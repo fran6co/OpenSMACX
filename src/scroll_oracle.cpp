@@ -105,7 +105,7 @@ struct ScrollCloseButtonTrace {
 Scroll *ScrollCloseTraceBase = nullptr;
 ScrollCloseButtonTrace ScrollCloseButtons = {};
 
-uint32_t __thiscall trace_scroll_button_close(void *self) {
+uint32_t __fastcall trace_scroll_button_close(void *self) {
     const uint32_t call = ScrollCloseButtons.calls++;
     if (call >= ARRAYSIZE(ScrollCloseButtons.self_offsets)) {
         return 0xBAD0C105U;

@@ -66,43 +66,43 @@ namespace {
 // each runs the recovered construction on the object the
 // thunk names. The hybrid executes these; leaf tests
 // rebind the seams to recorders instead.
-void __thiscall ambienceinitctor_default(void *object) {
+void __fastcall ambienceinitctor_default(void *object) {
     static_cast<Ambience *>(object)->construct();
 }
-void __thiscall bufferinitctor_default(void *object) {
+void __fastcall bufferinitctor_default(void *object) {
     static_cast<Buffer *>(object)->construct();
 }
-void __thiscall buttongroupinitctor_default(void *object) {
+void __fastcall buttongroupinitctor_default(void *object) {
     new (object) ButtonGroup();
 }
-void __thiscall caviardatainitctor_default(void *object) {
+void __fastcall caviardatainitctor_default(void *object) {
     new (object) CaviarData();
 }
-void __thiscall caviarinitctor_default(void *object) {
+void __fastcall caviarinitctor_default(void *object) {
     new (object) Caviar();
 }
-void __thiscall fxinitctor_default(void *object) {
+void __fastcall fxinitctor_default(void *object) {
     new (object) FX();
 }
-void __thiscall fontinitctor_default(void *object) {
+void __fastcall fontinitctor_default(void *object) {
     new (object) Font();
 }
-void __thiscall spriteinitctor_default(void *object) {
+void __fastcall spriteinitctor_default(void *object) {
     new (object) Sprite();
 }
-void __thiscall stringsinitctor_default(void *object) {
+void __fastcall stringsinitctor_default(void *object) {
     new (object) Strings();
 }
-void __thiscall textureinitctor_default(void *object) {
+void __fastcall textureinitctor_default(void *object) {
     new (object) Texture();
 }
-void __thiscall timeinitctor_default(void *object) {
+void __fastcall timeinitctor_default(void *object) {
     new (object) Time();
 }
-void __thiscall wavedeviceinitctor_default(void *object) {
+void __fastcall wavedeviceinitctor_default(void *object) {
     new (object) Wave_Device();
 }
-void __thiscall waveinitctor_default(void *object) {
+void __fastcall waveinitctor_default(void *object) {
     new (object) Wave();
 }
 

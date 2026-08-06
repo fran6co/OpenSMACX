@@ -858,18 +858,15 @@ void walk_group_waves(WaveControlGroup &group, void (*visit)(Wave *wave)) {
 void replay_wave_volume(Wave *wave) {
     uint32_t vol;
     std::memcpy(&vol, reinterpret_cast<uint8_t *>(wave) + 4, 4);
-    (*reinterpret_cast<void(__thiscall **)(Wave *, uint32_t)>(
-        *reinterpret_cast<uint8_t **>(wave) + 0x40))(wave, vol);
+    (ORIGINAL(wave)->*original_method<void (OriginalObject::*)(uint32_t) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x40)))(vol);
 }
 
 void resume_wave(Wave *wave) {
-    (*reinterpret_cast<void(__thiscall **)(Wave *)>(
-        *reinterpret_cast<uint8_t **>(wave) + 0x8C))(wave);
+    (ORIGINAL(wave)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x8C)))();
 }
 
 void halt_wave(Wave *wave) {
-    (*reinterpret_cast<void(__thiscall **)(Wave *)>(
-        *reinterpret_cast<uint8_t **>(wave) + 0x14))(wave);
+    (ORIGINAL(wave)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x14)))();
 }
 
 // The chain-link view select repurposes: once a sound is halted off the
@@ -892,23 +889,19 @@ WaveResumeLinks *resume_links(Wave *wave) {
 // (slot 0x70), the chain-next and chain-prev accessors (slots 0x64/0x68),
 // and load-by-name (slot 0x10).
 int wave_attrib(Wave *wave) {
-    return (*reinterpret_cast<int(__thiscall **)(Wave *)>(
-        *reinterpret_cast<uint8_t **>(wave) + 0x70))(wave);
+    return (ORIGINAL(wave)->*original_method<int (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x70)))();
 }
 
 Wave *wave_chain_next(Wave *wave) {
-    return (*reinterpret_cast<Wave *(__thiscall **)(Wave *)>(
-        *reinterpret_cast<uint8_t **>(wave) + 0x64))(wave);
+    return (ORIGINAL(wave)->*original_method<Wave * (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x64)))();
 }
 
 Wave *wave_chain_prev(Wave *wave) {
-    return (*reinterpret_cast<Wave *(__thiscall **)(Wave *)>(
-        *reinterpret_cast<uint8_t **>(wave) + 0x68))(wave);
+    return (ORIGINAL(wave)->*original_method<Wave * (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x68)))();
 }
 
 void load_wave_by_name(Wave *wave, char *fname) {
-    (*reinterpret_cast<int(__thiscall **)(Wave *, char *)>(
-        *reinterpret_cast<uint8_t **>(wave) + 0x10))(wave, fname);
+    (ORIGINAL(wave)->*original_method<int (OriginalObject::*)(char *) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x10)))(fname);
 }
 
 }  // namespace
@@ -1026,8 +1019,7 @@ int Wave_Device::select(unsigned long a1) {
             sound = wave_chain_next(sound);
         }
     }
-    (*reinterpret_cast<int(__thiscall **)(void *, unsigned long)>(
-        *reinterpret_cast<uint8_t **>(device_14_) + 0x18))(device_14_, a1);
+    (ORIGINAL(device_14_)->*original_method<int (OriginalObject::*)(unsigned long) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(device_14_) + 0x18)))(a1);
     for (Wave *replay = resume_tail; replay;) {
         char *const fname = resume_links(replay)->fname;
         Wave *const prev = wave_chain_prev(replay);
@@ -1118,8 +1110,7 @@ int Wave_Device::init(void *a1, unsigned long a2) {
     const int result = (*reinterpret_cast<device_init_fn *>(
         *reinterpret_cast<uint8_t **>(device_14_) + 0xC))(device_14_, a1, a2);
     if (result) {
-        (*reinterpret_cast<void(__thiscall **)(Wave_Device *)>(
-            *reinterpret_cast<uint8_t **>(this) + 4))(this);
+        (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 4)))();
         return result;
     }
     return 0;

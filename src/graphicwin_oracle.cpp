@@ -45,7 +45,7 @@ int ReleaseCalls = 0;
 void *ReleaseTarget = nullptr;
 uint32_t ReleaseFlags = 0;
 
-uint32_t __thiscall recording_release(void *target, uint32_t flags) {
+uint32_t __fastcall recording_release(void *target, int /* edx */, uint32_t flags) {
     ++ReleaseCalls;
     ReleaseTarget = target;
     ReleaseFlags = flags;

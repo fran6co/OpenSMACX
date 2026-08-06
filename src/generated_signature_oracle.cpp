@@ -136,6 +136,8 @@ void timing(uintptr_t address, DWORD elapsed_ms, const char *name) {
 
 }  // namespace
 
+#include "original_seam.h"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
 #pragma GCC diagnostic ignored "-Wuseless-cast"
@@ -144,8 +146,8 @@ void timing(uintptr_t address, DWORD elapsed_ms, const char *name) {
 // recovered in src/stringstruct.cpp:63
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_seek_id_00401560() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00401560U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00401560U);
     std::printf("  running ?seek_id@StringStruct@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -180,7 +182,7 @@ static bool verify_StringStruct_seek_id_00401560() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x00401560U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -200,7 +202,7 @@ static bool verify_StringStruct_seek_id_00401560() {
         oracle_fault_guard::begin(0x00401560U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -230,7 +232,7 @@ static bool verify_StringStruct_seek_id_00401560() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x00401560U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -289,8 +291,8 @@ static bool verify_StringStruct_seek_id_00401560() {
 // recovered in src/stringstruct.cpp:18
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_current_id_00401640() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00401640U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00401640U);
     std::printf("  running ?current_id@StringStruct@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -315,7 +317,7 @@ static bool verify_StringStruct_current_id_00401640() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x00401640U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -335,7 +337,7 @@ static bool verify_StringStruct_current_id_00401640() {
         oracle_fault_guard::begin(0x00401640U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -365,7 +367,7 @@ static bool verify_StringStruct_current_id_00401640() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x00401640U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -424,8 +426,8 @@ static bool verify_StringStruct_current_id_00401640() {
 // recovered in src/stringstruct.cpp:42
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_next_entry_00402500() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00402500U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00402500U);
     std::printf("  running ?next_entry@StringStruct@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -450,7 +452,7 @@ static bool verify_StringStruct_next_entry_00402500() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x00402500U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -470,7 +472,7 @@ static bool verify_StringStruct_next_entry_00402500() {
         oracle_fault_guard::begin(0x00402500U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -500,7 +502,7 @@ static bool verify_StringStruct_next_entry_00402500() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x00402500U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -559,8 +561,8 @@ static bool verify_StringStruct_next_entry_00402500() {
 // recovered in src/stringstruct.cpp:28
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_current_entry_00402530() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00402530U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00402530U);
     std::printf("  running ?current_entry@StringStruct@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -585,7 +587,7 @@ static bool verify_StringStruct_current_entry_00402530() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x00402530U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -605,7 +607,7 @@ static bool verify_StringStruct_current_entry_00402530() {
         oracle_fault_guard::begin(0x00402530U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -635,7 +637,7 @@ static bool verify_StringStruct_current_entry_00402530() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x00402530U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -896,8 +898,8 @@ static bool verify_load_deswin_sprites_00455e50() {
 // recovered in src/infowin.cpp:78
 // staged receiver: InfoWin, 0x1580 B, zero-filled, size bounded
 static bool verify_InfoWin_reset_00459280() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00459280U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00459280U);
     std::printf("  running ?reset@InfoWin@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -921,7 +923,7 @@ static bool verify_InfoWin_reset_00459280() {
         }
         oracle_fault_guard::begin(0x00459280U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -941,7 +943,7 @@ static bool verify_InfoWin_reset_00459280() {
         oracle_fault_guard::begin(0x00459280U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -970,7 +972,7 @@ static bool verify_InfoWin_reset_00459280() {
         }
         oracle_fault_guard::begin(0x00459280U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -1022,8 +1024,8 @@ static bool verify_InfoWin_reset_00459280() {
 // recovered in src/mapwin.cpp:102
 // staged receiver: MapWin, 0x22480 B, zero-filled, size pinned
 static bool verify_MapWin_on_left_click_0046eba0() {
-    typedef void (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x0046EBA0U);
+    typedef void (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x0046EBA0U);
     std::printf("  running ?on_left_click@MapWin@@QAEXHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -1057,7 +1059,7 @@ static bool verify_MapWin_on_left_click_0046eba0() {
         }
         oracle_fault_guard::begin(0x0046EBA0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -1077,7 +1079,7 @@ static bool verify_MapWin_on_left_click_0046eba0() {
         oracle_fault_guard::begin(0x0046EBA0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -1106,7 +1108,7 @@ static bool verify_MapWin_on_left_click_0046eba0() {
         }
         oracle_fault_guard::begin(0x0046EBA0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -1158,8 +1160,8 @@ static bool verify_MapWin_on_left_click_0046eba0() {
 // recovered in src/mapwin.cpp:118
 // staged receiver: MapWin, 0x22480 B, zero-filled, size pinned
 static bool verify_MapWin_on_right_click_0046ebe0() {
-    typedef void (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x0046EBE0U);
+    typedef void (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x0046EBE0U);
     std::printf("  running ?on_right_click@MapWin@@QAEXHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -1193,7 +1195,7 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
         }
         oracle_fault_guard::begin(0x0046EBE0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -1213,7 +1215,7 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
         oracle_fault_guard::begin(0x0046EBE0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -1242,7 +1244,7 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
         }
         oracle_fault_guard::begin(0x0046EBE0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -1294,8 +1296,8 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
 // recovered in src/mapwin.cpp:58
 // staged receiver: MapWin, 0x22480 B, zero-filled, size pinned
 static bool verify_MapWin_main_caption_0046fb10() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x0046FB10U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x0046FB10U);
     std::printf("  running ?main_caption@MapWin@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -1319,7 +1321,7 @@ static bool verify_MapWin_main_caption_0046fb10() {
         }
         oracle_fault_guard::begin(0x0046FB10U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -1339,7 +1341,7 @@ static bool verify_MapWin_main_caption_0046fb10() {
         oracle_fault_guard::begin(0x0046FB10U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -1368,7 +1370,7 @@ static bool verify_MapWin_main_caption_0046fb10() {
         }
         oracle_fault_guard::begin(0x0046FB10U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -1420,8 +1422,8 @@ static bool verify_MapWin_main_caption_0046fb10() {
 // recovered in src/netwin.cpp:122
 // staged receiver: NetWin, 0x7748 B, zero-filled, size bounded
 static bool verify_NetWin_UNK5_00483820() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00483820U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00483820U);
     std::printf("  running ?UNK5@NetWin@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -1445,7 +1447,7 @@ static bool verify_NetWin_UNK5_00483820() {
         }
         oracle_fault_guard::begin(0x00483820U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -1465,7 +1467,7 @@ static bool verify_NetWin_UNK5_00483820() {
         oracle_fault_guard::begin(0x00483820U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -1494,7 +1496,7 @@ static bool verify_NetWin_UNK5_00483820() {
         }
         oracle_fault_guard::begin(0x00483820U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -1546,8 +1548,8 @@ static bool verify_NetWin_UNK5_00483820() {
 // recovered in src/planwin.cpp:82
 // staged receiver: PlanWin, 0x22A64 B, zero-filled, size pinned
 static bool verify_PlanWin_blink_0048bc20() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x0048BC20U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x0048BC20U);
     std::printf("  running ?blink@PlanWin@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -1571,7 +1573,7 @@ static bool verify_PlanWin_blink_0048bc20() {
         }
         oracle_fault_guard::begin(0x0048BC20U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -1591,7 +1593,7 @@ static bool verify_PlanWin_blink_0048bc20() {
         oracle_fault_guard::begin(0x0048BC20U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -1620,7 +1622,7 @@ static bool verify_PlanWin_blink_0048bc20() {
         }
         oracle_fault_guard::begin(0x0048BC20U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -1672,8 +1674,8 @@ static bool verify_PlanWin_blink_0048bc20() {
 // recovered in src/statuswin.cpp:59
 // staged receiver: StatusWin, 0x1900 B, zero-filled, size bounded
 static bool verify_StatusWin_reset_004b8970() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x004B8970U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x004B8970U);
     std::printf("  running ?reset@StatusWin@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -1697,7 +1699,7 @@ static bool verify_StatusWin_reset_004b8970() {
         }
         oracle_fault_guard::begin(0x004B8970U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -1717,7 +1719,7 @@ static bool verify_StatusWin_reset_004b8970() {
         oracle_fault_guard::begin(0x004B8970U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -1746,7 +1748,7 @@ static bool verify_StatusWin_reset_004b8970() {
         }
         oracle_fault_guard::begin(0x004B8970U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -1798,8 +1800,8 @@ static bool verify_StatusWin_reset_004b8970() {
 // recovered in src/statuswin.cpp:37
 // staged receiver: StatusWin, 0x1900 B, zero-filled, size bounded
 static bool verify_StatusWin_set_loc_004b9f90() {
-    typedef void (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x004B9F90U);
+    typedef void (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x004B9F90U);
     std::printf("  running ?set_loc@StatusWin@@QAEXHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -1833,7 +1835,7 @@ static bool verify_StatusWin_set_loc_004b9f90() {
         }
         oracle_fault_guard::begin(0x004B9F90U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -1853,7 +1855,7 @@ static bool verify_StatusWin_set_loc_004b9f90() {
         oracle_fault_guard::begin(0x004B9F90U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -1882,7 +1884,7 @@ static bool verify_StatusWin_set_loc_004b9f90() {
         }
         oracle_fault_guard::begin(0x004B9F90U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -1934,8 +1936,8 @@ static bool verify_StatusWin_set_loc_004b9f90() {
 // recovered in src/tutwin.cpp:30
 // staged receiver: TutWin, 0x5430 B, zero-filled, size bounded
 static bool verify_TutWin_UNK1_004ba720() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x004BA720U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x004BA720U);
     std::printf("  running ?UNK1@TutWin@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -1959,7 +1961,7 @@ static bool verify_TutWin_UNK1_004ba720() {
         }
         oracle_fault_guard::begin(0x004BA720U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -1979,7 +1981,7 @@ static bool verify_TutWin_UNK1_004ba720() {
         oracle_fault_guard::begin(0x004BA720U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -2008,7 +2010,7 @@ static bool verify_TutWin_UNK1_004ba720() {
         }
         oracle_fault_guard::begin(0x004BA720U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -2060,8 +2062,8 @@ static bool verify_TutWin_UNK1_004ba720() {
 // recovered in src/tutwin.cpp:49
 // staged receiver: TutWin, 0x5430 B, zero-filled, size bounded
 static bool verify_TutWin_UNK3_004bddd0() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x004BDDD0U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x004BDDD0U);
     std::printf("  running ?UNK3@TutWin@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -2095,7 +2097,7 @@ static bool verify_TutWin_UNK3_004bddd0() {
         }
         oracle_fault_guard::begin(0x004BDDD0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -2115,7 +2117,7 @@ static bool verify_TutWin_UNK3_004bddd0() {
         oracle_fault_guard::begin(0x004BDDD0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -2144,7 +2146,7 @@ static bool verify_TutWin_UNK3_004bddd0() {
         }
         oracle_fault_guard::begin(0x004BDDD0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -2196,8 +2198,8 @@ static bool verify_TutWin_UNK3_004bddd0() {
 // recovered in src/sounddevice.cpp:397
 // staged receiver: Midi_Device, 0x28 B, zero-filled, size bounded
 static bool verify_Midi_Device_is_disabled_004c5920() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x004C5920U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x004C5920U);
     std::printf("  running ?is_disabled@Midi_Device@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -2222,7 +2224,7 @@ static bool verify_Midi_Device_is_disabled_004c5920() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x004C5920U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -2242,7 +2244,7 @@ static bool verify_Midi_Device_is_disabled_004c5920() {
         oracle_fault_guard::begin(0x004C5920U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -2272,7 +2274,7 @@ static bool verify_Midi_Device_is_disabled_004c5920() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x004C5920U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -2331,8 +2333,8 @@ static bool verify_Midi_Device_is_disabled_004c5920() {
 // recovered in src/delegation_thunks.cpp:188
 // staged receiver: Wave_In_Device, 0x7B60 B, zero-filled, size bounded
 static bool verify_Wave_In_Device_set_codec_004c5a80() {
-    typedef int (__thiscall *Callable)(void *, unsigned int);
-    Callable target = reinterpret_cast<Callable>(0x004C5A80U);
+    typedef int (OriginalObject::*Callable)(unsigned int);
+    Callable target = original_method<Callable>(0x004C5A80U);
     std::printf("  running ?set_codec@Wave_In_Device@@QAEHK@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -2367,7 +2369,7 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x004C5A80U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (unsigned int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((unsigned int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -2387,7 +2389,7 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
         oracle_fault_guard::begin(0x004C5A80U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (unsigned int)argv[0]);
+            (ORIGINAL(staged)->*target)((unsigned int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -2417,7 +2419,7 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x004C5A80U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (unsigned int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((unsigned int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -2476,8 +2478,8 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
 // recovered in src/console.cpp:137
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_edit_lock_004e1f40() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x004E1F40U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x004E1F40U);
     std::printf("  running ?edit_lock@Console@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -2502,7 +2504,7 @@ static bool verify_Console_edit_lock_004e1f40() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x004E1F40U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -2522,7 +2524,7 @@ static bool verify_Console_edit_lock_004e1f40() {
         oracle_fault_guard::begin(0x004E1F40U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -2552,7 +2554,7 @@ static bool verify_Console_edit_lock_004e1f40() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x004E1F40U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -2611,8 +2613,8 @@ static bool verify_Console_edit_lock_004e1f40() {
 // recovered in src/alphanet.cpp:15
 // staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_pid_2_idx_004e25e0() {
-    typedef int (__thiscall *Callable)(void *, unsigned int);
-    Callable target = reinterpret_cast<Callable>(0x004E25E0U);
+    typedef int (OriginalObject::*Callable)(unsigned int);
+    Callable target = original_method<Callable>(0x004E25E0U);
     std::printf("  running ?pid_2_idx@AlphaNet@@QAEHK@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -2647,7 +2649,7 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x004E25E0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (unsigned int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((unsigned int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -2667,7 +2669,7 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
         oracle_fault_guard::begin(0x004E25E0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (unsigned int)argv[0]);
+            (ORIGINAL(staged)->*target)((unsigned int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -2697,7 +2699,7 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x004E25E0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (unsigned int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((unsigned int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -2756,8 +2758,8 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
 // recovered in src/alphanet.cpp:33
 // staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_pid_2_who_004e2610() {
-    typedef int (__thiscall *Callable)(void *, unsigned int);
-    Callable target = reinterpret_cast<Callable>(0x004E2610U);
+    typedef int (OriginalObject::*Callable)(unsigned int);
+    Callable target = original_method<Callable>(0x004E2610U);
     std::printf("  running ?pid_2_who@AlphaNet@@QAEHK@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -2792,7 +2794,7 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x004E2610U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (unsigned int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((unsigned int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -2812,7 +2814,7 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
         oracle_fault_guard::begin(0x004E2610U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (unsigned int)argv[0]);
+            (ORIGINAL(staged)->*target)((unsigned int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -2842,7 +2844,7 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x004E2610U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (unsigned int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((unsigned int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -2901,8 +2903,8 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
 // recovered in src/alphanet.cpp:53
 // staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_who_2_pid_004e2660() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x004E2660U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x004E2660U);
     std::printf("  running ?who_2_pid@AlphaNet@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -2937,7 +2939,7 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x004E2660U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -2957,7 +2959,7 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
         oracle_fault_guard::begin(0x004E2660U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -2987,7 +2989,7 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x004E2660U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -3046,8 +3048,8 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
 // recovered in src/alphanet.cpp:73
 // staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_who_2_idx_004e26b0() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x004E26B0U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x004E26B0U);
     std::printf("  running ?who_2_idx@AlphaNet@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -3081,7 +3083,7 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
         }
         oracle_fault_guard::begin(0x004E26B0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -3101,7 +3103,7 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
         oracle_fault_guard::begin(0x004E26B0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -3130,7 +3132,7 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
         }
         oracle_fault_guard::begin(0x004E26B0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -3182,8 +3184,8 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
 // recovered in src/console.cpp:108
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_clear_group_0050f650() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x0050F650U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x0050F650U);
     std::printf("  running ?clear_group@Console@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -3207,7 +3209,7 @@ static bool verify_Console_clear_group_0050f650() {
         }
         oracle_fault_guard::begin(0x0050F650U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -3227,7 +3229,7 @@ static bool verify_Console_clear_group_0050f650() {
         oracle_fault_guard::begin(0x0050F650U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -3256,7 +3258,7 @@ static bool verify_Console_clear_group_0050f650() {
         }
         oracle_fault_guard::begin(0x0050F650U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -3308,8 +3310,8 @@ static bool verify_Console_clear_group_0050f650() {
 // recovered in src/console.cpp:250
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_focus_005108a0() {
-    typedef void (__thiscall *Callable)(void *, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005108A0U);
+    typedef void (OriginalObject::*Callable)(int, int, int);
+    Callable target = original_method<Callable>(0x005108A0U);
     std::printf("  running ?focus@Console@@QAEXHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -3343,7 +3345,7 @@ static bool verify_Console_focus_005108a0() {
         }
         oracle_fault_guard::begin(0x005108A0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -3363,7 +3365,7 @@ static bool verify_Console_focus_005108a0() {
         oracle_fault_guard::begin(0x005108A0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -3392,7 +3394,7 @@ static bool verify_Console_focus_005108a0() {
         }
         oracle_fault_guard::begin(0x005108A0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -3444,8 +3446,8 @@ static bool verify_Console_focus_005108a0() {
 // recovered in src/console.cpp:195
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_update_data_00514880() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00514880U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00514880U);
     std::printf("  running ?update_data@Console@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -3479,7 +3481,7 @@ static bool verify_Console_update_data_00514880() {
         }
         oracle_fault_guard::begin(0x00514880U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -3499,7 +3501,7 @@ static bool verify_Console_update_data_00514880() {
         oracle_fault_guard::begin(0x00514880U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -3528,7 +3530,7 @@ static bool verify_Console_update_data_00514880() {
         }
         oracle_fault_guard::begin(0x00514880U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -3690,8 +3692,8 @@ static bool verify_not_my_turn_0052dc70() {
 // recovered in src/netdaemon.cpp:37
 // staged receiver: NetDaemon, 0x2D58 B, zero-filled, size bounded
 static bool verify_NetDaemon_receive_00530320() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00530320U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00530320U);
     std::printf("  running ?receive@NetDaemon@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -3716,7 +3718,7 @@ static bool verify_NetDaemon_receive_00530320() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x00530320U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -3736,7 +3738,7 @@ static bool verify_NetDaemon_receive_00530320() {
         oracle_fault_guard::begin(0x00530320U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -3766,7 +3768,7 @@ static bool verify_NetDaemon_receive_00530320() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x00530320U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -3825,8 +3827,8 @@ static bool verify_NetDaemon_receive_00530320() {
 // recovered in src/netdaemon.cpp:213
 // staged receiver: NetDaemon, 0x2D58 B, zero-filled, size bounded
 static bool verify_NetDaemon_unlock_veh_005310f0() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005310F0U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005310F0U);
     std::printf("  running ?unlock_veh@NetDaemon@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -3850,7 +3852,7 @@ static bool verify_NetDaemon_unlock_veh_005310f0() {
         }
         oracle_fault_guard::begin(0x005310F0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -3870,7 +3872,7 @@ static bool verify_NetDaemon_unlock_veh_005310f0() {
         oracle_fault_guard::begin(0x005310F0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -3899,7 +3901,7 @@ static bool verify_NetDaemon_unlock_veh_005310f0() {
         }
         oracle_fault_guard::begin(0x005310F0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -4052,8 +4054,8 @@ static bool verify_desktop_update_0058ee50() {
 // recovered in src/graphicwin.cpp:254
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_fill_005d5250() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005D5250U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005D5250U);
     std::printf("  running ?fill@GraphicWin@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -4087,7 +4089,7 @@ static bool verify_GraphicWin_fill_005d5250() {
         }
         oracle_fault_guard::begin(0x005D5250U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -4107,7 +4109,7 @@ static bool verify_GraphicWin_fill_005d5250() {
         oracle_fault_guard::begin(0x005D5250U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -4136,7 +4138,7 @@ static bool verify_GraphicWin_fill_005d5250() {
         }
         oracle_fault_guard::begin(0x005D5250U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -4188,8 +4190,8 @@ static bool verify_GraphicWin_fill_005d5250() {
 // recovered in src/graphicwin.cpp:206
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_fill_005d5440() {
-    typedef int (__thiscall *Callable)(void *, int, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005D5440U);
+    typedef int (OriginalObject::*Callable)(int, int, int, int, int);
+    Callable target = original_method<Callable>(0x005D5440U);
     std::printf("  running ?fill@GraphicWin@@QAEHHHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -4224,7 +4226,7 @@ static bool verify_GraphicWin_fill_005d5440() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005D5440U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -4244,7 +4246,7 @@ static bool verify_GraphicWin_fill_005d5440() {
         oracle_fault_guard::begin(0x005D5440U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -4274,7 +4276,7 @@ static bool verify_GraphicWin_fill_005d5440() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005D5440U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -4333,8 +4335,8 @@ static bool verify_GraphicWin_fill_005d5440() {
 // recovered in src/graphicwin.cpp:322
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_redraw_005d5a70() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005D5A70U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005D5A70U);
     std::printf("  running ?redraw@GraphicWin@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -4358,7 +4360,7 @@ static bool verify_GraphicWin_redraw_005d5a70() {
         }
         oracle_fault_guard::begin(0x005D5A70U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -4378,7 +4380,7 @@ static bool verify_GraphicWin_redraw_005d5a70() {
         oracle_fault_guard::begin(0x005D5A70U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -4407,7 +4409,7 @@ static bool verify_GraphicWin_redraw_005d5a70() {
         }
         oracle_fault_guard::begin(0x005D5A70U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -4459,8 +4461,8 @@ static bool verify_GraphicWin_redraw_005d5a70() {
 // recovered in src/buffer.cpp:159
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color_005dacb0() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005DACB0U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x005DACB0U);
     std::printf("  running ?set_text_color@Buffer@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -4494,7 +4496,7 @@ static bool verify_Buffer_set_text_color_005dacb0() {
         }
         oracle_fault_guard::begin(0x005DACB0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -4514,7 +4516,7 @@ static bool verify_Buffer_set_text_color_005dacb0() {
         oracle_fault_guard::begin(0x005DACB0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -4543,7 +4545,7 @@ static bool verify_Buffer_set_text_color_005dacb0() {
         }
         oracle_fault_guard::begin(0x005DACB0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -4595,8 +4597,8 @@ static bool verify_Buffer_set_text_color_005dacb0() {
 // recovered in src/buffer.cpp:172
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color2_005dace0() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005DACE0U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x005DACE0U);
     std::printf("  running ?set_text_color2@Buffer@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -4630,7 +4632,7 @@ static bool verify_Buffer_set_text_color2_005dace0() {
         }
         oracle_fault_guard::begin(0x005DACE0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -4650,7 +4652,7 @@ static bool verify_Buffer_set_text_color2_005dace0() {
         oracle_fault_guard::begin(0x005DACE0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -4679,7 +4681,7 @@ static bool verify_Buffer_set_text_color2_005dace0() {
         }
         oracle_fault_guard::begin(0x005DACE0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -4731,8 +4733,8 @@ static bool verify_Buffer_set_text_color2_005dace0() {
 // recovered in src/buffer.cpp:185
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color3_005dad10() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005DAD10U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x005DAD10U);
     std::printf("  running ?set_text_color3@Buffer@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -4766,7 +4768,7 @@ static bool verify_Buffer_set_text_color3_005dad10() {
         }
         oracle_fault_guard::begin(0x005DAD10U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -4786,7 +4788,7 @@ static bool verify_Buffer_set_text_color3_005dad10() {
         oracle_fault_guard::begin(0x005DAD10U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -4815,7 +4817,7 @@ static bool verify_Buffer_set_text_color3_005dad10() {
         }
         oracle_fault_guard::begin(0x005DAD10U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -4867,8 +4869,8 @@ static bool verify_Buffer_set_text_color3_005dad10() {
 // recovered in src/buffer.cpp:198
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color_hyper_005dad40() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005DAD40U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x005DAD40U);
     std::printf("  running ?set_text_color_hyper@Buffer@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -4902,7 +4904,7 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
         }
         oracle_fault_guard::begin(0x005DAD40U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -4922,7 +4924,7 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
         oracle_fault_guard::begin(0x005DAD40U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -4951,7 +4953,7 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
         }
         oracle_fault_guard::begin(0x005DAD40U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -5003,8 +5005,8 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
 // recovered in src/buffer.cpp:733
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_text_height_005dca80() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005DCA80U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005DCA80U);
     std::printf("  running ?text_height@Buffer@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -5029,7 +5031,7 @@ static bool verify_Buffer_text_height_005dca80() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005DCA80U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -5049,7 +5051,7 @@ static bool verify_Buffer_text_height_005dca80() {
         oracle_fault_guard::begin(0x005DCA80U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -5079,7 +5081,7 @@ static bool verify_Buffer_text_height_005dca80() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005DCA80U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -5138,8 +5140,8 @@ static bool verify_Buffer_text_height_005dca80() {
 // recovered in src/buffer.cpp:358
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_text_line_height_005dcab0() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005DCAB0U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005DCAB0U);
     std::printf("  running ?text_line_height@Buffer@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -5164,7 +5166,7 @@ static bool verify_Buffer_text_line_height_005dcab0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005DCAB0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -5184,7 +5186,7 @@ static bool verify_Buffer_text_line_height_005dcab0() {
         oracle_fault_guard::begin(0x005DCAB0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -5214,7 +5216,7 @@ static bool verify_Buffer_text_line_height_005dcab0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005DCAB0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -5273,8 +5275,8 @@ static bool verify_Buffer_text_line_height_005dcab0() {
 // recovered in src/buffer.cpp:934
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_clear_links_005def90() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005DEF90U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005DEF90U);
     std::printf("  running ?clear_links@Buffer@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -5298,7 +5300,7 @@ static bool verify_Buffer_clear_links_005def90() {
         }
         oracle_fault_guard::begin(0x005DEF90U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -5318,7 +5320,7 @@ static bool verify_Buffer_clear_links_005def90() {
         oracle_fault_guard::begin(0x005DEF90U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -5347,7 +5349,7 @@ static bool verify_Buffer_clear_links_005def90() {
         }
         oracle_fault_guard::begin(0x005DEF90U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -5399,8 +5401,8 @@ static bool verify_Buffer_clear_links_005def90() {
 // recovered in src/buffer.cpp:275
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_get_data_005e3373() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005E3373U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005E3373U);
     std::printf("  running ?get_data@Buffer@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -5425,7 +5427,7 @@ static bool verify_Buffer_get_data_005e3373() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005E3373U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -5445,7 +5447,7 @@ static bool verify_Buffer_get_data_005e3373() {
         oracle_fault_guard::begin(0x005E3373U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -5475,7 +5477,7 @@ static bool verify_Buffer_get_data_005e3373() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005E3373U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -5534,8 +5536,8 @@ static bool verify_Buffer_get_data_005e3373() {
 // recovered in src/buffer.cpp:320
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_free_data_005e34a3() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005E34A3U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005E34A3U);
     std::printf("  running ?free_data@Buffer@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -5569,7 +5571,7 @@ static bool verify_Buffer_free_data_005e34a3() {
         }
         oracle_fault_guard::begin(0x005E34A3U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -5589,7 +5591,7 @@ static bool verify_Buffer_free_data_005e34a3() {
         oracle_fault_guard::begin(0x005E34A3U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -5618,7 +5620,7 @@ static bool verify_Buffer_free_data_005e34a3() {
         }
         oracle_fault_guard::begin(0x005E34A3U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -5670,8 +5672,8 @@ static bool verify_Buffer_free_data_005e34a3() {
 // recovered in src/buffer.cpp:616
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_get_hdc_005e3503() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005E3503U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005E3503U);
     std::printf("  running ?get_hdc@Buffer@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -5696,7 +5698,7 @@ static bool verify_Buffer_get_hdc_005e3503() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005E3503U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -5716,7 +5718,7 @@ static bool verify_Buffer_get_hdc_005e3503() {
         oracle_fault_guard::begin(0x005E3503U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -5746,7 +5748,7 @@ static bool verify_Buffer_get_hdc_005e3503() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005E3503U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -5805,8 +5807,8 @@ static bool verify_Buffer_get_hdc_005e3503() {
 // recovered in src/buffer.cpp:650
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_release_hdc_005e3563() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005E3563U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005E3563U);
     std::printf("  running ?release_hdc@Buffer@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -5840,7 +5842,7 @@ static bool verify_Buffer_release_hdc_005e3563() {
         }
         oracle_fault_guard::begin(0x005E3563U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -5860,7 +5862,7 @@ static bool verify_Buffer_release_hdc_005e3563() {
         oracle_fault_guard::begin(0x005E3563U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -5889,7 +5891,7 @@ static bool verify_Buffer_release_hdc_005e3563() {
         }
         oracle_fault_guard::begin(0x005E3563U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -5941,8 +5943,8 @@ static bool verify_Buffer_release_hdc_005e3563() {
 // recovered in src/win.cpp:539
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_cursor_005ec7c0() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005EC7C0U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005EC7C0U);
     std::printf("  running ?set_cursor@Win@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -5977,7 +5979,7 @@ static bool verify_Win_set_cursor_005ec7c0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005EC7C0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -5997,7 +5999,7 @@ static bool verify_Win_set_cursor_005ec7c0() {
         oracle_fault_guard::begin(0x005EC7C0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -6027,7 +6029,7 @@ static bool verify_Win_set_cursor_005ec7c0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005EC7C0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -6086,8 +6088,8 @@ static bool verify_Win_set_cursor_005ec7c0() {
 // recovered in src/win.cpp:887
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_UNK3_005ece80() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005ECE80U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005ECE80U);
     std::printf("  running ?UNK3@Win@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -6122,7 +6124,7 @@ static bool verify_Win_UNK3_005ece80() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005ECE80U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -6142,7 +6144,7 @@ static bool verify_Win_UNK3_005ece80() {
         oracle_fault_guard::begin(0x005ECE80U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -6172,7 +6174,7 @@ static bool verify_Win_UNK3_005ece80() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005ECE80U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -6231,8 +6233,8 @@ static bool verify_Win_UNK3_005ece80() {
 // recovered in src/win.cpp:162
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_move_005ed7d0() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005ED7D0U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005ED7D0U);
     std::printf("  running ?move@Win@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -6267,7 +6269,7 @@ static bool verify_Win_move_005ed7d0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005ED7D0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -6287,7 +6289,7 @@ static bool verify_Win_move_005ed7d0() {
         oracle_fault_guard::begin(0x005ED7D0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -6317,7 +6319,7 @@ static bool verify_Win_move_005ed7d0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005ED7D0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -6376,8 +6378,8 @@ static bool verify_Win_move_005ed7d0() {
 // recovered in src/win.cpp:803
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_vert_pos_005ee030() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005EE030U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005EE030U);
     std::printf("  running ?set_vert_pos@Win@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -6411,7 +6413,7 @@ static bool verify_Win_set_vert_pos_005ee030() {
         }
         oracle_fault_guard::begin(0x005EE030U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -6431,7 +6433,7 @@ static bool verify_Win_set_vert_pos_005ee030() {
         oracle_fault_guard::begin(0x005EE030U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -6460,7 +6462,7 @@ static bool verify_Win_set_vert_pos_005ee030() {
         }
         oracle_fault_guard::begin(0x005EE030U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -6512,8 +6514,8 @@ static bool verify_Win_set_vert_pos_005ee030() {
 // recovered in src/win.cpp:243
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_get_vert_pos_005ee050() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005EE050U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005EE050U);
     std::printf("  running ?get_vert_pos@Win@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -6538,7 +6540,7 @@ static bool verify_Win_get_vert_pos_005ee050() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005EE050U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -6558,7 +6560,7 @@ static bool verify_Win_get_vert_pos_005ee050() {
         oracle_fault_guard::begin(0x005EE050U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -6588,7 +6590,7 @@ static bool verify_Win_get_vert_pos_005ee050() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005EE050U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -6647,8 +6649,8 @@ static bool verify_Win_get_vert_pos_005ee050() {
 // recovered in src/win.cpp:816
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_horz_pos_005ee070() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005EE070U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005EE070U);
     std::printf("  running ?set_horz_pos@Win@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -6682,7 +6684,7 @@ static bool verify_Win_set_horz_pos_005ee070() {
         }
         oracle_fault_guard::begin(0x005EE070U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -6702,7 +6704,7 @@ static bool verify_Win_set_horz_pos_005ee070() {
         oracle_fault_guard::begin(0x005EE070U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -6731,7 +6733,7 @@ static bool verify_Win_set_horz_pos_005ee070() {
         }
         oracle_fault_guard::begin(0x005EE070U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -6783,8 +6785,8 @@ static bool verify_Win_set_horz_pos_005ee070() {
 // recovered in src/win.cpp:260
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_get_horz_pos_005ee090() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005EE090U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005EE090U);
     std::printf("  running ?get_horz_pos@Win@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -6809,7 +6811,7 @@ static bool verify_Win_get_horz_pos_005ee090() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005EE090U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -6829,7 +6831,7 @@ static bool verify_Win_get_horz_pos_005ee090() {
         oracle_fault_guard::begin(0x005EE090U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -6859,7 +6861,7 @@ static bool verify_Win_get_horz_pos_005ee090() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005EE090U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -6918,8 +6920,8 @@ static bool verify_Win_get_horz_pos_005ee090() {
 // recovered in src/win.cpp:829
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_vert_range_005ee0b0() {
-    typedef void (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005EE0B0U);
+    typedef void (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005EE0B0U);
     std::printf("  running ?set_vert_range@Win@@QAEXHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -6953,7 +6955,7 @@ static bool verify_Win_set_vert_range_005ee0b0() {
         }
         oracle_fault_guard::begin(0x005EE0B0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -6973,7 +6975,7 @@ static bool verify_Win_set_vert_range_005ee0b0() {
         oracle_fault_guard::begin(0x005EE0B0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -7002,7 +7004,7 @@ static bool verify_Win_set_vert_range_005ee0b0() {
         }
         oracle_fault_guard::begin(0x005EE0B0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -7054,8 +7056,8 @@ static bool verify_Win_set_vert_range_005ee0b0() {
 // recovered in src/win.cpp:842
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_horz_range_005ee0d0() {
-    typedef void (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005EE0D0U);
+    typedef void (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005EE0D0U);
     std::printf("  running ?set_horz_range@Win@@QAEXHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -7089,7 +7091,7 @@ static bool verify_Win_set_horz_range_005ee0d0() {
         }
         oracle_fault_guard::begin(0x005EE0D0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -7109,7 +7111,7 @@ static bool verify_Win_set_horz_range_005ee0d0() {
         oracle_fault_guard::begin(0x005EE0D0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -7138,7 +7140,7 @@ static bool verify_Win_set_horz_range_005ee0d0() {
         }
         oracle_fault_guard::begin(0x005EE0D0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -7190,8 +7192,8 @@ static bool verify_Win_set_horz_range_005ee0d0() {
 // recovered in src/win.cpp:277
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_vert_paging_005ee0f0() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005EE0F0U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005EE0F0U);
     std::printf("  running ?set_vert_paging@Win@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -7225,7 +7227,7 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
         }
         oracle_fault_guard::begin(0x005EE0F0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -7245,7 +7247,7 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
         oracle_fault_guard::begin(0x005EE0F0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -7274,7 +7276,7 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
         }
         oracle_fault_guard::begin(0x005EE0F0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -7326,8 +7328,8 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
 // recovered in src/win.cpp:288
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_set_horz_paging_005ee110() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005EE110U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005EE110U);
     std::printf("  running ?set_horz_paging@Win@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -7361,7 +7363,7 @@ static bool verify_Win_set_horz_paging_005ee110() {
         }
         oracle_fault_guard::begin(0x005EE110U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -7381,7 +7383,7 @@ static bool verify_Win_set_horz_paging_005ee110() {
         oracle_fault_guard::begin(0x005EE110U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -7410,7 +7412,7 @@ static bool verify_Win_set_horz_paging_005ee110() {
         }
         oracle_fault_guard::begin(0x005EE110U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -7462,8 +7464,8 @@ static bool verify_Win_set_horz_paging_005ee110() {
 // recovered in src/win.cpp:668
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_UNK8_005ee130() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005EE130U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005EE130U);
     std::printf("  running ?UNK8@Win@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -7497,7 +7499,7 @@ static bool verify_Win_UNK8_005ee130() {
         }
         oracle_fault_guard::begin(0x005EE130U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -7517,7 +7519,7 @@ static bool verify_Win_UNK8_005ee130() {
         oracle_fault_guard::begin(0x005EE130U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -7546,7 +7548,7 @@ static bool verify_Win_UNK8_005ee130() {
         }
         oracle_fault_guard::begin(0x005EE130U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -7598,8 +7600,8 @@ static bool verify_Win_UNK8_005ee130() {
 // recovered in src/win.cpp:684
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_UNK9_005ee160() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005EE160U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005EE160U);
     std::printf("  running ?UNK9@Win@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -7633,7 +7635,7 @@ static bool verify_Win_UNK9_005ee160() {
         }
         oracle_fault_guard::begin(0x005EE160U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -7653,7 +7655,7 @@ static bool verify_Win_UNK9_005ee160() {
         oracle_fault_guard::begin(0x005EE160U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -7682,7 +7684,7 @@ static bool verify_Win_UNK9_005ee160() {
         }
         oracle_fault_guard::begin(0x005EE160U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -7734,8 +7736,8 @@ static bool verify_Win_UNK9_005ee160() {
 // recovered in src/win.cpp:777
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_sync_palette_005f2c60() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005F2C60U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005F2C60U);
     std::printf("  running ?sync_palette@Win@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -7759,7 +7761,7 @@ static bool verify_Win_sync_palette_005f2c60() {
         }
         oracle_fault_guard::begin(0x005F2C60U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -7779,7 +7781,7 @@ static bool verify_Win_sync_palette_005f2c60() {
         oracle_fault_guard::begin(0x005F2C60U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -7808,7 +7810,7 @@ static bool verify_Win_sync_palette_005f2c60() {
         }
         oracle_fault_guard::begin(0x005F2C60U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -7860,8 +7862,8 @@ static bool verify_Win_sync_palette_005f2c60() {
 // recovered in src/win.cpp:418
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_is_dialog_focus_005f2ca0() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005F2CA0U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005F2CA0U);
     std::printf("  running ?is_dialog_focus@Win@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -7886,7 +7888,7 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F2CA0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -7906,7 +7908,7 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
         oracle_fault_guard::begin(0x005F2CA0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -7936,7 +7938,7 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F2CA0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -7995,8 +7997,8 @@ static bool verify_Win_is_dialog_focus_005f2ca0() {
 // recovered in src/win.cpp:172
 // staged receiver: Win, 0x444 B, zero-filled, size pinned
 static bool verify_Win_is_visible_005f7e90() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005F7E90U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005F7E90U);
     std::printf("  running ?is_visible@Win@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -8021,7 +8023,7 @@ static bool verify_Win_is_visible_005f7e90() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F7E90U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -8041,7 +8043,7 @@ static bool verify_Win_is_visible_005f7e90() {
         oracle_fault_guard::begin(0x005F7E90U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -8071,7 +8073,7 @@ static bool verify_Win_is_visible_005f7e90() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F7E90U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -8130,8 +8132,8 @@ static bool verify_Win_is_visible_005f7e90() {
 // recovered in src/pulldown.cpp:40
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_hide_item_005f8cb0() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005F8CB0U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005F8CB0U);
     std::printf("  running ?hide_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -8166,7 +8168,7 @@ static bool verify_PullDown_hide_item_005f8cb0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F8CB0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -8186,7 +8188,7 @@ static bool verify_PullDown_hide_item_005f8cb0() {
         oracle_fault_guard::begin(0x005F8CB0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -8216,7 +8218,7 @@ static bool verify_PullDown_hide_item_005f8cb0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F8CB0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -8275,8 +8277,8 @@ static bool verify_PullDown_hide_item_005f8cb0() {
 // recovered in src/pulldown.cpp:59
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_show_item_005f8d20() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005F8D20U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005F8D20U);
     std::printf("  running ?show_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -8311,7 +8313,7 @@ static bool verify_PullDown_show_item_005f8d20() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F8D20U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -8331,7 +8333,7 @@ static bool verify_PullDown_show_item_005f8d20() {
         oracle_fault_guard::begin(0x005F8D20U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -8361,7 +8363,7 @@ static bool verify_PullDown_show_item_005f8d20() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F8D20U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -8420,8 +8422,8 @@ static bool verify_PullDown_show_item_005f8d20() {
 // recovered in src/pulldown.cpp:78
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_disable_item_005f8d90() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005F8D90U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005F8D90U);
     std::printf("  running ?disable_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -8456,7 +8458,7 @@ static bool verify_PullDown_disable_item_005f8d90() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F8D90U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -8476,7 +8478,7 @@ static bool verify_PullDown_disable_item_005f8d90() {
         oracle_fault_guard::begin(0x005F8D90U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -8506,7 +8508,7 @@ static bool verify_PullDown_disable_item_005f8d90() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F8D90U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -8565,8 +8567,8 @@ static bool verify_PullDown_disable_item_005f8d90() {
 // recovered in src/pulldown.cpp:93
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_enable_item_005f8df0() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005F8DF0U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005F8DF0U);
     std::printf("  running ?enable_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -8601,7 +8603,7 @@ static bool verify_PullDown_enable_item_005f8df0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F8DF0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -8621,7 +8623,7 @@ static bool verify_PullDown_enable_item_005f8df0() {
         oracle_fault_guard::begin(0x005F8DF0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -8651,7 +8653,7 @@ static bool verify_PullDown_enable_item_005f8df0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F8DF0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -8710,8 +8712,8 @@ static bool verify_PullDown_enable_item_005f8df0() {
 // recovered in src/pulldown.cpp:108
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_check_item_005f9040() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005F9040U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005F9040U);
     std::printf("  running ?check_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -8746,7 +8748,7 @@ static bool verify_PullDown_check_item_005f9040() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F9040U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -8766,7 +8768,7 @@ static bool verify_PullDown_check_item_005f9040() {
         oracle_fault_guard::begin(0x005F9040U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -8796,7 +8798,7 @@ static bool verify_PullDown_check_item_005f9040() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F9040U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -8855,8 +8857,8 @@ static bool verify_PullDown_check_item_005f9040() {
 // recovered in src/pulldown.cpp:123
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_uncheck_item_005f90a0() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005F90A0U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005F90A0U);
     std::printf("  running ?uncheck_item@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -8891,7 +8893,7 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F90A0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -8911,7 +8913,7 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
         oracle_fault_guard::begin(0x005F90A0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -8941,7 +8943,7 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F90A0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -9000,8 +9002,8 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
 // recovered in src/pulldown.cpp:311
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_id_to_index_005f9d00() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005F9D00U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005F9D00U);
     std::printf("  running ?id_to_index@PullDown@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -9036,7 +9038,7 @@ static bool verify_PullDown_id_to_index_005f9d00() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F9D00U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -9056,7 +9058,7 @@ static bool verify_PullDown_id_to_index_005f9d00() {
         oracle_fault_guard::begin(0x005F9D00U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -9086,7 +9088,7 @@ static bool verify_PullDown_id_to_index_005f9d00() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F9D00U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -9145,8 +9147,8 @@ static bool verify_PullDown_id_to_index_005f9d00() {
 // recovered in src/pulldown.cpp:138
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_get_selected_005f9f40() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005F9F40U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005F9F40U);
     std::printf("  running ?get_selected@PullDown@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -9171,7 +9173,7 @@ static bool verify_PullDown_get_selected_005f9f40() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005F9F40U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -9191,7 +9193,7 @@ static bool verify_PullDown_get_selected_005f9f40() {
         oracle_fault_guard::begin(0x005F9F40U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -9221,7 +9223,7 @@ static bool verify_PullDown_get_selected_005f9f40() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005F9F40U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -9280,8 +9282,8 @@ static bool verify_PullDown_get_selected_005f9f40() {
 // recovered in src/menu.cpp:129
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK3_005fb1d0() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB1D0U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005FB1D0U);
     std::printf("  running ?UNK3@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -9316,7 +9318,7 @@ static bool verify_Menu_UNK3_005fb1d0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB1D0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -9336,7 +9338,7 @@ static bool verify_Menu_UNK3_005fb1d0() {
         oracle_fault_guard::begin(0x005FB1D0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -9366,7 +9368,7 @@ static bool verify_Menu_UNK3_005fb1d0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB1D0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -9425,8 +9427,8 @@ static bool verify_Menu_UNK3_005fb1d0() {
 // recovered in src/menu.cpp:395
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK6_005fb2a0() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB2A0U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005FB2A0U);
     std::printf("  running ?UNK6@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -9461,7 +9463,7 @@ static bool verify_Menu_UNK6_005fb2a0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB2A0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -9481,7 +9483,7 @@ static bool verify_Menu_UNK6_005fb2a0() {
         oracle_fault_guard::begin(0x005FB2A0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -9511,7 +9513,7 @@ static bool verify_Menu_UNK6_005fb2a0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB2A0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -9570,8 +9572,8 @@ static bool verify_Menu_UNK6_005fb2a0() {
 // recovered in src/menu.cpp:166
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_hide_menu_item_005fb300() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB300U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005FB300U);
     std::printf("  running ?hide_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -9606,7 +9608,7 @@ static bool verify_Menu_hide_menu_item_005fb300() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB300U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -9626,7 +9628,7 @@ static bool verify_Menu_hide_menu_item_005fb300() {
         oracle_fault_guard::begin(0x005FB300U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -9656,7 +9658,7 @@ static bool verify_Menu_hide_menu_item_005fb300() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB300U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -9715,8 +9717,8 @@ static bool verify_Menu_hide_menu_item_005fb300() {
 // recovered in src/menu.cpp:435
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK7_005fb360() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB360U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005FB360U);
     std::printf("  running ?UNK7@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -9751,7 +9753,7 @@ static bool verify_Menu_UNK7_005fb360() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB360U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -9771,7 +9773,7 @@ static bool verify_Menu_UNK7_005fb360() {
         oracle_fault_guard::begin(0x005FB360U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -9801,7 +9803,7 @@ static bool verify_Menu_UNK7_005fb360() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB360U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -9860,8 +9862,8 @@ static bool verify_Menu_UNK7_005fb360() {
 // recovered in src/menu.cpp:203
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_show_menu_item_005fb3c0() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB3C0U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005FB3C0U);
     std::printf("  running ?show_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -9896,7 +9898,7 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB3C0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -9916,7 +9918,7 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
         oracle_fault_guard::begin(0x005FB3C0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -9946,7 +9948,7 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB3C0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -10005,8 +10007,8 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
 // recovered in src/menu.cpp:475
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK8_005fb420() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB420U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005FB420U);
     std::printf("  running ?UNK8@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -10041,7 +10043,7 @@ static bool verify_Menu_UNK8_005fb420() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB420U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -10061,7 +10063,7 @@ static bool verify_Menu_UNK8_005fb420() {
         oracle_fault_guard::begin(0x005FB420U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -10091,7 +10093,7 @@ static bool verify_Menu_UNK8_005fb420() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB420U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -10150,8 +10152,8 @@ static bool verify_Menu_UNK8_005fb420() {
 // recovered in src/menu.cpp:240
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_disable_menu_item_005fb480() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB480U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005FB480U);
     std::printf("  running ?disable_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -10186,7 +10188,7 @@ static bool verify_Menu_disable_menu_item_005fb480() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB480U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -10206,7 +10208,7 @@ static bool verify_Menu_disable_menu_item_005fb480() {
         oracle_fault_guard::begin(0x005FB480U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -10236,7 +10238,7 @@ static bool verify_Menu_disable_menu_item_005fb480() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB480U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -10295,8 +10297,8 @@ static bool verify_Menu_disable_menu_item_005fb480() {
 // recovered in src/menu.cpp:515
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK9_005fb4e0() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB4E0U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005FB4E0U);
     std::printf("  running ?UNK9@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -10331,7 +10333,7 @@ static bool verify_Menu_UNK9_005fb4e0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB4E0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -10351,7 +10353,7 @@ static bool verify_Menu_UNK9_005fb4e0() {
         oracle_fault_guard::begin(0x005FB4E0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -10381,7 +10383,7 @@ static bool verify_Menu_UNK9_005fb4e0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB4E0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -10440,8 +10442,8 @@ static bool verify_Menu_UNK9_005fb4e0() {
 // recovered in src/menu.cpp:277
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_enable_menu_item_005fb540() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB540U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005FB540U);
     std::printf("  running ?enable_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -10476,7 +10478,7 @@ static bool verify_Menu_enable_menu_item_005fb540() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB540U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -10496,7 +10498,7 @@ static bool verify_Menu_enable_menu_item_005fb540() {
         oracle_fault_guard::begin(0x005FB540U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -10526,7 +10528,7 @@ static bool verify_Menu_enable_menu_item_005fb540() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB540U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -10585,8 +10587,8 @@ static bool verify_Menu_enable_menu_item_005fb540() {
 // recovered in src/menu.cpp:314
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_check_menu_item_005fb760() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB760U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005FB760U);
     std::printf("  running ?check_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -10621,7 +10623,7 @@ static bool verify_Menu_check_menu_item_005fb760() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB760U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -10641,7 +10643,7 @@ static bool verify_Menu_check_menu_item_005fb760() {
         oracle_fault_guard::begin(0x005FB760U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -10671,7 +10673,7 @@ static bool verify_Menu_check_menu_item_005fb760() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB760U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -10730,8 +10732,8 @@ static bool verify_Menu_check_menu_item_005fb760() {
 // recovered in src/menu.cpp:351
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_uncheck_menu_item_005fb7c0() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB7C0U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x005FB7C0U);
     std::printf("  running ?uncheck_menu_item@Menu@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -10766,7 +10768,7 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB7C0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -10786,7 +10788,7 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
         oracle_fault_guard::begin(0x005FB7C0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -10816,7 +10818,7 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB7C0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -10875,8 +10877,8 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
 // recovered in src/menu.cpp:33
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_id_to_index_005fb990() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005FB990U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005FB990U);
     std::printf("  running ?id_to_index@Menu@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -10911,7 +10913,7 @@ static bool verify_Menu_id_to_index_005fb990() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FB990U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -10931,7 +10933,7 @@ static bool verify_Menu_id_to_index_005fb990() {
         oracle_fault_guard::begin(0x005FB990U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -10961,7 +10963,7 @@ static bool verify_Menu_id_to_index_005fb990() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FB990U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -11020,8 +11022,8 @@ static bool verify_Menu_id_to_index_005fb990() {
 // recovered in src/menu.cpp:92
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_requested_height_005fc6a0() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x005FC6A0U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005FC6A0U);
     std::printf("  running ?requested_height@Menu@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -11046,7 +11048,7 @@ static bool verify_Menu_requested_height_005fc6a0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FC6A0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -11066,7 +11068,7 @@ static bool verify_Menu_requested_height_005fc6a0() {
         oracle_fault_guard::begin(0x005FC6A0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -11096,7 +11098,7 @@ static bool verify_Menu_requested_height_005fc6a0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FC6A0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -11256,8 +11258,8 @@ static bool verify_do_sound_005fd2b0() {
 // recovered in src/palette.cpp:85
 // staged receiver: Palette, 0x454 B, zero-filled, size pinned
 static bool verify_Palette_get_pos_005fed10() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x005FED10U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005FED10U);
     std::printf("  running ?get_pos@Palette@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -11292,7 +11294,7 @@ static bool verify_Palette_get_pos_005fed10() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x005FED10U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -11312,7 +11314,7 @@ static bool verify_Palette_get_pos_005fed10() {
         oracle_fault_guard::begin(0x005FED10U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -11342,7 +11344,7 @@ static bool verify_Palette_get_pos_005fed10() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x005FED10U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -11401,8 +11403,8 @@ static bool verify_Palette_get_pos_005fed10() {
 // recovered in src/basepop.cpp:387
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_width_00601b20() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00601B20U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00601B20U);
     std::printf("  running ?set_width@BasePop@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -11436,7 +11438,7 @@ static bool verify_BasePop_set_width_00601b20() {
         }
         oracle_fault_guard::begin(0x00601B20U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -11456,7 +11458,7 @@ static bool verify_BasePop_set_width_00601b20() {
         oracle_fault_guard::begin(0x00601B20U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -11485,7 +11487,7 @@ static bool verify_BasePop_set_width_00601b20() {
         }
         oracle_fault_guard::begin(0x00601B20U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -11537,8 +11539,8 @@ static bool verify_BasePop_set_width_00601b20() {
 // recovered in src/basepop.cpp:25
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_loc_00601b80() {
-    typedef void (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00601B80U);
+    typedef void (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x00601B80U);
     std::printf("  running ?set_loc@BasePop@@QAEXHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -11572,7 +11574,7 @@ static bool verify_BasePop_set_loc_00601b80() {
         }
         oracle_fault_guard::begin(0x00601B80U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -11592,7 +11594,7 @@ static bool verify_BasePop_set_loc_00601b80() {
         oracle_fault_guard::begin(0x00601B80U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -11621,7 +11623,7 @@ static bool verify_BasePop_set_loc_00601b80() {
         }
         oracle_fault_guard::begin(0x00601B80U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -11673,8 +11675,8 @@ static bool verify_BasePop_set_loc_00601b80() {
 // recovered in src/basepop.cpp:364
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_write_check_00601bb0() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00601BB0U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00601BB0U);
     std::printf("  running ?write_check@BasePop@@QAEXJ@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -11708,7 +11710,7 @@ static bool verify_BasePop_write_check_00601bb0() {
         }
         oracle_fault_guard::begin(0x00601BB0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -11728,7 +11730,7 @@ static bool verify_BasePop_write_check_00601bb0() {
         oracle_fault_guard::begin(0x00601BB0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -11757,7 +11759,7 @@ static bool verify_BasePop_write_check_00601bb0() {
         }
         oracle_fault_guard::begin(0x00601BB0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -11809,8 +11811,8 @@ static bool verify_BasePop_write_check_00601bb0() {
 // recovered in src/basepop.cpp:581
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_read_check_00601bd0() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00601BD0U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00601BD0U);
     std::printf("  running ?read_check@BasePop@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -11834,7 +11836,7 @@ static bool verify_BasePop_read_check_00601bd0() {
         }
         oracle_fault_guard::begin(0x00601BD0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -11854,7 +11856,7 @@ static bool verify_BasePop_read_check_00601bd0() {
         oracle_fault_guard::begin(0x00601BD0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -11883,7 +11885,7 @@ static bool verify_BasePop_read_check_00601bd0() {
         }
         oracle_fault_guard::begin(0x00601BD0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -11935,8 +11937,8 @@ static bool verify_BasePop_read_check_00601bd0() {
 // recovered in src/basepop.cpp:447
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_on_key_click_00604490() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00604490U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x00604490U);
     std::printf("  running ?on_key_click@BasePop@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -11971,7 +11973,7 @@ static bool verify_BasePop_on_key_click_00604490() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x00604490U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -11991,7 +11993,7 @@ static bool verify_BasePop_on_key_click_00604490() {
         oracle_fault_guard::begin(0x00604490U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -12021,7 +12023,7 @@ static bool verify_BasePop_on_key_click_00604490() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x00604490U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -12080,8 +12082,8 @@ static bool verify_BasePop_on_key_click_00604490() {
 // recovered in src/basepop.cpp:464
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_on_key_up_006044b0() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x006044B0U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x006044B0U);
     std::printf("  running ?on_key_up@BasePop@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -12116,7 +12118,7 @@ static bool verify_BasePop_on_key_up_006044b0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x006044B0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -12136,7 +12138,7 @@ static bool verify_BasePop_on_key_up_006044b0() {
         oracle_fault_guard::begin(0x006044B0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -12166,7 +12168,7 @@ static bool verify_BasePop_on_key_up_006044b0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x006044B0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -12225,8 +12227,8 @@ static bool verify_BasePop_on_key_up_006044b0() {
 // recovered in src/basepop.cpp:215
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color_00604730() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00604730U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x00604730U);
     std::printf("  running ?set_string_color@BasePop@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -12260,7 +12262,7 @@ static bool verify_BasePop_set_string_color_00604730() {
         }
         oracle_fault_guard::begin(0x00604730U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -12280,7 +12282,7 @@ static bool verify_BasePop_set_string_color_00604730() {
         oracle_fault_guard::begin(0x00604730U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -12309,7 +12311,7 @@ static bool verify_BasePop_set_string_color_00604730() {
         }
         oracle_fault_guard::begin(0x00604730U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -12361,8 +12363,8 @@ static bool verify_BasePop_set_string_color_00604730() {
 // recovered in src/basepop.cpp:232
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color2_00604760() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00604760U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x00604760U);
     std::printf("  running ?set_string_color2@BasePop@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -12396,7 +12398,7 @@ static bool verify_BasePop_set_string_color2_00604760() {
         }
         oracle_fault_guard::begin(0x00604760U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -12416,7 +12418,7 @@ static bool verify_BasePop_set_string_color2_00604760() {
         oracle_fault_guard::begin(0x00604760U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -12445,7 +12447,7 @@ static bool verify_BasePop_set_string_color2_00604760() {
         }
         oracle_fault_guard::begin(0x00604760U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -12497,8 +12499,8 @@ static bool verify_BasePop_set_string_color2_00604760() {
 // recovered in src/basepop.cpp:249
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color3_00604790() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00604790U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x00604790U);
     std::printf("  running ?set_string_color3@BasePop@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -12532,7 +12534,7 @@ static bool verify_BasePop_set_string_color3_00604790() {
         }
         oracle_fault_guard::begin(0x00604790U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -12552,7 +12554,7 @@ static bool verify_BasePop_set_string_color3_00604790() {
         oracle_fault_guard::begin(0x00604790U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -12581,7 +12583,7 @@ static bool verify_BasePop_set_string_color3_00604790() {
         }
         oracle_fault_guard::begin(0x00604790U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -12633,8 +12635,8 @@ static bool verify_BasePop_set_string_color3_00604790() {
 // recovered in src/basepop.cpp:266
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color_hyper_006047c0() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x006047C0U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x006047C0U);
     std::printf("  running ?set_string_color_hyper@BasePop@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -12668,7 +12670,7 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
         }
         oracle_fault_guard::begin(0x006047C0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -12688,7 +12690,7 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
         oracle_fault_guard::begin(0x006047C0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -12717,7 +12719,7 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
         }
         oracle_fault_guard::begin(0x006047C0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -12769,8 +12771,8 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
 // recovered in src/basepop.cpp:494
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_UNK3_00605180() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00605180U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00605180U);
     std::printf("  running ?UNK3@BasePop@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -12804,7 +12806,7 @@ static bool verify_BasePop_UNK3_00605180() {
         }
         oracle_fault_guard::begin(0x00605180U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -12824,7 +12826,7 @@ static bool verify_BasePop_UNK3_00605180() {
         oracle_fault_guard::begin(0x00605180U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -12853,7 +12855,7 @@ static bool verify_BasePop_UNK3_00605180() {
         }
         oracle_fault_guard::begin(0x00605180U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -12905,8 +12907,8 @@ static bool verify_BasePop_UNK3_00605180() {
 // recovered in src/basepop.cpp:515
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_UNK4_006051a0() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x006051A0U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x006051A0U);
     std::printf("  running ?UNK4@BasePop@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -12940,7 +12942,7 @@ static bool verify_BasePop_UNK4_006051a0() {
         }
         oracle_fault_guard::begin(0x006051A0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -12960,7 +12962,7 @@ static bool verify_BasePop_UNK4_006051a0() {
         oracle_fault_guard::begin(0x006051A0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -12989,7 +12991,7 @@ static bool verify_BasePop_UNK4_006051a0() {
         }
         oracle_fault_guard::begin(0x006051A0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -13041,8 +13043,8 @@ static bool verify_BasePop_UNK4_006051a0() {
 // recovered in src/scroll.cpp:294
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_range_006059b0() {
-    typedef void (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x006059B0U);
+    typedef void (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x006059B0U);
     std::printf("  running ?set_range@Scroll@@QAEXHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -13076,7 +13078,7 @@ static bool verify_Scroll_set_range_006059b0() {
         }
         oracle_fault_guard::begin(0x006059B0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -13096,7 +13098,7 @@ static bool verify_Scroll_set_range_006059b0() {
         oracle_fault_guard::begin(0x006059B0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -13125,7 +13127,7 @@ static bool verify_Scroll_set_range_006059b0() {
         }
         oracle_fault_guard::begin(0x006059B0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -13177,8 +13179,8 @@ static bool verify_Scroll_set_range_006059b0() {
 // recovered in src/scroll.cpp:316
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_button_color_00605a10() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00605A10U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00605A10U);
     std::printf("  running ?set_button_color@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -13212,7 +13214,7 @@ static bool verify_Scroll_set_button_color_00605a10() {
         }
         oracle_fault_guard::begin(0x00605A10U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -13232,7 +13234,7 @@ static bool verify_Scroll_set_button_color_00605a10() {
         oracle_fault_guard::begin(0x00605A10U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -13261,7 +13263,7 @@ static bool verify_Scroll_set_button_color_00605a10() {
         }
         oracle_fault_guard::begin(0x00605A10U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -13313,8 +13315,8 @@ static bool verify_Scroll_set_button_color_00605a10() {
 // recovered in src/scroll.cpp:332
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_thickness_00605a50() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00605A50U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00605A50U);
     std::printf("  running ?set_bevel_thickness@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -13348,7 +13350,7 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
         }
         oracle_fault_guard::begin(0x00605A50U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -13368,7 +13370,7 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
         oracle_fault_guard::begin(0x00605A50U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -13397,7 +13399,7 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
         }
         oracle_fault_guard::begin(0x00605A50U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -13449,8 +13451,8 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
 // recovered in src/scroll.cpp:348
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_upper_00605a90() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00605A90U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00605A90U);
     std::printf("  running ?set_bevel_upper@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -13484,7 +13486,7 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
         }
         oracle_fault_guard::begin(0x00605A90U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -13504,7 +13506,7 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
         oracle_fault_guard::begin(0x00605A90U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -13533,7 +13535,7 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
         }
         oracle_fault_guard::begin(0x00605A90U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -13585,8 +13587,8 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
 // recovered in src/scroll.cpp:364
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_lower_00605ad0() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00605AD0U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00605AD0U);
     std::printf("  running ?set_bevel_lower@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -13620,7 +13622,7 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
         }
         oracle_fault_guard::begin(0x00605AD0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -13640,7 +13642,7 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
         oracle_fault_guard::begin(0x00605AD0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -13669,7 +13671,7 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
         }
         oracle_fault_guard::begin(0x00605AD0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -13721,8 +13723,8 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
 // recovered in src/scroll.cpp:409
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_border_color_00605b10() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00605B10U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00605B10U);
     std::printf("  running ?set_border_color@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -13756,7 +13758,7 @@ static bool verify_Scroll_set_border_color_00605b10() {
         }
         oracle_fault_guard::begin(0x00605B10U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -13776,7 +13778,7 @@ static bool verify_Scroll_set_border_color_00605b10() {
         oracle_fault_guard::begin(0x00605B10U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -13805,7 +13807,7 @@ static bool verify_Scroll_set_border_color_00605b10() {
         }
         oracle_fault_guard::begin(0x00605B10U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -13857,8 +13859,8 @@ static bool verify_Scroll_set_border_color_00605b10() {
 // recovered in src/scroll.cpp:380
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bar_thickness_00605b80() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00605B80U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00605B80U);
     std::printf("  running ?set_bar_thickness@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -13892,7 +13894,7 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
         }
         oracle_fault_guard::begin(0x00605B80U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -13912,7 +13914,7 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
         oracle_fault_guard::begin(0x00605B80U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -13941,7 +13943,7 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
         }
         oracle_fault_guard::begin(0x00605B80U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -13993,8 +13995,8 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
 // recovered in src/scroll.cpp:490
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_pos_00605d20() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00605D20U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00605D20U);
     std::printf("  running ?set_pos@Scroll@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -14028,7 +14030,7 @@ static bool verify_Scroll_set_pos_00605d20() {
         }
         oracle_fault_guard::begin(0x00605D20U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -14048,7 +14050,7 @@ static bool verify_Scroll_set_pos_00605d20() {
         oracle_fault_guard::begin(0x00605D20U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -14077,7 +14079,7 @@ static bool verify_Scroll_set_pos_00605d20() {
         }
         oracle_fault_guard::begin(0x00605D20U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -14129,8 +14131,8 @@ static bool verify_Scroll_set_pos_00605d20() {
 // recovered in src/scroll.cpp:631
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_thumb_rect_00606ea0() {
-    typedef void (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00606EA0U);
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00606EA0U);
     std::printf("  running ?set_thumb_rect@Scroll@@QAEXXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -14154,7 +14156,7 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
         }
         oracle_fault_guard::begin(0x00606EA0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -14174,7 +14176,7 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
         oracle_fault_guard::begin(0x00606EA0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -14203,7 +14205,7 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
         }
         oracle_fault_guard::begin(0x00606EA0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -14255,8 +14257,8 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
 // recovered in src/basebutton.cpp:312
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color_00607360() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00607360U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x00607360U);
     std::printf("  running ?set_text_color@BaseButton@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -14290,7 +14292,7 @@ static bool verify_BaseButton_set_text_color_00607360() {
         }
         oracle_fault_guard::begin(0x00607360U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -14310,7 +14312,7 @@ static bool verify_BaseButton_set_text_color_00607360() {
         oracle_fault_guard::begin(0x00607360U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -14339,7 +14341,7 @@ static bool verify_BaseButton_set_text_color_00607360() {
         }
         oracle_fault_guard::begin(0x00607360U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -14391,8 +14393,8 @@ static bool verify_BaseButton_set_text_color_00607360() {
 // recovered in src/basebutton.cpp:332
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color2_006073a0() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x006073A0U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x006073A0U);
     std::printf("  running ?set_text_color2@BaseButton@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -14426,7 +14428,7 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
         }
         oracle_fault_guard::begin(0x006073A0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -14446,7 +14448,7 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
         oracle_fault_guard::begin(0x006073A0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -14475,7 +14477,7 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
         }
         oracle_fault_guard::begin(0x006073A0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -14527,8 +14529,8 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
 // recovered in src/basebutton.cpp:344
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color3_006073e0() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x006073E0U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x006073E0U);
     std::printf("  running ?set_text_color3@BaseButton@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -14562,7 +14564,7 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
         }
         oracle_fault_guard::begin(0x006073E0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -14582,7 +14584,7 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
         oracle_fault_guard::begin(0x006073E0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -14611,7 +14613,7 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
         }
         oracle_fault_guard::begin(0x006073E0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -14663,8 +14665,8 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
 // recovered in src/basebutton.cpp:385
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_00607c80() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00607C80U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00607C80U);
     std::printf("  running ?set@BaseButton@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -14698,7 +14700,7 @@ static bool verify_BaseButton_set_00607c80() {
         }
         oracle_fault_guard::begin(0x00607C80U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -14718,7 +14720,7 @@ static bool verify_BaseButton_set_00607c80() {
         oracle_fault_guard::begin(0x00607C80U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -14747,7 +14749,7 @@ static bool verify_BaseButton_set_00607c80() {
         }
         oracle_fault_guard::begin(0x00607C80U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -14799,8 +14801,8 @@ static bool verify_BaseButton_set_00607c80() {
 // recovered in src/dialog.cpp:108
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_selected_id_006099d0() {
-    typedef void (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x006099D0U);
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x006099D0U);
     std::printf("  running ?set_selected_id@Dialog@@QAEXH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -14834,7 +14836,7 @@ static bool verify_Dialog_set_selected_id_006099d0() {
         }
         oracle_fault_guard::begin(0x006099D0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -14854,7 +14856,7 @@ static bool verify_Dialog_set_selected_id_006099d0() {
         oracle_fault_guard::begin(0x006099D0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -14883,7 +14885,7 @@ static bool verify_Dialog_set_selected_id_006099d0() {
         }
         oracle_fault_guard::begin(0x006099D0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -14935,8 +14937,8 @@ static bool verify_Dialog_set_selected_id_006099d0() {
 // recovered in src/dialog.cpp:118
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_get_selected_id_00609a50() {
-    typedef int (__thiscall *Callable)(void *);
-    Callable target = reinterpret_cast<Callable>(0x00609A50U);
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00609A50U);
     std::printf("  running ?get_selected_id@Dialog@@QAEHXZ\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -14961,7 +14963,7 @@ static bool verify_Dialog_get_selected_id_00609a50() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x00609A50U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged);
+            original_result = (ORIGINAL(staged)->*target)();
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -14981,7 +14983,7 @@ static bool verify_Dialog_get_selected_id_00609a50() {
         oracle_fault_guard::begin(0x00609A50U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged);
+            (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -15011,7 +15013,7 @@ static bool verify_Dialog_get_selected_id_00609a50() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x00609A50U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged);
+            recovered_result = (ORIGINAL(staged)->*target)();
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -15070,8 +15072,8 @@ static bool verify_Dialog_get_selected_id_00609a50() {
 // recovered in src/dialog.cpp:81
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_id_to_pos_00609af0() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00609AF0U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00609AF0U);
     std::printf("  running ?id_to_pos@Dialog@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -15106,7 +15108,7 @@ static bool verify_Dialog_id_to_pos_00609af0() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x00609AF0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -15126,7 +15128,7 @@ static bool verify_Dialog_id_to_pos_00609af0() {
         oracle_fault_guard::begin(0x00609AF0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -15156,7 +15158,7 @@ static bool verify_Dialog_id_to_pos_00609af0() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x00609AF0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -15215,8 +15217,8 @@ static bool verify_Dialog_id_to_pos_00609af0() {
 // recovered in src/dialog.cpp:153
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_pos_to_id_00609b50() {
-    typedef int (__thiscall *Callable)(void *, int);
-    Callable target = reinterpret_cast<Callable>(0x00609B50U);
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00609B50U);
     std::printf("  running ?pos_to_id@Dialog@@QAEHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -15251,7 +15253,7 @@ static bool verify_Dialog_pos_to_id_00609b50() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x00609B50U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -15271,7 +15273,7 @@ static bool verify_Dialog_pos_to_id_00609b50() {
         oracle_fault_guard::begin(0x00609B50U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0]);
+            (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -15301,7 +15303,7 @@ static bool verify_Dialog_pos_to_id_00609b50() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x00609B50U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -15360,8 +15362,8 @@ static bool verify_Dialog_pos_to_id_00609b50() {
 // recovered in src/dialog.cpp:42
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_dialog_text_color_00609c90() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00609C90U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x00609C90U);
     std::printf("  running ?set_dialog_text_color@Dialog@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -15395,7 +15397,7 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
         }
         oracle_fault_guard::begin(0x00609C90U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -15415,7 +15417,7 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
         oracle_fault_guard::begin(0x00609C90U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -15444,7 +15446,7 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
         }
         oracle_fault_guard::begin(0x00609C90U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -15496,8 +15498,8 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
 // recovered in src/dialog.cpp:55
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00609CC0U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x00609CC0U);
     std::printf("  running ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -15531,7 +15533,7 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
         }
         oracle_fault_guard::begin(0x00609CC0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -15551,7 +15553,7 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
         oracle_fault_guard::begin(0x00609CC0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -15580,7 +15582,7 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
         }
         oracle_fault_guard::begin(0x00609CC0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -15632,8 +15634,8 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
 // recovered in src/dialog.cpp:68
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
-    typedef void (__thiscall *Callable)(void *, int, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00609CF0U);
+    typedef void (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x00609CF0U);
     std::printf("  running ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -15667,7 +15669,7 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
         }
         oracle_fault_guard::begin(0x00609CF0U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -15687,7 +15689,7 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
         oracle_fault_guard::begin(0x00609CF0U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -15716,7 +15718,7 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
         }
         oracle_fault_guard::begin(0x00609CF0U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -15768,8 +15770,8 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
 // recovered in src/caviar.cpp:248
 // staged receiver: Caviar, 0x13D0 B, zero-filled, size pinned
 static bool verify_Caviar_UNK10_00618320() {
-    typedef void (__thiscall *Callable)(void *, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00618320U);
+    typedef void (OriginalObject::*Callable)(int, int, int);
+    Callable target = original_method<Callable>(0x00618320U);
     std::printf("  running ?UNK10@Caviar@@QAEXHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -15803,7 +15805,7 @@ static bool verify_Caviar_UNK10_00618320() {
         }
         oracle_fault_guard::begin(0x00618320U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -15823,7 +15825,7 @@ static bool verify_Caviar_UNK10_00618320() {
         oracle_fault_guard::begin(0x00618320U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -15852,7 +15854,7 @@ static bool verify_Caviar_UNK10_00618320() {
         }
         oracle_fault_guard::begin(0x00618320U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -15904,8 +15906,8 @@ static bool verify_Caviar_UNK10_00618320() {
 // recovered in src/caviar.cpp:301
 // staged receiver: Caviar, 0x13D0 B, zero-filled, size pinned
 static bool verify_Caviar_UNK11_00618340() {
-    typedef void (__thiscall *Callable)(void *, int, int, int);
-    Callable target = reinterpret_cast<Callable>(0x00618340U);
+    typedef void (OriginalObject::*Callable)(int, int, int);
+    Callable target = original_method<Callable>(0x00618340U);
     std::printf("  running ?UNK11@Caviar@@QAEXHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -15939,7 +15941,7 @@ static bool verify_Caviar_UNK11_00618340() {
         }
         oracle_fault_guard::begin(0x00618340U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -15959,7 +15961,7 @@ static bool verify_Caviar_UNK11_00618340() {
         oracle_fault_guard::begin(0x00618340U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -15988,7 +15990,7 @@ static bool verify_Caviar_UNK11_00618340() {
         }
         oracle_fault_guard::begin(0x00618340U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1], (int)argv[2]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {
@@ -16040,8 +16042,8 @@ static bool verify_Caviar_UNK11_00618340() {
 // recovered in src/buttongroup.cpp:110
 // staged receiver: ButtonGroup, 0x94 B, zero-filled, size pinned
 static bool verify_ButtonGroup_set_0062b870() {
-    typedef int (__thiscall *Callable)(void *, int, int);
-    Callable target = reinterpret_cast<Callable>(0x0062B870U);
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x0062B870U);
     std::printf("  running ?set@ButtonGroup@@QAEHHH@Z\n");
     std::fflush(stdout);
     std::vector<uint8_t> &before = GlobalsBefore;
@@ -16076,7 +16078,7 @@ static bool verify_ButtonGroup_set_0062b870() {
         int original_result = (int)0;
         oracle_fault_guard::begin(0x0062B870U, "original");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            original_result = target(staged, (int)argv[0], (int)argv[1]);
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_original);
             std::memcpy(staged_original, staged, ObjectSize);
             oracle_fault_guard::end();
@@ -16096,7 +16098,7 @@ static bool verify_ButtonGroup_set_0062b870() {
         oracle_fault_guard::begin(0x0062B870U, "original-again");
         bool stable = true;
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            target(staged, (int)argv[0], (int)argv[1]);
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
             uintptr_t drift = 0;
@@ -16126,7 +16128,7 @@ static bool verify_ButtonGroup_set_0062b870() {
         int recovered_result = (int)0;
         oracle_fault_guard::begin(0x0062B870U, "recovered");
         if (setjmp(*oracle_fault_guard::buffer()) == 0) {
-            recovered_result = target(staged, (int)argv[0], (int)argv[1]);
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
             snapshot(after_recovered);
             oracle_fault_guard::end();
         } else {

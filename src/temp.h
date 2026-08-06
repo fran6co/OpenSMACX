@@ -1,4 +1,4 @@
-﻿/*
+/*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
  *

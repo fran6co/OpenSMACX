@@ -60,7 +60,7 @@ func_thiscall_teardown TeardownTarget0051D9F0 =
     original_method<func_thiscall_teardown>(0x0051D9F0);
 func_thiscall_teardown TeardownTarget005D4DD0 =
     original_method<func_thiscall_teardown>(0x005D4DD0);
-void __thiscall sprite_close_default(void *object) {
+void __fastcall sprite_close_default(void *object) {
     static_cast<Sprite *>(object)->close();
 }
 func_thiscall_teardown TeardownTarget005E3820 = &sprite_close_default;
