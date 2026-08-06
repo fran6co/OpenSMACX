@@ -49,6 +49,9 @@ class DLLEXPORT StringBox : GraphicWin {
   uint32_t field_2B9C_;
 };
 
+static_assert(sizeof(StringBox) == 0x2BA0,
+              "StringBox layout must match the original executable");
+
 // add() stages three fields into the embedded string struct at 0x2B70 and
 // then calls its add, falling back to a fixup pass when that reports the
 // entry did not fit. Neither callee is recovered yet.

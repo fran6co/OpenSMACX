@@ -483,6 +483,10 @@ class DLLEXPORT DiploWin : GraphicWin {
   uint8_t stringBox_[0x2BA0];  // 0xA388
   uint8_t listBox_[0xB54];  // 0xCF28
   uint8_t field_DA7C_[0x4];  // 0xDA7C
+
+  // Storage the image proves is here: its own methods reach 0xE5B0.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_DA80_[0xB30];
 };
 
 void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1);

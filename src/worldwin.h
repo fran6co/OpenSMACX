@@ -53,6 +53,10 @@ class DLLEXPORT WorldWin : GraphicWin {
   uint8_t buffer2_[0x588];  // 0xFA4
   uint8_t mapWin_[0x22480];  // 0x152C
   uint8_t field_239AC_[0x24];  // 0x239AC
+
+  // Storage the image proves is here: its own methods reach 0x239D4.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_239D0_[0x4];
 };
 
 void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *);

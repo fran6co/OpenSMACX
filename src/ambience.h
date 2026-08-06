@@ -98,6 +98,17 @@ class DLLEXPORT UAmbience : Ambience {
 
   // No constructor for this variant survives in the catalog, so unlike its
   // siblings nothing evidences fields of its own.
+
+  // Storage the image proves is here: its own methods reach 0x6D.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 6 member(s) from the IDA database, 0 named; it starts a member at 0x58, which is where src/ ends.
+
+  uint32_t field_58_;  // 0x58
+  uint32_t field_5C_;  // 0x5C
+  uint32_t field_60_;  // 0x60
+  uint32_t field_64_;  // 0x64
+  uint32_t field_68_;  // 0x68
+  uint8_t field_6C_;  // 0x6C
 };
 
 // MAmbience and SAmbience are evidenced the same way FactionAmbience and
@@ -123,6 +134,9 @@ class DLLEXPORT MAmbience : Ambience {
   uint32_t field_70_;
 };
 
+static_assert(sizeof(MAmbience) == 0x74,
+              "MAmbience layout must match the original executable");
+
 class DLLEXPORT SAmbience : Ambience {
  public:
   SAmbience() { ; }
@@ -141,6 +155,9 @@ class DLLEXPORT SAmbience : Ambience {
   uint32_t field_70_;
   uint32_t field_74_;
 };
+
+static_assert(sizeof(SAmbience) == 0x78,
+              "SAmbience layout must match the original executable");
 
 class DLLEXPORT GAmbience : Ambience {
  public:
@@ -165,6 +182,9 @@ class DLLEXPORT GAmbience : Ambience {
   uint8_t pad_6E_[2];
   uint32_t field_70_;
 };
+
+static_assert(sizeof(GAmbience) == 0x74,
+              "GAmbience layout must match the original executable");
 
 FactionAmbience *__fastcall faction_ambience_construct_redirect(
     FactionAmbience *self, void *);

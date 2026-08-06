@@ -53,7 +53,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
-from capstone.x86 import X86_OP_MEM, X86_REG_ECX  # noqa: E402
+from capstone.x86 import (X86_INS_ADD, X86_INS_LEA, X86_INS_MOV,  # noqa: E402
+                          X86_OP_MEM, X86_OP_REG, X86_OP_IMM)
 
 import derive_class_layout  # noqa: E402
 import recovery_symbols  # noqa: E402
@@ -79,8 +80,16 @@ RECEIVER_RE = re.compile(
     r"^(?:\?\?(?:_[A-Z]|[0-9A-Z])|\?[\w_]+@)"      # special code, or name@
     r"([\w_]+)(?:@[\w_]+)*@@"                       # class, innermost first
     r"([A-Z])([A-Z])([A-Z])")                       # access, CV, convention
-# Every spelling of ECX. Writing any of them ends its life as the receiver.
-ECX_NAMES = frozenset({"ecx", "cx", "cl", "ch"})
+# Every register spelling collapsed onto its 32-bit name, so that writing `cl`
+# is seen to destroy `ecx`.
+WHOLE_REGISTER = {}
+for _wide, _parts in (("eax", "ax al ah"), ("ebx", "bx bl bh"),
+                      ("ecx", "cx cl ch"), ("edx", "dx dl dh"),
+                      ("esi", "si sil"), ("edi", "di dil"),
+                      ("ebp", "bp bpl"), ("esp", "sp spl")):
+    WHOLE_REGISTER[_wide] = _wide
+    for _part in _parts.split():
+        WHOLE_REGISTER[_part] = _wide
 THISCALL = "__thiscall"
 # The convention code sits after the access and CV codes. `E`/`F` are thiscall.
 THISCALL_CODES = frozenset("EF")
@@ -128,27 +137,113 @@ def receivers() -> dict:
     return found
 
 
-def reach(image, engine, address: int, size: int) -> tuple:
-    """(highest byte touched through ECX, the instruction that touched it)."""
+def object_ceiling(image) -> int:
+    """No object is bigger than the image that holds its code and its data.
+
+    A crude ceiling, and it catches a real failure. `?check@MainMenu@@QAEXH@Z`
+    is 4,782 bytes with a jump table inline in `.text`; a linear disassembly
+    desynchronises on the table and everything after it is fiction. One such
+    fiction was
+
+        movsx eax, word ptr [ecx + 0x95282a]
+
+    whose displacement is an ABSOLUTE ADDRESS with ECX holding an index into a
+    global, not a member offset - and it put MainMenu at 9.7MB. That is past
+    the end of a 6MB image, so it cannot be an offset into anything.
+    """
+    return image.pe.OPTIONAL_HEADER.SizeOfImage
+
+
+def reach(image, engine, address: int, size: int, ceiling: int = 0) -> tuple:
+    """(highest byte touched through `this`, and the instruction that did it).
+
+    `this` arrives in ECX and almost never stays there. Every one of these
+    bodies moves it out in the prologue:
+
+        Patch::Patch      mov esi, ecx ; mov [esi+4], 0x7f
+        Fractal::init     mov ebx, ecx ; lea esi, [ebx + 0x169]
+
+    Reading ECX alone and stopping at the first write to it therefore saw
+    nothing at all in those functions, and reported four classes as having no
+    bound when the image proves otherwise. So `this` is followed through the
+    copies that carry it: register-to-register moves, and `lea` of a member's
+    address, which is how a by-value member is reached.
+
+    The tracking is a linear walk with no notion of branches, which is safe in
+    the only direction that matters: ANY write to a tracked register drops it,
+    so a register reassigned on a path this does not model stops being trusted
+    rather than being followed to a wrong offset. It can therefore still
+    under-report, and the control - it must never exceed a pinned size -
+    remains the check that it does not over-report.
+    """
     start = address - image.code_start
     if start < 0 or start + size > len(image.code):
         return 0, ""
+    # {register name: its offset from `this`}
+    carries = {"ecx": 0}
     best, evidence = 0, ""
+
     for instruction in engine.disasm(image.code[start:start + size], address):
-        for operand in instruction.operands:
-            if (operand.type != X86_OP_MEM
-                    or operand.mem.base != X86_REG_ECX
-                    or operand.mem.index != 0
-                    or operand.mem.disp < 0):
+        # `lea` COMPUTES AN ADDRESS AND TOUCHES NO MEMORY, so its operand is
+        # not evidence that the byte is inside the object - it is arithmetic as
+        # often as it is a member's address. Counting it put `Win` at 0x8f8
+        # against a real 0x444, off the back of `lea ecx, [esi + 0x8f4]`. It
+        # still PROPAGATES below, so a real access through the result counts.
+        for operand in ([] if instruction.id == X86_INS_LEA
+                        else instruction.operands):
+            if operand.type != X86_OP_MEM or operand.mem.index != 0:
                 continue
-            end = operand.mem.disp + (operand.size or 4)
+            base = WHOLE_REGISTER.get(engine.reg_name(operand.mem.base) or "")
+            if base not in carries:
+                continue
+            offset = carries[base] + operand.mem.disp
+            if offset < 0:
+                # An adjusted `this` pointing into a base subobject; those
+                # offsets belong to the base, not to this class.
+                continue
+            end = offset + (operand.size or 4)
+            if ceiling and end > ceiling:
+                continue
             if end > best:
                 best = end
                 evidence = (f"{instruction.mnemonic} {instruction.op_str}"
                             f" at 0x{instruction.address:08X}")
-        written = {engine.reg_name(register)
-                   for register in instruction.regs_access()[1]}
-        if written & ECX_NAMES:
+
+        # What this instruction makes into a new carrier, computed BEFORE the
+        # writes below retire the old one - `mov esi, ecx` reads and writes in
+        # the same breath.
+        gained = None
+        operands = instruction.operands
+        if len(operands) == 2 and operands[0].type == X86_OP_REG:
+            destination = WHOLE_REGISTER.get(
+                engine.reg_name(operands[0].reg) or "")
+            if destination:
+                if (instruction.id == X86_INS_MOV
+                        and operands[1].type == X86_OP_REG):
+                    source = WHOLE_REGISTER.get(
+                        engine.reg_name(operands[1].reg) or "")
+                    if source in carries:
+                        gained = (destination, carries[source])
+                elif (instruction.id == X86_INS_LEA
+                        and operands[1].type == X86_OP_MEM
+                        and operands[1].mem.index == 0):
+                    source = WHOLE_REGISTER.get(
+                        engine.reg_name(operands[1].mem.base) or "")
+                    if source in carries:
+                        gained = (destination,
+                                  carries[source] + operands[1].mem.disp)
+                # `add reg, imm` is deliberately NOT propagated. Capstone hands
+                # back the immediate of `add esi, 0xFFFFB1C4` in a form that
+                # made a subtraction read as a 4GB offset, and Console came out
+                # at 0xFFFFB1C4 against a real 0x247A8. Dropping the register is
+                # the conservative reading and costs nothing measurable.
+
+        for register in instruction.regs_access()[1]:
+            whole = WHOLE_REGISTER.get(engine.reg_name(register) or "")
+            carries.pop(whole, None)
+        if gained and gained[1] >= 0:
+            carries[gained[0]] = gained[1]
+        if not carries:
             break
     return best, evidence
 
@@ -157,11 +252,12 @@ def bounds(exe: Path) -> dict:
     image = derive_class_layout.Image(exe)
     engine = Cs(CS_ARCH_X86, CS_MODE_32)
     engine.detail = True
+    ceiling = object_ceiling(image)
     found = {}
     for name, methods in receivers().items():
         best, evidence = 0, ""
         for address, size, _ in methods:
-            reached, why = reach(image, engine, address, size)
+            reached, why = reach(image, engine, address, size, ceiling)
             if reached > best:
                 best, evidence = reached, why
         if best:
@@ -210,10 +306,22 @@ def control(found: dict) -> int:
 
 
 def falsified(found: dict) -> list:
-    """Source totals the image contradicts."""
+    """Source totals the image contradicts.
+
+    THE COMPARISON IS AGAINST THE ALIGNED TOTAL. The IDB's member table sums to
+    the last member's end, not to `sizeof`, and MSVC rounds a class up to its
+    alignment - `Buffer` sums to 0x585 and really is 0x588. Comparing against
+    the raw sum reported every 4-byte-aligned class in the database as
+    "contradicted", which is trailing padding rather than a missing member.
+    Four bytes of tail padding is the most any of these can hide, so the
+    comparison allows exactly that and no more.
+    """
     out = []
     for name, total in sorted(idb_totals().items()):
-        if name in found and found[name][0] > total:
+        if name not in found:
+            continue
+        aligned = (total + 3) & ~3
+        if found[name][0] > aligned:
             out.append((name, total, found[name][0], found[name][1]))
     return out
 

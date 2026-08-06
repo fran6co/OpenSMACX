@@ -101,7 +101,14 @@ class DLLEXPORT Datalink : GraphicWin {
   uint8_t flatButton18_[0xB4C];  // 0xEA48
   uint8_t buttonGroup_[0x94];  // 0xF594
   uint8_t field_F628_[0x4];  // 0xF628
+
+  // Storage the image proves is here: its own methods reach 0x1B394.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_F62C_[0xBD68];
 };
+
+static_assert(sizeof(Datalink) == 0x1B394,
+              "Datalink layout must match the original executable");
 
 int __fastcall datalink_unk1_redirect(Datalink *self, void *, int a1, int a2);
 void __fastcall datalink_parse_id_redirect(Datalink *self, void *, int id, DatalinkID *out_id, int *out_remainder);

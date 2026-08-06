@@ -64,6 +64,9 @@ class DLLEXPORT TutWin {
   int32_t field_53D4_;
 };
 
+static_assert(sizeof(TutWin) == 0x53D8,
+              "TutWin layout must match the original executable");
+
 extern uint32_t *TutWinShownFlag;
 
 void __fastcall tut_win_unk1_redirect(TutWin *self, void *);

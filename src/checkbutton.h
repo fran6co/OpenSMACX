@@ -48,5 +48,8 @@ class DLLEXPORT CheckButton : GraphicWin {
   uint32_t field_A28_;  // 0xA28
 };
 
+static_assert(sizeof(CheckButton) == 0xA2C,
+              "CheckButton layout must match the original executable");
+
 void __cdecl check_button_close_class_redirect();
 int __cdecl check_button_init_class_redirect();

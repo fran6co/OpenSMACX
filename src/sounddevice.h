@@ -68,6 +68,9 @@ class DLLEXPORT Midi_Device {
   uint32_t field_1C_;
 };
 
+static_assert(sizeof(Midi_Device) == 0x20,
+              "Midi_Device layout must match the original executable");
+
 class DLLEXPORT Wave_In_Device {
  public:
   Wave_In_Device() { ; }
@@ -95,6 +98,9 @@ class DLLEXPORT Wave_In_Device {
   uint32_t field_18_;
   uint32_t field_1C_;
 };
+
+static_assert(sizeof(Wave_In_Device) == 0x20,
+              "Wave_In_Device layout must match the original executable");
 
 void __fastcall midi_device_update_sound_redirect(Midi_Device *self, void *);
 void __fastcall midi_device_suspend_redirect(Midi_Device *self, void *);

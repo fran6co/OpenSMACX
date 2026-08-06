@@ -56,6 +56,9 @@ class DLLEXPORT FileWin {
   uint8_t unmapped_532_[0x33C4 - 0x532];
 };
 
+static_assert(sizeof(FileWin) == 0x33C4,
+              "FileWin layout must match the original executable");
+
 void __fastcall file_win_unk6_redirect(FileWin *self, void *);
 void __fastcall file_win_unk2_redirect(FileWin *self, void *, int a1);
 void __fastcall file_win_unk1_redirect(FileWin *self, void *);

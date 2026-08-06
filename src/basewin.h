@@ -354,6 +354,10 @@ class DLLEXPORT BaseWin : GraphicWin {
   uint32_t field_40D14_;  // 0x40D14
   uint32_t field_40D18_;  // 0x40D18
   uint8_t field_40D1C_[0x4];  // 0x40D1C
+
+  // Storage the image proves is here: its own methods reach 0x45B34.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_40D20_[0x4E14];
 };
 
 void __fastcall base_win_close_redirect(BaseWin *self, void *);

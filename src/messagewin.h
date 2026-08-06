@@ -47,7 +47,14 @@ class DLLEXPORT MessageWin : Sprite {
   uint32_t field_38_;  // 0x38
   uint8_t font_[0x28];  // 0x3C
   uint8_t field_64_[0x4];  // 0x64
+
+  // Storage the image proves is here: its own methods reach 0x3758.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_68_[0x36F0];
 };
+
+static_assert(sizeof(MessageWin) == 0x3758,
+              "MessageWin layout must match the original executable");
 
 void __fastcall message_win_unk1_redirect(MessageWin *self, void *, int a1, int a2, int a3, int a4, int a5);
 void __fastcall message_win_unk4_redirect(MessageWin *self, void *, int a1);

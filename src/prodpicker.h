@@ -72,7 +72,14 @@ class DLLEXPORT ProdPicker : GraphicWin {
   uint8_t flatButton8_[0xB4C];  // 0x5A88
   uint8_t flatButton9_[0xB4C];  // 0x65D4
   uint8_t field_7120_[0x4];  // 0x7120
+
+  // Storage the image proves is here: its own methods reach 0xA840.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_7124_[0x371C];
 };
+
+static_assert(sizeof(ProdPicker) == 0xA840,
+              "ProdPicker layout must match the original executable");
 
 int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1);
 void __fastcall prod_picker_on_mouse_move_redirect(ProdPicker *self, void *, int a1, int a2);

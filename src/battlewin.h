@@ -45,7 +45,25 @@ class DLLEXPORT BattleWin {
   // The destructor tears down a Time at +8, so the object reaches at least
   // 0x30; nothing further about the extent is established.
   uint8_t unmapped_0_[0x30];
+
+  // Storage the image proves is here: its own methods reach 0xA0.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 10 member(s) from the IDA database, 0 named; it starts a member at 0x30, which is where src/ ends.
+
+  uint8_t field_30_[0x10];  // 0x30
+  uint8_t field_40_[0x10];  // 0x40
+  uint8_t field_50_[0x10];  // 0x50
+  uint8_t field_60_[0x10];  // 0x60
+  uint8_t field_70_[0x10];  // 0x70
+  uint32_t field_80_;  // 0x80
+  uint32_t field_84_;  // 0x84
+  uint32_t field_88_;  // 0x88
+  uint32_t field_8C_;  // 0x8C
+  uint8_t field_90_[0x10];  // 0x90
 };
+
+static_assert(sizeof(BattleWin) == 0xA0,
+              "BattleWin layout must match the original executable");
 
 void __fastcall battle_win_dtor_redirect(BattleWin *self, void *);
 void __fastcall battle_win_on_iface_left_click_redirect(BattleWin *self, void *, int a1, int a2);
