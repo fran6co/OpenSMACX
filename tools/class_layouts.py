@@ -95,8 +95,16 @@ def members_of(body: str):
         member = MEMBER.match(stripped)
         if not member:
             return None
-        found.append((member.group("type").strip()
-                      + (" " + member.group("stars") if member.group("stars") else ""),
+        type_ = member.group("type").strip()
+        stars = member.group("stars")
+        if not stars and type_.replace("const", "").strip() not in SCALAR:
+            # A member held BY VALUE needs a complete type, and the emitted
+            # unit only forward-declares - `AutoSound auto_sound_;` is
+            # `error C2079: uses undefined class`. Supplying such a layout
+            # broke 675 of the 2,783 units before this refused it. A POINTER
+            # to an incomplete type is fine, which is most of them.
+            return None
+        found.append((type_ + (" " + stars if stars else ""),
                       member.group("name"), member.group("array") or ""))
     return found
 
