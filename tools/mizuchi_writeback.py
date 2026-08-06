@@ -370,16 +370,43 @@ def splice(address: int, row: dict, location: str, code: str,
 
 
 def writeback(target: str, code: str, check: bool = True) -> dict:
-    """Land a match wherever it belongs: the `src/` span, or the store."""
+    """Land a match wherever it belongs: the `src/` span, or the store.
+
+    A `src/` span is preferred and is NOT the only place a match may go. The
+    emitted unit declares the subject's class as an opaque shell with no
+    members, so an agent that needs a field reaches it by offset - and the
+    ones that reach several declare a shadow struct next to the function:
+
+        struct SS_Impl { int pad0; int pad1; int head; SS_Node *current; };
+        int StringStruct::current_id() {
+            SS_Impl *p = reinterpret_cast<SS_Impl *>(this);
+            ...
+
+    `splice` replaces the DEFINITION inside `src/`, so that struct does not
+    come with it and the spliced file stops compiling. Measured on the first
+    run over the real corpus: 4 of 10 writebacks, and every one of them a
+    body that had already been verified BYTE_EXACT on its own.
+
+    Discarding a proven match because it cannot be phrased in `src/`'s own
+    style is the wrong trade. The store exists for exactly this - a body with
+    nowhere in `src/` to go - so a splice that will not verify falls back to
+    it, and the reason is carried along rather than dropped.
+    """
     functions = emit.load_functions()
     address = resolve_address(target, functions)
     row = functions.get(address)
     if row is None:
         raise Refused(f"0x{address:08X} is not a catalogued function")
     location = (row.get("source_locations") or "").split(";")[0].strip()
-    if location.startswith("src/"):
+    if not location.startswith("src/"):
+        return land(address, row, code, check)
+    try:
         return splice(address, row, location, code, check)
-    return land(address, row, code, check)
+    except Refused as refusal:
+        landed = land(address, row, code, check)
+        landed["spliced"] = False
+        landed["splice_refusal"] = str(refusal)
+        return landed
 
 
 def main() -> int:

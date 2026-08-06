@@ -107,6 +107,11 @@ class WritebackFixture(unittest.TestCase):
         self.enterContext(mock.patch.object(tool, "REPO_ROOT", self.root))
         self.enterContext(mock.patch.object(emit, "load_functions",
                                             lambda: self.functions))
+        # EVERY subclass, not just the store's own: a splice that will not
+        # verify now falls back to landing, so any test can reach the store.
+        # Without this the fallback wrote into the real `src/recovered/`.
+        self.matched = self.root / "src" / "recovered"
+        self.enterContext(mock.patch.object(tool, "MATCHED_DIR", self.matched))
 
     @staticmethod
     def write_csv(path, field, rows):
@@ -186,6 +191,51 @@ class WritebackTest(WritebackFixture):
         self.assertEqual(result["address"], "0x00601B80")
 
 
+class SpliceFallbackTest(WritebackFixture):
+    """A body `src/` cannot hold is stored, not thrown away.
+
+    The emitted unit declares the subject's class as an opaque shell, so an
+    agent reaching several fields declares a shadow struct beside the
+    function. `splice` carries only the definition into `src/`, that struct
+    does not come with it, and the spliced file stops compiling. On the first
+    real run that was 4 of 10 writebacks - every one a body already verified
+    BYTE_EXACT on its own.
+    """
+
+
+    def splice_fails(self, code):
+        # BYTE_EXACT on its own, NO_COMPILE once spliced - which is exactly
+        # the shape of the failure being handled.
+        verdicts = iter([{"tier": "NO_COMPILE", "note": "shadow struct is missing"},
+                         {"tier": "BYTE_EXACT"}])
+        with mock.patch.object(tool, "verify", side_effect=lambda *a, **k: next(verdicts)):
+            return tool.writeback(hex(FIRST), code)
+
+    def test_a_body_src_cannot_hold_lands_in_the_store(self):
+        before = self.source.read_text()
+        result = self.splice_fails("struct Shadow { int a; };\n"
+                                   "void BasePop::set_loc(int x, int y) {\n"
+                                   "    reinterpret_cast<Shadow *>(this)->a = x + y;\n}\n")
+
+        self.assertEqual("src/recovered/00601b80.cpp", result["source_location"])
+        self.assertTrue((self.matched / "00601b80.cpp").is_file())
+        self.assertTrue(result["verified"])
+        self.assertEqual(self.source.read_text(), before,
+                         "the refused splice must have been reverted")
+
+    def test_the_reason_the_splice_was_refused_is_carried(self):
+        result = self.splice_fails("struct Shadow { int a; };\n"
+                                   "void BasePop::set_loc(int x, int y) {}\n")
+        self.assertFalse(result["spliced"])
+        self.assertIn("NO_COMPILE", result["splice_refusal"])
+
+    def test_a_splice_that_verifies_still_wins(self):
+        result = self.writeback("void BasePop::set_loc(int x, int y) {\n"
+                                "    loc_a_ = x;\n    loc_b_ = y;\n}\n")
+        self.assertEqual("src/basepop.cpp:3", result["source_location"])
+        self.assertFalse((self.matched / "00601b80.cpp").exists())
+
+
 class MatchedStoreTest(WritebackFixture):
     """A match with no owner lands in the store instead of being lost.
 
@@ -197,8 +247,6 @@ class MatchedStoreTest(WritebackFixture):
 
     def setUp(self):
         super().setUp()
-        self.matched = self.root / "src" / "recovered"
-        self.enterContext(mock.patch.object(tool, "MATCHED_DIR", self.matched))
         self.functions[FIRST]["source_locations"] = ""
         self.functions[FIRST]["name"] = "sub_601b80"
 
