@@ -121,8 +121,21 @@ plugins:
         compiling, and a body that was already byte-exact gets filed away
         under `src/recovered/` instead of landing where it belongs. Measured
         on the first real run: 4 of the first 10 matches were lost this way.
-      - So reach fields through a cast AT THE POINT OF USE, with a named local
-        for the base:
+      - USE THE MEMBERS WHEN THE CONTEXT DECLARES THEM. For many classes the
+        context file carries the real layout, taken from `src/` and verified
+        to compile to the real object's size:
+
+            class StringStruct { public:
+                uint32_t primary_abi_word_;
+                uint32_t virtual_base_abi_word_;
+                StringStructEntry * head_;
+                ...
+
+        Then write `head_` and `current_->id`, not `self[2]` and
+        `self[3]`. It compiles to the same instructions - measured - and it
+        is the spelling that survives into `src/`.
+      - When the class IS empty, reach fields through a cast at the point of
+        use, with a named local for the base:
 
             int *self = reinterpret_cast<int *>(this);
             if (self[2]) { return reinterpret_cast<int *>(self[3])[2]; }
