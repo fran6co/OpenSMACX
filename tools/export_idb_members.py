@@ -3,8 +3,10 @@
 
 IDA Free 9.4 cannot open this database at all - it is a 32-bit `.idb` and the
 free build refuses it - so `File > Produce file > Create C header file` is not
-available and `tools/sizes_from_ida_header.py` can never receive input on this
-machine. `python-idb` reads the container directly, which is what this does.
+available and no route that begins inside IDA can run here. `python-idb` reads
+the container directly, which is what this does, and it supersedes the two
+export scripts that had to be run from IDA's own script menu: this yields
+member NAMES and OFFSETS where they yielded a name and a total size.
 
 THE FORMAT, measured rather than looked up:
 
