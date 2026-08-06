@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.h"
+#include "original_seam.h"
 #include "delegation_thunks.h"
 
 /*
@@ -48,8 +49,7 @@ Status: Complete
 */
 int __fastcall alpha_movie_on_key_click_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
     return 0x1;
 }
 
@@ -62,8 +62,7 @@ Status: Complete
 */
 void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_2 *>(
-        vtable[0xc0 / sizeof(void *)])(self, a1, a2);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0xc0 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -75,8 +74,7 @@ Status: Complete
 */
 void __fastcall base_win_on_iface_scrolling_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_2 *>(
-        vtable[0x4 / sizeof(void *)])(self, a1, a2);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0x4 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -90,8 +88,7 @@ Status: Complete
 */
 int __fastcall credits_on_key_click_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
     return 0x1;
 }
 
@@ -106,8 +103,7 @@ Status: Complete
 */
 void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
 }
 
 /*
@@ -119,8 +115,7 @@ Status: Complete
 */
 void __fastcall select_part_win_on_scrolling_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_2 *>(
-        vtable[0xc0 / sizeof(void *)])(self, a1, a2);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0xc0 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -134,8 +129,7 @@ Status: Complete
 */
 int __fastcall interlude_on_key_down_redirect(void *self, void *, int a1) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
     return 0x1;
 }
 
@@ -150,8 +144,7 @@ Status: Complete
 */
 void __fastcall interlude_on_left_down_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
 }
 
 /*
@@ -165,8 +158,7 @@ Status: Complete
 */
 void __fastcall new_tech_win_on_button_clicked_redirect(void *self, void *, int a1) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
 }
 
 /*
@@ -178,8 +170,7 @@ Status: Complete
 */
 void __fastcall prod_picker_on_scrolling_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_2 *>(
-        vtable[0xc0 / sizeof(void *)])(self, a1, a2);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0xc0 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -196,8 +187,7 @@ int __fastcall wave_in_device_set_codec_redirect(void *self, void *, uint32_t a1
         return 0x13;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x60 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x60 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -214,8 +204,7 @@ int __fastcall wave_in_device_set_vxw_key_redirect(void *self, void *, int a1) {
         return 0x13;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x64 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x64 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -232,8 +221,7 @@ int __fastcall midi_play_redirect(void *self, void *) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_0 *>(
-        vtable[0x1c / sizeof(void *)])(member);
+    return (ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x1c / sizeof(void *)])))();
 }
 
 /*
@@ -250,8 +238,7 @@ int __fastcall midi_set_switch_type_redirect(void *self, void *, uint32_t a1) {
         return 0x13;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x100 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x100 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -268,8 +255,7 @@ int __fastcall midi_add_switch_range_redirect(void *self, void *, uint32_t a1, u
         return 0x13;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_2 *>(
-        vtable[0x108 / sizeof(void *)])(member, a1, a2);
+    return (ORIGINAL(member)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0x108 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -286,8 +272,7 @@ int __fastcall midi_set_nswitch_threads_redirect(void *self, void *, uint32_t a1
         return 0x13;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x104 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x104 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -304,8 +289,7 @@ int __fastcall midi_map_patch_3_redirect(void *self, void *, int a1, uint32_t a2
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_3 *>(
-        vtable[0xdc / sizeof(void *)])(member, a1, a2, a3);
+    return (ORIGINAL(member)->*original_method<func_delegation_3>(reinterpret_cast<unsigned long>(vtable[0xdc / sizeof(void *)])))(a1, a2, a3);
 }
 
 /*
@@ -322,8 +306,7 @@ int __fastcall midi_map_patch_2_redirect(void *self, void *, int a1, uint32_t a2
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_2 *>(
-        vtable[0xd8 / sizeof(void *)])(member, a1, a2);
+    return (ORIGINAL(member)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0xd8 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -340,8 +323,7 @@ int __fastcall midi_clear_patch_redirect(void *self, void *, uint32_t a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0xe0 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0xe0 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -358,8 +340,7 @@ int __fastcall midi_reset_redirect(void *self, void *) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_0 *>(
-        vtable[0xc8 / sizeof(void *)])(member);
+    return (ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xc8 / sizeof(void *)])))();
 }
 
 /*
@@ -376,8 +357,7 @@ int __fastcall midi_set_track_redirect(void *self, void *, uint32_t a1, uint32_t
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_2 *>(
-        vtable[0x84 / sizeof(void *)])(member, a1, a2);
+    return (ORIGINAL(member)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0x84 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -394,8 +374,7 @@ int __fastcall midi_mute_track_redirect(void *self, void *, uint32_t a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x8c / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x8c / sizeof(void *)])))(a1);
 }
 
 /*
@@ -412,8 +391,7 @@ int __fastcall midi_unmute_track_redirect(void *self, void *, uint32_t a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0xac / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0xac / sizeof(void *)])))(a1);
 }
 
 /*
@@ -430,8 +408,7 @@ int __fastcall midi_set_active_tracks_2_redirect(void *self, void *, uint32_t a1
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_2 *>(
-        vtable[0x94 / sizeof(void *)])(member, a1, a2);
+    return (ORIGINAL(member)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0x94 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -448,8 +425,7 @@ int __fastcall midi_set_active_tracks_1_redirect(void *self, void *, uint32_t a1
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x90 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x90 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -466,8 +442,7 @@ int __fastcall midi_play_trackset_redirect(void *self, void *, uint32_t a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x10c / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x10c / sizeof(void *)])))(a1);
 }
 
 /*
@@ -484,8 +459,7 @@ int __fastcall midi_xpose_trackset_redirect(void *self, void *, uint32_t a1, int
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_2 *>(
-        vtable[0x114 / sizeof(void *)])(member, a1, a2);
+    return (ORIGINAL(member)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0x114 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -502,8 +476,7 @@ int __fastcall midi_stop_trackset_redirect(void *self, void *, uint32_t a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x110 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x110 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -520,8 +493,7 @@ int __fastcall midi_add_active_trackset_redirect(void *self, void *, int a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x98 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x98 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -538,8 +510,7 @@ int __fastcall midi_set_active_range_lo_redirect(void *self, void *, uint32_t a1
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_2 *>(
-        vtable[0xa0 / sizeof(void *)])(member, a1, a2);
+    return (ORIGINAL(member)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0xa0 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -556,8 +527,7 @@ int __fastcall midi_set_active_range_hi_redirect(void *self, void *, uint32_t a1
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_2 *>(
-        vtable[0xa4 / sizeof(void *)])(member, a1, a2);
+    return (ORIGINAL(member)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0xa4 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -574,8 +544,7 @@ int __fastcall midi_remove_active_trackset_redirect(void *self, void *, uint32_t
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0xa8 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0xa8 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -592,8 +561,7 @@ int __fastcall midi_get_trackset_redirect(void *self, void *, uint32_t a1) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x9c / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x9c / sizeof(void *)])))(a1);
 }
 
 /*
@@ -610,8 +578,7 @@ int __fastcall midi_get_ntracks_redirect(void *self, void *) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_0 *>(
-        vtable[0xc4 / sizeof(void *)])(member);
+    return (ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xc4 / sizeof(void *)])))();
 }
 
 /*
@@ -628,8 +595,7 @@ int __fastcall midi_load_patch_redirect(void *self, void *, uint32_t a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x120 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x120 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -646,8 +612,7 @@ int __fastcall midi_unload_patch_redirect(void *self, void *, uint32_t a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x124 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x124 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -664,8 +629,7 @@ int __fastcall midi_set_patch_redirect(void *self, void *, uint32_t a1, uint32_t
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_2 *>(
-        vtable[0x128 / sizeof(void *)])(member, a1, a2);
+    return (ORIGINAL(member)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0x128 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -682,8 +646,7 @@ int __fastcall midi_set_tempo_redirect(void *self, void *, uint32_t a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x88 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x88 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -700,8 +663,7 @@ int __fastcall midi_get_time_redirect(void *self, void *, uint32_t a1) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0xd4 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0xd4 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -718,8 +680,7 @@ int __fastcall midi_get_control_track_redirect(void *self, void *) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_0 *>(
-        vtable[0xf4 / sizeof(void *)])(member);
+    return (ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xf4 / sizeof(void *)])))();
 }
 
 /*
@@ -736,8 +697,7 @@ int __fastcall midi_get_total_track_ticks_redirect(void *self, void *, uint32_t 
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0xf8 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0xf8 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -754,8 +714,7 @@ int __fastcall midi_set_channel_ctrl_redirect(void *self, void *, int a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0xe4 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0xe4 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -772,8 +731,7 @@ int __fastcall midi_set_program_ctrl_redirect(void *self, void *, int a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0xe8 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -790,8 +748,7 @@ int __fastcall midi_set_track_ctrl_redirect(void *self, void *, int a1) {
         return 0x14;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0xc0 / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0xc0 / sizeof(void *)])))(a1);
 }
 
 /*
@@ -810,8 +767,7 @@ int __fastcall voice_rx_start_redirect(void *self, void *) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0x88 / sizeof(void *)])(member);
+    (void)(ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x88 / sizeof(void *)])))();
     return 0x0;
 }
 
@@ -831,8 +787,7 @@ int __fastcall voice_rx_stop_redirect(void *self, void *) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0x20 / sizeof(void *)])(member);
+    (void)(ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x20 / sizeof(void *)])))();
     return 0x0;
 }
 
@@ -850,8 +805,7 @@ int __fastcall voice_rx_unload_redirect(void *self, void *) {
         return 0x13;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_0 *>(
-        vtable[0x14 / sizeof(void *)])(member);
+    return (ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x14 / sizeof(void *)])))();
 }
 
 /*
@@ -868,8 +822,7 @@ int __fastcall voice_rx_add_buffer_redirect(void *self, void *, int a1) {
         return 0x13;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x8c / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x8c / sizeof(void *)])))(a1);
 }
 
 /*
@@ -886,8 +839,7 @@ int __fastcall voice_rx_get_buffer_size_redirect(void *self, void *) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_0 *>(
-        vtable[0x90 / sizeof(void *)])(member);
+    return (ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x90 / sizeof(void *)])))();
 }
 
 /*
@@ -906,8 +858,7 @@ int __fastcall voice_tx_release_redirect(void *self, void *) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0x38 / sizeof(void *)])(member);
+    (void)(ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x38 / sizeof(void *)])))();
     return 0x0;
 }
 
@@ -925,8 +876,7 @@ int __fastcall voice_tx_get_nbuffers_redirect(void *self, void *) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_0 *>(
-        vtable[0x94 / sizeof(void *)])(member);
+    return (ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x94 / sizeof(void *)])))();
 }
 
 /*
@@ -943,8 +893,7 @@ int __fastcall voice_tx_get_next_buffer_redirect(void *self, void *) {
         return 0x0;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_0 *>(
-        vtable[0x88 / sizeof(void *)])(member);
+    return (ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x88 / sizeof(void *)])))();
 }
 
 /*
@@ -961,8 +910,7 @@ int __fastcall voice_tx_return_buffer_redirect(void *self, void *, int a1) {
         return 0x13;
     }
     void **const vtable = *reinterpret_cast<void ***>(member);
-    return reinterpret_cast<func_delegation_1 *>(
-        vtable[0x8c / sizeof(void *)])(member, a1);
+    return (ORIGINAL(member)->*original_method<func_delegation_1>(reinterpret_cast<unsigned long>(vtable[0x8c / sizeof(void *)])))(a1);
 }
 
 /*
@@ -976,8 +924,7 @@ Status: Complete
 */
 void __fastcall replay_win_on_left_click_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
 }
 
 /*
@@ -991,8 +938,7 @@ Status: Complete
 */
 void __fastcall replay_win_on_right_click_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
 }
 
 /*
@@ -1006,8 +952,7 @@ Status: Complete
 */
 void __fastcall replay_win_on_button_clicked_redirect(void *self, void *, int a1) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
 }
 
 /*
@@ -1021,8 +966,7 @@ Status: Complete
 */
 int __fastcall replay_win_on_key_click_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    reinterpret_cast<func_delegation_0 *>(
-        vtable[0xe8 / sizeof(void *)])(self);
+    (ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
     return 0x1;
 }
 
@@ -1035,8 +979,7 @@ Status: Complete
 */
 void __fastcall gamma_on_scrolling_redirect(void *self, void *, int a1, int a2) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_2 *>(
-        vtable[0xc0 / sizeof(void *)])(self, a1, a2);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0xc0 / sizeof(void *)])))(a1, a2);
 }
 
 /*
@@ -1050,6 +993,5 @@ Status: Complete
 */
 void __fastcall base_button_on_dialog_focus_redirect(void *self, void *, int a1) {
     void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)reinterpret_cast<func_delegation_0 *>(
-        vtable[0xf8 / sizeof(void *)])(self);
+    (void)(ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xf8 / sizeof(void *)])))();
 }

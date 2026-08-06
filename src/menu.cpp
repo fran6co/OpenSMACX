@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "menu.h"
 #include "pulldown.h"
 
@@ -419,8 +420,7 @@ int Menu::UNK6(int menu_id) {
     }
     entries_[index].flags &= 0xFE;
     void **const vtable = *reinterpret_cast<void ***>(this);
-    reinterpret_cast<func_menu_repaint *>(
-        vtable[0xF8 / sizeof(void *)])(this);
+    (ORIGINAL(this)->*original_method<func_menu_repaint>(reinterpret_cast<unsigned long>(vtable[0xF8 / sizeof(void *)])))();
     return 0;
 }
 
@@ -459,8 +459,7 @@ int Menu::UNK7(int menu_id) {
     }
     entries_[index].flags |= 0x01;
     void **const vtable = *reinterpret_cast<void ***>(this);
-    reinterpret_cast<func_menu_repaint *>(
-        vtable[0xF8 / sizeof(void *)])(this);
+    (ORIGINAL(this)->*original_method<func_menu_repaint>(reinterpret_cast<unsigned long>(vtable[0xF8 / sizeof(void *)])))();
     return 0;
 }
 
@@ -499,8 +498,7 @@ int Menu::UNK8(int menu_id) {
     }
     entries_[index].flags |= 0x02;
     void **const vtable = *reinterpret_cast<void ***>(this);
-    reinterpret_cast<func_menu_repaint *>(
-        vtable[0xF8 / sizeof(void *)])(this);
+    (ORIGINAL(this)->*original_method<func_menu_repaint>(reinterpret_cast<unsigned long>(vtable[0xF8 / sizeof(void *)])))();
     return 0;
 }
 
@@ -539,8 +537,7 @@ int Menu::UNK9(int menu_id) {
     }
     entries_[index].flags &= 0xFD;
     void **const vtable = *reinterpret_cast<void ***>(this);
-    reinterpret_cast<func_menu_repaint *>(
-        vtable[0xF8 / sizeof(void *)])(this);
+    (ORIGINAL(this)->*original_method<func_menu_repaint>(reinterpret_cast<unsigned long>(vtable[0xF8 / sizeof(void *)])))();
     return 0;
 }
 

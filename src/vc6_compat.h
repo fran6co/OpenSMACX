@@ -53,9 +53,11 @@
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 
 typedef unsigned int   uint32_t;
 typedef signed int     int32_t;
@@ -89,6 +91,68 @@ using ::sqrt;
 }  // namespace std
 
 /*
+ * Types the VC6 SDK predates. DWORD_PTR is pointer-sized and this is a
+ * 32-bit target, so `unsigned long` is exact rather than approximate.
+ */
+typedef unsigned long DWORD_PTR;
+typedef unsigned long ULONG_PTR;
+typedef long LONG_PTR;
+typedef unsigned int uintptr_t;
+typedef int intptr_t;
+
+/* C++11. `0` is what VC6-era code used and converts to every pointer. */
+#define nullptr 0
+
+/*
+ * The bounds-checked CRT arrived with VC8. These forward to the unchecked
+ * originals, which is what this code did before the `_s` names existed - the
+ * bound is dropped, not honoured. Fine for a tree being byte-matched against
+ * a binary that had no bounds checks either, and one more thing to delete
+ * during modernisation.
+ */
+inline int strcpy_s(char *destination, size_t, const char *source) {
+  strcpy(destination, source);
+  return 0;
+}
+inline int strcat_s(char *destination, size_t, const char *source) {
+  strcat(destination, source);
+  return 0;
+}
+/* Some call sites pass no bound at all. */
+inline int strcat_s(char *destination, const char *source) {
+  strcat(destination, source);
+  return 0;
+}
+inline int strcpy_s(char *destination, const char *source) {
+  strcpy(destination, source);
+  return 0;
+}
+
+/*
+ * std::to_string is C++11. VC6's <sstream> works, so this is the same
+ * conversion the tree would have written by hand at the time.
+ */
+namespace std {
+inline string to_string(int value) {
+  char text[32];
+  sprintf(text, "%d", value);
+  return string(text);
+}
+inline string to_string(unsigned int value) {
+  char text[32];
+  sprintf(text, "%u", value);
+  return string(text);
+}
+}  // namespace std
+inline int sprintf_s(char *destination, size_t, const char *format, ...) {
+  va_list arguments;
+  va_start(arguments, format);
+  int written = vsprintf(destination, format, arguments);
+  va_end(arguments);
+  return written;
+}
+
+/*
  * `typedef char x[cond ? 1 : -1]` - a negative array bound is an error, so a
  * false condition fails the compile. __LINE__ keeps two assertions in one
  * scope from colliding.
@@ -101,3 +165,17 @@ using ::sqrt;
 #define constexpr const
 
 #endif  // _MSC_VER <= 1200
+
+/*
+ * `__declspec(noinline)` arrived with VC7 and `__attribute__` is GCC's. The
+ * tree marks a handful of bodies noinline so the original's call survives
+ * being matched; on VC6 the attribute is simply unavailable, and inlining a
+ * body the original did not inline shows up as a diff rather than silently.
+ */
+#if defined(_MSC_VER) && _MSC_VER > 1200
+#define OPENSMACX_NOINLINE __declspec(noinline)
+#elif defined(__GNUC__)
+#define OPENSMACX_NOINLINE __attribute__((noinline))
+#else
+#define OPENSMACX_NOINLINE
+#endif

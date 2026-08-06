@@ -498,8 +498,7 @@ void Buffer::close() {
                             slot(surface, 0x68))(
                                 surface, reinterpret_cast<void *>(data));
                     if (result != 0) {
-                        reinterpret_cast<func_buffer_virtual>(
-                            slot(this, BufferVirtualSlot))(this);
+                        (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
                     }
                     ordered[0x68 / 4] = 0;
                     ordered[0x60 / 4] = 0;
@@ -618,8 +617,7 @@ Status: Complete
 */
 HDC Buffer::get_hdc() {
     if (field_50_ != 0) {
-        reinterpret_cast<func_buffer_virtual>(
-            slot(this, BufferVirtualSlot))(this);
+        (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
     }
     void *const surface = reinterpret_cast<void *>(field_58_);
     // Without a surface the buffer owns its context directly, so acquiring is
@@ -636,8 +634,7 @@ HDC Buffer::get_hdc() {
     const long result = reinterpret_cast<func_surface_get_dc_slot>(
         slot(surface, SurfaceGetDCSlot))(surface, &hdc2_);
     if (result != 0) {
-        reinterpret_cast<func_buffer_virtual>(
-            slot(this, BufferVirtualSlot))(this);
+        (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
     }
     ++field_68_;
     return hdc2_;
@@ -668,8 +665,7 @@ void Buffer::release_hdc(int count) {
     const long result = reinterpret_cast<func_surface_release_dc_slot>(
         slot(surface, SurfaceReleaseDCSlot))(surface, hdc2_);
     if (result != 0) {
-        reinterpret_cast<func_buffer_virtual>(
-            slot(this, BufferVirtualSlot))(this);
+        (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
     }
     field_68_ = 0;
     hdc2_ = nullptr;

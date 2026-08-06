@@ -153,8 +153,7 @@ uint32_t GraphicWin::close() {
     }
 
     void **const vtable = *reinterpret_cast<void ***>(release_target);
-    const uint32_t result = reinterpret_cast<func_scalar_deleting_destructor>(
-        vtable[0])(release_target, 1);
+    const uint32_t result = (ORIGINAL(release_target)->*original_method<func_scalar_deleting_destructor>(reinterpret_cast<unsigned long>(vtable[0])))(1);
     ordered[0xA08 / 4] = 0;
     return result;
 }

@@ -172,7 +172,7 @@ bool verify_constructor(
     runtime_oracle::Fixture<T> source;
     initialize(legacy, source);
     const uint32_t legacy_result =
-        reinterpret_cast<OriginalConstructor>(address)(legacy.object());
+        (ORIGINAL(legacy.object())->*original_method<OriginalConstructor>(reinterpret_cast<unsigned long>(address)))();
     const uint32_t source_result = reinterpret_cast<uintptr_t>(
         source_construct(source.object(), nullptr));
     return equivalent_constructor(
