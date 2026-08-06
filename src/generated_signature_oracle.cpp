@@ -143,7 +143,7 @@ void timing(uintptr_t address, DWORD elapsed_ms, const char *name) {
 #pragma GCC diagnostic ignored "-Wuseless-cast"
 
 // ?seek_id@StringStruct@@QAEHH@Z  (78 B)
-// recovered in src/stringstruct.cpp:63
+// recovered in src/stringstruct.cpp:66
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_seek_id_00401560() {
     typedef int (OriginalObject::*Callable)(int);
@@ -423,7 +423,7 @@ static bool verify_StringStruct_current_id_00401640() {
 }
 
 // ?next_entry@StringStruct@@QAEHXZ  (47 B)
-// recovered in src/stringstruct.cpp:42
+// recovered in src/stringstruct.cpp:45
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_next_entry_00402500() {
     typedef int (OriginalObject::*Callable)();
@@ -558,7 +558,7 @@ static bool verify_StringStruct_next_entry_00402500() {
 }
 
 // ?current_entry@StringStruct@@QAEHXZ  (17 B)
-// recovered in src/stringstruct.cpp:28
+// recovered in src/stringstruct.cpp:31
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_current_entry_00402530() {
     typedef int (OriginalObject::*Callable)();

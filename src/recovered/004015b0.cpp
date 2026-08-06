@@ -5,31 +5,36 @@
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
-typedef int (__cdecl *SeekAbsFn)(int);
+typedef int (__cdecl *AbsFnT)(int);
 
 int StringStruct::seek_pos(int a1) {
-    int *s = reinterpret_cast<int *>(this);
-    if (a1 > s[4] - 1) {
+    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
+    if (a1 > entry_count_ - 1) {
         return 0;
     }
-    s[3] = s[2];
+    current_ = head_;
     if (a1 < 0) {
-        if (reinterpret_cast<SeekAbsFn>(abs)(a1) > s[4]) {
+        if (abs_fn(a1) > entry_count_) {
             return 0;
         }
-        int i = reinterpret_cast<SeekAbsFn>(abs)(a1);
-        while (i > 0) {
-            i--;
-            s[3] = reinterpret_cast<int *>(s[3])[4];
+        int i = abs_fn(a1);
+        if (i > 0) {
+            do {
+                i--;
+                current_ = reinterpret_cast<StringStructEntry *>(reinterpret_cast<int *>(current_)[4]);
+            } while (i != 0);
         }
-        a1 += s[4];
+        current_position_ = a1 + entry_count_;
+        return 1;
     } else {
-        int j = a1;
-        while (j > 0) {
-            j--;
-            s[3] = reinterpret_cast<int *>(s[3])[3];
+        if (a1 > 0) {
+            int i = a1;
+            do {
+                i--;
+                current_ = reinterpret_cast<StringStructEntry *>(reinterpret_cast<int *>(current_)[3]);
+            } while (i != 0);
         }
+        current_position_ = a1;
+        return 1;
     }
-    s[5] = a1;
-    return 1;
 }
