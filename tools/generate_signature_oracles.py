@@ -546,6 +546,8 @@ def emit(rows: list, earned: set | None = None) -> str:
     # A __thiscall function POINTER is not a class method, so GCC warns on every
     # one of them. The hand-written suites silence it the same way; the
     # attribute is exactly what makes the receiver arrive in ECX.
+    w('#include "original_seam.h"')
+    w("")
     w('#pragma GCC diagnostic push')
     w('#pragma GCC diagnostic ignored "-Wattributes"')
     w('#pragma GCC diagnostic ignored "-Wuseless-cast"')
@@ -567,8 +569,18 @@ def emit(rows: list, earned: set | None = None) -> str:
               f"0x{row['object_size']:X} B, zero-filled, "
               f"size {row.get('size_source', 'pinned')}")
         w(f"static bool {fn}() {{")
-        w(f"    typedef {ret} ({conv} *Callable)({', '.join(params)});")
-        w(f"    Callable target = reinterpret_cast<Callable>({addr}U);")
+        # A pointer-to-member IS thiscall, in every compiler, without naming
+        # the convention - which matters because cl 12.00.8168 reserves the
+        # `__thiscall` keyword and refuses it. See src/original_seam.h.
+        if conv == "__thiscall" and staged:
+            w(f"    typedef {ret} (OriginalObject::*Callable)"
+              f"({', '.join(params[1:])});")
+        else:
+            w(f"    typedef {ret} ({conv} *Callable)({', '.join(params)});")
+        if conv == "__thiscall" and staged:
+            w(f"    Callable target = original_method<Callable>({addr}U);")
+        else:
+            w(f"    Callable target = reinterpret_cast<Callable>({addr}U);")
         # ANNOUNCE BEFORE CALLING, flushed. If a body takes the game down there
         # is no verdict line for it, and this is the only record of which one it
         # was; commit 7a2c554 credits exactly this with turning "the game
@@ -613,7 +625,11 @@ def emit(rows: list, earned: set | None = None) -> str:
         if staged:
             actuals.append("staged")
         actuals += [f"({args[i]})argv[{i}]" for i in range(len(args))]
-        call = "target(" + ", ".join(actuals) + ")"
+        if conv == "__thiscall" and staged:
+            call = ("(ORIGINAL(" + actuals[0] + ")->*target)("
+                    + ", ".join(actuals[1:]) + ")")
+        else:
+            call = "target(" + ", ".join(actuals) + ")"
         if staged:
             # ZEROS, not a pattern: a patterned object makes every pointer field
             # a wild address and the first dereference kills the game.

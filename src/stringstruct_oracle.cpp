@@ -35,16 +35,16 @@ struct Probe {
 
 Probe Record = {};
 
-void __thiscall probe_visit(void *, void *) {
+void __fastcall probe_visit(void *, int /* edx */, void *) {
     ++Record.visits;
 }
 
-void __thiscall probe_payload_destroy(void *, int flags) {
+void __fastcall probe_payload_destroy(void *, int /* edx */, int flags) {
     ++Record.payload_destroys;
     Record.flags = flags;
 }
 
-void __thiscall probe_entry_destroy(void *, int flags) {
+void __fastcall probe_entry_destroy(void *, int /* edx */, int flags) {
     ++Record.entry_destroys;
     Record.flags = flags;
 }

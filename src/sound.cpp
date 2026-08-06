@@ -407,8 +407,7 @@ int Sound::load(const char *a1) {
     if (result == 0) {
         if (!(flags_40_ & 1)) {
             flags_40_ |= 1;
-            (*reinterpret_cast<void(__thiscall **)(Sound *)>(
-                *reinterpret_cast<uint8_t **>(this) + 0x7C))(this);
+            (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x7C)))();
             if (loop_flag_30_) {
                 typedef void (OriginalObject::*device_loop_fn)(int on);
                 (*reinterpret_cast<device_loop_fn *>(
@@ -517,8 +516,7 @@ void Sound::fade_in(unsigned int a1) {
     typedef int (OriginalObject::*own_time_fn)(unsigned int t);
     if ((*reinterpret_cast<own_time_fn *>(
             *reinterpret_cast<uint8_t **>(this) + 0x54))(this, a1) == 0) {
-        (*reinterpret_cast<void(__thiscall **)(Sound *)>(
-            *reinterpret_cast<uint8_t **>(this) + 0x28))(this);
+        (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x28)))();
     }
 }
 
@@ -566,8 +564,7 @@ int Sound::unload() {
         result = (*reinterpret_cast<device_fn *>(
             *reinterpret_cast<uint8_t **>(device_) + 0x14))(device_);
     }
-    (*reinterpret_cast<void(__thiscall **)(Sound *)>(
-        *reinterpret_cast<uint8_t **>(this) + 0x80))(this);
+    (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x80)))();
     const uint32_t cleared = flags_40_ & ~1u;
     device_ = nullptr;
     flags_40_ = cleared;

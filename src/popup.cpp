@@ -493,8 +493,7 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
     if (popup->wave_index_ == 0x19) {
         void *const owner = *PopupWaveOwnerSlot;
         if (owner) {
-            (*reinterpret_cast<void(__thiscall **)(void *)>(
-                *reinterpret_cast<uint8_t **>(owner) + 0x138))(owner);
+            (ORIGINAL(owner)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(owner) + 0x138)))();
         }
     }
     if (popup->wave_index_ == 0x10) {

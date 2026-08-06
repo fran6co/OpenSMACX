@@ -757,8 +757,7 @@ int Wave::play() {
     }
     if (flags_54_ & 0x10) {
         start_time_ = (*WaveTimeGetTimeSlot)();
-        (*reinterpret_cast<void(__thiscall **)(Wave *)>(
-            *reinterpret_cast<uint8_t **>(this) + 0x80))(this);
+        (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x80)))();
         device_ = nullptr;
     }
     return result;
@@ -939,8 +938,7 @@ int Wave::dyna_load(char *a1) {
         return created;
     }
     uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
-    const int attribs = (*reinterpret_cast<int(__thiscall **)(Wave *)>(
-        *reinterpret_cast<uint8_t **>(this) + 0x70))(this);
+    const int attribs = (ORIGINAL(this)->*original_method<int (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x70)))();
     {
         typedef void (OriginalObject::*device_attrib_fn)(int attribs);
         (*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C))(
@@ -1129,15 +1127,13 @@ void Wave::init(char *a1, uint32_t a2) {
                 uint8_t *const device_vtable =
                     *reinterpret_cast<uint8_t **>(device_);
                 const int attribs =
-                    (*reinterpret_cast<int(__thiscall **)(Wave *)>(
-                        *reinterpret_cast<uint8_t **>(this) + 0x70))(this);
+                    (ORIGINAL(this)->*original_method<int (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x70)))();
                 {
                     typedef void (OriginalObject::*device_attrib_fn)(int attribs);
                     (*reinterpret_cast<device_attrib_fn *>(
                         device_vtable + 0x6C))(device_, attribs);
                 }
-                (*reinterpret_cast<void(__thiscall **)(Wave *)>(
-                    *reinterpret_cast<uint8_t **>(this) + 0x7C))(this);
+                (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x7C)))();
             }
         }
         if (device_) {
@@ -1153,8 +1149,7 @@ void Wave::init(char *a1, uint32_t a2) {
         flags_54_ |= 4;
     }
     if (a2 & 2) {
-        (*reinterpret_cast<void(__thiscall **)(Wave *, int)>(
-            *reinterpret_cast<uint8_t **>(this) + 0x48))(this, 1);
+        (ORIGINAL(this)->*original_method<void (OriginalObject::*)(int) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x48)))(1);
     }
     if (a2 & 0x40) {
         flags_54_ |= 8;

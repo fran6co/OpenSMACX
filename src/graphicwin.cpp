@@ -27,13 +27,13 @@
 const uint32_t GraphicWinPrimaryVtable = 0x0066FC50;
 const uint32_t GraphicWinBufferVtable = 0x0066FC48;
 
-void __thiscall buffer_subobject_destructor(void *self) {
+void __fastcall buffer_subobject_destructor(void *self) {
     // Source-owned: dispatches to the recovered Buffer destructor rather than
     // the original body at 0x005D7410.
     buffer_destructor_redirect(reinterpret_cast<Buffer *>(self), nullptr);
 }
 
-void __thiscall buffer_subobject_close(void *self) {
+void __fastcall buffer_subobject_close(void *self) {
     reinterpret_cast<Buffer *>(self)->close();
 }
 
