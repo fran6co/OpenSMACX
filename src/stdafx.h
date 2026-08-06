@@ -35,8 +35,16 @@
 // in this header - the DLL, recovery-leaf-tests, the oracle tests - fails to
 // compile here, which is the whole recovery gate. Same class of defect as the
 // path casefolding in bb95bb5, and invisible for the same reason.
+#include "vc6_compat.h"
+
+// VC6's SDK predates both of these. `sdkddkver.h` selects a target Windows
+// version, which for a compiler that shipped in 1998 is already decided, and
+// `<random>` is C++11 and is not used anywhere in this tree - it came in with
+// the modern build and stayed.
+#if !defined(_MSC_VER) || _MSC_VER > 1200
 #include <sdkddkver.h>
 #include <random>
+#endif
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
