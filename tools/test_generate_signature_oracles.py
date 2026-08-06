@@ -576,10 +576,17 @@ class EmissionTests(unittest.TestCase):
         text = self._member_text()
         self.assertIn("static uint8_t staged[ObjectSize]", text)
 
-    def test_the_receiver_is_passed_as_the_first_argument(self):
+    def test_the_receiver_arrives_in_ecx_as_a_pointer_to_member(self):
+        # It used to be `typedef void (__thiscall *Callable)(void *, int)`
+        # with the receiver passed as argument one. cl 12.00.8168 reserves
+        # the `__thiscall` keyword and refuses it, and silencing that warning
+        # emits __cdecl instead - the receiver on the stack, silently. A
+        # pointer-to-member is thiscall in every compiler without naming the
+        # convention. See src/original_seam.h.
         text = self._member_text()
-        self.assertIn("typedef void (__thiscall *Callable)(void *, int);", text)
-        self.assertIn("target(staged, (int)argv[0])", text)
+        self.assertIn("typedef void (OriginalObject::*Callable)(int);", text)
+        self.assertIn("(ORIGINAL(staged)->*target)((int)argv[0])", text)
+        self.assertNotIn("__thiscall", text)
 
     def _paths(self, rows):
         directory = tempfile.mkdtemp()
