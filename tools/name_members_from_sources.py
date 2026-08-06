@@ -42,6 +42,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC = REPO_ROOT / "src"
 IDB_MEMBERS = REPO_ROOT / "docs" / "recovery" / "idb-members.csv"
 THINKER = REPO_ROOT / "docs" / "recovery" / "thinker-members.csv"
+BEHAVIOUR = REPO_ROOT / "docs" / "recovery" / "behaviour-member-names.csv"
 GENERATED = "hypothesis_layouts.h"
 
 PLACEHOLDER_MEMBER = re.compile(
@@ -100,7 +101,12 @@ def source_members() -> dict:
     found = collections.defaultdict(dict)
     for path, columns, label in (
             (IDB_MEMBERS, ("class", "offset", "name", "size"), "the IDB"),
-            (THINKER, ("struct", "offset", "field", "size"), "Thinker")):
+            (THINKER, ("struct", "offset", "field", "size"), "Thinker"),
+            # Last, so it wins. A behaviour-derived name is read out of the
+            # image rather than out of somebody's notes, and it reproduced
+            # Wave's pitch_, reverb_mix_ and ms_length_ - three names this tree
+            # had already recovered by hand - exactly.
+            (BEHAVIOUR, ("class", "offset", "name", "size"), "the image")):
         if not path.is_file():
             continue
         klass, offset_column, name_column, size_column = columns

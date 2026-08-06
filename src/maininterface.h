@@ -296,7 +296,7 @@ class DLLEXPORT MainInterface : GraphicWin {
   uint32_t field_216E4_;
   uint32_t field_216E8_;
   uint32_t field_216EC_;
-  uint32_t field_216F0_;
+  uint32_t alert_;
   Sprite sprites1_[4];
   Sprite sprites2_[4];
   Sprite sprites3_[2];
