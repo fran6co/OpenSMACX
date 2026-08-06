@@ -1080,6 +1080,8 @@ if(BUILD_TESTING)
     # matched yet". 1,179 catalogued functions were in exactly that state.
     opensmacx_add_python_tool_test(class-layout-tests test_class_layouts.py)
 
+    opensmacx_add_python_tool_test(idb-member-tests test_export_idb_members.py)
+
     opensmacx_add_python_tool_test(recovery-symbol-tests
                                    test_recovery_symbols.py)
     opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)
@@ -1401,6 +1403,13 @@ if(BUILD_TESTING)
     # finishes - so it needs no wineprefix RESOURCE_LOCK, and
     # verify_wine_test_locks.py correctly does not demand one. A SECOND
     # VC6-backed test would share this prefix and should take a lock of its own.
+    # Skips cleanly without the ignored canonical IDB, which is the normal
+    # state of a fresh checkout.
+    add_test(NAME idb-members-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_idb_members.py"
+            --check
+    )
     add_test(NAME verified-layouts-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_class_layouts.py"
