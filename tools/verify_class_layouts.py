@@ -85,7 +85,24 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true",
                         help="fail if the committed list is stale")
+    # Named so verify_checks_can_fail.py can point --check at a deliberately
+    # damaged copy and prove this gate refuses one. A check with no such proof
+    # is a check nobody has seen fail.
+    parser.add_argument("--verified", type=Path, default=VERIFIED,
+                        help="the list to compare against (default: the "
+                             "committed one)")
     arguments = parser.parse_args()
+    verified_path = arguments.verified
+
+    # Without the compiler every probe fails to build, which reads as "no
+    # layout survived" and is indistinguishable from "every layout is wrong".
+    # As a CTest gate that would turn a missing toolchain into 23 phantom
+    # regressions, so the absence is reported as an absence.
+    reason = bm.available()
+    if reason:
+        print(f"SKIP: {reason}. This needs Visual C++ 6.0 (12.00.8168) under "
+              f"Wine.")
+        return 0
 
     candidates = class_layouts.pinned_layouts()
     verified, rejected = verify(candidates)
@@ -97,16 +114,16 @@ def main() -> int:
             + "\n".join(verified) + "\n")
 
     if arguments.check:
-        current = VERIFIED.read_text() if VERIFIED.is_file() else ""
+        current = verified_path.read_text() if verified_path.is_file() else ""
         if current != text:
             print("verified-layouts.txt is stale; regenerate it", file=sys.stderr)
             return 1
         print(f"class layouts: {len(verified)} verified (up to date)")
         return 0
 
-    VERIFIED.parent.mkdir(parents=True, exist_ok=True)
-    VERIFIED.write_text(text)
-    print(f"{len(verified)} verified, {len(rejected)} rejected -> {VERIFIED}")
+    verified_path.parent.mkdir(parents=True, exist_ok=True)
+    verified_path.write_text(text)
+    print(f"{len(verified)} verified, {len(rejected)} rejected -> {verified_path}")
     for name in rejected:
         print(f"    rejected: {name} (extracted layout is not the real size)")
     return 0

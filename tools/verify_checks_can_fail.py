@@ -191,6 +191,63 @@ def damage_stale_exclusions(workspace):
             "--document", str(copy), "--exe", str(exe)]
 
 
+def damage_verified_layouts(workspace):
+    """A class dropped from the list of layouts proved against the image.
+
+    Dropping rather than adding is deliberate. `test_class_layouts.py`'s
+    VerificationGateTest already asserts `verified <= pinned`, so an INVENTED
+    name is caught there; a name that quietly stops being verified is not, and
+    it is the one that matters - the emitter reads this file to decide whether
+    an agent gets real members or an opaque shell.
+    """
+    listing = REPO_ROOT / "docs" / "recovery" / "verified-layouts.txt"
+    if not listing.is_file():
+        raise Skip("docs/recovery/verified-layouts.txt is absent")
+    lines = listing.read_text(encoding="utf-8").splitlines(keepends=True)
+    body = [index for index, line in enumerate(lines)
+            if line.strip() and not line.startswith("#")]
+    if not body:
+        raise Skip("no verified layout to drop")
+    copy = workspace / "verified-layouts.txt"
+    copy.write_text("".join(line for index, line in enumerate(lines)
+                            if index != body[0]), encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_class_layouts.py"), "--check",
+            "--verified", str(copy)]
+
+
+def damage_pinned_class_size(workspace):
+    """Every pinned `sizeof` moved, so the image-derived sizes disagree.
+
+    Perturbing ALL of them rather than one chosen by name: the derivation
+    reproduces only 9 of the 40 and ABSTAINS on the rest, and abstention is a
+    correct outcome that this check must not treat as a refusal. Moving them
+    all guarantees the perturbation lands on a class the tool actually answers
+    for, whichever those turn out to be.
+    """
+    exe = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
+    if not exe.is_file():
+        raise Skip("the pinned executable is absent")
+    source = copy_tree(REPO_ROOT / "src", workspace / "src", ("*.h",))
+    pattern = re.compile(
+        r"(static_assert\(\s*sizeof\(\s*\w+\s*\)\s*==\s*)(0[xX][0-9a-fA-F]+|\d+)")
+    moved = 0
+
+    def bump(match):
+        nonlocal moved
+        moved += 1
+        return f"{match.group(1)}0x{int(match.group(2), 0) + 7:X}"
+
+    for header in sorted(source.glob("*.h")):
+        text = header.read_text(encoding="utf-8", errors="replace")
+        damaged = pattern.sub(bump, text)
+        if damaged != text:
+            header.write_text(damaged, encoding="utf-8")
+    if not moved:
+        raise Skip("no pinned sizeof to perturb")
+    return [PYTHON, str(TOOLS / "derive_class_layout.py"), "--check-pinned",
+            "--src", str(source), "--exe", str(exe)]
+
+
 def damage_pipeline_golden(workspace):
     """A pinned pipeline fact that no longer matches what the tools derive.
 
@@ -324,6 +381,10 @@ CASES = (
      damage_absent_signedness_image, "verified NOTHING"),
     ("export-signedness-audit", "an empty .def comparing zero exports",
      damage_emptied_def, "below the floor"),
+    ("verified-layouts-current", "a proved class layout quietly dropped",
+     damage_verified_layouts, "is stale"),
+    ("class-layout-derivation-pinned", "pinned sizes the image contradicts",
+     damage_pinned_class_size, "answered wrongly"),
 )
 
 # The gate checks this tool is responsible for. Adding a check here without
@@ -340,6 +401,8 @@ COVERED_CHECKS = {
     "recovery-pipeline",
     "observability-ratchet",
     "recovery-abi",
+    "verified-layouts-current",
+    "class-layout-derivation-pinned",
 }
 
 
