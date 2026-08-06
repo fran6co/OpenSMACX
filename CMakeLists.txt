@@ -1100,6 +1100,12 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(agreed-size-tests
                                    test_derive_agreed_sizes.py)
 
+    opensmacx_add_python_tool_test(layout-verifier-tests
+                                   test_verify_class_layouts.py)
+
+    opensmacx_add_python_tool_test(byte-match-ratchet-tests
+                                   test_byte_match_fanout.py)
+
     opensmacx_add_python_tool_test(size-promotion-tests
                                    test_promote_agreed_sizes.py)
 

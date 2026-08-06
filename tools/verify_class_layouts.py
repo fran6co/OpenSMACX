@@ -81,7 +81,29 @@ def verify(candidates: dict) -> tuple:
     return verified, rejected
 
 
-def main() -> int:
+def render(verified: list) -> str:
+    """The exact bytes of the committed list.
+
+    Extracted from `main` so it can be tested. `--check` compares the file
+    against this character for character, so a change to the banner - a
+    reworded line, a lost trailing newline - would report every checkout as
+    stale without a single layout having moved.
+    """
+    banner = (
+        "# Class layouts tools/class_layouts.py extracts AND that compile\n"
+        "# to the same size as the real class. Regenerate with\n"
+        "# tools/verify_class_layouts.py. A layout not listed here is not\n"
+        "# handed to an agent; the emitter falls back to an opaque shell.\n")
+    # An empty list is `"\n".join([]) + "\n"`, which is a stray blank line
+    # rather than no lines. Nothing has ever verified zero layouts, so it has
+    # never shown - but the comparison is exact, and a file that gains a blank
+    # line reads as stale.
+    if not verified:
+        return banner
+    return banner + "\n".join(verified) + "\n"
+
+
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true",
                         help="fail if the committed list is stale")
@@ -91,7 +113,7 @@ def main() -> int:
     parser.add_argument("--verified", type=Path, default=VERIFIED,
                         help="the list to compare against (default: the "
                              "committed one)")
-    arguments = parser.parse_args()
+    arguments = parser.parse_args(argv)
     verified_path = arguments.verified
 
     # Without the compiler every probe fails to build, which reads as "no
@@ -107,11 +129,7 @@ def main() -> int:
     candidates = class_layouts.pinned_layouts()
     verified, rejected = verify(candidates)
 
-    text = ("# Class layouts tools/class_layouts.py extracts AND that compile\n"
-            "# to the same size as the real class. Regenerate with\n"
-            "# tools/verify_class_layouts.py. A layout not listed here is not\n"
-            "# handed to an agent; the emitter falls back to an opaque shell.\n"
-            + "\n".join(verified) + "\n")
+    text = render(verified)
 
     if arguments.check:
         current = verified_path.read_text() if verified_path.is_file() else ""
