@@ -61,7 +61,11 @@ class DLLEXPORT PlanWin {
   // held as raw storage rather than a Buffer member because nothing recovered
   // so far needs to reach into it - UNK1 only ever passes its address.
   uint8_t buffer_[sizeof(Buffer)];
-  uint8_t derived_head_[0x21FF8 - 0x21A70 - sizeof(Buffer)];
+  // No `derived_head_` here: 0x21FF8 - 0x21A70 is exactly
+  // sizeof(Buffer) (0x588, pinned in buffer.h), so the array was
+  // zero-length. VC6 rejects that - it is an MSVC extension - and a
+  // zero-length member contributes nothing to the layout the
+  // static_assert below pins.
   int32_t field_21FF8_;
   uint8_t derived_tail_[0x22050 - 0x21FFC];
   GraphicWin virtual_base_;

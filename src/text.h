@@ -24,7 +24,7 @@ class DLLEXPORT Text {
  public:
   Text(); // 005FD860
   Text(size_t size); // 005FD880
-  ~Text() noexcept(false); // 00608C00
+  ~Text() OPENSMACX_NOEXCEPT_FALSE; // 00608C00
 
   int init(size_t size);
   void shutdown();

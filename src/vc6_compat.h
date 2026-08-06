@@ -172,6 +172,13 @@ inline int sprintf_s(char *destination, size_t, const char *format, ...) {
  * being matched; on VC6 the attribute is simply unavailable, and inlining a
  * body the original did not inline shows up as a diff rather than silently.
  */
+/* `noexcept` is C++11; an exception specification changes no layout. */
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#define OPENSMACX_NOEXCEPT_FALSE
+#else
+#define OPENSMACX_NOEXCEPT_FALSE noexcept(false)
+#endif
+
 #if defined(_MSC_VER) && _MSC_VER > 1200
 #define OPENSMACX_NOINLINE __declspec(noinline)
 #elif defined(__GNUC__)
