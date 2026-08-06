@@ -1097,6 +1097,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(short-class-tests
                                    test_extend_short_classes.py)
 
+    opensmacx_add_python_tool_test(pracx-layout-tests
+                                   test_correlate_pracx_layouts.py)
+
     opensmacx_add_python_tool_test(vtable-tests
                                    test_derive_vtables.py)
 
@@ -1450,6 +1453,12 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_access_bounds.py"
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # Skips without the fetched, ignored PRACX header.
+    add_test(NAME pracx-members-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_pracx_layouts.py"
+            --check
     )
     # Skips without the pinned image; every row is read out of its constructors.
     add_test(NAME vtables-current
