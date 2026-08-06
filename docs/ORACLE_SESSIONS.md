@@ -148,9 +148,19 @@ human work.
 
 The database that does have the layouts is the older 32-bit `.idb`, and IDA
 Free refuses it: 32-bit databases need IDA Pro. IDA Free also ships no
-IDAPython - only IDC - so `tools/export_idb_struct_sizes.idc` exists against
-the function list in the install's own `idc/idc.idc`, for whoever has a licence
-that can open the file.
+IDAPython, only IDC.
+
+**Superseded on 2026-08-06, and the premise with it.** Both of those facts are
+about getting *into* IDA, and nothing here ever needed to.
+`tools/export_idb_members.py` reads the container directly through `python-idb`
+and yields member names and OFFSETS - 13,078 members across 124 classes - where
+the script-menu route yielded a name and a total size. So the three tools built
+around IDA's own doors are gone: `export_idb_struct_sizes.py` and its `.idc`
+twin, which had to be run from the script menu, and `sizes_from_ida_header.py`,
+which turned a C-header export into sizes and could never receive one here.
+
+The lesson is cheap and worth writing down: a licence looked necessary because
+the obvious door was locked, and the container was readable the whole time.
 
 ### Thinker was checked, and it is the weaker source
 
