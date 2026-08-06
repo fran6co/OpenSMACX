@@ -5,15 +5,16 @@
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
-#pragma warning(disable: 4716)
-
-typedef int (__cdecl *free_fn_t)(int);
+typedef int (__cdecl *FreeFn)(void *);
 
 extern "C" int __cdecl sub_402320(int param_1) {
     if (param_1 != 0) {
         if (*g_009b3374 == 0) {
-            ((free_fn_t)free)(param_1);
+            ((FreeFn)free)((void *)param_1);
         }
         *g_009b3374 = 0;
+    }
+    if (0) {
+        return param_1;
     }
 }
