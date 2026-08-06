@@ -151,6 +151,16 @@ export async function integrate({ functionName, generatedCode, worktreePath, pro
 
   // 2. Worktree setup. Worktrees are sparse: gitignored artifacts and
   //    untracked work-in-progress files are absent.
+  //
+  //    NONE OF IT APPLIES WHEN THERE IS NO WORKTREE. With
+  //    `autoAction: apply` the integrator runs in the project itself, and
+  //    every step below would then act on the real tree: the rmSync would
+  //    DELETE `.opensmacx` - the pinned executable and the IDB - and
+  //    replace it with a symlink to itself, each copyFileSync would copy a
+  //    file onto itself, and the `git checkout --` at the end would revert
+  //    the tools. Verified before running it, which is the only reason the
+  //    pinned image still exists.
+  const inWorktree = path.resolve(worktreePath) !== path.resolve(projectRoot);
   //    - .opensmacx holds the pinned executable: symlink it.
   //    - The byte_match toolchain (and possibly the ledger) is untracked
   //      work-in-progress: COPY it. Symlinks would break it, because the
@@ -158,15 +168,15 @@ export async function integrate({ functionName, generatedCode, worktreePath, pro
   //      the main tree, writing the ledger there instead of the worktree.
   //    Everything copied or overwritten here is restored after the gate so
   //    the commit carries ONLY the ratcheted ledger.
-  const opensmacxSrc = path.join(projectRoot, '.opensmacx');
-  const opensmacxDest = path.join(worktreePath, '.opensmacx');
-  fs.rmSync(opensmacxDest, { recursive: true, force: true });
-  fs.symlinkSync(opensmacxSrc, opensmacxDest);
-
   const copiedToolFiles = [];
   const overwrittenToolFiles = [];
+  const opensmacxDest = inWorktree ? path.join(worktreePath, '.opensmacx') : null;
+  if (opensmacxDest) {
+    fs.rmSync(opensmacxDest, { recursive: true, force: true });
+    fs.symlinkSync(path.join(projectRoot, '.opensmacx'), opensmacxDest);
+  }
   const toolsDest = path.join(worktreePath, 'tools');
-  for (const entry of fs.readdirSync(path.join(projectRoot, 'tools'))) {
+  for (const entry of inWorktree ? fs.readdirSync(path.join(projectRoot, 'tools')) : []) {
     if (!entry.endsWith('.py')) {
       continue;
     }
@@ -182,7 +192,9 @@ export async function integrate({ functionName, generatedCode, worktreePath, pro
   }
 
   const ledgerRel = path.join('docs', 'recovery', 'byte-match.csv');
-  fs.copyFileSync(path.join(projectRoot, ledgerRel), path.join(worktreePath, ledgerRel));
+  if (inWorktree) {
+    fs.copyFileSync(path.join(projectRoot, ledgerRel), path.join(worktreePath, ledgerRel));
+  }
 
   // 3. Gate through byte_match and ratchet the ledger, in the worktree.
   const gatePath = path.join(os.tmpdir(), `mizuchi-gate-${hex}.py`);
@@ -237,7 +249,11 @@ export async function integrate({ functionName, generatedCode, worktreePath, pro
     for (const copied of copiedToolFiles) {
       fs.rmSync(copied, { force: true });
     }
-    fs.rmSync(opensmacxDest, { force: true });
+    // Only the symlink this created, and only when it created one. In the
+    // project itself this path IS `.opensmacx`.
+    if (opensmacxDest) {
+      fs.rmSync(opensmacxDest, { force: true });
+    }
   }
 
   if (gateError) {
