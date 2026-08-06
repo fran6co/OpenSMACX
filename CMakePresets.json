@@ -52,6 +52,17 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
+    },
+    {
+      "name": "vc6",
+      "displayName": "VC6 (cl 12.00.8168 under wine)",
+      "description": "The compiler that built the original image. The only one whose output says whether a body is RIGHT rather than merely valid.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/vc6",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/vc6.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
