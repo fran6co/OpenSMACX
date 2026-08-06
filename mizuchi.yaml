@@ -80,7 +80,7 @@ plugins:
     # Model used for decompilation (default: claude-sonnet-4-6).
     # Subscription auth: Claude Code aliases (opus, sonnet, haiku) or an
     # exact ID from https://api.anthropic.com/v1/models.
-    model: claude-opus-5
+    model: claude-sonnet-5
     softTimeout:
       softTimeoutMs: 420000
       prompt: 'You are running out of time. Submit your best C++ code now in a ```cpp block. Do not explain, do not use tools, just output the code.'
@@ -113,6 +113,29 @@ plugins:
       - C runtime callees are C symbols: declare any you add `extern "C"`.
       - Callee signatures must match the catalog's mangling exactly
         (signedness and pointer types are visible in the mangled name).
+
+      **Define the subject and nothing else**
+      - A match is spliced into `src/` as the DEFINITION alone. Anything you
+        define beside it - a shadow struct for the class layout, a typedef, a
+        helper function - does not travel with it, the spliced file stops
+        compiling, and a body that was already byte-exact gets filed away
+        under `src/recovered/` instead of landing where it belongs. Measured
+        on the first real run: 4 of the first 10 matches were lost this way.
+      - So reach fields through a cast AT THE POINT OF USE, with a named local
+        for the base:
+
+            int *self = reinterpret_cast<int *>(this);
+            if (self[2]) { return reinterpret_cast<int *>(self[3])[2]; }
+
+        and never:
+
+            struct Impl { int pad0, pad1, head; Node *current; };
+
+      - Name locals for what they hold - `self`, `head`, `entry`, `count`.
+        Names cost nothing in the instruction stream, and `src/` is read by
+        people: the body you write is the one that stays there. Offsets with
+        no name are the difference between a function someone can maintain
+        and one nobody dares touch.
 
       **Output Requirements**
       - Provide complete, compilable C++ code in a fenced code block (```cpp)
@@ -213,6 +236,11 @@ plugins:
   integrator:
     enable: true
     integratorModule: ./mizuchi-integrator.mjs
-    autoAction: commit
-    commitMessageTemplate: 'recovery: byte-exact {{functionName}} via Mizuchi'
-    branchTemplate: 'mizuchi/{{functionName}}'
+    # Put the change in the working tree rather than on a branch. A branch
+    # and a worktree per function is the right shape for a handful of
+    # reviewed matches and the wrong one for an unattended sweep: one 27
+    # minute run left 42 `mizuchi/*` refs and 42 worktrees under /tmp, and
+    # nothing visible in `git status`. Integration is serialised across
+    # workers in this mode, which costs ~9 s against prompts that take
+    # minutes.
+    autoAction: apply
