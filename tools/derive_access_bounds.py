@@ -64,10 +64,47 @@ FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 IDB_MEMBERS = REPO_ROOT / "docs" / "recovery" / "idb-members.csv"
 OUTPUT = REPO_ROOT / "docs" / "recovery" / "access-lower-bounds.csv"
 
-SCOPE_RE = re.compile(r"^\?{1,2}[~\w@]*?@(\w+)@@")
+# `?name@Class@@` and the special-name family `??0Class@@`, `??1`, `??_G`.
+# The trailing `([\w_]+)@@` must match a NON-EMPTY scope, which is what refuses
+# a free function: `?f@@YAXPAUGraphicWin@@@Z` has nothing between the name and
+# the `@@`. A lazy `[~\w@]*?@(\w+)@@` does NOT refuse it - it consumes `f@`,
+# then reads the convention code and the parameter type as a class, inventing
+# scopes called `YAXPAUGraphicWin` and `YAHHHHHHPAUCaviar`.
+#
+# The two shapes differ in where the class sits. An ordinary method spells
+# `?name@Class@@`, so the class follows the name. A SPECIAL name has no name
+# segment at all - `??0Buffer@@` is `??`, the operator code `0`, and then the
+# class - so a pattern written for the first shape silently matches neither.
+RECEIVER_RE = re.compile(
+    r"^(?:\?\?(?:_[A-Z]|[0-9A-Z])|\?[\w_]+@)"      # special code, or name@
+    r"([\w_]+)(?:@[\w_]+)*@@"                       # class, innermost first
+    r"([A-Z])([A-Z])([A-Z])")                       # access, CV, convention
 # Every spelling of ECX. Writing any of them ends its life as the receiver.
 ECX_NAMES = frozenset({"ecx", "cx", "cl", "ch"})
 THISCALL = "__thiscall"
+# The convention code sits after the access and CV codes. `E`/`F` are thiscall.
+THISCALL_CODES = frozenset("EF")
+
+
+def receiver_scope(mangled: str) -> str:
+    """The class whose `this` arrives in ECX, or '' when there is none.
+
+    `recovery_symbols.is_nonstatic_member` answers this for ordinary methods
+    and refuses the special-name family: its MEMBER_ACCESS is `^\\?[\\w_]+@...`,
+    and `??0Buffer@@QAE@XZ` begins `??0`. Constructors were therefore excluded
+    from every bound below, which is the worst possible omission here - a
+    constructor writes the WHOLE object, vtable and every field, so it reaches
+    further into the class than anything else does.
+    """
+    found = RECEIVER_RE.match((mangled or "").strip())
+    if not found:
+        return ""
+    scope, access, _cv, convention = found.groups()
+    if access not in recovery_symbols.NONSTATIC_MEMBER:
+        return ""
+    if convention not in THISCALL_CODES:
+        return ""
+    return scope
 
 
 def receivers() -> dict:
@@ -78,12 +115,8 @@ def receivers() -> dict:
     with FUNCTIONS.open(newline="", encoding="utf-8-sig") as handle:
         for row in csv.DictReader(handle):
             name = row.get("name") or ""
-            match = SCOPE_RE.match(name)
-            if not match:
-                continue
-            if not recovery_symbols.is_nonstatic_member(name):
-                continue
-            if recovery_symbols.convention_of(name) != THISCALL:
+            scope = receiver_scope(name)
+            if not scope:
                 continue
             try:
                 address = int(row["address"], 16)
@@ -91,7 +124,7 @@ def receivers() -> dict:
             except (ValueError, KeyError, TypeError):
                 continue
             if size > 0:
-                found[match.group(1)].append((address, size, name))
+                found[scope].append((address, size, name))
     return found
 
 
