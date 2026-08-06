@@ -238,6 +238,52 @@ Source *text* still never enters the repository: extracted offsets and names
 only, per `hypothesis_only_local_input` in
 `docs/recovery/external-analysis-sources.json`.
 
+### 7a. PRACX is the same source as Thinker, and must not be counted twice
+
+Checked on 2026-08-06 because it is the other public mod that describes these
+window classes, and its binaries (`prac.dll`, `prax.dll`, present under
+`.opensmacx/game/`) carry 39 RTTI type descriptors — all `std::`, no game
+types — so only its source could be worth anything.
+`DrazharLn/pracx@06726f89`, `shared/terran.h`, declares 42 structs.
+
+**It is not an independent source.** Of its 38 structs carrying members, 26
+share member names with a Thinker struct, and many share all of them:
+
+| PRACX | Thinker | shared member names |
+| --- | --- | ---: |
+| `CSprite` | `Sprite` | 12 of 12 |
+| `CImage` | `Texture` | 28 of 28 |
+| `_PcxHeader` | `PCXHeader` | 18 of 18 |
+| `CClass3B` | `CClass3B` | 25 of 25 |
+| `CMenu` | `CMenu` | 13 of 13 |
+| `CWinBase` | `Win` | 66 of 76 |
+| `CMap` | `Console` | 66 of 79 |
+| `CInfoWin` | `StatusWin` | 42 of 43 |
+
+Identical member names in identical order is descent, not convergence:
+Thinker's headers and PRACX's share an ancestor. `CCanvas` even carries
+Thinker's `pfcnScrollText`, `dwordC`, `dword10` and `iFlags` — including the
+function pointer whose unreadability once shifted a whole struct's offsets.
+
+**This matters more than the yield.** `tools/derive_agreed_sizes.py` admits a
+size when two INDEPENDENT sources land on the same number, and its control
+holds at 24 right / 0 wrong precisely because the IDA database and the observed
+access bound fail in unrelated ways. Adding PRACX and treating its agreement
+with Thinker as corroboration would be counting one source twice, and the
+control would not notice — both would be wrong together or right together.
+(The pairing in use today is the IDB against the access bound, so nothing is
+damaged; this is written down so the next attempt does not make the mistake.)
+
+What is genuinely PRACX-only is 12 small structs — `CHitBox`, `CMemAllocator`,
+`CLabelAllocator`, `MapVtbl` and friends — 39 members between them, 31 named,
+and named in PRACX's own vocabulary rather than the game's. Not worth a
+pipeline. Its useful residue is a NAME MAP for reading either mod's code:
+`CWinBase` is `Win`, `CCanvas` is `Buffer`, `CWinBuffed` is `GraphicWin`,
+`CMap` is `Console`, `CInfoWin` is `StatusWin`, `CMain` is `Console`.
+
+Not catalogued in `external-analysis-sources.json`, because nothing here needs
+fetching on a schedule.
+
 ---
 
 ## The measured block

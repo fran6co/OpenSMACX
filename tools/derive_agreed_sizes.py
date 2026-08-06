@@ -20,6 +20,14 @@ access bound under-reports when a method never touches the tail. Nothing makes
 them agree on a WRONG size, and measured against the classes whose size is
 already pinned, nothing does:
 
+INDEPENDENCE IS THE LOAD-BEARING PART, and it is not free. Adding a third
+source means checking that it does not share a lineage with one already here -
+two sources that agree because one was copied from the other are one source,
+and this control cannot tell the difference. The live example is in
+`docs/EXCLUSIONS.md` 7a: PRACX and Thinker share 26 structs with identical
+member names, several of them complete, so pairing those two would count one
+source twice and read as corroboration.
+
     24 right, 0 wrong, 16 not claimed
 
 `derive_class_layout.py --score-csv` - the gate that refused Thinker at 5 right
