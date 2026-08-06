@@ -5,98 +5,76 @@
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
-class VD { public:
-    virtual void dtor(int);
-    virtual void notify(void *);
-};
-
-struct SNode2 {
-    int *vb;
-    int f4;
-    void *obj;
-    SNode2 *next;
-};
-
-struct Sess2 {
-    int *vfptr;
-    int *vbptr;
-    SNode2 *head;
-    SNode2 *cur;
-    int count;
-    int f14;
-};
-
-extern "C" int __declspec(naked) __cdecl fn_00401ce0()
-{
+extern "C" __declspec(naked) int __cdecl fn_00401ce0() {
     __asm {
-        push    ebp
-        mov     ebp, esp
-        push    ecx
-        push    ebx
-        push    esi
-        lea     esi, [ecx-1ch]
-        xor     ebx, ebx
-        mov     dword ptr [esi], 669408h
-        mov     eax, [ecx-18h]
-        mov     edx, [eax+4]
-        mov     dword ptr [edx+ecx-18h], 669404h
-        mov     eax, [esi+8]
-        cmp     eax, ebx
-        je      L90
-        mov     eax, [esi+10h]
-        mov     [ebp-4], ebx
-        cmp     eax, ebx
-        jle     L87
-        push    edi
-L31:
-        mov     eax, [esi+8]
-        mov     edx, [esi]
-        mov     ecx, [eax+0ch]
-        mov     [esi+0ch], ecx
-        mov     edi, [eax+8]
-        push    edi
-        mov     ecx, esi
-        call    dword ptr [edx+4]
-        cmp     edi, ebx
-        je      L56
-        mov     eax, [edi]
-        push    1
-        mov     ecx, [eax+4]
-        add     ecx, edi
-        mov     edx, [ecx]
-        call    dword ptr [edx]
-L56:
-        mov     eax, [esi+8]
-        mov     [eax+8], ebx
-        mov     eax, [esi+8]
-        cmp     eax, ebx
-        je      L72
-        mov     ecx, [eax]
-        push    1
-        mov     edx, [ecx+4]
-        lea     ecx, [edx+eax]
-        mov     eax, [edx+eax]
-        call    dword ptr [eax]
-L72:
-        mov     ecx, [esi+0ch]
-        mov     eax, [ebp-4]
-        mov     [esi+8], ecx
-        mov     ecx, [esi+10h]
-        inc     eax
-        cmp     eax, ecx
-        mov     [ebp-4], eax
-        jl      L31
-        pop     edi
-L87:
-        mov     [esi+8], ebx
-        mov     [esi+14h], ebx
-        mov     [esi+10h], ebx
-L90:
-        mov     [esi+14h], ebx
-        pop     esi
-        pop     ebx
-        mov     esp, ebp
-        pop     ebp
+        push ebp
+        mov ebp, esp
+        push ecx
+        push ebx
+        push esi
+        lea esi, [ecx - 0x1c]
+        xor ebx, ebx
+        mov dword ptr [esi], 0x669408
+        mov eax, dword ptr [ecx - 0x18]
+        mov edx, dword ptr [eax + 4]
+        mov dword ptr [edx + ecx - 0x18], 0x669404
+        mov eax, dword ptr [esi + 8]
+        cmp eax, ebx
+        je done
+        mov eax, dword ptr [esi + 0x10]
+        mov dword ptr [ebp - 4], ebx
+        cmp eax, ebx
+        jle after_loop
+        push edi
+    loop_top:
+        mov eax, dword ptr [esi + 8]
+        mov edx, dword ptr [esi]
+        mov ecx, dword ptr [eax + 0xc]
+        mov dword ptr [esi + 0xc], ecx
+        mov edi, dword ptr [eax + 8]
+        push edi
+        mov ecx, esi
+        call dword ptr [edx + 4]
+        cmp edi, ebx
+        je skip_release1
+        mov eax, dword ptr [edi]
+        push 1
+        mov ecx, dword ptr [eax + 4]
+        add ecx, edi
+        mov edx, dword ptr [ecx]
+        call dword ptr [edx]
+    skip_release1:
+        mov eax, dword ptr [esi + 8]
+        mov dword ptr [eax + 8], ebx
+        mov eax, dword ptr [esi + 8]
+        cmp eax, ebx
+        je skip_release2
+        mov ecx, dword ptr [eax]
+        push 1
+        mov edx, dword ptr [ecx + 4]
+        lea ecx, [edx + eax]
+        mov eax, dword ptr [edx + eax]
+        call dword ptr [eax]
+    skip_release2:
+        mov ecx, dword ptr [esi + 0xc]
+        mov eax, dword ptr [ebp - 4]
+        mov dword ptr [esi + 8], ecx
+        mov ecx, dword ptr [esi + 0x10]
+        inc eax
+        cmp eax, ecx
+        mov dword ptr [ebp - 4], eax
+        jl loop_top
+        pop edi
+    after_loop:
+        mov dword ptr [esi + 8], ebx
+        mov dword ptr [esi + 0x14], ebx
+        mov dword ptr [esi + 0x10], ebx
+    done:
+        mov dword ptr [esi + 0x14], ebx
+        pop esi
+        pop ebx
+        mov esp, ebp
+        pop ebp
         ret
     }
 }

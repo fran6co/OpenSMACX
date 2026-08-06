@@ -34,9 +34,8 @@ Return Value: Current payload, or zero when the list is empty
 Status: Complete
 */
 int StringStruct::current_entry() {
-    int *self = reinterpret_cast<int *>(this);
-    if (self[2]) {
-        return reinterpret_cast<int *>(self[3])[2];
+    if (head_) {
+        return current_->payload;
     }
     return 0;
 }
@@ -53,10 +52,12 @@ int StringStruct::next_entry() {
     }
 
     StringStructEntry *next = current_->next;
-    uint32_t position = static_cast<uint32_t>(current_position_) + 1U;
+    int position = current_position_;
     current_ = next;
-    memcpy(&current_position_, &position, sizeof(current_position_));
-    if (position == static_cast<uint32_t>(entry_count_)) {
+    int count = entry_count_;
+    ++position;
+    current_position_ = position;
+    if (position == count) {
         current_position_ = 0;
     }
     return current_->payload;

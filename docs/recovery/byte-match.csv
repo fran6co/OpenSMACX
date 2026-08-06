@@ -1,23 +1,26 @@
 address,name,source_location,generated,size,span_classes,tier,original_bytes,rebuilt_bytes,original_mnemonics,rebuilt_mnemonics,first_divergence,note,refusal_reason
 0x00401000,??0StringStruct@@QAE@H@Z,,0,88,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,88,88,,,,,
-0x00401060,?close@StringStruct@@QAEXXZ,,0,153,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,153,153,,,,,
+0x00401060,?close@StringStruct@@QAEXXZ,src/stringstruct.cpp:216,0,153,,REFUSED,,,,,,,extract does not end in a closing brace
 0x00401100,?add@StringStruct@@QAEHH@Z,,0,1043,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1043,5,328,2,0,#0: original 'push' vs rebuilt 'xor',
-0x00401520,sub_401520,,0,62,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,62,5,22,2,0,#0: original 'push' vs rebuilt 'xor',
-0x00401560,?seek_id@StringStruct@@QAEHH@Z,,0,78,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,78,78,,,,,
+0x00401520,sub_401520,,0,62,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,62,62,,,,,
+0x00401560,?seek_id@StringStruct@@QAEHH@Z,src/stringstruct.cpp:67,0,78,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,78,78,,,,,
 0x004015B0,?seek_pos@StringStruct@@QAEHH@Z,,0,134,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,134,134,,,,,
-0x00401640,?current_id@StringStruct@@QAEHXZ,,0,17,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,17,17,,,,,
+0x00401640,?current_id@StringStruct@@QAEHXZ,src/stringstruct.cpp:18,0,17,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,17,17,,,,,
 0x004016C0,?close@ServiceStruct@@QAEXXZ,,0,153,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,153,153,,,,,
 0x00401760,?add@ServiceStruct@@QAEHH@Z,,0,1043,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1043,5,328,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00401B80,sub_401b80,,0,88,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,88,90,26,26,,,
 0x00401BE0,sub_401be0,,0,153,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,153,153,,,,,
 0x00401C80,SessionStruct::SessionStruct,,0,88,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,88,90,26,26,,,
+0x00401CE0,SessionStruct::close,,0,153,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,153,153,,,,,
 0x00402310,sub_402310,,0,15,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,15,15,,,,,
-0x00402320,sub_402320,,0,41,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,41,3,14,2,0,#0: original 'push' vs rebuilt 'xor',
-0x00402350,sub_402350,,0,75,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,75,5,27,2,0,#0: original 'push' vs rebuilt 'xor',
-0x00402500,?next_entry@StringStruct@@QAEHXZ,src/stringstruct.cpp:45,0,47,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00402320,sub_402320,,0,41,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,41,41,,,,,
+0x00402350,sub_402350,,0,75,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,75,77,27,27,,,
+0x004023A0,sub_4023a0,,0,365,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,344,365,126,131,126,#126: original '<end>' vs rebuilt 'mov',
+0x00402500,?next_entry@StringStruct@@QAEHXZ,src/stringstruct.cpp:44,0,47,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,47,47,,,,,
 0x00402530,?current_entry@StringStruct@@QAEHXZ,src/stringstruct.cpp:31,0,17,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,17,17,,,,,
 0x00402550,SpriteStruct::add,,0,1043,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1043,5,328,2,0,#0: original 'push' vs rebuilt 'xor',
-0x00402970,StringStruct::remove_all,src/stringstruct.cpp:142,0,115,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00402970,StringStruct::remove_all,src/stringstruct.cpp:143,0,115,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004029F0,??1StringStruct@@QAE@H@Z,,0,102,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,102,104,32,32,,,
 0x00402C20,sub_402c20,,0,66,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,66,5,23,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00402C70,sub_402c70,,0,66,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,66,5,23,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00402CC0,sub_402cc0,,0,75,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,75,5,27,2,0,#0: original 'push' vs rebuilt 'xor',
@@ -125,8 +128,8 @@ v00406330_0.cpp(49) : error C2065: 'GraphicWin' : undeclared identifier
 v00406330_0.cpp(49) : error C2059: syntax error : ','
 "
 0x00406670,sub_406670,,0,75,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,75,5,27,2,0,#0: original 'push' vs rebuilt 'xor',
-0x004066C0,sub_4066c0,src/stringstruct.cpp:224,0,365,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00406820,sub_406820,src/stringstruct.cpp:248,0,27,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004066C0,sub_4066c0,src/stringstruct.cpp:255,0,365,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00406820,sub_406820,src/stringstruct.cpp:279,0,27,,REFUSED,,,,,,,extract does not end in a closing brace
 0x00406840,sub_406840,src/field_accessors.cpp:18,1,6,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,6,6,,,,,
 0x00406850,??1Sprite@@QAE@XZ,,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
 0x00406860,?hide@BaseButton@@QAEXXZ,,0,25,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,25,25,,,,,
@@ -141,8 +144,8 @@ v00406330_0.cpp(49) : error C2059: syntax error : ','
 0x00406B70,sub_406b70,,0,44,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,44,5,13,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00406BA0,sub_406ba0,,0,44,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,44,5,13,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00406BD0,??_GPopup@@UAEPAXI@Z,src/deleting_thunks.cpp:241,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00406E60,??1Scroll@@QAE@XZ,src/scroll.cpp:782,0,248,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00406F20,??_GScroll@@UAEPAXI@Z,src/scroll.cpp:807,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00406E60,??1Scroll@@QAE@XZ,src/scroll.cpp:782,0,248,,REFUSED,,,,,,,extract does not end in a closing brace
+0x00406F20,??_GScroll@@UAEPAXI@Z,src/scroll.cpp:807,0,33,,REFUSED,,,,,,,extract failed: src/scroll.cpp:807: no closing brace within the file
 0x00406F50,??1thunk1_RadioButton@@QAE@H@Z,src/adjustor_thunks.cpp:236,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00406FF0,?on_redraw@thunk1_RadioButton@@QAEXXZ,src/adjustor_thunks.cpp:250,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00407000,?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z,src/adjustor_thunks.cpp:264,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -1491,8 +1494,8 @@ v0045d000_0.cpp(70) : error C2511: 'on_iface_mouse_move' : overloaded member fun
 0x0045EB70,?UNK4@MainInterface@@QAEXXZ,src/maininterface.cpp:69,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0045F1C0,??_GMainInterface@@UAEPAXI@Z,src/deleting_thunks.cpp:823,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0045F1F0,??3MainInterface@@SAXPAXI@Z,src/deleting_thunks.cpp:839,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x0045F6F0,?on_key_down@Interlude@@QAEXH@Z,src/delegation_thunks.cpp:131,1,16,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x0045F700,?on_left_down@Interlude@@QAEXHH@Z,src/delegation_thunks.cpp:147,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x0045F6F0,?on_key_down@Interlude@@QAEXH@Z,src/delegation_thunks.cpp:131,1,16,,REFUSED,,,,,,,extract does not end in a closing brace
+0x0045F700,?on_left_down@Interlude@@QAEXHH@Z,src/delegation_thunks.cpp:147,1,11,,REFUSED,,,,,,,extract does not end in a closing brace
 0x0045F710,??_GInterlude@@UAEPAXI@Z,src/deleting_thunks.cpp:854,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0045F910,??3Interlude@@SAXPAXI@Z,src/deleting_thunks.cpp:870,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0045F920,??__Eg_JACKAL_FONT@@YAXXZ,src/init_thunks.cpp:3880,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -1683,7 +1686,7 @@ v00483920_0.cpp(58) : error C2059: syntax error : ')'
 v00483920_0.cpp(58) : error C2143: syntax error : missing ';' before '{'
 v00483920_0.cpp(58) : error C2447: missing function header (old-style formal list?)
 "
-0x00483E80,?on_button_clicked@NewTechWin@@QAEXH@Z,src/delegation_thunks.cpp:162,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00483E80,?on_button_clicked@NewTechWin@@QAEXH@Z,src/delegation_thunks.cpp:162,1,11,,REFUSED,,,,,,,extract does not end in a closing brace
 0x00483E90,?on_left_click@NewTechWin@@QAEXHH@Z,src/newtechwin.cpp:23,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00483EA0,?on_key_click@NewTechWin@@QAEHHH@Z,src/newtechwin.cpp:36,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x00484A80,??_GNewTechWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1002,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -2035,19 +2038,19 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C4C70,??_GWorldWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1320,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C4CA0,??3WorldWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1336,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C4D70,sub_4c4d70,,0,54,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,54,3,21,2,0,#0: original 'push' vs rebuilt 'xor',
-0x004C4DD0,??0Wave_Device@@QAE@XZ,src/wave_device.cpp:1225,0,179,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,COMDAT-folded span
+0x004C4DD0,??0Wave_Device@@QAE@XZ,src/wave_device.cpp:1225,0,179,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C4E60,??1Wave_Device@@QAE@XZ,src/wave_device.cpp:1254,0,139,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,COMDAT-folded span
-0x004C4ED0,?create_device@Wave_Device@@QAEHK@Z,src/wave_device.cpp:1055,0,55,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C4F10,?delete_device@Wave_Device@@QAEHXZ,src/wave_device.cpp:1078,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C4ED0,?create_device@Wave_Device@@QAEHK@Z,src/wave_device.cpp:1055,0,55,,REFUSED,,,,,,,extract does not end in a closing brace
+0x004C4F10,?delete_device@Wave_Device@@QAEHXZ,src/wave_device.cpp:1078,0,39,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C4F40,?init@Wave_Device@@QAEHPAXK@Z,src/wave_device.cpp:1105,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C4F80,?release@Wave_Device@@QAEXXZ,src/wave_device.cpp:1139,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C4F80,?release@Wave_Device@@QAEXXZ,src/wave_device.cpp:1139,0,51,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C4FC0,?suspend@Wave_Device@@QAEXXZ,src/wave_device.cpp:161,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C4FD0,?restart@Wave_Device@@QAEXXZ,src/wave_device.cpp:171,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C4FE0,?update_sound@Wave_Device@@QAEXXZ,src/wave_device.cpp:181,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C4FF0,?get_ndevices@Wave_Device@@QAEHXZ,src/wave_device.cpp:192,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C5000,?set_hwnd@Wave_Device@@QAEHPAX@Z,src/wave_device.cpp:333,0,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C5020,?get_hw_mem_size@Wave_Device@@QAEHXZ,src/wave_device.cpp:203,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C5030,?select@Wave_Device@@QAEHK@Z,src/wave_device.cpp:1001,0,191,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C5030,?select@Wave_Device@@QAEHK@Z,src/wave_device.cpp:1001,0,191,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C50F0,?get_description@Wave_Device@@QAEXKPADK@Z,src/wave_device.cpp:550,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C5120,?set_rate@Wave_Device@@QAEXK@Z,src/wave_device.cpp:313,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C5140,?get_rate@Wave_Device@@QAEHXZ,src/wave_device.cpp:214,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -2064,12 +2067,12 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C5220,?stop_raw_dump@Wave_Device@@QAEHXZ,src/wave_device.cpp:291,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C5240,?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z,src/wave_device.cpp:402,0,55,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C5280,?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z,src/wave_device.cpp:431,0,156,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C5320,?set_group_volume@Wave_Device@@QAEHII@Z,src/wave_device.cpp:919,0,95,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C5320,?set_group_volume@Wave_Device@@QAEHII@Z,src/wave_device.cpp:919,0,95,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C5380,?get_group_volume@Wave_Device@@QAEHI@Z,src/wave_device.cpp:348,0,28,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
-0x004C53A0,?enable_group@Wave_Device@@QAEHI@Z,src/wave_device.cpp:944,0,96,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C5400,?disable_group@Wave_Device@@QAEHI@Z,src/wave_device.cpp:969,0,93,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C53A0,?enable_group@Wave_Device@@QAEHI@Z,src/wave_device.cpp:944,0,96,,REFUSED,,,,,,,extract does not end in a closing brace
+0x004C5400,?disable_group@Wave_Device@@QAEHI@Z,src/wave_device.cpp:969,0,93,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C5460,?is_group_disabled@Wave_Device@@QAEHI@Z,src/wave_device.cpp:485,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C5490,??0WaveControlGroup@@QAE@XZ,src/wave_device.cpp:1170,0,27,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C5490,??0WaveControlGroup@@QAE@XZ,src/wave_device.cpp:1170,0,27,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C54B0,?is_eax@Wave_Device@@QAEHXZ,src/wave_device.cpp:237,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C54C0,?set_eax@Wave_Device@@QAEHPAUEAX_REVERB_PROPERTIES@@@Z,src/wave_device.cpp:591,0,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C54E0,?set_eax@Wave_Device@@QAEHK@Z,src/wave_device.cpp:612,0,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -2111,8 +2114,8 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C59E0,?delete_device@Wave_In_Device@@QAEHXZ,,0,39,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,39,3,16,2,0,#0: original 'push' vs rebuilt 'xor',
 0x004C5A10,?init@Wave_In_Device@@QAEHPAXK@Z,,0,61,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,61,5,33,2,0,#0: original 'push' vs rebuilt 'xor',
 0x004C5A50,?release@Wave_In_Device@@QAEXXZ,,0,33,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,33,1,14,1,0,#0: original 'push' vs rebuilt 'ret',
-0x004C5A80,?set_codec@Wave_In_Device@@QAEHK@Z,src/delegation_thunks.cpp:188,1,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C5AA0,?set_vxw_key@Wave_In_Device@@QAEHPAC@Z,src/delegation_thunks.cpp:206,1,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C5A80,?set_codec@Wave_In_Device@@QAEHK@Z,src/delegation_thunks.cpp:188,1,32,,REFUSED,,,,,,,extract does not end in a closing brace
+0x004C5AA0,?set_vxw_key@Wave_In_Device@@QAEHPAC@Z,src/delegation_thunks.cpp:206,1,32,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C5AC0,?get_ndevices@Wave_In_Device@@QAEHXZ,src/sounddevice.cpp:277,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004C5AD0,?select@Wave_In_Device@@QAEHI@Z,src/sounddevice.cpp:168,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
 0x004C5AE0,?get_description@Wave_In_Device@@QAEHIPADI@Z,src/sounddevice.cpp:223,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
@@ -2125,7 +2128,7 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C5B50,?restart@Wave_In_Device@@QAEXXZ,src/sounddevice.cpp:68,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x004C5B60,?start_record@Wave_In_Device@@QAEHXZ,src/sounddevice.cpp:408,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C5B70,?end_record@Wave_In_Device@@QAEHXZ,src/sounddevice.cpp:420,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C5B80,??1WaveControlGroup@@QAE@XZ,src/wave_device.cpp:1190,0,111,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C5B80,??1WaveControlGroup@@QAE@XZ,src/wave_device.cpp:1190,0,111,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C5BF0,sub_4c5bf0,src/wave_device.cpp:511,0,90,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C5C50,??__Eg_WAVE_DEVICE@@YAXXZ,src/init_thunks.cpp:4155,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C5C70,??__Fg_WAVE_DEVICE@@YAXXZ,src/atexit_thunks.cpp:3975,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -2170,7 +2173,7 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C6920,?play@Wave@@QAEHXZ,src/wave.cpp:727,0,141,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C69B0,?init@Wave@@QAEXPADK@Z,src/wave.cpp:1101,0,293,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C6AE0,?is_hwbuffer@Wave@@QAEHXZ,src/wave.cpp:287,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C6B00,?get_ms_length@Wave@@QAEHXZ,src/wave.cpp:197,0,4,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C6B00,?get_ms_length@Wave@@QAEHXZ,src/wave.cpp:197,0,4,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,4,4,,,,,
 0x004C6B10,?is_playing@Wave@@QAEHXZ,src/wave.cpp:221,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C6B60,?set_fname@Wave@@QAEHPBD@Z,src/wave.cpp:695,0,75,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C6BB0,?dyna_load@Wave@@QAEHPAD@Z,src/wave.cpp:927,0,106,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -2187,7 +2190,7 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C7010,?get_game_hwnd@Wave@@QAEHXZ,src/wave.cpp:348,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C7020,?get_ndevices@Wave@@QAEHXZ,src/wave.cpp:368,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C7040,?get_device_description@Wave@@QAEHPADHH@Z,src/wave.cpp:453,0,56,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C7080,?UNK1@Wave@@QAEHH@Z,src/wave.cpp:390,0,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C7080,?UNK1@Wave@@QAEHH@Z,src/wave.cpp:390,0,22,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,22,22,,,,,
 0x004C70A0,?set_reverb_mix@Wave@@QAEHM@Z,src/wave.cpp:409,0,38,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C70D0,?set_bufflimit@Wave@@QAEHI@Z,src/wave.cpp:38,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x004C70E0,?set_asdr@Wave@@QAEHXZ,src/wave.cpp:24,0,6,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,6,6,,,,,
@@ -2206,10 +2209,10 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C74B0,sub_4c74b0,,0,64,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,64,5,26,2,0,#0: original 'push' vs rebuilt 'xor',
 0x004C75A0,sub_4c75a0,src/field_accessors.cpp:177,1,7,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,7,7,,,,,
 0x004C7670,??1Ambience@@QAE@XZ,src/ambience.cpp:282,0,273,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,COMDAT-folded span
-0x004C7760,?play@Midi@@QAEHXZ,src/delegation_thunks.cpp:224,1,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C7760,?play@Midi@@QAEHXZ,src/delegation_thunks.cpp:224,1,18,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C7780,?set_volume@Midi@@QAEXH@Z,,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
 0x004C77B0,?switch_state@Midi@@QAEH_N@Z,,0,26,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,26,26,,,,,
-0x004C77D0,?set_switch_type@Midi@@QAEHK@Z,src/delegation_thunks.cpp:242,1,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C77D0,?set_switch_type@Midi@@QAEHK@Z,src/delegation_thunks.cpp:242,1,35,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C7800,?add_switch_range@Midi@@QAEHKK@Z,src/delegation_thunks.cpp:260,1,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C7830,?set_nswitch_threads@Midi@@QAEHK@Z,src/delegation_thunks.cpp:278,1,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C7860,?map_patch@Midi@@QAEHPADKK@Z,src/delegation_thunks.cpp:296,1,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -2223,12 +2226,12 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C79C0,?set_active_tracks@Midi@@QAEHKK@Z,src/delegation_thunks.cpp:422,1,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C79F0,?set_active_tracks@Midi@@QAEHI@Z,src/delegation_thunks.cpp:440,1,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C7A20,?play_trackset@Midi@@QAEHI@Z,src/delegation_thunks.cpp:458,1,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C7A50,?xpose_trackset@Midi@@QAEHIH@Z,src/delegation_thunks.cpp:476,1,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C7A80,?stop_trackset@Midi@@QAEHI@Z,src/delegation_thunks.cpp:494,1,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C7A50,?xpose_trackset@Midi@@QAEHIH@Z,src/delegation_thunks.cpp:476,1,39,,REFUSED,,,,,,,extract does not end in a closing brace
+0x004C7A80,?stop_trackset@Midi@@QAEHI@Z,src/delegation_thunks.cpp:494,1,35,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C7AB0,?is_trackset_playing@Midi@@QAEHI@Z,,0,32,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,32,32,14,14,,,
-0x004C7AD0,?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z,src/delegation_thunks.cpp:512,1,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C7B00,?set_active_range_lo@Midi@@QAEHII@Z,src/delegation_thunks.cpp:530,1,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C7B30,?set_active_range_hi@Midi@@QAEHII@Z,src/delegation_thunks.cpp:548,1,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C7AD0,?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z,src/delegation_thunks.cpp:512,1,35,,REFUSED,,,,,,,extract does not end in a closing brace
+0x004C7B00,?set_active_range_lo@Midi@@QAEHII@Z,src/delegation_thunks.cpp:530,1,39,,REFUSED,,,,,,,extract does not end in a closing brace
+0x004C7B30,?set_active_range_hi@Midi@@QAEHII@Z,src/delegation_thunks.cpp:548,1,39,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C7B60,?remove_active_trackset@Midi@@QAEHI@Z,src/delegation_thunks.cpp:566,1,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C7B90,?get_trackset@Midi@@QAEHI@Z,src/delegation_thunks.cpp:584,1,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C7BB0,?get_ntracks@Midi@@QAEHXZ,src/delegation_thunks.cpp:602,1,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -2277,10 +2280,10 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C8A50,??1VoiceRx@@QAE@XZ,,0,262,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 0x004C8BD0,?release@VoiceRx@@QAEHXZ,,0,72,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,72,3,27,2,0,#0: original 'push' vs rebuilt 'xor',
 0x004C8C20,?start@VoiceRx@@QAEHXZ,src/delegation_thunks.cpp:802,1,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C8C40,?stop@VoiceRx@@QAEHXZ,src/delegation_thunks.cpp:823,1,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C8C50,?unload@VoiceRx@@QAEHXZ,src/delegation_thunks.cpp:842,1,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C8C70,?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z,src/delegation_thunks.cpp:860,1,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C8CA0,?get_buffer_size@VoiceRx@@QAEHXZ,src/delegation_thunks.cpp:878,1,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C8C40,?stop@VoiceRx@@QAEHXZ,src/delegation_thunks.cpp:823,1,15,,REFUSED,,,,,,,extract does not end in a closing brace
+0x004C8C50,?unload@VoiceRx@@QAEHXZ,src/delegation_thunks.cpp:842,1,18,,REFUSED,,,,,,,extract does not end in a closing brace
+0x004C8C70,?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z,src/delegation_thunks.cpp:860,1,35,,REFUSED,,,,,,,extract does not end in a closing brace
+0x004C8CA0,?get_buffer_size@VoiceRx@@QAEHXZ,src/delegation_thunks.cpp:878,1,18,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C8EA0,?release@VoiceTx@@QAEXXZ,src/delegation_thunks.cpp:898,1,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C8EB0,?start@VoiceTx@@QAEHXZ,,0,68,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,68,3,25,2,0,#0: original 'push' vs rebuilt 'xor',
 0x004C8F00,?stop@VoiceTx@@QAEHXZ,,0,60,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,60,3,23,2,0,#0: original 'push' vs rebuilt 'xor',
@@ -2289,7 +2292,7 @@ v004c2360_0.cpp(66) : error C2061: syntax error : identifier 'a1'
 0x004C9030,?get_next_buffer@VoiceTx@@QAEHXZ,src/delegation_thunks.cpp:935,1,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C9050,?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z,src/delegation_thunks.cpp:953,1,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C92D0,??_GSound@@UAEPAXI@Z,src/sound.cpp:642,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x004C9300,??_GWave@@UAEPAXI@Z,src/wave.cpp:1182,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004C9300,??_GWave@@UAEPAXI@Z,src/wave.cpp:1182,0,33,,REFUSED,,,,,,,extract does not end in a closing brace
 0x004C9330,??_GAmbience@@UAEPAXI@Z,src/deleting_thunks.cpp:1350,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C9360,??_GVideo@@UAEPAXI@Z,src/deleting_thunks.cpp:1369,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004C9390,sub_4c9390,,0,18,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,18,18,,,,,
@@ -3038,8 +3041,8 @@ v00593a00_0.cpp(158) : error C2061: syntax error : identifier 'a1'
 0x005AD400,?on_right_down@ReplayWin@@QAEXHH@Z,src/replaywin.cpp:50,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x005AD410,?on_left_down@ReplayWin@@QAEXHH@Z,src/replaywin.cpp:59,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x005AD420,?on_left_up@ReplayWin@@QAEXHH@Z,src/replaywin.cpp:68,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x005AD430,?on_button_clicked@ReplayWin@@QAEXH@Z,src/delegation_thunks.cpp:1003,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x005AD440,?on_key_click@ReplayWin@@QAEHHH@Z,src/delegation_thunks.cpp:1018,1,16,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x005AD430,?on_button_clicked@ReplayWin@@QAEXH@Z,src/delegation_thunks.cpp:1003,1,11,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1003: no closing brace within the file
+0x005AD440,?on_key_click@ReplayWin@@QAEHHH@Z,src/delegation_thunks.cpp:1018,1,16,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1018: no closing brace within the file
 0x005AD450,sub_5ad450,src/leaf_recoveries.cpp:572,0,32,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,29,19,10,7,0,#0: original 'lea' vs rebuilt 'push',
 0x005AD4C0,sub_5ad4c0,src/leaf_recoveries.cpp:845,0,64,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,64,71,27,30,4,#4: original 'push' vs rebuilt 'lea',
 0x005AD9A0,?close@ReplayWin@@QAEXXZ,,0,64,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,50,1,14,1,0,#0: original 'push' vs rebuilt 'ret',
@@ -3229,7 +3232,7 @@ v005bfd50_0.cpp(54) : fatal error C1004: unexpected end of file found
 0x005C8BA0,?zoc_sea@@YAHHHH@Z,src/map.cpp:3188,0,406,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x005C8D40,?zoc_move@@YAHHHH@Z,src/map.cpp:3218,0,86,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x005C9390,?on_scrolled@Gamma@@QAEXHH@Z,,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
-0x005C93A0,?on_scrolling@Gamma@@QAEXHH@Z,src/delegation_thunks.cpp:1032,1,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x005C93A0,?on_scrolling@Gamma@@QAEXHH@Z,src/delegation_thunks.cpp:1032,1,23,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1032: no closing brace within the file
 0x005C93C0,?on_button_clicked@Gamma@@QAEXH@Z,,0,70,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,70,3,20,1,0,#0: original 'push' vs rebuilt 'ret 4',
 0x005C9410,?on_key_click@Gamma@@QAEHHH@Z,src/gamma.cpp:23,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x005C97C0,??__Eg_MULTIDEBUG@@YAXXZ,src/init_thunks.cpp:4320,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -3837,17 +3840,17 @@ v00605130_0.cpp(111) : error C2511: 'on_left_down' : overloaded member function 
 0x006051A0,?UNK4@BasePop@@QAEXH@Z,src/basepop.cpp:515,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x006051C0,sub_6051c0,,0,14,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,14,14,,,,,
 0x00605370,?close@Scroll@@QAEXXZ,src/scroll.cpp:162,0,350,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00605840,?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z,src/scroll.cpp:215,0,69,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00605890,?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:236,0,59,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x006058D0,?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:250,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00605910,?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:264,0,69,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00605960,?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:279,0,70,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x006059B0,?set_range@Scroll@@QAEXHH@Z,src/scroll.cpp:294,0,93,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00605A10,?set_button_color@Scroll@@QAEXH@Z,src/scroll.cpp:316,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00605A50,?set_bevel_thickness@Scroll@@QAEXH@Z,src/scroll.cpp:332,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00605A90,?set_bevel_upper@Scroll@@QAEXH@Z,src/scroll.cpp:348,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00605AD0,?set_bevel_lower@Scroll@@QAEXH@Z,src/scroll.cpp:364,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00605B10,?set_border_color@Scroll@@QAEXH@Z,src/scroll.cpp:409,0,100,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00605840,?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z,src/scroll.cpp:215,0,69,,REFUSED,,,,,,,extract does not end in a closing brace
+0x00605890,?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:236,0,59,,REFUSED,,,,,,,extract does not end in a closing brace
+0x006058D0,?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:250,0,60,,REFUSED,,,,,,,extract does not end in a closing brace
+0x00605910,?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:264,0,69,,REFUSED,,,,,,,extract does not end in a closing brace
+0x00605960,?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:279,0,70,,REFUSED,,,,,,,extract does not end in a closing brace
+0x006059B0,?set_range@Scroll@@QAEXHH@Z,src/scroll.cpp:294,0,93,,REFUSED,,,,,,,extract does not end in a closing brace
+0x00605A10,?set_button_color@Scroll@@QAEXH@Z,src/scroll.cpp:316,0,61,,REFUSED,,,,,,,extract does not end in a closing brace
+0x00605A50,?set_bevel_thickness@Scroll@@QAEXH@Z,src/scroll.cpp:332,0,61,,REFUSED,,,,,,,extract does not end in a closing brace
+0x00605A90,?set_bevel_upper@Scroll@@QAEXH@Z,src/scroll.cpp:348,0,61,,REFUSED,,,,,,,extract does not end in a closing brace
+0x00605AD0,?set_bevel_lower@Scroll@@QAEXH@Z,src/scroll.cpp:364,0,61,,REFUSED,,,,,,,extract does not end in a closing brace
+0x00605B10,?set_border_color@Scroll@@QAEXH@Z,src/scroll.cpp:409,0,100,,REFUSED,,,,,,,extract does not end in a closing brace
 0x00605B80,?set_bar_thickness@Scroll@@QAEXH@Z,src/scroll.cpp:380,0,96,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00605BE0,?set_sprite_left@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z,src/scroll.cpp:446,0,75,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00605C30,?set_sprite_right@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z,src/scroll.cpp:457,0,75,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -3861,7 +3864,7 @@ v00605d90_0.cpp(48) : error C2061: syntax error : identifier 'RECT'
 0x00606310,?on_left_click@Scroll@@QAEHHH@Z,src/scroll.cpp:762,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00606C50,?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z,src/scroll.cpp:521,0,590,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00606EA0,?set_thumb_rect@Scroll@@QAEXXZ,src/scroll.cpp:631,0,88,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00606F00,sub_606f00,src/scroll.cpp:426,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00606F00,sub_606f00,src/scroll.cpp:426,0,43,,REFUSED,,,,,,,extract does not end in a closing brace
 0x00606F30,??0BaseButton@@QAE@XZ,src/basebutton.cpp:32,0,291,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00607040,??1BaseButton@@QAE@XZ,src/basebutton.cpp:132,0,167,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x006070C0,?close@BaseButton@@QAEXXZ,src/basebutton.cpp:78,0,208,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -3880,7 +3883,7 @@ v00605d90_0.cpp(48) : error C2061: syntax error : identifier 'RECT'
 0x00607810,?on_key_up@BaseButton@@QAEXH@Z,src/basebutton.cpp:449,0,5,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5,3,2,1,0,#0: original 'xor' vs rebuilt 'ret 4',
 0x00607820,?on_mouse_leave@BaseButton@@QAEXHH@Z,,0,45,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,45,3,15,1,0,#0: original 'mov' vs rebuilt 'ret 8',
 0x00607A00,?on_right_click@BaseButton@@QAEXHH@Z,,0,20,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,20,20,,,,,
-0x00607B00,?on_dialog_focus@BaseButton@@QAEXH@Z,src/delegation_thunks.cpp:1047,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00607B00,?on_dialog_focus@BaseButton@@QAEXH@Z,src/delegation_thunks.cpp:1047,1,11,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1047: no closing brace within the file
 0x00607B10,?timer_callback_daemon@BaseButton@@QAAXHH@Z,,0,19,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,19,19,,,,,
 0x00607C30,?UNK2@BaseButton@@QAEXXZ,,0,68,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,68,1,25,1,0,#0: original 'push' vs rebuilt 'ret',
 0x00607C80,?set@BaseButton@@QAEXH@Z,src/basebutton.cpp:385,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -3894,12 +3897,12 @@ v00605d90_0.cpp(48) : error C2061: syntax error : identifier 'RECT'
 0x00609990,?item@Dialog@@QAEHPADH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,52,5,13,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x006099D0,?set_selected_id@Dialog@@QAEXH@Z,src/dialog.cpp:108,0,115,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00609A50,?get_selected_id@Dialog@@QAEHXZ,src/dialog.cpp:118,0,150,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00609AF0,?id_to_pos@Dialog@@QAEHH@Z,src/dialog.cpp:81,0,91,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00609AF0,?id_to_pos@Dialog@@QAEHH@Z,src/dialog.cpp:81,0,91,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,91,92,29,31,23,#23: original 'jl' vs rebuilt 'jge',
 0x00609B50,?pos_to_id@Dialog@@QAEHH@Z,src/dialog.cpp:153,0,154,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00609C60,?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z,src/dialog.cpp:24,0,45,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00609C90,?set_dialog_text_color@Dialog@@QAEXHHHH@Z,src/dialog.cpp:42,0,40,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00609CC0,?set_dialog_text_color2@Dialog@@QAEXHHHH@Z,src/dialog.cpp:55,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00609CF0,?set_dialog_text_color3@Dialog@@QAEXHHHH@Z,src/dialog.cpp:68,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00609C90,?set_dialog_text_color@Dialog@@QAEXHHHH@Z,src/dialog.cpp:42,0,40,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,40,40,,,,,
+0x00609CC0,?set_dialog_text_color2@Dialog@@QAEXHHHH@Z,src/dialog.cpp:55,0,43,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,43,43,,,,,
+0x00609CF0,?set_dialog_text_color3@Dialog@@QAEXHHHH@Z,src/dialog.cpp:68,0,43,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,43,43,,,,,
 0x00609D20,?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,src/dialog.cpp:226,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00609D50,?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z,,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v00609d50_0.cpp
 v00609d50_0.cpp(44) : error C2143: syntax error : missing ';' before 'this'
@@ -3953,7 +3956,7 @@ v0060e4d0_0.cpp(64) : error C2059: syntax error : ')'
 v0060e4d0_0.cpp(82) : error C2143: syntax error : missing ')' before ';'
 v0060e4d0_0.cpp(82) : fatal error C1903: unable to recover from previous error(s); stopping compilation
 "
-0x0060E5D0,?close_class@RadioButton@@QAAXXZ,src/guarded_teardowns.cpp:284,0,20,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x0060E5D0,?close_class@RadioButton@@QAAXXZ,src/guarded_teardowns.cpp:284,0,20,,REFUSED,,,,,,,extract does not end in a closing brace
 0x0060E5F0,??__Eg_CHECKBOX_SPRITE_1@@YAXXZ,src/init_thunks.cpp:4397,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0060E610,??__Fg_CHECKBOX_SPRITE_1@@YAXXZ,src/guarded_teardowns.cpp:297,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0060E630,??__Eg_CHECKBOX_SPRITE_2@@YAXXZ,src/init_thunks.cpp:4408,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -3975,7 +3978,7 @@ v0060fc60_0.cpp(64) : error C2059: syntax error : ')'
 v0060fc60_0.cpp(82) : error C2143: syntax error : missing ')' before ';'
 v0060fc60_0.cpp(82) : fatal error C1903: unable to recover from previous error(s); stopping compilation
 "
-0x0060FD60,?close_class@CheckBox@@QAAXXZ,src/guarded_teardowns.cpp:335,0,20,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x0060FD60,?close_class@CheckBox@@QAAXXZ,src/guarded_teardowns.cpp:335,0,20,,REFUSED,,,,,,,extract does not end in a closing brace
 0x0060FE40,?on_redraw@thunk1_CheckBox@@QAEXXZ,src/adjustor_thunks.cpp:1726,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0060FE50,?on_mouse_move@thunk1_CheckBox@@QAEXHH@Z,src/adjustor_thunks.cpp:1740,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0060FE60,?on_mouse_leave@thunk1_CheckBox@@QAEXHH@Z,src/adjustor_thunks.cpp:1755,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -4105,7 +4108,7 @@ v00614e30_0.cpp(54) : error C2447: missing function header (old-style formal lis
 0x00616AA0,??__Eg_CAVIAR_BUFFER_1@@YAXXZ,src/init_thunks.cpp:4463,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00616AC0,??__Fg_CAVIAR_BUFFER_1@@YAXXZ,src/guarded_teardowns.cpp:405,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00616AE0,??__Eg_CAVIAR_BUFFER_2@@YAXXZ,src/init_thunks.cpp:4474,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00616B00,??__Fg_CAVIAR_BUFFER_2@@YAXXZ,src/guarded_teardowns.cpp:425,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00616B00,??__Fg_CAVIAR_BUFFER_2@@YAXXZ,src/guarded_teardowns.cpp:425,0,31,,REFUSED,,,,,,,extract does not end in a closing brace
 0x00616B20,sub_616b20,src/field_accessors.cpp:477,1,13,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
 0x00616B30,sub_616b30,src/nullsub_thunks.cpp:496,1,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
 0x00616BC0,??0CaviarData@@QAE@XZ,src/caviar.cpp:32,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -4121,10 +4124,10 @@ v00614e30_0.cpp(54) : error C2447: missing function header (old-style formal lis
 0x00618250,?UNK5@Caviar@@QAEXHH@Z,src/caviar.cpp:173,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00618260,?UNK6@Caviar@@QAEXHH@Z,src/caviar.cpp:186,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00618270,?UNK7@Caviar@@QAEXHH@Z,src/caviar.cpp:199,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x00618280,?UNK8@Caviar@@QAEXH@Z,src/caviar.cpp:238,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00618280,?UNK8@Caviar@@QAEXH@Z,src/caviar.cpp:238,0,13,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
 0x00618290,?UNK9@Caviar@@QAEXHHH@Z,src/caviar.cpp:212,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x006182A0,?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z,src/caviar.cpp:77,0,127,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00618320,?UNK10@Caviar@@QAEXHHH@Z,src/caviar.cpp:248,0,24,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00618320,?UNK10@Caviar@@QAEXHHH@Z,src/caviar.cpp:248,0,24,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,24,24,,,,,
 0x00618340,?UNK11@Caviar@@QAEXHHH@Z,src/caviar.cpp:301,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00618370,?set_scene_rotation@Caviar@@QAEXMMM@Z,src/caviar.cpp:272,0,47,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x006183A0,?UNK12@Caviar@@QAEXHHH@Z,src/caviar.cpp:225,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -4393,7 +4396,7 @@ v00630bf0_0.cpp(73) : error C2440: 'type cast' : cannot convert from 'const int'
 0x006339B0,?close_class@CheckButton@@QAAXXZ,src/checkbutton.cpp:23,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x006339C0,??0NetFifo@@QAE@XZ,,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x006343C0,??0Vector@@QAE@XZ,src/vector.cpp:18,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x006343D0,?close@Vector@@QAEXXZ,src/vector.cpp:26,0,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x006343D0,?close@Vector@@QAEXXZ,src/vector.cpp:26,0,11,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,11,11,,,,,
 0x006343E0,sub_6343e0,,0,75,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,75,5,22,2,0,#0: original 'sub' vs rebuilt 'xor',
 0x00634430,?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z,src/vector.cpp:38,0,75,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x00634480,?__apl@Vector@@QAEXAAVVector@@@Z,src/vector.cpp:60,0,33,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
@@ -4456,7 +4459,7 @@ v00637870_0.cpp(44) : error C2059: syntax error : ','
 0x0063B9B0,?sin@@YAHHH@Z,,0,267,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,267,3,84,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0063BAC0,?cos@@YAHHH@Z,,0,25,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,25,25,,,,,
 0x0063BAE0,sub_63bae0,,0,22,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,22,22,,,,,
-0x0063BB00,sub_63bb00,src/guarded_teardowns.cpp:445,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x0063BB00,sub_63bb00,src/guarded_teardowns.cpp:445,0,31,,REFUSED,,,,,,,extract does not end in a closing brace
 0x0063BEB0,sub_63beb0,src/leaf_recoveries.cpp:451,0,33,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,33,33,,,,,
 0x0063BEE0,sub_63bee0,src/leaf_recoveries.cpp:470,0,33,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,33,33,,,,,
 0x0063BF10,sub_63bf10,,0,1071,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v0063bf10_0.cpp
@@ -4473,7 +4476,7 @@ v0063c340_0.cpp(49) : error C2629: unexpected 'void ('
 0x0063C4E0,sub_63c4e0,,0,22,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,22,24,7,9,5,#5: original 'jmp' vs rebuilt 'push',
 0x0063C500,nullsub_175,src/nullsub_thunks.cpp:589,1,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x0063C9C0,nullsub_266,src/nullsub_thunks.cpp:599,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0063CEF0,sub_63cef0,src/guarded_teardowns.cpp:464,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x0063CEF0,sub_63cef0,src/guarded_teardowns.cpp:464,0,10,,REFUSED,,,,,,,extract failed: src/guarded_teardowns.cpp:464: no closing brace within the file
 0x0063CF00,deflateInit_,,0,37,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,37,3,15,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0063D420,sub_63d420,src/leaf_recoveries.cpp:1049,0,47,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0063DF40,sub_63df40,,0,68,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,68,3,27,2,0,#0: original 'mov' vs rebuilt 'xor',
