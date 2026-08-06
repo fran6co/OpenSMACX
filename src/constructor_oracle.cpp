@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "constructor_oracle.h"
 
 #include "autosound.h"
@@ -34,9 +35,8 @@
 
 namespace {
 
-typedef uint32_t (__thiscall *OriginalConstructor)(void *);
-typedef uint32_t (__thiscall *OriginalPaletteGet)(
-    Palette *, RGBQUAD *, int, int);
+typedef uint32_t (OriginalObject::*OriginalConstructor)();
+typedef uint32_t (OriginalObject::*OriginalPaletteGet)(RGBQUAD *, int, int);
 
 constexpr uintptr_t AutoSoundConstructorAddress = 0x0062BA80U;
 constexpr uintptr_t WinConstructorAddress = 0x005EB3D0U;

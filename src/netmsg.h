@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "popup.h"
 #include "time.h"
 
@@ -43,7 +45,7 @@ class DLLEXPORT NetMsg : Popup {
 };
 
 // Popup::hide is not recovered yet.
-typedef void (__thiscall func_popup_hide)(Popup *);
-extern func_popup_hide *PopupOriginalHide;
+typedef void (OriginalObject::*func_popup_hide)();
+extern func_popup_hide PopupOriginalHide;
 
 void __fastcall net_msg_close_redirect(NetMsg *self, void *);

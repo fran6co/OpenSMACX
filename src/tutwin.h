@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "win.h"
 
  /*
@@ -86,11 +88,8 @@ void __fastcall tut_win_des_rect_redirect(
     TutWin *self, void *, RECT *rect, int *x, int *y);
 
 // The shared tail of the four do_* helpers: 0x004BDFE0, still original.
-typedef int(__thiscall func_tut_win_show)(void *self, void *window,
-                                          const char *text, int x, int y,
-                                          void *sprite, int flag, int a7,
-                                          int a8);
-extern func_tut_win_show *TutWinOriginalShow;
+typedef int (OriginalObject::*func_tut_win_show)(void *window, const char *text, int x, int y, void *sprite, int flag, int a7, int a8);
+extern func_tut_win_show TutWinOriginalShow;
 
 void __fastcall tut_win_do_base_redirect(
     TutWin *self, void *, RECT *rect, const char *text, int flag);

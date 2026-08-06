@@ -16,14 +16,15 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "lock.h"
 
 int32_t *LockMapCount = reinterpret_cast<int32_t *>(0x00949884);
 uint8_t *LockMapTable = reinterpret_cast<uint8_t *>(0x0094A30C);
 uint32_t *LockEnableMask = reinterpret_cast<uint32_t *>(0x009A64E8);
-func_square_lock_unlock *LockSquareUnlock =
-    (func_square_lock_unlock *)0x0058FD90;
-func_square_lock_lock *LockSquareLock = (func_square_lock_lock *)0x0058FE80;
+func_square_lock_unlock LockSquareUnlock =
+    original_method<func_square_lock_unlock>(0x0058FD90);
+func_square_lock_lock LockSquareLock = original_method<func_square_lock_lock>(0x0058FE80);
 func_current_server *LockCurrentServer = (func_current_server *)0x0052DBA0;
 func_message_data *LockMessageData = (func_message_data *)0x00592EE0;
 
@@ -123,7 +124,7 @@ void Lock::unlock(int slot) {
     }
     Record &record = records_[slot];
     for (int entry = 0; entry < 2; ++entry) {
-        LockSquareUnlock(&record.entries[entry], slot);
+        (ORIGINAL(&record.entries[entry])->*LockSquareUnlock)(slot);
     }
     record.flag = 0;
 }
@@ -226,7 +227,7 @@ Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
 int Lock::add_lock(int slot, int flags, int a3, int a4) {
-    return LockSquareLock(&records_[slot].entries[1], slot, flags | 0x10, a3, a4);
+    return (ORIGINAL(&records_[slot].entries[1])->*LockSquareLock)(slot, flags | 0x10, a3, a4);
 }
 
 int __fastcall lock_add_lock_redirect(Lock *self, void *, int slot, int flags,
@@ -272,8 +273,8 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     }
     record.flag = 0;
 
-    if (LockSquareLock(&record.entries[0], slot, flags, a3, a4) == 0 &&
-        LockSquareLock(&record.entries[1], slot, a5, a6, a7) == 0) {
+    if ((ORIGINAL(&record.entries[0])->*LockSquareLock)(slot, flags, a3, a4) == 0 &&
+        (ORIGINAL(&record.entries[1])->*LockSquareLock)(slot, a5, a6, a7) == 0) {
         if (take_global && LockCurrentServer() != 0 && field_E4_ != 0) {
             const uint32_t owner = field_E0_;
             for (int index = 1; index < 8; ++index) {
@@ -295,7 +296,7 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     // A square failed: unlock both entries, clear the record, and drop the
     // global lock if this slot holds it.
     for (int entry = 0; entry < 2; ++entry) {
-        LockSquareUnlock(&record.entries[entry], slot);
+        (ORIGINAL(&record.entries[entry])->*LockSquareUnlock)(slot);
     }
     record.flag = 0;
     if (field_E0_ == static_cast<uint32_t>(slot)) {

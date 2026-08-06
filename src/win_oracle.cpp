@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "win_oracle.h"
 
 #include "runtime_oracle.h"
@@ -42,8 +43,8 @@ constexpr size_t MaximumDepth = 3;
 
 // GCC emits the correct ECX ABI for this raw thiscall pointer but warns
 // because it is not a C++ member-pointer type.
-typedef uint32_t (__thiscall *OriginalNoArg)(Win *);
-typedef void (__thiscall *OriginalCoordinates)(Win *, int *, int *);
+typedef uint32_t (OriginalObject::*OriginalNoArg)();
+typedef void (OriginalObject::*OriginalCoordinates)(int *, int *);
 
 template <typename T>
 void write_object(WinFixture &fixture, size_t offset, const T &value) {

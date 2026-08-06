@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "listbox.h"
 
 /*
@@ -31,8 +32,8 @@ void __fastcall list_box_on_dialog_focus_redirect(ListBox *self, void *, int a1)
     self->on_dialog_focus(a1);
 }
 
-func_dialog_close *ListBoxOriginalDialogClose =
-    (func_dialog_close *)0x00608F50;
+func_dialog_close ListBoxOriginalDialogClose =
+    original_method<func_dialog_close>(0x00608F50);
 uint32_t *ListBoxCloseStaticDefaults = (uint32_t *)0x006970E0;
 uint32_t *ListBoxCloseDynamicDefault = (uint32_t *)0x009B8EE0;
 
@@ -69,7 +70,7 @@ uint32_t ListBox::close() {
     // GraphicWin virtual base: source-owned close at 0x005D4E40. Return discarded.
     reinterpret_cast<GraphicWin *>(base + vbtable[1])->close();
     // Dialog virtual base: original dependency at 0x00608F50 via rebindable seam.
-    ListBoxOriginalDialogClose(reinterpret_cast<Dialog *>(base + vbtable[2]));
+    (ORIGINAL(reinterpret_cast<Dialog *>(base + vbtable[2]))->*ListBoxOriginalDialogClose)();
 
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(base);

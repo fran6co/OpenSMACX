@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.h"
+#include "original_seam.h"
 #include "atexit_thunks.h"
 #include "ambience.h"
 #include "battlewin.h"
@@ -29,57 +30,57 @@
 #include "texture.h"
 #include "wave.h"
 
-func_wave_destructor *WaveOriginalDestructor =
-    (func_wave_destructor *)0x004C67C0;
+func_wave_destructor WaveOriginalDestructor =
+    original_method<func_wave_destructor>(0x004C67C0);
 
 
 // Per-element teardowns the array walks dispatch to. The Wave one binds
 // the same address as WaveOriginalDestructor deliberately: it is the same
 // original body, held separately so the array seam rebinds alone.
-func_thiscall_teardown *BufferElementTeardown =
-    (func_thiscall_teardown *)0x005D7410;
-func_thiscall_teardown *CaviarDataElementTeardown =
-    (func_thiscall_teardown *)0x00456100;
-func_thiscall_teardown *FactionArtElementTeardown =
-    (func_thiscall_teardown *)0x00456010;
-func_thiscall_teardown *FontElementTeardown =
-    (func_thiscall_teardown *)0x00618EE0;
-func_thiscall_teardown *SpriteElementTeardown =
-    (func_thiscall_teardown *)0x00406850;
-func_thiscall_teardown *TextIndexElementTeardown =
-    (func_thiscall_teardown *)0x005FDF60;
-func_thiscall_teardown *TextureElementTeardown =
-    (func_thiscall_teardown *)0x00619660;
-func_thiscall_teardown *WaveElementTeardown =
-    (func_thiscall_teardown *)0x004C67C0;
+func_thiscall_teardown BufferElementTeardown =
+    original_method<func_thiscall_teardown>(0x005D7410);
+func_thiscall_teardown CaviarDataElementTeardown =
+    original_method<func_thiscall_teardown>(0x00456100);
+func_thiscall_teardown FactionArtElementTeardown =
+    original_method<func_thiscall_teardown>(0x00456010);
+func_thiscall_teardown FontElementTeardown =
+    original_method<func_thiscall_teardown>(0x00618EE0);
+func_thiscall_teardown SpriteElementTeardown =
+    original_method<func_thiscall_teardown>(0x00406850);
+func_thiscall_teardown TextIndexElementTeardown =
+    original_method<func_thiscall_teardown>(0x005FDF60);
+func_thiscall_teardown TextureElementTeardown =
+    original_method<func_thiscall_teardown>(0x00619660);
+func_thiscall_teardown WaveElementTeardown =
+    original_method<func_thiscall_teardown>(0x004C67C0);
 
 // The opaque-storage teardowns, each defaulting to the
 // original destructor the thunk tail jumps to; the
 // hybrid redirects it to a recovered body at run time.
-func_thiscall_teardown *InfoWinDtorTarget =
-    (func_thiscall_teardown *)0x004594A0;
-func_thiscall_teardown *MessageWinDtorTarget =
-    (func_thiscall_teardown *)0x00472020;
-func_thiscall_teardown *ReportIfDtorTarget =
-    (func_thiscall_teardown *)0x004ACDA0;
-func_thiscall_teardown *StatusWinDtorTarget =
-    (func_thiscall_teardown *)0x004BA120;
-func_thiscall_teardown *Wave_DeviceDtorTarget =
-    (func_thiscall_teardown *)0x004C4E60;
-func_thiscall_teardown *Midi_DeviceDtorTarget =
-    (func_thiscall_teardown *)0x004C5780;
-func_thiscall_teardown *Wave_In_DeviceDtorTarget =
-    (func_thiscall_teardown *)0x004C5980;
-func_thiscall_teardown *NetDaemonDtorTarget =
-    (func_thiscall_teardown *)0x00538D10;
-func_thiscall_teardown *PaletteDtorTarget =
-    (func_thiscall_teardown *)0x005FE2E0;
-func_thiscall_teardown *TimeDtorTarget =
-    (func_thiscall_teardown *)0x00616200;
-func_thiscall_teardown *StringsDtorTarget =
-    (func_thiscall_teardown *)0x006169C0;
-func_thiscall_teardown *CaviarCloseTarget =
-    (func_thiscall_teardown *)0x00617020;
+func_thiscall_teardown InfoWinDtorTarget =
+    original_method<func_thiscall_teardown>(0x004594A0);
+func_thiscall_teardown MessageWinDtorTarget =
+    original_method<func_thiscall_teardown>(0x00472020);
+func_thiscall_teardown ReportIfDtorTarget =
+    original_method<func_thiscall_teardown>(0x004ACDA0);
+func_thiscall_teardown StatusWinDtorTarget =
+    original_method<func_thiscall_teardown>(0x004BA120);
+func_thiscall_teardown Wave_DeviceDtorTarget =
+    original_method<func_thiscall_teardown>(0x004C4E60);
+func_thiscall_teardown Midi_DeviceDtorTarget =
+    original_method<func_thiscall_teardown>(0x004C5780);
+func_thiscall_teardown Wave_In_DeviceDtorTarget =
+    original_method<func_thiscall_teardown>(0x004C5980);
+func_thiscall_teardown NetDaemonDtorTarget =
+    original_method<func_thiscall_teardown>(0x00538D10);
+func_thiscall_teardown PaletteDtorTarget =
+    original_method<func_thiscall_teardown>(0x005FE2E0);
+func_thiscall_teardown TimeDtorTarget =
+    original_method<func_thiscall_teardown>(0x00616200);
+func_thiscall_teardown StringsDtorTarget =
+    original_method<func_thiscall_teardown>(0x006169C0);
+func_thiscall_teardown CaviarCloseTarget =
+    original_method<func_thiscall_teardown>(0x00617020);
 
 Wave *g_ALPHAMENU_WAVE = (Wave *)0x006A7090;
 Sprite *g_UNUSED_SPRITE_VAR02 = (Sprite *)0x006A7130;
@@ -427,7 +428,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_alphamenu_wave() {
-    WaveOriginalDestructor(g_ALPHAMENU_WAVE);
+    (ORIGINAL(g_ALPHAMENU_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -657,7 +658,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_basewin() {
-    BaseWinDtorTarget(reinterpret_cast<void *>(0x006A7628));
+    (ORIGINAL(reinterpret_cast<void *>(0x006A7628))->*BaseWinDtorTarget)();
 }
 
 /*
@@ -667,7 +668,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_basewin_wave() {
-    WaveOriginalDestructor(g_BASEWIN_WAVE);
+    (ORIGINAL(g_BASEWIN_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -687,7 +688,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_councwin() {
-    CouncWinDtorTarget(reinterpret_cast<void *>(0x006FEC80));
+    (ORIGINAL(reinterpret_cast<void *>(0x006FEC80))->*CouncWinDtorTarget)();
 }
 
 /*
@@ -697,7 +698,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_credits_wave() {
-    WaveOriginalDestructor(g_CREDITS_WAVE);
+    (ORIGINAL(g_CREDITS_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -707,7 +708,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_datalink() {
-    DatalinkDtorTarget(reinterpret_cast<void *>(0x00703EA0));
+    (ORIGINAL(reinterpret_cast<void *>(0x00703EA0))->*DatalinkDtorTarget)();
 }
 
 /*
@@ -717,7 +718,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_designwin() {
-    DesignWinDtorTarget(reinterpret_cast<void *>(0x0071F2B0));
+    (ORIGINAL(reinterpret_cast<void *>(0x0071F2B0))->*DesignWinDtorTarget)();
 }
 
 /*
@@ -727,7 +728,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_designwin_wave() {
-    WaveOriginalDestructor(g_DESIGNWIN_WAVE);
+    (ORIGINAL(g_DESIGNWIN_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -737,7 +738,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_diplopop() {
-    DiploPopDtorTarget(reinterpret_cast<void *>(0x00733990));
+    (ORIGINAL(reinterpret_cast<void *>(0x00733990))->*DiploPopDtorTarget)();
 }
 
 /*
@@ -747,7 +748,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_diplowin() {
-    DiploWinDtorTarget(reinterpret_cast<void *>(0x0073ACD8));
+    (ORIGINAL(reinterpret_cast<void *>(0x0073ACD8))->*DiploWinDtorTarget)();
 }
 
 /*
@@ -767,7 +768,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_menu_up_wave() {
-    WaveOriginalDestructor(g_MENU_UP_WAVE);
+    (ORIGINAL(g_MENU_UP_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -777,7 +778,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_menu_down_wave() {
-    WaveOriginalDestructor(g_MENU_DOWN_WAVE);
+    (ORIGINAL(g_MENU_DOWN_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -787,7 +788,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_scoot_wave() {
-    WaveOriginalDestructor(g_SCOOT_WAVE);
+    (ORIGINAL(g_SCOOT_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -797,7 +798,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_ok_wave() {
-    WaveOriginalDestructor(g_OK_WAVE);
+    (ORIGINAL(g_OK_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -807,7 +808,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_passover_wave() {
-    WaveOriginalDestructor(g_PASSOVER_WAVE);
+    (ORIGINAL(g_PASSOVER_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -837,7 +838,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_famewin() {
-    FameWinDtorTarget(reinterpret_cast<void *>(0x0074DAF8));
+    (ORIGINAL(reinterpret_cast<void *>(0x0074DAF8))->*FameWinDtorTarget)();
 }
 
 /*
@@ -3727,7 +3728,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_infowin() {
-    InfoWinDtorTarget(reinterpret_cast<void *>(0x007AD2A0));
+    (ORIGINAL(reinterpret_cast<void *>(0x007AD2A0))->*InfoWinDtorTarget)();
 }
 
 /*
@@ -3737,7 +3738,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_maininterface() {
-    MainInterfaceDtorTarget(reinterpret_cast<void *>(0x007AE820));
+    (ORIGINAL(reinterpret_cast<void *>(0x007AE820))->*MainInterfaceDtorTarget)();
 }
 
 /*
@@ -3747,7 +3748,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_maininterface_wave() {
-    WaveOriginalDestructor(g_MAININTERFACE_WAVE);
+    (ORIGINAL(g_MAININTERFACE_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -3767,7 +3768,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_messagewin() {
-    MessageWinDtorTarget(reinterpret_cast<void *>(0x007F67F8));
+    (ORIGINAL(reinterpret_cast<void *>(0x007F67F8))->*MessageWinDtorTarget)();
 }
 
 /*
@@ -3787,7 +3788,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_monuwin() {
-    MonuWinDtorTarget(reinterpret_cast<void *>(0x007F9F58));
+    (ORIGINAL(reinterpret_cast<void *>(0x007F9F58))->*MonuWinDtorTarget)();
 }
 
 /*
@@ -3797,7 +3798,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_multiwin() {
-    MultiWinDtorTarget(reinterpret_cast<void *>(0x007FD648));
+    (ORIGINAL(reinterpret_cast<void *>(0x007FD648))->*MultiWinDtorTarget)();
 }
 
 /*
@@ -3807,7 +3808,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_multiwin_wave() {
-    WaveOriginalDestructor(g_MULTIWIN_WAVE);
+    (ORIGINAL(g_MULTIWIN_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -3817,7 +3818,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_netmsg1() {
-    NetMsgDtorTarget(reinterpret_cast<void *>(0x00805338));
+    (ORIGINAL(reinterpret_cast<void *>(0x00805338))->*NetMsgDtorTarget)();
 }
 
 /*
@@ -3827,7 +3828,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_netmsg2() {
-    NetMsgDtorTarget(reinterpret_cast<void *>(0x007FFF80));
+    (ORIGINAL(reinterpret_cast<void *>(0x007FFF80))->*NetMsgDtorTarget)();
 }
 
 /*
@@ -3837,7 +3838,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_netwin() {
-    NetWinDtorTarget(reinterpret_cast<void *>(0x0080A6F8));
+    (ORIGINAL(reinterpret_cast<void *>(0x0080A6F8))->*NetWinDtorTarget)();
 }
 
 /*
@@ -3847,7 +3848,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_newtechwin() {
-    NewTechWinDtorTarget(reinterpret_cast<void *>(0x00811E40));
+    (ORIGINAL(reinterpret_cast<void *>(0x00811E40))->*NewTechWinDtorTarget)();
 }
 
 /*
@@ -3857,7 +3858,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_pickwin() {
-    PickWinDtorTarget(reinterpret_cast<void *>(0x00822718));
+    (ORIGINAL(reinterpret_cast<void *>(0x00822718))->*PickWinDtorTarget)();
 }
 
 /*
@@ -3867,7 +3868,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_prefwin() {
-    PrefWinDtorTarget(reinterpret_cast<void *>(0x008578D8));
+    (ORIGINAL(reinterpret_cast<void *>(0x008578D8))->*PrefWinDtorTarget)();
 }
 
 /*
@@ -3887,7 +3888,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_quaylewin() {
-    QuayleWinDtorTarget(reinterpret_cast<void *>(0x00872CB0));
+    (ORIGINAL(reinterpret_cast<void *>(0x00872CB0))->*QuayleWinDtorTarget)();
 }
 
 /*
@@ -3897,7 +3898,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_reportif() {
-    ReportIfDtorTarget(reinterpret_cast<void *>(0x00885F38));
+    (ORIGINAL(reinterpret_cast<void *>(0x00885F38))->*ReportIfDtorTarget)();
 }
 
 /*
@@ -3907,7 +3908,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_reportwin() {
-    ReportWinDtorTarget(reinterpret_cast<void *>(0x00876478));
+    (ORIGINAL(reinterpret_cast<void *>(0x00876478))->*ReportWinDtorTarget)();
 }
 
 /*
@@ -3917,7 +3918,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_socialwinparent() {
-    SocialWinDtorTarget(reinterpret_cast<void *>(0x008A6270));
+    (ORIGINAL(reinterpret_cast<void *>(0x008A6270))->*SocialWinDtorTarget)();
 }
 
 /*
@@ -3927,7 +3928,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_statuswin() {
-    StatusWinDtorTarget(reinterpret_cast<void *>(0x008C5568));
+    (ORIGINAL(reinterpret_cast<void *>(0x008C5568))->*StatusWinDtorTarget)();
 }
 
 /*
@@ -3937,7 +3938,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_tutwin() {
-    TutWinDtorTarget(reinterpret_cast<void *>(0x008C6E68));
+    (ORIGINAL(reinterpret_cast<void *>(0x008C6E68))->*TutWinDtorTarget)();
 }
 
 /*
@@ -3947,7 +3948,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_vehdraw_caviar() {
-    CaviarCloseTarget(reinterpret_cast<void *>(0x008CC828));
+    (ORIGINAL(reinterpret_cast<void *>(0x008CC828))->*CaviarCloseTarget)();
 }
 
 /*
@@ -3967,7 +3968,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_worldwin() {
-    WorldWinDtorTarget(reinterpret_cast<void *>(0x008E9F60));
+    (ORIGINAL(reinterpret_cast<void *>(0x008E9F60))->*WorldWinDtorTarget)();
 }
 
 /*
@@ -3977,7 +3978,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_wave_device() {
-    Wave_DeviceDtorTarget(reinterpret_cast<void *>(0x0090D978));
+    (ORIGINAL(reinterpret_cast<void *>(0x0090D978))->*Wave_DeviceDtorTarget)();
 }
 
 /*
@@ -3987,7 +3988,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_midi_device() {
-    Midi_DeviceDtorTarget(reinterpret_cast<void *>(0x0090D950));
+    (ORIGINAL(reinterpret_cast<void *>(0x0090D950))->*Midi_DeviceDtorTarget)();
 }
 
 /*
@@ -3997,7 +3998,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_wave_in_device() {
-    Wave_In_DeviceDtorTarget(reinterpret_cast<void *>(0x0090DB50));
+    (ORIGINAL(reinterpret_cast<void *>(0x0090DB50))->*Wave_In_DeviceDtorTarget)();
 }
 
 /*
@@ -4007,7 +4008,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_console_timer() {
-    TimeDtorTarget(reinterpret_cast<void *>(0x00939E88));
+    (ORIGINAL(reinterpret_cast<void *>(0x00939E88))->*TimeDtorTarget)();
 }
 
 /*
@@ -4027,7 +4028,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_netdaemon() {
-    NetDaemonDtorTarget(reinterpret_cast<void *>(0x0093CD90));
+    (ORIGINAL(reinterpret_cast<void *>(0x0093CD90))->*NetDaemonDtorTarget)();
 }
 
 /*
@@ -4057,7 +4058,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_top_menu_wave() {
-    WaveOriginalDestructor(g_TOP_MENU_WAVE);
+    (ORIGINAL(g_TOP_MENU_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -4077,7 +4078,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_crash_landing_wave() {
-    WaveOriginalDestructor(g_CRASH_LANDING_WAVE);
+    (ORIGINAL(g_CRASH_LANDING_WAVE)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -4087,7 +4088,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_wave_general() {
-    WaveOriginalDestructor(g_WAVE_GENERAL);
+    (ORIGINAL(g_WAVE_GENERAL)->*WaveOriginalDestructor)();
 }
 
 /*
@@ -4097,7 +4098,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_palette1() {
-    PaletteDtorTarget(reinterpret_cast<void *>(0x0094C590));
+    (ORIGINAL(reinterpret_cast<void *>(0x0094C590))->*PaletteDtorTarget)();
 }
 
 /*
@@ -4107,7 +4108,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_palette2() {
-    PaletteDtorTarget(reinterpret_cast<void *>(0x009523A0));
+    (ORIGINAL(reinterpret_cast<void *>(0x009523A0))->*PaletteDtorTarget)();
 }
 
 /*
@@ -4117,7 +4118,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_multidebug() {
-    MultiDebugDtorTarget(reinterpret_cast<void *>(0x009B22F0));
+    (ORIGINAL(reinterpret_cast<void *>(0x009B22F0))->*MultiDebugDtorTarget)();
 }
 
 /*
@@ -4147,5 +4148,5 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_stringtable() {
-    StringsDtorTarget(reinterpret_cast<void *>(0x009B90D8));
+    (ORIGINAL(reinterpret_cast<void *>(0x009B90D8))->*StringsDtorTarget)();
 }

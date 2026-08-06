@@ -16,10 +16,11 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "editgroup.h"
 
-func_edit_box_set_text *EditBoxOriginalSetText =
-    (func_edit_box_set_text *)0x006151E0;
+func_edit_box_set_text EditBoxOriginalSetText =
+    original_method<func_edit_box_set_text>(0x006151E0);
 
 /*
 Purpose: Apply one length limit to all ten edit boxes in the group.
@@ -56,7 +57,7 @@ Status: Complete
 void EditGroup::set_text(char *text, int index) {
     void *const box = boxes_[index];
     if (box) {
-        EditBoxOriginalSetText(box, text);
+        (ORIGINAL(box)->*EditBoxOriginalSetText)(text);
     }
 }
 

@@ -16,9 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "popmenu.h"
 
-func_base_pop_init *BasePopOriginalInit = (func_base_pop_init *)0x006015B0;
+func_base_pop_init BasePopOriginalInit = original_method<func_base_pop_init>(0x006015B0);
 
 /*
 Purpose: Initialise the pop-up menu with the base defaults.
@@ -27,7 +28,7 @@ Return Value: whatever BasePop::init returns
 Status: Complete
 */
 int PopMenu::init() {
-    return BasePopOriginalInit(this, 0, 0);
+    return (ORIGINAL(this)->*BasePopOriginalInit)(0, 0);
 }
 
 int __fastcall pop_menu_init_redirect(PopMenu *self, void *) {

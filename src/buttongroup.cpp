@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "buttongroup.h"
 
 #include <new>
@@ -101,8 +102,8 @@ int __fastcall button_group_init_redirect(
     return group_id;
 }
 
-func_button_group_click *ButtonGroupOriginalButtonClick =
-    (func_button_group_click *)0x0062B8A0;
+func_button_group_click ButtonGroupOriginalButtonClick =
+    original_method<func_button_group_click>(0x0062B8A0);
 
 /*
 Purpose: Activate a button in the group, suppressing the group's own
@@ -115,7 +116,7 @@ int ButtonGroup::set(int button_id, int notify) {
     if (!notify) {
         field_90_ = 1;
     }
-    const int result = ButtonGroupOriginalButtonClick(this, button_id);
+    const int result = (ORIGINAL(this)->*ButtonGroupOriginalButtonClick)(button_id);
     field_90_ = 0;
     return result;
 }

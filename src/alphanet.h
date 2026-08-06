@@ -9,6 +9,8 @@
  */
 #pragma once
 
+#include "original_seam.h"
+
 class DLLEXPORT AlphaNet {
  public:
   int pid_2_idx(uint32_t process_id);
@@ -38,5 +40,5 @@ void __fastcall alpha_net_close_redirect(AlphaNet *self, void *);
 
 // The legacy body tail-jumps into Net::close with this unchanged; that body
 // is 570 bytes with three call targets and remains an original dependency.
-typedef void(__thiscall func_net_close)(void *);
-extern func_net_close *NetCloseOriginal;
+typedef void (OriginalObject::*func_net_close)();
+extern func_net_close NetCloseOriginal;

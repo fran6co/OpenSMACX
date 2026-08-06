@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "caviar.h"
 
  /*
@@ -59,8 +61,8 @@ void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int 
 // SubInterface::release_iface_mode is not recovered, and the interface it
 // acts on is a global the original reaches at a fixed address. Both are
 // rebindable so the reset can be observed without either being present.
-typedef void (__thiscall func_release_iface_mode)(void *);
-extern func_release_iface_mode *SubInterfaceOriginalReleaseIfaceMode;
+typedef void (OriginalObject::*func_release_iface_mode)();
+extern func_release_iface_mode SubInterfaceOriginalReleaseIfaceMode;
 extern void *SubInterfaceGlobal;
 
 void __fastcall status_win_reset_redirect(StatusWin *self, void *);

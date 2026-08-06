@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "original_seam.h"
 #include "scroll_oracle.h"
 
 #include "runtime_oracle.h"
@@ -86,15 +87,12 @@ bool equivalent(const ScrollFixture &legacy, const ScrollFixture &source,
 
 // GCC emits the correct ECX/stack ABI for these raw thiscall pointers but
 // warns because they are not C++ member-pointer types.
-typedef uint32_t (__thiscall *OriginalNoArg)(Scroll *);
-typedef uint32_t (__thiscall *OriginalOneArg)(Scroll *, int);
-typedef uint32_t (__thiscall *OriginalTwoArgs)(Scroll *, int, int);
-typedef uint32_t (__thiscall *OriginalRectInit)(
-    Scroll *, RECT *, Win *, int, int);
-typedef uint32_t (__thiscall *OriginalAxisInit)(
-    Scroll *, int, int, int, Win *, int);
-typedef uint32_t (__thiscall *OriginalSprites)(
-    Scroll *, Sprite *, Sprite *, Sprite *);
+typedef uint32_t (OriginalObject::*OriginalNoArg)();
+typedef uint32_t (OriginalObject::*OriginalOneArg)(int);
+typedef uint32_t (OriginalObject::*OriginalTwoArgs)(int, int);
+typedef uint32_t (OriginalObject::*OriginalRectInit)(RECT *, Win *, int, int);
+typedef uint32_t (OriginalObject::*OriginalAxisInit)(int, int, int, Win *, int);
+typedef uint32_t (OriginalObject::*OriginalSprites)(Sprite *, Sprite *, Sprite *);
 
 struct ScrollCloseButtonTrace {
     uint32_t calls;

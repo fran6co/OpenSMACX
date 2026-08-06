@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "basebutton.h"
 
  /*
@@ -52,8 +54,8 @@ int __fastcall button_group_init_redirect(
 // button vtables and is not recovered yet, so set() reaches it at its
 // canonical address. Rebindable so tests can observe the call without the
 // original being present.
-typedef int (__thiscall func_button_group_click)(ButtonGroup *, int);
-extern func_button_group_click *ButtonGroupOriginalButtonClick;
+typedef int (OriginalObject::*func_button_group_click)(int);
+extern func_button_group_click ButtonGroupOriginalButtonClick;
 
 int __fastcall button_group_set_redirect(ButtonGroup *self, void *,
                                          int button_id, int notify);

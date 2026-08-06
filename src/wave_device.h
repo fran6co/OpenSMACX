@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "vector_teardown.h"
 
 class Wave;
@@ -126,8 +128,8 @@ static_assert(sizeof(WaveControlGroup) == 0x18, "group records stride 24 bytes")
 // The list-insert helper add_to_group threads new waves through: not yet
 // source-owned, so it stays a rebindable dependency. Its receiver is the
 // address of the group's head field.
-typedef void(__thiscall func_wave_group_insert)(void *group_head, Wave *wave);
-extern func_wave_group_insert *WaveDeviceGroupInsert;
+typedef void (OriginalObject::*func_wave_group_insert)(Wave *wave);
+extern func_wave_group_insert WaveDeviceGroupInsert;
 
 // The device factory/destroy hooks: two more function-pointer slots beside
 // the creation hook the waves use, consulted by the device lifecycle. The
@@ -142,8 +144,8 @@ extern func_wave_device_destroy **WaveDeviceDestroySlot;
 // The per-group construct/teardown pair the device's own lifetime hands to
 // the CRT vector iterators; both stay rebindable while they double as the
 // iterator arguments.
-extern func_thiscall_teardown *WaveControlGroupOriginalCtor;
-extern func_thiscall_teardown *WaveControlGroupOriginalDtor;
+extern func_thiscall_teardown WaveControlGroupOriginalCtor;
+extern func_thiscall_teardown WaveControlGroupOriginalDtor;
 
 void __fastcall wave_control_group_ctor_redirect(WaveControlGroup *self,
                                                  void *);

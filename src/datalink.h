@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "graphicwin.h"
 
  /*
@@ -101,9 +103,8 @@ void __fastcall datalink_close_redirect(Datalink *self, void *);
 // yet source-owned; every help_* forwarder below dispatches through it
 // against the fixed-address Datalink singleton, so both the exec entry point
 // and the singleton object are seams here rather than baked-in literals.
-typedef void(__thiscall func_datalink_exec)(void *datalink, unsigned int topic,
-                                            int index);
-extern func_datalink_exec *DatalinkExec;
+typedef void (OriginalObject::*func_datalink_exec)(unsigned int topic, int index);
+extern func_datalink_exec DatalinkExec;
 
 // The Datalink singleton the forwarders dispatch against - plain data, not a
 // call target, so it stays an unclassified rebindable seam rather than a

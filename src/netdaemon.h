@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "alphanet.h"
 
  /*
@@ -43,11 +45,10 @@ class DLLEXPORT NetDaemon : AlphaNet {
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the
 // daemon reads from lives at a fixed address.
-typedef int (__thiscall func_net_get)(void *net, unsigned long *a, unsigned long *b);
-typedef void (__thiscall func_process_message)(NetDaemon *self, char *message,
-                                               unsigned long a, int b);
-extern func_net_get *NetDaemonNetGet;
-extern func_process_message *NetDaemonProcessMessage;
+typedef int (OriginalObject::*func_net_get)(unsigned long *a, unsigned long *b);
+typedef void (OriginalObject::*func_process_message)(char *message, unsigned long a, int b);
+extern func_net_get NetDaemonNetGet;
+extern func_process_message NetDaemonProcessMessage;
 extern void *NetDaemonNet;
 
 int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *);
@@ -81,10 +82,8 @@ uint32_t __fastcall net_daemon_unlock_veh_redirect(NetDaemon *self, void *);
 // forwarders below all funnel into it, loading the same daemon at 0x0093CD90
 // that NetDaemonNet already binds above, and differ only in the opcode (and,
 // for synch_diplo, which of the two leading arguments carries which value).
-typedef void(__thiscall func_net_daemon_synch)(void *daemon, int16_t opcode,
-                                               int a, int b, int c, char *text,
-                                               int d, int16_t flags);
-extern func_net_daemon_synch *NetDaemonSynch;
+typedef void (OriginalObject::*func_net_daemon_synch)(int16_t opcode, int a, int b, int c, char *text, int d, int16_t flags);
+extern func_net_daemon_synch NetDaemonSynch;
 
 DLLEXPORT void __cdecl synch_veh(int id);
 DLLEXPORT void __cdecl synch_base(int id);

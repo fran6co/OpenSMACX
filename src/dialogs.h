@@ -8,6 +8,8 @@
  * (at your option) any later version.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "dialog.h"
 #include "graphicwin.h"
 
@@ -53,10 +55,10 @@ class DLLEXPORT Dialogs {
 };
 
 // Neither delegate target is recovered yet.
-typedef int (__thiscall func_dialog_item)(Dialog *, char *, int);
-typedef int (__thiscall func_list_box_item)(void *, char *, int);
-extern func_dialog_item *DialogOriginalItem;
-extern func_list_box_item *ListBoxOriginalItem;
+typedef int (OriginalObject::*func_dialog_item)(char *, int);
+typedef int (OriginalObject::*func_list_box_item)(char *, int);
+extern func_dialog_item DialogOriginalItem;
+extern func_list_box_item ListBoxOriginalItem;
 
 int __fastcall dialogs_item_redirect(Dialogs *self, void *, char *text, int index);
 int __fastcall dialogs_get_num_items_redirect(Dialogs *self, void *);
@@ -64,15 +66,15 @@ int __fastcall dialogs_get_num_items_redirect(Dialogs *self, void *);
 void __fastcall dialogs_close_redirect(Dialogs *self, void *);
 
 // The SpriteBox and ListBox handlers these forward to are not recovered.
-typedef void (__thiscall func_dialogs_fwd2)(void *self, int a1, int a2);
-typedef void (__thiscall func_dialogs_fwd1)(void *self, int a1);
-extern func_dialogs_fwd2 *DialogsSpriteBoxOnRightDown;
-extern func_dialogs_fwd2 *DialogsSpriteBoxOnRightDoubleClick;
-extern func_dialogs_fwd2 *DialogsSpriteBoxOnLeftUp;
-extern func_dialogs_fwd2 *DialogsSpriteBoxOnRightUp;
-extern func_dialogs_fwd2 *DialogsSpriteBoxOnRightClick;
-extern func_dialogs_fwd2 *DialogsListBoxOnScrolling;
-extern func_dialogs_fwd1 *DialogsListBoxOnMousewheel;
+typedef void (OriginalObject::*func_dialogs_fwd2)(int a1, int a2);
+typedef void (OriginalObject::*func_dialogs_fwd1)(int a1);
+extern func_dialogs_fwd2 DialogsSpriteBoxOnRightDown;
+extern func_dialogs_fwd2 DialogsSpriteBoxOnRightDoubleClick;
+extern func_dialogs_fwd2 DialogsSpriteBoxOnLeftUp;
+extern func_dialogs_fwd2 DialogsSpriteBoxOnRightUp;
+extern func_dialogs_fwd2 DialogsSpriteBoxOnRightClick;
+extern func_dialogs_fwd2 DialogsListBoxOnScrolling;
+extern func_dialogs_fwd1 DialogsListBoxOnMousewheel;
 
 void __fastcall dialogs_on_right_down_redirect(Dialogs *self, void *, int a1, int a2);
 void __fastcall dialogs_on_right_double_click_redirect(Dialogs *self, void *, int a1, int a2);
@@ -89,10 +91,10 @@ void __fastcall dialogs_on_mousewheel_redirect(Dialogs *self, void *, int a1);
 // torn down through their recovered bodies directly. operator delete is used
 // only by the scalar deleting destructor; func_operator_delete comes from
 // dialog.h.
-typedef void (__thiscall func_dialogs_teardown)(void *self);
-extern func_dialogs_teardown *DialogsEditGroupDestructor;  // 0x00611A20
-extern func_dialogs_teardown *DialogsSpriteBoxDestructor;  // 0x00610120
-extern func_dialogs_teardown *DialogsCheckBoxDestructor;   // 0x0060E740
+typedef void (OriginalObject::*func_dialogs_teardown)();
+extern func_dialogs_teardown DialogsEditGroupDestructor;  // 0x00611A20
+extern func_dialogs_teardown DialogsSpriteBoxDestructor;  // 0x00610120
+extern func_dialogs_teardown DialogsCheckBoxDestructor;   // 0x0060E740
 extern func_operator_delete *DialogsOperatorDelete;        // 0x0064557F
 
 // Virtual tables ~Dialogs stages: three into the GraphicWin/Win virtual base,

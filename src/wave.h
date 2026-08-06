@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "vector_teardown.h"
 
  /*
@@ -156,11 +158,10 @@ void __fastcall wave_init_redirect(Wave *self, void *, char *a1, uint32_t a2);
 // from the doubly-linked wave chain whose end slots the two chain seams name.
 // Which end is "head" is inferred from the unlink shape (the slot written
 // when the 0x44 neighbour is null); nothing else pins the labels.
-typedef int(__thiscall func_wave_device_pull_from_group)(void *device,
-                                                         Wave *wave);
+typedef int (OriginalObject::*func_wave_device_pull_from_group)(Wave *wave);
 typedef void(__cdecl func_operator_delete)(void *block);
 typedef void(__cdecl func_wave_device_release)(void *device);
-extern func_wave_device_pull_from_group *WaveDevicePullFromGroup;
+extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
 extern void *WaveDeviceGlobal;
 extern func_operator_delete *WaveOperatorDelete;
 extern func_wave_device_release **WaveDeviceReleaseSlot;
@@ -177,11 +178,10 @@ extern Wave **WaveChainTail;
 // WaveOperatorNew and its typedef now live in "vector_teardown.h" above -
 // the seam outgrew this header once GraphicWin::init needed it too.
 extern uint32_t *WaveDeviceGroupVolumes;
-typedef int(__thiscall func_wave_device_is_group_disabled)(void *device,
-                                                           uint32_t slot);
-typedef int(__thiscall func_wave_original_load)(Wave *wave);
-extern func_wave_device_is_group_disabled *WaveDeviceIsGroupDisabled;
-extern func_wave_original_load *WaveOriginalLoad;
+typedef int (OriginalObject::*func_wave_device_is_group_disabled)(uint32_t slot);
+typedef int (OriginalObject::*func_wave_original_load)();
+extern func_wave_device_is_group_disabled WaveDeviceIsGroupDisabled;
+extern func_wave_original_load WaveOriginalLoad;
 
 // load()'s remaining surface: the device-creation hook lives in the slot
 // right beside the release hook, behind the same guard dword, and builds the
@@ -191,10 +191,9 @@ extern func_wave_original_load *WaveOriginalLoad;
 typedef int(__cdecl func_wave_device_create)(void **device_slot,
                                              const char *fname, int mode);
 extern func_wave_device_create **WaveDeviceCreateSlot;
-typedef int(__thiscall func_sound_original_load)(Wave *wave,
-                                                 const char *fname);
-extern func_sound_original_load *SoundOriginalLoad;
-typedef void(__thiscall func_sound_set_type)(Wave *wave, uint32_t type);
-extern func_sound_set_type *SoundSetType;
+typedef int (OriginalObject::*func_sound_original_load)(const char *fname);
+extern func_sound_original_load SoundOriginalLoad;
+typedef void (OriginalObject::*func_sound_set_type)(uint32_t type);
+extern func_sound_set_type SoundSetType;
 
 void __fastcall wave_dtor_redirect(Wave *self, void *);

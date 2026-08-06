@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "graphicwin.h"
 
  /*
@@ -73,8 +75,8 @@ void __fastcall map_win_do_image_buttons_redirect(MapWin *self, void *);
 
 // MapWin::main_caption sets the date on the one MainInterface the original
 // keeps at a fixed address, using a caption that also lives at one.
-typedef void (__thiscall func_set_date)(void *, char *);
-extern func_set_date *MainInterfaceOriginalSetDate;
+typedef void (OriginalObject::*func_set_date)(char *);
+extern func_set_date MainInterfaceOriginalSetDate;
 extern void *MainInterfaceGlobal;
 extern char *MapWinMainCaption;
 
@@ -90,8 +92,8 @@ int __fastcall map_win_unk2_redirect(MapWin *self, void *);
 
 // MapWin's click handler and the input-enable flag it gates on are not
 // recovered; the flag lives at a fixed address and is rebindable for tests.
-typedef void (__thiscall func_map_win_click)(MapWin *self, int a1, int a2, int button);
-extern func_map_win_click *MapWinClick;
+typedef void (OriginalObject::*func_map_win_click)(int a1, int a2, int button);
+extern func_map_win_click MapWinClick;
 extern int32_t *MapWinInputEnabled;
 
 void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2);
@@ -127,9 +129,8 @@ constexpr size_t MapWinActiveOffset = 0x1DD74;
 // MapWin::compute_clip, GraphicWin::soft_update and do_all_draws, so it stays
 // original; bound through a rebindable seam so tests can substitute a probe
 // and the seam can later point at a recovered body.
-typedef void(__thiscall func_map_win_draw_radius)(
-    MapWin *self, int x_coord, int y_coord, int a3, int draw_type);
-extern func_map_win_draw_radius *MapWinOriginalDrawRadius;  // 0x0046A2A0
+typedef void (OriginalObject::*func_map_win_draw_radius)(int x_coord, int y_coord, int a3, int draw_type);
+extern func_map_win_draw_radius MapWinOriginalDrawRadius;  // 0x0046A2A0
 
 // Free functions, __cdecl (the `ret` at 0x0046AF85 / 0x0046B185 pops nothing).
 // Redirected directly with no adapter; see src/mapwin.cpp.

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "playerlock.h"
 #include "lock.h"
 
@@ -81,7 +82,7 @@ Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
 int PlayerLock::add_lock(int factionID, int flags, int x, int y) {
-    return LockSquareLock(&entries_[1], factionID, flags | 0x10, x, y);
+    return (ORIGINAL(&entries_[1])->*LockSquareLock)(factionID, flags | 0x10, x, y);
 }
 
 int __fastcall player_lock_add_lock_redirect(PlayerLock *self, void *,
@@ -103,7 +104,7 @@ Status: Complete
 */
 void PlayerLock::unlock(int factionID) {
     for (int entry = 0; entry < 2; ++entry) {
-        LockSquareUnlock(&entries_[entry], factionID);
+        (ORIGINAL(&entries_[entry])->*LockSquareUnlock)(factionID);
     }
     active_ = 0;
 }

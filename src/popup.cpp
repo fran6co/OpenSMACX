@@ -16,10 +16,11 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "popup.h"
 #include "wave.h"
 
-func_base_pop_close *BasePopOriginalClose = (func_base_pop_close *)0x00600F00;
+func_base_pop_close BasePopOriginalClose = original_method<func_base_pop_close>(0x00600F00);
 
 /*
 Purpose: Close the popup - its scroll bar first, then the popup base.
@@ -29,15 +30,15 @@ Status: Complete
 */
 void Popup::close() {
     scroll_.close();
-    BasePopOriginalClose(this);
+    (ORIGINAL(this)->*BasePopOriginalClose)();
 }
 
 void __fastcall popup_close_redirect(Popup *self, void *) {
     self->close();
 }
 
-func_popup_start_full *PopupOriginalStartFull =
-    (func_popup_start_full *)0x00406380;
+func_popup_start_full PopupOriginalStartFull =
+    original_method<func_popup_start_full>(0x00406380);
 
 /*
 Purpose: The five-argument start form, forwarding to the six-argument one with
@@ -47,7 +48,7 @@ Return Value: n/a
 Status: Complete
 */
 void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5) {
-    PopupOriginalStartFull(this, a1, a2, a3, a4, a5, nullptr);
+    (ORIGINAL(this)->*PopupOriginalStartFull)(a1, a2, a3, a4, a5, nullptr);
 }
 
 void __fastcall popup_start_redirect(Popup *self, void *, char *a1,
@@ -64,8 +65,7 @@ Return Value: n/a
 Status: Complete
 */
 void Popup::start(const char *label) {
-    PopupOriginalStartFull(this, PopupStartCaption, label, -1, nullptr, 0,
-                           nullptr);
+    (ORIGINAL(this)->*PopupOriginalStartFull)(PopupStartCaption, label, -1, nullptr, 0, nullptr);
 }
 
 /*
@@ -75,8 +75,7 @@ Return Value: n/a
 Status: Complete
 */
 void Popup::start(const char *label, int value) {
-    PopupOriginalStartFull(this, PopupStartCaption, label, -1, nullptr, value,
-                           nullptr);
+    (ORIGINAL(this)->*PopupOriginalStartFull)(PopupStartCaption, label, -1, nullptr, value, nullptr);
 }
 
 void __fastcall popup_start_label_redirect(Popup *self, void *, const char *label) {
@@ -434,10 +433,10 @@ Wave *PopupWaveBank = reinterpret_cast<Wave *>(0x0074C5F0);
 int32_t *PopupWaveLastIndex = reinterpret_cast<int32_t *>(0x0074DAA4);
 void **PopupWaveOwnerSlot = reinterpret_cast<void **>(0x0074DAA0);
 FX *PopupWaveFx = reinterpret_cast<FX *>(0x00749CF8);
-func_popup_wave_query *PopupWaveIsPlaying = (func_popup_wave_query *)0x004C6B10;
-func_popup_wave_query *PopupWaveLoad = (func_popup_wave_query *)0x004C6CE0;
-func_popup_wave_query *PopupWavePlay = (func_popup_wave_query *)0x004C6920;
-func_popup_fx_play *PopupFxPlay = (func_popup_fx_play *)0x00446A00;
+func_popup_wave_query PopupWaveIsPlaying = original_method<func_popup_wave_query>(0x004C6B10);
+func_popup_wave_query PopupWaveLoad = original_method<func_popup_wave_query>(0x004C6CE0);
+func_popup_wave_query PopupWavePlay = original_method<func_popup_wave_query>(0x004C6920);
+func_popup_fx_play PopupFxPlay = original_method<func_popup_fx_play>(0x00446A00);
 func_popup_time_source **PopupWaveTimeSlot = (func_popup_time_source **)0x00669368;
 
 /*
@@ -483,12 +482,12 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
     }
     const int32_t chosen = popup->wave_index_;
     if (*PopupWaveFlags & 0x400) {
-        if (!PopupWaveIsPlaying(PopupWaveVoice) &&
-            !PopupWaveIsPlaying(PopupWaveBank + *PopupWaveLastIndex)) {
+        if (!(ORIGINAL(PopupWaveVoice)->*PopupWaveIsPlaying)() &&
+            !(ORIGINAL(PopupWaveBank + *PopupWaveLastIndex)->*PopupWaveIsPlaying)()) {
             *PopupWaveLastIndex = chosen;
             Wave *const wave = PopupWaveBank + chosen;
-            PopupWaveLoad(wave);
-            PopupWavePlay(wave);
+            (ORIGINAL(wave)->*PopupWaveLoad)();
+            (ORIGINAL(wave)->*PopupWavePlay)();
         }
     }
     if (popup->wave_index_ == 0x19) {
@@ -499,7 +498,7 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
         }
     }
     if (popup->wave_index_ == 0x10) {
-        PopupFxPlay(PopupWaveFx, 0x38);
+        (ORIGINAL(PopupWaveFx)->*PopupFxPlay)(0x38);
     }
 }
 

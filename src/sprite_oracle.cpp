@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "sprite_oracle.h"
 
 #include "runtime_oracle.h"
@@ -27,7 +28,7 @@ const runtime_oracle::ClassSpec SpriteSpec = {
 
 // GCC emits the correct ECX ABI for this raw thiscall pointer but warns
 // because it is not a C++ member-pointer type.
-typedef uint32_t (__thiscall *OriginalNoArg)(Sprite *);
+typedef uint32_t (OriginalObject::*OriginalNoArg)();
 
 int FreeCalls = 0;
 void *FreeTargets[4] = {};
@@ -167,7 +168,7 @@ bool run_sprite_oracle_suite() {
 
 namespace {
 
-typedef void (__thiscall *OriginalClose)(Sprite *);
+typedef void (OriginalObject::*OriginalClose)();
 
 constexpr uintptr_t SpriteCloseAddress = 0x005E3820U;
 

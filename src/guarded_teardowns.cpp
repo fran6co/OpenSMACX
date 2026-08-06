@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.h"
+#include "original_seam.h"
 #include "guarded_teardowns.h"
 
 /*
@@ -49,23 +50,23 @@ void *TeardownObject00939444 = reinterpret_cast<void *>(0x00939444);
 void *TeardownObject009403E0 = reinterpret_cast<void *>(0x009403E0);
 void *TeardownObject009B7490 = reinterpret_cast<void *>(0x009B7490);
 void *TeardownObject009BEAE8 = reinterpret_cast<void *>(0x009BEAE8);
-func_thiscall_teardown *TeardownTarget00420F90 =
-    (func_thiscall_teardown *)0x00420F90;
-func_thiscall_teardown *TeardownTarget004327A0 =
-    (func_thiscall_teardown *)0x004327A0;
-func_thiscall_teardown *TeardownTarget0048BD80 =
-    (func_thiscall_teardown *)0x0048BD80;
-func_thiscall_teardown *TeardownTarget0051D9F0 =
-    (func_thiscall_teardown *)0x0051D9F0;
-func_thiscall_teardown *TeardownTarget005D4DD0 =
-    (func_thiscall_teardown *)0x005D4DD0;
+func_thiscall_teardown TeardownTarget00420F90 =
+    original_method<func_thiscall_teardown>(0x00420F90);
+func_thiscall_teardown TeardownTarget004327A0 =
+    original_method<func_thiscall_teardown>(0x004327A0);
+func_thiscall_teardown TeardownTarget0048BD80 =
+    original_method<func_thiscall_teardown>(0x0048BD80);
+func_thiscall_teardown TeardownTarget0051D9F0 =
+    original_method<func_thiscall_teardown>(0x0051D9F0);
+func_thiscall_teardown TeardownTarget005D4DD0 =
+    original_method<func_thiscall_teardown>(0x005D4DD0);
 void __thiscall sprite_close_default(void *object) {
     static_cast<Sprite *>(object)->close();
 }
-func_thiscall_teardown *TeardownTarget005E3820 = &sprite_close_default;
+func_thiscall_teardown TeardownTarget005E3820 = &sprite_close_default;
 
 /*
-Purpose: ?timer_callback_daemon@BattleWin@@QAAXHH@Z - run 1 teardown(s) on fixed globals,
+Purpose: ?timer_callback_daemon@BattleWin@@QAAXHH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 00422EB0
@@ -78,7 +79,7 @@ void __cdecl teardown_00422eb0() {
 }
 
 /*
-Purpose: ?timer_callback_daemon@BattleWin@@QAAXH@Z - run 1 teardown(s) on fixed globals,
+Purpose: ?timer_callback_daemon@BattleWin@@QAAXH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 00422EC0
@@ -91,7 +92,7 @@ void __cdecl teardown_00422ec0() {
 }
 
 /*
-Purpose: ?passover_callback@@YAXXZ - run 1 teardown(s) on fixed globals,
+Purpose: ?passover_callback@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 004456A0
@@ -104,7 +105,7 @@ void __cdecl teardown_004456a0() {
 }
 
 /*
-Purpose: ??__Fg_MAPWIN@@YAXXZ - run 2 teardown(s) on fixed globals,
+Purpose: ??__Fg_MAPWIN@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 004620A0
@@ -112,12 +113,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_g_mapwin() {
-    TeardownTarget00420F90(TeardownObject007F5ACC);
-    TeardownTarget005D4DD0(TeardownObject007F5ACC);
+    (ORIGINAL(TeardownObject007F5ACC)->*TeardownTarget00420F90)();
+    (ORIGINAL(TeardownObject007F5ACC)->*TeardownTarget005D4DD0)();
 }
 
 /*
-Purpose: ??__Fg_PLANWIN@@YAXXZ - run 2 teardown(s) on fixed globals,
+Purpose: ??__Fg_PLANWIN@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 0048AE20
@@ -125,12 +126,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_g_planwin() {
-    TeardownTarget0048BD80(TeardownObject00856DC0);
-    TeardownTarget005D4DD0(TeardownObject00856DC0);
+    (ORIGINAL(TeardownObject00856DC0)->*TeardownTarget0048BD80)();
+    (ORIGINAL(TeardownObject00856DC0)->*TeardownTarget005D4DD0)();
 }
 
 /*
-Purpose: ??__Eg_BOOM_BUFFER1@@YAXXZ - run 1 teardown(s) on fixed globals,
+Purpose: ??__Eg_BOOM_BUFFER1@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 00505D20
@@ -143,7 +144,7 @@ void __cdecl teardown_00505d20() {
 }
 
 /*
-Purpose: ??__Eg_BOOM_FLIC@@YAXXZ - run 1 teardown(s) on fixed globals,
+Purpose: ??__Eg_BOOM_FLIC@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 00505D30
@@ -151,11 +152,11 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_00505d30() {
-    TeardownTarget004327A0(TeardownObject0090EA68);
+    (ORIGINAL(TeardownObject0090EA68)->*TeardownTarget004327A0)();
 }
 
 /*
-Purpose: ??__Fg_CONSOLE@@YAXXZ - run 2 teardown(s) on fixed globals,
+Purpose: ??__Fg_CONSOLE@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 0050E870
@@ -163,12 +164,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_g_console() {
-    TeardownTarget0051D9F0(TeardownObject00939444);
-    TeardownTarget005D4DD0(TeardownObject00939444);
+    (ORIGINAL(TeardownObject00939444)->*TeardownTarget0051D9F0)();
+    (ORIGINAL(TeardownObject00939444)->*TeardownTarget005D4DD0)();
 }
 
 /*
-Purpose: sub_589890 - run 1 teardown(s) on fixed globals,
+Purpose: sub_589890 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 00589890
@@ -196,7 +197,7 @@ void __cdecl teardown_g_buffer_sprite() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B37CC = static_cast<uint8_t>(flags | 2);
-    TeardownTarget005E3820(g_BUFFER_SPRITE);
+    (ORIGINAL(g_BUFFER_SPRITE)->*TeardownTarget005E3820)();
 }
 
 /*
@@ -255,7 +256,7 @@ void __cdecl teardown_g_radiobutton_sprite_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 1);
-    TeardownTarget005E3820(g_RADIOBUTTON_SPRITE_1);
+    (ORIGINAL(g_RADIOBUTTON_SPRITE_1)->*TeardownTarget005E3820)();
 }
 
 /*
@@ -274,11 +275,11 @@ void __cdecl teardown_g_radiobutton_sprite_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 2);
-    TeardownTarget005E3820(g_RADIOBUTTON_SPRITE_2);
+    (ORIGINAL(g_RADIOBUTTON_SPRITE_2)->*TeardownTarget005E3820)();
 }
 
 /*
-Purpose: ?close_class@RadioButton@@QAAXXZ - run 2 teardown(s) on fixed globals,
+Purpose: ?close_class@RadioButton@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 0060E5D0
@@ -286,8 +287,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_0060e5d0() {
-    TeardownTarget005E3820(g_RADIOBUTTON_SPRITE_2);
-    TeardownTarget005E3820(g_RADIOBUTTON_SPRITE_1);
+    (ORIGINAL(g_RADIOBUTTON_SPRITE_2)->*TeardownTarget005E3820)();
+    (ORIGINAL(g_RADIOBUTTON_SPRITE_1)->*TeardownTarget005E3820)();
 }
 
 /*
@@ -306,7 +307,7 @@ void __cdecl teardown_g_checkbox_sprite_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8F58 = static_cast<uint8_t>(flags | 1);
-    TeardownTarget005E3820(g_CHECKBOX_SPRITE_1);
+    (ORIGINAL(g_CHECKBOX_SPRITE_1)->*TeardownTarget005E3820)();
 }
 
 /*
@@ -325,11 +326,11 @@ void __cdecl teardown_g_checkbox_sprite_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8F58 = static_cast<uint8_t>(flags | 2);
-    TeardownTarget005E3820(g_CHECKBOX_SPRITE_2);
+    (ORIGINAL(g_CHECKBOX_SPRITE_2)->*TeardownTarget005E3820)();
 }
 
 /*
-Purpose: ?close_class@CheckBox@@QAAXXZ - run 2 teardown(s) on fixed globals,
+Purpose: ?close_class@CheckBox@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 0060FD60
@@ -337,8 +338,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_0060fd60() {
-    TeardownTarget005E3820(g_CHECKBOX_SPRITE_1);
-    TeardownTarget005E3820(g_CHECKBOX_SPRITE_2);
+    (ORIGINAL(g_CHECKBOX_SPRITE_1)->*TeardownTarget005E3820)();
+    (ORIGINAL(g_CHECKBOX_SPRITE_2)->*TeardownTarget005E3820)();
 }
 
 /*
@@ -357,7 +358,7 @@ void __cdecl teardown_g_filewin_sprite_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 1);
-    TeardownTarget005E3820(g_FILEWIN_SPRITE_1);
+    (ORIGINAL(g_FILEWIN_SPRITE_1)->*TeardownTarget005E3820)();
 }
 
 /*
@@ -376,7 +377,7 @@ void __cdecl teardown_g_filewin_sprite_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 2);
-    TeardownTarget005E3820(g_FILEWIN_SPRITE_2);
+    (ORIGINAL(g_FILEWIN_SPRITE_2)->*TeardownTarget005E3820)();
 }
 
 /*
@@ -395,7 +396,7 @@ void __cdecl teardown_g_filewin_sprite_3() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 4);
-    TeardownTarget005E3820(g_FILEWIN_SPRITE_3);
+    (ORIGINAL(g_FILEWIN_SPRITE_3)->*TeardownTarget005E3820)();
 }
 
 /*
@@ -454,11 +455,11 @@ void __cdecl teardown_0063bb00() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009BEAE0 = static_cast<uint8_t>(flags | 1);
-    TeardownTarget005E3820(TeardownObject009BEAE8);
+    (ORIGINAL(TeardownObject009BEAE8)->*TeardownTarget005E3820)();
 }
 
 /*
-Purpose: sub_63cef0 - run 1 teardown(s) on fixed globals,
+Purpose: sub_63cef0 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 Original Offset: 0063CEF0
@@ -466,5 +467,5 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_0063cef0() {
-    TeardownTarget005E3820(TeardownObject009BEAE8);
+    (ORIGINAL(TeardownObject009BEAE8)->*TeardownTarget005E3820)();
 }

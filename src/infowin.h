@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "original_seam.h"
+
  /*
   * InfoWin class
   *
@@ -53,7 +55,7 @@ void __fastcall info_win_change_redirect(InfoWin *self, void *, int a1);
 void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2);
 
 // InfoWin::timer_proc is not recovered yet.
-typedef void (__thiscall func_info_win_timer_proc)(InfoWin *, int);
-extern func_info_win_timer_proc *InfoWinOriginalTimerProc;
+typedef void (OriginalObject::*func_info_win_timer_proc)(int);
+extern func_info_win_timer_proc InfoWinOriginalTimerProc;
 
 void __fastcall info_win_reset_redirect(InfoWin *self, void *);

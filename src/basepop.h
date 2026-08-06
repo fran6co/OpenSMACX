@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "graphicwin.h"
 #include "dialogs.h"
 #include "flatbutton.h"
@@ -375,15 +377,14 @@ class DLLEXPORT BasePop : GraphicWin {
 
 // CheckBox::set_state_flag is not recovered; write_check reaches it on the
 // CheckBox member at 0x2228.
-typedef void (__thiscall func_set_state_flag)(void *, long);
-extern func_set_state_flag *CheckBoxOriginalSetStateFlag;
+typedef void (OriginalObject::*func_set_state_flag)(long);
+extern func_set_state_flag CheckBoxOriginalSetStateFlag;
 
 void __fastcall base_pop_write_check_redirect(BasePop *self, void *, long value);
 
 // The two-argument exec these forward to is not recovered.
-typedef int (__thiscall func_base_pop_exec)(BasePop *self, int flag,
-                                            int (__cdecl *callback)());
-extern func_base_pop_exec *BasePopExec;
+typedef int (OriginalObject::*func_base_pop_exec)(int flag, int (__cdecl *callback)());
+extern func_base_pop_exec BasePopExec;
 
 int __fastcall base_pop_exec_void_redirect(BasePop *self, void *);
 int __fastcall base_pop_exec_callback_redirect(BasePop *self, void *,

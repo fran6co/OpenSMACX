@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "original_seam.h"
 #include "font.h"
 #include "graphicwin.h"
 #include "spot.h"
@@ -43,7 +45,7 @@ static_assert(offsetof(MenuEntry, flags) == 0x8,
   */
 // Slot 0xF8 of the Menu's OWN vtable: the repaint the flag operations end on.
 // It takes no arguments and its result is discarded.
-typedef void(__thiscall func_menu_repaint)(void *self);
+typedef void (OriginalObject::*func_menu_repaint)();
 
 class DLLEXPORT Menu : GraphicWin {
  public:

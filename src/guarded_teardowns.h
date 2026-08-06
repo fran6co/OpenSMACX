@@ -55,12 +55,12 @@ extern void *TeardownObject00939444;
 extern void *TeardownObject009403E0;
 extern void *TeardownObject009B7490;
 extern void *TeardownObject009BEAE8;
-extern func_thiscall_teardown *TeardownTarget00420F90;
-extern func_thiscall_teardown *TeardownTarget004327A0;
-extern func_thiscall_teardown *TeardownTarget0048BD80;
-extern func_thiscall_teardown *TeardownTarget0051D9F0;
-extern func_thiscall_teardown *TeardownTarget005D4DD0;
-extern func_thiscall_teardown *TeardownTarget005E3820;
+extern func_thiscall_teardown TeardownTarget00420F90;
+extern func_thiscall_teardown TeardownTarget004327A0;
+extern func_thiscall_teardown TeardownTarget0048BD80;
+extern func_thiscall_teardown TeardownTarget0051D9F0;
+extern func_thiscall_teardown TeardownTarget005D4DD0;
+extern func_thiscall_teardown TeardownTarget005E3820;
 
 void __cdecl teardown_00422eb0();
 void __cdecl teardown_00422ec0();

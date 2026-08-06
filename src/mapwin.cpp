@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "mapwin.h"
 #include "console.h"
 #include <cstring>
@@ -47,7 +48,7 @@ void __fastcall map_win_do_image_buttons_redirect(MapWin *self, void *) {
     self->do_image_buttons();
 }
 
-func_set_date *MainInterfaceOriginalSetDate = (func_set_date *)0x0045BE80;
+func_set_date MainInterfaceOriginalSetDate = original_method<func_set_date>(0x0045BE80);
 void *MainInterfaceGlobal = (void *)0x007AE820;
 char *MapWinMainCaption = (char *)0x009B86A0;
 
@@ -60,7 +61,7 @@ Return Value: n/a
 Status: Complete
 */
 void MapWin::main_caption() {
-    MainInterfaceOriginalSetDate(MainInterfaceGlobal, MapWinMainCaption);
+    (ORIGINAL(MainInterfaceGlobal)->*MainInterfaceOriginalSetDate)(MapWinMainCaption);
 }
 
 void __fastcall map_win_main_caption_redirect(MapWin *self, void *) {
@@ -92,7 +93,7 @@ void __fastcall map_win_close_redirect(MapWin *self, void *) {
     self->close();
 }
 
-func_map_win_click *MapWinClick = (func_map_win_click *)0x0046D5D0;
+func_map_win_click MapWinClick = original_method<func_map_win_click>(0x0046D5D0);
 int32_t *MapWinInputEnabled = reinterpret_cast<int32_t *>(0x0090D938);
 
 /*
@@ -109,7 +110,7 @@ void MapWin::on_left_click(int a1, int a2) {
     }
     auto *const base = reinterpret_cast<MapWin *>(
         reinterpret_cast<uint8_t *>(this) - 0x21A6C);
-    MapWinClick(base, a1, a2, 0);
+    (ORIGINAL(base)->*MapWinClick)(a1, a2, 0);
 }
 
 /*
@@ -125,7 +126,7 @@ void MapWin::on_right_click(int a1, int a2) {
     }
     auto *const base = reinterpret_cast<MapWin *>(
         reinterpret_cast<uint8_t *>(this) - 0x21A6C);
-    MapWinClick(base, a1, a2, 1);
+    (ORIGINAL(base)->*MapWinClick)(a1, a2, 1);
 }
 
 void __fastcall map_win_on_left_click_redirect(MapWin *self, void *, int a1, int a2) {
@@ -177,8 +178,8 @@ int __fastcall map_win_unk2_redirect(MapWin *self, void *) {
 }
 
 MapWin **MapWinTable = reinterpret_cast<MapWin **>(0x007D3C3C);
-func_map_win_draw_radius *MapWinOriginalDrawRadius =
-    (func_map_win_draw_radius *)0x0046A2A0;
+func_map_win_draw_radius MapWinOriginalDrawRadius =
+    original_method<func_map_win_draw_radius>(0x0046A2A0);
 
 /*
 Purpose: Broadcast a single-tile redraw to every live map window. Walks the
@@ -233,7 +234,7 @@ void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
         // (x_coord, y_coord, 0, draw_type) - the pushes run right to left, so
         // the last one (`push eax`, [ebp+8]) is the first stack argument. The
         // literal 0 is this function's discriminator; see draw_tiles.
-        MapWinOriginalDrawRadius(window, x_coord, y_coord, 0, draw_type);
+        (ORIGINAL(window)->*MapWinOriginalDrawRadius)(x_coord, y_coord, 0, draw_type);
     }
 }
 
@@ -267,7 +268,7 @@ void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type) {
             }
         }
         // 0x0046B171, with `push 1` at 0x0046B16D supplying the radius.
-        MapWinOriginalDrawRadius(window, x_coord, y_coord, 1, draw_type);
+        (ORIGINAL(window)->*MapWinOriginalDrawRadius)(x_coord, y_coord, 1, draw_type);
     }
 }
 

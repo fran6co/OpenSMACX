@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "graphicwin_oracle.h"
 
 #include "graphicwin.h"
@@ -34,7 +35,7 @@ constexpr size_t TraceOffsets[] = {
     0x134, 0x138, 0x9CC, 0xA08, 0xA0C, 0xA10,
 };
 
-typedef uint32_t(__thiscall *OriginalNoArg)(GraphicWin *);
+typedef uint32_t (OriginalObject::*OriginalNoArg)();
 
 struct FakeReleaseObject {
     uintptr_t *vtable;

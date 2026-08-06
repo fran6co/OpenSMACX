@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "graphicwin.h"
 #include "buffer.h"
 #include "scroll.h"
@@ -36,11 +37,11 @@ void __thiscall buffer_subobject_close(void *self) {
     reinterpret_cast<Buffer *>(self)->close();
 }
 
-func_subobject_destructor *BufferSubobjectDestructor = &buffer_subobject_destructor;
-func_subobject_destructor *WinOriginalDestructor =
-    (func_subobject_destructor *)0x005EBC90;
-func_subobject_close *BufferSubobjectClose = &buffer_subobject_close;
-func_subobject_close *WinOriginalClose = (func_subobject_close *)0x005EB640;
+func_subobject_destructor BufferSubobjectDestructor = &buffer_subobject_destructor;
+func_subobject_destructor WinOriginalDestructor =
+    original_method<func_subobject_destructor>(0x005EBC90);
+func_subobject_close BufferSubobjectClose = &buffer_subobject_close;
+func_subobject_close WinOriginalClose = original_method<func_subobject_close>(0x005EB640);
 uint32_t *GraphicWinFieldA0CDefault = (uint32_t *)0x009B33C0;
 
 /*
@@ -102,8 +103,7 @@ int graphic_win_destructor_probe_order() { return Probe.order; }
 
 namespace {
 
-typedef uint32_t(__thiscall *func_scalar_deleting_destructor)(
-    void *, uint32_t);
+typedef uint32_t (OriginalObject::*func_scalar_deleting_destructor)(uint32_t);
 
 }  // namespace
 
@@ -118,10 +118,10 @@ Status: Complete with temporary Win close dependency
 */
 uint32_t GraphicWin::close() {
     if (WinOriginalClose) {
-        WinOriginalClose(this);
+        (ORIGINAL(this)->*WinOriginalClose)();
     }
     if (BufferSubobjectClose) {
-        BufferSubobjectClose(reinterpret_cast<uint8_t *>(this) + 0x444);
+        (ORIGINAL(reinterpret_cast<uint8_t *>(this) + 0x444)->*BufferSubobjectClose)();
     }
 
     volatile uint32_t *const ordered =
@@ -188,7 +188,7 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
     Probe.buffer_calls++;
     Probe.order = (Probe.order << 4) | 2;
     if (BufferSubobjectDestructor) {
-        BufferSubobjectDestructor(buffer_subobject);
+        (ORIGINAL(buffer_subobject)->*BufferSubobjectDestructor)();
     }
 
     void *const win_subobject = reinterpret_cast<void *>(base);
@@ -196,7 +196,7 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
     Probe.win_calls++;
     Probe.order = (Probe.order << 4) | 1;
     if (WinOriginalDestructor) {
-        WinOriginalDestructor(win_subobject);
+        (ORIGINAL(win_subobject)->*WinOriginalDestructor)();
     }
     return self;
 }
@@ -207,11 +207,10 @@ Original Offset: 005D5440
 Return Value: whatever Buffer::fill returns
 Status: Complete
 */
-func_buffer_fill *BufferOriginalFill = (func_buffer_fill *)0x005D8240;
+func_buffer_fill BufferOriginalFill = original_method<func_buffer_fill>(0x005D8240);
 
 int GraphicWin::fill(int x1, int y1, int x2, int y2, int color) {
-    return BufferOriginalFill(reinterpret_cast<uint8_t *>(this) + 0x444,
-                              x1, y1, x2, y2, color);
+    return (ORIGINAL(reinterpret_cast<uint8_t *>(this) + 0x444)->*BufferOriginalFill)(x1, y1, x2, y2, color);
 }
 
 int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
@@ -222,16 +221,16 @@ int __fastcall graphic_win_fill_redirect(GraphicWin *self, void *,
 
 // Slot 0xF4 on the parent's vtable. The stock body at 0x004042B0 is
 // `mov eax, ecx; ret`, so a non-null parent answers with itself.
-typedef void *(__thiscall func_graphic_win_parent_query)(void *);
+typedef void * (OriginalObject::*func_graphic_win_parent_query)();
 // Virtual slot 0x30, the window's own paint.
-typedef void(__thiscall func_graphic_win_paint)(void *);
+typedef void (OriginalObject::*func_graphic_win_paint)();
 
-func_graphic_win_buffer_fill_color *BufferOriginalFillColor =
-    (func_graphic_win_buffer_fill_color *)0x005DFB50;
-func_graphic_win_map_colors *BufferOriginalMapColors =
-    (func_graphic_win_map_colors *)0x005DA330;
-func_graphic_win_overlay_nonclient *GraphicWinOverlayNonclient =
-    (func_graphic_win_overlay_nonclient *)0x005D6AC0;
+func_graphic_win_buffer_fill_color BufferOriginalFillColor =
+    original_method<func_graphic_win_buffer_fill_color>(0x005DFB50);
+func_graphic_win_map_colors BufferOriginalMapColors =
+    original_method<func_graphic_win_map_colors>(0x005DA330);
+func_graphic_win_overlay_nonclient GraphicWinOverlayNonclient =
+    original_method<func_graphic_win_overlay_nonclient>(0x005D6AC0);
 void **GraphicWinColorMapTable = reinterpret_cast<void **>(0x009B3390);
 // USER32!InvalidateRect, read out of the executable's import table. This is
 // resolved on FIRST USE rather than by a dynamic initializer, because the
@@ -278,13 +277,13 @@ void GraphicWin::fill(int color) {
     if ((flags & 0x80000) != 0 && parent != nullptr) {
         uintptr_t *const parent_vtable =
             *reinterpret_cast<uintptr_t **>(parent);
-        func_graphic_win_parent_query *const query =
+        func_graphic_win_parent_query const query =
             reinterpret_cast<func_graphic_win_parent_query *>(
                 parent_vtable[0xF4 / 4]);
         transparent = query(parent) != nullptr;
     }
     if (!transparent) {
-        BufferOriginalFillColor(surface, color);
+        (ORIGINAL(surface)->*BufferOriginalFillColor)(color);
         return;
     }
     int32_t outer_x, outer_y, inner_x, inner_y;
@@ -295,9 +294,7 @@ void GraphicWin::fill(int color) {
     int32_t width, height;
     std::memcpy(&width, object + 0x4C4, sizeof(width));
     std::memcpy(&height, object + 0x4C8, sizeof(height));
-    BufferCopyFull(parent + 0x444, reinterpret_cast<Buffer *>(surface),
-                   outer_x + inner_x, outer_y + inner_y, 0, 0,
-                   width, -height);
+    (ORIGINAL(parent + 0x444)->*BufferCopyFull)(reinterpret_cast<Buffer *>(surface), outer_x + inner_x, outer_y + inner_y, 0, 0, width, -height);
     void *const table = *GraphicWinColorMapTable;
     if (table == nullptr) {
         return;
@@ -307,7 +304,7 @@ void GraphicWin::fill(int color) {
     // by the remap. The bounds are inclusive, hence width-1 and -1-height.
     std::memcpy(&width, object + 0x4C4, sizeof(width));
     std::memcpy(&height, object + 0x4C8, sizeof(height));
-    BufferOriginalMapColors(surface, 0, 0, width - 1, -1 - height, table);
+    (ORIGINAL(surface)->*BufferOriginalMapColors)(0, 0, width - 1, -1 - height, table);
 }
 
 void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
@@ -349,10 +346,10 @@ void GraphicWin::redraw() {
         hook();
     }
     uintptr_t *const vtable = *reinterpret_cast<uintptr_t **>(object);
-    func_graphic_win_paint *const paint =
+    func_graphic_win_paint const paint =
         reinterpret_cast<func_graphic_win_paint *>(vtable[0x30 / 4]);
     paint(this);
-    GraphicWinOverlayNonclient(this, nullptr);
+    (ORIGINAL(this)->*GraphicWinOverlayNonclient)(nullptr);
 
     // Re-read, do NOT reuse the latched value: the original reloads at
     // 0x005D5ABB before clearing bit 0, so any bit the paint hook or the
@@ -391,12 +388,12 @@ void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *) {
 // nonclient_to_client converts an outer size to a client size in place, and
 // Buffer::init is DirectDraw/GDI surface creation; all four stay at their
 // original addresses until that closure is source-owned. Tests rebind them.
-func_win_init *WinOriginalInit = (func_win_init *)0x005EBD80;
-func_graphic_win_compute_min_size *GraphicWinOriginalComputeMinSize =
-    (func_graphic_win_compute_min_size *)0x005D7030;
-func_win_nonclient_to_client *WinOriginalNonclientToClient =
-    (func_win_nonclient_to_client *)0x005EEF60;
-func_buffer_init *BufferOriginalInit = (func_buffer_init *)0x005D7670;
+func_win_init WinOriginalInit = original_method<func_win_init>(0x005EBD80);
+func_graphic_win_compute_min_size GraphicWinOriginalComputeMinSize =
+    original_method<func_graphic_win_compute_min_size>(0x005D7030);
+func_win_nonclient_to_client WinOriginalNonclientToClient =
+    original_method<func_win_nonclient_to_client>(0x005EEF60);
+func_buffer_init BufferOriginalInit = original_method<func_buffer_init>(0x005D7670);
 
 uint32_t *GraphicWinInitDefaults = reinterpret_cast<uint32_t *>(0x009B3394);
 
@@ -501,8 +498,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     }
 
     // All nine arguments go straight through in order.
-    const int base_result = WinOriginalInit(this, x, y, width, height, title,
-                                            flags, parent, menu, border);
+    const int base_result = (ORIGINAL(this)->*WinOriginalInit)(x, y, width, height, title, flags, parent, menu, border);
     if (base_result != 0) {
         return base_result;
     }
@@ -512,12 +508,12 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     // minimum-size computation, in the original's order.
     object[0x448 / 4] =
         static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    GraphicWinOriginalComputeMinSize(this);
+    (ORIGINAL(this)->*GraphicWinOriginalComputeMinSize)();
 
     if ((flags & 0x800) == 0) {
         // Converts the outer size to a client size in place. What the callee
         // subtracts is its own business and is not asserted here.
-        WinOriginalNonclientToClient(this, &width, &height);
+        (ORIGINAL(this)->*WinOriginalNonclientToClient)(&width, &height);
     } else {
         // The 0x800 arm goes the other way and ADDS the process scrollbar
         // thickness, pairing bit 3 of the 0x98 flag dword with the width and
@@ -535,7 +531,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     }
 
     const int surface_result =
-        BufferOriginalInit(&buffer_, width, height, 0, nullptr);
+        (ORIGINAL(&buffer_)->*BufferOriginalInit)(width, height, 0, nullptr);
     if (surface_result != 0) {
         return surface_result;
     }

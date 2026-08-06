@@ -16,13 +16,14 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include <cstring>
 #include "dialogs.h"
 #include "listbox.h"      // ListBox::destroy (source-owned)
 #include "radiobutton.h"  // RadioButton::close (source-owned)
 
-func_dialog_item *DialogOriginalItem = (func_dialog_item *)0x00609990;
-func_list_box_item *ListBoxOriginalItem = (func_list_box_item *)0x0060C920;
+func_dialog_item DialogOriginalItem = original_method<func_dialog_item>(0x00609990);
+func_list_box_item ListBoxOriginalItem = original_method<func_list_box_item>(0x0060C920);
 
 namespace {
 
@@ -57,9 +58,9 @@ int Dialogs::item(char *text, int index) {
         case 4:
         case 8:
         case 16:
-            return DialogOriginalItem(dialog_of(this), text, index);
+            return (ORIGINAL(dialog_of(this))->*DialogOriginalItem)(text, index);
         case 2:
-            return ListBoxOriginalItem(this, text, index);
+            return (ORIGINAL(this)->*ListBoxOriginalItem)(text, index);
         default:
             return 0;
     }
@@ -101,13 +102,13 @@ int __fastcall dialogs_get_num_items_redirect(Dialogs *self, void *) {
     return self->get_num_items();
 }
 
-func_dialogs_fwd2 *DialogsSpriteBoxOnRightDown = (func_dialogs_fwd2 *)0x00611240;
-func_dialogs_fwd2 *DialogsSpriteBoxOnRightDoubleClick = (func_dialogs_fwd2 *)0x00611330;
-func_dialogs_fwd2 *DialogsSpriteBoxOnLeftUp = (func_dialogs_fwd2 *)0x006111A0;
-func_dialogs_fwd2 *DialogsSpriteBoxOnRightUp = (func_dialogs_fwd2 *)0x00611290;
-func_dialogs_fwd2 *DialogsSpriteBoxOnRightClick = (func_dialogs_fwd2 *)0x006111F0;
-func_dialogs_fwd2 *DialogsListBoxOnScrolling = (func_dialogs_fwd2 *)0x0060C5D0;
-func_dialogs_fwd1 *DialogsListBoxOnMousewheel = (func_dialogs_fwd1 *)0x0060CB70;
+func_dialogs_fwd2 DialogsSpriteBoxOnRightDown = original_method<func_dialogs_fwd2>(0x00611240);
+func_dialogs_fwd2 DialogsSpriteBoxOnRightDoubleClick = original_method<func_dialogs_fwd2>(0x00611330);
+func_dialogs_fwd2 DialogsSpriteBoxOnLeftUp = original_method<func_dialogs_fwd2>(0x006111A0);
+func_dialogs_fwd2 DialogsSpriteBoxOnRightUp = original_method<func_dialogs_fwd2>(0x00611290);
+func_dialogs_fwd2 DialogsSpriteBoxOnRightClick = original_method<func_dialogs_fwd2>(0x006111F0);
+func_dialogs_fwd2 DialogsListBoxOnScrolling = original_method<func_dialogs_fwd2>(0x0060C5D0);
+func_dialogs_fwd1 DialogsListBoxOnMousewheel = original_method<func_dialogs_fwd1>(0x0060CB70);
 
 /*
 Purpose: Forward on right down to the embedded widget, but only when the
@@ -123,7 +124,7 @@ void Dialogs::on_right_down(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        DialogsSpriteBoxOnRightDown(bytes - 0x8C, a1, a2);
+        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnRightDown)(a1, a2);
     }
 }
 
@@ -141,7 +142,7 @@ void Dialogs::on_right_double_click(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        DialogsSpriteBoxOnRightDoubleClick(bytes - 0x8C, a1, a2);
+        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnRightDoubleClick)(a1, a2);
     }
 }
 
@@ -159,7 +160,7 @@ void Dialogs::on_left_up(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        DialogsSpriteBoxOnLeftUp(bytes - 0x8C, a1, a2);
+        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnLeftUp)(a1, a2);
     }
 }
 
@@ -177,7 +178,7 @@ void Dialogs::on_right_up(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        DialogsSpriteBoxOnRightUp(bytes - 0x8C, a1, a2);
+        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnRightUp)(a1, a2);
     }
 }
 
@@ -195,7 +196,7 @@ void Dialogs::on_right_click(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
-        DialogsSpriteBoxOnRightClick(bytes - 0x8C, a1, a2);
+        (ORIGINAL(bytes - 0x8C)->*DialogsSpriteBoxOnRightClick)(a1, a2);
     }
 }
 
@@ -213,7 +214,7 @@ void Dialogs::on_scrolled(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 2) {
-        DialogsListBoxOnScrolling(bytes - 0x140, a1, a2);
+        (ORIGINAL(bytes - 0x140)->*DialogsListBoxOnScrolling)(a1, a2);
     }
 }
 
@@ -231,7 +232,7 @@ void Dialogs::on_scrolling(int a1, int a2) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 2) {
-        DialogsListBoxOnScrolling(bytes - 0x140, a1, a2);
+        (ORIGINAL(bytes - 0x140)->*DialogsListBoxOnScrolling)(a1, a2);
     }
 }
 
@@ -249,7 +250,7 @@ void Dialogs::on_mousewheel(int a1) {
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 2) {
-        DialogsListBoxOnMousewheel(bytes - 0x140, a1);
+        (ORIGINAL(bytes - 0x140)->*DialogsListBoxOnMousewheel)(a1);
     }
 }
 
@@ -285,12 +286,12 @@ void __fastcall dialogs_on_mousewheel_redirect(Dialogs *self, void *, int a1) {
     self->on_mousewheel(a1);
 }
 
-func_dialogs_teardown *DialogsEditGroupDestructor =
-    (func_dialogs_teardown *)0x00611A20;
-func_dialogs_teardown *DialogsSpriteBoxDestructor =
-    (func_dialogs_teardown *)0x00610120;
-func_dialogs_teardown *DialogsCheckBoxDestructor =
-    (func_dialogs_teardown *)0x0060E740;
+func_dialogs_teardown DialogsEditGroupDestructor =
+    original_method<func_dialogs_teardown>(0x00611A20);
+func_dialogs_teardown DialogsSpriteBoxDestructor =
+    original_method<func_dialogs_teardown>(0x00610120);
+func_dialogs_teardown DialogsCheckBoxDestructor =
+    original_method<func_dialogs_teardown>(0x0060E740);
 func_operator_delete *DialogsOperatorDelete =
     (func_operator_delete *)0x0064557F;
 
@@ -369,9 +370,9 @@ uint32_t Dialogs::destroy() {
     const auto guarded = [guard](uintptr_t member, uintptr_t adjust) {
         return reinterpret_cast<void *>((guard ? guard + member : 0) + adjust);
     };
-    DialogsEditGroupDestructor(guarded(0xF8, 0x8C));
-    DialogsSpriteBoxDestructor(guarded(0x70, 0x8C));
-    DialogsCheckBoxDestructor(guarded(0x58, 0x1C));
+    (ORIGINAL(guarded(0xF8, 0x8C))->*DialogsEditGroupDestructor)();
+    (ORIGINAL(guarded(0x70, 0x8C))->*DialogsSpriteBoxDestructor)();
+    (ORIGINAL(guarded(0x58, 0x1C))->*DialogsCheckBoxDestructor)();
 
     // The embedded RadioButton at base+0x44: its vbtable names the SHARED
     // virtual bases, so this staging overwrites the step-one tables, and its

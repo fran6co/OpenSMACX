@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.h"
+#include "original_seam.h"
 #include "adjustor_thunks.h"
 
 /*
@@ -41,194 +42,194 @@ is not built here.
 // Each seam defaults to the original method the thunk tail
 // jumps to; the hybrid redirects it to the recovered body at
 // run time, and the leaf suite rebinds it to a recorder.
-func_adjustor_i_piii *CheckBoxAttachTarget =
-    (func_adjustor_i_piii *)0x0060E800;
-func_adjustor_v_i *CheckBoxOnDialogFocusTarget =
-    (func_adjustor_v_i *)0x0060FB90;
-func_adjustor_i_i *CheckBoxOnKeyDownTarget =
-    (func_adjustor_i_i *)0x0060F8B0;
-func_adjustor_v_ii *CheckBoxOnLeftDoubleClickTarget =
-    (func_adjustor_v_ii *)0x0060FA80;
-func_adjustor_v_ii *CheckBoxOnLeftDownTarget =
-    (func_adjustor_v_ii *)0x0060F700;
-func_adjustor_v_ii *CheckBoxOnMouseLeaveTarget =
-    (func_adjustor_v_ii *)0x0060FC30;
-func_adjustor_v_ii *CheckBoxOnMouseMoveTarget =
-    (func_adjustor_v_ii *)0x0060FBB0;
-func_adjustor_v *CheckBoxOnRedrawTarget =
-    (func_adjustor_v *)0x0060FAB0;
-func_adjustor_i_ii *ConsoleOnKeyClickTarget =
-    (func_adjustor_i_ii *)0x005178C0;
-func_adjustor_v_ii *ConsoleOnNcHittestTarget =
-    (func_adjustor_v_ii *)0x0050F680;
-func_adjustor_v_ii *ConsoleOnNcLeftDownTarget =
-    (func_adjustor_v_ii *)0x0050FB10;
-func_adjustor_v_ii *ConsoleOnNcLeftUpTarget =
-    (func_adjustor_v_ii *)0x0050FE70;
-func_adjustor_v_ii *ConsoleOnNcMouseMoveTarget =
-    (func_adjustor_v_ii *)0x00510110;
-func_adjustor_v_pi *ConsoleOnPostRedrawNcBufferTarget =
-    (func_adjustor_v_pi *)0x0050F960;
-func_adjustor_v *ConsoleOnSysCloseTarget =
-    (func_adjustor_v *)0x0051D7C0;
-func_adjustor_p_u *ConsoleScalarDeleteTarget =
-    (func_adjustor_p_u *)0x0051DDF0;
-func_adjustor_i_piii *DialogsAttachTarget =
-    (func_adjustor_i_piii *)0x00612FE0;
-func_adjustor_v_i *DialogsOnDialogFocusTarget =
-    (func_adjustor_v_i *)0x006130E0;
-func_adjustor_i_i *DialogsOnKeyDownTarget =
-    (func_adjustor_i_i *)0x00612CC0;
-func_adjustor_v_ii *DialogsOnLeftClickTarget =
-    (func_adjustor_v_ii *)0x00612E80;
-func_adjustor_v_ii *DialogsOnLeftDoubleClickTarget =
-    (func_adjustor_v_ii *)0x00612D60;
-func_adjustor_v_ii *DialogsOnLeftDownTarget =
-    (func_adjustor_v_ii *)0x00612C20;
-func_adjustor_v_ii *DialogsOnLeftUpTarget =
-    (func_adjustor_v_ii *)0x00612F10;
-func_adjustor_v_ii *DialogsOnMouseLeaveTarget =
-    (func_adjustor_v_ii *)0x00612AE0;
-func_adjustor_v_ii *DialogsOnMouseMoveTarget =
-    (func_adjustor_v_ii *)0x00612B80;
-func_adjustor_v_i *DialogsOnMousewheelTarget =
-    (func_adjustor_v_i *)0x00612FC0;
-func_adjustor_v *DialogsOnRedrawTarget =
-    (func_adjustor_v *)0x00612E00;
-func_adjustor_v_ii *DialogsOnRightClickTarget =
-    (func_adjustor_v_ii *)0x00612F60;
-func_adjustor_v_ii *DialogsOnRightDoubleClickTarget =
-    (func_adjustor_v_ii *)0x00612EF0;
-func_adjustor_v_ii *DialogsOnRightDownTarget =
-    (func_adjustor_v_ii *)0x00612ED0;
-func_adjustor_v_ii *DialogsOnRightUpTarget =
-    (func_adjustor_v_ii *)0x00612F40;
-func_adjustor_v *DialogsOnScrollCreateTarget =
-    (func_adjustor_v *)0x00613220;
-func_adjustor_i_p *DialogsOnScrollDeleteTarget =
-    (func_adjustor_i_p *)0x00613260;
-func_adjustor_v_ii *DialogsOnScrolledTarget =
-    (func_adjustor_v_ii *)0x00612F80;
-func_adjustor_v_ii *DialogsOnScrollingTarget =
-    (func_adjustor_v_ii *)0x00612FA0;
-func_adjustor_v *DialogsPassDialogFocusTarget =
-    (func_adjustor_v *)0x00613180;
-func_adjustor_p_u *DialogsScalarDeleteTarget =
-    (func_adjustor_p_u *)0x00407100;
-func_adjustor_i_piii *EditGroupAttachTarget =
-    (func_adjustor_i_piii *)0x00611AF0;
-func_adjustor_v_i *EditGroupOnDialogFocusTarget =
-    (func_adjustor_v_i *)0x00612670;
-func_adjustor_v *EditGroupOnRedrawTarget =
-    (func_adjustor_v *)0x00612450;
-func_adjustor_v *EditGroupPassDialogFocusTarget =
-    (func_adjustor_v *)0x006126C0;
-func_adjustor_i_piii *ListBoxAttachTarget =
-    (func_adjustor_i_piii *)0x0060A670;
-func_adjustor_v_i *ListBoxOnDialogFocusTarget =
-    (func_adjustor_v_i *)0x0060C7C0;
-func_adjustor_v_i *ListBoxOnKeyDownTarget =
-    (func_adjustor_v_i *)0x0060AF90;
-func_adjustor_v_ii *ListBoxOnLeftDoubleClickTarget =
-    (func_adjustor_v_ii *)0x0060C710;
-func_adjustor_v_ii *ListBoxOnLeftDownTarget =
-    (func_adjustor_v_ii *)0x0060AA60;
-func_adjustor_v_ii *ListBoxOnMouseLeaveTarget =
-    (func_adjustor_v_ii *)0x0060CE10;
-func_adjustor_v_ii *ListBoxOnMouseMoveTarget =
-    (func_adjustor_v_ii *)0x0060CBC0;
-func_adjustor_v_i *ListBoxOnMousewheelTarget =
-    (func_adjustor_v_i *)0x0060CB70;
-func_adjustor_v *ListBoxOnRedrawTarget =
-    (func_adjustor_v *)0x0060C350;
-func_adjustor_v_ii *ListBoxOnRightDoubleClickTarget =
-    (func_adjustor_v_ii *)0x0060C6D0;
-func_adjustor_v_ii *ListBoxOnRightDownTarget =
-    (func_adjustor_v_ii *)0x0060AA20;
-func_adjustor_v_ii *ListBoxOnScrolledTarget =
-    (func_adjustor_v_ii *)0x0060C6A0;
-func_adjustor_v_ii *ListBoxOnScrollingTarget =
-    (func_adjustor_v_ii *)0x0060C5D0;
-func_adjustor_v_i *MapWinOnButtonClickedTarget =
-    (func_adjustor_v_i *)0x0046F8C0;
-func_adjustor_v_ii *MapWinOnLeftClickTarget =
-    (func_adjustor_v_ii *)0x0046EBA0;
-func_adjustor_v_ii *MapWinOnLeftDoubleClickTarget =
-    (func_adjustor_v_ii *)0x0046EBD0;
-func_adjustor_v_ii *MapWinOnLeftDownTarget =
-    (func_adjustor_v_ii *)0x0046ED30;
-func_adjustor_v_ii *MapWinOnLeftUpTarget =
-    (func_adjustor_v_ii *)0x0046EFF0;
-func_adjustor_v *MapWinOnLoseMouseCaptureTarget =
-    (func_adjustor_v *)0x0046EB90;
-func_adjustor_v_ii *MapWinOnMouseMoveTarget =
-    (func_adjustor_v_ii *)0x0046F000;
-func_adjustor_v_ii *MapWinOnNcHittestTarget =
-    (func_adjustor_v_ii *)0x0046F660;
-func_adjustor_v_ii *MapWinOnNcLeftDownTarget =
-    (func_adjustor_v_ii *)0x0046F700;
-func_adjustor_v *MapWinOnRedrawTarget =
-    (func_adjustor_v *)0x0046B1D0;
-func_adjustor_v_ii *MapWinOnResizeTarget =
-    (func_adjustor_v_ii *)0x0046FA00;
-func_adjustor_v_ii *MapWinOnRightClickTarget =
-    (func_adjustor_v_ii *)0x0046EBE0;
-func_adjustor_v_ii *MapWinOnRightDownTarget =
-    (func_adjustor_v_ii *)0x0046EC10;
-func_adjustor_v *MapWinOnSysCloseTarget =
-    (func_adjustor_v *)0x0046F880;
-func_adjustor_p_u *MapWinScalarDeleteTarget =
-    (func_adjustor_p_u *)0x00421830;
-func_adjustor_v *PlanWinOnRedrawTarget =
-    (func_adjustor_v *)0x0048AF30;
-func_adjustor_p_u *PlanWinScalarDeleteTarget =
-    (func_adjustor_p_u *)0x0048BF20;
-func_adjustor_i_piii *RadioButtonAttachTarget =
-    (func_adjustor_i_piii *)0x0060D1F0;
-func_adjustor_v_i *RadioButtonDtorTarget =
-    (func_adjustor_v_i *)0x00406F60;
-func_adjustor_v_i *RadioButtonOnDialogFocusTarget =
-    (func_adjustor_v_i *)0x0060E300;
-func_adjustor_i_i *RadioButtonOnKeyDownTarget =
-    (func_adjustor_i_i *)0x0060E020;
-func_adjustor_v_ii *RadioButtonOnLeftDoubleClickTarget =
-    (func_adjustor_v_ii *)0x0060E1E0;
-func_adjustor_v_ii *RadioButtonOnLeftDownTarget =
-    (func_adjustor_v_ii *)0x0060DE10;
-func_adjustor_v_ii *RadioButtonOnMouseLeaveTarget =
-    (func_adjustor_v_ii *)0x0060E4A0;
-func_adjustor_v_ii *RadioButtonOnMouseMoveTarget =
-    (func_adjustor_v_ii *)0x0060E320;
-func_adjustor_v *RadioButtonOnRedrawTarget =
-    (func_adjustor_v *)0x0060E220;
-func_adjustor_i_piii *SpriteBoxAttachTarget =
-    (func_adjustor_i_piii *)0x00610540;
-func_adjustor_v_i *SpriteBoxOnDialogFocusTarget =
-    (func_adjustor_v_i *)0x006115E0;
-func_adjustor_i_i *SpriteBoxOnKeyDownTarget =
-    (func_adjustor_i_i *)0x00611400;
-func_adjustor_v_ii *SpriteBoxOnLeftClickTarget =
-    (func_adjustor_v_ii *)0x00611060;
-func_adjustor_v_ii *SpriteBoxOnLeftDoubleClickTarget =
-    (func_adjustor_v_ii *)0x006112E0;
-func_adjustor_v_ii *SpriteBoxOnLeftDownTarget =
-    (func_adjustor_v_ii *)0x00611150;
-func_adjustor_v_ii *SpriteBoxOnLeftUpTarget =
-    (func_adjustor_v_ii *)0x006111A0;
-func_adjustor_v_ii *SpriteBoxOnMouseLeaveTarget =
-    (func_adjustor_v_ii *)0x00611050;
-func_adjustor_v_ii *SpriteBoxOnMouseMoveTarget =
-    (func_adjustor_v_ii *)0x00611040;
-func_adjustor_v *SpriteBoxOnRedrawTarget =
-    (func_adjustor_v *)0x00611380;
-func_adjustor_v_ii *SpriteBoxOnRightClickTarget =
-    (func_adjustor_v_ii *)0x006111F0;
-func_adjustor_v_ii *SpriteBoxOnRightDoubleClickTarget =
-    (func_adjustor_v_ii *)0x00611330;
-func_adjustor_v_ii *SpriteBoxOnRightDownTarget =
-    (func_adjustor_v_ii *)0x00611240;
-func_adjustor_v_ii *SpriteBoxOnRightUpTarget =
-    (func_adjustor_v_ii *)0x00611290;
+func_adjustor_i_piii CheckBoxAttachTarget =
+    original_method<func_adjustor_i_piii>(0x0060E800);
+func_adjustor_v_i CheckBoxOnDialogFocusTarget =
+    original_method<func_adjustor_v_i>(0x0060FB90);
+func_adjustor_i_i CheckBoxOnKeyDownTarget =
+    original_method<func_adjustor_i_i>(0x0060F8B0);
+func_adjustor_v_ii CheckBoxOnLeftDoubleClickTarget =
+    original_method<func_adjustor_v_ii>(0x0060FA80);
+func_adjustor_v_ii CheckBoxOnLeftDownTarget =
+    original_method<func_adjustor_v_ii>(0x0060F700);
+func_adjustor_v_ii CheckBoxOnMouseLeaveTarget =
+    original_method<func_adjustor_v_ii>(0x0060FC30);
+func_adjustor_v_ii CheckBoxOnMouseMoveTarget =
+    original_method<func_adjustor_v_ii>(0x0060FBB0);
+func_adjustor_v CheckBoxOnRedrawTarget =
+    original_method<func_adjustor_v>(0x0060FAB0);
+func_adjustor_i_ii ConsoleOnKeyClickTarget =
+    original_method<func_adjustor_i_ii>(0x005178C0);
+func_adjustor_v_ii ConsoleOnNcHittestTarget =
+    original_method<func_adjustor_v_ii>(0x0050F680);
+func_adjustor_v_ii ConsoleOnNcLeftDownTarget =
+    original_method<func_adjustor_v_ii>(0x0050FB10);
+func_adjustor_v_ii ConsoleOnNcLeftUpTarget =
+    original_method<func_adjustor_v_ii>(0x0050FE70);
+func_adjustor_v_ii ConsoleOnNcMouseMoveTarget =
+    original_method<func_adjustor_v_ii>(0x00510110);
+func_adjustor_v_pi ConsoleOnPostRedrawNcBufferTarget =
+    original_method<func_adjustor_v_pi>(0x0050F960);
+func_adjustor_v ConsoleOnSysCloseTarget =
+    original_method<func_adjustor_v>(0x0051D7C0);
+func_adjustor_p_u ConsoleScalarDeleteTarget =
+    original_method<func_adjustor_p_u>(0x0051DDF0);
+func_adjustor_i_piii DialogsAttachTarget =
+    original_method<func_adjustor_i_piii>(0x00612FE0);
+func_adjustor_v_i DialogsOnDialogFocusTarget =
+    original_method<func_adjustor_v_i>(0x006130E0);
+func_adjustor_i_i DialogsOnKeyDownTarget =
+    original_method<func_adjustor_i_i>(0x00612CC0);
+func_adjustor_v_ii DialogsOnLeftClickTarget =
+    original_method<func_adjustor_v_ii>(0x00612E80);
+func_adjustor_v_ii DialogsOnLeftDoubleClickTarget =
+    original_method<func_adjustor_v_ii>(0x00612D60);
+func_adjustor_v_ii DialogsOnLeftDownTarget =
+    original_method<func_adjustor_v_ii>(0x00612C20);
+func_adjustor_v_ii DialogsOnLeftUpTarget =
+    original_method<func_adjustor_v_ii>(0x00612F10);
+func_adjustor_v_ii DialogsOnMouseLeaveTarget =
+    original_method<func_adjustor_v_ii>(0x00612AE0);
+func_adjustor_v_ii DialogsOnMouseMoveTarget =
+    original_method<func_adjustor_v_ii>(0x00612B80);
+func_adjustor_v_i DialogsOnMousewheelTarget =
+    original_method<func_adjustor_v_i>(0x00612FC0);
+func_adjustor_v DialogsOnRedrawTarget =
+    original_method<func_adjustor_v>(0x00612E00);
+func_adjustor_v_ii DialogsOnRightClickTarget =
+    original_method<func_adjustor_v_ii>(0x00612F60);
+func_adjustor_v_ii DialogsOnRightDoubleClickTarget =
+    original_method<func_adjustor_v_ii>(0x00612EF0);
+func_adjustor_v_ii DialogsOnRightDownTarget =
+    original_method<func_adjustor_v_ii>(0x00612ED0);
+func_adjustor_v_ii DialogsOnRightUpTarget =
+    original_method<func_adjustor_v_ii>(0x00612F40);
+func_adjustor_v DialogsOnScrollCreateTarget =
+    original_method<func_adjustor_v>(0x00613220);
+func_adjustor_i_p DialogsOnScrollDeleteTarget =
+    original_method<func_adjustor_i_p>(0x00613260);
+func_adjustor_v_ii DialogsOnScrolledTarget =
+    original_method<func_adjustor_v_ii>(0x00612F80);
+func_adjustor_v_ii DialogsOnScrollingTarget =
+    original_method<func_adjustor_v_ii>(0x00612FA0);
+func_adjustor_v DialogsPassDialogFocusTarget =
+    original_method<func_adjustor_v>(0x00613180);
+func_adjustor_p_u DialogsScalarDeleteTarget =
+    original_method<func_adjustor_p_u>(0x00407100);
+func_adjustor_i_piii EditGroupAttachTarget =
+    original_method<func_adjustor_i_piii>(0x00611AF0);
+func_adjustor_v_i EditGroupOnDialogFocusTarget =
+    original_method<func_adjustor_v_i>(0x00612670);
+func_adjustor_v EditGroupOnRedrawTarget =
+    original_method<func_adjustor_v>(0x00612450);
+func_adjustor_v EditGroupPassDialogFocusTarget =
+    original_method<func_adjustor_v>(0x006126C0);
+func_adjustor_i_piii ListBoxAttachTarget =
+    original_method<func_adjustor_i_piii>(0x0060A670);
+func_adjustor_v_i ListBoxOnDialogFocusTarget =
+    original_method<func_adjustor_v_i>(0x0060C7C0);
+func_adjustor_v_i ListBoxOnKeyDownTarget =
+    original_method<func_adjustor_v_i>(0x0060AF90);
+func_adjustor_v_ii ListBoxOnLeftDoubleClickTarget =
+    original_method<func_adjustor_v_ii>(0x0060C710);
+func_adjustor_v_ii ListBoxOnLeftDownTarget =
+    original_method<func_adjustor_v_ii>(0x0060AA60);
+func_adjustor_v_ii ListBoxOnMouseLeaveTarget =
+    original_method<func_adjustor_v_ii>(0x0060CE10);
+func_adjustor_v_ii ListBoxOnMouseMoveTarget =
+    original_method<func_adjustor_v_ii>(0x0060CBC0);
+func_adjustor_v_i ListBoxOnMousewheelTarget =
+    original_method<func_adjustor_v_i>(0x0060CB70);
+func_adjustor_v ListBoxOnRedrawTarget =
+    original_method<func_adjustor_v>(0x0060C350);
+func_adjustor_v_ii ListBoxOnRightDoubleClickTarget =
+    original_method<func_adjustor_v_ii>(0x0060C6D0);
+func_adjustor_v_ii ListBoxOnRightDownTarget =
+    original_method<func_adjustor_v_ii>(0x0060AA20);
+func_adjustor_v_ii ListBoxOnScrolledTarget =
+    original_method<func_adjustor_v_ii>(0x0060C6A0);
+func_adjustor_v_ii ListBoxOnScrollingTarget =
+    original_method<func_adjustor_v_ii>(0x0060C5D0);
+func_adjustor_v_i MapWinOnButtonClickedTarget =
+    original_method<func_adjustor_v_i>(0x0046F8C0);
+func_adjustor_v_ii MapWinOnLeftClickTarget =
+    original_method<func_adjustor_v_ii>(0x0046EBA0);
+func_adjustor_v_ii MapWinOnLeftDoubleClickTarget =
+    original_method<func_adjustor_v_ii>(0x0046EBD0);
+func_adjustor_v_ii MapWinOnLeftDownTarget =
+    original_method<func_adjustor_v_ii>(0x0046ED30);
+func_adjustor_v_ii MapWinOnLeftUpTarget =
+    original_method<func_adjustor_v_ii>(0x0046EFF0);
+func_adjustor_v MapWinOnLoseMouseCaptureTarget =
+    original_method<func_adjustor_v>(0x0046EB90);
+func_adjustor_v_ii MapWinOnMouseMoveTarget =
+    original_method<func_adjustor_v_ii>(0x0046F000);
+func_adjustor_v_ii MapWinOnNcHittestTarget =
+    original_method<func_adjustor_v_ii>(0x0046F660);
+func_adjustor_v_ii MapWinOnNcLeftDownTarget =
+    original_method<func_adjustor_v_ii>(0x0046F700);
+func_adjustor_v MapWinOnRedrawTarget =
+    original_method<func_adjustor_v>(0x0046B1D0);
+func_adjustor_v_ii MapWinOnResizeTarget =
+    original_method<func_adjustor_v_ii>(0x0046FA00);
+func_adjustor_v_ii MapWinOnRightClickTarget =
+    original_method<func_adjustor_v_ii>(0x0046EBE0);
+func_adjustor_v_ii MapWinOnRightDownTarget =
+    original_method<func_adjustor_v_ii>(0x0046EC10);
+func_adjustor_v MapWinOnSysCloseTarget =
+    original_method<func_adjustor_v>(0x0046F880);
+func_adjustor_p_u MapWinScalarDeleteTarget =
+    original_method<func_adjustor_p_u>(0x00421830);
+func_adjustor_v PlanWinOnRedrawTarget =
+    original_method<func_adjustor_v>(0x0048AF30);
+func_adjustor_p_u PlanWinScalarDeleteTarget =
+    original_method<func_adjustor_p_u>(0x0048BF20);
+func_adjustor_i_piii RadioButtonAttachTarget =
+    original_method<func_adjustor_i_piii>(0x0060D1F0);
+func_adjustor_v_i RadioButtonDtorTarget =
+    original_method<func_adjustor_v_i>(0x00406F60);
+func_adjustor_v_i RadioButtonOnDialogFocusTarget =
+    original_method<func_adjustor_v_i>(0x0060E300);
+func_adjustor_i_i RadioButtonOnKeyDownTarget =
+    original_method<func_adjustor_i_i>(0x0060E020);
+func_adjustor_v_ii RadioButtonOnLeftDoubleClickTarget =
+    original_method<func_adjustor_v_ii>(0x0060E1E0);
+func_adjustor_v_ii RadioButtonOnLeftDownTarget =
+    original_method<func_adjustor_v_ii>(0x0060DE10);
+func_adjustor_v_ii RadioButtonOnMouseLeaveTarget =
+    original_method<func_adjustor_v_ii>(0x0060E4A0);
+func_adjustor_v_ii RadioButtonOnMouseMoveTarget =
+    original_method<func_adjustor_v_ii>(0x0060E320);
+func_adjustor_v RadioButtonOnRedrawTarget =
+    original_method<func_adjustor_v>(0x0060E220);
+func_adjustor_i_piii SpriteBoxAttachTarget =
+    original_method<func_adjustor_i_piii>(0x00610540);
+func_adjustor_v_i SpriteBoxOnDialogFocusTarget =
+    original_method<func_adjustor_v_i>(0x006115E0);
+func_adjustor_i_i SpriteBoxOnKeyDownTarget =
+    original_method<func_adjustor_i_i>(0x00611400);
+func_adjustor_v_ii SpriteBoxOnLeftClickTarget =
+    original_method<func_adjustor_v_ii>(0x00611060);
+func_adjustor_v_ii SpriteBoxOnLeftDoubleClickTarget =
+    original_method<func_adjustor_v_ii>(0x006112E0);
+func_adjustor_v_ii SpriteBoxOnLeftDownTarget =
+    original_method<func_adjustor_v_ii>(0x00611150);
+func_adjustor_v_ii SpriteBoxOnLeftUpTarget =
+    original_method<func_adjustor_v_ii>(0x006111A0);
+func_adjustor_v_ii SpriteBoxOnMouseLeaveTarget =
+    original_method<func_adjustor_v_ii>(0x00611050);
+func_adjustor_v_ii SpriteBoxOnMouseMoveTarget =
+    original_method<func_adjustor_v_ii>(0x00611040);
+func_adjustor_v SpriteBoxOnRedrawTarget =
+    original_method<func_adjustor_v>(0x00611380);
+func_adjustor_v_ii SpriteBoxOnRightClickTarget =
+    original_method<func_adjustor_v_ii>(0x006111F0);
+func_adjustor_v_ii SpriteBoxOnRightDoubleClickTarget =
+    original_method<func_adjustor_v_ii>(0x00611330);
+func_adjustor_v_ii SpriteBoxOnRightDownTarget =
+    original_method<func_adjustor_v_ii>(0x00611240);
+func_adjustor_v_ii SpriteBoxOnRightUpTarget =
+    original_method<func_adjustor_v_ii>(0x00611290);
 
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
@@ -241,7 +242,7 @@ void __fastcall adjust_radio_button1_dtor(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    RadioButtonDtorTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*RadioButtonDtorTarget)(arg0);
 }
 
 /*
@@ -255,7 +256,7 @@ void __fastcall adjust_radio_button1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    RadioButtonOnRedrawTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*RadioButtonOnRedrawTarget)();
 }
 
 /*
@@ -270,7 +271,7 @@ void __fastcall adjust_radio_button1_on_mouse_move(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    RadioButtonOnMouseMoveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*RadioButtonOnMouseMoveTarget)(arg0, arg1);
 }
 
 /*
@@ -285,7 +286,7 @@ void __fastcall adjust_radio_button1_on_mouse_leave(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    RadioButtonOnMouseLeaveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*RadioButtonOnMouseLeaveTarget)(arg0, arg1);
 }
 
 /*
@@ -300,7 +301,7 @@ void __fastcall adjust_radio_button1_on_left_down(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    RadioButtonOnLeftDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*RadioButtonOnLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -314,7 +315,7 @@ int __fastcall adjust_radio_button1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return RadioButtonOnKeyDownTarget(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*RadioButtonOnKeyDownTarget)(arg0);
 }
 
 /*
@@ -329,7 +330,7 @@ void __fastcall adjust_radio_button1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    RadioButtonOnLeftDoubleClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*RadioButtonOnLeftDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -344,7 +345,7 @@ void __fastcall adjust_radio_button1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    RadioButtonOnDialogFocusTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*RadioButtonOnDialogFocusTarget)(arg0);
 }
 
 /*
@@ -358,7 +359,7 @@ void __fastcall adjust_radio_button2_dtor(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 1096);
-    RadioButtonDtorTarget(object - vtordisp - 1092, arg0);
+    (ORIGINAL(object - vtordisp - 1092)->*RadioButtonDtorTarget)(arg0);
 }
 
 /*
@@ -372,7 +373,7 @@ void __fastcall adjust_radio_button3_dtor(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    RadioButtonDtorTarget(object - vtordisp - 2584, arg0);
+    (ORIGINAL(object - vtordisp - 2584)->*RadioButtonDtorTarget)(arg0);
 }
 
 /*
@@ -387,7 +388,7 @@ int __fastcall adjust_radio_button1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return RadioButtonAttachTarget(object - vtordisp, arg0, arg1, arg2, arg3);
+    return (ORIGINAL(object - vtordisp)->*RadioButtonAttachTarget)(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -401,7 +402,7 @@ void __fastcall adjust_radio_button3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    RadioButtonOnRedrawTarget(object - vtordisp - 2584);
+    (ORIGINAL(object - vtordisp - 2584)->*RadioButtonOnRedrawTarget)();
 }
 
 /*
@@ -416,7 +417,7 @@ void * __fastcall adjust_dialogs1_scalar_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return DialogsScalarDeleteTarget(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*DialogsScalarDeleteTarget)(arg0);
 }
 
 /*
@@ -430,7 +431,7 @@ void __fastcall adjust_dialogs1_on_scroll_create(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnScrollCreateTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*DialogsOnScrollCreateTarget)();
 }
 
 /*
@@ -445,7 +446,7 @@ int __fastcall adjust_dialogs1_on_scroll_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return DialogsOnScrollDeleteTarget(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*DialogsOnScrollDeleteTarget)(arg0);
 }
 
 /*
@@ -459,7 +460,7 @@ void __fastcall adjust_dialogs1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnRedrawTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*DialogsOnRedrawTarget)();
 }
 
 /*
@@ -473,7 +474,7 @@ void __fastcall adjust_dialogs1_on_mousewheel(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnMousewheelTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*DialogsOnMousewheelTarget)(arg0);
 }
 
 /*
@@ -488,7 +489,7 @@ void __fastcall adjust_dialogs1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnMouseMoveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnMouseMoveTarget)(arg0, arg1);
 }
 
 /*
@@ -503,7 +504,7 @@ void __fastcall adjust_dialogs1_on_mouse_leave(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnMouseLeaveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnMouseLeaveTarget)(arg0, arg1);
 }
 
 /*
@@ -518,7 +519,7 @@ void __fastcall adjust_dialogs1_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnLeftClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnLeftClickTarget)(arg0, arg1);
 }
 
 /*
@@ -533,7 +534,7 @@ void __fastcall adjust_dialogs1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnLeftDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -548,7 +549,7 @@ void __fastcall adjust_dialogs1_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnLeftUpTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnLeftUpTarget)(arg0, arg1);
 }
 
 /*
@@ -563,7 +564,7 @@ void __fastcall adjust_dialogs1_on_right_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnRightClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnRightClickTarget)(arg0, arg1);
 }
 
 /*
@@ -578,7 +579,7 @@ void __fastcall adjust_dialogs1_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnRightDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnRightDownTarget)(arg0, arg1);
 }
 
 /*
@@ -593,7 +594,7 @@ void __fastcall adjust_dialogs1_on_right_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnRightUpTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnRightUpTarget)(arg0, arg1);
 }
 
 /*
@@ -607,7 +608,7 @@ int __fastcall adjust_dialogs1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return DialogsOnKeyDownTarget(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*DialogsOnKeyDownTarget)(arg0);
 }
 
 /*
@@ -622,7 +623,7 @@ void __fastcall adjust_dialogs1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnLeftDoubleClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnLeftDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -637,7 +638,7 @@ void __fastcall adjust_dialogs1_on_right_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnRightDoubleClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnRightDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -652,7 +653,7 @@ void __fastcall adjust_dialogs1_on_scrolled(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnScrolledTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnScrolledTarget)(arg0, arg1);
 }
 
 /*
@@ -667,7 +668,7 @@ void __fastcall adjust_dialogs1_on_scrolling(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnScrollingTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*DialogsOnScrollingTarget)(arg0, arg1);
 }
 
 /*
@@ -681,7 +682,7 @@ void __fastcall adjust_dialogs1_on_dialog_focus(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnDialogFocusTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*DialogsOnDialogFocusTarget)(arg0);
 }
 
 /*
@@ -695,7 +696,7 @@ void __fastcall adjust_dialogs1_pass_dialog_focus(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsPassDialogFocusTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*DialogsPassDialogFocusTarget)();
 }
 
 /*
@@ -710,7 +711,7 @@ void * __fastcall adjust_dialogs2_scalar_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 1096);
-    return DialogsScalarDeleteTarget(object - vtordisp - 1092, arg0);
+    return (ORIGINAL(object - vtordisp - 1092)->*DialogsScalarDeleteTarget)(arg0);
 }
 
 /*
@@ -725,7 +726,7 @@ void * __fastcall adjust_dialogs3_scalar_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return DialogsScalarDeleteTarget(object - vtordisp - 2584, arg0);
+    return (ORIGINAL(object - vtordisp - 2584)->*DialogsScalarDeleteTarget)(arg0);
 }
 
 /*
@@ -740,7 +741,7 @@ int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return DialogsAttachTarget(object - vtordisp, arg0, arg1, arg2, arg3);
+    return (ORIGINAL(object - vtordisp)->*DialogsAttachTarget)(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -754,7 +755,7 @@ void __fastcall adjust_dialogs3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    DialogsOnRedrawTarget(object - vtordisp - 2584);
+    (ORIGINAL(object - vtordisp - 2584)->*DialogsOnRedrawTarget)();
 }
 
 /*
@@ -769,7 +770,7 @@ void * __fastcall adjust_map_win1_scalar_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return MapWinScalarDeleteTarget(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*MapWinScalarDeleteTarget)(arg0);
 }
 
 /*
@@ -783,7 +784,7 @@ void __fastcall adjust_map_win1_on_lose_mouse_capture(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLoseMouseCaptureTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*MapWinOnLoseMouseCaptureTarget)();
 }
 
 /*
@@ -797,7 +798,7 @@ void __fastcall adjust_map_win1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnRedrawTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*MapWinOnRedrawTarget)();
 }
 
 /*
@@ -812,7 +813,7 @@ void __fastcall adjust_map_win1_on_resize(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnResizeTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnResizeTarget)(arg0, arg1);
 }
 
 /*
@@ -826,7 +827,7 @@ void __fastcall adjust_map_win1_on_sys_close(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnSysCloseTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*MapWinOnSysCloseTarget)();
 }
 
 /*
@@ -841,7 +842,7 @@ void __fastcall adjust_map_win1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnMouseMoveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnMouseMoveTarget)(arg0, arg1);
 }
 
 /*
@@ -856,7 +857,7 @@ void __fastcall adjust_map_win1_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnLeftClickTarget)(arg0, arg1);
 }
 
 /*
@@ -871,7 +872,7 @@ void __fastcall adjust_map_win1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -886,7 +887,7 @@ void __fastcall adjust_map_win1_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftUpTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnLeftUpTarget)(arg0, arg1);
 }
 
 /*
@@ -901,7 +902,7 @@ void __fastcall adjust_map_win1_on_right_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnRightClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnRightClickTarget)(arg0, arg1);
 }
 
 /*
@@ -916,7 +917,7 @@ void __fastcall adjust_map_win1_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnRightDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnRightDownTarget)(arg0, arg1);
 }
 
 /*
@@ -931,7 +932,7 @@ void __fastcall adjust_map_win1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftDoubleClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnLeftDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -946,7 +947,7 @@ void __fastcall adjust_map_win1_on_nc_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnNcLeftDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnNcLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -961,7 +962,7 @@ void __fastcall adjust_map_win1_on_button_clicked(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnButtonClickedTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*MapWinOnButtonClickedTarget)(arg0);
 }
 
 /*
@@ -976,7 +977,7 @@ void __fastcall adjust_map_win1_on_nc_hittest(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnNcHittestTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*MapWinOnNcHittestTarget)(arg0, arg1);
 }
 
 /*
@@ -991,7 +992,7 @@ void * __fastcall adjust_map_win2_scalar_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 1096);
-    return MapWinScalarDeleteTarget(object - vtordisp - 1092, arg0);
+    return (ORIGINAL(object - vtordisp - 1092)->*MapWinScalarDeleteTarget)(arg0);
 }
 
 /*
@@ -1005,7 +1006,7 @@ void __fastcall adjust_map_win5_on_lose_mouse_capture(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLoseMouseCaptureTarget(object - vtordisp - 1508);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLoseMouseCaptureTarget)();
 }
 
 /*
@@ -1019,7 +1020,7 @@ void __fastcall adjust_plan_win1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    PlanWinOnRedrawTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*PlanWinOnRedrawTarget)();
 }
 
 /*
@@ -1034,7 +1035,7 @@ void __fastcall adjust_map_win5_on_resize(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnResizeTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnResizeTarget)(arg0, arg1);
 }
 
 /*
@@ -1048,7 +1049,7 @@ void __fastcall adjust_map_win5_on_sys_close(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnSysCloseTarget(object - vtordisp - 1508);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnSysCloseTarget)();
 }
 
 /*
@@ -1063,7 +1064,7 @@ void __fastcall adjust_map_win5_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnMouseMoveTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnMouseMoveTarget)(arg0, arg1);
 }
 
 /*
@@ -1078,7 +1079,7 @@ void __fastcall adjust_map_win5_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftClickTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLeftClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1093,7 +1094,7 @@ void __fastcall adjust_map_win5_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftDownTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1108,7 +1109,7 @@ void __fastcall adjust_map_win5_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftUpTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLeftUpTarget)(arg0, arg1);
 }
 
 /*
@@ -1123,7 +1124,7 @@ void __fastcall adjust_map_win5_on_right_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnRightClickTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnRightClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1138,7 +1139,7 @@ void __fastcall adjust_map_win5_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnRightDownTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnRightDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1153,7 +1154,7 @@ void __fastcall adjust_map_win5_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftDoubleClickTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnLeftDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1168,7 +1169,7 @@ void __fastcall adjust_map_win5_on_nc_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnNcLeftDownTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnNcLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1183,7 +1184,7 @@ void __fastcall adjust_map_win5_on_button_clicked(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnButtonClickedTarget(object - vtordisp - 1508, arg0);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnButtonClickedTarget)(arg0);
 }
 
 /*
@@ -1198,7 +1199,7 @@ void __fastcall adjust_map_win5_on_nc_hittest(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnNcHittestTarget(object - vtordisp - 1508, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 1508)->*MapWinOnNcHittestTarget)(arg0, arg1);
 }
 
 /*
@@ -1213,7 +1214,7 @@ void * __fastcall adjust_plan_win2_scalar_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 1096);
-    return PlanWinScalarDeleteTarget(object - vtordisp - 1092, arg0);
+    return (ORIGINAL(object - vtordisp - 1092)->*PlanWinScalarDeleteTarget)(arg0);
 }
 
 /*
@@ -1228,7 +1229,7 @@ void * __fastcall adjust_console1_scalar_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return ConsoleScalarDeleteTarget(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*ConsoleScalarDeleteTarget)(arg0);
 }
 
 /*
@@ -1242,7 +1243,7 @@ void __fastcall adjust_map_win4_on_lose_mouse_capture(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLoseMouseCaptureTarget(object - vtordisp - 9000);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLoseMouseCaptureTarget)();
 }
 
 /*
@@ -1256,7 +1257,7 @@ void __fastcall adjust_map_win4_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnRedrawTarget(object - vtordisp - 9000);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnRedrawTarget)();
 }
 
 /*
@@ -1271,7 +1272,7 @@ void __fastcall adjust_map_win4_on_resize(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnResizeTarget(object - vtordisp - 9000, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnResizeTarget)(arg0, arg1);
 }
 
 /*
@@ -1285,7 +1286,7 @@ void __fastcall adjust_console1_on_sys_close(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ConsoleOnSysCloseTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*ConsoleOnSysCloseTarget)();
 }
 
 /*
@@ -1300,7 +1301,7 @@ void __fastcall adjust_map_win4_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnMouseMoveTarget(object - vtordisp - 9000, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnMouseMoveTarget)(arg0, arg1);
 }
 
 /*
@@ -1315,7 +1316,7 @@ void __fastcall adjust_map_win4_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftClickTarget(object - vtordisp - 9000, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLeftClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1330,7 +1331,7 @@ void __fastcall adjust_map_win4_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftDownTarget(object - vtordisp - 9000, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1345,7 +1346,7 @@ void __fastcall adjust_map_win4_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftUpTarget(object - vtordisp - 9000, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLeftUpTarget)(arg0, arg1);
 }
 
 /*
@@ -1360,7 +1361,7 @@ void __fastcall adjust_map_win4_on_right_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnRightClickTarget(object - vtordisp - 9000, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnRightClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1375,7 +1376,7 @@ void __fastcall adjust_map_win4_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnRightDownTarget(object - vtordisp - 9000, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnRightDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1390,7 +1391,7 @@ int __fastcall adjust_console1_on_key_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return ConsoleOnKeyClickTarget(object - vtordisp, arg0, arg1);
+    return (ORIGINAL(object - vtordisp)->*ConsoleOnKeyClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1405,7 +1406,7 @@ void __fastcall adjust_map_win4_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnLeftDoubleClickTarget(object - vtordisp - 9000, arg0, arg1);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnLeftDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1420,7 +1421,7 @@ void __fastcall adjust_console1_on_nc_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ConsoleOnNcMouseMoveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ConsoleOnNcMouseMoveTarget)(arg0, arg1);
 }
 
 /*
@@ -1435,7 +1436,7 @@ void __fastcall adjust_console1_on_nc_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ConsoleOnNcLeftDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ConsoleOnNcLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1450,7 +1451,7 @@ void __fastcall adjust_console1_on_nc_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ConsoleOnNcLeftUpTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ConsoleOnNcLeftUpTarget)(arg0, arg1);
 }
 
 /*
@@ -1465,7 +1466,7 @@ void __fastcall adjust_map_win4_on_button_clicked(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    MapWinOnButtonClickedTarget(object - vtordisp - 9000, arg0);
+    (ORIGINAL(object - vtordisp - 9000)->*MapWinOnButtonClickedTarget)(arg0);
 }
 
 /*
@@ -1481,7 +1482,7 @@ void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ConsoleOnPostRedrawNcBufferTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ConsoleOnPostRedrawNcBufferTarget)(arg0, arg1);
 }
 
 /*
@@ -1496,7 +1497,7 @@ void __fastcall adjust_console1_on_nc_hittest(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ConsoleOnNcHittestTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ConsoleOnNcHittestTarget)(arg0, arg1);
 }
 
 /*
@@ -1511,7 +1512,7 @@ void * __fastcall adjust_console2_scalar_delete(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 1096);
-    return ConsoleScalarDeleteTarget(object - vtordisp - 1092, arg0);
+    return (ORIGINAL(object - vtordisp - 1092)->*ConsoleScalarDeleteTarget)(arg0);
 }
 
 /*
@@ -1525,7 +1526,7 @@ void __fastcall adjust_list_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnRedrawTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnRedrawTarget)();
 }
 
 /*
@@ -1539,7 +1540,7 @@ void __fastcall adjust_list_box1_on_mousewheel(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnMousewheelTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnMousewheelTarget)(arg0);
 }
 
 /*
@@ -1554,7 +1555,7 @@ void __fastcall adjust_list_box1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnMouseMoveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnMouseMoveTarget)(arg0, arg1);
 }
 
 /*
@@ -1569,7 +1570,7 @@ void __fastcall adjust_list_box1_on_mouse_leave(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnMouseLeaveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnMouseLeaveTarget)(arg0, arg1);
 }
 
 /*
@@ -1584,7 +1585,7 @@ void __fastcall adjust_list_box1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnLeftDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1599,7 +1600,7 @@ void __fastcall adjust_list_box1_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnRightDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnRightDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1613,7 +1614,7 @@ void __fastcall adjust_list_box1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnKeyDownTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnKeyDownTarget)(arg0);
 }
 
 /*
@@ -1628,7 +1629,7 @@ void __fastcall adjust_list_box1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnLeftDoubleClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnLeftDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1643,7 +1644,7 @@ void __fastcall adjust_list_box1_on_right_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnRightDoubleClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnRightDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1658,7 +1659,7 @@ void __fastcall adjust_list_box1_on_scrolled(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnScrolledTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnScrolledTarget)(arg0, arg1);
 }
 
 /*
@@ -1673,7 +1674,7 @@ void __fastcall adjust_list_box1_on_scrolling(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnScrollingTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnScrollingTarget)(arg0, arg1);
 }
 
 /*
@@ -1688,7 +1689,7 @@ void __fastcall adjust_list_box1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnDialogFocusTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*ListBoxOnDialogFocusTarget)(arg0);
 }
 
 /*
@@ -1703,7 +1704,7 @@ int __fastcall adjust_list_box1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return ListBoxAttachTarget(object - vtordisp, arg0, arg1, arg2, arg3);
+    return (ORIGINAL(object - vtordisp)->*ListBoxAttachTarget)(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -1717,7 +1718,7 @@ void __fastcall adjust_list_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    ListBoxOnRedrawTarget(object - vtordisp - 2584);
+    (ORIGINAL(object - vtordisp - 2584)->*ListBoxOnRedrawTarget)();
 }
 
 /*
@@ -1731,7 +1732,7 @@ void __fastcall adjust_check_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    CheckBoxOnRedrawTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*CheckBoxOnRedrawTarget)();
 }
 
 /*
@@ -1746,7 +1747,7 @@ void __fastcall adjust_check_box1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    CheckBoxOnMouseMoveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*CheckBoxOnMouseMoveTarget)(arg0, arg1);
 }
 
 /*
@@ -1761,7 +1762,7 @@ void __fastcall adjust_check_box1_on_mouse_leave(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    CheckBoxOnMouseLeaveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*CheckBoxOnMouseLeaveTarget)(arg0, arg1);
 }
 
 /*
@@ -1776,7 +1777,7 @@ void __fastcall adjust_check_box1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    CheckBoxOnLeftDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*CheckBoxOnLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1790,7 +1791,7 @@ int __fastcall adjust_check_box1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return CheckBoxOnKeyDownTarget(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*CheckBoxOnKeyDownTarget)(arg0);
 }
 
 /*
@@ -1805,7 +1806,7 @@ void __fastcall adjust_check_box1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    CheckBoxOnLeftDoubleClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*CheckBoxOnLeftDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1820,7 +1821,7 @@ void __fastcall adjust_check_box1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    CheckBoxOnDialogFocusTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*CheckBoxOnDialogFocusTarget)(arg0);
 }
 
 /*
@@ -1835,7 +1836,7 @@ int __fastcall adjust_check_box1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return CheckBoxAttachTarget(object - vtordisp, arg0, arg1, arg2, arg3);
+    return (ORIGINAL(object - vtordisp)->*CheckBoxAttachTarget)(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -1849,7 +1850,7 @@ void __fastcall adjust_check_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    CheckBoxOnRedrawTarget(object - vtordisp - 2584);
+    (ORIGINAL(object - vtordisp - 2584)->*CheckBoxOnRedrawTarget)();
 }
 
 /*
@@ -1863,7 +1864,7 @@ void __fastcall adjust_sprite_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnRedrawTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRedrawTarget)();
 }
 
 /*
@@ -1878,7 +1879,7 @@ void __fastcall adjust_sprite_box1_on_mouse_move(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnMouseMoveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnMouseMoveTarget)(arg0, arg1);
 }
 
 /*
@@ -1893,7 +1894,7 @@ void __fastcall adjust_sprite_box1_on_mouse_leave(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnMouseLeaveTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnMouseLeaveTarget)(arg0, arg1);
 }
 
 /*
@@ -1908,7 +1909,7 @@ void __fastcall adjust_sprite_box1_on_left_click(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnLeftClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnLeftClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1923,7 +1924,7 @@ void __fastcall adjust_sprite_box1_on_left_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnLeftDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnLeftDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1938,7 +1939,7 @@ void __fastcall adjust_sprite_box1_on_left_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnLeftUpTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnLeftUpTarget)(arg0, arg1);
 }
 
 /*
@@ -1953,7 +1954,7 @@ void __fastcall adjust_sprite_box1_on_right_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnRightClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRightClickTarget)(arg0, arg1);
 }
 
 /*
@@ -1968,7 +1969,7 @@ void __fastcall adjust_sprite_box1_on_right_down(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnRightDownTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRightDownTarget)(arg0, arg1);
 }
 
 /*
@@ -1983,7 +1984,7 @@ void __fastcall adjust_sprite_box1_on_right_up(void *self, void *, int arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnRightUpTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRightUpTarget)(arg0, arg1);
 }
 
 /*
@@ -1997,7 +1998,7 @@ int __fastcall adjust_sprite_box1_on_key_down(void *self, void *, int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return SpriteBoxOnKeyDownTarget(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*SpriteBoxOnKeyDownTarget)(arg0);
 }
 
 /*
@@ -2012,7 +2013,7 @@ void __fastcall adjust_sprite_box1_on_left_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnLeftDoubleClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnLeftDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -2027,7 +2028,7 @@ void __fastcall adjust_sprite_box1_on_right_double_click(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnRightDoubleClickTarget(object - vtordisp, arg0, arg1);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnRightDoubleClickTarget)(arg0, arg1);
 }
 
 /*
@@ -2042,7 +2043,7 @@ void __fastcall adjust_sprite_box1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnDialogFocusTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*SpriteBoxOnDialogFocusTarget)(arg0);
 }
 
 /*
@@ -2057,7 +2058,7 @@ int __fastcall adjust_sprite_box1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return SpriteBoxAttachTarget(object - vtordisp, arg0, arg1, arg2, arg3);
+    return (ORIGINAL(object - vtordisp)->*SpriteBoxAttachTarget)(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -2071,7 +2072,7 @@ void __fastcall adjust_sprite_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    SpriteBoxOnRedrawTarget(object - vtordisp - 2584);
+    (ORIGINAL(object - vtordisp - 2584)->*SpriteBoxOnRedrawTarget)();
 }
 
 /*
@@ -2085,7 +2086,7 @@ void __fastcall adjust_edit_group1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    EditGroupOnRedrawTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*EditGroupOnRedrawTarget)();
 }
 
 /*
@@ -2100,7 +2101,7 @@ void __fastcall adjust_edit_group1_on_dialog_focus(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    EditGroupOnDialogFocusTarget(object - vtordisp, arg0);
+    (ORIGINAL(object - vtordisp)->*EditGroupOnDialogFocusTarget)(arg0);
 }
 
 /*
@@ -2114,7 +2115,7 @@ void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    EditGroupPassDialogFocusTarget(object - vtordisp);
+    (ORIGINAL(object - vtordisp)->*EditGroupPassDialogFocusTarget)();
 }
 
 /*
@@ -2129,7 +2130,7 @@ int __fastcall adjust_edit_group1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return EditGroupAttachTarget(object - vtordisp, arg0, arg1, arg2, arg3);
+    return (ORIGINAL(object - vtordisp)->*EditGroupAttachTarget)(arg0, arg1, arg2, arg3);
 }
 
 /*
@@ -2143,5 +2144,5 @@ void __fastcall adjust_edit_group3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    EditGroupOnRedrawTarget(object - vtordisp - 2584);
+    (ORIGINAL(object - vtordisp - 2584)->*EditGroupOnRedrawTarget)();
 }

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "temp.h"
 #include "basebutton.h"
 
@@ -368,8 +369,8 @@ void __fastcall base_button_set_text_color3_redirect(
 
 namespace {
 
-typedef void(__thiscall func_button_refresh_slot)(void *);
-typedef void(__thiscall func_parent_notify_slot)(void *, int, int);
+typedef void (OriginalObject::*func_button_refresh_slot)();
+typedef void (OriginalObject::*func_parent_notify_slot)(int, int);
 
 // Both dispatches read the live vtable of whatever object is actually there
 // rather than going through a C++ virtual call, so no table this toolchain
@@ -459,8 +460,8 @@ void __fastcall base_button_on_key_up_redirect(
 
 namespace {
 
-typedef uint32_t(__thiscall func_button_init_close_slot)(void *);
-typedef void(__thiscall func_button_init_show_slot)(void *, int);
+typedef uint32_t (OriginalObject::*func_button_init_close_slot)();
+typedef void (OriginalObject::*func_button_init_show_slot)(int);
 
 // Both dispatches read the live vtable of whatever object is actually there
 // rather than going through a C++ virtual call, so a FlatButton entering this

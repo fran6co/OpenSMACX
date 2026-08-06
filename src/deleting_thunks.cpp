@@ -17,6 +17,7 @@
  */
 
 #include "stdafx.h"
+#include "original_seam.h"
 #include "deleting_thunks.h"
 #include "adjustor_thunks.h"
 #include "ambience.h"
@@ -54,104 +55,104 @@ the destructor patched to record its receiver. That is not built here.
 // Each seam defaults to the original body the thunk
 // reached; the hybrid redirects it to a recovered one at run
 // time, and the leaf suite rebinds it to a recorder.
-func_deleting_dtor *AlphaMenuDtorTarget =
-    (func_deleting_dtor *)0x0051DC10;
-func_deleting_dtor *AlphaMovieDtorTarget =
-    (func_deleting_dtor *)0x00404310;
-func_deleting_dtor *AlphaSaveDtorTarget =
-    (func_deleting_dtor *)0x00408170;
-func_deleting_dtor *BasePopDtorTarget =
-    (func_deleting_dtor *)0x004064D0;
-func_deleting_dtor *BaseWinDtorTarget =
-    (func_deleting_dtor *)0x00420A70;
-func_deleting_dtor *CheckButtonDtorTarget =
-    (func_deleting_dtor *)0x004B3EC0;
-func_deleting_dtor *CouncWinDtorTarget =
-    (func_deleting_dtor *)0x00428550;
-func_deleting_dtor *CreditsDtorTarget =
-    (func_deleting_dtor *)0x00428E90;
-func_deleting_dtor *DatalinkDtorTarget =
-    (func_deleting_dtor *)0x00432290;
-func_deleting_dtor *DesignWinDtorTarget =
-    (func_deleting_dtor *)0x0043ECB0;
-func_deleting_dtor *DipEditDtorTarget =
-    (func_deleting_dtor *)0x004E2240;
-func_deleting_dtor *DiploPopDtorTarget =
-    (func_deleting_dtor *)0x00440D50;
-func_deleting_dtor *DiploWinDtorTarget =
-    (func_deleting_dtor *)0x00444DB0;
-func_deleting_dtor *EditBoxDtorTarget =
-    (func_deleting_dtor *)0x00408010;
-func_deleting_dtor *FameWinDtorTarget =
-    (func_deleting_dtor *)0x0044B100;
-func_deleting_dtor *GammaDtorTarget =
-    (func_deleting_dtor *)0x00456110;
-func_deleting_dtor *ImageButtonDtorTarget =
-    (func_deleting_dtor *)0x00625310;
-func_deleting_dtor *InterludeDtorTarget =
-    (func_deleting_dtor *)0x0045F740;
-func_deleting_dtor *MainInterfaceDtorTarget =
-    (func_deleting_dtor *)0x0045EB80;
-func_deleting_dtor *MenuDtorTarget =
-    (func_deleting_dtor *)0x005FAD00;
-func_deleting_dtor *MonuWinDtorTarget =
-    (func_deleting_dtor *)0x00477B10;
-func_deleting_dtor *MultiDebugDtorTarget =
-    (func_deleting_dtor *)0x005C9E00;
-func_deleting_dtor *MultiWinDtorTarget =
-    (func_deleting_dtor *)0x0047A430;
-func_deleting_dtor *NetMsgDtorTarget =
-    (func_deleting_dtor *)0x0047ADA0;
-func_deleting_dtor *NetWinDtorTarget =
-    (func_deleting_dtor *)0x004834E0;
-func_deleting_dtor *NewTechWinDtorTarget =
-    (func_deleting_dtor *)0x00484810;
-func_deleting_dtor *PickTechDtorTarget =
-    (func_deleting_dtor *)0x00488690;
-func_deleting_dtor *PickWinDtorTarget =
-    (func_deleting_dtor *)0x0048A8E0;
-func_deleting_dtor *PopMenuDtorTarget =
-    (func_deleting_dtor *)0x00421400;
-func_deleting_dtor *PopupDtorTarget =
-    (func_deleting_dtor *)0x00406C00;
-func_deleting_dtor *PrefWinDtorTarget =
-    (func_deleting_dtor *)0x00491DF0;
-func_deleting_dtor *ProdPickerDtorTarget =
-    (func_deleting_dtor *)0x00421100;
-func_deleting_dtor *PushButtonDtorTarget =
-    (func_deleting_dtor *)0x0062C010;
-func_deleting_dtor *QuayleWinDtorTarget =
-    (func_deleting_dtor *)0x00496710;
-func_deleting_dtor *ReplayWinDtorTarget =
-    (func_deleting_dtor *)0x005ADF10;
-func_deleting_dtor *ReportWinDtorTarget =
-    (func_deleting_dtor *)0x004AD3B0;
-func_deleting_dtor *SelectPartWinDtorTarget =
-    (func_deleting_dtor *)0x0043EE10;
-func_deleting_dtor *SetupWinDtorTarget =
-    (func_deleting_dtor *)0x004AE790;
-func_deleting_dtor *SocialWinDtorTarget =
-    (func_deleting_dtor *)0x004B3C80;
-func_deleting_dtor *StringBoxDtorTarget =
-    (func_deleting_dtor *)0x004325C0;
-func_deleting_forward_nullary *Sub004042B0Target =
-    (func_deleting_forward_nullary *)0x004042B0;
-func_deleting_dtor *Sub004C86D0Target =
-    (func_deleting_dtor *)0x004C86D0;
-func_deleting_forward *Sub00612710Target =
-    (func_deleting_forward *)0x00612710;
-func_deleting_dtor *Sub00633010Target =
-    (func_deleting_dtor *)0x00633010;
-func_deleting_forward *Sub006336D0Target =
-    (func_deleting_forward *)0x006336D0;
-func_deleting_dtor *TutWinDtorTarget =
-    (func_deleting_dtor *)0x004BE7D0;
-func_deleting_dtor *VoiceRxDtorTarget =
-    (func_deleting_dtor *)0x004C8A50;
-func_deleting_dtor *VoiceTxDtorTarget =
-    (func_deleting_dtor *)0x004C8DB0;
-func_deleting_dtor *WorldWinDtorTarget =
-    (func_deleting_dtor *)0x004C4A70;
+func_deleting_dtor AlphaMenuDtorTarget =
+    original_method<func_deleting_dtor>(0x0051DC10);
+func_deleting_dtor AlphaMovieDtorTarget =
+    original_method<func_deleting_dtor>(0x00404310);
+func_deleting_dtor AlphaSaveDtorTarget =
+    original_method<func_deleting_dtor>(0x00408170);
+func_deleting_dtor BasePopDtorTarget =
+    original_method<func_deleting_dtor>(0x004064D0);
+func_deleting_dtor BaseWinDtorTarget =
+    original_method<func_deleting_dtor>(0x00420A70);
+func_deleting_dtor CheckButtonDtorTarget =
+    original_method<func_deleting_dtor>(0x004B3EC0);
+func_deleting_dtor CouncWinDtorTarget =
+    original_method<func_deleting_dtor>(0x00428550);
+func_deleting_dtor CreditsDtorTarget =
+    original_method<func_deleting_dtor>(0x00428E90);
+func_deleting_dtor DatalinkDtorTarget =
+    original_method<func_deleting_dtor>(0x00432290);
+func_deleting_dtor DesignWinDtorTarget =
+    original_method<func_deleting_dtor>(0x0043ECB0);
+func_deleting_dtor DipEditDtorTarget =
+    original_method<func_deleting_dtor>(0x004E2240);
+func_deleting_dtor DiploPopDtorTarget =
+    original_method<func_deleting_dtor>(0x00440D50);
+func_deleting_dtor DiploWinDtorTarget =
+    original_method<func_deleting_dtor>(0x00444DB0);
+func_deleting_dtor EditBoxDtorTarget =
+    original_method<func_deleting_dtor>(0x00408010);
+func_deleting_dtor FameWinDtorTarget =
+    original_method<func_deleting_dtor>(0x0044B100);
+func_deleting_dtor GammaDtorTarget =
+    original_method<func_deleting_dtor>(0x00456110);
+func_deleting_dtor ImageButtonDtorTarget =
+    original_method<func_deleting_dtor>(0x00625310);
+func_deleting_dtor InterludeDtorTarget =
+    original_method<func_deleting_dtor>(0x0045F740);
+func_deleting_dtor MainInterfaceDtorTarget =
+    original_method<func_deleting_dtor>(0x0045EB80);
+func_deleting_dtor MenuDtorTarget =
+    original_method<func_deleting_dtor>(0x005FAD00);
+func_deleting_dtor MonuWinDtorTarget =
+    original_method<func_deleting_dtor>(0x00477B10);
+func_deleting_dtor MultiDebugDtorTarget =
+    original_method<func_deleting_dtor>(0x005C9E00);
+func_deleting_dtor MultiWinDtorTarget =
+    original_method<func_deleting_dtor>(0x0047A430);
+func_deleting_dtor NetMsgDtorTarget =
+    original_method<func_deleting_dtor>(0x0047ADA0);
+func_deleting_dtor NetWinDtorTarget =
+    original_method<func_deleting_dtor>(0x004834E0);
+func_deleting_dtor NewTechWinDtorTarget =
+    original_method<func_deleting_dtor>(0x00484810);
+func_deleting_dtor PickTechDtorTarget =
+    original_method<func_deleting_dtor>(0x00488690);
+func_deleting_dtor PickWinDtorTarget =
+    original_method<func_deleting_dtor>(0x0048A8E0);
+func_deleting_dtor PopMenuDtorTarget =
+    original_method<func_deleting_dtor>(0x00421400);
+func_deleting_dtor PopupDtorTarget =
+    original_method<func_deleting_dtor>(0x00406C00);
+func_deleting_dtor PrefWinDtorTarget =
+    original_method<func_deleting_dtor>(0x00491DF0);
+func_deleting_dtor ProdPickerDtorTarget =
+    original_method<func_deleting_dtor>(0x00421100);
+func_deleting_dtor PushButtonDtorTarget =
+    original_method<func_deleting_dtor>(0x0062C010);
+func_deleting_dtor QuayleWinDtorTarget =
+    original_method<func_deleting_dtor>(0x00496710);
+func_deleting_dtor ReplayWinDtorTarget =
+    original_method<func_deleting_dtor>(0x005ADF10);
+func_deleting_dtor ReportWinDtorTarget =
+    original_method<func_deleting_dtor>(0x004AD3B0);
+func_deleting_dtor SelectPartWinDtorTarget =
+    original_method<func_deleting_dtor>(0x0043EE10);
+func_deleting_dtor SetupWinDtorTarget =
+    original_method<func_deleting_dtor>(0x004AE790);
+func_deleting_dtor SocialWinDtorTarget =
+    original_method<func_deleting_dtor>(0x004B3C80);
+func_deleting_dtor StringBoxDtorTarget =
+    original_method<func_deleting_dtor>(0x004325C0);
+func_deleting_forward_nullary Sub004042B0Target =
+    original_method<func_deleting_forward_nullary>(0x004042B0);
+func_deleting_dtor Sub004C86D0Target =
+    original_method<func_deleting_dtor>(0x004C86D0);
+func_deleting_forward Sub00612710Target =
+    original_method<func_deleting_forward>(0x00612710);
+func_deleting_dtor Sub00633010Target =
+    original_method<func_deleting_dtor>(0x00633010);
+func_deleting_forward Sub006336D0Target =
+    original_method<func_deleting_forward>(0x006336D0);
+func_deleting_dtor TutWinDtorTarget =
+    original_method<func_deleting_dtor>(0x004BE7D0);
+func_deleting_dtor VoiceRxDtorTarget =
+    original_method<func_deleting_dtor>(0x004C8A50);
+func_deleting_dtor VoiceTxDtorTarget =
+    original_method<func_deleting_dtor>(0x004C8DB0);
+func_deleting_dtor WorldWinDtorTarget =
+    original_method<func_deleting_dtor>(0x004C4A70);
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
@@ -164,7 +165,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_alpha_movie(void *self, void *,
                                            unsigned int arg0) {
-    AlphaMovieDtorTarget(self);
+    (ORIGINAL(self)->*AlphaMovieDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -180,7 +181,7 @@ Status: Complete
 */
 void *__fastcall adjust_this_sub_404420(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
-    return Sub004042B0Target(object - 0x444);
+    return (ORIGINAL(object - 0x444)->*Sub004042B0Target)();
 }
 
 /*
@@ -226,7 +227,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_base_pop(void *self, void *,
                                         unsigned int arg0) {
-    BasePopDtorTarget(self);
+    (ORIGINAL(self)->*BasePopDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -243,7 +244,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_popup(void *self, void *, unsigned int arg0) {
-    PopupDtorTarget(self);
+    (ORIGINAL(self)->*PopupDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -311,7 +312,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_edit_box(void *self, void *,
                                         unsigned int arg0) {
-    EditBoxDtorTarget(self);
+    (ORIGINAL(self)->*EditBoxDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -329,7 +330,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_alpha_save(void *self, void *,
                                           unsigned int arg0) {
-    AlphaSaveDtorTarget(self);
+    (ORIGINAL(self)->*AlphaSaveDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -372,7 +373,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_prod_picker(void *self, void *,
                                            unsigned int arg0) {
-    ProdPickerDtorTarget(self);
+    (ORIGINAL(self)->*ProdPickerDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -390,7 +391,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_base_win(void *self, void *,
                                         unsigned int arg0) {
-    BaseWinDtorTarget(self);
+    (ORIGINAL(self)->*BaseWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -408,7 +409,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_pop_menu(void *self, void *,
                                         unsigned int arg0) {
-    PopMenuDtorTarget(self);
+    (ORIGINAL(self)->*PopMenuDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -490,7 +491,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_counc_win(void *self, void *,
                                          unsigned int arg0) {
-    CouncWinDtorTarget(self);
+    (ORIGINAL(self)->*CouncWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -519,7 +520,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_credits(void *self, void *, unsigned int arg0) {
-    CreditsDtorTarget(self);
+    (ORIGINAL(self)->*CreditsDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -549,7 +550,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_string_box(void *self, void *,
                                           unsigned int arg0) {
-    StringBoxDtorTarget(self);
+    (ORIGINAL(self)->*StringBoxDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -567,7 +568,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_datalink(void *self, void *,
                                         unsigned int arg0) {
-    DatalinkDtorTarget(self);
+    (ORIGINAL(self)->*DatalinkDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -610,7 +611,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_design_win(void *self, void *,
                                           unsigned int arg0) {
-    DesignWinDtorTarget(self);
+    (ORIGINAL(self)->*DesignWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -628,7 +629,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_select_part_win(void *self, void *,
                                                unsigned int arg0) {
-    SelectPartWinDtorTarget(self);
+    (ORIGINAL(self)->*SelectPartWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -672,7 +673,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_diplo_pop(void *self, void *,
                                          unsigned int arg0) {
-    DiploPopDtorTarget(self);
+    (ORIGINAL(self)->*DiploPopDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -702,7 +703,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_diplo_win(void *self, void *,
                                          unsigned int arg0) {
-    DiploWinDtorTarget(self);
+    (ORIGINAL(self)->*DiploWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -731,7 +732,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_effect(void *self, void *, unsigned int arg0) {
-    EffectElementTeardown(self);
+    (ORIGINAL(self)->*EffectElementTeardown)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -767,7 +768,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_fame_win(void *self, void *,
                                         unsigned int arg0) {
-    FameWinDtorTarget(self);
+    (ORIGINAL(self)->*FameWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -796,7 +797,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_gamma(void *self, void *, unsigned int arg0) {
-    GammaDtorTarget(self);
+    (ORIGINAL(self)->*GammaDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -826,7 +827,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_main_interface(void *self, void *,
                                               unsigned int arg0) {
-    MainInterfaceDtorTarget(self);
+    (ORIGINAL(self)->*MainInterfaceDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -857,7 +858,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_interlude(void *self, void *,
                                          unsigned int arg0) {
-    InterludeDtorTarget(self);
+    (ORIGINAL(self)->*InterludeDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -887,7 +888,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_monu_win(void *self, void *,
                                         unsigned int arg0) {
-    MonuWinDtorTarget(self);
+    (ORIGINAL(self)->*MonuWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -917,7 +918,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_multi_win(void *self, void *,
                                          unsigned int arg0) {
-    MultiWinDtorTarget(self);
+    (ORIGINAL(self)->*MultiWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -946,7 +947,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_net_msg(void *self, void *, unsigned int arg0) {
-    NetMsgDtorTarget(self);
+    (ORIGINAL(self)->*NetMsgDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -975,7 +976,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_net_win(void *self, void *, unsigned int arg0) {
-    NetWinDtorTarget(self);
+    (ORIGINAL(self)->*NetWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1005,7 +1006,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_new_tech_win(void *self, void *,
                                             unsigned int arg0) {
-    NewTechWinDtorTarget(self);
+    (ORIGINAL(self)->*NewTechWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1036,7 +1037,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_pick_tech(void *self, void *,
                                          unsigned int arg0) {
-    PickTechDtorTarget(self);
+    (ORIGINAL(self)->*PickTechDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1066,7 +1067,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_pick_win(void *self, void *,
                                         unsigned int arg0) {
-    PickWinDtorTarget(self);
+    (ORIGINAL(self)->*PickWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1096,7 +1097,7 @@ void *__fastcall adjust_this_plan_win(void *self, void *, unsigned int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return PlanWinScalarDeleteTarget(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*PlanWinScalarDeleteTarget)(arg0);
 }
 
 /*
@@ -1110,7 +1111,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_pref_win(void *self, void *,
                                         unsigned int arg0) {
-    PrefWinDtorTarget(self);
+    (ORIGINAL(self)->*PrefWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1140,7 +1141,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_quayle_win(void *self, void *,
                                           unsigned int arg0) {
-    QuayleWinDtorTarget(self);
+    (ORIGINAL(self)->*QuayleWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1171,7 +1172,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_report_win(void *self, void *,
                                           unsigned int arg0) {
-    ReportWinDtorTarget(self);
+    (ORIGINAL(self)->*ReportWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1202,7 +1203,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_setup_win(void *self, void *,
                                          unsigned int arg0) {
-    SetupWinDtorTarget(self);
+    (ORIGINAL(self)->*SetupWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1232,7 +1233,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_check_button(void *self, void *,
                                             unsigned int arg0) {
-    CheckButtonDtorTarget(self);
+    (ORIGINAL(self)->*CheckButtonDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1250,7 +1251,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_social_win(void *self, void *,
                                           unsigned int arg0) {
-    SocialWinDtorTarget(self);
+    (ORIGINAL(self)->*SocialWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1293,7 +1294,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0) {
-    TutWinDtorTarget(self);
+    (ORIGINAL(self)->*TutWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1323,7 +1324,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_world_win(void *self, void *,
                                          unsigned int arg0) {
-    WorldWinDtorTarget(self);
+    (ORIGINAL(self)->*WorldWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1371,7 +1372,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_video(void *self, void *, unsigned int arg0) {
-    Sub004C86D0Target(self);
+    (ORIGINAL(self)->*Sub004C86D0Target)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1389,7 +1390,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_voice_rx(void *self, void *,
                                         unsigned int arg0) {
-    VoiceRxDtorTarget(self);
+    (ORIGINAL(self)->*VoiceRxDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1407,7 +1408,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_voice_tx(void *self, void *,
                                         unsigned int arg0) {
-    VoiceTxDtorTarget(self);
+    (ORIGINAL(self)->*VoiceTxDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1425,7 +1426,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_dip_edit(void *self, void *,
                                         unsigned int arg0) {
-    DipEditDtorTarget(self);
+    (ORIGINAL(self)->*DipEditDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1455,7 +1456,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_alpha_menu(void *self, void *,
                                           unsigned int arg0) {
-    AlphaMenuDtorTarget(self);
+    (ORIGINAL(self)->*AlphaMenuDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1486,7 +1487,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_replay_win(void *self, void *,
                                           unsigned int arg0) {
-    ReplayWinDtorTarget(self);
+    (ORIGINAL(self)->*ReplayWinDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1517,7 +1518,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_multi_debug(void *self, void *,
                                            unsigned int arg0) {
-    MultiDebugDtorTarget(self);
+    (ORIGINAL(self)->*MultiDebugDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1597,7 +1598,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_win(void *self, void *, unsigned int arg0) {
-    WinOriginalDestructor(self);
+    (ORIGINAL(self)->*WinOriginalDestructor)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1645,7 +1646,7 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_menu(void *self, void *, unsigned int arg0) {
-    MenuDtorTarget(self);
+    (ORIGINAL(self)->*MenuDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1708,7 +1709,7 @@ void *__fastcall adjust_this_sub_612700(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return Sub00612710Target(object - vtordisp, arg0);
+    return (ORIGINAL(object - vtordisp)->*Sub00612710Target)(arg0);
 }
 
 /*
@@ -1722,7 +1723,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_image_button(void *self, void *,
                                             unsigned int arg0) {
-    ImageButtonDtorTarget(self);
+    (ORIGINAL(self)->*ImageButtonDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1753,7 +1754,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_push_button(void *self, void *,
                                            unsigned int arg0) {
-    PushButtonDtorTarget(self);
+    (ORIGINAL(self)->*PushButtonDtorTarget)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1783,7 +1784,7 @@ Status: Complete
 */
 void *__fastcall scalar_delete_sub_633160(void *self, void *,
                                           unsigned int arg0) {
-    Sub00633010Target(self);
+    (ORIGINAL(self)->*Sub00633010Target)();
     if (arg0 & 1) {
         ScrollOperatorDelete(self);
     }
@@ -1800,7 +1801,7 @@ Status: Complete
 void *__fastcall adjust_this_sub_633730(void *self, void *,
                                         unsigned int arg0) {
     uint8_t *const object = static_cast<uint8_t *>(self);
-    return Sub006336D0Target(object - 0x58, arg0);
+    return (ORIGINAL(object - 0x58)->*Sub006336D0Target)(arg0);
 }
 
 /*

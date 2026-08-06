@@ -56,7 +56,7 @@ class DLLEXPORT RadioButton {
 };
 
 // RadioButton's Dialog::close is not recovered yet.
-extern func_dialog_close *RadioButtonOriginalDialogClose;
+extern func_dialog_close RadioButtonOriginalDialogClose;
 extern uint32_t *RadioButtonDefault1;
 extern uint32_t *RadioButtonDefault2;
 
