@@ -138,6 +138,69 @@ def census_rows(functions: dict) -> list:
     return out
 
 
+# The vocabulary `src/` uses to call into the original image, mirrored because
+# the scaffolding unit cannot include the tree's headers - it is built from
+# opaque shells and fixed-address globals precisely so it does not depend on
+# them (see src/recovered/README.md).
+#
+# WITHOUT THIS, 792 OF 2,184 NO_COMPILE ROWS ARE ONE MISSING DECLARATION. 590
+# bodies use `ORIGINAL(...)`, the pointer-to-member seam that replaced the
+# `__thiscall` typedefs VC6 refuses, and 202 more use the EH vector iterators.
+# Every one of them failed with C2065 and, until the census started recording
+# what CL said, failed indistinguishably from everything else.
+#
+# Mirrors src/original_seam.h and src/vector_teardown.h. Kept minimal and
+# emitted only for bodies that reference it, so a unit that compiled before
+# still compiles to the same bytes.
+SEAM_PREAMBLE = """
+class __single_inheritance OriginalObject;
+template <class Method>
+Method original_method(unsigned long address) {
+  union { unsigned long address; Method method; } cast;
+  cast.address = address;
+  return cast.method;
+}
+#define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))
+typedef void (OriginalObject::*func_thiscall_teardown)();
+typedef void(__stdcall func_vector_dtor_iterator)(
+    void *array, unsigned int element_size, int count,
+    func_thiscall_teardown teardown);
+extern func_vector_dtor_iterator *VectorDtorIterator;
+typedef void(__stdcall func_vector_ctor_iterator)(
+    void *array, unsigned int element_size, int count,
+    func_thiscall_teardown ctor, func_thiscall_teardown dtor);
+extern func_vector_ctor_iterator *VectorCtorIterator;
+"""
+
+SEAM_TRIGGERS = ("ORIGINAL(", "original_method", "VectorDtorIterator",
+                 "VectorCtorIterator", "OriginalObject")
+
+# Spellings `src/` uses that cl 12.00.8168 does not have without a header.
+# `nullptr` is C++11 and `vc6_compat.h` defines it away for the real build; the
+# scaffolding unit includes no headers at all, so it needs the same courtesy.
+#
+# Emitted PER SYMBOL and only when the body names it. A blanket preamble would
+# risk `C2371: redefinition; different basic types` against any scaffolding
+# that already declares one of these, which would break units that compile
+# today - and this file's whole job is to measure, so it must not change what
+# it is measuring.
+COMPAT_DECLARATIONS = {
+    "nullptr": "#ifndef nullptr\n#define nullptr 0\n#endif",
+    "LPSTR": "typedef char *LPSTR;",
+    "LPCSTR": "typedef const char *LPCSTR;",
+    "BOOL": "typedef int BOOL;",
+}
+
+
+def compat_preamble(body: str, scaffolding: str) -> str:
+    """Declarations the body needs that neither VC6 nor the scaffolding has."""
+    wanted = []
+    for name, declaration in COMPAT_DECLARATIONS.items():
+        if re.search(rf"\b{re.escape(name)}\b", body) and name not in scaffolding:
+            wanted.append(declaration)
+    return ("\n".join(wanted) + "\n") if wanted else ""
+
+
 def build_unit(address, row, location, functions, derived, callees, pe):
     """(unit text, refusal reason)."""
     if not location:
@@ -156,7 +219,9 @@ def build_unit(address, row, location, functions, derived, callees, pe):
                                 scaffolding_only=True)
     except emit.Unsettled as error:
         return None, f"no scaffolding: {error}"
-    return scaffolding + "\n" + body, ""
+    seam = SEAM_PREAMBLE if any(t in body for t in SEAM_TRIGGERS) else ""
+    compat = compat_preamble(body, scaffolding)
+    return scaffolding + seam + compat + "\n" + body, ""
 
 
 def run(limit: int, jobs: int, verbose: bool) -> int:
@@ -232,10 +297,18 @@ def run(limit: int, jobs: int, verbose: bool) -> int:
             for start in range(0, len(stems), jobs):
                 chunk = {s: units[s] for s in stems[start:start + jobs]}
                 objects = byte_match.compile_batch(chunk, work, flags)
+                diagnostics = getattr(byte_match.compile_batch,
+                                      "diagnostics", {})
                 for stem, data in objects.items():
                     if data is None:
-                        candidate = {"tier": "NO_COMPILE",
-                                     "refusal_reason": "CL emitted no object"}
+                        # WHAT CL SAID, not merely that it said something. "CL
+                        # emitted no object" was recorded for all 1,988
+                        # NO_COMPILE rows, and it is true of every compile
+                        # failure there has ever been, so it separates nothing.
+                        candidate = {
+                            "tier": "NO_COMPILE",
+                            "refusal_reason": diagnostics.get(
+                                stem, "CL emitted no object")}
                     else:
                         low, high = layouts[stem].primary[0]
                         try:
@@ -262,7 +335,13 @@ def run(limit: int, jobs: int, verbose: bool) -> int:
             rebuilt_bytes=verdict.get("rebuilt_bytes", ""),
             original_mnemonics=verdict.get("original_mnemonics", ""),
             rebuilt_mnemonics=verdict.get("rebuilt_mnemonics", ""),
-            first_divergence=verdict.get("first_divergence", ""))
+            first_divergence=verdict.get("first_divergence", ""),
+            # `refusal_reason` was built above and then not written. Every
+            # column this touches is listed here by hand, so a verdict field
+            # missing from the list is dropped silently - which is what
+            # happened, for every NO_COMPILE row this census has ever
+            # produced.
+            refusal_reason=verdict.get("refusal_reason", ""))
 
     # MERGE, never overwrite. The fan-out writes unrecovered rows into this
     # same ledger; a census re-run that truncated the file would erase every

@@ -729,14 +729,42 @@ def compile_batch(units: dict, work: Path, flags: str) -> dict:
     response = work / "cl.rsp"
     response.write_text(" ".join(flags.split()) + "\n"
                         + "\n".join(f"{stem}.cpp" for stem in units) + "\n")
-    subprocess.run(["wine", str(VC6_CL), "/nologo", "@cl.rsp"],
-                   cwd=work, env=wine_environment(),
-                   capture_output=True, text=True)
+    done = subprocess.run(["wine", str(VC6_CL), "/nologo", "@cl.rsp"],
+                          cwd=work, env=wine_environment(),
+                          capture_output=True, text=True)
+    compile_batch.diagnostics = batch_diagnostics(
+        done.stdout + done.stderr, units)
     out = {}
     for stem in units:
         obj = work / f"{stem}.obj"
         out[stem] = obj.read_bytes() if obj.is_file() else None
     return out
+
+
+def batch_diagnostics(output: str, units: dict) -> dict:
+    """{stem: what CL printed about it}.
+
+    CL announces each source file on a line of its own and then reports that
+    file's errors, so the last announcement seen attributes everything after
+    it.
+
+    This exists because the output was being thrown away: `compile_batch` ran
+    with `capture_output=True` and read neither stream. That is why 1,988
+    NO_COMPILE rows carry no error text - the census recorded "CL emitted no
+    object" for every one of them, which says only that the compile failed,
+    and 923 hand-written failures have been unreadable ever since.
+    """
+    stems = {f"{stem}.cpp": stem for stem in units}
+    found: dict = {}
+    current = None
+    for line in output.splitlines():
+        stripped = line.strip()
+        if stripped in stems:
+            current = stems[stripped]
+            continue
+        if current and stripped:
+            found.setdefault(current, []).append(stripped)
+    return {stem: "\n".join(text) for stem, text in found.items()}
 
 
 def wine_environment() -> dict:
