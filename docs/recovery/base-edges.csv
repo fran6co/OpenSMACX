@@ -1,0 +1,17 @@
+derived,base,verdict,evidence
+AlphaNet,Net,agreed,the constructor at 0x004E2490 builds a Net on an unadjusted this
+BaseButton,GraphicWin,agreed,the constructor at 0x00606F30 builds a GraphicWin on an unadjusted this
+BasePop,GraphicWin,agreed,the constructor at 0x00600860 builds a GraphicWin on an unadjusted this
+BaseWindow,GraphicWin,unchecked,no constructor catalogued for this class
+BattleWindow,SubInterface,unchecked,no constructor catalogued for this class
+Effect,Wave,agreed,the constructor at 0x004482D0 builds a Wave on an unadjusted this
+FlatButton,BaseButton,agreed,the constructor at 0x00607CF0 builds a BaseButton on an unadjusted this
+GraphicWin,Win,agreed,the constructor at 0x005D4CF0 builds a Win on an unadjusted this
+NetMessage,Popup,unchecked,no constructor catalogued for this class
+Popup,BasePop,agreed,the constructor at 0x004048A0 builds a BasePop on an unadjusted this
+PushButton,BaseButton,agreed,the constructor at 0x0062BF20 builds a BaseButton on an unadjusted this
+RenderWindow,GraphicWin,unchecked,no constructor catalogued for this class
+ReportInfc,SubInterface,unchecked,no constructor catalogued for this class
+Scroll,GraphicWin,agreed,the constructor at 0x006051D0 builds a GraphicWin on an unadjusted this
+SetupWin,GraphicWin,agreed,the constructor at 0x004AD880 builds a GraphicWin on an unadjusted this
+Wave,Sound,unchecked,the constructor at 0x004C66E0 builds nothing this catalogue names
