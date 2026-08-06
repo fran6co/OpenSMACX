@@ -56,6 +56,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import class_layouts  # noqa: E402
+import derive_base_edges  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC = REPO_ROOT / "src"
@@ -272,7 +273,7 @@ def layout_for(name: str, idb: dict, thinker: dict, bounds=None) -> tuple:
 
 
 def render(names: list, idb: dict, thinker: dict,
-           owned: collections.Counter, bounds=None) -> str:
+           owned: collections.Counter, bounds=None, bases=None) -> str:
     lines = [
         "/*",
         " * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.",
@@ -336,6 +337,14 @@ def render(names: list, idb: dict, thinker: dict,
         keyword_ = "class" if functions else "struct"
         real = sum(1 for _, member, _ in members
                    if member and not PLACEHOLDER.match(member))
+        # An inheritance edge the image confirms. It changes no byte here -
+        # these classes are emitted flat on purpose - but it says what the
+        # leading bytes ARE, which is the thing a flat layout cannot.
+        base = (bases or {}).get(name)
+        if base:
+            lines.append(f"/* Derives from {base}: its constructor builds one "
+                         f"on an unadjusted `this`. See "
+                         f"docs/recovery/base-edges.csv. */")
         lines.append(f"/* 0x{total:X} bytes, {len(members)} member(s), "
                      f"{real} named. From {provenance}."
                      + (f" {functions} function(s) in the image." if functions
@@ -381,7 +390,8 @@ def main(argv=None) -> int:
     bounds = access_bounds()
     names = sorted((set(idb) | set(thinker) | set(bounds)) - declared)
     owned = owns_functions()
-    text = render(names, idb, thinker, owned, bounds)
+    text = render(names, idb, thinker, owned, bounds,
+                  derive_base_edges.agreed())
 
     if args.check:
         current = args.out.read_text() if args.out.is_file() else ""

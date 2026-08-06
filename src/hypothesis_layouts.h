@@ -1106,6 +1106,7 @@ class EditBox {
   uint8_t time_[0x28];  // 0xB4C
 };
 
+/* Derives from Wave: its constructor builds one on an unadjusted `this`. See docs/recovery/base-edges.csv. */
 /* 0x6C bytes, 1 member(s), 1 named. From the IDB. 4 function(s) in the image. */
 class Effect {
  public:
@@ -1915,6 +1916,7 @@ class PrefWin {
   uint32_t ptrFont7_;  // 0x1B3CC
 };
 
+/* Derives from BaseButton: its constructor builds one on an unadjusted `this`. See docs/recovery/base-edges.csv. */
 /* 0xB00 bytes, 19 member(s), 1 named. From the IDB. 6 function(s) in the image. */
 class PushButton {
  public:

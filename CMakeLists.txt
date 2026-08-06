@@ -1097,6 +1097,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(short-class-tests
                                    test_extend_short_classes.py)
 
+    opensmacx_add_python_tool_test(base-edge-tests
+                                   test_derive_base_edges.py)
+
     opensmacx_add_python_tool_test(agreed-size-tests
                                    test_derive_agreed_sizes.py)
 
@@ -1436,6 +1439,13 @@ if(BUILD_TESTING)
     add_test(NAME access-lower-bounds-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_access_bounds.py"
+            --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # Skips without the pinned image, which every verdict here depends on.
+    add_test(NAME base-edges-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_base_edges.py"
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )
