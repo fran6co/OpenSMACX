@@ -47,10 +47,10 @@ class DLLEXPORT StatusWin {
   // below sit where the original puts them, which the unmapped span holds in
   // place and the test checks directly.
   uint8_t unmapped_0_[0x15B4];
-  int32_t field_15B4_;
-  int32_t field_15B8_;
-  int32_t field_15BC_;
-  int32_t field_15C0_;
+  int32_t iTileX_;
+  int32_t iTileY_;
+  int32_t iUnitIndex_;
+  int32_t iCityIndex_;
   uint8_t unmapped_15C4_[0x15D4 - 0x15C4];
   int32_t field_15D4_;
 
@@ -58,7 +58,7 @@ class DLLEXPORT StatusWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 2 member(s) from the IDA database, 0 named; it starts a member at 0x15D8, which is where src/ ends.
 
-  uint32_t field_15D8_;  // 0x15D8
+  uint32_t fInOnClick_;  // 0x15D8
   uint32_t field_15DC_;  // 0x15DC
 };
 

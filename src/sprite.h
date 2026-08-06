@@ -39,18 +39,18 @@ class DLLEXPORT Sprite {
  private:
   int ppszFileName_;
   int pcBits_;
-  char field_8_;
+  char cTransparentIndex_;
   char pad1_;
   char pad2_;
   char pad3_;
-  int field_C_;
-  int field_10_;
-  int field_14_;
-  int field_18_;
-  int field_1C_;
-  int field_20_;
-  int field_24_;
-  int field_28_;
+  int iSpriteWidth2_;
+  int iSpriteWidth_;
+  int iSpriteHeight_;
+  int iWidth_;
+  int iHeight_;
+  int iLeftOffset_;
+  int iTopOffset_;
+  int fObj1Exists_;
 };
 
 static_assert(sizeof(Sprite) == 0x2C, "Sprite layout must match the legacy ABI");
