@@ -36,6 +36,10 @@ class DLLEXPORT MessageWin : Sprite {
   ~MessageWin() { ; }
   void UNK1(int a1, int a2, int a3, int a4, int a5);
   void UNK4(int a1);
+
+  // Storage the image proves is here: its own methods reach 0x68.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_2C_[0x3C];
 };
 
 void __fastcall message_win_unk1_redirect(MessageWin *self, void *, int a1, int a2, int a3, int a4, int a5);

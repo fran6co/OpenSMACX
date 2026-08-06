@@ -60,6 +60,10 @@ class DLLEXPORT DiploWin : GraphicWin {
   uint8_t unmapped_A14_[0xA24 - 0xA14];
   int32_t field_A24_;
   int32_t field_A28_;
+
+  // Storage the image proves is here: its own methods reach 0xDA80.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A2C_[0xD054];
 };
 
 void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1);

@@ -38,6 +38,10 @@ class DLLEXPORT Credits : GraphicWin {
   void on_right_down(int a1, int a2);
   void on_mouse_move(int a1, int a2);
   void on_button_clicked(int a1);
+
+  // Storage the image proves is here: its own methods reach 0xA18.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A14_[0x4];
 };
 
 void __fastcall credits_on_left_down_redirect(Credits *self, void *, int a1, int a2);

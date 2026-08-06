@@ -33,6 +33,10 @@ class DLLEXPORT AlphaMenu {
   AlphaMenu() { ; }
   ~AlphaMenu() { ; }
   int requested_height();
+
+  // Storage the image proves is here: its own methods reach 0xA30.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_0_[0xA30];
 };
 
 int __fastcall alpha_menu_requested_height_redirect(AlphaMenu *self, void *);

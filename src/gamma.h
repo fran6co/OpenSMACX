@@ -35,6 +35,10 @@ class DLLEXPORT Gamma : GraphicWin {
   Gamma() { ; }
   ~Gamma() { ; }
   int on_key_click(int a1, int a2);
+
+  // Storage the image proves is here: its own methods reach 0x1920.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A14_[0xF0C];
 };
 
 int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2);

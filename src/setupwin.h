@@ -38,6 +38,10 @@ class DLLEXPORT SetupWin : GraphicWin {
   int UNK2(int a1);
   int UNK3(int a1);
   int UNK4(int a1);
+
+  // Storage the image proves is here: its own methods reach 0xA1C.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A14_[0x8];
 };
 
 int __fastcall setup_win_unk1_redirect(SetupWin *self, void *, int a1);

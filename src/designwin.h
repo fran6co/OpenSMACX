@@ -45,6 +45,10 @@ class DLLEXPORT DesignWin : GraphicWin {
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_group_clicked(int a1, int a2, int a3);
+
+  // Storage the image proves is here: its own methods reach 0x14210.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A14_[0x137FC];
 };
 
 void __fastcall design_win_unk1_redirect(DesignWin *self, void *);

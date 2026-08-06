@@ -43,6 +43,10 @@ class DLLEXPORT NetWin : GraphicWin {
   int on_key_click(int a1, int a2);
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
+
+  // Storage the image proves is here: its own methods reach 0x7730.
+  // Extent only - nothing here is named, and this class carries no size assertion.
+  uint8_t field_A14_[0x6D1C];
 };
 
 void __fastcall net_win_unk5_redirect(NetWin *self, void *);
