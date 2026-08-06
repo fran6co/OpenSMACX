@@ -75,9 +75,15 @@ SUPPORTED_IDB_HASHES = {
     "6ffdcf2d6644f2c1b19c218d3b1b293b4e442d56b8cf1f537b0403608ff866fa",
 }
 
-# `?name@Class@@...` and `??0Class@@...` - the class is the scope right before
-# the terminating `@@`.
-SCOPE_RE = re.compile(r"^\?{1,2}[~\w@]*?@(\w+)@@")
+# The class a member function belongs to. An ordinary method spells
+# `?name@Class@@`; a SPECIAL name has no name segment at all - `??0Buffer@@` is
+# `??`, the operator code, then the class. The scope must be NON-EMPTY, which
+# is what refuses a free function: a lazy `[~\w@]*?@(\w+)@@` reads
+# `?f@@YAXPAUGraphicWin@@@Z` as a class called `YAXPAUGraphicWin`. Here that
+# only cost wasted netnode lookups for names no database holds, but it is the
+# same defect and it is not worth leaving in three places.
+SCOPE_RE = re.compile(
+    r"^(?:\?\?(?:_[A-Z]|[0-9A-Z])|\?[\w_]+@)([\w_]+)(?:@[\w_]+)*@@")
 
 # Names that carry no information: IDA's own auto-generated ones, in the same
 # shape `src/` uses for a member it has an offset for and nothing else.

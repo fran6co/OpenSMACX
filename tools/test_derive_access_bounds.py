@@ -75,6 +75,50 @@ class ReachTest(unittest.TestCase):
         self.assertEqual(reach(b"\xc3"), 0)
 
 
+class ReceiverScopeTest(unittest.TestCase):
+    """Which mangled names put `this` in ECX.
+
+    Both directions have been wrong here. A lazy `[~\\w@]*?@(\\w+)@@` invented
+    classes out of free functions, and `recovery_symbols.is_nonstatic_member`
+    refuses the special-name family - so constructors, which write the WHOLE
+    object and reach further into a class than anything else, were excluded
+    from every bound.
+    """
+
+    def test_an_ordinary_thiscall_method(self):
+        self.assertEqual(bounds.receiver_scope("?tech@SAmbience@@QAEXXZ"),
+                         "SAmbience")
+
+    def test_constructors_and_destructors_are_receivers(self):
+        self.assertEqual(bounds.receiver_scope("??0Buffer@@QAE@XZ"), "Buffer")
+        self.assertEqual(bounds.receiver_scope("??1Win@@UAE@XZ"), "Win")
+        self.assertEqual(bounds.receiver_scope("??_GWin@@UAEPAXI@Z"), "Win")
+        self.assertEqual(bounds.receiver_scope("??4Buffer@@QAEAAV0@ABV0@@Z"),
+                         "Buffer")
+
+    def test_a_free_function_is_not_a_class(self):
+        # ?f@@YAXPAUGraphicWin@@@Z is a free function taking GraphicWin*. The
+        # old regex read the convention code and the parameter type as a
+        # class and invented scopes like YAXPAUGraphicWin.
+        self.assertEqual(bounds.receiver_scope("?f@@YAXPAUGraphicWin@@@Z"), "")
+        self.assertEqual(bounds.receiver_scope("?amovie_project@@YAXH@Z"), "")
+
+    def test_a_static_member_has_no_receiver(self):
+        self.assertEqual(bounds.receiver_scope("?g@Win@@SAHXZ"), "")
+
+    def test_a_cdecl_member_takes_this_on_the_stack(self):
+        # QAA, not QAE: the receiver is pushed, so ECX is not `this`.
+        self.assertEqual(bounds.receiver_scope("?p@Win@@QAAXXZ"), "")
+
+    def test_a_nested_scope_yields_the_innermost_class(self):
+        self.assertEqual(bounds.receiver_scope("?h@Inner@Outer@@QAEXXZ"),
+                         "Inner")
+
+    def test_junk_is_refused(self):
+        for name in ("", "sub_401000", "nullsub_1", "_main"):
+            self.assertEqual(bounds.receiver_scope(name), "")
+
+
 class FalsifiedTest(unittest.TestCase):
     def test_a_total_below_the_observed_reach_is_reported(self):
         found = {"PullDown": (0xF35, "mov byte ptr [ecx + 0xf34], 1")}

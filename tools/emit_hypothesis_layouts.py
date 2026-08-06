@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """Declare the classes the binary has and `src/` does not.
 
-51 classes own unrecovered functions and `src/` declares none of them: 213
-functions whose agent is handed an opaque shell and told nothing about the
-receiver. Between them the IDA database and the Thinker mod describe 83 such
-classes, covering 154 of those functions.
+Classes own unrecovered functions whose agent is handed an opaque shell and
+told nothing about the receiver it is writing through. 86 such classes are
+declared here, 27 of them owning functions in the image; afterwards **6 classes
+owning 19 unrecovered functions** have no declaration anywhere, and for four of
+those no source in this tree knows anything at all - not a member, not a size.
 
 A partial declaration is knowledge. The type exists, some members have names
 and offsets, and the rest is storage - and none of it can contradict anything,
 because none of these classes has a pinned size to contradict.
+
+(An earlier version of this file claimed 51 classes and 213 functions. Those
+came from a scope regex that read `?f@@YAXPAUGraphicWin@@@Z` - a free function
+taking a `GraphicWin *` - as a class called `YAXPAUGraphicWin`. The counts were
+inflated by free functions; the parse is fixed above and the numbers here are
+the corrected ones.)
 
 WHAT THIS DOES NOT DO. It writes no `static_assert`. A compile-time size
 assertion is believed by everything downstream and checked by nothing, so it
@@ -26,11 +33,14 @@ emission order. That is not a hypothetical cost: by-value layout members broke
 675 units once and alphabetical emission order broke 77 more. A byte array
 holds the same offsets and depends on nothing.
 
-WHERE THE MEMBERS COME FROM. The IDB for coverage, Thinker for names where the
-two describe the same offset - Thinker's offsets are explicit in its headers
-rather than accumulated, and its field meanings have been validated for years
-by the mod working. Neither source's text enters the repository; both are read
-through committed or ignored offset/name CSVs.
+WHERE THE MEMBERS COME FROM, strongest first. The IDB for coverage, since it
+carries every member of a class or none. Thinker for names wherever it
+describes the same offset - its offsets are explicit in its headers rather than
+accumulated, and its field meanings have been validated for years by the mod
+working. And for a class neither has heard of, the access lower bound: it names
+nothing, but a class known to be at least 0x40 bytes is a better receiver than
+a type the tree has never declared. Neither external source's text enters the
+repository; both are read through committed offset/name CSVs.
 """
 
 from __future__ import annotations
@@ -60,10 +70,20 @@ IDB_MEMBERS = REPO_ROOT / "docs" / "recovery" / "idb-members.csv"
 THINKER = REPO_ROOT / "docs" / "recovery" / "thinker-members.csv"
 THINKER_LOCAL = (REPO_ROOT / ".opensmacx" / "external-analysis" /
                  "thinker-layout-hypotheses.csv")
+ACCESS_BOUNDS = REPO_ROOT / "docs" / "recovery" / "access-lower-bounds.csv"
 FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 OUTPUT = SRC / "hypothesis_layouts.h"
 
-SCOPE_RE = re.compile(r"^\?{1,2}[~\w@]*?@(\w+)@@")
+# The class a member function belongs to, and nothing for a free function.
+# An ordinary method spells `?name@Class@@`; a SPECIAL name has no name segment
+# at all - `??0Buffer@@` is `??`, the operator code, then the class.
+#
+# The scope must be NON-EMPTY, which is what refuses a free function. A lazy
+# `[~\w@]*?@(\w+)@@` does not: on `?f@@YAXPAUGraphicWin@@@Z` it consumes `f@`
+# and then reads the convention code and the parameter type as a class,
+# inventing scopes called `YAXPAUGraphicWin` and `YAHHHHHHPAUCaviar`.
+SCOPE_RE = re.compile(
+    r"^(?:\?\?(?:_[A-Z]|[0-9A-Z])|\?[\w_]+@)([\w_]+)(?:@[\w_]+)*@@")
 PLACEHOLDER = re.compile(r"^(field_[0-9A-Fa-f]+|unk\w*|gap\w*|pad\w*|_?\d+|)$")
 IDENTIFIER = re.compile(r"^[A-Za-z_]\w*$")
 
@@ -136,6 +156,26 @@ def regenerate_thinker() -> int:
     return 0
 
 
+def access_bounds() -> dict:
+    """{class: the size its own code proves it must be at least}.
+
+    The weakest source here and the only one for a class neither the IDB nor
+    Thinker has heard of. It names no member, but a class known to be 0x40
+    bytes is still a better receiver than a class the tree has never declared:
+    the type exists and its extent is right.
+    """
+    found = {}
+    if not ACCESS_BOUNDS.is_file():
+        return found
+    with ACCESS_BOUNDS.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            try:
+                found[row["class"]] = int(row["lower_bound"], 16)
+            except (ValueError, KeyError, TypeError):
+                continue
+    return found
+
+
 def owns_functions() -> collections.Counter:
     owned = collections.Counter()
     if not FUNCTIONS.is_file():
@@ -184,7 +224,7 @@ def member_name(raw: str, offset: int, taken: set) -> str:
     return name
 
 
-def layout_for(name: str, idb: dict, thinker: dict) -> tuple:
+def layout_for(name: str, idb: dict, thinker: dict, bounds=None) -> tuple:
     """([(offset, name, size)], provenance) - the members to declare.
 
     The IDB carries every member or none, so it decides the shape. Thinker
@@ -220,11 +260,19 @@ def layout_for(name: str, idb: dict, thinker: dict) -> tuple:
             continue
         members.append((offset, member, size))
         cursor = offset + size
-    return members, "Thinker"
+    if members:
+        return members, "Thinker"
+
+    # Neither source has heard of this class, but its own code proves how far
+    # into it the image reaches. One block of storage, no names.
+    bound = (bounds or {}).get(name, 0)
+    if bound > 0:
+        return [(0, "", bound)], "its own code, which reaches that far"
+    return [], "nothing"
 
 
 def render(names: list, idb: dict, thinker: dict,
-           owned: collections.Counter) -> str:
+           owned: collections.Counter, bounds=None) -> str:
     lines = [
         "/*",
         " * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.",
@@ -277,7 +325,7 @@ def render(names: list, idb: dict, thinker: dict,
     ]
 
     for name in names:
-        members, provenance = layout_for(name, idb, thinker)
+        members, provenance = layout_for(name, idb, thinker, bounds)
         if not members:
             continue
         total = max((offset + size for offset, _, size in members), default=0)
@@ -330,9 +378,10 @@ def main(argv=None) -> int:
         return 0
 
     declared = declared_in_src()
-    names = sorted((set(idb) | set(thinker)) - declared)
+    bounds = access_bounds()
+    names = sorted((set(idb) | set(thinker) | set(bounds)) - declared)
     owned = owns_functions()
-    text = render(names, idb, thinker, owned)
+    text = render(names, idb, thinker, owned, bounds)
 
     if args.check:
         current = args.out.read_text() if args.out.is_file() else ""

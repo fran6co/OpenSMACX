@@ -60,7 +60,7 @@ class AAmbience {
   uint32_t field_6E_;  // 0x6E
 };
 
-/* 0x6058 bytes, 8 member(s), 8 named. From the IDB. 15 function(s) in the image. */
+/* 0x6058 bytes, 8 member(s), 8 named. From the IDB. 19 function(s) in the image. */
 class AlphaSave {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -148,7 +148,7 @@ struct BASE {
   uint32_t field_130_;  // 0x130
 };
 
-/* 0x7E bytes, 12 member(s), 1 named. From the IDB. 7 function(s) in the image. */
+/* 0x7E bytes, 12 member(s), 1 named. From the IDB. 8 function(s) in the image. */
 class BAmbience {
  public:
   uint8_t ambience_[0x58];  // 0x0
@@ -572,7 +572,7 @@ struct CWorldbuilder {
   uint32_t islands_;  // 0x78
 };
 
-/* 0xB74 bytes, 80 member(s), 2 named. From the IDB. 16 function(s) in the image. */
+/* 0xB74 bytes, 80 member(s), 2 named. From the IDB. 20 function(s) in the image. */
 class EditBox {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -657,10 +657,16 @@ class EditBox {
   uint8_t time_[0x28];  // 0xB4C
 };
 
-/* 0x6C bytes, 1 member(s), 1 named. From the IDB. 1 function(s) in the image. */
+/* 0x6C bytes, 1 member(s), 1 named. From the IDB. 4 function(s) in the image. */
 class Effect {
  public:
   uint8_t wave_[0x6C];  // 0x0
+};
+
+/* 0x4 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 1 function(s) in the image. */
+class ExternalContextBase {
+ public:
+  uint32_t field_0_;  // 0x0
 };
 
 /* 0x470 bytes, 123 member(s), 116 named. From Thinker. */
@@ -790,7 +796,7 @@ struct Faction {
   uint32_t field_46C_;  // 0x46C
 };
 
-/* 0xB69C bytes, 49 member(s), 10 named. From the IDB. 9 function(s) in the image. */
+/* 0xB69C bytes, 49 member(s), 10 named. From the IDB. 13 function(s) in the image. */
 class FameWin {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -844,7 +850,7 @@ class FameWin {
   uint8_t sprites_[0x210];  // 0xB48C
 };
 
-/* 0x41C bytes, 7 member(s), 4 named. From the IDB. 7 function(s) in the image. */
+/* 0x41C bytes, 7 member(s), 4 named. From the IDB. 9 function(s) in the image. */
 class FileBox {
  public:
   uint8_t field_0_[0x104];  // 0x0
@@ -865,14 +871,14 @@ struct FileFindPath {
   uint8_t relative_path_[0x100];  // 0x400
 };
 
-/* 0xABC bytes, 2 member(s), 1 named. From the IDB. 3 function(s) in the image. */
+/* 0xABC bytes, 2 member(s), 1 named. From the IDB. 7 function(s) in the image. */
 class ImageButton {
  public:
   uint8_t baseButton_[0xAB8];  // 0x0
   uint32_t field_AB8_;  // 0xAB8
 };
 
-/* 0xFDC bytes, 18 member(s), 2 named. From the IDB. 5 function(s) in the image. */
+/* 0xFDC bytes, 18 member(s), 2 named. From the IDB. 9 function(s) in the image. */
 class Interlude {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -929,7 +935,7 @@ struct MAP {
   uint8_t visible_items_[0x1C];  // 0x10
 };
 
-/* 0x46C bytes, 7 member(s), 2 named. From the IDB. 6 function(s) in the image. */
+/* 0x46C bytes, 7 member(s), 2 named. From the IDB. 8 function(s) in the image. */
 class MCIVideo {
  public:
   uint32_t field_0_;  // 0x0
@@ -1015,7 +1021,13 @@ struct MapTile {
   uint32_t sq_;  // 0xC
 };
 
-/* 0x366C bytes, 122 member(s), 13 named. From the IDB. 7 function(s) in the image. */
+/* 0x40 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 42 function(s) in the image. */
+class Midi {
+ public:
+  uint8_t field_0_[0x40];  // 0x0
+};
+
+/* 0x366C bytes, 122 member(s), 13 named. From the IDB. 11 function(s) in the image. */
 class MonuWin {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -1147,7 +1159,7 @@ struct Monument {
   uint8_t data1_[0x334];  // 0x0
 };
 
-/* 0x28B8 bytes, 31 member(s), 14 named. From the IDB. 16 function(s) in the image. */
+/* 0x28B8 bytes, 31 member(s), 14 named. From the IDB. 20 function(s) in the image. */
 class MultiWin {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -1190,7 +1202,7 @@ struct NameNode {
   uint8_t field_8_[0x258];  // 0x8
 };
 
-/* 0x10 bytes, 4 member(s), 0 named. From the IDB. 4 function(s) in the image. */
+/* 0x10 bytes, 4 member(s), 0 named. From the IDB. 6 function(s) in the image. */
 class NetFifo {
  public:
   uint32_t field_0_;  // 0x0
@@ -1226,7 +1238,7 @@ struct PaletteInternal {
   uint32_t field_C_;  // 0xC
 };
 
-/* 0xC5C bytes, 111 member(s), 5 named. From the IDB. 9 function(s) in the image. */
+/* 0xC5C bytes, 111 member(s), 5 named. From the IDB. 13 function(s) in the image. */
 class PickTech {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -1348,7 +1360,7 @@ struct Point {
   uint32_t y_;  // 0x4
 };
 
-/* 0x1B3D0 bytes, 55 member(s), 50 named. From the IDB. 16 function(s) in the image. */
+/* 0x1B3D0 bytes, 55 member(s), 50 named. From the IDB. 20 function(s) in the image. */
 class PrefWin {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -1408,7 +1420,7 @@ class PrefWin {
   uint32_t ptrFont7_;  // 0x1B3CC
 };
 
-/* 0xB00 bytes, 19 member(s), 1 named. From the IDB. 2 function(s) in the image. */
+/* 0xB00 bytes, 19 member(s), 1 named. From the IDB. 6 function(s) in the image. */
 class PushButton {
  public:
   uint8_t baseButton_[0xAB8];  // 0x0
@@ -1432,7 +1444,7 @@ class PushButton {
   uint32_t field_AFC_;  // 0xAFC
 };
 
-/* 0x37BC bytes, 47 member(s), 9 named. From the IDB. 7 function(s) in the image. */
+/* 0x37BC bytes, 47 member(s), 9 named. From the IDB. 11 function(s) in the image. */
 class QuayleWin {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -1501,7 +1513,7 @@ struct ResValue {
   uint32_t unused_;  // 0xC
 };
 
-/* 0x464C bytes, 87 member(s), 6 named. From the IDB. 13 function(s) in the image. */
+/* 0x464C bytes, 87 member(s), 6 named. From the IDB. 17 function(s) in the image. */
 class SelectPartWin {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -1593,7 +1605,7 @@ class SelectPartWin {
   uint32_t field_4648_;  // 0x4648
 };
 
-/* 0x24 bytes, 9 member(s), 0 named. From the IDB. 2 function(s) in the image. */
+/* 0x24 bytes, 9 member(s), 0 named. From the IDB. 3 function(s) in the image. */
 class ServiceStruct {
  public:
   uint32_t field_0_;  // 0x0
@@ -1612,6 +1624,12 @@ struct SpotList {
   uint32_t spots_;  // 0x0
   uint32_t max_count_;  // 0x4
   uint32_t cur_count_;  // 0x8
+};
+
+/* 0x1C bytes, 1 member(s), 0 named. From its own code, which reaches that far. 2 function(s) in the image. */
+class SpriteList {
+ public:
+  uint8_t field_0_[0x1C];  // 0x0
 };
 
 /* 0x8 bytes, 2 member(s), 1 named. From the IDB. 3 function(s) in the image. */
@@ -1637,7 +1655,7 @@ struct TTilePos {
   uint8_t field_B_;  // 0xB
 };
 
-/* 0x10 bytes, 4 member(s), 4 named. From the IDB. 5 function(s) in the image. */
+/* 0x10 bytes, 4 member(s), 4 named. From the IDB. 6 function(s) in the image. */
 class TexHeap {
  public:
   uint32_t basePtr_;  // 0x0
@@ -1717,7 +1735,7 @@ struct VEH {
   uint16_t prev_veh_id_stack_;  // 0x32
 };
 
-/* 0x1038 bytes, 365 member(s), 7 named. From the IDB. 8 function(s) in the image. */
+/* 0x1038 bytes, 365 member(s), 7 named. From the IDB. 11 function(s) in the image. */
 class Video {
  public:
   uint32_t field_0_;  // 0x0
@@ -2087,7 +2105,7 @@ class Video {
   uint8_t fields_1028_[0x10];  // 0x1028
 };
 
-/* 0x54 bytes, 21 member(s), 0 named. From the IDB. 7 function(s) in the image. */
+/* 0x54 bytes, 21 member(s), 0 named. From the IDB. 10 function(s) in the image. */
 class VoiceRx {
  public:
   uint32_t field_0_;  // 0x0
@@ -2113,7 +2131,7 @@ class VoiceRx {
   uint32_t field_50_;  // 0x50
 };
 
-/* 0x58 bytes, 22 member(s), 0 named. From the IDB. 8 function(s) in the image. */
+/* 0x58 bytes, 22 member(s), 0 named. From the IDB. 11 function(s) in the image. */
 class VoiceTx {
  public:
   uint32_t field_0_;  // 0x0

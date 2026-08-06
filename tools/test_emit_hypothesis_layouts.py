@@ -83,6 +83,40 @@ class LayoutTest(unittest.TestCase):
         self.assertEqual([member for _, member, _ in members], ["lineHeight"])
 
 
+class ScopeTest(unittest.TestCase):
+    def test_a_free_function_is_not_a_class(self):
+        # The old lazy regex read the convention code and the parameter type
+        # as a class, inventing YAXPAUGraphicWin and YAHHHHHHPAUCaviar.
+        self.assertIsNone(emitter.SCOPE_RE.match("?f@@YAXPAUGraphicWin@@@Z"))
+        self.assertIsNone(emitter.SCOPE_RE.match("?amovie_project@@YAXH@Z"))
+
+    def test_members_and_special_names_are_classes(self):
+        for name, want in (("?tech@SAmbience@@QAEXXZ", "SAmbience"),
+                           ("??0Buffer@@QAE@XZ", "Buffer"),
+                           ("??_GWin@@UAEPAXI@Z", "Win"),
+                           ("?g@Win@@SAHXZ", "Win")):
+            self.assertEqual(emitter.SCOPE_RE.match(name).group(1), want, name)
+
+
+class BoundOnlyTest(unittest.TestCase):
+    """A class no source describes, known only by how far its code reaches."""
+
+    def test_the_bound_becomes_one_block_of_storage(self):
+        members, provenance = emitter.layout_for("Midi", {}, {}, {"Midi": 0x40})
+        self.assertEqual(members, [(0, "", 0x40)])
+        self.assertIn("its own code", provenance)
+
+    def test_a_class_with_no_evidence_at_all_yields_nothing(self):
+        members, _ = emitter.layout_for("Fractal", {}, {}, {})
+        self.assertEqual(members, [])
+
+    def test_the_idb_wins_over_a_bare_bound(self):
+        idb = {"S": [(0x0, "a", 4)]}
+        members, provenance = emitter.layout_for("S", idb, {}, {"S": 0x100})
+        self.assertEqual(members, [(0x0, "a", 4)])
+        self.assertIn("IDB", provenance)
+
+
 class RenderTest(unittest.TestCase):
     def test_no_size_assertion_is_ever_emitted(self):
         """The one property that must not regress. A static_assert here would
