@@ -1091,6 +1091,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(member-naming-tests
                                    test_name_members_from_sources.py)
 
+    opensmacx_add_python_tool_test(access-bound-tests
+                                   test_derive_access_bounds.py)
+
     opensmacx_add_python_tool_test(recovery-symbol-tests
                                    test_recovery_symbols.py)
     opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)
@@ -1412,6 +1415,15 @@ if(BUILD_TESTING)
     # finishes - so it needs no wineprefix RESOURCE_LOCK, and
     # verify_wine_test_locks.py correctly does not demand one. A SECOND
     # VC6-backed test would share this prefix and should take a lock of its own.
+    # --check here also re-runs the control: a lower bound that exceeds a size
+    # the tree already knows is a defect in the derivation, and gating
+    # staleness without gating soundness would watch the wrong thing.
+    add_test(NAME access-lower-bounds-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_access_bounds.py"
+            --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
     # Skips cleanly without the ignored canonical IDB, which is the normal
     # state of a fresh checkout.
     add_test(NAME idb-members-current
