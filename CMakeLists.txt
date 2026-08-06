@@ -1097,6 +1097,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(short-class-tests
                                    test_extend_short_classes.py)
 
+    opensmacx_add_python_tool_test(vtable-tests
+                                   test_derive_vtables.py)
+
     opensmacx_add_python_tool_test(yitzi-notes-tests
                                    test_correlate_yitzi_notes.py)
 
@@ -1445,6 +1448,13 @@ if(BUILD_TESTING)
     add_test(NAME access-lower-bounds-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_access_bounds.py"
+            --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # Skips without the pinned image; every row is read out of its constructors.
+    add_test(NAME vtables-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_vtables.py"
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )
