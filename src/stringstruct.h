@@ -9,8 +9,11 @@
  */
 #pragma once
 
+#include "vc6_compat.h"
+#if !defined(_MSC_VER) || _MSC_VER > 1200
 #include <cstddef>
 #include <cstdint>
+#endif
 
 struct StringStructEntry {
   uint32_t abi_word;
