@@ -160,9 +160,9 @@ def load_functions() -> tuple[dict[int, dict], dict[str, int]]:
     return by_address, by_name
 
 
-def load_pinned() -> dict[str, int]:
+def load_pinned(src_dir: Path = None) -> dict[str, int]:
     pinned = {}
-    for header in sorted(SRC_DIR.glob("*.h")):
+    for header in sorted((src_dir or SRC_DIR).glob("*.h")):
         for match in PINNED_RE.finditer(header.read_text()):
             pinned[match.group(1)] = int(match.group(2), 0)
     return pinned
@@ -520,9 +520,15 @@ def main() -> int:
                         help="replay the derivation against every hand-pinned "
                              "class and summarise agreement")
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
+    # Named so verify_checks_can_fail.py can point --check-pinned at a copy of
+    # src/ with one pinned size perturbed, and prove this gate reports a wrong
+    # answer rather than only ever abstaining.
+    parser.add_argument("--src", type=Path, default=SRC_DIR,
+                        help="headers to read pinned sizes from "
+                             "(default: the tree's src/)")
     args = parser.parse_args()
 
-    pinned = load_pinned()
+    pinned = load_pinned(args.src)
 
     if args.score_csv:
         # THE GATE EVERY HYPOTHESIS SOURCE MUST PASS. Thinker's headers failed
@@ -567,6 +573,14 @@ def main() -> int:
                   "whose size is known, so it has not been checked at all.")
             return 1
         print("  accepted as a hypothesis source for classes it also covers")
+        return 0
+
+    # Every derivation below reads the image. Without it the tool abstains on
+    # all 40 pinned classes and reports "0 answered wrongly", which as a CTest
+    # gate is a clean sheet earned by measuring nothing.
+    if not args.exe.is_file():
+        print(f"SKIP: {args.exe} is absent. This replays the derivation "
+              f"against the pinned executable.")
         return 0
 
     image = Image(args.exe)

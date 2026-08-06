@@ -1388,6 +1388,33 @@ if(BUILD_TESTING)
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )
+    # docs/recovery/verified-layouts.txt decides which classes are handed to an
+    # agent with real members instead of an opaque shell, and it was the one
+    # recovery artifact with no staleness gate while nine others had one.
+    # test_class_layouts.py's VerificationGateTest only asserts
+    # verified <= pinned: it catches a class that stopped being EXTRACTED and
+    # is blind to one whose extracted SHAPE changed, which is the failure that
+    # reaches an agent. This recompiles every probe.
+    #
+    # It drives ~/opt/vc6/.wineprefix, which is byte_match.py's own prefix and
+    # not the ${OPENSMACX_WINE_PREFIX} that run_windows_test.py stops when it
+    # finishes - so it needs no wineprefix RESOURCE_LOCK, and
+    # verify_wine_test_locks.py correctly does not demand one. A SECOND
+    # VC6-backed test would share this prefix and should take a lock of its own.
+    add_test(NAME verified-layouts-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_class_layouts.py"
+            --check
+    )
+    # The derivation's own regression gate. It existed and nothing ran it, so a
+    # change that made the image-derived sizes answer WRONGLY - the one failure
+    # mode that matters, as opposed to abstaining - would have been silent.
+    add_test(NAME class-layout-derivation-pinned
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_class_layout.py"
+            --check-pinned
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
     # --exe named explicitly for the same reason as the signedness audit: with
     # no image this compares the document against nothing, and it now returns 2
     # rather than reporting that as agreement.
