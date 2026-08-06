@@ -256,7 +256,7 @@ gameplay tests keep a central `main()` list:
 - Persistent ignored Ghidra project: `build/ghidra-projects/live-recovery`.
 - Historical external-analysis catalog: `docs/recovery/external-analysis-sources.json`; exact snapshots remain ignored and are hypothesis inputs only.
 - Local correlation currently maps 88 of 91 Yitzi function-note addresses and all 1,352 Dio disassembly-label addresses to canonical function ranges.
-- The catalog's `additional_repositories` entry pins the Thinker mod. It is kept out on the **measured** position, not the licence one: it lands 2,279 of 2,562 address hypotheses exactly on catalogued entries with 100% correct class attribution (1,216/1,216), yet names exactly one function the catalogue leaves as `sub_*`, invents its method names, and is 5 right / 7 wrong on the pinned layouts — see `docs/EXCLUSIONS.md`. `tools/correlate_thinker_layouts.py` reduces the fetched headers to ignored struct-offset and global-address hypothesis CSVs; every lead still requires independent verification against the hash-bound canonical executable before source, tests, or metadata are committed, and its text is never copied or committed either way.
+- The catalog's `additional_repositories` entry pins the Thinker mod, on the **measured** position rather than the licence one: it lands 2,279 of 2,562 address hypotheses exactly on catalogued entries with 100% correct class attribution (1,216/1,216), yet names exactly one function the catalogue leaves as `sub_*` and invents its method names, so it adds nothing as a source of FUNCTION names. **Corrected 2026-08-06:** its member names and its class declarations ARE adopted — the binary carries zero data symbols, so nothing competes with them — and its 5-right/7-wrong layout score was total size measured against a mod that declares only the prefix it needs. Sizes still require `derive_class_layout.py --score-csv` at zero wrong; see `docs/EXCLUSIONS.md`. `tools/correlate_thinker_layouts.py` reduces the fetched headers to ignored struct-offset and global-address hypothesis CSVs; its text is never copied or committed either way.
 - The exported-first queue covers all 462 DEF exports: no unverified exact-name replacements or mapped unrecovered functions, 415 exact source-complete mappings, and 47 name-ambiguous rows manually resolved as 45 source-complete mappings and two source-only compatibility exports.
 
 ## Out of Scope
@@ -300,9 +300,22 @@ The **Thinker mod** is not excluded by licence — that objection was withdrawn 
 but by measurement. It lands 2,279 of 2,562 address hypotheses exactly on
 catalogued entries and its class attribution is 100% correct (1,216/1,216), so
 it understands the binary; it also names exactly **one** function the catalogue
-leaves as `sub_*`, invents its method names rather than using the real symbols,
-and gets the pinned class layouts 5 right / 7 wrong. Use it to understand
-behaviour. Do not import its names, addresses or layouts.
+leaves as `sub_*` and invents its method names rather than using the real
+symbols, so as a source of FUNCTION names it is close to worthless.
+
+**Corrected 2026-08-06:** that finding was extended to member names and to
+layouts, and it does not reach either. `functions.csv` holds 4,821 mangled
+function symbols and **zero data symbols** — MSVC mangling never names an
+instance data member — so there is no real member name for Thinker's to be
+redundant with, and for members it is the only source of semantic names that
+exists. And the 5-right/7-wrong layout score measured total size against a
+**mod**, which declares only the struct prefix it needs; a partial declaration
+scored on total size measures how much the mod needed. Member names, member
+types and whole classes `src/` does not declare are now adopted from Thinker
+and from the IDB. Sizes are not: a `static_assert` is believed by everything
+downstream and checked by nothing, so it still requires
+`derive_class_layout.py --score-csv` at zero wrong. See `docs/EXCLUSIONS.md`
+for the bar by where the data lands.
 
 There is **no `_except_handler3` residue**. That wall was an arithmetic
 artifact and has been withdrawn; see the closing section.

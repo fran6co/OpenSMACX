@@ -183,21 +183,60 @@ carries a class prefix, its **class attribution is 100% correct: 1,216 of
 1,216** agree with the catalogue's mangled class, including constructors,
 destructors, scalar deleting destructors and dynamic-initialiser thunks.
 
-So it understands the binary. It does not, however, know anything the
-catalogue does not:
+So it understands the binary. On **function** names it still knows almost
+nothing the catalogue does not:
 
 - It names **exactly one** function the catalogue leaves as `sub_*`:
   `sub_51dd00`, which Thinker calls `NetDaemon_cleanup`. One.
 - Its method names are **its own inventions**, not the real symbols. Only 6 of
   2,279 names match the catalogue's, and this image ships mangled names for
   89% of its functions, so the real name is already known wherever it matters.
-- Its class layouts are **5 right, 7 wrong** against the 40 pinned sizes
-  (`docs/ORACLE_SESSIONS.md`), and the failures are not near-misses: `Buffer`
-  0x1c against 0x588, `Font` 0x8 against 0x28, `Win` 0xc8 against 0x444.
 
-**Use it to understand behaviour. Do not import its names, its addresses, or
-its layouts.** A wrong layout compiles perfectly and corrupts memory at
-runtime, which is the exact failure this project is built to avoid.
+### Corrected on 2026-08-06 — that argument was applied to the wrong things
+
+The two conclusions below were both wrong, and both in the direction of
+refusing evidence this project has no other source for.
+
+**On names.** The redundancy argument above is measured over *functions* and
+was extended to *members*, where it does not hold. `docs/recovery/functions.csv`
+carries **4,821 mangled function symbols and zero data symbols** — no
+`?x@Class@@2…` static members, no `?x@@3…` globals. MSVC mangling encodes class
+scope and function signatures; instance data members never enter the symbol
+table at all. There is no real member name for Thinker's to be redundant with,
+so for data members Thinker is not a second-best source, it is the **only**
+source of semantic names this project has — and one whose field meanings have
+been validated for years by the mod working. The same holds for the IDB.
+
+**On layouts.** *"A wrong layout compiles perfectly and corrupts memory at
+runtime"* describes a shipping game. Nothing here runs. Every recovered body is
+compiled and byte-compared against the original object, so a wrong layout
+cannot produce a byte match: it is self-detecting at the objdiff gate and its
+cost is wasted attempts, not corruption.
+
+The 5-right/7-wrong figure also tested the one thing Thinker structurally
+cannot have. It is a **mod**: it declares only the prefix of each struct it
+touches, so `Font` 0x8 against 0x28 is a partial declaration, not a
+disagreement. Scoring a partial declaration on total size measures how much of
+the struct the mod needed, not whether it is right about what it does declare.
+
+### The bar, by where the data lands
+
+| use | bar |
+| --- | --- |
+| `static_assert(sizeof(X) == N)` in `src/` | unchanged: **zero wrong**, proved |
+| a member or class **name** | adopt; the binary supplies no competing name |
+| a class `src/` does not declare at all | adopt as a partial declaration, no size assertion |
+| a member name or type on an already-pinned offset | adopt — it cannot move a byte, and the existing `static_assert` fails the build if it somehow does |
+| a **size** for a class with none | stage to the agent as labelled hypothesis; objdiff is the acceptance test |
+
+`derive_class_layout.py --score-csv` is unchanged and still refuses any source
+that is wrong about a pinned size. It guards the first row, which is the only
+one where a wrong answer is unrecoverable — a `static_assert` is believed by
+everything downstream and checked by nothing.
+
+Source *text* still never enters the repository: extracted offsets and names
+only, per `hypothesis_only_local_input` in
+`docs/recovery/external-analysis-sources.json`.
 
 ---
 
