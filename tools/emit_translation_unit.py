@@ -827,6 +827,38 @@ def declare_callee(row: dict, derived: dict, pe=None,
             f"{signature.method}({', '.join(signature.params) or ''});")
 
 
+def by_value_first(names) -> list:
+    """Order class definitions so a by-value member's type comes first.
+
+    `class Dialog { Heap heap_; }` needs `Heap` COMPLETE, and the classes
+    were emitted alphabetically - Dialog at line 72, Heap at 143 - so 77
+    units failed with `error C2079: uses undefined class`. A pointer member
+    needs only the forward declaration above and imposes no order.
+
+    Stable: ties keep alphabetical order, so a unit does not reshuffle
+    between runs. A cycle cannot happen - a class cannot contain itself by
+    value - but is broken defensively rather than recursed into.
+    """
+    ordered, placed = [], set()
+
+    def place(name, seen):
+        if name in placed or name in seen:
+            return
+        for type_, _, _ in class_layouts.pinned_layouts().get(name, ()):
+            if "*" in type_:
+                continue
+            dependency = type_.replace("const", "").strip()
+            if dependency in names:
+                place(dependency, seen | {name})
+        if name not in placed:
+            placed.add(name)
+            ordered.append(name)
+
+    for name in sorted(names):
+        place(name, frozenset())
+    return ordered
+
+
 def emit(address: int, functions: dict, derived: dict, callees: dict,
          pe, scaffolding_only: bool = False) -> str:
     """The unit. With `scaffolding_only`, everything EXCEPT the subject's
@@ -958,7 +990,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # Layouts never hold a member by value, so a forward declaration above is
     # enough for these to be defined in any order.
     defined_later = {signature.klass} | set(methods_by_class)
-    for name in sorted(wanted - defined_later):
+    for name in by_value_first(wanted - defined_later):
         layout = class_layouts.declaration_for(name)
         if layout:
             lines.append(declare(name, opening=True))
@@ -970,7 +1002,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         lines.append("// ---- callees, declared and never defined "
                      "(a definition would be inlined) ----")
 
-    for klass in sorted(methods_by_class):
+    for klass in by_value_first(set(methods_by_class)):
         if klass == signature.klass:
             continue
         body = []

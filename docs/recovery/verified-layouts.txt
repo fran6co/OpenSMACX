@@ -3,16 +3,25 @@
 # tools/verify_class_layouts.py. A layout not listed here is not
 # handed to an agent; the emitter falls back to an opaque shell.
 AlphaNet
+AutoSound
+Base
 ButtonGroup
 Caviar
 CaviarData
+Dialog
 DialogEntry
+Filemap
+Heap
+Log
 MenuEntry
 PullDownItem
+Random
 Sprite
 StringList
 StringStruct
 StringStructEntry
+Strings
+TextIndex
 Vector
 Wave
 WaveControlGroup
