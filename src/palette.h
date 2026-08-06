@@ -292,7 +292,7 @@ class DLLEXPORT Palette {
   uint32_t field_3F4_;
   uint32_t field_3F8_;
   uint32_t field_3FC_;
-  uint32_t field_400_;
+  uint32_t seed_;
   struct PaletteInternal {
       uint32_t field_0;
       Time *time;

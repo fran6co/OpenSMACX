@@ -82,13 +82,13 @@ class DLLEXPORT Win {
   void on_sys_command(unsigned int a1, int a2, int a3);
  private:
   AutoSound auto_sound_;
-  uint32_t field_98_;
-  uint32_t field_9C_;
+  uint32_t iFlags_;
+  uint32_t iSomeFlag_;
   uint32_t field_A0_;
   uint32_t field_A4_;
-  uint32_t field_A8_;
-  uint32_t field_AC_;
-  uint32_t field_B0_;
+  uint32_t poWinBase_;
+  uint32_t iVertScaleDenom_;
+  uint32_t iVertScaleNum_;
   Buffer *buffer1_;
   Buffer *buffer2_;
   Buffer *buffer3_;

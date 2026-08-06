@@ -1085,6 +1085,12 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(hypothesis-layout-tests
                                    test_emit_hypothesis_layouts.py)
 
+    opensmacx_add_python_tool_test(thinker-layout-tests
+                                   test_correlate_thinker_layouts.py)
+
+    opensmacx_add_python_tool_test(member-naming-tests
+                                   test_name_members_from_sources.py)
+
     opensmacx_add_python_tool_test(recovery-symbol-tests
                                    test_recovery_symbols.py)
     opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)

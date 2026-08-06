@@ -72,7 +72,7 @@ class DLLEXPORT Datalink : GraphicWin {
   // there and the three fields close() clears is unmapped; the span holds
   // their offsets in place and the test checks them directly.
   uint8_t unmapped_A14_[0x29E0 - 0xA14];
-  int32_t field_29E0_;
+  int32_t facilityID_;
   uint8_t unmapped_29E4_[0x2A34 - 0x29E4];
   int32_t field_2A34_;
   int32_t field_2A38_;

@@ -82,6 +82,24 @@ def parse_struct_layouts(text, source_name):
             continue
         match = FIELD_RE.match(line)
         if not match:
+            # A DECLARATION THIS REGEX CANNOT READ IS NOT A LINE TO SKIP. It
+            # occupies storage, so every offset after it moves, and skipping it
+            # silently reports the REST of the struct too low by its width.
+            #
+            # Measured on Thinker's own Buffer, which declares
+            #
+            #     int (__cdecl *pfcnScrollText)(char *, int, int, int);
+            #
+            # at 0x8. FIELD_RE does not match a function pointer, so `iFlags`
+            # came out at 0x18 against a true 0x1C. The struct's own names give
+            # it away: the fields Thinker calls dwordC, dword10 and dword14
+            # were reported at 0x8, 0xC and 0x10.
+            #
+            # Anything ending in `;` inside a struct body is a member, so from
+            # here on the honest answer is that the offset is unknown - which
+            # this function already knows how to say.
+            if re.sub(r"//.*", "", line).strip().endswith(";"):
+                known = False
             continue
         size = field_size(match.group("type").strip(), match.group("count"))
         rows.append({

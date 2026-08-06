@@ -66,7 +66,7 @@ class DLLEXPORT Buffer {
   typedef int32_t Dib;
   
   LPVOID vtable_;
-  uint32_t field_4_;
+  uint32_t poOwner_;
   uint32_t field_8_;
   uint32_t field_C_;
   uint32_t field_10_;
@@ -88,8 +88,8 @@ class DLLEXPORT Buffer {
   uint32_t field_74_;
   HBITMAP bitmap_handle_;
   const BITMAPINFO *bitmap_info_;
-  uint32_t field_80_;
-  uint32_t field_84_;
+  uint32_t width_;
+  uint32_t height_;
   uint16_t field_88_;
   uint16_t field_8A_;
   uint32_t field_8C_;

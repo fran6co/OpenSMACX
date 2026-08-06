@@ -37,8 +37,8 @@ class DLLEXPORT Sprite {
   void UNK3(int a1, int a2);
   void UNK4(int a1, int a2);
  private:
-  int field_0_;
-  int field_4_;
+  int ppszFileName_;
+  int pcBits_;
   char field_8_;
   char pad1_;
   char pad2_;
