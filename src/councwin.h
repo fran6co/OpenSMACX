@@ -50,8 +50,17 @@ class DLLEXPORT CouncWin : GraphicWin {
   int on_button_text_draw(int, int, int);
 
   // Storage the image proves is here: its own methods reach 0xA38.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_A14_[0x24];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 8 member(s) from the IDA database, 1 named; it starts a member at 0xA14, which is where src/ ends.
+
+  uint8_t subIFace_[0x8];  // 0xA14
+  uint32_t field_A1C_;  // 0xA1C
+  uint32_t field_A20_;  // 0xA20
+  uint32_t field_A24_;  // 0xA24
+  uint32_t field_A28_;  // 0xA28
+  uint32_t field_A2C_;  // 0xA2C
+  uint32_t field_A30_;  // 0xA30
+  uint32_t field_A34_;  // 0xA34
 };
 
 void __fastcall counc_win_on_group_clicked_redirect(CouncWin *self, void *, int a1, int a2);

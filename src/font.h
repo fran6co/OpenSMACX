@@ -86,8 +86,18 @@ class DLLEXPORT FontQueue {
   uint8_t fonts_[3 * 0x28];
 
   // Storage the image proves is here: its own methods reach 0x9C.
-  // Extent only - nothing here is named, and this class carries no size assertion.
-  uint8_t field_78_[0x24];
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 9 member(s) from the IDA database, 0 named; it starts a member at 0x78, which is where src/ ends.
+
+  uint32_t field_78_;  // 0x78
+  uint32_t field_7C_;  // 0x7C
+  uint32_t field_80_;  // 0x80
+  uint32_t field_84_;  // 0x84
+  uint32_t field_88_;  // 0x88
+  uint32_t field_8C_;  // 0x8C
+  uint32_t field_90_;  // 0x90
+  uint32_t field_94_;  // 0x94
+  uint32_t field_98_;  // 0x98
 };
 
 #include "vector_teardown.h"

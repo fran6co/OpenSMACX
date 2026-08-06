@@ -45,11 +45,49 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import byte_match as bm  # noqa: E402
 import class_layouts  # noqa: E402
+import emit_hypothesis_layouts as hypothesis  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC = REPO_ROOT / "src"
 BOUNDS = REPO_ROOT / "docs" / "recovery" / "access-lower-bounds.csv"
+IDB_MEMBERS = REPO_ROOT / "docs" / "recovery" / "idb-members.csv"
 GENERATED = "hypothesis_layouts.h"
+
+
+def idb_members() -> dict:
+    """{class: {offset: (name, size)}} from the committed member table."""
+    found = {}
+    if not IDB_MEMBERS.is_file():
+        return found
+    with IDB_MEMBERS.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            try:
+                offset, size = int(row["offset"], 16), int(row["size"])
+            except (ValueError, KeyError, TypeError):
+                continue
+            found.setdefault(row["class"], {})[offset] = (row["name"], size)
+    return found
+
+
+def tail_members(name: str, at: int, bound: int, members: dict) -> list:
+    """[(offset, name, size)] to declare between `at` and `bound`, or [].
+
+    THE GATE IS THAT THE IDB'S OWN BOUNDARY LANDS ON `at`. Its offsets are not
+    recorded, they accumulate from member sizes, so a member nobody entered
+    shifts everything after it. A table that independently starts a member at
+    exactly the byte `src/` finished at is agreeing with `src/` about
+    everything before that point, which is the only check available here.
+
+    Refusing on that basis is not theoretical: `NetDaemon` has no member at its
+    declared end and is refused - and it is also one of the four classes whose
+    IDB total `derive_access_bounds.py --falsify` contradicts. Two independent
+    checks reject the same table.
+    """
+    table = members.get(name)
+    if not table or at not in table:
+        return []
+    return [(offset, table[offset][0], table[offset][1])
+            for offset in sorted(table) if at <= offset < bound]
 
 
 def lower_bounds() -> dict:
@@ -120,8 +158,49 @@ def declared_sizes(names: list, home: dict, ceiling: dict) -> dict:
     return low
 
 
-def extend(text: str, name: str, at: int, length: int) -> str:
-    """Append the tail member just before `name`'s closing brace."""
+def tail_text(name: str, at: int, length: int, members: list) -> str:
+    """The declarations to append: the IDB's members, else one byte array.
+
+    Whatever the IDB covers, the class still ends at `at + length`, so the
+    remainder after its last member is padded. The total is the same either
+    way - this changes how much of the tail has names, not how big it is.
+    """
+    reach = at + length
+    head = (f"\n  // Storage the image proves is here: its own methods "
+            f"reach 0x{reach:X}.\n"
+            f"  // Extent only - this class carries no size assertion, and "
+            f"the bound is a floor.\n")
+    if not members:
+        return (head + f"  uint8_t field_{at:X}_[0x{length:X}];\n")
+
+    named = sum(1 for _, member, _ in members
+                if not hypothesis.PLACEHOLDER.match(member))
+    lines = [head.rstrip("\n"),
+             f"  // {len(members)} member(s) from the IDA database, {named} "
+             f"named; it starts a member at 0x{at:X}, which is where src/ "
+             f"ends.",
+             ""]
+    taken = set()
+    cursor = at
+    for offset, member, size in members:
+        if offset < cursor or size <= 0:
+            continue
+        if offset > cursor:
+            lines.append(f"  uint8_t field_{cursor:X}_[0x{offset - cursor:X}];"
+                         f"  // 0x{cursor:X}")
+        if offset + size > reach:
+            break
+        lines.append(f"  {hypothesis.storage(size, hypothesis.member_name(member, offset, taken))}"
+                     f"  // 0x{offset:X}")
+        cursor = offset + size
+    if cursor < reach:
+        lines.append(f"  uint8_t field_{cursor:X}_[0x{reach - cursor:X}];"
+                     f"  // 0x{cursor:X}")
+    return "\n".join(lines) + "\n"
+
+
+def extend(text: str, name: str, at: int, length: int, members=()) -> str:
+    """Append the tail just before `name`'s closing brace."""
     for head in class_layouts.CLASS_HEAD.finditer(text):
         if head.group("name") != name:
             continue
@@ -133,12 +212,8 @@ def extend(text: str, name: str, at: int, length: int) -> str:
                 depth -= 1
             index += 1
         close = index - 1
-        member = (f"\n  // Storage the image proves is here: its own methods "
-                  f"reach 0x{at + length:X}.\n"
-                  f"  // Extent only - nothing here is named, and this class "
-                  f"carries no size assertion.\n"
-                  f"  uint8_t field_{at:X}_[0x{length:X}];\n")
-        return text[:close] + member + text[close:]
+        return (text[:close] + tail_text(name, at, length, list(members))
+                + text[close:])
     return text
 
 
@@ -173,6 +248,7 @@ def main(argv=None) -> int:
         return 0
 
     sizes = declared_sizes(short, home, candidates)
+    members = idb_members()
     by_header = {}
     for name in short:
         # AN EMPTY CLASS IS `sizeof == 1` AND HOLDS NOTHING. That byte exists
@@ -184,16 +260,19 @@ def main(argv=None) -> int:
         gap = candidates[name] - at
         if gap <= 0:
             continue
-        by_header.setdefault(home[name], []).append((name, at, gap))
+        tail = tail_members(name, at, candidates[name], members)
+        by_header.setdefault(home[name], []).append((name, at, gap, tail))
+        detail = (f"{len(tail)} IDB member(s)" if tail
+                  else "opaque - the IDB starts no member there")
         print(f"   {name:22} declared 0x{sizes[name]:X}, "
-              f"proven >= 0x{candidates[name]:X}, adding 0x{gap:X}")
+              f"proven >= 0x{candidates[name]:X}, adding 0x{gap:X}: {detail}")
 
     if args.apply:
         for header, additions in by_header.items():
             path = SRC / header
             text = path.read_text()
-            for name, at, length in additions:
-                text = extend(text, name, at, length)
+            for name, at, length, tail in additions:
+                text = extend(text, name, at, length, tail)
             path.write_text(text)
         print(f"\nextended {sum(len(v) for v in by_header.values())} class(es) "
               f"across {len(by_header)} header(s)")
