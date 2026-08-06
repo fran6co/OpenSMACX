@@ -81,7 +81,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -140,6 +142,22 @@ def split_definition(lines: list) -> int:
     raise Refused("catalogued span has no opening brace")
 
 
+def write_atomically(path: Path, text: str) -> None:
+    """Replace a file's contents in one step, from a reader's point of view.
+
+    The WRITER is serialised - the integrator holds a process-wide lock - but
+    the READERS are not. `getContextScript` runs `mizuchi_context.py` as every
+    prompt starts, and that reads `functions.csv` and the `src/` headers. A
+    plain `write_text` truncates and then fills, so a reader landing in that
+    window sees a half-written file and the prompt is refused for a reason
+    that has nothing to do with it. `os.replace` is atomic on one filesystem,
+    so a reader sees either the old file or the new one.
+    """
+    temporary = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    temporary.write_text(text)
+    os.replace(temporary, path)
+
+
 def shift_csv(path: Path, field: str, source_file: str, after: int, delta: int) -> bool:
     """Shift `file:line` pointers below an edit. True when the file changed."""
     if delta == 0 or not path.is_file():
@@ -164,10 +182,11 @@ def shift_csv(path: Path, field: str, source_file: str, after: int, delta: int) 
             row[field] = ";".join(parts)
             changed = True
     if changed:
-        with path.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.DictWriter(handle, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(rows)
+        buffer = io.StringIO()
+        writer = csv.DictWriter(buffer, fieldnames=fieldnames, lineterminator="\r\n")
+        writer.writeheader()
+        writer.writerows(rows)
+        write_atomically(path, buffer.getvalue())
     return changed
 
 
@@ -182,7 +201,7 @@ def shift_source_map(path: Path, source_file: str, after: int, delta: int) -> bo
             entry["line"] = int(entry["line"]) + delta
             changed = True
     if changed:
-        path.write_text(json.dumps(entries, indent=2) + "\n")
+        write_atomically(path, json.dumps(entries, indent=2) + "\n")
     return changed
 
 
@@ -290,7 +309,7 @@ def land(address: int, row: dict, code: str, check: bool = True) -> dict:
     existed = path.read_text() if path.is_file() else None
     MATCHED_DIR.mkdir(parents=True, exist_ok=True)
     name = row.get("name", "")
-    path.write_text(MATCHED_HEADER.format(
+    write_atomically(path, MATCHED_HEADER.format(
         address=address, name=name,
         symbol=recovery_symbols.symbol_for(name, address)) + "\n"
         + replacement + "\n")
@@ -310,7 +329,7 @@ def land(address: int, row: dict, code: str, check: bool = True) -> dict:
         if existed is None:
             path.unlink()
         else:
-            path.write_text(existed)
+            write_atomically(path, existed)
         raise Refused(
             f"body in {relative} verifies as {verdict.get('tier')} rather than "
             f"BYTE_EXACT "
@@ -333,7 +352,7 @@ def splice(address: int, row: dict, location: str, code: str,
     before = lines[:start + offset]
     after = lines[end + 1:]
     original_text = path.read_text()
-    path.write_text("\n".join(before + replacement + after) + "\n")
+    write_atomically(path, "\n".join(before + replacement + after) + "\n")
 
     delta = len(replacement) - (end + 1 - start - offset)
     touched = [source_file]
@@ -355,7 +374,7 @@ def splice(address: int, row: dict, location: str, code: str,
     if verdict.get("tier") != "BYTE_EXACT":
         # Restore everything. A half-applied writeback is worse than none: the
         # body would read as recovered while the pointers around it moved.
-        path.write_text(original_text)
+        write_atomically(path, original_text)
         shift_csv(FUNCTIONS_CSV, "source_locations", source_file, end + 1, -delta)
         shift_csv(LEDGER_CSV, "source_location", source_file, end + 1, -delta)
         shift_source_map(SOURCE_MAP, source_file, end + 1, -delta)

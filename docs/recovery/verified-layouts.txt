@@ -1,0 +1,18 @@
+# Class layouts tools/class_layouts.py extracts AND that compile
+# to the same size as the real class. Regenerate with
+# tools/verify_class_layouts.py. A layout not listed here is not
+# handed to an agent; the emitter falls back to an opaque shell.
+AlphaNet
+ButtonGroup
+Caviar
+CaviarData
+DialogEntry
+MenuEntry
+PullDownItem
+Sprite
+StringList
+StringStruct
+StringStructEntry
+Vector
+Wave
+WaveControlGroup

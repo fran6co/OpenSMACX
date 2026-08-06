@@ -12,6 +12,7 @@
 *.vcxproj
 *.vcxproj.filters
 *.txt
+!docs/recovery/verified-layouts.txt
 !CMakeLists.txt
 !tools/requirements.txt
 

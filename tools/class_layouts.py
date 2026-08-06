@@ -51,6 +51,11 @@ SIZE_ASSERT = re.compile(r"static_assert\(\s*sizeof\(\s*(\w+)\s*\)\s*==\s*"
 MEMBER = re.compile(
     r"^\s*(?P<type>(?:const\s+)?[A-Za-z_]\w*)\s*(?P<stars>\*+)?\s*"
     r"(?P<name>[A-Za-z_]\w*)\s*(?P<array>\[[^\]]*\])?\s*;\s*(?://.*)?$")
+# `void (*callback)(int);` - a whole line that declares a function pointer,
+# as opposed to a METHOD taking one, which is `void init(void (*cb)(int));`
+# and has an identifier before the first paren.
+FUNCTION_POINTER_MEMBER = re.compile(
+    r"^\s*(?:const\s+)?[\w:]+\s*\(\s*(?:__\w+\s+)?\*+\s*\w+\s*\)\s*\([^;]*\)\s*;")
 # Anything in a class body that means "stop, this is not a plain layout".
 REFUSE = re.compile(r"\b(virtual|union|enum|typedef|template|operator|friend|"
                     r"static|:\s*\d+\s*;)\b")
@@ -90,6 +95,14 @@ def members_of(body: str):
             if re.search(r"\bvirtual\b|\bunion\b", stripped):
                 return None
             continue
+        if FUNCTION_POINTER_MEMBER.match(stripped):
+            # `void (*callback)(int);` IS storage, and it contains a `(`, so
+            # the method test below would skip it and every offset after it
+            # would move. `sizeof` catches that only when padding does not
+            # absorb the four bytes, so it is refused explicitly rather than
+            # left to a check that might not fire. No pinned class has one
+            # today; this is here so the next one cannot pass quietly.
+            return None
         if "(" in stripped:            # a method declaration
             continue
         member = MEMBER.match(stripped)
