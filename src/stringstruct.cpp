@@ -21,7 +21,10 @@ Return Value: Current ID, or zero when the list is empty
 Status: Complete
 */
 int StringStruct::current_id() {
-    return head_ ? current_->id : 0;
+    if (head_) {
+        return reinterpret_cast<int *>(current_)[1];
+    }
+    return 0;
 }
 
 /*
@@ -65,26 +68,20 @@ Original Offset: 00401560
 Return Value: One when found, otherwise zero
 Status: Complete
 */
-int StringStruct::seek_id(int id) {
-    int result = 0;
+int StringStruct::seek_id(int a1) {
     if (head_) {
         current_position_ = 0;
         current_ = head_;
-        if (entry_count_ > 0) {
-            int traversed = 0;
-            do {
-                StringStructEntry *entry = current_;
-                if (entry->id == id) {
-                    result = 1;
-                    break;
-                }
-                current_position_++;
-                traversed++;
-                current_ = entry->next;
-            } while (traversed < entry_count_);
+        for (int traversed = 0; traversed < entry_count_; traversed++) {
+            int *entry = reinterpret_cast<int*>(current_);
+            if (entry[1] == a1) {
+                return 1;
+            }
+            current_position_++;
+            current_ = reinterpret_cast<StringStructEntry*>(entry[3]);
         }
     }
-    return result;
+    return 0;
 }
 
 int __fastcall string_struct_current_id_redirect(StringStruct *self, void *) {
