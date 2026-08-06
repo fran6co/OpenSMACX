@@ -1078,6 +1078,8 @@ if(BUILD_TESTING)
     # argument count does not produce a wrong diff - it produces no diff at
     # all, on every affected function at once, which reads as "nothing has
     # matched yet". 1,179 catalogued functions were in exactly that state.
+    opensmacx_add_python_tool_test(class-layout-tests test_class_layouts.py)
+
     opensmacx_add_python_tool_test(recovery-symbol-tests
                                    test_recovery_symbols.py)
     opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)

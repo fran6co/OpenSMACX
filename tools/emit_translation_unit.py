@@ -61,6 +61,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
 
+import class_layouts  # noqa: E402
 import recovery_symbols  # noqa: E402
 from generator_support import (absolute_operands, parse_body_ranges,  # noqa: E402
                                read_bytes)
@@ -918,6 +919,10 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # comment above already claimed "anywhere in this unit"; now it is true.
     for entry in free_callees:
         wanted |= entry.referenced_types()
+    # A supplied layout names types of its own - `StringStructEntry *head_` -
+    # and they have to be declared before the class that holds them.
+    for klass in [signature.klass] + list(methods_by_class):
+        wanted |= class_layouts.referenced_types(klass)
     # EVERYTHING referenced is forward-declared, including classes defined
     # further down. `struct X;` before `struct X { ... };` is legal and is what
     # keeps a callee declaration that takes `Win *` from preceding the
@@ -950,6 +955,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
                 body.append(f"    {entry.returns} {entry.member_convention()}"
                             f"{entry.method}({', '.join(entry.params)});")
         lines.append(declare(klass, opening=True))
+        lines.extend(class_layouts.declaration_for(klass))
         lines.extend(sorted(set(body)))
         lines.append("};")
     for text in sorted(set(d for d in declarations if d)):
@@ -992,6 +998,18 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         # holds. It also settles the C4099 the forward declarations above
         # warned about, since those already say `struct`.
         lines.append(declare(signature.klass, opening=True))
+        # THE REAL MEMBERS, when `src/` declares a layout that has been proved
+        # to compile to the real class's size (tools/verify_class_layouts.py).
+        # Without them the class is an opaque shell, and an agent that needs a
+        # field reaches it by offset - or declares a shadow struct beside the
+        # function, which the writeback cannot carry into `src/` because it
+        # splices the definition alone. Measured on the first real run: 4 of
+        # 10 writebacks lost that way, and the ones that landed wrote
+        # `self[2]` into a file that already said `head_`.
+        layout = class_layouts.declaration_for(signature.klass)
+        if layout:
+            lines.extend(layout)
+            lines.append("")
         seen = set()
         for entry in own:
             if entry.method == signature.method:
