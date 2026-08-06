@@ -24,6 +24,7 @@ MessageWin
 Midi_Device
 PullDownItem
 Random
+RulesFacility
 SAmbience
 Sprite
 SquareLock
@@ -35,6 +36,8 @@ TextIndex
 Texture
 TutWin
 Vector
+Veh
+VehPrototype
 Wave
 WaveControlGroup
 Wave_In_Device

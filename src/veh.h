@@ -409,6 +409,9 @@ struct Veh {
     int16_t prev_veh_id_stack;
 };
 
+static_assert(sizeof(Veh) == 0x34,
+              "Veh layout must match the original executable");
+
 struct VehPrototype {
     char veh_name[32];
     uint32_t ability_flags;
@@ -427,6 +430,9 @@ struct VehPrototype {
     uint16_t flags; // see veh_prototype_flag_bitfield
     int16_t preq_tech; // only set for predefined alpha/x.txt units
 };
+
+static_assert(sizeof(VehPrototype) == 0x34,
+              "VehPrototype layout must match the original executable");
 
 struct RulesReactor {
     LPSTR name;

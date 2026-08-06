@@ -1097,6 +1097,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(short-class-tests
                                    test_extend_short_classes.py)
 
+    opensmacx_add_python_tool_test(yitzi-notes-tests
+                                   test_correlate_yitzi_notes.py)
+
     opensmacx_add_python_tool_test(behaviour-naming-tests
                                    test_name_members_from_behaviour.py)
 
@@ -1444,6 +1447,12 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_access_bounds.py"
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # Skips without the fetched, ignored note; a clean checkout has neither.
+    add_test(NAME yitzi-sizes-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_yitzi_notes.py"
+            --check
     )
     # Skips without the pinned image; every name here is read out of it.
     add_test(NAME behaviour-member-names-current
