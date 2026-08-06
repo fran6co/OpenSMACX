@@ -30,7 +30,11 @@ Return Value: Current payload, or zero when the list is empty
 Status: Complete
 */
 int StringStruct::current_entry() {
-    return head_ ? current_->payload : 0;
+    int *self = reinterpret_cast<int *>(this);
+    if (self[2]) {
+        return reinterpret_cast<int *>(self[3])[2];
+    }
+    return 0;
 }
 
 /*

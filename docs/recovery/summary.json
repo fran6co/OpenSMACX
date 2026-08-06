@@ -8718,7 +8718,7 @@
         "function": "",
         "function_address": "",
         "kind": "data",
-        "location": "src/stringstruct.cpp:241",
+        "location": "src/stringstruct.cpp:245",
         "symbol": "StringVirtualBaseOwner",
         "type": "uint32_t *"
       },
