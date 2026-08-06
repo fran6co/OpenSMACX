@@ -44,6 +44,60 @@ class DLLEXPORT DiploPop : GraphicWin {
   void on_iface_left_double_click(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_button_toggled(int a1, int a2);
+
+  // Storage the image proves is here: its own methods reach 0x420C.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 49 member(s) from the IDA database, 10 named; it starts a member at 0xA14, which is where src/ ends.
+
+  uint8_t subIFace_[0x8];  // 0xA14
+  uint8_t font1_[0x28];  // 0xA1C
+  uint8_t font2_[0x28];  // 0xA44
+  uint8_t font3_[0x28];  // 0xA6C
+  uint8_t time1_[0x28];  // 0xA94
+  uint8_t time2_[0x28];  // 0xABC
+  uint8_t flic1_[0xAE4];  // 0xAE4
+  uint8_t flic2_[0xAE4];  // 0x15C8
+  uint32_t field_20AC_;  // 0x20AC
+  uint32_t field_20B0_;  // 0x20B0
+  uint32_t field_20B4_;  // 0x20B4
+  uint32_t field_20B8_;  // 0x20B8
+  uint32_t field_20BC_;  // 0x20BC
+  uint32_t field_20C0_;  // 0x20C0
+  uint32_t field_20C4_;  // 0x20C4
+  uint32_t field_20C8_;  // 0x20C8
+  uint32_t field_20CC_;  // 0x20CC
+  uint32_t field_20D0_;  // 0x20D0
+  uint32_t field_20D4_;  // 0x20D4
+  uint32_t field_20D8_;  // 0x20D8
+  uint32_t field_20DC_;  // 0x20DC
+  uint32_t field_20E0_;  // 0x20E0
+  uint32_t field_20E4_;  // 0x20E4
+  uint32_t field_20E8_;  // 0x20E8
+  uint32_t field_20EC_;  // 0x20EC
+  uint32_t field_20F0_;  // 0x20F0
+  uint8_t rect1_[0x10];  // 0x20F4
+  uint32_t field_2104_;  // 0x2104
+  uint32_t field_2108_;  // 0x2108
+  uint32_t field_210C_;  // 0x210C
+  uint32_t field_2110_;  // 0x2110
+  uint32_t field_2114_;  // 0x2114
+  uint32_t field_2118_;  // 0x2118
+  uint32_t field_211C_;  // 0x211C
+  uint32_t field_2120_;  // 0x2120
+  uint32_t field_2124_;  // 0x2124
+  uint32_t field_2128_;  // 0x2128
+  uint32_t field_212C_;  // 0x212C
+  uint32_t field_2130_;  // 0x2130
+  uint32_t field_2134_;  // 0x2134
+  uint32_t field_2138_;  // 0x2138
+  uint32_t field_213C_;  // 0x213C
+  uint32_t field_2140_;  // 0x2140
+  uint32_t field_2144_;  // 0x2144
+  uint32_t field_2148_;  // 0x2148
+  uint32_t field_214C_;  // 0x214C
+  uint32_t field_2150_;  // 0x2150
+  uint32_t field_2154_;  // 0x2154
+  uint8_t field_2158_[0x20B4];  // 0x2158
 };
 
 void __fastcall diplo_pop_on_iface_left_click_redirect(DiploPop *self, void *, int a1, int a2);

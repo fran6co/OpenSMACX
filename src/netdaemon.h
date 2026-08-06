@@ -45,6 +45,10 @@ class DLLEXPORT NetDaemon : AlphaNet {
   // Storage the image proves is here: its own methods reach 0x1BD0.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   uint8_t field_14A0_[0x730];
+
+  // Storage the image proves is here: its own methods reach 0x1BDC.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_1BD0_[0xC];
 };
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the

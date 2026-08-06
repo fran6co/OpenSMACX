@@ -59,6 +59,9 @@ class DLLEXPORT Lock {
   uint32_t field_E8_;
 };
 
+static_assert(sizeof(Lock) == 0xEC,
+              "Lock layout must match the original executable");
+
 // The map table and its count live at fixed addresses; rebindable for tests.
 extern int32_t *LockMapCount;
 extern uint8_t *LockMapTable;

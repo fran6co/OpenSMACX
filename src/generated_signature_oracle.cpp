@@ -61,7 +61,7 @@
 // PROVEN-AGAINST-ORIGINAL: 0x00618320  ?UNK10@Caviar@@QAEXHHH@Z
 // PROVEN-AGAINST-ORIGINAL: 0x0062B870  ?set@ButtonGroup@@QAEHHH@Z
 //
-// 69 function(s) below carry NO marker: they have not run
+// 81 function(s) below carry NO marker: they have not run
 // yet, or they ran and reported INCONCLUSIVE-no-effect, which means
 // every seed bailed on a guard and the agreement proves nothing.
 
@@ -689,6 +689,151 @@ static bool verify_StringStruct_current_entry_00402530() {
         return true;
     }
     verdict(0x00402530U, "PASS", "?current_entry@StringStruct@@QAEHXZ");
+    return true;
+}
+
+// ?UNK1@Datalink@@QAEHHH@Z  (30 B)
+// recovered in src/datalink.cpp:377
+// staged receiver: Datalink, 0x1B394 B, zero-filled, size pinned
+static bool verify_Datalink_UNK1_0042a020() {
+    typedef int (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x0042A020U);
+    std::printf("  running ?UNK1@Datalink@@QAEHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x1B394U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0042A020U)) {
+            std::printf("  ?UNK1@Datalink@@QAEHHH@Z: cannot suspend redirect\n");
+            verdict(0x0042A020U, "FAIL-no-redirect", "?UNK1@Datalink@@QAEHHH@Z");
+            return false;
+        }
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x0042A020U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0042A020U)) {
+                verdict(0x0042A020U, "FAIL-no-redirect", "?UNK1@Datalink@@QAEHHH@Z");
+                return false;
+            }
+            timing(0x0042A020U, GetTickCount() - started_at, "?UNK1@Datalink@@QAEHHH@Z");
+            verdict(0x0042A020U, "INCONCLUSIVE-original-faulted", "?UNK1@Datalink@@QAEHHH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x0042A020U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK1@Datalink@@QAEHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0042A020U, GetTickCount() - started_at, "?UNK1@Datalink@@QAEHHH@Z");
+            verdict(0x0042A020U, "INCONCLUSIVE-original-unstable", "?UNK1@Datalink@@QAEHHH@Z");
+            return true;
+        }
+        if (!resume_redirect_at(0x0042A020U)) {
+            std::printf("  ?UNK1@Datalink@@QAEHHH@Z: cannot resume redirect\n");
+            verdict(0x0042A020U, "FAIL-no-redirect", "?UNK1@Datalink@@QAEHHH@Z");
+            return false;
+        }
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x0042A020U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK1@Datalink@@QAEHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x0042A020U, GetTickCount() - started_at, "?UNK1@Datalink@@QAEHHH@Z");
+            verdict(0x0042A020U, "FAIL-faulted", "?UNK1@Datalink@@QAEHHH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?UNK1@Datalink@@QAEHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK1@Datalink@@QAEHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK1@Datalink@@QAEHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x0042A020U, GetTickCount() - started_at, "?UNK1@Datalink@@QAEHHH@Z");
+    if (!passed) {
+        verdict(0x0042A020U, "FAIL", "?UNK1@Datalink@@QAEHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK1@Datalink@@QAEHHH@Z: no seed produced an observable effect\n");
+        verdict(0x0042A020U, "INCONCLUSIVE-no-effect", "?UNK1@Datalink@@QAEHHH@Z");
+        return true;
+    }
+    verdict(0x0042A020U, "PASS", "?UNK1@Datalink@@QAEHHH@Z");
     return true;
 }
 
@@ -1670,6 +1815,142 @@ static bool verify_PlanWin_blink_0048bc20() {
     return true;
 }
 
+// ?on_scrolling@ProdPicker@@QAEXHH@Z  (23 B)
+// recovered in src/delegation_thunks.cpp:175
+// staged receiver: ProdPicker, 0xA840 B, zero-filled, size pinned
+static bool verify_ProdPicker_on_scrolling_00493e70() {
+    typedef void (OriginalObject::*Callable)(int, int);
+    Callable target = original_method<Callable>(0x00493E70U);
+    std::printf("  running ?on_scrolling@ProdPicker@@QAEXHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xA840U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][2] = {
+        {0, 1},
+        {1, -1},
+        {-1, 2},
+        {2, 7},
+        {7, 2147483647},
+        {2147483647, -2147483648},
+        {-2147483648, 1431655765},
+        {1431655765, 0},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00493E70U)) {
+            std::printf("  ?on_scrolling@ProdPicker@@QAEXHH@Z: cannot suspend redirect\n");
+            verdict(0x00493E70U, "FAIL-no-redirect", "?on_scrolling@ProdPicker@@QAEXHH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00493E70U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00493E70U)) {
+                verdict(0x00493E70U, "FAIL-no-redirect", "?on_scrolling@ProdPicker@@QAEXHH@Z");
+                return false;
+            }
+            timing(0x00493E70U, GetTickCount() - started_at, "?on_scrolling@ProdPicker@@QAEXHH@Z");
+            verdict(0x00493E70U, "INCONCLUSIVE-original-faulted", "?on_scrolling@ProdPicker@@QAEXHH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00493E70U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?on_scrolling@ProdPicker@@QAEXHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00493E70U, GetTickCount() - started_at, "?on_scrolling@ProdPicker@@QAEXHH@Z");
+            verdict(0x00493E70U, "INCONCLUSIVE-original-unstable", "?on_scrolling@ProdPicker@@QAEXHH@Z");
+            return true;
+        }
+        if (!resume_redirect_at(0x00493E70U)) {
+            std::printf("  ?on_scrolling@ProdPicker@@QAEXHH@Z: cannot resume redirect\n");
+            verdict(0x00493E70U, "FAIL-no-redirect", "?on_scrolling@ProdPicker@@QAEXHH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00493E70U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?on_scrolling@ProdPicker@@QAEXHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00493E70U, GetTickCount() - started_at, "?on_scrolling@ProdPicker@@QAEXHH@Z");
+            verdict(0x00493E70U, "FAIL-faulted", "?on_scrolling@ProdPicker@@QAEXHH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?on_scrolling@ProdPicker@@QAEXHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?on_scrolling@ProdPicker@@QAEXHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00493E70U, GetTickCount() - started_at, "?on_scrolling@ProdPicker@@QAEXHH@Z");
+    if (!passed) {
+        verdict(0x00493E70U, "FAIL", "?on_scrolling@ProdPicker@@QAEXHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?on_scrolling@ProdPicker@@QAEXHH@Z: no seed produced an observable effect\n");
+        verdict(0x00493E70U, "INCONCLUSIVE-no-effect", "?on_scrolling@ProdPicker@@QAEXHH@Z");
+        return true;
+    }
+    verdict(0x00493E70U, "PASS", "?on_scrolling@ProdPicker@@QAEXHH@Z");
+    return true;
+}
+
 // ?reset@StatusWin@@QAEXXZ  (31 B)
 // recovered in src/statuswin.cpp:59
 // staged receiver: StatusWin, 0x1900 B, zero-filled, size bounded
@@ -1934,7 +2215,7 @@ static bool verify_StatusWin_set_loc_004b9f90() {
 
 // ?UNK1@TutWin@@QAEXXZ  (65 B)
 // recovered in src/tutwin.cpp:30
-// staged receiver: TutWin, 0x5430 B, zero-filled, size bounded
+// staged receiver: TutWin, 0x53D8 B, zero-filled, size pinned
 static bool verify_TutWin_UNK1_004ba720() {
     typedef void (OriginalObject::*Callable)();
     Callable target = original_method<Callable>(0x004BA720U);
@@ -1946,7 +2227,7 @@ static bool verify_TutWin_UNK1_004ba720() {
     const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x5430U;
+    constexpr size_t ObjectSize = 0x53D8U;
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
@@ -2060,7 +2341,7 @@ static bool verify_TutWin_UNK1_004ba720() {
 
 // ?UNK3@TutWin@@QAEXH@Z  (16 B)
 // recovered in src/tutwin.cpp:49
-// staged receiver: TutWin, 0x5430 B, zero-filled, size bounded
+// staged receiver: TutWin, 0x53D8 B, zero-filled, size pinned
 static bool verify_TutWin_UNK3_004bddd0() {
     typedef void (OriginalObject::*Callable)(int);
     Callable target = original_method<Callable>(0x004BDDD0U);
@@ -2072,7 +2353,7 @@ static bool verify_TutWin_UNK3_004bddd0() {
     const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x5430U;
+    constexpr size_t ObjectSize = 0x53D8U;
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
@@ -2196,7 +2477,7 @@ static bool verify_TutWin_UNK3_004bddd0() {
 
 // ?is_disabled@Midi_Device@@QAEHXZ  (18 B)
 // recovered in src/sounddevice.cpp:397
-// staged receiver: Midi_Device, 0x28 B, zero-filled, size bounded
+// staged receiver: Midi_Device, 0x20 B, zero-filled, size pinned
 static bool verify_Midi_Device_is_disabled_004c5920() {
     typedef int (OriginalObject::*Callable)();
     Callable target = original_method<Callable>(0x004C5920U);
@@ -2208,7 +2489,7 @@ static bool verify_Midi_Device_is_disabled_004c5920() {
     const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x28U;
+    constexpr size_t ObjectSize = 0x20U;
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
@@ -2331,7 +2612,7 @@ static bool verify_Midi_Device_is_disabled_004c5920() {
 
 // ?set_codec@Wave_In_Device@@QAEHK@Z  (32 B)
 // recovered in src/delegation_thunks.cpp:188
-// staged receiver: Wave_In_Device, 0x7B60 B, zero-filled, size bounded
+// staged receiver: Wave_In_Device, 0x20 B, zero-filled, size pinned
 static bool verify_Wave_In_Device_set_codec_004c5a80() {
     typedef int (OriginalObject::*Callable)(unsigned int);
     Callable target = original_method<Callable>(0x004C5A80U);
@@ -2343,7 +2624,7 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
     const DWORD started_at = GetTickCount();
     bool passed = true;
     bool observed_effect = false;
-    constexpr size_t ObjectSize = 0x7B60U;
+    constexpr size_t ObjectSize = 0x20U;
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
@@ -4047,6 +4328,1245 @@ static bool verify_desktop_update_0058ee50() {
         return true;
     }
     verdict(0x0058EE50U, "PASS", "?desktop_update@@YAXXZ");
+    return true;
+}
+
+// ?unlock@SquareLock@@QAEXH@Z  (231 B)
+// recovered in src/squarelock.cpp:47
+// staged receiver: SquareLock, 0xC B, zero-filled, size pinned
+static bool verify_SquareLock_unlock_0058fd90() {
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x0058FD90U);
+    std::printf("  running ?unlock@SquareLock@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xCU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x0058FD90U)) {
+            std::printf("  ?unlock@SquareLock@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x0058FD90U, "FAIL-no-redirect", "?unlock@SquareLock@@QAEXH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x0058FD90U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x0058FD90U)) {
+                verdict(0x0058FD90U, "FAIL-no-redirect", "?unlock@SquareLock@@QAEXH@Z");
+                return false;
+            }
+            timing(0x0058FD90U, GetTickCount() - started_at, "?unlock@SquareLock@@QAEXH@Z");
+            verdict(0x0058FD90U, "INCONCLUSIVE-original-faulted", "?unlock@SquareLock@@QAEXH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x0058FD90U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?unlock@SquareLock@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x0058FD90U, GetTickCount() - started_at, "?unlock@SquareLock@@QAEXH@Z");
+            verdict(0x0058FD90U, "INCONCLUSIVE-original-unstable", "?unlock@SquareLock@@QAEXH@Z");
+            return true;
+        }
+        if (!resume_redirect_at(0x0058FD90U)) {
+            std::printf("  ?unlock@SquareLock@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x0058FD90U, "FAIL-no-redirect", "?unlock@SquareLock@@QAEXH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x0058FD90U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?unlock@SquareLock@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x0058FD90U, GetTickCount() - started_at, "?unlock@SquareLock@@QAEXH@Z");
+            verdict(0x0058FD90U, "FAIL-faulted", "?unlock@SquareLock@@QAEXH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?unlock@SquareLock@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?unlock@SquareLock@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x0058FD90U, GetTickCount() - started_at, "?unlock@SquareLock@@QAEXH@Z");
+    if (!passed) {
+        verdict(0x0058FD90U, "FAIL", "?unlock@SquareLock@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?unlock@SquareLock@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x0058FD90U, "INCONCLUSIVE-no-effect", "?unlock@SquareLock@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x0058FD90U, "PASS", "?unlock@SquareLock@@QAEXH@Z");
+    return true;
+}
+
+// ?reset_map@Lock@@QAEXXZ  (43 B)
+// recovered in src/lock.cpp:34
+// staged receiver: Lock, 0xEC B, zero-filled, size pinned
+static bool verify_Lock_reset_map_00590140() {
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00590140U);
+    std::printf("  running ?reset_map@Lock@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xECU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00590140U)) {
+            std::printf("  ?reset_map@Lock@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00590140U, "FAIL-no-redirect", "?reset_map@Lock@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00590140U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00590140U)) {
+                verdict(0x00590140U, "FAIL-no-redirect", "?reset_map@Lock@@QAEXXZ");
+                return false;
+            }
+            timing(0x00590140U, GetTickCount() - started_at, "?reset_map@Lock@@QAEXXZ");
+            verdict(0x00590140U, "INCONCLUSIVE-original-faulted", "?reset_map@Lock@@QAEXXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00590140U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?reset_map@Lock@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00590140U, GetTickCount() - started_at, "?reset_map@Lock@@QAEXXZ");
+            verdict(0x00590140U, "INCONCLUSIVE-original-unstable", "?reset_map@Lock@@QAEXXZ");
+            return true;
+        }
+        if (!resume_redirect_at(0x00590140U)) {
+            std::printf("  ?reset_map@Lock@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00590140U, "FAIL-no-redirect", "?reset_map@Lock@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00590140U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?reset_map@Lock@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00590140U, GetTickCount() - started_at, "?reset_map@Lock@@QAEXXZ");
+            verdict(0x00590140U, "FAIL-faulted", "?reset_map@Lock@@QAEXXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?reset_map@Lock@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?reset_map@Lock@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00590140U, GetTickCount() - started_at, "?reset_map@Lock@@QAEXXZ");
+    if (!passed) {
+        verdict(0x00590140U, "FAIL", "?reset_map@Lock@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?reset_map@Lock@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00590140U, "INCONCLUSIVE-no-effect", "?reset_map@Lock@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00590140U, "PASS", "?reset_map@Lock@@QAEXXZ");
+    return true;
+}
+
+// ?unlock@Lock@@QAEXH@Z  (83 B)
+// recovered in src/lock.cpp:115
+// staged receiver: Lock, 0xEC B, zero-filled, size pinned
+static bool verify_Lock_unlock_00590170() {
+    typedef void (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00590170U);
+    std::printf("  running ?unlock@Lock@@QAEXH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xECU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00590170U)) {
+            std::printf("  ?unlock@Lock@@QAEXH@Z: cannot suspend redirect\n");
+            verdict(0x00590170U, "FAIL-no-redirect", "?unlock@Lock@@QAEXH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00590170U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00590170U)) {
+                verdict(0x00590170U, "FAIL-no-redirect", "?unlock@Lock@@QAEXH@Z");
+                return false;
+            }
+            timing(0x00590170U, GetTickCount() - started_at, "?unlock@Lock@@QAEXH@Z");
+            verdict(0x00590170U, "INCONCLUSIVE-original-faulted", "?unlock@Lock@@QAEXH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00590170U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?unlock@Lock@@QAEXH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00590170U, GetTickCount() - started_at, "?unlock@Lock@@QAEXH@Z");
+            verdict(0x00590170U, "INCONCLUSIVE-original-unstable", "?unlock@Lock@@QAEXH@Z");
+            return true;
+        }
+        if (!resume_redirect_at(0x00590170U)) {
+            std::printf("  ?unlock@Lock@@QAEXH@Z: cannot resume redirect\n");
+            verdict(0x00590170U, "FAIL-no-redirect", "?unlock@Lock@@QAEXH@Z");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00590170U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?unlock@Lock@@QAEXH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00590170U, GetTickCount() - started_at, "?unlock@Lock@@QAEXH@Z");
+            verdict(0x00590170U, "FAIL-faulted", "?unlock@Lock@@QAEXH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?unlock@Lock@@QAEXH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?unlock@Lock@@QAEXH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00590170U, GetTickCount() - started_at, "?unlock@Lock@@QAEXH@Z");
+    if (!passed) {
+        verdict(0x00590170U, "FAIL", "?unlock@Lock@@QAEXH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?unlock@Lock@@QAEXH@Z: no seed produced an observable effect\n");
+        verdict(0x00590170U, "INCONCLUSIVE-no-effect", "?unlock@Lock@@QAEXH@Z");
+        return true;
+    }
+    verdict(0x00590170U, "PASS", "?unlock@Lock@@QAEXH@Z");
+    return true;
+}
+
+// ?check_global@Lock@@QAEXXZ  (105 B)
+// recovered in src/lock.cpp:194
+// staged receiver: Lock, 0xEC B, zero-filled, size pinned
+static bool verify_Lock_check_global_005901d0() {
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005901D0U);
+    std::printf("  running ?check_global@Lock@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xECU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005901D0U)) {
+            std::printf("  ?check_global@Lock@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x005901D0U, "FAIL-no-redirect", "?check_global@Lock@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x005901D0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005901D0U)) {
+                verdict(0x005901D0U, "FAIL-no-redirect", "?check_global@Lock@@QAEXXZ");
+                return false;
+            }
+            timing(0x005901D0U, GetTickCount() - started_at, "?check_global@Lock@@QAEXXZ");
+            verdict(0x005901D0U, "INCONCLUSIVE-original-faulted", "?check_global@Lock@@QAEXXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005901D0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?check_global@Lock@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005901D0U, GetTickCount() - started_at, "?check_global@Lock@@QAEXXZ");
+            verdict(0x005901D0U, "INCONCLUSIVE-original-unstable", "?check_global@Lock@@QAEXXZ");
+            return true;
+        }
+        if (!resume_redirect_at(0x005901D0U)) {
+            std::printf("  ?check_global@Lock@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x005901D0U, "FAIL-no-redirect", "?check_global@Lock@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x005901D0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?check_global@Lock@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005901D0U, GetTickCount() - started_at, "?check_global@Lock@@QAEXXZ");
+            verdict(0x005901D0U, "FAIL-faulted", "?check_global@Lock@@QAEXXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?check_global@Lock@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?check_global@Lock@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x005901D0U, GetTickCount() - started_at, "?check_global@Lock@@QAEXXZ");
+    if (!passed) {
+        verdict(0x005901D0U, "FAIL", "?check_global@Lock@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?check_global@Lock@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x005901D0U, "INCONCLUSIVE-no-effect", "?check_global@Lock@@QAEXXZ");
+        return true;
+    }
+    verdict(0x005901D0U, "PASS", "?check_global@Lock@@QAEXXZ");
+    return true;
+}
+
+// ?check_global_2@Lock@@QAEHH@Z  (126 B)
+// recovered in src/lock.cpp:161
+// staged receiver: Lock, 0xEC B, zero-filled, size pinned
+static bool verify_Lock_check_global_2_00590240() {
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x00590240U);
+    std::printf("  running ?check_global_2@Lock@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xECU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00590240U)) {
+            std::printf("  ?check_global_2@Lock@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x00590240U, "FAIL-no-redirect", "?check_global_2@Lock@@QAEHH@Z");
+            return false;
+        }
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00590240U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00590240U)) {
+                verdict(0x00590240U, "FAIL-no-redirect", "?check_global_2@Lock@@QAEHH@Z");
+                return false;
+            }
+            timing(0x00590240U, GetTickCount() - started_at, "?check_global_2@Lock@@QAEHH@Z");
+            verdict(0x00590240U, "INCONCLUSIVE-original-faulted", "?check_global_2@Lock@@QAEHH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00590240U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?check_global_2@Lock@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00590240U, GetTickCount() - started_at, "?check_global_2@Lock@@QAEHH@Z");
+            verdict(0x00590240U, "INCONCLUSIVE-original-unstable", "?check_global_2@Lock@@QAEHH@Z");
+            return true;
+        }
+        if (!resume_redirect_at(0x00590240U)) {
+            std::printf("  ?check_global_2@Lock@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x00590240U, "FAIL-no-redirect", "?check_global_2@Lock@@QAEHH@Z");
+            return false;
+        }
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00590240U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?check_global_2@Lock@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00590240U, GetTickCount() - started_at, "?check_global_2@Lock@@QAEHH@Z");
+            verdict(0x00590240U, "FAIL-faulted", "?check_global_2@Lock@@QAEHH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?check_global_2@Lock@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?check_global_2@Lock@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?check_global_2@Lock@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00590240U, GetTickCount() - started_at, "?check_global_2@Lock@@QAEHH@Z");
+    if (!passed) {
+        verdict(0x00590240U, "FAIL", "?check_global_2@Lock@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?check_global_2@Lock@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x00590240U, "INCONCLUSIVE-no-effect", "?check_global_2@Lock@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x00590240U, "PASS", "?check_global_2@Lock@@QAEHH@Z");
+    return true;
+}
+
+// ?global_lock@Lock@@QAEHH@Z  (51 B)
+// recovered in src/lock.cpp:139
+// staged receiver: Lock, 0xEC B, zero-filled, size pinned
+static bool verify_Lock_global_lock_005902c0() {
+    typedef int (OriginalObject::*Callable)(int);
+    Callable target = original_method<Callable>(0x005902C0U);
+    std::printf("  running ?global_lock@Lock@@QAEHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xECU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][1] = {
+        {0},
+        {1},
+        {-1},
+        {2},
+        {7},
+        {2147483647},
+        {-2147483648},
+        {1431655765},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005902C0U)) {
+            std::printf("  ?global_lock@Lock@@QAEHH@Z: cannot suspend redirect\n");
+            verdict(0x005902C0U, "FAIL-no-redirect", "?global_lock@Lock@@QAEHH@Z");
+            return false;
+        }
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005902C0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005902C0U)) {
+                verdict(0x005902C0U, "FAIL-no-redirect", "?global_lock@Lock@@QAEHH@Z");
+                return false;
+            }
+            timing(0x005902C0U, GetTickCount() - started_at, "?global_lock@Lock@@QAEHH@Z");
+            verdict(0x005902C0U, "INCONCLUSIVE-original-faulted", "?global_lock@Lock@@QAEHH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005902C0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?global_lock@Lock@@QAEHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005902C0U, GetTickCount() - started_at, "?global_lock@Lock@@QAEHH@Z");
+            verdict(0x005902C0U, "INCONCLUSIVE-original-unstable", "?global_lock@Lock@@QAEHH@Z");
+            return true;
+        }
+        if (!resume_redirect_at(0x005902C0U)) {
+            std::printf("  ?global_lock@Lock@@QAEHH@Z: cannot resume redirect\n");
+            verdict(0x005902C0U, "FAIL-no-redirect", "?global_lock@Lock@@QAEHH@Z");
+            return false;
+        }
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005902C0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?global_lock@Lock@@QAEHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x005902C0U, GetTickCount() - started_at, "?global_lock@Lock@@QAEHH@Z");
+            verdict(0x005902C0U, "FAIL-faulted", "?global_lock@Lock@@QAEHH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?global_lock@Lock@@QAEHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?global_lock@Lock@@QAEHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?global_lock@Lock@@QAEHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x005902C0U, GetTickCount() - started_at, "?global_lock@Lock@@QAEHH@Z");
+    if (!passed) {
+        verdict(0x005902C0U, "FAIL", "?global_lock@Lock@@QAEHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?global_lock@Lock@@QAEHH@Z: no seed produced an observable effect\n");
+        verdict(0x005902C0U, "INCONCLUSIVE-no-effect", "?global_lock@Lock@@QAEHH@Z");
+        return true;
+    }
+    verdict(0x005902C0U, "PASS", "?global_lock@Lock@@QAEHH@Z");
+    return true;
+}
+
+// ?lock@Lock@@QAEHHHHHHHH@Z  (361 B)
+// recovered in src/lock.cpp:247
+// staged receiver: Lock, 0xEC B, zero-filled, size pinned
+static bool verify_Lock_lock_00590300() {
+    typedef int (OriginalObject::*Callable)(int, int, int, int, int, int, int);
+    Callable target = original_method<Callable>(0x00590300U);
+    std::printf("  running ?lock@Lock@@QAEHHHHHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xECU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][7] = {
+        {0, 1, -1, 2, 7, 2147483647, -2147483648},
+        {1, -1, 2, 7, 2147483647, -2147483648, 1431655765},
+        {-1, 2, 7, 2147483647, -2147483648, 1431655765, 0},
+        {2, 7, 2147483647, -2147483648, 1431655765, 0, 1},
+        {7, 2147483647, -2147483648, 1431655765, 0, 1, -1},
+        {2147483647, -2147483648, 1431655765, 0, 1, -1, 2},
+        {-2147483648, 1431655765, 0, 1, -1, 2, 7},
+        {1431655765, 0, 1, -1, 2, 7, 2147483647},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00590300U)) {
+            std::printf("  ?lock@Lock@@QAEHHHHHHHH@Z: cannot suspend redirect\n");
+            verdict(0x00590300U, "FAIL-no-redirect", "?lock@Lock@@QAEHHHHHHHH@Z");
+            return false;
+        }
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00590300U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4], (int)argv[5], (int)argv[6]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00590300U)) {
+                verdict(0x00590300U, "FAIL-no-redirect", "?lock@Lock@@QAEHHHHHHHH@Z");
+                return false;
+            }
+            timing(0x00590300U, GetTickCount() - started_at, "?lock@Lock@@QAEHHHHHHHH@Z");
+            verdict(0x00590300U, "INCONCLUSIVE-original-faulted", "?lock@Lock@@QAEHHHHHHHH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00590300U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4], (int)argv[5], (int)argv[6]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?lock@Lock@@QAEHHHHHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00590300U, GetTickCount() - started_at, "?lock@Lock@@QAEHHHHHHHH@Z");
+            verdict(0x00590300U, "INCONCLUSIVE-original-unstable", "?lock@Lock@@QAEHHHHHHHH@Z");
+            return true;
+        }
+        if (!resume_redirect_at(0x00590300U)) {
+            std::printf("  ?lock@Lock@@QAEHHHHHHHH@Z: cannot resume redirect\n");
+            verdict(0x00590300U, "FAIL-no-redirect", "?lock@Lock@@QAEHHHHHHHH@Z");
+            return false;
+        }
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00590300U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3], (int)argv[4], (int)argv[5], (int)argv[6]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?lock@Lock@@QAEHHHHHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00590300U, GetTickCount() - started_at, "?lock@Lock@@QAEHHHHHHHH@Z");
+            verdict(0x00590300U, "FAIL-faulted", "?lock@Lock@@QAEHHHHHHHH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?lock@Lock@@QAEHHHHHHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?lock@Lock@@QAEHHHHHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?lock@Lock@@QAEHHHHHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00590300U, GetTickCount() - started_at, "?lock@Lock@@QAEHHHHHHHH@Z");
+    if (!passed) {
+        verdict(0x00590300U, "FAIL", "?lock@Lock@@QAEHHHHHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?lock@Lock@@QAEHHHHHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00590300U, "INCONCLUSIVE-no-effect", "?lock@Lock@@QAEHHHHHHHH@Z");
+        return true;
+    }
+    verdict(0x00590300U, "PASS", "?lock@Lock@@QAEHHHHHHHH@Z");
+    return true;
+}
+
+// ?add_lock@Lock@@QAEHHHHH@Z  (43 B)
+// recovered in src/lock.cpp:224
+// staged receiver: Lock, 0xEC B, zero-filled, size pinned
+static bool verify_Lock_add_lock_00590470() {
+    typedef int (OriginalObject::*Callable)(int, int, int, int);
+    Callable target = original_method<Callable>(0x00590470U);
+    std::printf("  running ?add_lock@Lock@@QAEHHHHH@Z\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xECU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    static const long long cases[][4] = {
+        {0, 1, -1, 2},
+        {1, -1, 2, 7},
+        {-1, 2, 7, 2147483647},
+        {2, 7, 2147483647, -2147483648},
+        {7, 2147483647, -2147483648, 1431655765},
+        {2147483647, -2147483648, 1431655765, 0},
+        {-2147483648, 1431655765, 0, 1},
+        {1431655765, 0, 1, -1},
+    };
+    for (const auto &argv : cases) {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00590470U)) {
+            std::printf("  ?add_lock@Lock@@QAEHHHHH@Z: cannot suspend redirect\n");
+            verdict(0x00590470U, "FAIL-no-redirect", "?add_lock@Lock@@QAEHHHHH@Z");
+            return false;
+        }
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x00590470U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00590470U)) {
+                verdict(0x00590470U, "FAIL-no-redirect", "?add_lock@Lock@@QAEHHHHH@Z");
+                return false;
+            }
+            timing(0x00590470U, GetTickCount() - started_at, "?add_lock@Lock@@QAEHHHHH@Z");
+            verdict(0x00590470U, "INCONCLUSIVE-original-faulted", "?add_lock@Lock@@QAEHHHHH@Z");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00590470U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?add_lock@Lock@@QAEHHHHH@Z: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00590470U, GetTickCount() - started_at, "?add_lock@Lock@@QAEHHHHH@Z");
+            verdict(0x00590470U, "INCONCLUSIVE-original-unstable", "?add_lock@Lock@@QAEHHHHH@Z");
+            return true;
+        }
+        if (!resume_redirect_at(0x00590470U)) {
+            std::printf("  ?add_lock@Lock@@QAEHHHHH@Z: cannot resume redirect\n");
+            verdict(0x00590470U, "FAIL-no-redirect", "?add_lock@Lock@@QAEHHHHH@Z");
+            return false;
+        }
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x00590470U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = (ORIGINAL(staged)->*target)((int)argv[0], (int)argv[1], (int)argv[2], (int)argv[3]);
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?add_lock@Lock@@QAEHHHHH@Z: the RECOVERED body faulted where the original did not\n");
+            timing(0x00590470U, GetTickCount() - started_at, "?add_lock@Lock@@QAEHHHHH@Z");
+            verdict(0x00590470U, "FAIL-faulted", "?add_lock@Lock@@QAEHHHHH@Z");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?add_lock@Lock@@QAEHHHHH@Z: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?add_lock@Lock@@QAEHHHHH@Z: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?add_lock@Lock@@QAEHHHHH@Z: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00590470U, GetTickCount() - started_at, "?add_lock@Lock@@QAEHHHHH@Z");
+    if (!passed) {
+        verdict(0x00590470U, "FAIL", "?add_lock@Lock@@QAEHHHHH@Z");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?add_lock@Lock@@QAEHHHHH@Z: no seed produced an observable effect\n");
+        verdict(0x00590470U, "INCONCLUSIVE-no-effect", "?add_lock@Lock@@QAEHHHHH@Z");
+        return true;
+    }
+    verdict(0x00590470U, "PASS", "?add_lock@Lock@@QAEHHHHH@Z");
+    return true;
+}
+
+// ?any_locks@Lock@@QAEHXZ  (94 B)
+// recovered in src/lock.cpp:82
+// staged receiver: Lock, 0xEC B, zero-filled, size pinned
+static bool verify_Lock_any_locks_005904a0() {
+    typedef int (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x005904A0U);
+    std::printf("  running ?any_locks@Lock@@QAEHXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0xECU;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x005904A0U)) {
+            std::printf("  ?any_locks@Lock@@QAEHXZ: cannot suspend redirect\n");
+            verdict(0x005904A0U, "FAIL-no-redirect", "?any_locks@Lock@@QAEHXZ");
+            return false;
+        }
+        int original_result = (int)0;
+        oracle_fault_guard::begin(0x005904A0U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            original_result = (ORIGINAL(staged)->*target)();
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x005904A0U)) {
+                verdict(0x005904A0U, "FAIL-no-redirect", "?any_locks@Lock@@QAEHXZ");
+                return false;
+            }
+            timing(0x005904A0U, GetTickCount() - started_at, "?any_locks@Lock@@QAEHXZ");
+            verdict(0x005904A0U, "INCONCLUSIVE-original-faulted", "?any_locks@Lock@@QAEHXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x005904A0U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?any_locks@Lock@@QAEHXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x005904A0U, GetTickCount() - started_at, "?any_locks@Lock@@QAEHXZ");
+            verdict(0x005904A0U, "INCONCLUSIVE-original-unstable", "?any_locks@Lock@@QAEHXZ");
+            return true;
+        }
+        if (!resume_redirect_at(0x005904A0U)) {
+            std::printf("  ?any_locks@Lock@@QAEHXZ: cannot resume redirect\n");
+            verdict(0x005904A0U, "FAIL-no-redirect", "?any_locks@Lock@@QAEHXZ");
+            return false;
+        }
+        int recovered_result = (int)0;
+        oracle_fault_guard::begin(0x005904A0U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            recovered_result = (ORIGINAL(staged)->*target)();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?any_locks@Lock@@QAEHXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x005904A0U, GetTickCount() - started_at, "?any_locks@Lock@@QAEHXZ");
+            verdict(0x005904A0U, "FAIL-faulted", "?any_locks@Lock@@QAEHXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        if (original_result != recovered_result) {
+            std::printf("  ?any_locks@Lock@@QAEHXZ: return value differs\n");
+            passed = false;
+        }
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?any_locks@Lock@@QAEHXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?any_locks@Lock@@QAEHXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+        if (original_result != (int)0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x005904A0U, GetTickCount() - started_at, "?any_locks@Lock@@QAEHXZ");
+    if (!passed) {
+        verdict(0x005904A0U, "FAIL", "?any_locks@Lock@@QAEHXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?any_locks@Lock@@QAEHXZ: no seed produced an observable effect\n");
+        verdict(0x005904A0U, "INCONCLUSIVE-no-effect", "?any_locks@Lock@@QAEHXZ");
+        return true;
+    }
+    verdict(0x005904A0U, "PASS", "?any_locks@Lock@@QAEHXZ");
     return true;
 }
 
@@ -15766,6 +17286,132 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
     return true;
 }
 
+// ?UNK1@FileWin@@QAEXXZ  (33 B)
+// recovered in src/filewin.cpp:50
+// staged receiver: FileWin, 0x33C4 B, zero-filled, size pinned
+static bool verify_FileWin_UNK1_00614320() {
+    typedef void (OriginalObject::*Callable)();
+    Callable target = original_method<Callable>(0x00614320U);
+    std::printf("  running ?UNK1@FileWin@@QAEXXZ\n");
+    std::fflush(stdout);
+    std::vector<uint8_t> &before = GlobalsBefore;
+    std::vector<uint8_t> &after_original = GlobalsAfterOriginal;
+    std::vector<uint8_t> &after_recovered = GlobalsAfterRecovered;
+    const DWORD started_at = GetTickCount();
+    bool passed = true;
+    bool observed_effect = false;
+    constexpr size_t ObjectSize = 0x33C4U;
+    alignas(16) static uint8_t staged[ObjectSize];
+    alignas(16) static uint8_t staged_seed[ObjectSize];
+    alignas(16) static uint8_t staged_original[ObjectSize];
+    {
+        std::memset(staged_seed, 0, ObjectSize);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        snapshot(before);
+        if (!suspend_redirect_at(0x00614320U)) {
+            std::printf("  ?UNK1@FileWin@@QAEXXZ: cannot suspend redirect\n");
+            verdict(0x00614320U, "FAIL-no-redirect", "?UNK1@FileWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00614320U, "original");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_original);
+            std::memcpy(staged_original, staged, ObjectSize);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            if (!resume_redirect_at(0x00614320U)) {
+                verdict(0x00614320U, "FAIL-no-redirect", "?UNK1@FileWin@@QAEXXZ");
+                return false;
+            }
+            timing(0x00614320U, GetTickCount() - started_at, "?UNK1@FileWin@@QAEXXZ");
+            verdict(0x00614320U, "INCONCLUSIVE-original-faulted", "?UNK1@FileWin@@QAEXXZ");
+            return true;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        oracle_fault_guard::begin(0x00614320U, "original-again");
+        bool stable = true;
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+            uintptr_t drift = 0;
+            if (!same_globals(after_original, after_recovered, &drift))
+                stable = false;
+            size_t drift_at = 0;
+            if (!globals_diff::equal(staged_original, staged,
+                                     ObjectSize, &drift_at))
+                stable = false;
+        } else {
+            oracle_fault_guard::end();
+            stable = false;
+        }
+        restore(before);
+        std::memcpy(staged, staged_seed, ObjectSize);
+        if (!stable) {
+            std::printf("  ?UNK1@FileWin@@QAEXXZ: the ORIGINAL does not reproduce itself; nothing here can be judged\n");
+            timing(0x00614320U, GetTickCount() - started_at, "?UNK1@FileWin@@QAEXXZ");
+            verdict(0x00614320U, "INCONCLUSIVE-original-unstable", "?UNK1@FileWin@@QAEXXZ");
+            return true;
+        }
+        if (!resume_redirect_at(0x00614320U)) {
+            std::printf("  ?UNK1@FileWin@@QAEXXZ: cannot resume redirect\n");
+            verdict(0x00614320U, "FAIL-no-redirect", "?UNK1@FileWin@@QAEXXZ");
+            return false;
+        }
+        oracle_fault_guard::begin(0x00614320U, "recovered");
+        if (setjmp(*oracle_fault_guard::buffer()) == 0) {
+            (ORIGINAL(staged)->*target)();
+            snapshot(after_recovered);
+            oracle_fault_guard::end();
+        } else {
+            oracle_fault_guard::end();
+            restore(before);
+            std::printf("  ?UNK1@FileWin@@QAEXXZ: the RECOVERED body faulted where the original did not\n");
+            timing(0x00614320U, GetTickCount() - started_at, "?UNK1@FileWin@@QAEXXZ");
+            verdict(0x00614320U, "FAIL-faulted", "?UNK1@FileWin@@QAEXXZ");
+            return false;
+        }
+        restore(before);   // leave the process as it was found
+        uintptr_t where = 0;
+        if (!same_globals(after_original, after_recovered, &where)) {
+            std::printf("  ?UNK1@FileWin@@QAEXXZ: globals differ, first at %p\n",
+                        reinterpret_cast<void *>(where));
+            passed = false;
+        }
+        size_t staged_at = 0;
+        if (!globals_diff::equal(staged_original, staged,
+                                 ObjectSize, &staged_at)) {
+            std::printf("  ?UNK1@FileWin@@QAEXXZ: staged object differs at +0x%X (original 0x%02X, recovered 0x%02X)\n",
+                        (unsigned)staged_at,
+                        staged_original[staged_at], staged[staged_at]);
+            passed = false;
+        }
+        uintptr_t moved = 0;
+        if (!same_globals(before, after_original, &moved)) {
+            observed_effect = true;
+        }
+        if (std::memcmp(staged_seed, staged_original, ObjectSize) != 0) {
+            observed_effect = true;
+        }
+    }
+    timing(0x00614320U, GetTickCount() - started_at, "?UNK1@FileWin@@QAEXXZ");
+    if (!passed) {
+        verdict(0x00614320U, "FAIL", "?UNK1@FileWin@@QAEXXZ");
+        return false;
+    }
+    if (!observed_effect) {
+        std::printf("  ?UNK1@FileWin@@QAEXXZ: no seed produced an observable effect\n");
+        verdict(0x00614320U, "INCONCLUSIVE-no-effect", "?UNK1@FileWin@@QAEXXZ");
+        return true;
+    }
+    verdict(0x00614320U, "PASS", "?UNK1@FileWin@@QAEXXZ");
+    return true;
+}
+
 // ?UNK10@Caviar@@QAEXHHH@Z  (24 B)
 // recovered in src/caviar.cpp:248
 // staged receiver: Caviar, 0x13D0 B, zero-filled, size pinned
@@ -16190,6 +17836,7 @@ bool run_generated_signature_oracles() {
     passed &= verify_StringStruct_current_id_00401640();
     passed &= verify_StringStruct_next_entry_00402500();
     passed &= verify_StringStruct_current_entry_00402530();
+    passed &= verify_Datalink_UNK1_0042a020();
     passed &= verify_passover_callback_004456a0();
     passed &= verify_load_deswin_sprites_00455e50();
     passed &= verify_InfoWin_reset_00459280();
@@ -16198,6 +17845,7 @@ bool run_generated_signature_oracles() {
     passed &= verify_MapWin_main_caption_0046fb10();
     passed &= verify_NetWin_UNK5_00483820();
     passed &= verify_PlanWin_blink_0048bc20();
+    passed &= verify_ProdPicker_on_scrolling_00493e70();
     passed &= verify_StatusWin_reset_004b8970();
     passed &= verify_StatusWin_set_loc_004b9f90();
     passed &= verify_TutWin_UNK1_004ba720();
@@ -16216,6 +17864,15 @@ bool run_generated_signature_oracles() {
     passed &= verify_NetDaemon_receive_00530320();
     passed &= verify_NetDaemon_unlock_veh_005310f0();
     passed &= verify_desktop_update_0058ee50();
+    passed &= verify_SquareLock_unlock_0058fd90();
+    passed &= verify_Lock_reset_map_00590140();
+    passed &= verify_Lock_unlock_00590170();
+    passed &= verify_Lock_check_global_005901d0();
+    passed &= verify_Lock_check_global_2_00590240();
+    passed &= verify_Lock_global_lock_005902c0();
+    passed &= verify_Lock_lock_00590300();
+    passed &= verify_Lock_add_lock_00590470();
+    passed &= verify_Lock_any_locks_005904a0();
     passed &= verify_GraphicWin_fill_005d5250();
     passed &= verify_GraphicWin_fill_005d5440();
     passed &= verify_GraphicWin_redraw_005d5a70();
@@ -16301,9 +17958,10 @@ bool run_generated_signature_oracles() {
     passed &= verify_Dialog_set_dialog_text_color_00609c90();
     passed &= verify_Dialog_set_dialog_text_color2_00609cc0();
     passed &= verify_Dialog_set_dialog_text_color3_00609cf0();
+    passed &= verify_FileWin_UNK1_00614320();
     passed &= verify_Caviar_UNK10_00618320();
     passed &= verify_Caviar_UNK11_00618340();
     passed &= verify_ButtonGroup_set_0062b870();
-    std::printf("generated signature oracles: %d function(s)\n", 118);
+    std::printf("generated signature oracles: %d function(s)\n", 130);
     return passed;
 }

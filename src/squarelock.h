@@ -37,6 +37,9 @@ class DLLEXPORT SquareLock {
   int32_t flag_;
 };
 
+static_assert(sizeof(SquareLock) == 0xC,
+              "SquareLock layout must match the original executable");
+
 void __fastcall square_lock_clear_redirect(SquareLock *self, void *);
 void __fastcall square_lock_unlock_redirect(SquareLock *self, void *, int factionID);
 int __fastcall square_lock_lock_redirect(SquareLock *self, void *, int factionID,

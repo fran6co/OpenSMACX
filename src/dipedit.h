@@ -34,6 +34,10 @@ class DLLEXPORT DipEdit {
 
  private:
   uint8_t unmapped_[0x4E10];
+
+  // Storage the image proves is here: its own methods reach 0x5240.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_4E10_[0x430];
 };
 
 void __fastcall dip_edit_on_left_click_redirect(DipEdit *self, void *, int a1, int a2);

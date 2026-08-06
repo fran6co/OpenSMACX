@@ -1097,6 +1097,12 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(short-class-tests
                                    test_extend_short_classes.py)
 
+    opensmacx_add_python_tool_test(agreed-size-tests
+                                   test_derive_agreed_sizes.py)
+
+    opensmacx_add_python_tool_test(size-promotion-tests
+                                   test_promote_agreed_sizes.py)
+
     opensmacx_add_python_tool_test(recovery-symbol-tests
                                    test_recovery_symbols.py)
     opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)
@@ -1426,6 +1432,14 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_access_bounds.py"
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # --check re-runs the control as well as comparing bytes. The agreement is
+    # only admissible while it stays at zero wrong against the classes whose
+    # size src/ already pins, and 30 of those pins now came FROM it.
+    add_test(NAME agreed-class-sizes-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_agreed_sizes.py"
+            --check
     )
     # Skips cleanly without the ignored canonical IDB, which is the normal
     # state of a fresh checkout.

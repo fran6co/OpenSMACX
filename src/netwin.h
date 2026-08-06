@@ -255,6 +255,10 @@ class DLLEXPORT NetWin : GraphicWin {
   uint8_t flatButton1_[0xB4C];  // 0x4F7C
   uint8_t flatButton2_[0xB4C];  // 0x5AC8
   uint8_t field_6614_[0x111C];  // 0x6614
+
+  // Storage the image proves is here: its own methods reach 0x7734.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_7730_[0x4];
 };
 
 void __fastcall net_win_unk5_redirect(NetWin *self, void *);

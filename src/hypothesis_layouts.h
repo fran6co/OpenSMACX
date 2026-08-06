@@ -871,6 +871,12 @@ struct FileFindPath {
   uint8_t relative_path_[0x100];  // 0x400
 };
 
+/* 0x2C0 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 3 function(s) in the image. */
+class Fractal {
+ public:
+  uint8_t field_0_[0x2C0];  // 0x0
+};
+
 /* 0xABC bytes, 2 member(s), 1 named. From the IDB. 7 function(s) in the image. */
 class ImageButton {
  public:
@@ -899,6 +905,12 @@ class Interlude {
   uint32_t field_A4C_;  // 0xA4C
   uint32_t field_A50_;  // 0xA50
   uint8_t buffer_[0x588];  // 0xA54
+};
+
+/* 0x18 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 1 function(s) in the image. */
+class JackalVoiceRx {
+ public:
+  uint8_t field_0_[0x18];  // 0x0
 };
 
 /* 0x14 bytes, 5 member(s), 5 named. From Thinker. */
@@ -1006,6 +1018,12 @@ struct MFaction {
   uint32_t soc_opposition_effect_;  // 0x598
 };
 
+/* 0x4 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 2 function(s) in the image. */
+class MainMenu {
+ public:
+  uint32_t field_0_;  // 0x0
+};
+
 /* 0xC bytes, 3 member(s), 3 named. From Thinker. */
 struct MapNode {
   uint32_t x_;  // 0x0
@@ -1021,10 +1039,10 @@ struct MapTile {
   uint32_t sq_;  // 0xC
 };
 
-/* 0x40 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 42 function(s) in the image. */
+/* 0x50 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 42 function(s) in the image. */
 class Midi {
  public:
-  uint8_t field_0_[0x40];  // 0x0
+  uint8_t field_0_[0x50];  // 0x0
 };
 
 /* 0x366C bytes, 122 member(s), 13 named. From the IDB. 11 function(s) in the image. */
@@ -1236,6 +1254,12 @@ struct PaletteInternal {
   uint8_t field_A_;  // 0xA
   uint8_t field_B_;  // 0xB
   uint32_t field_C_;  // 0xC
+};
+
+/* 0x34 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 1 function(s) in the image. */
+class Patch {
+ public:
+  uint8_t field_0_[0x34];  // 0x0
 };
 
 /* 0xC5C bytes, 111 member(s), 5 named. From the IDB. 13 function(s) in the image. */
@@ -1626,10 +1650,10 @@ struct SpotList {
   uint32_t cur_count_;  // 0x8
 };
 
-/* 0x1C bytes, 1 member(s), 0 named. From its own code, which reaches that far. 2 function(s) in the image. */
+/* 0x28 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 2 function(s) in the image. */
 class SpriteList {
  public:
-  uint8_t field_0_[0x1C];  // 0x0
+  uint8_t field_0_[0x28];  // 0x0
 };
 
 /* 0x8 bytes, 2 member(s), 1 named. From the IDB. 3 function(s) in the image. */

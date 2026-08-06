@@ -44,6 +44,23 @@ class DLLEXPORT Credits : GraphicWin {
   // 1 member(s) from the IDA database, 0 named; it starts a member at 0xA14, which is where src/ ends.
 
   uint32_t field_A14_;  // 0xA14
+
+  // Storage the image proves is here: its own methods reach 0x2640.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 12 member(s) from the IDA database, 4 named; it starts a member at 0xA18, which is where src/ ends.
+
+  uint32_t field_A18_;  // 0xA18
+  uint8_t field_A1C_[0x800];  // 0xA1C
+  uint32_t field_121C_;  // 0x121C
+  uint32_t field_1220_;  // 0x1220
+  uint32_t field_1224_;  // 0x1224
+  uint32_t field_1228_;  // 0x1228
+  uint32_t field_122C_;  // 0x122C
+  uint32_t field_1230_;  // 0x1230
+  uint8_t graphicWin2_[0xA14];  // 0x1234
+  uint8_t font_[0x28];  // 0x1C48
+  uint8_t buffer_[0x588];  // 0x1C70
+  uint8_t field_21F8_[0x448];  // 0x21F8
 };
 
 void __fastcall credits_on_left_down_redirect(Credits *self, void *, int a1, int a2);

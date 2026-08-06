@@ -42,6 +42,9 @@ class DLLEXPORT Texture {
   uint32_t borrowed_;   // 0x6C, nonzero when the pixels are not ours to free
 };
 
+static_assert(sizeof(Texture) == 0x70,
+              "Texture layout must match the original executable");
+
  /*
   * TextureStore class
   *

@@ -736,8 +736,8 @@ v00442510_0.cpp(130) : error C2511: 'on_left_click' : overloaded member function
 0x00447B60,?base_liberated@BAmbience@@QAEXXZ,,0,43,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,43,1,17,1,0,#0: original 'push' vs rebuilt 'ret',
 0x00447B90,??0GAmbience@@QAE@XZ,src/ambience.cpp:633,0,44,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x00447BC0,?begin@GAmbience@@QAEXXZ,,0,29,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,29,1,11,1,0,#0: original 'push' vs rebuilt 'ret',
-0x00447BE0,?basewin_show@GAmbience@@QAEXXZ,src/ambience.cpp:502,0,12,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
-0x00447BF0,?basewin_hide@GAmbience@@QAEXXZ,src/ambience.cpp:519,0,5,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00447BE0,?basewin_show@GAmbience@@QAEXXZ,src/ambience.cpp:502,0,12,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,12,12,,,,,
+0x00447BF0,?basewin_hide@GAmbience@@QAEXXZ,src/ambience.cpp:519,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
 0x00447C60,?tech@GAmbience@@QAEXXZ,src/ambience.cpp:150,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x00447C70,?terraform@GAmbience@@QAEXXZ,,0,42,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,42,1,11,1,0,#0: original 'mov' vs rebuilt 'ret',
 0x00447CA0,?production@GAmbience@@QAEXXZ,src/ambience.cpp:159,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
@@ -1969,7 +1969,7 @@ v004b8990_0.cpp(53) : error C2511: 'on_left_double_click' : overloaded member fu
 0x004BC690,?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z,src/tutwin.cpp:176,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x004BC6E0,?tour@TutWin@@QAEXXZ,,0,5598,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5598,1,1708,1,0,#0: original 'push' vs rebuilt 'ret',
 0x004BDDB0,?on_move@TutWin@@QAEXHH@Z,,0,21,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,21,21,,,,,
-0x004BDDD0,?UNK3@TutWin@@QAEXH@Z,src/tutwin.cpp:49,0,16,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x004BDDD0,?UNK3@TutWin@@QAEXH@Z,src/tutwin.cpp:49,0,16,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,16,16,,,,,
 0x004BDF20,?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,,0,70,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v004bdf20_0.cpp
 v004bdf20_0.cpp(46) : error C2143: syntax error : missing ';' before 'this'
 v004bdf20_0.cpp(46) : error C2143: syntax error : missing ';' before 'this'
@@ -2889,7 +2889,7 @@ v00589a30_0.cpp(146) : error C2061: syntax error : identifier 'a1'
 0x0058F9D0,?get_pact@@YAPADH@Z,,0,73,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,73,3,21,2,0,#0: original 'push' vs rebuilt 'xor',
 0x0058FA20,?get_pacts@@YAPADH@Z,,0,73,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,73,3,21,2,0,#0: original 'push' vs rebuilt 'xor',
 0x0058FB70,sub_58fb70,,0,66,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,66,3,31,2,0,#0: original 'push' vs rebuilt 'xor',
-0x0058FD70,?clear@SquareLock@@QAEXXZ,src/squarelock.cpp:24,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x0058FD70,?clear@SquareLock@@QAEXXZ,src/squarelock.cpp:24,0,21,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,21,21,,,,,
 0x0058FD90,?unlock@SquareLock@@QAEXH@Z,src/squarelock.cpp:47,0,231,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0058FE80,?lock@SquareLock@@QAEHHHHH@Z,src/squarelock.cpp:92,0,232,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x0058FF70,?clear@PlayerLock@@QAEXXZ,src/playerlock.cpp:25,0,38,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
@@ -4056,7 +4056,7 @@ v00612e80_0.cpp(60) : error C2511: 'on_left_click' : overloaded member function 
 0x00613830,??__Fg_FILEWIN_SPRITE_3@@YAXXZ,src/guarded_teardowns.cpp:386,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
 0x006141C0,?set_def_name@FileWin@@QAEHPAD@Z,,0,265,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,265,5,88,2,0,#0: original 'sub' vs rebuilt 'xor',
 0x006142D0,?set_directory@FileWin@@QAEHPAD@Z,,0,78,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,78,5,30,2,0,#0: original 'push' vs rebuilt 'xor',
-0x00614320,?UNK1@FileWin@@QAEXXZ,src/filewin.cpp:50,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,
+0x00614320,?UNK1@FileWin@@QAEXXZ,src/filewin.cpp:50,0,33,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,33,33,,,,,
 0x00614350,?UNK2@FileWin@@QAEXH@Z,src/filewin.cpp:36,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00614B60,?UNK5@FileWin@@QAEXXZ,,0,24,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,24,24,,,,,
 0x00614B80,?UNK6@FileWin@@QAEXXZ,src/filewin.cpp:23,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,

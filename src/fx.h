@@ -42,6 +42,9 @@ class DLLEXPORT FX {
   uint32_t field_28EC_;  // 0x28EC
 };
 
+static_assert(sizeof(FX) == 0x28F0,
+              "FX layout must match the original executable");
+
 // The per-element destructor the original passes: the Effect jump thunk at
 // 0x004482C0, which lands on the Wave destructor. Held as its own rebindable
 // dependency so the bank teardown retires with the Wave work.

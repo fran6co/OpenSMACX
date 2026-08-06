@@ -64,6 +64,10 @@ class DLLEXPORT Gamma : GraphicWin {
   uint32_t field_EE8_;  // 0xEE8
   uint32_t field_EEC_;  // 0xEEC
   uint8_t field_EF0_[0xA30];  // 0xEF0
+
+  // Storage the image proves is here: its own methods reach 0x46B4.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  uint8_t field_1920_[0x2D94];
 };
 
 int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2);

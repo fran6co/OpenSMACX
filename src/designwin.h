@@ -309,6 +309,39 @@ class DLLEXPORT DesignWin : GraphicWin {
   uint32_t protoArmorType_;  // 0x14204
   uint32_t protoAbilityFlags_;  // 0x14208
   uint32_t protoReactorType_;  // 0x1420C
+
+  // Storage the image proves is here: its own methods reach 0x145A4.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 28 member(s) from the IDA database, 6 named; it starts a member at 0x14210, which is where src/ ends.
+
+  uint32_t field_14210_;  // 0x14210
+  uint32_t mineralCostFactor_;  // 0x14214
+  uint32_t protoAbilityID1_;  // 0x14218
+  uint32_t protoAbilityID2_;  // 0x1421C
+  uint32_t field_14220_;  // 0x14220
+  uint32_t field_14224_;  // 0x14224
+  uint32_t field_14228_;  // 0x14228
+  uint32_t field_1422C_;  // 0x1422C
+  uint32_t field_14230_;  // 0x14230
+  uint32_t field_14234_;  // 0x14234
+  uint32_t field_14238_;  // 0x14238
+  uint32_t field_1423C_;  // 0x1423C
+  uint32_t field_14240_;  // 0x14240
+  uint32_t field_14244_;  // 0x14244
+  uint32_t field_14248_;  // 0x14248
+  uint32_t field_1424C_;  // 0x1424C
+  uint32_t field_14250_;  // 0x14250
+  uint32_t field_14254_;  // 0x14254
+  uint32_t field_14258_;  // 0x14258
+  uint32_t field_1425C_;  // 0x1425C
+  uint32_t field_14260_;  // 0x14260
+  uint32_t field_14264_;  // 0x14264
+  uint32_t field_14268_;  // 0x14268
+  uint32_t field_1426C_;  // 0x1426C
+  uint8_t field_14270_[0x2D0];  // 0x14270
+  uint8_t font1_[0x28];  // 0x14540
+  uint8_t font2_[0x28];  // 0x14568
+  uint8_t field_14590_[0x14];  // 0x14590
 };
 
 void __fastcall design_win_unk1_redirect(DesignWin *self, void *);

@@ -53,6 +53,13 @@ class DLLEXPORT StatusWin {
   int32_t field_15C0_;
   uint8_t unmapped_15C4_[0x15D4 - 0x15C4];
   int32_t field_15D4_;
+
+  // Storage the image proves is here: its own methods reach 0x15E0.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 2 member(s) from the IDA database, 0 named; it starts a member at 0x15D8, which is where src/ ends.
+
+  uint32_t field_15D8_;  // 0x15D8
+  uint32_t field_15DC_;  // 0x15DC
 };
 
 void __fastcall status_win_close_redirect(StatusWin *self, void *);

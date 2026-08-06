@@ -255,7 +255,62 @@ class DLLEXPORT SocialWin : GraphicWin {
   uint32_t field_2C1C_;  // 0x2C1C
   uint32_t field_2C20_;  // 0x2C20
   uint32_t effectMaximize_;  // 0x2C24
+
+  // Storage the image proves is here: its own methods reach 0x1F2F0.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 47 member(s) from the IDA database, 42 named; it starts a member at 0x2C28, which is where src/ ends.
+
+  uint32_t field_2C28_;  // 0x2C28
+  uint32_t field_2C2C_;  // 0x2C2C
+  uint32_t field_2C30_;  // 0x2C30
+  uint32_t field_2C34_;  // 0x2C34
+  uint32_t economyAllocOrig_;  // 0x2C38
+  uint32_t psychAllocOrig_;  // 0x2C3C
+  uint32_t labsAllocOrig_;  // 0x2C40
+  uint32_t economyAlloc3_;  // 0x2C44
+  uint32_t psychAlloc3_;  // 0x2C48
+  uint32_t labsAlloc3_;  // 0x2C4C
+  uint32_t economyAllocPending_;  // 0x2C50
+  uint32_t psychAllocPending_;  // 0x2C54
+  uint32_t labsAllocPending_;  // 0x2C58
+  uint32_t field_2C5C_;  // 0x2C5C
+  uint8_t socEngModifierNums_[0x1B8];  // 0x2C60
+  uint8_t effectIcons_[0xF78];  // 0x2E18
+  uint8_t energyAllocLock_[0x58];  // 0x3D90
+  uint8_t energyAllocArrow_[0x108];  // 0x3DE8
+  uint8_t energyAllocSlider_[0x2130];  // 0x3EF0
+  uint8_t flatButtons_[0x18B64];  // 0x6020
+  uint8_t buttonGroups_[0x250];  // 0x1EB84
+  uint8_t buttonGroup_[0x94];  // 0x1EDD4
+  uint8_t font1_[0x28];  // 0x1EE68
+  uint8_t font2_[0x28];  // 0x1EE90
+  uint8_t font3_[0x28];  // 0x1EEB8
+  uint8_t font4_[0x28];  // 0x1EEE0
+  uint8_t font5_[0x28];  // 0x1EF08
+  uint8_t font6_[0x28];  // 0x1EF30
+  uint8_t font7_[0x28];  // 0x1EF58
+  uint8_t font8_[0x28];  // 0x1EF80
+  uint8_t font9_[0x28];  // 0x1EFA8
+  uint8_t tutRects1_[0x90];  // 0x1EFD0
+  uint8_t tutRect1_[0x10];  // 0x1F060
+  uint8_t tutRects2_[0xA0];  // 0x1F070
+  uint8_t tooltipSocEng_[0x10];  // 0x1F110
+  uint8_t tutRect4_[0x10];  // 0x1F120
+  uint8_t tutRects3_[0x120];  // 0x1F130
+  uint8_t tooltipEffects_[0x10];  // 0x1F250
+  uint8_t tooltipEconomy_[0x10];  // 0x1F260
+  uint8_t tooltipLabs_[0x10];  // 0x1F270
+  uint8_t tooltipPsych_[0x10];  // 0x1F280
+  uint8_t tutRect9_[0x10];  // 0x1F290
+  uint8_t tooltipFactionPower_[0x10];  // 0x1F2A0
+  uint8_t tutRect11_[0x10];  // 0x1F2B0
+  uint8_t tutRect12_[0x10];  // 0x1F2C0
+  uint8_t tutRect13_[0x10];  // 0x1F2D0
+  uint8_t tutRect14_[0x10];  // 0x1F2E0
 };
+
+static_assert(sizeof(SocialWin) == 0x1F2F0,
+              "SocialWin layout must match the original executable");
 
 void __fastcall social_win_unk2_redirect(SocialWin *self, void *);
 void __fastcall social_win_unk3_redirect(SocialWin *self, void *);
