@@ -410,13 +410,18 @@ def land(address: int, row: dict, code: str, check: bool = True) -> dict:
 
 
 def splice(address: int, row: dict, location: str, code: str,
-           check: bool = True) -> dict:
+           check: bool = True, improve: bool = False) -> dict:
     path, lines, start, end = census.body_span(location)
     source_file = location.rpartition(":")[0]
     offset = split_definition(lines[start:end + 1])
     replacement = code.strip().splitlines()
     if not replacement:
         raise Refused("matched code is empty")
+
+    # What is there now, measured BEFORE anything moves. Only needed to judge
+    # an improvement, and it costs a compile, so it is not paid otherwise.
+    incumbent = verify(address, census.extract_body(location)) if (
+        check and improve) else None
 
     # A submitted comment replaces the whole doc comment, which begins ABOVE
     # the catalogued span - so the region being rewritten starts there, not at
@@ -460,24 +465,48 @@ def splice(address: int, row: dict, location: str, code: str,
         return result
 
     verdict = verify(address, census.extract_body(location))
-    if verdict.get("tier") != "BYTE_EXACT":
+    tier = verdict.get("tier")
+    result["tier"] = tier
+
+    # BYTE_EXACT is the only unconditional pass. `--improve` adds a second,
+    # narrower one: a body that is STRICTLY BETTER than the one it replaces,
+    # by `byte_match._better` - the same ordering the ledger ratchet and
+    # `verify_recovered_function.py --against-committed` already use, over
+    # tier first and then mnemonic similarity.
+    #
+    # This exists because refusing everything but BYTE_EXACT threw away real
+    # work. Two committed bodies were NO_COMPILE under this very recipe
+    # (`BOOL` and `LPSTR` are never forward-declared for a type that appears
+    # only on a local), and the one-word respelling that fixes them is not
+    # byte-exact and could not land - so the row kept reading as a mismatch
+    # for a reason that had nothing to do with its code.
+    accepted = tier == "BYTE_EXACT" or (
+        improve and incumbent is not None
+        and byte_match._better(verdict, incumbent))
+
+    if not accepted:
         # Restore everything. A half-applied writeback is worse than none: the
         # body would read as recovered while the pointers around it moved.
         write_atomically(path, original_text)
         shift_csv(FUNCTIONS_CSV, "source_locations", source_file, end + 1, -delta)
         shift_csv(LEDGER_CSV, "source_location", source_file, end + 1, -delta)
         shift_source_map(SOURCE_MAP, source_file, end + 1, -delta)
+        against = (f" and no better than the committed "
+                   f"{incumbent.get('tier')}" if incumbent is not None else "")
         raise Refused(
-            f"body in src/ verifies as {verdict.get('tier')} rather than "
-            f"BYTE_EXACT after the splice "
+            f"body in src/ verifies as {tier} rather than BYTE_EXACT"
+            f"{against} after the splice "
             f"({verdict.get('note') or verdict.get('refusal_reason') or ''}"
             f" first divergence #{verdict.get('first_divergence', '?')}); "
             f"reverted, nothing changed")
-    result["verified"] = True
+    result["verified"] = tier == "BYTE_EXACT"
+    if incumbent is not None:
+        result["improved_from"] = incumbent.get("tier")
     return result
 
 
-def writeback(target: str, code: str, check: bool = True) -> dict:
+def writeback(target: str, code: str, check: bool = True,
+              improve: bool = False) -> dict:
     """Land a match wherever it belongs: the `src/` span, or the store.
 
     A `src/` span is preferred and is NOT the only place a match may go. The
@@ -509,7 +538,7 @@ def writeback(target: str, code: str, check: bool = True) -> dict:
     if not location.startswith("src/"):
         return land(address, row, code, check)
     try:
-        return splice(address, row, location, code, check)
+        return splice(address, row, location, code, check, improve)
     except Refused as refusal:
         landed = land(address, row, code, check)
         landed["spliced"] = False
@@ -525,6 +554,11 @@ def main() -> int:
     parser.add_argument("code", help="file holding the matched body; - for stdin")
     parser.add_argument("--no-verify", action="store_true",
                         help="skip the BYTE_EXACT re-check (needs no Wine/VC6)")
+    parser.add_argument(
+        "--improve", action="store_true",
+        help="also accept a body that is not byte-exact but is STRICTLY "
+             "BETTER than the one it replaces, by the same ordering the "
+             "ledger ratchet uses. Refuses a tie.")
     parser.add_argument("--json", action="store_true", help="machine-readable result")
     arguments = parser.parse_args()
 
@@ -538,7 +572,8 @@ def main() -> int:
             return 3
 
     try:
-        result = writeback(arguments.target, code, check=check)
+        result = writeback(arguments.target, code, check=check,
+                           improve=arguments.improve)
     except Refused as error:
         if arguments.json:
             print(json.dumps({"status": "refused", "reason": str(error)}))

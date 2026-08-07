@@ -6895,8 +6895,8 @@ v0050b970_0.cpp(54) : fatal error C1004: unexpected end of file found
 c0050b9a0.cpp(48) : error C2227: left of '->str' must point to class/struct/union"
 0x0050B9C0,sub_50b9c0,,0,30,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,30,3,12,2,0,#0: original 'push' vs rebuilt 'xor',
 0x0050B9E0,?pop@NetMsg@@QAAXPBDPBD@Z,,0,30,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,30,30,,,,,
-0x0050BA00,?bitmask@@YAXHPAHPAH@Z,src/general.cpp:881,0,39,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,39,39,,,,,
-0x0050BA30,?bit_count@@YAHH@Z,src/general.cpp:749,0,30,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,30,22,15,12,2,#2: original 'push' vs rebuilt 'mov',
+0x0050BA00,?bitmask@@YAXHPAHPAH@Z,src/general.cpp:884,0,39,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,39,39,,,,,
+0x0050BA30,?bit_count@@YAHH@Z,src/general.cpp:752,0,30,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,30,22,15,12,2,#2: original 'push' vs rebuilt 'mov',
 0x0050C4B0,?steal_energy@@YAHH@Z,src/probe.cpp:31,0,84,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0050c4b0.cpp(40) : error C2065: 'Bases' : undeclared identifier
 c0050c4b0.cpp(40) : error C2109: subscript requires array or pointer type
 c0050c4b0.cpp(40) : error C2228: left of '.faction_id_current' must have class/struct/union type
@@ -7526,7 +7526,7 @@ v00532140_0.cpp(97) : error C2511: 'veh_drop' : overloaded member function 'int 
         v00532140_0.cpp(89) : see declaration of 'NetDaemon'
 "
 0x00532940,?send_message@NetDaemon@@QAEXPADKH@Z,,0,260,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,260,3,105,1,0,#0: original 'push' vs rebuilt 'ret 0xc',
-0x00532A50,sub_532a50,src/leaf_recoveries.cpp:833,0,49,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,49,37,24,17,3,#3: original 'push' vs rebuilt 'mov',
+0x00532A50,sub_532a50,src/leaf_recoveries.cpp:833,0,49,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,49,49,,,,,
 0x00532A90,?rebuild_vehicle_bits@@YAXXZ,src/map.cpp:1101,0,211,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00532a90.cpp(50) : error C2065: 'MapLatitudeBounds' : undeclared identifier
 c00532a90.cpp(50) : error C2100: illegal indirection
 c00532a90.cpp(51) : error C2065: 'MapLongitudeBounds' : undeclared identifier
@@ -7567,17 +7567,17 @@ v00532e00_0.cpp(189) : error C2061: syntax error : identifier 'a2'
 v00532e00_0.cpp(189) : error C2511: 'synch' : overloaded member function 'void (struct int16,int)' not found in 'NetDaemon'
         v00532e00_0.cpp(184) : see declaration of 'NetDaemon'
 "
-0x00538F30,?danger@@YAXPADPADHHH@Z,src/general.cpp:935,0,122,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00538f30.cpp(54) : error C2664: 'parse_says' : cannot convert parameter 2 from 'const char *' to 'char *'
+0x00538F30,?danger@@YAXPADPADHHH@Z,src/general.cpp:938,0,122,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00538f30.cpp(54) : error C2664: 'parse_says' : cannot convert parameter 2 from 'const char *' to 'char *'
 Conversion loses qualifiers
 c00538f30.cpp(55) : error C2664: 'parse_says' : cannot convert parameter 2 from 'const char *' to 'char *'
 Conversion loses qualifiers
 c00538f30.cpp(59) : error C2664: 'log_say' : cannot convert parameter 1 from 'const char *' to 'char *'
 Conversion loses qualifiers
 c00538f30.cpp(60) : error C2065: 'ScriptTxtID' : undeclared identifier"
-0x00538FB0,?my_srand@@YAHH@Z,src/general.cpp:785,0,34,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00538fb0.cpp(50) : error C2660: 'srand' : function does not take 1 parameters
+0x00538FB0,?my_srand@@YAHH@Z,src/general.cpp:788,0,34,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00538fb0.cpp(50) : error C2660: 'srand' : function does not take 1 parameters
 c00538fb0.cpp(51) : error C2065: '_srand' : undeclared identifier"
-0x00539090,?checksum@@YAEPADHE@Z,src/general.cpp:892,0,36,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,36,34,19,15,0,#0: original 'push' vs rebuilt 'mov',
-0x005390C0,?checksum_password@@YAHPAD@Z,src/general.cpp:903,0,151,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005390c0.cpp(51) : error C2660: 'strlen' : function does not take 1 parameters
+0x00539090,?checksum@@YAEPADHE@Z,src/general.cpp:895,0,36,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,36,34,19,15,0,#0: original 'push' vs rebuilt 'mov',
+0x005390C0,?checksum_password@@YAHPAD@Z,src/general.cpp:906,0,151,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005390c0.cpp(51) : error C2660: 'strlen' : function does not take 1 parameters
 c005390c0.cpp(55) : error C2065: 'strcpy_s' : undeclared identifier
 c005390c0.cpp(56) : error C2065: 'CharUpper' : undeclared identifier
 c005390c0.cpp(58) : error C2660: 'strlen' : function does not take 1 parameters
@@ -8796,7 +8796,7 @@ c0056b480.cpp(61) : error C2065: 'RadiusOffsetY' : undeclared identifier
 c0056b480.cpp(61) : error C2109: subscript requires array or pointer type
 c0056b480.cpp(62) : error C2065: 'on_map' : undeclared identifier
 c0056b480.cpp(62) : error C2065: 'is_ocean' : undeclared identifier"
-0x00579770,?rnd@@YAHHPAD@Z,src/general.cpp:925,0,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00579770.cpp(43) : error C2061: syntax error : identifier 'input'
+0x00579770,?rnd@@YAHHPAD@Z,src/general.cpp:928,0,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00579770.cpp(43) : error C2061: syntax error : identifier 'input'
 0x00579790,?x_dist@@YAHHH@Z,src/map.cpp:1145,0,55,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00579790.cpp(50) : error C2660: 'abs' : function does not take 1 parameters
 c00579790.cpp(51) : error C2065: 'MapIsFlat' : undeclared identifier
 c00579790.cpp(51) : error C2100: illegal indirection
@@ -9023,8 +9023,8 @@ c0057ce50.cpp(76) : error C2109: subscript requires array or pointer type
 c0057ce50.cpp(76) : error C2228: left of '.ranking' must have class/struct/union type
 c0057ce50.cpp(79) : error C2109: subscript requires array or pointer type
 c0057ce50.cpp(79) : error C2228: left of '.offense_rating' must have class/struct/union type"
-0x0057D1F0,?header_check@@YAXPADPAUFILE@@@Z,src/general.cpp:1094,0,69,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0057d1f0.cpp(46) : error C2065: '_fgetc' : undeclared identifier
-0x0057D240,?header_write@@YAXPADPAUFILE@@@Z,src/general.cpp:1116,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0057d240.cpp(49) : error C2065: '_fputc' : undeclared identifier
+0x0057D1F0,?header_check@@YAXPADPAUFILE@@@Z,src/general.cpp:1097,0,69,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0057d1f0.cpp(46) : error C2065: '_fgetc' : undeclared identifier
+0x0057D240,?header_write@@YAXPADPAUFILE@@@Z,src/general.cpp:1119,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0057d240.cpp(49) : error C2065: '_fputc' : undeclared identifier
 0x0057D270,?arm_strat@@YAHHH@Z,src/veh.cpp:1377,0,101,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0057d270.cpp(51) : error C2065: 'ExpansionEnabled' : undeclared identifier
 c0057d270.cpp(51) : error C2065: 'ARM_PSI_DEFENSE' : undeclared identifier
 c0057d270.cpp(54) : error C2065: 'Armor' : undeclared identifier
@@ -10996,8 +10996,8 @@ c005a96d0.cpp(62) : error C2228: left of '.flags' must have class/struct/union t
 c005a96d0.cpp(63) : error C2065: 'TFLAG_REVEALS_MAP' : undeclared identifier
 c005a96d0.cpp(64) : error C2109: subscript requires array or pointer type
 c005a96d0.cpp(64) : error C2228: left of '.flags' must have class/struct/union type"
-0x005ABD10,?kill_auto_save@@YAXXZ,src/general.cpp:951,0,12,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c005abd10.cpp(48) : error C2660: 'remove' : function does not take 1 parameters
-0x005ABD20,?auto_save@@YAXXZ,src/general.cpp:961,0,281,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005abd20.cpp(77) : error C2065: 'IsMultiplayerPBEM' : undeclared identifier
+0x005ABD10,?kill_auto_save@@YAXXZ,src/general.cpp:954,0,12,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c005abd10.cpp(48) : error C2660: 'remove' : function does not take 1 parameters
+0x005ABD20,?auto_save@@YAXXZ,src/general.cpp:964,0,281,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005abd20.cpp(77) : error C2065: 'IsMultiplayerPBEM' : undeclared identifier
 c005abd20.cpp(77) : error C2100: illegal indirection
 c005abd20.cpp(77) : error C2065: 'IsMultiplayerNet' : undeclared identifier
 c005abd20.cpp(77) : error C2100: illegal indirection
@@ -11024,12 +11024,12 @@ c005abd20.cpp(98) : error C2660: 'rename' : function does not take 2 parameters
 c005abd20.cpp(100) : error C2660: 'rename' : function does not take 2 parameters
 c005abd20.cpp(102) : error C2660: 'rename' : function does not take 2 parameters
 c005abd20.cpp(104) : error C2660: 'rename' : function does not take 2 parameters"
-0x005ABE40,?load_undo@@YAXH@Z,src/general.cpp:1036,0,127,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005abe40.cpp(52) : error C2065: 'ScenEditorUndoPosition' : undeclared identifier
+0x005ABE40,?load_undo@@YAXH@Z,src/general.cpp:1039,0,127,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005abe40.cpp(52) : error C2065: 'ScenEditorUndoPosition' : undeclared identifier
 c005abe40.cpp(59) : error C2065: 'sprintf_s' : undeclared identifier
 c005abe40.cpp(64) : error C2065: 'draw_map' : undeclared identifier"
-0x005ABEC0,?wipe_undo@@YAXXZ,src/general.cpp:1058,0,84,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005abec0.cpp(53) : error C2065: 'sprintf_s' : undeclared identifier
+0x005ABEC0,?wipe_undo@@YAXXZ,src/general.cpp:1061,0,84,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005abec0.cpp(53) : error C2065: 'sprintf_s' : undeclared identifier
 c005abec0.cpp(54) : error C2660: 'remove' : function does not take 1 parameters"
-0x005ABF20,?auto_undo@@YAXXZ,src/general.cpp:1072,0,207,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005abf20.cpp(56) : error C2065: 'GamePreferences' : undeclared identifier
+0x005ABF20,?auto_undo@@YAXXZ,src/general.cpp:1075,0,207,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005abf20.cpp(56) : error C2065: 'GamePreferences' : undeclared identifier
 c005abf20.cpp(56) : error C2100: illegal indirection
 c005abf20.cpp(56) : error C2065: 'PREF_BSC_AUTOSAVE_EACH_TURN' : undeclared identifier
 c005abf20.cpp(57) : error C2065: 'ScenEditorUndoPosition' : undeclared identifier
@@ -11280,7 +11280,7 @@ c005ad3c0.cpp(135) : error C2783: 'Method __cdecl original_method(unsigned long)
 0x005AD420,?on_left_up@ReplayWin@@QAEXHH@Z,src/replaywin.cpp:68,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x005AD430,?on_button_clicked@ReplayWin@@QAEXH@Z,src/delegation_thunks.cpp:1003,1,11,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1003: no closing brace within the file
 0x005AD440,?on_key_click@ReplayWin@@QAEHHH@Z,src/delegation_thunks.cpp:1018,1,16,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1018: no closing brace within the file
-0x005AD450,sub_5ad450,src/leaf_recoveries.cpp:635,0,32,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,29,19,10,7,0,#0: original 'lea' vs rebuilt 'push',
+0x005AD450,sub_5ad450,src/leaf_recoveries.cpp:635,0,32,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,29,29,,,,,
 0x005AD4C0,sub_5ad4c0,src/leaf_recoveries.cpp:936,0,64,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,64,71,27,30,4,#4: original 'push' vs rebuilt 'lea',
 0x005AD9A0,?close@ReplayWin@@QAEXXZ,,0,64,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,50,1,14,1,0,#0: original 'push' vs rebuilt 'ret',
 0x005ADBD0,?timer_callback_daemon@ReplayWin@@QAAXH@Z,,0,17,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,17,17,,,,,
@@ -11499,7 +11499,7 @@ c005b4790.cpp(217) : error C2109: subscript requires array or pointer type
 c005b4790.cpp(217) : error C2228: left of '.unk_46' must have class/struct/union type
 c005b4790.cpp(217) : error C2065: 'range' : undeclared identifier
 c005b4790.cpp(217) : fatal error C1003: error count exceeds 100; stopping compilation"
-0x005B5690,?sort@@YAXHPAHPAH@Z,src/general.cpp:1131,0,101,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,101,111,47,47,5,#5: original 'push' vs rebuilt 'lea',
+0x005B5690,?sort@@YAXHPAHPAH@Z,src/general.cpp:1134,0,101,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,101,111,47,47,5,#5: original 'push' vs rebuilt 'lea',
 0x005B5700,sub_5b5700,src/veh.cpp:2201,0,202,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005b5700.cpp(70) : error C2065: 'on_map' : undeclared identifier
 c005b5700.cpp(73) : error C2065: 'Map' : undeclared identifier
 c005b5700.cpp(73) : error C2065: 'tile' : undeclared identifier
@@ -15251,7 +15251,7 @@ c005fcc70.cpp(56) : error C2100: illegal indirection"
 0x005FD280,nullsub_192,src/nullsub_thunks.cpp:466,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x005FD290,nullsub_193,src/nullsub_thunks.cpp:476,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x005FD2A0,nullsub_194,src/nullsub_thunks.cpp:486,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x005FD2B0,?do_sound@@YAXXZ,src/autosound.cpp:183,0,3,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,3,1,2,1,0,#0: original 'xor' vs rebuilt 'ret',
+0x005FD2B0,?do_sound@@YAHXZ,src/autosound.cpp:183,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x005FD2C0,sub_5fd2c0,,0,72,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,72,3,22,2,0,#0: original 'sub' vs rebuilt 'xor',
 0x005FD310,sub_5fd310,,0,77,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,77,3,29,2,0,#0: original 'sub' vs rebuilt 'xor',
 0x005FD360,?do_all_sounds@@YAXXZ,,0,11,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,11,11,,,,,
@@ -15379,16 +15379,16 @@ c005fed10.cpp(47) : error C2228: left of '.field_0' must have class/struct/union
 0x005FFE80,sub_5ffe80,,0,61,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,61,3,19,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x006002F0,?status@MCIVideo@@QAEHXZ,,0,47,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,47,3,13,2,0,#0: original 'sub' vs rebuilt 'xor',
 0x00600320,?is_playing@MCIVideo@@QAEHXZ,src/field_accessors.cpp:453,1,6,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,6,6,,,,,
-0x006003A0,?filefind_cd_drive_letter@@YAPADXZ,src/general.cpp:615,0,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006003a0.cpp(44) : error C2065: 'FilefindPath' : undeclared identifier
+0x006003A0,?filefind_cd_drive_letter@@YAPADXZ,src/general.cpp:618,0,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006003a0.cpp(44) : error C2065: 'FilefindPath' : undeclared identifier
 c006003a0.cpp(44) : error C2227: left of '->cd_path' must point to class/struct/union"
-0x006003B0,?filefind_set_alternate@@YAXPAD@Z,src/general.cpp:623,0,70,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006003b0.cpp(51) : error C2065: 'FilefindPath' : undeclared identifier
+0x006003B0,?filefind_set_alternate@@YAXPAD@Z,src/general.cpp:626,0,70,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006003b0.cpp(51) : error C2065: 'FilefindPath' : undeclared identifier
 c006003b0.cpp(51) : error C2227: left of '->alt_path' must point to class/struct/union
 c006003b0.cpp(53) : error C2660: 'strchr' : function does not take 2 parameters
 c006003b0.cpp(54) : error C2065: 'strcat_s' : undeclared identifier
 c006003b0.cpp(54) : error C2227: left of '->alt_path' must point to class/struct/union
 c006003b0.cpp(54) : error C2227: left of '->exe_dir' must point to class/struct/union
 c006003b0.cpp(56) : error C2227: left of '->alt_path' must point to class/struct/union"
-0x006005D0,?filefind_get@@YAHPAD@Z,src/general.cpp:699,0,387,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006005d0.cpp(58) : error C2065: 'FilefindPath' : undeclared identifier
+0x006005D0,?filefind_get@@YAHPAD@Z,src/general.cpp:702,0,387,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006005d0.cpp(58) : error C2065: 'FilefindPath' : undeclared identifier
 c006005d0.cpp(58) : error C2227: left of '->last_path' must point to class/struct/union
 c006005d0.cpp(59) : error C2227: left of '->last_path' must point to class/struct/union
 c006005d0.cpp(61) : error C2065: 'WIN32_FIND_DATAA' : undeclared identifier
@@ -15857,9 +15857,9 @@ c006074b0.cpp(62) : error C2227: left of '->is_initialized' must point to class/
 c006074e0.cpp(42) : see declaration of 'BaseButton'"
 0x00607550,?set_bubble_text@BaseButton@@QAEHPAD@Z,src/basebutton.cpp:156,0,103,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607550.cpp(56) : error C2511: 'set_bubble_text' : overloaded member function 'int (const char *)' not found in 'BaseButton'
 c00607550.cpp(42) : see declaration of 'BaseButton'"
-0x006077F0,?on_key_click@BaseButton@@QAEXHH@Z,src/basebutton.cpp:421,0,5,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5,3,2,1,0,#0: original 'xor' vs rebuilt 'ret 8',
-0x00607800,?on_key_down@BaseButton@@QAEXH@Z,src/basebutton.cpp:436,0,5,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5,3,2,1,0,#0: original 'xor' vs rebuilt 'ret 4',
-0x00607810,?on_key_up@BaseButton@@QAEXH@Z,src/basebutton.cpp:451,0,5,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5,3,2,1,0,#0: original 'xor' vs rebuilt 'ret 4',
+0x006077F0,?on_key_click@BaseButton@@QAEHHH@Z,src/basebutton.cpp:421,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
+0x00607800,?on_key_down@BaseButton@@QAEHH@Z,src/basebutton.cpp:436,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
+0x00607810,?on_key_up@BaseButton@@QAEHH@Z,src/basebutton.cpp:451,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
 0x00607820,?on_mouse_leave@BaseButton@@QAEXHH@Z,,0,45,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,45,3,15,1,0,#0: original 'mov' vs rebuilt 'ret 8',
 0x00607A00,?on_right_click@BaseButton@@QAEXHH@Z,,0,20,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,20,20,,,,,
 0x00607B00,?on_dialog_focus@BaseButton@@QAEXH@Z,src/delegation_thunks.cpp:1047,1,11,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1047: no closing brace within the file
@@ -16751,15 +16751,15 @@ c00628950.cpp(62) : error C2065: 'htoi' : undeclared identifier
 c00628950.cpp(66) : error C2660: 'atoi' : function does not take 1 parameters
 c00628950.cpp(68) : error C2660: 'atoi' : function does not take 1 parameters
 c00628950.cpp(71) : error C2660: 'atoi' : function does not take 1 parameters"
-0x00628A50,?swap@@YAXPAHPAH@Z,src/general.cpp:798,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
-0x00628A80,?swap@@YAXPAEPAE@Z,src/general.cpp:816,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
-0x00628AB0,?bit_count_signed@@YAHH@Z,src/general.cpp:763,0,18,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,18,18,,,,,
-0x00628AD0,?fixed_div@@YAHJJ@Z,src/general.cpp:834,0,28,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00628ad0.cpp(43) : error C2065: 'int64_t' : undeclared identifier
+0x00628A50,?swap@@YAXPAHPAH@Z,src/general.cpp:801,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
+0x00628A80,?swap@@YAXPAEPAE@Z,src/general.cpp:819,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
+0x00628AB0,?bit_count_signed@@YAHH@Z,src/general.cpp:766,0,18,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,18,18,,,,,
+0x00628AD0,?fixed_div@@YAHJJ@Z,src/general.cpp:837,0,28,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00628ad0.cpp(43) : error C2065: 'int64_t' : undeclared identifier
 c00628ad0.cpp(43) : error C2146: syntax error : missing ')' before identifier 'numerator'
 c00628ad0.cpp(43) : error C2059: syntax error : ')'"
-0x00628AF0,?memrchr@@YAHPBX0H@Z,src/general.cpp:849,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00628af0.cpp(44) : error C2065: 'strrchr' : undeclared identifier
+0x00628AF0,?memrchr@@YAHPBX0H@Z,src/general.cpp:852,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00628af0.cpp(44) : error C2065: 'strrchr' : undeclared identifier
 0x00628B30,?findnum@@YAHPAD@Z,src/general.cpp:317,0,57,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,57,33,27,17,2,#2: original 'push' vs rebuilt 'mov',
-0x006290E0,?quick_root@@YAHH@Z,src/general.cpp:862,0,41,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,41,41,,,,,
+0x006290E0,?quick_root@@YAHH@Z,src/general.cpp:865,0,41,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,41,41,,,,,
 0x00629110,??0StringBox@@QAE@XZ,,0,266,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,248,3,47,2,0,#0: original 'push' vs rebuilt 'mov',
 0x00629710,?add@StringBox@@QAEXPADHH@Z,src/stringbox.cpp:29,0,57,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x00629750,?add_special@StringBox@@QAEXPAD@Z,,0,36,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,36,3,13,1,0,#0: original 'mov' vs rebuilt 'ret 4',
@@ -16795,7 +16795,7 @@ c0062ba80.cpp(130) : error C2065: 'AutoSoundVtable' : undeclared identifier"
 0x0062BBF0,?close@AutoSound@@QAEXXZ,src/autosound.cpp:54,0,333,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0062bbf0.cpp(129) : error C2065: 'AutoSoundDefaults' : undeclared identifier
 c0062bbf0.cpp(129) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast"
-0x0062BD40,?init@AutoSound@@QAEXXZ,src/autosound.cpp:103,0,132,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,132,21,39,7,0,#0: original 'xor' vs rebuilt 'lea',
+0x0062BD40,?init@AutoSound@@QAEXXZ,src/autosound.cpp:103,0,132,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,132,132,,,,,
 0x0062BDD0,?close2@AutoSound@@QAEXXZ,src/autosound.cpp:79,0,333,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0062bdd0.cpp(129) : error C2065: 'AutoSoundDefaults' : undeclared identifier
 c0062bdd0.cpp(129) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast"
@@ -16812,7 +16812,7 @@ c0062c830.cpp(72) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x0062D160,sub_62d160,,0,49,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,49,3,15,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0062D1A0,sub_62d1a0,,0,50,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,50,3,15,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0062D390,sub_62d390,src/field_accessors.cpp:503,1,6,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,6,6,,,,,
-0x0062D570,?jackal_version_check@@YAHPAD@Z,src/general.cpp:337,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0062d570.cpp(53) : error C2660: 'strcmp' : function does not take 2 parameters
+0x0062D570,?jackal_version_check@@YAHPAD@Z,src/general.cpp:340,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0062d570.cpp(53) : error C2660: 'strcmp' : function does not take 2 parameters
 c0062d570.cpp(54) : error C2065: 'MessageBoxA' : undeclared identifier
 c0062d570.cpp(54) : error C2065: 'NULL' : undeclared identifier
 c0062d570.cpp(58) : error C2065: 'MB_OK' : undeclared identifier"
@@ -16867,7 +16867,7 @@ c006343c0.cpp(46) : error C2447: missing function header (old-style formal list?
 0x00634430,?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z,src/vector.cpp:38,0,75,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x00634480,?__apl@Vector@@QAEXAAVVector@@@Z,src/vector.cpp:60,0,33,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x006344B0,?__ami@Vector@@QAEXAAVVector@@@Z,src/vector.cpp:76,0,33,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
-0x006344E0,sub_6344e0,src/leaf_recoveries.cpp:420,0,51,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,51,48,20,23,1,#1: original 'fld' vs rebuilt 'push',
+0x006344E0,sub_6344e0,src/leaf_recoveries.cpp:420,0,51,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,51,51,,,,,
 0x00634650,sub_634650,src/leaf_recoveries.cpp:156,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x00634670,?scale@Vector@@QAEXAAVVector@@M@Z,src/vector.cpp:92,0,65,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x006346C0,sub_6346c0,src/field_accessors.cpp:525,1,36,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,36,36,,,,,
@@ -16968,7 +16968,7 @@ c0063e7f0.cpp(48) : error C2065: 'store32' : undeclared identifier"
 0x00640A50,sub_640a50,,0,19,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,19,19,,,,,
 0x00640A70,sub_640a70,,0,12,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,12,12,,,,,
 0x00642480,_compress_block,,0,1083,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1083,3,295,2,0,#0: original 'mov' vs rebuilt 'xor',
-0x00642940,sub_642940,src/leaf_recoveries.cpp:758,0,31,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,31,31,15,15,,,
+0x00642940,sub_642940,src/leaf_recoveries.cpp:758,0,31,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,31,31,,,,,
 0x00643950,sub_643950,,0,49,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,49,3,23,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x006440E0,sub_6440e0,,0,24,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,24,24,,,,,
 0x00644100,sub_644100,,0,63,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,63,3,30,2,0,#0: original 'mov' vs rebuilt 'xor',

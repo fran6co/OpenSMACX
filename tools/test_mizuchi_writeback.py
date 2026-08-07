@@ -236,6 +236,71 @@ class SpliceFallbackTest(WritebackFixture):
         self.assertFalse((self.matched / "00601b80.cpp").exists())
 
 
+class ImproveTest(WritebackFixture):
+    """`--improve` lands a body that is better but not yet exact.
+
+    Refusing everything except BYTE_EXACT threw real work away. Two committed
+    bodies were NO_COMPILE under this very recipe because `BOOL` and `LPSTR`
+    are never forward-declared for a type used only on a local, and the
+    one-word respelling that fixes them is not byte-exact - so the row kept
+    reading as a mismatch for a reason that had nothing to do with its code.
+
+    The ordering is `byte_match._better`, the same one the ledger ratchet and
+    `verify_recovered_function.py --against-committed` already use.
+    """
+
+    BODY = "void BasePop::set_loc(int x, int y) {\n    loc_a_ = x;\n}\n"
+
+    def run_improve(self, incumbent, candidate, improve=True):
+        """(result or None). `splice` measures the incumbent first, then the
+        spliced result; a refused splice then tries the store, which measures
+        again and refuses too, so the last verdict repeats."""
+        verdicts = iter([incumbent, candidate])
+        def verdict(*_args, **_kwargs):
+            return next(verdicts, candidate)
+        with mock.patch.object(tool, "verify", side_effect=verdict):
+            try:
+                return tool.writeback(hex(FIRST), self.BODY, improve=improve)
+            except tool.Refused:
+                return None
+
+    def test_a_strictly_better_body_lands(self):
+        result = self.run_improve({"tier": "NO_COMPILE"}, {"tier": "MISMATCH"})
+        self.assertEqual("src/basepop.cpp:3", result["source_location"])
+        self.assertEqual("MISMATCH", result["tier"])
+        self.assertEqual("NO_COMPILE", result["improved_from"])
+
+    def test_it_is_not_reported_as_verified(self):
+        # `verified` means BYTE_EXACT. An improvement is progress, not proof,
+        # and the ledger must not read it as a match.
+        result = self.run_improve({"tier": "NO_COMPILE"}, {"tier": "MISMATCH"})
+        self.assertFalse(result["verified"])
+
+    def test_a_tie_is_refused(self):
+        before = self.source.read_text()
+        self.assertIsNone(
+            self.run_improve({"tier": "MISMATCH"}, {"tier": "MISMATCH"}))
+        self.assertEqual(self.source.read_text(), before)
+
+    def test_a_worse_body_is_refused(self):
+        before = self.source.read_text()
+        self.assertIsNone(
+            self.run_improve({"tier": "MISMATCH"}, {"tier": "NO_COMPILE"}))
+        self.assertEqual(self.source.read_text(), before)
+
+    def test_without_the_flag_only_byte_exact_lands(self):
+        before = self.source.read_text()
+        self.assertIsNone(
+            self.run_improve({"tier": "NO_COMPILE"}, {"tier": "MISMATCH"},
+                             improve=False))
+        self.assertEqual(self.source.read_text(), before)
+
+    def test_byte_exact_still_lands_and_still_reads_as_verified(self):
+        result = self.run_improve({"tier": "MISMATCH"}, {"tier": "BYTE_EXACT"})
+        self.assertEqual("src/basepop.cpp:3", result["source_location"])
+        self.assertTrue(result["verified"])
+
+
 class MatchedStoreTest(WritebackFixture):
     """A match with no owner lands in the store instead of being lost.
 

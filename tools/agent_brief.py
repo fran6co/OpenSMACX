@@ -283,6 +283,29 @@ Four items, each labelled, and omit the ones that do not apply:
 4. PROPOSALS - signature changes and renames, as `old -> new` with the
    evidence for each. These are catalogue edits and are applied separately
    from the body, so they are useless buried in prose.
+5. STRUCTURE - what you learned about the DATA that this function does not
+   itself need. One line each, in the shape
+
+       kind | subject | offset | what it is | what proves it
+
+   where kind is one of: member, member-type, class, embedded, vtable-slot,
+   table, callgraph, emitter. Offsets in hex, and `-` where one does not
+   apply. Examples of the real thing, all found this way:
+
+       member      | UAmbience | 0x6C  | one-byte flag, cleared on hide
+                   | mov byte ptr [esi+0x6c], 0 with esi as this
+       vtable-slot | Win       | 0x128 | slot 74 takes two ints
+                   | two pushes then call [eax+0x128]
+       table       | -         | 0xA20 | 512 records of three uint32
+                   | do/while of 0x200 writing three dwords, advancing by 3
+       emitter     | -         | -     | the VCall shim declares every slot
+                   | nullary, so any slot taking arguments needs a second shim
+
+   EVIDENCE IS REQUIRED. An observation without it is a guess in citation
+   format, and it will be dropped. Say nothing rather than guess a field's
+   meaning; an offset and a width with no story is still worth recording.
+   These go to `docs/recovery/agent-structure-observations.csv`, which is how
+   the next agent on the same class starts knowing what you just worked out.
 """
 
 
