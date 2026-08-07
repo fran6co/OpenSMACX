@@ -5605,14 +5605,14 @@ v004e0f30_0.cpp(47) : error C2059: syntax error : ','
 0x004E14A0,?editor_rockiness@Console@@QAEXXZ,,0,40,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,40,40,,,,,
 0x004E1F20,?editor_undo@Console@@QAEXXZ,src/console.cpp:170,0,9,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,9,9,,,,,
 0x004E1F30,?editor_redo@Console@@QAEXXZ,,0,9,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,9,9,,,,,
-0x004E1F40,?edit_lock@Console@@QAEHXZ,src/console.cpp:138,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004e1f40.cpp(52) : error C2065: 'GameState' : undeclared identifier
-c004e1f40.cpp(52) : error C2100: illegal indirection
-c004e1f40.cpp(52) : error C2065: 'STATE_SCENARIO_EDITOR' : undeclared identifier
-c004e1f40.cpp(55) : error C2065: 'ConsoleEditKeyStateSlot' : undeclared identifier
+0x004E1F40,?edit_lock@Console@@QAEHXZ,src/console.cpp:138,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004e1f40.cpp(55) : error C2065: 'GameState' : undeclared identifier
 c004e1f40.cpp(55) : error C2100: illegal indirection
-c004e1f40.cpp(55) : error C2065: 'VK_SCROLL' : undeclared identifier
-c004e1f40.cpp(56) : error C2100: illegal indirection
-c004e1f40.cpp(56) : error C2065: 'STATE_EDITOR_ONLY_MODE' : undeclared identifier"
+c004e1f40.cpp(55) : error C2065: 'STATE_SCENARIO_EDITOR' : undeclared identifier
+c004e1f40.cpp(58) : error C2065: 'ConsoleEditKeyStateSlot' : undeclared identifier
+c004e1f40.cpp(58) : error C2100: illegal indirection
+c004e1f40.cpp(58) : error C2065: 'VK_SCROLL' : undeclared identifier
+c004e1f40.cpp(59) : error C2100: illegal indirection
+c004e1f40.cpp(59) : error C2065: 'STATE_EDITOR_ONLY_MODE' : undeclared identifier"
 0x004E23C0,??_GDipEdit@@UAEPAXI@Z,src/deleting_thunks.cpp:1423,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004e23c0.cpp(69) : error C2065: 'DipEditDtorTarget' : undeclared identifier
 c004e23c0.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
 c004e23c0.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier
@@ -7225,66 +7225,66 @@ c0050f440.cpp(56) : error C2227: left of '->close' must point to class/struct/un
 0x0050F630,sub_50f630,,0,16,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
 0x0050F640,nullsub_185,src/field_accessors.cpp:816,1,16,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x0050F650,?clear_group@Console@@QAEXXZ,src/console.cpp:109,0,43,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
-0x005108A0,?focus@Console@@QAEXHHH@Z,src/console.cpp:251,0,259,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005108a0.cpp(119) : error C2556: 'int __thiscall Console::focus(int,int,int)' : overloaded function differs only by return type from 'void __thiscall Console::focus(int,int,int)'
-c005108a0.cpp(54) : see declaration of 'focus'
-c005108a0.cpp(119) : error C2371: 'focus' : redefinition; different basic types
-c005108a0.cpp(54) : see declaration of 'focus'
-c005108a0.cpp(130) : error C2065: 'LocalFaction' : undeclared identifier
-c005108a0.cpp(130) : error C2100: illegal indirection
-c005108a0.cpp(136) : error C2065: 'MapWinTableSlots' : undeclared identifier
-c005108a0.cpp(140) : error C2065: 'MapWinTable' : undeclared identifier
-c005108a0.cpp(140) : error C2109: subscript requires array or pointer type
-c005108a0.cpp(140) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
+0x005108A0,?focus@Console@@QAEXHHH@Z,src/console.cpp:251,0,259,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005108a0.cpp(122) : error C2556: 'int __thiscall Console::focus(int,int,int)' : overloaded function differs only by return type from 'void __thiscall Console::focus(int,int,int)'
+c005108a0.cpp(57) : see declaration of 'focus'
+c005108a0.cpp(122) : error C2371: 'focus' : redefinition; different basic types
+c005108a0.cpp(57) : see declaration of 'focus'
+c005108a0.cpp(133) : error C2065: 'LocalFaction' : undeclared identifier
+c005108a0.cpp(133) : error C2100: illegal indirection
+c005108a0.cpp(139) : error C2065: 'MapWinTableSlots' : undeclared identifier
+c005108a0.cpp(143) : error C2065: 'MapWinTable' : undeclared identifier
+c005108a0.cpp(143) : error C2109: subscript requires array or pointer type
+c005108a0.cpp(143) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005108a0.cpp(148) : error C2065: 'MapWinActiveOffset' : undeclared identifier
-c005108a0.cpp(165) : error C2065: 'ConsoleControlTurnActive' : undeclared identifier
-c005108a0.cpp(165) : error C2100: illegal indirection
-c005108a0.cpp(172) : error C2065: 'ConsoleGlobal' : undeclared identifier
-c005108a0.cpp(172) : error C2065: 'ConsoleOriginalCursorNext' : undeclared identifier
-c005108a0.cpp(172) : error C2297: '->*' : illegal, right operand has type 'int'
-c005108a0.cpp(190) : error C2109: subscript requires array or pointer type
-c005108a0.cpp(190) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
+c005108a0.cpp(151) : error C2065: 'MapWinActiveOffset' : undeclared identifier
+c005108a0.cpp(168) : error C2065: 'ConsoleControlTurnActive' : undeclared identifier
+c005108a0.cpp(168) : error C2100: illegal indirection
+c005108a0.cpp(175) : error C2065: 'ConsoleGlobal' : undeclared identifier
+c005108a0.cpp(175) : error C2065: 'ConsoleOriginalCursorNext' : undeclared identifier
+c005108a0.cpp(175) : error C2297: '->*' : illegal, right operand has type 'int'
+c005108a0.cpp(193) : error C2109: subscript requires array or pointer type
+c005108a0.cpp(193) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005108a0.cpp(191) : error C2065: 'ConsoleOriginalMapWinFocus' : undeclared identifier
-c005108a0.cpp(191) : error C2297: '->*' : illegal, right operand has type 'int'
-c005108a0.cpp(198) : error C2109: subscript requires array or pointer type
-c005108a0.cpp(198) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
+c005108a0.cpp(194) : error C2065: 'ConsoleOriginalMapWinFocus' : undeclared identifier
+c005108a0.cpp(194) : error C2297: '->*' : illegal, right operand has type 'int'
+c005108a0.cpp(201) : error C2109: subscript requires array or pointer type
+c005108a0.cpp(201) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005108a0.cpp(199) : error C2065: 'ConsoleOriginalMapWinDrawMap' : undeclared identifier
-c005108a0.cpp(199) : error C2297: '->*' : illegal, right operand has type 'int'
-c005108a0.cpp(210) : error C2109: subscript requires array or pointer type
-c005108a0.cpp(210) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
+c005108a0.cpp(202) : error C2065: 'ConsoleOriginalMapWinDrawMap' : undeclared identifier
+c005108a0.cpp(202) : error C2297: '->*' : illegal, right operand has type 'int'
+c005108a0.cpp(213) : error C2109: subscript requires array or pointer type
+c005108a0.cpp(213) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005108a0.cpp(213) : error C2297: '->*' : illegal, right operand has type 'int'
-c005108a0.cpp(221) : error C2065: 'ConsoleOriginalFlushInput' : undeclared identifier"
+c005108a0.cpp(216) : error C2297: '->*' : illegal, right operand has type 'int'
+c005108a0.cpp(224) : error C2065: 'ConsoleOriginalFlushInput' : undeclared identifier"
 0x00510C90,sub_510c90,,0,80,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,76,5,25,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00513B90,?veh_turn@Console@@QAEHXZ,,0,1065,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1065,1076,288,287,4,#4: original 'mov' vs rebuilt 'push',
-0x00514880,?update_data@Console@@QAEXH@Z,src/console.cpp:196,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514880.cpp(102) : error C2065: 'ConsoleInfoWin' : undeclared identifier
-c00514880.cpp(104) : error C2065: 'ConsoleStatusWin' : undeclared identifier
-c00514880.cpp(104) : error C2065: 'ConsoleOriginalStatusWinRedraw' : undeclared identifier
-c00514880.cpp(104) : error C2297: '->*' : illegal, right operand has type 'int'
-c00514880.cpp(107) : error C2065: 'ConsoleMapWinSlot' : undeclared identifier
-c00514880.cpp(107) : error C2100: illegal indirection"
-0x00514EF0,?set_preferences@Console@@QAEXXZ,src/console.cpp:35,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514ef0.cpp(75) : error C2065: 'ConsolePrefWin' : undeclared identifier
-c00514ef0.cpp(75) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
-c00514ef0.cpp(75) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x00514F00,?set_adv_preferences@Console@@QAEXXZ,src/console.cpp:159,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f00.cpp(75) : error C2065: 'ConsolePrefWin' : undeclared identifier
-c00514f00.cpp(75) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
-c00514f00.cpp(75) : error C2297: '->*' : illegal, right operand has type 'int'
+0x00514880,?update_data@Console@@QAEXH@Z,src/console.cpp:196,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514880.cpp(105) : error C2065: 'ConsoleInfoWin' : undeclared identifier
+c00514880.cpp(107) : error C2065: 'ConsoleStatusWin' : undeclared identifier
+c00514880.cpp(107) : error C2065: 'ConsoleOriginalStatusWinRedraw' : undeclared identifier
+c00514880.cpp(107) : error C2297: '->*' : illegal, right operand has type 'int'
+c00514880.cpp(110) : error C2065: 'ConsoleMapWinSlot' : undeclared identifier
+c00514880.cpp(110) : error C2100: illegal indirection"
+0x00514EF0,?set_preferences@Console@@QAEXXZ,src/console.cpp:35,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514ef0.cpp(78) : error C2065: 'ConsolePrefWin' : undeclared identifier
+c00514ef0.cpp(78) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
+c00514ef0.cpp(78) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x00514F00,?set_adv_preferences@Console@@QAEXXZ,src/console.cpp:159,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f00.cpp(78) : error C2065: 'ConsolePrefWin' : undeclared identifier
+c00514f00.cpp(78) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
+c00514f00.cpp(78) : error C2297: '->*' : illegal, right operand has type 'int'
 Generating Code...
 Compiling..."
-0x00514F10,?set_auto_preferences@Console@@QAEXXZ,src/console.cpp:45,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f10.cpp(75) : error C2065: 'ConsolePrefWin' : undeclared identifier
-c00514f10.cpp(75) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
-c00514f10.cpp(75) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x00514F20,?set_base_preferences@Console@@QAEXXZ,src/console.cpp:55,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f20.cpp(75) : error C2065: 'ConsolePrefWin' : undeclared identifier
-c00514f20.cpp(75) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
-c00514f20.cpp(75) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x00514F30,?set_audiovisual@Console@@QAEXXZ,src/console.cpp:65,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f30.cpp(75) : error C2065: 'ConsolePrefWin' : undeclared identifier
-c00514f30.cpp(75) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
-c00514f30.cpp(75) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x00514F40,?set_map_display@Console@@QAEXXZ,src/console.cpp:75,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f40.cpp(75) : error C2065: 'ConsolePrefWin' : undeclared identifier
-c00514f40.cpp(75) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
-c00514f40.cpp(75) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x00514F10,?set_auto_preferences@Console@@QAEXXZ,src/console.cpp:45,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f10.cpp(78) : error C2065: 'ConsolePrefWin' : undeclared identifier
+c00514f10.cpp(78) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
+c00514f10.cpp(78) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x00514F20,?set_base_preferences@Console@@QAEXXZ,src/console.cpp:55,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f20.cpp(78) : error C2065: 'ConsolePrefWin' : undeclared identifier
+c00514f20.cpp(78) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
+c00514f20.cpp(78) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x00514F30,?set_audiovisual@Console@@QAEXXZ,src/console.cpp:65,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f30.cpp(78) : error C2065: 'ConsolePrefWin' : undeclared identifier
+c00514f30.cpp(78) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
+c00514f30.cpp(78) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x00514F40,?set_map_display@Console@@QAEXXZ,src/console.cpp:75,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00514f40.cpp(78) : error C2065: 'ConsolePrefWin' : undeclared identifier
+c00514f40.cpp(78) : error C2065: 'ConsolePrefWinDisplay' : undeclared identifier
+c00514f40.cpp(78) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00515400,?center@Console@@QAEXXZ,,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
 0x00515430,sub_515430,,0,19,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,19,19,,,,,
 0x00515600,?base_names@Console@@QAEXXZ,,0,56,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v00515600_0.cpp
@@ -7347,8 +7347,8 @@ v0051bc70_0.cpp(119) : error C2059: syntax error : ')'
 c0051dc90.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
 c0051dc90.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x0051DCC0,sub_51dcc0,,0,54,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,54,3,20,2,0,#0: original 'push' vs rebuilt 'xor',
-0x0051DDE0,??_Gthunk1_Console@@UAEPAXI@Z,src/adjustor_thunks.cpp:1223,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0051dde0.cpp(68) : error C2065: 'ConsoleScalarDeleteTarget' : undeclared identifier
-c0051dde0.cpp(68) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0051DDE0,??_Gthunk1_Console@@UAEPAXI@Z,src/adjustor_thunks.cpp:1223,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0051dde0.cpp(71) : error C2065: 'ConsoleScalarDeleteTarget' : undeclared identifier
+c0051dde0.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0051DDF0,??_GConsole@@UAEPAXI@Z,,0,54,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v0051ddf0_0.cpp
 v0051ddf0_0.cpp(61) : error C4716: 'Console::m_0051ddf0' : must return a value
 "
@@ -7390,8 +7390,8 @@ c0051df20.cpp(68) : error C2297: '->*' : illegal, right operand has type 'int'"
 c0051df30.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0051DF40,?on_nc_hittest@thunk1_Console@@QAEXHH@Z,src/adjustor_thunks.cpp:1491,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0051df40.cpp(68) : error C2065: 'ConsoleOnNcHittestTarget' : undeclared identifier
 c0051df40.cpp(68) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0051DF50,??_Gthunk2_Console@@UAEPAXI@Z,src/adjustor_thunks.cpp:1506,1,17,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0051df50.cpp(68) : error C2065: 'ConsoleScalarDeleteTarget' : undeclared identifier
-c0051df50.cpp(68) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0051DF50,??_Gthunk2_Console@@UAEPAXI@Z,src/adjustor_thunks.cpp:1506,1,17,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0051df50.cpp(71) : error C2065: 'ConsoleScalarDeleteTarget' : undeclared identifier
+c0051df50.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0051DF70,??3AlphaMenu@@SAXPAXI@Z,src/deleting_thunks.cpp:1469,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0051df70.cpp(45) : error C2065: 'scalar_delete_alpha_menu' : undeclared identifier
 0x0051DF80,sub_51df80,,0,36,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,36,36,,,,,
 0x0051DFB0,sub_51dfb0,,0,20,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,20,20,,,,,

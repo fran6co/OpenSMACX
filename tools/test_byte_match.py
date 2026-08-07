@@ -170,6 +170,63 @@ class JumpTableClipTests(unittest.TestCase):
         code, _ = tool.object_code(data)
         self.assertEqual(code, b"\x90\x90" + RET)
 
+    def _object_with_compressed_table(self, entries, indices):
+        """The two-table shape VC6 emits for a SPARSE switch: a dword table
+        carrying the relocations, then a dense byte table of indices into it
+        carrying none, owning the COMDAT's last byte."""
+        code = RET
+        table = b"\0\0\0\0" * entries
+        relocs = {1: [(len(code) + 4 * i, 1, tool.IMAGE_REL_I386_DIR32)
+                      for i in range(entries)]}
+        return build_coff(
+            [(".text", code + table + bytes(indices))],
+            [("?f@@YAXXZ", 1, 0, tool.IMAGE_SYM_CLASS_EXTERNAL),
+             ("$L1", 1, len(code), tool.IMAGE_SYM_CLASS_LABEL)],
+            relocs)
+
+    def test_a_byte_index_table_after_the_dword_table_is_clipped(self):
+        """Both tables go, not just the relocated one.
+
+        The relocation run no longer reaches the COMDAT's end when a byte
+        table follows it, so the trailing-table test rejected the whole thing
+        and left 24 bytes of DATA in the compared span. That reported as a
+        length mismatch - 48 against 72 - on a function whose code was
+        byte-identical.
+        """
+        data = self._object_with_compressed_table(2, [0, 1, 1, 0, 1, 0])
+        code, _ = tool.object_code(data)
+        self.assertEqual(code, RET)
+
+    def test_a_tail_that_cannot_be_indices_is_left_alone(self):
+        """The test that stops this inventing a boundary: every byte of an
+        index table indexes the dword table, so a byte >= the entry count is
+        proof the tail is something else."""
+        data = self._object_with_compressed_table(2, [0, 1, 9])
+        code, _ = tool.object_code(data)
+        self.assertEqual(len(code), len(RET) + 8 + 3,
+                         "9 cannot index a 2-entry table, so nothing is a "
+                         "table here and the whole span stays")
+
+    def test_a_relocated_tail_is_not_an_index_table(self):
+        """An index table carries no relocations; anything that does is code."""
+        code = RET
+        table = b"\0\0\0\0" * 2
+        relocs = {1: [(len(code), 1, tool.IMAGE_REL_I386_DIR32),
+                      (len(code) + 4, 1, tool.IMAGE_REL_I386_DIR32),
+                      (len(code) + 8, 2, tool.IMAGE_REL_I386_DIR32)]}
+        data = build_coff(
+            [(".text", code + table + b"\0\0\0\0")],
+            [("?f@@YAXXZ", 1, 0, tool.IMAGE_SYM_CLASS_EXTERNAL),
+             ("$L1", 1, len(code), tool.IMAGE_SYM_CLASS_LABEL),
+             ("?g@@3HA", 0, 0, tool.IMAGE_SYM_CLASS_EXTERNAL)], relocs)
+        body, _ = tool.object_code(data)
+        self.assertEqual(len(body), len(RET) + 12)
+
+    def test_padding_after_the_index_table_does_not_defeat_it(self):
+        data = self._object_with_compressed_table(2, [0, 1, 1, 0x90, 0x90])
+        code, _ = tool.object_code(data)
+        self.assertEqual(code, RET)
+
     def test_a_relocation_to_a_non_label_is_not_a_table(self):
         """A DIR32 to an external - an ordinary global reference - must not be
         mistaken for a case arm."""

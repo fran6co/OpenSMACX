@@ -121,6 +121,13 @@ CORRECTIONS = {
         "void function reproduces an unread clear: a `volatile` local spills "
         "to the stack instead of the register, and a plain one is dead-store "
         "eliminated. It is a `return 0`"),
+    0x004C8F40: (
+        "?unload@VoiceTx@@QAEXXZ",
+        "?unload@VoiceTx@@QAEHXZ",
+        "ends `mov dword ptr [esi+0x3c], 0; xor eax, eax; pop esi; ret`. The "
+        "clear is the LAST thing before the epilogue and nothing reads it, so "
+        "it is a `return 0`. With the void head the body matches 17 of 18 "
+        "mnemonics and is 2 bytes short; with `int` it is byte-exact"),
 }
 
 
