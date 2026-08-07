@@ -72,6 +72,55 @@ CORRECTIONS = {
         "guard-taken and guard-skipped paths before `pop esi; ret`, so it is a "
         "shared `return 0` and the function returns int. With the void head "
         "the body matches through instruction 10 and is 2 bytes short"),
+    # A different KIND of error from every one above. Those correct a return
+    # type; these correct whether the function has a `this` at all.
+    #
+    # `QAA` is a public, NON-STATIC, __cdecl member, and VC6 passes such a
+    # member's `this` as a hidden first STACK argument - so the first declared
+    # parameter lands at [esp+8]. All three of these read their first
+    # parameter at [esp+4], and none references `ecx` or `[ecx+N]` anywhere in
+    # its body. Measured rather than reasoned: an isolated one-parameter
+    # non-static member compiled through this project's own CL puts the
+    # parameter at [esp+8], and the `static` equivalent reproduces [esp+4]
+    # exactly. `SAA` is the static spelling.
+    #
+    # The consequence is why this belongs here rather than in a note: under
+    # `QAA` the scaffolding emits a head no body can match, because every
+    # stack offset is wrong before anything else is decided. vx_read and
+    # vx_write both reach SHAPE_EXACT with each parameter read off by
+    # precisely the width of the `this` the bytes do not have.
+    0x00618E10: (
+        "?vx_malloc@Caviar@@QAAXK@Z",
+        "?vx_malloc@Caviar@@SAXK@Z",
+        "reads its sole parameter at [esp+4]; a non-static __cdecl member "
+        "puts `this` there and the parameter at [esp+8]. No ecx use anywhere"),
+    0x00618E30: (
+        "?vx_read@Caviar@@QAAXHPADJ@Z",
+        "?vx_read@Caviar@@SAXHPADJ@Z",
+        "SHAPE_EXACT with all three parameter reads off by exactly +4 "
+        "(0x4/0x8/0xc against 0x8/0xc/0x10) - the width of the `this` that "
+        "QAA inserts and the bytes do not have"),
+    0x00618E50: (
+        "?vx_write@Caviar@@QAAXHPAXJ@Z",
+        "?vx_write@Caviar@@SAXHPAXJ@Z",
+        "same +4 shift as vx_read, mirrored; pure stack-operand forwarding "
+        "with zero ecx-as-receiver use"),
+    # Back to the return-width family, and this pair travels together: the
+    # caller was catalogued void BECAUSE the callee was, so correcting one
+    # without the other leaves the residue unexplained at the other end.
+    0x00608BA0: (
+        "?add_special@StringList@@QAEXPAD@Z",
+        "?add_special@StringList@@QAEHPAD@Z",
+        "ends `neg eax; sbb eax, eax; neg eax; ret 4` - the canonical VC6 "
+        "normalisation of a value into 0 or 1, which a void function has no "
+        "reason to compute"),
+    0x00629750: (
+        "?add_special@StringBox@@QAEXPAD@Z",
+        "?add_special@StringBox@@QAEHPAD@Z",
+        "ends `xor eax, eax; pop esi; ret 4`. No source form for a genuinely "
+        "void function reproduces an unread clear: a `volatile` local spills "
+        "to the stack instead of the register, and a plain one is dead-store "
+        "eliminated. It is a `return 0`"),
 }
 
 

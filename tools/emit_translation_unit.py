@@ -66,7 +66,7 @@ import class_layouts  # noqa: E402
 import recovery_symbols  # noqa: E402
 from generator_support import (absolute_operands, parse_body_ranges,  # noqa: E402
                                read_bytes)
-from mizuchi_declfix import decode_signature  # noqa: E402
+from mizuchi_declfix import CRT_SIGNATURES, decode_signature  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
@@ -911,6 +911,31 @@ def unsettled_identifier(row: dict) -> str:
         row.get("name") or "", int(row["address"], 16))
 
 
+def crt_declaration(method: str) -> str:
+    """`CRT_SIGNATURES` for this callee, spelled with the name it is CALLED by.
+
+    The table is keyed by the DECORATED name - `_free`, `_read` - because that
+    is what the image's import carries. The emitter prints the undecorated one,
+    `free`, so a lookup on the printed name misses every entry that has a
+    leading underscore. That is not a near-miss: `free` then stays declared
+    nullary, and a body calling it properly fails `C2660` while a body
+    declaring it fails `C2733`. An agent hit exactly this on
+    `StringList::kill_entry` and worked around it by casting `&free` through a
+    function-pointer type - a correct answer to the wrong problem.
+
+    The name in the returned text is rewritten to whatever the emitter is
+    actually printing, because a declaration of `_free` does not declare the
+    `free` the call site names.
+    """
+    for key in (method, f"_{method}"):
+        text = CRT_SIGNATURES.get(key)
+        if text is None:
+            continue
+        head, _, tail = text.partition("(")
+        return f"{head.rsplit(key, 1)[0]}{method}({tail}"
+    return ""
+
+
 def declare_callee(row: dict, derived: dict, pe=None,
                    keys: dict = None) -> str:
     """A callee as a bare declaration. Never a definition.
@@ -929,6 +954,18 @@ def declare_callee(row: dict, derived: dict, pe=None,
         name = unsettled_identifier(row)
         if name in recovery_symbols.COMPILER_DECLARED:
             return ""
+        # A CRT routine whose arity IS known, just not from the catalogue.
+        # These are not `?`-mangled and appear in no prototype source, so
+        # `Signature` cannot decode them and they fell to the nullary
+        # declaration below - which does not merely lose information, it makes
+        # every caller uncompilable: `C2660: does not take 3 parameters` if the
+        # body calls it properly, and `C2733: second C linkage` if the body
+        # tries to declare it instead. `Caviar::vx_read` and `vx_write` are
+        # thin forwarders onto `_read`/`_write` and were blocked on nothing
+        # else.
+        crt = CRT_SIGNATURES.get(name)
+        if crt:
+            return f'extern "C" {crt};'
         return f"extern \"C\" int {name}();  // arity unknown"
     if signature.is_method:
         return ""      # emitted with its class
@@ -941,6 +978,19 @@ def declare_callee(row: dict, derived: dict, pe=None,
     # than a C++ mangling of it, which is the name the target object's
     # relocation carries. Without it every call to an undecorated function
     # reads as a diff in a body that is otherwise byte-exact.
+    # A CRT routine the catalogue SETTLED as nullary. `__read` carries no
+    # prototype at all, so `Signature` reads its mangled-looking name, finds
+    # no parameters to decode, and emits `_read()` - settled, and wrong. That
+    # is worse than the unsettled case, which at least says `arity unknown`:
+    # a caller then fails `C2660: does not take 3 parameters`, and declaring
+    # it in the body instead fails `C2733: second C linkage`, so the function
+    # is unreachable for a reason that has nothing to do with its own bytes.
+    #
+    # Only an EMPTY parameter list is overridden. A catalogue that has decoded
+    # real parameters knows something this table does not, and outranks it.
+    crt = crt_declaration(signature.method)
+    if crt and not signature.params:
+        return f'extern "C" {crt};'
     linkage = "extern \"C\" " if signature.linkage == "c" else ""
     return (f"{linkage}{signature.returns} {signature.convention} "
             f"{signature.method}({', '.join(signature.params) or ''});")

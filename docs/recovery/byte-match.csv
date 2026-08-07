@@ -539,35 +539,35 @@ v0041a7a0_0.cpp(135) : error C2061: syntax error : identifier 'a1'
 0x0041AF30,?UNK7@BaseWin@@QAEXXZ,src/basewin.cpp:53,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0041AF40,?timer_callback@BaseWin@@QAAXHH@Z,src/basewin.cpp:275,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0041AF50,?on_key_click@BaseWin@@QAEXHH@Z,,0,25,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,25,25,,,,,
-0x0041AF70,?on_left_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:230,0,24,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041af70.cpp(68) : error C2065: 'BaseWinClick' : undeclared identifier
-c0041af70.cpp(68) : error C2297: '->*' : illegal, right operand has type 'int'
+0x0041AF70,?on_left_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:230,0,24,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041af70.cpp(71) : error C2065: 'BaseWinClick' : undeclared identifier
+c0041af70.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'
 Generating Code...
 Compiling..."
-0x0041AF90,?on_right_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:241,0,24,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041af90.cpp(68) : error C2065: 'BaseWinClick' : undeclared identifier
-c0041af90.cpp(68) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0041AFB0,?on_left_double_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:252,0,24,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041afb0.cpp(68) : error C2065: 'BaseWinClick' : undeclared identifier
-c0041afb0.cpp(68) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0041B1E0,?on_mouse_leave@BaseWin@@QAEXHH@Z,src/basewin.cpp:295,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041b1e0.cpp(53) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+0x0041AF90,?on_right_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:241,0,24,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041af90.cpp(71) : error C2065: 'BaseWinClick' : undeclared identifier
+c0041af90.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0041AFB0,?on_left_double_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:252,0,24,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041afb0.cpp(71) : error C2065: 'BaseWinClick' : undeclared identifier
+c0041afb0.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0041B1E0,?on_mouse_leave@BaseWin@@QAEXHH@Z,src/basewin.cpp:295,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041b1e0.cpp(56) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
 c0041b1e0.cpp(39) : see declaration of 'clear_bubble_text'
-c0041b1e0.cpp(54) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c0041b1e0.cpp(57) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
 c0041b1e0.cpp(39) : see declaration of 'clear_bubble_text'"
 0x0041B4A0,?on_scrolled@BaseWin@@QAEXHH@Z,,0,29,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,29,29,11,10,2,#2: original 'mov' vs rebuilt 'cmp',
-0x0041B4C0,?on_scrolling@BaseWin@@QAEXHH@Z,src/delegation_thunks.cpp:59,1,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041b4c0.cpp(123) : error C2065: 'func_delegation_2' : undeclared identifier
-c0041b4c0.cpp(123) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
+0x0041B4C0,?on_scrolling@BaseWin@@QAEXHH@Z,src/delegation_thunks.cpp:59,1,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041b4c0.cpp(126) : error C2065: 'func_delegation_2' : undeclared identifier
+c0041b4c0.cpp(126) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
 0x0041B4E0,?on_button_toggled@BaseWin@@QAEXHH@Z,src/basewin.cpp:91,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x0041DC80,?on_iface_scrolled@BaseWin@@QAEXHH@Z,src/basewin.cpp:207,0,37,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
-0x0041DCB0,?on_iface_scrolling@BaseWin@@QAEXHH@Z,src/delegation_thunks.cpp:72,1,20,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041dcb0.cpp(75) : error C2065: 'func_delegation_2' : undeclared identifier
-c0041dcb0.cpp(75) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
-0x0041DCD0,?on_iface_left_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:134,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041dcd0.cpp(70) : error C2065: 'BaseWinIfaceClick' : undeclared identifier
-c0041dcd0.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0041DCF0,?on_iface_right_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:147,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041dcf0.cpp(70) : error C2065: 'BaseWinIfaceClick' : undeclared identifier
-c0041dcf0.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0041DCB0,?on_iface_scrolling@BaseWin@@QAEXHH@Z,src/delegation_thunks.cpp:72,1,20,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041dcb0.cpp(78) : error C2065: 'func_delegation_2' : undeclared identifier
+c0041dcb0.cpp(78) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
+0x0041DCD0,?on_iface_left_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:134,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041dcd0.cpp(73) : error C2065: 'BaseWinIfaceClick' : undeclared identifier
+c0041dcd0.cpp(73) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0041DCF0,?on_iface_right_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:147,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041dcf0.cpp(73) : error C2065: 'BaseWinIfaceClick' : undeclared identifier
+c0041dcf0.cpp(73) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0041DF40,?on_iface_right_down@BaseWin@@QAEXHH@Z,src/basewin.cpp:104,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x0041E4C0,?on_iface_selected@BaseWin@@QAEXHH@Z,src/basewin.cpp:117,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x0041E4D0,?on_iface_left_double_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:160,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041e4d0.cpp(70) : error C2065: 'BaseWinIfaceClick' : undeclared identifier
-c0041e4d0.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0041E4F0,?on_iface_right_double_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:173,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041e4f0.cpp(70) : error C2065: 'BaseWinIfaceClick' : undeclared identifier
-c0041e4f0.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0041E4D0,?on_iface_left_double_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:160,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041e4d0.cpp(73) : error C2065: 'BaseWinIfaceClick' : undeclared identifier
+c0041e4d0.cpp(73) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0041E4F0,?on_iface_right_double_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:173,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041e4f0.cpp(73) : error C2065: 'BaseWinIfaceClick' : undeclared identifier
+c0041e4f0.cpp(73) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0041E510,?on_iface_button_clicked@BaseWin@@QAEXH@Z,,0,29,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,29,29,,,,,
 0x0041E530,?on_iface_button_toggled@BaseWin@@QAEXHH@Z,,0,33,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,33,33,,,,,
 0x0041E890,?show@BaseWin@@QAEXH@Z,,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
@@ -576,9 +576,9 @@ c0041e4f0.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004213A0,??_GProdPicker@@UAEPAXI@Z,src/deleting_thunks.cpp:369,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004213a0.cpp(70) : error C2065: 'ProdPickerDtorTarget' : undeclared identifier
 c004213a0.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'
 c004213a0.cpp(72) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
-0x004213D0,??_GBaseWin@@UAEPAXI@Z,src/deleting_thunks.cpp:387,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004213d0.cpp(70) : error C2065: 'BaseWinDtorTarget' : undeclared identifier
-c004213d0.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'
-c004213d0.cpp(72) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x004213D0,??_GBaseWin@@UAEPAXI@Z,src/deleting_thunks.cpp:387,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004213d0.cpp(73) : error C2065: 'BaseWinDtorTarget' : undeclared identifier
+c004213d0.cpp(73) : error C2297: '->*' : illegal, right operand has type 'int'
+c004213d0.cpp(75) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x00421640,??_GPopMenu@@UAEPAXI@Z,src/deleting_thunks.cpp:405,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00421640.cpp(70) : error C2065: 'PopMenuDtorTarget' : undeclared identifier
 c00421640.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'
 c00421640.cpp(72) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
@@ -4914,10 +4914,8 @@ c004c6280.cpp(141) : error C2065: 'flags_40_' : undeclared identifier
 c004c6280.cpp(144) : error C2065: 'loop_flag_30_' : undeclared identifier
 c004c6280.cpp(146) : error C2297: '->*' : illegal, right operand has type 'int'
 c004c6280.cpp(154) : error C2065: 'WaveOperatorNew' : undeclared identifier
-c004c6280.cpp(154) : error C2660: 'strlen' : function does not take 1 parameters
 c004c6280.cpp(154) : error C2440: 'static_cast' : cannot convert from 'int' to 'char *'
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c004c6280.cpp(155) : error C2660: 'strcpy' : function does not take 2 parameters
 c004c6280.cpp(156) : error C2065: 'fname_' : undeclared identifier
 c004c6280.cpp(157) : error C2065: 'WaveOperatorDelete' : undeclared identifier
 c004c6280.cpp(159) : error C2440: '=' : cannot convert from 'char *const ' to 'int'
@@ -5230,7 +5228,6 @@ c004c93b0.cpp(72) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 c004c93f0.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'
 c004c93f0.cpp(72) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004C9420,?terraform_cost@@YAHHHH@Z,src/terraforming.cpp:33,0,694,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004c9420.cpp(56) : error C2065: 'alt_at' : undeclared identifier
-c004c9420.cpp(57) : error C2660: 'abs' : function does not take 1 parameters
 c004c9420.cpp(60) : error C2065: 'bit_at' : undeclared identifier
 c004c9420.cpp(60) : error C2065: 'BIT_FUNGUS' : undeclared identifier
 c004c9420.cpp(60) : error C2065: 'altitude_at' : undeclared identifier
@@ -5325,7 +5322,6 @@ c004cbaa0.cpp(116) : error C2065: 'BSTATE_UNK_200000' : undeclared identifier
 c004cbaa0.cpp(119) : error C2065: 'x_dist' : undeclared identifier
 c004cbaa0.cpp(119) : error C2228: left of '.x' must have class/struct/union type
 c004cbaa0.cpp(119) : error C2228: left of '.y' must have class/struct/union type
-c004cbaa0.cpp(119) : error C2660: 'abs' : function does not take 1 parameters
 c004cbaa0.cpp(120) : error C2228: left of '.state' must have class/struct/union type
 c004cbaa0.cpp(120) : error C2065: 'VSTATE_UNK_200' : undeclared identifier
 c004cbaa0.cpp(120) : error C2228: left of '.order_auto_type' must have class/struct/union type
@@ -5356,7 +5352,6 @@ c004cbaa0.cpp(149) : error C2109: subscript requires array or pointer type
 c004cbaa0.cpp(149) : error C2228: left of '.triad' must have class/struct/union type
 c004cbaa0.cpp(153) : error C2228: left of '.x' must have class/struct/union type
 c004cbaa0.cpp(153) : error C2228: left of '.y' must have class/struct/union type
-c004cbaa0.cpp(153) : error C2660: 'abs' : function does not take 1 parameters
 c004cbaa0.cpp(155) : error C2065: 'is_human' : undeclared identifier
 c004cbaa0.cpp(156) : error C2227: left of '->move_rate_roads' must point to class/struct/union
 c004cbaa0.cpp(158) : error C2228: left of '.proto_id' must have class/struct/union type
@@ -5364,7 +5359,6 @@ c004cbaa0.cpp(158) : error C2228: left of '.plan' must have class/struct/union t
 c004cbaa0.cpp(161) : error C2228: left of '.moves_expended' must have class/struct/union type
 c004cbaa0.cpp(163) : error C2228: left of '.x' must have class/struct/union type
 c004cbaa0.cpp(163) : error C2228: left of '.y' must have class/struct/union type
-c004cbaa0.cpp(163) : error C2660: 'abs' : function does not take 1 parameters
 c004cbaa0.cpp(164) : error C2227: left of '->move_rate_roads' must point to class/struct/union
 c004cbaa0.cpp(171) : error C2228: left of '.x' must have class/struct/union type
 c004cbaa0.cpp(172) : error C2228: left of '.y' must have class/struct/union type
@@ -5377,6 +5371,9 @@ c004cbaa0.cpp(182) : error C2065: 'RadiusOffsetY' : undeclared identifier
 c004cbaa0.cpp(182) : error C2109: subscript requires array or pointer type
 c004cbaa0.cpp(183) : error C2065: 'on_map' : undeclared identifier
 c004cbaa0.cpp(186) : error C2065: 'Map' : undeclared identifier
+c004cbaa0.cpp(186) : error C2065: 'tile' : undeclared identifier
+c004cbaa0.cpp(186) : error C2065: 'map_loc' : undeclared identifier
+c004cbaa0.cpp(186) : error C2106: '=' : left operand must be l-value
 c004cbaa0.cpp(186) : fatal error C1003: error count exceeds 100; stopping compilation"
 0x004CD060,?action_feature@@YAXXZ,,0,34,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,34,34,,,,,
 0x004CD6A0,?valid_patrol@@YAHHHH@Z,src/veh.cpp:164,0,899,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004cd6a0.cpp(97) : error C2065: 'Veh' : undeclared identifier
@@ -5432,14 +5429,12 @@ c004cd6a0.cpp(157) : error C2228: left of '.terraforming_turns' must have class/
 c004cd6a0.cpp(158) : error C2065: 'Rules' : undeclared identifier
 c004cd6a0.cpp(158) : error C2227: left of '->move_rate_roads' must point to class/struct/union
 c004cd6a0.cpp(159) : error C2228: left of '.x' must have class/struct/union type
-c004cd6a0.cpp(159) : error C2660: 'abs' : function does not take 1 parameters
 c004cd6a0.cpp(160) : error C2065: 'MapIsFlat' : undeclared identifier
 c004cd6a0.cpp(160) : error C2100: illegal indirection
 c004cd6a0.cpp(160) : error C2065: 'MapLongitude' : undeclared identifier
 c004cd6a0.cpp(160) : error C2100: illegal indirection
 c004cd6a0.cpp(161) : error C2100: illegal indirection
-c004cd6a0.cpp(163) : error C2228: left of '.y' must have class/struct/union type
-c004cd6a0.cpp(163) : error C2660: 'abs' : function does not take 1 parameters"
+c004cd6a0.cpp(163) : error C2228: left of '.y' must have class/struct/union type"
 0x004CF740,?action@@YAHH@Z,,0,116,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v004cf740_0.cpp
 v004cf740_0.cpp(52) : error C2061: syntax error : identifier 'BOOL'
 v004cf740_0.cpp(61) : error C2146: syntax error : missing ',' before identifier 'a1'
@@ -6588,8 +6583,7 @@ v004f67f0_0.cpp(62) : error C2059: syntax error : ','
 v004f67f0_0.cpp(69) : error C2061: syntax error : identifier 'int8'
 "
 0x004F7FE0,?make_base_unique@@YAXH@Z,src/base.cpp:1941,0,167,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
-0x004F8090,?vector_dist@@YAHHH@Z,src/map.cpp:161,0,59,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004f8090.cpp(43) : error C2660: 'abs' : function does not take 1 parameters
-c004f8090.cpp(44) : error C2660: 'abs' : function does not take 1 parameters"
+0x004F8090,?vector_dist@@YAHHH@Z,src/map.cpp:161,0,59,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,59,64,29,32,1,#1: original 'mov' vs rebuilt 'push',
 0x004F80D0,?has_project@@YAHHH@Z,src/base.cpp:1965,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004f80d0.cpp(47) : error C2065: 'base_project' : undeclared identifier
 c004f80d0.cpp(48) : error C2065: 'Bases' : undeclared identifier
 c004f80d0.cpp(48) : error C2109: subscript requires array or pointer type
@@ -7638,13 +7632,10 @@ Conversion loses qualifiers
 c00538f30.cpp(59) : error C2664: 'log_say' : cannot convert parameter 1 from 'const char *' to 'char *'
 Conversion loses qualifiers
 c00538f30.cpp(60) : error C2065: 'ScriptTxtID' : undeclared identifier"
-0x00538FB0,?my_srand@@YAHH@Z,src/general.cpp:795,0,34,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00538fb0.cpp(50) : error C2660: 'srand' : function does not take 1 parameters
-c00538fb0.cpp(51) : error C2065: '_srand' : undeclared identifier"
+0x00538FB0,?my_srand@@YAHH@Z,src/general.cpp:795,0,34,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00538fb0.cpp(51) : error C2065: '_srand' : undeclared identifier
 0x00539090,?checksum@@YAEPADHE@Z,src/general.cpp:902,0,36,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,36,36,19,19,3,#3: original 'push' vs rebuilt 'test',
-0x005390C0,?checksum_password@@YAHPAD@Z,src/general.cpp:921,0,151,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005390c0.cpp(51) : error C2660: 'strlen' : function does not take 1 parameters
-c005390c0.cpp(55) : error C2065: 'strcpy_s' : undeclared identifier
+0x005390C0,?checksum_password@@YAHPAD@Z,src/general.cpp:921,0,151,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005390c0.cpp(55) : error C2065: 'strcpy_s' : undeclared identifier
 c005390c0.cpp(56) : error C2065: 'CharUpper' : undeclared identifier
-c005390c0.cpp(58) : error C2660: 'strlen' : function does not take 1 parameters
 c005390c0.cpp(60) : error C2065: 'checksum' : undeclared identifier
 c005390c0.cpp(60) : error C2065: 'LPBYTE' : undeclared identifier
 c005390c0.cpp(60) : error C2297: '&' : illegal, right operand has type 'char [256]'
@@ -8321,7 +8312,6 @@ c0055eb80.cpp(197) : error C2065: 'Bases' : undeclared identifier
 c0055eb80.cpp(197) : error C2109: subscript requires array or pointer type
 c0055eb80.cpp(197) : error C2228: left of '.x' must have class/struct/union type
 c0055eb80.cpp(197) : error C2228: left of '.x' must have class/struct/union type
-c0055eb80.cpp(197) : error C2660: 'abs' : function does not take 1 parameters
 c0055eb80.cpp(198) : error C2065: 'MapIsFlat' : undeclared identifier
 c0055eb80.cpp(198) : error C2100: illegal indirection
 c0055eb80.cpp(198) : error C2065: 'MapLongitude' : undeclared identifier
@@ -8331,7 +8321,6 @@ c0055eb80.cpp(199) : error C2100: illegal indirection
 c0055eb80.cpp(201) : error C2109: subscript requires array or pointer type
 c0055eb80.cpp(201) : error C2228: left of '.y' must have class/struct/union type
 c0055eb80.cpp(201) : error C2228: left of '.y' must have class/struct/union type
-c0055eb80.cpp(201) : error C2660: 'abs' : function does not take 1 parameters
 c0055eb80.cpp(202) : error C2109: subscript requires array or pointer type
 c0055eb80.cpp(202) : error C2228: left of '.diplo_treaties' must have class/struct/union type
 c0055eb80.cpp(203) : error C2065: 'DTREATY_SHALL_BETRAY' : undeclared identifier
@@ -8825,7 +8814,6 @@ c005665d0.cpp(110) : error C2065: 'vector_dist' : undeclared identifier
 c005665d0.cpp(110) : error C2065: 'x_dist' : undeclared identifier
 c005665d0.cpp(110) : error C2228: left of '.x' must have class/struct/union type
 c005665d0.cpp(110) : error C2228: left of '.y' must have class/struct/union type
-c005665d0.cpp(110) : error C2660: 'abs' : function does not take 1 parameters
 c005665d0.cpp(111) : error C2228: left of '.mineral_intake_2' must have class/struct/union type
 c005665d0.cpp(111) : error C2228: left of '.energy_intake_2' must have class/struct/union type
 c005665d0.cpp(112) : error C2228: left of '.x' must have class/struct/union type
@@ -8865,8 +8853,7 @@ c0056b480.cpp(61) : error C2109: subscript requires array or pointer type
 c0056b480.cpp(62) : error C2065: 'on_map' : undeclared identifier
 c0056b480.cpp(62) : error C2065: 'is_ocean' : undeclared identifier"
 0x00579770,?rnd@@YAHHPAD@Z,src/general.cpp:943,0,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00579770.cpp(43) : error C2061: syntax error : identifier 'input'
-0x00579790,?x_dist@@YAHHH@Z,src/map.cpp:1145,0,55,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00579790.cpp(50) : error C2660: 'abs' : function does not take 1 parameters
-c00579790.cpp(51) : error C2065: 'MapIsFlat' : undeclared identifier
+0x00579790,?x_dist@@YAHHH@Z,src/map.cpp:1145,0,55,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00579790.cpp(51) : error C2065: 'MapIsFlat' : undeclared identifier
 c00579790.cpp(51) : error C2100: illegal indirection
 c00579790.cpp(51) : error C2065: 'MapLongitude' : undeclared identifier
 c00579790.cpp(51) : error C2100: illegal indirection
@@ -9393,7 +9380,6 @@ c00585e30.cpp(82) : error C2109: subscript requires array or pointer type
 c00585e30.cpp(82) : error C2228: left of '.id' must have class/struct/union type
 c00585e30.cpp(82) : error C2109: subscript requires array or pointer type
 c00585e30.cpp(82) : error C2228: left of '.id' must have class/struct/union type
-c00585e30.cpp(82) : error C2660: 'strcmp' : function does not take 2 parameters
 c00585e30.cpp(85) : error C2109: subscript requires array or pointer type
 c00585e30.cpp(85) : error C2228: left of '.id' must have class/struct/union type
 c00585e30.cpp(86) : error C2065: 'FilefindPath' : undeclared identifier
@@ -9560,7 +9546,6 @@ c00586090.cpp(160) : error C2227: left of '->ai_wealth' must point to class/stru
 c00586090.cpp(161) : error C2027: use of undefined type 'Player'
 c00586090.cpp(36) : see declaration of 'Player'
 c00586090.cpp(161) : error C2227: left of '->ai_growth' must point to class/struct/union
-c00586090.cpp(164) : error C2660: 'strlen' : function does not take 1 parameters
 c00586090.cpp(169) : error C2065: '_stricmp' : undeclared identifier
 c00586090.cpp(169) : error C2065: 'BonusName' : undeclared identifier
 c00586090.cpp(169) : error C2109: subscript requires array or pointer type
@@ -9622,6 +9607,7 @@ c00586090.cpp(191) : error C2227: left of '->faction_bonus_count' must point to 
 c00586090.cpp(191) : error C2660: 'atoi' : function does not take 1 parameters
 c00586090.cpp(192) : error C2027: use of undefined type 'Player'
 c00586090.cpp(36) : see declaration of 'Player'
+c00586090.cpp(192) : error C2227: left of '->faction_bonus_count' must point to class/struct/union
 c00586090.cpp(192) : fatal error C1003: error count exceeds 100; stopping compilation"
 0x00586F30,?read_factions@@YAHXZ,src/alpha.cpp:675,0,665,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00586f30.cpp(79) : error C2065: 'AlphaxFileID' : undeclared identifier
 c00586f30.cpp(82) : error C2065: 'MaxBonusNameNum' : undeclared identifier
@@ -9642,7 +9628,6 @@ c00586f30.cpp(106) : error C2371: 'i' : redefinition; different basic types
 c00586f30.cpp(82) : see declaration of 'i'
 c00586f30.cpp(107) : error C2109: subscript requires array or pointer type
 c00586f30.cpp(107) : error C2228: left of '.filename' must have class/struct/union type
-c00586f30.cpp(107) : error C2660: 'strcmp' : function does not take 2 parameters
 c00586f30.cpp(110) : error C2065: 'random' : undeclared identifier
 c00586f30.cpp(120) : error C2065: 'strcpy_s' : undeclared identifier
 c00586f30.cpp(120) : error C2109: subscript requires array or pointer type
@@ -9653,7 +9638,6 @@ c00586f30.cpp(124) : error C2109: subscript requires array or pointer type
 c00586f30.cpp(124) : error C2228: left of '.filename' must have class/struct/union type
 c00586f30.cpp(124) : error C2109: subscript requires array or pointer type
 c00586f30.cpp(124) : error C2228: left of '.filename' must have class/struct/union type
-c00586f30.cpp(124) : error C2660: 'strcmp' : function does not take 2 parameters
 c00586f30.cpp(131) : error C2109: subscript requires array or pointer type
 c00586f30.cpp(131) : error C2102: '&' requires l-value
 c00586f30.cpp(138) : error C2109: subscript requires array or pointer type
@@ -10423,7 +10407,6 @@ c00593510.cpp(88) : error C2065: 'BSC_MIND_WORMS' : undeclared identifier
 c00593510.cpp(88) : error C2065: 'BSC_SPORE_LAUNCHER' : undeclared identifier
 c00593510.cpp(91) : error C2065: 'BIT_RIVER' : undeclared identifier
 c00593510.cpp(91) : error C2065: 'x_dist' : undeclared identifier
-c00593510.cpp(92) : error C2660: 'abs' : function does not take 1 parameters
 c00593510.cpp(95) : error C2065: 'VehPrototypes' : undeclared identifier
 c00593510.cpp(95) : error C2109: subscript requires array or pointer type
 c00593510.cpp(95) : error C2228: left of '.chassis_id' must have class/struct/union type
@@ -10881,8 +10864,7 @@ c005a58e0.cpp(48) : error C2065: 'PluralityDefault' : undeclared identifier
 c005a58e0.cpp(48) : error C2100: illegal indirection"
 0x005A5900,?exec@BasePop@@QAEHXZ,src/basepop.cpp:411,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005a5900.cpp(69) : error C2065: 'BasePopExec' : undeclared identifier
 c005a5900.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x005A5910,?vector_dist@@YAHHHHH@Z,src/map.cpp:182,0,119,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005a5910.cpp(50) : error C2065: 'x_dist' : undeclared identifier
-c005a5910.cpp(50) : error C2660: 'abs' : function does not take 1 parameters"
+0x005A5910,?vector_dist@@YAHHHHH@Z,src/map.cpp:182,0,119,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c005a5910.cpp(50) : error C2065: 'x_dist' : undeclared identifier
 0x005A5990,?start@Popup@@QAEXPBD@Z,src/popup.cpp:62,0,29,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005a5990.cpp(76) : error C2065: 'PopupOriginalStartFull' : undeclared identifier
 c005a5990.cpp(76) : error C2297: '->*' : illegal, right operand has type 'int'
 c005a5990.cpp(76) : error C2065: 'PopupStartCaption' : undeclared identifier"
@@ -12576,7 +12558,6 @@ c005bf010.cpp(58) : error C2109: subscript requires array or pointer type
 c005bf010.cpp(58) : error C2228: left of '.x' must have class/struct/union type
 c005bf010.cpp(60) : error C2109: subscript requires array or pointer type
 c005bf010.cpp(60) : error C2228: left of '.y' must have class/struct/union type
-c005bf010.cpp(60) : error C2660: 'abs' : function does not take 1 parameters
 c005bf010.cpp(62) : error C2065: 'has_fac_built' : undeclared identifier
 c005bf010.cpp(62) : error C2065: 'FAC_GEOSYNC_SURVEY_POD' : undeclared identifier"
 0x005BF130,?has_temple@@YAHH@Z,src/map.cpp:1603,0,190,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005bf130.cpp(52) : error C2065: 'MapLatitudeBounds' : undeclared identifier
@@ -14062,7 +14043,7 @@ c005d4510.cpp(59) : error C2660: 'exit' : function does not take 1 parameters"
 0x005D4540,Heap::Heap2,src/field_accessors.cpp:908,1,17,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,17,17,,,,,
 0x005D4560,??0Heap@@QAE@XZ,,0,19,,REFUSED,,,,,,,no source_locations; not censusable
 0x005D4580,??1Heap@@QAE@XZ,,0,42,,REFUSED,,,,,,,no source_locations; not censusable
-0x005D45B0,?shutdown@Heap@@QAEXXZ,src/heap.cpp:24,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c005d45b0.cpp(57) : error C2660: 'free' : function does not take 1 parameters
+0x005D45B0,?shutdown@Heap@@QAEXXZ,src/heap.cpp:24,0,42,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,42,39,19,18,15,#15: original 'mov' vs rebuilt 'pop',
 0x005D45E0,?squeeze@Heap@@QAEXH@Z,src/heap.cpp:41,0,53,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d45e0.cpp(55) : error C2061: syntax error : identifier 'toggle'
 c005d45e0.cpp(55) : error C2511: 'squeeze' : overloaded member function 'void (int (__cdecl *)(void))' not found in 'Heap'
 c005d45e0.cpp(40) : see declaration of 'Heap'"
@@ -14377,7 +14358,6 @@ v005db400_0.cpp(44) : error C2059: syntax error : ','
 0x005DC310,?get_special_link@@YAHPADPAH@Z,,0,65,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,65,3,31,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005DC790,?text_width@Buffer@@QAEHPAD@Z,src/buffer.cpp:845,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dc790.cpp(75) : error C2065: 'BufferTextWidthMeasured' : undeclared identifier
 c005dc790.cpp(75) : error C2297: '->*' : illegal, right operand has type 'int'
-c005dc790.cpp(75) : error C2660: 'strlen' : function does not take 1 parameters
 Generating Code...
 Compiling..."
 0x005DCA80,?text_height@Buffer@@QAEHXZ,src/buffer.cpp:733,0,37,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dca80.cpp(57) : error C2065: 'Font' : undeclared identifier
@@ -14395,12 +14375,10 @@ c005dcab0.cpp(54) : error C2059: syntax error : 'const'
 c005dcab0.cpp(55) : error C2065: 'font' : undeclared identifier"
 0x005DCEA0,?write_l@Buffer@@QAEHPADHHH@Z,src/buffer.cpp:960,0,148,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dcea0.cpp(89) : error C2065: 'font1_' : undeclared identifier
 c005dcea0.cpp(89) : error C2227: left of '->is_initialized' must point to class/struct/union
-c005dcea0.cpp(92) : error C2660: 'strlen' : function does not take 1 parameters
 c005dcea0.cpp(97) : error C2065: 'BufferWriteMultiFontRawL' : undeclared identifier
 c005dcea0.cpp(97) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x005DCF40,?write_l@Buffer@@QAEHPADPAURECT@@H@Z,src/buffer.cpp:1004,0,214,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dcf40.cpp(106) : error C2065: 'font1_' : undeclared identifier
 c005dcf40.cpp(106) : error C2227: left of '->is_initialized' must point to class/struct/union
-c005dcf40.cpp(109) : error C2660: 'strlen' : function does not take 1 parameters
 c005dcf40.cpp(114) : error C2065: 'edge_bits' : undeclared identifier
 c005dcf40.cpp(114) : error C2027: use of undefined type 'RECT'
 c005dcf40.cpp(35) : see declaration of 'RECT'
@@ -14417,7 +14395,6 @@ c005dcf40.cpp(119) : error C2065: 'BufferWriteMultiFontRawL' : undeclared identi
 c005dcf40.cpp(119) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x005DD020,?write_cent_l@Buffer@@QAEHPADHHHH@Z,src/buffer.cpp:1065,0,178,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dd020.cpp(90) : error C2065: 'font1_' : undeclared identifier
 c005dd020.cpp(90) : error C2227: left of '->is_initialized' must point to class/struct/union
-c005dd020.cpp(93) : error C2660: 'strlen' : function does not take 1 parameters
 c005dd020.cpp(99) : error C2065: 'BufferTextWidthMeasured' : undeclared identifier
 c005dd020.cpp(99) : error C2297: '->*' : illegal, right operand has type 'int'
 c005dd020.cpp(100) : error C2065: 'edge_int' : undeclared identifier
@@ -14440,7 +14417,6 @@ c005dd130.cpp(35) : see declaration of 'RECT'
 c005dd130.cpp(109) : error C2227: left of '->bottom' must point to class/struct/union
 c005dd130.cpp(110) : error C2065: 'font1_' : undeclared identifier
 c005dd130.cpp(110) : error C2227: left of '->is_initialized' must point to class/struct/union
-c005dd130.cpp(113) : error C2660: 'strlen' : function does not take 1 parameters
 c005dd130.cpp(119) : error C2065: 'BufferTextWidthMeasured' : undeclared identifier
 c005dd130.cpp(119) : error C2297: '->*' : illegal, right operand has type 'int'
 c005dd130.cpp(120) : error C2065: 'edge_int' : undeclared identifier
@@ -15557,11 +15533,11 @@ c006005d0.cpp(88) : error C2227: left of '->last_path' must point to class/struc
 c006005d0.cpp(91) : error C2227: left of '->last_path' must point to class/struct/union"
 0x00600760,?purge_leading@@YAXPAD@Z,src/general.cpp:47,0,19,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00600760.cpp(45) : error C2065: 'strcpy_s' : undeclared identifier
 c00600760.cpp(45) : error C2065: 'strlen' : undeclared identifier"
-0x00600780,?purge_trailing@@YAXPAD@Z,src/general.cpp:33,0,45,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00600780.cpp(44) : error C2660: 'strlen' : function does not take 1 parameters
+0x00600780,?purge_trailing@@YAXPAD@Z,src/general.cpp:33,0,45,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,45,41,20,17,5,#5: original 'test' vs rebuilt 'pop',
 0x006007B0,?purge_spaces@@YAXPAD@Z,src/general.cpp:61,0,103,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006007b0.cpp(45) : error C2065: 'purge_leading' : undeclared identifier
 c006007b0.cpp(46) : error C2065: 'purge_trailing' : undeclared identifier"
 0x00600820,?kill_lf@@YAXPAD@Z,src/general.cpp:72,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00600820.cpp(44) : error C2660: 'strrchr' : function does not take 2 parameters
-0x00600840,?add_lf@@YAXPAD@Z,src/general.cpp:100,0,25,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00600840.cpp(44) : error C2660: 'strlen' : function does not take 1 parameters
+0x00600840,?add_lf@@YAXPAD@Z,src/general.cpp:100,0,25,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,25,23,10,10,5,#5: original 'add' vs rebuilt 'pop',
 0x006017A0,?set_ok_text@BasePop@@QAEHPAD@Z,,0,113,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,113,5,40,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00601820,?set_cancel_text@BasePop@@QAEHPAD@Z,,0,113,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,113,5,40,2,0,#0: original 'push' vs rebuilt 'xor',
 0x006018A0,?set_def_ok_text@BasePop@@QAAHPAD@Z,,0,98,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,98,3,35,2,0,#0: original 'push' vs rebuilt 'xor',
@@ -16302,10 +16278,10 @@ v00611330_0.cpp(69) : error C2511: 'on_right_double_click' : overloaded member f
         v00611330_0.cpp(65) : see declaration of 'SpriteBox'
 "
 0x006115E0,?on_dialog_focus@SpriteBox@@QAEXH@Z,,0,32,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,32,32,,,,,
-0x00611600,?id_to_pos@SpriteBox@@QAEXH@Z,src/spritebox.cpp:72,0,64,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00611600.cpp(46) : error C2556: 'unsigned int __thiscall SpriteBox::id_to_pos(int)' : overloaded function differs only by return type from 'void __thiscall SpriteBox::id_to_pos(int)'
-c00611600.cpp(37) : see declaration of 'id_to_pos'
-c00611600.cpp(46) : error C2371: 'id_to_pos' : redefinition; different basic types
-c00611600.cpp(37) : see declaration of 'id_to_pos'"
+0x00611600,?id_to_pos@SpriteBox@@QAEXH@Z,src/spritebox.cpp:72,0,64,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00611600.cpp(48) : error C2556: 'unsigned int __thiscall SpriteBox::id_to_pos(int)' : overloaded function differs only by return type from 'void __thiscall SpriteBox::id_to_pos(int)'
+c00611600.cpp(39) : see declaration of 'id_to_pos'
+c00611600.cpp(48) : error C2371: 'id_to_pos' : redefinition; different basic types
+c00611600.cpp(39) : see declaration of 'id_to_pos'"
 0x00611640,?pos_to_id@SpriteBox@@QAEXH@Z,,0,118,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,118,3,51,1,0,#0: original 'push' vs rebuilt 'ret 4',
 0x006116E0,sub_6116e0,,0,72,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,72,5,24,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00611820,?on_redraw@thunk1_SpriteBox@@QAEXXZ,src/adjustor_thunks.cpp:1858,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00611820.cpp(68) : error C2065: 'SpriteBoxOnRedrawTarget' : undeclared identifier
@@ -16570,7 +16546,6 @@ Conversion from integral type to pointer type requires reinterpret_cast, C-style
 0x006169D0,?labels_shutdown@@YAXXZ,src/alpha.cpp:1517,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006169d0.cpp(49) : error C2065: 'Labels' : undeclared identifier
 c006169d0.cpp(49) : error C2227: left of '->strings_ptr' must point to class/struct/union
 c006169d0.cpp(50) : error C2227: left of '->strings_ptr' must point to class/struct/union
-c006169d0.cpp(50) : error C2660: 'free' : function does not take 1 parameters
 c006169d0.cpp(51) : error C2227: left of '->strings_ptr' must point to class/struct/union
 c006169d0.cpp(53) : error C2227: left of '->count' must point to class/struct/union
 Generating Code...
@@ -16673,7 +16648,6 @@ c00619280.cpp(62) : error C2065: 'SIZE' : undeclared identifier
 c00619280.cpp(62) : error C2146: syntax error : missing ';' before identifier 'size'
 c00619280.cpp(62) : error C2065: 'size' : undeclared identifier
 c00619280.cpp(63) : error C2065: 'GetTextExtentPoint32A' : undeclared identifier
-c00619280.cpp(63) : error C2660: 'strlen' : function does not take 1 parameters
 c00619280.cpp(64) : error C2065: 'GetStockObject' : undeclared identifier
 c00619280.cpp(64) : error C2065: 'SYSTEM_FONT' : undeclared identifier
 c00619280.cpp(65) : error C2228: left of '.cx' must have class/struct/union type"
@@ -17003,8 +16977,7 @@ v0062d500_0.cpp(65) : error C2059: syntax error : ')'
 v0062d500_0.cpp(66) : error C2065: 'Cursor' : undeclared identifier
 v0062d500_0.cpp(66) : error C2059: syntax error : ')'
 "
-0x0062D570,?jackal_version_check@@YAHPAD@Z,src/general.cpp:340,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0062d570.cpp(53) : error C2660: 'strcmp' : function does not take 2 parameters
-c0062d570.cpp(54) : error C2065: 'MessageBoxA' : undeclared identifier
+0x0062D570,?jackal_version_check@@YAHPAD@Z,src/general.cpp:340,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0062d570.cpp(54) : error C2065: 'MessageBoxA' : undeclared identifier
 c0062d570.cpp(54) : error C2065: 'NULL' : undeclared identifier
 c0062d570.cpp(58) : error C2065: 'MB_OK' : undeclared identifier"
 0x0062D5B0,?do_net@@YAXXZ,,0,25,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,25,25,,,,,

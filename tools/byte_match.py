@@ -276,8 +276,23 @@ def classify_body(pe, row: dict, shared_spans: set) -> BodyLayout:
 
 
 def load_rows() -> dict:
+    """The catalogue, with `catalogue_corrections` applied.
+
+    `emit_translation_unit.load_functions` corrects the mangled names the
+    bytes prove wrong, and this loader used to read the CSV raw. So the
+    emitter built a unit against the CORRECTED signature while the comparison
+    looked the ORIGINAL name up - two loaders with two answers about one row,
+    and the disagreement was invisible, because the tier came out of a
+    comparison neither side thought it was making.
+
+    Found on `Caviar::vx_read`: the `QAA` -> `SAA` correction reached the
+    scaffolding but not here, so every parameter read stayed off by exactly
+    the width of a `this` the emitter had already taken out.
+    """
+    import catalogue_corrections
     with FUNCTIONS_CSV.open() as handle:
-        return {int(row["address"], 16): row for row in csv.DictReader(handle)}
+        rows = {int(row["address"], 16): row for row in csv.DictReader(handle)}
+    return catalogue_corrections.apply(rows)
 
 
 def shared_span_index(rows: dict) -> set:
