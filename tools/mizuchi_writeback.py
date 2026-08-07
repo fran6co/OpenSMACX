@@ -142,6 +142,75 @@ def split_definition(lines: list) -> int:
     raise Refused("catalogued span has no opening brace")
 
 
+def leading_comment(lines: list) -> int:
+    """How many of `lines` form a leading `/* ... */` block, or 0.
+
+    Only a block that STARTS the text counts, and only before the first `{`:
+    a `/*` further down belongs to the body.
+    """
+    if not lines or not lines[0].lstrip().startswith("/*"):
+        return 0
+    for index, line in enumerate(lines):
+        if "*/" in line:
+            return index + 1
+        if "{" in line:
+            return 0
+    return 0
+
+
+def comment_start(lines: list, span_start: int) -> int:
+    """Index of the `/*` opening the doc comment the span begins inside.
+
+    `functions.csv` points at a line WITHIN the comment - usually `Purpose:`
+    or `Original Offset:` - so the opening `/*` sits ABOVE the span and is not
+    part of the region the splice replaces. That was harmless while the old
+    comment was kept. It is not harmless once a submitted comment replaces it:
+    the orphaned `/*` stays behind and the file gets `/*` ... `/*` with no
+    close between them, which is a comment swallowing the next function.
+
+    Returns `span_start` unchanged when no open comment is found above it.
+    """
+    index = span_start
+    while index >= 0:
+        line = lines[index].strip()
+        if index != span_start and "*/" in line:
+            return span_start          # the span is not inside a comment
+        if line.startswith("/*"):
+            return index
+        index -= 1
+    return span_start
+
+
+def merge_doc_comment(existing: list, replacement: list) -> tuple:
+    """(comment lines to keep, definition lines to write).
+
+    The catalogued span opens inside the doc comment, and this tool has always
+    replaced only the DEFINITION and kept the comment verbatim, because the
+    comment carries `Purpose:` and `Original Offset:` that the code does not.
+
+    That was right while bodies were submitted bare. They are not any more:
+    the brief shows an agent the committed body INCLUDING its comment and asks
+    for the complete definition back, so the submission carries a comment of
+    its own and the file ends up with both. 22 duplicated headers landed in
+    product source in one day - which is precisely the readability this loop
+    is supposed to be protecting.
+
+    So a submitted comment REPLACES the existing one. It is written by whoever
+    just read the disassembly, and the brief now asks them to say what the
+    function does. The one thing that is not theirs to drop is a `Purpose:`
+    line: if the old comment had one and the new one does not, it is carried
+    over rather than lost.
+    """
+    taken = leading_comment(replacement)
+    if not taken:
+        return existing, replacement
+    incoming, body = replacement[:taken], replacement[taken:]
+    purpose = [line for line in existing if line.lstrip().startswith("Purpose:")]
+    if purpose and not any(l.lstrip().startswith("Purpose:") for l in incoming):
+        incoming = incoming[:1] + purpose + incoming[1:]
+    return incoming, body
+
+
 def write_atomically(path: Path, text: str) -> None:
     """Replace a file's contents in one step, from a reader's point of view.
 
@@ -349,12 +418,32 @@ def splice(address: int, row: dict, location: str, code: str,
     if not replacement:
         raise Refused("matched code is empty")
 
-    before = lines[:start + offset]
+    # A submitted comment replaces the whole doc comment, which begins ABOVE
+    # the catalogued span - so the region being rewritten starts there, not at
+    # `start`. Anchoring at `start` leaves the opening `/*` orphaned above a
+    # second `/*`, and the resulting unterminated comment eats the function
+    # after it.
+    head = comment_start(lines, start) if leading_comment(replacement) else start
+    comment, replacement = merge_doc_comment(
+        lines[head:start + offset], replacement)
+    if head < start and len(comment) <= start - head:
+        # This row's OWN `source_locations` names a line inside the comment,
+        # and it is not shifted by the splice. A replacement comment short
+        # enough to end above that line would leave the catalogue pointing at
+        # code instead. Keeping the existing comment is the lesser evil - a
+        # duplicate reads badly, a mislocated row reads as a different
+        # function, and that has cost a day before.
+        head, comment = start, lines[start:start + offset]
+        replacement = code.strip().splitlines()
+    before = lines[:head] + comment
     after = lines[end + 1:]
     original_text = path.read_text()
     write_atomically(path, "\n".join(before + replacement + after) + "\n")
 
-    delta = len(replacement) - (end + 1 - start - offset)
+    # Measured over the WHOLE rewritten region, because both the comment and
+    # its starting line can move now. Getting this wrong silently renumbers
+    # every `source_location` below it in the file.
+    delta = (len(comment) + len(replacement)) - (end + 1 - head)
     touched = [source_file]
     if shift_csv(FUNCTIONS_CSV, "source_locations", source_file, end + 1, delta):
         touched.append(str(FUNCTIONS_CSV.relative_to(REPO_ROOT)))

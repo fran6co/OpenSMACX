@@ -181,13 +181,13 @@ void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
 /*
 Purpose: Legacy sound processing hook retained as a no-op.
 Original Offset: 005FD2B0
-Return Value: n/a
+Return Value: zero
 Status: Complete
 */
-void __cdecl do_sound() {
+int __cdecl do_sound() {
+    return 0;
 }
 
 int __cdecl do_sound_redirect() {
-    do_sound();
-    return 0;
+    return do_sound();
 }
