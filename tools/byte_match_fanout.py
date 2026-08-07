@@ -191,7 +191,7 @@ def prepare(count: int, stratified: bool) -> int:
     return 0
 
 
-def collect(reverify: bool = False) -> int:
+def collect(reverify: bool = False, stored_only: bool = False) -> int:
     functions = emit.load_functions()
     pe = pefile.PE(str(byte_match.DEFAULT_EXE))
     shared = byte_match.shared_span_index(byte_match.load_rows())
@@ -202,8 +202,14 @@ def collect(reverify: bool = False) -> int:
     # and its unit is rebuilt from the current emitter every time - so a
     # scaffolding change that stops it verifying has to surface here as a
     # ledger regression rather than as a tracked file nobody re-reads.
-    units = [(int(unit.parent.name, 16), unit.read_text, "unit")
-             for unit in sorted(WORK_ROOT.glob("*/unit.cpp"))]
+    # `--stored-only` skips the build artefacts. A routine collect re-verifies
+    # 1,198 units under `build/byte-match/` as well as the store, and each one
+    # is a real compile under wine - the full pass is over an hour. After a
+    # batch of writebacks the only rows that CHANGED are the stored ones, and
+    # waiting an hour to see them is how a ratchet stops being checked.
+    units = [] if stored_only else [
+        (int(unit.parent.name, 16), unit.read_text, "unit")
+        for unit in sorted(WORK_ROOT.glob("*/unit.cpp"))]
     stored = [(int(body.stem, 16), body, "stored")
               for body in sorted(writeback.MATCHED_DIR.glob("*.cpp"))]
     if not units and not stored:
@@ -311,8 +317,8 @@ def collect(reverify: bool = False) -> int:
 # stubs and can rise much faster than the number of machine-carried bytes it
 # retires. The byte figure is the one that means anything, which is why both
 # are ratcheted and why the function count is never quoted alone.
-BASELINE_MATCHED_FUNCTIONS = 664
-BASELINE_MATCHED_BYTES = 9939
+BASELINE_MATCHED_FUNCTIONS = 670
+BASELINE_MATCHED_BYTES = 10195
 
 
 def summarise(ledger: dict) -> tuple:
@@ -352,6 +358,10 @@ def main() -> int:
                         help="spread the pick across size bands (a calibration "
                              "wave); default is largest-bytes-first")
     parser.add_argument("--collect", action="store_true")
+    parser.add_argument(
+        "--stored-only", action="store_true",
+        help="with --collect: re-verify only src/recovered/, not the "
+             "build artefacts. Minutes instead of an hour.")
     parser.add_argument("--reverify", action="store_true",
                         help="re-measure rows already at BYTE_EXACT too; use "
                              "after a tooling change, not for a routine "
@@ -378,7 +388,7 @@ def main() -> int:
         if reason:
             print(f"SKIP: {reason}")
             return 0
-        return collect(arguments.reverify)
+        return collect(arguments.reverify, arguments.stored_only)
     parser.error("one of --prepare N, --collect or --check is required")
 
 
