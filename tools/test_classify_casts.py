@@ -167,6 +167,39 @@ class ReportTest(unittest.TestCase):
             self.assertIn(row["confidence"], ("proved", "derived",
                                               "hypothesis", ""))
 
+    def test_the_computed_size_agrees_with_every_pinned_sizeof(self):
+        """The second independent control, and the one that catches WIDTH.
+
+        63 classes carry `static_assert(sizeof(X) == N)`, which is the
+        compiler's own answer rather than this file's arithmetic. It is a
+        different question from the offset check below: offsets can all be
+        right while a member's EXTENT is wrong, because alignment absorbs the
+        error. `Heap` summed to 17 against its asserted 0x14 and every offset
+        after it still landed correctly, since 17 rounds up to 20 under
+        4-byte alignment. What gave it away was the image reading a dword at
+        Heap+16, which looked like an access straddling the end of the member.
+        """
+        import re
+        pinned = {}
+        for header in tool.SRC.glob("*.h"):
+            for hit in re.finditer(
+                    r"static_assert\(\s*sizeof\(\s*(\w+)\s*\)\s*==\s*"
+                    r"(0x[0-9A-Fa-f]+|\d+)",
+                    header.read_text(errors="ignore")):
+                pinned[hit.group(1)] = int(hit.group(2), 0)
+        self.assertTrue(pinned)
+        disagreed = []
+        for name, want in sorted(pinned.items()):
+            got = tool.width_of(name, "probe", "")
+            if got is not None and got != want:
+                disagreed.append(f"{name}: asserted {want:#x}, computed {got:#x}")
+        self.assertEqual([], disagreed)
+
+    def test_a_nested_struct_is_laid_out_not_summed(self):
+        # Heap is int8_t then four 4-byte members: 1+4+4+4+4 is 17, and the
+        # real object pads the int8_t to 4 and ends on its own alignment.
+        self.assertEqual(0x14, tool.width_of("Heap", "heap_", ""))
+
     def test_the_accumulator_agrees_with_every_name_encoded_offset(self):
         """The strongest available control, and it needs no compiler.
 
