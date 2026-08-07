@@ -135,9 +135,15 @@ endif()
 # the compiler that built the image, so it is C++98 by necessity and the
 # requirement only means anything on a modern MSVC - where it still earns its
 # place, because that is the build a contributor is most likely to use.
+#
+# The body calls target_compile_features, NOT itself. It was written as a
+# self-call in a3cba48, and that survived review because VC6 reports 12.00:
+# the guard is false, the recursion never runs, and the VC6 lane configures
+# exactly as intended. Every other compiler reports 13 or above and died on
+# "Maximum recursion depth of 1000 exceeded" before one object was built.
 function(opensmacx_require_cxx11 target)
     if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
-        opensmacx_require_cxx11(${target})
+        target_compile_features(${target} PRIVATE cxx_std_11)
     endif()
 endfunction()
 
