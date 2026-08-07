@@ -748,16 +748,23 @@ LPSTR __cdecl filefind_get(LPCSTR file_name) {
 
 /*
 Purpose: Count the number of unsigned bits set. Replaced the original code with Brian Kernighan's 
-         algorithm.
 Original Offset: 0050BA30
-Return Value: Bit count
+Return Value: the number of set bits
 Status: Complete
 */
 int __cdecl bit_count(int bitfield) {
-    int count;
-    for (count = 0; bitfield; count++) {
-        bitfield &= bitfield - 1; // clear the least significant bit set
-    }
+    // Shift-and-accumulate, not Kernighan's clear-lowest-set-bit trick: the
+    // original's shr/adc carry chain is this algorithm, and the committed
+    // `n &= n - 1` form is a different one. Still not byte-exact - eleven
+    // source shapes all land on the same `#2 push vs mov`, which is the
+    // register-allocation class - but it is the right algorithm and it scores
+    // strictly better.
+    unsigned int bits = bitfield;
+    int count = 0;
+    do {
+        count += bits & 1;
+        bits >>= 1;
+    } while (bits);
     return count;
 }
 
@@ -893,11 +900,19 @@ void __cdecl bitmask(int input, int *offset, int *mask) {
 /*
 Purpose: Calculate a basic XOR checksum for the data buffer.
 Original Offset: 00539090
-Return Value: Checksum
+Return Value: the XOR checksum of the buffer, seeded
 Status: Complete
 */
 uint8_t __cdecl checksum(char *buffer, int size, uint8_t seed) {
-    while (size--) seed ^= *buffer++;
+    // Walked BACKWARDS with the length decremented in place. The forward
+    // pointer walk needs one more value live, and VC6 then saves no
+    // callee-saved register at all, diverging at instruction #0; this form
+    // matches the original's byte length exactly and diverges at #3, where
+    // the original saves esi unconditionally BEFORE the zero test and this
+    // does it inside the taken branch.
+    while (size) {
+        seed ^= buffer[--size];
+    }
     return seed;
 }
 
