@@ -129,10 +129,23 @@ else()
     endif()
 endif()
 
+# VC6 predates every language standard, and CMake keeps no feature record for
+# it, so `target_compile_features(... cxx_std_11)` is a hard CONFIGURE error
+# under the vc6 toolchain rather than a no-op. This tree has to compile with
+# the compiler that built the image, so it is C++98 by necessity and the
+# requirement only means anything on a modern MSVC - where it still earns its
+# place, because that is the build a contributor is most likely to use.
+function(opensmacx_require_cxx11 target)
+    if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
+        opensmacx_require_cxx11(${target})
+    endif()
+endfunction()
+
 if(NOT WIN32)
     message(FATAL_ERROR
         "The current OpenSMACX target is a Windows DLL. "
-        "Use the i686 MinGW toolchain when building from macOS or Linux.")
+        "Use cmake/toolchains/vc6.cmake, which drives cl 12.00.8168 under "
+        "wine, when building from macOS or Linux.")
 endif()
 
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -282,7 +295,7 @@ set(OPENSMACX_SOURCES
 
 add_library(OpenSMACX SHARED ${OPENSMACX_SOURCES})
 
-target_compile_features(OpenSMACX PRIVATE cxx_std_11)
+opensmacx_require_cxx11(OpenSMACX)
 target_compile_definitions(OpenSMACX PRIVATE
     BUILD_DLL
     $<$<CONFIG:Debug>:BUILD_DEBUG>
@@ -666,7 +679,7 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_BINARY_DIR}/generated/leaf")
 
     foreach(_leaf_target recovery-leaf-tests)
-        target_compile_features(${_leaf_target} PRIVATE cxx_std_11)
+        opensmacx_require_cxx11(${_leaf_target})
         target_compile_options(${_leaf_target} PRIVATE -fno-exceptions)
         target_compile_definitions(${_leaf_target} PRIVATE
             BUILD_DLL OPENSMACX_SPOT_MINIMAL_INIT)
@@ -786,7 +799,7 @@ if(BUILD_TESTING)
         src/win.cpp
         src/autosound.cpp
     )
-    target_compile_features(recovery-gameplay-tests PRIVATE cxx_std_11)
+    opensmacx_require_cxx11(recovery-gameplay-tests)
     target_compile_options(recovery-gameplay-tests PRIVATE -fno-exceptions)
     target_compile_definitions(recovery-gameplay-tests PRIVATE BUILD_DLL)
     set_target_properties(recovery-gameplay-tests PROPERTIES
@@ -844,7 +857,7 @@ if(BUILD_TESTING)
     add_executable(globals-diff-tests
         tests/globals_diff_tests.cpp
     )
-    target_compile_features(globals-diff-tests PRIVATE cxx_std_11)
+    opensmacx_require_cxx11(globals-diff-tests)
     set_target_properties(globals-diff-tests PROPERTIES
         CXX_EXTENSIONS OFF
         CXX_STANDARD 11
@@ -883,7 +896,7 @@ if(BUILD_TESTING)
         tests/oracle_fault_guard_tests.cpp
         src/oracle_fault_guard.cpp
     )
-    target_compile_features(oracle-fault-guard-tests PRIVATE cxx_std_11)
+    opensmacx_require_cxx11(oracle-fault-guard-tests)
     target_include_directories(oracle-fault-guard-tests PRIVATE src)
     set_target_properties(oracle-fault-guard-tests PROPERTIES
         CXX_EXTENSIONS OFF
@@ -917,7 +930,7 @@ if(BUILD_TESTING)
     add_executable(lifted-oracle-fold-tests
         tests/lifted_oracle_fold_tests.cpp
     )
-    target_compile_features(lifted-oracle-fold-tests PRIVATE cxx_std_11)
+    opensmacx_require_cxx11(lifted-oracle-fold-tests)
     set_target_properties(lifted-oracle-fold-tests PROPERTIES
         CXX_EXTENSIONS OFF
         CXX_STANDARD 11
@@ -1102,6 +1115,9 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(structure-observation-tests
                                    test_structure_observations.py)
+
+    opensmacx_add_python_tool_test(vc6-wrapper-tests
+                                   test_vc6_cl.py)
 
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
@@ -2122,7 +2138,7 @@ if(MINGW)
             src/basebutton.cpp
             "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
         )
-        target_compile_features(recovery-oracle-tests PRIVATE cxx_std_11)
+        opensmacx_require_cxx11(recovery-oracle-tests)
         target_compile_options(recovery-oracle-tests PRIVATE -fno-exceptions)
         target_compile_definitions(recovery-oracle-tests PRIVATE
             BUILD_DLL OPENSMACX_SPOT_MINIMAL_INIT)
@@ -2242,7 +2258,7 @@ if(MINGW)
             PROPERTIES GENERATED TRUE)
         add_library(static-recompile-pilot-generated OBJECT EXCLUDE_FROM_ALL
             "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}")
-        target_compile_features(static-recompile-pilot-generated PRIVATE cxx_std_11)
+        opensmacx_require_cxx11(static-recompile-pilot-generated)
         target_include_directories(static-recompile-pilot-generated PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/tools")
         target_compile_options(static-recompile-pilot-generated PRIVATE
@@ -2263,8 +2279,7 @@ if(MINGW)
         add_executable(static-recompile-pilot-standalone-tests EXCLUDE_FROM_ALL
             tests/static_recompile_pilot_tests.cpp
             $<TARGET_OBJECTS:static-recompile-pilot-generated>)
-        target_compile_features(
-            static-recompile-pilot-standalone-tests PRIVATE cxx_std_11)
+        opensmacx_require_cxx11(static-recompile-pilot-standalone-tests)
         target_compile_definitions(static-recompile-pilot-standalone-tests PRIVATE
             OPENSMACX_STATIC_RECOMPILE_STANDALONE=1)
         target_include_directories(static-recompile-pilot-standalone-tests PRIVATE
@@ -2279,7 +2294,7 @@ if(MINGW)
             tests/static_recompile_pilot_tests.cpp
             "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
             $<TARGET_OBJECTS:static-recompile-pilot-generated>)
-        target_compile_features(static-recompile-pilot-tests PRIVATE cxx_std_11)
+        opensmacx_require_cxx11(static-recompile-pilot-tests)
         target_include_directories(static-recompile-pilot-tests PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/tools")
         target_compile_options(static-recompile-pilot-tests PRIVATE

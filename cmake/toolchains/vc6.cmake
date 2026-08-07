@@ -53,6 +53,17 @@ set(CMAKE_CXX_STANDARD_DEFAULT "")
 set(CMAKE_CXX98_STANDARD_COMPILE_OPTION "")
 set(CMAKE_CXX98_EXTENSION_COMPILE_OPTION "")
 
+# `/Z7`, NOT `/Zi`. VC6 writes debug info to a single `vc60.pdb` per output
+# directory and takes no lock on it, so a parallel build fails with
+# `C1033: cannot open program database` on whichever objects lose the race -
+# 16 of 19 on the first run here. `/Z7` puts the debug info in the object
+# file, where there is no shared state and no race. CMake's MSVC defaults
+# assume a compiler that can share a PDB; this one cannot.
+set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /Ob0 /Od /GZ" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_DEBUG "/Z7 /Ob0 /Od /GZ" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)
+
 set(CMAKE_FIND_ROOT_PATH "${VC6_ROOT}")
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
