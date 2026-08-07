@@ -71,3 +71,9 @@ void __fastcall report_if_on_iface_button_toggled_redirect(ReportIf *self, void 
 void __fastcall report_if_close_score_redirect(ReportIf *self, void *);
 int __fastcall report_if_on_iface_dialog_item_back_draw_redirect(
     ReportIf *self, void *, int a1, int a2, int a3, int a4);
+
+// ReportIf::bl_anim is not recovered, and the class is DLLEXPORT - which
+// demands a definition for every member - so the body at the end of
+// reportif.cpp forwards through this seam.
+typedef void (OriginalObject::*func_report_if_bl_anim)();
+extern func_report_if_bl_anim ReportIfBlAnim;  // 0x004A4060

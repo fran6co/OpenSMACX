@@ -218,3 +218,60 @@ void ReportIf::done() {
     reinterpret_cast<Win *>(0x00876478)->release_modal();
     reinterpret_cast<SubInterface *>(this)->release_iface_mode();
 }
+
+// The seams and definitions for the unrecovered bodies, at the end of the file
+// so no recovered body above shifts.
+//
+// auto_inline(off) is load-bearing, not tidiness, and being defined after the
+// caller is NOT enough on its own: VC6 at /Ob2 defers codegen to the end of
+// the translation unit and folds a forwarder defined later back into a caller
+// defined earlier. Measured - without the pragma cl reports C4711 at
+// reportif.cpp(219), which is the release_iface_mode call inside ReportIf::done,
+// and done's 22-byte BYTE_EXACT match is a `call rel32` there.
+#pragma auto_inline(off)
+func_report_if_bl_anim ReportIfBlAnim =
+    original_method<func_report_if_bl_anim>(0x004A4060);
+
+/*
+Purpose: Step the report interface's blink animation. The body at 0x004A4060 is
+         NOT recovered; this is a seam to the original image, not a recovery,
+         and deliberately carries no `Original Offset:` line so the catalogue
+         does not mistake it for one.
+Status: Forwarded to the original image
+*/
+void ReportIf::bl_anim() {
+    (ORIGINAL(this)->*ReportIfBlAnim)();
+}
+
+/*
+ * SubInterface's two called methods, hosted here for the reason spelled out in
+ * subinterface.h: that class has no translation unit of its own, and this is
+ * the file that already sees the header and already calls one of them.
+ */
+func_sub_interface_iface_mode SubInterfaceSetIfaceMode =
+    original_method<func_sub_interface_iface_mode>(0x0045D310);
+func_sub_interface_iface_mode SubInterfaceReleaseIfaceMode =
+    original_method<func_sub_interface_iface_mode>(0x0045D380);
+
+/*
+Purpose: Make this interface the active one. The body at 0x0045D310 is NOT
+         recovered; this is a seam to the original image, not a recovery, and
+         deliberately carries no `Original Offset:` line so the catalogue does
+         not mistake it for one.
+Status: Forwarded to the original image
+*/
+void SubInterface::set_iface_mode() {
+    (ORIGINAL(this)->*SubInterfaceSetIfaceMode)();
+}
+
+/*
+Purpose: Give up the active interface mode. The body at 0x0045D380 is NOT
+         recovered; this is a seam to the original image, not a recovery, and
+         deliberately carries no `Original Offset:` line so the catalogue does
+         not mistake it for one.
+Status: Forwarded to the original image
+*/
+void SubInterface::release_iface_mode() {
+    (ORIGINAL(this)->*SubInterfaceReleaseIfaceMode)();
+}
+#pragma auto_inline(on)

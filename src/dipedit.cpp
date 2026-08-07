@@ -53,3 +53,25 @@ void DipEdit::on_selected(int a1) {
     *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0xa20) = a1;
     do_check();
 }
+
+func_dip_edit_check DipEditReadCheck =
+    original_method<func_dip_edit_check>(0x004DA990);
+func_dip_edit_check DipEditDoCheck =
+    original_method<func_dip_edit_check>(0x004DADA0);
+
+/*
+ * Forwarders, not recoveries. These two bodies are still in the original
+ * image; on_selected above calls them, so the DLL has to resolve the symbols,
+ * and until the bodies are decoded the definition is a seam into 0x004DA990
+ * and 0x004DADA0. Deliberately carrying no `Original Offset:` line: that
+ * annotation marks a RECOVERED body, and `repair_source_locations` indexes
+ * every one of them by address. Claiming it here would point the census at a
+ * forwarder the day either address is promoted.
+ */
+void DipEdit::read_check() {
+    (ORIGINAL(this)->*DipEditReadCheck)();
+}
+
+void DipEdit::do_check() {
+    (ORIGINAL(this)->*DipEditDoCheck)();
+}

@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "original_seam.h"
+
  /*
   * FileWin class
   *
@@ -67,3 +69,8 @@ static_assert(sizeof(FileWin) == 0x33C4,
 void __fastcall file_win_unk6_redirect(FileWin *self, void *);
 void __fastcall file_win_unk2_redirect(FileWin *self, void *, int a1);
 void __fastcall file_win_unk1_redirect(FileWin *self, void *);
+
+// ?UNK4@FileWin@@QAEXXZ (0x006146A0). Unrecovered; on_double_clicked calls it,
+// so its definition is a seam into the original image.
+typedef void (OriginalObject::*func_file_win_unk4)();
+extern func_file_win_unk4 FileWinUNK4;

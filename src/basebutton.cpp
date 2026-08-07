@@ -601,3 +601,18 @@ void __cdecl fn_00607b10(int a1, BaseButton* a2) {
         a2->timer_callback(a1);
     }
 }
+
+func_base_button_timer_callback BaseButtonTimerCallback =
+    original_method<func_base_button_timer_callback>(0x00607B30);
+
+/*
+Purpose: Run the button's timer tick; on_right_click and the daemon
+         fn_00607b10 above are its two callers.
+         Body unrecovered; forwards to the original image.
+Forwards To: 00607B30
+Return Value: n/a
+Status: Forwarder
+*/
+void BaseButton::timer_callback(int a1) {
+    (ORIGINAL(this)->*BaseButtonTimerCallback)(a1);
+}

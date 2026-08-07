@@ -141,3 +141,14 @@ extern func_map_win_draw_radius MapWinOriginalDrawRadius;  // 0x0046A2A0
 // Redirected directly with no adapter; see src/mapwin.cpp.
 DLLEXPORT void __cdecl draw_tile(int x_coord, int y_coord, int draw_type);
 DLLEXPORT void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type);
+
+// ?draw_map@MapWin@@QAEXH@Z at 0x0046A550 - public, __thiscall, void(int) by
+// the mangled name, `ret 4` by the image - is 2049 bytes and still an original
+// body. The receiver is an unadjusted MapWin*, which is why MapWin::on_redraw
+// backs the 0x21A6C virtual-base displacement out before calling it. Defined
+// at the end of mapwin.cpp as a forwarder so that call links.
+// Console holds its own seam on the same address
+// (console.h, ConsoleOriginalMapWinDrawMap); the two are independent by
+// design - that one is a call site's, this one is the class's.
+typedef void (OriginalObject::*func_map_win_draw_map)(int draw_type);
+extern func_map_win_draw_map MapWinOriginalDrawMap;  // 0x0046A550

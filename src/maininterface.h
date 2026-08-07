@@ -332,3 +332,9 @@ void __fastcall main_interface_on_iface_scrolling_redirect(MainInterface *self, 
 void __fastcall main_interface_on_iface_button_toggled_redirect(MainInterface *self, void *, int a1, int a2);
 void __fastcall main_interface_on_iface_right_double_click_redirect(MainInterface *self, void *, int a1, int a2);
 int __fastcall main_interface_on_iface_button_pressed_redirect(MainInterface *self, void *, int a1);
+
+// The click handler noted on the declaration above is not recovered; it
+// forwards to the original image. ?on_iface_button_clicked@MainInterface@@QAEXH@Z
+// is public, __thiscall, void(int).
+typedef void (OriginalObject::*func_main_interface_on_iface_button_clicked)(int);
+extern func_main_interface_on_iface_button_clicked MainInterfaceOnIfaceButtonClicked;

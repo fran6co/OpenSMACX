@@ -34,14 +34,16 @@ class DLLEXPORT InfoWin {
  public:
   void on_right_click(int a1, int a2);
   // 0x004589C0  ?right_menu@InfoWin@@QAEXHH@Z - public, __thiscall,
-  // void(int, int). Still unrecovered, so this is a declaration without a
-  // definition and the DLL will not link until it is recovered. Declared
-  // rather than routed through an original_seam.h seam ON PURPOSE:
-  // on_right_click's whole 20-byte body is `push a2; push a1; call rel32`
-  // (byte-match.csv:3554 BYTE_EXACT 20/20), and a seam turns that direct
-  // call into `call dword ptr [global]`, which loses the match and takes the
-  // body out of the census - every one of the 753 seam-using bodies scores
-  // NO_COMPILE there because the scaffolding cannot see the seam global.
+  // void(int, int). Still an original body, so the definition at the END of
+  // infowin.cpp forwards to it. on_right_click is NOT routed through that seam
+  // itself, ON PURPOSE: its whole 20-byte body is `push a2; push a1; call
+  // rel32` (byte-match.csv:3554 BYTE_EXACT 20/20), and calling the seam from
+  // inside it turns that direct call into `call dword ptr [global]`, which
+  // loses the match and takes the body out of the census - every one of the
+  // 753 seam-using bodies scores NO_COMPILE there because the scaffolding
+  // cannot see the seam global. Giving right_menu its own out-of-line
+  // forwarder keeps on_right_click's `call rel32` intact; the forwarder is
+  // placed after on_right_click so /Ob2 cannot inline it back in.
   void right_menu(int a1, int a2);
   InfoWin() { ; }
   ~InfoWin() { ; }
@@ -68,5 +70,11 @@ void __fastcall info_win_unk3_redirect(InfoWin *self, void *, int a1, int a2);
 // InfoWin::timer_proc is not recovered yet.
 typedef void (OriginalObject::*func_info_win_timer_proc)(int);
 extern func_info_win_timer_proc InfoWinOriginalTimerProc;
+
+// InfoWin::right_menu is not recovered yet - 911 bytes that build and run the
+// tile context menu. Rebindable so tests can substitute a probe and so the
+// seam can later point at a recovered body.
+typedef void (OriginalObject::*func_info_win_right_menu)(int, int);
+extern func_info_win_right_menu InfoWinOriginalRightMenu;  // 0x004589C0
 
 void __fastcall info_win_reset_redirect(InfoWin *self, void *);

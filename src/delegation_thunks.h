@@ -60,29 +60,37 @@ int __fastcall wave_in_device_set_codec_redirect(void *self, void *, uint32_t a1
 int __fastcall wave_in_device_set_vxw_key_redirect(void *self, void *, int a1);
 int __fastcall midi_play_redirect(void *self, void *);
 int __fastcall midi_set_switch_type_redirect(void *self, void *, uint32_t a1);
-int __fastcall midi_add_switch_range_redirect(void *self, void *, uint32_t a1, int a2);
+// The seven midi_* declarations below take uint32_t where this file's
+// generator would emit a generic `int`. The definitions in
+// delegation_thunks.cpp already use uint32_t and are right to: the
+// originals they stand in for mangle as ...@@QAEHII@Z, two UNSIGNED
+// arguments. The header was the half that had not been corrected, so
+// caller and definition emitted different symbols and the DLL did not
+// link. tools/generate_delegation_thunks.py still emits `int` for both,
+// so regenerating this file reintroduces the mismatch.
+int __fastcall midi_add_switch_range_redirect(void *self, void *, uint32_t a1, uint32_t a2);
 int __fastcall midi_set_nswitch_threads_redirect(void *self, void *, uint32_t a1);
-int __fastcall midi_map_patch_3_redirect(void *self, void *, int a1, uint32_t a2, int a3);
+int __fastcall midi_map_patch_3_redirect(void *self, void *, int a1, uint32_t a2, uint32_t a3);
 int __fastcall midi_map_patch_2_redirect(void *self, void *, int a1, uint32_t a2);
 int __fastcall midi_clear_patch_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_reset_redirect(void *self, void *);
-int __fastcall midi_set_track_redirect(void *self, void *, uint32_t a1, int a2);
+int __fastcall midi_set_track_redirect(void *self, void *, uint32_t a1, uint32_t a2);
 int __fastcall midi_mute_track_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_unmute_track_redirect(void *self, void *, uint32_t a1);
-int __fastcall midi_set_active_tracks_2_redirect(void *self, void *, uint32_t a1, int a2);
+int __fastcall midi_set_active_tracks_2_redirect(void *self, void *, uint32_t a1, uint32_t a2);
 int __fastcall midi_set_active_tracks_1_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_play_trackset_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_xpose_trackset_redirect(void *self, void *, uint32_t a1, int a2);
 int __fastcall midi_stop_trackset_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_add_active_trackset_redirect(void *self, void *, int a1);
-int __fastcall midi_set_active_range_lo_redirect(void *self, void *, uint32_t a1, int a2);
-int __fastcall midi_set_active_range_hi_redirect(void *self, void *, uint32_t a1, int a2);
+int __fastcall midi_set_active_range_lo_redirect(void *self, void *, uint32_t a1, uint32_t a2);
+int __fastcall midi_set_active_range_hi_redirect(void *self, void *, uint32_t a1, uint32_t a2);
 int __fastcall midi_remove_active_trackset_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_get_trackset_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_get_ntracks_redirect(void *self, void *);
 int __fastcall midi_load_patch_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_unload_patch_redirect(void *self, void *, uint32_t a1);
-int __fastcall midi_set_patch_redirect(void *self, void *, uint32_t a1, int a2);
+int __fastcall midi_set_patch_redirect(void *self, void *, uint32_t a1, uint32_t a2);
 int __fastcall midi_set_tempo_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_get_time_redirect(void *self, void *, uint32_t a1);
 int __fastcall midi_get_control_track_redirect(void *self, void *);

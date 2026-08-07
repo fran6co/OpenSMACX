@@ -293,7 +293,10 @@ extern uint32_t *AltNatural; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100
 
 DLLEXPORT BOOL __cdecl on_map(int x, int y);
 DLLEXPORT int __cdecl xrange(int x);
-DLLEXPORT int __cdecl whose_territory(uint32_t faction_id, uint32_t x, uint32_t y, int *base_id,
+// `int` throughout, matching both the definition in src/map.cpp and the
+// catalogue's ?whose_territory@@YAHHHHPAHH@Z. The header said `uint32_t`,
+// so callers emitted ...@@YAHIIIPAHH@Z and found no definition.
+DLLEXPORT int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
                                       BOOL ignore_comm);
 DLLEXPORT int __cdecl base_territory(int faction_id, int x, int y);
 DLLEXPORT int __cdecl crappy(int x, int y);

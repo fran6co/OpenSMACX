@@ -806,3 +806,28 @@ void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
     }
     return self;
 }
+
+func_scroll_on_mousewheel ScrollOriginalOnMousewheelDown =
+    original_method<func_scroll_on_mousewheel>(0x00606320);
+func_scroll_on_mousewheel ScrollOriginalOnMousewheelUp =
+    original_method<func_scroll_on_mousewheel>(0x00606440);
+
+/*
+Purpose: Page the scrollbar one wheel notch towards its maximum.
+Forwards To: 00606320
+Return Value: n/a
+Status: Original dependency - forwards to the original image.
+*/
+void Scroll::on_mousewheel_down(int a1) {
+    (ORIGINAL(this)->*ScrollOriginalOnMousewheelDown)(a1);
+}
+
+/*
+Purpose: Page the scrollbar one wheel notch towards its minimum.
+Forwards To: 00606440
+Return Value: n/a
+Status: Original dependency - forwards to the original image.
+*/
+void Scroll::on_mousewheel_up(int a1) {
+    (ORIGINAL(this)->*ScrollOriginalOnMousewheelUp)(a1);
+}

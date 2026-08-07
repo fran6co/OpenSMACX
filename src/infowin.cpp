@@ -98,3 +98,31 @@ Status: Complete
 void InfoWin::on_right_click(int a1, int a2) {
     right_menu(a1, a2);
 }
+
+func_info_win_right_menu InfoWinOriginalRightMenu =
+    original_method<func_info_win_right_menu>(0x004589C0);
+
+/*
+Purpose: Build and run the tile context menu.
+Forwards To: 004589C0
+Return Value: n/a
+Status: Original dependency - forwards to the original image.
+
+The auto_inline(off) is load-bearing, and being defined after the caller is
+NOT enough on its own. VC6 at /Ob2 defers codegen to the end of the
+translation unit, so it happily folds a forwarder defined later in the file
+back into a caller defined earlier: measured, on_right_click came out as
+
+    mov eax,[esp+8] / mov edx,[esp+4] / push eax / push edx
+    call dword ptr [InfoWinOriginalRightMenu] / ret 8
+
+which is the seam inlined and the 20-byte BYTE_EXACT match
+(byte-match.csv:3554) gone. With the pragma the caller keeps its
+`push a2; push a1; call rel32` and this body stays a separate `jmp`-shaped
+thunk.
+*/
+#pragma auto_inline(off)
+void InfoWin::right_menu(int a1, int a2) {
+    (ORIGINAL(this)->*InfoWinOriginalRightMenu)(a1, a2);
+}
+#pragma auto_inline(on)

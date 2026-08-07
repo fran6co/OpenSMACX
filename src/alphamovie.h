@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "original_seam.h"
 #include "graphicwin.h"
 
  /*
@@ -24,9 +25,9 @@
   * The MCI video subobject AlphaMovie embeds at +0xA14. Declared, not laid
   * out: close() is the only member reached from here and the address is
   * computed by hand at the call site, so nothing needs the size. Not
-  * DLLEXPORT - ?close@MCIVideo@@QAEXXZ (0x005FFDB0) is unrecovered and
-  * dllexport on a class with undefined members forces the linker to export
-  * them.
+  * DLLEXPORT - ?close@MCIVideo@@QAEXXZ (0x005FFDB0) is still an original body
+  * and dllexport on a class whose members only forward would export a seam
+  * that is not this DLL's to publish.
   */
 class MCIVideo {
  public:
@@ -71,3 +72,10 @@ int __fastcall alpha_movie_unk5_redirect(AlphaMovie *self, void *, int a1);
 void __fastcall alpha_movie_unk6_00404260_redirect(AlphaMovie *self, void *, int a1, int a2);
 void __fastcall alpha_movie_unk6_00404270_redirect(AlphaMovie *self, void *, int a1);
 int __fastcall alpha_movie_unk8_redirect(AlphaMovie *self, void *, int a1, int a2);
+
+// MCIVideo::close is still an original body - 141 bytes that shut down the MCI
+// device through winmm - so the definition at the end of alphamovie.cpp
+// forwards to it. Public, __thiscall, void(void). Rebindable so tests can
+// substitute a probe and so the seam can later point at a recovered body.
+typedef void (OriginalObject::*func_mci_video_close)();
+extern func_mci_video_close MCIVideoOriginalClose;  // 0x005FFDB0

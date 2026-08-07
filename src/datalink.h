@@ -150,6 +150,11 @@ extern func_datalink_exec DatalinkExec;
 // classified dependency.
 extern void *DatalinkMain;
 
+// Datalink::draw_entry (0x0042BF10) is likewise unrecovered; on_selected calls
+// it, so its definition is a seam into the original image.
+typedef void (OriginalObject::*func_datalink_draw_entry)();
+extern func_datalink_draw_entry DatalinkDrawEntry;
+
 DLLEXPORT void __cdecl help_tech(int id);
 DLLEXPORT void __cdecl help_weapon(int id);
 DLLEXPORT void __cdecl help_armor(int id);

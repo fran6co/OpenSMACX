@@ -523,7 +523,8 @@ DLLEXPORT uint32_t __cdecl planet_buster(int veh_id);
 DLLEXPORT int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
                                     int veh_id_atk);
 DLLEXPORT uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native);
-DLLEXPORT int __cdecl psi_factor(int combat_ratio, uint32_t faction_id, BOOL is_attack,
+// ?psi_factor@@YAHHHHH@Z - the faction id is `int`, as the definition has it.
+DLLEXPORT int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack,
                                  BOOL is_fungal_twr);
 // `int` throughout, per the catalogue: the original exports these as
 // `?get_basic_offense@@YAHHHHHH@Z` and `?get_basic_defense@@YAHHHHH@Z`, all
@@ -564,15 +565,18 @@ DLLEXPORT int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk)
 DLLEXPORT int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode);
 DLLEXPORT int __cdecl armor_budget(int faction_id, int max_cost);
 DLLEXPORT int __cdecl abil_index(int ability_id);
-DLLEXPORT int __cdecl hex_cost(int proto_id, int faction_id, uint32_t x_src, uint32_t y_src, 
-                               uint32_t x_dst, uint32_t y_dst, BOOL toggle);
+// ?hex_cost@@YAHHHHHHHH@Z - eight H. The coordinates are int.
+DLLEXPORT int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src,
+                               int x_dst, int y_dst, BOOL toggle);
 DLLEXPORT void __cdecl veh_put(int veh_id, int x, int y);
 DLLEXPORT int __cdecl veh_health(int veh_id);
 DLLEXPORT uint32_t __cdecl proto_cost(uint32_t chassis_id, uint32_t weapon_id, uint32_t armor_id, 
                                       uint32_t ability, uint32_t reactor_id);
 DLLEXPORT int __cdecl base_cost(int proto_id);
-DLLEXPORT void __cdecl make_proto(int proto_id, uint32_t chassis_id, uint32_t weapon_id, 
-                                  uint32_t armor_id, uint32_t ability, uint32_t reactor_id);
+// `int` throughout: the definition in src/veh.cpp already is, and the
+// catalogue exports ?make_proto@@YAXHHHHHH@Z - all H, no I.
+DLLEXPORT void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id,
+                                  int armor_id, int ability, int reactor_id);
 DLLEXPORT int __cdecl get_plan(int faction_id, int plan);
 void __cdecl spot_tile(int x, int y, int faction_id);
 DLLEXPORT void __cdecl spot_base(int base_id, int faction_id);
@@ -597,8 +601,9 @@ DLLEXPORT void __cdecl veh_demote(int veh_id);
 DLLEXPORT void __cdecl veh_promote(int veh_id);
 DLLEXPORT void __cdecl veh_clear(int veh_id, int proto_id, int faction_id);
 DLLEXPORT BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn);
-DLLEXPORT uint32_t __cdecl morale_veh(uint32_t veh_id, BOOL check_drone_riot, 
-                                      int faction_id_vs_native);
+// ?morale_veh@@YAHHHH@Z - returns int and takes int, as the definition does.
+DLLEXPORT int __cdecl morale_veh(int veh_id, BOOL check_drone_riot,
+                                 int faction_id_vs_native);
 DLLEXPORT int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard);
 DLLEXPORT int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard);
 DLLEXPORT int __cdecl speed_proto(int proto_id);

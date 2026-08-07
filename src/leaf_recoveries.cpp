@@ -1645,3 +1645,55 @@ Status: Complete
 int __cdecl cos(int a1, int a2) {
     return sin(a1 + 0x3fffffff, a2);
 }
+
+/*
+ * The seam for that sine, at the end of the file so no recovered body above
+ * shifts.
+ *
+ * A FREE function forwards differently from a method: there is no receiver to
+ * get into ECX, so nothing here goes through OriginalObject or ORIGINAL() - a
+ * plain __cdecl function pointer carries the whole convention, and `YA` in
+ * ?sin@@YAHHH@Z is what says __cdecl.
+ *
+ * auto_inline(off) is load-bearing, and being defined after cos is NOT enough
+ * on its own: VC6 at /Ob2 defers codegen to the end of the translation unit and
+ * folds a forwarder defined later back into a caller defined earlier. cos is a
+ * 25-byte BYTE_EXACT match whose last instruction is a `call rel32` to this
+ * symbol; inlined, it would become a call through the pointer instead.
+ */
+#pragma auto_inline(off)
+typedef int(__cdecl func_sin)(int, int);
+func_sin *OriginalSin = (func_sin *)0x0063B9B0;
+
+/*
+Purpose: The game's own fixed-point sine. The body at 0x0063B9B0 is NOT
+         recovered; this is a seam to the original image, not a recovery, and
+         deliberately carries no `Original Offset:` line so the catalogue does
+         not mistake it for one.
+Status: Forwarded to the original image
+*/
+int __cdecl sin(int a1, int a2) {
+    return OriginalSin(a1, a2);
+}
+#pragma auto_inline(on)
+
+/*
+ * A forwarder, not a recovery: ?pop_ask@@YAHPADPADHPADP6AHXZH@Z at 0x00627910,
+ * the six-parameter overload. The five-parameter pop_ask above IS recovered
+ * (0x00627830) and tail-calls this one, so the DLL cannot link without it.
+ * No `Original Offset:` line by design - that marks a recovered body.
+ *
+ * auto_inline(off) is load-bearing and NOT optional here: the caller is a
+ * recovered, byte-matched body in this same translation unit, and VC6 at /Ob2
+ * folds a one-line forwarder into it regardless of definition order because
+ * codegen is deferred to end of TU. OPENSMACX_NOINLINE cannot be used - it
+ * expands to nothing on VC6.
+ */
+#pragma auto_inline(off)
+int __cdecl pop_ask(char *a1, char *a2, int a3, char *a4,
+                    int (__cdecl *a5)(), int a6) {
+    typedef int(__cdecl * func_pop_ask)(char *, char *, int, char *,
+                                        int(__cdecl *)(), int);
+    return reinterpret_cast<func_pop_ask>(0x00627910)(a1, a2, a3, a4, a5, a6);
+}
+#pragma auto_inline(on)

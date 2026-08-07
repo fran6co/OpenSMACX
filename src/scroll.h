@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "original_seam.h"
 #include "buffer.h"
 #include "flatbutton.h"
 #include "graphicwin.h"
@@ -55,7 +56,8 @@ class DLLEXPORT Scroll : GraphicWin {
   // 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z and
   // 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z - public, __thiscall,
   // void(int). Both are still unrecovered; the declarations exist because the
-  // recovered Win::on_mousewheel_* wrappers call them directly.
+  // recovered Win::on_mousewheel_* wrappers call them directly, and the
+  // definitions at the end of scroll.cpp forward to the original image.
   void on_mousewheel_down(int a1);
   void on_mousewheel_up(int a1);
  private:
@@ -165,3 +167,12 @@ RECT *__fastcall scroll_compute_thumb_rect_redirect(
     Scroll *self, void *, RECT *rect);
 uint32_t __fastcall scroll_set_thumb_rect_redirect(Scroll *self, void *);
 void __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2);
+
+// The two mouse-wheel handlers are still original bodies: 286 and 284 bytes of
+// paging arithmetic that reach the unrecovered thumb and repaint paths. Both
+// are public, __thiscall, void(int), and both are forwarded to the original
+// image. Bound through rebindable seams so tests can substitute probes and so
+// each seam can later be repointed at a recovered body.
+typedef void (OriginalObject::*func_scroll_on_mousewheel)(int);
+extern func_scroll_on_mousewheel ScrollOriginalOnMousewheelDown;  // 0x00606320
+extern func_scroll_on_mousewheel ScrollOriginalOnMousewheelUp;    // 0x00606440

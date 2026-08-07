@@ -236,8 +236,6 @@ func_console_cursor_next ConsoleOriginalCursorNext =
     original_method<func_console_cursor_next>(0x005109B0);
 func_console_map_win_focus ConsoleOriginalMapWinFocus =
     original_method<func_console_map_win_focus>(0x0046B310);
-func_console_map_win_draw_map ConsoleOriginalMapWinDrawMap =
-    original_method<func_console_map_win_draw_map>(0x0046A550);
 func_console_flush_input *ConsoleOriginalFlushInput =
     (func_console_flush_input *)0x005FD120;
 void *ConsoleGlobal = reinterpret_cast<void *>(0x009156B0);
@@ -373,7 +371,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
                 // returned. Re-read, do NOT hoist and do not share with the
                 // load above. The literal 1 is the draw type.
                 MapWin *const repaint = MapWinTable[0];
-                (ORIGINAL(repaint)->*ConsoleOriginalMapWinDrawMap)(1);
+                (ORIGINAL(repaint)->*MapWinOriginalDrawMap)(1);
                 continue;
             }
             // Latch already clear (0x00510936 je 0x510964): fall through to the

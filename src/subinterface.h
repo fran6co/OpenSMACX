@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "original_seam.h"
 
  /*
   * SubInterface class: the interface-mode registry entry.
@@ -38,6 +39,9 @@
   * demands a definition for every member. They are public, non-virtual
   * __thiscall, void(void) - the mangled names say so - and every call site is
   * a direct `call rel32`, so none of them may be routed through a vtable slot.
+  * Two of the three now have FORWARDERS to the original image, which is not a
+  * recovery and does not make the class exportable: delete_iface_mode still
+  * has no definition, because nothing in the tree calls it.
   */
 class SubInterface {
  public:
@@ -45,3 +49,23 @@ class SubInterface {
   void set_iface_mode();      // 0x0045D310  ?set_iface_mode@SubInterface@@QAEXXZ
   void release_iface_mode();  // 0x0045D380  ?release_iface_mode@SubInterface@@QAEXXZ
 };
+
+/*
+ * Seams for the two methods the tree calls. Both are void(void) __thiscall, so
+ * one pointer-to-member type covers both.
+ *
+ * The DEFINITIONS live at the end of src/reportif.cpp rather than in a
+ * subinterface.cpp of their own: this class has no translation unit, and
+ * adding one is a CMakeLists change - a shared file. reportif.cpp is the
+ * nearest owner that already sees this header, through reportif.h, and
+ * already calls release_iface_mode from ReportIf::done.
+ *
+ * Distinct from statuswin.h's SubInterfaceOriginalReleaseIfaceMode, which
+ * names the same address for a different job: that one is the seam StatusWin's
+ * reset drives against a global receiver, and the tests rebind it. Sharing one
+ * global between the two would make a test that repoints the observer silently
+ * repoint every SubInterface::release_iface_mode call in the program.
+ */
+typedef void (OriginalObject::*func_sub_interface_iface_mode)();
+extern func_sub_interface_iface_mode SubInterfaceSetIfaceMode;      // 0x0045D310
+extern func_sub_interface_iface_mode SubInterfaceReleaseIfaceMode;  // 0x0045D380

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "original_seam.h"
 #include "autosound.h"
 #include "buffer.h"
 #include "palette.h"
@@ -284,3 +285,25 @@ int __cdecl win_onsetcursor_redirect(void *a1, void *a2, unsigned int a3, unsign
 int __fastcall win_unk3_redirect(Win *self, void *, int value);
 
 int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate);
+
+// The four handlers declared above that are still original bodies - hide is
+// 390 bytes, on_mouse_move 155, on_nc_hittest 294 and release_modal 167. Each
+// is reached by a direct `call rel32` from a derived window, so the class has
+// to name them; each is defined at the end of win.cpp as a forwarder through
+// one of these seams. Signatures are the mangled names:
+//   ?hide@Win@@QAEXXZ           void()
+//   ?on_mouse_move@Win@@QAEXHHIH@Z  void(int, int, unsigned int, int)
+//   ?on_nc_hittest@Win@@QAEHHH@Z    int(int, int)
+//   ?release_modal@Win@@QAEXXZ  void()
+typedef void (OriginalObject::*func_win_hide)();
+extern func_win_hide WinOriginalHide;  // 0x005EDCD0
+
+typedef void (OriginalObject::*func_win_on_mouse_move)(
+    int a1, int a2, unsigned int a3, int a4);
+extern func_win_on_mouse_move WinOriginalOnMouseMove;  // 0x005F6320
+
+typedef int (OriginalObject::*func_win_on_nc_hittest)(int a1, int a2);
+extern func_win_on_nc_hittest WinOriginalOnNcHittest;  // 0x005F5AD0
+
+typedef void (OriginalObject::*func_win_release_modal)();
+extern func_win_release_modal WinOriginalReleaseModal;  // 0x005EE280

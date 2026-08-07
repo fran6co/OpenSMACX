@@ -324,3 +324,21 @@ void MapWin::on_resize(int a1, int a2) {
         reinterpret_cast<MapWin *>(self - 0x21a6c)->do_image_buttons();
     }
 }
+
+// The seam and definition for the unrecovered draw_map, at the end of the file
+// so no recovered body above shifts.
+//
+// auto_inline(off) is load-bearing, not tidiness. Left alone, VC6 expands this
+// one-line forwarder into MapWin::on_redraw (0x0046B1D0), reported as C4711 at
+// mapwin.cpp(313). on_redraw is BYTE_EXACT today precisely because the original
+// emits `call rel32` there, and an inlined `mov ecx / call [seam]` would break
+// it. OPENSMACX_NOINLINE is the tree's spelling for this, but it expands to
+// nothing on VC6 - the pragma is the only form cl 12.00 honours.
+#pragma auto_inline(off)
+func_map_win_draw_map MapWinOriginalDrawMap =
+    original_method<func_map_win_draw_map>(0x0046A550);
+
+void MapWin::draw_map(int draw_type) {
+    (ORIGINAL(this)->*MapWinOriginalDrawMap)(draw_type);
+}
+#pragma auto_inline(on)

@@ -237,3 +237,22 @@ int CouncWin::show(int a1) {
     }
     reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->set_iface_mode();
 }
+
+// The seam and definition for the unrecovered draw_leader, at the end of the
+// file so no recovered body above shifts.
+//
+// auto_inline(off) is load-bearing, not tidiness. Left alone, VC6 expands this
+// one-line forwarder into draw_all_leaders (0x00425D90) and on_mouse_leave,
+// which reported it as C4711 at councwin.cpp(215) and (225). Both callers are
+// BYTE_EXACT today precisely because the original emits `call rel32` there, and
+// an inlined `mov ecx / call [seam]` would break them. OPENSMACX_NOINLINE is
+// the tree's spelling for this, but it expands to nothing on VC6 - the pragma
+// is the only form cl 12.00 honours.
+#pragma auto_inline(off)
+func_counc_win_draw_leader CouncWinOriginalDrawLeader =
+    original_method<func_counc_win_draw_leader>(0x00425DB0);
+
+void CouncWin::draw_leader(int factionID) {
+    (ORIGINAL(this)->*CouncWinOriginalDrawLeader)(factionID);
+}
+#pragma auto_inline(on)

@@ -86,15 +86,15 @@ v00403ba0_0.cpp(47) : error C2059: syntax error : ')'
 0x00404200,?UNK1@AlphaMovie@@QAEXXZ,,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x00404210,?on_key_click@AlphaMovie@@QAEHHH@Z,src/delegation_thunks.cpp:46,1,16,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00404210.cpp(133) : error C2065: 'func_delegation_0' : undeclared identifier
 c00404210.cpp(133) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
-0x00404220,?UNK2@AlphaMovie@@QAEHHHH@Z,src/alphamovie.cpp:36,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
-0x00404230,?UNK3@AlphaMovie@@QAEHH@Z,src/alphamovie.cpp:73,0,10,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,10,10,,,,,
-0x00404240,?UNK4@AlphaMovie@@QAEHHHHH@Z,src/alphamovie.cpp:50,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
-0x00404250,?UNK5@AlphaMovie@@QAEHH@Z,src/alphamovie.cpp:87,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
-0x00404260,?UNK6@AlphaMovie@@QAEXHH@Z,src/alphamovie.cpp:101,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x00404270,?UNK6@AlphaMovie@@QAEXH@Z,src/alphamovie.cpp:114,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x00404280,?UNK7@AlphaMovie@@QAEXXZ,src/alphamovie.cpp:23,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
+0x00404220,?UNK2@AlphaMovie@@QAEHHHH@Z,src/alphamovie.cpp:37,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
+0x00404230,?UNK3@AlphaMovie@@QAEHH@Z,src/alphamovie.cpp:74,0,10,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,10,10,,,,,
+0x00404240,?UNK4@AlphaMovie@@QAEHHHHH@Z,src/alphamovie.cpp:51,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
+0x00404250,?UNK5@AlphaMovie@@QAEHH@Z,src/alphamovie.cpp:88,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
+0x00404260,?UNK6@AlphaMovie@@QAEXHH@Z,src/alphamovie.cpp:102,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
+0x00404270,?UNK6@AlphaMovie@@QAEXH@Z,src/alphamovie.cpp:115,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
+0x00404280,?UNK7@AlphaMovie@@QAEXXZ,src/alphamovie.cpp:24,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x00404290,?update@AlphaMovie@@QAEXXZ,,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
-0x004042A0,?UNK8@AlphaMovie@@QAEHHH@Z,src/alphamovie.cpp:127,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
+0x004042A0,?UNK8@AlphaMovie@@QAEHHH@Z,src/alphamovie.cpp:128,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x004042B0,sub_4042b0,,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004042C0,??1MCIVideo@@QAE@XZ,,0,94,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,73,1,22,1,0,#0: original 'push' vs rebuilt 'ret',
 0x004043A0,??_GAlphaMovie@@UAEPAXI@Z,src/deleting_thunks.cpp:162,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004043a0.cpp(69) : error C2065: 'AlphaMovieDtorTarget' : undeclared identifier
@@ -6731,9 +6731,9 @@ c00500250.cpp(46) : error C2106: '=' : left operand must be l-value
 c00500250.cpp(47) : error C2227: left of '->bit' must point to class/struct/union
 c00500250.cpp(47) : error C2065: 'BIT_VEH_IN_TILE' : undeclared identifier
 c00500250.cpp(48) : error C2227: left of '->val2' must point to class/struct/union"
-0x00500290,?has_fac_built@@YA_NH@Z,src/base.cpp:1976,0,78,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00500290.cpp(49) : error C2065: 'FacilityRepStart' : undeclared identifier
-c00500290.cpp(50) : error C2065: 'BaseIDCurrentSelected' : undeclared identifier
-c00500290.cpp(50) : error C2100: illegal indirection"
+0x00500290,?has_fac_built@@YA_NH@Z,src/base.cpp:1976,0,78,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00500290.cpp(48) : error C2065: 'FacilityRepStart' : undeclared identifier
+c00500290.cpp(49) : error C2065: 'BaseIDCurrentSelected' : undeclared identifier
+c00500290.cpp(49) : error C2100: illegal indirection"
 0x005002E0,?base_project@@YAHH@Z,src/base.cpp:2000,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005002e0.cpp(45) : error C2065: 'SecretProject' : undeclared identifier
 c005002e0.cpp(45) : error C2227: left of '->human_genome_project' must point to class/struct/union"
 0x005002F0,?has_treaty@@YAHHHH@Z,src/faction.cpp:109,0,41,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005002f0.cpp(45) : error C2065: 'PlayersData' : undeclared identifier

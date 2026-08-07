@@ -402,3 +402,18 @@ void __fastcall base_win_on_right_click_redirect(BaseWin *self, void *, int a1, 
 void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, int a1, int a2);
 void __cdecl base_win_timer_callback_redirect(int a1, int a2);
 void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, int a2);
+
+// draw_facilities and garrison_click are declared on the class because the
+// recovered on_scrolled and UNK2 reach them with a direct `call rel32`, but
+// neither body is recovered - 1788 and 3768 bytes respectively - so the DLL
+// has nothing to link the calls against. Both stand in with a forward to the
+// original image until the bodies land.
+//   ?draw_facilities@BaseWin@@QAEXH@Z    0x0040FCC0  public __thiscall void(int)
+//   ?garrison_click@BaseWin@@QAEXHHHH@Z  0x0040B140  public __thiscall
+//                                                    void(int, int, int, int)
+typedef void (OriginalObject::*func_base_win_draw_facilities)(int a1);
+extern func_base_win_draw_facilities BaseWinDrawFacilities;
+
+typedef void (OriginalObject::*func_base_win_garrison_click)(int vehID, int a2,
+                                                             int a3, int a4);
+extern func_base_win_garrison_click BaseWinGarrisonClick;

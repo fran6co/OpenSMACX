@@ -120,3 +120,11 @@ int __fastcall menu_requested_height_redirect(Menu *self, void *);
 // The menu's own font, falling back to the process default when unset.
 extern Font **MenuFont;
 void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1, int *a2);
+
+// mouse_move is declared on the class because the recovered on_mouse_move is
+// an 18-byte tail-forward to it, but its 333-byte body is not recovered, so
+// the DLL has nothing to link that call against. It stands in with a forward
+// to the original image until the body lands.
+//   ?mouse_move@Menu@@QAEXHH@Z  0x005FBDB0  public, __thiscall, void(int, int)
+typedef void (OriginalObject::*func_menu_mouse_move)(int a1, int a2);
+extern func_menu_mouse_move MenuMouseMove;
