@@ -661,7 +661,7 @@ void Wave::set_volume(int a1) {
         // The original loads the group dword zero-extended through a 64-bit
         // fild, so the scale is the UNSIGNED value of the table entry.
         const double group = static_cast<double>(WaveDeviceGroupVolumes[group_slot_ * 6]);
-        level = static_cast<int>(static_cast<long long>(
+        level = static_cast<int>(static_cast<int64_t>(
             static_cast<double>(static_cast<int>(vol)) * (1.0 / 127.0) *
             group));
     }
