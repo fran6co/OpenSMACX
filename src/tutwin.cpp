@@ -20,6 +20,7 @@
 #include "tutwin.h"
 #include "win.h"
 #include "mapwin.h"
+#include "vtable_shim.h"
 
 // The tutorial's "already shown" marker, cleared alongside the window's own
 // state. Bound at its canonical address because nothing here owns it yet.

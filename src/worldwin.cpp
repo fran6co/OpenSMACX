@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "worldwin.h"
+#include "vtable_shim.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
