@@ -28,8 +28,8 @@ class DLLEXPORT Font {
   ~Font(); // 00618EE0
 
   // int UNK1(int, int, int, int) { return 1; } // no direct references
-  int init(LPCSTR font_name, int height, uint32_t style);
-  int init(LPCSTR file, LPCSTR font_name, int height, uint32_t style);
+  int init(LPCSTR font_name, int height, int style);
+  int init(LPCSTR file, LPCSTR font_name, int height, int style);
   void close();
   int width(LPSTR input);
   int width(LPSTR input, size_t max_len);

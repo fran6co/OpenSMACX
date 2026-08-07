@@ -28,8 +28,8 @@
 
 namespace {
 
-using BaseButtonFixture = runtime_oracle::Fixture<BaseButton>;
-using FlatButtonFixture = runtime_oracle::Fixture<FlatButton>;
+typedef runtime_oracle::Fixture<BaseButton> BaseButtonFixture;
+typedef runtime_oracle::Fixture<FlatButton> FlatButtonFixture;
 
 constexpr size_t VtableOffsets[] = {0};
 const runtime_oracle::ClassSpec BaseButtonSpec = {
@@ -178,12 +178,12 @@ bool verify_base_close(uintptr_t *vtable) {
         legacy.storage, source.storage, BaseButtonSpec, vtable);
     prepare_fixture(legacy, vtable, false);
     prepare_fixture(source, vtable, false);
-    auto original = reinterpret_cast<OriginalBaseNoArg>(
+    OriginalBaseNoArg original = original_method<OriginalBaseNoArg>(
         BaseButtonCloseAddress);
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     runtime_oracle::begin_trace(
         source.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -201,11 +201,11 @@ bool verify_flat_close(uintptr_t *vtable) {
         legacy.storage, source.storage, FlatButtonSpec, vtable);
     prepare_fixture(legacy, vtable, true);
     prepare_fixture(source, vtable, true);
-    auto original = reinterpret_cast<OriginalFlatNoArg>(FlatButtonCloseAddress);
+    OriginalFlatNoArg original = original_method<OriginalFlatNoArg>(FlatButtonCloseAddress);
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     runtime_oracle::begin_trace(
         source.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -223,12 +223,12 @@ bool verify_base_destructor(uintptr_t *vtable) {
         legacy.storage, source.storage, BaseButtonSpec, vtable);
     prepare_fixture(legacy, vtable, false);
     prepare_fixture(source, vtable, false);
-    auto original = reinterpret_cast<OriginalBaseNoArg>(
+    OriginalBaseNoArg original = original_method<OriginalBaseNoArg>(
         BaseButtonDestructorAddress);
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     runtime_oracle::begin_trace(
         source.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -247,12 +247,12 @@ bool verify_flat_destructor(uintptr_t *vtable) {
         legacy.storage, source.storage, FlatButtonSpec, vtable);
     prepare_fixture(legacy, vtable, true);
     prepare_fixture(source, vtable, true);
-    auto original = reinterpret_cast<OriginalFlatNoArg>(
+    OriginalFlatNoArg original = original_method<OriginalFlatNoArg>(
         FlatButtonDestructorAddress);
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     runtime_oracle::begin_trace(
         source.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -267,7 +267,7 @@ bool verify_flat_destructor(uintptr_t *vtable) {
 }  // namespace
 
 bool run_base_button_oracle_suite() {
-    uintptr_t vtable[3] = {};
+    uintptr_t vtable[3] = {0};
     vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
     runtime_oracle::set_watched_global(nullptr);
     SavedDefaults saved;
@@ -284,9 +284,9 @@ bool run_base_button_release_suite() {
     if (!suspend_redirect_at(BaseButtonCloseAddress)) {
         return false;
     }
-    uintptr_t vtable[3] = {};
+    uintptr_t vtable[3] = {0};
     vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
-    auto original = reinterpret_cast<OriginalBaseNoArg>(
+    OriginalBaseNoArg original = original_method<OriginalBaseNoArg>(
         BaseButtonCloseAddress);
     SavedDefaults saved;
     seed_defaults(saved);
@@ -333,7 +333,7 @@ bool run_base_button_release_suite() {
 
         runtime_oracle::begin_trace(
             legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-        const uint32_t legacy_result = original(legacy.object());
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
         const runtime_oracle::Trace legacy_trace =
             runtime_oracle::current_trace();
         runtime_oracle::begin_trace(

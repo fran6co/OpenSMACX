@@ -58,7 +58,7 @@ class DLLEXPORT Wave {
   int set_release(unsigned int a1, unsigned int a2, unsigned int a3);
   int unload();
   void set_pitch(int a1);
-  int load(int a1, int a2);
+  int load(int a1, uint32_t a2);
   int get_ms_length();
   int is_playing();
   int play(int a1);

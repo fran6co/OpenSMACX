@@ -16,7 +16,7 @@
 
 namespace {
 
-using ListFixture = runtime_oracle::Fixture<StringStruct>;
+typedef runtime_oracle::Fixture<StringStruct> ListFixture;
 
 // The list dispatches through its own vtable and through stand-in entry and
 // payload objects the fixture supplies, so the shared initializer installs no
@@ -33,7 +33,7 @@ struct Probe {
     int flags;
 };
 
-Probe Record = {};
+Probe Record = {0};
 
 void __fastcall probe_visit(void *, int /* edx */, void *) {
     ++Record.visits;
@@ -105,8 +105,10 @@ bool verify_remove_all() {
         {3, 3, false},
         {3, 2, true},
     };
-    auto original = reinterpret_cast<OriginalNoArg>(0x00402970U);
-    for (const RemoveCase &test : cases) {
+    OriginalNoArg original = original_method<OriginalNoArg>(0x00402970U);
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const RemoveCase &test = cases[test_index];
         ListFixture legacy;
         ListFixture source;
         uintptr_t vtable[1];
@@ -139,7 +141,7 @@ bool verify_remove_all() {
         }
 
         Record = Probe();
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         const Probe legacy_record = Record;
 
         Record = Probe();
@@ -150,8 +152,12 @@ bool verify_remove_all() {
         }
         // Compare list state apart from the two fields that necessarily hold
         // side-specific entry addresses.
-        for (size_t offset : {size_t(0x10), size_t(0x14),
-                              size_t(0x18), size_t(0x1C), size_t(0x20)}) {
+        size_t offset_cases[] = {size_t(0x10), size_t(0x14),
+                                 size_t(0x18), size_t(0x1C), size_t(0x20)};
+        for (size_t offset_index = 0;
+             offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+             ++offset_index) {
+            size_t offset = offset_cases[offset_index];
             if (memcmp(legacy.storage + runtime_oracle::CanarySize + offset,
                        source.storage + runtime_oracle::CanarySize + offset,
                        sizeof(uint32_t)) != 0) {
@@ -233,9 +239,14 @@ bool verify_close() {
         {0x00401060U, StringStructCloseAdjustment, StringStructVtable},
         {0x004066C0U, StringStructDerivedCloseAdjustment, StringStructVtable},
     };
-    for (const Variant &variant : variants) {
-    auto original = reinterpret_cast<OriginalClose>(variant.address);
-    for (const CloseCase &test : cases) {
+    for (size_t variant_index = 0;
+         variant_index < sizeof(variants) / sizeof(variants[0]);
+         ++variant_index) {
+    const Variant &variant = variants[variant_index];
+    OriginalClose original = original_method<OriginalClose>(variant.address);
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const CloseCase &test = cases[test_index];
         ListFixture legacy;
         ListFixture source;
         uintptr_t vtable[1];
@@ -285,8 +296,8 @@ bool verify_close() {
         }
 
         Record = Probe();
-        original(legacy.storage + runtime_oracle::CanarySize
-                 + variant.adjustment);
+        (ORIGINAL(legacy.storage + runtime_oracle::CanarySize
+                 + variant.adjustment)->*original)();
         const Probe legacy_record = Record;
 
         Record = Probe();
@@ -316,8 +327,12 @@ bool verify_close() {
         if (legacy_vbtable[1] != source_vbtable[1]) {
             return false;
         }
-        for (size_t offset : {size_t(0x10), size_t(0x14),
-                              size_t(0x18), size_t(0x1C), size_t(0x20)}) {
+        size_t offset_cases[] = {size_t(0x10), size_t(0x14),
+                                 size_t(0x18), size_t(0x1C), size_t(0x20)};
+        for (size_t offset_index = 0;
+             offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+             ++offset_index) {
+            size_t offset = offset_cases[offset_index];
             if (memcmp(legacy.storage + runtime_oracle::CanarySize + offset,
                        source.storage + runtime_oracle::CanarySize + offset,
                        sizeof(uint32_t)) != 0) {

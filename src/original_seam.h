@@ -79,4 +79,34 @@ Method original_method(unsigned long address) {
   return cast.method;
 }
 
+/*
+ * The same union read the other way. `reinterpret_cast<unsigned long>` on a
+ * pointer-to-member is `error C2440` on VC6 - it is not a pointer as far as
+ * the language is concerned, whatever the representation - so recovering the
+ * bare code address needs the same pinned punning that creating one does.
+ */
+template <class Method>
+unsigned long original_address(Method method) {
+  union {
+    unsigned long address;
+    Method method;
+  } cast;
+  cast.address = 0;
+  cast.method = method;
+  return cast.address;
+}
+
+/*
+ * A vtable slot, read as a pinned pointer-to-member. The recovered code spelt
+ * this `(*reinterpret_cast<Method *>(vtable + 0x14))(object)` in seventy-odd
+ * places - reading the slot AS a pointer-to-member and then calling it as a
+ * free function, which is `C2064: term does not evaluate to a function`. The
+ * slot holds a bare code address; this reads it as one and hands it to
+ * original_method, leaving the call site an honest `->*`.
+ */
+template <class Method>
+Method original_slot(const void *slot) {
+  return original_method<Method>(*reinterpret_cast<const unsigned long *>(slot));
+}
+
 #define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))

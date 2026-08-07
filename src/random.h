@@ -29,7 +29,7 @@ class DLLEXPORT Random {
   } // 00625740
 
   void reseed(uint32_t new_seed);
-  uint32_t get(uint32_t min, uint32_t max);
+  uint32_t get(int min, int max);
   double get();
   // additional functions to assist with encapsulation
   uint32_t get_seed() { return seed_; }

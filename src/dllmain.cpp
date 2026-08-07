@@ -142,15 +142,15 @@ struct SignatureExtension {
     uint8_t signature[SignatureExtensionSize];
 };
 
-RedirectState Redirects[RedirectCount] = {};
+RedirectState Redirects[RedirectCount] = {0};
 // Installed specs are retained so a single redirect can be lifted and
 // reinstalled later, which the deferred oracle phase needs to call an
 // original body after the executable's CRT has started.
-RedirectSpec InstalledSpecs[RedirectCount] = {};
-RedirectState CallRedirects[CallRedirectCount] = {};
+RedirectSpec InstalledSpecs[RedirectCount] = {0};
+RedirectState CallRedirects[CallRedirectCount] = {0};
 
 bool validate_signature(uintptr_t address, const uint8_t *expected, size_t size) {
-    auto *original = reinterpret_cast<uint8_t *>(address);
+    uint8_t *original = reinterpret_cast<uint8_t *>(address);
     MEMORY_BASIC_INFORMATION memory_info;
     if (VirtualQuery(original, &memory_info, sizeof(memory_info)) != sizeof(memory_info)
         || memory_info.State != MEM_COMMIT
@@ -175,7 +175,10 @@ bool validate_redirect_spec(const RedirectSpec &spec) {
         return false;
     }
     const SignatureExtension extensions[] = OPENSMACX_SIGNATURE_EXTENSIONS;
-    for (const SignatureExtension &extension : extensions) {
+    for (size_t extension_index = 0;
+         extension_index < sizeof(extensions) / sizeof(extensions[0]);
+         ++extension_index) {
+        const SignatureExtension &extension = extensions[extension_index];
         if (extension.original_address == spec.original_address
                 && !validate_signature(
                        spec.original_address + extension.offset,
@@ -212,7 +215,7 @@ bool redirect_function(RedirectState &state, const RedirectSpec &spec) {
     if (!validate_redirect_spec(spec)) {
         return false;
     }
-    auto *original = reinterpret_cast<uint8_t *>(spec.original_address);
+    uint8_t *original = reinterpret_cast<uint8_t *>(spec.original_address);
 
     uint8_t patch[PatchSize] = {0xE9, 0, 0, 0, 0};
     uint32_t relative_jump =
@@ -245,7 +248,7 @@ bool redirect_call(RedirectState &state, const RedirectSpec &spec) {
     if (!validate_redirect_spec(spec)) {
         return false;
     }
-    auto *original = reinterpret_cast<uint8_t *>(spec.original_address);
+    uint8_t *original = reinterpret_cast<uint8_t *>(spec.original_address);
 
     uint8_t patch[PatchSize] = {0xE8, 0, 0, 0, 0};
     uint32_t relative_call =
@@ -10525,7 +10528,9 @@ bool install_redirects() {
     };
     static_assert(sizeof(specs) / sizeof(specs[0]) == RedirectCount,
                   "redirect state count must match the redirect catalog");
-    for (const RedirectSpec &spec : specs) {
+    for (size_t spec_index = 0;
+         spec_index < sizeof(specs) / sizeof(specs[0]); ++spec_index) {
+        const RedirectSpec &spec = specs[spec_index];
         if (!validate_redirect_spec(spec)) {
             return false;
         }

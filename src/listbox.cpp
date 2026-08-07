@@ -60,7 +60,7 @@ address - the code reads the seam pointers, so the mutants are byte-identical
 and equivalent by construction.
 */
 uint32_t ListBox::close() {
-    auto *const base = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const base = reinterpret_cast<uint8_t *>(this);
     // Base offsets come from the object's OWN vbtable, read at run time - never
     // the compile-time 0x48/0xA60 - so an embedded ListBox with a different
     // vbtable still reaches the correct subobjects (AGENTS.md RadioButton rule).
@@ -110,7 +110,7 @@ code does carry - the vbase-adjust subtrahends below - have their mutants
 killed by the shifted-vbtable shape.
 */
 uint32_t ListBox::destroy() {
-    auto *const base = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const base = reinterpret_cast<uint8_t *>(this);
     const int32_t *const vbtable =
         *reinterpret_cast<const int32_t *const *>(base);
     const int32_t graphic_disp = vbtable[1];   // 0x48 when most-derived
@@ -144,7 +144,7 @@ uint32_t __fastcall list_box_close_redirect(ListBox *self, void *) {
 // location); recover the base before delegating, as the original does with
 // `eax - 0x48`.
 uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
-    auto *self = reinterpret_cast<ListBox *>(
+    ListBox *self = reinterpret_cast<ListBox *>(
         static_cast<uint8_t *>(adjusted) - ListBoxDestructorAdjustment);
     return self->destroy();
 }

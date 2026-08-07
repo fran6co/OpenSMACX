@@ -26,7 +26,7 @@
 
 namespace {
 
-using WinFixture = runtime_oracle::Fixture<Win>;
+typedef runtime_oracle::Fixture<Win> WinFixture;
 
 // is_visible never dispatches virtually, so the shared fixture initializer
 // only needs a one-entry vtable and installs no vtable pointers.
@@ -89,8 +89,10 @@ bool verify_is_visible() {
         {3, {0x00000001U, 0x00000000U, 0x00000001U}},
         {3, {0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFEU}},
     };
-    auto original = reinterpret_cast<OriginalNoArg>(0x005F7E90U);
-    for (const ChainCase &test : cases) {
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005F7E90U);
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const ChainCase &test = cases[test_index];
         static WinFixture legacy_nodes[MaximumDepth];
         static WinFixture source_nodes[MaximumDepth];
         static uint8_t legacy_snapshots[MaximumDepth][sizeof(WinFixture)];
@@ -98,7 +100,7 @@ bool verify_is_visible() {
         uintptr_t vtable[1];
 
         build_chain(legacy_nodes, legacy_snapshots, test.flags, test.depth, vtable);
-        const uint32_t legacy_result = original(legacy_nodes[0].object());
+        const uint32_t legacy_result = (ORIGINAL(legacy_nodes[0].object())->*original)();
 
         build_chain(source_nodes, source_snapshots, test.flags, test.depth, vtable);
         const uint32_t source_result = static_cast<uint32_t>(
@@ -186,14 +188,14 @@ bool verify_client_to_screen() {
         // Local additions cross both signed boundaries.
         {1,
          {{0, 0x00000001U, 0xFFFFFFFFU, 0x00000001U, 0xFFFFFFFFU},
-          {}, {}},
+          {0}, {0}},
          0x7FFFFFFFU, 0x80000000U,
          0x80000001U, 0x7FFFFFFEU, false},
         // Parent additions wrap coordinates already adjusted by the child.
         {2,
          {{0x00000020U, 0, 0, 0, 0},
           {0, 0x00000001U, 0xFFFFFFFFU, 0x00000001U, 0xFFFFFFFFU},
-          {}},
+          {0}},
          0x7FFFFFFFU, 0x80000000U,
          0x80000001U, 0x7FFFFFFEU, false},
         // Parent terms cancel during recursion, making the later subtraction
@@ -201,17 +203,19 @@ bool verify_client_to_screen() {
         {2,
          {{0x00008020U, 0, 0, 0, 0},
           {0, 0xFFFFFFFFU, 0x00000001U, 0x00000001U, 0xFFFFFFFFU},
-          {}},
+          {0}},
          0x80000000U, 0x7FFFFFFFU,
          0x7FFFFFFFU, 0x80000000U, false},
         // The original updates x before reading y, which is observable when
         // both output pointers alias the same coordinate.
         {1,
-         {{0, 100, 200, 10, 20}, {}, {}},
+         {{0, 100, 200, 10, 20}, {0}, {0}},
          7, 0xDEADBEEFU, 337, 337, true},
     };
-    auto original = reinterpret_cast<OriginalCoordinates>(0x005ED240U);
-    for (const CoordinateCase &test : cases) {
+    OriginalCoordinates original = original_method<OriginalCoordinates>(0x005ED240U);
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const CoordinateCase &test = cases[test_index];
         static WinFixture legacy_nodes[MaximumDepth];
         static WinFixture source_nodes[MaximumDepth];
         static uint8_t legacy_snapshots[MaximumDepth][sizeof(WinFixture)];
@@ -223,7 +227,7 @@ bool verify_client_to_screen() {
         int legacy_x = coordinate_from_bits(test.start_x);
         int legacy_y = coordinate_from_bits(test.start_y);
         int *legacy_y_output = test.alias_outputs ? &legacy_x : &legacy_y;
-        original(legacy_nodes[0].object(), &legacy_x, legacy_y_output);
+        (ORIGINAL(legacy_nodes[0].object())->*original)(&legacy_x, legacy_y_output);
 
         build_coordinate_chain(
             source_nodes, source_snapshots, test.nodes, test.depth, vtable);

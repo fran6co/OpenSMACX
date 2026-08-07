@@ -27,7 +27,7 @@
 
 namespace {
 
-using BufferFixture = runtime_oracle::Fixture<Buffer>;
+typedef runtime_oracle::Fixture<Buffer> BufferFixture;
 
 // Neither method dispatches through the Buffer vtable; both dispatch through a
 // DirectDraw surface interface the fixture supplies instead.
@@ -47,7 +47,7 @@ struct SurfaceProbe {
     void *unlock_data;
 };
 
-SurfaceProbe Probe = {};
+SurfaceProbe Probe = {0};
 long ProbeLockResult = 0;
 uint32_t ProbeLockPitch = 0;
 uint32_t ProbeLockData = 0;
@@ -55,7 +55,7 @@ uint32_t ProbeLockData = 0;
 long __stdcall probe_lock(
         void *, void *rect, void *descriptor, uint32_t flags, void *event) {
     ++Probe.lock_calls;
-    auto *bytes = static_cast<uint8_t *>(descriptor);
+    uint8_t *bytes = static_cast<uint8_t *>(descriptor);
     memcpy(&Probe.descriptor_size, bytes, sizeof(Probe.descriptor_size));
     if (rect != nullptr || flags != 1U || event != nullptr) {
         return -1;
@@ -77,7 +77,7 @@ struct FakeSurface {
     void **vtable;
 };
 
-void *SurfaceVtable[(0x80 / sizeof(void *)) + 1] = {};
+void *SurfaceVtable[(0x80 / sizeof(void *)) + 1] = {0};
 FakeSurface Surface = {SurfaceVtable};
 
 void install_surface() {
@@ -112,8 +112,10 @@ bool verify_get_data() {
         {true, 0, 0, 0xFFFFFFFFU, 0, 0xFFFFFFFFU, 0xABCDU},
     };
     install_surface();
-    auto original = reinterpret_cast<OriginalNoArg>(0x005E3373U);
-    for (const GetCase &test : cases) {
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005E3373U);
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const GetCase &test = cases[test_index];
         BufferFixture legacy;
         BufferFixture source;
         uintptr_t vtable[1];
@@ -121,7 +123,11 @@ bool verify_get_data() {
             legacy.storage, source.storage, BufferSpec, vtable);
         const uint32_t surface = test.has_surface
             ? static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&Surface)) : 0U;
-        for (BufferFixture *fixture : {&legacy, &source}) {
+        BufferFixture *fixture_cases[] = {&legacy, &source};
+        for (size_t fixture_index = 0;
+             fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+             ++fixture_index) {
+            BufferFixture *fixture = fixture_cases[fixture_index];
             write_field(*fixture, 0x50, test.field_50);
             write_field(*fixture, 0x54, test.field_54);
             write_field(*fixture, 0x58, surface);
@@ -133,7 +139,7 @@ bool verify_get_data() {
         ProbeLockData = test.data;
 
         Probe = SurfaceProbe();
-        const uint32_t legacy_result = original(legacy.object());
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
         const SurfaceProbe legacy_probe = Probe;
 
         Probe = SurfaceProbe();
@@ -170,8 +176,10 @@ bool verify_free_data() {
         {false, 0x5555U, 0x80000000U, static_cast<int>(0xFFFFFFFFU)},
     };
     install_surface();
-    auto original = reinterpret_cast<OriginalOneArg>(0x005E34A3U);
-    for (const FreeCase &test : cases) {
+    OriginalOneArg original = original_method<OriginalOneArg>(0x005E34A3U);
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const FreeCase &test = cases[test_index];
         BufferFixture legacy;
         BufferFixture source;
         uintptr_t vtable[1];
@@ -179,14 +187,18 @@ bool verify_free_data() {
             legacy.storage, source.storage, BufferSpec, vtable);
         const uint32_t surface = test.has_surface
             ? static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&Surface)) : 0U;
-        for (BufferFixture *fixture : {&legacy, &source}) {
+        BufferFixture *fixture_cases[] = {&legacy, &source};
+        for (size_t fixture_index = 0;
+             fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+             ++fixture_index) {
+            BufferFixture *fixture = fixture_cases[fixture_index];
             write_field(*fixture, 0x50, test.field_50);
             write_field(*fixture, 0x58, surface);
             write_field(*fixture, 0x6C, test.references);
         }
 
         Probe = SurfaceProbe();
-        original(legacy.object(), test.count);
+        (ORIGINAL(legacy.object())->*original)(test.count);
         const SurfaceProbe legacy_probe = Probe;
 
         Probe = SurfaceProbe();
@@ -207,10 +219,12 @@ bool verify_text_line_height() {
         {0, 111, 222}, {5, 111, 222}, {-1, 111, 222},
         {INT_MIN, 111, 222}, {INT_MAX, 111, 1}, {1, INT_MAX, INT_MAX},
     };
-    auto original = reinterpret_cast<OriginalNoArg>(0x005DCAB0U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005DCAB0U);
     Font *const saved_default = *FontDefaultPtr;
     bool passed = true;
-    for (const HeightCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const HeightCase &test = cases[test_index];
         for (int preset_font = 0; preset_font < 2 && passed; ++preset_font) {
             BufferFixture legacy;
             BufferFixture source;
@@ -218,7 +232,7 @@ bool verify_text_line_height() {
             runtime_oracle::initialize_pair(
                 legacy.storage, source.storage, BufferSpec, vtable);
 
-            alignas(Font) uint8_t font_storage[sizeof(Font)] = {};
+            alignas(Font) uint8_t font_storage[sizeof(Font)] = {0};
             int *const fields = reinterpret_cast<int *>(font_storage);
             fields[0x00 / 4] = test.override_value;
             fields[0x0C / 4] = test.line_height;
@@ -232,7 +246,7 @@ bool verify_text_line_height() {
             write_field(legacy, 0x52C, preset_font ? font : 0U);
             write_field(source, 0x52C, preset_font ? font : 0U);
 
-            const uint32_t legacy_result = original(legacy.object());
+            const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
             const uint32_t source_result = static_cast<uint32_t>(
                 source.object()->text_line_height());
             if (legacy_result != source_result
@@ -251,7 +265,9 @@ bool verify_find_font() {
         INT_MIN, -100000, -5, 0, 8, 9, 10, 11, 12, 13, 22, 26, 31, 40, 48,
         49, 10046, 10047, 100000, INT_MAX,
     };
-    for (int size : sizes) {
+    for (size_t size_index = 0;
+         size_index < sizeof(sizes) / sizeof(sizes[0]); ++size_index) {
+        int size = sizes[size_index];
         for (int style = 0; style < 4; ++style) {
             // find_font is cdecl and reads only original-image tables, so both
             // sides observe identical inputs.
@@ -272,7 +288,7 @@ bool verify_close_reset() {
     // release loop's skip path, both mode branches' guards, and the whole
     // field reset, which is where the transcription risk lives. Releases with
     // real allocations belong to the deferred phase.
-    auto original = reinterpret_cast<OriginalNoArg>(0x005D7470U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005D7470U);
     const int saved_mode = *BufferDirectDrawActive;
     bool passed = true;
     for (int direct_draw = 0; direct_draw < 2 && passed; ++direct_draw) {
@@ -282,19 +298,27 @@ bool verify_close_reset() {
             uintptr_t vtable[1];
             runtime_oracle::initialize_pair(
                 legacy.storage, source.storage, BufferSpec, vtable);
-            for (BufferFixture *fixture : {&legacy, &source}) {
+            BufferFixture *fixture_cases[] = {&legacy, &source};
+            for (size_t fixture_index = 0;
+                 fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+                 ++fixture_index) {
+                BufferFixture *fixture = fixture_cases[fixture_index];
                 for (size_t index = 0; index < 20; ++index) {
                     write_field(*fixture, 0x4BC + index * 4, 0);
                 }
                 write_field(*fixture, 0x1C, flag_bit ? 4U : 0U);
-                for (size_t offset : {size_t(0x58), size_t(0x5C), size_t(0x60),
-                                      size_t(0x64), size_t(0x70), size_t(0x74),
-                                      size_t(0x78)}) {
+                size_t offset_cases[] = {size_t(0x58), size_t(0x5C), size_t(0x60),
+                                         size_t(0x64), size_t(0x70), size_t(0x74),
+                                         size_t(0x78)};
+                for (size_t offset_index = 0;
+                     offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+                     ++offset_index) {
+                    size_t offset = offset_cases[offset_index];
                     write_field(*fixture, offset, 0);
                 }
             }
             *BufferDirectDrawActive = direct_draw;
-            original(legacy.object());
+            (ORIGINAL(legacy.object())->*original)();
             source.object()->close();
             if (memcmp(legacy.storage, source.storage,
                        sizeof(legacy.storage)) != 0) {
@@ -309,7 +333,7 @@ bool verify_close_reset() {
 bool verify_destroy() {
     // Same resource-free shape as the close reset, plus the vtable store and
     // the Spot subobject teardown the destructor adds around it.
-    auto original = reinterpret_cast<OriginalNoArg>(0x005D7410U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005D7410U);
     const int saved_mode = *BufferDirectDrawActive;
     bool passed = true;
     for (int direct_draw = 0; direct_draw < 2 && passed; ++direct_draw) {
@@ -318,24 +342,38 @@ bool verify_destroy() {
         uintptr_t vtable[1];
         runtime_oracle::initialize_pair(
             legacy.storage, source.storage, BufferSpec, vtable);
-        for (BufferFixture *fixture : {&legacy, &source}) {
+        BufferFixture *fixture_cases[] = {&legacy, &source};
+        for (size_t fixture_index = 0;
+             fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+             ++fixture_index) {
+            BufferFixture *fixture = fixture_cases[fixture_index];
             for (size_t index = 0; index < 20; ++index) {
                 write_field(*fixture, 0x4BC + index * 4, 0);
             }
             write_field(*fixture, 0x1C, 0);
-            for (size_t offset : {size_t(0x58), size_t(0x5C), size_t(0x60),
-                                  size_t(0x64), size_t(0x70), size_t(0x74),
-                                  size_t(0x78)}) {
+            size_t offset_cases[] = {size_t(0x58), size_t(0x5C), size_t(0x60),
+                                     size_t(0x64), size_t(0x70), size_t(0x74),
+                                     size_t(0x78)};
+            for (size_t offset_index = 0;
+                 offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+                 ++offset_index) {
+                size_t offset = offset_cases[offset_index];
                 write_field(*fixture, offset, 0);
             }
             // The Spot subobject owns resources of its own, so its fields
             // are left empty rather than seeded with sentinel pointers.
-            for (size_t offset : {size_t(0x4B0), size_t(0x4B4), size_t(0x4B8)}) {
+            size_t spot_offset_cases[] = {
+                size_t(0x4B0), size_t(0x4B4), size_t(0x4B8)};
+            for (size_t spot_offset_index = 0;
+                 spot_offset_index
+                     < sizeof(spot_offset_cases) / sizeof(spot_offset_cases[0]);
+                 ++spot_offset_index) {
+                size_t offset = spot_offset_cases[spot_offset_index];
                 write_field(*fixture, offset, 0);
             }
         }
         *BufferDirectDrawActive = direct_draw;
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         source.object()->destroy();
         if (memcmp(legacy.storage, source.storage,
                    sizeof(legacy.storage)) != 0) {
@@ -364,7 +402,7 @@ bool run_buffer_release_suite() {
     if (!suspend_redirect_at(BufferCloseAddress)) {
         return false;
     }
-    auto original = reinterpret_cast<OriginalNoArg>(BufferCloseAddress);
+    OriginalNoArg original = original_method<OriginalNoArg>(BufferCloseAddress);
     const int saved_mode = *BufferDirectDrawActive;
     bool passed = true;
 
@@ -395,16 +433,24 @@ bool run_buffer_release_suite() {
             passed = false;
             break;
         }
-        for (BufferFixture *fixture : {&legacy, &source}) {
+        BufferFixture *fixture_cases[] = {&legacy, &source};
+        for (size_t fixture_index = 0;
+             fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+             ++fixture_index) {
+            BufferFixture *fixture = fixture_cases[fixture_index];
             write_field(*fixture, 0x1C, 0);
-            for (size_t offset : {size_t(0x58), size_t(0x5C), size_t(0x60),
-                                  size_t(0x64), size_t(0x70), size_t(0x74),
-                                  size_t(0x78)}) {
+            size_t offset_cases[] = {size_t(0x58), size_t(0x5C), size_t(0x60),
+                                     size_t(0x64), size_t(0x70), size_t(0x74),
+                                     size_t(0x78)};
+            for (size_t offset_index = 0;
+                 offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+                 ++offset_index) {
+                size_t offset = offset_cases[offset_index];
                 write_field(*fixture, offset, 0);
             }
         }
         *BufferDirectDrawActive = 0;
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         source.object()->close();
         if (memcmp(legacy.storage, source.storage,
                    sizeof(legacy.storage)) != 0) {

@@ -39,7 +39,7 @@ void RadioButton::close() {
     // object's vbtable names different offsets, and hardcoding this class's
     // own sends both calls to the wrong subobject. Doing exactly that passed
     // every unit test here and crashed the game on a null vtable pointer.
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     const int32_t *const vbtable =
         *reinterpret_cast<const int32_t *const *>(self);
     field_C_ = 0;

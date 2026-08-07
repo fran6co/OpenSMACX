@@ -540,7 +540,7 @@ Return Value: n/a
 Status: Complete
 */
 void Popup::on_adjust_button_width() {
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     const int32_t scaled =
         *reinterpret_cast<const int32_t *>(self + 0x30AC) / 10000;
     if (scaled != 1000) {

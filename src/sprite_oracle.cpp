@@ -19,7 +19,7 @@
 
 namespace {
 
-using SpriteFixture = runtime_oracle::Fixture<Sprite>;
+typedef runtime_oracle::Fixture<Sprite> SpriteFixture;
 
 // The constructor never dispatches virtually, so the shared fixture
 // initializer only needs a one-entry vtable and installs no vtable pointers.
@@ -31,7 +31,7 @@ const runtime_oracle::ClassSpec SpriteSpec = {
 typedef uint32_t (OriginalObject::*OriginalNoArg)();
 
 int FreeCalls = 0;
-void *FreeTargets[4] = {};
+void *FreeTargets[4] = {0};
 
 void *recording_free(void *block) {
     // Fixtures never own real allocations, so releases are recorded rather
@@ -47,10 +47,14 @@ bool verify_construct() {
     const int32_t starting_totals[] = {
         0, 1, -1, 0x7FFFFFFF, static_cast<int32_t>(0x80000000U),
     };
-    auto original = reinterpret_cast<OriginalNoArg>(0x005E37E0U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005E37E0U);
     const int saved_total = *SpriteMemoryUsed;
     bool passed = true;
-    for (int32_t starting_total : starting_totals) {
+    for (size_t starting_total_index = 0;
+         starting_total_index
+             < sizeof(starting_totals) / sizeof(starting_totals[0]);
+         ++starting_total_index) {
+        int32_t starting_total = starting_totals[starting_total_index];
         SpriteFixture legacy;
         SpriteFixture source;
         uintptr_t vtable[1];
@@ -58,7 +62,7 @@ bool verify_construct() {
             legacy.storage, source.storage, SpriteSpec, vtable);
 
         *SpriteMemoryUsed = starting_total;
-        const uint32_t legacy_result = original(legacy.object());
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
         const int legacy_total = *SpriteMemoryUsed;
 
         *SpriteMemoryUsed = starting_total;
@@ -109,11 +113,13 @@ bool verify_close() {
         {0, 0x11110000U, 0, 0, 0x80000000U},
         {0, 0, 0x80000000U, 0x80000000U, 1},
     };
-    auto original = reinterpret_cast<OriginalNoArg>(0x005E3820U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005E3820U);
     const int saved_total = *SpriteMemoryUsed;
     func_sprite_free *const saved_free = SpriteFree;
     bool passed = true;
-    for (const CloseCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const CloseCase &test = cases[test_index];
         SpriteFixture legacy;
         SpriteFixture source;
         uintptr_t vtable[1];
@@ -137,7 +143,7 @@ bool verify_close() {
         FreeCalls = 0;
 
         *SpriteMemoryUsed = 0x1000;
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         const int legacy_total = *SpriteMemoryUsed;
 
         FreeCalls = 0;
@@ -180,7 +186,7 @@ bool run_sprite_release_suite() {
     if (!suspend_redirect_at(SpriteCloseAddress)) {
         return false;
     }
-    auto original = reinterpret_cast<OriginalClose>(SpriteCloseAddress);
+    OriginalClose original = original_method<OriginalClose>(SpriteCloseAddress);
     const int saved_total = *SpriteMemoryUsed;
     bool passed = true;
 
@@ -192,7 +198,9 @@ bool run_sprite_release_suite() {
         {0, 0, true, true},
         {0xFFFFFFFFU, 2, true, true},
     };
-    for (const ReleaseCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const ReleaseCase &test = cases[test_index];
         SpriteFixture legacy;
         SpriteFixture source;
         uintptr_t vtable[1];
@@ -232,7 +240,7 @@ bool run_sprite_release_suite() {
         memcpy(source.storage + runtime_oracle::CanarySize + 0x28, &zero, sizeof(zero));
 
         *SpriteMemoryUsed = 0x1000;
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         const int legacy_total = *SpriteMemoryUsed;
 
         *SpriteMemoryUsed = 0x1000;

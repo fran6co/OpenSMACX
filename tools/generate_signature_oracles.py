@@ -496,14 +496,18 @@ def emit(rows: list, earned: set | None = None) -> str:
     w("std::vector<uint8_t> GlobalsAfterOriginal;")
     w("std::vector<uint8_t> GlobalsAfterRecovered;")
     w("")
+    # `&v[0]`, not `v.data()`. std::vector::data() is C++11 and VC6's <vector>
+    # does not have it - `C2039: 'data' : is not a member of vector`. Both
+    # spellings are the address of the same contiguous block, and every vector
+    # reached here has been resized to GlobalsSize first, so [0] exists.
     w("void snapshot(std::vector<uint8_t> &into) {")
     w("    into.resize(GlobalsSize);")
-    w("    std::memcpy(into.data(), reinterpret_cast<const void *>(GlobalsBegin),")
+    w("    std::memcpy(&into[0], reinterpret_cast<const void *>(GlobalsBegin),")
     w("                GlobalsSize);")
     w("}")
     w("")
     w("void restore(const std::vector<uint8_t> &from) {")
-    w("    std::memcpy(reinterpret_cast<void *>(GlobalsBegin), from.data(),")
+    w("    std::memcpy(reinterpret_cast<void *>(GlobalsBegin), &from[0],")
     w("                GlobalsSize);")
     w("}")
     w("")
@@ -515,7 +519,7 @@ def emit(rows: list, earned: set | None = None) -> str:
     w("bool same_globals(const std::vector<uint8_t> &a,")
     w("                  const std::vector<uint8_t> &b, uintptr_t *where) {")
     w("    size_t first = 0;")
-    w("    if (globals_diff::equal(a.data(), b.data(), GlobalsSize, &first)) {")
+    w("    if (globals_diff::equal(&a[0], &b[0], GlobalsSize, &first)) {")
     w("        return true;")
     w("    }")
     w("    *where = GlobalsBegin + first;")
@@ -607,17 +611,33 @@ def emit(rows: list, earned: set | None = None) -> str:
             w("    alignas(16) static uint8_t staged_original[ObjectSize];")
         if args:
             # One row per case, so a failure names the arguments that caused it.
-            # long long, not the argument type: a seed of -1 or INT_MIN is a
-            # narrowing conversion into an unsigned parameter and the build
+            # A 64-bit type, not the argument type: a seed of -1 or INT_MIN is
+            # a narrowing conversion into an unsigned parameter and the build
             # refuses it. The call site casts each value back to its real type.
-            w(f"    static const long long cases[][{len(args)}] = {{")
+            #
+            # `int64_t`, not `long long`. cl 12.00.8168 - the compiler this
+            # tree is matched against, and now the only one that builds it -
+            # predates `long long` and rejects it outright with
+            # `error C2632: 'long' followed by 'long' is illegal`. <cstdint>
+            # is already included above, and `int64_t` is the portable
+            # spelling, so this reads identically on every other compiler.
+            w(f"    static const int64_t cases[][{len(args)}] = {{")
             for index in range(len(ARGUMENT_SEEDS)):
                 values = ", ".join(
                     str(ARGUMENT_SEEDS[(index + position) % len(ARGUMENT_SEEDS)])
                     for position in range(len(args)))
                 w(f"        {{{values}}},")
             w("    };")
-            w("    for (const auto &argv : cases) {")
+            # An index loop, not `for (const auto &argv : cases)`. VC6 has
+            # neither the range-based `for` nor `auto` as a type - it still
+            # reads `auto` as the C storage class - so the range form was 91
+            # syntax errors in this file alone. `cases` is a plain C array
+            # whose extent is known here, so the index form needs no library
+            # support and means exactly the same thing everywhere.
+            w("    for (size_t case_index = 0;")
+            w("         case_index < sizeof(cases) / sizeof(cases[0]);")
+            w("         ++case_index) {")
+            w("        const int64_t *argv = cases[case_index];")
         else:
             w("    {")
         indent = "        "

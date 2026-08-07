@@ -516,7 +516,11 @@ void Buffer::close() {
         }
     }
 
-    for (size_t offset : {size_t(0x78), size_t(0x70)}) {
+    size_t offset_cases[] = {size_t(0x78), size_t(0x70)};
+    for (size_t offset_index = 0;
+         offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+         ++offset_index) {
+        size_t offset = offset_cases[offset_index];
         if (ordered[offset / 4] != 0) {
             DeleteObject(reinterpret_cast<HGDIOBJ>(ordered[offset / 4]));
             ordered[offset / 4] = 0;
@@ -524,7 +528,12 @@ void Buffer::close() {
     }
 
     if (*BufferDirectDrawActive != 0) {
-        for (size_t offset : {size_t(0x58), size_t(0x5C)}) {
+        size_t release_offset_cases[] = {size_t(0x58), size_t(0x5C)};
+        for (size_t release_offset_index = 0;
+             release_offset_index
+                 < sizeof(release_offset_cases) / sizeof(release_offset_cases[0]);
+             ++release_offset_index) {
+            size_t offset = release_offset_cases[release_offset_index];
             void *const object = reinterpret_cast<void *>(ordered[offset / 4]);
             if (object) {
                 reinterpret_cast<func_com_release>(
@@ -704,7 +713,7 @@ int Buffer::sync_to_palette(Palette *palette) {
     // the 256-entry table it guards, so an unchanged palette costs nothing.
     if (field_4A4_ != palette->field_400_) {
         field_4A4_ = palette->field_400_;
-        auto *const table = reinterpret_cast<RGBQUAD *>(dib_);
+        RGBQUAD *const table = reinterpret_cast<RGBQUAD *>(dib_);
         palette->get_rgbquad(table, 0, 0x100);
         const HDC device = get_hdc();
         if (device != nullptr) {
@@ -929,7 +938,7 @@ Status: Complete
 void Buffer::clear_links() {
     spot_.init(0x28);
     field_4AC_ = 0;
-    auto *const links = reinterpret_cast<void **>(field_4BC_);
+    void * *const links = reinterpret_cast<void **>(field_4BC_);
     for (size_t index = 0; index < 20; ++index) {
         if (links[index]) {
             BufferFree(links[index]);

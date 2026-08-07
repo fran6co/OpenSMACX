@@ -38,7 +38,7 @@ void CheckBox::close() {
     // object's vbtable names different offsets, and hardcoding this class's
     // own sends both calls to the wrong subobject. Doing exactly that passed
     // every unit test here and crashed the game on a null vtable pointer.
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     const int32_t *const vbtable =
         *reinterpret_cast<const int32_t *const *>(self);
     field_4_ = 0;
@@ -80,7 +80,7 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::UNK1(int pos) {
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     const int32_t *const vbtable =
         *reinterpret_cast<const int32_t *const *>(self);
     uint32_t *const flags =
@@ -107,7 +107,7 @@ Return Value: the state word masked to the requested bit
 Status: Complete
 */
 int CheckBox::UNK2(int pos) {
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     const int32_t *const vbtable =
         *reinterpret_cast<const int32_t *const *>(self);
     const uint32_t *const flags =
@@ -128,7 +128,7 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::set_state_pos(int pos, int state) {
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     const int32_t *const vbtable =
         *reinterpret_cast<const int32_t *const *>(self);
     uint32_t *const flags =

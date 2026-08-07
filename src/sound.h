@@ -32,7 +32,7 @@ class DLLEXPORT Sound {
   Sound() { ; }
   ~Sound();
   int UNK1(int);
-  void fade(int a1);
+  void fade(unsigned long a1);
   int is_playing();
   int is_looping();
   int get_time();

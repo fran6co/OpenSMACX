@@ -1,0 +1,13 @@
+/*
+ * <cstdint> for cl 12.00.8168. C++11, so VC6 has neither this nor <stdint.h>.
+ *
+ * See stdint.h beside this file for why these are shims on an include path
+ * rather than edits at each `#include` site. The fixed-width types are not
+ * put into namespace std: VC6 leaves the whole C library in the global
+ * namespace (vc6_compat.h documents this as gap 2), so a `std::uint32_t`
+ * here would be the only one in the tree that resolved, and code written
+ * against it would stop compiling on every other compiler.
+ */
+#pragma once
+
+#include "vc6_compat.h"

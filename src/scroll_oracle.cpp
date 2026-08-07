@@ -23,8 +23,8 @@ namespace {
 
 constexpr size_t VtableEntries = 0xFC / sizeof(uintptr_t);
 
-using ScrollFixture = runtime_oracle::Fixture<Scroll>;
-using RedrawTrace = runtime_oracle::Trace;
+typedef runtime_oracle::Fixture<Scroll> ScrollFixture;
+typedef runtime_oracle::Trace RedrawTrace;
 
 const size_t ScrollVtableRefOffsets[] = {0, 0xAAC, 0x15F8};
 const runtime_oracle::ClassSpec ScrollSpec = {
@@ -103,7 +103,7 @@ struct ScrollCloseButtonTrace {
 };
 
 Scroll *ScrollCloseTraceBase = nullptr;
-ScrollCloseButtonTrace ScrollCloseButtons = {};
+ScrollCloseButtonTrace ScrollCloseButtons = {0};
 
 uint32_t __fastcall trace_scroll_button_close(void *self) {
     const uint32_t call = ScrollCloseButtons.calls++;
@@ -176,9 +176,9 @@ bool verify_close() {
     }
     dynamic[14] = 0xDEADC0DEU;
 
-    uintptr_t win_vtable[3] = {};
-    uintptr_t left_vtable[0x16C / sizeof(uintptr_t)] = {};
-    uintptr_t right_vtable[0x16C / sizeof(uintptr_t)] = {};
+    uintptr_t win_vtable[3] = {0};
+    uintptr_t left_vtable[0x16C / sizeof(uintptr_t)] = {0};
+    uintptr_t right_vtable[0x16C / sizeof(uintptr_t)] = {0};
     win_vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
     left_vtable[0x168 / sizeof(uintptr_t)] =
         reinterpret_cast<uintptr_t>(&trace_scroll_button_close);
@@ -191,19 +191,19 @@ bool verify_close() {
         legacy.storage, source.storage, ScrollCloseSpec, win_vtable);
     prepare_close_fixture(legacy, win_vtable, left_vtable, right_vtable);
     prepare_close_fixture(source, win_vtable, left_vtable, right_vtable);
-    auto original = reinterpret_cast<OriginalNoArg>(0x00605370U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x00605370U);
 
     ScrollCloseTraceBase = legacy.object();
-    ScrollCloseButtons = ScrollCloseButtonTrace{};
+    ScrollCloseButtons = ScrollCloseButtonTrace();
     runtime_oracle::begin_trace(
         legacy.object(), ScrollCloseTraceOffsets,
         ARRAYSIZE(ScrollCloseTraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     const ScrollCloseButtonTrace legacy_buttons = ScrollCloseButtons;
 
     ScrollCloseTraceBase = source.object();
-    ScrollCloseButtons = ScrollCloseButtonTrace{};
+    ScrollCloseButtons = ScrollCloseButtonTrace();
     runtime_oracle::begin_trace(
         source.object(), ScrollCloseTraceOffsets,
         ARRAYSIZE(ScrollCloseTraceOffsets));
@@ -239,7 +239,7 @@ bool verify_close() {
 }
 
 bool verify_init_wrappers() {
-    auto original_rect = reinterpret_cast<OriginalRectInit>(0x00605840U);
+    OriginalRectInit original_rect = original_method<OriginalRectInit>(0x00605840U);
     const uint32_t sentinel = 0x2468ACE0U;
     const int saved_nonclient = *ScrollNonClientInit;
     bool passed = true;
@@ -257,9 +257,8 @@ bool verify_init_wrappers() {
             ? reinterpret_cast<Win *>(0x45454545U) : nullptr;
 
         *ScrollNonClientInit = int_from_bits(sentinel);
-        const uint32_t legacy_result = original_rect(
-            legacy.object(), legacy_rect_arg, parent,
-            int_from_bits(0x13579BDFU), int_from_bits(0xFEDCBA98U));
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original_rect)(
+            legacy_rect_arg, parent, int_from_bits(0x13579BDFU), int_from_bits(0xFEDCBA98U));
         const int legacy_nonclient = *ScrollNonClientInit;
         *ScrollNonClientInit = int_from_bits(sentinel);
         const uint32_t source_result = source.object()->init(
@@ -284,16 +283,17 @@ bool verify_init_wrappers() {
         {0xFFFFFFFFU, nullptr},
     };
     for (size_t kind = 0; kind < ARRAYSIZE(addresses) && passed; ++kind) {
-        auto original = reinterpret_cast<OriginalAxisInit>(addresses[kind]);
-        for (const InvalidAxisCase &test : cases) {
+        OriginalAxisInit original = original_method<OriginalAxisInit>(addresses[kind]);
+        for (size_t test_index = 0;
+             test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+            const InvalidAxisCase &test = cases[test_index];
             ScrollFixture legacy;
             ScrollFixture source;
             uintptr_t vtable[VtableEntries];
             initialize_pair(legacy, source, vtable);
             *ScrollNonClientInit = int_from_bits(sentinel);
-            const uint32_t legacy_result = original(
-                legacy.object(), int_from_bits(0x80000000U),
-                int_from_bits(0x7FFFFFFFU), int_from_bits(test.length),
+            const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+                int_from_bits(0x80000000U), int_from_bits(0x7FFFFFFFU), int_from_bits(test.length),
                 test.parent, int_from_bits(0x13579BDFU));
             const int legacy_nonclient = *ScrollNonClientInit;
 
@@ -349,15 +349,17 @@ bool verify_range() {
         {0x7FFFFFFFU, 0x80000000U},
     };
     const size_t snapshots[] = {0xA20, 0xA24, 0xA28, 0xA2C};
-    auto original = reinterpret_cast<OriginalTwoArgs>(0x006059B0U);
-    for (const auto &test : cases) {
+    OriginalTwoArgs original = original_method<OriginalTwoArgs>(0x006059B0U);
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const uint32_t (&test)[2] = cases[test_index];
         ScrollFixture legacy;
         ScrollFixture source;
         uintptr_t vtable[VtableEntries];
         initialize_pair(legacy, source, vtable);
         begin_trace(legacy.object(), snapshots, ARRAYSIZE(snapshots));
-        const uint32_t legacy_result = original(
-            legacy.object(), int_from_bits(test[0]), int_from_bits(test[1]));
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+            int_from_bits(test[0]), int_from_bits(test[1]));
         const RedrawTrace legacy_trace = runtime_oracle::current_trace();
         begin_trace(source.object(), snapshots, ARRAYSIZE(snapshots));
         const uint32_t source_result = source.object()->set_range(
@@ -382,15 +384,17 @@ bool verify_styles() {
     };
     const uint32_t values[] = {0U, 0x80000000U, 0xFFFFFFFFU};
     for (size_t style = 0; style < ARRAYSIZE(addresses); ++style) {
-        auto original = reinterpret_cast<OriginalOneArg>(addresses[style]);
-        for (uint32_t value : values) {
+        OriginalOneArg original = original_method<OriginalOneArg>(addresses[style]);
+        for (size_t value_index = 0;
+             value_index < sizeof(values) / sizeof(values[0]); ++value_index) {
+            uint32_t value = values[value_index];
             ScrollFixture legacy;
             ScrollFixture source;
             uintptr_t vtable[VtableEntries];
             initialize_pair(legacy, source, vtable);
             begin_trace(legacy.object(), snapshots[style], 3);
-            const uint32_t legacy_result = original(
-                legacy.object(), int_from_bits(value));
+            const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+                int_from_bits(value));
             const RedrawTrace legacy_trace = runtime_oracle::current_trace();
             begin_trace(source.object(), snapshots[style], 3);
             uint32_t source_result;
@@ -424,10 +428,15 @@ bool verify_styles() {
 bool verify_thumb_resetters() {
     const uint32_t colors[] = {0xFFFFFFFFU, 0U, 0x80000000U};
     const uint32_t thicknesses[] = {0U, 1U, 0x80000000U, 0xFFFFFFFFU};
-    auto original_bar = reinterpret_cast<OriginalOneArg>(0x00605B80U);
-    auto original_thumb = reinterpret_cast<OriginalNoArg>(0x00606EA0U);
-    for (uint32_t color : colors) {
-        for (uint32_t thickness : thicknesses) {
+    OriginalOneArg original_bar = original_method<OriginalOneArg>(0x00605B80U);
+    OriginalNoArg original_thumb = original_method<OriginalNoArg>(0x00606EA0U);
+    for (size_t color_index = 0;
+         color_index < sizeof(colors) / sizeof(colors[0]); ++color_index) {
+        uint32_t color = colors[color_index];
+        for (size_t thickness_index = 0;
+             thickness_index < sizeof(thicknesses) / sizeof(thicknesses[0]);
+             ++thickness_index) {
+            uint32_t thickness = thicknesses[thickness_index];
             for (int set_bar = 0; set_bar < 2; ++set_bar) {
                 ScrollFixture legacy;
                 ScrollFixture source;
@@ -438,8 +447,8 @@ bool verify_thumb_resetters() {
                 memcpy(source.storage, legacy.storage, sizeof(source.storage));
                 begin_trace(legacy.object(), nullptr, 0);
                 const uint32_t legacy_result = set_bar
-                    ? original_bar(legacy.object(), int_from_bits(thickness))
-                    : original_thumb(legacy.object());
+                    ? (ORIGINAL(legacy.object())->*original_bar)(int_from_bits(thickness))
+                    : (ORIGINAL(legacy.object())->*original_thumb)();
                 const RedrawTrace legacy_trace = runtime_oracle::current_trace();
                 begin_trace(source.object(), nullptr, 0);
                 const uint32_t source_result = set_bar
@@ -473,8 +482,11 @@ bool verify_vertical_sprites() {
         reinterpret_cast<Sprite *>(0x10101010U),
     };
     for (size_t direction = 0; direction < ARRAYSIZE(addresses); ++direction) {
-        auto original = reinterpret_cast<OriginalSprites>(addresses[direction]);
-        for (const Geometry &geometry : geometries) {
+        OriginalSprites original = original_method<OriginalSprites>(addresses[direction]);
+        for (size_t geometry_index = 0;
+             geometry_index < sizeof(geometries) / sizeof(geometries[0]);
+             ++geometry_index) {
+            const Geometry &geometry = geometries[geometry_index];
             ScrollFixture legacy;
             ScrollFixture source;
             uintptr_t vtable[VtableEntries];
@@ -483,8 +495,8 @@ bool verify_vertical_sprites() {
             write_object(legacy, 0x4C8, geometry.stored_height);
             memcpy(source.storage, legacy.storage, sizeof(source.storage));
             begin_trace(legacy.object(), nullptr, 0);
-            const uint32_t legacy_result = original(
-                legacy.object(), sprites[0], sprites[1], sprites[2]);
+            const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+                sprites[0], sprites[1], sprites[2]);
             const RedrawTrace legacy_trace = runtime_oracle::current_trace();
             begin_trace(source.object(), nullptr, 0);
             const uint32_t source_result = direction == 0
@@ -525,10 +537,12 @@ bool verify_position() {
         {0x45454545U, 100U, 0U, 0U, 100U},
     };
     const size_t snapshots[] = {0xA20, 0xA24, 0xA28, 0xA2C};
-    auto original = reinterpret_cast<OriginalOneArg>(0x00605D20U);
+    OriginalOneArg original = original_method<OriginalOneArg>(0x00605D20U);
     ::Win *const saved_current = *ScrollCurrentWin;
     bool passed = true;
-    for (const PositionCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const PositionCase &test = cases[test_index];
         ScrollFixture legacy;
         ScrollFixture source;
         uintptr_t vtable[VtableEntries];
@@ -541,8 +555,8 @@ bool verify_position() {
 
         *ScrollCurrentWin = reinterpret_cast<::Win *>(0x24682468U);
         begin_trace(legacy.object(), snapshots, ARRAYSIZE(snapshots));
-        const uint32_t legacy_result = original(
-            legacy.object(), int_from_bits(test.input));
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+            int_from_bits(test.input));
         const RedrawTrace legacy_trace = runtime_oracle::current_trace();
         ::Win *const legacy_current = *ScrollCurrentWin;
 

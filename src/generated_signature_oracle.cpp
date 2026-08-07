@@ -95,12 +95,12 @@ std::vector<uint8_t> GlobalsAfterRecovered;
 
 void snapshot(std::vector<uint8_t> &into) {
     into.resize(GlobalsSize);
-    std::memcpy(into.data(), reinterpret_cast<const void *>(GlobalsBegin),
+    std::memcpy(&into[0], reinterpret_cast<const void *>(GlobalsBegin),
                 GlobalsSize);
 }
 
 void restore(const std::vector<uint8_t> &from) {
-    std::memcpy(reinterpret_cast<void *>(GlobalsBegin), from.data(),
+    std::memcpy(reinterpret_cast<void *>(GlobalsBegin), &from[0],
                 GlobalsSize);
 }
 
@@ -112,7 +112,7 @@ void restore(const std::vector<uint8_t> &from) {
 bool same_globals(const std::vector<uint8_t> &a,
                   const std::vector<uint8_t> &b, uintptr_t *where) {
     size_t first = 0;
-    if (globals_diff::equal(a.data(), b.data(), GlobalsSize, &first)) {
+    if (globals_diff::equal(&a[0], &b[0], GlobalsSize, &first)) {
         return true;
     }
     *where = GlobalsBegin + first;
@@ -160,7 +160,7 @@ static bool verify_StringStruct_seek_id_00401560() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -170,7 +170,10 @@ static bool verify_StringStruct_seek_id_00401560() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -710,7 +713,7 @@ static bool verify_Datalink_UNK1_0042a020() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -720,7 +723,10 @@ static bool verify_Datalink_UNK1_0042a020() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -1183,7 +1189,7 @@ static bool verify_MapWin_on_left_click_0046eba0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -1193,7 +1199,10 @@ static bool verify_MapWin_on_left_click_0046eba0() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -1319,7 +1328,7 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -1329,7 +1338,10 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -1833,7 +1845,7 @@ static bool verify_ProdPicker_on_scrolling_00493e70() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -1843,7 +1855,10 @@ static bool verify_ProdPicker_on_scrolling_00493e70() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -2095,7 +2110,7 @@ static bool verify_StatusWin_set_loc_004b9f90() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -2105,7 +2120,10 @@ static bool verify_StatusWin_set_loc_004b9f90() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -2357,7 +2375,7 @@ static bool verify_TutWin_UNK3_004bddd0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -2367,7 +2385,10 @@ static bool verify_TutWin_UNK3_004bddd0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -2628,7 +2649,7 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -2638,7 +2659,10 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -2908,7 +2932,7 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -2918,7 +2942,10 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -3053,7 +3080,7 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -3063,7 +3090,10 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -3198,7 +3228,7 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -3208,7 +3238,10 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -3343,7 +3376,7 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -3353,7 +3386,10 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -3605,7 +3641,7 @@ static bool verify_Console_focus_005108a0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][3] = {
+    static const int64_t cases[][3] = {
         {0, 1, -1},
         {1, -1, 2},
         {-1, 2, 7},
@@ -3615,7 +3651,10 @@ static bool verify_Console_focus_005108a0() {
         {-2147483648, 1431655765, 0},
         {1431655765, 0, 1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -3741,7 +3780,7 @@ static bool verify_Console_update_data_00514880() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -3751,7 +3790,10 @@ static bool verify_Console_update_data_00514880() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -4349,7 +4391,7 @@ static bool verify_SquareLock_unlock_0058fd90() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -4359,7 +4401,10 @@ static bool verify_SquareLock_unlock_0058fd90() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -4611,7 +4656,7 @@ static bool verify_Lock_unlock_00590170() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -4621,7 +4666,10 @@ static bool verify_Lock_unlock_00590170() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -4873,7 +4921,7 @@ static bool verify_Lock_check_global_2_00590240() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -4883,7 +4931,10 @@ static bool verify_Lock_check_global_2_00590240() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -5018,7 +5069,7 @@ static bool verify_Lock_global_lock_005902c0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -5028,7 +5079,10 @@ static bool verify_Lock_global_lock_005902c0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -5163,7 +5217,7 @@ static bool verify_Lock_lock_00590300() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][7] = {
+    static const int64_t cases[][7] = {
         {0, 1, -1, 2, 7, 2147483647, -2147483648},
         {1, -1, 2, 7, 2147483647, -2147483648, 1431655765},
         {-1, 2, 7, 2147483647, -2147483648, 1431655765, 0},
@@ -5173,7 +5227,10 @@ static bool verify_Lock_lock_00590300() {
         {-2147483648, 1431655765, 0, 1, -1, 2, 7},
         {1431655765, 0, 1, -1, 2, 7, 2147483647},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -5308,7 +5365,7 @@ static bool verify_Lock_add_lock_00590470() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -5318,7 +5375,10 @@ static bool verify_Lock_add_lock_00590470() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -5588,7 +5648,7 @@ static bool verify_GraphicWin_fill_005d5250() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -5598,7 +5658,10 @@ static bool verify_GraphicWin_fill_005d5250() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -5724,7 +5787,7 @@ static bool verify_GraphicWin_fill_005d5440() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][5] = {
+    static const int64_t cases[][5] = {
         {0, 1, -1, 2, 7},
         {1, -1, 2, 7, 2147483647},
         {-1, 2, 7, 2147483647, -2147483648},
@@ -5734,7 +5797,10 @@ static bool verify_GraphicWin_fill_005d5440() {
         {-2147483648, 1431655765, 0, 1, -1},
         {1431655765, 0, 1, -1, 2},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -5995,7 +6061,7 @@ static bool verify_Buffer_set_text_color_005dacb0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -6005,7 +6071,10 @@ static bool verify_Buffer_set_text_color_005dacb0() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -6131,7 +6200,7 @@ static bool verify_Buffer_set_text_color2_005dace0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -6141,7 +6210,10 @@ static bool verify_Buffer_set_text_color2_005dace0() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -6267,7 +6339,7 @@ static bool verify_Buffer_set_text_color3_005dad10() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -6277,7 +6349,10 @@ static bool verify_Buffer_set_text_color3_005dad10() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -6403,7 +6478,7 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -6413,7 +6488,10 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -7070,7 +7148,7 @@ static bool verify_Buffer_free_data_005e34a3() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -7080,7 +7158,10 @@ static bool verify_Buffer_free_data_005e34a3() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -7341,7 +7422,7 @@ static bool verify_Buffer_release_hdc_005e3563() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -7351,7 +7432,10 @@ static bool verify_Buffer_release_hdc_005e3563() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -7477,7 +7561,7 @@ static bool verify_Win_set_cursor_005ec7c0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -7487,7 +7571,10 @@ static bool verify_Win_set_cursor_005ec7c0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -7622,7 +7709,7 @@ static bool verify_Win_UNK3_005ece80() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -7632,7 +7719,10 @@ static bool verify_Win_UNK3_005ece80() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -7767,7 +7857,7 @@ static bool verify_Win_move_005ed7d0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -7777,7 +7867,10 @@ static bool verify_Win_move_005ed7d0() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -7912,7 +8005,7 @@ static bool verify_Win_set_vert_pos_005ee030() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -7922,7 +8015,10 @@ static bool verify_Win_set_vert_pos_005ee030() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -8183,7 +8279,7 @@ static bool verify_Win_set_horz_pos_005ee070() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -8193,7 +8289,10 @@ static bool verify_Win_set_horz_pos_005ee070() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -8454,7 +8553,7 @@ static bool verify_Win_set_vert_range_005ee0b0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -8464,7 +8563,10 @@ static bool verify_Win_set_vert_range_005ee0b0() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -8590,7 +8692,7 @@ static bool verify_Win_set_horz_range_005ee0d0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -8600,7 +8702,10 @@ static bool verify_Win_set_horz_range_005ee0d0() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -8726,7 +8831,7 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -8736,7 +8841,10 @@ static bool verify_Win_set_vert_paging_005ee0f0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -8862,7 +8970,7 @@ static bool verify_Win_set_horz_paging_005ee110() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -8872,7 +8980,10 @@ static bool verify_Win_set_horz_paging_005ee110() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -8998,7 +9109,7 @@ static bool verify_Win_UNK8_005ee130() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -9008,7 +9119,10 @@ static bool verify_Win_UNK8_005ee130() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -9134,7 +9248,7 @@ static bool verify_Win_UNK9_005ee160() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -9144,7 +9258,10 @@ static bool verify_Win_UNK9_005ee160() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -9666,7 +9783,7 @@ static bool verify_PullDown_hide_item_005f8cb0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -9676,7 +9793,10 @@ static bool verify_PullDown_hide_item_005f8cb0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -9811,7 +9931,7 @@ static bool verify_PullDown_show_item_005f8d20() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -9821,7 +9941,10 @@ static bool verify_PullDown_show_item_005f8d20() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -9956,7 +10079,7 @@ static bool verify_PullDown_disable_item_005f8d90() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -9966,7 +10089,10 @@ static bool verify_PullDown_disable_item_005f8d90() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -10101,7 +10227,7 @@ static bool verify_PullDown_enable_item_005f8df0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -10111,7 +10237,10 @@ static bool verify_PullDown_enable_item_005f8df0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -10246,7 +10375,7 @@ static bool verify_PullDown_check_item_005f9040() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -10256,7 +10385,10 @@ static bool verify_PullDown_check_item_005f9040() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -10391,7 +10523,7 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -10401,7 +10533,10 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -10536,7 +10671,7 @@ static bool verify_PullDown_id_to_index_005f9d00() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -10546,7 +10681,10 @@ static bool verify_PullDown_id_to_index_005f9d00() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -10816,7 +10954,7 @@ static bool verify_Menu_UNK3_005fb1d0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -10826,7 +10964,10 @@ static bool verify_Menu_UNK3_005fb1d0() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -10961,7 +11102,7 @@ static bool verify_Menu_UNK6_005fb2a0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -10971,7 +11112,10 @@ static bool verify_Menu_UNK6_005fb2a0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -11106,7 +11250,7 @@ static bool verify_Menu_hide_menu_item_005fb300() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -11116,7 +11260,10 @@ static bool verify_Menu_hide_menu_item_005fb300() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -11251,7 +11398,7 @@ static bool verify_Menu_UNK7_005fb360() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -11261,7 +11408,10 @@ static bool verify_Menu_UNK7_005fb360() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -11396,7 +11546,7 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -11406,7 +11556,10 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -11541,7 +11694,7 @@ static bool verify_Menu_UNK8_005fb420() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -11551,7 +11704,10 @@ static bool verify_Menu_UNK8_005fb420() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -11686,7 +11842,7 @@ static bool verify_Menu_disable_menu_item_005fb480() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -11696,7 +11852,10 @@ static bool verify_Menu_disable_menu_item_005fb480() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -11831,7 +11990,7 @@ static bool verify_Menu_UNK9_005fb4e0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -11841,7 +12000,10 @@ static bool verify_Menu_UNK9_005fb4e0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -11976,7 +12138,7 @@ static bool verify_Menu_enable_menu_item_005fb540() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -11986,7 +12148,10 @@ static bool verify_Menu_enable_menu_item_005fb540() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -12121,7 +12286,7 @@ static bool verify_Menu_check_menu_item_005fb760() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -12131,7 +12296,10 @@ static bool verify_Menu_check_menu_item_005fb760() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -12266,7 +12434,7 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -12276,7 +12444,10 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -12411,7 +12582,7 @@ static bool verify_Menu_id_to_index_005fb990() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -12421,7 +12592,10 @@ static bool verify_Menu_id_to_index_005fb990() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -12792,7 +12966,7 @@ static bool verify_Palette_get_pos_005fed10() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -12802,7 +12976,10 @@ static bool verify_Palette_get_pos_005fed10() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -12937,7 +13114,7 @@ static bool verify_BasePop_set_width_00601b20() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -12947,7 +13124,10 @@ static bool verify_BasePop_set_width_00601b20() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -13073,7 +13253,7 @@ static bool verify_BasePop_set_loc_00601b80() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -13083,7 +13263,10 @@ static bool verify_BasePop_set_loc_00601b80() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -13209,7 +13392,7 @@ static bool verify_BasePop_write_check_00601bb0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -13219,7 +13402,10 @@ static bool verify_BasePop_write_check_00601bb0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -13471,7 +13657,7 @@ static bool verify_BasePop_on_key_click_00604490() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -13481,7 +13667,10 @@ static bool verify_BasePop_on_key_click_00604490() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -13616,7 +13805,7 @@ static bool verify_BasePop_on_key_up_006044b0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -13626,7 +13815,10 @@ static bool verify_BasePop_on_key_up_006044b0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -13761,7 +13953,7 @@ static bool verify_BasePop_set_string_color_00604730() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -13771,7 +13963,10 @@ static bool verify_BasePop_set_string_color_00604730() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -13897,7 +14092,7 @@ static bool verify_BasePop_set_string_color2_00604760() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -13907,7 +14102,10 @@ static bool verify_BasePop_set_string_color2_00604760() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -14033,7 +14231,7 @@ static bool verify_BasePop_set_string_color3_00604790() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -14043,7 +14241,10 @@ static bool verify_BasePop_set_string_color3_00604790() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -14169,7 +14370,7 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -14179,7 +14380,10 @@ static bool verify_BasePop_set_string_color_hyper_006047c0() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -14305,7 +14509,7 @@ static bool verify_BasePop_UNK3_00605180() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -14315,7 +14519,10 @@ static bool verify_BasePop_UNK3_00605180() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -14441,7 +14648,7 @@ static bool verify_BasePop_UNK4_006051a0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -14451,7 +14658,10 @@ static bool verify_BasePop_UNK4_006051a0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -14577,7 +14787,7 @@ static bool verify_Scroll_set_range_006059b0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -14587,7 +14797,10 @@ static bool verify_Scroll_set_range_006059b0() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -14713,7 +14926,7 @@ static bool verify_Scroll_set_button_color_00605a10() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -14723,7 +14936,10 @@ static bool verify_Scroll_set_button_color_00605a10() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -14849,7 +15065,7 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -14859,7 +15075,10 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -14985,7 +15204,7 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -14995,7 +15214,10 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -15121,7 +15343,7 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -15131,7 +15353,10 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -15257,7 +15482,7 @@ static bool verify_Scroll_set_border_color_00605b10() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -15267,7 +15492,10 @@ static bool verify_Scroll_set_border_color_00605b10() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -15393,7 +15621,7 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -15403,7 +15631,10 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -15529,7 +15760,7 @@ static bool verify_Scroll_set_pos_00605d20() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -15539,7 +15770,10 @@ static bool verify_Scroll_set_pos_00605d20() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -15791,7 +16025,7 @@ static bool verify_BaseButton_set_text_color_00607360() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -15801,7 +16035,10 @@ static bool verify_BaseButton_set_text_color_00607360() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -15927,7 +16164,7 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -15937,7 +16174,10 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -16063,7 +16303,7 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -16073,7 +16313,10 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -16199,7 +16442,7 @@ static bool verify_BaseButton_set_00607c80() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -16209,7 +16452,10 @@ static bool verify_BaseButton_set_00607c80() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -16335,7 +16581,7 @@ static bool verify_Dialog_set_selected_id_006099d0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -16345,7 +16591,10 @@ static bool verify_Dialog_set_selected_id_006099d0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -16606,7 +16855,7 @@ static bool verify_Dialog_id_to_pos_00609af0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -16616,7 +16865,10 @@ static bool verify_Dialog_id_to_pos_00609af0() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -16751,7 +17003,7 @@ static bool verify_Dialog_pos_to_id_00609b50() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][1] = {
+    static const int64_t cases[][1] = {
         {0},
         {1},
         {-1},
@@ -16761,7 +17013,10 @@ static bool verify_Dialog_pos_to_id_00609b50() {
         {-2147483648},
         {1431655765},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -16896,7 +17151,7 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -16906,7 +17161,10 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -17032,7 +17290,7 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -17042,7 +17300,10 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -17168,7 +17429,7 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][4] = {
+    static const int64_t cases[][4] = {
         {0, 1, -1, 2},
         {1, -1, 2, 7},
         {-1, 2, 7, 2147483647},
@@ -17178,7 +17439,10 @@ static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
         {-2147483648, 1431655765, 0, 1},
         {1431655765, 0, 1, -1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -17430,7 +17694,7 @@ static bool verify_Caviar_UNK10_00618320() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][3] = {
+    static const int64_t cases[][3] = {
         {0, 1, -1},
         {1, -1, 2},
         {-1, 2, 7},
@@ -17440,7 +17704,10 @@ static bool verify_Caviar_UNK10_00618320() {
         {-2147483648, 1431655765, 0},
         {1431655765, 0, 1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -17566,7 +17833,7 @@ static bool verify_Caviar_UNK11_00618340() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][3] = {
+    static const int64_t cases[][3] = {
         {0, 1, -1},
         {1, -1, 2},
         {-1, 2, 7},
@@ -17576,7 +17843,10 @@ static bool verify_Caviar_UNK11_00618340() {
         {-2147483648, 1431655765, 0},
         {1431655765, 0, 1},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
@@ -17702,7 +17972,7 @@ static bool verify_ButtonGroup_set_0062b870() {
     alignas(16) static uint8_t staged[ObjectSize];
     alignas(16) static uint8_t staged_seed[ObjectSize];
     alignas(16) static uint8_t staged_original[ObjectSize];
-    static const long long cases[][2] = {
+    static const int64_t cases[][2] = {
         {0, 1},
         {1, -1},
         {-1, 2},
@@ -17712,7 +17982,10 @@ static bool verify_ButtonGroup_set_0062b870() {
         {-2147483648, 1431655765},
         {1431655765, 0},
     };
-    for (const auto &argv : cases) {
+    for (size_t case_index = 0;
+         case_index < sizeof(cases) / sizeof(cases[0]);
+         ++case_index) {
+        const int64_t *argv = cases[case_index];
         std::memset(staged_seed, 0, ObjectSize);
         std::memcpy(staged, staged_seed, ObjectSize);
         snapshot(before);
