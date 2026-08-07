@@ -59,7 +59,14 @@ MEMBER = re.compile(
 # as opposed to a METHOD taking one, which is `void init(void (*cb)(int));`
 # and has an identifier before the first paren.
 FUNCTION_POINTER_MEMBER = re.compile(
-    r"^\s*(?:const\s+)?[\w:]+\s*\(\s*(?:__\w+\s+)?\*+\s*\w+\s*\)\s*\([^;]*\)\s*;")
+    r"^\s*(?:const\s+)?[\w:]+\s*\(\s*(?:__\w+\s+)?\*+\s*(?P<name>\w+)\s*\)"
+    r"\s*\([^;]*\)\s*;")
+# `typedef int32_t Dib;` inside a class body. A nested alias for a type the
+# parser already knows is layout it can account for exactly, and refusing it
+# cost Buffer - whose `Dib dib_[256];` is 1 KB of int32_t - and through
+# Buffer, GraphicWin and the eight classes holding one by value.
+NESTED_TYPEDEF = re.compile(
+    r"^\s*typedef\s+(?P<type>[A-Za-z_]\w*)\s+(?P<name>[A-Za-z_]\w*)\s*;")
 # Anything in a class body that means "stop, this is not a plain layout".
 REFUSE = re.compile(r"\b(virtual|union|enum|typedef|template|operator|friend|"
                     r"static|:\s*\d+\s*;)\b")
@@ -92,7 +99,31 @@ WINDOWS_TYPEDEF = frozenset({
     "HRESULT", "LPSTR", "LPCSTR", "PVOID", "LPVOID", "LPCVOID", "LPBYTE",
     "LPWORD", "LPGUID", "PEXCEPTION_RECORD", "FARPROC",
     "HANDLE", "HWND", "HINSTANCE", "HIC", "LPDIRECTDRAW", "HDC",
+    # GDI object handles, pointer-width exactly like every other H* above.
+    # Their absence refused Font (HFONT) and Buffer (HRGN, HBITMAP) - nothing
+    # about those layouts was unknown, three names were simply missing here.
+    "HFONT", "HRGN", "HBITMAP", "HPALETTE", "HBRUSH", "HPEN", "HMENU",
 })
+
+
+# Win32 STRUCTS held by value. Unlike everything in WINDOWS_TYPEDEF these
+# cannot be spelled as a primitive - a RECT is sixteen bytes of four LONGs and
+# `typedef long RECT;` would be four bytes and wrong - so the emitter writes
+# the definition instead. The members are the Win32 ones verbatim, and the
+# mangling agrees: the catalogue spells it `PAURECT@@`, a pointer to a STRUCT
+# called RECT, which is what `struct RECT { ... };` emits.
+#
+# RECT was the single most expensive omission in this file. Holding one by
+# value refused Win, Buffer, Scroll and MainInterface outright; Buffer then
+# refused GraphicWin and Flic; GraphicWin refused the eight classes that hold
+# it as `virtual_base_`; and Scroll refused Popup and StringBox. One
+# undeclared sixteen-byte struct, seventeen classes.
+WINDOWS_STRUCT = {
+    "RECT": (("long", "left", ""), ("long", "top", ""),
+             ("long", "right", ""), ("long", "bottom", "")),
+    "POINT": (("long", "x", ""), ("long", "y", "")),
+    "SIZE": (("long", "cx", ""), ("long", "cy", "")),
+}
 
 
 def _needs_definition(name: str) -> bool:
@@ -103,6 +134,8 @@ def _needs_definition(name: str) -> bool:
 def _extractable(name: str, seen=()) -> bool:
     """Can this type be supplied as a full definition, so it may be held by
     value? Recursive, and cycle-safe: a class cannot contain itself."""
+    if name in WINDOWS_STRUCT:
+        return True
     if name in seen:
         return False
     declared = _declared_classes().get(name)
@@ -177,6 +210,14 @@ def members_of(body: str, seen=()):
     member missed is a member whose absence moves every offset after it.
     """
     found = []
+    # Nested aliases first: `typedef int32_t Dib;` has to be known before the
+    # member that uses it is read, and a class body may declare it anywhere.
+    alias = {}
+    for stripped in statements(body):
+        hit = NESTED_TYPEDEF.match(stripped)
+        if hit and (hit.group("type") in SCALAR
+                    or hit.group("type") in WINDOWS_TYPEDEF):
+            alias[hit.group("name")] = hit.group("type")
     for stripped in statements(body):
         if not stripped or stripped.startswith(("//", "/*", "*", "#")):
             continue
@@ -193,14 +234,16 @@ def members_of(body: str, seen=()):
             if re.search(r"\bvirtual\b|\bunion\b", stripped):
                 return None
             continue
-        if FUNCTION_POINTER_MEMBER.match(stripped):
-            # `void (*callback)(int);` IS storage, and it contains a `(`, so
-            # the method test below would skip it and every offset after it
-            # would move. `sizeof` catches that only when padding does not
-            # absorb the four bytes, so it is refused explicitly rather than
-            # left to a check that might not fire. No pinned class has one
-            # today; this is here so the next one cannot pass quietly.
-            return None
+        pointer_member = FUNCTION_POINTER_MEMBER.match(stripped)
+        if pointer_member:
+            # A function pointer IS storage, and on this target it is four
+            # bytes like any other. It is spelled `void *` here because the
+            # emitter writes members as `<type> <name>;` and a function
+            # pointer does not fit that shape - the LAYOUT is what this file
+            # answers for, and four bytes is four bytes. A body that actually
+            # calls one casts it, which is what src/ already does.
+            found.append(("void *", pointer_member.group("name"), ""))
+            continue
         if "(" in stripped:            # a method declaration
             continue
         member = MEMBER.match(stripped)
@@ -209,6 +252,9 @@ def members_of(body: str, seen=()):
         type_ = member.group("type").strip()
         stars = member.group("stars")
         bare = type_.replace("const", "").strip()
+        if bare in alias:
+            type_ = type_.replace(bare, alias[bare])
+            bare = alias[bare]
         if not stars and _needs_definition(bare) and not _extractable(bare, seen):
             # A member held BY VALUE needs a COMPLETE type, and the emitted
             # unit only forward-declares - `AutoSound auto_sound_;` is
@@ -345,6 +391,8 @@ def supplyable(name: str, seen=()) -> bool:
     was enough to emit `Heap heap_;` beside a bare `struct Heap;` and break
     77 units with `error C2079: uses undefined class`.
     """
+    if name in WINDOWS_STRUCT:
+        return True
     if name in seen or name not in verified_names():
         return False
     for type_, _, _ in pinned_layouts().get(name, ()):
@@ -358,6 +406,9 @@ def supplyable(name: str, seen=()) -> bool:
 
 def declaration_for(name: str) -> list:
     """The member lines to emit inside a class shell, or []."""
+    if name in WINDOWS_STRUCT:
+        return [f"    {type_} {member}{array};"
+                for type_, member, array in WINDOWS_STRUCT[name]]
     if not supplyable(name):
         return []
     members = pinned_layouts().get(name)

@@ -270,8 +270,8 @@ c00404850.cpp(45) : error C2227: left of '->close' must point to class/struct/un
 c00404900.cpp(74) : error C2228: left of '.close' must have class/struct/union type
 c00404900.cpp(75) : error C2065: 'BasePopOriginalClose' : undeclared identifier
 c00404900.cpp(75) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x00404F80,?on_redraw_nc@Popup@@QAEXPAURECT@@H@Z,src/popup.cpp:510,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00404f80.cpp(46) : error C2511: 'on_redraw_nc' : overloaded member function 'void (int,int)' not found in 'Popup'
-c00404f80.cpp(37) : see declaration of 'Popup'"
+0x00404F80,?on_redraw_nc@Popup@@QAEXPAURECT@@H@Z,src/popup.cpp:510,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00404f80.cpp(53) : error C2511: 'on_redraw_nc' : overloaded member function 'void (int,int)' not found in 'Popup'
+c00404f80.cpp(44) : see declaration of 'Popup'"
 0x00404F90,?on_nc_hittest@Popup@@QAEHHH@Z,,0,20,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,20,20,,,,,
 0x00405020,?on_adjust_button_width@Popup@@QAEXXZ,src/popup.cpp:538,0,42,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,42,42,,,,,
 0x00405050,?on_adjust_button_placement@Popup@@QAEXPAH00@Z,,0,67,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,67,3,22,1,0,#0: original 'push' vs rebuilt 'ret 0xc',
@@ -338,10 +338,10 @@ c00406910.cpp(140) : error C2039: 'destroy' : is not a member of 'ListBox'
 c00406910.cpp(48) : see declaration of 'ListBox'"
 0x00406A80,sub_406a80,src/nullsub_thunks.cpp:40,1,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
 0x00406A90,sub_406a90,,0,83,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,83,3,23,2,0,#0: original 'mov' vs rebuilt 'xor',
-0x00406AF0,sub_406af0,src/leaf_recoveries.cpp:1382,0,38,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00406af0.cpp(138) : error C2065: 'DialogsDestructorAdjustment' : undeclared identifier
-c00406af0.cpp(139) : error C2065: 'LeafDialogsDestructor' : undeclared identifier
-c00406af0.cpp(140) : error C2065: 'LeafDialogDestructor' : undeclared identifier
-c00406af0.cpp(141) : error C2065: 'LeafGraphicWinDestructor' : undeclared identifier"
+0x00406AF0,sub_406af0,src/leaf_recoveries.cpp:1382,0,38,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00406af0.cpp(154) : error C2065: 'DialogsDestructorAdjustment' : undeclared identifier
+c00406af0.cpp(155) : error C2065: 'LeafDialogsDestructor' : undeclared identifier
+c00406af0.cpp(156) : error C2065: 'LeafDialogDestructor' : undeclared identifier
+c00406af0.cpp(157) : error C2065: 'LeafGraphicWinDestructor' : undeclared identifier"
 0x00406B20,nullsub_27,src/field_accessors.cpp:728,1,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00406B30,sub_406b30,src/nullsub_thunks.cpp:51,1,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00406B40,??_GBasePop@@UAEPAXI@Z,src/deleting_thunks.cpp:224,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00406b40.cpp(69) : error C2065: 'BasePopDtorTarget' : undeclared identifier
@@ -401,13 +401,13 @@ Generating Code...
 Compiling..."
 0x004070F0,??_Gthunk1_Dialogs@@UAEPAXI@Z,src/adjustor_thunks.cpp:411,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004070f0.cpp(68) : error C2065: 'DialogsScalarDeleteTarget' : undeclared identifier
 c004070f0.cpp(68) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x00407100,??_GDialogs@@UAEPAXI@Z,src/dialogs_recovery.cpp:412,0,65,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00407100.cpp(142) : error C2065: 'DialogsDestructorAdjustment' : undeclared identifier
-c00407100.cpp(143) : error C2039: 'destroy' : is not a member of 'Dialogs'
-c00407100.cpp(126) : see declaration of 'Dialogs'
-c00407100.cpp(144) : error C2039: 'destroy' : is not a member of 'Dialog'
-c00407100.cpp(61) : see declaration of 'Dialog'
-c00407100.cpp(145) : error C2065: 'graphic_win_destructor_redirect' : undeclared identifier
-c00407100.cpp(148) : error C2065: 'DialogsOperatorDelete' : undeclared identifier"
+0x00407100,??_GDialogs@@UAEPAXI@Z,src/dialogs_recovery.cpp:412,0,65,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00407100.cpp(158) : error C2065: 'DialogsDestructorAdjustment' : undeclared identifier
+c00407100.cpp(159) : error C2039: 'destroy' : is not a member of 'Dialogs'
+c00407100.cpp(142) : see declaration of 'Dialogs'
+c00407100.cpp(160) : error C2039: 'destroy' : is not a member of 'Dialog'
+c00407100.cpp(77) : see declaration of 'Dialog'
+c00407100.cpp(161) : error C2065: 'graphic_win_destructor_redirect' : undeclared identifier
+c00407100.cpp(164) : error C2065: 'DialogsOperatorDelete' : undeclared identifier"
 0x00407150,?on_scroll_create@thunk1_Dialogs@@QAEXXZ,src/adjustor_thunks.cpp:426,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00407150.cpp(67) : error C2065: 'DialogsOnScrollCreateTarget' : undeclared identifier
 c00407150.cpp(67) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00407160,?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z,src/adjustor_thunks.cpp:440,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00407160.cpp(69) : error C2065: 'DialogsOnScrollDeleteTarget' : undeclared identifier
@@ -482,10 +482,10 @@ v00407e80_0.cpp(51) : error C2059: syntax error : ','
 0x00408080,??_GEditBox@@UAEPAXI@Z,src/deleting_thunks.cpp:309,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00408080.cpp(72) : error C2065: 'EditBoxDtorTarget' : undeclared identifier
 c00408080.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'
 c00408080.cpp(74) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
-0x004080B0,sub_4080b0,src/leaf_recoveries.cpp:1362,0,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004080b0.cpp(138) : error C2065: 'ListBoxDestructorAdjustment' : undeclared identifier
-c004080b0.cpp(139) : error C2065: 'LeafListBoxDestructor' : undeclared identifier
-c004080b0.cpp(140) : error C2065: 'LeafDialogDestructor' : undeclared identifier
-c004080b0.cpp(141) : error C2065: 'LeafGraphicWinDestructor' : undeclared identifier"
+0x004080B0,sub_4080b0,src/leaf_recoveries.cpp:1362,0,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004080b0.cpp(154) : error C2065: 'ListBoxDestructorAdjustment' : undeclared identifier
+c004080b0.cpp(155) : error C2065: 'LeafListBoxDestructor' : undeclared identifier
+c004080b0.cpp(156) : error C2065: 'LeafDialogDestructor' : undeclared identifier
+c004080b0.cpp(157) : error C2065: 'LeafGraphicWinDestructor' : undeclared identifier"
 0x004080E0,?on_scrolling@AlphaSave@@QAEXHH@Z,,0,44,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,44,44,,,,,
 0x00408110,?on_scrolled@AlphaSave@@QAEXHH@Z,,0,44,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,44,44,,,,,
 0x00408140,??_GAlphaSave@@UAEPAXI@Z,src/deleting_thunks.cpp:327,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00408140.cpp(69) : error C2065: 'AlphaSaveDtorTarget' : undeclared identifier
@@ -559,10 +559,10 @@ c0041af70.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'"
 c0041af90.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0041AFB0,?on_left_double_click@BaseWin@@QAEXHH@Z,src/basewin.cpp:254,0,24,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041afb0.cpp(70) : error C2065: 'BaseWinClick' : undeclared identifier
 c0041afb0.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0041B1E0,?on_mouse_leave@BaseWin@@QAEXHH@Z,src/basewin.cpp:297,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041b1e0.cpp(55) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c0041b1e0.cpp(39) : see declaration of 'clear_bubble_text'
-c0041b1e0.cpp(56) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c0041b1e0.cpp(39) : see declaration of 'clear_bubble_text'"
+0x0041B1E0,?on_mouse_leave@BaseWin@@QAEXHH@Z,src/basewin.cpp:297,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041b1e0.cpp(215) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c0041b1e0.cpp(199) : see declaration of 'clear_bubble_text'
+c0041b1e0.cpp(216) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c0041b1e0.cpp(199) : see declaration of 'clear_bubble_text'"
 0x0041B4A0,?on_scrolled@BaseWin@@QAEXHH@Z,,0,29,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,29,29,,,,,
 0x0041B4C0,?on_scrolling@BaseWin@@QAEXHH@Z,src/delegation_thunks.cpp:59,1,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0041b4c0.cpp(126) : error C2065: 'func_delegation_2' : undeclared identifier
 c0041b4c0.cpp(126) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
@@ -877,10 +877,10 @@ v00437ba0_0.cpp(58) : error C2061: syntax error : identifier 'a1'
 v00437ba0_0.cpp(58) : error C2511: 'on_mouse_move' : overloaded member function 'void (int)' not found in 'DesignWin'
         v00437ba0_0.cpp(54) : see declaration of 'DesignWin'
 "
-0x00437BE0,?on_mouse_leave@DesignWin@@QAEXHH@Z,src/designwin.cpp:135,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00437be0.cpp(52) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c00437be0.cpp(39) : see declaration of 'clear_bubble_text'
-c00437be0.cpp(53) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c00437be0.cpp(39) : see declaration of 'clear_bubble_text'"
+0x00437BE0,?on_mouse_leave@DesignWin@@QAEXHH@Z,src/designwin.cpp:135,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00437be0.cpp(212) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c00437be0.cpp(199) : see declaration of 'clear_bubble_text'
+c00437be0.cpp(213) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c00437be0.cpp(199) : see declaration of 'clear_bubble_text'"
 0x00438460,?on_button_clicked@DesignWin@@QAEXH@Z,,0,4973,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v00438460_0.cpp
 v00438460_0.cpp(43) : error C2059: syntax error : ';'
 "
@@ -3636,11 +3636,11 @@ Generating Code..."
 c0045f710.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
 c0045f710.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x0045F910,??3Interlude@@SAXPAXI@Z,src/deleting_thunks.cpp:871,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0045f910.cpp(44) : error C2065: 'scalar_delete_interlude' : undeclared identifier
-0x0045F920,??__Eg_JACKAL_FONT@@YAXXZ,src/init_thunks.cpp:3894,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0045f920.cpp(71) : error C2065: 'g_JACKAL_FONT' : undeclared identifier
-c0045f920.cpp(71) : error C2065: 'FontInitCtor' : undeclared identifier
-c0045f920.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'
-c0045f920.cpp(72) : error C2065: 'GameAtexit' : undeclared identifier
-c0045f920.cpp(72) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x0045F920,??__Eg_JACKAL_FONT@@YAXXZ,src/init_thunks.cpp:3894,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0045f920.cpp(84) : error C2065: 'g_JACKAL_FONT' : undeclared identifier
+c0045f920.cpp(84) : error C2065: 'FontInitCtor' : undeclared identifier
+c0045f920.cpp(84) : error C2297: '->*' : illegal, right operand has type 'int'
+c0045f920.cpp(85) : error C2065: 'GameAtexit' : undeclared identifier
+c0045f920.cpp(85) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x0045F940,??__Fg_JACKAL_FONT@@YAXXZ,src/atexit_thunks.cpp:3756,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0045f940.cpp(45) : error C2065: 'g_JACKAL_FONT' : undeclared identifier
 0x0045FB20,?menu_init@MainMenu@@QAEHXZ,,0,4784,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v0045fb20_0.cpp
 v0045fb20_0.cpp(57) : error C2143: syntax error : missing ';' before '__cdecl'
@@ -3891,11 +3891,11 @@ c0047a7a0.cpp(72) : error C2065: 'GameAtexit' : undeclared identifier
 c0047a7a0.cpp(72) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x0047A7C0,??__Fg_NETMSG2@@YAXXZ,src/atexit_thunks.cpp:3826,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0047a7c0.cpp(63) : error C2065: 'NetMsgDtorTarget' : undeclared identifier
 c0047a7c0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0047A7D0,?close@NetMsg@@QAEXXZ,src/netmsg.cpp:27,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0047a7d0.cpp(74) : error C2065: 'field_5384_' : undeclared identifier
-c0047a7d0.cpp(76) : error C2065: 'timer_' : undeclared identifier
-c0047a7d0.cpp(76) : error C2228: left of '.close' must have class/struct/union type
-c0047a7d0.cpp(77) : error C2065: 'PopupOriginalHide' : undeclared identifier
-c0047a7d0.cpp(77) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0047A7D0,?close@NetMsg@@QAEXXZ,src/netmsg.cpp:27,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0047a7d0.cpp(85) : error C2065: 'field_5384_' : undeclared identifier
+c0047a7d0.cpp(87) : error C2065: 'timer_' : undeclared identifier
+c0047a7d0.cpp(87) : error C2228: left of '.close' must have class/struct/union type
+c0047a7d0.cpp(88) : error C2065: 'PopupOriginalHide' : undeclared identifier
+c0047a7d0.cpp(88) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0047A800,?timer_daemon@NetMsg@@QAAXH@Z,,0,95,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,95,1,26,1,0,#0: original 'push' vs rebuilt 'ret',
 0x0047A860,?on_button_clicked@NetMsg@@QAEXH@Z,,0,45,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,45,45,,,,,
 0x0047AD70,??_GNetMsg@@UAEPAXI@Z,src/deleting_thunks.cpp:945,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0047ad70.cpp(68) : error C2065: 'NetMsgDtorTarget' : undeclared identifier
@@ -4280,8 +4280,8 @@ c00493e70.cpp(123) : error C2783: 'Method __cdecl original_method(unsigned long)
 0x00493E90,?on_mouse_move@ProdPicker@@QAEXHH@Z,src/prodpicker.cpp:38,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004941C0,?on_left_click@ProdPicker@@QAEXHH@Z,,0,111,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,111,3,36,1,0,#0: original 'push' vs rebuilt 'ret 8',
 0x00494230,?on_left_double_click@ProdPicker@@QAEXHH@Z,,0,65,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,65,3,28,1,0,#0: original 'push' vs rebuilt 'ret 8',
-0x004945C0,?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z,src/prodpicker.cpp:80,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004945c0.cpp(46) : error C2511: 'on_redraw_nc' : overloaded member function 'void (int,int)' not found in 'ProdPicker'
-c004945c0.cpp(37) : see declaration of 'ProdPicker'"
+0x004945C0,?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z,src/prodpicker.cpp:80,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004945c0.cpp(53) : error C2511: 'on_redraw_nc' : overloaded member function 'void (int,int)' not found in 'ProdPicker'
+c004945c0.cpp(44) : see declaration of 'ProdPicker'"
 0x004946D0,?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z,,0,39,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,39,39,,,,,
 0x00495160,?UNK3@ProdPicker@@QAEXH@Z,src/prodpicker.cpp:51,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00495170,??__Eg_QUAYLEWIN@@YAXXZ,src/init_thunks.cpp:4070,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00495170.cpp(71) : error C2065: 'QuayleWinCtorTarget' : undeclared identifier
@@ -4352,8 +4352,8 @@ v0049d540_0.cpp(103) : error C2059: syntax error : ','
 0x004A6020,?on_iface_right_down@ReportIf@@QAEXHH@Z,src/reportif.cpp:61,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004A6030,?on_iface_mouse_move@ReportIf@@QAEXHH@Z,src/reportif.cpp:70,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004A6040,?on_iface_mouse_leave@ReportIf@@QAEXHH@Z,src/reportif.cpp:79,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x004A6320,?on_iface_dialog_item_back_draw@ReportIf@@QAEHPAUGraphicWin@@HHPAURECT@@@Z,src/reportif.cpp:142,0,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004a6320.cpp(47) : error C2511: 'on_iface_dialog_item_back_draw' : overloaded member function 'int (int,int,int,int)' not found in 'ReportIf'
-c004a6320.cpp(38) : see declaration of 'ReportIf'"
+0x004A6320,?on_iface_dialog_item_back_draw@ReportIf@@QAEHPAUGraphicWin@@HHPAURECT@@@Z,src/reportif.cpp:142,0,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004a6320.cpp(54) : error C2511: 'on_iface_dialog_item_back_draw' : overloaded member function 'int (int,int,int,int)' not found in 'ReportIf'
+c004a6320.cpp(45) : see declaration of 'ReportIf'"
 0x004A6D60,?on_iface_button_toggled@ReportIf@@QAEXHH@Z,src/reportif.cpp:88,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004A7000,?draw_labs@ReportIf@@QAEXXZ,,0,5167,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5167,1,1483,1,0,#0: original 'push' vs rebuilt 'ret',
 0x004A8440,?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z,,0,46,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,46,46,,,,,
@@ -4427,14 +4427,14 @@ v004b1b70_0.cpp(59) : error C2447: missing function header (old-style formal lis
 0x004B2210,?on_iface_left_click@SocialWin@@QAEHHH@Z,,0,13,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
 0x004B2400,?on_iface_left_down@SocialWin@@QAEXHH@Z,src/socialwin.cpp:51,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2410,?on_iface_right_down@SocialWin@@QAEXHH@Z,src/socialwin.cpp:64,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x004B2420,?on_iface_mouse_move@SocialWin@@QAEXHH@Z,src/socialwin.cpp:149,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2420.cpp(52) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2420.cpp(39) : see declaration of 'clear_bubble_text'
-c004b2420.cpp(53) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2420.cpp(39) : see declaration of 'clear_bubble_text'"
-0x004B2430,?on_iface_mouse_leave@SocialWin@@QAEXHH@Z,src/socialwin.cpp:171,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2430.cpp(52) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2430.cpp(39) : see declaration of 'clear_bubble_text'
-c004b2430.cpp(53) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2430.cpp(39) : see declaration of 'clear_bubble_text'"
+0x004B2420,?on_iface_mouse_move@SocialWin@@QAEXHH@Z,src/socialwin.cpp:149,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2420.cpp(212) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2420.cpp(199) : see declaration of 'clear_bubble_text'
+c004b2420.cpp(213) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2420.cpp(199) : see declaration of 'clear_bubble_text'"
+0x004B2430,?on_iface_mouse_leave@SocialWin@@QAEXHH@Z,src/socialwin.cpp:171,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2430.cpp(212) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2430.cpp(199) : see declaration of 'clear_bubble_text'
+c004b2430.cpp(213) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2430.cpp(199) : see declaration of 'clear_bubble_text'"
 0x004B2440,?on_iface_selected@SocialWin@@QAEXHH@Z,src/socialwin.cpp:77,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2450,?on_iface_left_double_click@SocialWin@@QAEXHH@Z,src/socialwin.cpp:90,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2460,?on_iface_right_double_click@SocialWin@@QAEXHH@Z,src/socialwin.cpp:103,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -4502,150 +4502,42 @@ c004ba5e0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004BA6B0,??0TutWin@@QAE@XZ,,0,110,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,110,3,23,2,0,#0: original 'push' vs rebuilt 'mov',
 0x004BA720,?UNK1@TutWin@@QAEXXZ,src/tutwin.cpp:32,0,65,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba720.cpp(76) : error C2065: 'TutWinShownFlag' : undeclared identifier
 c004ba720.cpp(76) : error C2100: illegal indirection"
-0x004BA830,?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z,src/win.cpp:393,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba830.cpp(63) : error C2027: use of undefined type 'RECT'
-c004ba830.cpp(34) : see declaration of 'RECT'
-c004ba830.cpp(63) : error C2227: left of '->left' must point to class/struct/union
-c004ba830.cpp(64) : error C2027: use of undefined type 'RECT'
-c004ba830.cpp(34) : see declaration of 'RECT'
-c004ba830.cpp(64) : error C2227: left of '->right' must point to class/struct/union
-c004ba830.cpp(65) : error C2065: 'int_from_bits' : undeclared identifier
-c004ba830.cpp(65) : error C2065: 'midpoint' : undeclared identifier
-c004ba830.cpp(66) : error C2065: 'memcpy' : undeclared identifier
-c004ba830.cpp(68) : error C2027: use of undefined type 'RECT'
-c004ba830.cpp(34) : see declaration of 'RECT'
-c004ba830.cpp(68) : error C2227: left of '->top' must point to class/struct/union
-c004ba830.cpp(69) : error C2027: use of undefined type 'RECT'
-c004ba830.cpp(34) : see declaration of 'RECT'
-c004ba830.cpp(69) : error C2227: left of '->bottom' must point to class/struct/union"
-0x004BA870,?do_base@TutWin@@QAEXPAURECT@@PBDH@Z,src/tutwin.cpp:217,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba870.cpp(123) : error C2027: use of undefined type 'RECT'
-c004ba870.cpp(35) : see declaration of 'RECT'
-c004ba870.cpp(123) : error C2227: left of '->left' must point to class/struct/union
-c004ba870.cpp(124) : error C2027: use of undefined type 'RECT'
-c004ba870.cpp(35) : see declaration of 'RECT'
-c004ba870.cpp(124) : error C2227: left of '->right' must point to class/struct/union
-c004ba870.cpp(128) : error C2027: use of undefined type 'RECT'
-c004ba870.cpp(35) : see declaration of 'RECT'
-c004ba870.cpp(128) : error C2227: left of '->top' must point to class/struct/union
-c004ba870.cpp(129) : error C2027: use of undefined type 'RECT'
-c004ba870.cpp(35) : see declaration of 'RECT'
-c004ba870.cpp(129) : error C2227: left of '->bottom' must point to class/struct/union
-c004ba870.cpp(133) : error C2065: 'TutWinBaseWindow' : undeclared identifier
-c004ba870.cpp(133) : error C2227: left of '->client_to_screen' must point to class/struct/union
-c004ba870.cpp(136) : error C2065: 'MapWinTable' : undeclared identifier
-c004ba870.cpp(136) : error C2109: subscript requires array or pointer type
-c004ba870.cpp(144) : error C2065: 'TutWinOriginalShow' : undeclared identifier
-c004ba870.cpp(144) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004BA8F0,?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z,src/tutwin.cpp:261,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba8f0.cpp(123) : error C2027: use of undefined type 'RECT'
-c004ba8f0.cpp(35) : see declaration of 'RECT'
-c004ba8f0.cpp(123) : error C2227: left of '->left' must point to class/struct/union
-c004ba8f0.cpp(124) : error C2027: use of undefined type 'RECT'
-c004ba8f0.cpp(35) : see declaration of 'RECT'
-c004ba8f0.cpp(124) : error C2227: left of '->right' must point to class/struct/union
-c004ba8f0.cpp(128) : error C2027: use of undefined type 'RECT'
-c004ba8f0.cpp(35) : see declaration of 'RECT'
-c004ba8f0.cpp(128) : error C2227: left of '->top' must point to class/struct/union
-c004ba8f0.cpp(129) : error C2027: use of undefined type 'RECT'
-c004ba8f0.cpp(35) : see declaration of 'RECT'
-c004ba8f0.cpp(129) : error C2227: left of '->bottom' must point to class/struct/union
-c004ba8f0.cpp(133) : error C2065: 'TutWinIfaceWindow' : undeclared identifier
-c004ba8f0.cpp(133) : error C2227: left of '->client_to_screen' must point to class/struct/union
-c004ba8f0.cpp(136) : error C2065: 'MapWinTable' : undeclared identifier
-c004ba8f0.cpp(136) : error C2109: subscript requires array or pointer type
-c004ba8f0.cpp(144) : error C2065: 'TutWinOriginalShow' : undeclared identifier
-c004ba8f0.cpp(144) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004BA970,?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z,src/tutwin.cpp:305,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba970.cpp(123) : error C2027: use of undefined type 'RECT'
-c004ba970.cpp(35) : see declaration of 'RECT'
-c004ba970.cpp(123) : error C2227: left of '->left' must point to class/struct/union
-c004ba970.cpp(124) : error C2027: use of undefined type 'RECT'
-c004ba970.cpp(35) : see declaration of 'RECT'
-c004ba970.cpp(124) : error C2227: left of '->right' must point to class/struct/union
-c004ba970.cpp(128) : error C2027: use of undefined type 'RECT'
-c004ba970.cpp(35) : see declaration of 'RECT'
-c004ba970.cpp(128) : error C2227: left of '->top' must point to class/struct/union
-c004ba970.cpp(129) : error C2027: use of undefined type 'RECT'
-c004ba970.cpp(35) : see declaration of 'RECT'
-c004ba970.cpp(129) : error C2227: left of '->bottom' must point to class/struct/union
-c004ba970.cpp(133) : error C2065: 'TutWinSocWindow' : undeclared identifier
-c004ba970.cpp(133) : error C2227: left of '->client_to_screen' must point to class/struct/union
-c004ba970.cpp(136) : error C2065: 'MapWinTable' : undeclared identifier
-c004ba970.cpp(136) : error C2109: subscript requires array or pointer type
-c004ba970.cpp(144) : error C2065: 'TutWinOriginalShow' : undeclared identifier
-c004ba970.cpp(144) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004BA9F0,?do_des@TutWin@@QAEXPAURECT@@PBDH@Z,src/tutwin.cpp:349,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba9f0.cpp(123) : error C2027: use of undefined type 'RECT'
-c004ba9f0.cpp(35) : see declaration of 'RECT'
-c004ba9f0.cpp(123) : error C2227: left of '->left' must point to class/struct/union
-c004ba9f0.cpp(124) : error C2027: use of undefined type 'RECT'
-c004ba9f0.cpp(35) : see declaration of 'RECT'
-c004ba9f0.cpp(124) : error C2227: left of '->right' must point to class/struct/union
-c004ba9f0.cpp(128) : error C2027: use of undefined type 'RECT'
-c004ba9f0.cpp(35) : see declaration of 'RECT'
-c004ba9f0.cpp(128) : error C2227: left of '->top' must point to class/struct/union
-c004ba9f0.cpp(129) : error C2027: use of undefined type 'RECT'
-c004ba9f0.cpp(35) : see declaration of 'RECT'
-c004ba9f0.cpp(129) : error C2227: left of '->bottom' must point to class/struct/union
-c004ba9f0.cpp(133) : error C2065: 'TutWinDesWindow' : undeclared identifier
-c004ba9f0.cpp(133) : error C2227: left of '->client_to_screen' must point to class/struct/union
-c004ba9f0.cpp(136) : error C2065: 'MapWinTable' : undeclared identifier
-c004ba9f0.cpp(136) : error C2109: subscript requires array or pointer type
-c004ba9f0.cpp(144) : error C2065: 'TutWinOriginalShow' : undeclared identifier
-c004ba9f0.cpp(144) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004BA830,?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z,src/win.cpp:393,0,51,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba830.cpp(72) : error C2065: 'int_from_bits' : undeclared identifier
+c004ba830.cpp(72) : error C2065: 'midpoint' : undeclared identifier
+c004ba830.cpp(73) : error C2065: 'memcpy' : undeclared identifier"
+0x004BA870,?do_base@TutWin@@QAEXPAURECT@@PBDH@Z,src/tutwin.cpp:217,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba870.cpp(274) : error C2065: 'TutWinBaseWindow' : undeclared identifier
+c004ba870.cpp(274) : error C2227: left of '->client_to_screen' must point to class/struct/union
+c004ba870.cpp(277) : error C2065: 'MapWinTable' : undeclared identifier
+c004ba870.cpp(277) : error C2109: subscript requires array or pointer type
+c004ba870.cpp(285) : error C2065: 'TutWinOriginalShow' : undeclared identifier
+c004ba870.cpp(285) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004BA8F0,?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z,src/tutwin.cpp:261,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba8f0.cpp(274) : error C2065: 'TutWinIfaceWindow' : undeclared identifier
+c004ba8f0.cpp(274) : error C2227: left of '->client_to_screen' must point to class/struct/union
+c004ba8f0.cpp(277) : error C2065: 'MapWinTable' : undeclared identifier
+c004ba8f0.cpp(277) : error C2109: subscript requires array or pointer type
+c004ba8f0.cpp(285) : error C2065: 'TutWinOriginalShow' : undeclared identifier
+c004ba8f0.cpp(285) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004BA970,?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z,src/tutwin.cpp:305,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba970.cpp(274) : error C2065: 'TutWinSocWindow' : undeclared identifier
+c004ba970.cpp(274) : error C2227: left of '->client_to_screen' must point to class/struct/union
+c004ba970.cpp(277) : error C2065: 'MapWinTable' : undeclared identifier
+c004ba970.cpp(277) : error C2109: subscript requires array or pointer type
+c004ba970.cpp(285) : error C2065: 'TutWinOriginalShow' : undeclared identifier
+c004ba970.cpp(285) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004BA9F0,?do_des@TutWin@@QAEXPAURECT@@PBDH@Z,src/tutwin.cpp:349,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ba9f0.cpp(274) : error C2065: 'TutWinDesWindow' : undeclared identifier
+c004ba9f0.cpp(274) : error C2227: left of '->client_to_screen' must point to class/struct/union
+c004ba9f0.cpp(277) : error C2065: 'MapWinTable' : undeclared identifier
+c004ba9f0.cpp(277) : error C2109: subscript requires array or pointer type
+c004ba9f0.cpp(285) : error C2065: 'TutWinOriginalShow' : undeclared identifier
+c004ba9f0.cpp(285) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004BB380,?tour5@TutWin@@QAEXXZ,,0,1041,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1041,1,379,1,0,#0: original 'push' vs rebuilt 'ret',
-0x004BC5A0,?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z,src/tutwin.cpp:85,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bc5a0.cpp(77) : error C2027: use of undefined type 'RECT'
-c004bc5a0.cpp(34) : see declaration of 'RECT'
-c004bc5a0.cpp(77) : error C2227: left of '->left' must point to class/struct/union
-c004bc5a0.cpp(78) : error C2027: use of undefined type 'RECT'
-c004bc5a0.cpp(34) : see declaration of 'RECT'
-c004bc5a0.cpp(78) : error C2227: left of '->right' must point to class/struct/union
-c004bc5a0.cpp(82) : error C2027: use of undefined type 'RECT'
-c004bc5a0.cpp(34) : see declaration of 'RECT'
-c004bc5a0.cpp(82) : error C2227: left of '->top' must point to class/struct/union
-c004bc5a0.cpp(83) : error C2027: use of undefined type 'RECT'
-c004bc5a0.cpp(34) : see declaration of 'RECT'
-c004bc5a0.cpp(83) : error C2227: left of '->bottom' must point to class/struct/union
-c004bc5a0.cpp(87) : error C2065: 'TutWinIfaceWindow' : undeclared identifier
-c004bc5a0.cpp(87) : error C2227: left of '->client_to_screen' must point to class/struct/union"
-0x004BC5F0,?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z,src/tutwin.cpp:116,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bc5f0.cpp(77) : error C2027: use of undefined type 'RECT'
-c004bc5f0.cpp(34) : see declaration of 'RECT'
-c004bc5f0.cpp(77) : error C2227: left of '->left' must point to class/struct/union
-c004bc5f0.cpp(78) : error C2027: use of undefined type 'RECT'
-c004bc5f0.cpp(34) : see declaration of 'RECT'
-c004bc5f0.cpp(78) : error C2227: left of '->right' must point to class/struct/union
-c004bc5f0.cpp(82) : error C2027: use of undefined type 'RECT'
-c004bc5f0.cpp(34) : see declaration of 'RECT'
-c004bc5f0.cpp(82) : error C2227: left of '->top' must point to class/struct/union
-c004bc5f0.cpp(83) : error C2027: use of undefined type 'RECT'
-c004bc5f0.cpp(34) : see declaration of 'RECT'
-c004bc5f0.cpp(83) : error C2227: left of '->bottom' must point to class/struct/union
-c004bc5f0.cpp(87) : error C2065: 'TutWinBaseWindow' : undeclared identifier
-c004bc5f0.cpp(87) : error C2227: left of '->client_to_screen' must point to class/struct/union"
-0x004BC640,?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z,src/tutwin.cpp:147,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bc640.cpp(77) : error C2027: use of undefined type 'RECT'
-c004bc640.cpp(34) : see declaration of 'RECT'
-c004bc640.cpp(77) : error C2227: left of '->left' must point to class/struct/union
-c004bc640.cpp(78) : error C2027: use of undefined type 'RECT'
-c004bc640.cpp(34) : see declaration of 'RECT'
-c004bc640.cpp(78) : error C2227: left of '->right' must point to class/struct/union
-c004bc640.cpp(82) : error C2027: use of undefined type 'RECT'
-c004bc640.cpp(34) : see declaration of 'RECT'
-c004bc640.cpp(82) : error C2227: left of '->top' must point to class/struct/union
-c004bc640.cpp(83) : error C2027: use of undefined type 'RECT'
-c004bc640.cpp(34) : see declaration of 'RECT'
-c004bc640.cpp(83) : error C2227: left of '->bottom' must point to class/struct/union
-c004bc640.cpp(87) : error C2065: 'TutWinSocWindow' : undeclared identifier
-c004bc640.cpp(87) : error C2227: left of '->client_to_screen' must point to class/struct/union"
-0x004BC690,?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z,src/tutwin.cpp:178,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bc690.cpp(77) : error C2027: use of undefined type 'RECT'
-c004bc690.cpp(34) : see declaration of 'RECT'
-c004bc690.cpp(77) : error C2227: left of '->left' must point to class/struct/union
-c004bc690.cpp(78) : error C2027: use of undefined type 'RECT'
-c004bc690.cpp(34) : see declaration of 'RECT'
-c004bc690.cpp(78) : error C2227: left of '->right' must point to class/struct/union
-c004bc690.cpp(82) : error C2027: use of undefined type 'RECT'
-c004bc690.cpp(34) : see declaration of 'RECT'
-c004bc690.cpp(82) : error C2227: left of '->top' must point to class/struct/union
-c004bc690.cpp(83) : error C2027: use of undefined type 'RECT'
-c004bc690.cpp(34) : see declaration of 'RECT'
-c004bc690.cpp(83) : error C2227: left of '->bottom' must point to class/struct/union
-c004bc690.cpp(87) : error C2065: 'TutWinDesWindow' : undeclared identifier
-c004bc690.cpp(87) : error C2227: left of '->client_to_screen' must point to class/struct/union"
+0x004BC5A0,?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z,src/tutwin.cpp:85,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bc5a0.cpp(246) : error C2065: 'TutWinIfaceWindow' : undeclared identifier
+c004bc5a0.cpp(246) : error C2227: left of '->client_to_screen' must point to class/struct/union"
+0x004BC5F0,?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z,src/tutwin.cpp:116,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bc5f0.cpp(246) : error C2065: 'TutWinBaseWindow' : undeclared identifier
+c004bc5f0.cpp(246) : error C2227: left of '->client_to_screen' must point to class/struct/union"
+0x004BC640,?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z,src/tutwin.cpp:147,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bc640.cpp(246) : error C2065: 'TutWinSocWindow' : undeclared identifier
+c004bc640.cpp(246) : error C2227: left of '->client_to_screen' must point to class/struct/union"
+0x004BC690,?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z,src/tutwin.cpp:178,0,67,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bc690.cpp(246) : error C2065: 'TutWinDesWindow' : undeclared identifier
+c004bc690.cpp(246) : error C2227: left of '->client_to_screen' must point to class/struct/union"
 0x004BC6E0,?tour@TutWin@@QAEXXZ,,0,5598,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5598,1,1708,1,0,#0: original 'push' vs rebuilt 'ret',
 0x004BDDB0,?on_move@TutWin@@QAEXHH@Z,,0,21,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,21,21,,,,,
 0x004BDDD0,?UNK3@TutWin@@QAEXH@Z,src/tutwin.cpp:51,0,16,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,16,16,,,,,
@@ -7192,39 +7084,39 @@ c0050e870.cpp(70) : error C2065: 'TeardownTarget0051D9F0' : undeclared identifie
 c0050e870.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'
 c0050e870.cpp(71) : error C2065: 'TeardownTarget005D4DD0' : undeclared identifier
 c0050e870.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0050E980,??__Eg_CONSOLE_TIMER@@YAXXZ,src/init_thunks.cpp:4213,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0050e980.cpp(71) : error C2065: 'g_CONSOLE_TIMER' : undeclared identifier
-c0050e980.cpp(71) : error C2065: 'TimeInitCtor' : undeclared identifier
-c0050e980.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'
-c0050e980.cpp(72) : error C2065: 'GameAtexit' : undeclared identifier
-c0050e980.cpp(72) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x0050E980,??__Eg_CONSOLE_TIMER@@YAXXZ,src/init_thunks.cpp:4213,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0050e980.cpp(82) : error C2065: 'g_CONSOLE_TIMER' : undeclared identifier
+c0050e980.cpp(82) : error C2065: 'TimeInitCtor' : undeclared identifier
+c0050e980.cpp(82) : error C2297: '->*' : illegal, right operand has type 'int'
+c0050e980.cpp(83) : error C2065: 'GameAtexit' : undeclared identifier
+c0050e980.cpp(83) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x0050E9A0,??__Fg_CONSOLE_TIMER@@YAXXZ,src/atexit_thunks.cpp:4006,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0050e9a0.cpp(63) : error C2065: 'TimeDtorTarget' : undeclared identifier
 c0050e9a0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0050E9B0,sub_50e9b0,,0,62,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,62,3,14,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0050E9F0,sub_50e9f0,,0,50,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,50,50,,,,,
 0x0050EE30,?blink2_timer@@YAXH@Z,,0,77,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,77,1,23,1,0,#0: original 'mov' vs rebuilt 'ret',
 0x0050EF10,?turn_timer@@YAXH@Z,,0,50,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,50,50,,,,,
-0x0050F3D0,?start_timers@@YAXXZ,src/time.cpp:272,0,97,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0050f3d0.cpp(59) : error C2065: 'BlinkTimer' : undeclared identifier
-c0050f3d0.cpp(59) : error C2227: left of '->start' must point to class/struct/union
-c0050f3d0.cpp(59) : error C2065: 'blink_timer' : undeclared identifier
-c0050f3d0.cpp(60) : error C2065: 'Blink2Timer' : undeclared identifier
-c0050f3d0.cpp(60) : error C2227: left of '->start' must point to class/struct/union
-c0050f3d0.cpp(60) : error C2065: 'blink2_timer' : undeclared identifier
-c0050f3d0.cpp(61) : error C2065: 'LineTimer' : undeclared identifier
-c0050f3d0.cpp(61) : error C2227: left of '->start' must point to class/struct/union
-c0050f3d0.cpp(61) : error C2065: 'line_timer' : undeclared identifier
-c0050f3d0.cpp(62) : error C2065: 'TurnTimer' : undeclared identifier
-c0050f3d0.cpp(62) : error C2227: left of '->start' must point to class/struct/union
-c0050f3d0.cpp(62) : error C2065: 'turn_timer' : undeclared identifier"
-0x0050F440,?stop_timers@@YAXXZ,src/time.cpp:285,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0050f440.cpp(54) : error C2065: 'Blink2Timer' : undeclared identifier
-c0050f440.cpp(54) : error C2227: left of '->close' must point to class/struct/union
-c0050f440.cpp(55) : error C2065: 'BlinkTimer' : undeclared identifier
-c0050f440.cpp(55) : error C2227: left of '->close' must point to class/struct/union
-c0050f440.cpp(56) : error C2065: 'LineTimer' : undeclared identifier
-c0050f440.cpp(56) : error C2227: left of '->close' must point to class/struct/union"
+0x0050F3D0,?start_timers@@YAXXZ,src/time.cpp:272,0,97,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0050f3d0.cpp(70) : error C2065: 'BlinkTimer' : undeclared identifier
+c0050f3d0.cpp(70) : error C2227: left of '->start' must point to class/struct/union
+c0050f3d0.cpp(70) : error C2065: 'blink_timer' : undeclared identifier
+c0050f3d0.cpp(71) : error C2065: 'Blink2Timer' : undeclared identifier
+c0050f3d0.cpp(71) : error C2227: left of '->start' must point to class/struct/union
+c0050f3d0.cpp(71) : error C2065: 'blink2_timer' : undeclared identifier
+c0050f3d0.cpp(72) : error C2065: 'LineTimer' : undeclared identifier
+c0050f3d0.cpp(72) : error C2227: left of '->start' must point to class/struct/union
+c0050f3d0.cpp(72) : error C2065: 'line_timer' : undeclared identifier
+c0050f3d0.cpp(73) : error C2065: 'TurnTimer' : undeclared identifier
+c0050f3d0.cpp(73) : error C2227: left of '->start' must point to class/struct/union
+c0050f3d0.cpp(73) : error C2065: 'turn_timer' : undeclared identifier"
+0x0050F440,?stop_timers@@YAXXZ,src/time.cpp:285,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0050f440.cpp(65) : error C2065: 'Blink2Timer' : undeclared identifier
+c0050f440.cpp(65) : error C2227: left of '->close' must point to class/struct/union
+c0050f440.cpp(66) : error C2065: 'BlinkTimer' : undeclared identifier
+c0050f440.cpp(66) : error C2227: left of '->close' must point to class/struct/union
+c0050f440.cpp(67) : error C2065: 'LineTimer' : undeclared identifier
+c0050f440.cpp(67) : error C2227: left of '->close' must point to class/struct/union"
 0x0050F630,sub_50f630,,0,16,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
 0x0050F640,nullsub_185,src/field_accessors.cpp:816,1,16,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x0050F650,?clear_group@Console@@QAEXXZ,src/console.cpp:111,0,43,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
-0x005108A0,?focus@Console@@QAEXHHH@Z,src/console.cpp:256,0,259,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005108a0.cpp(122) : error C2556: 'int __thiscall Console::focus(int,int,int)' : overloaded function differs only by return type from 'void __thiscall Console::focus(int,int,int)'
+0x005108A0,?focus@Console@@QAEXHHH@Z,src/console.cpp:254,0,259,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005108a0.cpp(122) : error C2556: 'int __thiscall Console::focus(int,int,int)' : overloaded function differs only by return type from 'void __thiscall Console::focus(int,int,int)'
 c005108a0.cpp(57) : see declaration of 'focus'
 c005108a0.cpp(122) : error C2371: 'focus' : redefinition; different basic types
 c005108a0.cpp(57) : see declaration of 'focus'
@@ -7249,7 +7141,7 @@ c005108a0.cpp(194) : error C2297: '->*' : illegal, right operand has type 'int'
 c005108a0.cpp(201) : error C2109: subscript requires array or pointer type
 c005108a0.cpp(201) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005108a0.cpp(202) : error C2065: 'ConsoleOriginalMapWinDrawMap' : undeclared identifier
+c005108a0.cpp(202) : error C2065: 'MapWinOriginalDrawMap' : undeclared identifier
 c005108a0.cpp(202) : error C2297: '->*' : illegal, right operand has type 'int'
 c005108a0.cpp(213) : error C2109: subscript requires array or pointer type
 c005108a0.cpp(213) : error C2440: 'initializing' : cannot convert from 'int' to 'class MapWin *const '
@@ -14189,78 +14081,78 @@ c005d4680.cpp(55) : see declaration of 'Heap'"
 0x005D4990,sub_5d4990,,0,62,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,62,5,21,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x005D4C50,sub_5d4c50,,0,108,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,108,5,42,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005D4CC0,sub_5d4cc0,,0,39,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,39,39,,,,,
-0x005D4CF0,??0GraphicWin@@QAE@XZ,src/graphicwin.cpp:52,0,230,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d4cf0.cpp(68) : error C2039: 'construct' : is not a member of 'GraphicWin'
-c005d4cf0.cpp(55) : see declaration of 'GraphicWin'
-c005d4cf0.cpp(69) : error C2673: 'construct' : global functions do not have 'this' pointers
-c005d4cf0.cpp(69) : error C2227: left of '->construct' must point to class/struct/union
-c005d4cf0.cpp(70) : error C2065: 'buffer_' : undeclared identifier
-c005d4cf0.cpp(70) : error C2228: left of '.construct' must have class/struct/union type
-c005d4cf0.cpp(72) : error C2673: 'construct' : global functions do not have 'this' pointers
-c005d4cf0.cpp(73) : error C2065: 'GraphicWinPrimaryVtable' : undeclared identifier
-c005d4cf0.cpp(74) : error C2065: 'GraphicWinBufferVtable' : undeclared identifier
-c005d4cf0.cpp(81) : error C2065: 'GraphicWinFieldA0CDefault' : undeclared identifier
-c005d4cf0.cpp(81) : error C2100: illegal indirection"
-0x005D4DD0,??1GraphicWin@@QAE@XZ,src/graphicwin.cpp:171,0,121,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d4dd0.cpp(84) : error C2146: syntax error : missing ';' before identifier 'base'
-c005d4dd0.cpp(84) : error C2734: 'uintptr_t' : const object must be initialized if not extern
-c005d4dd0.cpp(84) : error C2065: 'base' : undeclared identifier
-c005d4dd0.cpp(84) : error C2061: syntax error : identifier 'uintptr_t'
-c005d4dd0.cpp(89) : error C2065: 'GraphicWinPrimaryVtable' : undeclared identifier
-c005d4dd0.cpp(90) : error C2065: 'GraphicWinBufferVtable' : undeclared identifier
-c005d4dd0.cpp(94) : error C2065: 'Probe' : undeclared identifier
-c005d4dd0.cpp(94) : error C2228: left of '.buffer_target' must have class/struct/union type
-c005d4dd0.cpp(95) : error C2228: left of '.buffer_calls' must have class/struct/union type
-c005d4dd0.cpp(96) : error C2228: left of '.order' must have class/struct/union type
-c005d4dd0.cpp(96) : error C2228: left of '.order' must have class/struct/union type
-c005d4dd0.cpp(97) : error C2065: 'BufferSubobjectDestructor' : undeclared identifier
-c005d4dd0.cpp(98) : error C2297: '->*' : illegal, right operand has type 'int'
-c005d4dd0.cpp(102) : error C2228: left of '.win_target' must have class/struct/union type
-c005d4dd0.cpp(103) : error C2228: left of '.win_calls' must have class/struct/union type
-c005d4dd0.cpp(104) : error C2228: left of '.order' must have class/struct/union type
-c005d4dd0.cpp(104) : error C2228: left of '.order' must have class/struct/union type
-c005d4dd0.cpp(105) : error C2065: 'WinOriginalDestructor' : undeclared identifier
-c005d4dd0.cpp(106) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x005D4E40,?close@GraphicWin@@QAEXXZ,src/graphicwin.cpp:116,0,166,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d4e40.cpp(89) : error C2556: 'unsigned int __thiscall GraphicWin::close(void)' : overloaded function differs only by return type from 'void __thiscall GraphicWin::close(void)'
-c005d4e40.cpp(62) : see declaration of 'close'
-c005d4e40.cpp(89) : error C2371: 'close' : redefinition; different basic types
-c005d4e40.cpp(62) : see declaration of 'close'
-c005d4e40.cpp(90) : error C2065: 'WinOriginalClose' : undeclared identifier
-c005d4e40.cpp(91) : error C2297: '->*' : illegal, right operand has type 'int'
-c005d4e40.cpp(93) : error C2065: 'BufferSubobjectClose' : undeclared identifier
-c005d4e40.cpp(94) : error C2297: '->*' : illegal, right operand has type 'int'
-c005d4e40.cpp(100) : error C2061: syntax error : identifier 'uintptr_t'
-c005d4e40.cpp(100) : error C2146: syntax error : missing '(' before identifier 'uintptr_t'
-c005d4e40.cpp(119) : error C2065: 'GraphicWinFieldA0CDefault' : undeclared identifier
-c005d4e40.cpp(119) : error C2100: illegal indirection
-c005d4e40.cpp(126) : error C2065: 'func_scalar_deleting_destructor' : undeclared identifier
-c005d4e40.cpp(126) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
-0x005D4EF0,?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z,src/graphicwin.cpp:407,0,443,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d4ef0.cpp(143) : error C2556: 'int __thiscall GraphicWin::init(int,int,int,int,char *,int,class Win *,class Menu *,struct BorderSizing *)' : overloaded function differs only by return type from 'void __thiscall GraphicWin::init(int,int,int,int,char *,int,class Win *,class Menu *,struct BorderSizing *)'
-c005d4ef0.cpp(77) : see declaration of 'init'
-c005d4ef0.cpp(143) : error C2371: 'init' : redefinition; different basic types
-c005d4ef0.cpp(77) : see declaration of 'init'
-c005d4ef0.cpp(155) : error C2065: 'GraphicWinInitDefaults' : undeclared identifier
-c005d4ef0.cpp(187) : error C2065: 'WaveOperatorNew' : undeclared identifier
-c005d4ef0.cpp(187) : error C2440: 'initializing' : cannot convert from 'int' to 'void *const '
+0x005D4CF0,??0GraphicWin@@QAE@XZ,src/graphicwin.cpp:52,0,230,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d4cf0.cpp(227) : error C2039: 'construct' : is not a member of 'GraphicWin'
+c005d4cf0.cpp(214) : see declaration of 'GraphicWin'
+c005d4cf0.cpp(228) : error C2673: 'construct' : global functions do not have 'this' pointers
+c005d4cf0.cpp(228) : error C2227: left of '->construct' must point to class/struct/union
+c005d4cf0.cpp(229) : error C2065: 'buffer_' : undeclared identifier
+c005d4cf0.cpp(229) : error C2228: left of '.construct' must have class/struct/union type
+c005d4cf0.cpp(231) : error C2673: 'construct' : global functions do not have 'this' pointers
+c005d4cf0.cpp(232) : error C2065: 'GraphicWinPrimaryVtable' : undeclared identifier
+c005d4cf0.cpp(233) : error C2065: 'GraphicWinBufferVtable' : undeclared identifier
+c005d4cf0.cpp(240) : error C2065: 'GraphicWinFieldA0CDefault' : undeclared identifier
+c005d4cf0.cpp(240) : error C2100: illegal indirection"
+0x005D4DD0,??1GraphicWin@@QAE@XZ,src/graphicwin.cpp:171,0,121,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d4dd0.cpp(243) : error C2146: syntax error : missing ';' before identifier 'base'
+c005d4dd0.cpp(243) : error C2734: 'uintptr_t' : const object must be initialized if not extern
+c005d4dd0.cpp(243) : error C2065: 'base' : undeclared identifier
+c005d4dd0.cpp(243) : error C2061: syntax error : identifier 'uintptr_t'
+c005d4dd0.cpp(248) : error C2065: 'GraphicWinPrimaryVtable' : undeclared identifier
+c005d4dd0.cpp(249) : error C2065: 'GraphicWinBufferVtable' : undeclared identifier
+c005d4dd0.cpp(253) : error C2065: 'Probe' : undeclared identifier
+c005d4dd0.cpp(253) : error C2228: left of '.buffer_target' must have class/struct/union type
+c005d4dd0.cpp(254) : error C2228: left of '.buffer_calls' must have class/struct/union type
+c005d4dd0.cpp(255) : error C2228: left of '.order' must have class/struct/union type
+c005d4dd0.cpp(255) : error C2228: left of '.order' must have class/struct/union type
+c005d4dd0.cpp(256) : error C2065: 'BufferSubobjectDestructor' : undeclared identifier
+c005d4dd0.cpp(257) : error C2297: '->*' : illegal, right operand has type 'int'
+c005d4dd0.cpp(261) : error C2228: left of '.win_target' must have class/struct/union type
+c005d4dd0.cpp(262) : error C2228: left of '.win_calls' must have class/struct/union type
+c005d4dd0.cpp(263) : error C2228: left of '.order' must have class/struct/union type
+c005d4dd0.cpp(263) : error C2228: left of '.order' must have class/struct/union type
+c005d4dd0.cpp(264) : error C2065: 'WinOriginalDestructor' : undeclared identifier
+c005d4dd0.cpp(265) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x005D4E40,?close@GraphicWin@@QAEXXZ,src/graphicwin.cpp:116,0,166,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d4e40.cpp(248) : error C2556: 'unsigned int __thiscall GraphicWin::close(void)' : overloaded function differs only by return type from 'void __thiscall GraphicWin::close(void)'
+c005d4e40.cpp(221) : see declaration of 'close'
+c005d4e40.cpp(248) : error C2371: 'close' : redefinition; different basic types
+c005d4e40.cpp(221) : see declaration of 'close'
+c005d4e40.cpp(249) : error C2065: 'WinOriginalClose' : undeclared identifier
+c005d4e40.cpp(250) : error C2297: '->*' : illegal, right operand has type 'int'
+c005d4e40.cpp(252) : error C2065: 'BufferSubobjectClose' : undeclared identifier
+c005d4e40.cpp(253) : error C2297: '->*' : illegal, right operand has type 'int'
+c005d4e40.cpp(259) : error C2061: syntax error : identifier 'uintptr_t'
+c005d4e40.cpp(259) : error C2146: syntax error : missing '(' before identifier 'uintptr_t'
+c005d4e40.cpp(278) : error C2065: 'GraphicWinFieldA0CDefault' : undeclared identifier
+c005d4e40.cpp(278) : error C2100: illegal indirection
+c005d4e40.cpp(285) : error C2065: 'func_scalar_deleting_destructor' : undeclared identifier
+c005d4e40.cpp(285) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
+0x005D4EF0,?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z,src/graphicwin.cpp:407,0,443,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d4ef0.cpp(301) : error C2556: 'int __thiscall GraphicWin::init(int,int,int,int,char *,int,class Win *,class Menu *,struct BorderSizing *)' : overloaded function differs only by return type from 'void __thiscall GraphicWin::init(int,int,int,int,char *,int,class Win *,class Menu *,struct BorderSizing *)'
+c005d4ef0.cpp(235) : see declaration of 'init'
+c005d4ef0.cpp(301) : error C2371: 'init' : redefinition; different basic types
+c005d4ef0.cpp(235) : see declaration of 'init'
+c005d4ef0.cpp(313) : error C2065: 'GraphicWinInitDefaults' : undeclared identifier
+c005d4ef0.cpp(345) : error C2065: 'WaveOperatorNew' : undeclared identifier
+c005d4ef0.cpp(345) : error C2440: 'initializing' : cannot convert from 'int' to 'void *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005d4ef0.cpp(191) : error C2039: 'construct' : is not a member of 'Buffer'
-c005d4ef0.cpp(43) : see declaration of 'Buffer'
-c005d4ef0.cpp(194) : error C2061: syntax error : identifier 'uintptr_t'
-c005d4ef0.cpp(194) : error C2146: syntax error : missing '(' before identifier 'uintptr_t'
-c005d4ef0.cpp(198) : error C2065: 'WinOriginalInit' : undeclared identifier
-c005d4ef0.cpp(198) : error C2297: '->*' : illegal, right operand has type 'int'
-c005d4ef0.cpp(207) : error C2061: syntax error : identifier 'uintptr_t'
-c005d4ef0.cpp(207) : error C2146: syntax error : missing '(' before identifier 'uintptr_t'
-c005d4ef0.cpp(208) : error C2065: 'GraphicWinOriginalComputeMinSize' : undeclared identifier
-c005d4ef0.cpp(208) : error C2297: '->*' : illegal, right operand has type 'int'
-c005d4ef0.cpp(213) : error C2065: 'WinOriginalNonclientToClient' : undeclared identifier
-c005d4ef0.cpp(213) : error C2297: '->*' : illegal, right operand has type 'int'
-c005d4ef0.cpp(221) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
-c005d4ef0.cpp(221) : error C2100: illegal indirection
-c005d4ef0.cpp(231) : error C2065: 'buffer_' : undeclared identifier
-c005d4ef0.cpp(231) : error C2065: 'BufferOriginalInit' : undeclared identifier
-c005d4ef0.cpp(231) : error C2297: '->*' : illegal, right operand has type 'int'
-c005d4ef0.cpp(236) : error C2228: left of '.sync_to_palette' must have class/struct/union type
-c005d4ef0.cpp(236) : error C2065: 'WinActivePalette' : undeclared identifier
-c005d4ef0.cpp(236) : error C2100: illegal indirection"
+c005d4ef0.cpp(349) : error C2039: 'construct' : is not a member of 'Buffer'
+c005d4ef0.cpp(124) : see declaration of 'Buffer'
+c005d4ef0.cpp(352) : error C2061: syntax error : identifier 'uintptr_t'
+c005d4ef0.cpp(352) : error C2146: syntax error : missing '(' before identifier 'uintptr_t'
+c005d4ef0.cpp(356) : error C2065: 'WinOriginalInit' : undeclared identifier
+c005d4ef0.cpp(356) : error C2297: '->*' : illegal, right operand has type 'int'
+c005d4ef0.cpp(365) : error C2061: syntax error : identifier 'uintptr_t'
+c005d4ef0.cpp(365) : error C2146: syntax error : missing '(' before identifier 'uintptr_t'
+c005d4ef0.cpp(366) : error C2065: 'GraphicWinOriginalComputeMinSize' : undeclared identifier
+c005d4ef0.cpp(366) : error C2297: '->*' : illegal, right operand has type 'int'
+c005d4ef0.cpp(371) : error C2065: 'WinOriginalNonclientToClient' : undeclared identifier
+c005d4ef0.cpp(371) : error C2297: '->*' : illegal, right operand has type 'int'
+c005d4ef0.cpp(379) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
+c005d4ef0.cpp(379) : error C2100: illegal indirection
+c005d4ef0.cpp(389) : error C2065: 'buffer_' : undeclared identifier
+c005d4ef0.cpp(389) : error C2065: 'BufferOriginalInit' : undeclared identifier
+c005d4ef0.cpp(389) : error C2297: '->*' : illegal, right operand has type 'int'
+c005d4ef0.cpp(394) : error C2228: left of '.sync_to_palette' must have class/struct/union type
+c005d4ef0.cpp(394) : error C2065: 'WinActivePalette' : undeclared identifier
+c005d4ef0.cpp(394) : error C2100: illegal indirection"
 0x005D50A0,?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z,,0,72,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,72,5,31,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x005D5240,nullsub_224,src/nullsub_thunks.cpp:445,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x005D5250,?fill@GraphicWin@@QAEXH@Z,src/graphicwin.cpp:254,0,246,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
@@ -14368,55 +14260,45 @@ v005d7ae0_0.cpp(48) : error C2059: syntax error : '*'
 0x005D7B20,?load_tga@Buffer@@QAGHPBD@Z,,0,22,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,22,22,,,,,
 0x005D7C80,?load_bmp@Buffer@@QAGHPBD@Z,,0,22,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,22,22,,,,,
 0x005D7F20,sub_5d7f20,,0,262,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,219,5,44,2,0,#0: original 'push' vs rebuilt 'xor',
-0x005D8000,?set_clip@Buffer@@QAEHPAURECT@@@Z,src/buffer.cpp:759,0,499,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d8000.cpp(108) : error C2065: 'ppv_bits_' : undeclared identifier
-c005d8000.cpp(108) : error C2065: 'field_58_' : undeclared identifier
-c005d8000.cpp(114) : error C2079: 'requested' uses undefined struct 'RECT'
-c005d8000.cpp(114) : error C2440: 'initializing' : cannot convert from 'struct RECT' to 'int'
-Source or target has incomplete type
-c005d8000.cpp(115) : error C2065: 'IntersectRect' : undeclared identifier
-c005d8000.cpp(115) : error C2065: 'rect1_' : undeclared identifier
-c005d8000.cpp(115) : error C2065: 'rect2_' : undeclared identifier
-c005d8000.cpp(122) : error C2065: 'hdc2_' : undeclared identifier
-c005d8000.cpp(124) : error C2065: 'get_hdc' : undeclared identifier
-c005d8000.cpp(127) : error C2065: 'field_70_' : undeclared identifier
-c005d8000.cpp(128) : error C2065: 'DeleteObject' : undeclared identifier
-c005d8000.cpp(131) : error C2065: 'HRGN' : undeclared identifier
-c005d8000.cpp(131) : error C2146: syntax error : missing ';' before identifier 'region'
-c005d8000.cpp(131) : error C2065: 'region' : undeclared identifier
-c005d8000.cpp(134) : error C2065: 'EqualRect' : undeclared identifier
-c005d8000.cpp(135) : error C2065: 'CreateRectRgnIndirect' : undeclared identifier
-c005d8000.cpp(143) : error C2065: 'SelectClipRgn' : undeclared identifier
-c005d8000.cpp(146) : error C2065: 'release_hdc' : undeclared identifier
-c005d8000.cpp(153) : error C2146: syntax error : missing ';' before identifier 'header'
-c005d8000.cpp(153) : error C2501: 'RGNDATAHEADER' : missing storage-class or type specifiers
-c005d8000.cpp(153) : error C2501: 'header' : missing storage-class or type specifiers
-c005d8000.cpp(154) : error C2079: 'rects' uses undefined struct 'RECT'
-c005d8000.cpp(155) : error C2512: 'ClipRegionData' : no appropriate default constructor available
-c005d8000.cpp(155) : error C2262: 'region_data' : cannot be destroyed
-c005d8000.cpp(156) : error C2039: 'header' : is not a member of 'ClipRegionData'
-c005d8000.cpp(152) : see declaration of 'ClipRegionData'
-c005d8000.cpp(156) : error C2228: left of '.dwSize' must have class/struct/union type
-c005d8000.cpp(156) : error C2065: 'RGNDATAHEADER' : undeclared identifier
-c005d8000.cpp(157) : error C2039: 'header' : is not a member of 'ClipRegionData'
-c005d8000.cpp(152) : see declaration of 'ClipRegionData'
-c005d8000.cpp(157) : error C2228: left of '.iType' must have class/struct/union type
-c005d8000.cpp(157) : error C2065: 'RDH_RECTANGLES' : undeclared identifier
-c005d8000.cpp(158) : error C2039: 'header' : is not a member of 'ClipRegionData'
-c005d8000.cpp(152) : see declaration of 'ClipRegionData'
-c005d8000.cpp(158) : error C2228: left of '.nCount' must have class/struct/union type
-c005d8000.cpp(159) : error C2039: 'header' : is not a member of 'ClipRegionData'
-c005d8000.cpp(152) : see declaration of 'ClipRegionData'
-c005d8000.cpp(159) : error C2228: left of '.nRgnSize' must have class/struct/union type
-c005d8000.cpp(159) : error C2027: use of undefined type 'RECT'
-c005d8000.cpp(35) : see declaration of 'RECT'
-c005d8000.cpp(160) : error C2039: 'header' : is not a member of 'ClipRegionData'
-c005d8000.cpp(152) : see declaration of 'ClipRegionData'
-c005d8000.cpp(160) : error C2228: left of '.rcBound' must have class/struct/union type
-c005d8000.cpp(161) : error C2036: 'struct RECT *' : unknown size
-c005d8000.cpp(161) : error C2582: 'RECT' : 'operator =' function is unavailable
-c005d8000.cpp(163) : error C2065: 'field_5C_' : undeclared identifier
-c005d8000.cpp(164) : error C2061: syntax error : identifier 'func_clipper_set_list_slot'
-c005d8000.cpp(167) : error C2061: syntax error : identifier 'func_surface_set_clipper_slot'
+0x005D8000,?set_clip@Buffer@@QAEHPAURECT@@@Z,src/buffer.cpp:759,0,499,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d8000.cpp(115) : error C2065: 'ppv_bits_' : undeclared identifier
+c005d8000.cpp(115) : error C2065: 'field_58_' : undeclared identifier
+c005d8000.cpp(122) : error C2065: 'IntersectRect' : undeclared identifier
+c005d8000.cpp(122) : error C2065: 'rect1_' : undeclared identifier
+c005d8000.cpp(122) : error C2065: 'rect2_' : undeclared identifier
+c005d8000.cpp(129) : error C2065: 'hdc2_' : undeclared identifier
+c005d8000.cpp(131) : error C2065: 'get_hdc' : undeclared identifier
+c005d8000.cpp(134) : error C2065: 'field_70_' : undeclared identifier
+c005d8000.cpp(135) : error C2065: 'DeleteObject' : undeclared identifier
+c005d8000.cpp(138) : error C2065: 'HRGN' : undeclared identifier
+c005d8000.cpp(138) : error C2146: syntax error : missing ';' before identifier 'region'
+c005d8000.cpp(138) : error C2065: 'region' : undeclared identifier
+c005d8000.cpp(141) : error C2065: 'EqualRect' : undeclared identifier
+c005d8000.cpp(142) : error C2065: 'CreateRectRgnIndirect' : undeclared identifier
+c005d8000.cpp(150) : error C2065: 'SelectClipRgn' : undeclared identifier
+c005d8000.cpp(153) : error C2065: 'release_hdc' : undeclared identifier
+c005d8000.cpp(160) : error C2146: syntax error : missing ';' before identifier 'header'
+c005d8000.cpp(160) : error C2501: 'RGNDATAHEADER' : missing storage-class or type specifiers
+c005d8000.cpp(160) : error C2501: 'header' : missing storage-class or type specifiers
+c005d8000.cpp(163) : error C2039: 'header' : is not a member of 'ClipRegionData'
+c005d8000.cpp(159) : see declaration of 'ClipRegionData'
+c005d8000.cpp(163) : error C2228: left of '.dwSize' must have class/struct/union type
+c005d8000.cpp(163) : error C2065: 'RGNDATAHEADER' : undeclared identifier
+c005d8000.cpp(164) : error C2039: 'header' : is not a member of 'ClipRegionData'
+c005d8000.cpp(159) : see declaration of 'ClipRegionData'
+c005d8000.cpp(164) : error C2228: left of '.iType' must have class/struct/union type
+c005d8000.cpp(164) : error C2065: 'RDH_RECTANGLES' : undeclared identifier
+c005d8000.cpp(165) : error C2039: 'header' : is not a member of 'ClipRegionData'
+c005d8000.cpp(159) : see declaration of 'ClipRegionData'
+c005d8000.cpp(165) : error C2228: left of '.nCount' must have class/struct/union type
+c005d8000.cpp(166) : error C2039: 'header' : is not a member of 'ClipRegionData'
+c005d8000.cpp(159) : see declaration of 'ClipRegionData'
+c005d8000.cpp(166) : error C2228: left of '.nRgnSize' must have class/struct/union type
+c005d8000.cpp(167) : error C2039: 'header' : is not a member of 'ClipRegionData'
+c005d8000.cpp(159) : see declaration of 'ClipRegionData'
+c005d8000.cpp(167) : error C2228: left of '.rcBound' must have class/struct/union type
+c005d8000.cpp(170) : error C2065: 'field_5C_' : undeclared identifier
+c005d8000.cpp(171) : error C2061: syntax error : identifier 'func_clipper_set_list_slot'
+c005d8000.cpp(174) : error C2061: syntax error : identifier 'func_surface_set_clipper_slot'
 Generating Code...
 Compiling..."
 0x005D8200,?set_clip@Buffer@@QAEHHHHH@Z,,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v005d8200_0.cpp
@@ -14430,38 +14312,25 @@ v005d8200_0.cpp(61) : error C2511: 'set_clip' : overloaded member function 'int 
 c005d8360.cpp(45) : error C2100: illegal indirection"
 0x005D95B0,?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z,src/buffer.cpp:416,0,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d95b0.cpp(73) : error C2065: 'BufferCopyFull' : undeclared identifier
 c005d95b0.cpp(73) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x005D95E0,?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z,src/buffer.cpp:439,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d95e0.cpp(73) : error C2027: use of undefined type 'RECT'
-c005d95e0.cpp(35) : see declaration of 'RECT'
-c005d95e0.cpp(73) : error C2227: left of '->left' must point to class/struct/union
-c005d95e0.cpp(74) : error C2027: use of undefined type 'RECT'
-c005d95e0.cpp(35) : see declaration of 'RECT'
-c005d95e0.cpp(74) : error C2227: left of '->top' must point to class/struct/union
-c005d95e0.cpp(75) : error C2065: 'BufferCopyFull' : undeclared identifier
-c005d95e0.cpp(75) : error C2297: '->*' : illegal, right operand has type 'int'
-c005d95e0.cpp(75) : error C2027: use of undefined type 'RECT'
-c005d95e0.cpp(35) : see declaration of 'RECT'
-c005d95e0.cpp(75) : error C2227: left of '->right' must point to class/struct/union
-c005d95e0.cpp(75) : error C2027: use of undefined type 'RECT'
-c005d95e0.cpp(35) : see declaration of 'RECT'
-c005d95e0.cpp(75) : error C2227: left of '->bottom' must point to class/struct/union"
+0x005D95E0,?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z,src/buffer.cpp:439,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005d95e0.cpp(82) : error C2065: 'BufferCopyFull' : undeclared identifier
+c005d95e0.cpp(82) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x005DA330,?map_colors@Buffer@@QAEHHHHHPAE@Z,,0,401,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,401,380,168,157,6,#6: original 'mov' vs rebuilt 'push',
 0x005DA680,?poly@Buffer@@QAEHPAUVert@@HH@Z,,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x005DA6A0,sub_5da6a0,src/field_accessors.cpp:302,1,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x005DA6B0,sub_5da6b0,src/field_accessors.cpp:324,1,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
-0x005DAC70,?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z,src/buffer.cpp:141,0,64,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dac70.cpp(50) : error C2027: use of undefined type 'Font'
-c005dac70.cpp(35) : see declaration of 'Font'
-c005dac70.cpp(50) : error C2227: left of '->is_initialized' must point to class/struct/union
-c005dac70.cpp(51) : error C2065: 'font1_' : undeclared identifier
-c005dac70.cpp(51) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+0x005DAC70,?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z,src/buffer.cpp:141,0,64,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dac70.cpp(66) : error C2039: 'is_initialized' : is not a member of 'Font'
+c005dac70.cpp(40) : see declaration of 'Font'
+c005dac70.cpp(67) : error C2065: 'font1_' : undeclared identifier
+c005dac70.cpp(67) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-c005dac70.cpp(53) : error C2065: 'font2_' : undeclared identifier
-c005dac70.cpp(53) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+c005dac70.cpp(69) : error C2065: 'font2_' : undeclared identifier
+c005dac70.cpp(69) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-c005dac70.cpp(54) : error C2065: 'font3_' : undeclared identifier
-c005dac70.cpp(54) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+c005dac70.cpp(70) : error C2065: 'font3_' : undeclared identifier
+c005dac70.cpp(70) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-c005dac70.cpp(55) : error C2065: 'font4_' : undeclared identifier
-c005dac70.cpp(55) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+c005dac70.cpp(71) : error C2065: 'font4_' : undeclared identifier
+c005dac70.cpp(71) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast"
 0x005DACB0,?set_text_color@Buffer@@QAEXHHHH@Z,src/buffer.cpp:160,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dacb0.cpp(46) : error C2065: 'color_val_1_' : undeclared identifier
 c005dacb0.cpp(47) : error C2065: 'color_val_2_' : undeclared identifier
@@ -14515,22 +14384,13 @@ c005dcab0.cpp(54) : error C2065: 'font' : undeclared identifier"
 c005dcea0.cpp(89) : error C2227: left of '->is_initialized' must point to class/struct/union
 c005dcea0.cpp(97) : error C2065: 'BufferWriteMultiFontRawL' : undeclared identifier
 c005dcea0.cpp(97) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x005DCF40,?write_l@Buffer@@QAEHPADPAURECT@@H@Z,src/buffer.cpp:1004,0,214,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dcf40.cpp(106) : error C2065: 'font1_' : undeclared identifier
-c005dcf40.cpp(106) : error C2227: left of '->is_initialized' must point to class/struct/union
-c005dcf40.cpp(114) : error C2065: 'edge_bits' : undeclared identifier
-c005dcf40.cpp(114) : error C2027: use of undefined type 'RECT'
-c005dcf40.cpp(35) : see declaration of 'RECT'
-c005dcf40.cpp(114) : error C2227: left of '->left' must point to class/struct/union
-c005dcf40.cpp(115) : error C2027: use of undefined type 'RECT'
-c005dcf40.cpp(35) : see declaration of 'RECT'
-c005dcf40.cpp(115) : error C2227: left of '->top' must point to class/struct/union
-c005dcf40.cpp(116) : error C2027: use of undefined type 'RECT'
-c005dcf40.cpp(35) : see declaration of 'RECT'
-c005dcf40.cpp(116) : error C2227: left of '->bottom' must point to class/struct/union
-c005dcf40.cpp(117) : error C2065: 'edge_int' : undeclared identifier
-c005dcf40.cpp(117) : error C2227: left of '->height_' must point to class/struct/union
-c005dcf40.cpp(119) : error C2065: 'BufferWriteMultiFontRawL' : undeclared identifier
-c005dcf40.cpp(119) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x005DCF40,?write_l@Buffer@@QAEHPADPAURECT@@H@Z,src/buffer.cpp:1004,0,214,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dcf40.cpp(113) : error C2065: 'font1_' : undeclared identifier
+c005dcf40.cpp(113) : error C2227: left of '->is_initialized' must point to class/struct/union
+c005dcf40.cpp(121) : error C2065: 'edge_bits' : undeclared identifier
+c005dcf40.cpp(124) : error C2065: 'edge_int' : undeclared identifier
+c005dcf40.cpp(124) : error C2227: left of '->height_' must point to class/struct/union
+c005dcf40.cpp(126) : error C2065: 'BufferWriteMultiFontRawL' : undeclared identifier
+c005dcf40.cpp(126) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x005DD020,?write_cent_l@Buffer@@QAEHPADHHHH@Z,src/buffer.cpp:1064,0,178,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dd020.cpp(91) : error C2065: 'font1_' : undeclared identifier
 c005dd020.cpp(91) : error C2227: left of '->is_initialized' must point to class/struct/union
 c005dd020.cpp(100) : error C2065: 'BufferTextWidthMeasured' : undeclared identifier
@@ -14540,29 +14400,17 @@ c005dd020.cpp(101) : error C2065: 'edge_bits' : undeclared identifier
 c005dd020.cpp(103) : error C2065: 'BufferWriteMultiFontRawL' : undeclared identifier
 c005dd020.cpp(103) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x005DD0E0,?write_cent_l@Buffer@@QAEHPADHHHHH@Z,,0,67,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,67,5,22,2,0,#0: original 'sub' vs rebuilt 'xor',
-0x005DD130,?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z,src/buffer.cpp:1114,0,282,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dd130.cpp(107) : error C2065: 'edge_bits' : undeclared identifier
-c005dd130.cpp(107) : error C2027: use of undefined type 'RECT'
-c005dd130.cpp(35) : see declaration of 'RECT'
-c005dd130.cpp(107) : error C2227: left of '->left' must point to class/struct/union
-c005dd130.cpp(108) : error C2027: use of undefined type 'RECT'
-c005dd130.cpp(35) : see declaration of 'RECT'
-c005dd130.cpp(108) : error C2227: left of '->top' must point to class/struct/union
-c005dd130.cpp(109) : error C2027: use of undefined type 'RECT'
-c005dd130.cpp(35) : see declaration of 'RECT'
-c005dd130.cpp(109) : error C2227: left of '->right' must point to class/struct/union
-c005dd130.cpp(110) : error C2027: use of undefined type 'RECT'
-c005dd130.cpp(35) : see declaration of 'RECT'
-c005dd130.cpp(110) : error C2227: left of '->bottom' must point to class/struct/union
-c005dd130.cpp(111) : error C2065: 'font1_' : undeclared identifier
-c005dd130.cpp(111) : error C2227: left of '->is_initialized' must point to class/struct/union
-c005dd130.cpp(120) : error C2065: 'BufferTextWidthMeasured' : undeclared identifier
-c005dd130.cpp(120) : error C2297: '->*' : illegal, right operand has type 'int'
-c005dd130.cpp(121) : error C2065: 'edge_int' : undeclared identifier
-c005dd130.cpp(124) : error C2065: 'FontDefaultPtr' : undeclared identifier
-c005dd130.cpp(124) : error C2100: illegal indirection
-c005dd130.cpp(126) : error C2227: left of '->height_' must point to class/struct/union
-c005dd130.cpp(128) : error C2065: 'BufferWriteMultiFontRawL' : undeclared identifier
-c005dd130.cpp(128) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x005DD130,?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z,src/buffer.cpp:1114,0,282,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005dd130.cpp(114) : error C2065: 'edge_bits' : undeclared identifier
+c005dd130.cpp(118) : error C2065: 'font1_' : undeclared identifier
+c005dd130.cpp(118) : error C2227: left of '->is_initialized' must point to class/struct/union
+c005dd130.cpp(127) : error C2065: 'BufferTextWidthMeasured' : undeclared identifier
+c005dd130.cpp(127) : error C2297: '->*' : illegal, right operand has type 'int'
+c005dd130.cpp(128) : error C2065: 'edge_int' : undeclared identifier
+c005dd130.cpp(131) : error C2065: 'FontDefaultPtr' : undeclared identifier
+c005dd130.cpp(131) : error C2100: illegal indirection
+c005dd130.cpp(133) : error C2227: left of '->height_' must point to class/struct/union
+c005dd130.cpp(135) : error C2065: 'BufferWriteMultiFontRawL' : undeclared identifier
+c005dd130.cpp(135) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x005DDC90,?wrap_right@Buffer@@QAEHPADH@Z,,0,257,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,257,5,99,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005DDDA0,?wrap_height_flying@Buffer@@QAEHPADH@Z,,0,50,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,50,49,13,13,9,#9: original 'mov' vs rebuilt 'push',
 0x005DDDE0,?wrap_height_flying@Buffer@@QAEHPAD@Z,,0,266,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,266,5,84,2,0,#0: original 'mov' vs rebuilt 'xor',
@@ -14600,26 +14448,14 @@ c005def90.cpp(61) : error C2065: 'BufferFree' : undeclared identifier"
 0x005E2460,sub_5e2460,src/field_accessors.cpp:346,1,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x005E2470,sub_5e2470,src/field_accessors.cpp:368,1,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x005E3193,?box@Buffer@@QAEHHHHHHH@Z,,0,105,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,105,5,48,2,0,#0: original 'mov' vs rebuilt 'xor',
-0x005E3203,?box@Buffer@@QAEHPAURECT@@HH@Z,src/buffer.cpp:897,0,125,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005e3203.cpp(81) : error C2065: 'edge_bits' : undeclared identifier
-c005e3203.cpp(81) : error C2027: use of undefined type 'RECT'
-c005e3203.cpp(35) : see declaration of 'RECT'
-c005e3203.cpp(81) : error C2227: left of '->left' must point to class/struct/union
-c005e3203.cpp(82) : error C2027: use of undefined type 'RECT'
-c005e3203.cpp(35) : see declaration of 'RECT'
-c005e3203.cpp(82) : error C2227: left of '->top' must point to class/struct/union
-c005e3203.cpp(83) : error C2027: use of undefined type 'RECT'
-c005e3203.cpp(35) : see declaration of 'RECT'
-c005e3203.cpp(83) : error C2227: left of '->right' must point to class/struct/union
-c005e3203.cpp(84) : error C2027: use of undefined type 'RECT'
-c005e3203.cpp(35) : see declaration of 'RECT'
-c005e3203.cpp(84) : error C2227: left of '->bottom' must point to class/struct/union
-c005e3203.cpp(85) : error C2065: 'BufferHLine' : undeclared identifier
-c005e3203.cpp(85) : error C2297: '->*' : illegal, right operand has type 'int'
-c005e3203.cpp(85) : error C2065: 'edge_int' : undeclared identifier
-c005e3203.cpp(86) : error C2297: '->*' : illegal, right operand has type 'int'
-c005e3203.cpp(87) : error C2065: 'BufferVLine' : undeclared identifier
-c005e3203.cpp(87) : error C2297: '->*' : illegal, right operand has type 'int'
-c005e3203.cpp(88) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x005E3203,?box@Buffer@@QAEHPAURECT@@HH@Z,src/buffer.cpp:897,0,125,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005e3203.cpp(88) : error C2065: 'edge_bits' : undeclared identifier
+c005e3203.cpp(92) : error C2065: 'BufferHLine' : undeclared identifier
+c005e3203.cpp(92) : error C2297: '->*' : illegal, right operand has type 'int'
+c005e3203.cpp(92) : error C2065: 'edge_int' : undeclared identifier
+c005e3203.cpp(93) : error C2297: '->*' : illegal, right operand has type 'int'
+c005e3203.cpp(94) : error C2065: 'BufferVLine' : undeclared identifier
+c005e3203.cpp(94) : error C2297: '->*' : illegal, right operand has type 'int'
+c005e3203.cpp(95) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x005E3283,?dotted_box@Buffer@@QAEHHHHHH@Z,,0,97,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,97,5,46,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x005E3373,?get_data@Buffer@@QAEHXZ,src/buffer.cpp:276,0,119,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005e3373.cpp(102) : error C2065: 'SurfaceDescriptorSize' : undeclared identifier
 c005e3373.cpp(102) : error C2057: expected constant expression
@@ -14762,42 +14598,42 @@ c005eb3b0.cpp(70) : error C2100: illegal indirection
 c005eb3b0.cpp(71) : error C2065: 'TeardownObject009B7490' : undeclared identifier
 c005eb3b0.cpp(71) : error C2065: 'original_address' : undeclared identifier
 c005eb3b0.cpp(71) : error C2065: 'BufferElementTeardown' : undeclared identifier"
-0x005EB3D0,??0Win@@QAE@XZ,src/win.cpp:32,0,621,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005eb3d0.cpp(112) : error C2039: 'construct' : is not a member of 'Win'
-c005eb3d0.cpp(100) : see declaration of 'Win'
-c005eb3d0.cpp(113) : error C2065: 'auto_sound_' : undeclared identifier
-c005eb3d0.cpp(113) : error C2228: left of '.construct' must have class/struct/union type
-c005eb3d0.cpp(115) : error C2673: 'construct' : global functions do not have 'this' pointers
-c005eb3d0.cpp(116) : error C2065: 'WinStaticDefaults' : undeclared identifier
-c005eb3d0.cpp(116) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
+0x005EB3D0,??0Win@@QAE@XZ,src/win.cpp:32,0,621,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005eb3d0.cpp(226) : error C2039: 'construct' : is not a member of 'Win'
+c005eb3d0.cpp(140) : see declaration of 'Win'
+c005eb3d0.cpp(227) : error C2065: 'auto_sound_' : undeclared identifier
+c005eb3d0.cpp(227) : error C2228: left of '.construct' must have class/struct/union type
+c005eb3d0.cpp(229) : error C2673: 'construct' : global functions do not have 'this' pointers
+c005eb3d0.cpp(230) : error C2065: 'WinStaticDefaults' : undeclared identifier
+c005eb3d0.cpp(230) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005eb3d0.cpp(117) : error C2065: 'WinDynamicDefaults' : undeclared identifier
-c005eb3d0.cpp(117) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
+c005eb3d0.cpp(231) : error C2065: 'WinDynamicDefaults' : undeclared identifier
+c005eb3d0.cpp(231) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005eb3d0.cpp(119) : error C2065: 'WinSecondaryVtable' : undeclared identifier
-c005eb3d0.cpp(125) : error C2065: 'WinPrimaryVtable' : undeclared identifier
-c005eb3d0.cpp(126) : error C2061: syntax error : identifier 'uintptr_t'
-c005eb3d0.cpp(180) : error C2374: 'offset' : redefinition; multiple initialization
-c005eb3d0.cpp(170) : see declaration of 'offset'"
+c005eb3d0.cpp(233) : error C2065: 'WinSecondaryVtable' : undeclared identifier
+c005eb3d0.cpp(239) : error C2065: 'WinPrimaryVtable' : undeclared identifier
+c005eb3d0.cpp(240) : error C2061: syntax error : identifier 'uintptr_t'
+c005eb3d0.cpp(294) : error C2374: 'offset' : redefinition; multiple initialization
+c005eb3d0.cpp(284) : see declaration of 'offset'"
 0x005EC630,?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z,,0,72,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,72,5,31,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x005EC680,?UNK1@Win@@QAEHHHHHHHHHH@Z,src/win.cpp:594,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
-0x005EC690,?get_hdc@Win@@QAGPAUHDC__@@XZ,src/win.cpp:468,0,81,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ec690.cpp(89) : error C2143: syntax error : missing ';' before 'tag::id'
-c005ec690.cpp(89) : error C2501: 'HDC' : missing storage-class or type specifiers
-c005ec690.cpp(89) : fatal error C1004: unexpected end of file found"
-0x005EC6F0,?release_hdc@Win@@QAGXXZ,src/win.cpp:497,0,76,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ec6f0.cpp(104) : error C2065: 'WinHdcRefCount' : undeclared identifier
-c005ec6f0.cpp(104) : error C2100: illegal indirection
-c005ec6f0.cpp(107) : error C2100: illegal indirection
-c005ec6f0.cpp(110) : error C2065: 'WinHdcSurface' : undeclared identifier
-c005ec6f0.cpp(110) : error C2100: illegal indirection
-c005ec6f0.cpp(110) : error C2440: 'initializing' : cannot convert from 'int' to 'void *const '
+0x005EC690,?get_hdc@Win@@QAGPAUHDC__@@XZ,src/win.cpp:468,0,81,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ec690.cpp(246) : error C2143: syntax error : missing ';' before 'tag::id'
+c005ec690.cpp(246) : error C2501: 'HDC' : missing storage-class or type specifiers
+c005ec690.cpp(246) : fatal error C1004: unexpected end of file found"
+0x005EC6F0,?release_hdc@Win@@QAGXXZ,src/win.cpp:497,0,76,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ec6f0.cpp(261) : error C2065: 'WinHdcRefCount' : undeclared identifier
+c005ec6f0.cpp(261) : error C2100: illegal indirection
+c005ec6f0.cpp(264) : error C2100: illegal indirection
+c005ec6f0.cpp(267) : error C2065: 'WinHdcSurface' : undeclared identifier
+c005ec6f0.cpp(267) : error C2100: illegal indirection
+c005ec6f0.cpp(267) : error C2440: 'initializing' : cannot convert from 'int' to 'void *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005ec6f0.cpp(112) : error C2061: syntax error : identifier 'func_win_surface_slot'
-c005ec6f0.cpp(115) : error C2065: 'WinSharedHdc' : undeclared identifier
-c005ec6f0.cpp(115) : error C2100: illegal indirection
-c005ec6f0.cpp(118) : error C2065: 'ReleaseDC' : undeclared identifier
-c005ec6f0.cpp(118) : error C2065: 'WinHdcWindow' : undeclared identifier
-c005ec6f0.cpp(118) : error C2100: illegal indirection
-c005ec6f0.cpp(118) : error C2100: illegal indirection
-c005ec6f0.cpp(119) : error C2100: illegal indirection"
+c005ec6f0.cpp(269) : error C2061: syntax error : identifier 'func_win_surface_slot'
+c005ec6f0.cpp(272) : error C2065: 'WinSharedHdc' : undeclared identifier
+c005ec6f0.cpp(272) : error C2100: illegal indirection
+c005ec6f0.cpp(275) : error C2065: 'ReleaseDC' : undeclared identifier
+c005ec6f0.cpp(275) : error C2065: 'WinHdcWindow' : undeclared identifier
+c005ec6f0.cpp(275) : error C2100: illegal indirection
+c005ec6f0.cpp(275) : error C2100: illegal indirection
+c005ec6f0.cpp(276) : error C2100: illegal indirection"
 0x005EC740,?set_cursor@Win@@QAEHPAVSprite@@HH@Z,,0,51,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,51,51,,,,,
 0x005EC780,?set_cursor@Win@@QAEHPAUHCURSOR@@@Z,,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v005ec780_0.cpp
 v005ec780_0.cpp(47) : error C2065: 'Win' : undeclared identifier
@@ -14806,40 +14642,17 @@ v005ec780_0.cpp(47) : error C2059: syntax error : ','
 v005ec780_0.cpp(53) : error C2146: syntax error : missing ',' before identifier 'a1'
 v005ec780_0.cpp(53) : error C2061: syntax error : identifier 'a1'
 "
-0x005EC7C0,?set_cursor@Win@@QAEHH@Z,src/win.cpp:539,0,62,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ec7c0.cpp(65) : error C2065: 'cursor_sprite_' : undeclared identifier
-c005ec7c0.cpp(66) : error C2065: 'cursor_name_' : undeclared identifier
-c005ec7c0.cpp(67) : error C2065: 'cursor_handle_' : undeclared identifier
-c005ec7c0.cpp(68) : error C2065: 'WinUpdateCursorOriginal' : undeclared identifier"
+0x005EC7C0,?set_cursor@Win@@QAEHH@Z,src/win.cpp:539,0,62,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c005ec7c0.cpp(225) : error C2065: 'WinUpdateCursorOriginal' : undeclared identifier
 0x005EC960,?get_lbutton_state@Win@@QAEHXZ,,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x005EC980,?get_rbutton_state@Win@@QAEHXZ,,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x005ECDC0,?UNK2@Win@@QAEHH@Z,,0,85,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,85,5,38,2,0,#0: original 'push' vs rebuilt 'xor',
-0x005ECE20,?is_descendant@Win@@QAEHPAVWin@@@Z,src/win.cpp:916,0,83,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ece20.cpp(63) : error C2065: 'child_count_' : undeclared identifier
-c005ece20.cpp(68) : error C2065: 'children_' : undeclared identifier
-c005ece20.cpp(68) : error C2109: subscript requires array or pointer type
-c005ece20.cpp(68) : error C2440: 'initializing' : cannot convert from 'int' to 'class Win *const '
-Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast"
+0x005ECE20,?is_descendant@Win@@QAEHPAVWin@@@Z,src/win.cpp:916,0,83,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,83,105,37,44,1,#1: original 'push' vs rebuilt 'mov',
 0x005ECE80,?UNK3@Win@@QAEHH@Z,src/win.cpp:887,0,54,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x005ECEC0,?UNK4@Win@@QAEHXZ,,0,92,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,92,3,43,2,0,#0: original 'mov' vs rebuilt 'xor',
-0x005ED240,?client_to_screen@Win@@QAEXPAH0@Z,src/win.cpp:190,0,133,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ed240.cpp(49) : error C2065: 'int_from_bits' : undeclared identifier
-c005ed240.cpp(49) : error C2065: 'long_bits' : undeclared identifier
-c005ed240.cpp(49) : error C2065: 'client_rect_' : undeclared identifier
-c005ed240.cpp(49) : error C2228: left of '.left' must have class/struct/union type
-c005ed240.cpp(49) : error C2065: 'outer_rect_' : undeclared identifier
-c005ed240.cpp(49) : error C2228: left of '.left' must have class/struct/union type
-c005ed240.cpp(50) : error C2228: left of '.top' must have class/struct/union type
-c005ed240.cpp(50) : error C2228: left of '.top' must have class/struct/union type
-c005ed240.cpp(53) : error C2065: 'iFlags_' : undeclared identifier
-c005ed240.cpp(53) : error C2065: 'win_parent_' : undeclared identifier
-c005ed240.cpp(56) : error C2227: left of '->client_to_screen' must point to class/struct/union
-c005ed240.cpp(62) : error C2227: left of '->outer_rect_' must point to class/struct/union
-c005ed240.cpp(62) : error C2228: left of '.left' must have class/struct/union type
-c005ed240.cpp(63) : error C2227: left of '->outer_rect_' must point to class/struct/union
-c005ed240.cpp(63) : error C2228: left of '.top' must have class/struct/union type"
+0x005ED240,?client_to_screen@Win@@QAEXPAH0@Z,src/win.cpp:190,0,133,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ed240.cpp(206) : error C2065: 'int_from_bits' : undeclared identifier
+c005ed240.cpp(206) : error C2065: 'long_bits' : undeclared identifier"
 0x005ED7C0,?UNK5@Win@@QAEHXZ,src/win.cpp:609,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x005ED7D0,?move@Win@@QAEHHH@Z,src/win.cpp:162,0,167,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ed7d0.cpp(49) : error C2065: 'move_rect' : undeclared identifier
-c005ed7d0.cpp(49) : error C2065: 'iSomeFlag_' : undeclared identifier
-c005ed7d0.cpp(49) : error C2065: 'client_rect_' : undeclared identifier
-c005ed7d0.cpp(49) : error C2065: 'outer_rect_' : undeclared identifier"
+0x005ED7D0,?move@Win@@QAEHHH@Z,src/win.cpp:162,0,167,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c005ed7d0.cpp(206) : error C2065: 'move_rect' : undeclared identifier
 0x005ED9C0,?on_redraw@Win@@QAEHXZ,,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
 0x005EDE60,?maximize@Win@@QAEHXZ,,0,72,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,72,3,23,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x005EDEB0,?minimize@Win@@QAEHXZ,,0,72,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,72,3,23,2,0,#0: original 'mov' vs rebuilt 'xor',
@@ -14847,32 +14660,34 @@ c005ed7d0.cpp(49) : error C2065: 'outer_rect_' : undeclared identifier"
 0x005EDFE0,?UNK6@Win@@QAEHH@Z,src/win.cpp:624,0,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
 0x005EDFF0,?UNK7@Win@@QAEXHHHH@Z,,0,45,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,45,45,,,,,
 0x005EE020,?reset_window_clip@Win@@QAEXXZ,src/win.cpp:706,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x005EE030,?set_vert_pos@Win@@QAEXH@Z,src/win.cpp:803,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee030.cpp(56) : error C2065: 'scroll_vert_' : undeclared identifier
-c005ee030.cpp(57) : error C2227: left of '->set_pos' must point to class/struct/union"
-0x005EE050,?get_vert_pos@Win@@QAEHXZ,src/win.cpp:243,0,20,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee050.cpp(53) : error C2065: 'scroll_vert_' : undeclared identifier
-c005ee050.cpp(53) : error C2227: left of '->position_' must point to class/struct/union"
-0x005EE070,?set_horz_pos@Win@@QAEXH@Z,src/win.cpp:816,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee070.cpp(56) : error C2065: 'scroll_horz_' : undeclared identifier
-c005ee070.cpp(57) : error C2227: left of '->set_pos' must point to class/struct/union
-Generating Code...
-Compiling..."
-0x005EE090,?get_horz_pos@Win@@QAEHXZ,src/win.cpp:260,0,20,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee090.cpp(53) : error C2065: 'scroll_horz_' : undeclared identifier
-c005ee090.cpp(53) : error C2227: left of '->position_' must point to class/struct/union"
-0x005EE0B0,?set_vert_range@Win@@QAEXHH@Z,src/win.cpp:829,0,28,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee0b0.cpp(56) : error C2065: 'scroll_vert_' : undeclared identifier
-c005ee0b0.cpp(57) : error C2227: left of '->set_range' must point to class/struct/union"
-0x005EE0D0,?set_horz_range@Win@@QAEXHH@Z,src/win.cpp:842,0,28,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee0d0.cpp(56) : error C2065: 'scroll_horz_' : undeclared identifier
-c005ee0d0.cpp(57) : error C2227: left of '->set_range' must point to class/struct/union"
-0x005EE0F0,?set_vert_paging@Win@@QAEXH@Z,src/win.cpp:277,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee0f0.cpp(49) : error C2065: 'scroll_vert_' : undeclared identifier
-c005ee0f0.cpp(50) : error C2227: left of '->paging_' must point to class/struct/union"
-0x005EE110,?set_horz_paging@Win@@QAEXH@Z,src/win.cpp:288,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee110.cpp(49) : error C2065: 'scroll_horz_' : undeclared identifier
-c005ee110.cpp(50) : error C2227: left of '->paging_' must point to class/struct/union"
-0x005EE130,?UNK8@Win@@QAEXH@Z,src/win.cpp:668,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee130.cpp(51) : error C2065: 'scroll_vert_' : undeclared identifier
-c005ee130.cpp(52) : error C2227: left of '->field_2144_' must point to class/struct/union
-c005ee130.cpp(54) : error C2065: 'scroll_horz_' : undeclared identifier
-c005ee130.cpp(55) : error C2227: left of '->field_2144_' must point to class/struct/union"
-0x005EE160,?UNK9@Win@@QAEXH@Z,src/win.cpp:684,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee160.cpp(49) : error C2065: 'scroll_vert_' : undeclared identifier
-c005ee160.cpp(50) : error C2227: left of '->field_2148_' must point to class/struct/union
-c005ee160.cpp(52) : error C2065: 'scroll_horz_' : undeclared identifier
-c005ee160.cpp(53) : error C2227: left of '->field_2148_' must point to class/struct/union"
+0x005EE030,?set_vert_pos@Win@@QAEXH@Z,src/win.cpp:803,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
+0x005EE050,?get_vert_pos@Win@@QAEHXZ,src/win.cpp:243,0,20,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee050.cpp(210) : error C2027: use of undefined type 'Scroll'
+c005ee050.cpp(42) : see declaration of 'Scroll'
+c005ee050.cpp(210) : error C2227: left of '->position_' must point to class/struct/union"
+0x005EE070,?set_horz_pos@Win@@QAEXH@Z,src/win.cpp:816,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
+0x005EE090,?get_horz_pos@Win@@QAEHXZ,src/win.cpp:260,0,20,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee090.cpp(210) : error C2027: use of undefined type 'Scroll'
+c005ee090.cpp(42) : see declaration of 'Scroll'
+c005ee090.cpp(210) : error C2227: left of '->position_' must point to class/struct/union"
+0x005EE0B0,?set_vert_range@Win@@QAEXHH@Z,src/win.cpp:829,0,28,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,28,28,,,,,
+0x005EE0D0,?set_horz_range@Win@@QAEXHH@Z,src/win.cpp:842,0,28,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,28,28,,,,,
+0x005EE0F0,?set_vert_paging@Win@@QAEXH@Z,src/win.cpp:277,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee0f0.cpp(207) : error C2027: use of undefined type 'Scroll'
+c005ee0f0.cpp(42) : see declaration of 'Scroll'
+c005ee0f0.cpp(207) : error C2227: left of '->paging_' must point to class/struct/union"
+0x005EE110,?set_horz_paging@Win@@QAEXH@Z,src/win.cpp:288,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee110.cpp(207) : error C2027: use of undefined type 'Scroll'
+c005ee110.cpp(42) : see declaration of 'Scroll'
+c005ee110.cpp(207) : error C2227: left of '->paging_' must point to class/struct/union"
+0x005EE130,?UNK8@Win@@QAEXH@Z,src/win.cpp:668,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee130.cpp(209) : error C2027: use of undefined type 'Scroll'
+c005ee130.cpp(42) : see declaration of 'Scroll'
+c005ee130.cpp(209) : error C2227: left of '->field_2144_' must point to class/struct/union
+c005ee130.cpp(212) : error C2027: use of undefined type 'Scroll'
+c005ee130.cpp(42) : see declaration of 'Scroll'
+c005ee130.cpp(212) : error C2227: left of '->field_2144_' must point to class/struct/union"
+0x005EE160,?UNK9@Win@@QAEXH@Z,src/win.cpp:684,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ee160.cpp(207) : error C2027: use of undefined type 'Scroll'
+c005ee160.cpp(42) : see declaration of 'Scroll'
+c005ee160.cpp(207) : error C2227: left of '->field_2148_' must point to class/struct/union
+c005ee160.cpp(210) : error C2027: use of undefined type 'Scroll'
+c005ee160.cpp(42) : see declaration of 'Scroll'
+c005ee160.cpp(210) : error C2227: left of '->field_2148_' must point to class/struct/union"
 0x005EE460,sub_5ee460,,0,55,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,55,3,23,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005EE4A0,sub_5ee4a0,,0,48,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,48,48,,,,,
 0x005EFD00,sub_5efd00,,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
@@ -14900,8 +14715,8 @@ v005f05d0_0.cpp(62) : error C2061: syntax error : identifier 'a1'
 v005f0610_0.cpp(62) : error C2146: syntax error : missing ',' before identifier 'a1'
 v005f0610_0.cpp(62) : error C2061: syntax error : identifier 'a1'
 "
-0x005F1060,?on_query_new_palette@Win@@QAEHXZ,src/win.cpp:220,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f1060.cpp(64) : error C2352: 'Palette::set_active_window' : illegal call of non-static member function
-c005f1060.cpp(39) : see declaration of 'set_active_window'"
+0x005F1060,?on_query_new_palette@Win@@QAEHXZ,src/win.cpp:220,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f1060.cpp(221) : error C2352: 'Palette::set_active_window' : illegal call of non-static member function
+c005f1060.cpp(122) : see declaration of 'set_active_window'"
 0x005F1230,sub_5f1230,,0,79,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,79,3,32,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005F1280,sub_5f1280,,0,33,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,33,33,,,,,
 0x005F12B0,sub_5f12b0,,0,38,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,38,38,,,,,
@@ -14964,20 +14779,14 @@ v005f2620_0.cpp(149) : error C2447: missing function header (old-style formal li
 0x005F2830,sub_5f2830,,0,267,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,267,3,84,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x005F2C40,?set_display_mode@Win@@QAAHHHHH@Z,,0,31,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,31,31,,,,,
 0x005F2C60,?sync_palette@Win@@QAEXXZ,src/win.cpp:777,0,52,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
-0x005F2CA0,?is_dialog_focus@Win@@QAEHXZ,src/win.cpp:418,0,63,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f2ca0.cpp(50) : error C2065: 'iFlags_' : undeclared identifier
-c005f2ca0.cpp(53) : error C2065: 'win_parent_' : undeclared identifier
-c005f2ca0.cpp(53) : error C2440: 'initializing' : cannot convert from 'int' to 'class Win *const '
-Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c005f2ca0.cpp(57) : error C2146: syntax error : missing ';' before identifier 'focused'
-c005f2ca0.cpp(57) : error C2734: 'uintptr_t' : const object must be initialized if not extern
-c005f2ca0.cpp(57) : error C2065: 'focused' : undeclared identifier
-c005f2ca0.cpp(57) : error C2039: 'field_CC_' : is not a member of 'Win'
-c005f2ca0.cpp(36) : see declaration of 'Win'
-c005f2ca0.cpp(59) : error C2061: syntax error : identifier 'uintptr_t'
-c005f2ca0.cpp(61) : error C2061: syntax error : identifier 'uintptr_t'
-c005f2ca0.cpp(61) : error C2143: syntax error : missing ';' before '{'"
-0x005F2CE0,?set_def_focus@Win@@QAAXPAUWin@@@Z,src/win.cpp:655,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f2ce0.cpp(53) : error C2511: 'set_def_focus' : overloaded member function 'void (int)' not found in 'Win'
-c005f2ce0.cpp(41) : see declaration of 'Win'"
+0x005F2CA0,?is_dialog_focus@Win@@QAEHXZ,src/win.cpp:418,0,63,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f2ca0.cpp(214) : error C2146: syntax error : missing ';' before identifier 'focused'
+c005f2ca0.cpp(214) : error C2734: 'uintptr_t' : const object must be initialized if not extern
+c005f2ca0.cpp(214) : error C2065: 'focused' : undeclared identifier
+c005f2ca0.cpp(216) : error C2061: syntax error : identifier 'uintptr_t'
+c005f2ca0.cpp(218) : error C2061: syntax error : identifier 'uintptr_t'
+c005f2ca0.cpp(218) : error C2143: syntax error : missing ';' before '{'"
+0x005F2CE0,?set_def_focus@Win@@QAAXPAUWin@@@Z,src/win.cpp:655,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f2ce0.cpp(210) : error C2511: 'set_def_focus' : overloaded member function 'void (int)' not found in 'Win'
+c005f2ce0.cpp(124) : see declaration of 'Win'"
 0x005F4C30,?redraw_nc_buffer@Win@@QAEHH@Z,,0,82,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,82,5,31,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005F4CA0,?update_nc_buffer@Win@@QAEXH@Z,,0,18,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,18,18,,,,,
 0x005F4CC0,?redraw@Win@@QAAXXZ,,0,49,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,49,49,,,,,
@@ -15019,10 +14828,10 @@ v005f5f60_0.cpp(54) : error C2447: missing function header (old-style formal lis
 "
 0x005F62D0,sub_5f62d0,,0,71,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,71,5,24,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005F6A30,?on_set_cursor@Win@@QAEHPAXII@Z,src/win.cpp:639,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
-0x005F6A40,?on_sys_command@Win@@QAEHIHH@Z,src/win.cpp:758,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f6a40.cpp(49) : error C2556: 'void __thiscall Win::on_sys_command(unsigned int,int,int)' : overloaded function differs only by return type from 'int __thiscall Win::on_sys_command(unsigned int,int,int)'
-c005f6a40.cpp(41) : see declaration of 'on_sys_command'
-c005f6a40.cpp(49) : error C2371: 'on_sys_command' : redefinition; different basic types
-c005f6a40.cpp(41) : see declaration of 'on_sys_command'"
+0x005F6A40,?on_sys_command@Win@@QAEHIHH@Z,src/win.cpp:758,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f6a40.cpp(206) : error C2556: 'void __thiscall Win::on_sys_command(unsigned int,int,int)' : overloaded function differs only by return type from 'int __thiscall Win::on_sys_command(unsigned int,int,int)'
+c005f6a40.cpp(198) : see declaration of 'on_sys_command'
+c005f6a40.cpp(206) : error C2371: 'on_sys_command' : redefinition; different basic types
+c005f6a40.cpp(198) : see declaration of 'on_sys_command'"
 0x005F6A50,?get_key_window@Win@@QAGHXZ,,0,96,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,96,5,33,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005F6F10,?get_mouse_window@Win@@QAAHPAH0@Z,,0,1033,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v005f6f10_0.cpp
 v005f6f10_0.cpp(43) : error C2143: syntax error : missing ';' before 'this'
@@ -15034,27 +14843,25 @@ v005f6f10_0.cpp(66) : error C2059: syntax error : ')'
 v005f6f10_0.cpp(66) : error C2143: syntax error : missing ';' before '{'
 v005f6f10_0.cpp(66) : error C2447: missing function header (old-style formal list?)
 "
-0x005F7E90,?is_visible@Win@@QAEHXZ,src/win.cpp:172,0,38,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f7e90.cpp(49) : error C2065: 'iSomeFlag_' : undeclared identifier
-c005f7e90.cpp(54) : error C2065: 'win_parent_' : undeclared identifier
-c005f7e90.cpp(54) : error C2227: left of '->is_visible' must point to class/struct/union"
+0x005F7E90,?is_visible@Win@@QAEHXZ,src/win.cpp:172,0,38,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,38,38,,,,,
 0x005F83B0,sub_5f83b0,,0,21,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,21,21,,,,,
-0x005F8500,?clear_bubble_text@Win@@QAGXXZ,src/win.cpp:573,0,47,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f8500.cpp(65) : error C2065: 'WinBubbleActive' : undeclared identifier
-c005f8500.cpp(65) : error C2100: illegal indirection
-c005f8500.cpp(68) : error C2065: 'WinBubbleCompanion' : undeclared identifier
-c005f8500.cpp(68) : error C2100: illegal indirection
-c005f8500.cpp(69) : error C2100: illegal indirection
-c005f8500.cpp(70) : error C2065: 'WinUpdateScreenOriginal' : undeclared identifier
-c005f8500.cpp(70) : error C2065: 'WinBubbleRect' : undeclared identifier
-c005f8500.cpp(71) : error C2065: 'WinFlipOriginal' : undeclared identifier"
+0x005F8500,?clear_bubble_text@Win@@QAGXXZ,src/win.cpp:573,0,47,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f8500.cpp(221) : error C2065: 'WinBubbleActive' : undeclared identifier
+c005f8500.cpp(221) : error C2100: illegal indirection
+c005f8500.cpp(224) : error C2065: 'WinBubbleCompanion' : undeclared identifier
+c005f8500.cpp(224) : error C2100: illegal indirection
+c005f8500.cpp(225) : error C2100: illegal indirection
+c005f8500.cpp(226) : error C2065: 'WinUpdateScreenOriginal' : undeclared identifier
+c005f8500.cpp(226) : error C2065: 'WinBubbleRect' : undeclared identifier
+c005f8500.cpp(227) : error C2065: 'WinFlipOriginal' : undeclared identifier"
 0x005F8530,?on_mousewheel_down_vert@Win@@QAEXH@Z,,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
 0x005F8550,?on_mousewheel_down_horz@Win@@QAEXH@Z,,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
 0x005F8570,?on_mousewheel_up_vert@Win@@QAEXH@Z,,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
 0x005F8590,?on_mousewheel_up_horz@Win@@QAEXH@Z,,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
 0x005F85B0,?on_mousewheel_down@Win@@QAEXH@Z,,0,45,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,45,45,,,,,
 0x005F85E0,?on_mousewheel_up@Win@@QAEXH@Z,,0,45,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,45,45,,,,,
-0x005F8610,??_GWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1596,1,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f8610.cpp(72) : error C2065: 'WinOriginalDestructor' : undeclared identifier
-c005f8610.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'
-c005f8610.cpp(74) : error C2065: 'ScrollOperatorDelete' : undeclared identifier
+0x005F8610,??_GWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1596,1,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f8610.cpp(229) : error C2065: 'WinOriginalDestructor' : undeclared identifier
+c005f8610.cpp(229) : error C2297: '->*' : illegal, right operand has type 'int'
+c005f8610.cpp(231) : error C2065: 'ScrollOperatorDelete' : undeclared identifier
 Generating Code...
 Compiling..."
 0x005F8640,??_GAutoSound@@UAEPAXI@Z,src/autosound.cpp:167,0,36,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005f8640.cpp(96) : error C2065: 'AutoSoundVtable' : undeclared identifier
@@ -15173,18 +14980,7 @@ c005fa770.cpp(57) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x005FA7A0,?in_box@@YAHHHHHHH@Z,src/win.cpp:374,0,59,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005fa7a0.cpp(42) : error C2065: 'int_from_bits' : undeclared identifier
 Generating Code...
 Compiling..."
-0x005FA7E0,?in_box@@YAHHHPAURECT@@@Z,src/win.cpp:320,0,52,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005fa7e0.cpp(43) : error C2027: use of undefined type 'RECT'
-c005fa7e0.cpp(34) : see declaration of 'RECT'
-c005fa7e0.cpp(43) : error C2227: left of '->left' must point to class/struct/union
-c005fa7e0.cpp(43) : error C2027: use of undefined type 'RECT'
-c005fa7e0.cpp(34) : see declaration of 'RECT'
-c005fa7e0.cpp(43) : error C2227: left of '->right' must point to class/struct/union
-c005fa7e0.cpp(43) : error C2027: use of undefined type 'RECT'
-c005fa7e0.cpp(34) : see declaration of 'RECT'
-c005fa7e0.cpp(43) : error C2227: left of '->top' must point to class/struct/union
-c005fa7e0.cpp(43) : error C2027: use of undefined type 'RECT'
-c005fa7e0.cpp(34) : see declaration of 'RECT'
-c005fa7e0.cpp(43) : error C2227: left of '->bottom' must point to class/struct/union"
+0x005FA7E0,?in_box@@YAHHHPAURECT@@@Z,src/win.cpp:320,0,52,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,52,42,24,16,3,#3: original 'jge' vs rebuilt 'jl',
 0x005FA820,?clear@Spot@@QAEXXZ,,0,11,,REFUSED,,,,,,,no source_locations; not censusable
 0x005FA830,?shutdown@Spot@@QAEXXZ,src/spot.cpp:24,0,46,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005fa830.cpp(49) : error C2065: 'spots_' : undeclared identifier
 c005fa830.cpp(52) : error C2065: 'clear' : undeclared identifier"
@@ -15271,34 +15067,34 @@ c005fab00.cpp(54) : error C2109: subscript requires array or pointer type
 c005fab00.cpp(54) : error C2228: left of '.position' must have class/struct/union type
 c005fab00.cpp(57) : error C2109: subscript requires array or pointer type
 c005fab00.cpp(57) : error C2228: left of '.type' must have class/struct/union type"
-0x005FAB70,?check@Spot@@QAEHHHPAH0PAURECT@@@Z,src/spot.cpp:170,0,143,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005fab70.cpp(47) : error C2065: 'add_count_' : undeclared identifier
-c005fab70.cpp(52) : error C2065: 'spots_' : undeclared identifier
-c005fab70.cpp(52) : error C2109: subscript requires array or pointer type
-c005fab70.cpp(52) : error C2228: left of '.rect' must have class/struct/union type
-c005fab70.cpp(52) : error C2228: left of '.left' must have class/struct/union type
-c005fab70.cpp(52) : error C2109: subscript requires array or pointer type
-c005fab70.cpp(52) : error C2228: left of '.rect' must have class/struct/union type
-c005fab70.cpp(52) : error C2228: left of '.right' must have class/struct/union type
-c005fab70.cpp(52) : error C2109: subscript requires array or pointer type
-c005fab70.cpp(52) : error C2228: left of '.rect' must have class/struct/union type
-c005fab70.cpp(53) : error C2228: left of '.top' must have class/struct/union type
-c005fab70.cpp(53) : error C2109: subscript requires array or pointer type
-c005fab70.cpp(53) : error C2228: left of '.rect' must have class/struct/union type
-c005fab70.cpp(53) : error C2228: left of '.bottom' must have class/struct/union type
-c005fab70.cpp(55) : error C2109: subscript requires array or pointer type
-c005fab70.cpp(55) : error C2228: left of '.position' must have class/struct/union type
-c005fab70.cpp(58) : error C2109: subscript requires array or pointer type
-c005fab70.cpp(58) : error C2228: left of '.type' must have class/struct/union type
-c005fab70.cpp(61) : error C2109: subscript requires array or pointer type
-c005fab70.cpp(61) : error C2228: left of '.rect' must have class/struct/union type"
-0x005FAC00,?get_rect@Spot@@QAEHHHPAURECT@@@Z,src/spot.cpp:199,0,91,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005fac00.cpp(47) : error C2065: 'add_count_' : undeclared identifier
-c005fac00.cpp(52) : error C2065: 'spots_' : undeclared identifier
-c005fac00.cpp(52) : error C2109: subscript requires array or pointer type
-c005fac00.cpp(52) : error C2228: left of '.position' must have class/struct/union type
-c005fac00.cpp(52) : error C2109: subscript requires array or pointer type
-c005fac00.cpp(52) : error C2228: left of '.type' must have class/struct/union type
-c005fac00.cpp(54) : error C2109: subscript requires array or pointer type
-c005fac00.cpp(54) : error C2228: left of '.rect' must have class/struct/union type"
+0x005FAB70,?check@Spot@@QAEHHHPAH0PAURECT@@@Z,src/spot.cpp:170,0,143,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005fab70.cpp(54) : error C2065: 'add_count_' : undeclared identifier
+c005fab70.cpp(59) : error C2065: 'spots_' : undeclared identifier
+c005fab70.cpp(59) : error C2109: subscript requires array or pointer type
+c005fab70.cpp(59) : error C2228: left of '.rect' must have class/struct/union type
+c005fab70.cpp(59) : error C2228: left of '.left' must have class/struct/union type
+c005fab70.cpp(59) : error C2109: subscript requires array or pointer type
+c005fab70.cpp(59) : error C2228: left of '.rect' must have class/struct/union type
+c005fab70.cpp(59) : error C2228: left of '.right' must have class/struct/union type
+c005fab70.cpp(59) : error C2109: subscript requires array or pointer type
+c005fab70.cpp(59) : error C2228: left of '.rect' must have class/struct/union type
+c005fab70.cpp(60) : error C2228: left of '.top' must have class/struct/union type
+c005fab70.cpp(60) : error C2109: subscript requires array or pointer type
+c005fab70.cpp(60) : error C2228: left of '.rect' must have class/struct/union type
+c005fab70.cpp(60) : error C2228: left of '.bottom' must have class/struct/union type
+c005fab70.cpp(62) : error C2109: subscript requires array or pointer type
+c005fab70.cpp(62) : error C2228: left of '.position' must have class/struct/union type
+c005fab70.cpp(65) : error C2109: subscript requires array or pointer type
+c005fab70.cpp(65) : error C2228: left of '.type' must have class/struct/union type
+c005fab70.cpp(68) : error C2109: subscript requires array or pointer type
+c005fab70.cpp(68) : error C2228: left of '.rect' must have class/struct/union type"
+0x005FAC00,?get_rect@Spot@@QAEHHHPAURECT@@@Z,src/spot.cpp:199,0,91,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005fac00.cpp(54) : error C2065: 'add_count_' : undeclared identifier
+c005fac00.cpp(59) : error C2065: 'spots_' : undeclared identifier
+c005fac00.cpp(59) : error C2109: subscript requires array or pointer type
+c005fac00.cpp(59) : error C2228: left of '.position' must have class/struct/union type
+c005fac00.cpp(59) : error C2109: subscript requires array or pointer type
+c005fac00.cpp(59) : error C2228: left of '.type' must have class/struct/union type
+c005fac00.cpp(61) : error C2109: subscript requires array or pointer type
+c005fac00.cpp(61) : error C2228: left of '.rect' must have class/struct/union type"
 0x005FAE70,?UNK1@Menu@@QAEXXZ,,0,104,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,104,1,37,1,0,#0: original 'push' vs rebuilt 'ret',
 0x005FAEE0,?set_def_font@Menu@@QAAXPAUFont@@@Z,,0,35,primary=1;eh=1;shared=0;selfmod=0,BYTE_EXACT,14,14,,,,,
 0x005FB100,?add_menu_item@Menu@@QAEHHHPAD@Z,,0,89,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,89,5,34,2,0,#0: original 'push' vs rebuilt 'xor',
@@ -15723,20 +15519,19 @@ v006043d0_0.cpp(56) : error C2447: missing function header (old-style formal lis
 0x00604490,?on_key_click@BasePop@@QAEHHH@Z,src/basepop.cpp:447,0,17,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00604490.cpp(46) : error C2065: 'field_30A8_' : undeclared identifier
 0x006044B0,?on_key_up@BasePop@@QAEHH@Z,src/basepop.cpp:464,0,17,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c006044b0.cpp(46) : error C2065: 'field_30A8_' : undeclared identifier
 0x00604680,?close_class@BasePop@@QAAXXZ,,0,109,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,109,1,34,1,0,#0: original 'mov' vs rebuilt 'ret',
-0x006046F0,?set_string_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z,src/basepop_font.cpp:6,0,64,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006046f0.cpp(50) : error C2027: use of undefined type 'Font'
-c006046f0.cpp(35) : see declaration of 'Font'
-c006046f0.cpp(50) : error C2227: left of '->is_initialized' must point to class/struct/union
-c006046f0.cpp(51) : error C2065: 'string_font1_' : undeclared identifier
-c006046f0.cpp(51) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+0x006046F0,?set_string_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z,src/basepop_font.cpp:6,0,64,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006046f0.cpp(66) : error C2039: 'is_initialized' : is not a member of 'Font'
+c006046f0.cpp(40) : see declaration of 'Font'
+c006046f0.cpp(67) : error C2065: 'string_font1_' : undeclared identifier
+c006046f0.cpp(67) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-c006046f0.cpp(53) : error C2065: 'string_font2_' : undeclared identifier
-c006046f0.cpp(53) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+c006046f0.cpp(69) : error C2065: 'string_font2_' : undeclared identifier
+c006046f0.cpp(69) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-c006046f0.cpp(54) : error C2065: 'string_font3_' : undeclared identifier
-c006046f0.cpp(54) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+c006046f0.cpp(70) : error C2065: 'string_font3_' : undeclared identifier
+c006046f0.cpp(70) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-c006046f0.cpp(55) : error C2065: 'string_font4_' : undeclared identifier
-c006046f0.cpp(55) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+c006046f0.cpp(71) : error C2065: 'string_font4_' : undeclared identifier
+c006046f0.cpp(71) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast"
 0x00604730,?set_string_color@BasePop@@QAEXHHHH@Z,src/basepop.cpp:216,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00604730.cpp(45) : error C2065: 'string_color_a_' : undeclared identifier
 c00604730.cpp(46) : error C2065: 'string_color_b_' : undeclared identifier
@@ -15754,17 +15549,16 @@ c00604790.cpp(48) : error C2065: 'string_color_3d_' : undeclared identifier"
 c006047c0.cpp(46) : error C2065: 'string_color_hyper_b_' : undeclared identifier
 c006047c0.cpp(47) : error C2065: 'string_color_hyperc_' : undeclared identifier
 c006047c0.cpp(48) : error C2065: 'string_color_hyper_d_' : undeclared identifier"
-0x006047F0,?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z,src/basepop_font.cpp:44,0,54,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006047f0.cpp(50) : error C2027: use of undefined type 'Font'
-c006047f0.cpp(35) : see declaration of 'Font'
-c006047f0.cpp(50) : error C2227: left of '->is_initialized' must point to class/struct/union
-c006047f0.cpp(51) : error C2065: 'button_font1_' : undeclared identifier
-c006047f0.cpp(51) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+0x006047F0,?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z,src/basepop_font.cpp:44,0,54,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006047f0.cpp(66) : error C2039: 'is_initialized' : is not a member of 'Font'
+c006047f0.cpp(40) : see declaration of 'Font'
+c006047f0.cpp(67) : error C2065: 'button_font1_' : undeclared identifier
+c006047f0.cpp(67) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-c006047f0.cpp(53) : error C2065: 'button_font2_' : undeclared identifier
-c006047f0.cpp(53) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+c006047f0.cpp(69) : error C2065: 'button_font2_' : undeclared identifier
+c006047f0.cpp(69) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-c006047f0.cpp(54) : error C2065: 'button_font3_' : undeclared identifier
-c006047f0.cpp(54) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+c006047f0.cpp(70) : error C2065: 'button_font3_' : undeclared identifier
+c006047f0.cpp(70) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
 This conversion requires a reinterpret_cast, a C-style cast or function-style cast"
 0x00604830,?set_button_color@BasePop@@QAEXDHHH@Z,src/basepop.cpp:284,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00604830.cpp(47) : error C2511: 'set_button_color' : overloaded member function 'void (int,int,int,int)' not found in 'BasePop'
 c00604830.cpp(36) : see declaration of 'BasePop'
@@ -15774,8 +15568,8 @@ Compiling..."
 c00604860.cpp(36) : see declaration of 'BasePop'"
 0x00604890,?set_button_color3@BasePop@@QAEXDHHH@Z,src/basepop.cpp:324,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00604890.cpp(47) : error C2511: 'set_button_color3' : overloaded member function 'void (int,int,int,int)' not found in 'BasePop'
 c00604890.cpp(36) : see declaration of 'BasePop'"
-0x006048C0,?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z,src/basepop.cpp:69,0,58,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006048c0.cpp(57) : error C2065: 'publish_default_fonts' : undeclared identifier
-c006048c0.cpp(57) : error C2065: 'BasePopDefaultStringFonts' : undeclared identifier"
+0x006048C0,?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z,src/basepop.cpp:69,0,58,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006048c0.cpp(73) : error C2065: 'publish_default_fonts' : undeclared identifier
+c006048c0.cpp(73) : error C2065: 'BasePopDefaultStringFonts' : undeclared identifier"
 0x00604900,?set_def_string_color@BasePop@@QAAXHHHH@Z,src/basepop.cpp:125,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00604900.cpp(53) : error C2065: 'store_colors' : undeclared identifier
 c00604900.cpp(53) : error C2065: 'BasePopDefaultStringColors' : undeclared identifier
 c00604900.cpp(53) : error C2065: 'StringColorStride' : undeclared identifier"
@@ -15788,8 +15582,8 @@ c00604960.cpp(53) : error C2065: 'StringColorStride' : undeclared identifier"
 0x00604990,?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z,src/basepop.cpp:164,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00604990.cpp(53) : error C2065: 'store_colors' : undeclared identifier
 c00604990.cpp(53) : error C2065: 'BasePopDefaultStringColors' : undeclared identifier
 c00604990.cpp(53) : error C2065: 'StringColorStride' : undeclared identifier"
-0x006049C0,?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,src/basepop.cpp:81,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006049c0.cpp(55) : error C2065: 'publish_default_fonts' : undeclared identifier
-c006049c0.cpp(55) : error C2065: 'BasePopDefaultButtonFonts' : undeclared identifier"
+0x006049C0,?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,src/basepop.cpp:81,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006049c0.cpp(71) : error C2065: 'publish_default_fonts' : undeclared identifier
+c006049c0.cpp(71) : error C2065: 'BasePopDefaultButtonFonts' : undeclared identifier"
 0x006049F0,?set_def_button_color@BasePop@@QAAXHHHH@Z,src/basepop.cpp:177,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006049f0.cpp(53) : error C2065: 'store_colors' : undeclared identifier
 c006049f0.cpp(53) : error C2065: 'BasePopDefaultButtonColors' : undeclared identifier
 c006049f0.cpp(53) : error C2065: 'ButtonColorStride' : undeclared identifier"
@@ -15824,34 +15618,22 @@ c00605370.cpp(176) : error C2065: 'ScrollCloseDynamicDefaults' : undeclared iden
 c00605370.cpp(212) : error C2065: 'call_noarg_virtual' : undeclared identifier
 c00605370.cpp(214) : error C2352: 'GraphicWin::close' : illegal call of non-static member function
 c00605370.cpp(39) : see declaration of 'close'"
-0x00605840,?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z,src/scroll.cpp:205,0,69,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00605840.cpp(55) : error C2027: use of undefined type 'RECT'
-c00605840.cpp(34) : see declaration of 'RECT'
-c00605840.cpp(55) : error C2227: left of '->top' must point to class/struct/union
-c00605840.cpp(56) : error C2027: use of undefined type 'RECT'
-c00605840.cpp(34) : see declaration of 'RECT'
-c00605840.cpp(56) : error C2227: left of '->left' must point to class/struct/union
-c00605840.cpp(57) : error C2027: use of undefined type 'RECT'
-c00605840.cpp(34) : see declaration of 'RECT'
-c00605840.cpp(57) : error C2227: left of '->bottom' must point to class/struct/union
-c00605840.cpp(58) : error C2027: use of undefined type 'RECT'
-c00605840.cpp(34) : see declaration of 'RECT'
-c00605840.cpp(58) : error C2227: left of '->right' must point to class/struct/union
-c00605840.cpp(59) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
-c00605840.cpp(60) : error C2065: 'long_from_bits' : undeclared identifier"
-0x00605890,?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:226,0,59,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00605890.cpp(58) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
-c00605890.cpp(59) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
-c00605890.cpp(59) : error C2100: illegal indirection"
-0x006058D0,?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:240,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006058d0.cpp(58) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
-c006058d0.cpp(59) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
-c006058d0.cpp(59) : error C2100: illegal indirection"
-0x00605910,?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:254,0,69,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00605910.cpp(56) : error C2065: 'ScrollNonClientInit' : undeclared identifier
-c00605910.cpp(60) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
-c00605910.cpp(61) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
-c00605910.cpp(61) : error C2100: illegal indirection"
-0x00605960,?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:269,0,70,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00605960.cpp(56) : error C2065: 'ScrollNonClientInit' : undeclared identifier
-c00605960.cpp(60) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
-c00605960.cpp(61) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
-c00605960.cpp(61) : error C2100: illegal indirection
+0x00605840,?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z,src/scroll.cpp:205,0,69,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00605840.cpp(220) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
+c00605840.cpp(221) : error C2065: 'long_from_bits' : undeclared identifier"
+0x00605890,?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:226,0,59,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00605890.cpp(220) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
+c00605890.cpp(221) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
+c00605890.cpp(221) : error C2100: illegal indirection"
+0x006058D0,?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:240,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006058d0.cpp(220) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
+c006058d0.cpp(221) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
+c006058d0.cpp(221) : error C2100: illegal indirection"
+0x00605910,?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:254,0,69,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00605910.cpp(218) : error C2065: 'ScrollNonClientInit' : undeclared identifier
+c00605910.cpp(222) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
+c00605910.cpp(223) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
+c00605910.cpp(223) : error C2100: illegal indirection"
+0x00605960,?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z,src/scroll.cpp:269,0,70,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00605960.cpp(218) : error C2065: 'ScrollNonClientInit' : undeclared identifier
+c00605960.cpp(222) : error C2065: 'ScrollPrimaryInit' : undeclared identifier
+c00605960.cpp(223) : error C2065: 'ScrollDefaultThickness' : undeclared identifier
+c00605960.cpp(223) : error C2100: illegal indirection
 Generating Code...
 Compiling..."
 0x006059B0,?set_range@Scroll@@QAEXHH@Z,src/scroll.cpp:284,0,93,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006059b0.cpp(119) : error C2556: 'unsigned int __thiscall Scroll::set_range(int,int)' : overloaded function differs only by return type from 'void __thiscall Scroll::set_range(int,int)'
@@ -15985,17 +15767,13 @@ v00605d90_0.cpp(48) : error C2061: syntax error : identifier 'RECT'
 c00606310.cpp(37) : see declaration of 'on_left_click'
 c00606310.cpp(45) : error C2371: 'on_left_click' : redefinition; different basic types
 c00606310.cpp(37) : see declaration of 'on_left_click'"
-0x00606C50,?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z,src/scroll.cpp:511,0,590,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00606c50.cpp(58) : error C2027: use of undefined type 'RECT'
-c00606c50.cpp(34) : see declaration of 'RECT'
-c00606c50.cpp(59) : error C2065: 'write_bits' : undeclared identifier
-c00606c50.cpp(59) : error C2065: 'read_bits' : undeclared identifier
-c00606c50.cpp(86) : error C2086: 'offset' : redefinition
-c00606c50.cpp(98) : error C2065: 'long_from_bits' : undeclared identifier
-c00606c50.cpp(105) : error C2065: 'signed_divide' : undeclared identifier
-c00606c50.cpp(118) : error C2065: 'arithmetic_shift_right_one' : undeclared identifier
-c00606c50.cpp(126) : error C2065: 'signed_min' : undeclared identifier
-c00606c50.cpp(144) : error C2027: use of undefined type 'RECT'
-c00606c50.cpp(34) : see declaration of 'RECT'"
+0x00606C50,?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z,src/scroll.cpp:511,0,590,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00606c50.cpp(66) : error C2065: 'write_bits' : undeclared identifier
+c00606c50.cpp(66) : error C2065: 'read_bits' : undeclared identifier
+c00606c50.cpp(93) : error C2086: 'offset' : redefinition
+c00606c50.cpp(105) : error C2065: 'long_from_bits' : undeclared identifier
+c00606c50.cpp(112) : error C2065: 'signed_divide' : undeclared identifier
+c00606c50.cpp(125) : error C2065: 'arithmetic_shift_right_one' : undeclared identifier
+c00606c50.cpp(133) : error C2065: 'signed_min' : undeclared identifier"
 0x00606EA0,?set_thumb_rect@Scroll@@QAEXXZ,src/scroll.cpp:621,0,88,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00606ea0.cpp(44) : error C2556: 'unsigned int __thiscall Scroll::set_thumb_rect(void)' : overloaded function differs only by return type from 'void __thiscall Scroll::set_thumb_rect(void)'
 c00606ea0.cpp(37) : see declaration of 'set_thumb_rect'
 c00606ea0.cpp(44) : error C2371: 'set_thumb_rect' : redefinition; different basic types
@@ -16036,32 +15814,32 @@ c00606f00.cpp(46) : error C2227: left of '->top' must point to class/struct/unio
 c00606f00.cpp(47) : error C2227: left of '->top' must point to class/struct/union
 c00606f00.cpp(48) : error C2227: left of '->bottom' must point to class/struct/union
 c00606f00.cpp(49) : error C2227: left of '->bottom' must point to class/struct/union"
-0x00606F30,??0BaseButton@@QAE@XZ,src/basebutton.cpp:33,0,291,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00606f30.cpp(72) : error C2039: 'construct' : is not a member of 'BaseButton'
-c00606f30.cpp(61) : see declaration of 'BaseButton'
-c00606f30.cpp(73) : error C2673: 'construct' : global functions do not have 'this' pointers
-c00606f30.cpp(73) : error C2227: left of '->construct' must point to class/struct/union
-c00606f30.cpp(74) : error C2065: 'time1_' : undeclared identifier
-c00606f30.cpp(75) : error C2065: 'time2_' : undeclared identifier
-c00606f30.cpp(77) : error C2673: 'construct' : global functions do not have 'this' pointers
-c00606f30.cpp(78) : error C2065: 'BaseButtonStaticDefaults' : undeclared identifier
-c00606f30.cpp(78) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
+0x00606F30,??0BaseButton@@QAE@XZ,src/basebutton.cpp:33,0,291,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00606f30.cpp(83) : error C2039: 'construct' : is not a member of 'BaseButton'
+c00606f30.cpp(72) : see declaration of 'BaseButton'
+c00606f30.cpp(84) : error C2673: 'construct' : global functions do not have 'this' pointers
+c00606f30.cpp(84) : error C2227: left of '->construct' must point to class/struct/union
+c00606f30.cpp(85) : error C2065: 'time1_' : undeclared identifier
+c00606f30.cpp(86) : error C2065: 'time2_' : undeclared identifier
+c00606f30.cpp(88) : error C2673: 'construct' : global functions do not have 'this' pointers
+c00606f30.cpp(89) : error C2065: 'BaseButtonStaticDefaults' : undeclared identifier
+c00606f30.cpp(89) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c00606f30.cpp(79) : error C2065: 'BaseButtonDynamicDefaults' : undeclared identifier
-c00606f30.cpp(79) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
+c00606f30.cpp(90) : error C2065: 'BaseButtonDynamicDefaults' : undeclared identifier
+c00606f30.cpp(90) : error C2440: 'initializing' : cannot convert from 'int' to 'volatile const unsigned int *const '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c00606f30.cpp(80) : error C2065: 'BaseButtonPrimaryVtable' : undeclared identifier
-c00606f30.cpp(81) : error C2065: 'BaseButtonBufferVtable' : undeclared identifier"
-0x00607040,??1BaseButton@@QAE@XZ,src/basebutton.cpp:133,0,167,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607040.cpp(67) : error C2039: 'destroy' : is not a member of 'BaseButton'
-c00607040.cpp(54) : see declaration of 'BaseButton'
-c00607040.cpp(69) : error C2673: 'destroy' : global functions do not have 'this' pointers
-c00607040.cpp(70) : error C2065: 'BaseButtonPrimaryVtable' : undeclared identifier
-c00607040.cpp(71) : error C2065: 'BaseButtonBufferVtable' : undeclared identifier
-c00607040.cpp(72) : error C2065: 'close' : undeclared identifier
-c00607040.cpp(73) : error C2065: 'time2_' : undeclared identifier
-c00607040.cpp(74) : error C2065: 'time1_' : undeclared identifier
-c00607040.cpp(75) : error C2065: 'graphic_win_destructor_redirect' : undeclared identifier
-c00607040.cpp(76) : error C2673: 'destroy' : global functions do not have 'this' pointers
-c00607040.cpp(77) : error C2673: 'destroy' : global functions do not have 'this' pointers"
+c00606f30.cpp(91) : error C2065: 'BaseButtonPrimaryVtable' : undeclared identifier
+c00606f30.cpp(92) : error C2065: 'BaseButtonBufferVtable' : undeclared identifier"
+0x00607040,??1BaseButton@@QAE@XZ,src/basebutton.cpp:133,0,167,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607040.cpp(78) : error C2039: 'destroy' : is not a member of 'BaseButton'
+c00607040.cpp(65) : see declaration of 'BaseButton'
+c00607040.cpp(80) : error C2673: 'destroy' : global functions do not have 'this' pointers
+c00607040.cpp(81) : error C2065: 'BaseButtonPrimaryVtable' : undeclared identifier
+c00607040.cpp(82) : error C2065: 'BaseButtonBufferVtable' : undeclared identifier
+c00607040.cpp(83) : error C2065: 'close' : undeclared identifier
+c00607040.cpp(84) : error C2065: 'time2_' : undeclared identifier
+c00607040.cpp(85) : error C2065: 'time1_' : undeclared identifier
+c00607040.cpp(86) : error C2065: 'graphic_win_destructor_redirect' : undeclared identifier
+c00607040.cpp(87) : error C2673: 'destroy' : global functions do not have 'this' pointers
+c00607040.cpp(88) : error C2673: 'destroy' : global functions do not have 'this' pointers"
 0x006070C0,?close@BaseButton@@QAEXXZ,src/basebutton.cpp:79,0,208,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006070c0.cpp(64) : error C2556: 'unsigned int __thiscall BaseButton::close(void)' : overloaded function differs only by return type from 'void __thiscall BaseButton::close(void)'
 c006070c0.cpp(55) : see declaration of 'close'
 c006070c0.cpp(64) : error C2371: 'close' : redefinition; different basic types
@@ -16074,8 +15852,8 @@ c006070c0.cpp(92) : error C2065: '_free' : undeclared identifier
 c006070c0.cpp(92) : error C2061: syntax error : identifier 'uintptr_t'
 c006070c0.cpp(92) : error C2146: syntax error : missing '(' before identifier 'uintptr_t'
 c006070c0.cpp(98) : error C2061: syntax error : identifier 'uintptr_t'"
-0x00607210,?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z,src/basebutton.cpp:481,0,322,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607210.cpp(225) : error C2511: 'init' : overloaded member function 'int (const char *,int,int,int,int,int,class Win *,int)' not found in 'BaseButton'
-c00607210.cpp(175) : see declaration of 'BaseButton'
+0x00607210,?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z,src/basebutton.cpp:481,0,322,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607210.cpp(401) : error C2511: 'init' : overloaded member function 'int (const char *,int,int,int,int,int,class Win *,int)' not found in 'BaseButton'
+c00607210.cpp(352) : see declaration of 'BaseButton'
 Generating Code...
 Compiling..."
 0x00607360,?set_text_color@BaseButton@@QAEXHHHH@Z,src/basebutton.cpp:313,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607360.cpp(66) : error C2065: 'win_parent_' : undeclared identifier
@@ -16090,12 +15868,11 @@ c006073e0.cpp(61) : error C2065: 'buffer_' : undeclared identifier"
 0x00607420,?set_def_text_color@BaseButton@@QAAXHHHH@Z,src/basebutton.cpp:226,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00607420.cpp(53) : error C2065: 'store_default_text_colors' : undeclared identifier
 0x00607450,?set_def_text_color2@BaseButton@@QAAXHHHH@Z,src/basebutton.cpp:235,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00607450.cpp(53) : error C2065: 'store_default_text_colors' : undeclared identifier
 0x00607480,?set_def_text_color3@BaseButton@@QAAXHHHH@Z,src/basebutton.cpp:244,0,39,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00607480.cpp(53) : error C2065: 'store_default_text_colors' : undeclared identifier
-0x006074B0,?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,src/basebutton.cpp:253,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006074b0.cpp(58) : error C2065: 'BaseButtonDefaultFonts' : undeclared identifier
-c006074b0.cpp(58) : error C2440: 'const_cast' : cannot convert from 'int' to 'volatile class Font ** '
+0x006074B0,?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,src/basebutton.cpp:253,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006074b0.cpp(74) : error C2065: 'BaseButtonDefaultFonts' : undeclared identifier
+c006074b0.cpp(74) : error C2440: 'const_cast' : cannot convert from 'int' to 'volatile class Font ** '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c006074b0.cpp(61) : error C2027: use of undefined type 'Font'
-c006074b0.cpp(35) : see declaration of 'Font'
-c006074b0.cpp(61) : error C2227: left of '->is_initialized' must point to class/struct/union"
+c006074b0.cpp(77) : error C2039: 'is_initialized' : is not a member of 'Font'
+c006074b0.cpp(40) : see declaration of 'Font'"
 0x006074E0,?set_name@BaseButton@@QAEHPAD@Z,src/basebutton.cpp:181,0,109,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006074e0.cpp(55) : error C2511: 'set_name' : overloaded member function 'int (const char *)' not found in 'BaseButton'
 c006074e0.cpp(42) : see declaration of 'BaseButton'"
 0x00607550,?set_bubble_text@BaseButton@@QAEHPAD@Z,src/basebutton.cpp:157,0,103,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607550.cpp(55) : error C2511: 'set_bubble_text' : overloaded member function 'int (const char *)' not found in 'BaseButton'
@@ -16121,68 +15898,66 @@ c00607c80.cpp(154) : error C2065: 'field_A78_' : undeclared identifier"
 0x00607CC0,??_GBaseButton@@UAEPAXI@Z,src/deleting_thunks.cpp:1673,1,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607cc0.cpp(54) : error C2065: 'base_button_destructor_redirect' : undeclared identifier
 c00607cc0.cpp(57) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x00607CE0,??3BaseButton@@SAXPAXI@Z,src/deleting_thunks.cpp:1690,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00607ce0.cpp(45) : error C2065: 'scalar_delete_base_button' : undeclared identifier
-0x00607DA0,?close@FlatButton@@QAEXXZ,src/flatbutton.cpp:28,0,161,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607da0.cpp(55) : error C2556: 'unsigned int __thiscall FlatButton::close(void)' : overloaded function differs only by return type from 'void __thiscall FlatButton::close(void)'
-c00607da0.cpp(47) : see declaration of 'close'
-c00607da0.cpp(55) : error C2371: 'close' : redefinition; different basic types
-c00607da0.cpp(47) : see declaration of 'close'
-c00607da0.cpp(56) : error C2065: 'time1_' : undeclared identifier
-c00607da0.cpp(56) : error C2228: left of '.close' must have class/struct/union type
-c00607da0.cpp(62) : error C2352: 'BaseButton::close' : illegal call of non-static member function
-c00607da0.cpp(40) : see declaration of 'close'
-c00607da0.cpp(65) : error C2065: 'FlatButtonDefaults' : undeclared identifier
-c00607da0.cpp(75) : error C2061: syntax error : identifier 'uintptr_t'"
+0x00607DA0,?close@FlatButton@@QAEXXZ,src/flatbutton.cpp:28,0,161,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607da0.cpp(66) : error C2556: 'unsigned int __thiscall FlatButton::close(void)' : overloaded function differs only by return type from 'void __thiscall FlatButton::close(void)'
+c00607da0.cpp(58) : see declaration of 'close'
+c00607da0.cpp(66) : error C2371: 'close' : redefinition; different basic types
+c00607da0.cpp(58) : see declaration of 'close'
+c00607da0.cpp(67) : error C2065: 'time1_' : undeclared identifier
+c00607da0.cpp(67) : error C2228: left of '.close' must have class/struct/union type
+c00607da0.cpp(73) : error C2352: 'BaseButton::close' : illegal call of non-static member function
+c00607da0.cpp(41) : see declaration of 'close'
+c00607da0.cpp(76) : error C2065: 'FlatButtonDefaults' : undeclared identifier
+c00607da0.cpp(86) : error C2061: syntax error : identifier 'uintptr_t'"
 0x006086F0,?fill_entry@StringList@@QAEHPAUStringStruct@@@Z,,0,113,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,113,5,45,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00608770,?kill_entry@StringList@@QAEXPAUStringStruct@@@Z,,0,43,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,43,43,,,,,
 0x00608BA0,?add_special@StringList@@QAEHPAD@Z,,0,92,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,92,3,33,1,0,#0: original 'mov' vs rebuilt 'ret 4',
 0x00608C00,??1Text@@QAE@XZ,,0,5,,REFUSED,,,,,,,no source_locations; not censusable
-0x00608E10,??1Dialog@@QAE@XZ,src/dialog.cpp:278,0,351,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00608e10.cpp(179) : error C2039: 'destroy' : is not a member of 'Dialog'
-c00608e10.cpp(85) : see declaration of 'Dialog'
-c00608e10.cpp(180) : error C2673: 'destroy' : global functions do not have 'this' pointers
-c00608e10.cpp(181) : error C2065: 'DialogPrimaryVtable' : undeclared identifier
-c00608e10.cpp(182) : error C2673: 'destroy' : global functions do not have 'this' pointers
-c00608e10.cpp(182) : error C2065: 'DialogOriginalClose' : undeclared identifier
-c00608e10.cpp(189) : error C2065: 'StringStruct' : undeclared identifier
-c00608e10.cpp(189) : error C2059: syntax error : 'const'
-c00608e10.cpp(191) : error C2065: 'list' : undeclared identifier
-c00608e10.cpp(191) : error C2227: left of '->close_with_tables' must point to class/struct/union
-c00608e10.cpp(191) : error C2065: 'DialogListDerivedVtable' : undeclared identifier
-c00608e10.cpp(192) : error C2065: 'DialogListDerivedVirtualBaseVtable' : undeclared identifier
-c00608e10.cpp(193) : error C2227: left of '->close_with_tables' must point to class/struct/union
-c00608e10.cpp(193) : error C2065: 'DialogListVtable' : undeclared identifier
-c00608e10.cpp(193) : error C2065: 'DialogListVirtualBaseVtable' : undeclared identifier
-c00608e10.cpp(200) : error C2673: 'destroy' : global functions do not have 'this' pointers
-c00608e10.cpp(202) : error C2065: 'DialogVirtualBaseFinalVtable' : undeclared identifier
-c00608e10.cpp(203) : error C2065: 'DialogPublishedGlobal' : undeclared identifier
-c00608e10.cpp(203) : error C2100: illegal indirection
-c00608e10.cpp(205) : error C2065: 'heap_' : undeclared identifier
-c00608e10.cpp(205) : error C2228: left of '.shutdown' must have class/struct/union type"
+0x00608E10,??1Dialog@@QAE@XZ,src/dialog.cpp:278,0,351,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00608e10.cpp(195) : error C2039: 'destroy' : is not a member of 'Dialog'
+c00608e10.cpp(101) : see declaration of 'Dialog'
+c00608e10.cpp(196) : error C2673: 'destroy' : global functions do not have 'this' pointers
+c00608e10.cpp(197) : error C2065: 'DialogPrimaryVtable' : undeclared identifier
+c00608e10.cpp(198) : error C2673: 'destroy' : global functions do not have 'this' pointers
+c00608e10.cpp(198) : error C2065: 'DialogOriginalClose' : undeclared identifier
+c00608e10.cpp(205) : error C2065: 'StringStruct' : undeclared identifier
+c00608e10.cpp(205) : error C2059: syntax error : 'const'
+c00608e10.cpp(207) : error C2065: 'list' : undeclared identifier
+c00608e10.cpp(207) : error C2227: left of '->close_with_tables' must point to class/struct/union
+c00608e10.cpp(207) : error C2065: 'DialogListDerivedVtable' : undeclared identifier
+c00608e10.cpp(208) : error C2065: 'DialogListDerivedVirtualBaseVtable' : undeclared identifier
+c00608e10.cpp(209) : error C2227: left of '->close_with_tables' must point to class/struct/union
+c00608e10.cpp(209) : error C2065: 'DialogListVtable' : undeclared identifier
+c00608e10.cpp(209) : error C2065: 'DialogListVirtualBaseVtable' : undeclared identifier
+c00608e10.cpp(216) : error C2673: 'destroy' : global functions do not have 'this' pointers
+c00608e10.cpp(218) : error C2065: 'DialogVirtualBaseFinalVtable' : undeclared identifier
+c00608e10.cpp(219) : error C2065: 'DialogPublishedGlobal' : undeclared identifier
+c00608e10.cpp(219) : error C2100: illegal indirection
+c00608e10.cpp(221) : error C2065: 'heap_' : undeclared identifier
+c00608e10.cpp(221) : error C2228: left of '.shutdown' must have class/struct/union type"
 0x00609970,?UNK1@Dialog@@QAEXHH@Z,,0,26,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,26,26,,,,,
 0x00609990,?item@Dialog@@QAEHPADH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,52,52,,,,,
-0x006099D0,?set_selected_id@Dialog@@QAEXH@Z,src/dialog.cpp:111,0,115,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c006099d0.cpp(126) : error C2065: 'id_to_pos' : undeclared identifier
-0x00609A50,?get_selected_id@Dialog@@QAEHXZ,src/dialog.cpp:121,0,150,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609a50.cpp(131) : error C2065: 'INT_MIN' : undeclared identifier
-c00609a50.cpp(142) : error C2065: 'memcpy' : undeclared identifier
+0x006099D0,?set_selected_id@Dialog@@QAEXH@Z,src/dialog.cpp:111,0,115,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c006099d0.cpp(142) : error C2065: 'id_to_pos' : undeclared identifier
+0x00609A50,?get_selected_id@Dialog@@QAEHXZ,src/dialog.cpp:121,0,150,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609a50.cpp(147) : error C2065: 'INT_MIN' : undeclared identifier
+c00609a50.cpp(158) : error C2065: 'memcpy' : undeclared identifier
 Generating Code..."
 0x00609AF0,?id_to_pos@Dialog@@QAEHH@Z,src/dialog.cpp:82,0,91,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,91,91,,,,,
-0x00609B50,?pos_to_id@Dialog@@QAEHH@Z,src/dialog.cpp:156,0,154,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609b50.cpp(130) : error C2065: 'INT_MIN' : undeclared identifier
-c00609b50.cpp(141) : error C2065: 'memcpy' : undeclared identifier"
+0x00609B50,?pos_to_id@Dialog@@QAEHH@Z,src/dialog.cpp:156,0,154,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609b50.cpp(146) : error C2065: 'INT_MIN' : undeclared identifier
+c00609b50.cpp(157) : error C2065: 'memcpy' : undeclared identifier"
 0x00609BF0,?UNK2@Dialog@@QAEXHHHH@Z,,0,112,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v00609bf0_0.cpp
 v00609bf0_0.cpp(142) : error C2146: syntax error : missing ',' before identifier 'a1'
 v00609bf0_0.cpp(142) : error C2061: syntax error : identifier 'a1'
 v00609bf0_0.cpp(142) : error C2511: 'UNK2' : overloaded member function 'void (struct HWND)' not found in 'Dialog'
         v00609bf0_0.cpp(138) : see declaration of 'Dialog'
 "
-0x00609C60,?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z,src/dialog.cpp:25,0,45,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609c60.cpp(129) : error C2027: use of undefined type 'Font'
-c00609c60.cpp(36) : see declaration of 'Font'
-c00609c60.cpp(129) : error C2227: left of '->is_initialized' must point to class/struct/union"
+0x00609C60,?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z,src/dialog.cpp:25,0,45,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609c60.cpp(145) : error C2039: 'is_initialized' : is not a member of 'Font'
+c00609c60.cpp(53) : see declaration of 'Font'"
 0x00609C90,?set_dialog_text_color@Dialog@@QAEXHHHH@Z,src/dialog.cpp:43,0,40,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,40,40,,,,,
 0x00609CC0,?set_dialog_text_color2@Dialog@@QAEXHHHH@Z,src/dialog.cpp:56,0,43,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,43,43,,,,,
 0x00609CF0,?set_dialog_text_color3@Dialog@@QAEXHHHH@Z,src/dialog.cpp:69,0,43,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,43,43,,,,,
-0x00609D20,?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,src/dialog.cpp:229,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609d20.cpp(137) : error C2065: 'DialogDefaultFonts' : undeclared identifier
-c00609d20.cpp(137) : error C2440: 'const_cast' : cannot convert from 'int' to 'volatile class Font ** '
+0x00609D20,?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,src/dialog.cpp:229,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609d20.cpp(153) : error C2065: 'DialogDefaultFonts' : undeclared identifier
+c00609d20.cpp(153) : error C2440: 'const_cast' : cannot convert from 'int' to 'volatile class Font ** '
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-c00609d20.cpp(140) : error C2027: use of undefined type 'Font'
-c00609d20.cpp(36) : see declaration of 'Font'
-c00609d20.cpp(140) : error C2227: left of '->is_initialized' must point to class/struct/union"
+c00609d20.cpp(156) : error C2039: 'is_initialized' : is not a member of 'Font'
+c00609d20.cpp(53) : see declaration of 'Font'"
 0x00609D50,?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z,,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v00609d50_0.cpp
 v00609d50_0.cpp(44) : error C2143: syntax error : missing ';' before 'this'
 v00609d50_0.cpp(44) : error C2143: syntax error : missing ';' before 'this'
@@ -16193,9 +15968,9 @@ v00609d50_0.cpp(54) : error C2059: syntax error : ')'
 v00609d50_0.cpp(54) : error C2143: syntax error : missing ';' before '{'
 v00609d50_0.cpp(54) : error C2447: missing function header (old-style formal list?)
 "
-0x00609D90,??_GDialog@@UAEPAXI@Z,src/dialog.cpp:327,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609d90.cpp(131) : error C2039: 'destroy' : is not a member of 'Dialog'
-c00609d90.cpp(61) : see declaration of 'Dialog'
-c00609d90.cpp(133) : error C2065: 'DialogOperatorDelete' : undeclared identifier"
+0x00609D90,??_GDialog@@UAEPAXI@Z,src/dialog.cpp:327,0,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609d90.cpp(147) : error C2039: 'destroy' : is not a member of 'Dialog'
+c00609d90.cpp(77) : see declaration of 'Dialog'
+c00609d90.cpp(149) : error C2065: 'DialogOperatorDelete' : undeclared identifier"
 0x00609EC0,??1ListBox@@QAE@XZ,src/listbox.cpp:104,0,83,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609ec0.cpp(60) : error C2039: 'destroy' : is not a member of 'ListBox'
 c00609ec0.cpp(45) : see declaration of 'ListBox'
 c00609ec0.cpp(61) : error C2673: 'destroy' : global functions do not have 'this' pointers
@@ -16203,19 +15978,19 @@ c00609ec0.cpp(71) : error C2065: 'ListBoxGraphicWinVtable' : undeclared identifi
 c00609ec0.cpp(73) : error C2065: 'ListBoxBufferVtable' : undeclared identifier
 c00609ec0.cpp(75) : error C2065: 'ListBoxDialogVtable' : undeclared identifier
 c00609ec0.cpp(83) : error C2065: 'close' : undeclared identifier"
-0x00609F20,?close@ListBox@@QAEXXZ,src/listbox.cpp:54,0,125,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609f20.cpp(166) : error C2556: 'unsigned int __thiscall ListBox::close(void)' : overloaded function differs only by return type from 'void __thiscall ListBox::close(void)'
-c00609f20.cpp(135) : see declaration of 'close'
-c00609f20.cpp(166) : error C2371: 'close' : redefinition; different basic types
-c00609f20.cpp(135) : see declaration of 'close'
-c00609f20.cpp(177) : error C2065: 'ListBoxOriginalDialogClose' : undeclared identifier
-c00609f20.cpp(177) : error C2297: '->*' : illegal, right operand has type 'int'
-c00609f20.cpp(186) : error C2065: 'ListBoxCloseStaticDefaults' : undeclared identifier
-c00609f20.cpp(186) : error C2109: subscript requires array or pointer type
-c00609f20.cpp(187) : error C2065: 'ListBoxCloseDynamicDefault' : undeclared identifier
-c00609f20.cpp(187) : error C2100: illegal indirection
-c00609f20.cpp(188) : error C2109: subscript requires array or pointer type
-c00609f20.cpp(189) : error C2109: subscript requires array or pointer type
-c00609f20.cpp(190) : error C2109: subscript requires array or pointer type"
+0x00609F20,?close@ListBox@@QAEXXZ,src/listbox.cpp:54,0,125,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00609f20.cpp(182) : error C2556: 'unsigned int __thiscall ListBox::close(void)' : overloaded function differs only by return type from 'void __thiscall ListBox::close(void)'
+c00609f20.cpp(151) : see declaration of 'close'
+c00609f20.cpp(182) : error C2371: 'close' : redefinition; different basic types
+c00609f20.cpp(151) : see declaration of 'close'
+c00609f20.cpp(193) : error C2065: 'ListBoxOriginalDialogClose' : undeclared identifier
+c00609f20.cpp(193) : error C2297: '->*' : illegal, right operand has type 'int'
+c00609f20.cpp(202) : error C2065: 'ListBoxCloseStaticDefaults' : undeclared identifier
+c00609f20.cpp(202) : error C2109: subscript requires array or pointer type
+c00609f20.cpp(203) : error C2065: 'ListBoxCloseDynamicDefault' : undeclared identifier
+c00609f20.cpp(203) : error C2100: illegal indirection
+c00609f20.cpp(204) : error C2109: subscript requires array or pointer type
+c00609f20.cpp(205) : error C2109: subscript requires array or pointer type
+c00609f20.cpp(206) : error C2109: subscript requires array or pointer type"
 0x00609FA0,?set_selected_id@ListBox@@QAEXH@Z,,0,115,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,115,3,47,1,0,#0: original 'mov' vs rebuilt 'ret 4',
 0x0060AA20,?on_right_down@ListBox@@QAEXHH@Z,,0,50,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,50,50,,,,,
 0x0060C6A0,?on_scrolled@ListBox@@QAEXHH@Z,,0,33,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,33,33,,,,,
@@ -16277,16 +16052,16 @@ c0060d0c0.cpp(70) : error C2100: illegal indirection
 c0060d0c0.cpp(71) : error C2065: 'g_RADIOBUTTON_SPRITE_2' : undeclared identifier
 c0060d0c0.cpp(71) : error C2065: 'TeardownTarget005E3820' : undeclared identifier
 c0060d0c0.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0060D1B0,?close@RadioButton@@QAEXXZ,src/radiobutton.cpp:31,0,54,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0060d1b0.cpp(168) : error C2065: 'field_C_' : undeclared identifier
-c0060d1b0.cpp(169) : error C2065: 'field_10_' : undeclared identifier
-c0060d1b0.cpp(170) : error C2065: 'field_8_' : undeclared identifier
-c0060d1b0.cpp(170) : error C2065: 'RadioButtonDefault2' : undeclared identifier
-c0060d1b0.cpp(170) : error C2100: illegal indirection
-c0060d1b0.cpp(171) : error C2065: 'field_4_' : undeclared identifier
-c0060d1b0.cpp(171) : error C2065: 'RadioButtonDefault1' : undeclared identifier
-c0060d1b0.cpp(171) : error C2100: illegal indirection
-c0060d1b0.cpp(172) : error C2065: 'RadioButtonOriginalDialogClose' : undeclared identifier
-c0060d1b0.cpp(172) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0060D1B0,?close@RadioButton@@QAEXXZ,src/radiobutton.cpp:31,0,54,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0060d1b0.cpp(184) : error C2065: 'field_C_' : undeclared identifier
+c0060d1b0.cpp(185) : error C2065: 'field_10_' : undeclared identifier
+c0060d1b0.cpp(186) : error C2065: 'field_8_' : undeclared identifier
+c0060d1b0.cpp(186) : error C2065: 'RadioButtonDefault2' : undeclared identifier
+c0060d1b0.cpp(186) : error C2100: illegal indirection
+c0060d1b0.cpp(187) : error C2065: 'field_4_' : undeclared identifier
+c0060d1b0.cpp(187) : error C2065: 'RadioButtonDefault1' : undeclared identifier
+c0060d1b0.cpp(187) : error C2100: illegal indirection
+c0060d1b0.cpp(188) : error C2065: 'RadioButtonOriginalDialogClose' : undeclared identifier
+c0060d1b0.cpp(188) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0060E1E0,?on_left_double_click@RadioButton@@QAEXHH@Z,,0,55,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,55,3,18,1,0,#0: original 'push' vs rebuilt 'ret 8',
 0x0060E300,?on_dialog_focus@RadioButton@@QAEXH@Z,,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
 0x0060E4A0,?on_mouse_leave@RadioButton@@QAEXHH@Z,,0,40,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,40,40,,,,,
@@ -16326,17 +16101,17 @@ c0060e650.cpp(70) : error C2100: illegal indirection
 c0060e650.cpp(71) : error C2065: 'g_CHECKBOX_SPRITE_2' : undeclared identifier
 c0060e650.cpp(71) : error C2065: 'TeardownTarget005E3820' : undeclared identifier
 c0060e650.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0060E7C0,?close@CheckBox@@QAEXXZ,src/checkbox.cpp:31,0,57,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0060e7c0.cpp(168) : error C2065: 'field_4_' : undeclared identifier
-c0060e7c0.cpp(169) : error C2065: 'field_8_' : undeclared identifier
-c0060e7c0.cpp(170) : error C2065: 'field_C_' : undeclared identifier
-c0060e7c0.cpp(171) : error C2065: 'field_14_' : undeclared identifier
-c0060e7c0.cpp(171) : error C2065: 'CheckBoxDefault2' : undeclared identifier
-c0060e7c0.cpp(171) : error C2100: illegal indirection
-c0060e7c0.cpp(172) : error C2065: 'field_10_' : undeclared identifier
-c0060e7c0.cpp(172) : error C2065: 'CheckBoxDefault1' : undeclared identifier
-c0060e7c0.cpp(172) : error C2100: illegal indirection
-c0060e7c0.cpp(173) : error C2065: 'CheckBoxOriginalDialogClose' : undeclared identifier
-c0060e7c0.cpp(173) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0060E7C0,?close@CheckBox@@QAEXXZ,src/checkbox.cpp:31,0,57,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0060e7c0.cpp(184) : error C2065: 'field_4_' : undeclared identifier
+c0060e7c0.cpp(185) : error C2065: 'field_8_' : undeclared identifier
+c0060e7c0.cpp(186) : error C2065: 'field_C_' : undeclared identifier
+c0060e7c0.cpp(187) : error C2065: 'field_14_' : undeclared identifier
+c0060e7c0.cpp(187) : error C2065: 'CheckBoxDefault2' : undeclared identifier
+c0060e7c0.cpp(187) : error C2100: illegal indirection
+c0060e7c0.cpp(188) : error C2065: 'field_10_' : undeclared identifier
+c0060e7c0.cpp(188) : error C2065: 'CheckBoxDefault1' : undeclared identifier
+c0060e7c0.cpp(188) : error C2100: illegal indirection
+c0060e7c0.cpp(189) : error C2065: 'CheckBoxOriginalDialogClose' : undeclared identifier
+c0060e7c0.cpp(189) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0060EB50,?UNK1@CheckBox@@QAEXH@Z,src/checkbox.cpp:79,0,45,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,45,48,16,17,5,#5: original 'shl' vs rebuilt 'and',
 0x0060EC10,?get_state_id@CheckBox@@QAEHH@Z,,0,105,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,105,5,40,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0060EC80,?set_state_pos@CheckBox@@QAEXHH@Z,src/checkbox.cpp:127,0,49,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,49,50,17,17,1,#1: original 'test' vs rebuilt 'mov',
@@ -16505,13 +16280,13 @@ c00612810.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00612820,?on_redraw@thunk3_EditGroup@@QAEXXZ,src/adjustor_thunks.cpp:2139,1,14,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00612820.cpp(67) : error C2065: 'EditGroupOnRedrawTarget' : undeclared identifier
 c00612820.cpp(67) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00612960,?close@Dialogs@@QAEXXZ,src/dialogs.cpp:15,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x00612A70,?item@Dialogs@@QAEHPADH@Z,src/dialogs_recovery.cpp:48,0,79,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00612a70.cpp(158) : error C2065: 'kind_in_range' : undeclared identifier
-c00612a70.cpp(158) : error C2065: 'kind_' : undeclared identifier
-c00612a70.cpp(166) : error C2065: 'dialog_of' : undeclared identifier
-c00612a70.cpp(166) : error C2065: 'DialogOriginalItem' : undeclared identifier
-c00612a70.cpp(166) : error C2297: '->*' : illegal, right operand has type 'int'
-c00612a70.cpp(168) : error C2065: 'ListBoxOriginalItem' : undeclared identifier
-c00612a70.cpp(168) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x00612A70,?item@Dialogs@@QAEHPADH@Z,src/dialogs_recovery.cpp:48,0,79,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00612a70.cpp(174) : error C2065: 'kind_in_range' : undeclared identifier
+c00612a70.cpp(174) : error C2065: 'kind_' : undeclared identifier
+c00612a70.cpp(182) : error C2065: 'dialog_of' : undeclared identifier
+c00612a70.cpp(182) : error C2065: 'DialogOriginalItem' : undeclared identifier
+c00612a70.cpp(182) : error C2297: '->*' : illegal, right operand has type 'int'
+c00612a70.cpp(184) : error C2065: 'ListBoxOriginalItem' : undeclared identifier
+c00612a70.cpp(184) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00612CC0,?on_key_down@Dialogs@@QAEHH@Z,,0,105,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,105,5,29,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x00612E00,?on_redraw@Dialogs@@QAEXXZ,,0,77,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,77,1,18,1,0,#0: original 'mov' vs rebuilt 'ret',
 0x00612E80,?on_left_click@Dialogs@@QAEXHH@Z,,0,48,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,48,48,,,,,
@@ -16580,92 +16355,68 @@ c00613830.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00615F10,?on_mouse_move@EditBox@@QAEXHH@Z,,0,62,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,62,3,22,1,0,#0: original 'push' vs rebuilt 'ret 8',
 0x00616030,?text_position@EditBox@@QAEXH@Z,,0,261,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,261,3,85,1,0,#0: original 'sub' vs rebuilt 'ret 4',
 0x00616140,?pass_dialog_focus@EditBox@@QAEXXZ,,0,86,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,86,1,22,1,0,#0: original 'mov' vs rebuilt 'ret',
-0x006161A0,?UNK2@EditBox@@QAEXXZ,src/leaf_recoveries.cpp:930,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c006161a0.cpp(58) : error C2065: 'win_is_dialog_focus_redirect' : undeclared identifier
+0x006161A0,?UNK2@EditBox@@QAEXXZ,src/leaf_recoveries.cpp:930,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c006161a0.cpp(218) : error C2065: 'win_is_dialog_focus_redirect' : undeclared identifier
 0x006161D0,??0Time@@QAE@XZ,,0,38,,REFUSED,,,,,,,no source_locations; not censusable
 0x00616200,??1Time@@QAE@XZ,,0,96,,REFUSED,,,,,,,no source_locations; not censusable
-0x00616260,?init@Time@@QAEXP6AXH@ZHHH@Z,src/time.cpp:27,0,110,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616260.cpp(55) : error C2511: 'init' : overloaded member function 'void (void (__cdecl *)(int),int,unsigned int,unsigned int)' not found in 'Time'
-c00616260.cpp(46) : see declaration of 'Time'"
-0x006162D0,?init@Time@@QAEXP6AXHH@ZHHHH@Z,src/time.cpp:46,0,114,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006162d0.cpp(56) : error C2511: 'init' : overloaded member function 'void (void (__cdecl *)(int,int),int,int,unsigned int,unsigned int)' not found in 'Time'
-c006162d0.cpp(46) : see declaration of 'Time'"
-0x00616350,?start@Time@@QAEXP6AXH@ZHHH@Z,src/time.cpp:66,0,181,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616350.cpp(59) : error C2511: 'start' : overloaded member function 'unsigned int (void (__cdecl *)(int),int,unsigned int,unsigned int)' not found in 'Time'
-c00616350.cpp(50) : see declaration of 'Time'"
-0x00616410,?start@Time@@QAEXP6AXHH@ZHHHH@Z,src/time.cpp:87,0,186,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616410.cpp(60) : error C2511: 'start' : overloaded member function 'unsigned int (void (__cdecl *)(int,int),int,int,unsigned int,unsigned int)' not found in 'Time'
-c00616410.cpp(50) : see declaration of 'Time'"
-0x006164D0,?pulse@Time@@QAEXP6AXH@ZHHH@Z,src/time.cpp:109,0,181,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006164d0.cpp(59) : error C2511: 'pulse' : overloaded member function 'unsigned int (void (__cdecl *)(int),int,unsigned int,unsigned int)' not found in 'Time'
-c006164d0.cpp(50) : see declaration of 'Time'"
-0x00616590,?pulse@Time@@QAEXP6AXHH@ZHHHH@Z,src/time.cpp:133,0,189,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616590.cpp(60) : error C2511: 'pulse' : overloaded member function 'unsigned int (void (__cdecl *)(int,int),int,int,unsigned int,unsigned int)' not found in 'Time'
-c00616590.cpp(50) : see declaration of 'Time'"
-0x00616650,?start@Time@@QAEXXZ,src/time.cpp:155,0,106,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616650.cpp(54) : error C2556: 'unsigned int __thiscall Time::start(void)' : overloaded function differs only by return type from 'void __thiscall Time::start(void)'
-c00616650.cpp(46) : see declaration of 'start'
-c00616650.cpp(54) : error C2371: 'start' : redefinition; different basic types
-c00616650.cpp(46) : see declaration of 'start'
-c00616650.cpp(55) : error C2065: 'callback1_' : undeclared identifier
-c00616650.cpp(55) : error C2065: 'callback2_' : undeclared identifier
-c00616650.cpp(58) : error C2065: 'unk_tgl_' : undeclared identifier
-c00616650.cpp(59) : error C2065: 'count_' : undeclared identifier
-c00616650.cpp(60) : error C2065: 'id_event_' : undeclared identifier
-c00616650.cpp(60) : error C2065: 'timeSetEvent' : undeclared identifier
-c00616650.cpp(60) : error C2065: 'resolution_' : undeclared identifier
-c00616650.cpp(60) : error C2065: 'LPTIMECALLBACK' : undeclared identifier
-c00616650.cpp(60) : error C2146: syntax error : missing ')' before identifier 'MultimediaProc'
-c00616650.cpp(61) : error C2059: syntax error : ')'
-c00616650.cpp(63) : error C2065: 'SetTimer' : undeclared identifier
-c00616650.cpp(63) : error C2065: 'HandleMain' : undeclared identifier
-c00616650.cpp(63) : error C2100: illegal indirection
-c00616650.cpp(63) : error C2065: 'UINT_PTR' : undeclared identifier
-c00616650.cpp(63) : error C2143: syntax error : missing ')' before 'this'
-c00616650.cpp(63) : error C2059: syntax error : ')'"
-0x006166C0,?pulse@Time@@QAEXXZ,src/time.cpp:175,0,108,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006166c0.cpp(54) : error C2556: 'unsigned int __thiscall Time::pulse(void)' : overloaded function differs only by return type from 'void __thiscall Time::pulse(void)'
-c006166c0.cpp(46) : see declaration of 'pulse'
-c006166c0.cpp(54) : error C2371: 'pulse' : redefinition; different basic types
-c006166c0.cpp(46) : see declaration of 'pulse'
-c006166c0.cpp(55) : error C2065: 'callback1_' : undeclared identifier
-c006166c0.cpp(55) : error C2065: 'callback2_' : undeclared identifier
-c006166c0.cpp(58) : error C2065: 'count_' : undeclared identifier
-c006166c0.cpp(59) : error C2065: 'id_event_' : undeclared identifier
-c006166c0.cpp(59) : error C2065: 'timeSetEvent' : undeclared identifier
-c006166c0.cpp(59) : error C2065: 'resolution_' : undeclared identifier
-c006166c0.cpp(59) : error C2065: 'LPTIMECALLBACK' : undeclared identifier
-c006166c0.cpp(59) : error C2146: syntax error : missing ')' before identifier 'MultimediaProc'
-c006166c0.cpp(60) : error C2059: syntax error : ')'
-c006166c0.cpp(62) : error C2065: 'unk_tgl_' : undeclared identifier
-c006166c0.cpp(63) : error C2065: 'SetTimer' : undeclared identifier
-c006166c0.cpp(63) : error C2065: 'HandleMain' : undeclared identifier
-c006166c0.cpp(63) : error C2100: illegal indirection
-c006166c0.cpp(63) : error C2065: 'UINT_PTR' : undeclared identifier
-c006166c0.cpp(63) : error C2143: syntax error : missing ')' before 'this'
-c006166c0.cpp(63) : error C2059: syntax error : ')'"
-0x00616730,?stop@Time@@QAEXXZ,src/time.cpp:195,0,66,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616730.cpp(53) : error C2065: 'id_event_' : undeclared identifier
-c00616730.cpp(54) : error C2065: 'count_' : undeclared identifier
-c00616730.cpp(55) : error C2065: 'timeKillEvent' : undeclared identifier
-c00616730.cpp(57) : error C2065: 'KillTimer' : undeclared identifier
-c00616730.cpp(57) : error C2065: 'HandleMain' : undeclared identifier
-c00616730.cpp(57) : error C2100: illegal indirection
-c00616730.cpp(61) : error C2065: 'unk_tgl_' : undeclared identifier
-c00616730.cpp(62) : error C2065: 'flush_timer' : undeclared identifier"
-0x00616780,?close@Time@@QAEXXZ,src/time.cpp:215,0,96,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616780.cpp(56) : error C2065: 'stop' : undeclared identifier
-c00616780.cpp(57) : error C2065: 'unk_tgl_' : undeclared identifier
-c00616780.cpp(58) : error C2065: 'callback1_' : undeclared identifier
-c00616780.cpp(59) : error C2065: 'callback2_' : undeclared identifier
-c00616780.cpp(60) : error C2065: 'cb_param2_' : undeclared identifier
-c00616780.cpp(61) : error C2065: 'cb_param1_' : undeclared identifier
-c00616780.cpp(62) : error C2065: 'count_' : undeclared identifier
-c00616780.cpp(63) : error C2065: 'unk_1_' : undeclared identifier
-c00616780.cpp(64) : error C2065: 'resolution_' : undeclared identifier
-c00616780.cpp(65) : error C2065: 'unk_2_' : undeclared identifier"
-0x006167E0,?TimerProc@Time@@QAEXPAXIIK@Z,src/time.cpp:234,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006167e0.cpp(52) : error C2065: 'HWND' : undeclared identifier
-c006167e0.cpp(52) : error C2146: syntax error : missing ')' before identifier 'UNUSED'
-c006167e0.cpp(52) : error C2182: 'TimerProc' : illegal use of type 'void'
-c006167e0.cpp(52) : error C2350: 'Time::TimerProc' is not a static member
-c006167e0.cpp(53) : error C2059: syntax error : ')'
-c006167e0.cpp(53) : error C2143: syntax error : missing ';' before '{'
-c006167e0.cpp(53) : error C2447: missing function header (old-style formal list?)"
-0x00616820,?MultimediaProc@Time@@QAEXIIKKK@Z,src/time.cpp:249,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616820.cpp(52) : error C2061: syntax error : identifier 'timer_id'
-c00616820.cpp(52) : error C2061: syntax error : identifier 'msg'
-c00616820.cpp(52) : error C2086: 'UNUSED' : redefinition
-c00616820.cpp(52) : error C2061: syntax error : identifier 'DWORD_PTR'
-c00616820.cpp(53) : error C2511: 'MultimediaProc' : overloaded member function 'void (unsigned int (__cdecl *)(void))' not found in 'Time'
-c00616820.cpp(43) : see declaration of 'Time'
+0x00616260,?init@Time@@QAEXP6AXH@ZHHH@Z,src/time.cpp:27,0,110,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616260.cpp(67) : error C2511: 'init' : overloaded member function 'void (void (__cdecl *)(int),int,unsigned int,unsigned int)' not found in 'Time'
+c00616260.cpp(47) : see declaration of 'Time'"
+0x006162D0,?init@Time@@QAEXP6AXHH@ZHHHH@Z,src/time.cpp:46,0,114,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006162d0.cpp(68) : error C2511: 'init' : overloaded member function 'void (void (__cdecl *)(int,int),int,int,unsigned int,unsigned int)' not found in 'Time'
+c006162d0.cpp(47) : see declaration of 'Time'"
+0x00616350,?start@Time@@QAEXP6AXH@ZHHH@Z,src/time.cpp:66,0,181,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616350.cpp(71) : error C2511: 'start' : overloaded member function 'unsigned int (void (__cdecl *)(int),int,unsigned int,unsigned int)' not found in 'Time'
+c00616350.cpp(51) : see declaration of 'Time'"
+0x00616410,?start@Time@@QAEXP6AXHH@ZHHHH@Z,src/time.cpp:87,0,186,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616410.cpp(72) : error C2511: 'start' : overloaded member function 'unsigned int (void (__cdecl *)(int,int),int,int,unsigned int,unsigned int)' not found in 'Time'
+c00616410.cpp(51) : see declaration of 'Time'"
+0x006164D0,?pulse@Time@@QAEXP6AXH@ZHHH@Z,src/time.cpp:109,0,181,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006164d0.cpp(71) : error C2511: 'pulse' : overloaded member function 'unsigned int (void (__cdecl *)(int),int,unsigned int,unsigned int)' not found in 'Time'
+c006164d0.cpp(51) : see declaration of 'Time'"
+0x00616590,?pulse@Time@@QAEXP6AXHH@ZHHHH@Z,src/time.cpp:133,0,189,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616590.cpp(72) : error C2511: 'pulse' : overloaded member function 'unsigned int (void (__cdecl *)(int,int),int,int,unsigned int,unsigned int)' not found in 'Time'
+c00616590.cpp(51) : see declaration of 'Time'"
+0x00616650,?start@Time@@QAEXXZ,src/time.cpp:155,0,106,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616650.cpp(66) : error C2556: 'unsigned int __thiscall Time::start(void)' : overloaded function differs only by return type from 'void __thiscall Time::start(void)'
+c00616650.cpp(58) : see declaration of 'start'
+c00616650.cpp(66) : error C2371: 'start' : redefinition; different basic types
+c00616650.cpp(58) : see declaration of 'start'
+c00616650.cpp(72) : error C2065: 'timeSetEvent' : undeclared identifier
+c00616650.cpp(72) : error C2065: 'LPTIMECALLBACK' : undeclared identifier
+c00616650.cpp(72) : error C2146: syntax error : missing ')' before identifier 'MultimediaProc'
+c00616650.cpp(73) : error C2059: syntax error : ')'
+c00616650.cpp(75) : error C2065: 'SetTimer' : undeclared identifier
+c00616650.cpp(75) : error C2065: 'HandleMain' : undeclared identifier
+c00616650.cpp(75) : error C2100: illegal indirection
+c00616650.cpp(75) : error C2065: 'TIMERPROC' : undeclared identifier
+c00616650.cpp(75) : error C2146: syntax error : missing ')' before identifier 'TimerProc'
+c00616650.cpp(75) : error C2059: syntax error : ')'"
+0x006166C0,?pulse@Time@@QAEXXZ,src/time.cpp:175,0,108,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006166c0.cpp(66) : error C2556: 'unsigned int __thiscall Time::pulse(void)' : overloaded function differs only by return type from 'void __thiscall Time::pulse(void)'
+c006166c0.cpp(58) : see declaration of 'pulse'
+c006166c0.cpp(66) : error C2371: 'pulse' : redefinition; different basic types
+c006166c0.cpp(58) : see declaration of 'pulse'
+c006166c0.cpp(71) : error C2065: 'timeSetEvent' : undeclared identifier
+c006166c0.cpp(71) : error C2065: 'LPTIMECALLBACK' : undeclared identifier
+c006166c0.cpp(71) : error C2146: syntax error : missing ')' before identifier 'MultimediaProc'
+c006166c0.cpp(72) : error C2059: syntax error : ')'
+c006166c0.cpp(75) : error C2065: 'SetTimer' : undeclared identifier
+c006166c0.cpp(75) : error C2065: 'HandleMain' : undeclared identifier
+c006166c0.cpp(75) : error C2100: illegal indirection
+c006166c0.cpp(75) : error C2065: 'TIMERPROC' : undeclared identifier
+c006166c0.cpp(75) : error C2146: syntax error : missing ')' before identifier 'TimerProc'
+c006166c0.cpp(75) : error C2059: syntax error : ')'"
+0x00616730,?stop@Time@@QAEXXZ,src/time.cpp:195,0,66,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616730.cpp(67) : error C2065: 'timeKillEvent' : undeclared identifier
+c00616730.cpp(69) : error C2065: 'KillTimer' : undeclared identifier
+c00616730.cpp(69) : error C2065: 'HandleMain' : undeclared identifier
+c00616730.cpp(69) : error C2100: illegal indirection
+c00616730.cpp(74) : error C2065: 'flush_timer' : undeclared identifier"
+0x00616780,?close@Time@@QAEXXZ,src/time.cpp:215,0,96,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00616780.cpp(68) : error C2065: 'stop' : undeclared identifier
+0x006167E0,?TimerProc@Time@@QAEXPAXIIK@Z,src/time.cpp:234,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006167e0.cpp(64) : error C2065: 'HWND' : undeclared identifier
+c006167e0.cpp(64) : error C2146: syntax error : missing ')' before identifier 'UNUSED'
+c006167e0.cpp(64) : error C2182: 'TimerProc' : illegal use of type 'void'
+c006167e0.cpp(64) : error C2350: 'Time::TimerProc' is not a static member
+c006167e0.cpp(65) : error C2059: syntax error : ')'
+c006167e0.cpp(65) : error C2143: syntax error : missing ';' before '{'
+c006167e0.cpp(65) : error C2447: missing function header (old-style formal list?)"
+0x00616820,?MultimediaProc@Time@@QAEXIIKKK@Z,src/time.cpp:249,0,60,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616820.cpp(64) : error C2061: syntax error : identifier 'timer_id'
+c00616820.cpp(64) : error C2061: syntax error : identifier 'msg'
+c00616820.cpp(64) : error C2086: 'UNUSED' : redefinition
+c00616820.cpp(64) : error C2061: syntax error : identifier 'DWORD_PTR'
+c00616820.cpp(65) : error C2511: 'MultimediaProc' : overloaded member function 'void (unsigned int (__cdecl *)(void))' not found in 'Time'
+c00616820.cpp(44) : see declaration of 'Time'
 Generating Code...
 Compiling..."
 0x00616860,?set_modal@Time@@QAAXXZ,,0,7,,REFUSED,,,,,,,no source_locations; not censusable
@@ -16788,51 +16539,41 @@ v00618430_0.cpp(65) : error C2027: use of undefined type 'LPBYTE'
 0x00618EC0,??0Font@@QAE@PADHH@Z,,0,31,,REFUSED,,,,,,,no source_locations; not censusable
 0x00618EE0,??1Font@@QAE@XZ,,0,77,,REFUSED,,,,,,,no source_locations; not censusable
 0x00618F30,?UNK1@Font@@QAEHHHHH@Z,src/font_recovery.cpp:80,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
-0x00618F40,?init@Font@@QAEHPADHH@Z,src/font.cpp:28,0,390,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00618f40.cpp(61) : error C2511: 'init' : overloaded member function 'int (const char *,int,int)' not found in 'Font'
-c00618f40.cpp(51) : see declaration of 'Font'"
-0x006190D0,?init@Font@@QAEHPADPADHH@Z,src/font.cpp:81,0,348,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006190d0.cpp(66) : error C2511: 'init' : overloaded member function 'int (const char *,const char *,int,int)' not found in 'Font'
-c006190d0.cpp(54) : see declaration of 'Font'"
-0x00619230,?close@Font@@QAEXXZ,src/font.cpp:112,0,77,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00619230.cpp(55) : error C2065: 'unk_1_' : undeclared identifier
-c00619230.cpp(56) : error C2065: 'line_height_' : undeclared identifier
-c00619230.cpp(57) : error C2065: 'height_' : undeclared identifier
-c00619230.cpp(58) : error C2065: 'ascent_' : undeclared identifier
-c00619230.cpp(59) : error C2065: 'descent_' : undeclared identifier
-c00619230.cpp(60) : error C2065: 'font_obj_' : undeclared identifier
-c00619230.cpp(61) : error C2065: 'DeleteObject' : undeclared identifier
-c00619230.cpp(64) : error C2065: 'fot_file_name_' : undeclared identifier
-c00619230.cpp(65) : error C2065: 'RemoveFontResourceA' : undeclared identifier"
-0x00619280,?width@Font@@QAEHPAD@Z,src/font.cpp:135,0,99,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00619280.cpp(61) : error C2065: 'SelectObject' : undeclared identifier
-c00619280.cpp(61) : error C2065: 'FontHDC' : undeclared identifier
-c00619280.cpp(61) : error C2065: 'font_obj_' : undeclared identifier
-c00619280.cpp(62) : error C2065: 'SIZE' : undeclared identifier
-c00619280.cpp(62) : error C2146: syntax error : missing ';' before identifier 'size'
-c00619280.cpp(62) : error C2065: 'size' : undeclared identifier
-c00619280.cpp(63) : error C2065: 'GetTextExtentPoint32A' : undeclared identifier
-c00619280.cpp(64) : error C2065: 'GetStockObject' : undeclared identifier
-c00619280.cpp(64) : error C2065: 'SYSTEM_FONT' : undeclared identifier
-c00619280.cpp(65) : error C2228: left of '.cx' must have class/struct/union type"
-0x006192F0,?width@Font@@QAEHPADH@Z,src/font.cpp:152,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006192f0.cpp(57) : error C2511: 'width' : overloaded member function 'int (char *,unsigned int)' not found in 'Font'
-c006192f0.cpp(47) : see declaration of 'Font'"
-0x00619370,?find_line_break_l@Font@@QAEHPADPAHH@Z,src/font.cpp:173,0,567,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00619370.cpp(59) : error C2511: 'find_line_break_l' : overloaded member function 'char *(char *,int *,unsigned int)' not found in 'Font'
-c00619370.cpp(49) : see declaration of 'Font'
+0x00618F40,?init@Font@@QAEHPADHH@Z,src/font.cpp:28,0,390,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00618f40.cpp(75) : error C2511: 'init' : overloaded member function 'int (const char *,int,int)' not found in 'Font'
+c00618f40.cpp(54) : see declaration of 'Font'"
+0x006190D0,?init@Font@@QAEHPADPADHH@Z,src/font.cpp:81,0,348,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006190d0.cpp(79) : error C2511: 'init' : overloaded member function 'int (const char *,const char *,int,int)' not found in 'Font'
+c006190d0.cpp(57) : see declaration of 'Font'"
+0x00619230,?close@Font@@QAEXXZ,src/font.cpp:112,0,77,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00619230.cpp(75) : error C2065: 'DeleteObject' : undeclared identifier
+c00619230.cpp(79) : error C2065: 'RemoveFontResourceA' : undeclared identifier"
+0x00619280,?width@Font@@QAEHPAD@Z,src/font.cpp:135,0,99,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00619280.cpp(74) : error C2065: 'SelectObject' : undeclared identifier
+c00619280.cpp(74) : error C2065: 'FontHDC' : undeclared identifier
+c00619280.cpp(75) : error C2065: 'SIZE' : undeclared identifier
+c00619280.cpp(75) : error C2146: syntax error : missing ';' before identifier 'size'
+c00619280.cpp(75) : error C2065: 'size' : undeclared identifier
+c00619280.cpp(76) : error C2065: 'GetTextExtentPoint32A' : undeclared identifier
+c00619280.cpp(77) : error C2065: 'GetStockObject' : undeclared identifier
+c00619280.cpp(77) : error C2065: 'SYSTEM_FONT' : undeclared identifier
+c00619280.cpp(78) : error C2228: left of '.cx' must have class/struct/union type"
+0x006192F0,?width@Font@@QAEHPADH@Z,src/font.cpp:152,0,123,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006192f0.cpp(70) : error C2511: 'width' : overloaded member function 'int (char *,unsigned int)' not found in 'Font'
+c006192f0.cpp(50) : see declaration of 'Font'"
+0x00619370,?find_line_break_l@Font@@QAEHPADPAHH@Z,src/font.cpp:173,0,567,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00619370.cpp(72) : error C2511: 'find_line_break_l' : overloaded member function 'char *(char *,int *,unsigned int)' not found in 'Font'
+c00619370.cpp(52) : see declaration of 'Font'
 Generating Code...
 Compiling..."
-0x006195B0,?init_font_class@Font@@QAAHPAUFont@@@Z,src/font.cpp:214,0,93,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006195b0.cpp(58) : error C2065: 'FontInitCount' : undeclared identifier
-c006195b0.cpp(64) : error C2065: 'FontHDC' : undeclared identifier
-c006195b0.cpp(64) : error C2065: 'CreateCompatibleDC' : undeclared identifier
-c006195b0.cpp(64) : error C2065: 'NULL' : undeclared identifier
-c006195b0.cpp(68) : error C2065: 'FontDefaultPtr' : undeclared identifier
-c006195b0.cpp(68) : error C2100: illegal indirection
-c006195b0.cpp(68) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
-This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-c006195b0.cpp(69) : error C2039: 'font_obj_' : is not a member of 'Font'
-c006195b0.cpp(47) : see declaration of 'Font'"
-0x00619610,?close_font_class@Font@@QAAXXZ,src/font.cpp:238,0,52,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00619610.cpp(54) : error C2065: 'FontInitCount' : undeclared identifier
-c00619610.cpp(55) : error C2065: 'FontHDC' : undeclared identifier
-c00619610.cpp(56) : error C2065: 'DeleteDC' : undeclared identifier
-c00619610.cpp(59) : error C2065: 'FontDefaultPtr' : undeclared identifier
-c00619610.cpp(59) : error C2100: illegal indirection
-c00619610.cpp(59) : error C2065: 'NULL' : undeclared identifier"
+0x006195B0,?init_font_class@Font@@QAAHPAUFont@@@Z,src/font.cpp:214,0,93,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006195b0.cpp(72) : error C2065: 'FontInitCount' : undeclared identifier
+c006195b0.cpp(78) : error C2065: 'FontHDC' : undeclared identifier
+c006195b0.cpp(78) : error C2065: 'CreateCompatibleDC' : undeclared identifier
+c006195b0.cpp(78) : error C2065: 'NULL' : undeclared identifier
+c006195b0.cpp(82) : error C2065: 'FontDefaultPtr' : undeclared identifier
+c006195b0.cpp(82) : error C2100: illegal indirection
+c006195b0.cpp(82) : error C2440: '=' : cannot convert from 'class Font *' to 'int'
+This conversion requires a reinterpret_cast, a C-style cast or function-style cast"
+0x00619610,?close_font_class@Font@@QAAXXZ,src/font.cpp:238,0,52,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00619610.cpp(68) : error C2065: 'FontInitCount' : undeclared identifier
+c00619610.cpp(69) : error C2065: 'FontHDC' : undeclared identifier
+c00619610.cpp(70) : error C2065: 'DeleteDC' : undeclared identifier
+c00619610.cpp(73) : error C2065: 'FontDefaultPtr' : undeclared identifier
+c00619610.cpp(73) : error C2100: illegal indirection
+c00619610.cpp(73) : error C2065: 'NULL' : undeclared identifier"
 0x00619650,??0Texture@@QAE@XZ,src/texture.cpp:26,0,16,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,16,16,,,,,
 0x00619660,??1Texture@@QAE@XZ,src/texture.cpp:42,0,37,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00619660.cpp(59) : error C2065: 'TextureFree' : undeclared identifier
 0x00619690,?close@Texture@@QAEXXZ,src/texture.cpp:65,0,58,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00619690.cpp(59) : error C2065: 'TextureFree' : undeclared identifier
@@ -16864,8 +16605,8 @@ c006252e0.cpp(67) : error C2065: 'ImageButtonBufferVtable' : undeclared identifi
 0x00625330,?close@ImageButton@@QAEXXZ,src/leaf_recoveries.cpp:1236,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00625330.cpp(52) : error C2065: 'store32' : undeclared identifier
 c00625330.cpp(53) : error C2065: 'base_button_close_redirect' : undeclared identifier
 c00625330.cpp(53) : error C2061: syntax error : identifier 'BaseButton'"
-0x00625340,?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z,src/leaf_recoveries.cpp:1257,0,58,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00625340.cpp(62) : error C2065: 'store32' : undeclared identifier
-c00625340.cpp(63) : error C2065: 'base_button_init_redirect' : undeclared identifier"
+0x00625340,?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z,src/leaf_recoveries.cpp:1257,0,58,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00625340.cpp(225) : error C2065: 'store32' : undeclared identifier
+c00625340.cpp(226) : error C2065: 'base_button_init_redirect' : undeclared identifier"
 0x00625380,sub_625380,,0,70,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,70,5,26,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x006256D0,??_GImageButton@@UAEPAXI@Z,src/deleting_thunks.cpp:1720,1,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006256d0.cpp(72) : error C2065: 'ImageButtonDtorTarget' : undeclared identifier
 c006256d0.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'

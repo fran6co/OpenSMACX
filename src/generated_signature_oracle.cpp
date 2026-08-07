@@ -3624,7 +3624,7 @@ static bool verify_Console_clear_group_0050f650() {
 }
 
 // ?focus@Console@@QAEXHHH@Z  (259 B)
-// recovered in src/console.cpp:256
+// recovered in src/console.cpp:254
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_focus_005108a0() {
     typedef void (OriginalObject::*Callable)(int, int, int);

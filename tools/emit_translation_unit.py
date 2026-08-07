@@ -176,6 +176,14 @@ NOT_A_STRUCT = {
     # the pairing count dropping by one.
     "HANDLE": "void *", "HWND": "void *", "HINSTANCE": "void *",
     "HIC": "void *", "LPDIRECTDRAW": "void *",
+    # GDI object handles, added on the same evidence and checked the same way:
+    # each name was counted against `PA[UV]<name>@@` across all 6,000
+    # catalogued mangled names and each scores ZERO, where HCURSOR scores one.
+    # Their absence refused Font (HFONT) and Buffer (HRGN, HBITMAP) outright,
+    # and Buffer refuses GraphicWin, which refuses eight more.
+    "HFONT": "void *", "HRGN": "void *", "HBITMAP": "void *",
+    "HPALETTE": "void *", "HBRUSH": "void *", "HPEN": "void *",
+    "HMENU": "void *",
 }
 
 
