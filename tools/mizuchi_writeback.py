@@ -589,6 +589,17 @@ def main() -> int:
               f"{'verified BYTE_EXACT' if result['verified'] else 'UNVERIFIED'})")
         for name in result["files_modified"]:
             print(f"  modified {name}")
+        # A STORED body is invisible to the ledger until `--collect` runs.
+        # `byte_match_census.py` scores rows through their `source_locations`,
+        # and a stored row deliberately has none, so the census measures it
+        # against an empty scaffold and the ratchet never moves. That is easy
+        # to mistake for the recovery not counting: two full censuses were
+        # spent here before anyone noticed they structurally could not see
+        # this work.
+        if result["source_location"].startswith("src/recovered/"):
+            print("  NOTE: stored bodies are invisible to the census. Run "
+                  "`tools/byte_match_fanout.py --collect`\n"
+                  "        to re-verify them and move the ledger.")
     return 0
 
 
