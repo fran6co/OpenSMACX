@@ -382,8 +382,21 @@ at a compiler setting rather than at the source - a per-file `#pragma
 optimize`, a flag combination nobody has tried, or a different build of
 12.00.8168. Worth an experiment before more agent time goes into either.
 
-WHAT WOULD SETTLE IT: sweep a wider flag product over these two bodies
-specifically - `/Og`, `/Oi`, `/Os`, `/Ot`, `/Oa`, `/Ow` and the `/O1`//`/O2`
-expansions individually rather than as the four bundles - and see whether any
-single combination produces both halves. That is a bounded experiment with a
-clear yes/no, and if it lands it retires a whole class of near-miss.
+THAT EXPERIMENT WAS RUN AND THE HYPOTHESIS IS DEAD. 288 combinations were
+swept over `sub_5e3630` - the product of `/Og`, `/Oi`, `/Os` against `/Ot`,
+`/Oy` against `/Oy-`, `/Ob0`/`/Ob1`/`/Ob2`, and `/Oa` against `/Ow`, which is
+the `/O1` and `/O2` bundles taken apart into their actual components. Not one
+reached BYTE_EXACT or even SHAPE_EXACT.
+
+So the residue is NOT a flag setting, at least not anywhere in the `/O`
+family, and the "the original used settings we do not have" reading has to be
+dropped. What survives is narrower and stranger: each half is reproducible,
+the two are never available together, and no optimisation switch selects
+between them. That leaves a per-function `#pragma optimize`, a different build
+of 12.00.8168, or something about the surrounding translation unit - none of
+which a body rewrite can reach, and none worth more agent time until there is
+a new reason to look.
+
+The cost of finding this out was one command. The cost of NOT finding it out
+would have been every future agent re-deriving "it might be the flags" on
+every function in this class.
