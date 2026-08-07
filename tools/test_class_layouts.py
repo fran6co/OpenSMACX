@@ -46,11 +46,53 @@ class MembersTest(unittest.TestCase):
     def test_anything_unrecognised_refuses(self):
         self.assertIsNone(tool.members_of("  int a_ : 3;\n"))
 
-    def test_a_function_pointer_member_refuses(self):
-        # It IS storage and it contains a `(`, so the method test would skip
-        # it and every offset after it would move. sizeof catches that only
-        # when padding does not absorb the four bytes.
-        self.assertIsNone(tool.members_of("  void (*callback)(int);\n"))
+    def test_a_function_pointer_member_is_counted_as_a_pointer(self):
+        # It IS storage. What must never happen is it being SKIPPED - it
+        # contains a `(`, so the method test would drop it and every offset
+        # after it would move, and sizeof only catches that when padding does
+        # not absorb the four bytes.
+        #
+        # It used to refuse the whole class instead. That was safe and became
+        # expensive: `Time` is pinned at 0x28 and holds two of these, so it
+        # was refused outright, and with it BaseButton, FlatButton, Scroll,
+        # MainInterface and everything downstream. Four bytes is four bytes.
+        # `void *` is the spelling because the emitter writes members as
+        # `<type> <name>;` and a function pointer does not fit that shape.
+        self.assertEqual([("void *", "callback", "")],
+                         tool.members_of("  void (*callback)(int);\n"))
+
+    def test_a_function_pointer_does_not_displace_the_member_after_it(self):
+        # The property the old refusal was protecting, stated directly.
+        self.assertEqual(
+            [("int", "a_", ""), ("void *", "cb_", ""), ("int", "b_", "")],
+            tool.members_of("  int a_;\n  void (__cdecl *cb_)(int);\n"
+                            "  int b_;\n"))
+
+    def test_a_nested_typedef_of_a_scalar_is_resolved(self):
+        # `typedef int32_t Dib;` inside Buffer, then `Dib dib_[256];`. Before
+        # this the alias was an unknown type and Buffer refused - taking
+        # GraphicWin and the eight classes holding one by value with it.
+        self.assertEqual(
+            [("int32_t", "dib_", "[256]")],
+            tool.members_of("  typedef int32_t Dib;\n  Dib dib_[256];\n"))
+
+    def test_a_nested_typedef_of_an_unknown_type_still_refuses(self):
+        # Only aliases of types this file already knows are resolved. An alias
+        # for something unknown is still unknown, and guessing its width is
+        # the one failure mode that silently moves every later offset.
+        self.assertIsNone(
+            tool.members_of("  typedef Whatever Alias;\n  Alias member_;\n"))
+
+    def test_a_win32_struct_may_be_held_by_value(self):
+        # RECT is sixteen bytes of four LONGs and cannot be spelled as a
+        # primitive, so the emitter defines it instead. Holding one refused
+        # Win, Buffer, Scroll and MainInterface before that.
+        self.assertEqual([("RECT", "outer_rect_", "")],
+                         tool.members_of("  RECT outer_rect_;\n"))
+        self.assertEqual(
+            ["    long left;", "    long top;",
+             "    long right;", "    long bottom;"],
+            tool.declaration_for("RECT"))
 
     def test_a_method_taking_a_function_pointer_still_parses(self):
         # The difference is the identifier before the first paren.

@@ -59,7 +59,14 @@ def compile_units(work: Path, units: dict, src: Path) -> str:
     (work / "cl.rsp").write_text(
         "/c /GR- /GX\n" + "\n".join(f"{stem}.cpp" for stem in units) + "\n")
     environment = bm.wine_environment()
-    environment["INCLUDE"] += ";Z:" + str(src).replace("/", "\\")
+    # PREPENDED, not appended. `src/time.h` and the CRT's `<time.h>` collide,
+    # and with VC6's INCLUDE first the probe for `Time` got the CRT header,
+    # left `Time` undeclared, and failed on `sizeof(Time)` inside the
+    # assertion - which reads as "the layout is the wrong size" when the
+    # layout was never tested at all. The real build puts `-I src` first and
+    # has always resolved this correctly; only the probe did not.
+    environment["INCLUDE"] = ("Z:" + str(src).replace("/", "\\") + ";"
+                              + environment["INCLUDE"])
     finished = subprocess.run(
         ["wine", str(bm.VC6_CL), "/nologo", "@cl.rsp"], cwd=work,
         env=environment, capture_output=True, text=True)
@@ -116,7 +123,13 @@ def verify(candidates: dict, src: Path = SRC) -> tuple:
             f'#include "stdafx.h"\n#include "{home[name]}"\n'
             f"struct Probe {{\n"
             f"{chr(10).join(class_layouts.unverified_declaration_for(name))}\n"
-            f"}};\n")
+            f"}};\n"
+            # A trivially TRUE assertion that still names the real class. The
+            # first pass must prove the Probe compiles AND that `name` itself
+            # resolves; without the second half a probe whose class was never
+            # declared sails through pass one and fails pass two, which reads
+            # as a size mismatch. That is exactly how `Time` was reported.
+            f'static_assert(sizeof({name}) == sizeof({name}), "reachable");\n')
         (work / f"{stem}.cpp").write_text(
             bodies[stem] + f"int probe{index}() {{ return 0; }}\n")
         units[stem] = name

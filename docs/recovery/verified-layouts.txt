@@ -15,6 +15,7 @@ DialogEntry
 FX
 FileWin
 Filemap
+Font
 GAmbience
 Heap
 Log
@@ -34,6 +35,7 @@ StringStructEntry
 Strings
 TextIndex
 Texture
+Time
 TutWin
 Vector
 Veh
@@ -41,3 +43,4 @@ VehPrototype
 Wave
 WaveControlGroup
 Wave_In_Device
+Win

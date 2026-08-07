@@ -373,8 +373,21 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # THE LESSON IS THE ORDERING, not the tool: any edit to a file holding
 # recovered bodies must be followed by the repair before the census, or the
 # census measures the wrong bytes and blames the body.
-BASELINE_MATCHED_FUNCTIONS = 883
-BASELINE_MATCHED_BYTES = 18598
+#
+# 888 / 18738 after repairing tools/class_layouts.py's type model. The rise is
+# the point of that repair and is worth recording as evidence for it: nothing
+# in src/ changed, only what the emitter could SAY about a class. Five bodies
+# went byte-exact because their scaffolding stopped being an opaque shell.
+#
+# What had been refusing them was not unknown layout. `RECT` is a Win32struct
+# held by value and could not be spelled as a primitive, so four classes
+# refused outright and the cascade through Buffer and GraphicWin took
+# seventeen; `Dib` is `typedef int32_t Dib;` nested inside Buffer and the
+# parser never learned nested aliases; and function-pointer members were
+# refused by a branch whose comment said "no pinned class has one today",
+# which `Time` had since made false.
+BASELINE_MATCHED_FUNCTIONS = 888
+BASELINE_MATCHED_BYTES = 18738
 
 
 def summarise(ledger: dict) -> tuple:
