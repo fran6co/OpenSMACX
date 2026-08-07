@@ -143,7 +143,7 @@ void timing(uintptr_t address, DWORD elapsed_ms, const char *name) {
 #pragma GCC diagnostic ignored "-Wuseless-cast"
 
 // ?seek_id@StringStruct@@QAEHH@Z  (78 B)
-// recovered in src/stringstruct.cpp:67
+// recovered in src/stringstruct.cpp:68
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_seek_id_00401560() {
     typedef int (OriginalObject::*Callable)(int);
@@ -291,7 +291,7 @@ static bool verify_StringStruct_seek_id_00401560() {
 }
 
 // ?current_id@StringStruct@@QAEHXZ  (17 B)
-// recovered in src/stringstruct.cpp:18
+// recovered in src/stringstruct.cpp:19
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_current_id_00401640() {
     typedef int (OriginalObject::*Callable)();
@@ -426,7 +426,7 @@ static bool verify_StringStruct_current_id_00401640() {
 }
 
 // ?next_entry@StringStruct@@QAEHXZ  (47 B)
-// recovered in src/stringstruct.cpp:44
+// recovered in src/stringstruct.cpp:45
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_next_entry_00402500() {
     typedef int (OriginalObject::*Callable)();
@@ -561,7 +561,7 @@ static bool verify_StringStruct_next_entry_00402500() {
 }
 
 // ?current_entry@StringStruct@@QAEHXZ  (17 B)
-// recovered in src/stringstruct.cpp:31
+// recovered in src/stringstruct.cpp:32
 // staged receiver: StringStruct, 0x24 B, zero-filled, size pinned
 static bool verify_StringStruct_current_entry_00402530() {
     typedef int (OriginalObject::*Callable)();
@@ -696,7 +696,7 @@ static bool verify_StringStruct_current_entry_00402530() {
 }
 
 // ?UNK1@Datalink@@QAEHHH@Z  (30 B)
-// recovered in src/datalink.cpp:377
+// recovered in src/datalink.cpp:378
 // staged receiver: Datalink, 0x1B394 B, zero-filled, size pinned
 static bool verify_Datalink_UNK1_0042a020() {
     typedef int (OriginalObject::*Callable)(int, int);
@@ -1046,7 +1046,7 @@ static bool verify_load_deswin_sprites_00455e50() {
 }
 
 // ?reset@InfoWin@@QAEXXZ  (28 B)
-// recovered in src/infowin.cpp:78
+// recovered in src/infowin.cpp:79
 // staged receiver: InfoWin, 0x1580 B, zero-filled, size bounded
 static bool verify_InfoWin_reset_00459280() {
     typedef void (OriginalObject::*Callable)();
@@ -1172,7 +1172,7 @@ static bool verify_InfoWin_reset_00459280() {
 }
 
 // ?on_left_click@MapWin@@QAEXHH@Z  (37 B)
-// recovered in src/mapwin.cpp:102
+// recovered in src/mapwin.cpp:103
 // staged receiver: MapWin, 0x22480 B, zero-filled, size pinned
 static bool verify_MapWin_on_left_click_0046eba0() {
     typedef void (OriginalObject::*Callable)(int, int);
@@ -1311,7 +1311,7 @@ static bool verify_MapWin_on_left_click_0046eba0() {
 }
 
 // ?on_right_click@MapWin@@QAEXHH@Z  (37 B)
-// recovered in src/mapwin.cpp:118
+// recovered in src/mapwin.cpp:119
 // staged receiver: MapWin, 0x22480 B, zero-filled, size pinned
 static bool verify_MapWin_on_right_click_0046ebe0() {
     typedef void (OriginalObject::*Callable)(int, int);
@@ -1450,7 +1450,7 @@ static bool verify_MapWin_on_right_click_0046ebe0() {
 }
 
 // ?main_caption@MapWin@@QAEXXZ  (16 B)
-// recovered in src/mapwin.cpp:58
+// recovered in src/mapwin.cpp:59
 // staged receiver: MapWin, 0x22480 B, zero-filled, size pinned
 static bool verify_MapWin_main_caption_0046fb10() {
     typedef void (OriginalObject::*Callable)();
@@ -1702,7 +1702,7 @@ static bool verify_NetWin_UNK5_00483820() {
 }
 
 // ?blink@PlanWin@@QAEXXZ  (43 B)
-// recovered in src/planwin.cpp:82
+// recovered in src/planwin.cpp:83
 // staged receiver: PlanWin, 0x22A64 B, zero-filled, size pinned
 static bool verify_PlanWin_blink_0048bc20() {
     typedef void (OriginalObject::*Callable)();
@@ -1828,7 +1828,7 @@ static bool verify_PlanWin_blink_0048bc20() {
 }
 
 // ?on_scrolling@ProdPicker@@QAEXHH@Z  (23 B)
-// recovered in src/delegation_thunks.cpp:175
+// recovered in src/delegation_thunks.cpp:167
 // staged receiver: ProdPicker, 0xA840 B, zero-filled, size pinned
 static bool verify_ProdPicker_on_scrolling_00493e70() {
     typedef void (OriginalObject::*Callable)(int, int);
@@ -1967,7 +1967,7 @@ static bool verify_ProdPicker_on_scrolling_00493e70() {
 }
 
 // ?reset@StatusWin@@QAEXXZ  (31 B)
-// recovered in src/statuswin.cpp:59
+// recovered in src/statuswin.cpp:60
 // staged receiver: StatusWin, 0x1900 B, zero-filled, size bounded
 static bool verify_StatusWin_reset_004b8970() {
     typedef void (OriginalObject::*Callable)();
@@ -2093,7 +2093,7 @@ static bool verify_StatusWin_reset_004b8970() {
 }
 
 // ?set_loc@StatusWin@@QAEXHH@Z  (40 B)
-// recovered in src/statuswin.cpp:37
+// recovered in src/statuswin.cpp:38
 // staged receiver: StatusWin, 0x1900 B, zero-filled, size bounded
 static bool verify_StatusWin_set_loc_004b9f90() {
     typedef void (OriginalObject::*Callable)(int, int);
@@ -2232,7 +2232,7 @@ static bool verify_StatusWin_set_loc_004b9f90() {
 }
 
 // ?UNK1@TutWin@@QAEXXZ  (65 B)
-// recovered in src/tutwin.cpp:30
+// recovered in src/tutwin.cpp:32
 // staged receiver: TutWin, 0x53D8 B, zero-filled, size pinned
 static bool verify_TutWin_UNK1_004ba720() {
     typedef void (OriginalObject::*Callable)();
@@ -2358,7 +2358,7 @@ static bool verify_TutWin_UNK1_004ba720() {
 }
 
 // ?UNK3@TutWin@@QAEXH@Z  (16 B)
-// recovered in src/tutwin.cpp:49
+// recovered in src/tutwin.cpp:51
 // staged receiver: TutWin, 0x53D8 B, zero-filled, size pinned
 static bool verify_TutWin_UNK3_004bddd0() {
     typedef void (OriginalObject::*Callable)(int);
@@ -2632,7 +2632,7 @@ static bool verify_Midi_Device_is_disabled_004c5920() {
 }
 
 // ?set_codec@Wave_In_Device@@QAEHK@Z  (32 B)
-// recovered in src/delegation_thunks.cpp:188
+// recovered in src/delegation_thunks.cpp:179
 // staged receiver: Wave_In_Device, 0x20 B, zero-filled, size pinned
 static bool verify_Wave_In_Device_set_codec_004c5a80() {
     typedef int (OriginalObject::*Callable)(unsigned int);
@@ -2780,7 +2780,7 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
 }
 
 // ?edit_lock@Console@@QAEHXZ  (48 B)
-// recovered in src/console.cpp:137
+// recovered in src/console.cpp:138
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_edit_lock_004e1f40() {
     typedef int (OriginalObject::*Callable)();
@@ -2915,7 +2915,7 @@ static bool verify_Console_edit_lock_004e1f40() {
 }
 
 // ?pid_2_idx@AlphaNet@@QAEHK@Z  (39 B)
-// recovered in src/alphanet.cpp:15
+// recovered in src/alphanet.cpp:16
 // staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_pid_2_idx_004e25e0() {
     typedef int (OriginalObject::*Callable)(unsigned int);
@@ -3063,7 +3063,7 @@ static bool verify_AlphaNet_pid_2_idx_004e25e0() {
 }
 
 // ?pid_2_who@AlphaNet@@QAEHK@Z  (67 B)
-// recovered in src/alphanet.cpp:33
+// recovered in src/alphanet.cpp:34
 // staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_pid_2_who_004e2610() {
     typedef int (OriginalObject::*Callable)(unsigned int);
@@ -3211,7 +3211,7 @@ static bool verify_AlphaNet_pid_2_who_004e2610() {
 }
 
 // ?who_2_pid@AlphaNet@@QAEHH@Z  (72 B)
-// recovered in src/alphanet.cpp:53
+// recovered in src/alphanet.cpp:54
 // staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_who_2_pid_004e2660() {
     typedef int (OriginalObject::*Callable)(int);
@@ -3359,7 +3359,7 @@ static bool verify_AlphaNet_who_2_pid_004e2660() {
 }
 
 // ?who_2_idx@AlphaNet@@QAEXH@Z  (44 B)
-// recovered in src/alphanet.cpp:73
+// recovered in src/alphanet.cpp:74
 // staged receiver: AlphaNet, 0x14A0 B, zero-filled, size pinned
 static bool verify_AlphaNet_who_2_idx_004e26b0() {
     typedef void (OriginalObject::*Callable)(int);
@@ -3498,7 +3498,7 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
 }
 
 // ?clear_group@Console@@QAEXXZ  (43 B)
-// recovered in src/console.cpp:108
+// recovered in src/console.cpp:109
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_clear_group_0050f650() {
     typedef void (OriginalObject::*Callable)();
@@ -3624,7 +3624,7 @@ static bool verify_Console_clear_group_0050f650() {
 }
 
 // ?focus@Console@@QAEXHHH@Z  (259 B)
-// recovered in src/console.cpp:250
+// recovered in src/console.cpp:251
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_focus_005108a0() {
     typedef void (OriginalObject::*Callable)(int, int, int);
@@ -3763,7 +3763,7 @@ static bool verify_Console_focus_005108a0() {
 }
 
 // ?update_data@Console@@QAEXH@Z  (42 B)
-// recovered in src/console.cpp:195
+// recovered in src/console.cpp:196
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_update_data_00514880() {
     typedef void (OriginalObject::*Callable)(int);
@@ -4012,7 +4012,7 @@ static bool verify_not_my_turn_0052dc70() {
 }
 
 // ?receive@NetDaemon@@QAEHXZ  (62 B)
-// recovered in src/netdaemon.cpp:37
+// recovered in src/netdaemon.cpp:38
 // staged receiver: NetDaemon, 0x2D58 B, zero-filled, size bounded
 static bool verify_NetDaemon_receive_00530320() {
     typedef int (OriginalObject::*Callable)();
@@ -4513,7 +4513,7 @@ static bool verify_SquareLock_unlock_0058fd90() {
 }
 
 // ?reset_map@Lock@@QAEXXZ  (43 B)
-// recovered in src/lock.cpp:34
+// recovered in src/lock.cpp:35
 // staged receiver: Lock, 0xEC B, zero-filled, size pinned
 static bool verify_Lock_reset_map_00590140() {
     typedef void (OriginalObject::*Callable)();
@@ -4639,7 +4639,7 @@ static bool verify_Lock_reset_map_00590140() {
 }
 
 // ?unlock@Lock@@QAEXH@Z  (83 B)
-// recovered in src/lock.cpp:115
+// recovered in src/lock.cpp:116
 // staged receiver: Lock, 0xEC B, zero-filled, size pinned
 static bool verify_Lock_unlock_00590170() {
     typedef void (OriginalObject::*Callable)(int);
@@ -4778,7 +4778,7 @@ static bool verify_Lock_unlock_00590170() {
 }
 
 // ?check_global@Lock@@QAEXXZ  (105 B)
-// recovered in src/lock.cpp:194
+// recovered in src/lock.cpp:195
 // staged receiver: Lock, 0xEC B, zero-filled, size pinned
 static bool verify_Lock_check_global_005901d0() {
     typedef void (OriginalObject::*Callable)();
@@ -4904,7 +4904,7 @@ static bool verify_Lock_check_global_005901d0() {
 }
 
 // ?check_global_2@Lock@@QAEHH@Z  (126 B)
-// recovered in src/lock.cpp:161
+// recovered in src/lock.cpp:162
 // staged receiver: Lock, 0xEC B, zero-filled, size pinned
 static bool verify_Lock_check_global_2_00590240() {
     typedef int (OriginalObject::*Callable)(int);
@@ -5052,7 +5052,7 @@ static bool verify_Lock_check_global_2_00590240() {
 }
 
 // ?global_lock@Lock@@QAEHH@Z  (51 B)
-// recovered in src/lock.cpp:139
+// recovered in src/lock.cpp:140
 // staged receiver: Lock, 0xEC B, zero-filled, size pinned
 static bool verify_Lock_global_lock_005902c0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -5200,7 +5200,7 @@ static bool verify_Lock_global_lock_005902c0() {
 }
 
 // ?lock@Lock@@QAEHHHHHHHH@Z  (361 B)
-// recovered in src/lock.cpp:247
+// recovered in src/lock.cpp:248
 // staged receiver: Lock, 0xEC B, zero-filled, size pinned
 static bool verify_Lock_lock_00590300() {
     typedef int (OriginalObject::*Callable)(int, int, int, int, int, int, int);
@@ -5348,7 +5348,7 @@ static bool verify_Lock_lock_00590300() {
 }
 
 // ?add_lock@Lock@@QAEHHHHH@Z  (43 B)
-// recovered in src/lock.cpp:224
+// recovered in src/lock.cpp:225
 // staged receiver: Lock, 0xEC B, zero-filled, size pinned
 static bool verify_Lock_add_lock_00590470() {
     typedef int (OriginalObject::*Callable)(int, int, int, int);
@@ -5496,7 +5496,7 @@ static bool verify_Lock_add_lock_00590470() {
 }
 
 // ?any_locks@Lock@@QAEHXZ  (94 B)
-// recovered in src/lock.cpp:82
+// recovered in src/lock.cpp:83
 // staged receiver: Lock, 0xEC B, zero-filled, size pinned
 static bool verify_Lock_any_locks_005904a0() {
     typedef int (OriginalObject::*Callable)();
@@ -5770,7 +5770,7 @@ static bool verify_GraphicWin_fill_005d5250() {
 }
 
 // ?fill@GraphicWin@@QAEHHHHHH@Z  (39 B)
-// recovered in src/graphicwin.cpp:206
+// recovered in src/graphicwin.cpp:207
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_fill_005d5440() {
     typedef int (OriginalObject::*Callable)(int, int, int, int, int);
@@ -5918,7 +5918,7 @@ static bool verify_GraphicWin_fill_005d5440() {
 }
 
 // ?redraw@GraphicWin@@QAEXXZ  (244 B)
-// recovered in src/graphicwin.cpp:322
+// recovered in src/graphicwin.cpp:320
 // staged receiver: GraphicWin, 0xA14 B, zero-filled, size pinned
 static bool verify_GraphicWin_redraw_005d5a70() {
     typedef void (OriginalObject::*Callable)();
@@ -6044,7 +6044,7 @@ static bool verify_GraphicWin_redraw_005d5a70() {
 }
 
 // ?set_text_color@Buffer@@QAEXHHHH@Z  (43 B)
-// recovered in src/buffer.cpp:159
+// recovered in src/buffer.cpp:160
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color_005dacb0() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -6183,7 +6183,7 @@ static bool verify_Buffer_set_text_color_005dacb0() {
 }
 
 // ?set_text_color2@Buffer@@QAEXHHHH@Z  (43 B)
-// recovered in src/buffer.cpp:172
+// recovered in src/buffer.cpp:173
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color2_005dace0() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -6322,7 +6322,7 @@ static bool verify_Buffer_set_text_color2_005dace0() {
 }
 
 // ?set_text_color3@Buffer@@QAEXHHHH@Z  (43 B)
-// recovered in src/buffer.cpp:185
+// recovered in src/buffer.cpp:186
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color3_005dad10() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -6461,7 +6461,7 @@ static bool verify_Buffer_set_text_color3_005dad10() {
 }
 
 // ?set_text_color_hyper@Buffer@@QAEXHHHH@Z  (43 B)
-// recovered in src/buffer.cpp:198
+// recovered in src/buffer.cpp:199
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_set_text_color_hyper_005dad40() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -6600,7 +6600,7 @@ static bool verify_Buffer_set_text_color_hyper_005dad40() {
 }
 
 // ?text_height@Buffer@@QAEHXZ  (37 B)
-// recovered in src/buffer.cpp:733
+// recovered in src/buffer.cpp:737
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_text_height_005dca80() {
     typedef int (OriginalObject::*Callable)();
@@ -6735,7 +6735,7 @@ static bool verify_Buffer_text_height_005dca80() {
 }
 
 // ?text_line_height@Buffer@@QAEHXZ  (43 B)
-// recovered in src/buffer.cpp:358
+// recovered in src/buffer.cpp:359
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_text_line_height_005dcab0() {
     typedef int (OriginalObject::*Callable)();
@@ -6996,7 +6996,7 @@ static bool verify_Buffer_clear_links_005def90() {
 }
 
 // ?get_data@Buffer@@QAEHXZ  (119 B)
-// recovered in src/buffer.cpp:275
+// recovered in src/buffer.cpp:276
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_get_data_005e3373() {
     typedef int (OriginalObject::*Callable)();
@@ -7131,7 +7131,7 @@ static bool verify_Buffer_get_data_005e3373() {
 }
 
 // ?free_data@Buffer@@QAEXH@Z  (88 B)
-// recovered in src/buffer.cpp:320
+// recovered in src/buffer.cpp:321
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_free_data_005e34a3() {
     typedef void (OriginalObject::*Callable)(int);
@@ -7270,7 +7270,7 @@ static bool verify_Buffer_free_data_005e34a3() {
 }
 
 // ?get_hdc@Buffer@@QAEHXZ  (89 B)
-// recovered in src/buffer.cpp:616
+// recovered in src/buffer.cpp:623
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_get_hdc_005e3503() {
     typedef int (OriginalObject::*Callable)();
@@ -7405,7 +7405,7 @@ static bool verify_Buffer_get_hdc_005e3503() {
 }
 
 // ?release_hdc@Buffer@@QAEXH@Z  (96 B)
-// recovered in src/buffer.cpp:650
+// recovered in src/buffer.cpp:655
 // staged receiver: Buffer, 0x588 B, zero-filled, size pinned
 static bool verify_Buffer_release_hdc_005e3563() {
     typedef void (OriginalObject::*Callable)(int);
@@ -9766,7 +9766,7 @@ static bool verify_Win_is_visible_005f7e90() {
 }
 
 // ?hide_item@PullDown@@QAEHH@Z  (111 B)
-// recovered in src/pulldown.cpp:40
+// recovered in src/pulldown.cpp:41
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_hide_item_005f8cb0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -9914,7 +9914,7 @@ static bool verify_PullDown_hide_item_005f8cb0() {
 }
 
 // ?show_item@PullDown@@QAEHH@Z  (111 B)
-// recovered in src/pulldown.cpp:59
+// recovered in src/pulldown.cpp:60
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_show_item_005f8d20() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10062,7 +10062,7 @@ static bool verify_PullDown_show_item_005f8d20() {
 }
 
 // ?disable_item@PullDown@@QAEHH@Z  (95 B)
-// recovered in src/pulldown.cpp:78
+// recovered in src/pulldown.cpp:79
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_disable_item_005f8d90() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10210,7 +10210,7 @@ static bool verify_PullDown_disable_item_005f8d90() {
 }
 
 // ?enable_item@PullDown@@QAEHH@Z  (95 B)
-// recovered in src/pulldown.cpp:93
+// recovered in src/pulldown.cpp:94
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_enable_item_005f8df0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10358,7 +10358,7 @@ static bool verify_PullDown_enable_item_005f8df0() {
 }
 
 // ?check_item@PullDown@@QAEHH@Z  (95 B)
-// recovered in src/pulldown.cpp:108
+// recovered in src/pulldown.cpp:109
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_check_item_005f9040() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10506,7 +10506,7 @@ static bool verify_PullDown_check_item_005f9040() {
 }
 
 // ?uncheck_item@PullDown@@QAEHH@Z  (95 B)
-// recovered in src/pulldown.cpp:123
+// recovered in src/pulldown.cpp:124
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_uncheck_item_005f90a0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10654,7 +10654,7 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
 }
 
 // ?id_to_index@PullDown@@QAEHH@Z  (40 B)
-// recovered in src/pulldown.cpp:311
+// recovered in src/pulldown.cpp:312
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_id_to_index_005f9d00() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10802,7 +10802,7 @@ static bool verify_PullDown_id_to_index_005f9d00() {
 }
 
 // ?get_selected@PullDown@@QAEHXZ  (28 B)
-// recovered in src/pulldown.cpp:138
+// recovered in src/pulldown.cpp:139
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_get_selected_005f9f40() {
     typedef int (OriginalObject::*Callable)();
@@ -10937,7 +10937,7 @@ static bool verify_PullDown_get_selected_005f9f40() {
 }
 
 // ?UNK3@Menu@@QAEHHH@Z  (84 B)
-// recovered in src/menu.cpp:129
+// recovered in src/menu.cpp:130
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK3_005fb1d0() {
     typedef int (OriginalObject::*Callable)(int, int);
@@ -11085,7 +11085,7 @@ static bool verify_Menu_UNK3_005fb1d0() {
 }
 
 // ?UNK6@Menu@@QAEHH@Z  (96 B)
-// recovered in src/menu.cpp:395
+// recovered in src/menu.cpp:396
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK6_005fb2a0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -11233,7 +11233,7 @@ static bool verify_Menu_UNK6_005fb2a0() {
 }
 
 // ?hide_menu_item@Menu@@QAEHHH@Z  (84 B)
-// recovered in src/menu.cpp:166
+// recovered in src/menu.cpp:167
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_hide_menu_item_005fb300() {
     typedef int (OriginalObject::*Callable)(int, int);
@@ -11529,7 +11529,7 @@ static bool verify_Menu_UNK7_005fb360() {
 }
 
 // ?show_menu_item@Menu@@QAEHHH@Z  (84 B)
-// recovered in src/menu.cpp:203
+// recovered in src/menu.cpp:204
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_show_menu_item_005fb3c0() {
     typedef int (OriginalObject::*Callable)(int, int);
@@ -11677,7 +11677,7 @@ static bool verify_Menu_show_menu_item_005fb3c0() {
 }
 
 // ?UNK8@Menu@@QAEHH@Z  (96 B)
-// recovered in src/menu.cpp:475
+// recovered in src/menu.cpp:474
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK8_005fb420() {
     typedef int (OriginalObject::*Callable)(int);
@@ -11825,7 +11825,7 @@ static bool verify_Menu_UNK8_005fb420() {
 }
 
 // ?disable_menu_item@Menu@@QAEHHH@Z  (84 B)
-// recovered in src/menu.cpp:240
+// recovered in src/menu.cpp:241
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_disable_menu_item_005fb480() {
     typedef int (OriginalObject::*Callable)(int, int);
@@ -11973,7 +11973,7 @@ static bool verify_Menu_disable_menu_item_005fb480() {
 }
 
 // ?UNK9@Menu@@QAEHH@Z  (96 B)
-// recovered in src/menu.cpp:515
+// recovered in src/menu.cpp:513
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_UNK9_005fb4e0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -12121,7 +12121,7 @@ static bool verify_Menu_UNK9_005fb4e0() {
 }
 
 // ?enable_menu_item@Menu@@QAEHHH@Z  (84 B)
-// recovered in src/menu.cpp:277
+// recovered in src/menu.cpp:278
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_enable_menu_item_005fb540() {
     typedef int (OriginalObject::*Callable)(int, int);
@@ -12269,7 +12269,7 @@ static bool verify_Menu_enable_menu_item_005fb540() {
 }
 
 // ?check_menu_item@Menu@@QAEHHH@Z  (84 B)
-// recovered in src/menu.cpp:314
+// recovered in src/menu.cpp:315
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_check_menu_item_005fb760() {
     typedef int (OriginalObject::*Callable)(int, int);
@@ -12417,7 +12417,7 @@ static bool verify_Menu_check_menu_item_005fb760() {
 }
 
 // ?uncheck_menu_item@Menu@@QAEHHH@Z  (84 B)
-// recovered in src/menu.cpp:351
+// recovered in src/menu.cpp:352
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_uncheck_menu_item_005fb7c0() {
     typedef int (OriginalObject::*Callable)(int, int);
@@ -12565,7 +12565,7 @@ static bool verify_Menu_uncheck_menu_item_005fb7c0() {
 }
 
 // ?id_to_index@Menu@@QAEHH@Z  (40 B)
-// recovered in src/menu.cpp:33
+// recovered in src/menu.cpp:34
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_id_to_index_005fb990() {
     typedef int (OriginalObject::*Callable)(int);
@@ -12713,7 +12713,7 @@ static bool verify_Menu_id_to_index_005fb990() {
 }
 
 // ?requested_height@Menu@@QAEHXZ  (20 B)
-// recovered in src/menu.cpp:92
+// recovered in src/menu.cpp:93
 // staged receiver: Menu, 0xB64 B, zero-filled, size pinned
 static bool verify_Menu_requested_height_005fc6a0() {
     typedef int (OriginalObject::*Callable)();
@@ -13236,7 +13236,7 @@ static bool verify_BasePop_set_width_00601b20() {
 }
 
 // ?set_loc@BasePop@@QAEXHH@Z  (37 B)
-// recovered in src/basepop.cpp:25
+// recovered in src/basepop.cpp:26
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_loc_00601b80() {
     typedef void (OriginalObject::*Callable)(int, int);
@@ -13375,7 +13375,7 @@ static bool verify_BasePop_set_loc_00601b80() {
 }
 
 // ?write_check@BasePop@@QAEXJ@Z  (19 B)
-// recovered in src/basepop.cpp:364
+// recovered in src/basepop.cpp:365
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_write_check_00601bb0() {
     typedef void (OriginalObject::*Callable)(int);
@@ -13936,7 +13936,7 @@ static bool verify_BasePop_on_key_up_006044b0() {
 }
 
 // ?set_string_color@BasePop@@QAEXHHHH@Z  (43 B)
-// recovered in src/basepop.cpp:215
+// recovered in src/basepop.cpp:216
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color_00604730() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -14075,7 +14075,7 @@ static bool verify_BasePop_set_string_color_00604730() {
 }
 
 // ?set_string_color2@BasePop@@QAEXHHHH@Z  (43 B)
-// recovered in src/basepop.cpp:232
+// recovered in src/basepop.cpp:233
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color2_00604760() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -14214,7 +14214,7 @@ static bool verify_BasePop_set_string_color2_00604760() {
 }
 
 // ?set_string_color3@BasePop@@QAEXHHHH@Z  (43 B)
-// recovered in src/basepop.cpp:249
+// recovered in src/basepop.cpp:250
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color3_00604790() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -14353,7 +14353,7 @@ static bool verify_BasePop_set_string_color3_00604790() {
 }
 
 // ?set_string_color_hyper@BasePop@@QAEXHHHH@Z  (43 B)
-// recovered in src/basepop.cpp:266
+// recovered in src/basepop.cpp:267
 // staged receiver: BasePop, 0x3230 B, zero-filled, size pinned
 static bool verify_BasePop_set_string_color_hyper_006047c0() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -14770,7 +14770,7 @@ static bool verify_BasePop_UNK4_006051a0() {
 }
 
 // ?set_range@Scroll@@QAEXHH@Z  (93 B)
-// recovered in src/scroll.cpp:294
+// recovered in src/scroll.cpp:284
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_range_006059b0() {
     typedef void (OriginalObject::*Callable)(int, int);
@@ -14909,7 +14909,7 @@ static bool verify_Scroll_set_range_006059b0() {
 }
 
 // ?set_button_color@Scroll@@QAEXH@Z  (61 B)
-// recovered in src/scroll.cpp:316
+// recovered in src/scroll.cpp:306
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_button_color_00605a10() {
     typedef void (OriginalObject::*Callable)(int);
@@ -15048,7 +15048,7 @@ static bool verify_Scroll_set_button_color_00605a10() {
 }
 
 // ?set_bevel_thickness@Scroll@@QAEXH@Z  (61 B)
-// recovered in src/scroll.cpp:332
+// recovered in src/scroll.cpp:322
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_thickness_00605a50() {
     typedef void (OriginalObject::*Callable)(int);
@@ -15187,7 +15187,7 @@ static bool verify_Scroll_set_bevel_thickness_00605a50() {
 }
 
 // ?set_bevel_upper@Scroll@@QAEXH@Z  (61 B)
-// recovered in src/scroll.cpp:348
+// recovered in src/scroll.cpp:338
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_upper_00605a90() {
     typedef void (OriginalObject::*Callable)(int);
@@ -15326,7 +15326,7 @@ static bool verify_Scroll_set_bevel_upper_00605a90() {
 }
 
 // ?set_bevel_lower@Scroll@@QAEXH@Z  (61 B)
-// recovered in src/scroll.cpp:364
+// recovered in src/scroll.cpp:354
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bevel_lower_00605ad0() {
     typedef void (OriginalObject::*Callable)(int);
@@ -15465,7 +15465,7 @@ static bool verify_Scroll_set_bevel_lower_00605ad0() {
 }
 
 // ?set_border_color@Scroll@@QAEXH@Z  (100 B)
-// recovered in src/scroll.cpp:409
+// recovered in src/scroll.cpp:399
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_border_color_00605b10() {
     typedef void (OriginalObject::*Callable)(int);
@@ -15604,7 +15604,7 @@ static bool verify_Scroll_set_border_color_00605b10() {
 }
 
 // ?set_bar_thickness@Scroll@@QAEXH@Z  (96 B)
-// recovered in src/scroll.cpp:380
+// recovered in src/scroll.cpp:370
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_bar_thickness_00605b80() {
     typedef void (OriginalObject::*Callable)(int);
@@ -15743,7 +15743,7 @@ static bool verify_Scroll_set_bar_thickness_00605b80() {
 }
 
 // ?set_pos@Scroll@@QAEXH@Z  (106 B)
-// recovered in src/scroll.cpp:490
+// recovered in src/scroll.cpp:480
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_pos_00605d20() {
     typedef void (OriginalObject::*Callable)(int);
@@ -15882,7 +15882,7 @@ static bool verify_Scroll_set_pos_00605d20() {
 }
 
 // ?set_thumb_rect@Scroll@@QAEXXZ  (88 B)
-// recovered in src/scroll.cpp:631
+// recovered in src/scroll.cpp:621
 // staged receiver: Scroll, 0x214C B, zero-filled, size pinned
 static bool verify_Scroll_set_thumb_rect_00606ea0() {
     typedef void (OriginalObject::*Callable)();
@@ -16008,7 +16008,7 @@ static bool verify_Scroll_set_thumb_rect_00606ea0() {
 }
 
 // ?set_text_color@BaseButton@@QAEXHHHH@Z  (61 B)
-// recovered in src/basebutton.cpp:312
+// recovered in src/basebutton.cpp:313
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color_00607360() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -16147,7 +16147,7 @@ static bool verify_BaseButton_set_text_color_00607360() {
 }
 
 // ?set_text_color2@BaseButton@@QAEXHHHH@Z  (61 B)
-// recovered in src/basebutton.cpp:332
+// recovered in src/basebutton.cpp:333
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color2_006073a0() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -16286,7 +16286,7 @@ static bool verify_BaseButton_set_text_color2_006073a0() {
 }
 
 // ?set_text_color3@BaseButton@@QAEXHHHH@Z  (61 B)
-// recovered in src/basebutton.cpp:344
+// recovered in src/basebutton.cpp:345
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_text_color3_006073e0() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -16425,7 +16425,7 @@ static bool verify_BaseButton_set_text_color3_006073e0() {
 }
 
 // ?set@BaseButton@@QAEXH@Z  (61 B)
-// recovered in src/basebutton.cpp:385
+// recovered in src/basebutton.cpp:386
 // staged receiver: BaseButton, 0xAB8 B, zero-filled, size pinned
 static bool verify_BaseButton_set_00607c80() {
     typedef void (OriginalObject::*Callable)(int);
@@ -16564,7 +16564,7 @@ static bool verify_BaseButton_set_00607c80() {
 }
 
 // ?set_selected_id@Dialog@@QAEXH@Z  (115 B)
-// recovered in src/dialog.cpp:110
+// recovered in src/dialog.cpp:111
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_selected_id_006099d0() {
     typedef void (OriginalObject::*Callable)(int);
@@ -16703,7 +16703,7 @@ static bool verify_Dialog_set_selected_id_006099d0() {
 }
 
 // ?get_selected_id@Dialog@@QAEHXZ  (150 B)
-// recovered in src/dialog.cpp:120
+// recovered in src/dialog.cpp:121
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_get_selected_id_00609a50() {
     typedef int (OriginalObject::*Callable)();
@@ -16838,7 +16838,7 @@ static bool verify_Dialog_get_selected_id_00609a50() {
 }
 
 // ?id_to_pos@Dialog@@QAEHH@Z  (91 B)
-// recovered in src/dialog.cpp:81
+// recovered in src/dialog.cpp:82
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_id_to_pos_00609af0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -16986,7 +16986,7 @@ static bool verify_Dialog_id_to_pos_00609af0() {
 }
 
 // ?pos_to_id@Dialog@@QAEHH@Z  (154 B)
-// recovered in src/dialog.cpp:155
+// recovered in src/dialog.cpp:156
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_pos_to_id_00609b50() {
     typedef int (OriginalObject::*Callable)(int);
@@ -17134,7 +17134,7 @@ static bool verify_Dialog_pos_to_id_00609b50() {
 }
 
 // ?set_dialog_text_color@Dialog@@QAEXHHHH@Z  (40 B)
-// recovered in src/dialog.cpp:42
+// recovered in src/dialog.cpp:43
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_dialog_text_color_00609c90() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -17273,7 +17273,7 @@ static bool verify_Dialog_set_dialog_text_color_00609c90() {
 }
 
 // ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z  (43 B)
-// recovered in src/dialog.cpp:55
+// recovered in src/dialog.cpp:56
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -17412,7 +17412,7 @@ static bool verify_Dialog_set_dialog_text_color2_00609cc0() {
 }
 
 // ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z  (43 B)
-// recovered in src/dialog.cpp:68
+// recovered in src/dialog.cpp:69
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_dialog_text_color3_00609cf0() {
     typedef void (OriginalObject::*Callable)(int, int, int, int);
@@ -17677,7 +17677,7 @@ static bool verify_FileWin_UNK1_00614320() {
 }
 
 // ?UNK10@Caviar@@QAEXHHH@Z  (24 B)
-// recovered in src/caviar.cpp:248
+// recovered in src/caviar.cpp:244
 // staged receiver: Caviar, 0x13D0 B, zero-filled, size pinned
 static bool verify_Caviar_UNK10_00618320() {
     typedef void (OriginalObject::*Callable)(int, int, int);
@@ -17816,7 +17816,7 @@ static bool verify_Caviar_UNK10_00618320() {
 }
 
 // ?UNK11@Caviar@@QAEXHHH@Z  (42 B)
-// recovered in src/caviar.cpp:301
+// recovered in src/caviar.cpp:297
 // staged receiver: Caviar, 0x13D0 B, zero-filled, size pinned
 static bool verify_Caviar_UNK11_00618340() {
     typedef void (OriginalObject::*Callable)(int, int, int);
@@ -17955,7 +17955,7 @@ static bool verify_Caviar_UNK11_00618340() {
 }
 
 // ?set@ButtonGroup@@QAEHHH@Z  (47 B)
-// recovered in src/buttongroup.cpp:110
+// recovered in src/buttongroup.cpp:107
 // staged receiver: ButtonGroup, 0x94 B, zero-filled, size pinned
 static bool verify_ButtonGroup_set_0062b870() {
     typedef int (OriginalObject::*Callable)(int, int);
