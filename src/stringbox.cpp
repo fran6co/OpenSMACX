@@ -52,8 +52,7 @@ Return Value: n/a
 Status: Complete
 */
 void StringBox::on_scrolled(int a1, int a2) {
-    // a1 is dead: the disassembly never reads [esp+4]. Only the second
-    // argument is stored.
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0xa1c) = a2;
+    char *self = reinterpret_cast<char *>(this);
+    *reinterpret_cast<int *>(self + 0xa1c) = a2;
     reinterpret_cast<VCall *>(this)->slot062();
 }

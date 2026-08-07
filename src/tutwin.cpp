@@ -393,9 +393,9 @@ Return Value: n/a
 Status: Complete
 */
 void TutWin::on_move(int a1, int a2) {
-    // field_53D4_ is typed int32_t by the scaffolding but holds a pointer to
-    // a vtable-bearing object. Both arguments are dead.
-    if (field_53D4_ != 0) {
-        reinterpret_cast<VCall *>(field_53D4_)->slot063();
+    char *self = reinterpret_cast<char *>(this);
+    VCall *obj = *reinterpret_cast<VCall **>(self + 0x53d4);
+    if (obj) {
+        obj->slot063();
     }
 }

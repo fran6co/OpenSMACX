@@ -38,10 +38,7 @@ Original Offset: 005C9900
 Return Value: n/a
 Status: Complete
 */
-void __cdecl MultiDebug::timer_callback_daemon(int a1) {
-    // Dispatch on `this`, NOT on a1. For a __cdecl member VC6 puts `this` at
-    // [ebp+8] and the explicit argument at [ebp+0xc]; dispatching on a1 is
-    // SHAPE_EXACT and reads the wrong slot. a1 is unused by this body.
+void __cdecl MultiDebug::timer_callback_daemon(int a2) {
     if (this) {
         reinterpret_cast<VCall *>(this)->slot062();
     }
