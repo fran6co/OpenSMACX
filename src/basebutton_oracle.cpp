@@ -28,8 +28,8 @@
 
 namespace {
 
-using BaseButtonFixture = runtime_oracle::Fixture<BaseButton>;
-using FlatButtonFixture = runtime_oracle::Fixture<FlatButton>;
+typedef runtime_oracle::Fixture<BaseButton> BaseButtonFixture;
+typedef runtime_oracle::Fixture<FlatButton> FlatButtonFixture;
 
 constexpr size_t VtableOffsets[] = {0};
 const runtime_oracle::ClassSpec BaseButtonSpec = {
@@ -178,7 +178,7 @@ bool verify_base_close(uintptr_t *vtable) {
         legacy.storage, source.storage, BaseButtonSpec, vtable);
     prepare_fixture(legacy, vtable, false);
     prepare_fixture(source, vtable, false);
-    auto original = reinterpret_cast<OriginalBaseNoArg>(
+    OriginalBaseNoArg original = reinterpret_cast<OriginalBaseNoArg>(
         BaseButtonCloseAddress);
 
     runtime_oracle::begin_trace(
@@ -201,7 +201,7 @@ bool verify_flat_close(uintptr_t *vtable) {
         legacy.storage, source.storage, FlatButtonSpec, vtable);
     prepare_fixture(legacy, vtable, true);
     prepare_fixture(source, vtable, true);
-    auto original = reinterpret_cast<OriginalFlatNoArg>(FlatButtonCloseAddress);
+    OriginalFlatNoArg original = reinterpret_cast<OriginalFlatNoArg>(FlatButtonCloseAddress);
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -223,7 +223,7 @@ bool verify_base_destructor(uintptr_t *vtable) {
         legacy.storage, source.storage, BaseButtonSpec, vtable);
     prepare_fixture(legacy, vtable, false);
     prepare_fixture(source, vtable, false);
-    auto original = reinterpret_cast<OriginalBaseNoArg>(
+    OriginalBaseNoArg original = reinterpret_cast<OriginalBaseNoArg>(
         BaseButtonDestructorAddress);
 
     runtime_oracle::begin_trace(
@@ -247,7 +247,7 @@ bool verify_flat_destructor(uintptr_t *vtable) {
         legacy.storage, source.storage, FlatButtonSpec, vtable);
     prepare_fixture(legacy, vtable, true);
     prepare_fixture(source, vtable, true);
-    auto original = reinterpret_cast<OriginalFlatNoArg>(
+    OriginalFlatNoArg original = reinterpret_cast<OriginalFlatNoArg>(
         FlatButtonDestructorAddress);
 
     runtime_oracle::begin_trace(
@@ -286,7 +286,7 @@ bool run_base_button_release_suite() {
     }
     uintptr_t vtable[3] = {};
     vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
-    auto original = reinterpret_cast<OriginalBaseNoArg>(
+    OriginalBaseNoArg original = reinterpret_cast<OriginalBaseNoArg>(
         BaseButtonCloseAddress);
     SavedDefaults saved;
     seed_defaults(saved);

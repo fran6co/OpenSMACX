@@ -40,11 +40,11 @@ constexpr size_t ConsolePreviousVehicleOffset = 0x23BE0;
 constexpr size_t ConsoleTurnLoopOffset = 0x23BE4;
 constexpr size_t ConsoleTurnActiveOffset = 0x23BE8;
 
-using TopMenuFunction = int (__cdecl *)(int);
-using OpeningMovieFunction = void (__cdecl *)(char *);
-using LoadFlagsFunction = void (__cdecl *)();
-using InterfaceRefreshFunction = void (__fastcall *)(void *, void *);
-using ActionGoToFunction = void (__cdecl *)(int);
+typedef int (__cdecl *TopMenuFunction)(int);
+typedef void (__cdecl *OpeningMovieFunction)(char *);
+typedef void (__cdecl *LoadFlagsFunction)();
+typedef void (__fastcall *InterfaceRefreshFunction)(void *, void *);
+typedef void (__cdecl *ActionGoToFunction)(int);
 
 TopMenuFunction OriginalTopMenu = reinterpret_cast<TopMenuFunction>(TopMenuAddress);
 OpeningMovieFunction OriginalOpeningMovie =
@@ -174,9 +174,9 @@ void refresh_loaded_game() {
     LoadFlags();
     *GameState &= 0xF79FCF16;
 
-    auto *object = reinterpret_cast<void *>(MainInterfaceAddress);
+    void *object = reinterpret_cast<void *>(MainInterfaceAddress);
     auto *vtable = *reinterpret_cast<uintptr_t **>(object);
-    auto refresh = reinterpret_cast<InterfaceRefreshFunction>(vtable[2]);
+    InterfaceRefreshFunction refresh = reinterpret_cast<InterfaceRefreshFunction>(vtable[2]);
     refresh(object, nullptr);
     prefs_use();
 }
@@ -251,7 +251,7 @@ void inspect_loaded_state() {
 }
 
 void request_end_turn(Console *self) {
-    auto *bytes = reinterpret_cast<uint8_t *>(self);
+    uint8_t *bytes = reinterpret_cast<uint8_t *>(self);
     *GameState |= STATE_UNK_2;
     *reinterpret_cast<int *>(ControlTurnPhaseAddress) = 0;
     *reinterpret_cast<int *>(bytes + ConsoleTurnLoopOffset) = 0;
@@ -344,7 +344,7 @@ void execute_commands(Console *self) {
         && Vehs[State.vehicle_id].next_veh_id_stack == -1
         && Vehs[State.vehicle_id].prev_veh_id_stack == -1;
     request_end_turn(self);
-    auto *bytes = reinterpret_cast<uint8_t *>(self);
+    uint8_t *bytes = reinterpret_cast<uint8_t *>(self);
     bool end_turn_requested = (*GameState & STATE_UNK_2) != 0
         && *reinterpret_cast<int *>(ControlTurnPhaseAddress) == 0
         && *reinterpret_cast<int *>(bytes + ConsoleTurnLoopOffset) == 0

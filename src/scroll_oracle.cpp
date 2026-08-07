@@ -23,8 +23,8 @@ namespace {
 
 constexpr size_t VtableEntries = 0xFC / sizeof(uintptr_t);
 
-using ScrollFixture = runtime_oracle::Fixture<Scroll>;
-using RedrawTrace = runtime_oracle::Trace;
+typedef runtime_oracle::Fixture<Scroll> ScrollFixture;
+typedef runtime_oracle::Trace RedrawTrace;
 
 const size_t ScrollVtableRefOffsets[] = {0, 0xAAC, 0x15F8};
 const runtime_oracle::ClassSpec ScrollSpec = {
@@ -191,7 +191,7 @@ bool verify_close() {
         legacy.storage, source.storage, ScrollCloseSpec, win_vtable);
     prepare_close_fixture(legacy, win_vtable, left_vtable, right_vtable);
     prepare_close_fixture(source, win_vtable, left_vtable, right_vtable);
-    auto original = reinterpret_cast<OriginalNoArg>(0x00605370U);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x00605370U);
 
     ScrollCloseTraceBase = legacy.object();
     ScrollCloseButtons = ScrollCloseButtonTrace{};
@@ -239,7 +239,7 @@ bool verify_close() {
 }
 
 bool verify_init_wrappers() {
-    auto original_rect = reinterpret_cast<OriginalRectInit>(0x00605840U);
+    OriginalRectInit original_rect = reinterpret_cast<OriginalRectInit>(0x00605840U);
     const uint32_t sentinel = 0x2468ACE0U;
     const int saved_nonclient = *ScrollNonClientInit;
     bool passed = true;
@@ -284,7 +284,7 @@ bool verify_init_wrappers() {
         {0xFFFFFFFFU, nullptr},
     };
     for (size_t kind = 0; kind < ARRAYSIZE(addresses) && passed; ++kind) {
-        auto original = reinterpret_cast<OriginalAxisInit>(addresses[kind]);
+        OriginalAxisInit original = reinterpret_cast<OriginalAxisInit>(addresses[kind]);
         for (const InvalidAxisCase &test : cases) {
             ScrollFixture legacy;
             ScrollFixture source;
@@ -349,7 +349,7 @@ bool verify_range() {
         {0x7FFFFFFFU, 0x80000000U},
     };
     const size_t snapshots[] = {0xA20, 0xA24, 0xA28, 0xA2C};
-    auto original = reinterpret_cast<OriginalTwoArgs>(0x006059B0U);
+    OriginalTwoArgs original = reinterpret_cast<OriginalTwoArgs>(0x006059B0U);
     for (const auto &test : cases) {
         ScrollFixture legacy;
         ScrollFixture source;
@@ -382,7 +382,7 @@ bool verify_styles() {
     };
     const uint32_t values[] = {0U, 0x80000000U, 0xFFFFFFFFU};
     for (size_t style = 0; style < ARRAYSIZE(addresses); ++style) {
-        auto original = reinterpret_cast<OriginalOneArg>(addresses[style]);
+        OriginalOneArg original = reinterpret_cast<OriginalOneArg>(addresses[style]);
         for (uint32_t value : values) {
             ScrollFixture legacy;
             ScrollFixture source;
@@ -424,8 +424,8 @@ bool verify_styles() {
 bool verify_thumb_resetters() {
     const uint32_t colors[] = {0xFFFFFFFFU, 0U, 0x80000000U};
     const uint32_t thicknesses[] = {0U, 1U, 0x80000000U, 0xFFFFFFFFU};
-    auto original_bar = reinterpret_cast<OriginalOneArg>(0x00605B80U);
-    auto original_thumb = reinterpret_cast<OriginalNoArg>(0x00606EA0U);
+    OriginalOneArg original_bar = reinterpret_cast<OriginalOneArg>(0x00605B80U);
+    OriginalNoArg original_thumb = reinterpret_cast<OriginalNoArg>(0x00606EA0U);
     for (uint32_t color : colors) {
         for (uint32_t thickness : thicknesses) {
             for (int set_bar = 0; set_bar < 2; ++set_bar) {
@@ -473,7 +473,7 @@ bool verify_vertical_sprites() {
         reinterpret_cast<Sprite *>(0x10101010U),
     };
     for (size_t direction = 0; direction < ARRAYSIZE(addresses); ++direction) {
-        auto original = reinterpret_cast<OriginalSprites>(addresses[direction]);
+        OriginalSprites original = reinterpret_cast<OriginalSprites>(addresses[direction]);
         for (const Geometry &geometry : geometries) {
             ScrollFixture legacy;
             ScrollFixture source;
@@ -525,7 +525,7 @@ bool verify_position() {
         {0x45454545U, 100U, 0U, 0U, 100U},
     };
     const size_t snapshots[] = {0xA20, 0xA24, 0xA28, 0xA2C};
-    auto original = reinterpret_cast<OriginalOneArg>(0x00605D20U);
+    OriginalOneArg original = reinterpret_cast<OriginalOneArg>(0x00605D20U);
     ::Win *const saved_current = *ScrollCurrentWin;
     bool passed = true;
     for (const PositionCase &test : cases) {

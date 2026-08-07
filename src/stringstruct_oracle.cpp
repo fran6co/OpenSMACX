@@ -16,7 +16,7 @@
 
 namespace {
 
-using ListFixture = runtime_oracle::Fixture<StringStruct>;
+typedef runtime_oracle::Fixture<StringStruct> ListFixture;
 
 // The list dispatches through its own vtable and through stand-in entry and
 // payload objects the fixture supplies, so the shared initializer installs no
@@ -105,7 +105,7 @@ bool verify_remove_all() {
         {3, 3, false},
         {3, 2, true},
     };
-    auto original = reinterpret_cast<OriginalNoArg>(0x00402970U);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x00402970U);
     for (const RemoveCase &test : cases) {
         ListFixture legacy;
         ListFixture source;
@@ -234,7 +234,7 @@ bool verify_close() {
         {0x004066C0U, StringStructDerivedCloseAdjustment, StringStructVtable},
     };
     for (const Variant &variant : variants) {
-    auto original = reinterpret_cast<OriginalClose>(variant.address);
+    OriginalClose original = reinterpret_cast<OriginalClose>(variant.address);
     for (const CloseCase &test : cases) {
         ListFixture legacy;
         ListFixture source;

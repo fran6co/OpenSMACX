@@ -108,7 +108,7 @@ void MapWin::on_left_click(int a1, int a2) {
     if (*MapWinInputEnabled == 0) {
         return;
     }
-    auto *const base = reinterpret_cast<MapWin *>(
+    MapWin *const base = reinterpret_cast<MapWin *>(
         reinterpret_cast<uint8_t *>(this) - 0x21A6C);
     (ORIGINAL(base)->*MapWinClick)(a1, a2, 0);
 }
@@ -124,7 +124,7 @@ void MapWin::on_right_click(int a1, int a2) {
     if (*MapWinInputEnabled == 0) {
         return;
     }
-    auto *const base = reinterpret_cast<MapWin *>(
+    MapWin *const base = reinterpret_cast<MapWin *>(
         reinterpret_cast<uint8_t *>(this) - 0x21A6C);
     (ORIGINAL(base)->*MapWinClick)(a1, a2, 1);
 }

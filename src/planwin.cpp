@@ -109,7 +109,7 @@ slip: it loads the buffer's field at 0x84 and runs `neg edx` before pushing.
 */
 void PlanWin::UNK1() {
     uint8_t *const base = virtual_base_of(this);
-    auto *const window_buffer = reinterpret_cast<Buffer *>(base + 0x444);
+    Buffer *const window_buffer = reinterpret_cast<Buffer *>(base + 0x444);
     int32_t width;
     int32_t height;
     std::memcpy(&width, base + 0x4C4, sizeof(width));

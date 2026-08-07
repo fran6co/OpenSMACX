@@ -150,7 +150,7 @@ RedirectSpec InstalledSpecs[RedirectCount] = {};
 RedirectState CallRedirects[CallRedirectCount] = {};
 
 bool validate_signature(uintptr_t address, const uint8_t *expected, size_t size) {
-    auto *original = reinterpret_cast<uint8_t *>(address);
+    uint8_t *original = reinterpret_cast<uint8_t *>(address);
     MEMORY_BASIC_INFORMATION memory_info;
     if (VirtualQuery(original, &memory_info, sizeof(memory_info)) != sizeof(memory_info)
         || memory_info.State != MEM_COMMIT
@@ -212,7 +212,7 @@ bool redirect_function(RedirectState &state, const RedirectSpec &spec) {
     if (!validate_redirect_spec(spec)) {
         return false;
     }
-    auto *original = reinterpret_cast<uint8_t *>(spec.original_address);
+    uint8_t *original = reinterpret_cast<uint8_t *>(spec.original_address);
 
     uint8_t patch[PatchSize] = {0xE9, 0, 0, 0, 0};
     uint32_t relative_jump =
@@ -245,7 +245,7 @@ bool redirect_call(RedirectState &state, const RedirectSpec &spec) {
     if (!validate_redirect_spec(spec)) {
         return false;
     }
-    auto *original = reinterpret_cast<uint8_t *>(spec.original_address);
+    uint8_t *original = reinterpret_cast<uint8_t *>(spec.original_address);
 
     uint8_t patch[PatchSize] = {0xE8, 0, 0, 0, 0};
     uint32_t relative_call =

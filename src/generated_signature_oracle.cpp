@@ -95,12 +95,12 @@ std::vector<uint8_t> GlobalsAfterRecovered;
 
 void snapshot(std::vector<uint8_t> &into) {
     into.resize(GlobalsSize);
-    std::memcpy(into.data(), reinterpret_cast<const void *>(GlobalsBegin),
+    std::memcpy(&into[0], reinterpret_cast<const void *>(GlobalsBegin),
                 GlobalsSize);
 }
 
 void restore(const std::vector<uint8_t> &from) {
-    std::memcpy(reinterpret_cast<void *>(GlobalsBegin), from.data(),
+    std::memcpy(reinterpret_cast<void *>(GlobalsBegin), &from[0],
                 GlobalsSize);
 }
 
@@ -112,7 +112,7 @@ void restore(const std::vector<uint8_t> &from) {
 bool same_globals(const std::vector<uint8_t> &a,
                   const std::vector<uint8_t> &b, uintptr_t *where) {
     size_t first = 0;
-    if (globals_diff::equal(a.data(), b.data(), GlobalsSize, &first)) {
+    if (globals_diff::equal(&a[0], &b[0], GlobalsSize, &first)) {
         return true;
     }
     *where = GlobalsBegin + first;

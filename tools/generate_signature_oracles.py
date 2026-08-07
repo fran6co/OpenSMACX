@@ -496,14 +496,18 @@ def emit(rows: list, earned: set | None = None) -> str:
     w("std::vector<uint8_t> GlobalsAfterOriginal;")
     w("std::vector<uint8_t> GlobalsAfterRecovered;")
     w("")
+    # `&v[0]`, not `v.data()`. std::vector::data() is C++11 and VC6's <vector>
+    # does not have it - `C2039: 'data' : is not a member of vector`. Both
+    # spellings are the address of the same contiguous block, and every vector
+    # reached here has been resized to GlobalsSize first, so [0] exists.
     w("void snapshot(std::vector<uint8_t> &into) {")
     w("    into.resize(GlobalsSize);")
-    w("    std::memcpy(into.data(), reinterpret_cast<const void *>(GlobalsBegin),")
+    w("    std::memcpy(&into[0], reinterpret_cast<const void *>(GlobalsBegin),")
     w("                GlobalsSize);")
     w("}")
     w("")
     w("void restore(const std::vector<uint8_t> &from) {")
-    w("    std::memcpy(reinterpret_cast<void *>(GlobalsBegin), from.data(),")
+    w("    std::memcpy(reinterpret_cast<void *>(GlobalsBegin), &from[0],")
     w("                GlobalsSize);")
     w("}")
     w("")
@@ -515,7 +519,7 @@ def emit(rows: list, earned: set | None = None) -> str:
     w("bool same_globals(const std::vector<uint8_t> &a,")
     w("                  const std::vector<uint8_t> &b, uintptr_t *where) {")
     w("    size_t first = 0;")
-    w("    if (globals_diff::equal(a.data(), b.data(), GlobalsSize, &first)) {")
+    w("    if (globals_diff::equal(&a[0], &b[0], GlobalsSize, &first)) {")
     w("        return true;")
     w("    }")
     w("    *where = GlobalsBegin + first;")

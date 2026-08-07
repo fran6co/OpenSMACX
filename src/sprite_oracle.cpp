@@ -19,7 +19,7 @@
 
 namespace {
 
-using SpriteFixture = runtime_oracle::Fixture<Sprite>;
+typedef runtime_oracle::Fixture<Sprite> SpriteFixture;
 
 // The constructor never dispatches virtually, so the shared fixture
 // initializer only needs a one-entry vtable and installs no vtable pointers.
@@ -47,7 +47,7 @@ bool verify_construct() {
     const int32_t starting_totals[] = {
         0, 1, -1, 0x7FFFFFFF, static_cast<int32_t>(0x80000000U),
     };
-    auto original = reinterpret_cast<OriginalNoArg>(0x005E37E0U);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005E37E0U);
     const int saved_total = *SpriteMemoryUsed;
     bool passed = true;
     for (int32_t starting_total : starting_totals) {
@@ -109,7 +109,7 @@ bool verify_close() {
         {0, 0x11110000U, 0, 0, 0x80000000U},
         {0, 0, 0x80000000U, 0x80000000U, 1},
     };
-    auto original = reinterpret_cast<OriginalNoArg>(0x005E3820U);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005E3820U);
     const int saved_total = *SpriteMemoryUsed;
     func_sprite_free *const saved_free = SpriteFree;
     bool passed = true;
@@ -180,7 +180,7 @@ bool run_sprite_release_suite() {
     if (!suspend_redirect_at(SpriteCloseAddress)) {
         return false;
     }
-    auto original = reinterpret_cast<OriginalClose>(SpriteCloseAddress);
+    OriginalClose original = reinterpret_cast<OriginalClose>(SpriteCloseAddress);
     const int saved_total = *SpriteMemoryUsed;
     bool passed = true;
 

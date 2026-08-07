@@ -25,7 +25,7 @@
 
 namespace {
 
-using GraphicWinFixture = runtime_oracle::Fixture<GraphicWin>;
+typedef runtime_oracle::Fixture<GraphicWin> GraphicWinFixture;
 
 constexpr size_t VtableOffsets[] = {0};
 const runtime_oracle::ClassSpec GraphicWinSpec = {
@@ -92,7 +92,7 @@ bool verify_close() {
         reinterpret_cast<uintptr_t>(&recording_release),
     };
     FakeReleaseObject release_object = {release_vtable};
-    auto original = reinterpret_cast<OriginalNoArg>(0x005D4E40U);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005D4E40U);
 
     for (int owns_release_target = 0; owns_release_target < 2;
          ++owns_release_target) {

@@ -211,7 +211,7 @@ void StringStruct::close() {
 }
 
 void __fastcall string_struct_close_redirect(void *adjusted, void *) {
-    auto *self = reinterpret_cast<StringStruct *>(
+    StringStruct *self = reinterpret_cast<StringStruct *>(
         static_cast<uint8_t *>(adjusted) - StringStructCloseAdjustment);
     self->close();
 }
@@ -232,7 +232,7 @@ instruction bytes directly (`mov [ebx-0x28], 0x6698C4` and
 `mov [ecx+ebx-0x24], 0x6698C0`).
 */
 void __fastcall string_struct_derived_close_redirect(void *adjusted, void *) {
-    auto *self = reinterpret_cast<StringStruct *>(
+    StringStruct *self = reinterpret_cast<StringStruct *>(
         static_cast<uint8_t *>(adjusted) - StringStructDerivedCloseAdjustment);
     self->close_with_tables(
         StringStructDerivedVtable, StringStructDerivedVirtualBaseVtable);
@@ -264,7 +264,7 @@ belongs to 0x004066C0 and is covered in-process by the stringstruct
 runtime-oracle suite.
 */
 uint32_t StringList::destroy() {
-    auto *const base = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const base = reinterpret_cast<uint8_t *>(this);
     // `lea esi, [ecx + 0x28]` / `mov ecx, esi` / `call 0x004066C0`. The
     // source-owned derived close is entered on the virtual base and recovers
     // the object by subtracting the same 0x28, which is why the raw pointer
