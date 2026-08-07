@@ -281,7 +281,8 @@ def member_name(raw: str, offset: int, taken: set) -> str:
     return name
 
 
-def layout_for(name: str, idb: dict, thinker: dict, bounds=None) -> tuple:
+def layout_for(name: str, idb: dict, thinker: dict, bounds=None,
+               proved=None) -> tuple:
     """([(offset, name, size)], provenance) - the members to declare.
 
     The IDB carries every member or none, so it decides the shape. Thinker
@@ -320,16 +321,42 @@ def layout_for(name: str, idb: dict, thinker: dict, bounds=None) -> tuple:
     if members:
         return members, "Thinker"
 
-    # Neither source has heard of this class, but its own code proves how far
-    # into it the image reaches. One block of storage, no names.
+    # Neither the IDB nor Thinker has heard of this class, but a recovered
+    # body that was PROVED byte-identical reached into it, and that says where
+    # a field is with more authority than either. It says nothing about the
+    # ones nobody has touched, so the gaps stay padding and the access bound -
+    # if there is one - extends the tail.
+    #
+    # This is what stops a recovered body writing
+    # `*reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x2144) = a1;`
+    # where `field_2144_ = a1;` would do. `Midi` reaching here as one opaque
+    # `uint8_t field_0_[0x50]` is why every Midi body casts.
+    proved = (proved or {}).get(name, {})
     bound = (bounds or {}).get(name, 0)
+    if proved:
+        members, cursor = [], 0
+        for offset in sorted(proved):
+            member, size = proved[offset]
+            if offset < cursor:
+                continue
+            if offset > cursor:
+                members.append((cursor, "", offset - cursor))
+            members.append((offset, member, size))
+            cursor = offset + size
+        if bound > cursor:
+            members.append((cursor, "", bound - cursor))
+        return members, "bodies proved byte-identical"
+
+    # Nothing names a member, but the class's own code proves how far into it
+    # the image reaches. One block of storage, no names.
     if bound > 0:
         return [(0, "", bound)], "its own code, which reaches that far"
     return [], "nothing"
 
 
 def render(names: list, idb: dict, thinker: dict,
-           owned: collections.Counter, bounds=None, bases=None) -> str:
+           owned: collections.Counter, bounds=None, bases=None,
+           proved=None) -> str:
     lines = [
         "/*",
         " * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.",
@@ -382,7 +409,7 @@ def render(names: list, idb: dict, thinker: dict,
     ]
 
     for name in names:
-        members, provenance = layout_for(name, idb, thinker, bounds)
+        members, provenance = layout_for(name, idb, thinker, bounds, proved)
         if not members:
             continue
         total = max((offset + size for offset, _, size in members), default=0)
@@ -444,10 +471,12 @@ def main(argv=None) -> int:
 
     declared = declared_in_src()
     bounds = access_bounds()
-    names = sorted((set(idb) | set(thinker) | set(bounds)) - declared)
+    proved = proved_members()
+    names = sorted((set(idb) | set(thinker) | set(bounds) | set(proved))
+                   - declared)
     owned = owns_functions()
     text = render(names, idb, thinker, owned, bounds,
-                  derive_base_edges.agreed())
+                  derive_base_edges.agreed(), proved)
 
     if args.check:
         current = args.out.read_text() if args.out.is_file() else ""
