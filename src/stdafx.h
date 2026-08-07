@@ -60,6 +60,22 @@
 // `UNUSED_input` is defined nowhere.
 #define UNUSED(x)
 
+// Window messages that postdate VC6's Platform SDK. Their values are fixed by
+// the Win32 ABI and the recovered window procedures compare against them, so
+// these are constants this SDK is missing rather than anything to derive.
+// Defined after <windows.h> for the same reason as the macro below.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#ifndef WM_INPUT
+#define WM_INPUT 0x00FF
+#endif
+#ifndef WM_UNICHAR
+#define WM_UNICHAR 0x0109
+#endif
+#ifndef UNICODE_NOCHAR
+#define UNICODE_NOCHAR 0xFFFF
+#endif
+#endif
+
 // OPENSMACX_VC6_FIX_FOR_SCOPE
 //
 // VC6 uses the pre-standard rule where `for (int i = ...)` leaves `i` alive in
