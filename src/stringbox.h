@@ -25,6 +25,7 @@
   */
 class DLLEXPORT StringBox : GraphicWin {
  public:
+  void on_scrolled(int a1, int a2);
   StringBox() { ; }
   ~StringBox() { ; }
   void add(char *text, int index, int flag);

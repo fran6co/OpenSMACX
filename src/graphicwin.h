@@ -30,6 +30,7 @@ class DLLEXPORT GraphicWin : Win {
   friend class BaseButton;
 
  public:
+  void on_mouse_move(int a1, int a2, unsigned int a3, int a4);
   GraphicWin() { ; }
   ~GraphicWin() { ; }
   void construct();

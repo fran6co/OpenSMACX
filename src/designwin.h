@@ -34,6 +34,8 @@
   */
 class DLLEXPORT DesignWin : GraphicWin {
  public:
+  void select_special_2();
+  void select_special_1();
   DesignWin() { ; }
   ~DesignWin() { ; }
   void UNK1();
