@@ -1100,6 +1100,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(agent-brief-tests
                                    test_agent_brief.py)
 
+    opensmacx_add_python_tool_test(structure-observation-tests
+                                   test_structure_observations.py)
+
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
 
