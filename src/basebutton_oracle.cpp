@@ -178,7 +178,7 @@ bool verify_base_close(uintptr_t *vtable) {
         legacy.storage, source.storage, BaseButtonSpec, vtable);
     prepare_fixture(legacy, vtable, false);
     prepare_fixture(source, vtable, false);
-    OriginalBaseNoArg original = reinterpret_cast<OriginalBaseNoArg>(
+    OriginalBaseNoArg original = original_method<OriginalBaseNoArg>(
         BaseButtonCloseAddress);
 
     runtime_oracle::begin_trace(
@@ -201,7 +201,7 @@ bool verify_flat_close(uintptr_t *vtable) {
         legacy.storage, source.storage, FlatButtonSpec, vtable);
     prepare_fixture(legacy, vtable, true);
     prepare_fixture(source, vtable, true);
-    OriginalFlatNoArg original = reinterpret_cast<OriginalFlatNoArg>(FlatButtonCloseAddress);
+    OriginalFlatNoArg original = original_method<OriginalFlatNoArg>(FlatButtonCloseAddress);
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -223,7 +223,7 @@ bool verify_base_destructor(uintptr_t *vtable) {
         legacy.storage, source.storage, BaseButtonSpec, vtable);
     prepare_fixture(legacy, vtable, false);
     prepare_fixture(source, vtable, false);
-    OriginalBaseNoArg original = reinterpret_cast<OriginalBaseNoArg>(
+    OriginalBaseNoArg original = original_method<OriginalBaseNoArg>(
         BaseButtonDestructorAddress);
 
     runtime_oracle::begin_trace(
@@ -247,7 +247,7 @@ bool verify_flat_destructor(uintptr_t *vtable) {
         legacy.storage, source.storage, FlatButtonSpec, vtable);
     prepare_fixture(legacy, vtable, true);
     prepare_fixture(source, vtable, true);
-    OriginalFlatNoArg original = reinterpret_cast<OriginalFlatNoArg>(
+    OriginalFlatNoArg original = original_method<OriginalFlatNoArg>(
         FlatButtonDestructorAddress);
 
     runtime_oracle::begin_trace(
@@ -286,7 +286,7 @@ bool run_base_button_release_suite() {
     }
     uintptr_t vtable[3] = {0};
     vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
-    OriginalBaseNoArg original = reinterpret_cast<OriginalBaseNoArg>(
+    OriginalBaseNoArg original = original_method<OriginalBaseNoArg>(
         BaseButtonCloseAddress);
     SavedDefaults saved;
     seed_defaults(saved);

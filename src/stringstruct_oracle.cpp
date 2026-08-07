@@ -105,7 +105,7 @@ bool verify_remove_all() {
         {3, 3, false},
         {3, 2, true},
     };
-    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x00402970U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x00402970U);
     for (size_t test_index = 0;
          test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
         const RemoveCase &test = cases[test_index];
@@ -243,7 +243,7 @@ bool verify_close() {
          variant_index < sizeof(variants) / sizeof(variants[0]);
          ++variant_index) {
     const Variant &variant = variants[variant_index];
-    OriginalClose original = reinterpret_cast<OriginalClose>(variant.address);
+    OriginalClose original = original_method<OriginalClose>(variant.address);
     for (size_t test_index = 0;
          test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
         const CloseCase &test = cases[test_index];
