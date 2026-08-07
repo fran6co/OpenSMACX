@@ -64,6 +64,36 @@ set(CMAKE_C_FLAGS_DEBUG "/Z7 /Ob0 /Od /GZ" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)
 
+# `/Zm200`, NOT the `/Zm1000` CMake picks for us.
+#
+# Windows-MSVC.cmake appends `/Zm1000` unconditionally when MSVC_VERSION is
+# below 1310, and on a real 1999 Windows box that is generous and harmless.
+# Under wine it is neither. `/Zm` does not cap the heap, it RESERVES it up
+# front, and the reservation has to find room in a 32-bit address space that
+# already has the precompiled header mapped at a fixed base. At 1000 the
+# reservation fails and the compiler reports the failure as
+# `fatal error C1060: compiler is out of heap space` - so asking for ten times
+# the memory is precisely what makes it run out.
+#
+# Measured on src/ambience.cpp, twice at each setting: /Zm1000 fails, /Zm400,
+# /Zm200, /Zm100 and no /Zm at all all succeed. Measured again on the four
+# largest units - dllmain.cpp at 10,657 lines, veh, map, init_thunks - where
+# 100 through 600 behave identically, so nothing here is short of heap at 200.
+# It is 2x the default for headroom and far below where the reservation
+# breaks.
+#
+# This was the whole of "C1060 on at least one translation unit": it was not
+# one unit and it was not the source. It was this flag.
+#
+# It has to be undone through the make-rules override rather than here: this
+# file is read BEFORE Windows-MSVC.cmake, which appends its `/Zm1000` to
+# whatever the toolchain left behind, so a substitution at this point has
+# nothing to substitute. The override file is included afterwards and still
+# before `CMAKE_CXX_FLAGS` reaches the cache, which is the one window where
+# the flag exists and is still editable.
+set(CMAKE_USER_MAKE_RULES_OVERRIDE
+    "${CMAKE_CURRENT_LIST_DIR}/vc6-flag-overrides.cmake")
+
 set(CMAKE_FIND_ROOT_PATH "${VC6_ROOT}")
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
