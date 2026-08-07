@@ -62,3 +62,11 @@ void FileWin::UNK1() {
 void __fastcall file_win_unk1_redirect(FileWin *self, void *) {
     self->UNK1();
 }
+
+/*
+Original Offset: 00614C40
+Status: Complete
+*/
+void FileWin::on_double_clicked(int a1) {
+    UNK4();
+}

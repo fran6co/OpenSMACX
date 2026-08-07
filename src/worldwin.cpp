@@ -74,3 +74,21 @@ void __fastcall world_win_on_left_click_redirect(WorldWin *self, void *, int a1,
 void __fastcall world_win_on_right_click_redirect(WorldWin *self, void *, int a1, int a2) {
     self->on_right_click(a1, a2);
 }
+
+/*
+Original Offset: 004C45F0
+Status: Complete
+*/
+void WorldWin::set_center(int a1, int a2) {
+    reinterpret_cast<VCall *>(this)->slot012();
+    reinterpret_cast<GraphicWin *>(this)->soft_update();
+}
+
+/*
+Original Offset: 004C4610
+Status: Complete
+*/
+void WorldWin::focus(int a1, int a2) {
+    reinterpret_cast<VCall *>(this)->slot012();
+    reinterpret_cast<GraphicWin *>(this)->soft_update();
+}

@@ -957,3 +957,25 @@ int Win::is_descendant(Win *candidate) {
 int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate) {
     return self->is_descendant(candidate);
 }
+
+/*
+Original Offset: 005F8530
+Status: Complete
+*/
+void Win::on_mousewheel_down_vert(int a1) {
+    Scroll *scroll = *reinterpret_cast<Scroll **>(reinterpret_cast<char *>(this) + 0x43c);
+    if (scroll) {
+        scroll->on_mousewheel_down(a1);
+    }
+}
+
+/*
+Original Offset: 005F8590
+Status: Complete
+*/
+void Win::on_mousewheel_up_horz(int a1) {
+    Scroll *scroll = *reinterpret_cast<Scroll **>(reinterpret_cast<char *>(this) + 0x440);
+    if (scroll) {
+        scroll->on_mousewheel_up(a1);
+    }
+}

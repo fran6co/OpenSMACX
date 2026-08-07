@@ -45,6 +45,13 @@ class ValidationTest(unittest.TestCase):
         with self.assertRaises(tool.Invalid):
             tool.validate([row(status="maybe")])
 
+    def test_a_negative_offset_is_allowed(self):
+        # `[ecx-0x1c]` means the declared class is a SUBOBJECT inside a larger
+        # one - inheritance the declaration does not model. That is the most
+        # informative observation there is, and the first version of this
+        # validator threw it away.
+        tool.validate([row(offset="-0x1C")])
+
     def test_a_decimal_offset_is_refused(self):
         # Every other offset in this repository is hex; one decimal row is
         # how a promotion silently lands a field 42 bytes from where it is.

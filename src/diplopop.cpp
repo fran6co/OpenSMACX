@@ -147,3 +147,14 @@ void DiploPop::on_iface_button_toggled(int, int) {
 void __fastcall diplo_pop_on_iface_button_toggled_redirect(DiploPop *self, void *, int a1, int a2) {
     self->on_iface_button_toggled(a1, a2);
 }
+
+/*
+Original Offset: 0043F170
+Status: Complete
+*/
+void DiploPop::hide() {
+    Win *self = reinterpret_cast<Win *>(this);
+    if (self->is_visible()) {
+        self->hide();
+    }
+}

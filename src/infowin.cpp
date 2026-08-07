@@ -90,3 +90,11 @@ void InfoWin::reset() {
 void __fastcall info_win_reset_redirect(InfoWin *self, void *) {
     self->reset();
 }
+
+/*
+Original Offset: 00458D40
+Status: Complete
+*/
+void InfoWin::on_right_click(int a1, int a2) {
+    right_menu(a1, a2);
+}

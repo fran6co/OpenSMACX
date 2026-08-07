@@ -547,3 +547,11 @@ int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
                                          Menu *menu, BorderSizing *border) {
     return self->init(x, y, width, height, title, flags, parent, menu, border);
 }
+
+/*
+Original Offset: 005D6310
+Status: Complete
+*/
+void GraphicWin::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
+    reinterpret_cast<Win *>(this)->on_mouse_move(a1, a2, a3, a4);
+}

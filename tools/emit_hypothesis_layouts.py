@@ -72,6 +72,9 @@ THINKER = REPO_ROOT / "docs" / "recovery" / "thinker-members.csv"
 THINKER_LOCAL = (REPO_ROOT / ".opensmacx" / "external-analysis" /
                  "thinker-layout-hypotheses.csv")
 ACCESS_BOUNDS = REPO_ROOT / "docs" / "recovery" / "access-lower-bounds.csv"
+# The only member source derived from bodies PROVED byte-identical.
+OBSERVATIONS = (REPO_ROOT / "docs" / "recovery"
+                / "agent-structure-observations.csv")
 FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 OUTPUT = SRC / "hypothesis_layouts.h"
 
@@ -174,6 +177,59 @@ def access_bounds() -> dict:
                 found[row["class"]] = int(row["lower_bound"], 16)
             except (ValueError, KeyError, TypeError):
                 continue
+    return found
+
+
+def proved_members() -> dict:
+    """{class: {offset: (name, size)}} from bodies proved BYTE_EXACT.
+
+    THE STRONGEST SOURCE HERE, and the last to be wired in. Every other input
+    is an outside opinion: the IDB is analysis, Thinker is a mod's reading,
+    and the access bounds only say how far the image reaches. These come from
+    `agent-structure-observations.csv`, written while recovering a function
+    whose body was then proved byte-identical - so the offset is not a
+    hypothesis about the layout, it is a fact the comparison would have caught.
+
+    WHY IT MATTERS FOR READABILITY, not only accuracy: a recovered body that
+    reaches an UNDECLARED field must write
+    `*reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x2144) = a1;`
+    where a declared one writes `field_2144_ = a1;`. `GAmbience::begin` does
+    exactly the latter, and only because this file happens to declare its
+    member; `Midi` is one opaque `uint8_t field_0_[0x50]`, so every Midi body
+    casts. The casts in recovered code were never a style problem - they are
+    this file's gaps, showing up in source form.
+
+    NEGATIVE offsets are skipped. They are real, and they are the most
+    interesting rows in that file - `[ecx-0x1c]` means the class is a
+    SUBOBJECT of something larger - but a member cannot be declared at a
+    negative offset, and inventing the enclosing class from one access would
+    be exactly the kind of guess this file exists to avoid.
+    """
+    found = collections.defaultdict(dict)
+    if not OBSERVATIONS.is_file():
+        return found
+    with OBSERVATIONS.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("kind") not in ("member", "member-type"):
+                continue
+            if row.get("status") == "rejected":
+                continue
+            subject = (row.get("subject") or "").strip()
+            offset = (row.get("offset") or "").strip()
+            # The subject must NAME a class. Observations are written by hand
+            # and several say things like "the class read by sub_5e3630" -
+            # true, useful to a reader, and not something a declaration can be
+            # emitted for. Those wait until someone identifies the type.
+            if not IDENTIFIER.match(subject):
+                continue
+            if not offset.lower().startswith("0x"):
+                continue               # negative, or not an offset at all
+            try:
+                at = int(offset, 16)
+            except ValueError:
+                continue
+            width = 1 if "one byte" in (row.get("detail") or "") else 4
+            found[subject][at] = (f"field_{at:x}_", width)
     return found
 
 

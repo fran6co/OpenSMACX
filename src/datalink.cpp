@@ -427,3 +427,15 @@ void __fastcall datalink_parse_id_redirect(Datalink *self, void *, int id,
                                            int *out_remainder) {
     self->parse_id(id, out_id, out_remainder);
 }
+
+/*
+Original Offset: 00432040
+Status: Complete
+*/
+void Datalink::on_selected(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    int v = *reinterpret_cast<int *>(self + 0x2a38);
+    if (v == 0) {
+        draw_entry();
+    }
+}

@@ -86,18 +86,34 @@ def body_of(address: int, unit_text: str, functions: dict, derived: dict,
     diverge from it after 325 bytes, in prose, while the declarations below are
     fine. Comparing text that was never load-bearing rejected every one.
 
-    The definition HEAD is load-bearing and the emitter still computes it, so
-    that is the anchor: find it in the unit and take everything from there. A
-    unit that does not contain its own head is reported, since that means the
-    signature changed and the proof no longer describes this function.
+    Anchoring on the definition HEAD does not work either, and the way it
+    failed is worth keeping. It rescued 65 of 186 and refused the rest - and
+    re-measuring all 122 refusals by compiling their units WHOLE showed every
+    single one still BYTE_EXACT. The proofs were fine; the extraction was
+    wrong, twice over. 83 units no longer contain today's head because the
+    catalogued name has since been corrected, and 38 more extracted a body
+    that would not compile because agents declare shim classes and typedefs
+    ABOVE the definition, and cutting at the head throws them away.
+
+    So the cut is made where the SCAFFOLDING ends, which is what "the body"
+    always meant. The scaffolding's declarations are stable even though its
+    header comment is not, so the anchor is its last real line of code - not
+    its prose, and not the subject's own signature.
     """
-    head = prompts.signature_head(address, functions, derived, callees, pe_fast)
-    index = unit_text.rfind(head)
+    scaffolding = emit.emit(address, functions, derived, callees, pe_fast,
+                            scaffolding_only=True)
+    tail = [line for line in scaffolding.splitlines()
+            if line.strip() and not line.lstrip().startswith("//")]
+    if not tail:
+        raise ValueError("scaffolding has no code to anchor on")
+    anchor = tail[-1]
+    index = unit_text.rfind(anchor)
     if index < 0:
-        raise ValueError(f"unit does not contain its definition head {head!r}")
-    body = unit_text[index:]
+        raise ValueError(f"unit does not contain the scaffolding's last "
+                         f"declaration {anchor.strip()!r}")
+    body = unit_text[index + len(anchor):]
     if not body.strip():
-        raise ValueError("nothing after the definition head")
+        raise ValueError("nothing follows the scaffolding")
     return body.strip() + "\n"
 
 

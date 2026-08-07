@@ -321,3 +321,34 @@ that file is promoted from the canonical IDB export rather than hand-edited.
 Total prize: about 18 bytes across four 3-to-5-byte functions. Left alone
 deliberately - it is a change to how the catalogue is derived, and the
 unrecovered pool is worth orders of magnitude more.
+
+## The ledger was honest and the extraction was not
+
+The harvest refused 121 of 186 proved recoveries, and the commit that landed
+it said those were "ledger rows claiming BYTE_EXACT that the current toolchain
+cannot reproduce". THAT WAS WRONG. All 122 unit-only rows were re-measured by
+compiling their units WHOLE, and every one is still BYTE_EXACT. The proofs
+were fine; the extraction was broken, in two different ways at once.
+
+- 83 units no longer contained the definition head the emitter computes today,
+  because the catalogued NAME has since been corrected - including by
+  `catalogue_corrections.py` earlier the same day. The head moved; the body
+  did not.
+- 38 more extracted a body that would not compile, because agents declare shim
+  classes and typedefs ABOVE the definition, and cutting at the head throws
+  them away. `NO_COMPILE` there was self-inflicted.
+
+Cutting where the SCAFFOLDING ends - at its last real line of code, not its
+prose and not the subject's signature - rescues 134 instead of 65.
+
+The wider audit is worth recording too, because it is the reassuring half.
+Of the 670 rows the ratchet counts: 465 have a committed `src/` body, 83 are
+in the store, 122 existed only as a gitignored `unit.cpp`, and ZERO have no
+artifact at all. Nothing in the ledger is fabricated. The exposure was never
+false claims - it was that a `git clean` would have erased 122 real proofs
+while the ledger went on counting them.
+
+A REFUSAL RATE IS A CLAIM ABOUT THE TOOL BEFORE IT IS A CLAIM ABOUT THE DATA.
+121 of 186 was read as rot in the ledger and reported that way, when the
+cheaper hypothesis - that a two-day-old extractor was wrong - was both true
+and testable in one pass.

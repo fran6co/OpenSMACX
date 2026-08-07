@@ -385,3 +385,17 @@ void __fastcall tut_win_do_des_redirect(
         TutWin *self, void *, RECT *rect, const char *text, int flag) {
     self->do_des(rect, text, flag);
 }
+
+/*
+Purpose: Tell the attached object the tutorial window moved.
+Original Offset: 004BDDB0
+Return Value: n/a
+Status: Complete
+*/
+void TutWin::on_move(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+    VCall *obj = *reinterpret_cast<VCall **>(self + 0x53d4);
+    if (obj) {
+        obj->slot063();
+    }
+}
