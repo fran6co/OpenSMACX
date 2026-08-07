@@ -1097,6 +1097,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(short-class-tests
                                    test_extend_short_classes.py)
 
+    opensmacx_add_python_tool_test(agent-brief-tests
+                                   test_agent_brief.py)
+
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
 

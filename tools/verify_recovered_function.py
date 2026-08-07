@@ -38,11 +38,45 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import byte_match  # noqa: E402
 import byte_match_census as census  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
 import mizuchi_writeback as writeback  # noqa: E402
 
 MATCHED = "BYTE_EXACT"
+
+# BYTE EXACTNESS IS NOT THE ONLY THING THAT MATTERS. A body can reproduce the
+# instruction stream and still be the wrong thing to have in the tree, and the
+# compiler cannot tell the difference - so the form is checked separately.
+#
+# The first entry is a REFUSAL, not a warning: `__asm` pastes the original's
+# instructions instead of deriving them, so it proves nothing about the source,
+# and `AGENTS.md:5` bars copied machine code from distributable builds.
+# `mizuchi_writeback.py` deliberately carries no content policy, so without a
+# check here an `__asm` body that happens to be byte-exact lands in `src/`
+# unchallenged. That has happened once already.
+FORBIDDEN = (
+    (r"\b__asm\b|\b_emit\b",
+     "inline assembly: pastes the original's instructions instead of deriving "
+     "them (AGENTS.md:5)"),
+)
+QUESTIONABLE = (
+    (r"\(\s*(?:[^)]*,)?\s*uint32_t\s+\w+\s*[,)]",
+     "uint32_t parameter: AGENTS.md:87 says parameters are int, and the "
+     "signedness is visible in the branch the compiler picks"),
+    (r"0x00[45678][0-9A-Fa-f]{5}\b",
+     "a fixed image address written into the body: the tree reaches those "
+     "through a rebindable seam"),
+    (r"\bgoto\b", "goto"),
+)
+
+
+def form_report(body: str) -> tuple:
+    """(hard refusals, things worth a second look)."""
+    import re
+    refusals = [why for pattern, why in FORBIDDEN if re.search(pattern, body)]
+    notes = [why for pattern, why in QUESTIONABLE if re.search(pattern, body)]
+    return refusals, notes
 
 
 def committed_body(address: int) -> tuple:
@@ -70,6 +104,9 @@ def main(argv=None) -> int:
     parser.add_argument("--body", type=str,
                         help="score this candidate instead of what is "
                              "committed; '-' reads stdin")
+    parser.add_argument("--against-committed", action="store_true",
+                        help="with --body: also score what is committed and "
+                             "refuse a candidate that is WORSE")
     parser.add_argument("--json", action="store_true")
     arguments = parser.parse_args(argv)
 
@@ -90,8 +127,34 @@ def main(argv=None) -> int:
             print(f"SKIP: {source}")
             return 0
 
+    refusals, notes = form_report(body)
+    for why in refusals:
+        print(f"    REFUSED on form: {why}", file=sys.stderr)
+    for why in notes:
+        print(f"    form: {why}")
+    if refusals:
+        # Refused before compiling. A byte-exact answer would only make this
+        # harder to argue with.
+        return 1
+
     verdict = writeback.verify(address, body)
     tier = verdict.get("tier", "?")
+
+    # A CANDIDATE THAT IS WORSE IS NOT AN IMPROVEMENT, and "byte exact or not"
+    # cannot see the difference between a candidate that stayed MNEMONIC_ONLY
+    # and one that fell to MISMATCH. Both are non-zero exits. This is the
+    # per-function form of the ratchet `byte_match_fanout.py --check` applies
+    # to the whole ledger: a tier may rise and may not fall.
+    if arguments.against_committed and arguments.body:
+        incumbent_body, incumbent_source = committed_body(address)
+        if incumbent_body is not None:
+            incumbent = writeback.verify(address, incumbent_body)
+            print(f"    committed ({incumbent_source}): "
+                  f"{incumbent.get('tier', '?')}")
+            if byte_match._better(incumbent, verdict):
+                print(f"    REGRESSION: the candidate is worse than what is "
+                      f"already committed; refusing it", file=sys.stderr)
+                return 1
 
     if arguments.json:
         import json

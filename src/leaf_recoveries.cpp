@@ -113,11 +113,27 @@ Original Offset: 006281B0
 Return Value: n/a
 Status: Complete
 */
+/*
+Original Offset: 006281B0
+Return Value: n/a
+Status: Complete
+*/
 void __cdecl leaf_006281b0_redirect(const float *source, float scale,
                                     float *result) {
-    result[0] = source[0] * scale;
-    result[1] = source[1] * scale;
-    result[2] = source[2] * scale;
+    // Each component is bound to a local BEFORE the multiply, and that is
+    // load-bearing rather than stylistic. `result[i] = source[i] * scale` is
+    // a memory-by-memory multiply, and VC6 schedules those by loading the
+    // shared operand first - `fld [esp+8]; fmul [eax+N]`. The original loads
+    // the component first. Binding the component to a local makes the
+    // multiply local-by-memory, which flips the schedule to
+    // `fld [eax+N]; fmul [esp+8]` and matches. Inlining these three temps
+    // reverses every fmul pair and costs the byte match.
+    const float x = source[0];
+    result[0] = x * scale;
+    const float y = source[1];
+    result[1] = y * scale;
+    const float z = source[2];
+    result[2] = z * scale;
 }
 
 /*
