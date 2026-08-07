@@ -120,3 +120,55 @@ Before assuming the body is wrong, check whether the SIGNATURE is.
 
 If the scaffolding's definition head disagrees with what the disassembly needs,
 say so and stop. That is a finding, not a failure.
+
+## Whether the signature is free depends on whether the row has a mangled name
+
+Both halves of this were measured, and they point opposite ways:
+
+- A row WITH a catalogued mangled name (`?on_key_click@BaseButton@@QAEXH@Z`)
+  gets a class and a member declaration in its scaffolding, so the body has to
+  agree with it. That is the `C2556` above, and it is a catalogue fix.
+- A row WITHOUT one (`sub_5e3630`, every `leaf_*_redirect`) gets NO declaration
+  of itself at all. `byte_match.object_code` compares the object's CODE and
+  never looks a symbol up, so the return type, the convention and the parameter
+  list are all free, and a class introduced to express `__thiscall` costs no
+  bytes. The brief forbade changing them anyway, purely by wording, which put
+  every convention error out of reach for no reason.
+
+## Four levers refuted on 0x005E3630, all cheap to repeat and all worthless
+
+Twenty bytes, every mnemonic already agreeing, one register wrong at index 4:
+the original chains `mov eax,[eax+8]` -> `mov eax,[eax+4]` and the rebuild
+borrows ecx, `mov ecx,[eax+8]` -> `mov eax,[ecx+4]`. What does NOT move it:
+
+- **A real `__thiscall` member** instead of the fake `__fastcall(void *, void *)`.
+  Byte-identical output. The fake receiver is not the problem.
+- **Reusing one pointer variable** instead of two named temps. The obvious
+  reading - one variable, one register - is wrong.
+- **Collapsing the chase into a single nested expression.** Also identical.
+  Note this is the REVERSE of 0x006281B0, where BINDING a component to a local
+  was what flipped fmul scheduling. Operand binding moves some things and not
+  this one; it is not a general lever.
+- **The whole `/G` processor family.** `/G3 /G4 /G5 /G6 /GB` all emit exactly
+  the same bytes here. Instruction scheduling was the best remaining theory for
+  the register-allocation class and it is dead for this function.
+
+One real signal did come out of it: at `/O1` the TAIL is exactly right
+(`mov eax,[eax+8]; mov eax,[eax+4]`) while the head is wrong (`cmp [ecx+8],0`
+instead of a load and `test`), and at `/O2` it is the other way round. The
+original is `/O2`'s head with `/O1`'s tail. Whatever explains that is not a
+flag in `FLAG_SETS`.
+
+## Levers that DID pay, from the four-agent batch
+
+- **A loop bound the original does not have emits a `cmp`.** `for (i = 0; x &&
+  i < 32; i++)` against a plain shift-until-zero. Dropping the bound and
+  writing it shift-then-test as a `do/while` was the whole fix (0x00628AB0).
+- **A short `for` loop over byte stores gets unrolled AND store-merged.** VC6
+  turned eight byte-writes into `or eax,-1` plus two merged dword stores.
+  Writing the dword store and the byte stores separately stops the merge
+  (0x0057DEE0).
+- **Order the statements the way the original schedules them.** Materialising
+  the address arithmetic into named temps BEFORE computing a wraparound counter
+  kept the counter an `inc`; computing the counter first degraded it
+  (0x006252C0).
