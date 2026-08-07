@@ -109,6 +109,63 @@ class IntegrateTest(unittest.TestCase):
             tool.integrate(0x401000, self.target)
         self.assertEqual(self.located[-1], "")
 
+    def test_a_body_using_VCall_pulls_in_the_shim_header(self):
+        """The one mistake verification structurally cannot catch.
+
+        `verify()` compiles against the emitter's scaffolding, and the
+        scaffolding declares `VCall` itself - so a body that lands in `src/`
+        without the include is BYTE_EXACT and un-buildable at the same time.
+        Eight compiled files reached exactly that state after the first
+        integration pass and the ratchet stayed green throughout.
+        """
+        tool.writeback.verify = lambda a, b: {"tier": "BYTE_EXACT"}
+        tool.stored_body = lambda a: (
+            "void C::f() { ((VCall *)this)->slot012(); }\n")
+        tool.census.extract_body = lambda loc: "void C::f() {}\n"
+        result = tool.integrate(0x401000, self.target)
+        self.assertEqual(result["includes_added"], ["vtable_shim.h"])
+        self.assertIn('#include "vtable_shim.h"', self.target.read_text())
+
+    def test_the_shim_header_is_not_added_twice(self):
+        self.target.write_text('#include "stdafx.h"\n'
+                               '#include "vtable_shim.h"\n\nvoid other() {}\n')
+        tool.writeback.verify = lambda a, b: {"tier": "BYTE_EXACT"}
+        tool.stored_body = lambda a: (
+            "void C::f() { ((VCall *)this)->slot012(); }\n")
+        tool.census.extract_body = lambda loc: "void C::f() {}\n"
+        result = tool.integrate(0x401000, self.target)
+        self.assertEqual(result["includes_added"], [])
+        self.assertEqual(self.target.read_text().count("vtable_shim.h"), 1)
+
+    def test_a_body_that_needs_no_shim_gets_no_include(self):
+        tool.writeback.verify = lambda a, b: {"tier": "BYTE_EXACT"}
+        result = tool.integrate(0x401000, self.target)
+        self.assertEqual(result["includes_added"], [])
+        self.assertNotIn("vtable_shim.h", self.target.read_text())
+
+    def test_the_catalogued_line_accounts_for_the_added_include(self):
+        """An include inserted AFTER the location was computed would push the
+        definition down and leave `source_locations` pointing a line short -
+        and `census.extract_body` reads that line, so the row would quietly
+        stop being scored against its own body."""
+        tool.writeback.verify = lambda a, b: {"tier": "BYTE_EXACT"}
+        tool.stored_body = lambda a: (
+            "void C::f() { ((VCall *)this)->slot012(); }\n")
+        tool.census.extract_body = lambda loc: "void C::f() {}\n"
+        tool.integrate(0x401000, self.target)
+        line = int(self.located[-1].rsplit(":", 1)[1])
+        text = self.target.read_text().splitlines()[line - 1]
+        self.assertEqual(text.strip(), "Original Offset: 00401000")
+
+    def test_a_failed_integration_takes_the_include_back_out(self):
+        tool.writeback.verify = lambda a, b: {"tier": "MISMATCH", "note": "x"}
+        tool.stored_body = lambda a: (
+            "void C::f() { ((VCall *)this)->slot012(); }\n")
+        tool.census.extract_body = lambda loc: "void C::f() {}\n"
+        with self.assertRaises(tool.Refused):
+            tool.integrate(0x401000, self.target)
+        self.assertEqual(self.target.read_text(), self.before)
+
     def test_a_row_that_already_has_a_home_is_refused(self):
         tool.emit.load_functions = lambda: {
             0x401000: {"name": "f", "source_locations": "src/a.cpp:10"}}
