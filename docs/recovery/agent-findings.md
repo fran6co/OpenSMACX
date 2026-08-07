@@ -352,3 +352,51 @@ A REFUSAL RATE IS A CLAIM ABOUT THE TOOL BEFORE IT IS A CLAIM ABOUT THE DATA.
 121 of 186 was read as rot in the ledger and reported that way, when the
 cheaper hypothesis - that a two-day-old extractor was wrong - was both true
 and testable in one pass.
+
+## The original's flags are not in FLAG_SETS, and two functions now say so
+
+Two independent recoveries have stalled on the SAME shape: the original is
+`/O2`'s output in one place and `/O1`'s in another, and no single flag set in
+`byte_match.FLAG_SETS` produces the mixture.
+
+- `sub_5e3630` (20 bytes). `/O1` emits the exact TAIL - `mov eax,[eax+8];
+  mov eax,[eax+4]`, chaining through one register - while `/O2` emits the
+  exact HEAD, a load and a `test` where `/O1` has `cmp [ecx+8],0`. The
+  original is `/O2`'s head with `/O1`'s tail. Seven source shapes, a real
+  `__thiscall`, one reused local, a nested expression and the entire
+  `/G3 /G4 /G5 /G6 /GB` scheduling family all leave it untouched.
+- `sub_52a980` (37 bytes). `/O2` reproduces the loop bound, the `add`/`cmp`/
+  `jl`, and the trailing `xor eax,eax` plus two stores - but always
+  register-mediates `*p &= 0xfe` instead of leaving the original's direct
+  `and byte ptr [eax], 0xfe`. `/O1` keeps that `and` as a direct memory op and
+  then gets the rest wrong: it re-encodes the `0xFF` store as a
+  memory-immediate every iteration rather than hoisting it into `cl` once, and
+  collapses the trailing zero-out to `and dword ptr [...], 0`. Eight source
+  shapes ruled out, including a minimal single-field repro that isolates the
+  mediation as inherent to `/O2` rather than caused by the second field.
+
+Two functions is not proof, but it is the second time the residue has this
+exact character, and it is a different character from register allocation: in
+both cases each HALF is reproducible exactly, just never together. That points
+at a compiler setting rather than at the source - a per-file `#pragma
+optimize`, a flag combination nobody has tried, or a different build of
+12.00.8168. Worth an experiment before more agent time goes into either.
+
+THAT EXPERIMENT WAS RUN AND THE HYPOTHESIS IS DEAD. 288 combinations were
+swept over `sub_5e3630` - the product of `/Og`, `/Oi`, `/Os` against `/Ot`,
+`/Oy` against `/Oy-`, `/Ob0`/`/Ob1`/`/Ob2`, and `/Oa` against `/Ow`, which is
+the `/O1` and `/O2` bundles taken apart into their actual components. Not one
+reached BYTE_EXACT or even SHAPE_EXACT.
+
+So the residue is NOT a flag setting, at least not anywhere in the `/O`
+family, and the "the original used settings we do not have" reading has to be
+dropped. What survives is narrower and stranger: each half is reproducible,
+the two are never available together, and no optimisation switch selects
+between them. That leaves a per-function `#pragma optimize`, a different build
+of 12.00.8168, or something about the surrounding translation unit - none of
+which a body rewrite can reach, and none worth more agent time until there is
+a new reason to look.
+
+The cost of finding this out was one command. The cost of NOT finding it out
+would have been every future agent re-deriving "it might be the flags" on
+every function in this class.
