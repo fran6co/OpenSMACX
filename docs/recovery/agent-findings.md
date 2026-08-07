@@ -261,3 +261,37 @@ spelled `==` where the first two are `!=`, because VC6 lays the final block out
 the other way round. The form check flags `goto` as questionable and it should
 keep doing so - but here the alternative is not a cleaner body, it is a body
 that does not match.
+
+## The loop-form lever is real but NOT general - three refusals in one batch
+
+Told about the `sub_5ad450` pointer-walk fix, three agents applied it and it
+did not transfer. Recording them so it does not get overgeneralised the way
+"push is register allocation" was:
+
+- `sub_5ad4c0` is the IMMEDIATE NEIGHBOUR of `sub_5ad450`, same table at
+  `+0xA20`, same 3-word stride - and the pointer walk made it strictly WORSE,
+  moving the divergence from #4 to #2. Address proximity does not imply the
+  same register-pressure shape.
+- `sub_6348c0` is a genuine nested 3x3 loop (the original has two independent
+  `dec`/`jne` pairs, so it is not a flat 9-loop the compiler split). Matching
+  that nesting closed most of the gap - 26 of 39 bytes to 36 of 39, every
+  mnemonic in order - and the residue is one `push`/`pop` pair. Pointer walks
+  were worse here, not better.
+- `?checksum@@YAEPADHE@Z`: the reverse indexed walk `seed ^= buffer[--size]`
+  moved the divergence from #0 to #3 and matched the byte LENGTH exactly. The
+  wall is that VC6 schedules `push esi` after the `size == 0` test while the
+  original saves it unconditionally before, then pushes and pops esi AGAIN
+  inside the taken branch. No source shape reached a double save.
+
+The pattern across all three: the lever moves the divergence LATER and often
+matches the length, which is real progress and still not a match. Ranking by
+`first_divergence` alone would call these wins.
+
+## A settled hypothesis is not a hypothesis
+
+`sub_532a50` carried a pre-registered diagnostic in `msvc6_byte_match.py`
+arguing its ternary should be an `if`. Half right: the ternary was implicated,
+but the `if` does not match either. What matters is the `rounded` TEMPORARY -
+either spelling of it keeps one more value live and VC6 stops spilling the
+divisor to esi. `++quotient` in place is byte-exact. The diagnostic is retired
+and the perturbation re-pinned.

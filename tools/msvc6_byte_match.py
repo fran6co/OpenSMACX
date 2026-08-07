@@ -140,18 +140,17 @@ CASES = [
                      "recovery declares the parameter uint32_t, and the "
                      "mangled name ?bitmask@@YAXHPAHPAH@Z says int"),
          shape="__cdecl; signed divide by 8, variable shift, two stores"),
+    # This case USED to carry a diagnostic proposing that the body's ternary
+    # be rewritten as an `if`, on the theory that the ternary's `jne` with
+    # swapped arms was why it did not match. The hypothesis was right about
+    # the ternary and wrong about the fix: neither spelling matches while a
+    # `rounded` TEMPORARY exists, because the extra live value stops VC6
+    # spilling the divisor to esi. Incrementing the quotient in place is
+    # byte-exact, the body now does that, and the diagnostic is retired -
+    # a hypothesis that has been settled is not a hypothesis.
     Case(address=0x00532A50,
          label="sub_532a50",
-         perturb=("quotient + 1", "quotient - 1"),
-         diagnostic=("""    const int rounded = remainder == 0 ? quotient : quotient + 1;
-    *quotient_out = rounded;
-    return rounded;""",
-                     """    int rounded = quotient;
-    if (remainder != 0) { rounded = quotient + 1; }
-    *quotient_out = rounded;
-    return rounded;""",
-                     "the ternary compiles to jne with the arms swapped; the "
-                     "original's je says the source was an if-statement"),
+         perturb=("++quotient", "--quotient"),
          shape="__stdcall; variable idiv, remainder, conditional round up"),
     Case(address=0x00559210,
          label="sub_559210",
