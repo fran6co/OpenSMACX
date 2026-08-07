@@ -15831,7 +15831,7 @@ c006070c0.cpp(93) : error C2065: '_free' : undeclared identifier
 c006070c0.cpp(93) : error C2061: syntax error : identifier 'uintptr_t'
 c006070c0.cpp(93) : error C2146: syntax error : missing '(' before identifier 'uintptr_t'
 c006070c0.cpp(99) : error C2061: syntax error : identifier 'uintptr_t'"
-0x00607210,?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z,src/basebutton.cpp:480,0,322,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607210.cpp(223) : error C2511: 'init' : overloaded member function 'int (const char *,int,int,int,int,int,class Win *,int)' not found in 'BaseButton'
+0x00607210,?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z,src/basebutton.cpp:483,0,322,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607210.cpp(223) : error C2511: 'init' : overloaded member function 'int (const char *,int,int,int,int,int,class Win *,int)' not found in 'BaseButton'
 c00607210.cpp(175) : see declaration of 'BaseButton'"
 0x00607360,?set_text_color@BaseButton@@QAEXHHHH@Z,src/basebutton.cpp:312,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607360.cpp(67) : error C2065: 'win_parent_' : undeclared identifier
 c00607360.cpp(70) : error C2065: 'recolour' : undeclared identifier
@@ -15858,8 +15858,8 @@ c006074e0.cpp(42) : see declaration of 'BaseButton'"
 0x00607550,?set_bubble_text@BaseButton@@QAEHPAD@Z,src/basebutton.cpp:156,0,103,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00607550.cpp(56) : error C2511: 'set_bubble_text' : overloaded member function 'int (const char *)' not found in 'BaseButton'
 c00607550.cpp(42) : see declaration of 'BaseButton'"
 0x006077F0,?on_key_click@BaseButton@@QAEXHH@Z,src/basebutton.cpp:421,0,5,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5,3,2,1,0,#0: original 'xor' vs rebuilt 'ret 8',
-0x00607800,?on_key_down@BaseButton@@QAEXH@Z,src/basebutton.cpp:435,0,5,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5,3,2,1,0,#0: original 'xor' vs rebuilt 'ret 4',
-0x00607810,?on_key_up@BaseButton@@QAEXH@Z,src/basebutton.cpp:449,0,5,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5,3,2,1,0,#0: original 'xor' vs rebuilt 'ret 4',
+0x00607800,?on_key_down@BaseButton@@QAEXH@Z,src/basebutton.cpp:436,0,5,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5,3,2,1,0,#0: original 'xor' vs rebuilt 'ret 4',
+0x00607810,?on_key_up@BaseButton@@QAEXH@Z,src/basebutton.cpp:451,0,5,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,5,3,2,1,0,#0: original 'xor' vs rebuilt 'ret 4',
 0x00607820,?on_mouse_leave@BaseButton@@QAEXHH@Z,,0,45,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,45,3,15,1,0,#0: original 'mov' vs rebuilt 'ret 8',
 0x00607A00,?on_right_click@BaseButton@@QAEXHH@Z,,0,20,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,20,20,,,,,
 0x00607B00,?on_dialog_focus@BaseButton@@QAEXH@Z,src/delegation_thunks.cpp:1047,1,11,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1047: no closing brace within the file

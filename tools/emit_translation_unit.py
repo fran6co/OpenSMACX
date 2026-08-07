@@ -61,6 +61,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
 
+import catalogue_corrections  # noqa: E402
 import class_layouts  # noqa: E402
 import recovery_symbols  # noqa: E402
 from generator_support import (absolute_operands, parse_body_ranges,  # noqa: E402
@@ -275,8 +276,18 @@ class Unsettled(Exception):
 # ------------------------------------------------------------------ metadata
 
 def load_functions() -> dict:
+    """The catalogue, with the names the bytes prove wrong corrected.
+
+    The image carries no symbols, so every catalogued mangled name is IDA's
+    analysis and four are contradicted by the bodies they name - see
+    `catalogue_corrections`. Correcting HERE rather than at each use is what
+    keeps the declaration, the decoded signature and the emitted symbol
+    agreeing with one another; `functions.csv` is promoted from the canonical
+    export and is not a file to hand-edit.
+    """
     with FUNCTIONS_CSV.open() as handle:
-        return {int(r["address"], 16): r for r in csv.DictReader(handle)}
+        rows = {int(r["address"], 16): r for r in csv.DictReader(handle)}
+    return catalogue_corrections.apply(rows)
 
 
 def load_derived() -> dict:

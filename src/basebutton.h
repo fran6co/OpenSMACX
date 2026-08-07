@@ -31,9 +31,13 @@ class DLLEXPORT BaseButton : GraphicWin {
   friend class Scroll;
 
  public:
-  void on_key_click(int a, int b);
-  void on_key_down(int a);
-  void on_key_up(int a);
+  // These return `int`, not `void`. Each body is `xor eax, eax; ret N`, and
+  // the sibling class BasePop declares the same three handlers `int`. The
+  // catalogued mangled names spelled `X` and are corrected in
+  // tools/catalogue_corrections.py.
+  int on_key_click(int a, int b);
+  int on_key_down(int a);
+  int on_key_up(int a);
   BaseButton() { ; }
   ~BaseButton() { ; }
 

@@ -88,5 +88,7 @@ void __fastcall auto_sound_init_redirect(AutoSound *self, void *);
 void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
                                                  unsigned int mode);
 
-DLLEXPORT void __cdecl do_sound();
+// Returns `int`, not `void`: the body is `xor eax, eax; ret`, where a void
+// function would emit `ret` alone. Corrected in tools/catalogue_corrections.py.
+DLLEXPORT int __cdecl do_sound();
 int __cdecl do_sound_redirect();

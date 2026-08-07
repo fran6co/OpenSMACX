@@ -343,5 +343,61 @@ class SplitDefinitionTest(unittest.TestCase):
         self.assertEqual(tool.split_definition(span), 0)
 
 
+class DocCommentMergeTest(unittest.TestCase):
+    """One doc comment per function, not two.
+
+    The brief shows an agent the committed body INCLUDING its header comment
+    and asks for the complete definition back, so submissions carry a comment.
+    The splice kept the existing comment as well, and 22 duplicated headers
+    landed in product source in a single day before anyone looked.
+    """
+
+    OLD = ["/*", "Purpose: The old summary.", "Original Offset: 00401000",
+           "Status: Complete", "*/"]
+
+    def test_a_submitted_comment_replaces_the_existing_one(self):
+        new = ["/*", "Purpose: A better summary.", "Original Offset: 00401000",
+               "*/", "void f() {", "}"]
+        comment, body = tool.merge_doc_comment(self.OLD, new)
+        self.assertEqual(comment, new[:4])
+        self.assertEqual(body, ["void f() {", "}"])
+
+    def test_a_bare_submission_keeps_the_existing_comment(self):
+        comment, body = tool.merge_doc_comment(self.OLD, ["void f() {", "}"])
+        self.assertEqual(comment, self.OLD)
+        self.assertEqual(body, ["void f() {", "}"])
+
+    def test_a_purpose_line_is_carried_over_rather_than_dropped(self):
+        # `Purpose:` is the one thing in the old comment not recoverable from
+        # the code, so a submission that omits it does not get to delete it.
+        new = ["/*", "Original Offset: 00401000", "*/", "void f() {", "}"]
+        comment, _ = tool.merge_doc_comment(self.OLD, new)
+        self.assertIn("Purpose: The old summary.", comment)
+        self.assertEqual(comment[0], "/*")
+
+    def test_a_submitted_purpose_wins_over_the_old_one(self):
+        new = ["/*", "Purpose: A better summary.", "*/", "void f() {", "}"]
+        comment, _ = tool.merge_doc_comment(self.OLD, new)
+        self.assertNotIn("Purpose: The old summary.", comment)
+
+
+class LeadingCommentTest(unittest.TestCase):
+    def test_it_counts_a_leading_block(self):
+        self.assertEqual(
+            tool.leading_comment(["/*", "x", "*/", "void f() {", "}"]), 3)
+
+    def test_code_first_is_not_a_leading_comment(self):
+        self.assertEqual(tool.leading_comment(["void f() {", "}"]), 0)
+
+    def test_a_comment_after_the_brace_does_not_count(self):
+        # Otherwise a body whose first statement is commented would have that
+        # comment mistaken for the header and spliced away.
+        self.assertEqual(
+            tool.leading_comment(["void f() {", "/* inner", "*/", "}"]), 0)
+
+    def test_an_unterminated_block_counts_as_none(self):
+        self.assertEqual(tool.leading_comment(["/*", "x"]), 0)
+
+
 if __name__ == "__main__":
     unittest.main()

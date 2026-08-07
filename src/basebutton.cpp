@@ -415,11 +415,12 @@ void __fastcall base_button_set_redirect(BaseButton *self, void *, int value) {
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-         arguments.
 Original Offset: 006077F0
+Return Value: zero - the base class handles no key click
 Status: Complete
 */
-void BaseButton::on_key_click(int, int) {
+int BaseButton::on_key_click(int a, int b) {
+    return 0;
 }
 
 void __fastcall base_button_on_key_click_redirect(
@@ -429,11 +430,12 @@ void __fastcall base_button_on_key_click_redirect(
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-         arguments.
 Original Offset: 00607800
+Return Value: zero - the base class handles no key down
 Status: Complete
 */
-void BaseButton::on_key_down(int) {
+int BaseButton::on_key_down(int a) {
+    return 0;
 }
 
 void __fastcall base_button_on_key_down_redirect(
@@ -443,11 +445,12 @@ void __fastcall base_button_on_key_down_redirect(
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-         arguments.
 Original Offset: 00607810
+Return Value: zero - the base class handles no key up
 Status: Complete
 */
-void BaseButton::on_key_up(int) {
+int BaseButton::on_key_up(int a) {
+    return 0;
 }
 
 void __fastcall base_button_on_key_up_redirect(
