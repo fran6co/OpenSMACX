@@ -110,7 +110,7 @@ bool verify_close() {
         ReleaseFlags = 0;
         runtime_oracle::begin_trace(
             legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-        const uint32_t legacy_result = original(legacy.object());
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
         const runtime_oracle::Trace legacy_trace =
             runtime_oracle::current_trace();
         const int legacy_release_calls = ReleaseCalls;

@@ -88,8 +88,7 @@ int forward_to_wrapped_device(Wave_Device *self, int vtable_offset, int a1,
         return no_device_result;
     }
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (*reinterpret_cast<device_arg_vfn *>(vtable + vtable_offset))(device,
-                                                                        a1);
+    return (ORIGINAL(device)->*original_slot<device_arg_vfn>(vtable + vtable_offset))(a1);
 }
 }  // namespace
 
@@ -555,9 +554,8 @@ Status: Complete
 void Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {
     if (device_14_) {
         typedef void (OriginalObject::*device_fn)(unsigned long a1, char *a2, unsigned long a3);
-        (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x1c))(
-            device_14_, a1, a2, a3);
+        (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x1c))(
+            a1, a2, a3);
     }
 }
 
@@ -575,9 +573,8 @@ Status: Complete
 int Wave_Device::start_raw_dump(char *a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(char *a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x50))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x50))(
+            a1);
     }
     return 3;
 }
@@ -596,9 +593,8 @@ Status: Complete
 int Wave_Device::set_eax(EAX_REVERB_PROPERTIES *a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(EAX_REVERB_PROPERTIES *a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x7c))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x7c))(
+            a1);
     }
     return 0x14;
 }
@@ -617,9 +613,8 @@ Status: Complete
 int Wave_Device::set_eax(unsigned long a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(unsigned long a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x78))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x78))(
+            a1);
     }
     return 0x14;
 }
@@ -638,9 +633,8 @@ Status: Complete
 int Wave_Device::set_eax_mix(float a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(float a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x80))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x80))(
+            a1);
     }
     return 0x14;
 }
@@ -659,9 +653,8 @@ Status: Complete
 int Wave_Device::set_listener_position(float a1, float a2, float a3) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(float a1, float a2, float a3);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x88))(
-            device_14_, a1, a2, a3);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x88))(
+            a1, a2, a3);
     }
     return 0x14;
 }
@@ -680,9 +673,8 @@ Status: Complete
 int Wave_Device::get_listener_position(float *a1, float *a2, float *a3) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(float *a1, float *a2, float *a3);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x8c))(
-            device_14_, a1, a2, a3);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x8c))(
+            a1, a2, a3);
     }
     return 0x14;
 }
@@ -701,9 +693,8 @@ Status: Complete
 int Wave_Device::set_listener_xpos(float a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(float a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x90))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x90))(
+            a1);
     }
     return 0x14;
 }
@@ -722,9 +713,8 @@ Status: Complete
 int Wave_Device::get_listener_xpos(float *a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(float *a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x94))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x94))(
+            a1);
     }
     return 0x14;
 }
@@ -743,9 +733,8 @@ Status: Complete
 int Wave_Device::set_listener_ypos(float a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(float a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x98))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x98))(
+            a1);
     }
     return 0x14;
 }
@@ -764,9 +753,8 @@ Status: Complete
 int Wave_Device::get_listener_ypos(float *a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(float *a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x9c))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x9c))(
+            a1);
     }
     return 0x14;
 }
@@ -785,9 +773,8 @@ Status: Complete
 int Wave_Device::set_listener_zpos(float a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(float a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0xa0))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0xa0))(
+            a1);
     }
     return 0x14;
 }
@@ -806,9 +793,8 @@ Status: Complete
 int Wave_Device::get_listener_zpos(float *a1) {
     if (device_14_) {
         typedef int (OriginalObject::*device_fn)(float *a1);
-        return (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0xa4))(
-            device_14_, a1);
+        return (ORIGINAL(device_14_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0xa4))(
+            a1);
     }
     return 0x14;
 }
@@ -858,7 +844,8 @@ void walk_group_waves(WaveControlGroup &group, void (*visit)(Wave *wave)) {
 void replay_wave_volume(Wave *wave) {
     uint32_t vol;
     std::memcpy(&vol, reinterpret_cast<uint8_t *>(wave) + 4, 4);
-    (ORIGINAL(wave)->*original_method<void (OriginalObject::*)(uint32_t) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x40)))(vol);
+    (ORIGINAL(wave)->*original_method<void (OriginalObject::*)(uint32_t) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x40)))(
+        vol);
 }
 
 void resume_wave(Wave *wave) {
@@ -901,7 +888,8 @@ Wave *wave_chain_prev(Wave *wave) {
 }
 
 void load_wave_by_name(Wave *wave, char *fname) {
-    (ORIGINAL(wave)->*original_method<int (OriginalObject::*)(char *) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x10)))(fname);
+    (ORIGINAL(wave)->*original_method<int (OriginalObject::*)(char *) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(wave) + 0x10)))(
+        fname);
 }
 
 }  // namespace
@@ -1019,7 +1007,8 @@ int Wave_Device::select(unsigned long a1) {
             sound = wave_chain_next(sound);
         }
     }
-    (ORIGINAL(device_14_)->*original_method<int (OriginalObject::*)(unsigned long) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(device_14_) + 0x18)))(a1);
+    (ORIGINAL(device_14_)->*original_method<int (OriginalObject::*)(unsigned long) >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(device_14_) + 0x18)))(
+        a1);
     for (Wave *replay = resume_tail; replay;) {
         char *const fname = resume_links(replay)->fname;
         Wave *const prev = wave_chain_prev(replay);
@@ -1101,14 +1090,14 @@ Status: Complete
 */
 int Wave_Device::init(void *a1, unsigned long a2) {
     typedef int (OriginalObject::*own_mode_fn)(unsigned long mode);
-    const int staged = (*reinterpret_cast<own_mode_fn *>(
-        *reinterpret_cast<uint8_t **>(this) + 0))(this, a2);
+    const int staged = (ORIGINAL(this)->*original_slot<own_mode_fn>(*reinterpret_cast<uint8_t **>(this) + 0))(
+        a2);
     if (staged) {
         return staged;
     }
     typedef int (OriginalObject::*device_init_fn)(void *a1, unsigned long a2);
-    const int result = (*reinterpret_cast<device_init_fn *>(
-        *reinterpret_cast<uint8_t **>(device_14_) + 0xC))(device_14_, a1, a2);
+    const int result = (ORIGINAL(device_14_)->*original_slot<device_init_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0xC))(
+        a1, a2);
     if (result) {
         (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 4)))();
         return result;
@@ -1136,8 +1125,7 @@ void Wave_Device::release() {
     }
     {
         typedef void (OriginalObject::*device_down_fn)();
-        (*reinterpret_cast<device_down_fn *>(
-            *reinterpret_cast<uint8_t **>(device_14_) + 0x10))(device_14_);
+        (ORIGINAL(device_14_)->*original_slot<device_down_fn>(*reinterpret_cast<uint8_t **>(device_14_) + 0x10))();
     }
     if (device_14_ && *WaveDeviceDestroySlot) {
         (*WaveDeviceDestroySlot)();
@@ -1255,8 +1243,7 @@ Wave_Device::~Wave_Device() {
         void *const device = self->device_14_;
         if (device) {
             typedef void (OriginalObject::*device_down_fn)();
-            (*reinterpret_cast<device_down_fn *>(
-                *reinterpret_cast<uint8_t **>(device) + 0x10))(device);
+            (ORIGINAL(device)->*original_slot<device_down_fn>(*reinterpret_cast<uint8_t **>(device) + 0x10))();
         }
     }
 }

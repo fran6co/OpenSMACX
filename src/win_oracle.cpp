@@ -100,7 +100,7 @@ bool verify_is_visible() {
         uintptr_t vtable[1];
 
         build_chain(legacy_nodes, legacy_snapshots, test.flags, test.depth, vtable);
-        const uint32_t legacy_result = original(legacy_nodes[0].object());
+        const uint32_t legacy_result = (ORIGINAL(legacy_nodes[0].object())->*original)();
 
         build_chain(source_nodes, source_snapshots, test.flags, test.depth, vtable);
         const uint32_t source_result = static_cast<uint32_t>(
@@ -227,7 +227,7 @@ bool verify_client_to_screen() {
         int legacy_x = coordinate_from_bits(test.start_x);
         int legacy_y = coordinate_from_bits(test.start_y);
         int *legacy_y_output = test.alias_outputs ? &legacy_x : &legacy_y;
-        original(legacy_nodes[0].object(), &legacy_x, legacy_y_output);
+        (ORIGINAL(legacy_nodes[0].object())->*original)(&legacy_x, legacy_y_output);
 
         build_coordinate_chain(
             source_nodes, source_snapshots, test.nodes, test.depth, vtable);

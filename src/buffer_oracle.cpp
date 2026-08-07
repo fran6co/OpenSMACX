@@ -139,7 +139,7 @@ bool verify_get_data() {
         ProbeLockData = test.data;
 
         Probe = SurfaceProbe();
-        const uint32_t legacy_result = original(legacy.object());
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
         const SurfaceProbe legacy_probe = Probe;
 
         Probe = SurfaceProbe();
@@ -198,7 +198,7 @@ bool verify_free_data() {
         }
 
         Probe = SurfaceProbe();
-        original(legacy.object(), test.count);
+        (ORIGINAL(legacy.object())->*original)(test.count);
         const SurfaceProbe legacy_probe = Probe;
 
         Probe = SurfaceProbe();
@@ -246,7 +246,7 @@ bool verify_text_line_height() {
             write_field(legacy, 0x52C, preset_font ? font : 0U);
             write_field(source, 0x52C, preset_font ? font : 0U);
 
-            const uint32_t legacy_result = original(legacy.object());
+            const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
             const uint32_t source_result = static_cast<uint32_t>(
                 source.object()->text_line_height());
             if (legacy_result != source_result
@@ -318,7 +318,7 @@ bool verify_close_reset() {
                 }
             }
             *BufferDirectDrawActive = direct_draw;
-            original(legacy.object());
+            (ORIGINAL(legacy.object())->*original)();
             source.object()->close();
             if (memcmp(legacy.storage, source.storage,
                        sizeof(legacy.storage)) != 0) {
@@ -373,7 +373,7 @@ bool verify_destroy() {
             }
         }
         *BufferDirectDrawActive = direct_draw;
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         source.object()->destroy();
         if (memcmp(legacy.storage, source.storage,
                    sizeof(legacy.storage)) != 0) {
@@ -450,7 +450,7 @@ bool run_buffer_release_suite() {
             }
         }
         *BufferDirectDrawActive = 0;
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         source.object()->close();
         if (memcmp(legacy.storage, source.storage,
                    sizeof(legacy.storage)) != 0) {
