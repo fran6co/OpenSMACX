@@ -149,6 +149,68 @@ class SelfContainmentTest(unittest.TestCase):
         self.assertLess(len(agent_brief.brief(0x401000)), 6000)
 
 
+class FreshRecoveryTest(unittest.TestCase):
+    """278 of the remaining leaves under 64 bytes have NO committed body.
+
+    The census still gives those rows a tier, because it scores every
+    catalogued function and an unrecovered one compiles to an empty scaffold.
+    Left alone the brief handed an agent a blank body, the `committed_body`
+    error string as a source location, and a paragraph of register-allocation
+    advice about a stub that does not exist.
+    """
+
+    def setUp(self):
+        self.committed = agent_brief.verifier.committed_body
+        self.functions = agent_brief.emit.load_functions
+        self.row = agent_brief.ledger_row
+        self.disasm = agent_brief.disassembly
+        self.section = agent_brief.prompt_section
+        agent_brief.verifier.committed_body = lambda a: (
+            None, "0x00401000 has no source_locations")
+        agent_brief.emit.load_functions = lambda: {0x401000: {"name": "f"}}
+        agent_brief.ledger_row = lambda a: {
+            "size": "26", "tier": "MISMATCH",
+            "note": "#0: original 'push' vs rebuilt 'xor'"}
+        agent_brief.disassembly = lambda a: "```asm\n0x00401000 ret\n```"
+        agent_brief.prompt_section = lambda a, h: (
+            "## Contract\n\nint C::m(int a) {" if h == "Contract"
+            else "## Ghidra\n\nvoid FUN_401000(void) {}")
+
+    def tearDown(self):
+        agent_brief.verifier.committed_body = self.committed
+        agent_brief.emit.load_functions = self.functions
+        agent_brief.ledger_row = self.row
+        agent_brief.disassembly = self.disasm
+        agent_brief.prompt_section = self.section
+
+    def test_it_says_nothing_is_recovered_rather_than_showing_a_blank_body(self):
+        text = agent_brief.brief(0x401000)
+        self.assertIn("nothing recovered yet", text)
+        self.assertNotIn("The body as it stands", text)
+
+    def test_it_does_not_leak_the_lookup_error_as_a_source_location(self):
+        self.assertNotIn("has no source_locations",
+                         agent_brief.brief(0x401000))
+
+    def test_the_empty_scaffold_divergence_is_disowned_not_explained(self):
+        # `#0 push vs xor` against an unrecovered row is the shape of a
+        # function that does not exist. Explaining it sends the agent after
+        # a register-allocation problem it does not have.
+        text = agent_brief.brief(0x401000)
+        self.assertIn("IGNORE IT", text)
+        self.assertNotIn("REGISTER ALLOCATION", text)
+
+    def test_it_carries_the_definition_head_and_the_decompiler_guess(self):
+        text = agent_brief.brief(0x401000)
+        self.assertIn("int C::m(int a) {", text)
+        self.assertIn("FUN_401000", text)
+
+    def test_it_says_what_to_run_when_there_is_no_prompt_either(self):
+        agent_brief.prompt_section = lambda a, h: ""
+        text = agent_brief.brief(0x401000)
+        self.assertIn("emit_mizuchi_prompts.py", text)
+
+
 class RealBriefSizeTest(unittest.TestCase):
     """The size guard above measures a one-line mock body, so it would not
     notice the prose growing until a real brief was twice its budget. This
