@@ -121,6 +121,17 @@ CORRECTIONS = {
         "void function reproduces an unread clear: a `volatile` local spills "
         "to the stack instead of the register, and a plain one is dead-store "
         "eliminated. It is a `return 0`"),
+    # The clearest of the family, because BOTH paths are visible: the taken
+    # one returns whatever the vtable call returned and the other returns a
+    # literal zero. A void function would do neither.
+    0x00613220: (
+        "?on_scroll_create@Dialogs@@QAEXXZ",
+        "?on_scroll_create@Dialogs@@QAEHXZ",
+        "ends `call dword ptr [eax+0x20]; ret` on the success path - no eax "
+        "handling at all, so the callee's return value IS this function's - "
+        "and `xor eax, eax; ret` on the failure path, which is `return 0`. It "
+        "also explains why the original does not tail-jmp the dispatch: VC6 "
+        "folds that only when the value is discarded"),
     0x004C8F40: (
         "?unload@VoiceTx@@QAEXXZ",
         "?unload@VoiceTx@@QAEHXZ",
