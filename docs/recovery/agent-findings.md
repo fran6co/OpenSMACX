@@ -295,3 +295,29 @@ but the `if` does not match either. What matters is the `rounded` TEMPORARY -
 either spelling of it keeps one more value live and VC6 stops spilling the
 divisor to esi. `++quotient` in place is byte-exact. The diagnostic is retired
 and the perturbation re-pinned.
+
+## The four return-type defects need a CATALOGUE change, and here is exactly where
+
+`BaseButton::on_key_click/on_key_down/on_key_up` (0x006077F0, 0x00607800,
+0x00607810) and `?do_sound@@YAXXZ` (0x005FD2B0) all emit `xor eax, eax; ret N`
+- they return a value - while the catalogued mangled name spells `X`, void.
+The sibling class `BasePop` declares the same handler `int on_key_click(int,
+int)`, so the `void` is an analysis error rather than a real difference.
+
+`derived-prototypes.csv` is NOT the way in. It carries a `prototype` and a
+`convention` per address, but `emit_translation_unit.py:716` then does
+
+    decoded = decode_signature(self.mangled)
+    if decoded is not None and len(decoded[1]) == len(self.params):
+        self.returns, self.params = decoded[0], list(decoded[1])
+
+and that is deliberate: the derived prototypes are written in IDA's alphabet,
+which collapses `char`/`signed char` and `long`/`int`, so the mangled name has
+to win or 108 rows emit a symbol no target object holds. The consequence here
+is that the RETURN TYPE cannot be overridden per-address at all.
+
+So the fix is to correct `name` in `functions.csv` to `...@@QAEHHH@Z`, and
+that file is promoted from the canonical IDB export rather than hand-edited.
+Total prize: about 18 bytes across four 3-to-5-byte functions. Left alone
+deliberately - it is a change to how the catalogue is derived, and the
+unrecovered pool is worth orders of magnitude more.
