@@ -207,9 +207,28 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
     # is a real compile under wine - the full pass is over an hour. After a
     # batch of writebacks the only rows that CHANGED are the stored ones, and
     # waiting an hour to see them is how a ratchet stops being checked.
+    # A row that a file in `src/` OWNS is the census's to score, and a build
+    # artefact must never speak for it. `build/byte-match/<addr>/unit.cpp` is
+    # whatever was written the last time that address was worked on, read back
+    # VERBATIM rather than regenerated - so a stale unit can compile and score
+    # BYTE_EXACT while the committed body it stands for no longer builds.
+    #
+    # Not hypothetical. `StringStruct::close`, `remove_all` and the two
+    # ALPHAMENU_WAVE thunks were NO_COMPILE in a census; a later collect found
+    # day-old units for them and wrote BYTE_EXACT back over the top, taking
+    # the ledger from 867 to 884 and carrying four broken rows into the
+    # ratchet floor. The next census failed, which is the only reason it
+    # surfaced.
+    #
+    # The store is NOT skipped for the same reason: a body under
+    # `src/recovered/` is the only committed copy of that recovery, so if this
+    # does not score it, nothing does.
+    owned = {address for address, row in functions.items()
+             if (row.get("source_locations") or "").strip()}
     units = [] if stored_only else [
         (int(unit.parent.name, 16), unit.read_text, "unit")
-        for unit in sorted(WORK_ROOT.glob("*/unit.cpp"))]
+        for unit in sorted(WORK_ROOT.glob("*/unit.cpp"))
+        if int(unit.parent.name, 16) not in owned]
     stored = [(int(body.stem, 16), body, "stored")
               for body in sorted(writeback.MATCHED_DIR.glob("*.cpp"))]
     if not units and not stored:
@@ -335,8 +354,8 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # `--collect` skips settled rows by design, since re-verifying finished work is
 # most of a run. That is the right default and it has this cost, so the number
 # above is only as true as the last full census.
-BASELINE_MATCHED_FUNCTIONS = 884
-BASELINE_MATCHED_BYTES = 18856
+BASELINE_MATCHED_FUNCTIONS = 880
+BASELINE_MATCHED_BYTES = 18556
 
 
 def summarise(ledger: dict) -> tuple:
