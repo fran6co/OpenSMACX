@@ -1138,6 +1138,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(build-regression-tests
                                    test_build_regressions.py)
 
+    opensmacx_add_python_tool_test(vtable-slot-tests
+                                   test_vtable_slots.py)
+
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
 

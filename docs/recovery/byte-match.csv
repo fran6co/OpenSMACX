@@ -1,10 +1,6 @@
 address,name,source_location,generated,size,span_classes,tier,original_bytes,rebuilt_bytes,original_mnemonics,rebuilt_mnemonics,first_divergence,note,refusal_reason
 0x00401000,??0StringStruct@@QAE@H@Z,,0,88,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,88,88,,,,,
-0x00401060,?close@StringStruct@@QAEXXZ,src/stringstruct.cpp:186,0,153,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00401060.cpp(82) : error C2039: 'close_with_tables' : is not a member of 'StringStruct'
-c00401060.cpp(64) : see declaration of 'StringStruct'
-c00401060.cpp(83) : error C2673: 'close_with_tables' : global functions do not have 'this' pointers
-c00401060.cpp(98) : error C2065: 'remove_all' : undeclared identifier
-c00401060.cpp(99) : error C2065: 'current_position_' : undeclared identifier"
+0x00401060,?close@StringStruct@@QAEXXZ,,0,153,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,153,153,,,,,the src/ body calls a name the scaffolding cannot declare; see byte_match_fanout floor note
 0x00401100,?add@StringStruct@@QAEHH@Z,,0,1043,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1043,5,328,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00401520,sub_401520,,0,62,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,62,62,,,,,
 0x00401560,?seek_id@StringStruct@@QAEHH@Z,src/stringstruct.cpp:67,0,78,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,78,78,,,,,
@@ -49,14 +45,8 @@ c00402970.cpp(96) : error C2065: 'current_position_' : undeclared identifier"
 0x00402CC0,sub_402cc0,,0,75,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,75,5,27,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00402D80,sub_402d80,,0,66,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,66,5,23,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00402EE0,sub_402ee0,,0,40,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,40,40,,,,,
-0x00402F10,??__Eg_ALPHAMENU_WAVE@@YAXXZ,src/init_thunks.cpp:216,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00402f10.cpp(92) : error C2065: 'g_ALPHAMENU_WAVE' : undeclared identifier
-c00402f10.cpp(92) : error C2065: 'WaveInitCtor' : undeclared identifier
-c00402f10.cpp(92) : error C2297: '->*' : illegal, right operand has type 'int'
-c00402f10.cpp(93) : error C2065: 'GameAtexit' : undeclared identifier
-c00402f10.cpp(93) : error C2061: syntax error : identifier 'func_atexit_callback'"
-0x00402F30,??__Fg_ALPHAMENU_WAVE@@YAXXZ,src/atexit_thunks.cpp:425,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00402f30.cpp(64) : error C2065: 'g_ALPHAMENU_WAVE' : undeclared identifier
-c00402f30.cpp(64) : error C2065: 'WaveOriginalDestructor' : undeclared identifier
-c00402f30.cpp(64) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x00402F10,??__Eg_ALPHAMENU_WAVE@@YAXXZ,,0,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,22,22,,,,,the src/ body calls a name the scaffolding cannot declare; see byte_match_fanout floor note
+0x00402F30,??__Fg_ALPHAMENU_WAVE@@YAXXZ,,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,10,10,,,,,the src/ body calls a name the scaffolding cannot declare; see byte_match_fanout floor note
 0x00403610,?requested_height@AlphaMenu@@QAEHXZ,src/alphamenu.cpp:23,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00403B70,?backfill_func@AlphaMenu@@QAAHPAUGraphicWin@@@Z,,0,36,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v00403b70_0.cpp
 v00403b70_0.cpp(47) : error C2143: syntax error : missing ';' before 'this'

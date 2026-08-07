@@ -487,29 +487,58 @@ def vtable_slots(pe, spans, cap: int = VTABLE_SLOT_CAP):
     827 of the remaining targets contain such a call and they hold **33% of the
     remaining mass** (720,586 bytes), so this is not a corner case.
 
-    A cap is needed because not every `call [reg+disp]` is a vtable dispatch -
-    a call through a function-pointer FIELD looks identical. Measured over the
-    806 readable ones: the median highest slot is 37, p99 is 93, and the single
-    largest is 6,286, which is a 25 KB "vtable" and certainly a field. A cap of
-    128 covers 804 of 806, and the two it excludes are reported rather than
-    silently emitted as an enormous class.
+    A call through a function-pointer FIELD looks identical, and what tells
+    them apart is where the base register came from. A vtable pointer is read
+    by dereferencing an OBJECT; a function pointer held in a local or an
+    argument is read off the stack frame:
+
+        mov eax, [ecx]          mov eax, [esp+0xc]     <- off the stack
+        call [eax + 0xf8]       call [eax + 0x24]
+        a vtable slot           a function-pointer field at +0x24
+
+    Both were previously read as slots. 0x00644910 is the measured case: the
+    emitter produced a ten-slot shim for a body with no vtable at all, and the
+    agent had to notice and ignore it.
+
+    "Dereferenced at offset zero" was tried first as the test and is WRONG: a
+    virtual base reads its vtable through a computed address,
+    `mov eax, [edx + ecx - 0x1c]`, and 0x0060FB90 stopped being detected at
+    all. Excluding esp/ebp-relative loads keeps that case and still rejects
+    the field.
+
+    The cap stays as a backstop. Measured over the 806 readable bodies before
+    any of this: median highest slot 37, p99 93, largest 6,286 - a 25 KB
+    "vtable" and certainly a field.
     """
     from capstone import CS_ARCH_X86, CS_MODE_32, Cs
-    from capstone.x86 import X86_OP_MEM
+    from capstone.x86 import (X86_OP_MEM, X86_OP_REG, X86_REG_ESP,
+                              X86_REG_EBP)
     engine = Cs(CS_ARCH_X86, CS_MODE_32)
     engine.detail = True
+    FRAME = (X86_REG_ESP, X86_REG_EBP)
     found = set()
     for low, high in spans:
         data = read_bytes(pe, low, high - low)
         if not data:
             continue
+        # Registers holding something read out of an OBJECT rather than off
+        # the stack frame - which is what a vtable pointer load leaves behind.
+        object_regs = set()
         for one in engine.disasm(data, low):
-            if one.mnemonic != "call":
-                continue
-            for operand in one.operands:
-                if (operand.type == X86_OP_MEM and operand.mem.base != 0
-                        and operand.mem.disp >= 0):
-                    found.add(operand.mem.disp // 4)
+            if one.mnemonic == "mov" and len(one.operands) == 2:
+                destination, source = one.operands
+                if destination.type == X86_OP_REG:
+                    if (source.type == X86_OP_MEM and source.mem.base != 0
+                            and source.mem.base not in FRAME):
+                        object_regs.add(destination.reg)
+                    else:
+                        object_regs.discard(destination.reg)
+            elif one.mnemonic == "call":
+                for operand in one.operands:
+                    if (operand.type == X86_OP_MEM and operand.mem.base != 0
+                            and operand.mem.disp >= 0
+                            and operand.mem.base in object_regs):
+                        found.add(operand.mem.disp // 4)
     return sorted(slot for slot in found if slot <= cap), sorted(
         slot for slot in found if slot > cap)
 
