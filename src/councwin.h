@@ -32,6 +32,7 @@
   */
 class DLLEXPORT CouncWin : GraphicWin {
  public:
+  void on_mouse_leave(int a1, int a2);
   CouncWin() { ; }
   ~CouncWin() { ; }
   void on_group_clicked(int a1, int a2);

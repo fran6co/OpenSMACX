@@ -33,6 +33,7 @@
   */
 class DLLEXPORT TutWin {
  public:
+  void on_move(int a1, int a2);
   TutWin() { ; }
   ~TutWin() { ; }
   void UNK1();

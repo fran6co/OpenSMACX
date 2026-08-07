@@ -27,6 +27,7 @@
   */
 class DLLEXPORT DipEdit {
  public:
+  void on_selected(int a1);
   DipEdit() { ; }
   ~DipEdit() { ; }
   void on_left_click(int, int);

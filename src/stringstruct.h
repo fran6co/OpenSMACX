@@ -34,6 +34,7 @@ static_assert(offsetof(StringStructEntry, payload) == 0x8,
 
 class DLLEXPORT StringStruct {
  public:
+  int seek_pos(int a1);
   int current_id();
   int current_entry();
   int next_entry();

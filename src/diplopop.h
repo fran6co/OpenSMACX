@@ -32,6 +32,7 @@
   */
 class DLLEXPORT DiploPop : GraphicWin {
  public:
+  void hide();
   DiploPop() { ; }
   ~DiploPop() { ; }
   void on_iface_left_click(int a1, int a2);

@@ -31,6 +31,7 @@
   */
 class DLLEXPORT MultiDebug : GraphicWin {
  public:
+  void __cdecl timer_callback_daemon(int a2);
   MultiDebug() { ; }
   ~MultiDebug() { ; }
   void close();

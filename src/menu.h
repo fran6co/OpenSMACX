@@ -49,6 +49,7 @@ typedef void (OriginalObject::*func_menu_repaint)();
 
 class DLLEXPORT Menu : GraphicWin {
  public:
+  void on_mouse_move(int a1, int a2);
   int requested_height();
   int UNK2(int a);
   int UNK6(int menu_id);

@@ -29,6 +29,9 @@
   */
 class DLLEXPORT FX {
  public:
+  void fade(int a1);
+  void release(int a1);
+  void stop(int a1);
   FX();
   ~FX();
 
