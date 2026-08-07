@@ -108,19 +108,32 @@ void __fastcall waveinitctor_default(void *object) {
 
 }  // namespace
 
-func_thiscall_teardown AmbienceInitCtor = &ambienceinitctor_default;
-func_thiscall_teardown BufferInitCtor = &bufferinitctor_default;
-func_thiscall_teardown ButtonGroupInitCtor = &buttongroupinitctor_default;
-func_thiscall_teardown CaviarDataInitCtor = &caviardatainitctor_default;
-func_thiscall_teardown CaviarInitCtor = &caviarinitctor_default;
-func_thiscall_teardown FXInitCtor = &fxinitctor_default;
-func_thiscall_teardown FontInitCtor = &fontinitctor_default;
-func_thiscall_teardown SpriteInitCtor = &spriteinitctor_default;
-func_thiscall_teardown StringsInitCtor = &stringsinitctor_default;
-func_thiscall_teardown TextureInitCtor = &textureinitctor_default;
-func_thiscall_teardown TimeInitCtor = &timeinitctor_default;
-func_thiscall_teardown WaveDeviceInitCtor = &wavedeviceinitctor_default;
-func_thiscall_teardown WaveInitCtor = &waveinitctor_default;
+func_thiscall_teardown AmbienceInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&ambienceinitctor_default));
+func_thiscall_teardown BufferInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&bufferinitctor_default));
+func_thiscall_teardown ButtonGroupInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&buttongroupinitctor_default));
+func_thiscall_teardown CaviarDataInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&caviardatainitctor_default));
+func_thiscall_teardown CaviarInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&caviarinitctor_default));
+func_thiscall_teardown FXInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&fxinitctor_default));
+func_thiscall_teardown FontInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&fontinitctor_default));
+func_thiscall_teardown SpriteInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&spriteinitctor_default));
+func_thiscall_teardown StringsInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&stringsinitctor_default));
+func_thiscall_teardown TextureInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&textureinitctor_default));
+func_thiscall_teardown TimeInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&timeinitctor_default));
+func_thiscall_teardown WaveDeviceInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&wavedeviceinitctor_default));
+func_thiscall_teardown WaveInitCtor = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&waveinitctor_default));
 
 // The opaque-storage constructors, each defaulting to
 // the original the thunk calls; the hybrid redirects

@@ -79,4 +79,21 @@ Method original_method(unsigned long address) {
   return cast.method;
 }
 
+/*
+ * The same union read the other way. `reinterpret_cast<unsigned long>` on a
+ * pointer-to-member is `error C2440` on VC6 - it is not a pointer as far as
+ * the language is concerned, whatever the representation - so recovering the
+ * bare code address needs the same pinned punning that creating one does.
+ */
+template <class Method>
+unsigned long original_address(Method method) {
+  union {
+    unsigned long address;
+    Method method;
+  } cast;
+  cast.address = 0;
+  cast.method = method;
+  return cast.address;
+}
+
 #define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))

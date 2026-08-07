@@ -31,7 +31,7 @@ const runtime_oracle::ClassSpec SpriteSpec = {
 typedef uint32_t (OriginalObject::*OriginalNoArg)();
 
 int FreeCalls = 0;
-void *FreeTargets[4] = {};
+void *FreeTargets[4] = {0};
 
 void *recording_free(void *block) {
     // Fixtures never own real allocations, so releases are recorded rather
@@ -50,7 +50,11 @@ bool verify_construct() {
     OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005E37E0U);
     const int saved_total = *SpriteMemoryUsed;
     bool passed = true;
-    for (int32_t starting_total : starting_totals) {
+    for (size_t starting_total_index = 0;
+         starting_total_index
+             < sizeof(starting_totals) / sizeof(starting_totals[0]);
+         ++starting_total_index) {
+        int32_t starting_total = starting_totals[starting_total_index];
         SpriteFixture legacy;
         SpriteFixture source;
         uintptr_t vtable[1];
@@ -113,7 +117,9 @@ bool verify_close() {
     const int saved_total = *SpriteMemoryUsed;
     func_sprite_free *const saved_free = SpriteFree;
     bool passed = true;
-    for (const CloseCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const CloseCase &test = cases[test_index];
         SpriteFixture legacy;
         SpriteFixture source;
         uintptr_t vtable[1];
@@ -192,7 +198,9 @@ bool run_sprite_release_suite() {
         {0, 0, true, true},
         {0xFFFFFFFFU, 2, true, true},
     };
-    for (const ReleaseCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const ReleaseCase &test = cases[test_index];
         SpriteFixture legacy;
         SpriteFixture source;
         uintptr_t vtable[1];

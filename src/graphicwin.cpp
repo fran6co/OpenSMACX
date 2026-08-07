@@ -37,10 +37,12 @@ void __fastcall buffer_subobject_close(void *self) {
     reinterpret_cast<Buffer *>(self)->close();
 }
 
-func_subobject_destructor BufferSubobjectDestructor = &buffer_subobject_destructor;
+func_subobject_destructor BufferSubobjectDestructor = original_method<func_subobject_destructor>(
+    reinterpret_cast<unsigned long>(&buffer_subobject_destructor));
 func_subobject_destructor WinOriginalDestructor =
     original_method<func_subobject_destructor>(0x005EBC90);
-func_subobject_close BufferSubobjectClose = &buffer_subobject_close;
+func_subobject_close BufferSubobjectClose = original_method<func_subobject_close>(
+    reinterpret_cast<unsigned long>(&buffer_subobject_close));
 func_subobject_close WinOriginalClose = original_method<func_subobject_close>(0x005EB640);
 uint32_t *GraphicWinFieldA0CDefault = (uint32_t *)0x009B33C0;
 
@@ -87,7 +89,7 @@ struct DestructorProbe {
     int order;
 };
 
-DestructorProbe Probe = {};
+DestructorProbe Probe = {0};
 
 }  // namespace
 
@@ -277,9 +279,9 @@ void GraphicWin::fill(int color) {
         uintptr_t *const parent_vtable =
             *reinterpret_cast<uintptr_t **>(parent);
         func_graphic_win_parent_query const query =
-            reinterpret_cast<func_graphic_win_parent_query *>(
+            original_method<func_graphic_win_parent_query>(
                 parent_vtable[0xF4 / 4]);
-        transparent = query(parent) != nullptr;
+        transparent = (ORIGINAL(parent)->*query)() != nullptr;
     }
     if (!transparent) {
         (ORIGINAL(surface)->*BufferOriginalFillColor)(color);
@@ -346,8 +348,8 @@ void GraphicWin::redraw() {
     }
     uintptr_t *const vtable = *reinterpret_cast<uintptr_t **>(object);
     func_graphic_win_paint const paint =
-        reinterpret_cast<func_graphic_win_paint *>(vtable[0x30 / 4]);
-    paint(this);
+        original_method<func_graphic_win_paint>(vtable[0x30 / 4]);
+    (ORIGINAL(this)->*paint)();
     (ORIGINAL(this)->*GraphicWinOverlayNonclient)(nullptr);
 
     // Re-read, do NOT reuse the latched value: the original reloads at

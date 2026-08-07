@@ -39,7 +39,7 @@ Original Offset: 00634430
 Status: Complete
 */
 void Vector::__mi(Vector &output, Vector &right) {
-    uint32_t results[3] = {};
+    uint32_t results[3] = {0};
     for (size_t index = 0; index < 3; ++index) {
         float left_value;
         float right_value;

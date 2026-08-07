@@ -86,7 +86,7 @@ void prepare_fixture(GraphicWinFixture &fixture, uintptr_t *win_vtable,
 }
 
 bool verify_close() {
-    uintptr_t win_vtable[3] = {};
+    uintptr_t win_vtable[3] = {0};
     win_vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
     uintptr_t release_vtable[] = {
         reinterpret_cast<uintptr_t>(&recording_release),

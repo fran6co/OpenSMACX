@@ -48,7 +48,7 @@ Text::Text(size_t size)
     }
 }
 
-Text::~Text() noexcept(false) {
+Text::~Text() OPENSMACX_NOEXCEPT_FALSE {
     shutdown();
 }
 

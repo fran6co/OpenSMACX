@@ -103,7 +103,7 @@ struct ScrollCloseButtonTrace {
 };
 
 Scroll *ScrollCloseTraceBase = nullptr;
-ScrollCloseButtonTrace ScrollCloseButtons = {};
+ScrollCloseButtonTrace ScrollCloseButtons = {0};
 
 uint32_t __fastcall trace_scroll_button_close(void *self) {
     const uint32_t call = ScrollCloseButtons.calls++;
@@ -176,9 +176,9 @@ bool verify_close() {
     }
     dynamic[14] = 0xDEADC0DEU;
 
-    uintptr_t win_vtable[3] = {};
-    uintptr_t left_vtable[0x16C / sizeof(uintptr_t)] = {};
-    uintptr_t right_vtable[0x16C / sizeof(uintptr_t)] = {};
+    uintptr_t win_vtable[3] = {0};
+    uintptr_t left_vtable[0x16C / sizeof(uintptr_t)] = {0};
+    uintptr_t right_vtable[0x16C / sizeof(uintptr_t)] = {0};
     win_vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
     left_vtable[0x168 / sizeof(uintptr_t)] =
         reinterpret_cast<uintptr_t>(&trace_scroll_button_close);
@@ -285,7 +285,9 @@ bool verify_init_wrappers() {
     };
     for (size_t kind = 0; kind < ARRAYSIZE(addresses) && passed; ++kind) {
         OriginalAxisInit original = reinterpret_cast<OriginalAxisInit>(addresses[kind]);
-        for (const InvalidAxisCase &test : cases) {
+        for (size_t test_index = 0;
+             test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+            const InvalidAxisCase &test = cases[test_index];
             ScrollFixture legacy;
             ScrollFixture source;
             uintptr_t vtable[VtableEntries];
@@ -350,7 +352,9 @@ bool verify_range() {
     };
     const size_t snapshots[] = {0xA20, 0xA24, 0xA28, 0xA2C};
     OriginalTwoArgs original = reinterpret_cast<OriginalTwoArgs>(0x006059B0U);
-    for (const auto &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const uint32_t (&test)[2] = cases[test_index];
         ScrollFixture legacy;
         ScrollFixture source;
         uintptr_t vtable[VtableEntries];
@@ -383,7 +387,9 @@ bool verify_styles() {
     const uint32_t values[] = {0U, 0x80000000U, 0xFFFFFFFFU};
     for (size_t style = 0; style < ARRAYSIZE(addresses); ++style) {
         OriginalOneArg original = reinterpret_cast<OriginalOneArg>(addresses[style]);
-        for (uint32_t value : values) {
+        for (size_t value_index = 0;
+             value_index < sizeof(values) / sizeof(values[0]); ++value_index) {
+            uint32_t value = values[value_index];
             ScrollFixture legacy;
             ScrollFixture source;
             uintptr_t vtable[VtableEntries];
@@ -426,8 +432,13 @@ bool verify_thumb_resetters() {
     const uint32_t thicknesses[] = {0U, 1U, 0x80000000U, 0xFFFFFFFFU};
     OriginalOneArg original_bar = reinterpret_cast<OriginalOneArg>(0x00605B80U);
     OriginalNoArg original_thumb = reinterpret_cast<OriginalNoArg>(0x00606EA0U);
-    for (uint32_t color : colors) {
-        for (uint32_t thickness : thicknesses) {
+    for (size_t color_index = 0;
+         color_index < sizeof(colors) / sizeof(colors[0]); ++color_index) {
+        uint32_t color = colors[color_index];
+        for (size_t thickness_index = 0;
+             thickness_index < sizeof(thicknesses) / sizeof(thicknesses[0]);
+             ++thickness_index) {
+            uint32_t thickness = thicknesses[thickness_index];
             for (int set_bar = 0; set_bar < 2; ++set_bar) {
                 ScrollFixture legacy;
                 ScrollFixture source;
@@ -474,7 +485,10 @@ bool verify_vertical_sprites() {
     };
     for (size_t direction = 0; direction < ARRAYSIZE(addresses); ++direction) {
         OriginalSprites original = reinterpret_cast<OriginalSprites>(addresses[direction]);
-        for (const Geometry &geometry : geometries) {
+        for (size_t geometry_index = 0;
+             geometry_index < sizeof(geometries) / sizeof(geometries[0]);
+             ++geometry_index) {
+            const Geometry &geometry = geometries[geometry_index];
             ScrollFixture legacy;
             ScrollFixture source;
             uintptr_t vtable[VtableEntries];
@@ -528,7 +542,9 @@ bool verify_position() {
     OriginalOneArg original = reinterpret_cast<OriginalOneArg>(0x00605D20U);
     ::Win *const saved_current = *ScrollCurrentWin;
     bool passed = true;
-    for (const PositionCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const PositionCase &test = cases[test_index];
         ScrollFixture legacy;
         ScrollFixture source;
         uintptr_t vtable[VtableEntries];

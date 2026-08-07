@@ -52,15 +52,21 @@ OpeningMovieFunction OriginalOpeningMovie =
 LoadFlagsFunction LoadFlags = reinterpret_cast<LoadFlagsFunction>(LoadFlagsAddress);
 ActionGoToFunction ActionGoTo = reinterpret_cast<ActionGoToFunction>(ActionGoToAddress);
 
-enum class ScenarioPhase {
+// A namespaced plain enum rather than `enum class`, which VC6 does not have.
+// It keeps every `ScenarioPhase::Finished` at the sixteen use sites spelt
+// exactly as before; what is lost is the distinct type, so the enumerators
+// convert to int again as they did in C++98.
+namespace ScenarioPhase {
+enum Value {
     Inactive,
     Loaded,
     AwaitingAdvance,
     Finished,
 };
+}  // namespace ScenarioPhase
 
 struct ScenarioState {
-    ScenarioPhase phase;
+    ScenarioPhase::Value phase;
     char save_path[1024];
     char result_path[1024];
     bool inspect_only;
@@ -75,7 +81,9 @@ struct ScenarioState {
     int movement_cost;
 };
 
-ScenarioState State = {};
+// `{0}` would be a `const int` initialising the leading enum member, which
+// VC6 will not narrow; naming the enumerator says the same thing everywhere.
+ScenarioState State = {ScenarioPhase::Inactive};
 
 bool read_environment(LPCSTR name, char *output, DWORD size) {
     DWORD length = GetEnvironmentVariableA(name, output, size);

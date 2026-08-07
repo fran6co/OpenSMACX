@@ -267,7 +267,7 @@ bool verify_flat_destructor(uintptr_t *vtable) {
 }  // namespace
 
 bool run_base_button_oracle_suite() {
-    uintptr_t vtable[3] = {};
+    uintptr_t vtable[3] = {0};
     vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
     runtime_oracle::set_watched_global(nullptr);
     SavedDefaults saved;
@@ -284,7 +284,7 @@ bool run_base_button_release_suite() {
     if (!suspend_redirect_at(BaseButtonCloseAddress)) {
         return false;
     }
-    uintptr_t vtable[3] = {};
+    uintptr_t vtable[3] = {0};
     vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
     OriginalBaseNoArg original = reinterpret_cast<OriginalBaseNoArg>(
         BaseButtonCloseAddress);

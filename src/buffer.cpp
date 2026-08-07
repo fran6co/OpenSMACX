@@ -516,7 +516,11 @@ void Buffer::close() {
         }
     }
 
-    for (size_t offset : {size_t(0x78), size_t(0x70)}) {
+    size_t offset_cases[] = {size_t(0x78), size_t(0x70)};
+    for (size_t offset_index = 0;
+         offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+         ++offset_index) {
+        size_t offset = offset_cases[offset_index];
         if (ordered[offset / 4] != 0) {
             DeleteObject(reinterpret_cast<HGDIOBJ>(ordered[offset / 4]));
             ordered[offset / 4] = 0;
@@ -524,7 +528,12 @@ void Buffer::close() {
     }
 
     if (*BufferDirectDrawActive != 0) {
-        for (size_t offset : {size_t(0x58), size_t(0x5C)}) {
+        size_t release_offset_cases[] = {size_t(0x58), size_t(0x5C)};
+        for (size_t release_offset_index = 0;
+             release_offset_index
+                 < sizeof(release_offset_cases) / sizeof(release_offset_cases[0]);
+             ++release_offset_index) {
+            size_t offset = release_offset_cases[release_offset_index];
             void *const object = reinterpret_cast<void *>(ordered[offset / 4]);
             if (object) {
                 reinterpret_cast<func_com_release>(
