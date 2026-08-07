@@ -182,7 +182,12 @@ bool verify_constructor(
 bool verify_palette() {
     OriginalPaletteGet original = reinterpret_cast<OriginalPaletteGet>(PaletteGetAddress);
     bool passed = true;
-    for (int initialized : {0, 1}) {
+    int initialized_cases[] = {0, 1};
+    for (size_t initialized_index = 0;
+         initialized_index
+             < sizeof(initialized_cases) / sizeof(initialized_cases[0]);
+         ++initialized_index) {
+        int initialized = initialized_cases[initialized_index];
         *PaletteInitialized = initialized;
         runtime_oracle::Fixture<Palette> legacy;
         runtime_oracle::Fixture<Palette> source;
@@ -229,7 +234,9 @@ bool verify_buffer_cases(Palette *palette) {
     bool passed = true;
     struct Case { Palette *palette; int initialized; };
     const Case cases[] = {{nullptr, 0}, {palette, 0}, {palette, 1}};
-    for (const Case &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const Case &test = cases[test_index];
         *BufferPalette = test.palette;
         *PaletteInitialized = test.initialized;
         passed = passed && verify_constructor<Buffer>(

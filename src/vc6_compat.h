@@ -229,6 +229,13 @@ inline int _snprintf_s(char *destination, size_t size, size_t, const char *forma
 #define INVALID_SET_FILE_POINTER ((unsigned long)-1)
 #endif
 
+/*
+ * `snprintf` is C99. VC6 has the same function under the reserved spelling,
+ * with one difference the callers here do not depend on: it returns -1 rather
+ * than the required length when the result does not fit.
+ */
+#define snprintf _snprintf
+
 /* ARRAYSIZE arrived in a later Platform SDK than the one VC6 shipped with. */
 #ifndef ARRAYSIZE
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))

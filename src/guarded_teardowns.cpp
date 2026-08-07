@@ -63,7 +63,8 @@ func_thiscall_teardown TeardownTarget005D4DD0 =
 void __fastcall sprite_close_default(void *object) {
     static_cast<Sprite *>(object)->close();
 }
-func_thiscall_teardown TeardownTarget005E3820 = &sprite_close_default;
+func_thiscall_teardown TeardownTarget005E3820 = original_method<func_thiscall_teardown>(
+    reinterpret_cast<unsigned long>(&sprite_close_default));
 
 /*
 Purpose: ?timer_callback_daemon@BattleWin@@QAAXHH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
@@ -74,7 +75,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_00422eb0() {
-    (ORIGINAL(g_BattleWin)->*original_method<func_thiscall_teardown>(reinterpret_cast<unsigned long>(SubInterfaceOriginalReleaseIfaceMode)))();
+    (ORIGINAL(g_BattleWin)->*original_method<func_thiscall_teardown>(original_address(SubInterfaceOriginalReleaseIfaceMode)))();
 }
 
 /*
@@ -86,7 +87,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_00422ec0() {
-    (ORIGINAL(g_BattleWin)->*original_method<func_thiscall_teardown>(reinterpret_cast<unsigned long>(SubInterfaceOriginalReleaseIfaceMode)))();
+    (ORIGINAL(g_BattleWin)->*original_method<func_thiscall_teardown>(original_address(SubInterfaceOriginalReleaseIfaceMode)))();
 }
 
 /*
@@ -98,7 +99,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_004456a0() {
-    (ORIGINAL(g_PASSOVER_WAVE)->*original_method<func_thiscall_teardown>(reinterpret_cast<unsigned long>(PopupWavePlay)))();
+    (ORIGINAL(g_PASSOVER_WAVE)->*original_method<func_thiscall_teardown>(original_address(PopupWavePlay)))();
 }
 
 /*
@@ -136,7 +137,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_00505d20() {
-    (ORIGINAL(TeardownObject00915068)->*original_method<func_thiscall_teardown>(reinterpret_cast<unsigned long>(BufferElementTeardown)))();
+    (ORIGINAL(TeardownObject00915068)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
 }
 
 /*
@@ -173,7 +174,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_00589890() {
-    (ORIGINAL(TeardownObject009403E0)->*original_method<func_thiscall_teardown>(reinterpret_cast<unsigned long>(PopupDtorTarget)))();
+    (ORIGINAL(TeardownObject009403E0)->*original_method<func_thiscall_teardown>(original_address(PopupDtorTarget)))();
 }
 
 /*
@@ -211,7 +212,7 @@ void __cdecl teardown_g_win_buffer() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B6E30 = static_cast<uint8_t>(flags | 1);
-    (ORIGINAL(g_WIN_BUFFER)->*original_method<func_thiscall_teardown>(reinterpret_cast<unsigned long>(BufferElementTeardown)))();
+    (ORIGINAL(g_WIN_BUFFER)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
 }
 
 /*
@@ -230,7 +231,7 @@ void __cdecl teardown_005eb3b0() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B6E30 = static_cast<uint8_t>(flags | 2);
-    (ORIGINAL(TeardownObject009B7490)->*original_method<func_thiscall_teardown>(reinterpret_cast<unsigned long>(BufferElementTeardown)))();
+    (ORIGINAL(TeardownObject009B7490)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
 }
 
 /*
@@ -408,7 +409,7 @@ void __cdecl teardown_g_caviar_buffer_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 1);
-    (ORIGINAL(g_CAVIAR_BUFFER_1)->*original_method<func_thiscall_teardown>(reinterpret_cast<unsigned long>(BufferElementTeardown)))();
+    (ORIGINAL(g_CAVIAR_BUFFER_1)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
 }
 
 /*
@@ -427,7 +428,7 @@ void __cdecl teardown_g_caviar_buffer_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 2);
-    (ORIGINAL(g_CAVIAR_BUFFER_2)->*original_method<func_thiscall_teardown>(reinterpret_cast<unsigned long>(BufferElementTeardown)))();
+    (ORIGINAL(g_CAVIAR_BUFFER_2)->*original_method<func_thiscall_teardown>(original_address(BufferElementTeardown)))();
 }
 
 /*

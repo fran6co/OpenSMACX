@@ -1051,7 +1051,11 @@ Status: Complete
 Wave::Wave() {
     volume_ = 0x7F;
     field_8_ = 0;
-    for (uint8_t &region_byte : memset_region_) {
+    for (size_t region_byte_index = 0;
+         region_byte_index
+             < sizeof(memset_region_) / sizeof(memset_region_[0]);
+         ++region_byte_index) {
+        uint8_t &region_byte = memset_region_[region_byte_index];
         region_byte = 0;
     }
     field_30_ = 0;

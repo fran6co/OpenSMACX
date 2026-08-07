@@ -47,7 +47,7 @@ struct SurfaceProbe {
     void *unlock_data;
 };
 
-SurfaceProbe Probe = {};
+SurfaceProbe Probe = {0};
 long ProbeLockResult = 0;
 uint32_t ProbeLockPitch = 0;
 uint32_t ProbeLockData = 0;
@@ -77,7 +77,7 @@ struct FakeSurface {
     void **vtable;
 };
 
-void *SurfaceVtable[(0x80 / sizeof(void *)) + 1] = {};
+void *SurfaceVtable[(0x80 / sizeof(void *)) + 1] = {0};
 FakeSurface Surface = {SurfaceVtable};
 
 void install_surface() {
@@ -113,7 +113,9 @@ bool verify_get_data() {
     };
     install_surface();
     OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005E3373U);
-    for (const GetCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const GetCase &test = cases[test_index];
         BufferFixture legacy;
         BufferFixture source;
         uintptr_t vtable[1];
@@ -121,7 +123,11 @@ bool verify_get_data() {
             legacy.storage, source.storage, BufferSpec, vtable);
         const uint32_t surface = test.has_surface
             ? static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&Surface)) : 0U;
-        for (BufferFixture *fixture : {&legacy, &source}) {
+        BufferFixture *fixture_cases[] = {&legacy, &source};
+        for (size_t fixture_index = 0;
+             fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+             ++fixture_index) {
+            BufferFixture *fixture = fixture_cases[fixture_index];
             write_field(*fixture, 0x50, test.field_50);
             write_field(*fixture, 0x54, test.field_54);
             write_field(*fixture, 0x58, surface);
@@ -171,7 +177,9 @@ bool verify_free_data() {
     };
     install_surface();
     OriginalOneArg original = reinterpret_cast<OriginalOneArg>(0x005E34A3U);
-    for (const FreeCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const FreeCase &test = cases[test_index];
         BufferFixture legacy;
         BufferFixture source;
         uintptr_t vtable[1];
@@ -179,7 +187,11 @@ bool verify_free_data() {
             legacy.storage, source.storage, BufferSpec, vtable);
         const uint32_t surface = test.has_surface
             ? static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&Surface)) : 0U;
-        for (BufferFixture *fixture : {&legacy, &source}) {
+        BufferFixture *fixture_cases[] = {&legacy, &source};
+        for (size_t fixture_index = 0;
+             fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+             ++fixture_index) {
+            BufferFixture *fixture = fixture_cases[fixture_index];
             write_field(*fixture, 0x50, test.field_50);
             write_field(*fixture, 0x58, surface);
             write_field(*fixture, 0x6C, test.references);
@@ -210,7 +222,9 @@ bool verify_text_line_height() {
     OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005DCAB0U);
     Font *const saved_default = *FontDefaultPtr;
     bool passed = true;
-    for (const HeightCase &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const HeightCase &test = cases[test_index];
         for (int preset_font = 0; preset_font < 2 && passed; ++preset_font) {
             BufferFixture legacy;
             BufferFixture source;
@@ -218,7 +232,7 @@ bool verify_text_line_height() {
             runtime_oracle::initialize_pair(
                 legacy.storage, source.storage, BufferSpec, vtable);
 
-            alignas(Font) uint8_t font_storage[sizeof(Font)] = {};
+            alignas(Font) uint8_t font_storage[sizeof(Font)] = {0};
             int *const fields = reinterpret_cast<int *>(font_storage);
             fields[0x00 / 4] = test.override_value;
             fields[0x0C / 4] = test.line_height;
@@ -251,7 +265,9 @@ bool verify_find_font() {
         INT_MIN, -100000, -5, 0, 8, 9, 10, 11, 12, 13, 22, 26, 31, 40, 48,
         49, 10046, 10047, 100000, INT_MAX,
     };
-    for (int size : sizes) {
+    for (size_t size_index = 0;
+         size_index < sizeof(sizes) / sizeof(sizes[0]); ++size_index) {
+        int size = sizes[size_index];
         for (int style = 0; style < 4; ++style) {
             // find_font is cdecl and reads only original-image tables, so both
             // sides observe identical inputs.
@@ -282,14 +298,22 @@ bool verify_close_reset() {
             uintptr_t vtable[1];
             runtime_oracle::initialize_pair(
                 legacy.storage, source.storage, BufferSpec, vtable);
-            for (BufferFixture *fixture : {&legacy, &source}) {
+            BufferFixture *fixture_cases[] = {&legacy, &source};
+            for (size_t fixture_index = 0;
+                 fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+                 ++fixture_index) {
+                BufferFixture *fixture = fixture_cases[fixture_index];
                 for (size_t index = 0; index < 20; ++index) {
                     write_field(*fixture, 0x4BC + index * 4, 0);
                 }
                 write_field(*fixture, 0x1C, flag_bit ? 4U : 0U);
-                for (size_t offset : {size_t(0x58), size_t(0x5C), size_t(0x60),
-                                      size_t(0x64), size_t(0x70), size_t(0x74),
-                                      size_t(0x78)}) {
+                size_t offset_cases[] = {size_t(0x58), size_t(0x5C), size_t(0x60),
+                                         size_t(0x64), size_t(0x70), size_t(0x74),
+                                         size_t(0x78)};
+                for (size_t offset_index = 0;
+                     offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+                     ++offset_index) {
+                    size_t offset = offset_cases[offset_index];
                     write_field(*fixture, offset, 0);
                 }
             }
@@ -318,19 +342,33 @@ bool verify_destroy() {
         uintptr_t vtable[1];
         runtime_oracle::initialize_pair(
             legacy.storage, source.storage, BufferSpec, vtable);
-        for (BufferFixture *fixture : {&legacy, &source}) {
+        BufferFixture *fixture_cases[] = {&legacy, &source};
+        for (size_t fixture_index = 0;
+             fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+             ++fixture_index) {
+            BufferFixture *fixture = fixture_cases[fixture_index];
             for (size_t index = 0; index < 20; ++index) {
                 write_field(*fixture, 0x4BC + index * 4, 0);
             }
             write_field(*fixture, 0x1C, 0);
-            for (size_t offset : {size_t(0x58), size_t(0x5C), size_t(0x60),
-                                  size_t(0x64), size_t(0x70), size_t(0x74),
-                                  size_t(0x78)}) {
+            size_t offset_cases[] = {size_t(0x58), size_t(0x5C), size_t(0x60),
+                                     size_t(0x64), size_t(0x70), size_t(0x74),
+                                     size_t(0x78)};
+            for (size_t offset_index = 0;
+                 offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+                 ++offset_index) {
+                size_t offset = offset_cases[offset_index];
                 write_field(*fixture, offset, 0);
             }
             // The Spot subobject owns resources of its own, so its fields
             // are left empty rather than seeded with sentinel pointers.
-            for (size_t offset : {size_t(0x4B0), size_t(0x4B4), size_t(0x4B8)}) {
+            size_t spot_offset_cases[] = {
+                size_t(0x4B0), size_t(0x4B4), size_t(0x4B8)};
+            for (size_t spot_offset_index = 0;
+                 spot_offset_index
+                     < sizeof(spot_offset_cases) / sizeof(spot_offset_cases[0]);
+                 ++spot_offset_index) {
+                size_t offset = spot_offset_cases[spot_offset_index];
                 write_field(*fixture, offset, 0);
             }
         }
@@ -395,11 +433,19 @@ bool run_buffer_release_suite() {
             passed = false;
             break;
         }
-        for (BufferFixture *fixture : {&legacy, &source}) {
+        BufferFixture *fixture_cases[] = {&legacy, &source};
+        for (size_t fixture_index = 0;
+             fixture_index < sizeof(fixture_cases) / sizeof(fixture_cases[0]);
+             ++fixture_index) {
+            BufferFixture *fixture = fixture_cases[fixture_index];
             write_field(*fixture, 0x1C, 0);
-            for (size_t offset : {size_t(0x58), size_t(0x5C), size_t(0x60),
-                                  size_t(0x64), size_t(0x70), size_t(0x74),
-                                  size_t(0x78)}) {
+            size_t offset_cases[] = {size_t(0x58), size_t(0x5C), size_t(0x60),
+                                     size_t(0x64), size_t(0x70), size_t(0x74),
+                                     size_t(0x78)};
+            for (size_t offset_index = 0;
+                 offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
+                 ++offset_index) {
+                size_t offset = offset_cases[offset_index];
                 write_field(*fixture, offset, 0);
             }
         }
