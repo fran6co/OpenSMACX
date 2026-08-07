@@ -400,3 +400,43 @@ a new reason to look.
 The cost of finding this out was one command. The cost of NOT finding it out
 would have been every future agent re-deriving "it might be the flags" on
 every function in this class.
+
+## The negative offsets ARE virtual inheritance, and that is now measured
+
+Three recovered bodies dereference a negative offset from `this`, and two of
+them - `CheckBox` at -0x1C and `SpriteBox` at -0x8C - carry the identical
+five-instruction sequence:
+
+    mov eax, [ecx - N]           ; the vbptr, N bytes BEFORE this
+    mov edx, [eax + 4]           ; a this-adjustment delta from vbtable[1]
+    mov eax, [edx + ecx - N]     ; the adjusted object's vtable
+    lea ecx, [edx + ecx - N]     ; the adjusted this
+    call [eax + 0xf8]            ; virtual slot 62
+
+That is MSVC's canonical virtual-base access, and it was CONFIRMED rather than
+assumed. A declared hierarchy - a non-virtual lead base plus
+`public virtual VBase`, with the call written as an ordinary `slot062()` -
+compiles to SHAPE_EXACT against 0x0060FB90: all six instructions, every
+register, in order. The single difference is the displacement, `+0x18` where
+the original has `-0x1C`.
+
+WHAT THAT PROVES AND WHAT IT DOES NOT. It proves the model: these classes are
+virtually derived, the compiler generates this sequence for them, and no
+hand-written cast chain is needed to reproduce it. It does NOT give the
+hierarchy. A negative displacement means `this` sits N bytes PAST the vbptr,
+which happens when the function's class is a later base inside a larger
+object - and which class encloses `CheckBox`, and at what offset, is not
+visible from `CheckBox`'s own code. Two arrangements were tried and ruled out:
+a lead base plus a virtual base puts the vbptr at +0x18 (positive), and an
+`Owner : virtual VBase` with `CheckBoxImpl : Owner` changes the shape outright
+(`add` where the original has `lea`).
+
+So the inheritance is real, the sequence is reproducible, and the missing
+piece is one fact about the ENCLOSING class - which a caller of one of these
+functions would show. That is a targeted question for whoever recovers a
+caller, not a guess to make here.
+
+The cast-based bodies stay as they are meanwhile: they are byte-exact, and a
+declared hierarchy would change layout and vtable order for every other body
+on the same class. Modelling it is worth doing when the enclosing offset is
+known, and not before.
