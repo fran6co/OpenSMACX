@@ -554,3 +554,36 @@ CENSUS, which does so by design and is usually what was run just before.
 The observed behaviour was real and the attribution was not, so the practical
 advice still holds: after a census, `git checkout docs/recovery/byte-match.csv`
 as well as the source, or the next run compares against the lowered census.
+
+## One address, two bodies: why the ratchet oscillated
+
+Three addresses had a body in `src/` AND a body in `src/recovered/`. The
+census scores the `src/` copy, `--collect` scores the store copy, both write
+the same ledger row, and the tier is therefore whichever tool ran last.
+
+  0x00401060  ?close@StringStruct@@QAEXXZ    src/stringstruct.cpp:186
+  0x00402F10  ??__Eg_ALPHAMENU_WAVE@@YAXXZ   src/init_thunks.cpp:216
+  0x00402F30  ??__Fg_ALPHAMENU_WAVE@@YAXXZ   src/atexit_thunks.cpp:425
+
+In one session the ratchet read 702, then 699, then 702 again, entirely from
+this. The 702 -> 699 swing was reported first as the VC6 branch breaking three
+functions, then as three stale rows. Both readings were wrong and both were
+confidently argued. The number was not stale and nothing regressed - two
+different bodies were being measured under one address.
+
+THE STORE IS FOR ROWS WITH NO `src/` HOME, and that was always the rule; the
+harvest simply did not enforce it. It filtered on `recovery_state`, and these
+three were catalogued `unrecovered` while carrying a `source_locations` - so
+the state and the location disagreed, and the filter believed the state. It
+now checks the location, which is the field that actually says whether a file
+owns the function.
+
+The duplicates are deleted, `src/` wins because it is what the build compiles,
+and the three rows are honestly NO_COMPILE: their bodies call
+`close_with_tables` and `g_ALPHAMENU_WAVE`, neither of which is catalogued, so
+the verification unit cannot declare them.
+
+WHAT TO TAKE FROM IT: when a measurement disagrees with itself across runs,
+the first hypothesis should be that the two runs measured different things -
+not that one of them is stale. Staleness was the more interesting story and it
+was wrong twice.

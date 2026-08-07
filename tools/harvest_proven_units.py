@@ -70,6 +70,19 @@ def candidates(functions: dict, tiers: dict) -> list:
         row = functions.get(address)
         if row is None or row.get("recovery_state") not in TARGET_STATES:
             continue
+        # A row with a `src/` home already has an authoritative body, and a
+        # store copy alongside it is not a spare - it is a SECOND ANSWER for
+        # one address. The census scores the `src/` one and `--collect` scores
+        # the store one, both write the same ledger row, and the tier then
+        # depends on which tool ran last. Three rows reached that state and
+        # made the ratchet read 702, then 699, then 702 again in one session;
+        # the swing was read first as a branch regression and then as a stale
+        # row, and it was neither.
+        #
+        # `recovery_state` alone does not catch it: these were catalogued
+        # `unrecovered` while carrying a `source_locations`.
+        if (row.get("source_locations") or "").strip():
+            continue
         if tiers.get(f"0X{address:08X}") != "BYTE_EXACT":
             continue
         found.append((address, unit))
