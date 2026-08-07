@@ -2953,7 +2953,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0051D720,0x0051D733,19,.text,?menu_daemon@Console@@QAAXH@Z,,0x0051D720-0x0051D733,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x0051D740,0x0051D753,19,.text,?menu_update@Console@@QAEXXZ,void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this),0x0051D740-0x0051D753,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x0051D760,0x0051D7B5,85,.text,sub_51d760,,0x0051D760-0x0051D7B5,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x0051D7C0,0x0051D7CB,11,.text,?on_sys_close@Console@@QAEXXZ,void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this),0x0051D7C0-0x0051D7CB,game,sp_ready;purged_ok,,,,ConsoleOnSysCloseTarget,original_dependency,,,,0,0
+0x0051D7C0,0x0051D7CB,11,.text,?on_sys_close@Console@@QAEXXZ,void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this),0x0051D7C0-0x0051D7CB,game,sp_ready;purged_ok,src/console.cpp:406,,,ConsoleOnSysCloseTarget,original_dependency,,,,0,0
 0x0051D7D0,0x0051D88E,190,.text,?close@Console@@QAEXXZ,void (__thiscall ?close@Console@@QAEXXZ)(Console* this),0x0051D7D0-0x0051D88E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,3
 0x0051D890,0x0051D9CF,319,.text,?init@Console@@QAEXH@Z,"void (__thiscall ?init@Console@@QAEXH@Z)(Console* this, int)",0x0051D890-0x0051D9CF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,1
 0x0051D9D0,0x0051D9D1,1,.text,nullsub_187,,0x0051D9D0-0x0051D9D1,game,hidden;sp_ready;purged_ok,src/nullsub_thunks.cpp:425,Complete,,,source_complete,,,,0,0
