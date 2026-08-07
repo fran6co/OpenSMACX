@@ -95,3 +95,13 @@ void __fastcall replay_win_on_left_down_redirect(ReplayWin *self, void *, int a1
 void __fastcall replay_win_on_left_up_redirect(ReplayWin *self, void *, int a1, int a2) {
     self->on_left_up(a1, a2);
 }
+
+/*
+Original Offset: 005ADBD0
+Status: Complete
+*/
+void __cdecl fn_005adbd0(ReplayWin* a1) {
+    if (a1) {
+        a1->timer_callback();
+    }
+}

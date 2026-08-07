@@ -39,6 +39,7 @@
   */
 class DLLEXPORT ListBox {
  public:
+  void on_mouse_leave(int a1, int a2);
   ListBox() { ; }
   ~ListBox() { ; }
   // close() and destroy() are void in the mangled names but are modelled as

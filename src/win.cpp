@@ -979,3 +979,20 @@ void Win::on_mousewheel_up_horz(int a1) {
         scroll->on_mousewheel_up(a1);
     }
 }
+
+/*
+Purpose: Report the left mouse button state, honouring a swapped-buttons
+         system setting.
+Original Offset: 005EC960
+Return Value: nonzero while the logical left button is down
+Status: Complete
+*/
+// ONE expression. Naming either result as a local is still correct C++, but
+// VC6 then defers the `movsx` that widens the SHORT until after the second
+// call instead of folding it straight after the first.
+extern "C" __declspec(dllimport) short __stdcall GetAsyncKeyState(int key);
+extern "C" __declspec(dllimport) int __stdcall GetSystemMetrics(int index);
+
+int Win::get_lbutton_state() {
+    return GetSystemMetrics(0x17) ^ (GetAsyncKeyState(1) >> 15);
+}

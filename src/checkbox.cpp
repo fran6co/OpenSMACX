@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "checkbox.h"
+#include "vtable_shim.h"
 
 func_dialog_close CheckBoxOriginalDialogClose = original_method<func_dialog_close>(0x00608F50);
 uint32_t *CheckBoxDefault1 = (uint32_t *)0x00697104;
@@ -144,4 +145,55 @@ void CheckBox::set_state_pos(int pos, int state) {
 void __fastcall check_box_set_state_pos_redirect(CheckBox *self, void *,
                                                  int pos, int state) {
     self->set_state_pos(pos, state);
+}
+
+/*
+Purpose: Repaint on dialog focus, dispatching through the enclosing object.
+Original Offset: 0060FB90
+Return Value: n/a
+Status: Complete
+*/
+void CheckBox::on_dialog_focus(int a1) {
+    // `this - 0x1c` is NOT arithmetic on a member: CheckBox is a SUBOBJECT of
+    // a larger object, and this walks back to the enclosing one, then applies
+    // a further delta read from its own +4. Written as one expression on
+    // purpose - naming either intermediate makes VC6 pick eax for the delta
+    // and edx for the vtable, which is mnemonic-identical and byte-different.
+    // a1 is never read; `ret 4` still pops it.
+    VCall *const target = reinterpret_cast<VCall *>(
+        reinterpret_cast<char *>(this) - 0x1c +
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(
+            *reinterpret_cast<int **>(
+                reinterpret_cast<char *>(this) - 0x1c)) + 4));
+    target->slot062();
+}
+
+/*
+Purpose: Clear the hover index and repaint, through the enclosing object.
+Original Offset: 0060FC30
+Return Value: n/a
+Status: Complete
+*/
+void CheckBox::on_mouse_leave(int a1, int a2) {
+    // `this - 0x1C` reaches a vbtable-shaped descriptor with two deltas:
+    // entry +8 locates the field, entry +4 the enclosing object's vtable.
+    // Note 0x1C + 0xD4 == 0xF0 across this whole family, so the
+    // field is at a FIXED +0xF0 in the enclosing object and these classes are
+    // subobjects at differing offsets inside it.
+    //
+    // The arithmetic must go through `char *`. Through `int *` the compiler
+    // scales the +8 and emits [eax+0x20].
+    //
+    // Both parameters are dead; `ret 8` still pops them.
+    *reinterpret_cast<int *>(
+        reinterpret_cast<char *>(this) + 0xD4 +
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(
+            *reinterpret_cast<int **>(
+                reinterpret_cast<char *>(this) - 0x1C)) + 8)) = -1;
+
+    reinterpret_cast<VCall *>(
+        reinterpret_cast<char *>(this) - 0x1C +
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(
+            *reinterpret_cast<int **>(
+                reinterpret_cast<char *>(this) - 0x1C)) + 4))->slot062();
 }

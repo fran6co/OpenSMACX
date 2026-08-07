@@ -32,6 +32,7 @@
   */
 class DLLEXPORT SetupWin : GraphicWin {
  public:
+  int do_menu(int8* a1, int a2, int a3);
   SetupWin() { ; }
   ~SetupWin() { ; }
   int UNK1(int a1);

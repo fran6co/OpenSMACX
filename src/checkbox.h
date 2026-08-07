@@ -39,6 +39,8 @@
   */
 class DLLEXPORT CheckBox {
  public:
+  void on_mouse_leave(int a1, int a2);
+  void on_dialog_focus(int a1);
   CheckBox() { ; }
   ~CheckBox() { ; }
   void close();

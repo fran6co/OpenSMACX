@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "listbox.h"
+#include "vtable_shim.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -147,4 +148,34 @@ uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
     ListBox *self = reinterpret_cast<ListBox *>(
         static_cast<uint8_t *>(adjusted) - ListBoxDestructorAdjustment);
     return self->destroy();
+}
+
+/*
+Purpose: Clear the hover index and repaint, through the enclosing object.
+Original Offset: 0060CE10
+Return Value: n/a
+Status: Complete
+*/
+void ListBox::on_mouse_leave(int a1, int a2) {
+    // `this - 0x48` reaches a vbtable-shaped descriptor with two deltas:
+    // entry +8 locates the field, entry +4 the enclosing object's vtable.
+    // Note 0x48 + 0xA8 == 0xF0 across this whole family, so the
+    // field is at a FIXED +0xF0 in the enclosing object and these classes are
+    // subobjects at differing offsets inside it.
+    //
+    // The arithmetic must go through `char *`. Through `int *` the compiler
+    // scales the +8 and emits [eax+0x20].
+    //
+    // Both parameters are dead; `ret 8` still pops them.
+    *reinterpret_cast<int *>(
+        reinterpret_cast<char *>(this) + 0xA8 +
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(
+            *reinterpret_cast<int **>(
+                reinterpret_cast<char *>(this) - 0x48)) + 8)) = -1;
+
+    reinterpret_cast<VCall *>(
+        reinterpret_cast<char *>(this) - 0x48 +
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(
+            *reinterpret_cast<int **>(
+                reinterpret_cast<char *>(this) - 0x48)) + 4))->slot062();
 }

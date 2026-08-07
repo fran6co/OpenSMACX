@@ -591,3 +591,13 @@ void BaseButton::on_right_click(int a1, int a2) {
         timer_callback(0);
     }
 }
+
+/*
+Original Offset: 00607B10
+Status: Complete
+*/
+void __cdecl fn_00607b10(int a1, BaseButton* a2) {
+    if (a2) {
+        a2->timer_callback(a1);
+    }
+}
