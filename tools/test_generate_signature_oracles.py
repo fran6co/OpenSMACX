@@ -522,7 +522,11 @@ class EmissionTests(unittest.TestCase):
         text = generator.emit(generator.candidates(
             *self._paths([member()]), SelectionTests.REDIRECTED, SIZES))
         body = text[text.index("static bool verify_"):]
-        loop = body.index("for (const auto &argv : cases)")
+        # Matched on the loop's OPENING, not its full spelling: the emitted
+        # form is an index loop over `cases` rather than a range-for, because
+        # VC6 has neither range-for nor `auto`. What this test pins is where
+        # the snapshot sits, which that change does not affect.
+        loop = body.index("for (size_t case_index = 0;")
         self.assertIn("snapshot(before)", body[loop:])
 
     def test_the_STAGED_OBJECT_is_restored_between_the_two_calls(self):
