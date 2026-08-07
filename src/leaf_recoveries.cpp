@@ -834,14 +834,24 @@ Original Offset: 00532A50
 Return Value: the quotient that was stored
 Status: Complete
 */
+/*
+Original Offset: 00532A50
+Return Value: the quotient, rounded up when the division is not exact
+Status: Complete
+*/
 int __stdcall leaf_00532a50_redirect(int value, int *quotient_out,
                                      int *remainder_out, int divisor) {
-    const int quotient = value / divisor;
+    // Increment the quotient IN PLACE. A `rounded` temp - whether built by a
+    // ternary or by an `if` - keeps one more value live, and VC6 then stops
+    // spilling the divisor to esi, which is the `push` at index 3.
+    int quotient = value / divisor;
     const int remainder = value - quotient * divisor;
     *remainder_out = remainder;
-    const int rounded = remainder == 0 ? quotient : quotient + 1;
-    *quotient_out = rounded;
-    return rounded;
+    if (remainder != 0) {
+        ++quotient;
+    }
+    *quotient_out = quotient;
+    return quotient;
 }
 
 /*

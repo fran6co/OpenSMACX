@@ -83,7 +83,7 @@ v00403ba0_0.cpp(46) : error C2086: 'int8' : redefinition
 v00403ba0_0.cpp(46) : error C2501: 'text_item' : missing storage-class or type specifiers
 v00403ba0_0.cpp(47) : error C2059: syntax error : ')'
 "
-0x004041C0,?on_modal@AlphaMovie@@QAE_NXZ,src/leaf_recoveries.cpp:1037,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004041c0.cpp(55) : error C2065: 'field_accessor_00600320_redirect' : undeclared identifier
+0x004041C0,?on_modal@AlphaMovie@@QAE_NXZ,src/leaf_recoveries.cpp:1047,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004041c0.cpp(55) : error C2065: 'field_accessor_00600320_redirect' : undeclared identifier
 0x004041E0,?close@AlphaMovie@@QAEXXZ,,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
 0x00404200,?UNK1@AlphaMovie@@QAEXXZ,,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x00404210,?on_key_click@AlphaMovie@@QAEHHH@Z,src/delegation_thunks.cpp:45,1,16,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00404210.cpp(134) : error C2065: 'func_delegation_0' : undeclared identifier
@@ -341,7 +341,7 @@ c00406910.cpp(137) : error C2065: 'DialogsRadioWinVtable' : undeclared identifie
 c00406910.cpp(144) : error C2039: 'destroy' : is not a member of 'ListBox'
 c00406910.cpp(48) : see declaration of 'ListBox'"
 0x00406A80,sub_406a80,src/nullsub_thunks.cpp:40,1,5,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,5,5,,,,,
-0x00406AF0,sub_406af0,src/leaf_recoveries.cpp:1342,0,38,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00406af0.cpp(138) : error C2065: 'DialogsDestructorAdjustment' : undeclared identifier
+0x00406AF0,sub_406af0,src/leaf_recoveries.cpp:1352,0,38,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00406af0.cpp(138) : error C2065: 'DialogsDestructorAdjustment' : undeclared identifier
 c00406af0.cpp(139) : error C2065: 'LeafDialogsDestructor' : undeclared identifier
 c00406af0.cpp(140) : error C2065: 'LeafDialogDestructor' : undeclared identifier
 c00406af0.cpp(141) : error C2065: 'LeafGraphicWinDestructor' : undeclared identifier"
@@ -456,7 +456,7 @@ v00407e80_0.cpp(51) : error C2059: syntax error : ','
 0x00408080,??_GEditBox@@UAEPAXI@Z,src/deleting_thunks.cpp:308,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00408080.cpp(70) : error C2065: 'EditBoxDtorTarget' : undeclared identifier
 c00408080.cpp(70) : error C2297: '->*' : illegal, right operand has type 'int'
 c00408080.cpp(72) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
-0x004080B0,sub_4080b0,src/leaf_recoveries.cpp:1322,0,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004080b0.cpp(138) : error C2065: 'ListBoxDestructorAdjustment' : undeclared identifier
+0x004080B0,sub_4080b0,src/leaf_recoveries.cpp:1332,0,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004080b0.cpp(138) : error C2065: 'ListBoxDestructorAdjustment' : undeclared identifier
 c004080b0.cpp(139) : error C2065: 'LeafListBoxDestructor' : undeclared identifier
 c004080b0.cpp(140) : error C2065: 'LeafDialogDestructor' : undeclared identifier
 c004080b0.cpp(141) : error C2065: 'LeafGraphicWinDestructor' : undeclared identifier"
@@ -848,7 +848,7 @@ c00432880.cpp(93) : error C2061: syntax error : identifier 'func_atexit_callback
 0x004328A0,??__Fg_DESIGNWIN_WAVE@@YAXXZ,src/atexit_thunks.cpp:725,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004328a0.cpp(64) : error C2065: 'g_DESIGNWIN_WAVE' : undeclared identifier
 c004328a0.cpp(64) : error C2065: 'WaveOriginalDestructor' : undeclared identifier
 c004328a0.cpp(64) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x00432970,?close@SelectPartWin@@QAEXXZ,src/leaf_recoveries.cpp:1085,0,63,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00432970.cpp(59) : error C2065: 'store32' : undeclared identifier
+0x00432970,?close@SelectPartWin@@QAEXXZ,src/leaf_recoveries.cpp:1095,0,63,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00432970.cpp(59) : error C2065: 'store32' : undeclared identifier
 c00432970.cpp(65) : error C2065: 'graphic_win_close_redirect' : undeclared identifier
 c00432970.cpp(66) : error C2065: 'buffer_close_redirect' : undeclared identifier"
 0x004339C0,?on_redraw@SelectPartWin@@QAEXXZ,,0,66,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,66,1,25,1,0,#0: original 'push' vs rebuilt 'ret',
@@ -3501,7 +3501,7 @@ v00454fc0_0.cpp(61) : error C2143: syntax error : missing ')' before '}'
 v00454fc0_0.cpp(61) : error C2059: syntax error : ')'
 v00454fc0_0.cpp(98) : fatal error C1004: unexpected end of file found
 "
-0x00455E50,?load_deswin_sprites@@YAXXZ,src/leaf_recoveries.cpp:1385,0,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00455e50.cpp(51) : error C2065: 'alignas' : undeclared identifier
+0x00455E50,?load_deswin_sprites@@YAXXZ,src/leaf_recoveries.cpp:1395,0,35,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00455e50.cpp(51) : error C2065: 'alignas' : undeclared identifier
 c00455e50.cpp(51) : error C2146: syntax error : missing ';' before identifier 'uint8_t'
 c00455e50.cpp(51) : error C2146: syntax error : missing ';' before identifier 'storage'
 c00455e50.cpp(51) : error C2275: 'uint8_t' : illegal use of this type as an expression
@@ -3943,7 +3943,7 @@ c00484a80.cpp(72) : error C2065: 'ScrollOperatorDelete' : undeclared identifier
 Generating Code...
 Compiling..."
 0x00484AB0,??3NewTechWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1018,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00484ab0.cpp(46) : error C2065: 'scalar_delete_new_tech_win' : undeclared identifier
-0x00484B60,?close@PickTech@@QAEXXZ,src/leaf_recoveries.cpp:1271,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00484b60.cpp(49) : error C2065: 'store32' : undeclared identifier
+0x00484B60,?close@PickTech@@QAEXXZ,src/leaf_recoveries.cpp:1281,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00484b60.cpp(49) : error C2065: 'store32' : undeclared identifier
 c00484b60.cpp(53) : error C2065: 'graphic_win_close_redirect' : undeclared identifier
 c00484b60.cpp(53) : error C2061: syntax error : identifier 'GraphicWin'"
 0x00484C60,?draw_tech@PickTech@@QAEHHPAURECT@@H@Z,,0,5009,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v00484c60_0.cpp
@@ -4637,7 +4637,7 @@ v004bdfa0_0.cpp(51) : error C2447: missing function header (old-style formal lis
 c004be9f0.cpp(85) : error C2297: '->*' : illegal, right operand has type 'int'
 c004be9f0.cpp(87) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004BEA20,??3TutWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1306,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004bea20.cpp(45) : error C2065: 'scalar_delete_tut_win' : undeclared identifier
-0x004BEA30,??0UV2Player@@QAE@XZ,src/leaf_recoveries.cpp:1057,0,28,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bea30.cpp(55) : error C2065: 'buffer_construct_redirect' : undeclared identifier
+0x004BEA30,??0UV2Player@@QAE@XZ,src/leaf_recoveries.cpp:1067,0,28,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bea30.cpp(55) : error C2065: 'buffer_construct_redirect' : undeclared identifier
 c004bea30.cpp(58) : error C2065: 'store32' : undeclared identifier"
 0x004BF380,?UNK4@UV2Player@@QAEHXZ,src/uv2player.cpp:23,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004BF6E0,??__Eg_VEHDRAW_CAVIAR@@YAXXZ,src/init_thunks.cpp:4122,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004bf6e0.cpp(80) : error C2065: 'g_VEHDRAW_CAVIAR' : undeclared identifier
@@ -7493,7 +7493,7 @@ c0052dc70.cpp(60) : error C2065: 'NetTurnFaction' : undeclared identifier
 c0052dc70.cpp(60) : error C2100: illegal indirection
 c0052dc70.cpp(60) : error C2065: 'LocalFaction' : undeclared identifier
 c0052dc70.cpp(60) : error C2100: illegal indirection"
-0x0052DCA0,??0DeletionList@@QAE@XZ,src/leaf_recoveries.cpp:1002,0,33,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
+0x0052DCA0,??0DeletionList@@QAE@XZ,src/leaf_recoveries.cpp:1012,0,33,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x0052DCD0,?clear@DeletionList@@QAEXH@Z,src/deletionlist.cpp:25,0,28,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x0052DCF0,?UNK1@DeletionList@@QAEHXZ,,0,32,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,32,32,,,,,
 0x0052DD10,?UNK2@DeletionList@@QAEHH@Z,,0,59,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,59,5,31,2,0,#0: original 'push' vs rebuilt 'xor',
@@ -10259,7 +10259,7 @@ c005926f0.cpp(60) : error C2100: illegal indirection"
 0x00592AF0,?clear_dirty@@YAXXZ,,0,76,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,76,1,28,1,0,#0: original 'mov' vs rebuilt 'ret',
 0x00592D70,sub_592d70,,0,24,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,24,24,,,,,
 0x00592D90,sub_592d90,,0,26,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,26,3,11,2,0,#0: original 'push' vs rebuilt 'xor',
-0x00592DB0,sub_592db0,src/leaf_recoveries.cpp:862,0,44,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,44,44,,,,,
+0x00592DB0,sub_592db0,src/leaf_recoveries.cpp:872,0,44,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,44,44,,,,,
 0x00592DE0,sub_592de0,,0,46,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,46,3,16,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00593220,?synch_veh@@YAXH@Z,src/netdaemon.cpp:65,0,34,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00593220.cpp(73) : error C2065: 'NetDaemonNet' : undeclared identifier
 c00593220.cpp(73) : error C2065: 'NetDaemonSynch' : undeclared identifier
@@ -10598,7 +10598,7 @@ c0059cca0.cpp(120) : error C2109: subscript requires array or pointer type
 c0059cca0.cpp(121) : error C2109: subscript requires array or pointer type
 c0059cca0.cpp(122) : error C2109: subscript requires array or pointer type
 c0059cca0.cpp(145) : error C2065: 'set' : undeclared identifier"
-0x0059D230,sub_59d230,src/leaf_recoveries.cpp:1249,0,19,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0059d230.cpp(54) : error C2065: 'DialogsItemText6900C4' : undeclared identifier
+0x0059D230,sub_59d230,src/leaf_recoveries.cpp:1259,0,19,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0059d230.cpp(54) : error C2065: 'DialogsItemText6900C4' : undeclared identifier
 0x0059D3A0,?init@PopMenu@@QAEHXZ,src/popmenu.cpp:25,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0059d3a0.cpp(71) : error C2065: 'BasePopOriginalInit' : undeclared identifier
 c0059d3a0.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0059D980,?prefs_get@@YAPADPADPADH@Z,src/alpha.cpp:1234,0,153,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0059d980.cpp(60) : error C2065: 'GetPrivateProfileStringA' : undeclared identifier
@@ -11281,7 +11281,7 @@ c005ad3c0.cpp(135) : error C2783: 'Method __cdecl original_method(unsigned long)
 0x005AD430,?on_button_clicked@ReplayWin@@QAEXH@Z,src/delegation_thunks.cpp:1003,1,11,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1003: no closing brace within the file
 0x005AD440,?on_key_click@ReplayWin@@QAEHHH@Z,src/delegation_thunks.cpp:1018,1,16,,REFUSED,,,,,,,extract failed: src/delegation_thunks.cpp:1018: no closing brace within the file
 0x005AD450,sub_5ad450,src/leaf_recoveries.cpp:635,0,32,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,29,19,10,7,0,#0: original 'lea' vs rebuilt 'push',
-0x005AD4C0,sub_5ad4c0,src/leaf_recoveries.cpp:926,0,64,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,64,71,27,30,4,#4: original 'push' vs rebuilt 'lea',
+0x005AD4C0,sub_5ad4c0,src/leaf_recoveries.cpp:936,0,64,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,64,71,27,30,4,#4: original 'push' vs rebuilt 'lea',
 0x005AD9A0,?close@ReplayWin@@QAEXXZ,,0,64,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,50,1,14,1,0,#0: original 'push' vs rebuilt 'ret',
 0x005ADBD0,?timer_callback_daemon@ReplayWin@@QAAXH@Z,,0,17,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,17,17,,,,,
 0x005AE0B0,??_GReplayWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1483,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005ae0b0.cpp(70) : error C2065: 'ReplayWinDtorTarget' : undeclared identifier
@@ -13930,7 +13930,7 @@ c005c9e80.cpp(72) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x005C9EB0,??3MultiDebug@@SAXPAXI@Z,src/deleting_thunks.cpp:1530,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c005c9eb0.cpp(46) : error C2065: 'scalar_delete_multi_debug' : undeclared identifier
 0x005CB610,sub_5cb610,,0,66,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,66,3,22,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x005CB6C0,sub_5cb6c0,,0,1041,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1041,3,364,2,0,#0: original 'sub' vs rebuilt 'xor',
-0x005CBBC0,sub_5cbbc0,src/leaf_recoveries.cpp:964,0,53,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005cbbc0.cpp(40) : error C2065: 'load32' : undeclared identifier
+0x005CBBC0,sub_5cbbc0,src/leaf_recoveries.cpp:974,0,53,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c005cbbc0.cpp(40) : error C2065: 'load32' : undeclared identifier
 c005cbbc0.cpp(44) : error C2065: 'store32' : undeclared identifier"
 0x005CC430,sub_5cc430,src/leaf_recoveries.cpp:673,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x005CE2B0,sub_5ce2b0,,0,64,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"CL produced no object: v005ce2b0_0.cpp
@@ -16265,7 +16265,7 @@ v00614e30_0.cpp(54) : error C2447: missing function header (old-style formal lis
 0x00615EC0,?on_left_up@EditBox@@QAEXHH@Z,,0,77,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,77,3,21,1,0,#0: original 'mov' vs rebuilt 'ret 8',
 0x00615F10,?on_mouse_move@EditBox@@QAEXHH@Z,,0,62,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,62,3,22,1,0,#0: original 'push' vs rebuilt 'ret 8',
 0x00616030,?text_position@EditBox@@QAEXH@Z,,0,261,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,261,3,85,1,0,#0: original 'sub' vs rebuilt 'ret 4',
-0x006161A0,?UNK2@EditBox@@QAEXXZ,src/leaf_recoveries.cpp:890,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c006161a0.cpp(55) : error C2065: 'win_is_dialog_focus_redirect' : undeclared identifier
+0x006161A0,?UNK2@EditBox@@QAEXXZ,src/leaf_recoveries.cpp:900,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c006161a0.cpp(55) : error C2065: 'win_is_dialog_focus_redirect' : undeclared identifier
 0x006161D0,??0Time@@QAE@XZ,,0,38,,REFUSED,,,,,,,no source_locations; not censusable
 0x00616200,??1Time@@QAE@XZ,,0,96,,REFUSED,,,,,,,no source_locations; not censusable
 0x00616260,?init@Time@@QAEXP6AXH@ZHHH@Z,src/time.cpp:27,0,110,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00616260.cpp(55) : error C2511: 'init' : overloaded member function 'void (void (__cdecl *)(int),int,unsigned int,unsigned int)' not found in 'Time'
@@ -16551,15 +16551,15 @@ Generating Code...
 Compiling..."
 0x006252B0,??1TextureStore@@QAE@XZ,src/texture.cpp:82,0,14,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,14,14,,,,,
 0x006252C0,sub_6252c0,src/leaf_recoveries.cpp:575,0,30,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,30,30,,,,,
-0x006252E0,??0ImageButton@@QAE@XZ,src/leaf_recoveries.cpp:1173,0,38,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006252e0.cpp(61) : error C2065: 'base_button_construct_redirect' : undeclared identifier
+0x006252E0,??0ImageButton@@QAE@XZ,src/leaf_recoveries.cpp:1183,0,38,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006252e0.cpp(61) : error C2065: 'base_button_construct_redirect' : undeclared identifier
 c006252e0.cpp(63) : error C2065: 'store32' : undeclared identifier
 c006252e0.cpp(63) : error C2065: 'ImageButtonPrimaryVtable' : undeclared identifier
 c006252e0.cpp(64) : error C2065: 'ImageButtonBufferVtable' : undeclared identifier"
 0x00625310,??1ImageButton@@QAE@XZ,,0,21,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,21,21,,,,,
-0x00625330,?close@ImageButton@@QAEXXZ,src/leaf_recoveries.cpp:1196,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00625330.cpp(49) : error C2065: 'store32' : undeclared identifier
+0x00625330,?close@ImageButton@@QAEXXZ,src/leaf_recoveries.cpp:1206,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00625330.cpp(49) : error C2065: 'store32' : undeclared identifier
 c00625330.cpp(50) : error C2065: 'base_button_close_redirect' : undeclared identifier
 c00625330.cpp(50) : error C2061: syntax error : identifier 'BaseButton'"
-0x00625340,?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z,src/leaf_recoveries.cpp:1217,0,58,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00625340.cpp(59) : error C2065: 'store32' : undeclared identifier
+0x00625340,?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z,src/leaf_recoveries.cpp:1227,0,58,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00625340.cpp(59) : error C2065: 'store32' : undeclared identifier
 c00625340.cpp(60) : error C2065: 'base_button_init_redirect' : undeclared identifier"
 0x00625380,sub_625380,,0,70,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,70,5,26,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x006256D0,??_GImageButton@@UAEPAXI@Z,src/deleting_thunks.cpp:1719,1,30,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006256d0.cpp(70) : error C2065: 'ImageButtonDtorTarget' : undeclared identifier
@@ -16954,7 +16954,7 @@ v0063c340_0.cpp(49) : error C2629: unexpected 'void ('
 0x0063C9C0,nullsub_266,src/nullsub_thunks.cpp:599,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0063CEF0,sub_63cef0,src/guarded_teardowns.cpp:464,0,10,,REFUSED,,,,,,,extract failed: src/guarded_teardowns.cpp:464: no closing brace within the file
 0x0063CF00,deflateInit_,,0,37,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,37,3,15,2,0,#0: original 'mov' vs rebuilt 'xor',
-0x0063D420,sub_63d420,src/leaf_recoveries.cpp:1130,0,47,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0063d420.cpp(40) : error C2065: 'load32' : undeclared identifier
+0x0063D420,sub_63d420,src/leaf_recoveries.cpp:1140,0,47,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0063d420.cpp(40) : error C2065: 'load32' : undeclared identifier
 c0063d420.cpp(46) : error C2065: 'store32' : undeclared identifier"
 0x0063DF40,sub_63df40,,0,68,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,68,3,27,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0063DF90,sub_63df90,,0,77,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,77,3,32,2,0,#0: original 'push' vs rebuilt 'xor',
