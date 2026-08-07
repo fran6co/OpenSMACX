@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -93,6 +94,57 @@ def targeted_rules(note: str) -> str:
         "No fingerprint matched this divergence. Reason from the disassembly.")
 
 
+# Identifiers that carry no meaning: IDA's address-derived placeholders, the
+# emitter's own, and the decompiler's positional argument names. A body full of
+# these compiles identically to a body that says what it means, so the compiler
+# will never ask for better ones - which is exactly why asking has to be part
+# of the task rather than left to whoever reads the diff later.
+PLACEHOLDER = re.compile(
+    r"\b(?:sub_[0-9a-fA-F]{6,}"
+    r"|(?:leaf|nullsub|unknown|j)_[0-9a-fA-F]{4,}\w*"
+    r"|[aA]\d{1,2}|arg_\w+|v\d{1,2}|dword_\w+|off_\w+|unk_\w+"
+    r"|param\d*|result\d*|field_\w+)\b")
+
+
+def placeholders(name: str, body: str) -> list:
+    """The meaningless identifiers in this target, in first-seen order."""
+    seen = []
+    for found in PLACEHOLDER.findall(f"{name}\n{body or ''}"):
+        if found not in seen:
+            seen.append(found)
+    return seen
+
+
+def naming_section(name: str, body: str) -> str:
+    """Ask for better names, but ONLY when there are placeholders to replace.
+
+    An agent that has just read twenty bytes of pointer arithmetic knows more
+    about what a function does than anyone who will look at it later, and that
+    knowledge is thrown away the moment it returns a body still calling things
+    `a1`. But a target whose names are already good does not need the
+    paragraph, and every line here is budget not spent on the match.
+    """
+    found = placeholders(name, body)
+    if not found:
+        return ""
+    return f"""
+# Naming
+
+These identifiers say nothing: {', '.join(f'`{f}`' for f in found[:8])}.
+
+You will understand this function better than its next reader. Propose better
+names for it and for its parameters, derived from what the disassembly and the
+body actually DO - what is being counted, indexed, compared, returned. A name
+you cannot justify from the code is worse than the placeholder, so say
+"unclear" rather than inventing one.
+
+Renaming is FREE with respect to the match: the comparison is over the emitted
+code, and the code does not change when an identifier does. So rename in the
+body you submit, and list the renames separately in your report - the function
+name is catalogue data and gets applied there, not in the body alone.
+"""
+
+
 def brief(address: int) -> str:
     row = ledger_row(address)
     body, location = verifier.committed_body(address)
@@ -121,6 +173,28 @@ Current verdict: {row.get('tier', '?')}{(' - ' + note) if note else ''}
 # What the divergence usually means
 
 {targeted_rules(note)}
+{naming_section(name, body)}
+# The signature is yours to change
+
+Nothing pins it. The scaffolding does NOT declare this function, and the
+comparison is over the object's CODE rather than a symbol lookup, so a
+different return type, convention or parameter list still scores. Change it
+when the DISASSEMBLY contradicts the current one:
+
+- reads `[ecx+N]` with no stack access -> the receiver is `this`, so this is a
+  `__thiscall` member and needs a class in your unit to say so
+- `ret N` with N != 0 -> a callee-pop convention, `__stdcall` or `__thiscall`
+- sets `eax` before returning where the signature says `void` -> it returns
+
+Measured, so you do not repeat it: on 0x005E3630 rewriting the fake-thiscall
+`__fastcall(void *self, void *)` as a real `__thiscall` member changed NOT ONE
+BYTE. Change the signature on evidence from the disassembly, never on style.
+
+A changed signature is a proposal about the CATALOGUE, which owns the mangled
+name and the declaration every caller sees - so report it as its own item. A
+byte-exact body whose signature silently disagrees with the catalogue cannot
+land: it fails on `C2371`/`C2556` at integration, which is how an earlier
+return-type change turned MISMATCH into NO_COMPILE.
 
 # Your loop
 
@@ -137,8 +211,8 @@ Iterate until exit 0, or until you can say what you ruled out.
 
 # Rules
 
-- Submit the COMPLETE definition, same signature as the body above, nothing
-  else. The scaffolding supplies every declaration.
+- Submit the COMPLETE definition and nothing else. The scaffolding supplies
+  every declaration except a class you introduce to express `__thiscall`.
 - No `__asm`, no `_emit`. The verifier refuses them before compiling: pasting
   the original's instructions proves nothing about the source, and
   AGENTS.md:5 bars copied machine code from distributable builds.
@@ -148,9 +222,16 @@ Iterate until exit 0, or until you can say what you ruled out.
 
 # Report
 
-The final body in one ```cpp block, the verdict line the tool printed, and one
-sentence on what the source-form change was. If you cannot reach BYTE_EXACT,
-say what you ruled out - that is a result, not a failure.
+Four items, each labelled, and omit the ones that do not apply:
+
+1. BODY - the final definition in one ```cpp block.
+2. VERDICT - the line the tool printed, verbatim. Not your reading of it.
+3. CHANGE - one sentence on what the source-form change was. If you did not
+   reach BYTE_EXACT, what you RULED OUT instead; that is a result, not a
+   failure, and it stops the next agent paying for it again.
+4. PROPOSALS - signature changes and renames, as `old -> new` with the
+   evidence for each. These are catalogue edits and are applied separately
+   from the body, so they are useless buried in prose.
 """
 
 
