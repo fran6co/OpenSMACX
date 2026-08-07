@@ -74,7 +74,7 @@ Return Value: the resulting position, which is also left at 0x38
 Status: Complete
 */
 uint32_t SpriteBox::id_to_pos(int id) {
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     uint32_t *const head = reinterpret_cast<uint32_t *>(self + 0x2C);
     uint32_t *const cursor = reinterpret_cast<uint32_t *>(self + 0x30);
     int32_t *const count = reinterpret_cast<int32_t *>(self + 0x34);
@@ -90,7 +90,7 @@ uint32_t SpriteBox::id_to_pos(int id) {
     }
     int32_t examined = 0;
     for (;;) {
-        auto *const entry = reinterpret_cast<const uint8_t *>(*cursor);
+        const uint8_t *const entry = reinterpret_cast<const uint8_t *>(*cursor);
         if (*reinterpret_cast<const int32_t *>(entry + 4) == id) {
             break;
         }

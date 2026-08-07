@@ -58,7 +58,7 @@ Return Value: n/a
 Status: Complete
 */
 Caviar::Caviar() {
-    auto *bytes = reinterpret_cast<uint8_t *>(this);
+    uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
     memset(bytes + 0x74C, 0, sizeof(CaviarData) * 200);
     const uint32_t distance_limit = 0x461C4000;
     const uint32_t default_scene_scale = 0x3F2AAAAB;
@@ -76,7 +76,7 @@ Status: Complete
 */
 void Caviar::set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix) {
     if (camera && matrix) {
-        auto *bytes = reinterpret_cast<uint8_t *>(this);
+        uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
         memcpy(bytes + 0xA5, camera, sizeof(*camera));
         memcpy(bytes + 0xB1, matrix, sizeof(*matrix));
     }

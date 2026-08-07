@@ -251,7 +251,7 @@ Return Value: n/a
 Status: Complete
 */
 void DiploWin::UNK3(int a1) {
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     *reinterpret_cast<int32_t *>(self + 0xA1C + a1 * 4) = 0;
     int32_t *const pair = reinterpret_cast<int32_t *>(self + 0xA24);
     pair[0] = 0;

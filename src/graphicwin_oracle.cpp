@@ -25,7 +25,7 @@
 
 namespace {
 
-using GraphicWinFixture = runtime_oracle::Fixture<GraphicWin>;
+typedef runtime_oracle::Fixture<GraphicWin> GraphicWinFixture;
 
 constexpr size_t VtableOffsets[] = {0};
 const runtime_oracle::ClassSpec GraphicWinSpec = {
@@ -86,13 +86,13 @@ void prepare_fixture(GraphicWinFixture &fixture, uintptr_t *win_vtable,
 }
 
 bool verify_close() {
-    uintptr_t win_vtable[3] = {};
+    uintptr_t win_vtable[3] = {0};
     win_vtable[2] = reinterpret_cast<uintptr_t>(&runtime_oracle::probe);
     uintptr_t release_vtable[] = {
         reinterpret_cast<uintptr_t>(&recording_release),
     };
     FakeReleaseObject release_object = {release_vtable};
-    auto original = reinterpret_cast<OriginalNoArg>(0x005D4E40U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005D4E40U);
 
     for (int owns_release_target = 0; owns_release_target < 2;
          ++owns_release_target) {
@@ -110,7 +110,7 @@ bool verify_close() {
         ReleaseFlags = 0;
         runtime_oracle::begin_trace(
             legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-        const uint32_t legacy_result = original(legacy.object());
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
         const runtime_oracle::Trace legacy_trace =
             runtime_oracle::current_trace();
         const int legacy_release_calls = ReleaseCalls;

@@ -93,7 +93,7 @@ uint32_t call_noarg_virtual(void *self, size_t slot) {
     const uint32_t target_bits = read_volatile_bits(
         reinterpret_cast<const void *>(static_cast<uintptr_t>(vtable_bits)),
         slot);
-    return (ORIGINAL(self)->*original_method<func_noarg_virtual>(reinterpret_cast<unsigned long>(static_cast<uintptr_t>(target_bits))))();
+    return (ORIGINAL(self)->*original_method<func_noarg_virtual>(static_cast<unsigned long>(static_cast<uintptr_t>(target_bits))))();
 }
 
 void set_sprite_triplet(void *object, Sprite *volatile *primary,
@@ -523,7 +523,7 @@ statements earlier, so off-by-small-constant offset mutants read the same
 zeros.
 */
 void Scroll::compute_thumb_rect(RECT *rect) {
-    auto *thumb = reinterpret_cast<uint8_t *>(this) + 0xA4C;
+    uint8_t *thumb = reinterpret_cast<uint8_t *>(this) + 0xA4C;
     for (size_t offset = 0; offset < sizeof(RECT); offset += sizeof(uint32_t)) {
         write_bits(rect, offset, read_bits(thumb, offset));
     }

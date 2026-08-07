@@ -523,10 +523,15 @@ DLLEXPORT uint32_t __cdecl defense_value(uint32_t faction_id, uint32_t x, uint32
 DLLEXPORT uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native);
 DLLEXPORT int __cdecl psi_factor(int combat_ratio, uint32_t faction_id, BOOL is_attack,
                                  BOOL is_fungal_twr);
-DLLEXPORT int __cdecl get_basic_offense(uint32_t veh_id_atk, int veh_id_def, 
-                                        uint32_t psi_combat_type, BOOL is_bombard, BOOL unk_tgl);
-DLLEXPORT int __cdecl get_basic_defense(uint32_t veh_id_def, int veh_id_atk, 
-                                        uint32_t psi_combat_type, BOOL is_bombard);
+// `int` throughout, per the catalogue: the original exports these as
+// `?get_basic_offense@@YAHHHHHH@Z` and `?get_basic_defense@@YAHHHHH@Z`, all
+// `H`. The `uint32_t` parameters here decorated to `I` and made each of these
+// a second overload alongside the catalogued definition in veh.cpp, which is
+// what the C2666 ambiguities at every call site were.
+DLLEXPORT int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def,
+                                        int psi_combat_type, BOOL is_bombard, BOOL unk_tgl);
+DLLEXPORT int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk,
+                                        int psi_combat_type, BOOL is_bombard);
 DLLEXPORT void __cdecl battle_init();
 DLLEXPORT void __cdecl add_bat(int type, int modifier, LPCSTR display_str);
 DLLEXPORT void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, 

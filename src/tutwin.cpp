@@ -239,7 +239,7 @@ void TutWin::do_base(RECT *rect, const char *text, int flag) {
     TutWinBaseWindow->client_to_screen(&x, &y);
 
     void *window = nullptr;
-    auto *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
+    uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
     if (primary != nullptr) {
         // The virtual-base displacement lives at offset 4 of the object's
         // vbtable, which is the dword at offset 0.
@@ -283,7 +283,7 @@ void TutWin::do_iface(RECT *rect, const char *text, int flag) {
     TutWinIfaceWindow->client_to_screen(&x, &y);
 
     void *window = nullptr;
-    auto *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
+    uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
     if (primary != nullptr) {
         // The virtual-base displacement lives at offset 4 of the object's
         // vbtable, which is the dword at offset 0.
@@ -327,7 +327,7 @@ void TutWin::do_soc(RECT *rect, const char *text, int flag) {
     TutWinSocWindow->client_to_screen(&x, &y);
 
     void *window = nullptr;
-    auto *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
+    uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
     if (primary != nullptr) {
         // The virtual-base displacement lives at offset 4 of the object's
         // vbtable, which is the dword at offset 0.
@@ -371,7 +371,7 @@ void TutWin::do_des(RECT *rect, const char *text, int flag) {
     TutWinDesWindow->client_to_screen(&x, &y);
 
     void *window = nullptr;
-    auto *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
+    uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
     if (primary != nullptr) {
         // The virtual-base displacement lives at offset 4 of the object's
         // vbtable, which is the dword at offset 0.

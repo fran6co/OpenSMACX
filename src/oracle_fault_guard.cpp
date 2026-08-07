@@ -20,6 +20,16 @@
 
 #include <cstdio>
 
+// Vectored exception handling shipped with Windows XP and VC6's Platform SDK
+// predates it, so the entry point is present in every kernel32 this runs
+// against - wine's included - but declared in none of its headers. Declared
+// here rather than in vc6_compat.h because that header is included before
+// <windows.h> and LONG and EXCEPTION_POINTERS do not exist yet at that point.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+extern "C" __declspec(dllimport) PVOID WINAPI AddVectoredExceptionHandler(
+    ULONG First, LONG(CALLBACK *Handler)(EXCEPTION_POINTERS *));
+#endif
+
 namespace oracle_fault_guard {
 namespace {
 
@@ -76,6 +86,23 @@ extern "C" void oracle_fault_guard_escape(void) {
 // msvcrt's longjmp calls _global_unwind2, which walks the SEH chain back to the
 // setjmp frame and pops exactly those registrations - which is the work a %fs:0
 // restore would be trying to shortcut, done correctly.
+//
+// Two spellings of the same three instructions. GCC's top-level `asm` is
+// AT&T and needs the leading underscore written out; MSVC has no top-level
+// `asm` at all - `C2290: C++ 'asm' syntax ignored` - and wants a naked
+// function with an Intel-syntax body, where the decoration is the compiler's
+// job. This is scaffolding, not a recovered body: nothing here is copied from
+// the original image, so the bar on inline assembly in recovered code does
+// not apply.
+#if defined(_MSC_VER)
+extern "C" __declspec(naked) void oracle_fault_guard_thunk(void) {
+    __asm {
+        cld
+        call oracle_fault_guard_escape
+        hlt
+    }
+}
+#else
 asm(
 ".text\n"
 ".globl _oracle_fault_guard_thunk\n"
@@ -86,6 +113,7 @@ asm(
 );
 
 extern "C" void oracle_fault_guard_thunk(void);
+#endif
 
 namespace {
 

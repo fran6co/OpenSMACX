@@ -45,7 +45,7 @@ struct ProbeContext {
     runtime_oracle::Trace trace;
 };
 
-ProbeContext Context = {};
+ProbeContext Context = {0};
 void **WatchedGlobal = nullptr;
 
 const runtime_oracle::Suite Suites[] = {
@@ -173,7 +173,9 @@ bool run_runtime_oracles() {
     char report[ReportSize] = "";
     size_t used = 0;
     bool all_passed = true;
-    for (const runtime_oracle::Suite &suite : Suites) {
+    for (size_t suite_index = 0;
+         suite_index < sizeof(Suites) / sizeof(Suites[0]); ++suite_index) {
+        const runtime_oracle::Suite &suite = Suites[suite_index];
         const bool suite_passed = suite.run();
         all_passed = all_passed && suite_passed;
         const int written = _snprintf_s(
@@ -267,7 +269,10 @@ void run_deferred_oracles() {
         }
         report[used++] = *cursor;
     }
-    for (const runtime_oracle::Suite &suite : DeferredSuites) {
+    for (size_t suite_index = 0;
+         suite_index < sizeof(DeferredSuites) / sizeof(DeferredSuites[0]);
+         ++suite_index) {
+        const runtime_oracle::Suite &suite = DeferredSuites[suite_index];
         const bool suite_passed = suite.run();
         all_passed = all_passed && suite_passed;
         const int written = _snprintf_s(

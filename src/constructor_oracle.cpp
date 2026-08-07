@@ -171,8 +171,9 @@ bool verify_constructor(
     runtime_oracle::Fixture<T> legacy;
     runtime_oracle::Fixture<T> source;
     initialize(legacy, source);
-    const uint32_t legacy_result =
-        (ORIGINAL(legacy.object())->*original_method<OriginalConstructor>(reinterpret_cast<unsigned long>(address)))();
+    const OriginalConstructor original =
+        original_method<OriginalConstructor>(address);
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const uint32_t source_result = reinterpret_cast<uintptr_t>(
         source_construct(source.object(), nullptr));
     return equivalent_constructor(
@@ -180,9 +181,14 @@ bool verify_constructor(
 }
 
 bool verify_palette() {
-    auto original = reinterpret_cast<OriginalPaletteGet>(PaletteGetAddress);
+    OriginalPaletteGet original = original_method<OriginalPaletteGet>(PaletteGetAddress);
     bool passed = true;
-    for (int initialized : {0, 1}) {
+    int initialized_cases[] = {0, 1};
+    for (size_t initialized_index = 0;
+         initialized_index
+             < sizeof(initialized_cases) / sizeof(initialized_cases[0]);
+         ++initialized_index) {
+        int initialized = initialized_cases[initialized_index];
         *PaletteInitialized = initialized;
         runtime_oracle::Fixture<Palette> legacy;
         runtime_oracle::Fixture<Palette> source;
@@ -196,7 +202,7 @@ bool verify_palette() {
         RGBQUAD *const source_quads =
             reinterpret_cast<RGBQUAD *>(source_output + 16);
         const uint32_t legacy_result =
-            original(legacy.object(), legacy_quads, 3, 5);
+            (ORIGINAL(legacy.object())->*original)(legacy_quads, 3, 5);
         const uint32_t source_result = palette_get_rgbquad_redirect(
             source.object(), nullptr, source_quads, 3, 5);
         passed = passed
@@ -216,7 +222,7 @@ bool verify_palette() {
     RGBQUAD *const source_alias =
         reinterpret_cast<RGBQUAD *>(source.object());
     const uint32_t legacy_result =
-        original(legacy.object(), legacy_alias, 0, 4);
+        (ORIGINAL(legacy.object())->*original)(legacy_alias, 0, 4);
     const uint32_t source_result = palette_get_rgbquad_redirect(
         source.object(), nullptr, source_alias, 0, 4);
     return passed
@@ -229,7 +235,9 @@ bool verify_buffer_cases(Palette *palette) {
     bool passed = true;
     struct Case { Palette *palette; int initialized; };
     const Case cases[] = {{nullptr, 0}, {palette, 0}, {palette, 1}};
-    for (const Case &test : cases) {
+    for (size_t test_index = 0;
+         test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
+        const Case &test = cases[test_index];
         *BufferPalette = test.palette;
         *PaletteInitialized = test.initialized;
         passed = passed && verify_constructor<Buffer>(

@@ -77,7 +77,7 @@ bool run_spying_oracle_suite() {
     // A pure read over original-image tables: both sides observe identical
     // globals, so every branch is compared by driving the two selector globals
     // across their interesting values and sweeping the subject index.
-    auto original = reinterpret_cast<OriginalSpying>(0x0055BC00U);
+    OriginalSpying original = reinterpret_cast<OriginalSpying>(0x0055BC00U);
     const int saved_base = *SpyingBaseIndex;
     const int saved_observer = *SpyingObserverFaction;
     const int saved_faction = *SpyingCurrentFaction;
@@ -113,8 +113,14 @@ bool run_spying_oracle_suite() {
     for (int faction = 0; faction < 8 && passed; ++faction) {
         *SpyingCurrentFaction = faction;
         const int observers[] = {faction, faction + 1, -1};
-        for (int base_index : base_indices) {
-            for (int observer : observers) {
+        for (size_t base_index_index = 0;
+             base_index_index < sizeof(base_indices) / sizeof(base_indices[0]);
+             ++base_index_index) {
+            int base_index = base_indices[base_index_index];
+            for (size_t observer_index = 0;
+                 observer_index < sizeof(observers) / sizeof(observers[0]);
+                 ++observer_index) {
+                int observer = observers[observer_index];
                 *SpyingBaseIndex = base_index;
                 *SpyingObserverFaction = observer;
                 for (int subject = 0; subject < 8 && passed; ++subject) {
