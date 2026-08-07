@@ -104,6 +104,7 @@ import json
 import os
 import shutil
 import struct
+import concurrent.futures
 import subprocess
 import sys
 import tempfile
@@ -801,13 +802,46 @@ def compile_batch(units: dict, work: Path, flags: str) -> dict:
     done = subprocess.run(["wine", str(VC6_CL), "/nologo", "@cl.rsp"],
                           cwd=work, env=wine_environment(),
                           capture_output=True, text=True)
-    compile_batch.diagnostics = batch_diagnostics(
-        done.stdout + done.stderr, units)
+    # RETURNED, not stashed on the function. This used to be
+    # `compile_batch.diagnostics = ...`, a single slot on a module-level
+    # object, which is exactly one shared mutable cell - fine while the only
+    # caller was a serial loop and a race the moment batches run at once.
+    diagnostics = batch_diagnostics(done.stdout + done.stderr, units)
     out = {}
     for stem in units:
         obj = work / f"{stem}.obj"
         out[stem] = obj.read_bytes() if obj.is_file() else None
-    return out
+    return out, diagnostics
+
+
+def compile_batches(chunks: list, flags: str, workers: int = 0) -> list:
+    """Compile several batches CONCURRENTLY, one directory each.
+
+    `compile_batch` already buys 21.6x by putting many units through a single
+    response file. What it does not do is use the other fifteen cores: the
+    census compiled ~13 chunks per flag set strictly one after another, which
+    is most of why a full census took 12 to 19 minutes.
+
+    EACH BATCH NEEDS ITS OWN DIRECTORY. cl writes `<stem>.obj` and reads
+    `cl.rsp` from the working directory, so two batches sharing one would
+    overwrite each other's response file and read each other's objects. That
+    is the whole reason this is not simply a thread pool over the old loop.
+
+    Nothing about a verdict changes. The objects are byte-identical to the
+    serial ones - `compile_batch`'s own docstring records that they differ
+    from isolated compiles only in COFF byte 4, the timestamp - and no batch
+    can see another's files.
+    """
+    workers = workers or min(8, (os.cpu_count() or 2))
+
+    def one(chunk):
+        with tempfile.TemporaryDirectory() as tmp:
+            return compile_batch(chunk, Path(tmp), flags)
+
+    if len(chunks) < 2 or workers < 2:
+        return [one(chunk) for chunk in chunks]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(one, chunks))
 
 
 def batch_diagnostics(output: str, units: dict) -> dict:
