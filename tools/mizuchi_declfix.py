@@ -60,6 +60,17 @@ CRT_SIGNATURES = {
     "_rand": "int _rand()",
     "_srand": "void _srand(unsigned int)",
     "_abs": "int _abs(int)",
+    # The low-level IO trio. These are not `?`-mangled and appear in no
+    # prototype source, so nothing could decode their arity and the emitter
+    # declared them NULLARY. A body that calls one then fails `C2660: does not
+    # take 3 parameters`, and declaring it in the body instead fails `C2733:
+    # second C linkage of overloaded function` - so the function is
+    # unreachable for a reason that has nothing to do with its own bytes.
+    # `Caviar::vx_read` and `Caviar::vx_write` are thin forwarders onto these
+    # and were blocked on exactly this.
+    "_read": "int _read(int, void *, unsigned int)",
+    "_write": "int _write(int, const void *, unsigned int)",
+    "_close": "int _close(int)",
 }
 
 

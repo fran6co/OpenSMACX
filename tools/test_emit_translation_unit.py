@@ -606,3 +606,35 @@ class DeclaredBeforeTests(unittest.TestCase):
 
     def test_nothing_emitted_yet_declares_nothing(self):
         self.assertEqual(set(), tool.declared_before([]))
+
+
+class CrtDeclarationTests(unittest.TestCase):
+    """A CRT callee is declared with its real arity, under the name in use.
+
+    `CRT_SIGNATURES` is keyed by the DECORATED name because that is what the
+    image's import carries, and the emitter prints the undecorated one. A
+    lookup on the printed name therefore missed every underscored entry, and
+    the miss is not benign: the callee stays declared nullary, a body calling
+    it properly fails `C2660: does not take N parameters`, and a body
+    declaring it instead fails `C2733: second C linkage`. An agent hit this on
+    `StringList::kill_entry` and routed around it by casting `&free` through a
+    function-pointer type - byte-exact, and unreadable for no reason.
+    """
+
+    def test_an_undecorated_call_finds_the_decorated_entry(self):
+        self.assertEqual("void free(void *)", tool.crt_declaration("free"))
+
+    def test_the_name_is_rewritten_to_the_one_being_called(self):
+        """Declaring `_free` does not declare the `free` the call site names."""
+        self.assertNotIn("_free", tool.crt_declaration("free"))
+
+    def test_a_decorated_call_keeps_its_own_spelling(self):
+        self.assertEqual("int _read(int, void *, unsigned int)",
+                         tool.crt_declaration("_read"))
+
+    def test_a_pointer_return_survives_the_rewrite(self):
+        self.assertEqual("void *malloc(unsigned int)",
+                         tool.crt_declaration("malloc"))
+
+    def test_an_unknown_name_yields_nothing(self):
+        self.assertEqual("", tool.crt_declaration("not_a_crt_function"))
