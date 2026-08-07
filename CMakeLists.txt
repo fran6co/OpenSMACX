@@ -1150,6 +1150,12 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(source-location-tests
                                    test_repair_source_locations.py)
 
+    # Fails if a build artefact is ever scored for a row `src/` owns. Four
+    # stale units resurrected NO_COMPILE rows as BYTE_EXACT and put them in
+    # the ratchet floor.
+    opensmacx_add_python_tool_test(collect-ownership-tests
+                                   test_collect_ownership.py)
+
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
 

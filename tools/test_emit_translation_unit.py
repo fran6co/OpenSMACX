@@ -638,3 +638,57 @@ class CrtDeclarationTests(unittest.TestCase):
 
     def test_an_unknown_name_yields_nothing(self):
         self.assertEqual("", tool.crt_declaration("not_a_crt_function"))
+
+
+class OverloadDeclarationTests(unittest.TestCase):
+    """A same-named OVERLOAD is a different function and must stay declared.
+
+    The class body skips the subject, whose declaration comes with its
+    definition. It compared bare NAMES to do that, so every overload sharing
+    the subject's name vanished too - 98 (class, method) pairs in the
+    catalogue have more than one, covering 252 functions.
+
+    The failure is badly disguised: a body calling its own sibling overload
+    gets `C2660`, which reads as a wrong argument list rather than a missing
+    declaration. `Buffer::wrap_height_flying(char *, int)` delegates to
+    `wrap_height_flying(char *)` and had to route around it by casting `this`
+    to an unrelated same-layout class.
+    """
+
+    def entry(self, method, params, kind="method", returns="int"):
+        row = {"address": "0x00401000",
+               "name": f"?{method}@C@@QAEH{'H' * len(params)}@Z",
+               "prototype": f"int (__thiscall ?{method}@C@@QAEH@Z)"
+                            f"(C* this{''.join(', ' + p for p in params)})",
+               "size": "16", "body_ranges": "0x00401000-0x00401010",
+               "recovery_state": "unrecovered"}
+        signature = tool.Signature(row, {})
+        signature.params = list(params)
+        signature.kind = kind
+        signature.method = method
+        signature.returns = returns
+        return signature
+
+    def test_an_overload_is_not_the_subject(self):
+        subject = self.entry("init", ["int"])
+        sibling = self.entry("init", ["int", "int"])
+        same = (sibling.method == subject.method
+                and sibling.params == subject.params
+                and sibling.kind == subject.kind)
+        self.assertFalse(same, "differing parameters make it another function")
+
+    def test_the_subject_itself_still_matches(self):
+        subject = self.entry("init", ["int"])
+        twin = self.entry("init", ["int"])
+        same = (twin.method == subject.method
+                and twin.params == subject.params
+                and twin.kind == subject.kind)
+        self.assertTrue(same, "the subject must still be skipped")
+
+    def test_a_ctor_and_a_method_of_one_name_are_distinct(self):
+        subject = self.entry("C", [], kind="ctor")
+        method = self.entry("C", [], kind="method")
+        same = (method.method == subject.method
+                and method.params == subject.params
+                and method.kind == subject.kind)
+        self.assertFalse(same)

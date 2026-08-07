@@ -1275,7 +1275,20 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
             lines.append("")
         seen = set()
         for entry in own:
-            if entry.method == signature.method:
+            # Skip the SUBJECT, whose declaration is written below with its
+            # definition - but skip only the subject. Comparing bare names
+            # dropped every same-name OVERLOAD too, and an overload is a
+            # different function: 98 (class, method) pairs in the catalogue
+            # have more than one, covering 252 functions, and each of them
+            # disappeared from the class body whenever a sibling was the
+            # subject. A body calling that sibling then cannot compile, and
+            # the failure looks like a bad body rather than a missing
+            # declaration - `Buffer::wrap_height_flying` delegates to its own
+            # one-argument overload and had to route around it through an
+            # unrelated same-layout class.
+            if (entry.method == signature.method
+                    and entry.params == signature.params
+                    and entry.kind == signature.kind):
                 continue
             text = (f"    {entry.returns} {entry.member_convention()}"
                     f"{entry.method}({', '.join(entry.params)});")
