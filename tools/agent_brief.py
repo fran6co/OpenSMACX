@@ -260,6 +260,24 @@ Exit 0 means BYTE_EXACT. Anything else prints the first differing mnemonic and
 its index, and refuses a candidate that is WORSE than what is committed.
 Iterate until exit 0, or until you can say what you ruled out.
 
+# Already measured - do not re-derive
+
+STOP if your only remaining divergence is one of these. The first alone cost
+three agents most of their budget, separately.
+
+- a constant held in its OWN register across a guard test
+  (`mov al,1; test al,cl; or cl,al`) - VC6 folds it to an immediate instead
+- the order inside a `rep stosd` setup - VC6 emits the count first
+- a bare x87 opcode (`fnclex`) with no preceding `call` - it was inlined
+- no sibling `jmp` for an indirect thiscall dispatch; VC6 emits `call; ret N`
+- a span excluding its own `ret` - a `/Gy` fold onto another function, which
+  no per-function compile reproduces. Check whether the branch target is the
+  ENTRY of another catalogued symbol.
+
+Worth trying: parameter reads exactly 4 too high are the FRAME POINTER, not a
+missing `this`; `switch (x) {{ case 1: }}` gives `dec eax; jne` where
+`if (x == 1)` gives `cmp [ebp+8],1`.
+
 # Rules
 
 - Submit the COMPLETE definition and nothing else. The scaffolding supplies
