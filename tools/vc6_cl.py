@@ -47,10 +47,22 @@ def windows_path(text: str) -> str:
     return text
 
 
+# Options CMake glues an absolute path straight onto. `/FI`, `/Yc` and `/Yu`
+# are the precompiled-header trio; without them the path went through
+# untranslated, VC6 read its leading `/` as the start of another option, and
+# the build stopped on `D2004: '/FI' requires an argument` at the very first
+# object.
+PATH_PREFIXES = ("/Fo", "/Fe", "/Fd", "/Fp", "/Fa", "/FI", "/Yc", "/Yu",
+                 "/I", "/OUT:", "/out:", "/IMPLIB:", "/PDB:", "/LIBPATH:")
+
+
 def translate(argument: str) -> str:
     """Translate a bare path, or the path inside `/Fo<path>` and friends."""
-    for prefix in ("/Fo", "/Fe", "/Fd", "/Fp", "/Fa", "/I", "/OUT:", "/out:",
-                   "/IMPLIB:", "/PDB:", "/LIBPATH:"):
+    # LONGEST FIRST. `/I` is a prefix of `/IMPLIB:`, so in source order it
+    # matched first and handed `MPLIB:/tmp/...` to the translator, which sees
+    # no leading slash and passes it through - the import library path reached
+    # LINK untranslated every time.
+    for prefix in sorted(PATH_PREFIXES, key=len, reverse=True):
         if argument.startswith(prefix):
             return prefix + windows_path(argument[len(prefix):])
     if argument.startswith("@"):
