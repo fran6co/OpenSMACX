@@ -112,3 +112,12 @@ void BattleWin::on_iface_selected(int, int) {
 void __fastcall battle_win_on_iface_selected_redirect(BattleWin *self, void *, int a1, int a2) {
     self->on_iface_selected(a1, a2);
 }
+
+/*
+Original Offset: 00422DC0
+Status: Complete
+*/
+void BattleWin::on_iface_button_clicked(int a1) {
+    reinterpret_cast<SubInterface*>(this)->release_iface_mode();
+    reinterpret_cast<MainInterface*>(0x7af234)->on_iface_button_clicked(a1);
+}

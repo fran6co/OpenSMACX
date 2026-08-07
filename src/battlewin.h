@@ -30,6 +30,7 @@
 */
 class DLLEXPORT BattleWin {
  public:
+  void on_iface_button_clicked(int a1);
   BattleWin() { ; }
   ~BattleWin();
   void on_iface_left_click(int a1, int a2);

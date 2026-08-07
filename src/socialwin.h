@@ -34,6 +34,7 @@
   */
 class DLLEXPORT SocialWin : GraphicWin {
  public:
+  void hide();
   void show(int a1);
   SocialWin() { ; }
   ~SocialWin() { ; }

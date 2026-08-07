@@ -39,6 +39,8 @@ class DLLEXPORT Win {
   friend class BaseButton;
 
  public:
+  void on_mousewheel_up_vert(int a1);
+  void on_mousewheel_down_horz(int a1);
   int get_lbutton_state();
   void on_mousewheel_up_horz(int a1);
   void on_mousewheel_down_vert(int a1);
