@@ -195,6 +195,52 @@ def declare_in_header(header: Path, declaration: str, klass: str) -> str:
     return text
 
 
+SCAFFOLDING_INCLUDES = (
+    # name the body may use -> the header in `src/` that declares it
+    ("VCall", "vtable_shim.h"),
+)
+
+
+def required_includes(body: str, target: Path) -> list:
+    """Headers this body needs that the target does not already pull in.
+
+    This exists because integration is the ONE step where verification cannot
+    see the mistake. `verify()` compiles the body against the emitter's
+    scaffolding, and the scaffolding declares `VCall` itself - so a body that
+    lands in `src/` without the include verifies BYTE_EXACT and breaks the
+    build at the same time. That is not hypothetical: eight compiled files
+    referenced a `VCall` that did not exist after the first integration pass,
+    and the ratchet stayed green through all of it.
+
+    Matching on the bare identifier is deliberately loose. A false positive
+    costs one unused `#include`; a false negative costs a broken build that
+    nothing downstream will report.
+    """
+    text = target.read_text()
+    wanted = []
+    for name, header in SCAFFOLDING_INCLUDES:
+        if not re.search(rf"\b{re.escape(name)}\b", body):
+            continue
+        if re.search(rf'^\s*#\s*include\s*"{re.escape(header)}"', text, re.M):
+            continue
+        wanted.append(header)
+    return wanted
+
+
+def add_includes(target: Path, headers: list) -> str:
+    """Insert after the last existing `#include`, and return the old text."""
+    text = target.read_text()
+    last = None
+    for match in re.finditer(r'^\s*#\s*include\s*[<"].*$', text, re.M):
+        last = match
+    if last is None:
+        raise Refused(f"{target.name} has no #include to insert after")
+    block = "".join(f'\n#include "{header}"' for header in headers)
+    writeback.write_atomically(target, text[:last.end()] + block
+                               + text[last.end():])
+    return text
+
+
 def set_source_location(address: int, location: str) -> None:
     """Point this row at its new home, in `functions.csv`."""
     import csv
@@ -234,9 +280,20 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
     offset = catalogue_line(text)
 
     original = target.read_text()
-    appended = original.rstrip("\n") + "\n\n" + text.strip() + "\n"
+
+    # Includes go in FIRST and are then treated as part of the file the body
+    # is appended to. Adding them afterwards would insert lines ABOVE the
+    # definition and silently move it, leaving `source_locations` pointing a
+    # line or two short - and `census.extract_body` reads that line, so the
+    # row would stop being scored against its own body.
+    needed = required_includes(text, target)
+    if needed:
+        add_includes(target, needed)
+    base = target.read_text()
+
+    appended = base.rstrip("\n") + "\n\n" + text.strip() + "\n"
     relative = str(target.relative_to(REPO_ROOT))
-    line = len(original.rstrip("\n").splitlines()) + 2 + offset - 1
+    line = len(base.rstrip("\n").splitlines()) + 2 + offset - 1
     location = f"{relative}:{line}"
 
     header, declaration = declaration_for(text)
@@ -269,7 +326,8 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
         stored.unlink()                    # the store was staging; it landed
     return {"address": f"0x{address:08X}", "name": row.get("name", ""),
             "source_location": location, "removed_from_store": body is None,
-            "declared_in": header.name if header is not None else ""}
+            "declared_in": header.name if header is not None else "",
+            "includes_added": needed}
 
 
 def main(argv=None) -> int:
