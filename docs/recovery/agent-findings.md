@@ -587,3 +587,41 @@ WHAT TO TAKE FROM IT: when a measurement disagrees with itself across runs,
 the first hypothesis should be that the two runs measured different things -
 not that one of them is stale. Staleness was the more interesting story and it
 was wrong twice.
+
+## The enclosing object has a field at +0xF0, and three subobject offsets
+
+The `on_mouse_leave` family gives the enclosing-object fact that the
+`on_dialog_focus` family could not:
+
+    class        subobject   field written   sum
+    ListBox        -0x48        +0xA8        0xF0
+    RadioButton    -0x18        +0xD8        0xF0
+    CheckBox       -0x1C        +0xD4        0xF0
+
+`this + write_offset` is `enclosing + 0xF0` in all three, so ONE enclosing
+class holds a field at +0xF0 and these are subobjects at +0x48, +0x18 and
++0x1C inside it. CheckBox's -0x1C matches what `on_dialog_focus` showed
+independently, so two different functions on the same class agree.
+
+The descriptor at the negative offset is a vbtable with two live entries:
+`+4` is the delta to the enclosing object's vtable, `+8` the delta used to
+reach the field. Note `+8` is combined with `this` UNCORRECTED while `+4` is
+combined with `this - subobject`, which is why the two look inconsistent until
+the 0xF0 identity is spotted.
+
+WHAT IS STILL MISSING is the enclosing class's NAME and its own size. Three
+offsets into it are known and the sum is fixed, which is enough to say the
+thing exists and is shared, and not enough to declare it.
+
+DECLARING THE HIERARCHY STILL DOES NOT REPRODUCE THE BYTES. Six shapes have
+now been measured against 0x0060FB90. A leading base plus `public virtual
+VBase` reaches SHAPE_EXACT - all six instructions, every register, differing
+only in the displacement - and every attempt to move that displacement makes
+it worse: `Owner : virtual VBase` with a derived class changes `lea` to `add`,
+and putting the class last among several bases diverges at instruction #1,
+`mov` against `call`. So the model is right, the shape is reproducible, and
+the layout that produces -0x1C specifically has not been found.
+
+The casts stay for now. They are byte-exact, the hierarchy is not, and
+declaring a wrong one would change layout and vtable order for every other
+body on these classes.
