@@ -141,7 +141,14 @@ class SelfContainmentTest(unittest.TestCase):
     def test_the_refuted_signature_lever_is_carried(self):
         # Freeing the signature invites rewriting every fake-thiscall as a
         # real one. Measured on 0x005E3630: it changes nothing.
-        self.assertIn("NOT ONE\nBYTE", agent_brief.brief(0x401000))
+        #
+        # Matched with whitespace collapsed. Pinning "NOT ONE\nBYTE" with the
+        # newline inside it pinned where the paragraph HAPPENED to wrap, which
+        # is not the claim being guarded: rewording earlier in the same
+        # sentence failed this test while the fact was still stated, and the
+        # only way to pass was to break the line mid-phrase.
+        text = " ".join(agent_brief.brief(0x401000).split())
+        self.assertIn("NOT ONE BYTE", text)
 
     def test_it_stays_small(self):
         # The whole point. A brief that grows into a manual recreates the

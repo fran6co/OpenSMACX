@@ -237,9 +237,8 @@ when the DISASSEMBLY contradicts the current one:
 - `ret N` with N != 0 -> a callee-pop convention, `__stdcall` or `__thiscall`
 - sets `eax` before returning where the signature says `void` -> it returns
 
-Measured, so you do not repeat it: on 0x005E3630 rewriting the fake-thiscall
-`__fastcall(void *self, void *)` as a real `__thiscall` member changed NOT ONE
-BYTE. Change the signature on evidence from the disassembly, never on style.
+Change it on evidence, never on style: rewriting a fake-thiscall as a real
+`__thiscall` member on 0x005E3630 changed NOT ONE BYTE.
 
 A changed signature is a proposal about the CATALOGUE, which owns the mangled
 name and the declaration every caller sees - so report it as its own item. A
@@ -262,21 +261,23 @@ Iterate until exit 0, or until you can say what you ruled out.
 
 # Already measured - do not re-derive
 
-STOP if your only remaining divergence is one of these. The first alone cost
-three agents most of their budget, separately.
+STOP if your only divergence is one of these. The first cost three agents most
+of their budget, separately.
 
 - a constant held in its OWN register across a guard test
-  (`mov al,1; test al,cl; or cl,al`) - VC6 folds it to an immediate instead
+  (`mov al,1; test al,cl; or cl,al`) - VC6 folds it to an immediate
 - the order inside a `rep stosd` setup - VC6 emits the count first
 - a bare x87 opcode (`fnclex`) with no preceding `call` - it was inlined
 - no sibling `jmp` for an indirect thiscall dispatch; VC6 emits `call; ret N`
-- a span excluding its own `ret` - a `/Gy` fold onto another function, which
-  no per-function compile reproduces. Check whether the branch target is the
-  ENTRY of another catalogued symbol.
+- a span excluding its own `ret` - a `/Gy` fold onto another function. Check
+  whether the branch target is the ENTRY of another catalogued symbol.
 
-Worth trying: parameter reads exactly 4 too high are the FRAME POINTER, not a
-missing `this`; `switch (x) {{ case 1: }}` gives `dec eax; jne` where
-`if (x == 1)` gives `cmp [ebp+8],1`.
+Two that DO work. Parameter reads exactly 4 too high are the FRAME POINTER,
+not a missing `this`. And for READ-MODIFY-WRITE on a fixed global (`inc`,
+`dec`, `|=` in place) the context's `static T *const g_ADDR` is wrong - it
+always yields load/modify/store; declare `extern T name;` yourself instead,
+because the relocation is masked, and you get the in-place instruction and a
+readable name. Plain loads and stores keep the context's global.
 
 # Rules
 
