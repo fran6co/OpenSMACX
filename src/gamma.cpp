@@ -31,3 +31,11 @@ int Gamma::on_key_click(int, int) {
 int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2) {
     return self->on_key_click(a1, a2);
 }
+
+/*
+Original Offset: 005C9390
+Status: Complete
+*/
+void Gamma::on_scrolled(int a1, int a2) {
+    adjust_palette();
+}

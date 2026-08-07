@@ -52,3 +52,15 @@ void RadioButton::close() {
 void __fastcall radio_button_close_redirect(RadioButton *self, void *) {
     self->close();
 }
+
+/*
+Original Offset: 0060E300
+Status: Complete
+*/
+void RadioButton::on_dialog_focus(int a1) {
+    reinterpret_cast<VCall *>(
+        reinterpret_cast<char *>(this) - 0x18 +
+        *reinterpret_cast<int *>(
+            *reinterpret_cast<char **>(reinterpret_cast<char *>(this) - 0x18) + 4)
+    )->slot062();
+}

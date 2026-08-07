@@ -579,3 +579,15 @@ int __fastcall base_button_init_redirect(
         int width, int height, Win *parent, int style_flag) {
     return self->init(name, id, x, y, width, height, parent, style_flag);
 }
+
+/*
+Original Offset: 00607A00
+Status: Complete
+*/
+void BaseButton::on_right_click(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+    int v = *reinterpret_cast<int *>(self + 0xa80);
+    if (v) {
+        timer_callback(0);
+    }
+}

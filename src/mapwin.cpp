@@ -303,3 +303,24 @@ int MapWin::UNK1() {
 int __fastcall map_win_unk1_redirect(MapWin *self, void *) {
     return self->UNK1();
 }
+
+/*
+Original Offset: 0046B1D0
+Status: Complete
+*/
+void MapWin::on_redraw() {
+    if (*reinterpret_cast<int *>(reinterpret_cast<char *>(this) - 0x21a68)) {
+        reinterpret_cast<MapWin *>(reinterpret_cast<char *>(this) - 0x21a6c)->draw_map(1);
+    }
+}
+
+/*
+Original Offset: 0046FA00
+Status: Complete
+*/
+void MapWin::on_resize(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+    if ((*reinterpret_cast<unsigned int *>(self - 0x3cfc) & 0x80000000) == 0) {
+        reinterpret_cast<MapWin *>(self - 0x21a6c)->do_image_buttons();
+    }
+}
