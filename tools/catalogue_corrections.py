@@ -52,6 +52,16 @@ CORRECTIONS = {
         "?do_sound@@YAXXZ",
         "?do_sound@@YAHXZ",
         "body is `xor eax, eax; ret` - a void function would emit `ret` alone"),
+    # The RETURN WIDTH is byte-visible, which is easy to miss because both
+    # clears are two bytes. `xor al, al` is 32 C0 and `xor eax, eax` is 33 C0,
+    # and VC6 emits the narrow one only for a `bool` return. Measured: an
+    # otherwise identical int-returning member compiles the null path to
+    # `xor eax, eax` under every flag set, never to `xor al, al`.
+    0x004C7AB0: (
+        "?is_trackset_playing@Midi@@QAEHI@Z",
+        "?is_trackset_playing@Midi@@QAE_NI@Z",
+        "the no-delegate path is `xor al, al`, which clears AL alone; only a "
+        "bool return produces that opcode, and `H` (int) cannot"),
 }
 
 

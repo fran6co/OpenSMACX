@@ -98,7 +98,12 @@ def validate(rows: list) -> None:
         if address and not address.lower().startswith("0x"):
             raise Invalid(f"{where}: address {address!r} is not hex")
         offset = (row.get("offset") or "").strip()
-        if offset and not offset.lower().startswith("0x"):
+        # A NEGATIVE offset is allowed and is the most informative kind there
+        # is: `[ecx-0x1c]` means the declared class is a SUBOBJECT inside a
+        # larger one, which is inheritance the declaration does not model.
+        # Rejecting them, as this first did, throws away the evidence that
+        # matters most.
+        if offset and not offset.lstrip("-").lower().startswith("0x"):
             raise Invalid(f"{where}: offset {offset!r} is not hex")
 
 
