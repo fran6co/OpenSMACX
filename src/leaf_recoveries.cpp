@@ -215,11 +215,11 @@ Status: Complete
 uint32_t __fastcall leaf_005e3650_redirect(void *self, void *) {
     const uint8_t *const bytes = static_cast<const uint8_t *>(self);
     const int32_t index = *reinterpret_cast<const int32_t *>(bytes + 0x0);
-    if (index < 0) {
-        return *reinterpret_cast<const uint32_t *>(bytes + 0xc);
+    if (index >= 0) {
+        return *reinterpret_cast<const uint32_t *>(bytes + 0x10)
+               + static_cast<uint32_t>(index);
     }
-    return *reinterpret_cast<const uint32_t *>(bytes + 0x10)
-           + static_cast<uint32_t>(index);
+    return *reinterpret_cast<const uint32_t *>(bytes + 0xc);
 }
 
 /*
