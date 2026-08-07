@@ -51,7 +51,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00403BE0,0x0040400D,1321,.text,?amovie_project@@YAXPAD@Z,,0x00403BE0-0x0040400D;0x006505E0-0x006506DC,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,16,5
 0x00404010,0x00404067,105,.text,??0AlphaMovie@@QAE@XZ,void (__thiscall ??0AlphaMovie@@QAE@XZ)(AlphaMovie* this),0x00404010-0x00404067;0x006506DC-0x006506EE,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x00404070,0x004041BF,335,.text,?exec@AlphaMovie@@QAEHPAD@Z,"int (__thiscall ?exec@AlphaMovie@@QAEHPAD@Z)(AlphaMovie* this, int8* lpszPath)",0x00404070-0x004041BF,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,1
-0x004041C0,0x004041D2,18,.text,?on_modal@AlphaMovie@@QAE_NXZ,bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this),0x004041C0-0x004041D2,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:982,Complete,,,source_complete,,,,1,0
+0x004041C0,0x004041D2,18,.text,?on_modal@AlphaMovie@@QAE_NXZ,bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this),0x004041C0-0x004041D2,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:999,Complete,,,source_complete,,,,1,0
 0x004041E0,0x004041F7,23,.text,?close@AlphaMovie@@QAEXXZ,void (__thiscall ?close@AlphaMovie@@QAEXXZ)(AlphaMovie* this),0x004041E0-0x004041F7,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x00404200,0x00404208,8,.text,?UNK1@AlphaMovie@@QAEXXZ,void (__thiscall ?UNK1@AlphaMovie@@QAEXXZ)(AlphaMovie* this),0x00404200-0x00404208,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00404210,0x00404220,16,.text,?on_key_click@AlphaMovie@@QAEHHH@Z,"int (__thiscall ?on_key_click@AlphaMovie@@QAEHHH@Z)(AlphaMovie* this, int, int)",0x00404210-0x00404220,game,hidden;sp_ready;purged_ok,src/delegation_thunks.cpp:45,Complete,,,source_complete,,,,0,0
@@ -150,7 +150,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00406910,0x00406A74,590,.text,??1Dialogs@@QAE@XZ,void (__thiscall ??1Dialogs@@QAE@XZ)(Dialogs* this),0x00406910-0x00406A74;0x006509C0-0x00650AAA,game,frame;hidden;sp_ready;purged_ok,src/dialogs_recovery.cpp:342,"Complete with temporary EditGroup, SpriteBox and CheckBox destructor",,,source_complete,,,,6,72
 0x00406A80,0x00406A85,5,.text,sub_406a80,,0x00406A80-0x00406A85,game,hidden;sp_ready;purged_ok,src/nullsub_thunks.cpp:40,Complete,,,source_complete,,,,0,0
 0x00406A90,0x00406AE3,83,.text,sub_406a90,,0x00406A90-0x00406AE3,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,9
-0x00406AF0,0x00406B16,38,.text,sub_406af0,,0x00406AF0-0x00406B16,game,sp_ready;purged_ok,src/leaf_recoveries.cpp:1287,Complete,,,source_complete,,,,3,9
+0x00406AF0,0x00406B16,38,.text,sub_406af0,,0x00406AF0-0x00406B16,game,sp_ready;purged_ok,src/leaf_recoveries.cpp:1304,Complete,,,source_complete,,,,3,9
 0x00406B20,0x00406B23,3,.text,nullsub_27,,0x00406B20-0x00406B23,game,hidden;sp_ready;purged_ok,src/field_accessors.cpp:728,Complete,,,source_complete,,,,0,0
 0x00406B30,0x00406B33,3,.text,sub_406b30,,0x00406B30-0x00406B33,game,hidden;sp_ready;purged_ok,src/nullsub_thunks.cpp:51,Complete,,,source_complete,,,,0,0
 0x00406B40,0x00406B61,33,.text,??_GBasePop@@UAEPAXI@Z,,0x00406B40-0x00406B61,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:223,Complete,,,source_complete,,,,2,0
@@ -219,7 +219,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00407F00,0x00408003,363,.text,??1FileWin@@QAE@XZ,void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this),0x00407F00-0x00408003;0x00650C80-0x00650CE8,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,2
 0x00408010,0x00408077,135,.text,??1EditBox@@QAE@XZ,void (__thiscall ??1EditBox@@QAE@XZ)(EditBox* this),0x00408010-0x00408077;0x00650CF0-0x00650D10,game,frame;hidden;sp_ready;purged_ok,,,,EditBoxDtorTarget,original_dependency,,,,3,2
 0x00408080,0x004080A1,33,.text,??_GEditBox@@UAEPAXI@Z,,0x00408080-0x004080A1,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:308,Complete,,,source_complete,,,,2,0
-0x004080B0,0x004080D3,35,.text,sub_4080b0,,0x004080B0-0x004080D3,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1267,Complete,,,source_complete,,,,3,3
+0x004080B0,0x004080D3,35,.text,sub_4080b0,,0x004080B0-0x004080D3,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1284,Complete,,,source_complete,,,,3,3
 0x004080E0,0x0040810C,44,.text,?on_scrolling@AlphaSave@@QAEXHH@Z,"void (__thiscall ?on_scrolling@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)",0x004080E0-0x0040810C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00408110,0x0040813C,44,.text,?on_scrolled@AlphaSave@@QAEXHH@Z,"void (__thiscall ?on_scrolled@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)",0x00408110-0x0040813C,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00408140,0x00408161,33,.text,??_GAlphaSave@@UAEPAXI@Z,,0x00408140-0x00408161,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:326,Complete,,,source_complete,,,,2,0
@@ -231,7 +231,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004083E0,0x004083F6,22,.text,??__Eg_BASEWIN_WAVE@@YAXXZ,,0x004083E0-0x004083F6,game,sp_ready;purged_ok,src/init_thunks.cpp:480,Complete,,,source_complete,,,,2,0
 0x00408400,0x0040840A,10,.text,??__Fg_BASEWIN_WAVE@@YAXXZ,,0x00408400-0x0040840A,game,sp_ready;purged_ok,src/atexit_thunks.cpp:665,Complete,,,source_complete,,,,0,0
 0x00408410,0x0040846B,91,.text,?load_inverts@@YAXXZ,,0x00408410-0x0040846B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,0
-0x00408470,0x0040848A,26,.text,sub_408470,,0x00408470-0x0040848A,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:573,Complete,,,source_complete,,,,0,0
+0x00408470,0x0040848A,26,.text,sub_408470,,0x00408470-0x0040848A,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:590,Complete,,,source_complete,,,,0,0
 0x00408490,0x0040870D,1147,.text,??0BaseWin@@QAE@XZ,void (__thiscall ??0BaseWin@@QAE@XZ)(BaseWin* this),0x00408490-0x0040870D;0x004210D0-0x004210E7;0x00651380-0x00651567,game,frame;sp_ready;purged_ok,,,,BaseWinCtorTarget,original_dependency,,,,15,1
 0x00408710,0x00408711,1,.text,?close@BaseWin@@QAEXXZ,void (__thiscall ?close@BaseWin@@QAEXXZ)(BaseWin* this),0x00408710-0x00408711,game,hidden;sp_ready;purged_ok,src/basewin.cpp:26,Complete,,,source_complete,,,,0,3
 0x00408720,0x00408B1B,1037,.text,?psych_row@BaseWin@@QAEXHHHHHHH@Z,"void (__thiscall ?psych_row@BaseWin@@QAEXHHHHHHH@Z)(BaseWin* this, int, int, int, int, int, int, int)",0x00408720-0x00408B1B;0x00651567-0x00651579,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,6,1
@@ -535,7 +535,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00432880,0x00432896,22,.text,??__Eg_DESIGNWIN_WAVE@@YAXXZ,,0x00432880-0x00432896,game,hidden;sp_ready;purged_ok,src/init_thunks.cpp:546,Complete,,,source_complete,,,,2,0
 0x004328A0,0x004328AA,10,.text,??__Fg_DESIGNWIN_WAVE@@YAXXZ,,0x004328A0-0x004328AA,game,hidden;sp_ready;purged_ok,src/atexit_thunks.cpp:725,Complete,,,source_complete,,,,0,0
 0x004328B0,0x00432961,251,.text,??0SelectPartWin@@QAE@XZ,void (__thiscall ??0SelectPartWin@@QAE@XZ)(SelectPartWin* this),0x004328B0-0x00432961;0x00653F10-0x00653F5A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,4
-0x00432970,0x004329AF,63,.text,?close@SelectPartWin@@QAEXXZ,void (__thiscall ?close@SelectPartWin@@QAEXXZ)(SelectPartWin* this),0x00432970-0x004329AF,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1030,Complete,,,source_complete,,,,2,0
+0x00432970,0x004329AF,63,.text,?close@SelectPartWin@@QAEXXZ,void (__thiscall ?close@SelectPartWin@@QAEXXZ)(SelectPartWin* this),0x00432970-0x004329AF,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1047,Complete,,,source_complete,,,,2,0
 0x004329B0,0x00432CB1,769,.text,?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z,,0x004329B0-0x00432CB1,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,14,1
 0x00432CC0,0x00433167,1191,.text,?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z,,0x00432CC0-0x00433167,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,16,1
 0x00433170,0x0043351C,940,.text,?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z,,0x00433170-0x0043351C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,15,1
@@ -1481,7 +1481,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00455400,0x004554C0,192,.text,?load_cycling@@YAXXZ,,0x00455400-0x004554C0,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,0
 0x004554C0,0x00455606,326,.text,?def_caption_draw@@YAHPAUGraphicWin@@PADPAUBuffer@@@Z,,0x004554C0-0x00455606,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,7,0
 0x00455610,0x00455E41,2097,.text,?load_interface@@YAXH@Z,,0x00455610-0x00455E41,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,9,1
-0x00455E50,0x00455E73,35,.text,?load_deswin_sprites@@YAXXZ,,0x00455E50-0x00455E73,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1330,Complete,,,source_complete,,,,2,1
+0x00455E50,0x00455E73,35,.text,?load_deswin_sprites@@YAXXZ,,0x00455E50-0x00455E73,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1347,Complete,,,source_complete,,,,2,1
 0x00455E80,0x00455EA8,40,.text,?load_fixed_sprites@@YAXXZ,,0x00455E80-0x00455EA8,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,6,1
 0x00455EB0,0x00455F0E,94,.text,?load_sprites@@YAXXZ,,0x00455EB0-0x00455F0E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x00455F10,0x0045600B,412,.text,??0FactionArt@@QAE@XZ,FactionArt* (__thiscall ??0FactionArt@@QAE@XZ)(FactionArt* this),0x00455F10-0x0045600B;0x00654ED0-0x00654F71,game,frame;sp_ready;purged_ok,,,,FactionArtCtorTarget,original_dependency,,,,3,0
@@ -1838,7 +1838,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00484A80,0x00484AA1,33,.text,??_GNewTechWin@@UAEPAXI@Z,"void* (__thiscall ??_GNewTechWin@@UAEPAXI@Z)(NewTechWin* this, unsigned int)",0x00484A80-0x00484AA1,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:1002,Complete,,,source_complete,,,,2,0
 0x00484AB0,0x00484ABB,11,.text,??3NewTechWin@@SAXPAXI@Z,,0x00484AB0-0x00484ABB,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:1018,Complete,,,source_complete,,,,0,0
 0x00484AC0,0x00484B5C,216,.text,??0PickTech@@QAE@XZ,void (__thiscall ??0PickTech@@QAE@XZ)(PickTech* this),0x00484AC0-0x00484B5C;0x00657630-0x0065766C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
-0x00484B60,0x00484B7F,31,.text,?close@PickTech@@QAEXXZ,void (__thiscall ?close@PickTech@@QAEXXZ)(PickTech* this),0x00484B60-0x00484B7F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1216,Complete,,,source_complete,,,,0,1
+0x00484B60,0x00484B7F,31,.text,?close@PickTech@@QAEXXZ,void (__thiscall ?close@PickTech@@QAEXXZ)(PickTech* this),0x00484B60-0x00484B7F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1233,Complete,,,source_complete,,,,0,1
 0x00484B80,0x00484C5D,221,.text,?UNK1@PickTech@@QAEXPAD@Z,"void (__thiscall ?UNK1@PickTech@@QAEXPAD@Z)(PickTech* this, int8*)",0x00484B80-0x00484C5D,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
 0x00484C60,0x00485FBD,5009,.text,?draw_tech@PickTech@@QAEHHPAURECT@@H@Z,"int (__thiscall ?draw_tech@PickTech@@QAEHHPAURECT@@H@Z)(PickTech* this, int, RECT*, int)",0x00484C60-0x00485FBD;0x0065766C-0x006576A0,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,25,1
 0x00485FC0,0x004860A6,230,.text,?on_mouse_move@PickTech@@QAEXHH@Z,"void (__thiscall ?on_mouse_move@PickTech@@QAEXHH@Z)(PickTech* this, int, int)",0x00485FC0-0x004860A6,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
@@ -2227,7 +2227,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004BE7D0,0x004BE9EE,773,.text,??1TutWin@@QAE@XZ,void (__thiscall ??1TutWin@@QAE@XZ)(TutWin* this),0x004BE7D0-0x004BE9EE;0x00659BF0-0x00659CD7,game,frame;hidden;sp_ready;purged_ok,,,,TutWinDtorTarget,original_dependency,,,,14,1
 0x004BE9F0,0x004BEA11,33,.text,??_GTutWin@@UAEPAXI@Z,"void* (__thiscall ??_GTutWin@@UAEPAXI@Z)(TutWin* this, unsigned int)",0x004BE9F0-0x004BEA11,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:1291,Complete,,,source_complete,,,,2,0
 0x004BEA20,0x004BEA2B,11,.text,??3TutWin@@SAXPAXI@Z,,0x004BEA20-0x004BEA2B,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:1306,Complete,,,source_complete,,,,0,0
-0x004BEA30,0x004BEA4C,28,.text,??0UV2Player@@QAE@XZ,void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this),0x004BEA30-0x004BEA4C,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1002,Complete,,,source_complete,,,,1,1
+0x004BEA30,0x004BEA4C,28,.text,??0UV2Player@@QAE@XZ,void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this),0x004BEA30-0x004BEA4C,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1019,Complete,,,source_complete,,,,1,1
 0x004BEA50,0x004BEDB5,869,.text,?exec@UV2Player@@QAEHPADHHH@Z,"int (__thiscall ?exec@UV2Player@@QAEHPADHHH@Z)(UV2Player* this, LPSTR pszFileName, int, int, int)",0x004BEA50-0x004BEDB5,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,18,1
 0x004BEDC0,0x004BEE5A,154,.text,?UNK1@UV2Player@@QAEHHHHH@Z,"int (__thiscall ?UNK1@UV2Player@@QAEHHHHH@Z)(UV2Player* this, int, int, int, int)",0x004BEDC0-0x004BEE5A,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x004BEE60,0x004BEEFD,157,.text,?UNK2@UV2Player@@QAAHHHHH@Z,,0x004BEE60-0x004BEEFD,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
@@ -2842,7 +2842,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0050B9A0,0x0050B9B6,22,.text,?say_stats_3@@YAXH@Z,void (__cdecl ?say_stats_3@@YAXH@Z)(int protoID),0x0050B9A0-0x0050B9B6,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1565,Complete,,,source_complete,,,,1,1
 0x0050B9C0,0x0050B9DE,30,.text,sub_50b9c0,,0x0050B9C0-0x0050B9DE,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x0050B9E0,0x0050B9FE,30,.text,?pop@NetMsg@@QAAXPBDPBD@Z,,0x0050B9E0-0x0050B9FE,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
-0x0050BA00,0x0050BA27,39,.text,?bitmask@@YAXHPAHPAH@Z,"void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)",0x0050BA00-0x0050BA27,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:871,Complete,?bitmask@@YAXHPAHPAH@Z,,source_complete,,,,0,103
+0x0050BA00,0x0050BA27,39,.text,?bitmask@@YAXHPAHPAH@Z,"void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)",0x0050BA00-0x0050BA27,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:879,Complete,?bitmask@@YAXHPAHPAH@Z,,source_complete,,,,0,103
 0x0050BA30,0x0050BA4E,30,.text,?bit_count@@YAHH@Z,,0x0050BA30-0x0050BA4E,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:749,Complete,?bit_count@@YAHH@Z,,source_complete,,,,0,34
 0x0050BA50,0x0050BCB6,614,.text,?intervention@@YAXHH@Z,,0x0050BA50-0x0050BCB6,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x0050BCC0,0x0050C2D7,1559,.text,?double_cross@@YAXHHH@Z,,0x0050BCC0-0x0050C2D7,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,9,15
@@ -3048,7 +3048,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0052DBA0,0x0052DBE6,70,.text,?current_server@@YAHXZ,,0x0052DBA0-0x0052DBE6,game,hidden;sp_ready;purged_ok,,,,LockCurrentServer,original_dependency,,,,0,3
 0x0052DBF0,0x0052DC68,120,.text,?next_player_turn@@YAHXZ,,0x0052DBF0-0x0052DC68,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
 0x0052DC70,0x0052DC9C,44,.text,?not_my_turn@@YAHXZ,,0x0052DC70-0x0052DC9C,game,hidden;sp_ready;purged_ok,src/game.cpp:264,Complete,,,source_complete,,,,0,8
-0x0052DCA0,0x0052DCC1,33,.text,??0DeletionList@@QAE@XZ,void (__thiscall ??0DeletionList@@QAE@XZ)(DeletionList* this),0x0052DCA0-0x0052DCC1,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:947,Complete,,,source_complete,,,,0,0
+0x0052DCA0,0x0052DCC1,33,.text,??0DeletionList@@QAE@XZ,void (__thiscall ??0DeletionList@@QAE@XZ)(DeletionList* this),0x0052DCA0-0x0052DCC1,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:964,Complete,,,source_complete,,,,0,0
 0x0052DCD0,0x0052DCEC,28,.text,?clear@DeletionList@@QAEXH@Z,"void (__thiscall ?clear@DeletionList@@QAEXH@Z)(DeletionList* this, int)",0x0052DCD0-0x0052DCEC,game,frame;hidden;sp_ready;purged_ok,src/deletionlist.cpp:25,Complete,,,source_complete,,,,0,1
 0x0052DCF0,0x0052DD10,32,.text,?UNK1@DeletionList@@QAEHXZ,int (__thiscall ?UNK1@DeletionList@@QAEHXZ)(DeletionList* this),0x0052DCF0-0x0052DD10,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0052DD10,0x0052DD4B,59,.text,?UNK2@DeletionList@@QAEHH@Z,"int (__thiscall ?UNK2@DeletionList@@QAEHH@Z)(DeletionList* this, int)",0x0052DD10-0x0052DD4B,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
@@ -3086,7 +3086,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00532570,0x005328BA,842,.text,?action@NetDaemon@@QAEHHH@Z,"int (__thiscall ?action@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int vehID, int)",0x00532570-0x005328BA,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,14,3
 0x005328C0,0x00532934,116,.text,?end_of_event@NetDaemon@@QAEHHH@Z,"int (__thiscall ?end_of_event@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)",0x005328C0-0x00532934,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x00532940,0x00532A44,260,.text,?send_message@NetDaemon@@QAEXPADKH@Z,"void (__thiscall ?send_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, int8*, unsigned int, int)",0x00532940-0x00532A44,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,12
-0x00532A50,0x00532A81,49,.text,sub_532a50,,0x00532A50-0x00532A81,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:778,Complete,,,source_complete,,,,0,0
+0x00532A50,0x00532A81,49,.text,sub_532a50,,0x00532A50-0x00532A81,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:795,Complete,,,source_complete,,,,0,0
 0x00532A90,0x00532B63,211,.text,?rebuild_vehicle_bits@@YAXXZ,,0x00532A90-0x00532B63,game,frame;sp_ready;purged_ok,src/map.cpp:1101,Complete,?rebuild_vehicle_bits@@YAXXZ,,source_complete,,,,0,3
 0x00532B70,0x00532C2B,187,.text,?rebuild_base_bits@@YAXXZ,,0x00532B70-0x00532C2B,game,frame;sp_ready;purged_ok,src/map.cpp:1124,Complete,?rebuild_base_bits@@YAXXZ,,source_complete,,,,0,3
 0x00532C30,0x00532DA2,370,.text,?synch_display@@YAXHHHH@Z,,0x00532C30-0x00532DA2,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
@@ -3097,11 +3097,11 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00538B60,0x00538D0E,606,.text,??1AlphaNet@@QAE@XZ,void (__thiscall ??1AlphaNet@@QAE@XZ)(AlphaNet* this),0x00538B60-0x00538D0E;0x004E3710-0x004E372B;0x0065DF70-0x0065E005,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,0
 0x00538D10,0x00538EBE,606,.text,??1NetDaemon@@QAE@XZ,void (__thiscall ??1NetDaemon@@QAE@XZ)(NetDaemon* this),0x00538D10-0x00538EBE;0x004E3710-0x004E372B;0x0065E010-0x0065E0A5,game,frame;hidden;sp_ready;purged_ok,,,,NetDaemonDtorTarget,original_dependency,,,,9,0
 0x00538EC0,0x00538F2E,110,.text,??1JackalVoiceRx@@QAE@XZ,void (__thiscall ??1JackalVoiceRx@@QAE@XZ)(JackalVoiceRx* this),0x00538EC0-0x00538F2E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
-0x00538F30,0x00538FAA,122,.text,?danger@@YAXPADPADHHH@Z,,0x00538F30-0x00538FAA,game,frame;sp_ready;purged_ok,src/general.cpp:925,Complete,,,source_complete,,,,4,3
-0x00538FB0,0x00538FD2,34,.text,?my_srand@@YAHH@Z,int (__cdecl ?my_srand@@YAHH@Z)(int reseed),0x00538FB0-0x00538FD2,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:777,Complete with built in version of srand(). Revisit once more code is redirected to dll.,,,source_complete,,,,2,6
+0x00538F30,0x00538FAA,122,.text,?danger@@YAXPADPADHHH@Z,,0x00538F30-0x00538FAA,game,frame;sp_ready;purged_ok,src/general.cpp:933,Complete,,,source_complete,,,,4,3
+0x00538FB0,0x00538FD2,34,.text,?my_srand@@YAHH@Z,int (__cdecl ?my_srand@@YAHH@Z)(int reseed),0x00538FB0-0x00538FD2,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:785,Complete with built in version of srand(). Revisit once more code is redirected to dll.,,,source_complete,,,,2,6
 0x00538FE0,0x0053908F,193,.text,?checksum_file@@YAEPAD@Z,,0x00538FE0-0x0053908F;0x0065E450-0x0065E462,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,2
-0x00539090,0x005390B4,36,.text,?checksum@@YAEPADHE@Z,,0x00539090-0x005390B4,game,frame;sp_ready;purged_ok,src/general.cpp:882,Complete,,,source_complete,,,,0,2
-0x005390C0,0x00539157,151,.text,?checksum_password@@YAHPAD@Z,,0x005390C0-0x00539157,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:893,Complete,,,source_complete,,,,2,2
+0x00539090,0x005390B4,36,.text,?checksum@@YAEPADHE@Z,,0x00539090-0x005390B4,game,frame;sp_ready;purged_ok,src/general.cpp:890,Complete,,,source_complete,,,,0,2
+0x005390C0,0x00539157,151,.text,?checksum_password@@YAHPAD@Z,,0x005390C0-0x00539157,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:901,Complete,,,source_complete,,,,2,2
 0x00539160,0x00539193,51,.text,?auto_contact@@YAHXZ,,0x00539160-0x00539193,game,hidden;sp_ready;purged_ok,src/faction.cpp:140,Complete,?auto_contact@@YAHXZ,,source_complete,,,,0,3
 0x005391A0,0x005391C0,32,.text,sub_5391a0,,0x005391A0-0x005391C0,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x005391C0,0x0053922A,106,.text,?net_treaty_on@@YAXHHHH@Z,,0x005391C0-0x0053922A,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,4
@@ -3251,7 +3251,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0056B5B0,0x00579208,56408,.text,?enemy_move@@YAHH@Z,int (__cdecl ?enemy_move@@YAHH@Z)(int vehID),0x0056B5B0-0x00579208,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,106,2
 0x00579240,0x005794C8,648,.text,?enemy_veh@@YAHH@Z,int (__cdecl ?enemy_veh@@YAHH@Z)(int vehID),0x00579240-0x005794C8,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,14,2
 0x00579510,0x00579769,601,.text,?enemy_turn@@YAHH@Z,int (__cdecl ?enemy_turn@@YAHH@Z)(int factionID),0x00579510-0x00579769,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,6,2
-0x00579770,0x00579790,32,.text,?rnd@@YAHHPAD@Z,"int (__cdecl ?rnd@@YAHHPAD@Z)(int seed, int8*)",0x00579770-0x00579790,game,frame;sp_ready;purged_ok,src/general.cpp:915,Complete,,,source_complete,,,,1,2
+0x00579770,0x00579790,32,.text,?rnd@@YAHHPAD@Z,"int (__cdecl ?rnd@@YAHHPAD@Z)(int seed, int8*)",0x00579770-0x00579790,game,frame;sp_ready;purged_ok,src/general.cpp:923,Complete,,,source_complete,,,,1,2
 0x00579790,0x005797C7,55,.text,?x_dist@@YAHHH@Z,,0x00579790-0x005797C7,game,frame;hidden;sp_ready;purged_ok,src/map.cpp:1145,Complete,?x_dist@@YAHHH@Z,,source_complete,,,,1,1
 0x005797D0,0x00579832,98,.text,?site_at@@YAHHHH@Z,,0x005797D0-0x00579832,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x00579840,0x00579896,86,.text,?is_known@@YAHHHH@Z,"int (__cdecl ?is_known@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)",0x00579840-0x00579896,game,frame;hidden;sp_ready;purged_ok,src/map.cpp:1159,Complete,,,source_complete,,,,0,1
@@ -3260,7 +3260,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00579920,0x0057995A,58,.text,?veh_top@@YAHH@Z,int (__cdecl ?veh_top@@YAHH@Z)(int vehID),0x00579920-0x0057995A,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1321,Complete,?veh_top@@YAHH@Z,,source_complete,,,,0,2
 0x00579960,0x00579998,56,.text,?veh_moves@@YAHH@Z,int (__cdecl ?veh_moves@@YAHH@Z)(int vehID),0x00579960-0x00579998,game,frame;sp_ready;purged_ok,src/veh.cpp:1338,Complete,,,source_complete,,,,1,1
 0x005799A0,0x005799F9,89,.text,?proto_power@@YAHH@Z,int (__cdecl ?proto_power@@YAHH@Z)(int vehID),0x005799A0-0x005799F9,game,frame;sp_ready;purged_ok,src/veh.cpp:1348,Complete,,,source_complete,,,,0,1
-0x00579A00,0x00579A30,48,.text,?is_port@@YAHHH@Z,"int (__cdecl ?is_port@@YAHHH@Z)(int baseID, int isBaseRadius)",0x00579A00-0x00579A30,game,frame;sp_ready;purged_ok,src/base.cpp:2303,Complete,,,source_complete,,,,1,2
+0x00579A00,0x00579A30,48,.text,?is_port@@YAHHH@Z,"int (__cdecl ?is_port@@YAHHH@Z)(int baseID, int isBaseRadius)",0x00579A00-0x00579A30,game,frame;sp_ready;purged_ok,src/base.cpp:2308,Complete,,,source_complete,,,,1,2
 0x00579A30,0x00579B64,308,.text,?add_goal@@YAXHHHHHH@Z,"void (__cdecl ?add_goal@@YAXHHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord, int baseID)",0x00579A30-0x00579B64,game,frame;sp_ready;purged_ok,src/faction.cpp:973,Complete,,,source_complete,,,,0,12
 0x00579B70,0x00579CB5,325,.text,?add_site@@YAXHHHHH@Z,"void (__cdecl ?add_site@@YAXHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord)",0x00579B70-0x00579CB5,game,frame;sp_ready;purged_ok,src/faction.cpp:1019,Complete,,,source_complete,,,,2,4
 0x00579CC0,0x00579D16,86,.text,?at_goal@@YAHHHHH@Z,"int (__cdecl ?at_goal@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)",0x00579CC0-0x00579D16,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1065,Complete,,,source_complete,,,,0,5
@@ -3274,8 +3274,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0057A660,0x0057CDE6,10118,.text,?goody_box@@YAHHH@Z,"int (__cdecl ?goody_box@@YAHHH@Z)(int vehID, int type)",0x0057A660-0x0057CDE6,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,54,2
 0x0057CE50,0x0057CF9E,334,.text,?valid_tech_leap@@YAHHH@Z,"int (__cdecl ?valid_tech_leap@@YAHHH@Z)(int techID, int factionID)",0x0057CE50-0x0057CF9E,game,frame;sp_ready;purged_ok,src/technology.cpp:49,Complete,,,source_complete,,,,2,1
 0x0057CFA0,0x0057D1E8,584,.text,?study_artifact@@YAHH@Z,int (__cdecl ?study_artifact@@YAHH@Z)(int vehID),0x0057CFA0-0x0057D1E8,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,13,2
-0x0057D1F0,0x0057D235,69,.text,?header_check@@YAXPADPAUFILE@@@Z,"void (__cdecl ?header_check@@YAXPADPAUFILE@@@Z)(int8* header, FILE* file)",0x0057D1F0-0x0057D235,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:1084,Complete,,,source_complete,,,,1,2
-0x0057D240,0x0057D270,48,.text,?header_write@@YAXPADPAUFILE@@@Z,,0x0057D240-0x0057D270,game,frame;sp_ready;purged_ok,src/general.cpp:1106,Complete,,,source_complete,,,,1,2
+0x0057D1F0,0x0057D235,69,.text,?header_check@@YAXPADPAUFILE@@@Z,"void (__cdecl ?header_check@@YAXPADPAUFILE@@@Z)(int8* header, FILE* file)",0x0057D1F0-0x0057D235,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:1092,Complete,,,source_complete,,,,1,2
+0x0057D240,0x0057D270,48,.text,?header_write@@YAXPADPAUFILE@@@Z,,0x0057D240-0x0057D270,game,frame;sp_ready;purged_ok,src/general.cpp:1114,Complete,,,source_complete,,,,1,2
 0x0057D270,0x0057D2D5,101,.text,?arm_strat@@YAHHH@Z,"int (__cdecl ?arm_strat@@YAHHH@Z)(int armorID, int factionID)",0x0057D270-0x0057D2D5,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1377,Complete,,,source_complete,,,,1,7
 0x0057D2E0,0x0057D35D,125,.text,?weap_strat@@YAHHH@Z,"int (__cdecl ?weap_strat@@YAHHH@Z)(int weaponID, int factionID)",0x0057D2E0-0x0057D35D,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1396,Complete,,,source_complete,,,,1,7
 0x0057D360,0x0057D3ED,141,.text,?weap_val@@YAHHH@Z,"int (__cdecl ?weap_val@@YAHHH@Z)(int protoID, int factionID)",0x0057D360-0x0057D3ED,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:1415,Complete,,,source_complete,,,,1,5
@@ -3456,7 +3456,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00592B40,0x00592D6F,559,.text,sub_592b40,,0x00592B40-0x00592D6F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,0
 0x00592D70,0x00592D88,24,.text,sub_592d70,,0x00592D70-0x00592D88,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x00592D90,0x00592DAA,26,.text,sub_592d90,,0x00592D90-0x00592DAA,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x00592DB0,0x00592DDC,44,.text,sub_592db0,,0x00592DB0-0x00592DDC,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:807,Complete,,,source_complete,,,,0,0
+0x00592DB0,0x00592DDC,44,.text,sub_592db0,,0x00592DB0-0x00592DDC,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:824,Complete,,,source_complete,,,,0,0
 0x00592DE0,0x00592E0E,46,.text,sub_592de0,,0x00592DE0-0x00592E0E,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x00592E10,0x00592E70,96,.text,?message_veh@@YAXHHHH@Z,"void (__cdecl ?message_veh@@YAXHHHH@Z)(int, int vehID, int xCoord, int yCoord)",0x00592E10-0x00592E70,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,1,12
 0x00592E70,0x00592EDA,106,.text,?message_base@@YAXHHPADH@Z,,0x00592E70-0x00592EDA,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,2
@@ -3500,7 +3500,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0059C520,0x0059C781,609,.text,?continent@Path@@QAEXHHH@Z,"void (__thiscall ?continent@Path@@QAEXHHH@Z)(Path* this, int xCoord, int yCoord, int region)",0x0059C520-0x0059C781,game,frame;sp_ready;purged_ok,src/path.cpp:248,Complete,,,source_complete,,,,3,1
 0x0059C790,0x0059CC9D,1293,.text,?continents@Path@@QAEXXZ,void (__thiscall ?continents@Path@@QAEXXZ)(Path* this),0x0059C790-0x0059CC9D,game,frame;sp_ready;purged_ok,src/path.cpp:297,Complete,?continents@Path@@QAEXXZ,,source_complete,,,,5,3
 0x0059CCA0,0x0059D22A,1418,.text,?sensors@Path@@QAEHHPAHPAH@Z,"int (__thiscall ?sensors@Path@@QAEHHPAHPAH@Z)(Path* this, int factionID, int* xCoordPtr, int* yCoordPtr)",0x0059CCA0-0x0059D22A,game,frame;sp_ready;purged_ok,src/path.cpp:396,Complete - testing,,,source_complete,,,,8,2
-0x0059D230,0x0059D243,19,.text,sub_59d230,,0x0059D230-0x0059D243,game,sp_ready;purged_ok,src/leaf_recoveries.cpp:1194,Complete,,,source_complete,,,,1,0
+0x0059D230,0x0059D243,19,.text,sub_59d230,,0x0059D230-0x0059D243,game,sp_ready;purged_ok,src/leaf_recoveries.cpp:1211,Complete,,,source_complete,,,,1,0
 0x0059D250,0x0059D392,322,.text,?exec@PopMenu@@QAEXHHP6AHXZ@Z,"void (__thiscall ?exec@PopMenu@@QAEXHHP6AHXZ@Z)(PopMenu* this, int, int, int (__cdecl *)())",0x0059D250-0x0059D392,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,16
 0x0059D3A0,0x0059D3AA,10,.text,?init@PopMenu@@QAEHXZ,int (__thiscall ?init@PopMenu@@QAEHXZ)(PopMenu* this),0x0059D3A0-0x0059D3AA,game,hidden;sp_ready;purged_ok,src/popmenu.cpp:25,Complete,,,source_complete,,,,1,14
 0x0059D3B0,0x0059D690,968,.text,?popm@@YAHPADPADHHP6AHXZ@Z,,0x0059D3B0-0x0059D690;0x00661200-0x006612E8,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,18,0
@@ -3517,7 +3517,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0059E530,0x0059E5CD,157,.text,?prefs_put@@YAXPADHH@Z,"void (__cdecl ?prefs_put@@YAXPADHH@Z)(int8* lpKeyName, int, int)",0x0059E530-0x0059E5CD,game,frame;hidden;sp_ready;purged_ok,src/alpha.cpp:1396,Complete,,,source_complete,,,,2,12
 0x0059E5D0,0x0059E946,886,.text,?prefs_save@@YAXH@Z,void (__cdecl ?prefs_save@@YAXH@Z)(BOOL saveFactions),0x0059E5D0-0x0059E946,game,frame;sp_ready;purged_ok,src/alpha.cpp:1408,Complete,?prefs_save@@YAXH@Z,,source_complete,,,,3,17
 0x0059E950,0x0059E973,35,.text,?prefs_use@@YAXXZ,,0x0059E950-0x0059E973,game,sp_ready;purged_ok,src/alpha.cpp:1444,Complete,?prefs_use@@YAXXZ,,source_complete,,,,0,6
-0x0059E980,0x0059EA73,243,.text,?vulnerable@@YAHHHH@Z,"int (__cdecl ?vulnerable@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)",0x0059E980-0x0059EA73,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2314,Complete,,,source_complete,,,,2,1
+0x0059E980,0x0059EA73,243,.text,?vulnerable@@YAHHHH@Z,"int (__cdecl ?vulnerable@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)",0x0059E980-0x0059EA73,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2319,Complete,,,source_complete,,,,2,1
 0x0059EA80,0x0059EE42,962,.text,?mind_control@@YAHHHH@Z,"int (__cdecl ?mind_control@@YAHHHH@Z)(int baseID, int factionID, BOOL isCornerMarket)",0x0059EA80-0x0059EE42,game,frame;sp_ready;purged_ok,src/probe.cpp:45,Complete,,,source_complete,,,,7,2
 0x0059EE50,0x0059EEDD,141,.text,?corner_market@@YAHH@Z,int (__cdecl ?corner_market@@YAHH@Z)(int factionID),0x0059EE50-0x0059EEDD,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1173,Complete,,,source_complete,,,,1,2
 0x0059EEE0,0x0059F11E,574,.text,?success_rates@@YAHHHHH@Z,"int (__cdecl ?success_rates@@YAHHHHH@Z)(uint32_t id, uint32_t morale, uint32_t diffModifier, int baseID)",0x0059EEE0-0x0059F11E,game,frame;sp_ready;purged_ok,src/probe.cpp:123,Complete,,,source_complete,,,,4,1
@@ -3555,17 +3555,17 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005AAAB0,0x005AB5E3,3414,.text,?load_game@@YAHHH@Z,,0x005AAAB0-0x005AB5E3;0x00661E84-0x006620A7,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,54,3
 0x005AB600,0x005ABB8D,1797,.text,?load_map@@YAHXZ,,0x005AB600-0x005ABB8D;0x006620A7-0x0066221F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,34,4
 0x005ABB90,0x005ABD0C,401,.text,?save_map@@YAXXZ,,0x005ABB90-0x005ABD0C;0x0066221F-0x00662234,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,15,1
-0x005ABD10,0x005ABD1C,12,.text,?kill_auto_save@@YAXXZ,,0x005ABD10-0x005ABD1C,game,hidden;sp_ready;purged_ok,src/general.cpp:941,Complete,?kill_auto_save@@YAXXZ,,source_complete,,,,1,1
-0x005ABD20,0x005ABE39,281,.text,?auto_save@@YAXXZ,,0x005ABD20-0x005ABE39,game,sp_ready;purged_ok,src/general.cpp:951,Complete,?auto_save@@YAXXZ,,source_complete,,,,3,9
-0x005ABE40,0x005ABEBF,127,.text,?load_undo@@YAXH@Z,void (__cdecl ?load_undo@@YAXH@Z)(int type),0x005ABE40-0x005ABEBF,game,frame;sp_ready;purged_ok,src/general.cpp:1026,Complete,?load_undo@@YAXH@Z,,source_complete,,,,3,2
-0x005ABEC0,0x005ABF14,84,.text,?wipe_undo@@YAXXZ,,0x005ABEC0-0x005ABF14,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:1048,Complete,?wipe_undo@@YAXXZ,,source_complete,,,,3,1
-0x005ABF20,0x005ABFEF,207,.text,?auto_undo@@YAXXZ,,0x005ABF20-0x005ABFEF,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:1062,Complete,?auto_undo@@YAXXZ,,source_complete,,,,7,32
+0x005ABD10,0x005ABD1C,12,.text,?kill_auto_save@@YAXXZ,,0x005ABD10-0x005ABD1C,game,hidden;sp_ready;purged_ok,src/general.cpp:949,Complete,?kill_auto_save@@YAXXZ,,source_complete,,,,1,1
+0x005ABD20,0x005ABE39,281,.text,?auto_save@@YAXXZ,,0x005ABD20-0x005ABE39,game,sp_ready;purged_ok,src/general.cpp:959,Complete,?auto_save@@YAXXZ,,source_complete,,,,3,9
+0x005ABE40,0x005ABEBF,127,.text,?load_undo@@YAXH@Z,void (__cdecl ?load_undo@@YAXH@Z)(int type),0x005ABE40-0x005ABEBF,game,frame;sp_ready;purged_ok,src/general.cpp:1034,Complete,?load_undo@@YAXH@Z,,source_complete,,,,3,2
+0x005ABEC0,0x005ABF14,84,.text,?wipe_undo@@YAXXZ,,0x005ABEC0-0x005ABF14,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:1056,Complete,?wipe_undo@@YAXXZ,,source_complete,,,,3,1
+0x005ABF20,0x005ABFEF,207,.text,?auto_undo@@YAXXZ,,0x005ABF20-0x005ABFEF,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:1070,Complete,?auto_undo@@YAXXZ,,source_complete,,,,7,32
 0x005ABFF0,0x005AC051,97,.text,?get_rating@@YAHHH@Z,"int (__cdecl ?get_rating@@YAHHH@Z)(int factionID, int)",0x005ABFF0-0x005AC051,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,3
-0x005AC060,0x005AC10B,171,.text,?is_objective@@YAHH@Z,int (__cdecl ?is_objective@@YAHH@Z)(int baseID),0x005AC060-0x005AC10B,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2331,Complete,,,source_complete,,,,1,14
-0x005AC110,0x005AC599,1161,.text,?num_objectives@@YAHHH@Z,"int (__cdecl ?num_objectives@@YAHHH@Z)(int factionID, int)",0x005AC110-0x005AC599,game,frame;sp_ready;purged_ok,src/base.cpp:2356,Complete,?num_objectives@@YAHHH@Z,,source_complete,,,,5,9
+0x005AC060,0x005AC10B,171,.text,?is_objective@@YAHH@Z,int (__cdecl ?is_objective@@YAHH@Z)(int baseID),0x005AC060-0x005AC10B,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2336,Complete,,,source_complete,,,,1,14
+0x005AC110,0x005AC599,1161,.text,?num_objectives@@YAHHH@Z,"int (__cdecl ?num_objectives@@YAHHH@Z)(int factionID, int)",0x005AC110-0x005AC599,game,frame;sp_ready;purged_ok,src/base.cpp:2361,Complete,?num_objectives@@YAHHH@Z,,source_complete,,,,5,9
 0x005AC5A0,0x005AC62F,143,.text,?most_objectives@@YAHPAHPAH@Z,,0x005AC5A0-0x005AC62F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
-0x005AC630,0x005AC67A,74,.text,?transcending@@YAHH@Z,int (__cdecl ?transcending@@YAHH@Z)(int factionID),0x005AC630-0x005AC67A,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2495,Complete,?transcending@@YAHH@Z,,source_complete,,,,0,0
-0x005AC680,0x005AC68F,15,.text,?ascending@@YAHH@Z,int (__cdecl ?ascending@@YAHH@Z)(int factionID),0x005AC680-0x005AC68F,game,hidden;sp_ready;purged_ok,src/base.cpp:2514,Complete,?ascending@@YAHH@Z,,source_complete,,,,0,4
+0x005AC630,0x005AC67A,74,.text,?transcending@@YAHH@Z,int (__cdecl ?transcending@@YAHH@Z)(int factionID),0x005AC630-0x005AC67A,game,frame;hidden;sp_ready;purged_ok,src/base.cpp:2500,Complete,?transcending@@YAHH@Z,,source_complete,,,,0,0
+0x005AC680,0x005AC68F,15,.text,?ascending@@YAHH@Z,int (__cdecl ?ascending@@YAHH@Z)(int factionID),0x005AC680-0x005AC68F,game,hidden;sp_ready;purged_ok,src/base.cpp:2519,Complete,?ascending@@YAHH@Z,,source_complete,,,,0,4
 0x005AC690,0x005ACBD6,1350,.text,?rankings@@YAXH@Z,,0x005AC690-0x005ACBD6,game,frame;sp_ready;purged_ok,src/faction.cpp:1222,Complete,?rankings@@YAXH@Z,,source_complete,,,,7,3
 0x005ACBE0,0x005AD3AD,1997,.text,?compute_score@@YAXHPAHPAHH@Z,"void (__cdecl ?compute_score@@YAXHPAHPAHH@Z)(int factionID, int*, int*, int)",0x005ACBE0-0x005AD3AD,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,6,4
 0x005AD3B0,0x005AD3BB,11,.text,?on_left_click@ReplayWin@@QAEXHH@Z,"void (__thiscall ?on_left_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)",0x005AD3B0-0x005AD3BB,game,hidden;sp_ready;purged_ok,src/delegation_thunks.cpp:973,Complete,,,source_complete,,,,0,0
@@ -3578,9 +3578,9 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005AD420,0x005AD423,3,.text,?on_left_up@ReplayWin@@QAEXHH@Z,"void (__thiscall ?on_left_up@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)",0x005AD420-0x005AD423,game,sp_ready;purged_ok,src/replaywin.cpp:68,Complete,,,source_complete,,,,0,0
 0x005AD430,0x005AD43B,11,.text,?on_button_clicked@ReplayWin@@QAEXH@Z,"void (__thiscall ?on_button_clicked@ReplayWin@@QAEXH@Z)(ReplayWin* this, int)",0x005AD430-0x005AD43B,game,hidden;sp_ready;purged_ok,src/delegation_thunks.cpp:1003,Complete,,,source_complete,,,,0,0
 0x005AD440,0x005AD450,16,.text,?on_key_click@ReplayWin@@QAEHHH@Z,"int (__thiscall ?on_key_click@ReplayWin@@QAEHHH@Z)(ReplayWin* this, int, int)",0x005AD440-0x005AD450,game,hidden;sp_ready;purged_ok,src/delegation_thunks.cpp:1018,Complete,,,source_complete,,,,0,0
-0x005AD450,0x005AD470,32,.text,sub_5ad450,,0x005AD450-0x005AD470,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:598,Complete,,,source_complete,,,,0,0
+0x005AD450,0x005AD470,32,.text,sub_5ad450,,0x005AD450-0x005AD470,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:615,Complete,,,source_complete,,,,0,0
 0x005AD470,0x005AD4C0,80,.text,sub_5ad470,,0x005AD470-0x005AD4C0,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x005AD4C0,0x005AD500,64,.text,sub_5ad4c0,,0x005AD4C0-0x005AD500,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:871,Complete,,,source_complete,,,,0,0
+0x005AD4C0,0x005AD500,64,.text,sub_5ad4c0,,0x005AD4C0-0x005AD500,game,frame;hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:888,Complete,,,source_complete,,,,0,0
 0x005AD500,0x005AD560,96,.text,sub_5ad500,,0x005AD500-0x005AD560,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x005AD560,0x005AD607,167,.text,?make_bases@ReplayWin@@QAEXXZ,void (__thiscall ?make_bases@ReplayWin@@QAEXXZ)(ReplayWin* this),0x005AD560-0x005AD607,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,2
 0x005AD610,0x005AD71F,271,.text,?on_redraw@ReplayWin@@QAEXXZ,void (__thiscall ?on_redraw@ReplayWin@@QAEXXZ)(ReplayWin* this),0x005AD610-0x005AD71F,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,7,0
@@ -3612,7 +3612,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005B4730,0x005B4786,86,.text,?society_avail@@YAHHHH@Z,"int (__cdecl ?society_avail@@YAHHHH@Z)(int socCategory, int socModel, int factionID)",0x005B4730-0x005B4786,game,frame;hidden;sp_ready;purged_ok,src/faction.cpp:1604,Complete,,,source_complete,,,,1,5
 0x005B4790,0x005B5612,3714,.text,?social_ai@@YAXHHHHHPAH@Z,"void (__cdecl ?social_ai@@YAXHHHHHPAH@Z)(int factionID, int growthVal, int techVal, int wealthVal, int powerVal, social_category* output)",0x005B4790-0x005B5612,game,frame;sp_ready;purged_ok,src/faction.cpp:1618,Complete - testing (likely has multiple issues due to length + complexity),,,source_complete,,,,7,2
 0x005B5620,0x005B5688,104,.text,?social_select@@YAXH@Z,void (__cdecl ?social_select@@YAXH@Z)(int factionID),0x005B5620-0x005B5688,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,4
-0x005B5690,0x005B56F5,101,.text,?sort@@YAXHPAHPAH@Z,"void (__cdecl ?sort@@YAXHPAHPAH@Z)(int count, int* id, int* value)",0x005B5690-0x005B56F5,game,frame;sp_ready;purged_ok,src/general.cpp:1121,Complete,,,source_complete,,,,1,2
+0x005B5690,0x005B56F5,101,.text,?sort@@YAXHPAHPAH@Z,"void (__cdecl ?sort@@YAXHPAHPAH@Z)(int count, int* id, int* value)",0x005B5690-0x005B56F5,game,frame;sp_ready;purged_ok,src/general.cpp:1129,Complete,,,source_complete,,,,1,2
 0x005B5700,0x005B57CA,202,.text,sub_5b5700,,0x005B5700-0x005B57CA,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:2201,Complete,,,source_complete,,,,1,1
 0x005B57D0,0x005B58D2,258,.text,?spot_base@@YAXHH@Z,"void (__cdecl ?spot_base@@YAXHH@Z)(int baseID, int factionID)",0x005B57D0-0x005B58D2,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:2237,Complete,?spot_base@@YAXHH@Z,,source_complete,,,,1,8
 0x005B58E0,0x005B5A61,385,.text,?spot_stack@@YAXHH@Z,"void (__cdecl ?spot_stack@@YAXHH@Z)(int vehID, int factionID)",0x005B58E0-0x005B5A61,game,frame;hidden;sp_ready;purged_ok,src/veh.cpp:2259,Complete,?spot_stack@@YAXHH@Z,,source_complete,,,,1,2
@@ -3637,8 +3637,8 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005B9F20,0x005B9F89,105,.text,?has_tech@@YA_NHH@Z,"bool (__cdecl ?has_tech@@YA_NHH@Z)(int techID, int factionID)",0x005B9F20-0x005B9F89,game,frame;sp_ready;purged_ok,src/technology.cpp:132,Complete,,,source_complete,,,,0,109
 0x005B9F90,0x005B9FE0,80,.text,?tech_recurse@@YAHHH@Z,"int (__cdecl ?tech_recurse@@YAHHH@Z)(int techID, int ret)",0x005B9F90-0x005B9FE0,game,frame;hidden;sp_ready;purged_ok,src/technology.cpp:155,Complete,?tech_recurse@@YAHHH@Z,,source_complete,,,,1,7
 0x005B9FE0,0x005BA02C,76,.text,?tech_category@@YAHH@Z,int (__cdecl ?tech_category@@YAHH@Z)(int techID),0x005B9FE0-0x005BA02C,game,frame;hidden;sp_ready;purged_ok,src/technology.cpp:171,Complete,,,source_complete,,,,0,6
-0x005BA030,0x005BA0DD,173,.text,?redundant@@YAHHH@Z,"int (__cdecl ?redundant@@YAHHH@Z)(int facilityID, int factionID)",0x005BA030-0x005BA0DD,game,frame;sp_ready;purged_ok,src/base.cpp:2524,Complete,,,source_complete,,,,0,1
-0x005BA0E0,0x005BA90A,2090,.text,?facility_avail@@YAHHHHH@Z,"int (__cdecl ?facility_avail@@YAHHHHH@Z)(int facilityID, int factionID, int baseID, int queueCount)",0x005BA0E0-0x005BA90A,game,frame;sp_ready;purged_ok,src/base.cpp:2562,Complete,,,source_complete,,,,6,5
+0x005BA030,0x005BA0DD,173,.text,?redundant@@YAHHH@Z,"int (__cdecl ?redundant@@YAHHH@Z)(int facilityID, int factionID)",0x005BA030-0x005BA0DD,game,frame;sp_ready;purged_ok,src/base.cpp:2529,Complete,,,source_complete,,,,0,1
+0x005BA0E0,0x005BA90A,2090,.text,?facility_avail@@YAHHHHH@Z,"int (__cdecl ?facility_avail@@YAHHHHH@Z)(int facilityID, int factionID, int baseID, int queueCount)",0x005BA0E0-0x005BA90A,game,frame;sp_ready;purged_ok,src/base.cpp:2567,Complete,,,source_complete,,,,6,5
 0x005BA910,0x005BAB39,553,.text,?veh_avail@@YAHHHH@Z,"int (__cdecl ?veh_avail@@YAHHHH@Z)(int protoID, int factionID, int baseID)",0x005BA910-0x005BAB39,game,frame;sp_ready;purged_ok,src/veh.cpp:2806,Complete,,,source_complete,,,,1,7
 0x005BAB40,0x005BAC13,211,.text,?terrain_avail@@YAHHHH@Z,"int (__cdecl ?terrain_avail@@YAHHHH@Z)(int terraformID, BOOL isSea, int factionID)",0x005BAB40-0x005BAC13,game,frame;sp_ready;purged_ok,src/terraforming.cpp:94,Complete,,,source_complete,,,,0,5
 0x005BAC20,0x005BADBF,415,.text,?tech_avail@@YAHHH@Z,"int (__cdecl ?tech_avail@@YAHHH@Z)(int techID, int factionID)",0x005BAC20-0x005BADBF,game,frame;sp_ready;purged_ok,src/technology.cpp:192,Complete,,,source_complete,,,,0,6
@@ -3819,12 +3819,12 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005CB660,0x005CB6BF,95,.text,sub_5cb660,,0x005CB660-0x005CB6BF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x005CB6C0,0x005CBAD1,1041,.text,sub_5cb6c0,,0x005CB6C0-0x005CBAD1,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,2
 0x005CBAE0,0x005CBBB6,214,.text,sub_5cbae0,,0x005CBAE0-0x005CBBB6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
-0x005CBBC0,0x005CBBF5,53,.text,sub_5cbbc0,,0x005CBBC0-0x005CBBF5,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:909,Complete,,,source_complete,,,,0,2
+0x005CBBC0,0x005CBBF5,53,.text,sub_5cbbc0,,0x005CBBC0-0x005CBBF5,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:926,Complete,,,source_complete,,,,0,2
 0x005CBC00,0x005CBE2A,554,.text,sub_5cbc00,,0x005CBC00-0x005CBE2A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x005CBE30,0x005CC14A,794,.text,sub_5cbe30,,0x005CBE30-0x005CC14A,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,5,1
 0x005CC150,0x005CC2A9,345,.text,sub_5cc150,,0x005CC150-0x005CC2A9,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x005CC2B0,0x005CC42C,380,.text,sub_5cc2b0,,0x005CC2B0-0x005CC42C,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
-0x005CC430,0x005CC44B,27,.text,sub_5cc430,,0x005CC430-0x005CC44B,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:624,Complete,,,source_complete,,,,0,1
+0x005CC430,0x005CC44B,27,.text,sub_5cc430,,0x005CC430-0x005CC44B,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:641,Complete,,,source_complete,,,,0,1
 0x005CC450,0x005CC70D,701,.text,sub_5cc450,,0x005CC450-0x005CC70D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x005CC710,0x005CC856,326,.text,sub_5cc710,,0x005CC710-0x005CC856,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,2
 0x005CC860,0x005CC935,213,.text,sub_5cc860,,0x005CC860-0x005CC935,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
@@ -3917,7 +3917,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005D5250,0x005D5346,246,.text,?fill@GraphicWin@@QAEXH@Z,"void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)",0x005D5250-0x005D5346,game,hidden;sp_ready;purged_ok,src/graphicwin.cpp:254,Complete,,,source_complete,,,,3,58
 0x005D5350,0x005D543E,238,.text,?fill@GraphicWin@@QAEHPAURECT@@H@Z,"int (__thiscall ?fill@GraphicWin@@QAEHPAURECT@@H@Z)(GraphicWin* this, RECT*, int)",0x005D5350-0x005D543E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,18
 0x005D5440,0x005D5467,39,.text,?fill@GraphicWin@@QAEHHHHHH@Z,"int (__thiscall ?fill@GraphicWin@@QAEHHHHHH@Z)(GraphicWin* this, int xLeft, int yTop, int length, int width, int)",0x005D5440-0x005D5467,game,hidden;sp_ready;purged_ok,src/graphicwin.cpp:206,Complete,,,source_complete,,,,1,6
-0x005D5470,0x005D5492,34,.text,sub_5d5470,,0x005D5470-0x005D5492,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:685,Complete,,,source_complete,,,,1,0
+0x005D5470,0x005D5492,34,.text,sub_5d5470,,0x005D5470-0x005D5492,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:702,Complete,,,source_complete,,,,1,0
 0x005D54A0,0x005D54C2,34,.text,sub_5d54a0,,0x005D54A0-0x005D54C2,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005D54D0,0x005D54F2,34,.text,sub_5d54d0,,0x005D54D0-0x005D54F2,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x005D5500,0x005D5536,54,.text,?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z,"int (__thiscall ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z)(GraphicWin* this, int8* lpszFileName, Palette*, int, int)",0x005D5500-0x005D5536,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
@@ -3959,7 +3959,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x005D7470,0x005D7665,501,.text,?close@Buffer@@QAEXXZ,void (__thiscall ?close@Buffer@@QAEXXZ)(Buffer* this),0x005D7470-0x005D7665,game,hidden;sp_ready;purged_ok,src/buffer.cpp:463,Complete,,,source_complete,,Runtime redirect installed by DllMain after byte-signature validation,,1,44
 0x005D7670,0x005D79BF,847,.text,?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z,"int (__thiscall ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z)(Buffer* this, int width, int height, int, ExtDirectDraw*)",0x005D7670-0x005D79BF,game,sp_ready;purged_ok,,,,BufferOriginalInit,original_dependency,,,,6,42
 0x005D79C0,0x005D7A05,69,.text,?resize@Buffer@@QAEXHH@Z,"void (__thiscall ?resize@Buffer@@QAEXHH@Z)(Buffer* this, int width, int height)",0x005D79C0-0x005D7A05,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,5
-0x005D7A10,0x005D7A2F,31,.text,sub_5d7a10,,0x005D7A10-0x005D7A2F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:654,Complete,,,source_complete,,,,0,1
+0x005D7A10,0x005D7A2F,31,.text,sub_5d7a10,,0x005D7A10-0x005D7A2F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:671,Complete,,,source_complete,,,,0,1
 0x005D7A30,0x005D7ADA,188,.text,sub_5d7a30,,0x005D7A30-0x005D7ADA;0x00662B80-0x00662B92,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
 0x005D7AE0,0x005D7B1D,61,.text,sub_5d7ae0,,0x005D7AE0-0x005D7B1D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1
 0x005D7B20,0x005D7B36,22,.text,?load_tga@Buffer@@QAGHPBD@Z,"int (__stdcall ?load_tga@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)",0x005D7B20-0x005D7B36,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
@@ -4955,7 +4955,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00615F50,0x00616029,217,.text,?text_fits@EditBox@@QAEHXZ,int (__thiscall ?text_fits@EditBox@@QAEHXZ)(EditBox* this),0x00615F50-0x00616029,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,2
 0x00616030,0x00616135,261,.text,?text_position@EditBox@@QAEXH@Z,"void (__thiscall ?text_position@EditBox@@QAEXH@Z)(EditBox* this, int)",0x00616030-0x00616135,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,3
 0x00616140,0x00616196,86,.text,?pass_dialog_focus@EditBox@@QAEXXZ,void (__thiscall ?pass_dialog_focus@EditBox@@QAEXXZ)(EditBox* this),0x00616140-0x00616196,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
-0x006161A0,0x006161CA,42,.text,?UNK2@EditBox@@QAEXXZ,void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this),0x006161A0-0x006161CA,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:835,Complete,,,source_complete,,,,1,0
+0x006161A0,0x006161CA,42,.text,?UNK2@EditBox@@QAEXXZ,void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this),0x006161A0-0x006161CA,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:852,Complete,,,source_complete,,,,1,0
 0x006161D0,0x006161F6,38,.text,??0Time@@QAE@XZ,void (__thiscall ??0Time@@QAE@XZ)(Time* this),0x006161D0-0x006161F6,game,hidden;sp_ready;purged_ok,,,??0Time@@QAE@XZ,,source_complete,,Staged hybrid export redirect calls the source-owned constructor,,0,19
 0x00616200,0x00616260,96,.text,??1Time@@QAE@XZ,void (__thiscall ??1Time@@QAE@XZ)(Time* this),0x00616200-0x00616260,game,hidden;sp_ready;purged_ok,,,??1Time@@QAE@XZ,TimeDtorTarget,source_complete,,Staged hybrid export redirect calls the source-owned destructor,,1,30
 0x00616260,0x006162CE,110,.text,?init@Time@@QAEXP6AXH@ZHHH@Z,"void (__thiscall ?init@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int)",0x00616260-0x006162CE,game,hidden;sp_ready;purged_ok,src/time.cpp:27,Complete,,,source_complete,,,,1,4
@@ -5110,11 +5110,11 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00625080,0x00625294,532,.text,sub_625080,,0x00625080-0x00625294,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,4
 0x006252A0,0x006252B0,16,.text,??0TextureStore@@QAE@XZ,void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this),0x006252A0-0x006252B0,game,hidden;sp_ready;purged_ok,src/texture.cpp:122,Complete,,,source_complete,,,,0,1
 0x006252B0,0x006252BE,14,.text,??1TextureStore@@QAE@XZ,void (__thiscall ??1TextureStore@@QAE@XZ)(TextureStore* this),0x006252B0-0x006252BE,game,hidden;sp_ready;purged_ok,src/texture.cpp:82,Complete,,,source_complete,,,,0,6
-0x006252C0,0x006252DE,30,.text,sub_6252c0,,0x006252C0-0x006252DE,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:547,Complete,,,source_complete,,,,0,0
-0x006252E0,0x00625306,38,.text,??0ImageButton@@QAE@XZ,void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this),0x006252E0-0x00625306,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1118,Complete,,,source_complete,,,,1,0
+0x006252C0,0x006252DE,30,.text,sub_6252c0,,0x006252C0-0x006252DE,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:555,Complete,,,source_complete,,,,0,0
+0x006252E0,0x00625306,38,.text,??0ImageButton@@QAE@XZ,void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this),0x006252E0-0x00625306,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1135,Complete,,,source_complete,,,,1,0
 0x00625310,0x00625325,21,.text,??1ImageButton@@QAE@XZ,void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this),0x00625310-0x00625325,game,hidden;sp_ready;purged_ok,,,,ImageButtonDtorTarget,original_dependency,,,,0,1
-0x00625330,0x0062533F,15,.text,?close@ImageButton@@QAEXXZ,void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this),0x00625330-0x0062533F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1141,Complete,,,source_complete,,,,0,0
-0x00625340,0x0062537A,58,.text,?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z,"int (__thiscall ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z)(ImageButton* this, int, int8*, int, int, int, int, int, Win*, int)",0x00625340-0x0062537A,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1162,Complete,,,source_complete,,,,1,0
+0x00625330,0x0062533F,15,.text,?close@ImageButton@@QAEXXZ,void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this),0x00625330-0x0062533F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1158,Complete,,,source_complete,,,,0,0
+0x00625340,0x0062537A,58,.text,?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z,"int (__thiscall ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z)(ImageButton* this, int, int8*, int, int, int, int, int, Win*, int)",0x00625340-0x0062537A,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1179,Complete,,,source_complete,,,,1,0
 0x00625380,0x006253C6,70,.text,sub_625380,,0x00625380-0x006253C6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
 0x006253D0,0x006256CC,764,.text,?on_redraw@ImageButton@@QAEXXZ,void (__thiscall ?on_redraw@ImageButton@@QAEXXZ)(ImageButton* this),0x006253D0-0x006256CC,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,7,0
 0x006256D0,0x006256EE,30,.text,??_GImageButton@@UAEPAXI@Z,"void* (__thiscall ??_GImageButton@@UAEPAXI@Z)(ImageButton* this, unsigned int)",0x006256D0-0x006256EE,game,hidden;sp_ready;purged_ok,src/deleting_thunks.cpp:1719,Complete,,,source_complete,,,,2,0
@@ -5220,16 +5220,16 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x006288D0,0x006288ED,29,.text,?btoi@@YAHPAD@Z,int (__cdecl ?btoi@@YAHPAD@Z)(int8* input),0x006288D0-0x006288ED,game,hidden;sp_ready;purged_ok,src/general.cpp:254,Complete,,,source_complete,,,,0,2
 0x006288F0,0x0062894B,91,.text,?htoi@@YAHPAD@Z,int (__cdecl ?htoi@@YAHPAD@Z)(int8* input),0x006288F0-0x0062894B,game,sp_ready;purged_ok,src/general.cpp:268,Complete,,,source_complete,,,,3,2
 0x00628950,0x006289FE,174,.text,?stoi@@YAHPAD@Z,int (__cdecl ?stoi@@YAHPAD@Z)(int8* input),0x00628950-0x006289FE,game,hidden;sp_ready;purged_ok,src/general.cpp:288,Complete,,,source_complete,,,,4,2
-0x00628A50,0x00628A73,35,.text,?swap@@YAXPAHPAH@Z,,0x00628A50-0x00628A73,game,sp_ready;purged_ok,src/general.cpp:790,Complete,,,source_complete,,,,0,14
-0x00628A80,0x00628AA3,35,.text,?swap@@YAXPAEPAE@Z,,0x00628A80-0x00628AA3,game,hidden;sp_ready;purged_ok,src/general.cpp:807,Complete,,,source_complete,,,,0,0
+0x00628A50,0x00628A73,35,.text,?swap@@YAXPAHPAH@Z,,0x00628A50-0x00628A73,game,sp_ready;purged_ok,src/general.cpp:798,Complete,,,source_complete,,,,0,14
+0x00628A80,0x00628AA3,35,.text,?swap@@YAXPAEPAE@Z,,0x00628A80-0x00628AA3,game,hidden;sp_ready;purged_ok,src/general.cpp:815,Complete,,,source_complete,,,,0,0
 0x00628AB0,0x00628AC2,18,.text,?bit_count_signed@@YAHH@Z,,0x00628AB0-0x00628AC2,game,hidden;sp_ready;purged_ok,src/general.cpp:763,Complete,,,source_complete,,,,0,1
-0x00628AD0,0x00628AEC,28,.text,?fixed_div@@YAHJJ@Z,,0x00628AD0-0x00628AEC,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:824,Complete,,,source_complete,,,,0,7
-0x00628AF0,0x00628B23,51,.text,?memrchr@@YAHPBX0H@Z,,0x00628AF0-0x00628B23,game,frame;sp_ready;purged_ok,src/general.cpp:839,Complete,,,source_complete,,,,0,6
+0x00628AD0,0x00628AEC,28,.text,?fixed_div@@YAHJJ@Z,,0x00628AD0-0x00628AEC,game,frame;hidden;sp_ready;purged_ok,src/general.cpp:832,Complete,,,source_complete,,,,0,7
+0x00628AF0,0x00628B23,51,.text,?memrchr@@YAHPBX0H@Z,,0x00628AF0-0x00628B23,game,frame;sp_ready;purged_ok,src/general.cpp:847,Complete,,,source_complete,,,,0,6
 0x00628B30,0x00628B69,57,.text,?findnum@@YAHPAD@Z,,0x00628B30-0x00628B69,game,frame;sp_ready;purged_ok,src/general.cpp:317,Complete,,,source_complete,,,,0,1
 0x00628B70,0x00628D92,546,.text,?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z,,0x00628B70-0x00628D92,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,2,0
 0x00628DB0,0x00628F27,375,.text,?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z,,0x00628DB0-0x00628F27,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,3
 0x00628F30,0x006290E0,432,.text,sub_628f30,,0x00628F30-0x006290E0,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,2
-0x006290E0,0x00629109,41,.text,?quick_root@@YAHH@Z,,0x006290E0-0x00629109,game,hidden;sp_ready;purged_ok,src/general.cpp:852,Complete,?quick_root@@YAHH@Z,,source_complete,,,,0,3
+0x006290E0,0x00629109,41,.text,?quick_root@@YAHH@Z,,0x006290E0-0x00629109,game,hidden;sp_ready;purged_ok,src/general.cpp:860,Complete,?quick_root@@YAHH@Z,,source_complete,,,,0,3
 0x00629110,0x00629208,266,.text,??0StringBox@@QAE@XZ,void (__thiscall ??0StringBox@@QAE@XZ)(StringBox* this),0x00629110-0x00629208;0x00663300-0x00663312,game,sp_ready;purged_ok,,,,,unrecovered,,,,2,6
 0x00629210,0x006292C9,185,.text,?close@StringBox@@QAEXXZ,void (__thiscall ?close@StringBox@@QAEXXZ)(StringBox* this),0x00629210-0x006292C9,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,10
 0x006292D0,0x00629486,438,.text,?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z,"void (__thiscall ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z)(StringBox* this, int, int, int, int, Win*, StringList*, int)",0x006292D0-0x00629486,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,6
@@ -5528,7 +5528,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0063CF30,0x0063D11C,492,.text,sub_63cf30,,0x0063CF30-0x0063D11C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x0063D120,0x0063D193,115,.text,sub_63d120,,0x0063D120-0x0063D193,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x0063D1A0,0x0063D413,627,.text,sub_63d1a0,,0x0063D1A0-0x0063D413,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
-0x0063D420,0x0063D44F,47,.text,sub_63d420,,0x0063D420-0x0063D44F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1075,Complete,,,source_complete,,,,0,1
+0x0063D420,0x0063D44F,47,.text,sub_63d420,,0x0063D420-0x0063D44F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:1092,Complete,,,source_complete,,,,0,1
 0x0063D450,0x0063D4C2,114,.text,sub_63d450,,0x0063D450-0x0063D4C2,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,4
 0x0063D4D0,0x0063D55F,143,.text,sub_63d4d0,,0x0063D4D0-0x0063D55F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
 0x0063D560,0x0063D5F3,147,.text,sub_63d560,,0x0063D560-0x0063D5F3,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
@@ -5548,7 +5548,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0063E590,0x0063E5DF,79,.text,sub_63e590,,0x0063E590-0x0063E5DF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,3
 0x0063E5E0,0x0063E6DD,253,.text,sub_63e5e0,,0x0063E5E0-0x0063E6DD,game,sp_ready;purged_ok,,,,,unrecovered,,,,3,0
 0x0063E6E0,0x0063E7EE,270,.text,sub_63e6e0,,0x0063E6E0-0x0063E7EE,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
-0x0063E7F0,0x0063E81C,44,.text,sub_63e7f0,,0x0063E7F0-0x0063E81C,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:743,Complete,,,source_complete,,,,0,2
+0x0063E7F0,0x0063E81C,44,.text,sub_63e7f0,,0x0063E7F0-0x0063E81C,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:760,Complete,,,source_complete,,,,0,2
 0x0063E820,0x0063E85B,59,.text,sub_63e820,,0x0063E820-0x0063E85B,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
 0x0063E860,0x0063E94E,238,.text,sub_63e860,,0x0063E860-0x0063E94E,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x0063E950,0x0063EFFF,1711,.text,sub_63e950,,0x0063E950-0x0063EFFF,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,8,1
@@ -5581,7 +5581,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00642350,0x00642477,295,.text,sub_642350,,0x00642350-0x00642477,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
 0x00642480,0x006428BB,1083,.text,_compress_block,,0x00642480-0x006428BB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x006428C0,0x00642934,116,.text,sub_6428c0,,0x006428C0-0x00642934,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
-0x00642940,0x0064295F,31,.text,sub_642940,,0x00642940-0x0064295F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:709,Complete,,,source_complete,,,,0,2
+0x00642940,0x0064295F,31,.text,sub_642940,,0x00642940-0x0064295F,game,hidden;sp_ready;purged_ok,src/leaf_recoveries.cpp:726,Complete,,,source_complete,,,,0,2
 0x00642960,0x006429EB,139,.text,sub_642960,,0x00642960-0x006429EB,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x006429F0,0x00642A6C,124,.text,sub_6429f0,,0x006429F0-0x00642A6C,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,2
 0x00642A70,0x00642B07,151,.text,sub_642a70,,0x00642A70-0x00642B07,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,1

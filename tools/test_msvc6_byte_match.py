@@ -211,9 +211,14 @@ class CatalogueTests(unittest.TestCase):
                              f"0x{case.address:08X} is not a leaf")
 
     def test_every_case_still_points_at_its_recovered_body(self):
+        # The location is DERIVED from the catalogue now rather than pinned in
+        # `CASES`, so this no longer asks "did the body move" - it moves
+        # whenever anything above it is spliced, and that is not a defect.
+        # What still has to hold is that the catalogue can place each case.
         for case in tool.CASES:
-            self.assertEqual(self.rows[case.address]["source_locations"],
-                             case.source, f"0x{case.address:08X} moved")
+            location = tool.case_location(self.rows, case.address)
+            self.assertRegex(location, r"^src/\S+\.cpp:\d+$",
+                             f"0x{case.address:08X}")
 
     def test_every_case_carries_a_perturbation_that_is_present(self):
         # A positive control that silently matches nothing is the failure mode
@@ -221,8 +226,18 @@ class CatalogueTests(unittest.TestCase):
         for case in tool.CASES:
             old, _ = case.perturb
             self.assertTrue(old, f"0x{case.address:08X} has no perturbation")
-            self.assertIn(old, tool.extract_body(case.source),
+            body = tool.extract_body(
+                tool.case_location(self.rows, case.address))
+            self.assertIn(old, body,
                           f"0x{case.address:08X} perturbation is stale")
+
+    def test_a_case_the_catalogue_cannot_place_is_an_error(self):
+        # Deriving the location must not turn a genuinely missing recovery
+        # into a silently empty body.
+        with self.assertRaises(ValueError):
+            tool.case_location({0x401000: {"source_locations": ""}}, 0x401000)
+        with self.assertRaises(ValueError):
+            tool.case_location({}, 0x401000)
 
     def test_the_pre_registered_flags_are_recorded_verbatim(self):
         self.assertEqual(tool.PREREGISTERED_FLAGS, "/c /O2 /Gy /GR-")

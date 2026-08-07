@@ -521,11 +521,19 @@ Original Offset: 0057DEE0
 Return Value: n/a
 Status: Complete
 */
+/*
+Original Offset: 0057DEE0
+Return Value: n/a
+Status: Complete
+*/
 void __cdecl leaf_0057dee0_redirect(void *target) {
+    *static_cast<uint32_t *>(target) = 0xFFFFFFFF;
     uint8_t *const bytes = static_cast<uint8_t *>(target);
-    for (int index = 0; index < 8; ++index) {
-        bytes[index] = 0xFF;
-    }
+    const uint8_t fill = 0xFF;
+    bytes[4] = fill;
+    bytes[5] = fill;
+    bytes[6] = fill;
+    bytes[7] = fill;
 }
 
 /*
@@ -548,15 +556,24 @@ Original Offset: 006252C0
 Return Value: a pointer to the slot that was current on entry
 Status: Complete
 */
+/*
+Original Offset: 006252C0
+Return Value: a pointer to the slot that was current on entry
+Status: Complete
+*/
 void *__fastcall leaf_006252c0_redirect(void *self, void *) {
     uint8_t *const bytes = static_cast<uint8_t *>(self);
     int32_t *const counter = reinterpret_cast<int32_t *>(bytes + 4);
     const int32_t current = *counter;
-    *counter = current + 1;
-    if (*counter == 10) {
+    const int32_t triple = current * 3;
+    const int32_t scaled = triple * 5;
+    void *const result = bytes + 8 + scaled * 4;
+    const int32_t next = current + 1;
+    *counter = next;
+    if (next == 10) {
         *counter = 0;
     }
-    return bytes + 8 + current * 60;
+    return result;
 }
 
 /*

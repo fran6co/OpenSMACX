@@ -97,7 +97,12 @@ class Case:
     """One catalogued recovery, and what it takes to compile it alone."""
     address: int
     label: str
-    source: str          # "src/foo.cpp:LINE" as functions.csv records it
+    # WHERE the body lives is deliberately NOT recorded here. It was, as
+    # "src/foo.cpp:LINE", and it went stale three times: every splice above one
+    # of these five renumbers it, and a hand-copied line number cannot survive
+    # a tool whose whole job is to insert lines. `functions.csv` is the one
+    # place that tracks it and `mizuchi_writeback.py` keeps it current, so it
+    # is read from there - see `case_location`. The ADDRESS is the identity.
     preamble: str = ""   # declarations the extracted body needs, nothing more
     # (old, new): a ONE-OPERATION edit that must change the mnemonic sequence.
     perturb: tuple[str, str] = ("", "")
@@ -117,13 +122,11 @@ class Case:
 CASES = [
     Case(address=0x0042A020,
          label="?UNK1@Datalink@@QAEHHH@Z",
-         source="src/datalink.cpp:377",
          preamble="class Datalink { public: int UNK1(int, int); };\n",
          perturb=("+ static_cast<uint32_t>(a2)", "- static_cast<uint32_t>(a2)"),
          shape="__thiscall; multiply by constant 10000, add"),
     Case(address=0x0042A040,
          label="?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z",
-         source="src/datalink.cpp:411",
          preamble=("struct DatalinkID;\n"
                    "class Datalink { public: "
                    "void parse_id(int, DatalinkID *, int *); };\n"),
@@ -131,7 +134,6 @@ CASES = [
          shape="__thiscall; signed divide by constant 10000, two stores"),
     Case(address=0x0050BA00,
          label="?bitmask@@YAXHPAHPAH@Z",
-         source="src/general.cpp:871",
          perturb=("1 << (input & 7)", "1 >> (input & 7)"),
          diagnostic=("uint32_t input", "int input",
                      "the original divides SIGNED (cdq/and/add/sar); the "
@@ -140,7 +142,6 @@ CASES = [
          shape="__cdecl; signed divide by 8, variable shift, two stores"),
     Case(address=0x00532A50,
          label="sub_532a50",
-         source="src/leaf_recoveries.cpp:778",
          perturb=("quotient + 1", "quotient - 1"),
          diagnostic=("""    const int rounded = remainder == 0 ? quotient : quotient + 1;
     *quotient_out = rounded;
@@ -154,7 +155,6 @@ CASES = [
          shape="__stdcall; variable idiv, remainder, conditional round up"),
     Case(address=0x00559210,
          label="sub_559210",
-         source="src/leaf_recoveries.cpp:181",
          perturb=("value / step * step", "value / step + step"),
          shape="__cdecl; variable idiv then multiply back"),
 ]
@@ -197,6 +197,22 @@ def original_bytes(pe, row: dict) -> bytes:
 
 
 # ------------------------------------------------------------------ the source
+
+def case_location(rows: dict, address: int) -> str:
+    """Where `functions.csv` says this recovery lives, right now.
+
+    The catalogue records `source_locations` as a `;`-separated list because a
+    function can be spliced into more than one place; every case here is a
+    single-site leaf, so the first entry is the body.
+    """
+    row = rows.get(address)
+    if row is None:
+        raise ValueError(f"0x{address:08X} is not in the catalogue")
+    location = (row.get("source_locations") or "").split(";")[0].strip()
+    if not location:
+        raise ValueError(f"0x{address:08X} has no source_locations")
+    return location
+
 
 def extract_body(source: str) -> str:
     """The committed recovery verbatim, from its catalogued line to its `}`.
@@ -334,7 +350,7 @@ def run(flags: str, work: Path, verbose: bool) -> list[dict]:
     results = []
     for case in CASES:
         row = rows[case.address]
-        case.body = extract_body(case.source)
+        case.body = extract_body(case_location(rows, case.address))
         original = original_bytes(pe, row)
         unit = STDINT + case.preamble + "\n" + case.body
         rebuilt = compile_unit(unit, work, f"f{case.address:08x}", flags)
