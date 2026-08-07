@@ -188,14 +188,14 @@ bool verify_client_to_screen() {
         // Local additions cross both signed boundaries.
         {1,
          {{0, 0x00000001U, 0xFFFFFFFFU, 0x00000001U, 0xFFFFFFFFU},
-          {}, {}},
+          {0}, {0}},
          0x7FFFFFFFU, 0x80000000U,
          0x80000001U, 0x7FFFFFFEU, false},
         // Parent additions wrap coordinates already adjusted by the child.
         {2,
          {{0x00000020U, 0, 0, 0, 0},
           {0, 0x00000001U, 0xFFFFFFFFU, 0x00000001U, 0xFFFFFFFFU},
-          {}},
+          {0}},
          0x7FFFFFFFU, 0x80000000U,
          0x80000001U, 0x7FFFFFFEU, false},
         // Parent terms cancel during recursion, making the later subtraction
@@ -203,13 +203,13 @@ bool verify_client_to_screen() {
         {2,
          {{0x00008020U, 0, 0, 0, 0},
           {0, 0xFFFFFFFFU, 0x00000001U, 0x00000001U, 0xFFFFFFFFU},
-          {}},
+          {0}},
          0x80000000U, 0x7FFFFFFFU,
          0x7FFFFFFFU, 0x80000000U, false},
         // The original updates x before reading y, which is observable when
         // both output pointers alias the same coordinate.
         {1,
-         {{0, 100, 200, 10, 20}, {}, {}},
+         {{0, 100, 200, 10, 20}, {0}, {0}},
          7, 0xDEADBEEFU, 337, 337, true},
     };
     OriginalCoordinates original = original_method<OriginalCoordinates>(0x005ED240U);
