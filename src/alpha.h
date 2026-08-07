@@ -732,7 +732,7 @@ DLLEXPORT void __cdecl clear_faction(Player *player);
 DLLEXPORT void __cdecl read_faction(uint32_t player_id);
 DLLEXPORT void __cdecl read_faction(Player *player, int toggle);
 DLLEXPORT BOOL __cdecl read_factions();
-DLLEXPORT void __cdecl noun_item(int *gender, BOOL *plurality);
+DLLEXPORT void __cdecl noun_item(int *gender, int *plurality);
 DLLEXPORT BOOL __cdecl read_units();
 DLLEXPORT BOOL __cdecl read_rules(BOOL tgl_all_rules);
 DLLEXPORT LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default);

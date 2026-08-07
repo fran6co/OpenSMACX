@@ -172,3 +172,38 @@ flag in `FLAG_SETS`.
   the address arithmetic into named temps BEFORE computing a wraparound counter
   kept the counter an `inc`; computing the counter first degraded it
   (0x006252C0).
+
+## Naming proposals awaiting a catalogue change
+
+Asking for names produced two the code justifies but that a body edit cannot
+carry, because the identifier is catalogue data and the redirect stubs are
+exported through the append-only `src/OpenSMACX.def`:
+
+- `0x00448380` `field_accessor_00448380_redirect` -> something like
+  `sign_extend_flag_bit0`. The whole body reads bit 0 of `+0x40` and smears it
+  with `shl 31; sar 31`; the current name only restates the address.
+- `0x00634650` `leaf_00634650_redirect(void *self, void *, const float *other)`
+  -> `Vector3::Dot(const float *) const`, with `struct Vector3 { float x, y, z; }`.
+  The receiver is indexed at 0, 4 and 8 as floats and `ret 4` pops the single
+  stack argument, so the fake `__fastcall` receiver is standing in for a real
+  `this`. Verified byte-exact in BOTH spellings, so the rename is free of any
+  byte risk and is purely a catalogue and `.def` question.
+
+## The XOR-swap idiom, and a lever that transferred
+
+`?swap@@YAXPAHPAH@Z` at 0x00628A50 was written with a temp; the original is the
+three-statement XOR swap with NO aliasing guard. Predicted to transfer to the
+byte twin `?swap@@YAXPAEPAE@Z` at 0x00628A80 and it did, first try - the two
+had been sitting at MISMATCH with the same `#2 push vs cmp` note.
+
+When two rows share a fingerprint AND a name, fix one and try the other
+immediately; that one cost a single compile.
+
+## `BOOL` and `LPSTR` are NO_COMPILE, not a mismatch
+
+`src/alpha.cpp`'s `noun_item` read as `#12 jne vs je` in the ledger but was
+actually NO_COMPILE under the writeback recipe: the scaffolding forward-declares
+types reachable from the decoded signature and from callee signatures, and a
+Windows typedef used only for a LOCAL or spelled into a parameter is not
+reachable. `BOOL` is `int` and `LPSTR` is `char *`, so respelling them changes
+no type and no byte - but until it is done the body cannot be scored at all.

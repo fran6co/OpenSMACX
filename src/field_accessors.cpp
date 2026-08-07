@@ -1051,7 +1051,15 @@ Original Offset: 00448380
 Return Value: the value described above
 Status: Complete
 */
+/*
+Original Offset: 00448380
+Return Value: bit 0 of the field at +0x40, sign-extended to a full mask
+Status: Complete
+*/
 uint32_t __fastcall field_accessor_00448380_redirect(void *self, void *) {
-    return 0U - (*reinterpret_cast<const uint32_t *>(
-        static_cast<const uint8_t *>(self) + 0x40) & 1U);
+    // Sign-extend bit 0 to 0xFFFFFFFF or 0: `shl 31` puts it in the sign
+    // position and `sar 31` smears it back, which is what the original does.
+    const int32_t value = *reinterpret_cast<const int32_t *>(
+        static_cast<const uint8_t *>(self) + 0x40);
+    return static_cast<uint32_t>((value << 31) >> 31);
 }
