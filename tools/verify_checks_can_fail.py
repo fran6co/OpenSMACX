@@ -215,6 +215,37 @@ def damage_verified_layouts(workspace):
             "--verified", str(copy)]
 
 
+def damage_layout_probe_header(workspace):
+    """A header that does not compile, which is NOT a wrong layout.
+
+    This case exists because the distinction was missing and it cost four
+    classes. `src/buffer.h` referenced an undeclared `Vert`; `graphicwin.h`
+    and `win.h` include it, so the probes for ButtonGroup, MenuEntry,
+    PullDownItem and TutWin stopped producing an object. Their layouts were
+    correct. The tool reported "verified-layouts.txt is stale", and the
+    obvious response - regenerate it - would have dropped all four from the
+    list, turned `supplyable()` False for each, and sent every recovered body
+    in them to NO_COMPILE with nothing pointing at the typo.
+
+    The damage is applied to a COPY of src/ passed via `--src`, because a gate
+    check may not edit the tree it is checking. What must go red is the build
+    control specifically, so the expected text is the header-defect wording
+    and not "is stale" - the two outcomes are exactly what this separates.
+    """
+    source = REPO_ROOT / "src"
+    header = source / "buffer.h"
+    if not header.is_file():
+        raise Skip("src/buffer.h is absent")
+    copy = workspace / "src"
+    shutil.copytree(source, copy)
+    (copy / "buffer.h").write_text(
+        substitute(header.read_text(encoding="utf-8"),
+                   "struct Vert;", "// struct Vert;"),
+        encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_class_layouts.py"), "--check",
+            "--src", str(copy)]
+
+
 def damage_pinned_class_size(workspace):
     """Every pinned `sizeof` moved, so the image-derived sizes disagree.
 
@@ -383,6 +414,8 @@ CASES = (
      damage_emptied_def, "below the floor"),
     ("verified-layouts-current", "a proved class layout quietly dropped",
      damage_verified_layouts, "is stale"),
+    ("verified-layouts-current", "a header defect read as a wrong layout",
+     damage_layout_probe_header, "header defect"),
     ("class-layout-derivation-pinned", "pinned sizes the image contradicts",
      damage_pinned_class_size, "answered wrongly"),
 )

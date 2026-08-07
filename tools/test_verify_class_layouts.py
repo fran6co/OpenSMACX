@@ -69,7 +69,8 @@ class CheckTest(unittest.TestCase):
         self.verify = verifier.verify
         self.pinned = verifier.class_layouts.pinned_layouts
         verifier.bm.available = lambda: ""
-        verifier.verify = lambda candidates: (["Buffer", "Font"], [])
+        verifier.verify = lambda candidates, src=None: (
+            ["Buffer", "Font"], [], [])
         verifier.class_layouts.pinned_layouts = lambda: {"Buffer": 1, "Font": 1}
         self.work = Path(tempfile.mkdtemp())
 
@@ -119,6 +120,107 @@ class CheckTest(unittest.TestCase):
                          verifier.render(["Buffer", "Font"]))
 
 
+class BuildControlTest(unittest.TestCase):
+    """A probe that does not COMPILE is not a verdict about a layout.
+
+    The case this exists for actually happened: `src/buffer.h` referenced an
+    undeclared `Vert`, and because `graphicwin.h` and `win.h` include it, four
+    classes whose layouts were correct - ButtonGroup, MenuEntry, PullDownItem,
+    TutWin - stopped producing an object. Before this control they were
+    reported as "the extracted layout is not the real size", and regenerating
+    the list would have dropped all four.
+    """
+
+    def setUp(self):
+        self.available = verifier.bm.available
+        self.verify = verifier.verify
+        self.pinned = verifier.class_layouts.pinned_layouts
+        verifier.bm.available = lambda: ""
+        verifier.class_layouts.pinned_layouts = lambda: {"Buffer": 1, "Font": 1}
+        verifier.verify = lambda candidates, src=None: (
+            ["Buffer"], [], [("Font", "font.h(9) : error C2061: 'Vert'")])
+        self.work = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        verifier.bm.available = self.available
+        verifier.verify = self.verify
+        verifier.class_layouts.pinned_layouts = self.pinned
+
+    def run_main(self, *argv):
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            status = verifier.main(list(argv))
+        return status, out.getvalue() + err.getvalue()
+
+    def test_an_unbuildable_probe_refuses_to_write_the_list(self):
+        # The damaging outcome is not the red exit, it is a REGENERATION that
+        # quietly drops the class. The file must not appear at all.
+        listing = self.work / "verified.txt"
+        status, _ = self.run_main("--verified", str(listing))
+        self.assertEqual(status, 1)
+        self.assertFalse(listing.exists())
+
+    def test_it_says_header_defect_rather_than_wrong_layout(self):
+        status, output = self.run_main("--verified",
+                                       str(self.work / "verified.txt"))
+        self.assertEqual(status, 1)
+        self.assertIn("header defect", output)
+        self.assertNotIn("not the real size", output)
+
+    def test_it_names_the_class_and_the_compiler_error(self):
+        # Naming the diagnostic is the whole point: `C2061: 'Vert'` points at
+        # a header, and "ButtonGroup is the wrong size" points nowhere.
+        _, output = self.run_main("--verified", str(self.work / "v.txt"))
+        self.assertIn("Font", output)
+        self.assertIn("C2061", output)
+
+    def test_check_also_refuses_rather_than_reporting_stale(self):
+        # Reporting "stale" here would blame the committed list for a typo in
+        # a header, which is the wrong thing to go fix.
+        listing = self.work / "verified.txt"
+        listing.write_text(verifier.render(["Buffer"]))
+        status, output = self.run_main("--check", "--verified", str(listing))
+        self.assertEqual(status, 1)
+        self.assertNotIn("stale", output)
+
+
+class ErrorAttributionTest(unittest.TestCase):
+    """`cl` compiles the batch and announces each unit by file name; that
+    line is the only thing tying a diagnostic to the class it came from."""
+
+    def test_it_attributes_each_error_to_the_unit_above_it(self):
+        output = ("c000.cpp\n"
+                  "buffer.h(32) : error C2061: syntax error : 'Vert'\n"
+                  "c001.cpp\n"
+                  "menu.h(9) : error C2065: undeclared 'Foo'\n")
+        self.assertEqual(
+            verifier.errors_by_unit(output, {"c000": "A", "c001": "B"}),
+            {"A": "buffer.h(32) : error C2061: syntax error : 'Vert'",
+             "B": "menu.h(9) : error C2065: undeclared 'Foo'"})
+
+    def test_it_keeps_the_first_error_not_the_last(self):
+        # A cascade reports the root cause first; the tail is usually noise
+        # about the type the first error stopped it from parsing.
+        output = ("c000.cpp\n"
+                  "buffer.h(32) : error C2061: 'Vert'\n"
+                  "buffer.h(40) : error C2238: unexpected token\n")
+        self.assertEqual(verifier.errors_by_unit(output, {"c000": "A"}),
+                         {"A": "buffer.h(32) : error C2061: 'Vert'"})
+
+    def test_a_unit_that_compiled_gets_no_entry(self):
+        self.assertEqual(
+            verifier.errors_by_unit("c000.cpp\nc001.cpp\n",
+                                    {"c000": "A", "c001": "B"}), {})
+
+    def test_output_before_any_unit_name_is_not_attributed(self):
+        # cl prints its own banner and any command-line diagnostics before the
+        # first file name. Blaming those on a class would be worse than
+        # reporting none.
+        self.assertEqual(
+            verifier.errors_by_unit("error D8021: invalid option\n",
+                                    {"c000": "A"}), {})
+
+
 class ToolchainAbsentTest(unittest.TestCase):
     """Without VC6 every probe fails to build, which reads as "no layout
     survived" and is indistinguishable from "all 36 are wrong". As a CTest
@@ -128,7 +230,7 @@ class ToolchainAbsentTest(unittest.TestCase):
         self.available = verifier.bm.available
         self.verify = verifier.verify
         verifier.bm.available = lambda: "wine is not on PATH"
-        verifier.verify = lambda candidates: self.fail(
+        verifier.verify = lambda candidates, src=None: self.fail(
             "verify() must not run when the compiler is absent")
 
     def tearDown(self):

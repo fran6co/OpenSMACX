@@ -39,46 +39,116 @@ SRC = REPO_ROOT / "src"
 VERIFIED = REPO_ROOT / "docs" / "recovery" / "verified-layouts.txt"
 
 
-def declaring_header() -> dict:
+def declaring_header(src: Path = SRC) -> dict:
     """{class name: the header that defines it}."""
     home = {}
-    for header in sorted(SRC.glob("*.h")):
+    for header in sorted(src.glob("*.h")):
         for name, _, _ in class_layouts.class_bodies(
                 header.read_text(errors="ignore")):
             home.setdefault(name, header.name)
     return home
 
 
-def verify(candidates: dict) -> tuple:
-    """(verified, rejected) - one translation unit per class, compiled."""
-    home = declaring_header()
-    work = Path(tempfile.mkdtemp())
-    environment = bm.wine_environment()
-    environment["INCLUDE"] += ";Z:" + str(SRC).replace("/", "\\")
+def compile_units(work: Path, units: dict, src: Path) -> str:
+    """Compile every unit in one batch; return the compiler's output.
 
-    units = {}
+    Whether a unit succeeded is read from its `.obj`, not from the exit code:
+    `cl` returns non-zero when ANY unit fails and the others still produce
+    objects, so the per-unit answer is on disk.
+    """
+    (work / "cl.rsp").write_text(
+        "/c /GR- /GX\n" + "\n".join(f"{stem}.cpp" for stem in units) + "\n")
+    environment = bm.wine_environment()
+    environment["INCLUDE"] += ";Z:" + str(src).replace("/", "\\")
+    finished = subprocess.run(
+        ["wine", str(bm.VC6_CL), "/nologo", "@cl.rsp"], cwd=work,
+        env=environment, capture_output=True, text=True)
+    return finished.stdout + finished.stderr
+
+
+def errors_by_unit(output: str, units: dict) -> dict:
+    """{class name: first compiler error}, from cl's per-file output.
+
+    `cl` announces each translation unit by printing its file name on a line
+    of its own before any diagnostic for it, which is the only thing tying an
+    error to a unit when they are compiled in one batch.
+    """
+    found, current = {}, None
+    for line in output.splitlines():
+        stem = line.strip()[:-4] if line.strip().endswith(".cpp") else None
+        if stem in units:
+            current = units[stem]
+        elif current and "error" in line and current not in found:
+            found[current] = line.strip()
+    return found
+
+
+def verify(candidates: dict, src: Path = SRC) -> tuple:
+    """(verified, rejected, unbuildable) - one translation unit per class.
+
+    THE PROBE IS BUILT TWICE, AND THE FIRST BUILD CARRIES NO ASSERTION. A
+    probe that fails to COMPILE produces no `.obj`, and so did a probe whose
+    `static_assert` fired - the two were indistinguishable, and every one of
+    them was reported as "the extracted layout is not the real size".
+
+    That is not a cosmetic misattribution. `src/buffer.h` referenced an
+    undeclared `Vert` for one commit, and because `graphicwin.h` and `win.h`
+    include it, four unrelated classes - ButtonGroup, MenuEntry, PullDownItem,
+    TutWin - stopped verifying. Their layouts were never wrong. Regenerating
+    the list at that moment would have dropped all four, `supplyable()` would
+    have returned False for each, and every recovered body in them would have
+    gone NO_COMPILE with nothing pointing back to a header that had a typo.
+
+    So a unit that cannot build is not a verdict about a layout, and it is
+    returned separately rather than folded into `rejected`. `main` refuses to
+    write the list at all while any exist. `extend_short_classes.py:24-28`
+    documents this same control for itself; this tool did not have it.
+    """
+    home = declaring_header(src)
+    work = Path(tempfile.mkdtemp())
+
+    units, bodies = {}, {}
     for index, name in enumerate(sorted(candidates)):
         if name not in home:
             continue
         stem = f"c{index:03d}"
-        body = "\n".join(class_layouts.unverified_declaration_for(name))
-        (work / f"{stem}.cpp").write_text(
+        bodies[stem] = (
             f'#include "stdafx.h"\n#include "{home[name]}"\n'
-            f"struct Probe {{\n{body}\n}};\n"
-            f'static_assert(sizeof(Probe) == sizeof({name}), "layout");\n'
-            f"int probe{index}() {{ return 0; }}\n")
+            f"struct Probe {{\n"
+            f"{chr(10).join(class_layouts.unverified_declaration_for(name))}\n"
+            f"}};\n")
+        (work / f"{stem}.cpp").write_text(
+            bodies[stem] + f"int probe{index}() {{ return 0; }}\n")
         units[stem] = name
 
-    (work / "cl.rsp").write_text(
-        "/c /GR- /GX\n" + "\n".join(f"{stem}.cpp" for stem in units) + "\n")
-    subprocess.run(["wine", str(bm.VC6_CL), "/nologo", "@cl.rsp"], cwd=work,
-                   env=environment, capture_output=True, text=True)
+    # Pass one: the probe alone. Anything that fails here is a broken header,
+    # a missing type, or a member `class_layouts` mis-parsed into something
+    # that will not compile - none of which is an answer about size.
+    output = compile_units(work, units, src)
+    reasons = errors_by_unit(output, units)
+    buildable = {stem: name for stem, name in units.items()
+                 if (work / f"{stem}.obj").is_file()}
+    unbuildable = sorted(
+        (name, reasons.get(name, "(no diagnostic captured)"))
+        for stem, name in units.items() if stem not in buildable)
 
-    verified = sorted(name for stem, name in units.items()
+    # Pass two: the same probes, now asserting. Only these verdicts are about
+    # the layout, because the unit is already known to build without them.
+    for stem in buildable:
+        (work / f"{stem}.obj").unlink()
+        (work / f"{stem}.cpp").write_text(
+            bodies[stem]
+            + f'static_assert(sizeof(Probe) == sizeof({buildable[stem]}), '
+              f'"layout");\n'
+            + f"int probe_{stem}() {{ return 0; }}\n")
+    if buildable:
+        compile_units(work, buildable, src)
+
+    verified = sorted(name for stem, name in buildable.items()
                       if (work / f"{stem}.obj").is_file())
-    rejected = sorted(name for stem, name in units.items()
+    rejected = sorted(name for stem, name in buildable.items()
                       if not (work / f"{stem}.obj").is_file())
-    return verified, rejected
+    return verified, rejected, unbuildable
 
 
 def render(verified: list) -> str:
@@ -113,6 +183,12 @@ def main(argv=None) -> int:
     parser.add_argument("--verified", type=Path, default=VERIFIED,
                         help="the list to compare against (default: the "
                              "committed one)")
+    # Also for verify_checks_can_fail.py: the build control can only be shown
+    # to fire by handing the tool a header that does not compile, and damaging
+    # the real src/ to do it is not something a gate check may do.
+    parser.add_argument("--src", type=Path, default=SRC,
+                        help="the header tree to read and compile against "
+                             "(default: the committed one)")
     arguments = parser.parse_args(argv)
     verified_path = arguments.verified
 
@@ -127,7 +203,21 @@ def main(argv=None) -> int:
         return 0
 
     candidates = class_layouts.pinned_layouts()
-    verified, rejected = verify(candidates)
+    verified, rejected, unbuildable = verify(candidates, arguments.src)
+
+    # A probe that will not build says nothing about the layout it was meant
+    # to test, so neither answer this tool can give is available: writing the
+    # list would silently drop the class, and reporting the checkout stale
+    # would blame the list for a broken header. Refuse both, and name the
+    # header, because that is the only thing here anyone can act on.
+    if unbuildable:
+        print(f"{len(unbuildable)} probe(s) do not compile. This is a header "
+              f"defect, NOT a wrong layout - no verdict is available for "
+              f"these classes and the list has not been written:",
+              file=sys.stderr)
+        for name, reason in unbuildable:
+            print(f"    {name}: {reason}", file=sys.stderr)
+        return 1
 
     text = render(verified)
 
