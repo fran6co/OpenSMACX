@@ -51,7 +51,6 @@ import collections
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -291,40 +290,40 @@ def run(limit: int, jobs: int, verbose: bool) -> int:
     for flags in byte_match.FLAG_SETS:
         if not pending:
             break
-        with tempfile.TemporaryDirectory() as tmp:
-            work = Path(tmp)
-            stems = sorted(pending)
-            for start in range(0, len(stems), jobs):
-                chunk = {s: units[s] for s in stems[start:start + jobs]}
-                objects = byte_match.compile_batch(chunk, work, flags)
-                diagnostics = getattr(byte_match.compile_batch,
-                                      "diagnostics", {})
-                for stem, data in objects.items():
-                    if data is None:
-                        # WHAT CL SAID, not merely that it said something. "CL
-                        # emitted no object" was recorded for all 1,988
-                        # NO_COMPILE rows, and it is true of every compile
-                        # failure there has ever been, so it separates nothing.
-                        candidate = {
-                            "tier": "NO_COMPILE",
-                            "refusal_reason": diagnostics.get(
-                                stem, "CL emitted no object")}
+        stems = sorted(pending)
+        chunks = [{s: units[s] for s in stems[start:start + jobs]}
+                  for start in range(0, len(stems), jobs)]
+        # Concurrent, one temporary directory per batch. The flag SETS stay
+        # sequential on purpose - each pass re-reads `pending`, which the
+        # previous pass shrinks, and running them together would recompile
+        # units that are already BYTE_EXACT.
+        for objects, diagnostics in byte_match.compile_batches(chunks, flags):
+            for stem, data in objects.items():
+                if data is None:
+                    # WHAT CL SAID, not merely that it said something. "CL
+                    # emitted no object" was recorded for all 1,988
+                    # NO_COMPILE rows, and it is true of every compile
+                    # failure there has ever been, so it separates nothing.
+                    candidate = {
+                        "tier": "NO_COMPILE",
+                        "refusal_reason": diagnostics.get(
+                            stem, "CL emitted no object")}
+                else:
+                    low, high = layouts[stem].primary[0]
+                    try:
+                        original = byte_match.original_span_bytes(pe, low, high)
+                        mask = byte_match.original_relocation_mask(pe, low, high)
+                        rebuilt, rebuilt_mask = byte_match.object_code(data)
+                    except ValueError as error:
+                        candidate = {"tier": "NO_COMPILE",
+                                     "refusal_reason": str(error)}
                     else:
-                        low, high = layouts[stem].primary[0]
-                        try:
-                            original = byte_match.original_span_bytes(pe, low, high)
-                            mask = byte_match.original_relocation_mask(pe, low, high)
-                            rebuilt, rebuilt_mask = byte_match.object_code(data)
-                        except ValueError as error:
-                            candidate = {"tier": "NO_COMPILE",
-                                         "refusal_reason": str(error)}
-                        else:
-                            candidate = byte_match.compare(original, mask, low,
-                                                           rebuilt, rebuilt_mask)
-                    if stem not in best or byte_match._better(candidate, best[stem]):
-                        best[stem] = candidate
-                    if best[stem]["tier"] == "BYTE_EXACT":
-                        pending.discard(stem)
+                        candidate = byte_match.compare(original, mask, low,
+                                                       rebuilt, rebuilt_mask)
+                if stem not in best or byte_match._better(candidate, best[stem]):
+                    best[stem] = candidate
+                if best[stem]["tier"] == "BYTE_EXACT":
+                    pending.discard(stem)
         print(f"  after {flags!r}: {len(pending)} unit(s) short of BYTE_EXACT",
               flush=True)
 
