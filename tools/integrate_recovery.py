@@ -46,6 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import byte_match_census as census  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
 import mizuchi_writeback as writeback  # noqa: E402
+import repair_source_locations as repair  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -289,6 +290,12 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
     needed = required_includes(text, target)
     if needed:
         add_includes(target, needed)
+        # Every row ALREADY in this file just moved down. Their locations are
+        # `path:line` and nothing else keeps them in step, so leaving them is
+        # how `src/init_thunks.cpp` came to be off by 14 and 619 rows came to
+        # be scored against text that was not theirs. Re-point them from the
+        # bodies themselves, which carry their own `Original Offset` line.
+        repair.main(["--apply"])
     base = target.read_text()
 
     appended = base.rstrip("\n") + "\n\n" + text.strip() + "\n"

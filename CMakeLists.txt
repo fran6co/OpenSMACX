@@ -1144,6 +1144,12 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(no-duplicate-bodies-tests
                                    test_no_duplicate_bodies.py)
 
+    # Fails when a line is inserted above a committed body and its
+    # `source_locations` is not re-pointed. 1,592 had drifted before this
+    # existed, and 619 of those far enough to score the wrong text entirely.
+    opensmacx_add_python_tool_test(source-location-tests
+                                   test_repair_source_locations.py)
+
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
 
