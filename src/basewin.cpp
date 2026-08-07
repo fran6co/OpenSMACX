@@ -338,3 +338,30 @@ void BaseWin::on_scrolled(int a1, int a2) {
             break;
     }
 }
+
+func_base_win_draw_facilities BaseWinDrawFacilities =
+    original_method<func_base_win_draw_facilities>(0x0040FCC0);
+func_base_win_garrison_click BaseWinGarrisonClick =
+    original_method<func_base_win_garrison_click>(0x0040B140);
+
+/*
+Purpose: Redraw the base's facility list. The body at 0x0040FCC0 is NOT
+         recovered; this is a seam to the original image, not a recovery, and
+         deliberately carries no `Original Offset:` line so the catalogue does
+         not mistake it for one.
+Status: Forwarded to the original image
+*/
+void BaseWin::draw_facilities(int a1) {
+    (ORIGINAL(this)->*BaseWinDrawFacilities)(a1);
+}
+
+/*
+Purpose: Handle a click on the base's garrison list. The body at 0x0040B140 is
+         NOT recovered; this is a seam to the original image, not a recovery,
+         and deliberately carries no `Original Offset:` line so the catalogue
+         does not mistake it for one.
+Status: Forwarded to the original image
+*/
+void BaseWin::garrison_click(int vehID, int a2, int a3, int a4) {
+    (ORIGINAL(this)->*BaseWinGarrisonClick)(vehID, a2, a3, a4);
+}

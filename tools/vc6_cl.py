@@ -19,6 +19,7 @@ you whether the code is valid, never whether it is right.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -84,6 +85,91 @@ def environment() -> dict:
     )
 
 
+LINE_DIRECTIVE = re.compile(r'^#line\s+\d+\s+"(.*)"', re.M)
+# Flags that make no sense for, or actively defeat, a preprocess-only pass.
+# `/Yu` is the important one: with the precompiled header in use cl does not
+# re-read the headers it covers, so the dependency list would omit exactly the
+# headers most likely to change.
+DEP_PASS_DROP = ("/Yu", "/Fp", "/Fo", "/Fd", "/c")
+
+
+def posix_path(text: str) -> str:
+    """`Z:\\home\\x\\y.h` back to `/home/x/y.h`.
+
+    The inverse of `windows_path`, and needed only for depfiles: cl reports
+    the headers it opened in the drive-letter form wine handed it, and ninja
+    compares those strings against the POSIX paths in build.ninja. A path in
+    the wrong alphabet is not a mismatch it reports - it is a dependency it
+    silently does not have.
+    """
+    if len(text) > 2 and text[1] == ":":
+        text = text[2:]
+    return text.replace("\\", "/")
+
+
+def take_depfile(arguments: list) -> tuple:
+    """Pull `--deptarget=` and `--depfile=` out of the argument list.
+
+    CMake's Ninja generator writes `deps = gcc` and `depfile = $DEP_FILE` for
+    this compiler, then passes whatever CMAKE_DEPFILE_FLAGS_CXX holds. It held
+    nothing, so no depfile was ever written and ninja recorded `#deps 0` for
+    every object - meaning a header could be edited and NOTHING rebuilt. Three
+    measurements in one session were taken against stale objects before that
+    surfaced. cl cannot write a GNU depfile, so the wrapper does it.
+
+    THE FLAG NAMES ARE NOT THE GNU ONES ON PURPOSE. The first attempt used
+    `-MD -MT -MF`, and `-MD` is MSVC's multithreaded-DLL RUNTIME switch, which
+    CMake passes on every compile: consuming it here stripped the runtime
+    model out of the command silently, swapping the CRT the DLL links. `-MT`
+    is the static-runtime switch and would collide the same way. These two
+    spellings belong to this wrapper and to nothing else.
+    """
+    kept, target, depfile = [], None, None
+    for argument in arguments:
+        if argument.startswith("--deptarget="):
+            target = argument.split("=", 1)[1]
+        elif argument.startswith("--depfile="):
+            depfile = argument.split("=", 1)[1]
+        else:
+            kept.append(argument)
+    return kept, target, depfile
+
+
+def write_depfile(executable, arguments: list, path: str, target: str) -> None:
+    """One GNU depfile, from a preprocess-only pass.
+
+    NOT `/showIncludes`: cl 12.00.8168 answers that with
+    `D4002: ignoring unknown option` - it arrived in VS2003 - and the silent
+    result is an empty dependency list, which is indistinguishable from a file
+    that genuinely includes nothing. `/E` is what this compiler has: it emits
+    a `#line N "file"` directive for every file it opens, so the set of names
+    in those directives IS the dependency set.
+
+    The cost is one extra preprocessor pass per translation unit. On this tree
+    that is a few seconds against an eleven-second build, and it buys an
+    incremental build that is correct rather than one that quietly compiles
+    nothing after a header changes.
+
+    A failure here is deliberately silent: dependency information is an
+    optimisation, and refusing to produce an object because the DEPENDENCY
+    pass failed would turn a missing nicety into a broken build.
+    """
+    kept = [a for a in arguments if not a.startswith(DEP_PASS_DROP)]
+    finished = subprocess.run(
+        ["wine", str(executable), "/nologo", "/E"] + [translate(a) for a in kept],
+        env=environment(), capture_output=True, text=True, errors="replace")
+    seen, ordered = set(), []
+    for name in LINE_DIRECTIVE.findall(finished.stdout):
+        # cl escapes the separators inside the directive, so `Z:\\a\\b.h`.
+        resolved = posix_path(name.replace("\\\\", "\\"))
+        if resolved not in seen:
+            seen.add(resolved)
+            ordered.append(resolved)
+    body = "".join(f" \\\n  {name}" for name in ordered)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Path(path).write_text(f"{target}:{body}\n")
+
+
 def main(argv: list) -> int:
     tool = "cl"
     arguments = argv[1:]
@@ -102,12 +188,20 @@ def main(argv: list) -> int:
         print(f"{executable} not found; set VC6_ROOT", file=sys.stderr)
         return 127
 
+    arguments, dep_target, dep_file = take_depfile(arguments)
+    if dep_file:
+        # Before the real compile, and unconditionally: a depfile is what
+        # tells ninja to try again once the header is fixed, so it has to
+        # exist even when the compile that follows fails.
+        write_depfile(executable, arguments, dep_file, dep_target or "")
     command = ["wine", str(executable)] + [translate(a) for a in arguments]
     finished = subprocess.run(command, env=environment(), capture_output=True,
                               text=True, errors="replace")
     # CL writes the source file name to stdout before any diagnostic. It is
     # noise in a build log and CMake does not need it, but a diagnostic that
-    # follows it does, so only the bare echo line is dropped.
+    # follows it does, so only the bare echo line is dropped. The
+    # `/showIncludes` notes go the same way - they are the depfile's input,
+    # not a build log's.
     for line in finished.stdout.splitlines():
         if line.strip() and not line.strip().lower().endswith((".cpp", ".c", ".cxx")):
             print(line)

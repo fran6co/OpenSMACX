@@ -359,3 +359,11 @@ void __fastcall design_win_on_iface_right_double_click_redirect(DesignWin *self,
 void __fastcall design_win_on_iface_button_toggled_redirect(DesignWin *self, void *, int a1, int a2);
 void __fastcall design_win_on_iface_group_clicked_redirect(DesignWin *self, void *, int a1, int a2, int a3);
 void __fastcall design_win_on_mouse_leave_redirect(DesignWin *self, void *, int a1, int a2);
+
+// DesignWin::select_special is not recovered, and DesignWin is DLLEXPORT -
+// which demands a definition for every member - so the body at the end of
+// designwin.cpp forwards through this seam. The `H` in
+// ?select_special@DesignWin@@QAEXH@Z is the one int both select_special_N
+// thunks pass.
+typedef void (OriginalObject::*func_design_win_select_special)(int);
+extern func_design_win_select_special DesignWinSelectSpecial;  // 0x0043AC70

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "original_seam.h"
 #include "graphicwin.h"
 
  /*
@@ -154,3 +155,12 @@ int __fastcall setup_win_unk1_redirect(SetupWin *self, void *, int a1);
 int __fastcall setup_win_unk2_redirect(SetupWin *self, void *, int a1);
 int __fastcall setup_win_unk3_redirect(SetupWin *self, void *, int a1);
 int __fastcall setup_win_unk4_redirect(SetupWin *self, void *, int a1);
+
+// do_menu_rightside is declared on the class because the recovered do_menu
+// reaches it with a direct `call rel32`, but its 2129-byte body is not
+// recovered, so the DLL has nothing to link that call against. It stands in
+// with a forward to the original image until the body lands.
+//   ?do_menu_rightside@SetupWin@@QAEHPADH@Z  0x004ADB70
+//     public, __thiscall, int(char *, int)
+typedef int (OriginalObject::*func_setup_win_do_menu_rightside)(char *a1, int a2);
+extern func_setup_win_do_menu_rightside SetupWinDoMenuRightside;

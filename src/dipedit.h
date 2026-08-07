@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "original_seam.h"
+
  /*
   * DipEdit class
   *
@@ -48,3 +50,10 @@ class DLLEXPORT DipEdit {
 
 void __fastcall dip_edit_on_left_click_redirect(DipEdit *self, void *, int a1, int a2);
 void __fastcall dip_edit_on_redraw_redirect(DipEdit *self, void *);
+
+// The two siblings on_selected calls are still in the original image, and
+// share one signature: ?read_check@DipEdit@@QAEXXZ (0x004DA990) and
+// ?do_check@DipEdit@@QAEXXZ (0x004DADA0) are both public __thiscall void(void).
+typedef void (OriginalObject::*func_dip_edit_check)();
+extern func_dip_edit_check DipEditReadCheck;
+extern func_dip_edit_check DipEditDoCheck;

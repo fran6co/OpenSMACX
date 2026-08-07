@@ -66,6 +66,27 @@ set(CMAKE_CXX_STANDARD_DEFAULT "")
 set(CMAKE_CXX98_STANDARD_COMPILE_OPTION "")
 set(CMAKE_CXX98_EXTENSION_COMPILE_OPTION "")
 
+# HEADER DEPENDENCIES. Without this the build is silently WRONG on every
+# incremental run. CMake's Ninja generator emits `deps = gcc` and
+# `depfile = $DEP_FILE` for this compiler but passes no flag that would
+# produce one, so no depfile was ever written, ninja recorded `#deps 0` for
+# all 137 objects, and editing a header rebuilt NOTHING. That is not a slow
+# build, it is a build that reports success over stale objects - three
+# measurements in one session were taken against them before it surfaced.
+#
+# cl cannot write a GNU depfile, so tools/vc6_cl.py consumes these flags
+# itself, adds `/showIncludes`, and converts the `Z:\...` paths cl reports
+# back to the POSIX ones ninja matches against. A path in the wrong alphabet
+# is not a mismatch ninja reports; it is a dependency it silently lacks.
+#
+# The spelling is deliberately NOT the GNU one. `-MD` is MSVC's
+# multithreaded-DLL runtime switch and CMake already passes it; a wrapper that
+# consumed `-MD` as "write a depfile" would silently strip the runtime model
+# from every compile. `-MT` collides with the static-runtime switch the same
+# way. These two are the wrapper's own and can collide with nothing.
+set(CMAKE_DEPFILE_FLAGS_CXX "--deptarget=<DEP_TARGET> --depfile=<DEP_FILE>")
+set(CMAKE_DEPFILE_FLAGS_C "--deptarget=<DEP_TARGET> --depfile=<DEP_FILE>")
+
 # `/Z7`, NOT `/Zi`. VC6 writes debug info to a single `vc60.pdb` per output
 # directory and takes no lock on it, so a parallel build fails with
 # `C1033: cannot open program database` on whichever objects lose the race -

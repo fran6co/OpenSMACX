@@ -54,7 +54,8 @@ class DLLEXPORT GraphicWin : public Win {
   void update(GraphicWin *target);
   // 0x005D5890  ?soft_update@GraphicWin@@QAEXXZ - public, __thiscall,
   // void(void). Called directly (not virtually) by WorldWin, so it must not
-  // be virtual here.
+  // be virtual here. Still an original body; the definition at the end of
+  // graphicwin.cpp forwards to it.
   void soft_update();
  private:
   Buffer buffer_;
@@ -184,3 +185,12 @@ int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
                                          int x, int y, int width, int height,
                                          LPSTR title, int flags, Win *parent,
                                          Menu *menu, BorderSizing *border);
+
+// GraphicWin::soft_update at 0x005D5890 (157 bytes, bare ret) blits the
+// window's own buffer without the full repaint path. Still an original body -
+// MapWin::draw_radius, WorldWin and StatusWin::redraw all reach it - so it is
+// forwarded. Rebindable so tests can substitute a probe and so the seam can
+// later point at a recovered body.
+typedef void (OriginalObject::*func_graphic_win_soft_update)();
+typedef void (OriginalObject::*func_graphic_win_update)(GraphicWin *);
+extern func_graphic_win_soft_update GraphicWinOriginalSoftUpdate;

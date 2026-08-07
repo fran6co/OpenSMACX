@@ -1977,7 +1977,7 @@ Original Offset: 00500290
 Return Value: Does current base have facility? true/false
 Status: Complete
 */
-BOOL __cdecl has_fac_built(int facility_id) {
+bool __cdecl has_fac_built(int facility_id) {
     return (facility_id >= FacilityRepStart) ? false
         : has_fac_built(facility_id, *BaseIDCurrentSelected);
 }
@@ -1988,7 +1988,7 @@ Original Offset: n/a
 Return Value: Does base have facility built? true/false
 Status: Complete
 */
-BOOL __cdecl has_fac_built(uint32_t facility_id, uint32_t base_id) {
+bool __cdecl has_fac_built(int facility_id, int base_id) {
     int offset;
     int mask;
     bitmask(facility_id, &offset, &mask);

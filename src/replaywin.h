@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "original_seam.h"
+
  /*
   * ReplayWin class
   *
@@ -53,3 +55,13 @@ void __fastcall replay_win_on_mouse_move_redirect(ReplayWin *self, void *, int a
 void __fastcall replay_win_on_right_down_redirect(ReplayWin *self, void *, int a1, int a2);
 void __fastcall replay_win_on_left_down_redirect(ReplayWin *self, void *, int a1, int a2);
 void __fastcall replay_win_on_left_up_redirect(ReplayWin *self, void *, int a1, int a2);
+
+// timer_callback is declared on the class because fn_005adbd0, the recovered
+// free forwarder in replaywin.cpp, reaches it with a direct `call rel32`, but
+// its 492-byte body is not recovered, so the DLL has nothing to link that
+// call against. It stands in with a forward to the original image until the
+// body lands.
+//   ?timer_callback@ReplayWin@@QAEXXZ  0x005AD9E0
+//     public, __thiscall, void(void)
+typedef void (OriginalObject::*func_replay_win_timer_callback)();
+extern func_replay_win_timer_callback ReplayWinTimerCallback;

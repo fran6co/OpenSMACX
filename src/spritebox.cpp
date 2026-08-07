@@ -157,3 +157,17 @@ int SpriteBox::init(Heap *a1) {
     return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
         + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(a1);
 }
+
+func_sprite_box_close SpriteBoxClose =
+    original_method<func_sprite_box_close>(0x00610280);
+
+/*
+Purpose: Tear the sprite box's entry list down and close the dialog.
+         Body unrecovered; forwards to the original image.
+Forwards To: 00610280
+Return Value: n/a
+Status: Forwarder
+*/
+void SpriteBox::close() {
+    (ORIGINAL(this)->*SpriteBoxClose)();
+}

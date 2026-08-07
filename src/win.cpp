@@ -1018,3 +1018,31 @@ void Win::on_mousewheel_up_vert(int a1) {
         scroll->on_mousewheel_up(a1);
     }
 }
+
+// Seams for the four unrecovered Win handlers, and the definitions that give
+// the direct calls from the derived windows something to link against. Kept
+// at the end of the file so nothing above - every body here carries an
+// Original Offset the census reads by line number - moves.
+func_win_hide WinOriginalHide = original_method<func_win_hide>(0x005EDCD0);
+func_win_on_mouse_move WinOriginalOnMouseMove =
+    original_method<func_win_on_mouse_move>(0x005F6320);
+func_win_on_nc_hittest WinOriginalOnNcHittest =
+    original_method<func_win_on_nc_hittest>(0x005F5AD0);
+func_win_release_modal WinOriginalReleaseModal =
+    original_method<func_win_release_modal>(0x005EE280);
+
+void Win::hide() {
+    (ORIGINAL(this)->*WinOriginalHide)();
+}
+
+void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
+    (ORIGINAL(this)->*WinOriginalOnMouseMove)(a1, a2, a3, a4);
+}
+
+int Win::on_nc_hittest(int a1, int a2) {
+    return (ORIGINAL(this)->*WinOriginalOnNcHittest)(a1, a2);
+}
+
+void Win::release_modal() {
+    (ORIGINAL(this)->*WinOriginalReleaseModal)();
+}

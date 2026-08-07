@@ -576,3 +576,17 @@ Status: Complete
 void Menu::on_mouse_move(int a1, int a2) {
     mouse_move(a1, a2);
 }
+
+func_menu_mouse_move MenuMouseMove =
+    original_method<func_menu_mouse_move>(0x005FBDB0);
+
+/*
+Purpose: Track the pointer over the menu bar. The body at 0x005FBDB0 is NOT
+         recovered; this is a seam to the original image, not a recovery, and
+         deliberately carries no `Original Offset:` line so the catalogue does
+         not mistake it for one.
+Status: Forwarded to the original image
+*/
+void Menu::mouse_move(int a1, int a2) {
+    (ORIGINAL(this)->*MenuMouseMove)(a1, a2);
+}

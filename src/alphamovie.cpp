@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "original_seam.h"
 #include "alphamovie.h"
 
 /*
@@ -153,3 +154,25 @@ Status: Complete
 void AlphaMovie::update() {
     reinterpret_cast<GraphicWin *>(this)->update(0);
 }
+
+func_mci_video_close MCIVideoOriginalClose =
+    original_method<func_mci_video_close>(0x005FFDB0);
+
+/*
+Purpose: Shut the MCI video device down.
+Forwards To: 005FFDB0
+Return Value: n/a
+Status: Original dependency - forwards to the original image.
+
+The auto_inline(off) is load-bearing. VC6 at /Ob2 defers codegen to the end of
+the translation unit, so being defined after AlphaMovie::close does not stop
+it folding this forwarder into that recovered body: measured, the caller's
+`lea ecx,[esi+0xa14]; call rel32` became `lea ecx,[esi+0xa14]; call dword ptr
+[MCIVideoOriginalClose]`. The pragma keeps the caller's direct call and leaves
+this a separate thunk.
+*/
+#pragma auto_inline(off)
+void MCIVideo::close() {
+    (ORIGINAL(this)->*MCIVideoOriginalClose)();
+}
+#pragma auto_inline(on)

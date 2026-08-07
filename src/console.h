@@ -149,7 +149,6 @@ typedef void (OriginalObject::*func_console_cursor_next)(int x_coord, int y_coor
 // focus reaches in_box and set_center, draw_map is 2049 bytes - so both stay
 // original behind a seam.
 typedef int (OriginalObject::*func_console_map_win_focus)(int x_coord, int y_coord);
-typedef void (OriginalObject::*func_console_map_win_draw_map)(int draw_type);
 // ?flush_input@@YAXXZ at 0x005FD120 - __cdecl, no arguments - drains the queued
 // input once the focus walk actually moved the primary view. Still original; it
 // pumps the message loop through check_net.
@@ -157,7 +156,12 @@ typedef void(__cdecl func_console_flush_input)(void);
 
 extern func_console_cursor_next ConsoleOriginalCursorNext;          // 0x005109B0
 extern func_console_map_win_focus ConsoleOriginalMapWinFocus;       // 0x0046B310
-extern func_console_map_win_draw_map ConsoleOriginalMapWinDrawMap;  // 0x0046A550
+// 0x0046A550 is NOT bound here. It is MapWin::draw_map's own address and
+// src/mapwin.h owns the seam for it (MapWinOriginalDrawMap). Seams dedupe on
+// the ADDRESS, never the name: two variables for one address is not a link
+// error, so a fixture rebinding one would leave the other still pointing at
+// the original image - which is why tools/test_generator_support.py refuses
+// a second binding, and it caught this one.
 extern func_console_flush_input *ConsoleOriginalFlushInput;          // 0x005FD120
 extern void *ConsoleGlobal;  // 0x009156B0, the process-wide Console
 

@@ -25,10 +25,26 @@
 // against - wine's included - but declared in none of its headers. Declared
 // here rather than in vc6_compat.h because that header is included before
 // <windows.h> and LONG and EXCEPTION_POINTERS do not exist yet at that point.
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-extern "C" __declspec(dllimport) PVOID WINAPI AddVectoredExceptionHandler(
+//
+// RESOLVED AT RUNTIME, not imported. `__declspec(dllimport)` asks the linker
+// for `__imp__AddVectoredExceptionHandler@8`, and that symbol lives in an
+// IMPORT LIBRARY: VC6's kernel32.lib is from 1998 and carries no entry for an
+// API that arrived with XP, so the declaration compiled happily and the DLL
+// then failed to link on this one symbol - the last unresolved external in
+// the whole build. The comment above is right that the entry point is present
+// in every kernel32 this runs against; it is only the 1998 import library
+// that disagrees, and GetProcAddress asks the DLL rather than the library.
+typedef PVOID(WINAPI *AddVectoredExceptionHandlerFn)(
     ULONG First, LONG(CALLBACK *Handler)(EXCEPTION_POINTERS *));
-#endif
+
+static AddVectoredExceptionHandlerFn resolve_add_vectored_handler() {
+    HMODULE kernel = GetModuleHandleA("kernel32.dll");
+    if (kernel == NULL) {
+        return NULL;
+    }
+    return reinterpret_cast<AddVectoredExceptionHandlerFn>(
+        GetProcAddress(kernel, "AddVectoredExceptionHandler"));
+}
 
 namespace oracle_fault_guard {
 namespace {
@@ -147,7 +163,15 @@ void arm() {
         return;
     }
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
-    AddVectoredExceptionHandler(1, handler);
+    // A null answer means this host predates vectored handling. The guard then
+    // does not arm, and `Armed` stays false so nothing downstream believes a
+    // fault would be caught - which is the honest outcome, and better than
+    // arming a handler that was never installed.
+    AddVectoredExceptionHandlerFn add_handler = resolve_add_vectored_handler();
+    if (add_handler == NULL) {
+        return;
+    }
+    add_handler(1, handler);
     OwnerThread = GetCurrentThreadId();
     Armed = true;
 }

@@ -1184,3 +1184,28 @@ Status: Complete
 int Buffer::poly(Vert *a1, int a2, int a3) {
     return polygon(this, a1, a2, a3);
 }
+
+/*
+ * A forwarder, not a recovery. ?polygon@@YAHPAUBuffer@@PAUVert@@HH@Z at
+ * 0x00626620 is 736 bytes and undecoded, but Buffer::poly calls it, so the
+ * DLL has to resolve the symbol. No `Original Offset:` line by design: that
+ * annotation marks a recovered body and is indexed by address.
+ *
+ * The address is cast inside the body rather than at file scope so nothing is
+ * dereferenced before main() - tools/verify_no_load_time_addresses.py exists
+ * because a file-scope seam through an unmapped address took the process down
+ * before the first line of it ran.
+ *
+ * auto_inline(off) is load-bearing. OPENSMACX_NOINLINE expands to NOTHING on
+ * VC6 (src/vc6_compat.h gates __declspec(noinline) on _MSC_VER > 1200 and VC6
+ * IS 1200), and at /Ob2 cl folds a one-line forwarder into a caller in the
+ * same translation unit even when it is defined after it, because codegen is
+ * deferred to end of TU. Buffer::poly is a recovered body; inlining this into
+ * it would replace its `call rel32` and cost its byte match.
+ */
+#pragma auto_inline(off)
+int __cdecl polygon(Buffer *buffer, Vert *verts, int a3, int a4) {
+    typedef int(__cdecl * func_polygon)(Buffer *, Vert *, int, int);
+    return reinterpret_cast<func_polygon>(0x00626620)(buffer, verts, a3, a4);
+}
+#pragma auto_inline(on)

@@ -70,3 +70,17 @@ Status: Complete
 void FileWin::on_double_clicked(int a1) {
     UNK4();
 }
+
+func_file_win_unk4 FileWinUNK4 =
+    original_method<func_file_win_unk4>(0x006146A0);
+
+/*
+ * A forwarder, not a recovery. on_double_clicked above reaches UNK4 with a
+ * direct `call rel32` - which is what makes that body byte-exact - so the DLL
+ * must resolve the symbol, but 0x006146A0 is not decoded yet. No
+ * `Original Offset:` line by design: that annotation marks a recovered body
+ * and is indexed by address.
+ */
+void FileWin::UNK4() {
+    (ORIGINAL(this)->*FileWinUNK4)();
+}

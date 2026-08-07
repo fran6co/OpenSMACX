@@ -255,3 +255,10 @@ void __fastcall counc_win_on_iface_button_toggled_redirect(CouncWin *self, void 
 void __fastcall counc_win_on_iface_group_clicked_redirect(CouncWin *self, void *, int a1, int a2, int a3);
 int __fastcall counc_win_on_button_text_draw_redirect(
     CouncWin *self, void *, int a1, int a2, int a3);
+
+// ?draw_leader@CouncWin@@QAEXH@Z at 0x00425DB0 - public, __thiscall,
+// void(int) - is 1705 bytes and unrecovered. draw_all_leaders and
+// on_mouse_leave both reach it with a direct `call rel32`, so it is declared
+// on the class and defined at the end of councwin.cpp as a forwarder.
+typedef void (OriginalObject::*func_counc_win_draw_leader)(int factionID);
+extern func_counc_win_draw_leader CouncWinOriginalDrawLeader;  // 0x00425DB0

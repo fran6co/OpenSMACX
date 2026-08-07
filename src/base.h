@@ -526,7 +526,8 @@ DLLEXPORT void __cdecl set_base(int base_id);
 DLLEXPORT void __cdecl say_base(LPSTR base_str, int base_id);
 DLLEXPORT int __cdecl base_at(int x, int y);
 DLLEXPORT int __cdecl base_find(int x, int y);
-DLLEXPORT int __cdecl base_find(int x, int y, uint32_t faction_id);
+// ?base_find@@YAHHHH@Z - three H.
+DLLEXPORT int __cdecl base_find(int x, int y, int faction_id);
 DLLEXPORT int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2, 
                                 int faction_id_3);
 DLLEXPORT uint32_t  __cdecl best_specialist();
@@ -563,8 +564,12 @@ DLLEXPORT int __cdecl fac_maint(int facility_id, int faction_id);
 DLLEXPORT void __cdecl base_maint();
 DLLEXPORT void __cdecl make_base_unique(int base_id);
 DLLEXPORT BOOL __cdecl has_project(int project_id, int faction_id);
-DLLEXPORT BOOL __cdecl has_fac_built(uint32_t facility_id);
-DLLEXPORT BOOL __cdecl has_fac_built(uint32_t facility_id, uint32_t base_id);
+// ?has_fac_built@@YA_NH@Z. `_N` is bool, not BOOL: the catalogue spells a
+// genuine one-byte bool, and per tools/catalogue_corrections.py that width is
+// byte-visible - a bool return clears with `xor al, al` (32 C0) where an int
+// uses `xor eax, eax` (33 C0). The two-argument overload is not catalogued.
+DLLEXPORT bool __cdecl has_fac_built(int facility_id);
+DLLEXPORT bool __cdecl has_fac_built(int facility_id, int base_id);
 DLLEXPORT int __cdecl base_project(int project_id);
 DLLEXPORT int __cdecl attack_from(int base_id_to_atk, int faction_id);
 DLLEXPORT int __cdecl value_of_base(int base_id, uint32_t faction_id_req, uint32_t faction_id_res, 
@@ -578,7 +583,8 @@ DLLEXPORT int __cdecl num_objectives(int faction_id, BOOL count_pact_factions);
 DLLEXPORT BOOL __cdecl transcending(int faction_id);
 DLLEXPORT BOOL __cdecl ascending(int UNUSED(faction_id) faction_id);
 DLLEXPORT BOOL __cdecl redundant(int facility_id, int faction_id);
-DLLEXPORT BOOL __cdecl facility_avail(uint32_t facility_id, uint32_t faction_id, int base_id,
+// ?facility_avail@@YAHHHHH@Z - the definition already takes int.
+DLLEXPORT BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
                                       int queue_count);
 DLLEXPORT int __cdecl facility_offset(LPCSTR facil_search);
 DLLEXPORT int __cdecl suggest_plan(int faction_id, int faction_id_2);

@@ -463,3 +463,17 @@ void Datalink::hide() {
         reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->release_iface_mode();
     }
 }
+
+func_datalink_draw_entry DatalinkDrawEntry =
+    original_method<func_datalink_draw_entry>(0x0042BF10);
+
+/*
+ * A forwarder, not a recovery. on_selected above reaches draw_entry with a
+ * direct `call rel32`, so the DLL must resolve the symbol, but the body at
+ * 0x0042BF10 is not decoded yet. No `Original Offset:` line by design - that
+ * annotation marks a recovered body and is indexed by address, so claiming it
+ * here would aim the census at a seam.
+ */
+void Datalink::draw_entry() {
+    (ORIGINAL(this)->*DatalinkDrawEntry)();
+}

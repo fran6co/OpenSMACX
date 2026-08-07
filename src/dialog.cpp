@@ -336,3 +336,36 @@ void *__fastcall dialog_scalar_dtor_redirect(
     }
     return self;
 }
+
+func_dialog_init_int DialogInitInt =
+    original_method<func_dialog_init_int>(0x006095F0);
+
+/*
+ * A forwarder, not a recovery. One of Dialog's seven init overloads; the body
+ * at 0x006095F0 is not decoded yet, and SpriteBox::init calls this one, so the
+ * DLL has to resolve the symbol. No `Original Offset:` line by design - that
+ * annotation marks a recovered body and is indexed by address.
+ */
+int Dialog::init(int a1) {
+    return (ORIGINAL(this)->*DialogInitInt)(a1);
+}
+
+func_dialog_init_rect DialogInitRect =
+    original_method<func_dialog_init_rect>(0x00609470);
+func_dialog_init_heap DialogInitHeap =
+    original_method<func_dialog_init_heap>(0x006098D0);
+
+/*
+ * Two more of Dialog's seven init overloads, forwarders on the same terms as
+ * init(int) above. 0x00609470 takes a RECT and an int; 0x006098D0 takes a
+ * Heap. Neither body is decoded.
+ */
+#pragma auto_inline(off)
+int Dialog::init(RECT *a1, int a2) {
+    return (ORIGINAL(this)->*DialogInitRect)(a1, a2);
+}
+
+int Dialog::init(Heap *a1) {
+    return (ORIGINAL(this)->*DialogInitHeap)(a1);
+}
+#pragma auto_inline(on)
