@@ -303,6 +303,19 @@ target_compile_definitions(OpenSMACX PRIVATE
 target_precompile_headers(OpenSMACX PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h")
 target_link_libraries(OpenSMACX PRIVATE user32 gdi32 winmm)
 
+# `<stdint.h>` and `<cstdint>` are C99 and C++11; cl 12.00.8168 ships neither,
+# and thirteen `C1083: Cannot open include file` came from that alone. The
+# shims are put on the include path rather than spliced into each includer so
+# the source keeps saying the standard thing and there is nothing to undo when
+# this compiler is retired. Guarded by version, so a modern build never
+# shadows its own headers with these.
+if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
+    target_include_directories(OpenSMACX PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/vc6-include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    )
+endif()
+
 set_target_properties(OpenSMACX PROPERTIES
     OUTPUT_NAME OpenSMACX
     PREFIX ""

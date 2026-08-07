@@ -164,6 +164,13 @@ inline int sprintf_s(char *destination, size_t, const char *format, ...) {
 
 #define constexpr const
 
+/*
+ * 5. `for (int i = ...)` LEAKS `i` INTO THE ENCLOSING SCOPE - see
+ *    OPENSMACX_VC6_FIX_FOR_SCOPE at the bottom of stdafx.h. The macro that
+ *    repairs it deliberately does NOT live here, because this header is
+ *    included before the STL is and the macro must not reach it.
+ */
+
 #endif  // _MSC_VER <= 1200
 
 /*
