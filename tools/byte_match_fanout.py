@@ -335,8 +335,8 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # `--collect` skips settled rows by design, since re-verifying finished work is
 # most of a run. That is the right default and it has this cost, so the number
 # above is only as true as the last full census.
-BASELINE_MATCHED_FUNCTIONS = 867
-BASELINE_MATCHED_BYTES = 17962
+BASELINE_MATCHED_FUNCTIONS = 884
+BASELINE_MATCHED_BYTES = 18856
 
 
 def summarise(ledger: dict) -> tuple:

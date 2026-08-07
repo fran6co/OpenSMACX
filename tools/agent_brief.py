@@ -61,7 +61,43 @@ TARGETED = (
      "If this is `push` vs `mov` at index 0-2 it is REGISTER ALLOCATION - the\n"
      "original dedicates a callee-saved register the rebuild does not.\n"
      "docs/BYTE_MATCH_ROUTE.md:305-330 measured this as the hard class with\n"
-     "two levers already refuted. Timebox it and report what you tried."),
+     "two levers already refuted. Timebox it and report what you tried.\n"
+     "Also measured: VC6 does not reclaim a register freed earlier in the same\n"
+     "body - whichever value is computed FIRST lands in EAX and the second in\n"
+     "EDX, whatever order the source puts them in. Six functions have stalled\n"
+     "there. If that is your only divergence, stop."),
+    # WALLS. Ruled out exhaustively; each is keyed like every other entry so an
+    # agent meets the one that applies rather than a catalogue of all of them.
+    (("or", "test", "and"),
+     "GUARD-MASK REGISTER. If the original holds the mask in its OWN register\n"
+     "across the test - `mov al,1; test al,cl; or cl,al` - stop. VC6 folds the\n"
+     "mask into an immediate and reuses one register. Three agents ruled this\n"
+     "out separately, across /O1 and /O2, framed and frameless, with a plain\n"
+     "immediate, a named local, a const, a volatile-adjacent read, an explicit\n"
+     "`x|0xFF`, `register` storage, a 1-bit bitfield, a discarded __fastcall\n"
+     "parameter, and a byte-exact sibling's idiom copied verbatim."),
+    (("stosd", "rep"),
+     "REP STOSD SETUP ORDER. The original emits `xor eax,eax` before\n"
+     "`mov ecx,N`; every source form emits the count first. memset, ascending\n"
+     "and descending hand loops, scoped loop variables and a hoisted const\n"
+     "zero were all measured. Stop."),
+    (("fnclex", "fninit", "fldcw", "fnstcw"),
+     "A BARE x87 OPCODE with no preceding `call` was inlined in the original's\n"
+     "source. `_clear87()` and `_fpreset()` both emit a real `call`, and\n"
+     "`__asm` is barred. Unreachable - stop."),
+    (("jmp",),
+     "If the original TAIL-JUMPS an indirect thiscall dispatch where you emit\n"
+     "`call; ret N`, stop: VC6 does not emit the sibling jump even when the\n"
+     "argument slot is untouched and the cleanup matches exactly.\n"
+     "If instead the original's span carries no `ret` AT ALL, check whether the\n"
+     "branch target is the ENTRY of another catalogued symbol - that is a `/Gy`\n"
+     "fold onto a different function, which no per-function compile can\n"
+     "reproduce, and an MSVC vtordisp adjustor thunk looks the same way."),
+    (("<end>",),
+     "A LENGTH MISMATCH where the ORIGINAL ends first is usually a span that\n"
+     "excludes its own `ret` because the linker folded the tail onto another\n"
+     "function. Check whether the branch target is the ENTRY of a different\n"
+     "catalogued symbol; if it is, this is unreachable."),
 )
 
 
@@ -259,25 +295,23 @@ Exit 0 means BYTE_EXACT. Anything else prints the first differing mnemonic and
 its index, and refuses a candidate that is WORSE than what is committed.
 Iterate until exit 0, or until you can say what you ruled out.
 
-# Already measured - do not re-derive
+# The lever that keeps working
 
-STOP if your only divergence is one of these. The first cost three agents most
-of their budget, separately.
+The context spells fixed globals `static T *const g_ADDR = (T *)0xADDR;`. That
+is right for a plain load or store and WRONG wherever the ADDRESS ITSELF does
+work, because `/O2` folds the literal away and the instruction the original
+used disappears with it. Measured in three unrelated shapes:
 
-- a constant held in its OWN register across a guard test
-  (`mov al,1; test al,cl; or cl,al`) - VC6 folds it to an immediate
-- the order inside a `rep stosd` setup - VC6 emits the count first
-- a bare x87 opcode (`fnclex`) with no preceding `call` - it was inlined
-- no sibling `jmp` for an indirect thiscall dispatch; VC6 emits `call; ret N`
-- a span excluding its own `ret` - a `/Gy` fold onto another function. Check
-  whether the branch target is the ENTRY of another catalogued symbol.
+    read-modify-write   `dec [addr]`   became load/modify/store
+    indexed table base  `lea`          became `add`
+    `guard ? obj : 0`   `neg/sbb/and`  vanished entirely
 
-Two that DO work. Parameter reads exactly 4 too high are the FRAME POINTER,
-not a missing `this`. And for READ-MODIFY-WRITE on a fixed global (`inc`,
-`dec`, `|=` in place) the context's `static T *const g_ADDR` is wrong - it
-always yields load/modify/store; declare `extern T name;` yourself instead,
-because the relocation is masked, and you get the in-place instruction and a
-readable name. Plain loads and stores keep the context's global.
+Declare your own `extern T name;` (or `extern T name[];`) and use it plainly.
+BYTE_EXACT in all three. The relocation it needs is MASKED by the comparison,
+so it costs nothing, and it reads better than an address. Plain loads and
+stores keep the context's global.
+
+Parameter reads exactly 4 too high are the FRAME POINTER, not a missing `this`.
 
 # Rules
 
