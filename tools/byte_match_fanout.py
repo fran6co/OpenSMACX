@@ -317,8 +317,8 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # stubs and can rise much faster than the number of machine-carried bytes it
 # retires. The byte figure is the one that means anything, which is why both
 # are ratcheted and why the function count is never quoted alone.
-BASELINE_MATCHED_FUNCTIONS = 670
-BASELINE_MATCHED_BYTES = 10195
+BASELINE_MATCHED_FUNCTIONS = 702
+BASELINE_MATCHED_BYTES = 11199
 
 
 def summarise(ledger: dict) -> tuple:

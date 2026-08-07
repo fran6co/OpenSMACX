@@ -12,7 +12,6 @@ Return Value: the delegate's result; UNSET when there is no delegate
 Status: Complete
 */
 // The scaffolding's VCall shim declares every slot nullary and void.
-// A slot with an argument - or a narrower return - needs its own.
 class MidiDelegate {
  public:
   virtual void slot000();
@@ -77,16 +76,12 @@ class MidiDelegate {
   virtual int slot059(const char *);
 };
 
-struct MidiLayout {
-    char pad[0x3c];
-    MidiDelegate *other;
-};
-
 int Midi::set_base_path(const char * a1) {
-    MidiLayout *const self = reinterpret_cast<MidiLayout *>(this);
-    if (self->other) {
-        return self->other->slot059(a1);
+    // `field_3c_` is a DECLARED member now, so no pad struct and no cast to
+    // reach it. Before hypothesis_layouts.h knew about it, this body had to
+    // overlay a `struct { char pad[0x3c]; MidiDelegate *other; }` on `this`.
+    if (field_3c_) {
+        return reinterpret_cast<MidiDelegate *>(field_3c_)->slot059(a1);
     }
-    // NO return here, deliberately. The original leaves eax untouched on the
-    // null path; writing `return 0;` would emit a clear the original does not.
+    // No return: the original leaves eax untouched on the null path.
 }
