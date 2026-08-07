@@ -1,0 +1,25 @@
+address,kind,subject,offset,detail,evidence,status
+0x00634650,class,Vector3,,three contiguous floats; the receiver of a dot product,"receiver indexed at 0x0, 0x4, 0x8 as float and multiplied pairwise against a second float triple; verified byte-exact as both a fake-fastcall and a real Vector3::Dot member",open
+0x006344E0,class,Vector3,,"the same three-float receiver, compared componentwise","three fcomp/test ah,0x40 pairs against 0x0, 0x4, 0x8 of the receiver; byte-exact",open
+0x006347C0,table,3x3 float matrix,0x0,"nine contiguous floats walked as 3 rows of 3, not a flat 9","two independent countdown loops (edi=3, esi=3) each with their own dec/jne, walking two pointers in lockstep through fld/fadd/fstp",open
+0x005AD450,table,the class owning the 0xA20 table,0xA20,"512 records of three uint32 each, reset to 0xFFFFFFFF (a -1 sentinel)",do/while of 0x200 iterations writing three dwords and advancing by 3; byte-exact,open
+0x005AD4C0,member-type,the class owning the 0xA20 table,0xA20,"the three words of each record are (key1, key2, value): the first two are compared, the third overwritten","scan compares [table+i*3] and [table+i*3+1] against two arguments and stores the third on a hit, returning 0x200 on a miss",open
+0x00447550,member,UAmbience,0x6C,"a one-byte flag, cleared when the base window hides","mov byte ptr [esi+0x6c], 0 with esi as this; byte-exact",open
+0x00428DC0,member,Credits,0xA14,"an int frame counter, incremented once per timer tick",inc dword ptr [ecx+0xa14] as the whole of the timer daemon; byte-exact,open
+0x00448380,member,the class read by field_accessor_00448380,0x40,"bit 0 of this int is a flag, read sign-extended to a full mask",shl 0x1f / sar 0x1f on the dword at +0x40; byte-exact,open
+0x005E3630,member,the class read by sub_5e3630,0x8,"a count or non-empty guard, tested but not otherwise used","mov eax,[ecx+8]; test eax,eax; je - the value is discarded and the chase starts from +0xC",open
+0x005E3630,member,the class read by sub_5e3630,0xC,a pointer to the first node of a list,"mov eax,[ecx+0xc] then two further dereferences at +8 and +4",open
+0x006252C0,table,the class read by sub_6252c0,0x8,"10 slots of 15 dwords each, with a wrapping cursor",counter at +4 incremented and reset at 10; slot address is base+8+cursor*60,open
+0x00421B40,embedded,BattleWin,0x8,a Time sub-object,"add ecx, 8 then a tail jmp into the already-recovered Time::stop at 0x616730",open
+0x00404200,vtable-slot,AlphaMovie,0xE8,"slot 58, nullary","mov eax,[ecx]; jmp [eax+0xe8]; byte-exact through a 59-slot shim",open
+0x005C98F0,vtable-slot,MultiDebug,0xF8,"slot 62, nullary","mov eax,[ecx]; jmp [eax+0xf8]; byte-exact",open
+0x00447840,vtable-slot,SAmbience,0x10C,slot 67 takes one int; called with 15,push 0xf; call [eax+0x10c]; byte-exact only with the argument declared,open
+0x00447550,vtable-slot,UAmbience,0x110,slot 68 takes one int; called with 6,push 6; call [eax+0x110]; byte-exact,open
+0x005F4CA0,vtable-slot,Win,0x128,"slot 74 takes two ints; called with (0, arg)",two pushes then call [eax+0x128]; byte-exact,open
+0x005F9460,vtable-slot,PullDown,0x50,"slot 20 takes two ints, forwarded unchanged",on_right_down pushes both incoming arguments and calls [eax+0x50]; byte-exact,open
+0x005F9570,vtable-slot,PullDown,0x54,"slot 21 takes two ints, forwarded unchanged","on_right_up, same shape as slot 20; byte-exact",open
+0x004457C0,vtable-slot,the type held in g_0074daa0,0x13C,"slot 79, nullary","mov ecx,[0x74daa0]; test; je; mov eax,[ecx]; jmp [eax+0x13c]; byte-exact",open
+,emitter,callgraph.json,,"edges are collected from `call` sites only, so a callee reached by a tail `jmp` is missing and the scaffolding does not declare it","0x00428DC0, 0x00421B40 and 0x00404200 all tail-jump to a callee absent from their scaffolding; each agent hand-declared a shim to get round it",open
+,emitter,the emitted VCall shim,,"every slot is declared nullary, so any slot that takes arguments forces the agent to declare a second shim class of the right arity","0x00447840, 0x00447550, 0x005F4CA0, 0x005F9460 and 0x005F9570 each redeclared a shim; five of sixteen Phase 2 recoveries",open
+,emitter,the writeback scaffolding,,"forward-declares only types reachable from a signature, so a Windows typedef used on a LOCAL makes the whole body NO_COMPILE and unscoreable",?sort@@YAXHPAHPAH@Z on BOOL and ?findnum@@YAHPAD@Z on LPSTR; both read as mismatches in the ledger for a reason unrelated to their code,promoted
+0x006077F0,emitter,catalogue return types,,"a mangled name spelling `X` cannot be overridden per-address, because decode_signature outranks the derived prototype",emit_translation_unit.py:716; fixed by tools/catalogue_corrections.py,promoted

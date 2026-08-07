@@ -318,7 +318,10 @@ Original Offset: 00628B30
 Return Value: Pointer to the first number, otherwise zero
 Status: Complete
 */
-LPSTR __cdecl findnum(LPSTR str) {
+// `char *`, not `LPSTR`. The same type, but the verification scaffolding
+// forward-declares only types reachable from a signature, so the Windows
+// typedef made this body NO_COMPILE and unscoreable.
+char *__cdecl findnum(char *str) {
     if (!str) {
         return 0;
     }
@@ -326,7 +329,7 @@ LPSTR __cdecl findnum(LPSTR str) {
         if (*str == 0) {
             return 0;
         }
-        *str++;
+        str++;
     }
     return str;
 }
@@ -1134,7 +1137,10 @@ Status: Complete
 */
 void __cdecl sort(int count, int *id, int *value) {
     int bounds = count - 1;
-    BOOL has_swapped;
+    // `int`, not `BOOL`. Identical type, but the verification scaffolding
+    // forward-declares only types reachable from a signature, so a Windows
+    // typedef on a LOCAL makes the whole body NO_COMPILE and unscoreable.
+    int has_swapped;
     do {
         has_swapped = false;
         for (int i = 0; i < bounds; i++) {
