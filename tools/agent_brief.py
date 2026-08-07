@@ -86,12 +86,61 @@ def disassembly(address: int) -> str:
     return text[start:end + 3]
 
 
+def prompt_section(address: int, heading: str) -> str:
+    """One `## heading` section of the generated prompt, or ''."""
+    path = PROMPTS / f"{address:08x}" / "prompt.md"
+    if not path.is_file():
+        return ""
+    text = path.read_text()
+    start = text.find(f"## {heading}")
+    if start < 0:
+        return ""
+    end = text.find("\n## ", start + 1)
+    return text[start:end if end > 0 else len(text)].strip()
+
+
 def targeted_rules(note: str) -> str:
     words = set(note.replace("'", " ").split())
     wanted = [advice for triggers, advice in TARGETED
               if words & set(triggers)]
     return "\n\n".join(wanted) if wanted else (
         "No fingerprint matched this divergence. Reason from the disassembly.")
+
+
+def fresh_recovery_section(address: int) -> str:
+    """What to send when NOTHING is recovered yet.
+
+    The ledger still carries a tier for these rows, because the census scores
+    every catalogued function and an unrecovered one gets an empty scaffold -
+    so the note reads `#0: original 'push' vs rebuilt 'xor'`, which is not a
+    divergence at all, it is the shape of a function that does not exist. Left
+    alone, the brief hands an agent a blank body, a made-up location and a
+    paragraph of register-allocation advice about a stub. There are 278
+    unrecovered leaves under 64 bytes, so this is most of the remaining work.
+
+    What a fresh recovery needs instead is the definition head the scaffolding
+    will compile against and the decompiler's guess at the body, both of which
+    `emit_mizuchi_prompts.py` already writes.
+    """
+    contract = prompt_section(address, "Contract")
+    ghidra = prompt_section(address, "Ghidra decompilation (hypothesis only)")
+    if not contract and not ghidra:
+        return ("# Nothing is recovered yet\n\nThere is no committed body and "
+                "no generated prompt for this address. Run\n"
+                "`tools/emit_mizuchi_prompts.py` first - without the contract "
+                "there is no way to\nknow what definition head the scaffolding "
+                "will accept.\n")
+    return f"""# Nothing is recovered yet - write it from scratch
+
+There is no committed body. The ledger still shows a tier for this row
+because the census scores every catalogued function and an unrecovered one
+gets an empty scaffold, so its "divergence" is just the shape of a function
+that does not exist. IGNORE IT and work from the disassembly.
+
+{contract}
+
+{ghidra}
+"""
 
 
 # Identifiers that carry no meaning: IDA's address-derived placeholders, the
@@ -152,28 +201,30 @@ def brief(address: int) -> str:
     name = (functions.get(address) or {}).get("name", f"sub_{address:x}")
     note = row.get("note") or row.get("refusal_reason") or ""
 
+    if body is None:
+        verdict = "nothing recovered yet"
+        middle = fresh_recovery_section(address)
+    else:
+        verdict = f"{row.get('tier', '?')}{(' - ' + note) if note else ''}"
+        middle = (f"# The body as it stands ({location})\n\n"
+                  f"```cpp\n{body.strip()}\n```\n\n"
+                  f"# What the divergence usually means\n\n"
+                  f"{targeted_rules(note)}\n"
+                  f"{naming_section(name, body)}")
+
     return f"""Matching decompilation, MSVC 6.0 x86. One function. Everything you
 need is below - do not go looking for anything else.
 
 # Target
 
 `{name}` at 0x{address:08X}, {row.get('size', '?')} bytes.
-Current verdict: {row.get('tier', '?')}{(' - ' + note) if note else ''}
+Current verdict: {verdict}
 
 # What the original compiles to
 
 {disassembly(address)}
 
-# The body as it stands ({location})
-
-```cpp
-{(body or '').strip()}
-```
-
-# What the divergence usually means
-
-{targeted_rules(note)}
-{naming_section(name, body)}
+{middle}
 # The signature is yours to change
 
 Nothing pins it. The scaffolding does NOT declare this function, and the
