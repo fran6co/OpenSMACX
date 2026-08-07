@@ -207,3 +207,57 @@ types reachable from the decoded signature and from callee signatures, and a
 Windows typedef used only for a LOCAL or spelled into a parameter is not
 reachable. `BOOL` is `int` and `LPSTR` is `char *`, so respelling them changes
 no type and no byte - but until it is done the body cannot be scored at all.
+
+## Loops: VC6 will not unroll a constant fill, and an indexed loop costs a push
+
+Three results in one batch say the same thing from different directions, and
+together they are the most transferable lever found so far.
+
+- **A constant fill stays a loop, always.** `AutoSound::init` zeroes 37 fields
+  and the original is 132 bytes of straight-line stores; every loop spelling
+  tried collapsed to a 31-byte address-stepping loop. There is no bound, no
+  first-N-special-case and no unroll pragma that reaches it - the stores have
+  to be written out. Write them against the CLASS MEMBERS rather than an
+  index over a `volatile uint32_t *`: both are byte-exact and only one is
+  readable.
+- **An indexed loop needs one more value live than a pointer walk**, so VC6
+  spills a callee-saved register for it. That spill IS the `push` at index 0.
+  `sub_5ad450` went exact by walking a pointer with a down-counter
+  (`do { ...; p += 3; } while (--count)`) instead of indexing.
+- **An extra local can invert the whole register assignment.** `sub_642940`
+  was MNEMONIC_ONLY with every mnemonic and every stack offset already
+  agreeing: a `remaining = count` copy made VC6 put the counter in ecx and the
+  value in edx, exactly the reverse of the original. `while (--count > 0)` on
+  the parameter itself flipped it back.
+
+So `push` at index 0 is worth ONE attempt at the loop form before it is filed
+under register allocation. It was the answer twice in this batch.
+
+## Where `push` really is register allocation
+
+Two functions in the same batch resisted it, and both are worth leaving alone:
+
+- `?bit_count@@YAHH@Z` (0x0050BA30). ELEVEN structurally distinct variants -
+  do-while against for, `if` against `+=`, an added live temp, a guard, a
+  writeback through the parameter's stack slot, signed against unsigned - all
+  landed on the identical `#2 push vs mov`. VC6 never chose ebx for the loop
+  and never folded `and`+`add` into the original's `shr`/`adc` carry chain.
+- `?findnum@@YAHPAD@Z` (0x00628B30). Reshaping the loop took mnemonic
+  similarity from 0.49 to 0.667 and reproduced the original's check ordering,
+  but the residue is `and reg,reg` against `test reg,reg`, a full-register
+  `xor ebx,ebx` before a byte-only loop, and a store/reload to share one `pop`
+  across three exits.
+
+Neither was landed: `mizuchi_writeback.py` only accepts BYTE_EXACT, and
+replacing a working body with a differently-shaped one that is still not exact
+trades a known quantity for a guess.
+
+## `goto` to a shared failure tail is sometimes the honest spelling
+
+`sub_6344e0` compares three floats and is byte-exact ONLY when the three tests
+are unrolled and share ONE failure return. A `return false` inside each arm
+duplicates the tail; a loop pays a `push`. The last comparison also has to be
+spelled `==` where the first two are `!=`, because VC6 lays the final block out
+the other way round. The form check flags `goto` as questionable and it should
+keep doing so - but here the alternative is not a cleaner body, it is a body
+that does not match.

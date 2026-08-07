@@ -421,14 +421,23 @@ Original Offset: 006344E0
 Return Value: true when every component matches, or is unordered
 Status: Complete
 */
-bool __fastcall leaf_006344e0_redirect(void *self, void *, const float *other) {
+/*
+Original Offset: 006344E0
+Return Value: true when the three components compare equal or unordered
+Status: Complete
+*/
+bool __fastcall leaf_006344e0_redirect(void *self, void *,
+                                       const float *other) {
     const float *const mine = static_cast<const float *>(self);
-    for (int index = 0; index < 3; ++index) {
-        if (mine[index] < other[index] || mine[index] > other[index]) {
-            return false;
-        }
-    }
-    return true;
+    // Fully unrolled, with one SHARED failure tail. A loop costs a
+    // callee-saved push the original does not pay, and a `return false` in
+    // each arm duplicates the tail instead of sharing it. `!=`/`==` also
+    // collapses to a single fcomp where `a < b || a > b` emits two.
+    if (mine[0] != other[0]) goto unequal;
+    if (mine[1] != other[1]) goto unequal;
+    if (mine[2] == other[2]) return true;
+unequal:
+    return false;
 }
 
 /*
@@ -627,12 +636,24 @@ Original Offset: 005AD450
 Return Value: n/a
 Status: Complete
 */
+/*
+Original Offset: 005AD450
+Return Value: n/a
+Status: Complete
+*/
 void __fastcall leaf_005ad450_redirect(void *self, void *) {
-    uint32_t *const slots = reinterpret_cast<uint32_t *>(
-        static_cast<uint8_t *>(self) + 0xA20);
-    for (int index = 0; index < 0x200 * 3; ++index) {
-        slots[index] = 0xFFFFFFFFU;
-    }
+    // A pointer walk with a down-counter, not an indexed loop: the indexed
+    // form needs one more value live across the body and VC6 spills a
+    // callee-saved register for it, which is the `push` at index 0.
+    uint32_t *slot = reinterpret_cast<uint32_t *>(
+        static_cast<uint8_t *>(self) + 0xA24);
+    int count = 0x200;
+    do {
+        slot[-1] = 0xFFFFFFFFU;
+        slot[0] = 0xFFFFFFFFU;
+        slot[1] = 0xFFFFFFFFU;
+        slot += 3;
+    } while (--count);
 }
 
 /*
@@ -738,16 +759,22 @@ Original Offset: 00642940
 Return Value: the low `count` bits, reversed
 Status: Complete
 */
-uint32_t __cdecl leaf_00642940_redirect(uint32_t value, int count) {
-    uint32_t result = 0;
-    int remaining = count;
+/*
+Original Offset: 00642940
+Return Value: the low `count` bits of `value`, reversed
+Status: Complete
+*/
+unsigned int __cdecl leaf_00642940_redirect(unsigned int value, int count) {
+    // `count` is decremented IN PLACE. A separate `remaining` local made VC6
+    // bind the counter to ecx and the value to edx, exactly the reverse of
+    // the original's allocation, with every mnemonic already agreeing.
+    unsigned int reversed = 0;
     do {
-        result |= value & 1U;
+        reversed |= value & 1U;
         value >>= 1;
-        result <<= 1;
-        --remaining;
-    } while (remaining > 0);
-    return result >> 1;
+        reversed <<= 1;
+    } while (--count > 0);
+    return reversed >> 1;
 }
 
 /*

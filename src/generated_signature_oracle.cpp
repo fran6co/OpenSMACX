@@ -939,7 +939,7 @@ static bool verify_passover_callback_004456a0() {
 }
 
 // ?load_deswin_sprites@@YAXXZ  (35 B)
-// recovered in src/leaf_recoveries.cpp:1358
+// recovered in src/leaf_recoveries.cpp:1385
 static bool verify_load_deswin_sprites_00455e50() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x00455E50U);
@@ -12674,7 +12674,7 @@ static bool verify_Menu_requested_height_005fc6a0() {
 }
 
 // ?do_sound@@YAXXZ  (3 B)
-// recovered in src/autosound.cpp:141
+// recovered in src/autosound.cpp:183
 static bool verify_do_sound_005fd2b0() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x005FD2B0U);

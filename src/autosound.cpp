@@ -104,14 +104,56 @@ Original Offset: 0062BD40
 Return Value: n/a
 Status: Complete
 */
+/*
+Purpose: Zero every field, in the legacy store order construction uses,
+         leaving the virtual table alone.
+Original Offset: 0062BD40
+Return Value: n/a
+Status: Complete
+*/
 void AutoSound::init() {
-    // The original zeroes the fields in the same shuffled order the copies
-    // use, but a constant fill makes no order observable - one pass serves.
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    for (size_t index = 1; index < 38; ++index) {
-        object[index] = 0;
-    }
+    // Spelled out, NOT a loop. A constant fill makes no store order
+    // observable, so a loop is the natural source - but VC6 keeps a constant
+    // fill as an address-stepping loop of 31 bytes and never unrolls it,
+    // where the original is 132 bytes of straight-line stores. The odd
+    // 1,3,4,2 opening is the order construct() copies in.
+    val_1_ = 0;
+    val_3_ = 0;
+    val_4_ = 0;
+    val_2_ = 0;
+    val_5_ = 0;
+    val_6_ = 0;
+    val_7_ = 0;
+    val_8_ = 0;
+    val_9_ = 0;
+    val_10_ = 0;
+    val_11_ = 0;
+    val_12_ = 0;
+    val_13_ = 0;
+    val_14_ = 0;
+    val_15_ = 0;
+    val_16_ = 0;
+    val_17_ = 0;
+    val_18_ = 0;
+    val_19_ = 0;
+    val_20_ = 0;
+    val_21_ = 0;
+    val_22_ = 0;
+    val_23_ = 0;
+    val_24_ = 0;
+    val_25_ = 0;
+    val_26_ = 0;
+    val_27_ = 0;
+    val_28_ = 0;
+    val_29_ = 0;
+    val_30_ = 0;
+    val_31_ = 0;
+    val_32_ = 0;
+    val_33_ = 0;
+    val_34_ = 0;
+    val_35_ = 0;
+    val_36_ = 0;
+    val_37_ = 0;
 }
 
 void __fastcall auto_sound_init_redirect(AutoSound *self, void *) {
