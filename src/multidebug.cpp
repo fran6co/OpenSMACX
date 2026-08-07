@@ -31,3 +31,18 @@ void MultiDebug::close() {
 void __fastcall multi_debug_close_redirect(MultiDebug *self, void *) {
     self->close();
 }
+
+/*
+Purpose: Forward the timer tick to the object's own virtual slot 62.
+Original Offset: 005C9900
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl MultiDebug::timer_callback_daemon(int a1) {
+    // Dispatch on `this`, NOT on a1. For a __cdecl member VC6 puts `this` at
+    // [ebp+8] and the explicit argument at [ebp+0xc]; dispatching on a1 is
+    // SHAPE_EXACT and reads the wrong slot. a1 is unused by this body.
+    if (this) {
+        reinterpret_cast<VCall *>(this)->slot062();
+    }
+}

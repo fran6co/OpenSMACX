@@ -328,3 +328,13 @@ int PullDown::id_to_index(int id) {
 int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id) {
     return self->id_to_index(id);
 }
+
+/*
+Original Offset: 005F93A0
+Status: Complete
+*/
+void PullDown::hide() {
+    reinterpret_cast<VCall *>(this)->slot058();
+    reinterpret_cast<Win *>(this)->hide();
+    do_all_draws();
+}

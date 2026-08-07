@@ -385,3 +385,17 @@ void __fastcall tut_win_do_des_redirect(
         TutWin *self, void *, RECT *rect, const char *text, int flag) {
     self->do_des(rect, text, flag);
 }
+
+/*
+Purpose: Tell the attached object the tutorial window moved.
+Original Offset: 004BDDB0
+Return Value: n/a
+Status: Complete
+*/
+void TutWin::on_move(int a1, int a2) {
+    // field_53D4_ is typed int32_t by the scaffolding but holds a pointer to
+    // a vtable-bearing object. Both arguments are dead.
+    if (field_53D4_ != 0) {
+        reinterpret_cast<VCall *>(field_53D4_)->slot063();
+    }
+}

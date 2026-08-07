@@ -63,3 +63,29 @@ FX::~FX() {
 void __fastcall fx_dtor_redirect(FX *self, void *) {
     self->~FX();
 }
+
+/*
+Original Offset: 00446A90
+Status: Complete
+*/
+void FX::stop(int a1) {
+    reinterpret_cast<VCall *>(reinterpret_cast<char *>(this) + a1 * 0x6C)->slot008();
+}
+
+/*
+Original Offset: 00446AB0
+Status: Complete
+*/
+void FX::release(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    reinterpret_cast<VCall *>(self + a1 * 108)->slot014();
+}
+
+/*
+Original Offset: 00446AD0
+Status: Complete
+*/
+void FX::fade(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    reinterpret_cast<VCall *>(self)[a1 * 27].slot010();
+}

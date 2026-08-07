@@ -260,3 +260,23 @@ void DiploWin::UNK3(int a1) {
 void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1) {
     self->UNK3(a1);
 }
+
+/*
+Original Offset: 00443C30
+Status: Complete
+*/
+void DiploWin::show(int a1) {
+    if (!reinterpret_cast<Win *>(this)->is_visible()) {
+        reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->set_iface_mode();
+    }
+}
+
+/*
+Original Offset: 00443C50
+Status: Complete
+*/
+void DiploWin::hide() {
+    if (reinterpret_cast<Win *>(this)->is_visible()) {
+        reinterpret_cast<VCall *>(this)->slot058();
+    }
+}

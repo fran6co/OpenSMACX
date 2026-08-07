@@ -179,3 +179,13 @@ void SocialWin::on_iface_mouse_leave(int, int) {
 void __fastcall social_win_on_iface_mouse_leave_redirect(SocialWin *self, void *, int a1, int a2) {
     self->on_iface_mouse_leave(a1, a2);
 }
+
+/*
+Original Offset: 004B2690
+Status: Complete
+*/
+void SocialWin::show(int a1) {
+    if (!reinterpret_cast<Win *>(this)->is_visible()) {
+        reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->set_iface_mode();
+    }
+}

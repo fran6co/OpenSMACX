@@ -201,3 +201,16 @@ int __fastcall counc_win_on_button_text_draw_redirect(
         CouncWin *self, void *, int a1, int a2, int a3) {
     return self->on_button_text_draw(a1, a2, a3);
 }
+
+/*
+Original Offset: 00426EC0
+Status: Complete
+*/
+void CouncWin::on_mouse_leave(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+    int v = *reinterpret_cast<int *>(self + 0xa34);
+    if (v != -1) {
+        *reinterpret_cast<int *>(self + 0xa34) = -1;
+        draw_leader(v);
+    }
+}

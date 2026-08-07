@@ -135,3 +135,21 @@ int AlphaMovie::UNK8(int, int) {
 int __fastcall alpha_movie_unk8_redirect(AlphaMovie *self, void *, int a1, int a2) {
     return self->UNK8(a1, a2);
 }
+
+/*
+Original Offset: 004041E0
+Status: Complete
+*/
+void AlphaMovie::close() {
+    char *self = reinterpret_cast<char *>(this);
+    reinterpret_cast<MCIVideo *>(self + 0xa14)->close();
+    reinterpret_cast<GraphicWin *>(self)->close();
+}
+
+/*
+Original Offset: 00404290
+Status: Complete
+*/
+void AlphaMovie::update() {
+    reinterpret_cast<GraphicWin *>(this)->update(0);
+}

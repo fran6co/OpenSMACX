@@ -568,3 +568,11 @@ void Menu::on_adjust_pulldown_pos(int *, int *) {
 void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1, int *a2) {
     self->on_adjust_pulldown_pos(a1, a2);
 }
+
+/*
+Original Offset: 005FC680
+Status: Complete
+*/
+void Menu::on_mouse_move(int a1, int a2) {
+    mouse_move(a1, a2);
+}
