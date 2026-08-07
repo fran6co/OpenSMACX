@@ -543,10 +543,10 @@ class ProvedSubobjectTests(unittest.TestCase):
         self.layouts.proved_members = self.members
         self.layouts.proved_subobjects = self.subobjects
 
-    def declare(self, members, subobjects):
+    def declare(self, members, subobjects, declared=("SubInterface", "A", "B")):
         self.layouts.proved_members = lambda: members
         self.layouts.proved_subobjects = lambda: subobjects
-        return tool.proved_member_declaration("C")
+        return tool.proved_member_declaration("C", set(declared))
 
     def test_a_sub_object_is_declared_at_its_offset(self):
         self.assertEqual(
@@ -570,3 +570,39 @@ class ProvedSubobjectTests(unittest.TestCase):
 
     def test_a_class_with_neither_gets_no_layout(self):
         self.assertEqual([], self.declare({}, {}))
+
+    def test_a_sub_object_whose_type_the_unit_never_declares_is_skipped(self):
+        """The regression this cost 50 proved functions to learn.
+
+        An embedded member needs a COMPLETE type, and the scaffolding declares
+        a class only when the subject reaches it - so `SubInterface` is in the
+        units of the five bodies that call into it and absent from every other
+        method of the same class. Emitting it regardless gave those methods a
+        member of a type their unit never names, and VC6 reports an unknown
+        type as `C2146: syntax error : missing ';'`, which reads like a broken
+        body rather than a broken declaration.
+        """
+        self.assertEqual(
+            [], self.declare({}, {"C": {0xA14: ("sub_interface_",
+                                               "SubInterface")}},
+                             declared=()))
+
+    def test_known_members_survive_a_skipped_sub_object(self):
+        """Dropping the sub-object must not drop the layout with it."""
+        self.assertEqual(
+            ["    uint8_t pad_0_[0x8];", "    uint32_t field_8_;"],
+            self.declare({"C": {8: ("field_8_", 4)}},
+                         {"C": {0x14: ("sub_interface_", "SubInterface")}},
+                         declared=()))
+
+
+class DeclaredBeforeTests(unittest.TestCase):
+    def test_it_finds_classes_and_structs_already_emitted(self):
+        self.assertEqual(
+            {"SubInterface", "Vert"},
+            tool.declared_before(["class SubInterface { public:",
+                                  "    void f();", "};",
+                                  "struct Vert { int x; };"]))
+
+    def test_nothing_emitted_yet_declares_nothing(self):
+        self.assertEqual(set(), tool.declared_before([]))

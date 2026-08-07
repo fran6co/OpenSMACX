@@ -543,7 +543,20 @@ def vtable_slots(pe, spans, cap: int = VTABLE_SLOT_CAP):
         slot for slot in found if slot > cap)
 
 
-def proved_member_declaration(name: str) -> list:
+DECLARED_TYPE = re.compile(r"^\s*(?:class|struct)\s+(\w+)", re.M)
+
+
+def declared_before(lines: list) -> set:
+    """Type names this unit has already declared, at this point in the text.
+
+    An EMBEDDED member needs a COMPLETE type, so it can only be declared when
+    the unit has already defined that class - and it has to be already, not
+    eventually, because a member cannot name a class declared below it.
+    """
+    return set(DECLARED_TYPE.findall("\n".join(lines)))
+
+
+def proved_member_declaration(name: str, declared: set = frozenset()) -> list:
     """Member lines for a class only BYTE-EXACT bodies have described, or [].
 
     Read from `agent-structure-observations.csv` through
@@ -584,8 +597,23 @@ def proved_member_declaration(name: str) -> list:
     # `((SubInterface *)((char *)this + 0xA14))->release_iface_mode()`, and
     # both compile to `lea ecx,[esi+0xa14]; call ...` - the byte comparison
     # cannot tell them apart, which is exactly why the readable one is free.
+    #
+    # It is emitted ONLY when this unit has already declared the type. An
+    # embedded member needs a COMPLETE type, and the scaffolding declares a
+    # class only when the subject reaches it - so `SubInterface` is present in
+    # the units of the five bodies that call into it and absent from every
+    # other method of the same class.
+    #
+    # Emitting it unconditionally cost 50 proved functions: BaseWin,
+    # CouncWin, Datalink and SocialWin methods that never touch the
+    # sub-object got a member of a type their unit never names, and VC6
+    # reports an unknown type as `C2146: syntax error : missing ';'`, which
+    # reads like a broken body rather than a broken declaration. The census
+    # caught it and the ratchet refused to move; nothing else would have.
     for offset in sorted(subobjects)[:1]:
         member, type_name = subobjects[offset]
+        if type_name not in declared:
+            continue
         if offset < cursor:
             continue
         if offset > cursor:
@@ -1174,7 +1202,8 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
             #     field_2144_ = a1;
             # in every future recovery on the class. The casts in recovered
             # code were never a style problem; they are this file's gaps.
-            layout = proved_member_declaration(signature.klass)
+            layout = proved_member_declaration(
+                signature.klass, declared_before(lines))
         if layout:
             lines.extend(layout)
             lines.append("")
