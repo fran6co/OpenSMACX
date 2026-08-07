@@ -32,6 +32,7 @@
 */
 class DLLEXPORT InfoWin {
  public:
+  void on_right_click(int a1, int a2);
   InfoWin() { ; }
   ~InfoWin() { ; }
   void UNK1();

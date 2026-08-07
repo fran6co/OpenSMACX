@@ -28,6 +28,7 @@
   */
 class DLLEXPORT ReportIf {
  public:
+  void done();
   ReportIf() { ; }
   ~ReportIf() { ; }
   void close_energy();

@@ -37,6 +37,7 @@ compiles against real headers, stays a human decision - the same line
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -93,6 +94,53 @@ def catalogue_line(body: str) -> int:
     raise Refused("body has no `Original Offset:` line to catalogue")
 
 
+DEFINITION = re.compile(
+    r"^(?P<ret>[\w:<>*&\s]+?)\b(?P<klass>\w+)::(?P<method>~?\w+)\s*"
+    r"\((?P<params>[^)]*)\)\s*(?P<trail>const\s*)?\{", re.M)
+
+
+def declaration_for(body: str) -> tuple:
+    """(header path, declaration line) a member definition needs, or (None, why).
+
+    A DEFINITION WITHOUT A DECLARATION COMPILES NOWHERE. `void FX::stop() {}`
+    with no `stop` in `fx.h` is not a VC6 quirk - the compiler cannot find a
+    member to define, demotes it to a global function, and then every `this`
+    inside cascades. VC6 reports it as `C2039` plus a pile of `C2673`, which is
+    confusing enough that it reads like a dialect problem and is not.
+
+    This is the second half of what the splice has to carry. The first
+    integration pass moved 38 bodies and left 39 undeclared, because the
+    verification unit gets the declaration from the CATALOGUE and so never
+    notices the header is missing it.
+    """
+    match = DEFINITION.search(body)
+    if match is None:
+        return None, "no member definition found (a free function needs none)"
+    klass, method = match.group("klass"), match.group("method")
+    header = REPO_ROOT / "src" / f"{klass.lower()}.h"
+    if not header.is_file():
+        return None, f"no src/{klass.lower()}.h to declare {klass}::{method} in"
+    text = header.read_text(errors="ignore")
+    if re.search(rf"\b{re.escape(method)}\s*\(", text):
+        return None, "already declared"
+    returns = " ".join(match.group("ret").split())
+    params = " ".join(match.group("params").split())
+    trail = " const" if match.group("trail") else ""
+    lead = f"{returns} " if returns and not method.startswith("~") else ""
+    return header, f"  {lead}{method}({params}){trail};"
+
+
+def declare_in_header(header: Path, declaration: str) -> str:
+    """Insert into the FIRST `public:` of the first class, return the old text."""
+    text = header.read_text()
+    match = re.search(r"^\s*public:\s*$", text, re.M)
+    if match is None:
+        raise Refused(f"{header.name} has no `public:` to declare into")
+    at = match.end()
+    writeback.write_atomically(header, text[:at] + "\n" + declaration + text[at:])
+    return text
+
+
 def set_source_location(address: int, location: str) -> None:
     """Point this row at its new home, in `functions.csv`."""
     import csv
@@ -137,8 +185,13 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
     line = len(original.rstrip("\n").splitlines()) + 2 + offset - 1
     location = f"{relative}:{line}"
 
+    header, declaration = declaration_for(text)
+    header_before = None
+
     writeback.write_atomically(target, appended)
     try:
+        if header is not None:
+            header_before = declare_in_header(header, declaration)
         set_source_location(address, location)
         # Re-extract from DISK. What is proved is the text now in the file,
         # not the text this tool was handed - the same rule the writeback
@@ -151,6 +204,8 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
                 f"{verdict.get('note') or verdict.get('refusal_reason') or ''}")
     except Exception:
         writeback.write_atomically(target, original)
+        if header_before is not None:
+            writeback.write_atomically(header, header_before)
         set_source_location(address, existing)
         raise
 
@@ -158,7 +213,8 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
     if body is None and stored.is_file():
         stored.unlink()                    # the store was staging; it landed
     return {"address": f"0x{address:08X}", "name": row.get("name", ""),
-            "source_location": location, "removed_from_store": body is None}
+            "source_location": location, "removed_from_store": body is None,
+            "declared_in": header.name if header is not None else ""}
 
 
 def main(argv=None) -> int:
@@ -190,6 +246,8 @@ def main(argv=None) -> int:
           f"(verified BYTE_EXACT)")
     if result["removed_from_store"]:
         print(f"  removed src/recovered/{address:08x}.cpp")
+    if result["declared_in"]:
+        print(f"  declared it in src/{result['declared_in']}")
     return 0
 
 

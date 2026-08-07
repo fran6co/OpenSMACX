@@ -31,6 +31,7 @@ class DLLEXPORT BaseButton : GraphicWin {
   friend class Scroll;
 
  public:
+  void on_right_click(int a1, int a2);
   // These return `int`, not `void`. Each body is `xor eax, eax; ret N`, and
   // the sibling class BasePop declares the same three handlers `int`. The
   // catalogued mangled names spelled `X` and are corrected in

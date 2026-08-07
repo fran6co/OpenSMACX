@@ -30,6 +30,7 @@
 */
 class DLLEXPORT FileWin {
  public:
+  void on_double_clicked(int a1);
   FileWin() { ; }
   ~FileWin() { ; }
   void UNK6();

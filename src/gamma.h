@@ -32,6 +32,7 @@
   */
 class DLLEXPORT Gamma : GraphicWin {
  public:
+  void on_scrolled(int a1, int a2);
   Gamma() { ; }
   ~Gamma() { ; }
   int on_key_click(int a1, int a2);

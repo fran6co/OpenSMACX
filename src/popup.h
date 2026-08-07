@@ -32,6 +32,7 @@
   */
 class DLLEXPORT Popup : BasePop {
  public:
+  int on_nc_hittest(int a1, int a2);
   Popup() { ; }
   ~Popup() { ; }
   void close();

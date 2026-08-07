@@ -44,6 +44,8 @@
   */
 class DLLEXPORT MapWin {
  public:
+  void on_resize(int a1, int a2);
+  void on_redraw();
   MapWin() { ; }
   ~MapWin() { ; }
   int UNK1();
