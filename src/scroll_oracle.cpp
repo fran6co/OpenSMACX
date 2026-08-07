@@ -198,7 +198,7 @@ bool verify_close() {
     runtime_oracle::begin_trace(
         legacy.object(), ScrollCloseTraceOffsets,
         ARRAYSIZE(ScrollCloseTraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     const ScrollCloseButtonTrace legacy_buttons = ScrollCloseButtons;
 
@@ -257,9 +257,8 @@ bool verify_init_wrappers() {
             ? reinterpret_cast<Win *>(0x45454545U) : nullptr;
 
         *ScrollNonClientInit = int_from_bits(sentinel);
-        const uint32_t legacy_result = original_rect(
-            legacy.object(), legacy_rect_arg, parent,
-            int_from_bits(0x13579BDFU), int_from_bits(0xFEDCBA98U));
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original_rect)(
+            legacy_rect_arg, parent, int_from_bits(0x13579BDFU), int_from_bits(0xFEDCBA98U));
         const int legacy_nonclient = *ScrollNonClientInit;
         *ScrollNonClientInit = int_from_bits(sentinel);
         const uint32_t source_result = source.object()->init(
@@ -293,9 +292,8 @@ bool verify_init_wrappers() {
             uintptr_t vtable[VtableEntries];
             initialize_pair(legacy, source, vtable);
             *ScrollNonClientInit = int_from_bits(sentinel);
-            const uint32_t legacy_result = original(
-                legacy.object(), int_from_bits(0x80000000U),
-                int_from_bits(0x7FFFFFFFU), int_from_bits(test.length),
+            const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+                int_from_bits(0x80000000U), int_from_bits(0x7FFFFFFFU), int_from_bits(test.length),
                 test.parent, int_from_bits(0x13579BDFU));
             const int legacy_nonclient = *ScrollNonClientInit;
 
@@ -360,8 +358,8 @@ bool verify_range() {
         uintptr_t vtable[VtableEntries];
         initialize_pair(legacy, source, vtable);
         begin_trace(legacy.object(), snapshots, ARRAYSIZE(snapshots));
-        const uint32_t legacy_result = original(
-            legacy.object(), int_from_bits(test[0]), int_from_bits(test[1]));
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+            int_from_bits(test[0]), int_from_bits(test[1]));
         const RedrawTrace legacy_trace = runtime_oracle::current_trace();
         begin_trace(source.object(), snapshots, ARRAYSIZE(snapshots));
         const uint32_t source_result = source.object()->set_range(
@@ -395,8 +393,8 @@ bool verify_styles() {
             uintptr_t vtable[VtableEntries];
             initialize_pair(legacy, source, vtable);
             begin_trace(legacy.object(), snapshots[style], 3);
-            const uint32_t legacy_result = original(
-                legacy.object(), int_from_bits(value));
+            const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+                int_from_bits(value));
             const RedrawTrace legacy_trace = runtime_oracle::current_trace();
             begin_trace(source.object(), snapshots[style], 3);
             uint32_t source_result;
@@ -449,8 +447,8 @@ bool verify_thumb_resetters() {
                 memcpy(source.storage, legacy.storage, sizeof(source.storage));
                 begin_trace(legacy.object(), nullptr, 0);
                 const uint32_t legacy_result = set_bar
-                    ? original_bar(legacy.object(), int_from_bits(thickness))
-                    : original_thumb(legacy.object());
+                    ? (ORIGINAL(legacy.object())->*original_bar)(int_from_bits(thickness))
+                    : (ORIGINAL(legacy.object())->*original_thumb)();
                 const RedrawTrace legacy_trace = runtime_oracle::current_trace();
                 begin_trace(source.object(), nullptr, 0);
                 const uint32_t source_result = set_bar
@@ -497,8 +495,8 @@ bool verify_vertical_sprites() {
             write_object(legacy, 0x4C8, geometry.stored_height);
             memcpy(source.storage, legacy.storage, sizeof(source.storage));
             begin_trace(legacy.object(), nullptr, 0);
-            const uint32_t legacy_result = original(
-                legacy.object(), sprites[0], sprites[1], sprites[2]);
+            const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+                sprites[0], sprites[1], sprites[2]);
             const RedrawTrace legacy_trace = runtime_oracle::current_trace();
             begin_trace(source.object(), nullptr, 0);
             const uint32_t source_result = direction == 0
@@ -557,8 +555,8 @@ bool verify_position() {
 
         *ScrollCurrentWin = reinterpret_cast<::Win *>(0x24682468U);
         begin_trace(legacy.object(), snapshots, ARRAYSIZE(snapshots));
-        const uint32_t legacy_result = original(
-            legacy.object(), int_from_bits(test.input));
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)(
+            int_from_bits(test.input));
         const RedrawTrace legacy_trace = runtime_oracle::current_trace();
         ::Win *const legacy_current = *ScrollCurrentWin;
 

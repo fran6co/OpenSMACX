@@ -62,7 +62,7 @@ bool verify_construct() {
             legacy.storage, source.storage, SpriteSpec, vtable);
 
         *SpriteMemoryUsed = starting_total;
-        const uint32_t legacy_result = original(legacy.object());
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
         const int legacy_total = *SpriteMemoryUsed;
 
         *SpriteMemoryUsed = starting_total;
@@ -143,7 +143,7 @@ bool verify_close() {
         FreeCalls = 0;
 
         *SpriteMemoryUsed = 0x1000;
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         const int legacy_total = *SpriteMemoryUsed;
 
         FreeCalls = 0;
@@ -240,7 +240,7 @@ bool run_sprite_release_suite() {
         memcpy(source.storage + runtime_oracle::CanarySize + 0x28, &zero, sizeof(zero));
 
         *SpriteMemoryUsed = 0x1000;
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         const int legacy_total = *SpriteMemoryUsed;
 
         *SpriteMemoryUsed = 0x1000;

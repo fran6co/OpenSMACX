@@ -47,9 +47,9 @@ void Sound::fade(uint32_t a1) {
     uint8_t *const vtable = *reinterpret_cast<uint8_t **>(this);
     typedef int (OriginalObject::*fade_fn)(int a1);
     typedef void (OriginalObject::*fallback_fn)();
-    if ((*reinterpret_cast<fade_fn *>(vtable))(this, a1) == 0) {
+    if ((ORIGINAL(this)->*original_slot<fade_fn>(vtable))(a1) == 0) {
         uint8_t *const reread = *reinterpret_cast<uint8_t **>(this);
-        (*reinterpret_cast<fallback_fn *>(reread + 0x28))(this);
+        (ORIGINAL(this)->*original_slot<fallback_fn>(reread + 0x28))();
     }
 }
 
@@ -74,8 +74,7 @@ int query_sound_device(Sound *self, int vtable_offset) {
         return 0;
     }
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (*reinterpret_cast<sound_device_query *>(vtable + vtable_offset))(
-        device);
+    return (ORIGINAL(device)->*original_slot<sound_device_query>(vtable + vtable_offset))();
 }
 }  // namespace
 
@@ -132,8 +131,7 @@ int forward_sound_device(Sound *self, int vtable_offset, int a1,
         return no_device_result;
     }
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (*reinterpret_cast<sound_device_arg *>(vtable + vtable_offset))(
-        device, a1);
+    return (ORIGINAL(device)->*original_slot<sound_device_arg>(vtable + vtable_offset))(a1);
 }
 
 int query_sound_device_default(Sound *self, int vtable_offset,
@@ -144,8 +142,7 @@ int query_sound_device_default(Sound *self, int vtable_offset,
         return no_device_result;
     }
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (*reinterpret_cast<sound_device_query *>(vtable + vtable_offset))(
-        device);
+    return (ORIGINAL(device)->*original_slot<sound_device_query>(vtable + vtable_offset))();
 }
 }  // namespace
 
@@ -257,8 +254,7 @@ int guarded_query_sound_device(Sound *self, int vtable_offset) {
         return 0x13;
     }
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (*reinterpret_cast<sound_device_query *>(vtable + vtable_offset))(
-        device);
+    return (ORIGINAL(device)->*original_slot<sound_device_query>(vtable + vtable_offset))();
 }
 }  // namespace
 
@@ -299,8 +295,7 @@ void Sound::ramp(int a1, int a2, unsigned int a3) {
     }
     typedef void (OriginalObject::*ramp_fn)(int a1, int a2, int a3);
     uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    (*reinterpret_cast<ramp_fn *>(vtable + 0x34))(device, a1, a2,
-                                                  static_cast<int>(a3));
+    (ORIGINAL(device)->*original_slot<ramp_fn>(vtable + 0x34))(a1, a2, static_cast<int>(a3));
 }
 
 int __fastcall sound_fade_query_redirect(Sound *self, void *) {
@@ -393,16 +388,15 @@ int Sound::load(const char *a1) {
         }
     } else {
         typedef int (OriginalObject::*device_busy_fn)();
-        if ((*reinterpret_cast<device_busy_fn *>(
-                *reinterpret_cast<uint8_t **>(device_) + 0x60))(device_)) {
+        if ((ORIGINAL(device_)->*original_slot<device_busy_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x60))()) {
             return 0xF;
         }
     }
     int result;
     {
         typedef int (OriginalObject::*device_load_fn)(const char *name);
-        result = (*reinterpret_cast<device_load_fn *>(
-            *reinterpret_cast<uint8_t **>(device_) + 0x10))(device_, resolved);
+        result = (ORIGINAL(device_)->*original_slot<device_load_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x10))(
+            resolved);
     }
     if (result == 0) {
         if (!(flags_40_ & 1)) {
@@ -410,9 +404,8 @@ int Sound::load(const char *a1) {
             (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x7C)))();
             if (loop_flag_30_) {
                 typedef void (OriginalObject::*device_loop_fn)(int on);
-                (*reinterpret_cast<device_loop_fn *>(
-                    *reinterpret_cast<uint8_t **>(device_) + 0x48))(device_,
-                                                                    1);
+                (ORIGINAL(device_)->*original_slot<device_loop_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x48))(
+                    1);
             }
         }
     } else {
@@ -445,8 +438,8 @@ void Sound::set_volume(int a1) {
     volume_ = vol;
     if (device_) {
         typedef void (OriginalObject::*device_fn)(uint32_t vol);
-        (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_) + 0x40))(device_, vol);
+        (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x40))(
+            vol);
     }
 }
 
@@ -469,8 +462,8 @@ int Sound::set_fade(unsigned long a1) {
     fade_38_ = a1;
     if (device_) {
         typedef void (OriginalObject::*device_fn)(unsigned long t);
-        (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_) + 0))(device_, a1);
+        (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0))(
+            a1);
     }
     return 0;
 }
@@ -494,8 +487,8 @@ int Sound::set_fade_in(unsigned int a1) {
     fade_38_ = a1;
     if (device_) {
         typedef void (OriginalObject::*device_fn)(unsigned int t);
-        (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_) + 0x54))(device_, a1);
+        (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x54))(
+            a1);
     }
     return 0;
 }
@@ -514,8 +507,8 @@ Status: Complete
 */
 void Sound::fade_in(unsigned int a1) {
     typedef int (OriginalObject::*own_time_fn)(unsigned int t);
-    if ((*reinterpret_cast<own_time_fn *>(
-            *reinterpret_cast<uint8_t **>(this) + 0x54))(this, a1) == 0) {
+    if ((ORIGINAL(this)->*original_slot<own_time_fn>(*reinterpret_cast<uint8_t **>(this) + 0x54))(
+        a1) == 0) {
         (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x28)))();
     }
 }
@@ -538,8 +531,8 @@ void Sound::set_pan(int a1) {
     pan_8_ = pan;
     if (device_) {
         typedef void (OriginalObject::*device_fn)(int pan);
-        (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_) + 0x44))(device_, pan);
+        (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x44))(
+            pan);
     }
 }
 
@@ -561,8 +554,7 @@ int Sound::unload() {
     int result = 0;
     if (device_) {
         typedef int (OriginalObject::*device_fn)();
-        result = (*reinterpret_cast<device_fn *>(
-            *reinterpret_cast<uint8_t **>(device_) + 0x14))(device_);
+        result = (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x14))();
     }
     (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x80)))();
     const uint32_t cleared = flags_40_ & ~1u;

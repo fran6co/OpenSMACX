@@ -183,7 +183,7 @@ bool verify_base_close(uintptr_t *vtable) {
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     runtime_oracle::begin_trace(
         source.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -205,7 +205,7 @@ bool verify_flat_close(uintptr_t *vtable) {
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     runtime_oracle::begin_trace(
         source.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -228,7 +228,7 @@ bool verify_base_destructor(uintptr_t *vtable) {
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     runtime_oracle::begin_trace(
         source.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -252,7 +252,7 @@ bool verify_flat_destructor(uintptr_t *vtable) {
 
     runtime_oracle::begin_trace(
         legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-    const uint32_t legacy_result = original(legacy.object());
+    const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
     const runtime_oracle::Trace legacy_trace = runtime_oracle::current_trace();
     runtime_oracle::begin_trace(
         source.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
@@ -333,7 +333,7 @@ bool run_base_button_release_suite() {
 
         runtime_oracle::begin_trace(
             legacy.object(), TraceOffsets, ARRAYSIZE(TraceOffsets));
-        const uint32_t legacy_result = original(legacy.object());
+        const uint32_t legacy_result = (ORIGINAL(legacy.object())->*original)();
         const runtime_oracle::Trace legacy_trace =
             runtime_oracle::current_trace();
         runtime_oracle::begin_trace(

@@ -96,4 +96,17 @@ unsigned long original_address(Method method) {
   return cast.address;
 }
 
+/*
+ * A vtable slot, read as a pinned pointer-to-member. The recovered code spelt
+ * this `(*reinterpret_cast<Method *>(vtable + 0x14))(object)` in seventy-odd
+ * places - reading the slot AS a pointer-to-member and then calling it as a
+ * free function, which is `C2064: term does not evaluate to a function`. The
+ * slot holds a bare code address; this reads it as one and hands it to
+ * original_method, leaving the call site an honest `->*`.
+ */
+template <class Method>
+Method original_slot(const void *slot) {
+  return original_method<Method>(*reinterpret_cast<const unsigned long *>(slot));
+}
+
 #define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))

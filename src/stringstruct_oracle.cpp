@@ -141,7 +141,7 @@ bool verify_remove_all() {
         }
 
         Record = Probe();
-        original(legacy.object());
+        (ORIGINAL(legacy.object())->*original)();
         const Probe legacy_record = Record;
 
         Record = Probe();
@@ -296,8 +296,8 @@ bool verify_close() {
         }
 
         Record = Probe();
-        original(legacy.storage + runtime_oracle::CanarySize
-                 + variant.adjustment);
+        (ORIGINAL(legacy.storage + runtime_oracle::CanarySize
+                 + variant.adjustment)->*original)();
         const Probe legacy_record = Record;
 
         Record = Probe();
