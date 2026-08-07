@@ -1185,6 +1185,7 @@ if(BUILD_TESTING)
     # all, on every affected function at once, which reads as "nothing has
     # matched yet". 1,179 catalogued functions were in exactly that state.
     opensmacx_add_python_tool_test(class-layout-tests test_class_layouts.py)
+    opensmacx_add_python_tool_test(cast-classification-tests test_classify_casts.py)
 
     opensmacx_add_python_tool_test(idb-member-tests test_export_idb_members.py)
 
@@ -1663,6 +1664,14 @@ if(BUILD_TESTING)
     add_test(NAME verified-layouts-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_class_layouts.py"
+            --check
+    )
+    # Every `this`-relative cast in src/, resolved against the layout its
+    # class declares. The committed CSV is the measurement; this refuses a
+    # checkout where the code moved and the measurement did not.
+    add_test(NAME cast-classification-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/classify_casts.py"
             --check
     )
     # The derivation's own regression gate. It existed and nothing ran it, so a
