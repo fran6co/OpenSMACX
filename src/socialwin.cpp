@@ -189,3 +189,13 @@ void SocialWin::show(int a1) {
         reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->set_iface_mode();
     }
 }
+
+/*
+Original Offset: 004B26B0
+Status: Complete
+*/
+void SocialWin::hide() {
+    if (reinterpret_cast<Win *>(this)->is_visible()) {
+        sub_interface_.release_iface_mode();
+    }
+}

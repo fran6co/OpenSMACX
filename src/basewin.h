@@ -36,6 +36,8 @@
   */
 class DLLEXPORT BaseWin : GraphicWin {
  public:
+  void on_scrolled(int a1, int a2);
+  void UNK2(int a1, int a2, int a3, int a4);
   void show(int a1);
   BaseWin() { ; }
   ~BaseWin() { ; }

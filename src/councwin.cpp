@@ -214,3 +214,25 @@ void CouncWin::on_mouse_leave(int a1, int a2) {
         draw_leader(v);
     }
 }
+
+/*
+Original Offset: 00425D90
+Status: Complete
+*/
+void CouncWin::draw_all_leaders() {
+    for (int i = 1; i < 8; i++) {
+        draw_leader(i);
+    }
+}
+
+/*
+Original Offset: 00427130
+Status: Complete
+*/
+int CouncWin::show(int a1) {
+    int visible = reinterpret_cast<Win *>(this)->is_visible();
+    if (visible) {
+        return visible;
+    }
+    sub_interface_.set_iface_mode();
+}

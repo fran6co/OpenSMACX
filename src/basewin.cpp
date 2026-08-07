@@ -316,3 +316,24 @@ void BaseWin::show(int a1) {
         reinterpret_cast<SubInterface *>(self + 0xa14)->set_iface_mode();
     }
 }
+
+/*
+Original Offset: 0040B120
+Status: Complete
+*/
+void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
+    garrison_click(a1, a2, a3, a4);
+}
+
+/*
+Original Offset: 0041B4A0
+Status: Complete
+*/
+void BaseWin::on_scrolled(int a1, int a2) {
+    switch (a1) {
+        case 1:
+            *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x40b10) = a2;
+            draw_facilities(1);
+            break;
+    }
+}

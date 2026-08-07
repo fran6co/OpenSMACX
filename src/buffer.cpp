@@ -1176,3 +1176,11 @@ int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
                                                  int len) {
     return self->write_cent_l(text, rect, len);
 }
+
+/*
+Original Offset: 005DA680
+Status: Complete
+*/
+int Buffer::poly(Vert *a1, int a2, int a3) {
+    return polygon(this, a1, a2, a3);
+}

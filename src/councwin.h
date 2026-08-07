@@ -32,6 +32,8 @@
   */
 class DLLEXPORT CouncWin : GraphicWin {
  public:
+  int show(int a1);
+  void draw_all_leaders();
   void on_mouse_leave(int a1, int a2);
   CouncWin() { ; }
   ~CouncWin() { ; }

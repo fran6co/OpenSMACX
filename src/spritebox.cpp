@@ -136,3 +136,23 @@ void SpriteBox::on_dialog_focus(int a1) {
             *reinterpret_cast<int *>(
                 reinterpret_cast<char *>(this) - 0x8c) + 4))->slot062();
 }
+
+/*
+Original Offset: 00610420
+Status: Complete
+*/
+int SpriteBox::init(int a1) {
+    close();
+    return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
+        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(a1);
+}
+
+/*
+Original Offset: 006104B0
+Status: Complete
+*/
+int SpriteBox::init(Heap *a1) {
+    close();
+    return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
+        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(a1);
+}

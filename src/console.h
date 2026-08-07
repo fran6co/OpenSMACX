@@ -50,6 +50,7 @@
   */
 class DLLEXPORT Console {
  public:
+  void editor_polar();
   void on_sys_close();
   void menu_update();
   void editor_redo();

@@ -439,3 +439,23 @@ void Datalink::on_selected(int a1) {
         draw_entry();
     }
 }
+
+/*
+Original Offset: 0042BD40
+Status: Complete
+*/
+void Datalink::show(int a1) {
+    if (!reinterpret_cast<Win *>(this)->is_visible()) {
+        sub_interface_.set_iface_mode();
+    }
+}
+
+/*
+Original Offset: 0042BD60
+Status: Complete
+*/
+void Datalink::hide() {
+    if (reinterpret_cast<Win *>(this)->is_visible()) {
+        sub_interface_.release_iface_mode();
+    }
+}

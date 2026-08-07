@@ -440,3 +440,14 @@ void Console::menu_update() {
     int v = *reinterpret_cast<int *>(self + 0x23bdc);
     reinterpret_cast<MainMenu *>(self + 0x22a2c)->check(v);
 }
+
+/*
+Original Offset: 004E0F80
+Status: Complete
+*/
+void Console::editor_polar() {
+    auto_undo();
+    world_polar_caps();
+    world_climate();
+    draw_map(1);
+}

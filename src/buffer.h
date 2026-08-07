@@ -29,6 +29,7 @@ class Palette;
   */
 class DLLEXPORT Buffer {
  public:
+  int poly(Vert *a1, int a2, int a3);
   Buffer() { ; }
   ~Buffer() { ; }
 

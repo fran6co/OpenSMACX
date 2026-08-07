@@ -996,3 +996,25 @@ extern "C" __declspec(dllimport) int __stdcall GetSystemMetrics(int index);
 int Win::get_lbutton_state() {
     return GetSystemMetrics(0x17) ^ (GetAsyncKeyState(1) >> 15);
 }
+
+/*
+Original Offset: 005F8550
+Status: Complete
+*/
+void Win::on_mousewheel_down_horz(int a1) {
+    Scroll *scroll = *reinterpret_cast<Scroll **>(reinterpret_cast<char *>(this) + 0x440);
+    if (scroll) {
+        scroll->on_mousewheel_down(a1);
+    }
+}
+
+/*
+Original Offset: 005F8570
+Status: Complete
+*/
+void Win::on_mousewheel_up_vert(int a1) {
+    Scroll *scroll = *reinterpret_cast<Scroll **>(reinterpret_cast<char *>(this) + 0x43c);
+    if (scroll) {
+        scroll->on_mousewheel_up(a1);
+    }
+}
