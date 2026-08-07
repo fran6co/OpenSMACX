@@ -264,13 +264,25 @@ def width_of(type_: str, name: str, array: str, depth=0):
     nested = class_layouts._with_bases(bare)
     if nested is None:
         return None
-    total = 0
+    # A NESTED STRUCT IS LAID OUT, NOT SUMMED. Adding the raw member sizes
+    # gave `Heap` 17 bytes against its own `static_assert(sizeof(Heap) ==
+    # 0x14)`: `int8_t` then four 4-byte members is 1+4+4+4+4, and the real
+    # object pads the int8_t to 4 and ends on a multiple of its alignment.
+    #
+    # The offsets AFTER such a member survived by luck - 17 rounds up to 20
+    # under 4-byte alignment - which is why 1,113 name-encoded offsets all
+    # agreed while this was wrong. What did not survive was the member's own
+    # extent, and the image reading a dword at Heap+16 looked like an access
+    # STRADDLING the end of it.
+    total, alignment = 0, 1
     for member_type, member_name, member_array in nested:
         one = width_of(member_type, member_name, member_array, depth + 1)
         if one is None:
             return None
-        total += one
-    return total * count
+        member_alignment = alignment_of(member_type, member_array, depth + 1)
+        alignment = max(alignment, member_alignment)
+        total = align_to(total, member_alignment) + one
+    return align_to(total, alignment) * count
 
 
 def align_to(offset: int, alignment: int) -> int:
