@@ -24,6 +24,15 @@
 
 class Palette;
 
+// A polygon vertex, named by the image rather than invented: every one of the
+// 35 mangled names that mentions it spells `PAUVert@@`, and `U` is MSVC's tag
+// for a struct. It has to be `struct` for that reason and not as a style
+// choice - declaring `class Vert;` would mangle `Buffer::poly` as `PAVVert@@`
+// and match no symbol the target objects hold. Nothing defines it yet, so the
+// members are unknown; the declaration exists so headers that only pass a
+// `Vert *` through can compile.
+struct Vert;
+
  /*
   * Buffer class
   */
