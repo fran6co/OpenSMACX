@@ -428,8 +428,51 @@ def parse_coff(data: bytes):
     return sections, symbols
 
 
-def clip_jump_table(section: CoffSection, symbols: list, start: int,
-                    end: int) -> int:
+def index_table_span(section: CoffSection, data: bytes, entries: list,
+                     end: int):
+    """`entries[-1] + 4` when a byte-index table fills the rest, else None.
+
+    VC6 compresses a sparse switch into two tables: a dword table of label
+    addresses, which carries the DIR32 relocations, and a dense byte table of
+    indices into it, which carries none:
+
+        mov dl, byte ptr [eax + BYTES]
+        jmp dword ptr [edx*4 + DWORDS]
+
+    The byte table sits last and owns the COMDAT's final byte, so the
+    relocation run never reaches the end and the trailing-table test rejects
+    the whole thing - leaving BOTH tables inside the compared span. 24 bytes of
+    data then get compared against nothing on the original side, which reports
+    as a length mismatch on a function whose code is byte-identical.
+
+    The tail is verified, not assumed: every byte of an index table indexes the
+    dword table, so no byte may be >= the number of dword entries. That is a
+    strong test - ordinary code has bytes all over the range - and it is what
+    keeps this from inventing a boundary, which is exactly what the original
+    version declined to do.
+    """
+    dwords = entries[-1] + 4
+    if dwords >= end:
+        return None
+    if any(dwords <= va < end
+           for va, _symbol, _kind in section.relocations):
+        return None                      # a relocation here means it is code
+    base = section.raw_pointer
+    tail = data[base + dwords:base + end]
+    if not tail:
+        return None
+    # Trailing COMDAT padding is not part of the table and is not an index.
+    tail = tail.rstrip(b"\xcc").rstrip(b"\x90")
+    if not tail:
+        return None
+    count = len(entries)
+    if any(byte >= count for byte in tail):
+        return None
+    return dwords
+
+
+def clip_jump_table(section: CoffSection, symbols: list, data: bytes,
+                    start: int, end: int) -> int:
     """Where the code stops and MSVC's switch table begins.
 
     Measured: under `/Gy` VC6 puts the table in the SAME `.text` COMDAT,
@@ -458,9 +501,20 @@ def clip_jump_table(section: CoffSection, symbols: list, start: int,
         and start <= va < end)
     if not entries:
         return end
-    # The run has to reach the COMDAT's end, or it is not a trailing table.
+    # The run has to reach the COMDAT's end, or it is not a trailing table -
+    # EXCEPT when a dense byte-index table follows it, which is what VC6 emits
+    # for a sparse switch: `mov dl,[eax+BYTES]; jmp [edx*4+DWORDS]`. There the
+    # dword table carries the relocations and the byte table, which carries
+    # none, sits after it and owns the COMDAT's last byte.
+    #
+    # The tail is confirmed rather than assumed, and the test is exact: every
+    # byte of an index table must be a valid index INTO the dword table. Code
+    # bytes essentially never satisfy that, and the check costs one pass.
     if entries[-1] + 4 != end:
-        return end
+        tail = index_table_span(section, data, entries, end)
+        if tail is None:
+            return end
+        end = tail
     clip = entries[-1]
     for va in reversed(entries[:-1]):
         if va + 4 != clip:
@@ -508,7 +562,7 @@ def object_code(data: bytes, want_eh: bool = False):
     symbol, section = found[0]
 
     start, end = symbol.value, section.raw_size
-    end = clip_jump_table(section, symbols, start, end)
+    end = clip_jump_table(section, symbols, data, start, end)
     body = data[section.raw_pointer + start:section.raw_pointer + end]
     # VC6 pads COMDATs with 0x90; the original's catalogued span does not
     # include padding, so strip it. `int3` is stripped for the same reason.
