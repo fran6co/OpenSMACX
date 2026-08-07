@@ -471,3 +471,39 @@ What the header would be FOR is product code: a recovered body integrated into
 build reads. That means including it from the files that need it, or promoting
 those classes into headers of their own. Neither has been done, and until one
 is, integration keeps needing the offset-cast spelling.
+
+## The ratchet was an upper bound, and now it is measured
+
+A full census found THREE rows sitting at BYTE_EXACT for bodies that no longer
+compile. The floor is corrected from 702 / 11199 to 699 / 11014 - the only
+downward move it has made, and a measurement correction rather than a
+regression.
+
+  0x00401060  ?close@StringStruct@@QAEXXZ    153 B   NO_COMPILE
+  0x00402F10  ??__Eg_ALPHAMENU_WAVE@@YAXXZ    22 B   NO_COMPILE
+  0x00402F30  ??__Fg_ALPHAMENU_WAVE@@YAXXZ    10 B   NO_COMPILE
+
+NONE IS A BODY DEFECT. Each calls something the scaffolding cannot declare.
+`close_with_tables` is a hand-written helper on `StringStruct` that appears in
+no catalogued row, so the emitter has no way to know it exists;
+`g_ALPHAMENU_WAVE` is an uncatalogued global. The bodies may be perfectly
+right and there is no way to find out, because the verification unit will not
+build.
+
+WHY IT WENT UNNOTICED. `--collect` skips rows already at BYTE_EXACT, on
+purpose: re-verifying hundreds of finished rows is most of a run and the
+answer almost never changes. That is the correct default and this is its cost.
+A row that was green and then stopped compiling stays green until a FULL
+census runs, and a full census is the slow thing everyone avoids - it was
+aborted once today for exactly that reason.
+
+So the honest reading of the ratchet is: it is as true as the last full
+census, and no truer. 699 of 702 held up, which is 99.6% - the ledger was in
+good shape, and that was worth establishing rather than assuming in either
+direction.
+
+THE REAL REMEDY IS THE EMITTER, not the floor. A recovered body that calls an
+uncatalogued sibling method or reads an uncatalogued global is unverifiable
+by construction. Either the catalogue gains those names, or the emitter learns
+to declare what a body references, or bodies must be written using only
+catalogued names - and nothing enforces the last one today.

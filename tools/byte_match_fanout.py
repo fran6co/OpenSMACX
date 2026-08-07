@@ -317,8 +317,26 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # stubs and can rise much faster than the number of machine-carried bytes it
 # retires. The byte figure is the one that means anything, which is why both
 # are ratcheted and why the function count is never quoted alone.
-BASELINE_MATCHED_FUNCTIONS = 702
-BASELINE_MATCHED_BYTES = 11199
+# LOWERED, deliberately, from 702 / 11199 - the only downward move this file
+# has ever made, and it is a measurement correction rather than a regression.
+# A full census found three rows sitting at BYTE_EXACT for bodies that no
+# longer compile at all:
+#
+#   0x00401060  ?close@StringStruct@@QAEXXZ    153 B
+#   0x00402F10  ??__Eg_ALPHAMENU_WAVE@@YAXXZ    22 B
+#   0x00402F30  ??__Fg_ALPHAMENU_WAVE@@YAXXZ    10 B
+#
+# None is a body defect. Each calls something the scaffolding cannot declare -
+# `close_with_tables` is a hand-written helper on StringStruct that appears in
+# NO catalogued row, and `g_ALPHAMENU_WAVE` is an uncatalogued global - so the
+# verification unit cannot compile them however good the body is.
+#
+# They went green long ago and stayed green because nothing re-measured them:
+# `--collect` skips settled rows by design, since re-verifying finished work is
+# most of a run. That is the right default and it has this cost, so the number
+# above is only as true as the last full census.
+BASELINE_MATCHED_FUNCTIONS = 699
+BASELINE_MATCHED_BYTES = 11014
 
 
 def summarise(ledger: dict) -> tuple:
