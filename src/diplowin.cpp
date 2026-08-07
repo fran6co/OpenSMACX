@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "diplowin.h"
+#include "vtable_shim.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

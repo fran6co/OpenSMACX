@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "fx.h"
+#include "vtable_shim.h"
 
 func_thiscall_teardown EffectElementTeardown =
     original_method<func_thiscall_teardown>(0x004482C0);
