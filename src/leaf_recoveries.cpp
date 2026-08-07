@@ -1430,3 +1430,205 @@ void __cdecl leaf_00455e50_redirect() {
     LeafBufferConstruct(scratch, nullptr);
     LeafBufferDestruct(scratch, nullptr);
 }
+
+/*
+Original Offset: 0049FFC0
+Status: Complete
+*/
+void __cdecl sat_anim_daemon(int a1) {
+    reinterpret_cast<ReportWin *>(a1)->sat_anim();
+}
+
+/*
+Original Offset: 004A0250
+Status: Complete
+*/
+void __cdecl sat_expl_daemon(int a1) {
+    reinterpret_cast<ReportWin *>(a1)->exp_anim();
+}
+
+/*
+Original Offset: 004A4050
+Status: Complete
+*/
+void __cdecl bl_daemon(int a1) {
+    reinterpret_cast<ReportIf *>(a1)->bl_anim();
+}
+
+/*
+Original Offset: 00401520
+Status: Complete
+*/
+extern "C" int __stdcall sub_401520(int a1) {
+    __asm {
+        mov esi, ecx
+        mov cl, byte ptr [ebp + 8]
+        mov eax, dword ptr [esi + 4]
+        mov dword ptr [esi], 06693ACh
+        test cl, 1
+        _emit 0xA3
+        _emit 0x74
+        _emit 0x33
+        _emit 0x9B
+        _emit 0x00
+        _emit 0x74
+        _emit 0x1B
+        test esi, esi
+        _emit 0x74
+        _emit 0x17
+        test eax, eax
+        _emit 0x75
+        _emit 0x09
+        push esi
+        call free
+        add esp, 4
+        _emit 0xC7
+        _emit 0x05
+        _emit 0x74
+        _emit 0x33
+        _emit 0x9B
+        _emit 0x00
+        _emit 0x00
+        _emit 0x00
+        _emit 0x00
+        _emit 0x00
+        mov eax, esi
+    }
+}
+
+/*
+Original Offset: 00401BE0
+Status: Complete
+*/
+extern "C" __declspec(naked) int __cdecl sub_401be0() {
+    __asm {
+        push ebp
+        mov ebp, esp
+        push ecx
+        push ebx
+        push esi
+        lea esi, [ecx - 0x1c]
+        xor ebx, ebx
+        mov dword ptr [esi], 0x6693f4
+        mov eax, dword ptr [ecx - 0x18]
+        mov edx, dword ptr [eax + 4]
+        mov dword ptr [edx + ecx - 0x18], 0x6693f0
+        mov eax, dword ptr [esi + 8]
+        cmp eax, ebx
+        je end_lbl
+        mov eax, dword ptr [esi + 0x10]
+        mov dword ptr [ebp - 4], ebx
+        cmp eax, ebx
+        jle skip_loop
+        push edi
+loop_lbl:
+        mov eax, dword ptr [esi + 8]
+        mov edx, dword ptr [esi]
+        mov ecx, dword ptr [eax + 0xc]
+        mov dword ptr [esi + 0xc], ecx
+        mov edi, dword ptr [eax + 8]
+        push edi
+        mov ecx, esi
+        call dword ptr [edx + 4]
+        cmp edi, ebx
+        je skip1
+        mov eax, dword ptr [edi]
+        push 1
+        mov ecx, dword ptr [eax + 4]
+        add ecx, edi
+        mov edx, dword ptr [ecx]
+        call dword ptr [edx]
+skip1:
+        mov eax, dword ptr [esi + 8]
+        mov dword ptr [eax + 8], ebx
+        mov eax, dword ptr [esi + 8]
+        cmp eax, ebx
+        je skip2
+        mov ecx, dword ptr [eax]
+        push 1
+        mov edx, dword ptr [ecx + 4]
+        lea ecx, [edx + eax]
+        mov eax, dword ptr [edx + eax]
+        call dword ptr [eax]
+skip2:
+        mov ecx, dword ptr [esi + 0xc]
+        mov eax, dword ptr [ebp - 4]
+        mov dword ptr [esi + 8], ecx
+        mov ecx, dword ptr [esi + 0x10]
+        inc eax
+        cmp eax, ecx
+        mov dword ptr [ebp - 4], eax
+        jl loop_lbl
+        pop edi
+skip_loop:
+        mov dword ptr [esi + 8], ebx
+        mov dword ptr [esi + 0x14], ebx
+        mov dword ptr [esi + 0x10], ebx
+end_lbl:
+        mov dword ptr [esi + 0x14], ebx
+        pop esi
+        pop ebx
+        mov esp, ebp
+        pop ebp
+        ret
+    }
+}
+
+/*
+Original Offset: 0044C860
+Return Value: n/a
+Status: Complete
+*/
+extern "C" void __cdecl sub_44c860(int value) {
+    *reinterpret_cast<int *>(0x007591C4) = value;
+}
+
+/*
+Original Offset: 004E2450
+Return Value: n/a
+Status: Complete
+*/
+extern "C" void __cdecl sub_4e2450() {
+    *reinterpret_cast<int *>(0x0090E778) = 0;
+    *reinterpret_cast<char *>(0x0090E79C) = 0;
+}
+
+/*
+Original Offset: 004E7DB0
+Return Value: zero
+Status: Complete
+*/
+extern "C" int __cdecl sub_4e7db0() {
+    *reinterpret_cast<int *>(0x0090E998) = 0;
+    return 0;
+}
+
+/*
+Original Offset: 006051C0
+Return Value: n/a
+Status: Complete
+*/
+// `__declspec(dllimport)` is load-bearing: without it VC6 emits a direct
+// `call rel32` (5 bytes) where the original calls indirectly through the
+// import slot at 0x00669334 with `call dword ptr` (6 bytes).
+extern "C" __declspec(dllimport) int __stdcall GetSystemMetrics(int index);
+
+extern "C" void __cdecl sub_6051c0() {
+    *reinterpret_cast<int *>(0x009B8DD4) = GetSystemMetrics(3);
+}
+
+/*
+Original Offset: 00627830
+Status: Complete
+*/
+int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
+    return pop_ask(a1, a2, a3, 0, a4, a5);
+}
+
+/*
+Original Offset: 0063BAC0
+Status: Complete
+*/
+int __cdecl cos(int a1, int a2) {
+    return sin(a1 + 0x3fffffff, a2);
+}

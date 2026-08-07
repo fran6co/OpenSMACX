@@ -31,6 +31,22 @@ the agent, because each was measured and each has exactly one right answer:
    Only the third reproduces the original's encoding INCLUDING the address. The
    first cannot match at any tier.
 
+   BUT THE THIRD CANNOT DO READ-MODIFY-WRITE, and that is not a small corner.
+   The original writes `dec dword ptr [0x93F664]`; through the const-pointer
+   spelling VC6 emits load/dec/store on every flag set, for every source form
+   tried - `(*g)--`, `--(*g)`, `g[0]--`, `*g -= 1`, a named `int *p` local,
+   and volatile variants - including in an isolated one-line probe. The
+   second spelling emits the single in-place `dec`, and 0x00592DE0 is
+   BYTE_EXACT with it.
+
+   The reason the second was set aside - "needs a relocation" - is not
+   disqualifying, because the comparison MASKS relocation operands. It costs
+   the address bytes, which are exactly the bytes that are not compared. So
+   the rule is by ACCESS SHAPE, not one spelling for everything: a plain load
+   or store takes the const pointer, and a read-modify-write takes
+   `extern T name;`. The second is also the more readable of the two, since
+   it carries a name instead of an address.
+
 3. `__thiscall` IS A MEMBER FUNCTION, never a free function with a keyword. VC6
    rejects the keyword outright - `error C4234: '__thiscall' keyword reserved
    for future use` - and 1,708 of the 3,063 remaining functions are `__thiscall`,
