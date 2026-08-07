@@ -140,7 +140,7 @@ CASES = [
          shape="__cdecl; signed divide by 8, variable shift, two stores"),
     Case(address=0x00532A50,
          label="sub_532a50",
-         source="src/leaf_recoveries.cpp:752",
+         source="src/leaf_recoveries.cpp:778",
          perturb=("quotient + 1", "quotient - 1"),
          diagnostic=("""    const int rounded = remainder == 0 ? quotient : quotient + 1;
     *quotient_out = rounded;
@@ -154,7 +154,7 @@ CASES = [
          shape="__stdcall; variable idiv, remainder, conditional round up"),
     Case(address=0x00559210,
          label="sub_559210",
-         source="src/leaf_recoveries.cpp:165",
+         source="src/leaf_recoveries.cpp:181",
          perturb=("value / step * step", "value / step + step"),
          shape="__cdecl; variable idiv then multiply back"),
 ]
