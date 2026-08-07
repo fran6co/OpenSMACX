@@ -399,3 +399,19 @@ int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
                                       int y_coord, int faction_id) {
     return self->focus(x_coord, y_coord, faction_id);
 }
+
+/*
+Purpose: Record that the console was closed from the system menu, by raising
+         the flag the turn loop watches.
+Original Offset: 0051D7C0
+Return Value: n/a
+Status: Complete
+*/
+void Console::on_sys_close() {
+    // 0x009B2068 is `ExitTurnLoopAddress` in src/scenario.cpp. Bound here as
+    // a local so the body compiles both against the project's headers and
+    // against the verification scaffolding, which knows the address but not
+    // the project's name for it.
+    int *const exit_turn_loop = reinterpret_cast<int *>(0x009B2068);
+    *exit_turn_loop = 1;
+}
