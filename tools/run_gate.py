@@ -31,9 +31,15 @@ That target writes `docs/recovery/` in the source tree, which is exactly the
 kind of shared writable state the concurrency argument above depends on not
 existing. Promote first, serially, then gate.
 
-    tools/run_gate.py                     # both presets, concurrently
-    tools/run_gate.py --preset mingw-i686-debug     # one alone
+    tools/run_gate.py                     # both lanes, concurrently
+    tools/run_gate.py --build-type Debug  # one alone
     tools/run_gate.py --serial            # both, one after the other
+
+The lanes were CMake presets until VC6 became the only compiler and the preset
+file went with the other toolchains. They are build TYPES now, one build
+directory each, which is the same two lanes for the same reason: Debug is /Od
+and Release is /O2, and a body can be right under one and wrong under the
+other. A directory is configured on demand if it is not there yet.
 """
 
 import argparse
@@ -43,7 +49,7 @@ import sys
 import time
 
 
-PRESETS = ("mingw-i686-debug", "mingw-i686-release")
+BUILD_TYPES = ("Debug", "Release")
 TARGET = "verify-recovery-batch"
 # A gate lane runs for minutes; a fifth of a second of poll granularity is
 # below the noise and costs nothing.
@@ -60,18 +66,41 @@ INTERESTING = (
 
 
 class Lane:
-    def __init__(self, preset, target, log_directory, repository):
-        self.preset = preset
+    def __init__(self, build_type, target, log_directory, repository):
+        self.name = build_type
         self.target = target
-        self.log = Path(log_directory) / f"gate-{preset}.log"
-        self.command = ["cmake", "--build", "--preset", preset,
-                        "--target", target]
         self.repository = Path(repository)
+        self.directory = self.repository / "build" / f"vc6-{build_type.lower()}"
+        self.log = Path(log_directory) / f"gate-vc6-{build_type.lower()}.log"
+        self.command = ["cmake", "--build", str(self.directory),
+                        "--target", target]
         self.process = None
         self.handle = None
         self.started = 0.0
         self.elapsed = 0.0
         self.returncode = None
+
+    def configure(self):
+        """Configure this lane's build directory if it is not there yet.
+
+        There is one compiler and CMakeLists.txt names it, so a lane is a
+        build TYPE and a directory: no toolchain argument to get wrong and no
+        preset to forget. A directory that already has a cache is left alone,
+        so a warm tree pays nothing.
+
+        It is deliberately NOT reconfigured when it exists. CMAKE_CXX_FLAGS is
+        a cache variable, so reconfiguring cannot repair a directory that was
+        configured wrong - which is exactly how `/Zm1000` survived in a build
+        tree long after the fix for it had landed, failing all 137 objects
+        with C1060. A stale lane is deleted, not re-run.
+        """
+        if (self.directory / "CMakeCache.txt").is_file():
+            return
+        self.directory.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["cmake", "-S", str(self.repository), "-B", str(self.directory),
+             "-G", "Ninja", f"-DCMAKE_BUILD_TYPE={self.name}"],
+            cwd=self.repository, check=True)
 
     def start(self):
         self.log.parent.mkdir(parents=True, exist_ok=True)
@@ -116,7 +145,7 @@ class Lane:
 
 def report(lane):
     status = "PASSED" if lane.returncode == 0 else "FAILED"
-    print(f"\n=== {lane.preset}: {status} in {lane.elapsed:.2f} s "
+    print(f"\n=== {lane.name}: {status} in {lane.elapsed:.2f} s "
           f"({lane.log})")
     for line in lane.verdict_lines():
         print(f"    {line}")
@@ -209,24 +238,27 @@ def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--preset", action="append", default=[],
-                        help=f"repeatable; defaults to {' and '.join(PRESETS)}")
+    parser.add_argument("--build-type", action="append", default=[],
+                        help=f"repeatable; defaults to "
+                             f"{' and '.join(BUILD_TYPES)}")
     parser.add_argument("--target", default=TARGET)
     parser.add_argument("--serial", action="store_true",
-                        help="run the presets one after the other, for a "
-                             "machine that cannot afford two lanes")
+                        help="run the lanes one after the other, for a "
+                             "machine that cannot afford two")
     parser.add_argument("--repository", default=str(Path(__file__).resolve().parent.parent))
     parser.add_argument("--log-dir", default=None,
                         help="defaults to <repository>/build")
     arguments = parser.parse_args()
 
-    presets = arguments.preset or list(PRESETS)
+    build_types = arguments.build_type or list(BUILD_TYPES)
     repository = Path(arguments.repository).resolve()
     log_directory = Path(arguments.log_dir) if arguments.log_dir \
         else repository / "build"
 
-    lanes = [Lane(preset, arguments.target, log_directory, repository)
-             for preset in presets]
+    lanes = [Lane(build_type, arguments.target, log_directory, repository)
+             for build_type in build_types]
+    for lane in lanes:
+        lane.configure()
     before = tracked_manifest(repository)
     started = time.monotonic()
     if arguments.serial or len(lanes) == 1:
@@ -249,7 +281,7 @@ def main():
 
     wrote_metadata = report_tree_writes(before, tracked_manifest(repository))
 
-    failed = [lane.preset for lane in lanes if lane.returncode != 0]
+    failed = [lane.name for lane in lanes if lane.returncode != 0]
     mode = "serially" if (arguments.serial or len(lanes) == 1) else "concurrently"
     total = sum(lane.elapsed for lane in lanes)
     print(f"\n{len(lanes)} lane(s) {mode}: wall {wall:.2f} s, "
@@ -264,7 +296,7 @@ def main():
         # Named, not counted: "1 of 2 failed" sends the reader to the wrong log.
         print(f"GATE FAILED: {', '.join(failed)}")
         return 1
-    print(f"GATE PASSED: {', '.join(lane.preset for lane in lanes)}")
+    print(f"GATE PASSED: {', '.join(lane.name for lane in lanes)}")
     return 0
 
 
