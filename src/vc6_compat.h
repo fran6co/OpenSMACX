@@ -65,6 +65,14 @@ typedef unsigned short uint16_t;
 typedef signed short   int16_t;
 typedef unsigned char  uint8_t;
 typedef signed char    int8_t;
+/*
+ * VC6 predates `long long` - `error C2632: 'long' followed by 'long' is
+ * illegal` - and spells the 64-bit type `__int64`. These two were missing
+ * from the list above, which is why general.cpp:852 could cast to `int64_t`
+ * with nothing defining it.
+ */
+typedef          __int64 int64_t;
+typedef unsigned __int64 uint64_t;
 
 namespace std {
 using ::fflush;
@@ -153,6 +161,75 @@ inline int sprintf_s(char *destination, size_t, const char *format, ...) {
 }
 
 /*
+ * The rest of the `_s` family the tree reaches for, on the same terms as the
+ * four above: the bound is dropped, not honoured, because the binary being
+ * matched had no bounds checks either and these call sites were `strncpy`,
+ * `_itoa` and `memcpy` before the names existed.
+ *
+ * `strncpy_s` comes in both spellings the tree uses - with an explicit
+ * destination size and without, which on a real CRT is the template overload
+ * that deduces it from an array parameter. Neither forces a terminator, and
+ * that is deliberate: `strncpy_s(BonusName[i].key, text_item(), 24)` fills a
+ * 24-byte field exactly, and writing a NUL at [24] to look more like the
+ * modern CRT would run off the end of the very field it is copying into.
+ */
+inline int strncpy_s(char *destination, size_t, const char *source, size_t count) {
+  strncpy(destination, source, count);
+  return 0;
+}
+inline int strncpy_s(char *destination, const char *source, size_t count) {
+  strncpy(destination, source, count);
+  return 0;
+}
+inline int _itoa_s(int value, char *destination, size_t, int radix) {
+  _itoa(value, destination, radix);
+  return 0;
+}
+inline int memcpy_s(void *destination, size_t, const void *source, size_t count) {
+  memcpy(destination, source, count);
+  return 0;
+}
+inline int fopen_s(FILE **stream, const char *name, const char *mode) {
+  *stream = fopen(name, mode);
+  return *stream ? 0 : -1;
+}
+inline int fprintf_s(FILE *stream, const char *format, ...) {
+  va_list arguments;
+  va_start(arguments, format);
+  int written = vfprintf(stream, format, arguments);
+  va_end(arguments);
+  return written;
+}
+
+/*
+ * `_snprintf_s(buffer, size, _TRUNCATE, ...)` IS THE ONE WHERE THE RETURN
+ * VALUE IS LOAD-BEARING. runtime_oracle.cpp:179 relies on a truncated write
+ * reporting -1 so an overflowing report is caught instead of silently
+ * standing as a short one - the comment there says so. VC6's `_vsnprintf`
+ * has exactly that contract, returning -1 rather than the length it wanted,
+ * so the check keeps working; it also leaves the buffer unterminated on
+ * truncation, which is fine because that path is taken as a failure.
+ */
+#define _TRUNCATE ((size_t)-1)
+inline int _snprintf_s(char *destination, size_t size, size_t, const char *format, ...) {
+  va_list arguments;
+  va_start(arguments, format);
+  int written = _vsnprintf(destination, size, format, arguments);
+  va_end(arguments);
+  return written;
+}
+
+/*
+ * The VC6 SDK returns failure from SetFilePointer as -1 without naming it;
+ * the name arrived with a later SDK. Spelt `unsigned long` rather than
+ * `DWORD` because this header is included before <windows.h> and DWORD does
+ * not exist yet - it is the same type on Win32.
+ */
+#ifndef INVALID_SET_FILE_POINTER
+#define INVALID_SET_FILE_POINTER ((unsigned long)-1)
+#endif
+
+/*
  * `typedef char x[cond ? 1 : -1]` - a negative array bound is an error, so a
  * false condition fails the compile. __LINE__ keeps two assertions in one
  * scope from colliding.
@@ -163,6 +240,30 @@ inline int sprintf_s(char *destination, size_t, const char *format, ...) {
   typedef char OPENSMACX_ASSERT_JOIN(vc6_static_assert_, __LINE__)[(condition) ? 1 : -1]
 
 #define constexpr const
+
+/*
+ * `override` and `final` are C++11 spellings of things the compiler already
+ * checks or does not need to. Erasing them changes no layout and no code:
+ * `override` only asks to be told when a signature stops matching a virtual,
+ * and `final` only forbids further derivation. Both keep their meaning on
+ * every other compiler, which is where the checking still happens.
+ */
+#define override
+#define final
+
+/*
+ * `alignas` IS ERASED, NOT TRANSLATED, and that is a real reduction rather
+ * than a rename. VC6 has no `alignas` and no `__declspec(align(n))` either -
+ * the latter is `error C2485: 'align' : unrecognized extended attribute`, so
+ * there is nothing to forward to. Every use in this tree over-provisions a
+ * `static uint8_t[]` staging buffer to 16 bytes for objects whose widest
+ * member is a 4-byte int or pointer, so the alignment the compiler gives a
+ * static array is already sufficient and dropping the request costs nothing
+ * that is used. It is still a downgrade, and if a staged object ever gains a
+ * member that genuinely needs 8- or 16-byte alignment, this is where it
+ * breaks - silently, because a misaligned x86 access faults nowhere.
+ */
+#define alignas(n)
 
 /*
  * 5. `for (int i = ...)` LEAKS `i` INTO THE ENCLOSING SCOPE - see
