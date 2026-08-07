@@ -557,8 +557,13 @@ DLLEXPORT BOOL __cdecl is_alien_faction(uint32_t faction_id);
 DLLEXPORT BOOL __cdecl is_human(uint32_t faction_id);
 DLLEXPORT BOOL __cdecl is_alive(uint32_t faction_id);
 DLLEXPORT void __cdecl psych_check(int faction_id, int *drones, int *talents);
-DLLEXPORT uint32_t __cdecl has_treaty(uint32_t faction_id, uint32_t faction_id_with, 
-                                      uint32_t treaties);
+// `int`, not `uint32_t`, and the catalogue is the authority: the original
+// exports `?has_treaty@@YAHHHH@Z`, where each `H` is an int. The `uint32_t`
+// spelling here decorated to `@@YAIII@Z` and stopped matching the export,
+// while the definition in faction.cpp:113 kept the catalogued `int` form - so
+// the two were separate overloads and every call was `C2666: 2 overloads have
+// similar conversions`, 33 of them. AGENTS.md:85 states the rule.
+DLLEXPORT int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty);
 DLLEXPORT LPSTR __cdecl get_adjective(int faction_id);
 DLLEXPORT LPSTR __cdecl get_noun(int faction_id);
 DLLEXPORT BOOL __cdecl auto_contact();

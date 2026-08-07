@@ -328,6 +328,14 @@ void stage_virtual_tables(uint8_t *subobject, uint32_t primary_vtable,
         win - win_own_offset;
 }
 
+// A member's entry address, guarded the way the original guards it. A plain
+// function rather than the lambda this was: VC6 has no lambdas, and the
+// capture was one value. Integer arithmetic, so the unreachable null branch
+// stays exactly the original's `0 + adjust`.
+void *guarded_member(uintptr_t guard, uintptr_t member, uintptr_t adjust) {
+    return reinterpret_cast<void *>((guard ? guard + member : 0) + adjust);
+}
+
 }  // namespace
 
 /*
@@ -367,17 +375,14 @@ uint32_t Dialogs::destroy() {
     // the unreachable null branch stays exactly the original's `0 + adjust`.
     const uintptr_t guard =
         base != nullptr ? reinterpret_cast<uintptr_t>(base) : 0;
-    const auto guarded = [guard](uintptr_t member, uintptr_t adjust) {
-        return reinterpret_cast<void *>((guard ? guard + member : 0) + adjust);
-    };
-    (ORIGINAL(guarded(0xF8, 0x8C))->*DialogsEditGroupDestructor)();
-    (ORIGINAL(guarded(0x70, 0x8C))->*DialogsSpriteBoxDestructor)();
-    (ORIGINAL(guarded(0x58, 0x1C))->*DialogsCheckBoxDestructor)();
+    (ORIGINAL(guarded_member(guard, 0xF8, 0x8C))->*DialogsEditGroupDestructor)();
+    (ORIGINAL(guarded_member(guard, 0x70, 0x8C))->*DialogsSpriteBoxDestructor)();
+    (ORIGINAL(guarded_member(guard, 0x58, 0x1C))->*DialogsCheckBoxDestructor)();
 
     // The embedded RadioButton at base+0x44: its vbtable names the SHARED
     // virtual bases, so this staging overwrites the step-one tables, and its
     // recovered close walks them through the same vbtable.
-    uint8_t *const radio = static_cast<uint8_t *>(guarded(0x44, 0));
+    uint8_t *const radio = static_cast<uint8_t *>(guarded_member(guard, 0x44, 0));
     stage_virtual_tables(radio, DialogsRadioPrimaryVtable,
                          DialogsRadioBufferVtable, DialogsRadioWinVtable,
                          0x18, 0xA30);

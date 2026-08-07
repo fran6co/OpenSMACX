@@ -41,7 +41,7 @@ Original Offset: 004C6600
 Return Value: n/a
 Status: Complete
 */
-void Sound::fade(uint32_t a1) {
+void Sound::fade(unsigned long a1) {
     // The object's own vtable is read at run time rather than declaring these
     // virtual, so the dispatch cannot disagree with the original's layout.
     uint8_t *const vtable = *reinterpret_cast<uint8_t **>(this);

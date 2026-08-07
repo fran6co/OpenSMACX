@@ -194,7 +194,7 @@ bool verify_close() {
     OriginalNoArg original = original_method<OriginalNoArg>(0x00605370U);
 
     ScrollCloseTraceBase = legacy.object();
-    ScrollCloseButtons = ScrollCloseButtonTrace{};
+    ScrollCloseButtons = ScrollCloseButtonTrace();
     runtime_oracle::begin_trace(
         legacy.object(), ScrollCloseTraceOffsets,
         ARRAYSIZE(ScrollCloseTraceOffsets));
@@ -203,7 +203,7 @@ bool verify_close() {
     const ScrollCloseButtonTrace legacy_buttons = ScrollCloseButtons;
 
     ScrollCloseTraceBase = source.object();
-    ScrollCloseButtons = ScrollCloseButtonTrace{};
+    ScrollCloseButtons = ScrollCloseButtonTrace();
     runtime_oracle::begin_trace(
         source.object(), ScrollCloseTraceOffsets,
         ARRAYSIZE(ScrollCloseTraceOffsets));
