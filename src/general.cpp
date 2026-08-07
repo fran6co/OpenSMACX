@@ -799,13 +799,14 @@ Original Offset: 00628A50
 Return Value: n/a
 Status: Complete
 */
+/*
+Original Offset: 00628A50
+Return Value: n/a
+Status: Complete
+*/
 void __cdecl swap(int *var1, int *var2) {
-    if (var1 == var2) {
-        return;
-    }
-    int temp = *var1 ^ *var2;
-    *var1 = temp;
-    *var2 ^= temp;
+    *var1 ^= *var2;
+    *var2 ^= *var1;
     *var1 ^= *var2;
 }
 
@@ -816,13 +817,14 @@ Original Offset: 00628A80
 Return Value: n/a
 Status: Complete
 */
+/*
+Original Offset: 00628A80
+Return Value: n/a
+Status: Complete
+*/
 void __cdecl swap(uint8_t *var1, uint8_t *var2) {
-    if (var1 == var2) {
-        return;
-    }
-    uint8_t temp = *var1 ^ *var2;
-    *var1 = temp;
-    *var2 ^= temp;
+    *var1 ^= *var2;
+    *var2 ^= *var1;
     *var1 ^= *var2;
 }
 

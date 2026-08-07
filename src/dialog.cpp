@@ -83,22 +83,24 @@ Original Offset: 00609AF0
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
+/*
+Purpose: Find an item ID's bounded position in the dialog string list.
+Original Offset: 00609AF0
+Return Value: Matching position, or the configured entry count on a miss
+Status: Complete
+*/
 int Dialog::id_to_pos(int id) {
     if (entry_head_) {
-        int traversed = 0;
         int count = entry_count_;
         entry_position_ = 0;
         current_entry_ = entry_head_;
-        if (count > 0) {
-            do {
-                DialogEntry *entry = current_entry_;
-                if (entry->id == id) {
-                    break;
-                }
-                entry_position_++;
-                traversed++;
-                current_entry_ = entry->next;
-            } while (traversed < count);
+        for (int traversed = 0; traversed < count; traversed++) {
+            DialogEntry *entry = current_entry_;
+            if (entry->id == id) {
+                break;
+            }
+            entry_position_++;
+            current_entry_ = entry->next;
         }
     }
     return entry_position_;

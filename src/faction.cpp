@@ -388,11 +388,18 @@ Original Offset: 0053A1C0
 Return Value: Goodwill (friction reduction amount)
 Status: Complete
 */
+/*
+Original Offset: 0053A1C0
+Return Value: Goodwill (friction reduction amount)
+Status: Complete
+*/
 int __cdecl energy_value(int loan_principal) {
-    uint32_t goodwill = 0;
-    uint32_t divisor = 2;
-    for (int weight = 10, energy = loan_principal / 5; energy > 0; energy -= weight, weight = 20) {
-        goodwill += ((weight >= 0) ? ((energy > weight) ? weight : energy) : 0) / divisor++;
+    int goodwill = 0;
+    int divisor = 2;
+    for (int weight = 10, energy = loan_principal / 5; energy > 0;
+         energy -= weight, weight = 20) {
+        goodwill += ((weight >= 0) ? ((energy > weight) ? weight : energy) : 0)
+                    / divisor++;
     }
     return (goodwill + 4) / 5;
 }

@@ -157,10 +157,21 @@ Original Offset: 00634650
 Return Value: the dot product, in ST(0)
 Status: Complete
 */
+/*
+Original Offset: 00634650
+Return Value: the dot product, in ST(0)
+Status: Complete
+*/
 float __fastcall leaf_00634650_redirect(void *self, void *,
                                         const float *other) {
     const float *mine = static_cast<const float *>(self);
-    return other[2] * mine[2] + other[1] * mine[1] + other[0] * mine[0];
+    // Binding the `other` components to locals is what pins VC6's fld/fmul
+    // scheduling to the original's; reading them live through the pointer
+    // swaps which operand is loaded first. Same lever as sub_6281b0.
+    const float ox = other[2];
+    const float oy = other[1];
+    const float oz = other[0];
+    return ox * mine[2] + oy * mine[1] + oz * mine[0];
 }
 
 /*

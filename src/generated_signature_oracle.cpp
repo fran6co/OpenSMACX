@@ -939,7 +939,7 @@ static bool verify_passover_callback_004456a0() {
 }
 
 // ?load_deswin_sprites@@YAXXZ  (35 B)
-// recovered in src/leaf_recoveries.cpp:1347
+// recovered in src/leaf_recoveries.cpp:1358
 static bool verify_load_deswin_sprites_00455e50() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x00455E50U);
@@ -16318,7 +16318,7 @@ static bool verify_BaseButton_set_00607c80() {
 }
 
 // ?set_selected_id@Dialog@@QAEXH@Z  (115 B)
-// recovered in src/dialog.cpp:108
+// recovered in src/dialog.cpp:110
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_set_selected_id_006099d0() {
     typedef void (OriginalObject::*Callable)(int);
@@ -16454,7 +16454,7 @@ static bool verify_Dialog_set_selected_id_006099d0() {
 }
 
 // ?get_selected_id@Dialog@@QAEHXZ  (150 B)
-// recovered in src/dialog.cpp:118
+// recovered in src/dialog.cpp:120
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_get_selected_id_00609a50() {
     typedef int (OriginalObject::*Callable)();
@@ -16734,7 +16734,7 @@ static bool verify_Dialog_id_to_pos_00609af0() {
 }
 
 // ?pos_to_id@Dialog@@QAEHH@Z  (154 B)
-// recovered in src/dialog.cpp:153
+// recovered in src/dialog.cpp:155
 // staged receiver: Dialog, 0xF4 B, zero-filled, size pinned
 static bool verify_Dialog_pos_to_id_00609b50() {
     typedef int (OriginalObject::*Callable)(int);

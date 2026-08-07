@@ -749,16 +749,33 @@ Original Offset: 005871D0
 Return Value: n/a
 Status: Complete
 */
-void __cdecl noun_item(int *gender, BOOL *plurality) {
-    LPSTR noun = text_item();
+/*
+Purpose: Set the noun's gender and plurality from the current Txt item.
+Original Offset: 005871D0
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl noun_item(int *gender, int *plurality) {
+    char *noun = text_item();
     *gender = 0; // defaults to male ('m' || 'M')
     *plurality = false; // defaults to singular ('1')
-    if (noun[0] == 'f' || noun[0] == 'F') {
+    // Four independent `if`s, not a chain: the original re-loads and re-tests
+    // the character for each, and the 'M' arm redundantly re-stores the
+    // default. `noun++` between the two plurality tests is load-bearing.
+    if (noun[0] == 'M' || noun[0] == 'm') {
+        *gender = 0;
+    }
+    if (noun[0] == 'F' || noun[0] == 'f') {
         *gender = 1;
-    } else if (noun[0] == 'n' || noun[0] == 'N') {
+    }
+    if (noun[0] == 'N' || noun[0] == 'n') {
         *gender = 2;
     }
-    if (noun[1] == '2') {
+    noun++;
+    if (noun[0] == '1') {
+        *plurality = false;
+    }
+    if (noun[0] == '2') {
         *plurality = true;
     }
 }
