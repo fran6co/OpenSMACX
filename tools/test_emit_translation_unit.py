@@ -517,3 +517,56 @@ class ClassKeyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProvedSubobjectTests(unittest.TestCase):
+    """An EMBEDDED sub-object becomes a declared member, so bodies stop casting.
+
+    The whole point is readability at zero cost to the proof:
+
+        ((SubInterface *)((char *)this + 0xA14))->release_iface_mode();
+        sub_interface_.release_iface_mode();
+
+    both compile to `lea ecx,[esi+0xa14]; call ...`, and all five bodies in
+    the BaseWin/CouncWin/Datalink/SocialWin family verify BYTE_EXACT either
+    way. The casts in recovered code were never a style problem - they were
+    the emitter's missing declarations showing up in source form.
+    """
+
+    def setUp(self):
+        import emit_hypothesis_layouts as layouts
+        self.layouts = layouts
+        self.members = layouts.proved_members
+        self.subobjects = layouts.proved_subobjects
+
+    def tearDown(self):
+        self.layouts.proved_members = self.members
+        self.layouts.proved_subobjects = self.subobjects
+
+    def declare(self, members, subobjects):
+        self.layouts.proved_members = lambda: members
+        self.layouts.proved_subobjects = lambda: subobjects
+        return tool.proved_member_declaration("C")
+
+    def test_a_sub_object_is_declared_at_its_offset(self):
+        self.assertEqual(
+            ["    uint8_t pad_0_[0xA14];", "    SubInterface sub_interface_;"],
+            self.declare({}, {"C": {0xA14: ("sub_interface_", "SubInterface")}}))
+
+    def test_it_is_placed_after_the_known_members(self):
+        self.assertEqual(
+            ["    uint8_t pad_0_[0x8];",
+             "    uint32_t field_8_;",
+             "    uint8_t pad_c_[0x8];",
+             "    SubInterface sub_interface_;"],
+            self.declare({"C": {8: ("field_8_", 4)}},
+                         {"C": {0x14: ("sub_interface_", "SubInterface")}}))
+
+    def test_only_the_lowest_sub_object_is_placed(self):
+        """A second would have to sit a known distance past the first, and the
+        first's size is exactly what a sub-object observation does not know."""
+        lines = self.declare({}, {"C": {0x10: ("a_", "A"), 0x40: ("b_", "B")}})
+        self.assertEqual(["    uint8_t pad_0_[0x10];", "    A a_;"], lines)
+
+    def test_a_class_with_neither_gets_no_layout(self):
+        self.assertEqual([], self.declare({}, {}))

@@ -559,8 +559,9 @@ def proved_member_declaration(name: str) -> list:
     downstream as a verified one.
     """
     import emit_hypothesis_layouts as layouts
-    proved = layouts.proved_members().get(name)
-    if not proved:
+    proved = layouts.proved_members().get(name) or {}
+    subobjects = layouts.proved_subobjects().get(name) or {}
+    if not proved and not subobjects:
         return []
     lines, cursor = [], 0
     for offset in sorted(proved):
@@ -572,6 +573,24 @@ def proved_member_declaration(name: str) -> list:
         lines.append(f"    uint32_t {member};" if size == 4
                      else f"    uint8_t {member};")
         cursor = offset + size
+    # An embedded sub-object goes LAST and closes the class. Its size is the
+    # one thing not known - that is what makes it a sub-object observation
+    # rather than a member - so nothing may be declared after it without
+    # inventing an offset. Only the lowest one can be placed, for the same
+    # reason: a second would have to sit a known distance past the first.
+    #
+    # This is what takes the reinterpret_cast out. The body writes
+    # `sub_interface_.release_iface_mode()` instead of
+    # `((SubInterface *)((char *)this + 0xA14))->release_iface_mode()`, and
+    # both compile to `lea ecx,[esi+0xa14]; call ...` - the byte comparison
+    # cannot tell them apart, which is exactly why the readable one is free.
+    for offset in sorted(subobjects)[:1]:
+        member, type_name = subobjects[offset]
+        if offset < cursor:
+            continue
+        if offset > cursor:
+            lines.append(f"    uint8_t pad_{cursor:x}_[0x{offset - cursor:X}];")
+        lines.append(f"    {type_name} {member};")
     return lines
 
 
