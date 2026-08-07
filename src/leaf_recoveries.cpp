@@ -353,11 +353,27 @@ Original Offset: 006347C0
 Return Value: n/a
 Status: Complete
 */
+/*
+Original Offset: 006347C0
+Return Value: n/a
+Status: Complete
+*/
 void __fastcall leaf_006347c0_redirect(void *self, void *, const float *other) {
-    float *const mine = static_cast<float *>(self);
-    for (int index = 0; index < 9; ++index) {
-        mine[index] = other[index] + mine[index];
-    }
+    // A NESTED 3x3 pointer walk, not a flat indexed 9: the original has two
+    // independent countdown counters, each with their own dec/jne. Still one
+    // callee-saved register short of the original's three, which is the
+    // register-allocation class, but every other mnemonic lines up.
+    float *dst = static_cast<float *>(self);
+    const float *src = other;
+    int rows = 3;
+    do {
+        int cols = 3;
+        do {
+            *dst = *src + *dst;
+            ++dst;
+            ++src;
+        } while (--cols);
+    } while (--rows);
 }
 
 /*
@@ -394,10 +410,22 @@ Original Offset: 006348C0
 Return Value: n/a
 Status: Complete
 */
+/*
+Original Offset: 006348C0
+Return Value: n/a
+Status: Complete
+*/
 void __fastcall leaf_006348c0_redirect(void *self, void *, float scale) {
+    // A NESTED 3x3, not a flat 9. The original has two independent countdown
+    // counters each with their own dec/jne, so it was written as rows and
+    // columns; matching that shape takes the rebuild from 26 of 39 bytes to
+    // 36 of 39 with every mnemonic in order. What remains is one push/pop
+    // pair - the register-allocation class.
     float *const mine = static_cast<float *>(self);
-    for (int index = 0; index < 9; ++index) {
-        mine[index] = scale * mine[index];
+    for (int row = 0; row < 3; ++row) {
+        for (int col = 0; col < 3; ++col) {
+            mine[row * 3 + col] = scale * mine[row * 3 + col];
+        }
     }
 }
 
