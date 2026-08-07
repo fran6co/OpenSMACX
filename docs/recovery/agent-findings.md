@@ -471,3 +471,48 @@ What the header would be FOR is product code: a recovered body integrated into
 build reads. That means including it from the files that need it, or promoting
 those classes into headers of their own. Neither has been done, and until one
 is, integration keeps needing the offset-cast spelling.
+
+## Making GraphicWin's inheritance public fixes seven C2248 and costs a proof
+
+Measured, reverted, and recorded so it is not retried.
+
+`class GraphicWin : Win` and `class BaseButton : GraphicWin` are both PRIVATE
+inheritance. `Win` befriends `BaseButton` and `Scroll` so their colour setters
+can test `win_parent_`, and `GraphicWin` befriends them too - but VC6 will not
+route a friendship through a privately inherited base, so reaching
+`win_parent_` from a grandchild is `C2248: cannot access private member
+declared in class 'Win'`. Seven of those across basebutton.cpp and scroll.cpp.
+
+It is a defect in that compiler and not a real access violation: gcc accepts
+the identical hierarchy at both -std=c++98 and -std=c++17, and this reproduces
+it in 23 lines.
+
+    class Win        { friend class BaseButton; private: Win *win_parent_; };
+    class GraphicWin : Win        { friend class BaseButton; };
+    class BaseButton : GraphicWin { public: int probe(); };
+    int BaseButton::probe() { return win_parent_ != 0; }
+
+Changing the middle level to `public Win` compiles both files clean -
+scroll.cpp goes fully clean and basebutton.cpp drops to one unrelated error.
+
+DO NOT DO IT. The byte-match ratchet falls 702 -> 701 functions and
+11199 -> 11083 bytes.
+
+The trap is that the change looks free. Inheritance access is a compile-time
+notion, and building the same hierarchy both ways at `/O2 /Gy /GR-` gives
+objects identical but for the source filename recorded inside them - same
+size, same layout, same vtable, same decorated names. That test is what
+convinced me it was safe, and it was too narrow: accessibility is an input to
+OVERLOAD RESOLUTION. Making the derived-to-base conversion accessible lets
+`BaseButton*` and `Scroll*` bind to overloads taking `Win*` that they
+previously could not, and at some call site the compiler then picks a
+different function. An isolated class hierarchy cannot show that; only
+recompiling the bodies can.
+
+So a synthetic object-level diff is not sufficient evidence that a header
+change is byte-neutral. `byte_match_fanout.py --check` is.
+
+Note also that a failed `--check` REWRITES docs/recovery/byte-match.csv as a
+side effect, so reverting the source is not enough to restore the floor -
+`git checkout docs/recovery/byte-match.csv` too, or the next run compares
+against the lowered census.
