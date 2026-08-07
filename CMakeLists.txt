@@ -1,8 +1,170 @@
 cmake_minimum_required(VERSION 3.20)
 
+# ---------------------------------------------------------------------------
+# The toolchain. There is exactly one: cl 12.00.8168, the compiler that built
+# the original image.
+#
+# This is a matching decompilation, so VC6 is not one option among several -
+# it is the only compiler whose output carries information. Anything else can
+# tell you the code is valid; only this one can tell you it is RIGHT. It is
+# set here rather than in a toolchain file behind a preset because with one
+# compiler there is no choice to express, and a preset that must always be
+# passed is a way to get the build wrong by forgetting it. `cmake -B build`
+# is the whole invocation.
+#
+# It is legal this early because nothing here needs a probe. The compiler id
+# is FORCED, which skips both the identification and the ABI try_compile -
+# CMake identifies a compiler by building a probe and reading strings out of
+# the object, and its MSVC probe assumes a native toolchain, so letting it try
+# means it falls back to GNU rules and passes flags VC6 has never heard of.
+#
+# It runs under wine through tools/vc6_cl.py, which exists because CMake
+# drives a compiler with POSIX paths and MSVC reads a leading `/` as the start
+# of an option.
+# ---------------------------------------------------------------------------
+set(CMAKE_SYSTEM_NAME Windows)
+set(CMAKE_SYSTEM_PROCESSOR x86)
+set(CMAKE_SYSTEM_VERSION 4.0)
+
+if(NOT DEFINED VC6_ROOT)
+    if(DEFINED ENV{VC6_ROOT})
+        set(VC6_ROOT "$ENV{VC6_ROOT}")
+    else()
+        set(VC6_ROOT "$ENV{HOME}/opt/vc6")
+    endif()
+endif()
+
+set(_vc6_tools "${CMAKE_CURRENT_LIST_DIR}/tools")
+set(CMAKE_CXX_COMPILER "${_vc6_tools}/vc6-cl" CACHE FILEPATH "VC6 C++ compiler under wine")
+set(CMAKE_C_COMPILER   "${_vc6_tools}/vc6-cl" CACHE FILEPATH "VC6 C compiler under wine")
+set(CMAKE_LINKER       "${_vc6_tools}/vc6-link" CACHE FILEPATH "VC6 linker under wine")
+set(CMAKE_AR           "${_vc6_tools}/vc6-lib" CACHE FILEPATH "VC6 librarian under wine")
+
+set(CMAKE_CXX_COMPILER_ID MSVC)
+set(CMAKE_C_COMPILER_ID MSVC)
+set(CMAKE_CXX_COMPILER_VERSION 12.00.8168)
+set(CMAKE_C_COMPILER_VERSION 12.00.8168)
+set(CMAKE_CXX_SIMULATE_ID "")
+set(CMAKE_CXX_COMPILER_FRONTEND_VARIANT MSVC)
+set(CMAKE_C_COMPILER_FRONTEND_VARIANT MSVC)
+set(CMAKE_CXX_COMPILER_FORCED TRUE)
+set(CMAKE_C_COMPILER_FORCED TRUE)
+
+# Forcing the compiler id also skips CMake's ABI probe, which is what
+# normally discovers these. VC6 is 32-bit x86 and nothing else, so they are
+# constants rather than something to detect.
+set(CMAKE_SIZEOF_VOID_P 4)
+set(CMAKE_CXX_SIZEOF_DATA_PTR 4)
+set(CMAKE_C_SIZEOF_DATA_PTR 4)
+
+# VC6 predates every /std: switch and has no notion of a language standard.
+# The tree is C++98 by necessity and src/vc6_compat.h supplies the C++11
+# SPELLINGS it uses - static_assert, constexpr, override, final - as macros.
+# So there is no standard to request and nothing that could honour it, which
+# is why no target here asks for one.
+set(CMAKE_CXX_STANDARD_DEFAULT "")
+set(CMAKE_CXX98_STANDARD_COMPILE_OPTION "")
+set(CMAKE_CXX98_EXTENSION_COMPILE_OPTION "")
+
+# `/Z7`, NOT `/Zi`. VC6 writes debug info to a single `vc60.pdb` per output
+# directory and takes no lock on it, so a parallel build fails with
+# `C1033: cannot open program database` on whichever objects lose the race -
+# 16 of 19 on the first run here. `/Z7` puts the debug info in the object
+# file, where there is no shared state and no race. CMake's MSVC defaults
+# assume a compiler that can share a PDB; this one cannot.
+set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /Ob0 /Od /GZ" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_DEBUG "/Z7 /Ob0 /Od /GZ" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)
+
+# `/Zm200`, NOT the `/Zm1000` CMake picks for us.
+#
+# Windows-MSVC.cmake appends `/Zm1000` unconditionally when MSVC_VERSION is
+# below 1310, and on a real 1999 Windows box that is generous and harmless.
+# Under wine it is neither. `/Zm` does not cap the heap, it RESERVES it up
+# front, and the reservation has to find room in a 32-bit address space that
+# already has the precompiled header mapped at a fixed base. At 1000 the
+# reservation fails and the compiler reports the failure as
+# `fatal error C1060: compiler is out of heap space` - so asking for ten times
+# the memory is precisely what makes it run out.
+#
+# Measured on src/ambience.cpp, twice at each setting: /Zm1000 fails, /Zm400,
+# /Zm200, /Zm100 and no /Zm at all all succeed. Measured again on the four
+# largest units - dllmain.cpp at 10,657 lines, veh, map, init_thunks - where
+# 100 through 600 behave identically, so nothing here is short of heap at 200.
+# It is 2x the default for headroom and far below where the reservation
+# breaks.
+#
+# THIS FLAG WAS THE WHOLE OF "C1060 ON AT LEAST ONE TRANSLATION UNIT". It was
+# not one unit and it was not the source: 137 of 138 objects died on it. And
+# because CMAKE_CXX_FLAGS is a CACHE variable, a build directory configured
+# before this override landed keeps `/Zm1000` forever - reconfiguring never
+# rewrites it. If every object fails with C1060, DELETE the build directory
+# rather than reconfiguring it.
+#
+# It has to be undone through the make-rules override rather than here: this
+# block is read BEFORE Windows-MSVC.cmake, which appends its `/Zm1000` to
+# whatever was left behind, so a substitution at this point has nothing to
+# substitute. The override file is included afterwards and still before
+# `CMAKE_CXX_FLAGS` reaches the cache, which is the one window where the flag
+# exists and is still editable.
+set(CMAKE_USER_MAKE_RULES_OVERRIDE
+    "${CMAKE_CURRENT_LIST_DIR}/cmake/vc6-flag-overrides.cmake")
+
+set(CMAKE_FIND_ROOT_PATH "${VC6_ROOT}")
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+
 project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX)
 
 include(CTest)
+
+# ---------------------------------------------------------------------------
+# GNU tools that are NOT the compiler.
+#
+# The DLL is built by VC6 and nothing else. Two things in this tree still want
+# GNU binaries, and neither is a second compiler for the product:
+#
+#   * `nm` and `objdump` INSPECT objects. They read VC6's output natively -
+#     `objdump -h` on a cl 12.00.8168 object reports `file format pe-i386` -
+#     so the ABI checks that used to sit behind `if(MINGW)` work unchanged.
+#     They were never gated on the compiler because they needed it; they were
+#     gated on it because it happened to be what supplied them.
+#
+#   * a GNU C++ driver assembles `legacy-leaves.S` (`-x assembler-with-cpp`)
+#     and compiles the static-recompilation pilot. Those are local
+#     verification subsystems whose output is never committed and never linked
+#     into OpenSMACX.dll, per docs/STATIC_RECOMPILATION.md. VC6 cannot build
+#     them and does not need to.
+#
+# Each is found separately so a host with binutils but no cross-compiler still
+# gets the ABI gates, which is the pairing that matters. Absence is REPORTED,
+# never silent - a gate that quietly stops existing is the failure mode
+# tools/verify_checks_can_fail.py exists to prevent.
+# ---------------------------------------------------------------------------
+find_program(OPENSMACX_NM NAMES i686-w64-mingw32-nm x86_64-w64-mingw32-nm nm)
+find_program(OPENSMACX_OBJDUMP
+    NAMES i686-w64-mingw32-objdump x86_64-w64-mingw32-objdump objdump)
+find_program(OPENSMACX_GNU_CXX NAMES i686-w64-mingw32-g++)
+
+if(OPENSMACX_NM AND OPENSMACX_OBJDUMP)
+    set(OPENSMACX_HAVE_BINUTILS TRUE)
+else()
+    set(OPENSMACX_HAVE_BINUTILS FALSE)
+    message(STATUS
+        "binutils (nm/objdump) not found: the recovery-abi gates are SKIPPED. "
+        "They read VC6 objects and are what checks that no recovered body "
+        "carries exception unwind data the original does not have.")
+endif()
+
+if(NOT OPENSMACX_GNU_CXX)
+    message(STATUS
+        "i686-w64-mingw32-g++ not found: the legacy-island and "
+        "static-recompilation targets are SKIPPED. They are local "
+        "verification only and are never linked into OpenSMACX.dll.")
+endif()
 
 set(OPENSMACX_GAME_INSTALLER "" CACHE FILEPATH "Path to the locally owned GOG installer")
 set(OPENSMACX_GAME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/game" CACHE PATH
@@ -129,23 +291,6 @@ else()
     endif()
 endif()
 
-# VC6 predates every language standard, and CMake keeps no feature record for
-# it, so `target_compile_features(... cxx_std_11)` is a hard CONFIGURE error
-# under the vc6 toolchain rather than a no-op. This tree has to compile with
-# the compiler that built the image, so it is C++98 by necessity and the
-# requirement only means anything on a modern MSVC - where it still earns its
-# place, because that is the build a contributor is most likely to use.
-#
-# The body calls target_compile_features, NOT itself. It was written as a
-# self-call in a3cba48, and that survived review because VC6 reports 12.00:
-# the guard is false, the recursion never runs, and the VC6 lane configures
-# exactly as intended. Every other compiler reports 13 or above and died on
-# "Maximum recursion depth of 1000 exceeded" before one object was built.
-function(opensmacx_require_cxx11 target)
-    if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
-        target_compile_features(${target} PRIVATE cxx_std_11)
-    endif()
-endfunction()
 
 if(NOT WIN32)
     message(FATAL_ERROR
@@ -301,7 +446,6 @@ set(OPENSMACX_SOURCES
 
 add_library(OpenSMACX SHARED ${OPENSMACX_SOURCES})
 
-opensmacx_require_cxx11(OpenSMACX)
 target_compile_definitions(OpenSMACX PRIVATE
     BUILD_DLL
     $<$<CONFIG:Debug>:BUILD_DEBUG>
@@ -330,121 +474,94 @@ set_target_properties(OpenSMACX PROPERTIES
     CXX_STANDARD_REQUIRED YES
 )
 
-if(MINGW)
-    target_sources(OpenSMACX PRIVATE src/OpenSMACX.def)
-    target_compile_options(OpenSMACX PRIVATE
-        -pedantic
-        -Wall
-        -Wextra
-        -Wshadow
-        -Wcast-align
-        -Wfloat-conversion
-        -Wuseless-cast
-        -Wno-comment
-        -Wno-parentheses
-        -Wno-unknown-pragmas
-        -fkeep-inline-functions
-        # The canonical executable contains no C++ throw entry point and its
-        # operator new returns null rather than raising, so no recovered body
-        # may introduce an exception the original could not have produced.
-        -fno-exceptions
-        # -fno-exceptions ALONE DOES NOT REMOVE THE UNWIND TABLES, and on this
-        # toolchain it never did - it just was not visible before. i686-w64-
-        # mingw32 g++ 13 defaults to asynchronous unwind tables, so
-        # autosound.cpp.obj carried 1,081 .eh_frame sections - one per
-        # std::ctype instantiation reached through <sstream> and <string> in
-        # stdafx.h, plus a 0x6d4-byte .eh_frame of its own - and
-        # verify-recovery-abi failed exactly as it is designed to.
-        #
-        # The check is right and stays as it is. What was missing is the rest
-        # of the flag: an object with no exceptions and full unwind tables
-        # still carries the machinery the original does not have, and MSVC 6
-        # emitted none of it. Removing the tables is what makes the object
-        # match the claim; relaxing the check would only have stopped it being
-        # reported.
-        -fno-asynchronous-unwind-tables
-        -fno-unwind-tables
-        $<$<CONFIG:Debug>:-Og>
-        $<$<CONFIG:Release>:-O2>
-        $<$<CONFIG:Release>:-fno-delete-null-pointer-checks>
-        $<$<CONFIG:Release>:-fno-strict-aliasing>
-    )
-    target_link_options(OpenSMACX PRIVATE
-        $<$<CONFIG:Release>:-s>
-        -static
-    )
+# VC6 is the only compiler, so its warning level is unconditional rather than
+# a branch. The GNU warning set that used to sit here went with the toolchain.
+#
+# src/OpenSMACX.def is NOT linked. That file is generated by
+# tools/generate_mingw_exports.py and every line in it is an ALIAS bridging an
+# Itanium-mangled MinGW symbol to the MSVC name the patched image imports.
+# cl 12.00.8168 emits the MSVC name directly, so the aliases describe symbols
+# this build does not produce. tools/generate_vc6_exports.py is the VC6
+# counterpart and is written but not yet wired in here; until it is, exports
+# rest on __declspec(dllexport) alone and the export SET is not pinned.
+target_compile_options(OpenSMACX PRIVATE /W4)
 
-    set(OPENSMACX_ALPHANET_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/alphanet.cpp.obj")
-    set(OPENSMACX_AUTOSOUND_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/autosound.cpp.obj")
-    set(OPENSMACX_SCENARIO_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scenario.cpp.obj")
-    set(OPENSMACX_BUTTON_GROUP_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/buttongroup.cpp.obj")
-    set(OPENSMACX_BASEPOP_FONT_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basepop_font.cpp.obj")
-    set(OPENSMACX_BUFFER_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/buffer.cpp.obj")
-    set(OPENSMACX_BASE_BUTTON_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basebutton.cpp.obj")
-    set(OPENSMACX_BASE_BUTTON_ORACLE_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basebutton_oracle.cpp.obj")
-    set(OPENSMACX_DIALOG_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/dialog.cpp.obj")
-    set(OPENSMACX_CONSTRUCTOR_ORACLE_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/constructor_oracle.cpp.obj")
-    set(OPENSMACX_FONT_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/font_recovery.cpp.obj")
-    set(OPENSMACX_FILEMAP_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/filemap_recovery.cpp.obj")
-    set(OPENSMACX_FLAT_BUTTON_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/flatbutton.cpp.obj")
-    set(OPENSMACX_HEAP_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/heap.cpp.obj")
-    set(OPENSMACX_GRAPHICWIN_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/graphicwin.cpp.obj")
-    set(OPENSMACX_GRAPHICWIN_ORACLE_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/graphicwin_oracle.cpp.obj")
-    set(OPENSMACX_LOG_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/log.cpp.obj")
-    set(OPENSMACX_MENU_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/menu.cpp.obj")
-    set(OPENSMACX_PALETTE_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/palette.cpp.obj")
-    set(OPENSMACX_PULLDOWN_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/pulldown.cpp.obj")
-    set(OPENSMACX_RANDOM_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/random.cpp.obj")
-    set(OPENSMACX_SCROLL_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scroll.cpp.obj")
-    set(OPENSMACX_SCROLL_ORACLE_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scroll_oracle.cpp.obj")
-    set(OPENSMACX_RUNTIME_ORACLE_OBJECT_FILE
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/runtime_oracle.cpp.obj")
-    set(OPENSMACX_STRING_STRUCT_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
-    set(OPENSMACX_SPOT_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/spot_recovery.cpp.obj")
-    set(OPENSMACX_STRINGS_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/strings.cpp.obj")
-    set(OPENSMACX_TEXT_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/text_recovery.cpp.obj")
-    set(OPENSMACX_TEXT_INDEX_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/textindex_recovery.cpp.obj")
-    set(OPENSMACX_TIME_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/time_recovery.cpp.obj")
-    set(OPENSMACX_WIN_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/win.cpp.obj")
-    set(OPENSMACX_WIN_ORACLE_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/win_oracle.cpp.obj")
-    set(OPENSMACX_VECTOR_OBJECT
-        "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/vector.cpp.obj")
+set(OPENSMACX_ALPHANET_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/alphanet.cpp.obj")
+set(OPENSMACX_AUTOSOUND_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/autosound.cpp.obj")
+set(OPENSMACX_SCENARIO_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scenario.cpp.obj")
+set(OPENSMACX_BUTTON_GROUP_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/buttongroup.cpp.obj")
+set(OPENSMACX_BASEPOP_FONT_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basepop_font.cpp.obj")
+set(OPENSMACX_BUFFER_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/buffer.cpp.obj")
+set(OPENSMACX_BASE_BUTTON_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basebutton.cpp.obj")
+set(OPENSMACX_BASE_BUTTON_ORACLE_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/basebutton_oracle.cpp.obj")
+set(OPENSMACX_DIALOG_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/dialog.cpp.obj")
+set(OPENSMACX_CONSTRUCTOR_ORACLE_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/constructor_oracle.cpp.obj")
+set(OPENSMACX_FONT_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/font_recovery.cpp.obj")
+set(OPENSMACX_FILEMAP_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/filemap_recovery.cpp.obj")
+set(OPENSMACX_FLAT_BUTTON_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/flatbutton.cpp.obj")
+set(OPENSMACX_HEAP_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/heap.cpp.obj")
+set(OPENSMACX_GRAPHICWIN_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/graphicwin.cpp.obj")
+set(OPENSMACX_GRAPHICWIN_ORACLE_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/graphicwin_oracle.cpp.obj")
+set(OPENSMACX_LOG_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/log.cpp.obj")
+set(OPENSMACX_MENU_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/menu.cpp.obj")
+set(OPENSMACX_PALETTE_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/palette.cpp.obj")
+set(OPENSMACX_PULLDOWN_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/pulldown.cpp.obj")
+set(OPENSMACX_RANDOM_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/random.cpp.obj")
+set(OPENSMACX_SCROLL_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scroll.cpp.obj")
+set(OPENSMACX_SCROLL_ORACLE_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/scroll_oracle.cpp.obj")
+set(OPENSMACX_RUNTIME_ORACLE_OBJECT_FILE
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/runtime_oracle.cpp.obj")
+set(OPENSMACX_STRING_STRUCT_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/stringstruct.cpp.obj")
+set(OPENSMACX_SPOT_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/spot_recovery.cpp.obj")
+set(OPENSMACX_STRINGS_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/strings.cpp.obj")
+set(OPENSMACX_TEXT_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/text_recovery.cpp.obj")
+set(OPENSMACX_TEXT_INDEX_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/textindex_recovery.cpp.obj")
+set(OPENSMACX_TIME_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/time_recovery.cpp.obj")
+set(OPENSMACX_WIN_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/win.cpp.obj")
+set(OPENSMACX_WIN_ORACLE_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/win_oracle.cpp.obj")
+set(OPENSMACX_VECTOR_OBJECT
+    "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/vector.cpp.obj")
+
+# Gated on the INSPECTORS, not on a compiler: objdump reads a cl
+# 12.00.8168 object as pe-i386, so this check is compiler-agnostic and
+# only ever needed nm and objdump to exist.
+if(OPENSMACX_HAVE_BINUTILS)
     add_custom_target(verify-recovery-abi
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
-            --nm "${CMAKE_NM}"
-            --objdump "${CMAKE_OBJDUMP}"
+            --nm "${OPENSMACX_NM}"
+            --objdump "${OPENSMACX_OBJDUMP}"
             --object "${OPENSMACX_ALPHANET_OBJECT}"
             --generated-signature-oracle-object
                 "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenSMACX.dir/src/generated_signature_oracle.cpp.obj"
@@ -486,8 +603,6 @@ if(MINGW)
         USES_TERMINAL
         VERBATIM
     )
-elseif(MSVC)
-    target_compile_options(OpenSMACX PRIVATE /W4)
 endif()
 
 if(BUILD_TESTING)
@@ -698,7 +813,6 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_BINARY_DIR}/generated/leaf")
 
     foreach(_leaf_target recovery-leaf-tests)
-        opensmacx_require_cxx11(${_leaf_target})
         target_compile_options(${_leaf_target} PRIVATE -fno-exceptions)
         target_compile_definitions(${_leaf_target} PRIVATE
             BUILD_DLL OPENSMACX_SPOT_MINIMAL_INIT)
@@ -708,27 +822,6 @@ if(BUILD_TESTING)
             CXX_STANDARD_REQUIRED YES
         )
 
-        if(MINGW)
-            target_compile_options(${_leaf_target} PRIVATE
-                -pedantic
-                -Wall
-                -Wextra
-                -Wshadow
-                -Wcast-align
-                -Wfloat-conversion
-                -Wuseless-cast
-                -Wno-comment
-                -Wno-parentheses
-                -Wno-unknown-pragmas
-                $<$<CONFIG:Debug>:-Og>
-                $<$<CONFIG:Release>:-O2>
-            )
-            target_link_options(${_leaf_target} PRIVATE
-                -static
-                -Wl,--wrap=atexit
-                -Wl,--wrap=fclose
-                -Wl,--wrap=free)
-        endif()
     endforeach()
 
     if(CMAKE_CROSSCOMPILING)
@@ -818,7 +911,6 @@ if(BUILD_TESTING)
         src/win.cpp
         src/autosound.cpp
     )
-    opensmacx_require_cxx11(recovery-gameplay-tests)
     target_compile_options(recovery-gameplay-tests PRIVATE -fno-exceptions)
     target_compile_definitions(recovery-gameplay-tests PRIVATE BUILD_DLL)
     set_target_properties(recovery-gameplay-tests PROPERTIES
@@ -827,19 +919,6 @@ if(BUILD_TESTING)
         CXX_STANDARD_REQUIRED YES
     )
 
-    if(MINGW)
-        target_compile_options(recovery-gameplay-tests PRIVATE
-            -Wall
-            -Wextra
-            -Wno-comment
-            -Wno-parentheses
-            -Wno-unknown-pragmas
-            $<$<CONFIG:Debug>:-Og>
-            $<$<CONFIG:Release>:-O2>
-        )
-        target_link_options(recovery-gameplay-tests PRIVATE -static)
-        target_link_libraries(recovery-gameplay-tests PRIVATE gdi32 winmm)
-    endif()
 
     if(CMAKE_CROSSCOMPILING)
         set(OPENSMACX_GAMEPLAY_TEST_COMMAND
@@ -876,20 +955,11 @@ if(BUILD_TESTING)
     add_executable(globals-diff-tests
         tests/globals_diff_tests.cpp
     )
-    opensmacx_require_cxx11(globals-diff-tests)
     set_target_properties(globals-diff-tests PROPERTIES
         CXX_EXTENSIONS OFF
         CXX_STANDARD 11
         CXX_STANDARD_REQUIRED YES
     )
-    if(MINGW)
-        target_compile_options(globals-diff-tests PRIVATE
-            -pedantic -Wall -Wextra -Wshadow)
-        # Self-contained, as every other test executable here is: without it the
-        # binary wants libstdc++-6.dll and libgcc_s_dw2-1.dll from the Wine
-        # prefix and fails to load with c0000135.
-        target_link_options(globals-diff-tests PRIVATE -static)
-    endif()
     if(CMAKE_CROSSCOMPILING)
         set(OPENSMACX_GLOBALS_DIFF_TEST_COMMAND
             "${OPENSMACX_PYTHON_EXECUTABLE}"
@@ -915,18 +985,12 @@ if(BUILD_TESTING)
         tests/oracle_fault_guard_tests.cpp
         src/oracle_fault_guard.cpp
     )
-    opensmacx_require_cxx11(oracle-fault-guard-tests)
     target_include_directories(oracle-fault-guard-tests PRIVATE src)
     set_target_properties(oracle-fault-guard-tests PROPERTIES
         CXX_EXTENSIONS OFF
         CXX_STANDARD 11
         CXX_STANDARD_REQUIRED YES
     )
-    if(MINGW)
-        target_compile_options(oracle-fault-guard-tests PRIVATE
-            -pedantic -Wall -Wextra -Wno-attributes)
-        target_link_options(oracle-fault-guard-tests PRIVATE -static)
-    endif()
     if(CMAKE_CROSSCOMPILING)
         set(OPENSMACX_FAULT_GUARD_TEST_COMMAND
             "${OPENSMACX_PYTHON_EXECUTABLE}"
@@ -949,23 +1013,11 @@ if(BUILD_TESTING)
     add_executable(lifted-oracle-fold-tests
         tests/lifted_oracle_fold_tests.cpp
     )
-    opensmacx_require_cxx11(lifted-oracle-fold-tests)
     set_target_properties(lifted-oracle-fold-tests PROPERTIES
         CXX_EXTENSIONS OFF
         CXX_STANDARD 11
         CXX_STANDARD_REQUIRED YES
     )
-    if(MINGW)
-        target_compile_options(lifted-oracle-fold-tests PRIVATE
-            -pedantic
-            -Wall
-            -Wextra
-            -Wshadow
-            $<$<CONFIG:Debug>:-Og>
-            $<$<CONFIG:Release>:-O2>
-        )
-        target_link_options(lifted-oracle-fold-tests PRIVATE -static)
-    endif()
 
     if(CMAKE_CROSSCOMPILING)
         set(OPENSMACX_FOLD_TEST_COMMAND
@@ -986,12 +1038,13 @@ if(BUILD_TESTING)
             COMMAND lifted-oracle-fold-tests)
     endif()
 
-    if(MINGW)
+    # The inspectors, not the compiler - see OPENSMACX_HAVE_BINUTILS.
+    if(OPENSMACX_HAVE_BINUTILS)
         add_test(NAME recovery-abi
             COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_abi.py"
-                --nm "${CMAKE_NM}"
-                --objdump "${CMAKE_OBJDUMP}"
+                --nm "${OPENSMACX_NM}"
+                --objdump "${OPENSMACX_OBJDUMP}"
                 --object "${OPENSMACX_ALPHANET_OBJECT}"
                 # Sweep what the DLL actually built. The --*-object flags below
                 # are a hand-kept list of 35; the DLL compiles 137, so 102
@@ -2064,7 +2117,12 @@ add_custom_target(extract-legacy-leaves
         "${OPENSMACX_LEGACY_LEAF_SYMBOLS}"
 )
 
-if(MINGW)
+# These targets assemble legacy-leaves.S with `-x assembler-with-cpp` and
+# compile the static-recompilation pilot. Both need a GNU C++ driver, and
+# neither is ever committed or linked into OpenSMACX.dll
+# (docs/STATIC_RECOMPILATION.md). VC6 cannot build them and does not need
+# to, so they follow the GNU driver rather than the product compiler.
+if(OPENSMACX_GNU_CXX)
     get_filename_component(OPENSMACX_LEGACY_LEAF_OBJECT_DIR
         "${OPENSMACX_LEGACY_LEAF_OBJECT}" DIRECTORY)
     add_custom_command(
@@ -2189,7 +2247,6 @@ if(MINGW)
             src/basebutton.cpp
             "${OPENSMACX_RECOVERY_ORACLE_OBJECT}"
         )
-        opensmacx_require_cxx11(recovery-oracle-tests)
         target_compile_options(recovery-oracle-tests PRIVATE -fno-exceptions)
         target_compile_definitions(recovery-oracle-tests PRIVATE
             BUILD_DLL OPENSMACX_SPOT_MINIMAL_INIT)
@@ -2309,7 +2366,6 @@ if(MINGW)
             PROPERTIES GENERATED TRUE)
         add_library(static-recompile-pilot-generated OBJECT EXCLUDE_FROM_ALL
             "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}")
-        opensmacx_require_cxx11(static-recompile-pilot-generated)
         target_include_directories(static-recompile-pilot-generated PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/tools")
         target_compile_options(static-recompile-pilot-generated PRIVATE
@@ -2330,7 +2386,6 @@ if(MINGW)
         add_executable(static-recompile-pilot-standalone-tests EXCLUDE_FROM_ALL
             tests/static_recompile_pilot_tests.cpp
             $<TARGET_OBJECTS:static-recompile-pilot-generated>)
-        opensmacx_require_cxx11(static-recompile-pilot-standalone-tests)
         target_compile_definitions(static-recompile-pilot-standalone-tests PRIVATE
             OPENSMACX_STATIC_RECOMPILE_STANDALONE=1)
         target_include_directories(static-recompile-pilot-standalone-tests PRIVATE
@@ -2345,7 +2400,6 @@ if(MINGW)
             tests/static_recompile_pilot_tests.cpp
             "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
             $<TARGET_OBJECTS:static-recompile-pilot-generated>)
-        opensmacx_require_cxx11(static-recompile-pilot-tests)
         target_include_directories(static-recompile-pilot-tests PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/tools")
         target_compile_options(static-recompile-pilot-tests PRIVATE
@@ -2390,6 +2444,7 @@ if(MINGW)
             USES_TERMINAL
             VERBATIM
         )
+
     endif()
 endif()
 
@@ -2421,7 +2476,10 @@ if(OPENSMACX_GAME_INSTALLER)
     )
 endif()
 
-if(MINGW AND BUILD_TESTING)
+# Pure Python plus a file comparison - nothing toolchain-specific. It was
+# gated on MINGW only because that used to mean "the build that runs the
+# gate", and under VC6-only that gating would have deleted the check.
+if(BUILD_TESTING)
     add_custom_target(verify-redirect-signatures
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_generate_redirect_signatures.py"
@@ -2515,13 +2573,29 @@ if(MINGW AND BUILD_TESTING)
             PROPERTIES FIXTURES_REQUIRED build_fresh)
     endif()
 
+    # The two GNU-assembled entries are appended only when the driver that can
+    # build them was found. They are the differential-oracle track: a 32-
+    # function suite that runs a recovered body beside the original at its real
+    # address, which is behavioural evidence byte-matching does not give. It is
+    # worth keeping and it is not worth REQUIRING - its input lives under
+    # .opensmacx/, which .gitignore excludes, so a checkout without the
+    # user-owned executable never had it either. Listing them unconditionally
+    # made a missing cross-assembler a configure error in a build whose product
+    # does not use one: legacy-leaves.obj is not linked into OpenSMACX.dll.
+    set(OPENSMACX_GATE_ORACLE_DEPENDS)
+    if(OPENSMACX_GNU_CXX)
+        list(APPEND OPENSMACX_GATE_ORACLE_DEPENDS
+            verify-recovery-oracles
+            assemble-legacy-leaves)
+    endif()
+
     add_custom_target(verify-recovery-batch
         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
             --parallel "${OPENSMACX_CTEST_JOBS}"
         DEPENDS
             verify-recovery-metadata
             verify-recovery-abi
-            verify-recovery-oracles
+            ${OPENSMACX_GATE_ORACLE_DEPENDS}
             verify-redirect-signatures
             recovery-leaf-tests
             recovery-gameplay-tests
@@ -2534,7 +2608,6 @@ if(MINGW AND BUILD_TESTING)
             # one it never rebuilt. recovery-oracle-tests needs no line here -
             # verify-recovery-oracles already pulls it in order-only.
             oracle-fault-guard-tests
-            assemble-legacy-leaves
             smoke-hybrid-game
         USES_TERMINAL
         VERBATIM

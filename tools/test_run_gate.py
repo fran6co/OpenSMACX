@@ -11,6 +11,7 @@ gate.
 import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import run_gate
@@ -40,12 +41,22 @@ class FakeProcess:
 
 
 class RunGateTest(unittest.TestCase):
+    def setUp(self):
+        # These tests are about LANE SCHEDULING. Configuring a build directory
+        # is a separate concern with its own case below, and letting it run
+        # here would shell out to cmake from a unit test.
+        self._configure = run_gate.Lane.configure
+        run_gate.Lane.configure = lambda self: None
+
+    def tearDown(self):
+        run_gate.Lane.configure = self._configure
+
     def _run(self, argv, outcomes):
-        """outcomes: preset -> (returncode, log text). Returns (rc, stdout)."""
+        """outcomes: lane dir name -> (returncode, log text). Returns (rc, stdout)."""
         starts = []
 
         def fake_popen(command, cwd, stdout, stderr, **_ignored):
-            preset = command[command.index("--preset") + 1]
+            preset = Path(command[command.index("--build") + 1]).name
             starts.append(preset)
             returncode, output = outcomes[preset]
             return FakeProcess(returncode, output, stdout)
@@ -60,50 +71,50 @@ class RunGateTest(unittest.TestCase):
                 code = run_gate.main()
             return code, out.text, starts
 
-    def test_both_presets_pass(self):
+    def test_both_lanes_pass(self):
         code, text, starts = self._run([], {
-            "mingw-i686-debug": (0, "100% tests passed out of 59\n"),
-            "mingw-i686-release": (0, "100% tests passed out of 59\n"),
+            "vc6-debug": (0, "100% tests passed out of 59\n"),
+            "vc6-release": (0, "100% tests passed out of 59\n"),
         })
         self.assertEqual(0, code)
-        self.assertEqual(run_gate.PRESETS, tuple(starts))
+        self.assertEqual(("vc6-debug", "vc6-release"), tuple(starts))
         self.assertIn("GATE PASSED", text)
         # The verdict has to be visible without opening the logs.
         self.assertEqual(2, text.count("100% tests passed out of 59"))
 
     def test_one_failing_lane_fails_the_gate_and_is_named(self):
         code, text, _ = self._run([], {
-            "mingw-i686-debug": (0, "100% tests passed out of 59\n"),
-            "mingw-i686-release": (8, "The following tests FAILED:\n"
+            "vc6-debug": (0, "100% tests passed out of 59\n"),
+            "vc6-release": (8, "The following tests FAILED:\n"
                                       "\t3 - recovery-gameplay-tests\n"),
         })
         self.assertEqual(1, code)
-        self.assertIn("GATE FAILED: mingw-i686-release", text)
+        self.assertIn("GATE FAILED: Release", text)
         self.assertNotIn("GATE PASSED", text)
 
     def test_a_lane_that_produced_no_verdict_still_shows_its_tail(self):
         # A build failure never reaches CTest, so there is no "tests passed"
         # line to echo. Silence there would read as success.
         code, text, _ = self._run([], {
-            "mingw-i686-debug": (2, "ninja: build stopped: subcommand failed.\n"),
-            "mingw-i686-release": (0, "100% tests passed out of 59\n"),
+            "vc6-debug": (2, "ninja: build stopped: subcommand failed.\n"),
+            "vc6-release": (0, "100% tests passed out of 59\n"),
         })
         self.assertEqual(1, code)
         self.assertIn("ninja: build stopped", text)
 
-    def test_one_preset_alone(self):
-        code, text, starts = self._run(["--preset", "mingw-i686-debug"], {
-            "mingw-i686-debug": (0, "100% tests passed out of 59\n"),
+    def test_one_lane_alone(self):
+        code, text, starts = self._run(["--build-type", "Debug"], {
+            "vc6-debug": (0, "100% tests passed out of 59\n"),
         })
         self.assertEqual(0, code)
-        self.assertEqual(["mingw-i686-debug"], starts)
+        self.assertEqual(["vc6-debug"], starts)
         self.assertIn("1 lane(s) serially", text)
 
     def test_serial_mode_starts_the_second_lane_after_the_first(self):
         order = []
 
         def fake_popen(command, cwd, stdout, stderr, **_ignored):
-            preset = command[command.index("--preset") + 1]
+            preset = Path(command[command.index("--build") + 1]).name
             order.append(f"start {preset}")
             process = FakeProcess(0, "100% tests passed out of 59\n", stdout)
             wait = process.wait
@@ -123,15 +134,15 @@ class RunGateTest(unittest.TestCase):
                                       lambda _repository: {}), \
                     mock.patch("sys.stdout", new_callable=_Capture):
                 self.assertEqual(0, run_gate.main())
-        self.assertEqual(["start mingw-i686-debug", "wait mingw-i686-debug",
-                          "start mingw-i686-release", "wait mingw-i686-release"],
+        self.assertEqual(["start vc6-debug", "wait vc6-debug",
+                          "start vc6-release", "wait vc6-release"],
                          order)
 
     def test_concurrent_mode_starts_both_lanes_before_either_finishes(self):
         order = []
 
         def fake_popen(command, cwd, stdout, stderr, **_ignored):
-            preset = command[command.index("--preset") + 1]
+            preset = Path(command[command.index("--build") + 1]).name
             order.append(f"start {preset}")
             process = FakeProcess(0, "100% tests passed out of 59\n", stdout,
                                   polls=1)
@@ -153,8 +164,8 @@ class RunGateTest(unittest.TestCase):
                     mock.patch.object(run_gate.time, "sleep", lambda _: None), \
                     mock.patch("sys.stdout", new_callable=_Capture):
                 self.assertEqual(0, run_gate.main())
-        self.assertEqual(["start mingw-i686-debug", "start mingw-i686-release",
-                          "done mingw-i686-debug", "done mingw-i686-release"],
+        self.assertEqual(["start vc6-debug", "start vc6-release",
+                          "done vc6-debug", "done vc6-release"],
                          order)
 
     def test_a_lane_is_timed_when_it_ends_not_when_it_is_reaped(self):
@@ -164,8 +175,8 @@ class RunGateTest(unittest.TestCase):
         clock = [0.0]
 
         def fake_popen(command, cwd, stdout, stderr, **_ignored):
-            preset = command[command.index("--preset") + 1]
-            polls = 1 if preset == "mingw-i686-debug" else 5
+            preset = Path(command[command.index("--build") + 1]).name
+            polls = 1 if preset == "vc6-debug" else 5
             return FakeProcess(0, "100% tests passed out of 59\n", stdout,
                                polls=polls)
 
@@ -184,21 +195,21 @@ class RunGateTest(unittest.TestCase):
                                       lambda: clock[0]), \
                     mock.patch.object(run_gate, "report",
                                       lambda lane: (lanes.append(
-                                          (lane.preset, lane.elapsed)),
+                                          (lane.directory.name, lane.elapsed)),
                                           original_report(lane))[1]), \
                     mock.patch("sys.stdout", new_callable=_Capture):
                 self.assertEqual(0, run_gate.main())
         elapsed = dict(lanes)
-        self.assertLess(elapsed["mingw-i686-debug"],
-                        elapsed["mingw-i686-release"])
+        self.assertLess(elapsed["vc6-debug"],
+                        elapsed["vc6-release"])
 
     def test_the_default_target_does_not_promote_metadata(self):
         # promote-recovery-metadata writes docs/recovery/ in the SOURCE tree,
         # which is the one thing two concurrent lanes must not both do. The
         # gate target's outputs are all under the preset's binary dir.
-        lane = run_gate.Lane("mingw-i686-debug", run_gate.TARGET, ".", ".")
+        lane = run_gate.Lane("Debug", run_gate.TARGET, ".", ".")
         self.assertEqual(
-            ["cmake", "--build", "--preset", "mingw-i686-debug",
+            ["cmake", "--build", str(lane.directory),
              "--target", "verify-recovery-batch"], lane.command)
 
 
@@ -212,10 +223,6 @@ class _Capture:
 
     def flush(self):
         pass
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 class TreeWriteDetectionTests(unittest.TestCase):
@@ -252,3 +259,48 @@ class TreeWriteDetectionTests(unittest.TestCase):
         # Returning an empty manifest would compare nothing with nothing and
         # report a clean tree forever.
         self.assertEqual(run_gate.report_tree_writes(None, {"a": (1, 1)}), 0)
+
+
+class ConfigureTest(unittest.TestCase):
+    """A lane configures its own directory, and never re-configures one.
+
+    The re-configure case is the one that matters. CMAKE_CXX_FLAGS is a cache
+    variable, so a directory configured with the wrong flags cannot be
+    repaired by configuring it again - `/Zm1000` survived that way and failed
+    137 objects with C1060 long after the fix had landed. If this ever starts
+    reconfiguring, that failure becomes silent again.
+    """
+
+    def setUp(self):
+        self.work = Path(tempfile.mkdtemp())
+        self.calls = []
+        self.run = run_gate.subprocess.run
+        run_gate.subprocess.run = lambda *a, **k: self.calls.append(a[0])
+
+    def tearDown(self):
+        run_gate.subprocess.run = self.run
+
+    def test_it_configures_a_directory_that_does_not_exist(self):
+        lane = run_gate.Lane("Debug", run_gate.TARGET, self.work, self.work)
+        lane.configure()
+        self.assertEqual(len(self.calls), 1)
+        self.assertIn("-DCMAKE_BUILD_TYPE=Debug", self.calls[0])
+        self.assertIn(str(lane.directory), self.calls[0])
+
+    def test_it_leaves_an_existing_cache_alone(self):
+        lane = run_gate.Lane("Release", run_gate.TARGET, self.work, self.work)
+        lane.directory.mkdir(parents=True)
+        (lane.directory / "CMakeCache.txt").write_text("")
+        lane.configure()
+        self.assertEqual(self.calls, [],
+                         "a configured lane must not be reconfigured")
+
+    def test_the_two_lanes_use_separate_directories(self):
+        one = run_gate.Lane("Debug", run_gate.TARGET, self.work, self.work)
+        two = run_gate.Lane("Release", run_gate.TARGET, self.work, self.work)
+        self.assertNotEqual(one.directory, two.directory)
+        self.assertNotEqual(one.log, two.log)
+
+
+if __name__ == "__main__":
+    unittest.main()
