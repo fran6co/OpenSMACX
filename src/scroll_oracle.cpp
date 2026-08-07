@@ -191,7 +191,7 @@ bool verify_close() {
         legacy.storage, source.storage, ScrollCloseSpec, win_vtable);
     prepare_close_fixture(legacy, win_vtable, left_vtable, right_vtable);
     prepare_close_fixture(source, win_vtable, left_vtable, right_vtable);
-    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x00605370U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x00605370U);
 
     ScrollCloseTraceBase = legacy.object();
     ScrollCloseButtons = ScrollCloseButtonTrace{};
@@ -239,7 +239,7 @@ bool verify_close() {
 }
 
 bool verify_init_wrappers() {
-    OriginalRectInit original_rect = reinterpret_cast<OriginalRectInit>(0x00605840U);
+    OriginalRectInit original_rect = original_method<OriginalRectInit>(0x00605840U);
     const uint32_t sentinel = 0x2468ACE0U;
     const int saved_nonclient = *ScrollNonClientInit;
     bool passed = true;
@@ -284,7 +284,7 @@ bool verify_init_wrappers() {
         {0xFFFFFFFFU, nullptr},
     };
     for (size_t kind = 0; kind < ARRAYSIZE(addresses) && passed; ++kind) {
-        OriginalAxisInit original = reinterpret_cast<OriginalAxisInit>(addresses[kind]);
+        OriginalAxisInit original = original_method<OriginalAxisInit>(addresses[kind]);
         for (size_t test_index = 0;
              test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
             const InvalidAxisCase &test = cases[test_index];
@@ -351,7 +351,7 @@ bool verify_range() {
         {0x7FFFFFFFU, 0x80000000U},
     };
     const size_t snapshots[] = {0xA20, 0xA24, 0xA28, 0xA2C};
-    OriginalTwoArgs original = reinterpret_cast<OriginalTwoArgs>(0x006059B0U);
+    OriginalTwoArgs original = original_method<OriginalTwoArgs>(0x006059B0U);
     for (size_t test_index = 0;
          test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
         const uint32_t (&test)[2] = cases[test_index];
@@ -386,7 +386,7 @@ bool verify_styles() {
     };
     const uint32_t values[] = {0U, 0x80000000U, 0xFFFFFFFFU};
     for (size_t style = 0; style < ARRAYSIZE(addresses); ++style) {
-        OriginalOneArg original = reinterpret_cast<OriginalOneArg>(addresses[style]);
+        OriginalOneArg original = original_method<OriginalOneArg>(addresses[style]);
         for (size_t value_index = 0;
              value_index < sizeof(values) / sizeof(values[0]); ++value_index) {
             uint32_t value = values[value_index];
@@ -430,8 +430,8 @@ bool verify_styles() {
 bool verify_thumb_resetters() {
     const uint32_t colors[] = {0xFFFFFFFFU, 0U, 0x80000000U};
     const uint32_t thicknesses[] = {0U, 1U, 0x80000000U, 0xFFFFFFFFU};
-    OriginalOneArg original_bar = reinterpret_cast<OriginalOneArg>(0x00605B80U);
-    OriginalNoArg original_thumb = reinterpret_cast<OriginalNoArg>(0x00606EA0U);
+    OriginalOneArg original_bar = original_method<OriginalOneArg>(0x00605B80U);
+    OriginalNoArg original_thumb = original_method<OriginalNoArg>(0x00606EA0U);
     for (size_t color_index = 0;
          color_index < sizeof(colors) / sizeof(colors[0]); ++color_index) {
         uint32_t color = colors[color_index];
@@ -484,7 +484,7 @@ bool verify_vertical_sprites() {
         reinterpret_cast<Sprite *>(0x10101010U),
     };
     for (size_t direction = 0; direction < ARRAYSIZE(addresses); ++direction) {
-        OriginalSprites original = reinterpret_cast<OriginalSprites>(addresses[direction]);
+        OriginalSprites original = original_method<OriginalSprites>(addresses[direction]);
         for (size_t geometry_index = 0;
              geometry_index < sizeof(geometries) / sizeof(geometries[0]);
              ++geometry_index) {
@@ -539,7 +539,7 @@ bool verify_position() {
         {0x45454545U, 100U, 0U, 0U, 100U},
     };
     const size_t snapshots[] = {0xA20, 0xA24, 0xA28, 0xA2C};
-    OriginalOneArg original = reinterpret_cast<OriginalOneArg>(0x00605D20U);
+    OriginalOneArg original = original_method<OriginalOneArg>(0x00605D20U);
     ::Win *const saved_current = *ScrollCurrentWin;
     bool passed = true;
     for (size_t test_index = 0;

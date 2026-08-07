@@ -127,7 +127,7 @@ void destroy_virtual_base(void *object) {
     uint8_t *const subobject =
         static_cast<uint8_t *>(object) + vtable[1];
     uint32_t *const subobject_vtable = *reinterpret_cast<uint32_t **>(subobject);
-    (ORIGINAL(subobject)->*original_method<func_scalar_deleting_destructor>(reinterpret_cast<unsigned long>(subobject_vtable[0])))(1);
+    (ORIGINAL(subobject)->*original_method<func_scalar_deleting_destructor>(static_cast<unsigned long>(subobject_vtable[0])))(1);
 }
 
 void *payload_pointer(int payload) {
@@ -154,7 +154,7 @@ void StringStruct::remove_all() {
             current_ = entry->next;
             void *const payload = payload_pointer(entry->payload);
             uint32_t *const vtable = *reinterpret_cast<uint32_t **>(this);
-            (ORIGINAL(this)->*original_method<func_entry_visitor>(reinterpret_cast<unsigned long>(vtable[1])))(payload);
+            (ORIGINAL(this)->*original_method<func_entry_visitor>(static_cast<unsigned long>(vtable[1])))(payload);
             if (payload) {
                 destroy_virtual_base(payload);
             }

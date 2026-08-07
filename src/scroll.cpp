@@ -93,7 +93,7 @@ uint32_t call_noarg_virtual(void *self, size_t slot) {
     const uint32_t target_bits = read_volatile_bits(
         reinterpret_cast<const void *>(static_cast<uintptr_t>(vtable_bits)),
         slot);
-    return (ORIGINAL(self)->*original_method<func_noarg_virtual>(reinterpret_cast<unsigned long>(static_cast<uintptr_t>(target_bits))))();
+    return (ORIGINAL(self)->*original_method<func_noarg_virtual>(static_cast<unsigned long>(static_cast<uintptr_t>(target_bits))))();
 }
 
 void set_sprite_triplet(void *object, Sprite *volatile *primary,

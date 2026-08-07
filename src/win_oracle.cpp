@@ -89,7 +89,7 @@ bool verify_is_visible() {
         {3, {0x00000001U, 0x00000000U, 0x00000001U}},
         {3, {0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFEU}},
     };
-    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005F7E90U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005F7E90U);
     for (size_t test_index = 0;
          test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
         const ChainCase &test = cases[test_index];
@@ -212,7 +212,7 @@ bool verify_client_to_screen() {
          {{0, 100, 200, 10, 20}, {}, {}},
          7, 0xDEADBEEFU, 337, 337, true},
     };
-    OriginalCoordinates original = reinterpret_cast<OriginalCoordinates>(0x005ED240U);
+    OriginalCoordinates original = original_method<OriginalCoordinates>(0x005ED240U);
     for (size_t test_index = 0;
          test_index < sizeof(cases) / sizeof(cases[0]); ++test_index) {
         const CoordinateCase &test = cases[test_index];

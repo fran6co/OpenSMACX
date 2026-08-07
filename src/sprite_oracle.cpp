@@ -47,7 +47,7 @@ bool verify_construct() {
     const int32_t starting_totals[] = {
         0, 1, -1, 0x7FFFFFFF, static_cast<int32_t>(0x80000000U),
     };
-    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005E37E0U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005E37E0U);
     const int saved_total = *SpriteMemoryUsed;
     bool passed = true;
     for (size_t starting_total_index = 0;
@@ -113,7 +113,7 @@ bool verify_close() {
         {0, 0x11110000U, 0, 0, 0x80000000U},
         {0, 0, 0x80000000U, 0x80000000U, 1},
     };
-    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005E3820U);
+    OriginalNoArg original = original_method<OriginalNoArg>(0x005E3820U);
     const int saved_total = *SpriteMemoryUsed;
     func_sprite_free *const saved_free = SpriteFree;
     bool passed = true;
@@ -186,7 +186,7 @@ bool run_sprite_release_suite() {
     if (!suspend_redirect_at(SpriteCloseAddress)) {
         return false;
     }
-    OriginalClose original = reinterpret_cast<OriginalClose>(SpriteCloseAddress);
+    OriginalClose original = original_method<OriginalClose>(SpriteCloseAddress);
     const int saved_total = *SpriteMemoryUsed;
     bool passed = true;
 
