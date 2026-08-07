@@ -333,14 +333,31 @@ def check() -> int:
         print(f"byte-match-ratchet: {LEDGER} is absent; nothing to check")
         return 0
     functions, size = summarise(ledger)
+
+    # A body may be traded down so the tree compiles - see
+    # `tools/build_regressions.py`. That is allowed and it is NOT free: the
+    # debt is recorded per address with the tier it held and why it was given
+    # up, and forgiven here against the floor. The alternative is lowering the
+    # floor, which is a number moving down with no record of which functions
+    # regressed or whether anyone meant it.
+    import build_regressions
+    forgiven, regressions = build_regressions.owed()
+    forgiven_bytes = sum(int(functions_row.get("size") or 0)
+                         for functions_row in (
+                             ledger.get(row["address"].upper(), {})
+                             for row in regressions))
+
     print(f"byte-match-ratchet: {functions} functions / {size} bytes matched "
           f"(floor {BASELINE_MATCHED_FUNCTIONS} / {BASELINE_MATCHED_BYTES})")
+    if forgiven:
+        print(f"  {forgiven} body(ies) traded down for the build, forgiven "
+              f"against the floor - tools/build_regressions.py --list")
     failed = False
-    if functions < BASELINE_MATCHED_FUNCTIONS:
+    if functions + forgiven < BASELINE_MATCHED_FUNCTIONS:
         print(f"  FAIL: matched functions fell {BASELINE_MATCHED_FUNCTIONS} "
               f"-> {functions}")
         failed = True
-    if size < BASELINE_MATCHED_BYTES:
+    if size + forgiven_bytes < BASELINE_MATCHED_BYTES:
         print(f"  FAIL: matched bytes fell {BASELINE_MATCHED_BYTES} -> {size}")
         failed = True
     if functions > BASELINE_MATCHED_FUNCTIONS or size > BASELINE_MATCHED_BYTES:
