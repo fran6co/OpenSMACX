@@ -1132,6 +1132,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(vc6-wrapper-tests
                                    test_vc6_cl.py)
 
+    opensmacx_add_python_tool_test(integrate-recovery-tests
+                                   test_integrate_recovery.py)
+
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
 

@@ -44,3 +44,15 @@ void __fastcall string_box_add_redirect(StringBox *self, void *, char *text,
                                         int index, int flag) {
     self->add(text, index, flag);
 }
+
+/*
+Purpose: Record the scroll position and repaint through virtual slot 62.
+Original Offset: 00629D20
+Return Value: n/a
+Status: Complete
+*/
+void StringBox::on_scrolled(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+    *reinterpret_cast<int *>(self + 0xa1c) = a2;
+    reinterpret_cast<VCall *>(this)->slot062();
+}

@@ -551,3 +551,11 @@ void Popup::on_adjust_button_width() {
 void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *) {
     self->on_adjust_button_width();
 }
+
+/*
+Original Offset: 00404F90
+Status: Complete
+*/
+int Popup::on_nc_hittest(int a1, int a2) {
+    return reinterpret_cast<Win *>(this)->on_nc_hittest(a1, a2);
+}

@@ -31,3 +31,15 @@ void MultiDebug::close() {
 void __fastcall multi_debug_close_redirect(MultiDebug *self, void *) {
     self->close();
 }
+
+/*
+Purpose: Forward the timer tick to the object's own virtual slot 62.
+Original Offset: 005C9900
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl MultiDebug::timer_callback_daemon(int a2) {
+    if (this) {
+        reinterpret_cast<VCall *>(this)->slot062();
+    }
+}

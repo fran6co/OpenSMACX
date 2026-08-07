@@ -60,6 +60,25 @@ def stored_body(address: int) -> str:
     return writeback.read_matched_body(path)
 
 
+def with_doc_comment(address: int, body: str) -> str:
+    """The body, guaranteed to carry the doc comment the catalogue needs.
+
+    A body harvested out of `build/byte-match/<address>/unit.cpp` has NO doc
+    comment - the emitter's units never carried one; only hand-written
+    candidates do. But `source_locations` has to name a line inside one, and
+    `export_recovery_inventory` reads `Status: Complete` through it to set
+    `recovery_state`. So the required lines are synthesised here.
+
+    `Purpose:` is deliberately NOT synthesised. It is the one line that says
+    what the function is for, nobody can derive it from an address, and a
+    generated placeholder would read exactly like a real one.
+    """
+    if any(l.strip().startswith("Original Offset:") for l in body.splitlines()):
+        return body
+    return (f"/*\nOriginal Offset: {address:08X}\nStatus: Complete\n*/\n"
+            + body.lstrip("\n"))
+
+
 def catalogue_line(body: str) -> int:
     """Which line of the body `source_locations` should name.
 
@@ -108,7 +127,8 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
     if existing:
         raise Refused(f"0x{address:08X} already lives at {existing}")
 
-    text = body if body is not None else stored_body(address)
+    text = with_doc_comment(address, body if body is not None
+                            else stored_body(address))
     offset = catalogue_line(text)
 
     original = target.read_text()

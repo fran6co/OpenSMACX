@@ -144,3 +144,19 @@ void DesignWin::on_mouse_leave(int, int) {
 void __fastcall design_win_on_mouse_leave_redirect(DesignWin *self, void *, int a1, int a2) {
     self->on_mouse_leave(a1, a2);
 }
+
+/*
+Original Offset: 0043BE10
+Status: Complete
+*/
+void DesignWin::select_special_1() {
+    select_special(0);
+}
+
+/*
+Original Offset: 0043BE20
+Status: Complete
+*/
+void DesignWin::select_special_2() {
+    select_special(1);
+}

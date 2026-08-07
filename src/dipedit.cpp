@@ -43,3 +43,13 @@ void __fastcall dip_edit_on_left_click_redirect(DipEdit *self, void *, int a1, i
 void __fastcall dip_edit_on_redraw_redirect(DipEdit *self, void *) {
     self->on_redraw();
 }
+
+/*
+Original Offset: 004DA740
+Status: Complete
+*/
+void DipEdit::on_selected(int a1) {
+    read_check();
+    *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0xa20) = a1;
+    do_check();
+}

@@ -408,10 +408,35 @@ Return Value: n/a
 Status: Complete
 */
 void Console::on_sys_close() {
-    // 0x009B2068 is `ExitTurnLoopAddress` in src/scenario.cpp. Bound here as
-    // a local so the body compiles both against the project's headers and
-    // against the verification scaffolding, which knows the address but not
-    // the project's name for it.
-    int *const exit_turn_loop = reinterpret_cast<int *>(0x009B2068);
-    *exit_turn_loop = 1;
+    *g_009b2068 = 1;
+}
+
+/*
+Original Offset: 004E0FA0
+Status: Complete
+*/
+void Console::editor_climate() {
+    auto_undo();
+    if (!custom_planet(0, 0)) {
+        world_climate();
+        draw_map(1);
+    }
+}
+
+/*
+Original Offset: 004E1F30
+Status: Complete
+*/
+void Console::editor_redo() {
+    load_undo(-1);
+}
+
+/*
+Original Offset: 0051D740
+Status: Complete
+*/
+void Console::menu_update() {
+    char *self = reinterpret_cast<char *>(this);
+    int v = *reinterpret_cast<int *>(self + 0x23bdc);
+    reinterpret_cast<MainMenu *>(self + 0x22a2c)->check(v);
 }

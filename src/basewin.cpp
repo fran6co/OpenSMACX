@@ -305,3 +305,14 @@ void BaseWin::on_mouse_leave(int, int) {
 void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, int a2) {
     self->on_mouse_leave(a1, a2);
 }
+
+/*
+Original Offset: 0041E890
+Status: Complete
+*/
+void BaseWin::show(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    if (!reinterpret_cast<Win *>(self)->is_visible()) {
+        reinterpret_cast<SubInterface *>(self + 0xa14)->set_iface_mode();
+    }
+}
