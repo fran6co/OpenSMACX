@@ -1141,6 +1141,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(vtable-slot-tests
                                    test_vtable_slots.py)
 
+    opensmacx_add_python_tool_test(no-duplicate-bodies-tests
+                                   test_no_duplicate_bodies.py)
+
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
 
