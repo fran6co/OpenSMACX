@@ -183,7 +183,7 @@ void refresh_loaded_game() {
     *GameState &= 0xF79FCF16;
 
     void *object = reinterpret_cast<void *>(MainInterfaceAddress);
-    auto *vtable = *reinterpret_cast<uintptr_t **>(object);
+    uintptr_t *vtable = *reinterpret_cast<uintptr_t **>(object);
     InterfaceRefreshFunction refresh = reinterpret_cast<InterfaceRefreshFunction>(vtable[2]);
     refresh(object, nullptr);
     prefs_use();

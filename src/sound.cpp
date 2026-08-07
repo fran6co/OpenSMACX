@@ -17,7 +17,6 @@
  */
 #include "stdafx.h"
 #include "original_seam.h"
-#include <algorithm>
 #include "sound.h"
 #include "general.h"
 #include "wave.h"
@@ -527,7 +526,10 @@ Return Value: n/a
 Status: Complete
 */
 void Sound::set_pan(int a1) {
-    const int pan = std::min(std::max(a1, -0x40), 0x3F);
+    // Written out rather than with std::min/std::max: <windows.h> defines min
+    // and max as function-like macros, and VC6's STL spells the templates
+    // _cpp_min/_cpp_max, so neither name is usable here.
+    const int pan = a1 < -0x40 ? -0x40 : (a1 > 0x3F ? 0x3F : a1);
     pan_8_ = pan;
     if (device_) {
         typedef void (OriginalObject::*device_fn)(int pan);

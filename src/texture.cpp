@@ -29,8 +29,8 @@ Status: Complete
 */
 Texture::Texture() {
     pixels_ = nullptr;
-    field_4_ = 0;
-    field_8_ = 0;
+    iWidth_ = 0;
+    iHeight_ = 0;
     borrowed_ = 0;
 }
 
@@ -71,8 +71,8 @@ void Texture::close() {
         TextureFree(pixels_);
         pixels_ = nullptr;
     }
-    field_4_ = 0;
-    field_8_ = 0;
+    iWidth_ = 0;
+    iHeight_ = 0;
     borrowed_ = 0;
 }
 
@@ -125,7 +125,7 @@ Status: Complete
 */
 void TextureStore::construct() {
     field_0_ = 3;
-    field_4_ = 0;
+    iWidth_ = 0;
 }
 
 TextureStore *__fastcall texture_store_construct_redirect(TextureStore *self,

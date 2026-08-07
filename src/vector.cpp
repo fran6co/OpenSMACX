@@ -18,7 +18,11 @@ Purpose: Initialize a zero vector.
 Original Offset: 006343C0
 Status: Complete
 */
-Vector::Vector() : values_{} {
+Vector::Vector() {
+    volatile uint32_t *ordered = values_;
+    ordered[0] = 0;
+    ordered[1] = 0;
+    ordered[2] = 0;
 }
 
 /*

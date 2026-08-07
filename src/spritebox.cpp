@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "spritebox.h"
+#include "dialog.h"
 #include "vtable_shim.h"
 
 /*

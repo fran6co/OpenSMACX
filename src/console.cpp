@@ -21,8 +21,10 @@
 #include "game.h"
 #include "general.h"
 #include "infowin.h"
+#include "map.h"
 #include "mapwin.h"
 #include "statuswin.h"
+#include "temp.h"
 #include <cstring>
 
 func_pref_win_display ConsolePrefWinDisplay = original_method<func_pref_win_display>(0x0048FA00);
@@ -240,6 +242,9 @@ func_console_flush_input *ConsoleOriginalFlushInput =
     (func_console_flush_input *)0x005FD120;
 void *ConsoleGlobal = reinterpret_cast<void *>(0x009156B0);
 int32_t *ConsoleControlTurnActive = reinterpret_cast<int32_t *>(0x0093A938);
+int32_t *ConsoleExitTurnLoop = reinterpret_cast<int32_t *>(0x009B2068);
+func_main_menu_check ConsoleOriginalMainMenuCheck =
+    original_method<func_main_menu_check>(0x00460DD0);
 
 /*
 Purpose: Point the map windows at one tile on behalf of one faction. Build a
@@ -408,7 +413,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::on_sys_close() {
-    *g_009b2068 = 1;
+    *ConsoleExitTurnLoop = 1;
 }
 
 /*
@@ -438,7 +443,7 @@ Status: Complete
 void Console::menu_update() {
     char *self = reinterpret_cast<char *>(this);
     int v = *reinterpret_cast<int *>(self + 0x23bdc);
-    reinterpret_cast<MainMenu *>(self + 0x22a2c)->check(v);
+    (ORIGINAL(self + 0x22a2c)->*ConsoleOriginalMainMenuCheck)(v);
 }
 
 /*

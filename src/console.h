@@ -170,5 +170,16 @@ extern void *ConsoleGlobal;  // 0x009156B0, the process-wide Console
 // whether an untagged primary window still gets the cursor path.
 extern int32_t *ConsoleControlTurnActive;  // 0x0093A938
 
+// on_sys_close raises the flag the turn loop watches. The dword at 0x009B2068
+// is the same one src/scenario.cpp binds as `ExitTurnLoopAddress`.
+extern int32_t *ConsoleExitTurnLoop;  // 0x009B2068
+
+// menu_update hands the console's selected-vehicle id to the MainMenu the
+// original embeds at +0x22A2C. MainMenu::check (0x00460DD0, 4782 bytes) is
+// unrecovered and MainMenu has no header in src/, so this is a seam rather
+// than a declared type.
+typedef void (OriginalObject::*func_main_menu_check)(int veh_id);
+extern func_main_menu_check ConsoleOriginalMainMenuCheck;  // 0x00460DD0
+
 int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
                                       int y_coord, int faction_id);

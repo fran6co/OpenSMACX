@@ -32,7 +32,11 @@
   */
 class DLLEXPORT SetupWin : GraphicWin {
  public:
-  int do_menu(int8* a1, int a2, int a3);
+  int do_menu(char* a1, int a2, int a3);
+  // 0x004ADB70  ?do_menu_rightside@SetupWin@@QAEHPADH@Z - public, __thiscall,
+  // int(char*, int), unrecovered. Declared so do_menu, which reaches it with a
+  // direct `call rel32`, can name it.
+  int do_menu_rightside(char* a1, int a2);
   SetupWin() { ; }
   ~SetupWin() { ; }
   int UNK1(int a1);

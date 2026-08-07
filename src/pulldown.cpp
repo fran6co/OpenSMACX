@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+#include "temp.h"  // do_all_draws
 #include "pulldown.h"
 #include "vtable_shim.h"
 

@@ -33,6 +33,16 @@
 class DLLEXPORT InfoWin {
  public:
   void on_right_click(int a1, int a2);
+  // 0x004589C0  ?right_menu@InfoWin@@QAEXHH@Z - public, __thiscall,
+  // void(int, int). Still unrecovered, so this is a declaration without a
+  // definition and the DLL will not link until it is recovered. Declared
+  // rather than routed through an original_seam.h seam ON PURPOSE:
+  // on_right_click's whole 20-byte body is `push a2; push a1; call rel32`
+  // (byte-match.csv:3554 BYTE_EXACT 20/20), and a seam turns that direct
+  // call into `call dword ptr [global]`, which loses the match and takes the
+  // body out of the census - every one of the 753 seam-using bodies scores
+  // NO_COMPILE there because the scaffolding cannot see the seam global.
+  void right_menu(int a1, int a2);
   InfoWin() { ; }
   ~InfoWin() { ; }
   void UNK1();

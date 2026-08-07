@@ -46,6 +46,9 @@ class DLLEXPORT MapWin {
  public:
   void on_resize(int a1, int a2);
   void on_redraw();
+  // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550, still an original body: declared
+  // here so on_redraw's direct call compiles, resolved at link time.
+  void draw_map(int draw_type);
   MapWin() { ; }
   ~MapWin() { ; }
   int UNK1();

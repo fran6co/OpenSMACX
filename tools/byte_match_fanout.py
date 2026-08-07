@@ -354,8 +354,27 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # `--collect` skips settled rows by design, since re-verifying finished work is
 # most of a run. That is the right default and it has this cost, so the number
 # above is only as true as the last full census.
-BASELINE_MATCHED_FUNCTIONS = 880
-BASELINE_MATCHED_BYTES = 18556
+#
+# 883 / 18598, from a full census after the VC6 build was made to compile.
+#
+# It went 880 -> 866 first, and the drop is worth recording because the cause
+# was not the code. Fixing the build inserted lines near the top of
+# src/datalink.cpp and src/vector.cpp - an #include and a rewritten
+# constructor - and every recovered body BELOW an insertion moved. The census
+# extracts a body by the line in `source_locations`, so it began reading from
+# the wrong offset and 17 rows failed with "extract does not end in a closing
+# brace". Not one of them had changed.
+#
+# `tools/repair_source_locations.py --apply` re-points each row from its own
+# `Original Offset:` marker rather than by counting lines, so it cannot drift
+# in turn. It found 242 stale locations across 10 files, of which the 17
+# byte-exact ones were the only visible symptom.
+#
+# THE LESSON IS THE ORDERING, not the tool: any edit to a file holding
+# recovered bodies must be followed by the repair before the census, or the
+# census measures the wrong bytes and blames the body.
+BASELINE_MATCHED_FUNCTIONS = 883
+BASELINE_MATCHED_BYTES = 18598
 
 
 def summarise(ledger: dict) -> tuple:

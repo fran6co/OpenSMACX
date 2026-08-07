@@ -32,10 +32,13 @@ int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2) 
     return self->on_key_click(a1, a2);
 }
 
+func_gamma_adjust_palette GammaOriginalAdjustPalette =
+    original_method<func_gamma_adjust_palette>(0x005C9520);
+
 /*
 Original Offset: 005C9390
 Status: Complete
 */
 void Gamma::on_scrolled(int a1, int a2) {
-    adjust_palette();
+    (ORIGINAL(this)->*GammaOriginalAdjustPalette)();
 }

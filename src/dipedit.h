@@ -28,6 +28,11 @@
 class DLLEXPORT DipEdit {
  public:
   void on_selected(int a1);
+  // Siblings on_selected calls. Bodies unrecovered - 0x004DA990 (?read_check@
+  // DipEdit@@QAEXXZ) and 0x004DADA0 (?do_check@DipEdit@@QAEXXZ) - so these are
+  // declarations only, resolved at link time like the other unrecovered methods.
+  void read_check();
+  void do_check();
   DipEdit() { ; }
   ~DipEdit() { ; }
   void on_left_click(int, int);

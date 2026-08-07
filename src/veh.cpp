@@ -319,8 +319,8 @@ Original Offset: 005010C0
 Return Value: Defense terrain value
 Status: Complete
 */
-uint32_t __cdecl defense_value(int faction_id, int x, int y, int veh_id_def, 
-                               int veh_id_atk) {
+int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
+                          int veh_id_atk) {
     if (is_ocean(x, y) || base_who(x, y) >= 0) {
         return 2;
     }

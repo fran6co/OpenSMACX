@@ -65,6 +65,13 @@ typedef void *func9(void);
 extern func9 *fixup_landmarks;
 extern func9 *mapwin_terrain_fixup;
 extern func9 *world_rainfall;
+// 0x0058C2A0 ?custom_planet@@YAHHH@Z and 0x005C5A30 ?world_climate@@YAXXZ are
+// both still original bodies; the scenario editor's climate and polar commands
+// reach them through these bindings.
+typedef int func_custom_planet(int, int);
+extern func_custom_planet *custom_planet;  // 0x0058C2A0
+typedef void func_world_climate(void);
+extern func_world_climate *world_climate;  // 0x005C5A30
 typedef BOOL func11(int, int, int);
 extern func11 *wants_to_attack_;
 typedef uint32_t func15(LPCSTR);

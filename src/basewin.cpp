@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "basewin.h"
 #include "win.h"
+#include "subinterface.h"
 #include <cstdint>
 #include <cstring>
 

@@ -932,7 +932,7 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
     uint8_t chksum = 0;
     size_t len = strlen(buffer);
     if (len) {
-        chksum = checksum((LPBYTE)&buffer, len, 0);
+        chksum = checksum((LPSTR)&buffer, len, 0);
     }
     return chksum + 1;
 }

@@ -17,6 +17,7 @@
  */
 #pragma once
 #include "listbox.h"
+#include "subinterface.h"
 
  /*
   * ReportIf class
@@ -43,6 +44,9 @@ class DLLEXPORT ReportIf {
   void on_iface_button_toggled(int, int);
   void close_score();
   int on_iface_dialog_item_back_draw(int, int, int, int);
+  // 0x004A4060  ?bl_anim@ReportIf@@QAEXXZ - public, __thiscall, void(void),
+  // unrecovered. The bl_daemon thunk in leaf_recoveries.cpp calls it.
+  void bl_anim();
 
  private:
   uint8_t unmapped_[0x202F0];

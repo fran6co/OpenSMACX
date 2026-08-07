@@ -163,7 +163,7 @@ Original Offset: 005ED7D0
 Status: Complete
 */
 int Win::move(int x, int y) {
-    move_rect((field_9C_ & 2U) ? client_rect_ : outer_rect_, x, y);
+    move_rect((iSomeFlag_ & 2U) ? client_rect_ : outer_rect_, x, y);
     return 0;
 }
 
@@ -173,7 +173,7 @@ Original Offset: 005F7E90
 Status: Complete
 */
 int Win::is_visible() {
-    if (!(field_9C_ & 1U)) {
+    if (!(iSomeFlag_ & 1U)) {
         return 0;
     }
     // A detached window is visible on its own; otherwise the whole parent
@@ -195,13 +195,13 @@ void Win::client_to_screen(int *x, int *y) {
     *y = int_from_bits(static_cast<uint32_t>(*y) + long_bits(client_rect_.top) + long_bits(outer_rect_.top));
     // Bit 5 marks a window whose coordinates are relative to its parent, so
     // the walk continues only while both that flag and a parent are present.
-    if ((field_98_ & 0x20U) == 0 || !win_parent_) {
+    if ((iFlags_ & 0x20U) == 0 || !win_parent_) {
         return;
     }
     win_parent_->client_to_screen(x, y);
     // Bit 15 additionally backs out the parent's own outer origin. The legacy
     // body re-reads win_parent_ for each subtraction rather than caching it.
-    if ((field_98_ & 0x8000U) == 0) {
+    if ((iFlags_ & 0x8000U) == 0) {
         return;
     }
     *x = int_from_bits(static_cast<uint32_t>(*x) - long_bits(win_parent_->outer_rect_.left));
@@ -420,7 +420,7 @@ Return Value: Holds focus (1); does not (0)
 Status: Complete
 */
 int Win::is_dialog_focus() {
-    if ((field_98_ & 0x1000U) != 0) {
+    if ((iFlags_ & 0x1000U) != 0) {
         return 1;
     }
     Win *const parent = win_parent_;

@@ -47,6 +47,10 @@ class DLLEXPORT Datalink : GraphicWin {
   void hide();
   void show(int a1);
   void on_selected(int a1);
+  // 0x0042BF10  ?draw_entry@Datalink@@QAEXXZ - public, __thiscall, void(void),
+  // unrecovered. Declared so on_selected, which reaches it with a direct
+  // `call rel32` on an unadjusted `this`, can name it.
+  void draw_entry();
   Datalink() { ; }
   ~Datalink() { ; }
   int UNK1(int a1, int a2);

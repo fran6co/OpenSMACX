@@ -113,7 +113,7 @@ int __fastcall setup_win_unk2_redirect(SetupWin *self, void *, int a1) {
 Original Offset: 004ADAF0
 Status: Complete
 */
-int SetupWin::do_menu(int8* a1, int a2, int a3) {
+int SetupWin::do_menu(char* a1, int a2, int a3) {
     switch (a2) {
         case 1:
             return do_menu_rightside(a1, a3);
