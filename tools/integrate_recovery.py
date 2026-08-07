@@ -99,6 +99,46 @@ DEFINITION = re.compile(
     r"\((?P<params>[^)]*)\)\s*(?P<trail>const\s*)?\{", re.M)
 
 
+def class_span(text: str, klass: str):
+    """(start, end) of this class's body in `text`, or None.
+
+    EVERY placement question has to be scoped to this span, and both of them
+    were wrong before it existed. Asking "is the method already declared"
+    against the whole FILE answers yes because a sibling class in the same
+    header also has a `destroy`; inserting at the first `public:` in the file
+    puts the declaration INTO that sibling. One reports nothing to do, the
+    other quietly does the wrong thing, and neither fails loudly.
+    """
+    opening = re.search(rf"\b(?:class|struct)\s+(?:DLLEXPORT\s+)?"
+                        rf"{re.escape(klass)}\b\s*(?::[^{{;]*)?{{", text)
+    if opening is None:
+        return None
+    end = text.find("\n};", opening.end())   # this tree closes at column zero
+    return (opening.end(), end) if end > 0 else None
+
+
+def header_declaring(klass: str) -> Path | None:
+    """The header that declares this class, wherever it lives.
+
+    NOT `src/<lowercased>.h`. That convention holds for most classes and fails
+    for 61 of them - `StringList` is not in `stringlist.h`, `FactionAmbience`
+    is not in `factionambience.h` - so a backfill keyed on the filename
+    reported "no header" and declared nothing, while the compiler went on
+    reporting the member as undeclared. Search for the declaration instead.
+
+    `hypothesis_layouts.h` is skipped deliberately: it is GENERATED, and a
+    declaration added there is erased by the next regeneration. A class that
+    lives only there needs promoting into a header of its own first, which is
+    a decision rather than a splice.
+    """
+    for header in sorted((REPO_ROOT / "src").glob("*.h")):
+        if header.name == "hypothesis_layouts.h":
+            continue
+        if class_span(header.read_text(errors="ignore"), klass):
+            return header
+    return None
+
+
 def declaration_for(body: str) -> tuple:
     """(header path, declaration line) a member definition needs, or (None, why).
 
@@ -117,26 +157,40 @@ def declaration_for(body: str) -> tuple:
     if match is None:
         return None, "no member definition found (a free function needs none)"
     klass, method = match.group("klass"), match.group("method")
-    header = REPO_ROOT / "src" / f"{klass.lower()}.h"
-    if not header.is_file():
-        return None, f"no src/{klass.lower()}.h to declare {klass}::{method} in"
+    header = header_declaring(klass)
+    if header is None:
+        return None, (f"no header declares class {klass}, so "
+                      f"{klass}::{method} has nowhere to be declared")
     text = header.read_text(errors="ignore")
-    if re.search(rf"\b{re.escape(method)}\s*\(", text):
+    start, end = class_span(text, klass)
+    if re.search(rf"\b{re.escape(method)}\s*\(", text[start:end]):
         return None, "already declared"
     returns = " ".join(match.group("ret").split())
     params = " ".join(match.group("params").split())
     trail = " const" if match.group("trail") else ""
     lead = f"{returns} " if returns and not method.startswith("~") else ""
-    return header, f"  {lead}{method}({params}){trail};"
+    return header, (f"  {lead}{method}({params}){trail};", klass)
 
 
-def declare_in_header(header: Path, declaration: str) -> str:
-    """Insert into the FIRST `public:` of the first class, return the old text."""
+def declare_in_header(header: Path, declaration: str, klass: str) -> str:
+    """Insert into THIS class's public section, and return the old text.
+
+    The class has to be located first. An earlier version took the first
+    `public:` in the FILE, which is only right when the header declares one
+    class - and `StringList` shares `stringstruct.h` with `StringStruct`,
+    `FactionAmbience` shares `ambience.h` with five siblings. Sixty-one
+    declarations would have gone into the wrong classes, every one of them
+    compiling perfectly and describing a member that class does not have.
+    """
     text = header.read_text()
-    match = re.search(r"^\s*public:\s*$", text, re.M)
-    if match is None:
-        raise Refused(f"{header.name} has no `public:` to declare into")
-    at = match.end()
+    span = class_span(text, klass)
+    if span is None:
+        raise Refused(f"{header.name} does not declare {klass}")
+    start, end = span
+    inside = re.search(r"^\s*public:\s*$", text[start:end], re.M)
+    if inside is None:
+        raise Refused(f"{klass} in {header.name} has no `public:` section")
+    at = start + inside.end()
     writeback.write_atomically(header, text[:at] + "\n" + declaration + text[at:])
     return text
 
@@ -191,7 +245,8 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
     writeback.write_atomically(target, appended)
     try:
         if header is not None:
-            header_before = declare_in_header(header, declaration)
+            header_before = declare_in_header(
+                header, declaration[0], declaration[1])
         set_source_location(address, location)
         # Re-extract from DISK. What is proved is the text now in the file,
         # not the text this tool was handed - the same rule the writeback
