@@ -44,6 +44,7 @@ struct DatalinkID;
 
 class DLLEXPORT Datalink : GraphicWin {
  public:
+  void on_selected(int a1);
   Datalink() { ; }
   ~Datalink() { ; }
   int UNK1(int a1, int a2);

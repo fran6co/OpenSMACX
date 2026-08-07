@@ -34,6 +34,8 @@
   */
 class DLLEXPORT DiploWin : GraphicWin {
  public:
+  void hide();
+  void show(int a1);
   DiploWin() { ; }
   ~DiploWin() { ; }
   void UNK3(int a1);

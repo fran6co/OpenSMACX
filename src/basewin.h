@@ -36,6 +36,7 @@
   */
 class DLLEXPORT BaseWin : GraphicWin {
  public:
+  void show(int a1);
   BaseWin() { ; }
   ~BaseWin() { ; }
   void close();

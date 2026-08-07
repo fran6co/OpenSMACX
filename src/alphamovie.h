@@ -34,6 +34,8 @@
   */
 class DLLEXPORT AlphaMovie : GraphicWin {
  public:
+  void update();
+  void close();
   AlphaMovie() { ; }
   ~AlphaMovie() { ; }
   void UNK7();

@@ -36,6 +36,8 @@
   */
 class DLLEXPORT WorldWin : GraphicWin {
  public:
+  void focus(int a1, int a2);
+  void set_center(int a1, int a2);
   WorldWin() { ; }
   ~WorldWin() { ; }
   void clear_terrain();

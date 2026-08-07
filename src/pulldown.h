@@ -29,6 +29,7 @@ static_assert(offsetof(PullDownItem, flags) == 0xC,
 
 class DLLEXPORT PullDown : GraphicWin {
  public:
+  void hide();
   int UNK2(int a);
   int UNK3(int a, int b, int c);
   int UNK5();

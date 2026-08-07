@@ -37,6 +37,7 @@
   */
 class DLLEXPORT RadioButton {
  public:
+  void on_dialog_focus(int a1);
   RadioButton() { ; }
   ~RadioButton() { ; }
   void close();

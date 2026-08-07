@@ -50,6 +50,10 @@
   */
 class DLLEXPORT Console {
  public:
+  void on_sys_close();
+  void menu_update();
+  void editor_redo();
+  void editor_climate();
   Console() { ; }
   ~Console() { ; }
   void clear_group();
