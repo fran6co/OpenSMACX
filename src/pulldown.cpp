@@ -9,6 +9,7 @@
  */
 #include "stdafx.h"
 #include "pulldown.h"
+#include "vtable_shim.h"
 
 namespace {
 
