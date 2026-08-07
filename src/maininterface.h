@@ -43,6 +43,10 @@ class DLLEXPORT MainInterface : GraphicWin {
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
   int on_iface_button_pressed(int a1);
+  // ?on_iface_button_clicked@MainInterface@@QAEXH@Z (0x0045D170), unrecovered.
+  // BattleWin::on_iface_button_clicked forwards to it on the fixed-address
+  // MainInterface singleton at 0x007AF234.
+  void on_iface_button_clicked(int a1);
  private:
   uint32_t field_A14_;
   uint32_t field_A18_;

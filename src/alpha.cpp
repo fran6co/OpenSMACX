@@ -906,13 +906,13 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     for (int i = 0; i < MaxChassisNum; i++) {
         text_get();
         Chassis[i].offsv_1_name = text_item_string();
-        noun_item(&Chassis[i].offsv_1_gender, &Chassis[i].offsv_1_plural);
+        noun_item((int *)&Chassis[i].offsv_1_gender, &Chassis[i].offsv_1_plural);
         Chassis[i].offsv_2_name = text_item_string();
-        noun_item(&Chassis[i].offsv_2_gender, &Chassis[i].offsv_2_plural);
+        noun_item((int *)&Chassis[i].offsv_2_gender, &Chassis[i].offsv_2_plural);
         Chassis[i].defsv_1_name = text_item_string();
-        noun_item(&Chassis[i].defsv_1_gender, &Chassis[i].defsv_1_plural);
+        noun_item((int *)&Chassis[i].defsv_1_gender, &Chassis[i].defsv_1_plural);
         Chassis[i].defsv_2_name = text_item_string();
-        noun_item(&Chassis[i].defsv_2_gender, &Chassis[i].defsv_2_plural);
+        noun_item((int *)&Chassis[i].defsv_2_gender, &Chassis[i].defsv_2_plural);
         Chassis[i].speed = (uint8_t)text_item_number();
         Chassis[i].triad = (uint8_t)text_item_number();
         Chassis[i].range = (uint8_t)text_item_number();
@@ -921,9 +921,9 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         Chassis[i].cost = (uint8_t)text_item_number();
         Chassis[i].preq_tech = (int16_t)tech_name(text_item());
         Chassis[i].offsv_lrg_name = text_item_string();
-        noun_item(&Chassis[i].offsv_lrg_gender, &Chassis[i].offsv_lrg_plural);
+        noun_item((int *)&Chassis[i].offsv_lrg_gender, &Chassis[i].offsv_lrg_plural);
         Chassis[i].defsv_lrg_name = text_item_string();
-        noun_item(&Chassis[i].defsv_lrg_gender, &Chassis[i].defsv_lrg_plural);
+        noun_item((int *)&Chassis[i].defsv_lrg_gender, &Chassis[i].defsv_lrg_plural);
     }
     if (text_open(AlphaxFileID, "REACTORS")) {
         return true;
@@ -1450,7 +1450,7 @@ void __cdecl prefs_save(BOOL save_factions) {
     prefs_put("Time Controls", AlphaIniPrefs->time_controls, false);
     if (save_factions && *ExpansionEnabled) {
         for (uint32_t i = 1; i < MaxPlayerNum; i++) {
-            sprintf_s(stringTemp->str, "Faction %d", i);
+            sprintf_s(stringTemp->str, sizeof(stringTemp->str), "Faction %d", i);
             prefs_put(stringTemp->str, Players[i].filename);
         }
     }

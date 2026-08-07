@@ -149,6 +149,14 @@ class DLLEXPORT Buffer {
 
 static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original executable");
 
+// ?polygon@@YAHPAUBuffer@@PAUVert@@HH@Z at 0x00626620 is the 736-byte
+// rasteriser Buffer::poly hands its arguments to. YA = __cdecl, H = int, and
+// the arguments are (Buffer *, Vert *, int, int). Still unrecovered, so this
+// is a declaration with no definition - deliberately NOT a rebindable seam,
+// because Buffer::poly is byte-exact on a direct `call rel32` and a seam
+// would turn it into `call dword ptr [X]`.
+int polygon(Buffer *buffer, Vert *verts, int a3, int a4);
+
 // DirectDraw surface vtable slots the data lock/release pair dispatches
 // through; both are stdcall COM methods on the surface interface.
 constexpr size_t BufferSurfaceLockSlot = 0x64;

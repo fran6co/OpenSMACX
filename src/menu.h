@@ -50,6 +50,10 @@ typedef void (OriginalObject::*func_menu_repaint)();
 class DLLEXPORT Menu : GraphicWin {
  public:
   void on_mouse_move(int a1, int a2);
+  // ?mouse_move@Menu@@QAEXHH@Z (0x005FBDB0, 333 bytes) is unrecovered;
+  // on_mouse_move is an 18-byte tail-forward to it. Declared so that
+  // forward names a real member - it still needs a body before the DLL links.
+  void mouse_move(int a1, int a2);
   int requested_height();
   int UNK2(int a);
   int UNK6(int menu_id);

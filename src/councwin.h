@@ -32,6 +32,10 @@
   */
 class DLLEXPORT CouncWin : GraphicWin {
  public:
+  // 0x00425DB0  ?draw_leader@CouncWin@@QAEXH@Z - public, __thiscall,
+  // void(int), unrecovered. Declared so draw_all_leaders and on_mouse_leave,
+  // which each reach it with a direct `call rel32`, can name it.
+  void draw_leader(int factionID);
   int show(int a1);
   void draw_all_leaders();
   void on_mouse_leave(int a1, int a2);

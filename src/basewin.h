@@ -38,6 +38,11 @@ class DLLEXPORT BaseWin : GraphicWin {
  public:
   void on_scrolled(int a1, int a2);
   void UNK2(int a1, int a2, int a3, int a4);
+  // Two siblings the recovered bodies above reach with a direct `call rel32`
+  // - UNK2 calls garrison_click, on_scrolled calls draw_facilities. Both are
+  // unrecovered; declared so their callers can name them.
+  void garrison_click(int vehID, int a2, int a3, int a4);  // 0x0040B140
+  void draw_facilities(int a1);                            // 0x0040FCC0
   void show(int a1);
   BaseWin() { ; }
   ~BaseWin() { ; }

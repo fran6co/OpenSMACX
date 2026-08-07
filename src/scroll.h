@@ -52,6 +52,12 @@ class DLLEXPORT Scroll : GraphicWin {
   uint32_t set_thumb_rect();
 
   void on_left_click(int a1, int a2);
+  // 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z and
+  // 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z - public, __thiscall,
+  // void(int). Both are still unrecovered; the declarations exist because the
+  // recovered Win::on_mousewheel_* wrappers call them directly.
+  void on_mousewheel_down(int a1);
+  void on_mousewheel_up(int a1);
  private:
   friend class Win;
 

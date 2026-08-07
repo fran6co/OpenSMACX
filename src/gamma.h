@@ -72,3 +72,9 @@ class DLLEXPORT Gamma : GraphicWin {
 };
 
 int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2);
+
+// ?adjust_palette@Gamma@@QAEXXZ (0x005C9520) is not recovered. Gamma::on_scrolled
+// is nothing but a call to it, so the call goes through a rebindable seam
+// rather than a member this DLL cannot define.
+typedef void (OriginalObject::*func_gamma_adjust_palette)();
+extern func_gamma_adjust_palette GammaOriginalAdjustPalette;

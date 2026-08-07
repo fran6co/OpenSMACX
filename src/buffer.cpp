@@ -711,8 +711,8 @@ int Buffer::sync_to_palette(Palette *palette) {
     }
     // field_4A4_ caches the palette generation tag and sits immediately after
     // the 256-entry table it guards, so an unchanged palette costs nothing.
-    if (field_4A4_ != palette->field_400_) {
-        field_4A4_ = palette->field_400_;
+    if (field_4A4_ != palette->seed_) {
+        field_4A4_ = palette->seed_;
         RGBQUAD *const table = reinterpret_cast<RGBQUAD *>(dib_);
         palette->get_rgbquad(table, 0, 0x100);
         const HDC device = get_hdc();

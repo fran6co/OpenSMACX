@@ -518,8 +518,10 @@ DLLEXPORT void __cdecl say_morale(uint32_t veh_id, int faction_id_vs_native);
 DLLEXPORT int __cdecl drop_range(int faction_id);
 DLLEXPORT uint32_t __cdecl planet_buster2(int proto_id);
 DLLEXPORT uint32_t __cdecl planet_buster(int veh_id);
-DLLEXPORT uint32_t __cdecl defense_value(uint32_t faction_id, uint32_t x, uint32_t y, 
-                                         uint32_t veh_id_def, int veh_id_atk);
+// `int` throughout, per the catalogue: the original exports this as
+// `?defense_value@@YAHHHHHH@Z` - all `H`, no `I`.
+DLLEXPORT int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
+                                    int veh_id_atk);
 DLLEXPORT uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native);
 DLLEXPORT int __cdecl psi_factor(int combat_ratio, uint32_t faction_id, BOOL is_attack,
                                  BOOL is_fungal_twr);

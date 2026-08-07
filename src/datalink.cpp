@@ -18,6 +18,10 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "datalink.h"
+// Datalink::show and Datalink::hide reach the SubInterface subobject the
+// original places at +0xA14 by casting a hand-computed address, so the type
+// must be complete.
+#include "subinterface.h"
 
 func_datalink_exec DatalinkExec = original_method<func_datalink_exec>(0x00429180);
 // Unclassified data seam: the Datalink singleton object, not a call target.
@@ -251,7 +255,7 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::close() {
-    field_29E0_ = 0;
+    facilityID_ = 0;
     field_2A34_ = 0;
     field_2A38_ = 0;
 }
@@ -446,7 +450,7 @@ Status: Complete
 */
 void Datalink::show(int a1) {
     if (!reinterpret_cast<Win *>(this)->is_visible()) {
-        sub_interface_.set_iface_mode();
+        reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->set_iface_mode();
     }
 }
 
@@ -456,6 +460,6 @@ Status: Complete
 */
 void Datalink::hide() {
     if (reinterpret_cast<Win *>(this)->is_visible()) {
-        sub_interface_.release_iface_mode();
+        reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->release_iface_mode();
     }
 }

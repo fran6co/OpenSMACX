@@ -696,7 +696,7 @@ static bool verify_StringStruct_current_entry_00402530() {
 }
 
 // ?UNK1@Datalink@@QAEHHH@Z  (30 B)
-// recovered in src/datalink.cpp:378
+// recovered in src/datalink.cpp:382
 // staged receiver: Datalink, 0x1B394 B, zero-filled, size pinned
 static bool verify_Datalink_UNK1_0042a020() {
     typedef int (OriginalObject::*Callable)(int, int);
@@ -945,7 +945,7 @@ static bool verify_passover_callback_004456a0() {
 }
 
 // ?load_deswin_sprites@@YAXXZ  (35 B)
-// recovered in src/leaf_recoveries.cpp:1423
+// recovered in src/leaf_recoveries.cpp:1425
 static bool verify_load_deswin_sprites_00455e50() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x00455E50U);
@@ -2780,7 +2780,7 @@ static bool verify_Wave_In_Device_set_codec_004c5a80() {
 }
 
 // ?edit_lock@Console@@QAEHXZ  (48 B)
-// recovered in src/console.cpp:138
+// recovered in src/console.cpp:140
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_edit_lock_004e1f40() {
     typedef int (OriginalObject::*Callable)();
@@ -3498,7 +3498,7 @@ static bool verify_AlphaNet_who_2_idx_004e26b0() {
 }
 
 // ?clear_group@Console@@QAEXXZ  (43 B)
-// recovered in src/console.cpp:109
+// recovered in src/console.cpp:111
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_clear_group_0050f650() {
     typedef void (OriginalObject::*Callable)();
@@ -3624,7 +3624,7 @@ static bool verify_Console_clear_group_0050f650() {
 }
 
 // ?focus@Console@@QAEXHHH@Z  (259 B)
-// recovered in src/console.cpp:251
+// recovered in src/console.cpp:256
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_focus_005108a0() {
     typedef void (OriginalObject::*Callable)(int, int, int);
@@ -3763,7 +3763,7 @@ static bool verify_Console_focus_005108a0() {
 }
 
 // ?update_data@Console@@QAEXH@Z  (42 B)
-// recovered in src/console.cpp:196
+// recovered in src/console.cpp:198
 // staged receiver: Console, 0x247A8 B, zero-filled, size pinned
 static bool verify_Console_update_data_00514880() {
     typedef void (OriginalObject::*Callable)(int);
@@ -9766,7 +9766,7 @@ static bool verify_Win_is_visible_005f7e90() {
 }
 
 // ?hide_item@PullDown@@QAEHH@Z  (111 B)
-// recovered in src/pulldown.cpp:41
+// recovered in src/pulldown.cpp:42
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_hide_item_005f8cb0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -9914,7 +9914,7 @@ static bool verify_PullDown_hide_item_005f8cb0() {
 }
 
 // ?show_item@PullDown@@QAEHH@Z  (111 B)
-// recovered in src/pulldown.cpp:60
+// recovered in src/pulldown.cpp:61
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_show_item_005f8d20() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10062,7 +10062,7 @@ static bool verify_PullDown_show_item_005f8d20() {
 }
 
 // ?disable_item@PullDown@@QAEHH@Z  (95 B)
-// recovered in src/pulldown.cpp:79
+// recovered in src/pulldown.cpp:80
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_disable_item_005f8d90() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10210,7 +10210,7 @@ static bool verify_PullDown_disable_item_005f8d90() {
 }
 
 // ?enable_item@PullDown@@QAEHH@Z  (95 B)
-// recovered in src/pulldown.cpp:94
+// recovered in src/pulldown.cpp:95
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_enable_item_005f8df0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10358,7 +10358,7 @@ static bool verify_PullDown_enable_item_005f8df0() {
 }
 
 // ?check_item@PullDown@@QAEHH@Z  (95 B)
-// recovered in src/pulldown.cpp:109
+// recovered in src/pulldown.cpp:110
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_check_item_005f9040() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10506,7 +10506,7 @@ static bool verify_PullDown_check_item_005f9040() {
 }
 
 // ?uncheck_item@PullDown@@QAEHH@Z  (95 B)
-// recovered in src/pulldown.cpp:124
+// recovered in src/pulldown.cpp:125
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_uncheck_item_005f90a0() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10654,7 +10654,7 @@ static bool verify_PullDown_uncheck_item_005f90a0() {
 }
 
 // ?id_to_index@PullDown@@QAEHH@Z  (40 B)
-// recovered in src/pulldown.cpp:312
+// recovered in src/pulldown.cpp:313
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_id_to_index_005f9d00() {
     typedef int (OriginalObject::*Callable)(int);
@@ -10802,7 +10802,7 @@ static bool verify_PullDown_id_to_index_005f9d00() {
 }
 
 // ?get_selected@PullDown@@QAEHXZ  (28 B)
-// recovered in src/pulldown.cpp:139
+// recovered in src/pulldown.cpp:140
 // staged receiver: PullDown, 0xF40 B, zero-filled, size pinned
 static bool verify_PullDown_get_selected_005f9f40() {
     typedef int (OriginalObject::*Callable)();

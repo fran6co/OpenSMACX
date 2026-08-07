@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "heap.h"
 
  /*
   * SpriteBox class
@@ -28,7 +29,10 @@
 class DLLEXPORT SpriteBox {
  public:
   void on_dialog_focus(int a1);
+  void close();
   int init(RECT* a1, int a2);
+  int init(int a1);
+  int init(Heap *a1);
   SpriteBox() { ; }
   ~SpriteBox() { ; }
   uint32_t id_to_pos(int id);

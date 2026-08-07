@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "socialwin.h"
 #include "win.h"
+#include "subinterface.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -196,6 +197,6 @@ Status: Complete
 */
 void SocialWin::hide() {
     if (reinterpret_cast<Win *>(this)->is_visible()) {
-        sub_interface_.release_iface_mode();
+        reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->release_iface_mode();
     }
 }

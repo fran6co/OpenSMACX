@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "councwin.h"
+#include "subinterface.h"
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -234,5 +235,5 @@ int CouncWin::show(int a1) {
     if (visible) {
         return visible;
     }
-    sub_interface_.set_iface_mode();
+    reinterpret_cast<SubInterface *>(reinterpret_cast<char *>(this) + 0xa14)->set_iface_mode();
 }

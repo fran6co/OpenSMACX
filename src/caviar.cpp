@@ -29,7 +29,7 @@ Original Offset: 00616BC0
 Return Value: n/a
 Status: Complete
 */
-CaviarData::CaviarData() : field_0_(0), field_4_(0), record_(nullptr) {
+CaviarData::CaviarData() : field_0_(0), fileDescriptor_(0), record_(nullptr) {
 }
 
 func_caviar_free_record *CaviarDataFreeRecord =

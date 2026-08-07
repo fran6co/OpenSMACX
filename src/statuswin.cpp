@@ -40,10 +40,10 @@ Return Value: n/a
 Status: Complete
 */
 void StatusWin::set_loc(int x, int y) {
-    field_15B4_ = x;
-    field_15B8_ = y;
-    field_15C0_ = -1;
-    field_15BC_ = -1;
+    iTileX_ = x;
+    iTileY_ = y;
+    iCityIndex_ = -1;
+    iUnitIndex_ = -1;
 }
 
 void __fastcall status_win_set_loc_redirect(StatusWin *self, void *, int x, int y) {

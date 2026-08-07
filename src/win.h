@@ -39,6 +39,10 @@ class DLLEXPORT Win {
   friend class BaseButton;
 
  public:
+  // 0x005F6320  ?on_mouse_move@Win@@QAEXHHIH@Z - public, __thiscall,
+  // void(int, int, unsigned int, int). GraphicWin::on_mouse_move is a pure
+  // forwarder to it and is its only caller.
+  void on_mouse_move(int a1, int a2, unsigned int a3, int a4);
   void on_mousewheel_up_vert(int a1);
   void on_mousewheel_down_horz(int a1);
   int get_lbutton_state();
@@ -85,6 +89,14 @@ class DLLEXPORT Win {
   void on_size(unsigned int a1, int a2, int a3);
   void on_size_nc(unsigned int a1, int a2, int a3);
   void on_sys_command(unsigned int a1, int a2, int a3);
+
+  // Three base handlers the derived windows reach with a direct `call rel32`,
+  // never through a vtable slot - PullDown::hide, DiploPop::hide,
+  // Popup::on_nc_hittest and ReportIf::done all encode one - so they are
+  // declared non-virtual on purpose. All three are unrecovered.
+  void hide();                          // 0x005EDCD0  ?hide@Win@@QAEXXZ
+  int on_nc_hittest(int a1, int a2);    // 0x005F5AD0  ?on_nc_hittest@Win@@QAEHHH@Z
+  void release_modal();                 // 0x005EE280  ?release_modal@Win@@QAEXXZ
  private:
   AutoSound auto_sound_;
   uint32_t iFlags_;

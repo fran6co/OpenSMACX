@@ -36,6 +36,10 @@ class DLLEXPORT ReportWin : GraphicWin {
   ~ReportWin() { ; }
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
+  // The two animation ticks the daemons in leaf_recoveries.cpp drive. Public,
+  // __thiscall, void(void); both unrecovered.
+  void sat_anim();  // 0x0049FE40  ?sat_anim@ReportWin@@QAEXXZ
+  void exp_anim();  // 0x004A0100  ?exp_anim@ReportWin@@QAEXXZ
 
   // Storage the image proves is here: its own methods reach 0xFABC.
   // Extent only - this class carries no size assertion, and the bound is a floor.

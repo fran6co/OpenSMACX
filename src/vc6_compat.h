@@ -161,6 +161,20 @@ inline int sprintf_s(char *destination, size_t, const char *format, ...) {
 }
 
 /*
+ * THERE IS DELIBERATELY NO SIZELESS OVERLOAD. On a real CRT the two-argument
+ * spelling is a template that deduces the bound from an array parameter, and
+ * adding a plain `sprintf_s(char *, const char *, ...)` here to serve it does
+ * not work on VC6: given `sprintf_s(buf, "Faction %d", i)` the compiler still
+ * selects the four-parameter form and reports
+ * `C2664: cannot convert parameter 2 from 'char [11]' to 'unsigned int'`,
+ * because its overload resolution ranks the ellipsis candidate below one that
+ * needs an impossible conversion. Measured on cl 12.00.8168, not reasoned.
+ *
+ * So the bound is written at the call site, which is what every other
+ * sprintf_s in this tree already does.
+ */
+
+/*
  * The rest of the `_s` family the tree reaches for, on the same terms as the
  * four above: the bound is dropped, not honoured, because the binary being
  * matched had no bounds checks either and these call sites were `strncpy`,

@@ -19,6 +19,21 @@
 #include "graphicwin.h"
 
  /*
+  * MCIVideo class
+  *
+  * The MCI video subobject AlphaMovie embeds at +0xA14. Declared, not laid
+  * out: close() is the only member reached from here and the address is
+  * computed by hand at the call site, so nothing needs the size. Not
+  * DLLEXPORT - ?close@MCIVideo@@QAEXXZ (0x005FFDB0) is unrecovered and
+  * dllexport on a class with undefined members forces the linker to export
+  * them.
+  */
+class MCIVideo {
+ public:
+  void close();  // ?close@MCIVideo@@QAEXXZ  0x005FFDB0
+};
+
+ /*
   * AlphaMovie class
   *
   * Derives from GraphicWin in the original by ordinary single inheritance -

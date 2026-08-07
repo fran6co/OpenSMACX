@@ -24,7 +24,15 @@
  /*
   * GraphicWin class
   */
-class DLLEXPORT GraphicWin : Win {
+// The base is spelled `public` deliberately. Win grants `friend class
+// BaseButton;` / `friend class Scroll;` so those classes may touch
+// win_parent_, but VC6 does not implement the friend clause of
+// [class.access.base]/5: a friend of the derived class still cannot see
+// through a PRIVATE base, and reaching win_parent_ from BaseButton or Scroll
+// gave C2248/C2247 while the base stayed private. Access to the member itself
+// is unchanged - win_parent_ is still private in Win - and a base's
+// accessibility affects no offset, so the layout is untouched.
+class DLLEXPORT GraphicWin : public Win {
   friend class Scroll;
   // BaseButton's colour setters drive this buffer directly.
   friend class BaseButton;
@@ -40,6 +48,14 @@ class DLLEXPORT GraphicWin : Win {
   int fill(int x1, int y1, int x2, int y2, int color);
   void fill(int color);
   void redraw();
+  // 0x005D56B0  ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z - public,
+  // __thiscall, void(GraphicWin *). The one-argument overload; the siblings
+  // take (int, int, int, int, GraphicWin *) and (RECT *, GraphicWin *).
+  void update(GraphicWin *target);
+  // 0x005D5890  ?soft_update@GraphicWin@@QAEXXZ - public, __thiscall,
+  // void(void). Called directly (not virtually) by WorldWin, so it must not
+  // be virtual here.
+  void soft_update();
  private:
   Buffer buffer_;
   uint32_t field_9CC_;

@@ -29,6 +29,11 @@
   */
 class DLLEXPORT ReplayWin {
  public:
+  // 0x005AD9E0  ?timer_callback@ReplayWin@@QAEXXZ - public, __thiscall,
+  // void(void), unrecovered. Declared so timer_callback_daemon, the free
+  // forwarder in replaywin.cpp that reaches it with a direct `call rel32`,
+  // can name it.
+  void timer_callback();
   ReplayWin() { ; }
   ~ReplayWin() { ; }
   void on_left_double_click(int, int);

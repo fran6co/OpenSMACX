@@ -18,6 +18,9 @@
 #include "stdafx.h"
 #include "diplowin.h"
 #include "vtable_shim.h"
+// DiploWin::show reaches the SubInterface subobject the original places at
+// +0xA14 by casting a hand-computed address, so the type must be complete.
+#include "subinterface.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

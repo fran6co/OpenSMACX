@@ -277,7 +277,16 @@ bool redirect_call(RedirectState &state, const RedirectSpec &spec) {
 }
 
 bool install_redirects() {
-    const RedirectSpec specs[] = {
+    // `static`, and it is not a micro-optimisation. Without it this is a
+    // function-LOCAL aggregate of 2,049 entries - about 49 KB - that VC6 must
+    // treat as constructed on entry, so /O2 optimises a single 10,250-line
+    // function and emits initialisation for the whole table. dllmain.cpp was
+    // the only unit in 138 that took over twenty minutes, and it was never
+    // once observed to finish: two builds were killed at 19:37 and 13:00 with
+    // it still running. `static` makes it one `.rdata` object initialised
+    // once, which is what the table has always been semantically - it is read
+    // and never written, and install_redirects runs once.
+    static const RedirectSpec specs[] = {
         {
             0x00402F10,
             reinterpret_cast<uintptr_t>(&construct_alphamenu_wave),

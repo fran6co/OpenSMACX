@@ -34,6 +34,10 @@
   */
 class DLLEXPORT DesignWin : GraphicWin {
  public:
+  // The shared body both select_special_N thunks tail into:
+  // ?select_special@DesignWin@@QAEXH@Z at 0x0043AC70, still an original body,
+  // so this is a declaration only, resolved at link time.
+  void select_special(int a1);
   void select_special_2();
   void select_special_1();
   DesignWin() { ; }

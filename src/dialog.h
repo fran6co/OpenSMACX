@@ -64,6 +64,11 @@ class DLLEXPORT Dialog {
   void set_selected_id(int id);
   int get_selected_id();
   int pos_to_id(int position);
+  // Three of Dialog's seven init overloads; the three SpriteBox::init forwards
+  // to. All unrecovered - declared so the recovered callers can name them.
+  int init(RECT *a1, int a2);  // ?init@Dialog@@QAEHPAURECT@@H@Z  0x00609470
+  int init(int a1);            // ?init@Dialog@@QAEHH@Z           0x006095F0
+  int init(Heap *a1);          // ?init@Dialog@@QAEHPAUHeap@@@Z   0x006098D0
 
  private:
   LPVOID vtable_;

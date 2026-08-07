@@ -33,6 +33,8 @@
 #include "dialogs.h"
 #include "listbox.h"
 #include "dialog.h"
+#include "reportwin.h"
+#include "reportif.h"
 
 #include <cstring>
 
@@ -1617,6 +1619,12 @@ extern "C" void __cdecl sub_6051c0() {
     *reinterpret_cast<int *>(0x009B8DD4) = GetSystemMetrics(3);
 }
 
+// 0x00627910 ?pop_ask@@YAHPADPADHPADP6AHXZH@Z - the six-parameter overload the
+// forwarder below tail-calls. PAD PAD H PAD P6AHXZ H is char*, char*, int,
+// char*, int(__cdecl*)(), int. Not recovered; declared so the forwarder can
+// name it.
+int __cdecl pop_ask(char *a1, char *a2, int a3, char *a4, int (__cdecl *a5)(), int a6);
+
 /*
 Original Offset: 00627830
 Status: Complete
@@ -1624,6 +1632,11 @@ Status: Complete
 int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
     return pop_ask(a1, a2, a3, 0, a4, a5);
 }
+
+// 0x0063B9B0 ?sin@@YAHHH@Z - the game's own fixed-point sine, an ordinary C++
+// overload of the CRT's double sin(double), exactly as the mangled name says
+// the original declared it. Not recovered; declared so cos below can name it.
+int __cdecl sin(int a1, int a2);
 
 /*
 Original Offset: 0063BAC0

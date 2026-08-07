@@ -32,6 +32,10 @@ class DLLEXPORT BaseButton : GraphicWin {
 
  public:
   void on_right_click(int a1, int a2);
+  // 0x00607B30  ?timer_callback@BaseButton@@QAEXH@Z - public, __thiscall,
+  // void(int). Public is load-bearing: the non-member daemon fn_00607b10
+  // reaches it through a BaseButton * it was handed.
+  void timer_callback(int a1);
   // These return `int`, not `void`. Each body is `xor eax, eax; ret N`, and
   // the sibling class BasePop declares the same three handlers `int`. The
   // catalogued mangled names spelled `X` and are corrected in

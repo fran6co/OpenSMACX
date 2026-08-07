@@ -17,6 +17,8 @@
  */
 #include "stdafx.h"
 #include "battlewin.h"
+#include "maininterface.h"
+#include "subinterface.h"
 #include "time.h"
 
 /*

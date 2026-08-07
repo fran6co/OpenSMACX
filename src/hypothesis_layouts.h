@@ -1403,18 +1403,6 @@ struct MAP {
   uint8_t visible_items_[0x1C];  // 0x10
 };
 
-/* 0x46C bytes, 7 member(s), 2 named. From the IDB. 8 function(s) in the image. */
-class MCIVideo {
- public:
-  uint32_t field_0_;  // 0x0
-  uint32_t mciId_;  // 0x4
-  uint32_t field_8_;  // 0x8
-  uint32_t field_C_;  // 0xC
-  uint8_t palette_[0x454];  // 0x10
-  uint32_t field_464_;  // 0x464
-  uint32_t field_468_;  // 0x468
-};
-
 /* 0x59C bytes, 55 member(s), 53 named. From Thinker. */
 struct MFaction {
   uint32_t is_leader_female_;  // 0x0
@@ -2230,13 +2218,6 @@ struct SpotList {
 class SpriteList {
  public:
   uint8_t field_0_[0x28];  // 0x0
-};
-
-/* 0x8 bytes, 2 member(s), 1 named. From the IDB. 3 function(s) in the image. */
-class SubInterface {
- public:
-  uint32_t vtable_;  // 0x0
-  uint32_t field_4_;  // 0x4
 };
 
 /* 0xC bytes, 12 member(s), 0 named. From Thinker. */
