@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "spritebox.h"
+#include "vtable_shim.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -106,4 +107,32 @@ uint32_t SpriteBox::id_to_pos(int id) {
 
 uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int id) {
     return self->id_to_pos(id);
+}
+
+/*
+Original Offset: 00610480
+Status: Complete
+*/
+int SpriteBox::init(RECT* a1, int a2) {
+    close();
+    return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
+        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(a1, a2);
+}
+
+/*
+Purpose: Repaint on dialog focus, through the enclosing object.
+Original Offset: 006115E0
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_dialog_focus(int a1) {
+    // `this - 0x8c` walks OUT of this subobject to the enclosing one, whose
+    // own +4 holds a further this-adjustment delta - the MSVC virtual-base
+    // shape. One expression: naming an intermediate changes the register
+    // choice. `a1` is dead; `ret 4` still pops it.
+    reinterpret_cast<VCall *>(
+        reinterpret_cast<char *>(this) - 0x8c
+        + *reinterpret_cast<int *>(
+            *reinterpret_cast<int *>(
+                reinterpret_cast<char *>(this) - 0x8c) + 4))->slot062();
 }

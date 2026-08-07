@@ -93,3 +93,13 @@ void WorldWin::focus(int a1, int a2) {
     reinterpret_cast<VCall *>(this)->slot012();
     reinterpret_cast<GraphicWin *>(this)->soft_update();
 }
+
+/*
+Original Offset: 004C3EA0
+Status: Complete
+*/
+void WorldWin::follow_center(int xCoord, int yCoord) {
+    char *self = reinterpret_cast<char *>(this);
+    reinterpret_cast<VCall *>(self)->slot012();
+    reinterpret_cast<GraphicWin *>(self)->soft_update();
+}

@@ -27,6 +27,8 @@
   */
 class DLLEXPORT SpriteBox {
  public:
+  void on_dialog_focus(int a1);
+  int init(RECT* a1, int a2);
   SpriteBox() { ; }
   ~SpriteBox() { ; }
   uint32_t id_to_pos(int id);
