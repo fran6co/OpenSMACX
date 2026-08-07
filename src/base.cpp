@@ -2287,8 +2287,13 @@ Original Offset: 00560D30
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */
+/*
+Original Offset: 00560D30
+Return Value: Amount of defensive units needed (1-8)
+Status: Complete
+*/
 int __cdecl defensive_check(int base_id) {
-    uint32_t defenses = garrison_check(base_id);
+    int defenses = garrison_check(base_id);
     if (defenses > 5) {
         defenses--;
     }

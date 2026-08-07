@@ -764,10 +764,18 @@ Original Offset: 00628AB0
 Return Value: Bit count
 Status: Complete
 */
+/*
+Original Offset: 00628AB0
+Return Value: Bit count
+Status: Complete
+*/
 uint32_t __cdecl bit_count_signed(int input) {
     uint32_t count = 0;
-    for (count = 0; input && count < 32; count++) {
-        input >>= 1;
+    if (input) {
+        do {
+            input >>= 1;
+            count++;
+        } while (input);
     }
     return count;
 }
