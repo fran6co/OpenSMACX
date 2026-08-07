@@ -1135,6 +1135,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(integrate-recovery-tests
                                    test_integrate_recovery.py)
 
+    opensmacx_add_python_tool_test(build-regression-tests
+                                   test_build_regressions.py)
+
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
 
