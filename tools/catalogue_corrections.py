@@ -62,6 +62,16 @@ CORRECTIONS = {
         "?is_trackset_playing@Midi@@QAE_NI@Z",
         "the no-delegate path is `xor al, al`, which clears AL alone; only a "
         "bool return produces that opcode, and `H` (int) cannot"),
+    # The reverse of the BaseButton cases: catalogued void, actually int. Here
+    # the giveaway is not the presence of a clear but WHERE it sits - at a
+    # merge point both paths reach, which is a `return 0`, not a side effect.
+    0x004C5A50: (
+        "?release@Wave_In_Device@@QAEXXZ",
+        "?release@Wave_In_Device@@QAEHXZ",
+        "a trailing `xor eax, eax` at 0x004C5A6D is reached from BOTH the "
+        "guard-taken and guard-skipped paths before `pop esi; ret`, so it is a "
+        "shared `return 0` and the function returns int. With the void head "
+        "the body matches through instruction 10 and is 2 bytes short"),
 }
 
 

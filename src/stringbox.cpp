@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "stringbox.h"
 #include <cstring>
+#include "vtable_shim.h"
 
 func_string_struct_add StringBoxStructAdd = original_method<func_string_struct_add>(0x00401100);
 func_string_box_add_fixup StringBoxAddFixup = original_method<func_string_box_add_fixup>(0x00629490);

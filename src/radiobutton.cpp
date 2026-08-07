@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "radiobutton.h"
+#include "vtable_shim.h"
 
 func_dialog_close RadioButtonOriginalDialogClose = original_method<func_dialog_close>(0x00608F50);
 uint32_t *RadioButtonDefault1 = (uint32_t *)0x006970F0;

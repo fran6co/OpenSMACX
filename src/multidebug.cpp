@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "multidebug.h"
+#include "vtable_shim.h"
 
 /*
 Purpose: Close the debug window by clearing its single active flag.

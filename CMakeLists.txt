@@ -1454,6 +1454,14 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_signature_oracles.py"
             --check
     )
+    # The VCall shim the COMPILED tree uses. It is generated from the same
+    # function the verification scaffolding uses, and a drift between the two
+    # would let a body verify against one slot layout and call another.
+    add_test(NAME vtable-shim-header-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/emit_vtable_shim_header.py"
+            --check
+    )
     add_test(NAME class-size-bounds-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_class_size_bounds.py"
