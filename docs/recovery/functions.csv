@@ -2674,7 +2674,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004E0EA0,0x004E0F22,130,.text,?editor_set_brush@Console@@QAEXXZ,void (__thiscall ?editor_set_brush@Console@@QAEXXZ)(Console* this),0x004E0EA0-0x004E0F22,game,sp_ready;purged_ok,,,,,unrecovered,,,,4,2
 0x004E0F30,0x004E0F7D,77,.text,?editor_flat@Console@@QAEXXZ,void (__thiscall ?editor_flat@Console@@QAEXXZ)(Console* this),0x004E0F30-0x004E0F7D,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x004E0F80,0x004E0F98,24,.text,?editor_polar@Console@@QAEXXZ,void (__thiscall ?editor_polar@Console@@QAEXXZ)(Console* this),0x004E0F80-0x004E0F98,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
-0x004E0FA0,0x004E0FC3,35,.text,?editor_climate@Console@@QAEXXZ,void (__thiscall ?editor_climate@Console@@QAEXXZ)(Console* this),0x004E0FA0-0x004E0FC3,game,hidden;sp_ready;purged_ok,src/console.cpp:420,,,,unrecovered,,,,4,2
+0x004E0FA0,0x004E0FC3,35,.text,?editor_climate@Console@@QAEXXZ,void (__thiscall ?editor_climate@Console@@QAEXXZ)(Console* this),0x004E0FA0-0x004E0FC3,game,hidden;sp_ready;purged_ok,src/console.cpp:415,,,,unrecovered,,,,4,2
 0x004E0FD0,0x004E10BC,236,.text,?editor_generate@Console@@QAEXXZ,void (__thiscall ?editor_generate@Console@@QAEXXZ)(Console* this),0x004E0FD0-0x004E10BC,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,2
 0x004E10C0,0x004E118D,205,.text,?editor_fast@Console@@QAEXXZ,void (__thiscall ?editor_fast@Console@@QAEXXZ)(Console* this),0x004E10C0-0x004E118D,game,sp_ready;purged_ok,,,,,unrecovered,,,,3,2
 0x004E1190,0x004E11F7,103,.text,?editor_randomize@Console@@QAEXXZ,void (__thiscall ?editor_randomize@Console@@QAEXXZ)(Console* this),0x004E1190-0x004E11F7,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,1
@@ -2686,7 +2686,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x004E14A0,0x004E14C8,40,.text,?editor_rockiness@Console@@QAEXXZ,void (__thiscall ?editor_rockiness@Console@@QAEXXZ)(Console* this),0x004E14A0-0x004E14C8,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,1
 0x004E14D0,0x004E1E99,2977,.text,?editor_natural@Console@@QAEXH@Z,"void (__thiscall ?editor_natural@Console@@QAEXH@Z)(Console* this, int)",0x004E14D0-0x004E1E99;0x0065C38C-0x0065C564,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,46,1
 0x004E1F20,0x004E1F29,9,.text,?editor_undo@Console@@QAEXXZ,void (__thiscall ?editor_undo@Console@@QAEXXZ)(Console* this),0x004E1F20-0x004E1F29,game,hidden;sp_ready;purged_ok,src/console.cpp:169,Complete,,,source_complete,,,,1,2
-0x004E1F30,0x004E1F39,9,.text,?editor_redo@Console@@QAEXXZ,void (__thiscall ?editor_redo@Console@@QAEXXZ)(Console* this),0x004E1F30-0x004E1F39,game,sp_ready;purged_ok,src/console.cpp:432,,,,unrecovered,,,,1,1
+0x004E1F30,0x004E1F39,9,.text,?editor_redo@Console@@QAEXXZ,void (__thiscall ?editor_redo@Console@@QAEXXZ)(Console* this),0x004E1F30-0x004E1F39,game,sp_ready;purged_ok,src/console.cpp:427,,,,unrecovered,,,,1,1
 0x004E1F40,0x004E1F70,48,.text,?edit_lock@Console@@QAEHXZ,int (__thiscall ?edit_lock@Console@@QAEHXZ)(Console* this),0x004E1F40-0x004E1F70,game,sp_ready;purged_ok,src/console.cpp:137,Complete,,,source_complete,,,,0,8
 0x004E1F70,0x004E1FF6,134,.text,?editor_lock2@Console@@QAEXXZ,void (__thiscall ?editor_lock2@Console@@QAEXXZ)(Console* this),0x004E1F70-0x004E1FF6,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,3,2
 0x004E2000,0x004E2235,565,.text,?corner_the_market@Console@@QAEXXZ,void (__thiscall ?corner_the_market@Console@@QAEXXZ)(Console* this),0x004E2000-0x004E2235,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,12,2
@@ -2951,7 +2951,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x0051BBA0,0x0051BC62,194,.text,?load_proc@Console@@QAEXHH@Z,"void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)",0x0051BBA0-0x0051BC62,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,9,2
 0x0051BC70,0x0051D23E,5582,.text,?menu_proc@Console@@QAEXH@Z,"void (__thiscall ?menu_proc@Console@@QAEXH@Z)(Console* this, int)",0x0051BC70-0x0051D23E,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,148,1
 0x0051D720,0x0051D733,19,.text,?menu_daemon@Console@@QAAXH@Z,,0x0051D720-0x0051D733,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,0
-0x0051D740,0x0051D753,19,.text,?menu_update@Console@@QAEXXZ,void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this),0x0051D740-0x0051D753,game,hidden;sp_ready;purged_ok,src/console.cpp:440,,,,unrecovered,,,,1,0
+0x0051D740,0x0051D753,19,.text,?menu_update@Console@@QAEXXZ,void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this),0x0051D740-0x0051D753,game,hidden;sp_ready;purged_ok,src/console.cpp:435,,,,unrecovered,,,,1,0
 0x0051D760,0x0051D7B5,85,.text,sub_51d760,,0x0051D760-0x0051D7B5,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,0
 0x0051D7C0,0x0051D7CB,11,.text,?on_sys_close@Console@@QAEXXZ,void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this),0x0051D7C0-0x0051D7CB,game,sp_ready;purged_ok,src/console.cpp:406,,,ConsoleOnSysCloseTarget,original_dependency,,,,0,0
 0x0051D7D0,0x0051D88E,190,.text,?close@Console@@QAEXXZ,void (__thiscall ?close@Console@@QAEXXZ)(Console* this),0x0051D7D0-0x0051D88E,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,4,3

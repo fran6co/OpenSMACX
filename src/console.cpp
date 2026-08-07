@@ -408,12 +408,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::on_sys_close() {
-    // 0x009B2068 is `ExitTurnLoopAddress` in src/scenario.cpp. Bound here as
-    // a local so the body compiles both against the project's headers and
-    // against the verification scaffolding, which knows the address but not
-    // the project's name for it.
-    int *const exit_turn_loop = reinterpret_cast<int *>(0x009B2068);
-    *exit_turn_loop = 1;
+    *g_009b2068 = 1;
 }
 
 /*
