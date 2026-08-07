@@ -1,4 +1,4 @@
-// 0x004C78C0  ?set_base_path@Midi@@QAEHPBD@Z  ->  ?set_base_path@Midi@@QAEHPBD@Z
+// 0x005F12B0  sub_5f12b0  ->  _sub_5f12b0
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
@@ -6,13 +6,14 @@
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
 /*
-Purpose: Forward to the Midi delegate at +0x3C, when there is one.
-Original Offset: 004C78C0
-Return Value: the delegate's result; UNSET when there is no delegate
+Purpose: Recover the window's C++ object and forward the message to it.
+Original Offset: 005F12B0
+Return Value: the handler's result, or zero when the window has no object
 Status: Complete
 */
-// The scaffolding's VCall shim declares every slot nullary and void.
-class MidiDelegate {
+// Catalogued as taking NO arguments; the disassembly reads three off the
+// stack and calls GetWindowLongA(hwnd, GWL_USERDATA).
+class WndVCall {
  public:
   virtual void slot000();
   virtual void slot001();
@@ -73,15 +74,28 @@ class MidiDelegate {
   virtual void slot056();
   virtual void slot057();
   virtual void slot058();
-  virtual int slot059(const char *);
+  virtual void slot059();
+  virtual void slot060();
+  virtual void slot061();
+  virtual void slot062();
+  virtual void slot063();
+  virtual void slot064();
+  virtual void slot065();
+  virtual void slot066();
+  virtual void slot067();
+  virtual void slot068();
+  virtual void slot069();
+  virtual int slot070(int, int);
 };
 
-int Midi::set_base_path(const char * a1) {
-    // `field_3c_` is a DECLARED member now, so no pad struct and no cast to
-    // reach it. Before hypothesis_layouts.h knew about it, this body had to
-    // overlay a `struct { char pad[0x3c]; MidiDelegate *other; }` on `this`.
-    if (field_3c_) {
-        return reinterpret_cast<MidiDelegate *>(field_3c_)->slot059(a1);
+extern "C" int __cdecl sub_5f12b0(void *window, int a2, int a3) {
+    typedef long(__stdcall * GetWindowLongFn)(void *, int);
+    // ONE variable returned on both paths. Two separate returns re-zero eax
+    // with an instruction of its own instead of merging to one epilogue.
+    int object = (*reinterpret_cast<GetWindowLongFn *>(g_0066934c))(
+        window, -0x15);
+    if (object) {
+        object = reinterpret_cast<WndVCall *>(object)->slot070(a2, a3);
     }
-    // No return: the original leaves eax untouched on the null path.
+    return object;
 }

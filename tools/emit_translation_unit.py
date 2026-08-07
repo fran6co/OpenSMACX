@@ -514,6 +514,38 @@ def vtable_slots(pe, spans, cap: int = VTABLE_SLOT_CAP):
         slot for slot in found if slot > cap)
 
 
+def proved_member_declaration(name: str) -> list:
+    """Member lines for a class only BYTE-EXACT bodies have described, or [].
+
+    Read from `agent-structure-observations.csv` through
+    `emit_hypothesis_layouts.proved_members`, so the emitter and the layout
+    header agree about what has been proved. Gaps between known offsets become
+    padding, exactly as they do for a Thinker-only layout - a member nobody has
+    touched is storage, not an invention.
+
+    Deliberately NOT routed through `class_layouts.pinned_layouts()`. That gate
+    means "this layout compiles to the real class size", which is a stronger
+    and different claim; these offsets are proved individually and the size is
+    still unknown. Keeping them apart is what stops a partial layout being read
+    downstream as a verified one.
+    """
+    import emit_hypothesis_layouts as layouts
+    proved = layouts.proved_members().get(name)
+    if not proved:
+        return []
+    lines, cursor = [], 0
+    for offset in sorted(proved):
+        member, size = proved[offset]
+        if offset < cursor:
+            continue
+        if offset > cursor:
+            lines.append(f"    uint8_t pad_{cursor:x}_[0x{offset - cursor:X}];")
+        lines.append(f"    uint32_t {member};" if size == 4
+                     else f"    uint8_t {member};")
+        cursor = offset + size
+    return lines
+
+
 def vtable_shim(slots: list) -> str:
     """A class whose Nth virtual gives ordinary codegen for `call [reg+N*4]`.
 
@@ -1078,6 +1110,23 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         # 10 writebacks lost that way, and the ones that landed wrote
         # `self[2]` into a file that already said `head_`.
         layout = class_layouts.declaration_for(signature.klass)
+        if not layout:
+            # NO PINNED LAYOUT, but a body that was proved byte-identical may
+            # already have reached into this class, and where it did the
+            # offset is not a hypothesis - the comparison would have caught it.
+            #
+            # The pinned gate exists so a WRONG offset cannot reach an agent.
+            # A proved one cannot be wrong, which is why it is admitted here
+            # and nowhere else: this is still not a proved SIZE, so it does not
+            # go near `pinned_layouts()` or `verified-layouts.txt`.
+            #
+            # What it buys is the difference between
+            #     *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x2144) = a1;
+            # and
+            #     field_2144_ = a1;
+            # in every future recovery on the class. The casts in recovered
+            # code were never a style problem; they are this file's gaps.
+            layout = proved_member_declaration(signature.klass)
         if layout:
             lines.extend(layout)
             lines.append("")

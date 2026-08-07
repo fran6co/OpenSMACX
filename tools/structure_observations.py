@@ -97,7 +97,12 @@ def validate(rows: list) -> None:
         address = (row.get("address") or "").strip()
         if address and not address.lower().startswith("0x"):
             raise Invalid(f"{where}: address {address!r} is not hex")
+        # `-` means "not applicable" and is what a person writes in a table.
+        # Refusing it made three separate agents' rows fail validation for a
+        # reason that has nothing to do with whether the observation is sound.
         offset = (row.get("offset") or "").strip()
+        if offset == "-":
+            offset = ""
         # A NEGATIVE offset is allowed and is the most informative kind there
         # is: `[ecx-0x1c]` means the declared class is a SUBOBJECT inside a
         # larger one, which is inheritance the declaration does not model.

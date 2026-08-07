@@ -45,6 +45,12 @@ class ValidationTest(unittest.TestCase):
         with self.assertRaises(tool.Invalid):
             tool.validate([row(status="maybe")])
 
+    def test_a_dash_means_not_applicable(self):
+        # It is what a person writes in a table, and three agents' rows failed
+        # validation over it for a reason unrelated to whether the observation
+        # was sound.
+        tool.validate([row(offset="-")])
+
     def test_a_negative_offset_is_allowed(self):
         # `[ecx-0x1c]` means the declared class is a SUBOBJECT inside a larger
         # one - inheritance the declaration does not model. That is the most
