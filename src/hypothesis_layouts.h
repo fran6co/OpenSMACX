@@ -175,6 +175,12 @@ struct BItem {
   uint32_t energy_;  // 0x14
 };
 
+/* 0xA1C bytes, 2 member(s), 1 named. From bodies proved byte-identical. */
+struct Base524320 {
+  uint8_t field_0_[0xA18];  // 0x0
+  uint32_t field_a18_;  // 0xA18
+};
+
 /* 0x1E674 bytes, 410 member(s), 0 named. From Thinker. */
 struct BaseWindow {
   uint8_t field_0_[0xA14];  // 0x0
@@ -1489,10 +1495,12 @@ struct MapTile {
   uint32_t sq_;  // 0xC
 };
 
-/* 0x50 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 42 function(s) in the image. */
+/* 0x50 bytes, 3 member(s), 1 named. From bodies proved byte-identical. 42 function(s) in the image. */
 class Midi {
  public:
-  uint8_t field_0_[0x50];  // 0x0
+  uint8_t field_0_[0x3C];  // 0x0
+  uint32_t field_3c_;  // 0x3C
+  uint8_t field_40_[0x10];  // 0x40
 };
 
 /* 0x366C bytes, 122 member(s), 13 named. From the IDB. 11 function(s) in the image. */
