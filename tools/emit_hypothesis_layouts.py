@@ -233,6 +233,85 @@ def proved_members() -> dict:
     return found
 
 
+def member_name_for(type_name: str) -> str:
+    """`SubInterface` -> `sub_interface_`, so the member reads as itself."""
+    parts = re.findall(r"[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[a-z0-9]+", type_name)
+    return "_".join(part.lower() for part in parts) + "_"
+
+
+def proved_subobjects() -> dict:
+    """{class: {offset: (member, type)}} for EMBEDDED sub-objects.
+
+    Kept apart from `proved_members` because the two are not the same claim
+    and cannot be emitted the same way. A member has a known width; an
+    embedded sub-object's size is exactly what nobody knows yet, so it can
+    only ever be declared LAST - anything after it would sit at an offset
+    this file just invented.
+
+    This is the other half of the reinterpret_cast story. `proved_members`
+    already explains why an undeclared FIELD forces a cast; an undeclared
+    SUB-OBJECT forces the uglier one, because there is no field to name at
+    all:
+
+        ((SubInterface *)((char *)this + 0xA14))->release_iface_mode();
+
+    against what a declaration buys:
+
+        sub_interface_.release_iface_mode();
+
+    Both compile to `lea ecx,[esi+0xa14]; call ...`, so this is readability
+    bought at no cost to the proof - the byte comparison cannot tell them
+    apart, which is precisely why it is safe to prefer the second.
+
+    The evidence for this one is unusually strong: five distinct classes -
+    BaseWin, CouncWin, Datalink, DiploWin, SocialWin - place SubInterface at
+    the SAME +0xA14, every one of them established by a body that then
+    verified byte-identical. Five classes agreeing on an offset is a shared
+    base, and no `src/*.h` declares any inheritance at all. Declaring the
+    sub-object per class is what can be justified TODAY; naming the common
+    base needs its size, which is still unknown.
+
+    NEGATIVE offsets are skipped for the same reason as in `proved_members`,
+    and they mean the same thing: `-0xA14` says this class is itself a
+    sub-object of something larger. That is the more interesting fact and
+    still not one a declaration can express.
+    """
+    found = collections.defaultdict(dict)
+    if not OBSERVATIONS.is_file():
+        return found
+    with OBSERVATIONS.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("kind") != "embedded":
+                continue
+            if row.get("status") == "rejected":
+                continue
+            subject = (row.get("subject") or "").strip()
+            offset = (row.get("offset") or "").strip()
+            if not IDENTIFIER.match(subject):
+                continue
+            if not offset.lower().startswith("0x"):
+                continue                       # negative, or not an offset
+            try:
+                at = int(offset, 16)
+            except ValueError:
+                continue
+            # The TYPE is the leading identifier of the detail, which is how
+            # these rows are written: "SubInterface sub-object embedded at
+            # +0xA14". A row that does not start by naming a type is not
+            # actionable - it describes a sub-object nobody has identified.
+            #
+            # It must LOOK like a class name, which here means starting with a
+            # capital. Accepting any leading word turned BattleWin's
+            # "a Win sub-object at +8" into a member of type `a`, which
+            # compiles to nothing and reads as a finding.
+            lead = re.match(r"\s*([A-Z]\w*)", row.get("detail") or "")
+            if lead is None or lead.group(1) == subject:
+                continue
+            found[subject][at] = (member_name_for(lead.group(1)),
+                                  lead.group(1))
+    return found
+
+
 def owns_functions() -> collections.Counter:
     owned = collections.Counter()
     if not FUNCTIONS.is_file():
