@@ -246,6 +246,27 @@ def damage_layout_probe_header(workspace):
             "--src", str(copy)]
 
 
+def damage_cast_classification(workspace):
+    """A cast reclassified, so the committed measurement stops describing src/.
+
+    Dropping a ROW rather than editing a field, because a dropped row is the
+    failure mode this classifier is built against: it is the shape a
+    classifier takes when it quietly emits only what it understood, and a
+    clean sheet produced by discarding evidence looks exactly like a clean
+    sheet produced by there being nothing wrong.
+    """
+    report = REPO_ROOT / "docs" / "recovery" / "cast-classification.csv"
+    if not report.is_file():
+        raise Skip("docs/recovery/cast-classification.csv is absent")
+    lines = report.read_text(encoding="utf-8").splitlines(keepends=True)
+    if len(lines) < 3:
+        raise Skip("no classified cast to drop")
+    copy = workspace / "cast-classification.csv"
+    copy.write_text("".join(lines[:1] + lines[2:]), encoding="utf-8")
+    return [PYTHON, str(TOOLS / "classify_casts.py"), "--check",
+            "--report", str(copy)]
+
+
 def damage_pinned_class_size(workspace):
     """Every pinned `sizeof` moved, so the image-derived sizes disagree.
 
@@ -416,6 +437,8 @@ CASES = (
      damage_verified_layouts, "is stale"),
     ("verified-layouts-current", "a header defect read as a wrong layout",
      damage_layout_probe_header, "header defect"),
+    ("cast-classification-current", "a classified cast quietly dropped",
+     damage_cast_classification, "is stale"),
     ("class-layout-derivation-pinned", "pinned sizes the image contradicts",
      damage_pinned_class_size, "answered wrongly"),
 )
@@ -436,6 +459,7 @@ COVERED_CHECKS = {
     "recovery-abi",
     "verified-layouts-current",
     "class-layout-derivation-pinned",
+    "cast-classification-current",
 }
 
 
