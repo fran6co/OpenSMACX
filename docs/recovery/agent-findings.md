@@ -440,3 +440,34 @@ The cast-based bodies stay as they are meanwhile: they are byte-exact, and a
 declared hierarchy would change layout and vtable order for every other body
 on the same class. Modelling it is worth doing when the enclosing offset is
 known, and not before.
+
+## `hypothesis_layouts.h` reaches no compiled translation unit
+
+Nothing in `OPENSMACX_SOURCES` includes it. The only `#include` anywhere is in
+a `src/recovered/` staging file, which is not compiled either. So the header
+exists, is regenerated, is checked for staleness - and no build has ever seen
+it.
+
+That corrects something claimed here earlier. Feeding proved members into
+`emit_hypothesis_layouts.py` was described as fixing "the PRODUCT side" while
+leaving verification untouched. It fixed neither: the generated header is not
+compiled, so naming a member there changes nothing about any build.
+
+The change that DID work is the separate one, and it works for a different
+reason: `emit_translation_unit.proved_member_declaration` calls
+`emit_hypothesis_layouts.proved_members()`, which reads
+`agent-structure-observations.csv` DIRECTLY. It never reads the header. So the
+scaffolding gains the members, recovered bodies can name them, and
+`Midi::set_base_path` is byte-exact writing `field_3c_` - all of which is real
+and none of which came from the header.
+
+Two things follow. A generated artefact nobody includes cannot be assumed to
+have an effect just because it is regenerated and gated; and when two changes
+land together and one works, the working one is worth isolating before its
+success is attributed to the other.
+
+What the header would be FOR is product code: a recovered body integrated into
+`src/` that wants to say `field_3c_` needs the declaration from somewhere the
+build reads. That means including it from the files that need it, or promoting
+those classes into headers of their own. Neither has been done, and until one
+is, integration keeps needing the offset-cast spelling.
