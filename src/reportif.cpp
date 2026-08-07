@@ -170,7 +170,7 @@ Return Value: n/a
 Status: Complete
 */
 void ReportIf::close_intel() {
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     reinterpret_cast<ListBox *>(self + 0xA2D0)->close();
     reinterpret_cast<ListBox *>(self + 0xAE24)->close();
 }
@@ -200,7 +200,7 @@ Return Value: n/a
 Status: Complete
 */
 void ReportIf::close_energy() {
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     ReportIfEnergyListBox->close();
     reinterpret_cast<ListBox *>(self + 0xA2D0)->close();
     reinterpret_cast<ListBox *>(self + 0xAE24)->close();

@@ -704,7 +704,7 @@ int Buffer::sync_to_palette(Palette *palette) {
     // the 256-entry table it guards, so an unchanged palette costs nothing.
     if (field_4A4_ != palette->field_400_) {
         field_4A4_ = palette->field_400_;
-        auto *const table = reinterpret_cast<RGBQUAD *>(dib_);
+        RGBQUAD *const table = reinterpret_cast<RGBQUAD *>(dib_);
         palette->get_rgbquad(table, 0, 0x100);
         const HDC device = get_hdc();
         if (device != nullptr) {
@@ -929,7 +929,7 @@ Status: Complete
 void Buffer::clear_links() {
     spot_.init(0x28);
     field_4AC_ = 0;
-    auto *const links = reinterpret_cast<void **>(field_4BC_);
+    void * *const links = reinterpret_cast<void **>(field_4BC_);
     for (size_t index = 0; index < 20; ++index) {
         if (links[index]) {
             BufferFree(links[index]);

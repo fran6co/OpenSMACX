@@ -137,7 +137,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_left_click(int a1, int a2) {
-    auto *const base = reinterpret_cast<BaseWin *>(
+    BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
     (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 0, 0);
 }
@@ -150,7 +150,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_right_click(int a1, int a2) {
-    auto *const base = reinterpret_cast<BaseWin *>(
+    BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
     (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 1, 0);
 }
@@ -163,7 +163,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_left_double_click(int a1, int a2) {
-    auto *const base = reinterpret_cast<BaseWin *>(
+    BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
     (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 0, 1);
 }
@@ -176,7 +176,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_right_double_click(int a1, int a2) {
-    auto *const base = reinterpret_cast<BaseWin *>(
+    BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
     (ORIGINAL(base)->*BaseWinIfaceClick)(a1, a2, 1, 1);
 }
@@ -214,7 +214,7 @@ void BaseWin::on_iface_scrolled(int a1, int a2) {
         return;
     }
     std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x40100, &a2, sizeof(a2));
-    auto *const base = reinterpret_cast<BaseWin *>(
+    BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
     (ORIGINAL(base)->*BaseWinDrawSupported)(1);
 }

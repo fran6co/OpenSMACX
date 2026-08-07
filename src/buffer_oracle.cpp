@@ -27,7 +27,7 @@
 
 namespace {
 
-using BufferFixture = runtime_oracle::Fixture<Buffer>;
+typedef runtime_oracle::Fixture<Buffer> BufferFixture;
 
 // Neither method dispatches through the Buffer vtable; both dispatch through a
 // DirectDraw surface interface the fixture supplies instead.
@@ -55,7 +55,7 @@ uint32_t ProbeLockData = 0;
 long __stdcall probe_lock(
         void *, void *rect, void *descriptor, uint32_t flags, void *event) {
     ++Probe.lock_calls;
-    auto *bytes = static_cast<uint8_t *>(descriptor);
+    uint8_t *bytes = static_cast<uint8_t *>(descriptor);
     memcpy(&Probe.descriptor_size, bytes, sizeof(Probe.descriptor_size));
     if (rect != nullptr || flags != 1U || event != nullptr) {
         return -1;
@@ -112,7 +112,7 @@ bool verify_get_data() {
         {true, 0, 0, 0xFFFFFFFFU, 0, 0xFFFFFFFFU, 0xABCDU},
     };
     install_surface();
-    auto original = reinterpret_cast<OriginalNoArg>(0x005E3373U);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005E3373U);
     for (const GetCase &test : cases) {
         BufferFixture legacy;
         BufferFixture source;
@@ -170,7 +170,7 @@ bool verify_free_data() {
         {false, 0x5555U, 0x80000000U, static_cast<int>(0xFFFFFFFFU)},
     };
     install_surface();
-    auto original = reinterpret_cast<OriginalOneArg>(0x005E34A3U);
+    OriginalOneArg original = reinterpret_cast<OriginalOneArg>(0x005E34A3U);
     for (const FreeCase &test : cases) {
         BufferFixture legacy;
         BufferFixture source;
@@ -207,7 +207,7 @@ bool verify_text_line_height() {
         {0, 111, 222}, {5, 111, 222}, {-1, 111, 222},
         {INT_MIN, 111, 222}, {INT_MAX, 111, 1}, {1, INT_MAX, INT_MAX},
     };
-    auto original = reinterpret_cast<OriginalNoArg>(0x005DCAB0U);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005DCAB0U);
     Font *const saved_default = *FontDefaultPtr;
     bool passed = true;
     for (const HeightCase &test : cases) {
@@ -272,7 +272,7 @@ bool verify_close_reset() {
     // release loop's skip path, both mode branches' guards, and the whole
     // field reset, which is where the transcription risk lives. Releases with
     // real allocations belong to the deferred phase.
-    auto original = reinterpret_cast<OriginalNoArg>(0x005D7470U);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005D7470U);
     const int saved_mode = *BufferDirectDrawActive;
     bool passed = true;
     for (int direct_draw = 0; direct_draw < 2 && passed; ++direct_draw) {
@@ -309,7 +309,7 @@ bool verify_close_reset() {
 bool verify_destroy() {
     // Same resource-free shape as the close reset, plus the vtable store and
     // the Spot subobject teardown the destructor adds around it.
-    auto original = reinterpret_cast<OriginalNoArg>(0x005D7410U);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(0x005D7410U);
     const int saved_mode = *BufferDirectDrawActive;
     bool passed = true;
     for (int direct_draw = 0; direct_draw < 2 && passed; ++direct_draw) {
@@ -364,7 +364,7 @@ bool run_buffer_release_suite() {
     if (!suspend_redirect_at(BufferCloseAddress)) {
         return false;
     }
-    auto original = reinterpret_cast<OriginalNoArg>(BufferCloseAddress);
+    OriginalNoArg original = reinterpret_cast<OriginalNoArg>(BufferCloseAddress);
     const int saved_mode = *BufferDirectDrawActive;
     bool passed = true;
 

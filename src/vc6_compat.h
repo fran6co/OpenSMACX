@@ -229,6 +229,11 @@ inline int _snprintf_s(char *destination, size_t size, size_t, const char *forma
 #define INVALID_SET_FILE_POINTER ((unsigned long)-1)
 #endif
 
+/* ARRAYSIZE arrived in a later Platform SDK than the one VC6 shipped with. */
+#ifndef ARRAYSIZE
+#define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
+#endif
+
 /*
  * `typedef char x[cond ? 1 : -1]` - a negative array bound is an error, so a
  * false condition fails the compile. __LINE__ keeps two assertions in one

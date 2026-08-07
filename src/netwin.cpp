@@ -124,7 +124,7 @@ Return Value: n/a
 Status: Complete
 */
 void NetWin::UNK5() {
-    auto *const self = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     *reinterpret_cast<uint32_t *>(self + 0x178) = 0;
     self[0] = 0xFF;
     self[1] = 0;

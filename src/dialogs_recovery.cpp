@@ -35,7 +35,7 @@ bool kind_in_range(int32_t kind) {
 
 // Where the Dialog subobject is, according to this object's own vbtable.
 Dialog *dialog_of(void *self) {
-    auto *const bytes = reinterpret_cast<uint8_t *>(self);
+    uint8_t *const bytes = reinterpret_cast<uint8_t *>(self);
     const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(bytes);
     return reinterpret_cast<Dialog *>(bytes + vbtable[2]);
 }
@@ -120,7 +120,7 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_right_down(int a1, int a2) {
-    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
@@ -138,7 +138,7 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_right_double_click(int a1, int a2) {
-    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
@@ -156,7 +156,7 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_left_up(int a1, int a2) {
-    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
@@ -174,7 +174,7 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_right_up(int a1, int a2) {
-    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
@@ -192,7 +192,7 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_right_click(int a1, int a2) {
-    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 8) {
@@ -210,7 +210,7 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_scrolled(int a1, int a2) {
-    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 2) {
@@ -228,7 +228,7 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_scrolling(int a1, int a2) {
-    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 2) {
@@ -246,7 +246,7 @@ Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_mousewheel(int a1) {
-    auto *const bytes = reinterpret_cast<uint8_t *>(this);
+    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     int discriminator;
     std::memcpy(&discriminator, bytes - 8, sizeof(discriminator));
     if (discriminator == 2) {
@@ -377,7 +377,7 @@ uint32_t Dialogs::destroy() {
     // The embedded RadioButton at base+0x44: its vbtable names the SHARED
     // virtual bases, so this staging overwrites the step-one tables, and its
     // recovered close walks them through the same vbtable.
-    auto *const radio = static_cast<uint8_t *>(guarded(0x44, 0));
+    uint8_t *const radio = static_cast<uint8_t *>(guarded(0x44, 0));
     stage_virtual_tables(radio, DialogsRadioPrimaryVtable,
                          DialogsRadioBufferVtable, DialogsRadioWinVtable,
                          0x18, 0xA30);
@@ -391,7 +391,7 @@ uint32_t Dialogs::destroy() {
 
 // ~Dialogs is entered with this = B + 0x188; recover the base first.
 uint32_t __fastcall dialogs_destructor_redirect(void *adjusted, void *) {
-    auto *self = reinterpret_cast<Dialogs *>(
+    Dialogs *self = reinterpret_cast<Dialogs *>(
         static_cast<uint8_t *>(adjusted) - DialogsDestructorAdjustment);
     return self->destroy();
 }

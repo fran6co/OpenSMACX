@@ -77,7 +77,7 @@ bool run_spying_oracle_suite() {
     // A pure read over original-image tables: both sides observe identical
     // globals, so every branch is compared by driving the two selector globals
     // across their interesting values and sweeping the subject index.
-    auto original = reinterpret_cast<OriginalSpying>(0x0055BC00U);
+    OriginalSpying original = reinterpret_cast<OriginalSpying>(0x0055BC00U);
     const int saved_base = *SpyingBaseIndex;
     const int saved_observer = *SpyingObserverFaction;
     const int saved_faction = *SpyingCurrentFaction;

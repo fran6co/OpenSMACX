@@ -583,7 +583,7 @@ Return Value: the embedded CheckBox's state word
 Status: Complete
 */
 uint32_t BasePop::read_check() {
-    auto *const check = reinterpret_cast<uint8_t *>(this) + 0x2228;
+    uint8_t *const check = reinterpret_cast<uint8_t *>(this) + 0x2228;
     const int32_t *const vbtable =
         *reinterpret_cast<const int32_t *const *>(check);
     return *reinterpret_cast<const uint32_t *>(check + vbtable[2] + 0xEC);

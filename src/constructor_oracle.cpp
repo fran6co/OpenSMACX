@@ -180,7 +180,7 @@ bool verify_constructor(
 }
 
 bool verify_palette() {
-    auto original = reinterpret_cast<OriginalPaletteGet>(PaletteGetAddress);
+    OriginalPaletteGet original = reinterpret_cast<OriginalPaletteGet>(PaletteGetAddress);
     bool passed = true;
     for (int initialized : {0, 1}) {
         *PaletteInitialized = initialized;

@@ -523,7 +523,7 @@ statements earlier, so off-by-small-constant offset mutants read the same
 zeros.
 */
 void Scroll::compute_thumb_rect(RECT *rect) {
-    auto *thumb = reinterpret_cast<uint8_t *>(this) + 0xA4C;
+    uint8_t *thumb = reinterpret_cast<uint8_t *>(this) + 0xA4C;
     for (size_t offset = 0; offset < sizeof(RECT); offset += sizeof(uint32_t)) {
         write_bits(rect, offset, read_bits(thumb, offset));
     }
