@@ -201,16 +201,26 @@ Original Offset: 005E3630
 Return Value: the dword two links away, or 0
 Status: Complete
 */
+/*
+Original Offset: 005E3630
+Return Value: the dword two links away, or 0
+Status: Complete
+*/
 uint32_t __fastcall leaf_005e3630_redirect(void *self, void *) {
     const uint8_t *const bytes = static_cast<const uint8_t *>(self);
-    if (*reinterpret_cast<const uint32_t *>(bytes + 0x8) == 0) {
-        return 0;
+    // Guarding the WORK rather than the early return: an `if` jumps over its
+    // guarded arm, so this spelling negates to `je` and the `== 0` spelling
+    // negated to `jne`. What remains is a register-allocation difference the
+    // original resolves by reusing eax across the pointer chase; seven source
+    // shapes were tried and none steers it (docs/BYTE_MATCH_ROUTE.md:295-340).
+    if (*reinterpret_cast<const uint32_t *>(bytes + 0x8) != 0) {
+        const uint8_t *const first = *reinterpret_cast<const uint8_t *const *>(
+            bytes + 0xc);
+        const uint8_t *const second = *reinterpret_cast<const uint8_t *const *>(
+            first + 0x8);
+        return *reinterpret_cast<const uint32_t *>(second + 0x4);
     }
-    const uint8_t *const first = *reinterpret_cast<const uint8_t *const *>(
-        bytes + 0xc);
-    const uint8_t *const second = *reinterpret_cast<const uint8_t *const *>(
-        first + 0x8);
-    return *reinterpret_cast<const uint32_t *>(second + 0x4);
+    return 0;
 }
 
 /*

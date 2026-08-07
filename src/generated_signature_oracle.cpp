@@ -939,7 +939,7 @@ static bool verify_passover_callback_004456a0() {
 }
 
 // ?load_deswin_sprites@@YAXXZ  (35 B)
-// recovered in src/leaf_recoveries.cpp:1304
+// recovered in src/leaf_recoveries.cpp:1330
 static bool verify_load_deswin_sprites_00455e50() {
     typedef void (__cdecl *Callable)();
     Callable target = reinterpret_cast<Callable>(0x00455E50U);
