@@ -100,6 +100,86 @@ function whose prologue targets a handler other than `0x00644FD6` still
 stands, and is now known to fire only inside the CRT, which is excluded
 anyway.
 
+## 2a. C++ EH unwind funclets — expressibility, and measured three times
+
+43 functions, 15,970 bytes, all `unrecovered`, all flagged `hidden`, all in
+the linker's pool at `0x0065xxxx`–`0x0066xxxx`.
+
+These are a DIFFERENT POPULATION from the frame registrations above and were
+being walked into as if they were ordinary small functions. A registration is
+a `mov fs:[0], esp` inside a function that has a frame. A funclet is a
+separate body with **no frame of its own** that runs during unwinding and
+destroys a local belonging to the function that registered — so it borrows
+that function's `ebp`:
+
+```
+0x0065BFB1   lea ecx, [ebp - 0xA714]   ; the CALLER's frame, 42 KB into it
+             jmp 0x00406C00            ; = ??1Popup@@QAE@XZ, an entry point
+0x0065C001   mov ecx, [ebp - 0x14]
+             jmp <BaseButton dtor>
+```
+
+No prologue, no epilogue, no `ret` — a tail `jmp` into another symbol's entry.
+
+**Why a per-function compile cannot produce one, measured rather than argued.**
+Three recovery agents reached this independently and tested the alternatives:
+a genuine pointer local forces VC6 to emit its own `push ebp; mov ebp, esp`
+and a `call` instead of a `jmp`, because the function then has a frame to
+establish; only a compile-time-constant `this` reaches a tail `jmp`, and then
+the load collapses to `xor ecx, ecx` and the ebp-relative access is gone
+entirely. There is no source form with all three of "no prologue",
+"ebp-relative access to somebody else's locals" and "no epilogue".
+
+The `-0xA714` displacement settles it without any of that: no standalone
+function this harness compiles has a 42 KB frame.
+
+**Consequence.** The recovery unit for a funclet is the ENCLOSING function
+that registered it, not the funclet's own address. These addresses should not
+be queued by `byte_match_fanout.py --prepare`, and an agent that meets one
+should report it and move on rather than spend a wave on it. That is a
+catalogue-scope finding; the bodies are not defective and nothing about them
+is unknown.
+
+## 2b. Casts that no class declaration can remove
+
+Not functions — CASTS. `tools/classify_casts.py` resolves every
+`this`-relative cast in hand-written `src/` against the layout its class
+declares and writes `docs/recovery/cast-classification.csv`, gated by the
+`cast-classification-current` CTest. Three of its buckets are permanent, and
+they are recorded here so the count is not mistaken for a backlog.
+
+**`vtable-load` and `vtable-slot` — correct as written.** `src/wave.h:29-31`
+states the model: the vtable pointer at offset 0 is held as opaque storage
+"so no C++ vtable is generated; the original installs fixed vtable addresses
+itself (the constructor writes one, the destructor republishes three as it
+descends the inlined hierarchy)". Declaring these `virtual` would make VC6
+own a vptr the original owns by hand, and no C++ destructor republishes three
+different tables on the way down. These are not a missing-`virtual` defect;
+they are a deliberate refusal to let the compiler own it. The only legitimate
+improvement is naming the slot constants, which `src/basebutton.cpp` already
+does with `BaseButtonRefreshSlot`.
+
+**`receiver-is-subobject` and `negative-offset` — `container_of`, and C++ has
+no `container_of`.** A negative displacement says the class is standing on a
+sub-object and reaching its enclosing object. `emit_hypothesis_layouts`
+reached the same conclusion for the same reason: "`-0xA14` says this class is
+itself a sub-object of something larger. That is the more interesting fact and
+still not one a declaration can express." The best form available is
+`(char *)this - offsetof(BaseWin, iface_)` — typed and named, and still a
+cast. Anything in a body carrying such an offset is disqualified wholesale,
+because `this` there is not the declared class and no offset in it resolves.
+
+**Every `ORIGINAL(...)` cast.** `src/original_seam.h:112` is
+`#define ORIGINAL(p) (reinterpret_cast<OriginalObject *>(p))`, and the comment
+above it records why: VC6 rejects `__thiscall` with C4234, and suppressing
+that warning silently emits `__cdecl`, putting the receiver on the stack and
+cleaning it twice. These vanish only when the CALLEE becomes source-owned,
+which is a recovery task and not a header one.
+
+Anything under `src/hypothesis_layouts.h` or the twelve generated `.cpp`
+files is out of scope by construction: those are regenerated, and a hand edit
+is reverted by the next build.
+
 ## 3. Port I/O — expressibility, and it is one function
 
 Exactly one body in this image does port I/O on a directly reachable path:
@@ -298,6 +378,8 @@ and are cited above with their derivation instead.
 external_library.functions = 327
 external_library.bytes = 45155
 external_library.underscore_names = 278
+eh_funclets.functions = 43
+eh_funclets.bytes = 15970
 seh.frames = 402
 seh.cxx_frame_handler = 387
 seh.except_handler3 = 14
