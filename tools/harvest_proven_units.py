@@ -112,19 +112,53 @@ def body_of(address: int, unit_text: str, functions: dict, derived: dict,
     always meant. The scaffolding's declarations are stable even though its
     header comment is not, so the anchor is its last real line of code - not
     its prose, and not the subject's own signature.
+
+    THE EMITTER GROWS, AND THE CUT HAS TO SURVIVE THAT. Searching for the last
+    line and only the last line assumed the scaffolding a unit was written
+    against still ends where today's ends. It does not: the emitter has since
+    gained a second typedef block (`int32`..`uint8` alongside `int32_t`..
+    `uint8_t`), and every unit predating that gain stopped containing today's
+    final declaration. 49 proved recoveries were refused over it while nothing
+    about the proof had changed - each unit's scaffolding was a strict PREFIX
+    of the current one, which is the case that most obviously should succeed.
+
+    So the cut is the longest agreeing PREFIX of code lines, and the position
+    is counted rather than searched. Prefix comparison was tried before and
+    rejected, correctly, for comparing the whole text: the header COMMENT is
+    rewritten constantly and diverges within 325 bytes while the declarations
+    below it are fine. Comparing only code lines keeps the part that was ever
+    load-bearing. Counting instead of searching is what a `rfind` cannot do -
+    `};` closes the emitted shell AND every shim struct an agent wrote beside
+    its body, so any search for it cuts at the wrong brace, while the sixth
+    code line is unambiguously the sixth code line.
+
+    A cut that is wrong anyway is not silent: `mizuchi_writeback` recompiles
+    the body and refuses it unless it still scores BYTE_EXACT. If the emitter
+    ever changes a line in the MIDDLE, agreement stops early, stale
+    declarations ride along into the body, and the compiler rejects the
+    duplicate - which is the refusal we already had, not a new failure mode.
     """
     scaffolding = emit.emit(address, functions, derived, callees, pe_fast,
                             scaffolding_only=True)
-    tail = [line for line in scaffolding.splitlines()
-            if line.strip() and not line.lstrip().startswith("//")]
-    if not tail:
+    wanted = [line.strip() for line in scaffolding.splitlines()
+              if line.strip() and not line.lstrip().startswith("//")]
+    if not wanted:
         raise ValueError("scaffolding has no code to anchor on")
-    anchor = tail[-1]
-    index = unit_text.rfind(anchor)
-    if index < 0:
-        raise ValueError(f"unit does not contain the scaffolding's last "
-                         f"declaration {anchor.strip()!r}")
-    body = unit_text[index + len(anchor):]
+
+    agreed, cut, seen = 0, 0, 0
+    for line in unit_text.splitlines(keepends=True):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("//"):
+            continue
+        if seen >= len(wanted) or stripped != wanted[seen]:
+            break
+        seen += 1
+        agreed += 1
+        cut = unit_text.index(line, cut) + len(line)
+    if not agreed:
+        raise ValueError(f"unit shares no scaffolding with the emitter; its "
+                         f"first declaration should be {wanted[0]!r}")
+    body = unit_text[cut:]
     if not body.strip():
         raise ValueError("nothing follows the scaffolding")
     return body.strip() + "\n"
