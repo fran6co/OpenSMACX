@@ -47,11 +47,29 @@ def ledger_tiers() -> dict:
                 for row in csv.DictReader(handle)}
 
 
+def is_untouched(text: str) -> bool:
+    """Placeholder present AND nothing written where the body belongs.
+
+    The placeholder alone is not proof of an untouched unit. An agent found
+    one whose body had been appended BELOW the `// BODY GOES HERE.` line
+    instead of replacing it - real work that this would have called untouched
+    and thrown back into the queue. So the test is what follows the marker,
+    not whether the marker survived.
+    """
+    if PLACEHOLDER not in text:
+        return False
+    after = text.split(PLACEHOLDER, 1)[1]
+    code = [line for line in after.splitlines()
+            if line.strip() and not line.lstrip().startswith("//")]
+    # The emitter's own closing brace is one line and is not a body.
+    return len(code) <= 1
+
+
 def state_of(address: int, since: dt.datetime | None) -> str:
     unit = WORK_ROOT / f"{address:08x}" / "unit.cpp"
     if not unit.is_file():
         return "no-unit"
-    if PLACEHOLDER in unit.read_text():
+    if is_untouched(unit.read_text()):
         return "untouched"
     if since is not None:
         stamp = dt.datetime.fromtimestamp(unit.stat().st_mtime)
