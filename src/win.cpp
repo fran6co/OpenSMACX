@@ -963,7 +963,7 @@ Original Offset: 005F8530
 Status: Complete
 */
 void Win::on_mousewheel_down_vert(int a1) {
-    Scroll *scroll = *reinterpret_cast<Scroll **>(reinterpret_cast<char *>(this) + 0x43c);
+    Scroll *scroll = scroll_vert_;
     if (scroll) {
         scroll->on_mousewheel_down(a1);
     }
@@ -974,7 +974,7 @@ Original Offset: 005F8590
 Status: Complete
 */
 void Win::on_mousewheel_up_horz(int a1) {
-    Scroll *scroll = *reinterpret_cast<Scroll **>(reinterpret_cast<char *>(this) + 0x440);
+    Scroll *scroll = scroll_horz_;
     if (scroll) {
         scroll->on_mousewheel_up(a1);
     }
@@ -1002,7 +1002,7 @@ Original Offset: 005F8550
 Status: Complete
 */
 void Win::on_mousewheel_down_horz(int a1) {
-    Scroll *scroll = *reinterpret_cast<Scroll **>(reinterpret_cast<char *>(this) + 0x440);
+    Scroll *scroll = scroll_horz_;
     if (scroll) {
         scroll->on_mousewheel_down(a1);
     }
@@ -1013,7 +1013,7 @@ Original Offset: 005F8570
 Status: Complete
 */
 void Win::on_mousewheel_up_vert(int a1) {
-    Scroll *scroll = *reinterpret_cast<Scroll **>(reinterpret_cast<char *>(this) + 0x43c);
+    Scroll *scroll = scroll_vert_;
     if (scroll) {
         scroll->on_mousewheel_up(a1);
     }

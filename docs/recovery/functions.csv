@@ -12,7 +12,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00401B80,0x00401BD8,88,.text,sub_401b80,,0x00401B80-0x00401BD8,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x00401BE0,0x00401C79,153,.text,sub_401be0,,0x00401BE0-0x00401C79,game,frame;sp_ready;purged_ok,src/leaf_recoveries.cpp:1502,,,,unrecovered,,,,0,3
 0x00401C80,0x00401CD8,88,.text,SessionStruct::SessionStruct,,0x00401C80-0x00401CD8,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
-0x00401CE0,0x00401D79,153,.text,SessionStruct::close,,0x00401CE0-0x00401D79,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
+0x00401CE0,0x00401D79,153,.text,SessionStruct::close,,0x00401CE0-0x00401D79,game,frame;hidden;sp_ready;purged_ok,src/alphanet.cpp:136,,,,unrecovered,,,,0,1
 0x00401D80,0x0040230F,1568,.text,sub_401d80,,0x00401D80-0x0040230F;0x006504E0-0x00650571,game,frame;sp_ready;purged_ok,,,,,unrecovered,,,,6,1
 0x00402310,0x0040231F,15,.text,sub_402310,,0x00402310-0x0040231F,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,0,1
 0x00402320,0x00402349,41,.text,sub_402320,,0x00402320-0x00402349,game,frame;hidden;sp_ready;purged_ok,,,,,unrecovered,,,,1,2
@@ -4817,7 +4817,7 @@ address,end_address,size,segment,name,prototype,body_ranges,binary_kind,flags,so
 0x00610440,0x00610471,49,.text,?init@SpriteBox@@QAEHHHHHH@Z,"int (__thiscall ?init@SpriteBox@@QAEHHHHHH@Z)(SpriteBox* this, int, int, int, int, int)",0x00610440-0x00610471,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x00610480,0x006104A2,34,.text,?init@SpriteBox@@QAEHPAURECT@@H@Z,"int (__thiscall ?init@SpriteBox@@QAEHPAURECT@@H@Z)(SpriteBox* this, RECT*, int)",0x00610480-0x006104A2,game,hidden;sp_ready;purged_ok,src/spritebox.cpp:114,,,,unrecovered,,,,2,1
 0x006104B0,0x006104CD,29,.text,?init@SpriteBox@@QAEHPAUHeap@@@Z,"int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@@Z)(SpriteBox* this, Heap*)",0x006104B0-0x006104CD,game,hidden;sp_ready;purged_ok,src/spritebox.cpp:152,,,,unrecovered,,,,2,1
-0x006104D0,0x00610501,49,.text,?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z,"int (__thiscall ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z)(SpriteBox* this, int, int, int, int, Heap*)",0x006104D0-0x00610501,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
+0x006104D0,0x00610501,49,.text,?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z,"int (__thiscall ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z)(SpriteBox* this, int, int, int, int, Heap*)",0x006104D0-0x00610501,game,hidden;sp_ready;purged_ok,src/spritebox.cpp:176,,,,unrecovered,,,,2,1
 0x00610510,0x00610532,34,.text,?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z,"int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z)(SpriteBox* this, RECT*, Heap*)",0x00610510-0x00610532,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,1
 0x00610540,0x006108D5,917,.text,?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z,"int (__thiscall ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z)(SpriteBox* this, GraphicWin*, int, int, int)",0x00610540-0x006108D5,game,hidden;sp_ready;purged_ok,,,,SpriteBoxAttachTarget,original_dependency,,,,9,2
 0x006108E0,0x00610965,133,.text,?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z,"int (__thiscall ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z)(SpriteBox* this, Sprite*, int8*, int)",0x006108E0-0x00610965,game,hidden;sp_ready;purged_ok,,,,,unrecovered,,,,2,22

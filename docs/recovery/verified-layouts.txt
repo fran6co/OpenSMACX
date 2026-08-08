@@ -46,6 +46,7 @@ StringList
 StringStruct
 StringStructEntry
 Strings
+SubInterface
 TextIndex
 Texture
 Time

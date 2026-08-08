@@ -28,12 +28,23 @@
   * and ReportIf reaches its own at `this` unadjusted, so every use in the tree
   * is a reinterpret_cast of an address.
   *
-  * NOT a modelled layout, and deliberately carries no data member: nothing
-  * recovered dereferences a field, nobody holds one by value, and no member
-  * declared here could move a byte in the classes that embed it. The IDB
-  * records the object as 0x8 bytes (a vtable slot and one dword); should a
-  * class ever need to hold one by value, that is a layout change and needs its
-  * own evidence.
+  * THE LAYOUT IS MEASURED. An earlier version of this header carried no data
+  * member and said one would need "its own evidence" - the evidence was
+  * already in the image and had simply not been read. Disassembling this
+  * class's own methods and following `this` out of ECX:
+  *
+  *     ?set_iface_mode@SubInterface@@QAEXXZ      0x0045D310  4 bytes at +0x4
+  *     ?release_iface_mode@SubInterface@@QAEXXZ  0x0045D380  4 bytes at +0x4
+  *     ?delete_iface_mode@SubInterface@@QAEXXZ   0x0045D2E0  touches nothing
+  *
+  * so the object is AT LEAST 8 bytes, which is independently what the IDB
+  * records. Code that indexes a member proves the member is there.
+  *
+  * +0x0 is NOT proved: no method of this class touches it. It is a dword
+  * because the size says so and because +0x4 is dword-aligned, and it is
+  * named for its offset rather than given a meaning it has not earned. It is
+  * NOT a vtable pointer - every call site reaches these methods with
+  * `lea ecx, [esi+0xa14]; call rel32`, a direct call, never through a slot.
   *
   * NOT DLLEXPORT: all three methods are unrecovered, and dllexport on a class
   * demands a definition for every member. They are public, non-virtual
@@ -48,7 +59,17 @@ class SubInterface {
   void delete_iface_mode();   // 0x0045D2E0  ?delete_iface_mode@SubInterface@@QAEXXZ
   void set_iface_mode();      // 0x0045D310  ?set_iface_mode@SubInterface@@QAEXXZ
   void release_iface_mode();  // 0x0045D380  ?release_iface_mode@SubInterface@@QAEXXZ
+
+ private:
+  uint32_t field_0_;  // 0x0  not touched by any method of this class
+  uint32_t field_4_;  // 0x4  PROVED: set_iface_mode and release_iface_mode
+                      //      both access 4 bytes here
 };
+
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(SubInterface) == 0x8,
+              "SubInterface layout must match the legacy ABI");
+#endif
 
 /*
  * Seams for the two methods the tree calls. Both are void(void) __thiscall, so
