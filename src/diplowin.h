@@ -16,6 +16,9 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "spot.h"
+#include "listbox.h"
+#include "flatbutton.h"
 #include "graphicwin.h"
 
  /*
@@ -364,7 +367,7 @@ class DLLEXPORT DiploWin : GraphicWin {
   uint32_t field_EC4_;  // 0xEC4
   uint32_t field_EC8_;  // 0xEC8
   uint32_t field_ECC_;  // 0xECC
-  uint8_t spot_[0xC];  // 0xED0
+  Spot spot_;  // 0xED0
   uint32_t field_EDC_;  // 0xEDC
   uint32_t field_EE0_;  // 0xEE0
   uint32_t field_EE4_;  // 0xEE4
@@ -481,9 +484,9 @@ class DLLEXPORT DiploWin : GraphicWin {
   uint32_t field_10A0_;  // 0x10A0
   uint32_t field_10A4_;  // 0x10A4
   uint32_t field_10A8_;  // 0x10A8
-  uint8_t flatButtons_[0x92DC];  // 0x10AC
+  FlatButton flatButtons_[13];  // 0x10AC
   uint8_t stringBox_[0x2BA0];  // 0xA388
-  uint8_t listBox_[0xB54];  // 0xCF28
+  ListBox listBox_;  // 0xCF28
   uint8_t field_DA7C_[0x4];  // 0xDA7C
 
   // Storage the image proves is here: its own methods reach 0xE5B0.
