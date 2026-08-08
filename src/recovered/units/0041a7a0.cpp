@@ -7,7 +7,7 @@
 // name           ?check_base@BaseWin@@QAEXH@Z
 // size           63 bytes
 // measured tier  NO_COMPILE
-// refusal        u0041a7a0.cpp(135) : error C2146: syntax error : missing ',' before identifier 'a1' u0041a7a0.cpp(135) : error C2061: syntax error : identifier 'a1'
+// refusal        u0041a7a0.cpp(1) : error C2653: 'BaseWin' : is not a class or namespace name u0041a7a0.cpp(2) : error C2061: syntax error : identifier 'Win' u0041a7a0.cpp(3) : 
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

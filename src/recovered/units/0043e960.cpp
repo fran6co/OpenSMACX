@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,8 @@
 // address        0x0043E960
 // name           ?shut_that_badboy_down@DesignWin@@QAEXXZ
 // size           61 bytes
-// measured tier  NO_COMPILE
-// refusal        u0043e960.cpp(48) : error C2143: syntax error : missing ')' before 'this' u0043e960.cpp(48) : error C2143: syntax error : missing ';' before 'this' u0043e960.cp
+// measured tier  MISMATCH
+// divergence     8
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

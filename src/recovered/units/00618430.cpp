@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,7 @@
 // address        0x00618430
 // name           ?set_shadow_table@Caviar@@QAEHPAE@Z
 // size           56 bytes
-// measured tier  NO_COMPILE
-// refusal        u00618430.cpp(65) : error C2027: use of undefined type 'LPBYTE' u00618430.cpp(43) : see declaration of 'LPBYTE'
+// measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

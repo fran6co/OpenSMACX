@@ -7,7 +7,7 @@
 // name           ?timer_callback_daemon2@DiploPop@@QAAXHH@Z
 // size           56 bytes
 // measured tier  NO_COMPILE
-// refusal        u0043f250.cpp(45) : error C2143: syntax error : missing ';' before 'this' u0043f250.cpp(45) : error C2143: syntax error : missing ';' before 'this' u0043f250.cp
+// refusal        u0043f250.cpp(1) : error C2653: 'DiploPop' : is not a class or namespace name u0043f250.cpp(2) : error C2065: 'DiploPop' : undeclared identifier u0043f250.cpp(2
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
