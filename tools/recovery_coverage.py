@@ -34,7 +34,25 @@ Two populations are reported apart rather than counted as debt, and both are
   linking the ISO's `LIBC.LIB` makes these identical rather than
   assumed-equivalent, which is a linking job, not a recovery one.
 
-`--include-crt` counts them anyway, for the question "how much of the
+A third population is reported apart for a different reason. 59 rows are
+`recovery_state == source_complete` with an EMPTY `source_locations`: the
+catalogue says a `src/` file implements them and does not say which one.
+Spot-checked, they are real - `Spot::clear` is `src/spot_recovery.cpp:12`,
+`text_get` is `src/text.cpp:241` - so counting them as work still to do
+overstates the debt by about 1%. They are not counted as covered either,
+because nothing here can point at the body.
+
+Repairing them is NOT free and is deliberately not done automatically. The
+census reads a body from `source_locations` and scores whatever it extracts
+against the address it MEANT to read, so a location pointed at the wrong
+body produces a confident wrong verdict - the exact failure
+`tools/repair_source_locations.py` documents at length. 31 of the 59 have
+their address appearing exactly once anywhere in `src/` and could be placed
+mechanically; the other 28 never appear at all and would have to be matched
+by name, which is a guess. Until a row can be placed by evidence, it is
+reported and not counted.
+
+`--include-crt` counts the CRT anyway, for the question "how much of the
 executable", as distinct from "how much of the game".
 
     tools/recovery_coverage.py           # the numbers
@@ -84,11 +102,13 @@ def survey(functions: dict, include_crt: bool = False) -> dict:
     crt = [] if include_crt else [
         a for a in rest if not EH_LOW <= a <= EH_HIGH
         and functions[a].get("recovery_state") == "external_library"]
-    excluded = set(funclets) | set(crt)
+    unlocated = [a for a in rest if not EH_LOW <= a <= EH_HIGH
+                 and functions[a].get("recovery_state") == "source_complete"]
+    excluded = set(funclets) | set(crt) | set(unlocated)
     return {"functions": functions, "owned": owned, "proved": proved,
             "preserved": preserved, "covered": covered,
             "uncovered": [a for a in rest if a not in excluded],
-            "funclets": funclets, "crt": crt}
+            "funclets": funclets, "crt": crt, "unlocated": unlocated}
 
 
 def band(size: int) -> str:
@@ -111,7 +131,8 @@ def main(argv=None) -> int:
 
     functions = emit.load_functions()
     state = survey(functions, include_crt=arguments.include_crt)
-    total = len(functions) - len(state["funclets"]) - len(state["crt"])
+    total = (len(functions) - len(state["funclets"]) - len(state["crt"])
+             - len(state["unlocated"]))
     covered = len(state["covered"])
 
     print(f"in scope               {total}")
@@ -126,6 +147,9 @@ def main(argv=None) -> int:
     if state["crt"]:
         print(f"  MSVC 6 CRT           {len(state['crt']):>6}  "
               f"(excluded, EXCLUSIONS.md 1; --include-crt to count)")
+    if state["unlocated"]:
+        print(f"  source_complete      {len(state['unlocated']):>6}  "
+              f"(implemented in src/, catalogue does not say where)")
 
     sizes = {}
     for address in state["uncovered"]:
