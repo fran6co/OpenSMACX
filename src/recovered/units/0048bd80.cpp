@@ -7,7 +7,7 @@
 // name           ??1PlanWin@@QAE@XZ
 // size           548 bytes
 // measured tier  NO_COMPILE
-// refusal        u0048bd80.cpp(193) : error C2079: 'buffer_' uses undefined class 'Buffer' Generating Code... Compiling...
+// refusal        u0048bd80.cpp(193) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

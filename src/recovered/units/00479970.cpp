@@ -1,22 +1,22 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x004672C0
-// name           ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z
-// size           364 bytes
-// measured tier  NO_COMPILE
-// refusal        u004672c0.cpp(204) : error C2079: 'buffer_' uses undefined class 'Buffer' Generating Code... Compiling...
+// address        0x00479970
+// name           ?show@MultiWin@@QAEXXZ
+// size           662 bytes
+// measured tier  MISMATCH
+// divergence     84
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/004672c0/unit.cpp
+//   build/byte-match/00479970/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z  at 0x004672C0  (364 bytes)
+// subject: ?show@MultiWin@@QAEXXZ  at 0x00479970  (662 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -53,7 +53,6 @@ struct BITMAPINFO;
 typedef int BOOL;
 class Buffer;
 class Font;
-class GraphicWin;
 typedef void * HBITMAP;
 struct HCURSOR;
 typedef void * HDC;
@@ -62,13 +61,15 @@ typedef void * HRGN;
 class Heap;
 typedef char * LPSTR;
 typedef void * LPVOID;
-class MapWin;
 class Menu;
+class MultiWin;
 typedef void * PVOID;
 struct RECT;
 class Scroll;
+class Sound;
 class Spot;
 class Sprite;
+class Wave;
 class Win;
 
 class AutoSound { public:
@@ -138,105 +139,6 @@ struct RECT {
     long top;
     long right;
     long bottom;
-};
-
-class GraphicWin { public:
-    AutoSound auto_sound_;
-    uint32_t iFlags_;
-    uint32_t iSomeFlag_;
-    uint32_t field_A0_;
-    uint32_t field_A4_;
-    uint32_t poWinBase_;
-    uint32_t iVertScaleDenom_;
-    uint32_t iVertScaleNum_;
-    Buffer * buffer1_;
-    Buffer * buffer2_;
-    Buffer * buffer3_;
-    Buffer * buffer4_;
-    Win * win_parent_;
-    uint32_t field_C8_;
-    uint32_t field_CC_;
-    uint32_t field_D0_;
-    uint32_t field_D4_;
-    uint32_t field_D8_;
-    Heap heap_;
-    Menu * menu_;
-    uint32_t field_F4_;
-    uint32_t field_F8_;
-    uint32_t field_FC_;
-    uint32_t field_100_;
-    uint32_t field_104_;
-    uint32_t field_108_;
-    uint32_t field_10C_;
-    uint32_t field_110_;
-    int caption_height_;
-    int border_thickness_;
-    int bottom_border_thickness_;
-    uint32_t field_120_;
-    uint32_t field_124_;
-    uint32_t field_128_;
-    uint32_t field_12C_;
-    uint32_t field_130_;
-    uint32_t field_134_;
-    uint32_t field_138_;
-    RECT outer_rect_;
-    RECT client_rect_;
-    uint32_t field_15C_;
-    uint32_t field_160_;
-    uint32_t field_164_;
-    uint32_t field_168_;
-    uint32_t field_16C_;
-    uint32_t field_170_;
-    uint32_t field_174_;
-    uint32_t field_178_;
-    uint32_t field_17C_;
-    uint32_t field_180_;
-    uint32_t field_184_;
-    Sprite * cursor_sprite_;
-    uint32_t field_18C_;
-    uint32_t field_190_;
-    HCURSOR * cursor_handle_;
-    int cursor_name_;
-    uint32_t field_19C_;
-    uint32_t field_1A0_;
-    Win * children_[150];
-    int child_count_;
-    uint32_t field_400_;
-    uint32_t field_404_;
-    uint32_t field_408_;
-    uint32_t field_40C_;
-    uint32_t field_410_;
-    uint32_t field_414_;
-    uint32_t field_418_;
-    uint32_t field_41C_;
-    uint32_t field_420_;
-    uint32_t field_424_;
-    uint32_t field_428_;
-    uint32_t field_42C_;
-    uint32_t field_430_;
-    uint32_t field_434_;
-    uint32_t field_438_;
-    Scroll * scroll_vert_;
-    Scroll * scroll_horz_;
-    Buffer buffer_;
-    uint32_t field_9CC_;
-    uint32_t field_9D0_;
-    uint32_t field_9D4_;
-    uint32_t field_9D8_;
-    uint32_t field_9DC_;
-    uint32_t field_9E0_;
-    uint32_t field_9E4_;
-    uint32_t field_9E8_;
-    uint32_t field_9EC_;
-    uint32_t field_9F0_;
-    uint32_t field_9F4_;
-    uint32_t field_9F8_;
-    uint32_t field_9FC_;
-    uint32_t field_A00_;
-    uint32_t field_A04_;
-    uint32_t poCanvas_;
-    uint32_t field_A0C_;
-    uint32_t field_A10_;
 };
 
 class Spot { public:
@@ -334,8 +236,38 @@ class Buffer { public:
     uint32_t field_57C_;
     int8_t field_580_;
     uint32_t field_584_;
-    void line(int, int, int, int, int);
-    void line(int, int, int, int, int, int, int, int, int);
+    Buffer();
+    int draw(Buffer *, int, int, int, int, int);
+    int fill(int);
+    int set_clip(RECT *);
+    void resize(int, int);
+    ~Buffer();
+};
+class Sound { public:
+    void fade(unsigned long);
+};
+class Wave { public:
+    uint32_t vtable_storage_;
+    uint32_t volume_;
+    uint32_t field_8_;
+    uint8_t memset_region_[0x24];
+    uint32_t field_30_;
+    uint32_t field_34_;
+    uint32_t field_38_;
+    void * device_;
+    uint32_t field_40_;
+    Wave * chain_prev_;
+    Wave * chain_next_;
+    void * fname_;
+    uint32_t field_50_;
+    uint8_t flags_54_;
+    uint8_t pad_55_[3];
+    int32_t pitch_;
+    float reverb_mix_;
+    int32_t ms_length_;
+    uint32_t start_time_;
+    uint32_t group_slot_;
+    int play();
 };
 class Win { public:
     AutoSound auto_sound_;
@@ -415,79 +347,132 @@ class Win { public:
     uint32_t field_438_;
     Scroll * scroll_vert_;
     Scroll * scroll_horz_;
-    int __cdecl update_cursor(Win *, int);
-    void screen_to_client(int *, int *);
+    void __cdecl flip(RECT *);
+    void client_to_screen(RECT *);
+    void show(int);
+    void update_window_to_buffer(Buffer *);
+};
+int __cdecl do_sound();
+
+// Vtable shim. VC6 rejects a free `__thiscall` function pointer
+// (C4234), so an indirect virtual call is spelled by calling the Nth
+// virtual of a class that is never defined and never instantiated.
+// Only DECLARATION ORDER matters - change a slot's signature freely
+// to match the call you need; it will not move.
+// This body dispatches through slot(s): 12
+class VCall { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();  // <-- used
 };
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_0093755c = (int *)0x0093755C;
-static int *const g_00939fd4 = (int *)0x00939FD4;
+static int *const g_00656400 = (int *)0x00656400;
+static int *const g_00669368 = (int *)0x00669368;
+static int *const g_006761b8 = (int *)0x006761B8;
+static int *const g_00691af8 = (int *)0x00691AF8;
+static int *const g_00696d14 = (int *)0x00696D14;
+static int *const g_007cff04 = (int *)0x007CFF04;
+static int *const g_007fff00 = (int *)0x007FFF00;
+static int *const g_007fff70 = (int *)0x007FFF70;
+static int *const g_00939284 = (int *)0x00939284;
+static int *const g_0093f660 = (int *)0x0093F660;
+static int *const g_00946f58 = (int *)0x00946F58;
+static int *const g_009a6488 = (int *)0x009A6488;
+static int *const g_009a6490 = (int *)0x009A6490;
+static int *const g_009b7490 = (int *)0x009B7490;
+static int *const g_009b74c0 = (int *)0x009B74C0;
+static int *const g_009b7ad8 = (int *)0x009B7AD8;
 
-class MapWin { public:
-    uint32_t vbtable_pointer_;
-    void * owned_;
-    uint8_t derived_tail_[0x21A6C - 0x8];
-    GraphicWin virtual_base_;
-
-    void tile_to_pixel(int, int, int *, int *);
-    void direct_dest_line(int, int, int, int, int, int, int, int);
+class MultiWin { public:
+    void show();
 };
 
-void MapWin::direct_dest_line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) {
+// Indexed table base: the byte array is indexed by a computed register
+// offset (idx*0x59c), so the address itself does work - needs `extern
+// T name[]` under a name distinct from the context's own const-pointer
+// global.
+extern unsigned char g_table_946f58[];
+
+void MultiWin::show() {
     char *self = reinterpret_cast<char *>(this);
+    Buffer buf;
 
-    reinterpret_cast<Win *>(self)->update_cursor(0, 1);
+    if (*g_0093f660 != 0 || *reinterpret_cast<int *>(self + 0xa24) == 0) {
+        *reinterpret_cast<int *>(self + 0x1168) = -1;
 
-    int px1, py1, px2, py2;
-    tile_to_pixel(a1, a2, &px1, &py1);
-    tile_to_pixel(a3, a4, &px2, &py2);
+        if (*g_009a6488 == 0 ||
+            (g_table_946f58[*g_00939284 * 0x59c] & 0x80) == 0) {
+            *reinterpret_cast<int *>(self + 0x1260) |= 1;
+        }
+        if (*g_0093f660 != 0) {
+            *reinterpret_cast<int *>(self + 0x1dac) |= 1;
+        }
+        if ((*g_009a6490 & 0x400) != 0) {
+            reinterpret_cast<Wave *>(g_007fff00)->play();
+        }
+        *g_007cff04 = 2;
+        *reinterpret_cast<int *>(self + 0xa24) = 1;
+        *g_007fff70 = 1;
+        reinterpret_cast<VCall *>(this)->slot012();
+        *g_007fff70 = 0;
 
-    px1 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py1 += *reinterpret_cast<int *>(self + 0x1ddc0);
-    px2 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py2 += *reinterpret_cast<int *>(self + 0x1ddc0);
+        buf.resize(*reinterpret_cast<int *>(self + 0x4c4),
+                   -*reinterpret_cast<int *>(self + 0x4c8));
+        buf.fill(*reinterpret_cast<unsigned char *>(g_00696d14));
+        reinterpret_cast<Win *>(this)->update_window_to_buffer(&buf);
 
-    int color;
-    switch (a5) {
-        case 0:
-            color = 0xfa;
-            break;
-        case 1:
-            color = 0xfe;
-            if (a8 == 0) {
-                px1++;
-                px2++;
-                py1++;
-                py2++;
-            }
-            break;
-        case 2:
-            color = 0xf9;
-            if (a8 == 0) {
-                py1--;
-                py2--;
-            }
-            break;
-        default:
-            color = a2;
-            break;
+        RECT local = *reinterpret_cast<RECT *>(self + 0x474);
+        reinterpret_cast<Win *>(this)->client_to_screen(&local);
+
+        int diff = local.bottom - *reinterpret_cast<int *>(self + 0x1100);
+        if (*g_0093f660 != 0) {
+            diff += -14 - *reinterpret_cast<int *>(self + 0x112c);
+        }
+        int step = (diff - local.top) / 5;
+        reinterpret_cast<Buffer *>(g_009b7490)->set_clip(&local);
+
+        if ((*g_009a6490 & 0x8000000) != 0 && *g_0093f660 == 0) {
+            *g_009b7ad8 = 1;
+            int count = 6;
+            typedef unsigned long(__stdcall * TimeFn)();
+            do {
+                unsigned long t1 = (*reinterpret_cast<TimeFn *>(g_00669368))();
+                reinterpret_cast<Buffer *>(g_009b7490)->draw(
+                    &buf, 9, local.left, diff, 1, 1);
+                reinterpret_cast<Win *>(this)->flip(&local);
+                diff -= step;
+                do_sound();
+                unsigned long t2 = (*reinterpret_cast<TimeFn *>(g_00669368))();
+                if (t2 - t1 < static_cast<unsigned long>(*g_00691af8)) {
+                    do {
+                        do_sound();
+                        t2 = (*reinterpret_cast<TimeFn *>(g_00669368))();
+                    } while (t2 - t1 < static_cast<unsigned long>(*g_00691af8));
+                }
+            } while (--count != 0);
+            reinterpret_cast<Buffer *>(g_009b7490)->set_clip(
+                reinterpret_cast<RECT *>(g_009b74c0));
+            *g_009b7ad8 = 0;
+        }
+
+        if ((*g_009a6490 & 0x400) != 0) {
+            reinterpret_cast<Sound *>(g_007fff00)->fade(0x32);
+        }
+        if (*g_0093f660 == 0) {
+            reinterpret_cast<Win *>(this)->show(3);
+        }
     }
-
-    if (*reinterpret_cast<int *>(self + 0x1dd84) != 0) {
-        color = 0xfb;
-    }
-
-    if (a8 != 0) {
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px1, &py1);
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px2, &py2);
-        reinterpret_cast<Buffer *>(g_0093755c)->line(px1, py1, px2, py2, color);
-        return;
-    }
-
-    reinterpret_cast<Buffer *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4) + 0x444)
-        ->line(px1, py1, px2, py2, 0, color, a6, a7, (a6 + a7 - 1) & *g_00939fd4);
 }

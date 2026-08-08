@@ -3,20 +3,20 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x004AF1E0
-// name           ?draw_presets@SocialWin@@QAEXXZ
-// size           295 bytes
+// address        0x004AF8C0
+// name           ?draw_faction_basal@SocialWin@@QAEXXZ
+// size           669 bytes
 // measured tier  NO_COMPILE
-// refusal        u004af1e0.cpp(212) : error C2079: 'buffer_' uses undefined class 'Buffer' u004af1e0.cpp(343) : error C2079: 'buffer_' uses undefined class 'Buffer'
+// refusal        u004af8c0.cpp(211) : error C2079: 'buffer_' uses undefined class 'Buffer' u004af8c0.cpp(342) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/004af1e0/unit.cpp
+//   build/byte-match/004af8c0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?draw_presets@SocialWin@@QAEXXZ  at 0x004AF1E0  (295 bytes)
+// subject: ?draw_faction_basal@SocialWin@@QAEXXZ  at 0x004AF8C0  (669 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -73,7 +73,6 @@ class Scroll;
 class SocialWin;
 class Spot;
 class Sprite;
-class Strings;
 class SubInterface;
 class Time;
 typedef unsigned int UINT_PTR;
@@ -457,23 +456,6 @@ class Spot { public:
     uint32_t add_count_;
 };
 
-class Sprite { public:
-    int ppszFileName_;
-    int pcBits_;
-    char cTransparentIndex_;
-    char pad1_;
-    char pad2_;
-    char pad3_;
-    int iSpriteWidth2_;
-    int iSpriteWidth_;
-    int iSpriteHeight_;
-    int iWidth_;
-    int iHeight_;
-    int iLeftOffset_;
-    int iTopOffset_;
-    int fObj1Exists_;
-};
-
 class SubInterface { public:
     uint32_t field_0_;
     uint32_t field_4_;
@@ -736,14 +718,22 @@ class GraphicWin { public:
     uint32_t field_A10_;
     void soft_update(RECT *);
 };
-class Strings { public:
-    int8_t err_flags_;
-    LPVOID base_;
-    LPVOID current_;
-    size_t base_size_;
-    size_t free_size_;
-    BOOL is_populated_;
-    int get(int);
+class Sprite { public:
+    int ppszFileName_;
+    int pcBits_;
+    char cTransparentIndex_;
+    char pad1_;
+    char pad2_;
+    char pad3_;
+    int iSpriteWidth2_;
+    int iSpriteWidth_;
+    int iSpriteHeight_;
+    int iWidth_;
+    int iHeight_;
+    int iLeftOffset_;
+    int iTopOffset_;
+    int fObj1Exists_;
+    int draw(Buffer *, int, int, int, int, int);
 };
 extern "C" char *strcat(char *, const char *);
 extern "C" unsigned int strlen(const char *);
@@ -755,9 +745,10 @@ int __cdecl do_sound();
 static int *const g_0066931c = (int *)0x0066931C;
 static int *const g_0078d5a0 = (int *)0x0078D5A0;
 static int *const g_0078d618 = (int *)0x0078D618;
+static int *const g_0096ccb0 = (int *)0x0096CCB0;
 static int *const g_009b86a0 = (int *)0x009B86A0;
-static int *const g_009b90d8 = (int *)0x009B90D8;
-static int *const g_009b90f8 = (int *)0x009B90F8;
+static int *const g_009bbfec = (int *)0x009BBFEC;
+static int *const g_009bbff0 = (int *)0x009BBFF0;
 
 class SocialWin { public:
     AutoSound auto_sound_;
@@ -1107,57 +1098,103 @@ class SocialWin { public:
     uint8_t tutRect13_[0x10];
     uint8_t tutRect14_[0x10];
 
-    void draw_presets();
+    void draw_faction_basal();
 };
 
-// MEASURED NO_COMPILE FOR A REASON UNRELATED TO THIS BODY: the live
-// scaffolding for this address puts `class BaseButton` and `class
-// FlatButton` (each embeds a by-value `Buffer buffer_;`) ahead of
-// `class Buffer`'s own full definition, so BOTH classes fail with
-// C2079 "'buffer_' uses undefined class 'Buffer'" before this
-// function is even reached - confirmed with a trivial empty body,
-// which fails identically. This is an emitter ordering defect, not a
-// C++ error in the body below, which is otherwise faithful to the
-// disassembly and ready to score once the scaffolding is fixed.
-void SocialWin::draw_presets() {
+// Indexed table bases: both are indexed by a computed register offset
+// (faction*0x59c and faction*0x20cc+i*4 respectively), so the address
+// itself does work - each needs `extern T name[]` under a name distinct
+// from the context's own const-pointer global.
+extern unsigned char g_table_946d34[];
+extern unsigned char g_table_96ccb0[];
+
+void SocialWin::draw_faction_basal() {
     char *self = reinterpret_cast<char *>(this);
-    RECT *rect_ptr = reinterpret_cast<RECT *>(self + 0x1f060);
+    Buffer *buf = reinterpret_cast<Buffer *>(self + 0x444);
 
-    RECT r = *rect_ptr;
-    buffer_.set_clip(&r);
-    buffer_.box_sprite(&r, reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
+    RECT clipRect = *reinterpret_cast<RECT *>(self + 0x1f2a0);
+    buf->set_clip(&clipRect);
+    buf->box_sprite(&clipRect, reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
 
-    r.right -= 3;
-    r.left += 3;
-    r.bottom -= 3;
-    r.top += 3;
+    int newRight = clipRect.right - 3;
+    int newTop = clipRect.top + 3;
+    int newLeft = clipRect.left + 3;
+    clipRect.bottom -= 3;
+    int newBottom = clipRect.top + 0x17;
+    clipRect.left = newLeft;
+    clipRect.top = newTop;
+    clipRect.right = newRight;
 
-    RECT r2;
-    r2.left = r.left;
-    r2.top = r.top;
-    r2.right = r.right;
-    r2.bottom = r.top + 0x14;
-    buffer_.box_sprite(&r2, reinterpret_cast<BoxSpriteParams *>(g_0078d618));
+    RECT titleRect;
+    titleRect.left = newLeft;
+    titleRect.top = newTop;
+    titleRect.right = newRight;
+    titleRect.bottom = newBottom;
+    buf->box_sprite(&titleRect, reinterpret_cast<BoxSpriteParams *>(g_0078d618));
 
     *reinterpret_cast<char *>(g_009b86a0) = 0;
-    Strings *strings = reinterpret_cast<Strings *>(g_009b90d8);
-    int *ptr = *reinterpret_cast<int **>(g_009b90f8);
-    int idx = *reinterpret_cast<int *>(reinterpret_cast<char *>(ptr) + 0x114);
-    char *text = reinterpret_cast<char *>(strings->get(idx));
-    strcat(reinterpret_cast<char *>(g_009b86a0), text);
 
-    typedef void(__stdcall *CharUpperFn)(char *);
-    (*reinterpret_cast<CharUpperFn *>(g_0066931c))(
-        reinterpret_cast<char *>(g_009b86a0));
+    int faction = *reinterpret_cast<int *>(self + 0xcf4);
+    *g_009bbfec = *reinterpret_cast<int *>(g_table_946d34 + faction * 0x59c + 0x18);
+    *g_009bbff0 = *reinterpret_cast<int *>(g_table_946d34 + faction * 0x59c + 0x1c);
+    strcat(reinterpret_cast<char *>(g_009b86a0),
+           reinterpret_cast<const char *>(g_table_946d34 + faction * 0x59c));
 
-    buffer_.set_font(reinterpret_cast<Font *>(self + 0x1ee68), 0, 0, 0);
-    buffer_.set_text_color(0x9f, -1, 1, 1);
+    typedef char *(__stdcall * CharUpperFn)(char *);
+    (*reinterpret_cast<CharUpperFn *>(g_0066931c))(reinterpret_cast<char *>(g_009b86a0));
 
-    char *msg = reinterpret_cast<char *>(g_009b86a0);
-    if (msg) {
-        buffer_.write_cent_l(msg, &r2, strlen(msg));
+    buf->set_font(reinterpret_cast<Font *>(self + 0x1ee68), 0, 0, 0);
+    buf->set_text_color(0x9f, -1, 1, 1);
+
+    if (g_009b86a0 != 0) {
+        unsigned len = strlen(reinterpret_cast<char *>(g_009b86a0));
+        buf->write_cent_l(reinterpret_cast<char *>(g_009b86a0), &titleRect, len);
     }
 
-    reinterpret_cast<GraphicWin *>(this)->soft_update(rect_ptr);
+    RECT bottomBar;
+    bottomBar.right = clipRect.right;
+    bottomBar.left = clipRect.left;
+    bottomBar.bottom = clipRect.bottom;
+    bottomBar.top = clipRect.bottom - 0x14;
+    buf->box_sprite(&bottomBar, reinterpret_cast<BoxSpriteParams *>(g_0078d618));
+    clipRect = bottomBar;
+
+    int sum = 0;
+    for (int i = 0; i < 0xb; i++) {
+        if (i != 3) {
+            int v = *reinterpret_cast<int *>(g_table_96ccb0 + faction * 0x20cc + i * 4);
+            if (v < 0) v = -v;
+            sum += v;
+        }
+    }
+
+    if (sum != 0) {
+        int lineHeight = *reinterpret_cast<int *>(self + 0x2e30) + 2;
+        int curX = (bottomBar.right - lineHeight * sum - bottomBar.left) / 2 + bottomBar.left;
+        int curY = (bottomBar.bottom - *reinterpret_cast<int *>(self + 0x2e34) - bottomBar.top) / 2 + bottomBar.top;
+
+        int j = 0;
+        do {
+            faction = *reinterpret_cast<int *>(self + 0xcf4);
+            int k = 0;
+            int cell = *reinterpret_cast<int *>(g_table_96ccb0 + faction * 0x20cc + j * 4);
+            while (true) {
+                int absCell = cell < 0 ? -cell : cell;
+                if (absCell <= k) break;
+
+                Buffer *bufOrNull = (this != 0) ? buf : 0;
+                int idx = (j > 2) ? j - 1 : j;
+                int slot = idx * 9 + ((cell > 0) ? 2 : 1);
+                Sprite *spriteObj = reinterpret_cast<Sprite *>(self + 0x2f20 + slot * 0x2c);
+                spriteObj->draw(bufOrNull, spriteObj->cTransparentIndex_, curX, curY, 1, 1);
+
+                curX += lineHeight;
+                k++;
+            }
+            j++;
+        } while (j < 0xb);
+    }
+
+    reinterpret_cast<GraphicWin *>(this)->soft_update(reinterpret_cast<RECT *>(self + 0x1f2a0));
     do_sound();
 }

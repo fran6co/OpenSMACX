@@ -1,22 +1,22 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x004672C0
-// name           ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z
-// size           364 bytes
-// measured tier  NO_COMPILE
-// refusal        u004672c0.cpp(204) : error C2079: 'buffer_' uses undefined class 'Buffer' Generating Code... Compiling...
+// address        0x005C86E0
+// name           ?world_build@@YAXXZ
+// size           701 bytes
+// measured tier  MISMATCH
+// divergence     12
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/004672c0/unit.cpp
+//   build/byte-match/005c86e0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z  at 0x004672C0  (364 bytes)
+// subject: ?world_build@@YAXXZ  at 0x005C86E0  (701 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -70,6 +70,7 @@ class Scroll;
 class Spot;
 class Sprite;
 class Win;
+class WorldWin;
 
 class AutoSound { public:
     PVOID vtable_;
@@ -112,6 +113,92 @@ class AutoSound { public:
     int val_37_;
 };
 
+struct RECT {
+    long left;
+    long top;
+    long right;
+    long bottom;
+};
+
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+};
+
+class Buffer { public:
+    LPVOID vtable_;
+    uint32_t poOwner_;
+    uint32_t field_8_;
+    uint32_t field_C_;
+    uint32_t field_10_;
+    uint32_t field_14_;
+    uint32_t field_18_;
+    uint32_t field_1C_;
+    RECT rect1_;
+    RECT rect2_;
+    uint32_t field_40_[4];
+    uint32_t field_50_;
+    LPVOID * ppv_bits_;
+    uint32_t field_58_;
+    uint32_t field_5C_;
+    HDC hdc2_;
+    HDC hdc_;
+    uint32_t field_68_;
+    uint32_t field_6C_;
+    HRGN field_70_;
+    uint32_t field_74_;
+    HBITMAP bitmap_handle_;
+    const BITMAPINFO * bitmap_info_;
+    uint32_t width_;
+    uint32_t height_;
+    uint16_t field_88_;
+    uint16_t field_8A_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+    uint32_t field_94_;
+    uint32_t field_98_;
+    uint32_t field_9C_;
+    uint32_t field_A0_;
+    int32_t dib_[256];
+    uint32_t field_4A4_;
+    uint32_t field_4A8_;
+    uint32_t field_4AC_;
+    Spot spot_;
+    uint8_t field_4BC_[80];
+    uint32_t field_50C_;
+    uint32_t field_510_;
+    uint32_t field_514_;
+    uint32_t field_518_;
+    uint32_t field_51C_;
+    uint32_t field_520_;
+    uint32_t field_524_;
+    uint32_t field_528_;
+    Font * font1_;
+    Font * font2_;
+    Font * font3_;
+    Font * font4_;
+    uint32_t color_val_1_;
+    uint32_t color_2_val_1_;
+    uint32_t color_3_val_1_;
+    uint32_t color_hyper_val_1_;
+    uint32_t color_val_2_;
+    uint32_t color_2_val_2_;
+    uint32_t color_3_val_2_;
+    uint32_t color_hyper_val_2_;
+    uint32_t color_val_3_;
+    uint32_t color_2_val_3_;
+    uint32_t color_3_val_3_;
+    uint32_t color_hyper_val_3_;
+    uint32_t color_val_4_;
+    uint32_t color_2_val_4_;
+    uint32_t color_3_val_4_;
+    uint32_t color_hyper_val_4_;
+    uint32_t field_57C_;
+    int8_t field_580_;
+    uint32_t field_584_;
+};
+
 class Font { public:
     int unk_1_;
     BOOL is_fot_set_;
@@ -131,13 +218,6 @@ class Heap { public:
     LPVOID current_;
     size_t base_size_;
     size_t free_size_;
-};
-
-struct RECT {
-    long left;
-    long top;
-    long right;
-    long bottom;
 };
 
 class GraphicWin { public:
@@ -239,12 +319,6 @@ class GraphicWin { public:
     uint32_t field_A10_;
 };
 
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
-};
-
 class Sprite { public:
     int ppszFileName_;
     int pcBits_;
@@ -262,81 +336,6 @@ class Sprite { public:
     int fObj1Exists_;
 };
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-class Buffer { public:
-    LPVOID vtable_;
-    uint32_t poOwner_;
-    uint32_t field_8_;
-    uint32_t field_C_;
-    uint32_t field_10_;
-    uint32_t field_14_;
-    uint32_t field_18_;
-    uint32_t field_1C_;
-    RECT rect1_;
-    RECT rect2_;
-    uint32_t field_40_[4];
-    uint32_t field_50_;
-    LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    HDC hdc2_;
-    HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
-    HBITMAP bitmap_handle_;
-    const BITMAPINFO * bitmap_info_;
-    uint32_t width_;
-    uint32_t height_;
-    uint16_t field_88_;
-    uint16_t field_8A_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
-    uint32_t field_94_;
-    uint32_t field_98_;
-    uint32_t field_9C_;
-    uint32_t field_A0_;
-    int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
-    Spot spot_;
-    uint8_t field_4BC_[80];
-    uint32_t field_50C_;
-    uint32_t field_510_;
-    uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
-    uint32_t field_524_;
-    uint32_t field_528_;
-    Font * font1_;
-    Font * font2_;
-    Font * font3_;
-    Font * font4_;
-    uint32_t color_val_1_;
-    uint32_t color_2_val_1_;
-    uint32_t color_3_val_1_;
-    uint32_t color_hyper_val_1_;
-    uint32_t color_val_2_;
-    uint32_t color_2_val_2_;
-    uint32_t color_3_val_2_;
-    uint32_t color_hyper_val_2_;
-    uint32_t color_val_3_;
-    uint32_t color_2_val_3_;
-    uint32_t color_3_val_3_;
-    uint32_t color_hyper_val_3_;
-    uint32_t color_val_4_;
-    uint32_t color_2_val_4_;
-    uint32_t color_3_val_4_;
-    uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
-    int8_t field_580_;
-    uint32_t field_584_;
-    void line(int, int, int, int, int);
-    void line(int, int, int, int, int, int, int, int, int);
-};
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -415,79 +414,180 @@ class Win { public:
     uint32_t field_438_;
     Scroll * scroll_vert_;
     Scroll * scroll_horz_;
-    int __cdecl update_cursor(Win *, int);
-    void screen_to_client(int *, int *);
 };
 
-// ---- fixed globals this body references ----
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const g_0093755c = (int *)0x0093755C;
-static int *const g_00939fd4 = (int *)0x00939FD4;
-
+// ---- callees, declared and never defined (a definition would be inlined) ----
 class MapWin { public:
     uint32_t vbtable_pointer_;
     void * owned_;
     uint8_t derived_tail_[0x21A6C - 0x8];
     GraphicWin virtual_base_;
-
-    void tile_to_pixel(int, int, int *, int *);
-    void direct_dest_line(int, int, int, int, int, int, int, int);
+    void clear_terrain();
 };
+class WorldWin { public:
+    void clear_terrain();
+};
+extern "C" int rand();
+int __cdecl world_validate();
+void __cdecl build_continent(int);
+void __cdecl build_hills(int);
+void __cdecl draw_map(int);
+void __cdecl fixup_landmarks();
+void __cdecl map_wipe();
+void __cdecl world_borehole(int, int);
+void __cdecl world_climate();
+void __cdecl world_crater(int, int);
+void __cdecl world_diamond(int, int);
+void __cdecl world_dune(int, int);
+void __cdecl world_erosion();
+void __cdecl world_fossil(int, int);
+void __cdecl world_fresh(int, int);
+void __cdecl world_fungus();
+void __cdecl world_geothermal(int, int);
+void __cdecl world_linearize_contours();
+void __cdecl world_mesa(int, int);
+void __cdecl world_monsoon(int, int);
+void __cdecl world_polar_caps();
+void __cdecl world_ridge(int, int);
+void __cdecl world_riverbeds();
+void __cdecl world_rocky();
+void __cdecl world_ruin(int, int);
+void __cdecl world_sargasso(int, int);
+void __cdecl world_shorelines();
+void __cdecl world_temperature();
+void __cdecl world_temple(int, int);
+void __cdecl world_unity(int, int);
+void __cdecl world_volcano(int, int, int);
 
-void MapWin::direct_dest_line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) {
-    char *self = reinterpret_cast<char *>(this);
+// ---- fixed globals this body references ----
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const g_0068f21c = (int *)0x0068F21C;
+static int *const g_0068faf4 = (int *)0x0068FAF4;
+static int *const g_0068fb4c = (int *)0x0068FB4C;
+static int *const g_007d3c3c = (int *)0x007D3C3C;
+static int *const g_007d3c5c = (int *)0x007D3C5C;
+static int *const g_008e9f60 = (int *)0x008E9F60;
+static int *const g_00949884 = (int *)0x00949884;
+static int *const g_0094988c = (int *)0x0094988C;
+static int *const g_0094a2a0 = (int *)0x0094A2A0;
+static int *const g_0094a2a4 = (int *)0x0094A2A4;
+static int *const g_0094a2ac = (int *)0x0094A2AC;
+static int *const g_0094a2bc = (int *)0x0094A2BC;
+static int *const g_009502a8 = (int *)0x009502A8;
+static int *const g_009502ac = (int *)0x009502AC;
+static int *const g_009502b8 = (int *)0x009502B8;
+static int *const g_009502bc = (int *)0x009502BC;
+static int *const g_00950320 = (int *)0x00950320;
+static int *const g_009a6488 = (int *)0x009A6488;
+static int *const g_009a64c0 = (int *)0x009A64C0;
+static int *const g_009b22b0 = (int *)0x009B22B0;
+static int *const g_009b22b4 = (int *)0x009B22B4;
+static int *const g_009b22e8 = (int *)0x009B22E8;
+static int *const g_009b22ec = (int *)0x009B22EC;
 
-    reinterpret_cast<Win *>(self)->update_cursor(0, 1);
+extern "C" int rand();
 
-    int px1, py1, px2, py2;
-    tile_to_pixel(a1, a2, &px1, &py1);
-    tile_to_pixel(a3, a4, &px2, &py2);
-
-    px1 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py1 += *reinterpret_cast<int *>(self + 0x1ddc0);
-    px2 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py2 += *reinterpret_cast<int *>(self + 0x1ddc0);
-
-    int color;
-    switch (a5) {
-        case 0:
-            color = 0xfa;
-            break;
-        case 1:
-            color = 0xfe;
-            if (a8 == 0) {
-                px1++;
-                px2++;
-                py1++;
-                py2++;
+void __cdecl world_build() {
+    int iVar2 = 0;
+    int local_8 = 0;
+    do {
+        {
+            int *src = g_0068faf4;
+            int *dst = g_0068fb4c;
+            for (int i = 0x0b; i != 0; --i) {
+                *dst = *src;
+                ++src;
+                ++dst;
             }
-            break;
-        case 2:
-            color = 0xf9;
-            if (a8 == 0) {
-                py1--;
-                py2--;
+        }
+        *g_009b22e8 = 1;
+        *g_009b22ec = 1;
+
+        for (int *p = g_0094a2a0; p < g_0094a2bc; ++p) {
+            if (*p < 0) {
+                *p = rand() % 3;
             }
-            break;
-        default:
-            color = a2;
-            break;
-    }
+        }
 
-    if (*reinterpret_cast<int *>(self + 0x1dd84) != 0) {
-        color = 0xfb;
-    }
+        map_wipe();
 
-    if (a8 != 0) {
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px1, &py1);
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px2, &py2);
-        reinterpret_cast<Buffer *>(g_0093755c)->line(px1, py1, px2, py2, color);
-        return;
-    }
+        int iVar1 = *g_00950320 * *g_00949884;
+        *g_009b22b4 = (((2 - *g_0094a2a4) * (*g_009502ac) + *g_009502a8) * (*g_00949884)) / 0xc80;
+        *g_009b22b0 = 0;
 
-    reinterpret_cast<Buffer *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4) + 0x444)
-        ->line(px1, py1, px2, py2, 0, color, a6, a7, (a6 + a7 - 1) & *g_00939fd4);
+        if ((*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0) {
+            reinterpret_cast<MapWin *>(*g_007d3c3c)->clear_terrain();
+            draw_map(1);
+        }
+
+        int target = iVar1 / 0xc80;
+        int iVar5 = 0;
+        while ((*g_009b22b0 < *g_009b22b4 || iVar2 < target) && (++iVar5, iVar5 < 100)) {
+            ++iVar2;
+            build_continent(iVar2);
+        }
+
+        if (*g_0094a2ac > 0) {
+            int hills = (((*g_0094a2ac - 1) * (*g_009502bc) + *g_009502b8) * (*g_00949884)) / 0xc80;
+            if (*g_0094a2a4 == 2) {
+                hills = hills / 2;
+            }
+            if (hills > 0) {
+                do {
+                    build_hills(4);
+                    --hills;
+                } while (hills != 0);
+            }
+        }
+
+        world_erosion();
+
+        if ((*reinterpret_cast<unsigned char *>(g_0094988c) & 1) == 0 && *g_0094a2a4 < 2 &&
+            (*g_0094a2a4 == 0 || rand() % 3 == 0)) {
+            world_polar_caps();
+        }
+
+        world_shorelines();
+    } while ((*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) == 0 &&
+             world_validate() != 0 && (++local_8, local_8 < 4));
+
+    world_temperature();
+    world_riverbeds();
+    world_fungus();
+    world_monsoon(-1, -1);
+    world_crater(-1, -1);
+    world_volcano(-1, -1, 0);
+    world_mesa(-1, -1);
+    world_ridge(-1, -1);
+    world_diamond(-1, -1);
+    world_ruin(-1, -1);
+    if (*g_009a6488 != 0) {
+        world_unity(-1, -1);
+        if (*g_009a6488 != 0) {
+            world_fossil(-1, -1);
+        }
+    }
+    world_temple(-1, -1);
+    world_borehole(-1, -1);
+    world_sargasso(-1, -1);
+    world_dune(-1, -1);
+    world_fresh(-1, -1);
+    world_geothermal(-1, -1);
+
+    fixup_landmarks();
+    world_linearize_contours();
+    *g_009b22e8 = 0;
+    world_climate();
+    world_rocky();
+    *g_009b22ec = 0;
+
+    if (*g_0068f21c == 0) {
+        for (int *p = g_007d3c3c; p < g_007d3c5c; ++p) {
+            if (*reinterpret_cast<int *>(*p + 0x1dd74) != 0) {
+                reinterpret_cast<MapWin *>(*p)->clear_terrain();
+            }
+        }
+        reinterpret_cast<WorldWin *>(g_008e9f60)->clear_terrain();
+    }
 }

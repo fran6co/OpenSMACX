@@ -1,22 +1,22 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x004672C0
-// name           ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z
-// size           364 bytes
-// measured tier  NO_COMPILE
-// refusal        u004672c0.cpp(204) : error C2079: 'buffer_' uses undefined class 'Buffer' Generating Code... Compiling...
+// address        0x0060FF00
+// name           ??0SpriteBox@@QAE@H@Z
+// size           656 bytes
+// measured tier  SHARED_TAIL
+// refusal        1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/004672c0/unit.cpp
+//   build/byte-match/0060ff00/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z  at 0x004672C0  (364 bytes)
+// subject: ??0SpriteBox@@QAE@H@Z  at 0x0060FF00  (656 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -52,6 +52,8 @@ class AutoSound;
 struct BITMAPINFO;
 typedef int BOOL;
 class Buffer;
+class Dialog;
+struct DialogEntry;
 class Font;
 class GraphicWin;
 typedef void * HBITMAP;
@@ -62,13 +64,13 @@ typedef void * HRGN;
 class Heap;
 typedef char * LPSTR;
 typedef void * LPVOID;
-class MapWin;
 class Menu;
 typedef void * PVOID;
 struct RECT;
 class Scroll;
 class Spot;
 class Sprite;
+class SpriteBox;
 class Win;
 
 class AutoSound { public:
@@ -112,6 +114,16 @@ class AutoSound { public:
     int val_37_;
 };
 
+struct DialogEntry {
+    uint32_t vtable;
+    int id;
+    void * payload;
+    DialogEntry * next;
+    DialogEntry * previous;
+    uint32_t secondary_vtable;
+    void * heap;
+};
+
 class Font { public:
     int unk_1_;
     BOOL is_fot_set_;
@@ -140,6 +152,246 @@ struct RECT {
     long bottom;
 };
 
+class Sprite { public:
+    int ppszFileName_;
+    int pcBits_;
+    char cTransparentIndex_;
+    char pad1_;
+    char pad2_;
+    char pad3_;
+    int iSpriteWidth2_;
+    int iSpriteWidth_;
+    int iSpriteHeight_;
+    int iWidth_;
+    int iHeight_;
+    int iLeftOffset_;
+    int iTopOffset_;
+    int fObj1Exists_;
+};
+
+class Win { public:
+    AutoSound auto_sound_;
+    uint32_t iFlags_;
+    uint32_t iSomeFlag_;
+    uint32_t field_A0_;
+    uint32_t field_A4_;
+    uint32_t poWinBase_;
+    uint32_t iVertScaleDenom_;
+    uint32_t iVertScaleNum_;
+    Buffer * buffer1_;
+    Buffer * buffer2_;
+    Buffer * buffer3_;
+    Buffer * buffer4_;
+    Win * win_parent_;
+    uint32_t field_C8_;
+    uint32_t field_CC_;
+    uint32_t field_D0_;
+    uint32_t field_D4_;
+    uint32_t field_D8_;
+    Heap heap_;
+    Menu * menu_;
+    uint32_t field_F4_;
+    uint32_t field_F8_;
+    uint32_t field_FC_;
+    uint32_t field_100_;
+    uint32_t field_104_;
+    uint32_t field_108_;
+    uint32_t field_10C_;
+    uint32_t field_110_;
+    int caption_height_;
+    int border_thickness_;
+    int bottom_border_thickness_;
+    uint32_t field_120_;
+    uint32_t field_124_;
+    uint32_t field_128_;
+    uint32_t field_12C_;
+    uint32_t field_130_;
+    uint32_t field_134_;
+    uint32_t field_138_;
+    RECT outer_rect_;
+    RECT client_rect_;
+    uint32_t field_15C_;
+    uint32_t field_160_;
+    uint32_t field_164_;
+    uint32_t field_168_;
+    uint32_t field_16C_;
+    uint32_t field_170_;
+    uint32_t field_174_;
+    uint32_t field_178_;
+    uint32_t field_17C_;
+    uint32_t field_180_;
+    uint32_t field_184_;
+    Sprite * cursor_sprite_;
+    uint32_t field_18C_;
+    uint32_t field_190_;
+    HCURSOR * cursor_handle_;
+    int cursor_name_;
+    uint32_t field_19C_;
+    uint32_t field_1A0_;
+    Win * children_[150];
+    int child_count_;
+    uint32_t field_400_;
+    uint32_t field_404_;
+    uint32_t field_408_;
+    uint32_t field_40C_;
+    uint32_t field_410_;
+    uint32_t field_414_;
+    uint32_t field_418_;
+    uint32_t field_41C_;
+    uint32_t field_420_;
+    uint32_t field_424_;
+    uint32_t field_428_;
+    uint32_t field_42C_;
+    uint32_t field_430_;
+    uint32_t field_434_;
+    uint32_t field_438_;
+    Scroll * scroll_vert_;
+    Scroll * scroll_horz_;
+};
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+    Spot();
+};
+class Buffer { public:
+    LPVOID vtable_;
+    uint32_t poOwner_;
+    uint32_t field_8_;
+    uint32_t field_C_;
+    uint32_t field_10_;
+    uint32_t field_14_;
+    uint32_t field_18_;
+    uint32_t field_1C_;
+    RECT rect1_;
+    RECT rect2_;
+    uint32_t field_40_[4];
+    uint32_t field_50_;
+    LPVOID * ppv_bits_;
+    uint32_t field_58_;
+    uint32_t field_5C_;
+    HDC hdc2_;
+    HDC hdc_;
+    uint32_t field_68_;
+    uint32_t field_6C_;
+    HRGN field_70_;
+    uint32_t field_74_;
+    HBITMAP bitmap_handle_;
+    const BITMAPINFO * bitmap_info_;
+    uint32_t width_;
+    uint32_t height_;
+    uint16_t field_88_;
+    uint16_t field_8A_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+    uint32_t field_94_;
+    uint32_t field_98_;
+    uint32_t field_9C_;
+    uint32_t field_A0_;
+    int32_t dib_[256];
+    uint32_t field_4A4_;
+    uint32_t field_4A8_;
+    uint32_t field_4AC_;
+    Spot spot_;
+    uint8_t field_4BC_[80];
+    uint32_t field_50C_;
+    uint32_t field_510_;
+    uint32_t field_514_;
+    uint32_t field_518_;
+    uint32_t field_51C_;
+    uint32_t field_520_;
+    uint32_t field_524_;
+    uint32_t field_528_;
+    Font * font1_;
+    Font * font2_;
+    Font * font3_;
+    Font * font4_;
+    uint32_t color_val_1_;
+    uint32_t color_2_val_1_;
+    uint32_t color_3_val_1_;
+    uint32_t color_hyper_val_1_;
+    uint32_t color_val_2_;
+    uint32_t color_2_val_2_;
+    uint32_t color_3_val_2_;
+    uint32_t color_hyper_val_2_;
+    uint32_t color_val_3_;
+    uint32_t color_2_val_3_;
+    uint32_t color_3_val_3_;
+    uint32_t color_hyper_val_3_;
+    uint32_t color_val_4_;
+    uint32_t color_2_val_4_;
+    uint32_t color_3_val_4_;
+    uint32_t color_hyper_val_4_;
+    uint32_t field_57C_;
+    int8_t field_580_;
+    uint32_t field_584_;
+    int set_font(Font *, Font *, Font *, Font *);
+    void set_text_color(int, int, int, int);
+    void set_text_color2(int, int, int, int);
+    void set_text_color3(int, int, int, int);
+};
+class Dialog { public:
+    LPVOID vtable_;
+    Heap heap_;
+    Heap * heap_ptr_;
+    uint32_t field_1C_;
+    uint32_t field_20_;
+    uint32_t field_24_;
+    uint32_t field_28_;
+    uint32_t field_2C_;
+    uint32_t field_30_;
+    uint32_t field_34_;
+    uint32_t field_38_;
+    uint32_t field_3C_;
+    uint32_t field_40_;
+    uint32_t field_44_;
+    uint32_t field_48_;
+    uint32_t field_4C_;
+    uint32_t field_50_;
+    uint32_t field_54_;
+    uint32_t field_58_;
+    uint32_t field_5C_;
+    uint32_t field_60_;
+    uint32_t field_64_;
+    uint32_t field_68_;
+    uint32_t field_6C_;
+    Font * font1_;
+    Font * font2_;
+    Font * font3_;
+    uint32_t text_color_a_;
+    uint32_t text_color_2a_;
+    uint32_t text_color_3a_;
+    uint32_t text_color_b_;
+    uint32_t text_color_2b_;
+    uint32_t text_color_3b_;
+    uint32_t text_color_c_;
+    uint32_t text_color_2c_;
+    uint32_t text_color_3c_;
+    uint32_t text_color_d_;
+    uint32_t text_color_2d_;
+    uint32_t text_color_3d_;
+    uint32_t field_AC_;
+    uint32_t field_B0_;
+    uint32_t field_B4_;
+    uint32_t field_B8_;
+    uint32_t field_BC_;
+    uint32_t field_C0_;
+    DialogEntry * entry_head_;
+    DialogEntry * current_entry_;
+    int entry_count_;
+    int entry_position_;
+    uint32_t field_D4_;
+    uint32_t field_D8_;
+    uint32_t field_DC_;
+    uint32_t field_E0_;
+    uint32_t field_E4_;
+    uint32_t field_E8_;
+    int selected_position_;
+    uint32_t field_F0_;
+    Dialog();
+};
 class GraphicWin { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -237,257 +489,156 @@ class GraphicWin { public:
     uint32_t poCanvas_;
     uint32_t field_A0C_;
     uint32_t field_A10_;
+    GraphicWin();
 };
-
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
-};
-
-class Sprite { public:
-    int ppszFileName_;
-    int pcBits_;
-    char cTransparentIndex_;
-    char pad1_;
-    char pad2_;
-    char pad3_;
-    int iSpriteWidth2_;
-    int iSpriteWidth_;
-    int iSpriteHeight_;
-    int iWidth_;
-    int iHeight_;
-    int iLeftOffset_;
-    int iTopOffset_;
-    int fObj1Exists_;
-};
-
-// ---- callees, declared and never defined (a definition would be inlined) ----
-class Buffer { public:
-    LPVOID vtable_;
-    uint32_t poOwner_;
-    uint32_t field_8_;
-    uint32_t field_C_;
-    uint32_t field_10_;
-    uint32_t field_14_;
-    uint32_t field_18_;
-    uint32_t field_1C_;
-    RECT rect1_;
-    RECT rect2_;
-    uint32_t field_40_[4];
-    uint32_t field_50_;
-    LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    HDC hdc2_;
-    HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
-    HBITMAP bitmap_handle_;
-    const BITMAPINFO * bitmap_info_;
-    uint32_t width_;
-    uint32_t height_;
-    uint16_t field_88_;
-    uint16_t field_8A_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
-    uint32_t field_94_;
-    uint32_t field_98_;
-    uint32_t field_9C_;
-    uint32_t field_A0_;
-    int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
-    Spot spot_;
-    uint8_t field_4BC_[80];
-    uint32_t field_50C_;
-    uint32_t field_510_;
-    uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
-    uint32_t field_524_;
-    uint32_t field_528_;
-    Font * font1_;
-    Font * font2_;
-    Font * font3_;
-    Font * font4_;
-    uint32_t color_val_1_;
-    uint32_t color_2_val_1_;
-    uint32_t color_3_val_1_;
-    uint32_t color_hyper_val_1_;
-    uint32_t color_val_2_;
-    uint32_t color_2_val_2_;
-    uint32_t color_3_val_2_;
-    uint32_t color_hyper_val_2_;
-    uint32_t color_val_3_;
-    uint32_t color_2_val_3_;
-    uint32_t color_3_val_3_;
-    uint32_t color_hyper_val_3_;
-    uint32_t color_val_4_;
-    uint32_t color_2_val_4_;
-    uint32_t color_3_val_4_;
-    uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
-    int8_t field_580_;
-    uint32_t field_584_;
-    void line(int, int, int, int, int);
-    void line(int, int, int, int, int, int, int, int, int);
-};
-class Win { public:
-    AutoSound auto_sound_;
-    uint32_t iFlags_;
-    uint32_t iSomeFlag_;
-    uint32_t field_A0_;
-    uint32_t field_A4_;
-    uint32_t poWinBase_;
-    uint32_t iVertScaleDenom_;
-    uint32_t iVertScaleNum_;
-    Buffer * buffer1_;
-    Buffer * buffer2_;
-    Buffer * buffer3_;
-    Buffer * buffer4_;
-    Win * win_parent_;
-    uint32_t field_C8_;
-    uint32_t field_CC_;
-    uint32_t field_D0_;
-    uint32_t field_D4_;
-    uint32_t field_D8_;
-    Heap heap_;
-    Menu * menu_;
-    uint32_t field_F4_;
-    uint32_t field_F8_;
-    uint32_t field_FC_;
-    uint32_t field_100_;
-    uint32_t field_104_;
-    uint32_t field_108_;
-    uint32_t field_10C_;
-    uint32_t field_110_;
-    int caption_height_;
-    int border_thickness_;
-    int bottom_border_thickness_;
-    uint32_t field_120_;
-    uint32_t field_124_;
-    uint32_t field_128_;
-    uint32_t field_12C_;
-    uint32_t field_130_;
-    uint32_t field_134_;
-    uint32_t field_138_;
-    RECT outer_rect_;
-    RECT client_rect_;
-    uint32_t field_15C_;
-    uint32_t field_160_;
-    uint32_t field_164_;
-    uint32_t field_168_;
-    uint32_t field_16C_;
-    uint32_t field_170_;
-    uint32_t field_174_;
-    uint32_t field_178_;
-    uint32_t field_17C_;
-    uint32_t field_180_;
-    uint32_t field_184_;
-    Sprite * cursor_sprite_;
-    uint32_t field_18C_;
-    uint32_t field_190_;
-    HCURSOR * cursor_handle_;
-    int cursor_name_;
-    uint32_t field_19C_;
-    uint32_t field_1A0_;
-    Win * children_[150];
-    int child_count_;
-    uint32_t field_400_;
-    uint32_t field_404_;
-    uint32_t field_408_;
-    uint32_t field_40C_;
-    uint32_t field_410_;
-    uint32_t field_414_;
-    uint32_t field_418_;
-    uint32_t field_41C_;
-    uint32_t field_420_;
-    uint32_t field_424_;
-    uint32_t field_428_;
-    uint32_t field_42C_;
-    uint32_t field_430_;
-    uint32_t field_434_;
-    uint32_t field_438_;
-    Scroll * scroll_vert_;
-    Scroll * scroll_horz_;
-    int __cdecl update_cursor(Win *, int);
-    void screen_to_client(int *, int *);
-};
+extern "C" int __cdecl sub_611730();
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_0093755c = (int *)0x0093755C;
-static int *const g_00939fd4 = (int *)0x00939FD4;
+static int *const g_00662ff0 = (int *)0x00662FF0;
+static int *const g_006693ac = (int *)0x006693AC;
+static int *const g_00669438 = (int *)0x00669438;
+static int *const g_0066943c = (int *)0x0066943C;
+static int *const g_00670724 = (int *)0x00670724;
+static int *const g_00670730 = (int *)0x00670730;
+static int *const g_00670738 = (int *)0x00670738;
+static int *const g_006708a0 = (int *)0x006708A0;
+static int *const g_006708a4 = (int *)0x006708A4;
+static int *const g_006708ac = (int *)0x006708AC;
+static int *const g_006708b4 = (int *)0x006708B4;
+static int *const g_0067fca8 = (int *)0x0067FCA8;
+static int *const g_006970ac = (int *)0x006970AC;
+static int *const g_006970b0 = (int *)0x006970B0;
+static int *const g_006970b4 = (int *)0x006970B4;
+static int *const g_006970b8 = (int *)0x006970B8;
+static int *const g_006970bc = (int *)0x006970BC;
+static int *const g_006970c0 = (int *)0x006970C0;
+static int *const g_006970c4 = (int *)0x006970C4;
+static int *const g_006970c8 = (int *)0x006970C8;
+static int *const g_006970cc = (int *)0x006970CC;
+static int *const g_006970d0 = (int *)0x006970D0;
+static int *const g_006970d4 = (int *)0x006970D4;
+static int *const g_006970d8 = (int *)0x006970D8;
+static int *const g_009b3374 = (int *)0x009B3374;
+static int *const g_009b8ec0 = (int *)0x009B8EC0;
+static int *const g_009b8ec4 = (int *)0x009B8EC4;
+static int *const g_009b8ec8 = (int *)0x009B8EC8;
+static int *const g_009b8fc4 = (int *)0x009B8FC4;
 
-class MapWin { public:
-    uint32_t vbtable_pointer_;
-    void * owned_;
-    uint8_t derived_tail_[0x21A6C - 0x8];
-    GraphicWin virtual_base_;
+class SpriteBox { public:
+    uint32_t field_0_;
 
-    void tile_to_pixel(int, int, int *, int *);
-    void direct_dest_line(int, int, int, int, int, int, int, int);
+    SpriteBox(int);
 };
 
-void MapWin::direct_dest_line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) {
+inline void *operator new(unsigned int, void *p) { return p; }
+
+SpriteBox::SpriteBox(int a1) {
     char *self = reinterpret_cast<char *>(this);
 
-    reinterpret_cast<Win *>(self)->update_cursor(0, 1);
-
-    int px1, py1, px2, py2;
-    tile_to_pixel(a1, a2, &px1, &py1);
-    tile_to_pixel(a3, a4, &px2, &py2);
-
-    px1 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py1 += *reinterpret_cast<int *>(self + 0x1ddc0);
-    px2 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py2 += *reinterpret_cast<int *>(self + 0x1ddc0);
-
-    int color;
-    switch (a5) {
-        case 0:
-            color = 0xfa;
-            break;
-        case 1:
-            color = 0xfe;
-            if (a8 == 0) {
-                px1++;
-                px2++;
-                py1++;
-                py2++;
-            }
-            break;
-        case 2:
-            color = 0xf9;
-            if (a8 == 0) {
-                py1--;
-                py2--;
-            }
-            break;
-        default:
-            color = a2;
-            break;
+    if (a1) {
+        *reinterpret_cast<void **>(self) = g_006708b4;
+        new (self + 0x8c) GraphicWin();
+        new (self + 0xaa4) Dialog();
     }
 
-    if (*reinterpret_cast<int *>(self + 0x1dd84) != 0) {
-        color = 0xfb;
+    new (self + 0x10) Spot();
+
+    *reinterpret_cast<void **>(self + 0x28) = g_006708ac;
+    *reinterpret_cast<void **>(self + 0x4c) = g_006693ac;
+    *reinterpret_cast<int *>(self + 0x50) = *g_009b3374;
+    *g_009b3374 = 0;
+
+    *reinterpret_cast<void **>(self + 0x24) = g_0066943c;
+    {
+        int *vtbl = *reinterpret_cast<int **>(self + 0x28);
+        int voff = vtbl[1];
+        *reinterpret_cast<void **>(self + 0x28 + voff) = g_00669438;
     }
 
-    if (a8 != 0) {
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px1, &py1);
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px2, &py2);
-        reinterpret_cast<Buffer *>(g_0093755c)->line(px1, py1, px2, py2, color);
-        return;
+    *reinterpret_cast<int *>(self + 0x2c) = 0;
+    *reinterpret_cast<int *>(self + 0x30) = 0;
+    *reinterpret_cast<int *>(self + 0x34) = 0;
+    *reinterpret_cast<int *>(self + 0x38) = 0;
+    *reinterpret_cast<int *>(self + 0x3c) = 0;
+
+    *reinterpret_cast<void **>(self + 0x24) = g_006708a4;
+    {
+        int *vtbl = *reinterpret_cast<int **>(self + 0x28);
+        int voff = vtbl[1];
+        *reinterpret_cast<void **>(self + 0x28 + voff) = g_006708a0;
     }
 
-    reinterpret_cast<Buffer *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4) + 0x444)
-        ->line(px1, py1, px2, py2, 0, color, a6, a7, (a6 + a7 - 1) & *g_00939fd4);
+    {
+        int *vtbl = *reinterpret_cast<int **>(self);
+        int voff = vtbl[1];
+        *reinterpret_cast<void **>(self + voff) = g_00670738;
+    }
+    {
+        int *vtbl = *reinterpret_cast<int **>(self);
+        int voff = vtbl[1];
+        *reinterpret_cast<void **>(self + voff + 0x444) = g_00670730;
+    }
+    {
+        int *vtbl = *reinterpret_cast<int **>(self);
+        int voff = vtbl[2];
+        *reinterpret_cast<void **>(self + voff) = g_00670724;
+    }
+    {
+        int *vtbl = *reinterpret_cast<int **>(self);
+        int voff = vtbl[1];
+        *reinterpret_cast<int *>(self + voff - 4) = voff - 0x8c;
+    }
+    {
+        int *vtbl = *reinterpret_cast<int **>(self);
+        int voff = vtbl[2];
+        *reinterpret_cast<int *>(self + voff - 4) = voff - 0xaa4;
+    }
+
+    *reinterpret_cast<int *>(self + 4) = 0;
+    *reinterpret_cast<int *>(self + 0x1c) = 1;
+    *reinterpret_cast<int *>(self + 0x20) = 1;
+    *reinterpret_cast<int *>(self + 0x54) = 0;
+    *reinterpret_cast<int *>(self + 0x58) = 0;
+    *reinterpret_cast<int *>(self + 0x5c) = 0;
+    *reinterpret_cast<int *>(self + 0x60) = 0;
+    *reinterpret_cast<int *>(self + 0x64) = 0;
+    *reinterpret_cast<int *>(self + 0x68) = 0;
+    *reinterpret_cast<int *>(self + 0x6c) = 0;
+    *reinterpret_cast<int *>(self + 0x70) = 0;
+    *reinterpret_cast<int *>(self + 0x74) = 0;
+    *reinterpret_cast<int *>(self + 0x78) = 0;
+    *reinterpret_cast<int *>(self + 0x7c) = 0;
+    *reinterpret_cast<int *>(self + 0x80) = 0;
+    *reinterpret_cast<int *>(self + 0x84) = 0;
+
+    *reinterpret_cast<int *>(self + 8) = *g_009b8fc4;
+
+    {
+        int *vtbl = *reinterpret_cast<int **>(self);
+        int voff = vtbl[1];
+        Buffer *buf = reinterpret_cast<Buffer *>(self + voff + 0x444);
+        buf->set_text_color(*g_006970ac, *g_006970b8, *g_006970c4, *g_006970d0);
+    }
+    {
+        int *vtbl = *reinterpret_cast<int **>(self);
+        int voff = vtbl[1];
+        Buffer *buf = reinterpret_cast<Buffer *>(self + voff + 0x444);
+        buf->set_text_color2(*g_006970b0, *g_006970bc, *g_006970c8, *g_006970d4);
+    }
+    {
+        int *vtbl = *reinterpret_cast<int **>(self);
+        int voff = vtbl[1];
+        Buffer *buf = reinterpret_cast<Buffer *>(self + voff + 0x444);
+        buf->set_text_color3(*g_006970b4, *g_006970c0, *g_006970cc, *g_006970d8);
+    }
+    {
+        int *vtbl = *reinterpret_cast<int **>(self);
+        int voff = vtbl[1];
+        Buffer *buf = reinterpret_cast<Buffer *>(self + voff + 0x444);
+        buf->set_font(reinterpret_cast<Font *>(*g_009b8ec0),
+                      reinterpret_cast<Font *>(*g_009b8ec4),
+                      reinterpret_cast<Font *>(*g_009b8ec8), 0);
+    }
 }

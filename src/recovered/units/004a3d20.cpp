@@ -1,0 +1,263 @@
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE, not as a claim. Nothing reads this directory:
+// it is on no ratchet, in no build, and scored by no collect.
+//
+// address        0x004A3D20
+// name           ?reset@ReportIf@@QAEXXZ
+// size           671 bytes
+// measured tier  MISMATCH
+// divergence     43
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/004a3d20/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?reset@ReportIf@@QAEXXZ  at 0x004A3D20  (671 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+
+struct BITMAPINFO;
+typedef int BOOL;
+struct BoxSpriteParams;
+class Buffer;
+class Font;
+typedef void * HBITMAP;
+typedef void * HDC;
+typedef void * HFONT;
+typedef void * HRGN;
+typedef char * LPSTR;
+typedef void * LPVOID;
+struct RECT;
+class ReportIf;
+class Spot;
+
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+};
+
+struct RECT {
+    long left;
+    long top;
+    long right;
+    long bottom;
+};
+
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+};
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class Buffer { public:
+    LPVOID vtable_;
+    uint32_t poOwner_;
+    uint32_t field_8_;
+    uint32_t field_C_;
+    uint32_t field_10_;
+    uint32_t field_14_;
+    uint32_t field_18_;
+    uint32_t field_1C_;
+    RECT rect1_;
+    RECT rect2_;
+    uint32_t field_40_[4];
+    uint32_t field_50_;
+    LPVOID * ppv_bits_;
+    uint32_t field_58_;
+    uint32_t field_5C_;
+    HDC hdc2_;
+    HDC hdc_;
+    uint32_t field_68_;
+    uint32_t field_6C_;
+    HRGN field_70_;
+    uint32_t field_74_;
+    HBITMAP bitmap_handle_;
+    const BITMAPINFO * bitmap_info_;
+    uint32_t width_;
+    uint32_t height_;
+    uint16_t field_88_;
+    uint16_t field_8A_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+    uint32_t field_94_;
+    uint32_t field_98_;
+    uint32_t field_9C_;
+    uint32_t field_A0_;
+    int32_t dib_[256];
+    uint32_t field_4A4_;
+    uint32_t field_4A8_;
+    uint32_t field_4AC_;
+    Spot spot_;
+    uint8_t field_4BC_[80];
+    uint32_t field_50C_;
+    uint32_t field_510_;
+    uint32_t field_514_;
+    uint32_t field_518_;
+    uint32_t field_51C_;
+    uint32_t field_520_;
+    uint32_t field_524_;
+    uint32_t field_528_;
+    Font * font1_;
+    Font * font2_;
+    Font * font3_;
+    Font * font4_;
+    uint32_t color_val_1_;
+    uint32_t color_2_val_1_;
+    uint32_t color_3_val_1_;
+    uint32_t color_hyper_val_1_;
+    uint32_t color_val_2_;
+    uint32_t color_2_val_2_;
+    uint32_t color_3_val_2_;
+    uint32_t color_hyper_val_2_;
+    uint32_t color_val_3_;
+    uint32_t color_2_val_3_;
+    uint32_t color_3_val_3_;
+    uint32_t color_hyper_val_3_;
+    uint32_t color_val_4_;
+    uint32_t color_2_val_4_;
+    uint32_t color_3_val_4_;
+    uint32_t color_hyper_val_4_;
+    uint32_t field_57C_;
+    int8_t field_580_;
+    uint32_t field_584_;
+    int box_sprite(RECT *, BoxSpriteParams *);
+    int set_clip(RECT *);
+    int set_font(Font *, Font *, Font *, Font *);
+    void clear_links();
+    void set_text_color(int, int, int, int);
+    void set_text_color2(int, int, int, int);
+    void set_text_color3(int, int, int, int);
+};
+
+// ---- fixed globals this body references ----
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const g_0078d528 = (int *)0x0078D528;
+static int *const g_0078d5a0 = (int *)0x0078D5A0;
+static int *const g_0078da50 = (int *)0x0078DA50;
+static int *const g_007aec64 = (int *)0x007AEC64;
+static int *const g_007aec94 = (int *)0x007AEC94;
+
+class ReportIf { public:
+    void reset();
+};
+
+void ReportIf::reset() {
+    char *self = reinterpret_cast<char *>(this);
+    Buffer *buf = reinterpret_cast<Buffer *>(g_007aec64);
+
+    RECT *r1 = reinterpret_cast<RECT *>(self + 0x20);
+    buf->box_sprite(r1, reinterpret_cast<BoxSpriteParams *>(g_0078da50));
+    RECT *r2 = reinterpret_cast<RECT *>(self + 0x30);
+    buf->box_sprite(r2, reinterpret_cast<BoxSpriteParams *>(g_0078da50));
+    RECT *r3 = reinterpret_cast<RECT *>(self + 0x50);
+    buf->box_sprite(r3, reinterpret_cast<BoxSpriteParams *>(g_0078da50));
+    RECT *r4 = reinterpret_cast<RECT *>(self + 0x40);
+    buf->set_clip(r4);
+    r4->left -= 7;
+    buf->box_sprite(r4, reinterpret_cast<BoxSpriteParams *>(g_0078da50));
+    r4->left += 7;
+    buf->set_clip(reinterpret_cast<RECT *>(g_007aec94));
+
+    r1->left += 3;
+    r1->right -= 3;
+    r1->top += 3;
+    r1->bottom -= 3;
+    r2->left += 3;
+    r2->top += 3;
+    r2->right -= 3;
+    r2->bottom -= 3;
+    r3->top += 4;
+    r3->left += 4;
+    r3->right -= 4;
+    r3->bottom -= 4;
+    r4->left += 4;
+    r4->top += 4;
+    r4->right -= 4;
+    r4->bottom -= 4;
+    r4->left -= 3;
+
+    buf->box_sprite(r1, reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
+    buf->box_sprite(r2, reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
+    buf->box_sprite(r3, reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
+    buf->box_sprite(r4, reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
+
+    r3->left += 3;
+    r3->right -= 3;
+    r3->top += 3;
+    r3->bottom -= 3;
+    r4->left += 3;
+    r4->right -= 3;
+    r4->top += 3;
+    r4->bottom -= 3;
+
+    buf->box_sprite(r3, reinterpret_cast<BoxSpriteParams *>(g_0078d528));
+    buf->box_sprite(r4, reinterpret_cast<BoxSpriteParams *>(g_0078d528));
+
+    r4->left += 3;
+    r1->left -= 3;
+    r1->right += 3;
+    r1->top -= 3;
+    r1->bottom += 3;
+    r2->left -= 3;
+    r2->right += 3;
+    r2->top -= 3;
+    r2->bottom += 3;
+    r3->left -= 7;
+    r3->right += 7;
+    r3->top -= 7;
+    r3->bottom += 7;
+    r4->left -= 7;
+    r4->right += 7;
+    r4->top -= 7;
+    r4->bottom += 7;
+
+    Font *f0 = *reinterpret_cast<Font **>(self + 0x1e180);
+    Font *f1 = *reinterpret_cast<Font **>(self + 0x1e184);
+    buf->set_font(f0, f1, f1, 0);
+    buf->set_text_color(0x99, -1, 1, 1);
+    buf->set_text_color2(0x99, -1, 1, 1);
+    buf->set_text_color3(0xe1, -1, 1, 1);
+    buf->clear_links();
+}

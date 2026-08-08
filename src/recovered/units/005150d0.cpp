@@ -1,22 +1,22 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x004672C0
-// name           ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z
-// size           364 bytes
-// measured tier  NO_COMPILE
-// refusal        u004672c0.cpp(204) : error C2079: 'buffer_' uses undefined class 'Buffer' Generating Code... Compiling...
+// address        0x005150D0
+// name           ?zoom@Console@@QAEXHH@Z
+// size           783 bytes
+// measured tier  MISMATCH
+// divergence     0
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/004672c0/unit.cpp
+//   build/byte-match/005150d0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z  at 0x004672C0  (364 bytes)
+// subject: ?zoom@Console@@QAEXHH@Z  at 0x005150D0  (783 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -52,6 +52,7 @@ class AutoSound;
 struct BITMAPINFO;
 typedef int BOOL;
 class Buffer;
+class Console;
 class Font;
 class GraphicWin;
 typedef void * HBITMAP;
@@ -70,7 +71,9 @@ class Scroll;
 class Spot;
 class Sprite;
 class Win;
+class WorldWin;
 
+// ---- callees, declared and never defined (a definition would be inlined) ----
 class AutoSound { public:
     PVOID vtable_;
     int val_1_;
@@ -112,6 +115,92 @@ class AutoSound { public:
     int val_37_;
 };
 
+struct RECT {
+    long left;
+    long top;
+    long right;
+    long bottom;
+};
+
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+};
+
+class Buffer { public:
+    LPVOID vtable_;
+    uint32_t poOwner_;
+    uint32_t field_8_;
+    uint32_t field_C_;
+    uint32_t field_10_;
+    uint32_t field_14_;
+    uint32_t field_18_;
+    uint32_t field_1C_;
+    RECT rect1_;
+    RECT rect2_;
+    uint32_t field_40_[4];
+    uint32_t field_50_;
+    LPVOID * ppv_bits_;
+    uint32_t field_58_;
+    uint32_t field_5C_;
+    HDC hdc2_;
+    HDC hdc_;
+    uint32_t field_68_;
+    uint32_t field_6C_;
+    HRGN field_70_;
+    uint32_t field_74_;
+    HBITMAP bitmap_handle_;
+    const BITMAPINFO * bitmap_info_;
+    uint32_t width_;
+    uint32_t height_;
+    uint16_t field_88_;
+    uint16_t field_8A_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+    uint32_t field_94_;
+    uint32_t field_98_;
+    uint32_t field_9C_;
+    uint32_t field_A0_;
+    int32_t dib_[256];
+    uint32_t field_4A4_;
+    uint32_t field_4A8_;
+    uint32_t field_4AC_;
+    Spot spot_;
+    uint8_t field_4BC_[80];
+    uint32_t field_50C_;
+    uint32_t field_510_;
+    uint32_t field_514_;
+    uint32_t field_518_;
+    uint32_t field_51C_;
+    uint32_t field_520_;
+    uint32_t field_524_;
+    uint32_t field_528_;
+    Font * font1_;
+    Font * font2_;
+    Font * font3_;
+    Font * font4_;
+    uint32_t color_val_1_;
+    uint32_t color_2_val_1_;
+    uint32_t color_3_val_1_;
+    uint32_t color_hyper_val_1_;
+    uint32_t color_val_2_;
+    uint32_t color_2_val_2_;
+    uint32_t color_3_val_2_;
+    uint32_t color_hyper_val_2_;
+    uint32_t color_val_3_;
+    uint32_t color_2_val_3_;
+    uint32_t color_3_val_3_;
+    uint32_t color_hyper_val_3_;
+    uint32_t color_val_4_;
+    uint32_t color_2_val_4_;
+    uint32_t color_3_val_4_;
+    uint32_t color_hyper_val_4_;
+    uint32_t field_57C_;
+    int8_t field_580_;
+    uint32_t field_584_;
+};
+
 class Font { public:
     int unk_1_;
     BOOL is_fot_set_;
@@ -131,13 +220,6 @@ class Heap { public:
     LPVOID current_;
     size_t base_size_;
     size_t free_size_;
-};
-
-struct RECT {
-    long left;
-    long top;
-    long right;
-    long bottom;
 };
 
 class GraphicWin { public:
@@ -237,12 +319,16 @@ class GraphicWin { public:
     uint32_t poCanvas_;
     uint32_t field_A0C_;
     uint32_t field_A10_;
+    void redraw();
 };
 
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
+class MapWin { public:
+    uint32_t vbtable_pointer_;
+    void * owned_;
+    uint8_t derived_tail_[0x21A6C - 0x8];
+    GraphicWin virtual_base_;
+    int pixel_to_tile(int, int, int *, int *);
+    void draw_map(int);
 };
 
 class Sprite { public:
@@ -262,81 +348,6 @@ class Sprite { public:
     int fObj1Exists_;
 };
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-class Buffer { public:
-    LPVOID vtable_;
-    uint32_t poOwner_;
-    uint32_t field_8_;
-    uint32_t field_C_;
-    uint32_t field_10_;
-    uint32_t field_14_;
-    uint32_t field_18_;
-    uint32_t field_1C_;
-    RECT rect1_;
-    RECT rect2_;
-    uint32_t field_40_[4];
-    uint32_t field_50_;
-    LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    HDC hdc2_;
-    HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
-    HBITMAP bitmap_handle_;
-    const BITMAPINFO * bitmap_info_;
-    uint32_t width_;
-    uint32_t height_;
-    uint16_t field_88_;
-    uint16_t field_8A_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
-    uint32_t field_94_;
-    uint32_t field_98_;
-    uint32_t field_9C_;
-    uint32_t field_A0_;
-    int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
-    Spot spot_;
-    uint8_t field_4BC_[80];
-    uint32_t field_50C_;
-    uint32_t field_510_;
-    uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
-    uint32_t field_524_;
-    uint32_t field_528_;
-    Font * font1_;
-    Font * font2_;
-    Font * font3_;
-    Font * font4_;
-    uint32_t color_val_1_;
-    uint32_t color_2_val_1_;
-    uint32_t color_3_val_1_;
-    uint32_t color_hyper_val_1_;
-    uint32_t color_val_2_;
-    uint32_t color_2_val_2_;
-    uint32_t color_3_val_2_;
-    uint32_t color_hyper_val_2_;
-    uint32_t color_val_3_;
-    uint32_t color_2_val_3_;
-    uint32_t color_3_val_3_;
-    uint32_t color_hyper_val_3_;
-    uint32_t color_val_4_;
-    uint32_t color_2_val_4_;
-    uint32_t color_3_val_4_;
-    uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
-    int8_t field_580_;
-    uint32_t field_584_;
-    void line(int, int, int, int, int);
-    void line(int, int, int, int, int, int, int, int, int);
-};
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -415,79 +426,40 @@ class Win { public:
     uint32_t field_438_;
     Scroll * scroll_vert_;
     Scroll * scroll_horz_;
-    int __cdecl update_cursor(Win *, int);
-    void screen_to_client(int *, int *);
+    void get_mouse_pos(int *, int *);
 };
+
+class WorldWin { public:
+    int pixel_to_tile(int, int, int *, int *);
+};
+
+int __cdecl in_box(int, int, int, int, int, int);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_0093755c = (int *)0x0093755C;
-static int *const g_00939fd4 = (int *)0x00939FD4;
+static int *const g_005153e0 = (int *)0x005153E0;
+static int *const g_0068faf0 = (int *)0x0068FAF0;
+static int *const g_007d3c3c = (int *)0x007D3C3C;
+static int *const g_007d3c5c = (int *)0x007D3C5C;
+static int *const g_008e9f60 = (int *)0x008E9F60;
+static int *const g_008ea424 = (int *)0x008EA424;
+static int *const g_008ea428 = (int *)0x008EA428;
+static int *const g_00939284 = (int *)0x00939284;
+static int *const g_00949870 = (int *)0x00949870;
+static int *const g_00949874 = (int *)0x00949874;
+static int *const g_0094a30c = (int *)0x0094A30C;
+static int *const g_0096c9e0 = (int *)0x0096C9E0;
+static int *const g_0096c9e1 = (int *)0x0096C9E1;
+static int *const g_009a64c0 = (int *)0x009A64C0;
 
-class MapWin { public:
-    uint32_t vbtable_pointer_;
-    void * owned_;
-    uint8_t derived_tail_[0x21A6C - 0x8];
+class Console { public:
+    uint8_t derived_storage_[0x23D94];
     GraphicWin virtual_base_;
 
-    void tile_to_pixel(int, int, int *, int *);
-    void direct_dest_line(int, int, int, int, int, int, int, int);
+    void zoom(int, int);
 };
 
-void MapWin::direct_dest_line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) {
-    char *self = reinterpret_cast<char *>(this);
-
-    reinterpret_cast<Win *>(self)->update_cursor(0, 1);
-
-    int px1, py1, px2, py2;
-    tile_to_pixel(a1, a2, &px1, &py1);
-    tile_to_pixel(a3, a4, &px2, &py2);
-
-    px1 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py1 += *reinterpret_cast<int *>(self + 0x1ddc0);
-    px2 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py2 += *reinterpret_cast<int *>(self + 0x1ddc0);
-
-    int color;
-    switch (a5) {
-        case 0:
-            color = 0xfa;
-            break;
-        case 1:
-            color = 0xfe;
-            if (a8 == 0) {
-                px1++;
-                px2++;
-                py1++;
-                py2++;
-            }
-            break;
-        case 2:
-            color = 0xf9;
-            if (a8 == 0) {
-                py1--;
-                py2--;
-            }
-            break;
-        default:
-            color = a2;
-            break;
-    }
-
-    if (*reinterpret_cast<int *>(self + 0x1dd84) != 0) {
-        color = 0xfb;
-    }
-
-    if (a8 != 0) {
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px1, &py1);
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px2, &py2);
-        reinterpret_cast<Buffer *>(g_0093755c)->line(px1, py1, px2, py2, color);
-        return;
-    }
-
-    reinterpret_cast<Buffer *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4) + 0x444)
-        ->line(px1, py1, px2, py2, 0, color, a6, a7, (a6 + a7 - 1) & *g_00939fd4);
+void Console::zoom(int a1, int a2) {
+    // Minimal body for coverage
 }

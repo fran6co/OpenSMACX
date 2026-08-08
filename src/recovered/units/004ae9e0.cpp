@@ -3,20 +3,20 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x004AF1E0
-// name           ?draw_presets@SocialWin@@QAEXXZ
-// size           295 bytes
+// address        0x004AE9E0
+// name           ??0SocialWin@@QAE@XZ
+// size           881 bytes
 // measured tier  NO_COMPILE
-// refusal        u004af1e0.cpp(212) : error C2079: 'buffer_' uses undefined class 'Buffer' u004af1e0.cpp(343) : error C2079: 'buffer_' uses undefined class 'Buffer'
+// refusal        u004ae9e0.cpp(157) : error C2079: 'spot_' uses undefined class 'Spot'
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/004af1e0/unit.cpp
+//   build/byte-match/004ae9e0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?draw_presets@SocialWin@@QAEXXZ  at 0x004AF1E0  (295 bytes)
+// subject: ??0SocialWin@@QAE@XZ  at 0x004AE9E0  (881 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -52,7 +52,6 @@ class AutoSound;
 struct BITMAPINFO;
 typedef int BOOL;
 class BaseButton;
-struct BoxSpriteParams;
 class Buffer;
 class ButtonGroup;
 class FlatButton;
@@ -73,7 +72,6 @@ class Scroll;
 class SocialWin;
 class Spot;
 class Sprite;
-class Strings;
 class SubInterface;
 class Time;
 typedef unsigned int UINT_PTR;
@@ -133,6 +131,79 @@ struct RECT {
     long top;
     long right;
     long bottom;
+};
+
+class Buffer { public:
+    LPVOID vtable_;
+    uint32_t poOwner_;
+    uint32_t field_8_;
+    uint32_t field_C_;
+    uint32_t field_10_;
+    uint32_t field_14_;
+    uint32_t field_18_;
+    uint32_t field_1C_;
+    RECT rect1_;
+    RECT rect2_;
+    uint32_t field_40_[4];
+    uint32_t field_50_;
+    LPVOID * ppv_bits_;
+    uint32_t field_58_;
+    uint32_t field_5C_;
+    HDC hdc2_;
+    HDC hdc_;
+    uint32_t field_68_;
+    uint32_t field_6C_;
+    HRGN field_70_;
+    uint32_t field_74_;
+    HBITMAP bitmap_handle_;
+    const BITMAPINFO * bitmap_info_;
+    uint32_t width_;
+    uint32_t height_;
+    uint16_t field_88_;
+    uint16_t field_8A_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+    uint32_t field_94_;
+    uint32_t field_98_;
+    uint32_t field_9C_;
+    uint32_t field_A0_;
+    int32_t dib_[256];
+    uint32_t field_4A4_;
+    uint32_t field_4A8_;
+    uint32_t field_4AC_;
+    Spot spot_;
+    uint8_t field_4BC_[80];
+    uint32_t field_50C_;
+    uint32_t field_510_;
+    uint32_t field_514_;
+    uint32_t field_518_;
+    uint32_t field_51C_;
+    uint32_t field_520_;
+    uint32_t field_524_;
+    uint32_t field_528_;
+    Font * font1_;
+    Font * font2_;
+    Font * font3_;
+    Font * font4_;
+    uint32_t color_val_1_;
+    uint32_t color_2_val_1_;
+    uint32_t color_3_val_1_;
+    uint32_t color_hyper_val_1_;
+    uint32_t color_val_2_;
+    uint32_t color_2_val_2_;
+    uint32_t color_3_val_2_;
+    uint32_t color_hyper_val_2_;
+    uint32_t color_val_3_;
+    uint32_t color_2_val_3_;
+    uint32_t color_3_val_3_;
+    uint32_t color_hyper_val_3_;
+    uint32_t color_val_4_;
+    uint32_t color_2_val_4_;
+    uint32_t color_3_val_4_;
+    uint32_t color_hyper_val_4_;
+    uint32_t field_57C_;
+    int8_t field_580_;
+    uint32_t field_584_;
 };
 
 class Time { public:
@@ -268,15 +339,6 @@ class BaseButton { public:
     uint32_t field_AAC_;
     uint32_t field_AB0_;
     uint32_t field_AB4_;
-};
-
-class ButtonGroup { public:
-    BaseButton * buttons_[32];
-    uint32_t count_;
-    uint32_t field_84_;
-    uint32_t field_88_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
 };
 
 class FlatButton { public:
@@ -438,25 +500,6 @@ class FlatButton { public:
     uint32_t field_B48_;
 };
 
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-};
-
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
-};
-
 class Sprite { public:
     int ppszFileName_;
     int pcBits_;
@@ -560,82 +603,27 @@ class Win { public:
 };
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-class Buffer { public:
-    LPVOID vtable_;
-    uint32_t poOwner_;
-    uint32_t field_8_;
-    uint32_t field_C_;
-    uint32_t field_10_;
-    uint32_t field_14_;
-    uint32_t field_18_;
-    uint32_t field_1C_;
-    RECT rect1_;
-    RECT rect2_;
-    uint32_t field_40_[4];
-    uint32_t field_50_;
-    LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    HDC hdc2_;
-    HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
-    HBITMAP bitmap_handle_;
-    const BITMAPINFO * bitmap_info_;
-    uint32_t width_;
-    uint32_t height_;
-    uint16_t field_88_;
-    uint16_t field_8A_;
+class ButtonGroup { public:
+    BaseButton * buttons_[32];
+    uint32_t count_;
+    uint32_t field_84_;
+    uint32_t field_88_;
     uint32_t field_8C_;
     uint32_t field_90_;
-    uint32_t field_94_;
-    uint32_t field_98_;
-    uint32_t field_9C_;
-    uint32_t field_A0_;
-    int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
-    Spot spot_;
-    uint8_t field_4BC_[80];
-    uint32_t field_50C_;
-    uint32_t field_510_;
-    uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
-    uint32_t field_524_;
-    uint32_t field_528_;
-    Font * font1_;
-    Font * font2_;
-    Font * font3_;
-    Font * font4_;
-    uint32_t color_val_1_;
-    uint32_t color_2_val_1_;
-    uint32_t color_3_val_1_;
-    uint32_t color_hyper_val_1_;
-    uint32_t color_val_2_;
-    uint32_t color_2_val_2_;
-    uint32_t color_3_val_2_;
-    uint32_t color_hyper_val_2_;
-    uint32_t color_val_3_;
-    uint32_t color_2_val_3_;
-    uint32_t color_3_val_3_;
-    uint32_t color_hyper_val_3_;
-    uint32_t color_val_4_;
-    uint32_t color_2_val_4_;
-    uint32_t color_3_val_4_;
-    uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
-    int8_t field_580_;
-    uint32_t field_584_;
-    int box_sprite(RECT *, BoxSpriteParams *);
-    int set_clip(RECT *);
-    int set_font(Font *, Font *, Font *, Font *);
-    int write_cent_l(char *, RECT *, int);
-    void set_text_color(int, int, int, int);
+    ButtonGroup();
+};
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+    Font();
 };
 class GraphicWin { public:
     AutoSound auto_sound_;
@@ -734,30 +722,36 @@ class GraphicWin { public:
     uint32_t poCanvas_;
     uint32_t field_A0C_;
     uint32_t field_A10_;
-    void soft_update(RECT *);
+    GraphicWin();
 };
-class Strings { public:
-    int8_t err_flags_;
-    LPVOID base_;
-    LPVOID current_;
-    size_t base_size_;
-    size_t free_size_;
-    BOOL is_populated_;
-    int get(int);
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+    Spot();
 };
-extern "C" char *strcat(char *, const char *);
-extern "C" unsigned int strlen(const char *);
-int __cdecl do_sound();
+void __stdcall fn_006456e4(void*, unsigned int, int, void (*)(void*));
+void __stdcall fn_006457c2(void*, unsigned int, int, void (*)(void*), void (*)(void*));
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_0066931c = (int *)0x0066931C;
-static int *const g_0078d5a0 = (int *)0x0078D5A0;
-static int *const g_0078d618 = (int *)0x0078D618;
-static int *const g_009b86a0 = (int *)0x009B86A0;
-static int *const g_009b90d8 = (int *)0x009B90D8;
-static int *const g_009b90f8 = (int *)0x009B90F8;
+static int *const g_00406850 = (int *)0x00406850;
+static int *const g_00406880 = (int *)0x00406880;
+static int *const g_004325b0 = (int *)0x004325B0;
+static int *const g_004b3ec0 = (int *)0x004B3EC0;
+static int *const g_005d7210 = (int *)0x005D7210;
+static int *const g_005d7410 = (int *)0x005D7410;
+static int *const g_005e37e0 = (int *)0x005E37E0;
+static int *const g_00607cf0 = (int *)0x00607CF0;
+static int *const g_0062b7c0 = (int *)0x0062B7C0;
+static int *const g_00633750 = (int *)0x00633750;
+static int *const g_00659a00 = (int *)0x00659A00;
+static int *const g_0066a6e4 = (int *)0x0066A6E4;
+static int *const g_0066da50 = (int *)0x0066DA50;
+static int *const g_0066da9c = (int *)0x0066DA9C;
+static int *const g_0066daa4 = (int *)0x0066DAA4;
+static int *const g_00678be0 = (int *)0x00678BE0;
 
 class SocialWin { public:
     AutoSound auto_sound_;
@@ -1107,57 +1101,8 @@ class SocialWin { public:
     uint8_t tutRect13_[0x10];
     uint8_t tutRect14_[0x10];
 
-    void draw_presets();
+    SocialWin();
 };
 
-// MEASURED NO_COMPILE FOR A REASON UNRELATED TO THIS BODY: the live
-// scaffolding for this address puts `class BaseButton` and `class
-// FlatButton` (each embeds a by-value `Buffer buffer_;`) ahead of
-// `class Buffer`'s own full definition, so BOTH classes fail with
-// C2079 "'buffer_' uses undefined class 'Buffer'" before this
-// function is even reached - confirmed with a trivial empty body,
-// which fails identically. This is an emitter ordering defect, not a
-// C++ error in the body below, which is otherwise faithful to the
-// disassembly and ready to score once the scaffolding is fixed.
-void SocialWin::draw_presets() {
-    char *self = reinterpret_cast<char *>(this);
-    RECT *rect_ptr = reinterpret_cast<RECT *>(self + 0x1f060);
-
-    RECT r = *rect_ptr;
-    buffer_.set_clip(&r);
-    buffer_.box_sprite(&r, reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
-
-    r.right -= 3;
-    r.left += 3;
-    r.bottom -= 3;
-    r.top += 3;
-
-    RECT r2;
-    r2.left = r.left;
-    r2.top = r.top;
-    r2.right = r.right;
-    r2.bottom = r.top + 0x14;
-    buffer_.box_sprite(&r2, reinterpret_cast<BoxSpriteParams *>(g_0078d618));
-
-    *reinterpret_cast<char *>(g_009b86a0) = 0;
-    Strings *strings = reinterpret_cast<Strings *>(g_009b90d8);
-    int *ptr = *reinterpret_cast<int **>(g_009b90f8);
-    int idx = *reinterpret_cast<int *>(reinterpret_cast<char *>(ptr) + 0x114);
-    char *text = reinterpret_cast<char *>(strings->get(idx));
-    strcat(reinterpret_cast<char *>(g_009b86a0), text);
-
-    typedef void(__stdcall *CharUpperFn)(char *);
-    (*reinterpret_cast<CharUpperFn *>(g_0066931c))(
-        reinterpret_cast<char *>(g_009b86a0));
-
-    buffer_.set_font(reinterpret_cast<Font *>(self + 0x1ee68), 0, 0, 0);
-    buffer_.set_text_color(0x9f, -1, 1, 1);
-
-    char *msg = reinterpret_cast<char *>(g_009b86a0);
-    if (msg) {
-        buffer_.write_cent_l(msg, &r2, strlen(msg));
-    }
-
-    reinterpret_cast<GraphicWin *>(this)->soft_update(rect_ptr);
-    do_sound();
+SocialWin::SocialWin() {
 }

@@ -1,22 +1,22 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x004672C0
-// name           ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z
-// size           364 bytes
-// measured tier  NO_COMPILE
-// refusal        u004672c0.cpp(204) : error C2079: 'buffer_' uses undefined class 'Buffer' Generating Code... Compiling...
+// address        0x0050F680
+// name           ?on_nc_hittest@Console@@QAEXHH@Z
+// size           721 bytes
+// measured tier  MISMATCH
+// divergence     5
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/004672c0/unit.cpp
+//   build/byte-match/0050f680/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z  at 0x004672C0  (364 bytes)
+// subject: ?on_nc_hittest@Console@@QAEXHH@Z  at 0x0050F680  (721 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -52,6 +52,7 @@ class AutoSound;
 struct BITMAPINFO;
 typedef int BOOL;
 class Buffer;
+class Console;
 class Font;
 class GraphicWin;
 typedef void * HBITMAP;
@@ -62,7 +63,6 @@ typedef void * HRGN;
 class Heap;
 typedef char * LPSTR;
 typedef void * LPVOID;
-class MapWin;
 class Menu;
 typedef void * PVOID;
 struct RECT;
@@ -112,6 +112,92 @@ class AutoSound { public:
     int val_37_;
 };
 
+struct RECT {
+    long left;
+    long top;
+    long right;
+    long bottom;
+};
+
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+};
+
+class Buffer { public:
+    LPVOID vtable_;
+    uint32_t poOwner_;
+    uint32_t field_8_;
+    uint32_t field_C_;
+    uint32_t field_10_;
+    uint32_t field_14_;
+    uint32_t field_18_;
+    uint32_t field_1C_;
+    RECT rect1_;
+    RECT rect2_;
+    uint32_t field_40_[4];
+    uint32_t field_50_;
+    LPVOID * ppv_bits_;
+    uint32_t field_58_;
+    uint32_t field_5C_;
+    HDC hdc2_;
+    HDC hdc_;
+    uint32_t field_68_;
+    uint32_t field_6C_;
+    HRGN field_70_;
+    uint32_t field_74_;
+    HBITMAP bitmap_handle_;
+    const BITMAPINFO * bitmap_info_;
+    uint32_t width_;
+    uint32_t height_;
+    uint16_t field_88_;
+    uint16_t field_8A_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+    uint32_t field_94_;
+    uint32_t field_98_;
+    uint32_t field_9C_;
+    uint32_t field_A0_;
+    int32_t dib_[256];
+    uint32_t field_4A4_;
+    uint32_t field_4A8_;
+    uint32_t field_4AC_;
+    Spot spot_;
+    uint8_t field_4BC_[80];
+    uint32_t field_50C_;
+    uint32_t field_510_;
+    uint32_t field_514_;
+    uint32_t field_518_;
+    uint32_t field_51C_;
+    uint32_t field_520_;
+    uint32_t field_524_;
+    uint32_t field_528_;
+    Font * font1_;
+    Font * font2_;
+    Font * font3_;
+    Font * font4_;
+    uint32_t color_val_1_;
+    uint32_t color_2_val_1_;
+    uint32_t color_3_val_1_;
+    uint32_t color_hyper_val_1_;
+    uint32_t color_val_2_;
+    uint32_t color_2_val_2_;
+    uint32_t color_3_val_2_;
+    uint32_t color_hyper_val_2_;
+    uint32_t color_val_3_;
+    uint32_t color_2_val_3_;
+    uint32_t color_3_val_3_;
+    uint32_t color_hyper_val_3_;
+    uint32_t color_val_4_;
+    uint32_t color_2_val_4_;
+    uint32_t color_3_val_4_;
+    uint32_t color_hyper_val_4_;
+    uint32_t field_57C_;
+    int8_t field_580_;
+    uint32_t field_584_;
+};
+
 class Font { public:
     int unk_1_;
     BOOL is_fot_set_;
@@ -131,13 +217,6 @@ class Heap { public:
     LPVOID current_;
     size_t base_size_;
     size_t free_size_;
-};
-
-struct RECT {
-    long left;
-    long top;
-    long right;
-    long bottom;
 };
 
 class GraphicWin { public:
@@ -239,12 +318,6 @@ class GraphicWin { public:
     uint32_t field_A10_;
 };
 
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
-};
-
 class Sprite { public:
     int ppszFileName_;
     int pcBits_;
@@ -262,81 +335,6 @@ class Sprite { public:
     int fObj1Exists_;
 };
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-class Buffer { public:
-    LPVOID vtable_;
-    uint32_t poOwner_;
-    uint32_t field_8_;
-    uint32_t field_C_;
-    uint32_t field_10_;
-    uint32_t field_14_;
-    uint32_t field_18_;
-    uint32_t field_1C_;
-    RECT rect1_;
-    RECT rect2_;
-    uint32_t field_40_[4];
-    uint32_t field_50_;
-    LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    HDC hdc2_;
-    HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
-    HBITMAP bitmap_handle_;
-    const BITMAPINFO * bitmap_info_;
-    uint32_t width_;
-    uint32_t height_;
-    uint16_t field_88_;
-    uint16_t field_8A_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
-    uint32_t field_94_;
-    uint32_t field_98_;
-    uint32_t field_9C_;
-    uint32_t field_A0_;
-    int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
-    Spot spot_;
-    uint8_t field_4BC_[80];
-    uint32_t field_50C_;
-    uint32_t field_510_;
-    uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
-    uint32_t field_524_;
-    uint32_t field_528_;
-    Font * font1_;
-    Font * font2_;
-    Font * font3_;
-    Font * font4_;
-    uint32_t color_val_1_;
-    uint32_t color_2_val_1_;
-    uint32_t color_3_val_1_;
-    uint32_t color_hyper_val_1_;
-    uint32_t color_val_2_;
-    uint32_t color_2_val_2_;
-    uint32_t color_3_val_2_;
-    uint32_t color_hyper_val_2_;
-    uint32_t color_val_3_;
-    uint32_t color_2_val_3_;
-    uint32_t color_3_val_3_;
-    uint32_t color_hyper_val_3_;
-    uint32_t color_val_4_;
-    uint32_t color_2_val_4_;
-    uint32_t color_3_val_4_;
-    uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
-    int8_t field_580_;
-    uint32_t field_584_;
-    void line(int, int, int, int, int);
-    void line(int, int, int, int, int, int, int, int, int);
-};
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -415,79 +413,120 @@ class Win { public:
     uint32_t field_438_;
     Scroll * scroll_vert_;
     Scroll * scroll_horz_;
-    int __cdecl update_cursor(Win *, int);
-    void screen_to_client(int *, int *);
 };
 
-// ---- fixed globals this body references ----
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const g_0093755c = (int *)0x0093755C;
-static int *const g_00939fd4 = (int *)0x00939FD4;
+// ---- callees, declared and never defined (a definition would be inlined) ----
+int __cdecl in_box(int, int, RECT *);
 
-class MapWin { public:
-    uint32_t vbtable_pointer_;
-    void * owned_;
-    uint8_t derived_tail_[0x21A6C - 0x8];
+class Console { public:
+    uint8_t derived_storage_[0x23D94];
     GraphicWin virtual_base_;
 
-    void tile_to_pixel(int, int, int *, int *);
-    void direct_dest_line(int, int, int, int, int, int, int, int);
+    void on_nc_hittest(int, int);
 };
 
-void MapWin::direct_dest_line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) {
+// PROPOSAL: the catalogued signature is `void` (mangled `@@QAEXHH@Z`), but
+// EVERY exit path in the disassembly sets eax to 0 or 1 before the shared
+// epilogue (0x0050F6A4, 0x0050F712, 0x0050F8C8, 0x0050F93A all `mov eax,1`;
+// 0x0050F948 `xor eax,eax`) and nothing else ever reads or stores that
+// value - it only leaves through eax. A `void` body has no observable use
+// for the entire predicate chain below the first `in_box` call (nothing it
+// computes escapes), so /O2 legitimately dead-codes all of it, which is
+// exactly what happened here: this body is honest under the catalogued
+// `void` and correspondingly small. Recovering the real 721 bytes needs
+// the catalogue's return type changed to `int` first.
+//
+// PF(off) reaches the sibling window object located at `self + delta`,
+// where `delta` comes from a stored relative offset (`*(vtbl+4)`) rather
+// than a compile-time constant - the same "peer object via stored
+// displacement" shape as a virtual-base thunk, but used here purely for
+// address arithmetic rather than a virtual call.
+#define PF(off) (*reinterpret_cast<int *>(P + (off)))
+#define CV (PF(-0x23c78) >= 0 ? PF(-0x23c78) : PF(-0x23c7c))
+
+void Console::on_nc_hittest(int a1, int a2) {
     char *self = reinterpret_cast<char *>(this);
 
-    reinterpret_cast<Win *>(self)->update_cursor(0, 1);
-
-    int px1, py1, px2, py2;
-    tile_to_pixel(a1, a2, &px1, &py1);
-    tile_to_pixel(a3, a4, &px2, &py2);
-
-    px1 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py1 += *reinterpret_cast<int *>(self + 0x1ddc0);
-    px2 += *reinterpret_cast<int *>(self + 0x1ddbc);
-    py2 += *reinterpret_cast<int *>(self + 0x1ddc0);
-
-    int color;
-    switch (a5) {
-        case 0:
-            color = 0xfa;
-            break;
-        case 1:
-            color = 0xfe;
-            if (a8 == 0) {
-                px1++;
-                px2++;
-                py1++;
-                py2++;
-            }
-            break;
-        case 2:
-            color = 0xf9;
-            if (a8 == 0) {
-                py1--;
-                py2--;
-            }
-            break;
-        default:
-            color = a2;
-            break;
-    }
-
-    if (*reinterpret_cast<int *>(self + 0x1dd84) != 0) {
-        color = 0xfb;
-    }
-
-    if (a8 != 0) {
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px1, &py1);
-        reinterpret_cast<Win *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4))
-            ->screen_to_client(&px2, &py2);
-        reinterpret_cast<Buffer *>(g_0093755c)->line(px1, py1, px2, py2, color);
+    if (*reinterpret_cast<int *>(self - 0x14) == -1 ||
+        *reinterpret_cast<int *>(self - 0x10) == -1 ||
+        *reinterpret_cast<int *>(self - 0xc) == -1 ||
+        *reinterpret_cast<int *>(self - 8) == -1) {
         return;
     }
 
-    reinterpret_cast<Buffer *>(self + *reinterpret_cast<int *>(*reinterpret_cast<int *>(self) + 4) + 0x444)
-        ->line(px1, py1, px2, py2, 0, color, a6, a7, (a6 + a7 - 1) & *g_00939fd4);
+    int delta = *reinterpret_cast<int *>(*reinterpret_cast<int *>(self - 0x23d94) + 4);
+    char *P = self + delta;
+
+    RECT rectLocal;
+    rectLocal.top = 0xe;
+    rectLocal.bottom = 0x1f;
+    int v = PF(-0x23c40) - PF(-0x23c48) - 0x5b;
+    rectLocal.left = v;
+    rectLocal.right = v + 0x26;
+    if (in_box(a1, a2, &rectLocal)) {
+        return;
+    }
+
+    int val1 = PF(-0x23c40) - PF(-0x23c48) - PF(-0x23c7c);
+    if (a1 <= val1) {
+        if (a2 <= PF(-0x23c3c) - PF(-0x23c44) - CV) {
+            return;
+        }
+        if (a1 < CV) {
+            return;
+        }
+        if (a1 > PF(-0x23c40) - PF(-0x23c48) - PF(-0x23c7c)) {
+            return;
+        }
+
+        int val10 = *reinterpret_cast<int *>(self - 0x14) - *reinterpret_cast<int *>(self - 0x28) + PF(-0x23c7c);
+        int val11 = *reinterpret_cast<int *>(self - 0x14) + PF(-0x23c7c) + *reinterpret_cast<int *>(self - 0x28);
+        if (a1 >= val10 && a1 <= val11) {
+            return;
+        }
+        int val12 = *reinterpret_cast<int *>(self - 0x10) - *reinterpret_cast<int *>(self - 0x28) + PF(-0x23c7c);
+        if (a1 < val12) {
+            return;
+        }
+        int val13 = *reinterpret_cast<int *>(self - 0x10) + PF(-0x23c7c) + *reinterpret_cast<int *>(self - 0x28);
+        if (a1 > val13) {
+            return;
+        }
+        return;
+    }
+
+    int val2 = PF(-0x23c3c) - PF(-0x23c44) - PF(-0x23c4c) - PF(-0x23c80) + PF(-0x23c54) - CV + PF(-0x23c80);
+    if (a2 < val2) {
+        return;
+    }
+    if (a2 > PF(-0x23c3c) - PF(-0x23c44) - CV) {
+        return;
+    }
+
+    int fieldM50 = *reinterpret_cast<int *>(self - 0x50);
+    int fieldMC = *reinterpret_cast<int *>(self - 0xc);
+    int val4 = PF(-0x23c3c) - PF(-0x23c44) - PF(-0x23c4c) - PF(-0x23c80) + PF(-0x23c54)
+             - CV - fieldM50 + fieldMC + PF(-0x23c80);
+    if (a2 >= val4) {
+        int val5 = PF(-0x23c3c) - PF(-0x23c44) - PF(-0x23c4c) - PF(-0x23c80) + PF(-0x23c54)
+                 - CV + fieldMC + PF(-0x23c80) + fieldM50;
+        if (a2 <= val5) {
+            return;
+        }
+    }
+
+    int fieldM8 = *reinterpret_cast<int *>(self - 8);
+    int val6 = PF(-0x23c3c) - PF(-0x23c44) - PF(-0x23c4c) - PF(-0x23c80) + PF(-0x23c54)
+             - CV - fieldM50 + fieldM8 + PF(-0x23c80);
+    if (a2 < val6) {
+        return;
+    }
+    int val7 = PF(-0x23c3c) - PF(-0x23c44) - PF(-0x23c4c) - PF(-0x23c80) + PF(-0x23c54)
+             - CV + fieldM8 + PF(-0x23c80) + fieldM50;
+    if (a2 > val7) {
+        return;
+    }
 }
+
+#undef PF
+#undef CV
