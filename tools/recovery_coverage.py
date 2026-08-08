@@ -127,6 +127,8 @@ def main(argv=None) -> int:
     parser.add_argument("--limit", type=int, default=40)
     parser.add_argument("--include-crt", action="store_true",
                         help="count the MSVC 6 CRT as debt (EXCLUSIONS.md #1)")
+    parser.add_argument("--quality", action="store_true",
+                        help="how COMPLETE the covered bodies are, by size")
     arguments = parser.parse_args(argv)
 
     functions = emit.load_functions()
@@ -162,6 +164,43 @@ def main(argv=None) -> int:
                 group = sizes[name]
                 print(f"  {name:>8}  {len(group):>5} function(s), "
                       f"{sum(group):>8} bytes")
+
+    if arguments.quality:
+        # COVERAGE DOES NOT MEAN COMPLETE, and above ~768 bytes it barely
+        # means anything. `rebuilt_bytes / original_bytes` is a blunt
+        # completeness proxy - it says how much code the body actually
+        # compiles to against how much the target holds - and it collapses
+        # with size, because an agent given eight 1.4 kB functions translates
+        # the setup prefix of each and time-boxes the rest. Those bodies are
+        # honest work and a real starting point; they are not most of the
+        # function, and a single coverage percentage hides that completely.
+        import csv as _csv
+        import statistics
+        ledger = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
+        bands: dict = {}
+        if ledger.is_file():
+            with ledger.open(newline="", encoding="utf-8-sig") as handle:
+                for row in _csv.DictReader(handle):
+                    if row.get("tier") not in ("MISMATCH", "MNEMONIC_ONLY"):
+                        continue
+                    try:
+                        target = int(row.get("original_bytes") or 0)
+                        built = int(row.get("rebuilt_bytes") or 0)
+                    except ValueError:
+                        continue
+                    if target <= 0 or built <= 0:
+                        continue
+                    bands.setdefault(band(target), []).append(built / target)
+        print("\nhow complete the non-matching bodies are "
+              "(rebuilt bytes / target bytes):")
+        for _limit, name in BANDS + ((0, ">1k"),):
+            group = bands.get(name)
+            if not group:
+                continue
+            thin = sum(1 for value in group if value < 0.6)
+            print(f"  {name:>8}  n={len(group):>4}  "
+                  f"median {statistics.median(group):.2f}  "
+                  f"under 60% of target: {thin} ({100 * thin / len(group):.0f}%)")
 
     if arguments.left:
         print("\nnext up, smallest first:")
