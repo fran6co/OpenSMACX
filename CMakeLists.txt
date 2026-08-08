@@ -1216,6 +1216,9 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(integrate-recovery-tests
                                    test_integrate_recovery.py)
 
+    opensmacx_add_python_tool_test(harvest-proven-units-tests
+                                   test_harvest_proven_units.py)
+
     opensmacx_add_python_tool_test(build-regression-tests
                                    test_build_regressions.py)
 
