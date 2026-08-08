@@ -305,6 +305,19 @@ def measure(exe: Path, functions_csv: Path, callgraph_json: Path) -> dict:
             sum(1 for row in external if row["name"].startswith("_")),
     }
 
+    # The EH UNWIND FUNCLETS, which are a different population from the SEH
+    # FRAME REGISTRATIONS measured below and were being conflated with them.
+    # A registration is a `mov fs:[0], esp` in a function that has a frame; a
+    # funclet is a separate linker-pooled body with NO frame of its own that
+    # runs during unwinding and destroys a local belonging to the function
+    # that registered. They live in the pool the linker gathers at
+    # 0x0065xxxx-0x0066xxxx and every one is flagged `hidden`.
+    funclets = [row for row in rows
+                if 0x00650000 <= int(row["address"], 16) < 0x00670000
+                and row["recovery_state"] == "unrecovered"]
+    measured["eh_funclets.functions"] = len(funclets)
+    measured["eh_funclets.bytes"] = sum(int(row["size"]) for row in funclets)
+
     registrations = seh_registrations(image)
     kinds = defaultdict(list)
     for site, handler in registrations:
