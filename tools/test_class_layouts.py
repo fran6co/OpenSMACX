@@ -127,5 +127,30 @@ class VerificationGateTest(unittest.TestCase):
             self.assertFalse(tool.referenced_types(name) & tool.SCALAR, name)
 
 
+class WindowsTypeAgreementTest(unittest.TestCase):
+    """The two hand-synced Win32 lists must name the same types.
+
+    `class_layouts.WINDOWS_TYPEDEF` decides whether a by-value member is
+    ALLOWED; `emit_translation_unit.NOT_A_STRUCT` decides how the emitter
+    SPELLS it. A name in the first and not the second is permitted into a
+    layout and then forward-declared as a struct, which is
+    `C2079: uses undefined struct` on every unit that holds one.
+
+    That is not hypothetical. HDC was missing from the second list for as long
+    as Buffer was unreadable and nothing noticed, because no unit ever held an
+    `HDC` by value. The moment Buffer became extractable it cost 72 byte-exact
+    bodies in a single census.
+    """
+
+    def test_every_allowed_typedef_has_a_spelling(self):
+        import emit_translation_unit
+        missing = sorted(set(tool.WINDOWS_TYPEDEF)
+                         - set(emit_translation_unit.NOT_A_STRUCT))
+        self.assertEqual([], missing,
+                         "these are allowed by value but the emitter has no "
+                         "spelling for them, so it will forward-declare them "
+                         "as structs")
+
+
 if __name__ == "__main__":
     unittest.main()

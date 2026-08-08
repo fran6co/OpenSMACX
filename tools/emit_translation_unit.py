@@ -176,6 +176,15 @@ NOT_A_STRUCT = {
     # the pairing count dropping by one.
     "HANDLE": "void *", "HWND": "void *", "HINSTANCE": "void *",
     "HIC": "void *", "LPDIRECTDRAW": "void *",
+    # HDC was in class_layouts.WINDOWS_TYPEDEF and missing HERE, and the two
+    # lists are kept in step BY HAND. Nothing noticed while Buffer was
+    # unreadable, because `HDC hdc2_;` never reached a unit; the moment Buffer
+    # became extractable the emitter forward-declared `struct HDC;` beside a
+    # by-value member and 72 byte-exact bodies went NO_COMPILE with
+    # `C2079: 'hdc2_' uses undefined struct 'HDC'`. test_class_layouts now
+    # requires the two sets to agree, so the next omission cannot wait for a
+    # cascade to reveal it.
+    "HDC": "void *",
     # GDI object handles, added on the same evidence and checked the same way:
     # each name was counted against `PA[UV]<name>@@` across all 6,000
     # catalogued mangled names and each scores ZERO, where HCURSOR scores one.

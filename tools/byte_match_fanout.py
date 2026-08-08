@@ -404,8 +404,14 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # BYTE_EXACT and the harness measured 16; --collect recompiles every unit
 # itself for exactly that reason, and the twelve that did not survive cost
 # nothing but the compile.
-BASELINE_MATCHED_FUNCTIONS = 902
-BASELINE_MATCHED_BYTES = 19468
+#
+# 908 / 19689, after tools/class_layouts.py learned to read 32 more classes.
+# The route there is worth keeping because it went backwards first: the same
+# change initially cost 72 bodies to a stale hand-synced Win32 list (HDC) and
+# 70 more to base/derived member shadowing, and both were found by reading the
+# refusal text the census now carries rather than by guessing.
+BASELINE_MATCHED_FUNCTIONS = 908
+BASELINE_MATCHED_BYTES = 19689
 
 
 def summarise(ledger: dict) -> tuple:

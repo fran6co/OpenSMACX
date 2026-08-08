@@ -161,7 +161,7 @@ def statements(body: str):
     the semicolon - and on the brace of a nested definition - makes the
     method test see the whole thing.
     """
-    pending, depth = [], 0
+    pending, depth, nested = [], 0, ""
     for line in body.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith(("//", "#")):
@@ -181,6 +181,42 @@ def statements(body: str):
             # WOULD parse as one and silently add a member the real class
             # does not have. Skipped by brace depth rather than by pattern.
             depth += stripped.count("{") - stripped.count("}")
+            if not depth and nested:
+                # THE CLOSING LINE MAY CARRY A DECLARATOR, and it is storage:
+                #
+                #     struct SpotInternal { ... } *spots_;
+                #
+                # The opening line was yielded and the body skipped, so this
+                # `*spots_` reached nobody - Spot lost a member and refused,
+                # Buffer refused for holding a Spot, GraphicWin for holding a
+                # Buffer, and every class deriving from GraphicWin after it.
+                # The declarator is re-emitted against the nested type's name,
+                # which is all the caller needs to size a POINTER; a by-value
+                # nested member still refuses, because its width is not
+                # something this line states.
+                tail = re.sub(r"^.*\}", "", stripped).strip()
+                if tail.endswith(";") and tail != ";":
+                    # `void *` AND NOT THE NESTED TYPE'S NAME. `SpotInternal`
+                    # exists only inside `Spot`, so a probe that says
+                    # `SpotInternal *spots_;` at file scope is
+                    # `C2143: syntax error : missing ';' before '*'`. A
+                    # pointer is four bytes whatever it points at, which is
+                    # the whole of what a layout needs; a BY-VALUE nested
+                    # member is not emitted at all, because its width is not
+                    # something this line states.
+                    # A POINTER is four bytes whatever it points at, so
+                    # `void *` states the width exactly. A BY-VALUE nested
+                    # member does NOT have a width this line states, and the
+                    # first version yielded "" for it - which `members_of`
+                    # skips, silently DROPPING the member. Palette then
+                    # computed 0x404 against its asserted 0x454, eighty bytes
+                    # short and not refused, which is the one outcome this
+                    # whole file exists to prevent. The bare declarator is
+                    # yielded instead: it matches no member pattern, so the
+                    # class refuses.
+                    yield (f"void {tail}" if tail.lstrip().startswith("*")
+                           else tail)
+                nested = ""
             continue
         opens, closes = stripped.count("{"), stripped.count("}")
         if opens:
@@ -194,6 +230,9 @@ def statements(body: str):
             yield " ".join(pending)
             pending = []
             depth += opens - closes
+            if depth:
+                found = re.search(r"\b(?:struct|class)\s+(\w+)", stripped)
+                nested = found.group(1) if found else ""
             continue
         pending.append(stripped)
         if stripped.endswith(";"):
@@ -214,6 +253,14 @@ def members_of(body: str, seen=()):
     # member that uses it is read, and a class body may declare it anywhere.
     alias = {}
     for stripped in statements(body):
+        # THE ACCESS LABEL SHARES THE LINE, and this file already records that
+        # trap for members: `private: AutoSound auto_sound_;`. It applies
+        # identically to `private: typedef int32_t Dib;`, which is exactly how
+        # buffer.h writes it - so the alias went unlearned, Buffer refused on
+        # `Dib dib_[256]`, GraphicWin refused for holding a Buffer, and every
+        # class deriving from GraphicWin refused after it.
+        stripped = re.sub(r"^(?:public|private|protected)\s*:\s*", "",
+                          stripped)
         hit = NESTED_TYPEDEF.match(stripped)
         if hit and (hit.group("type") in SCALAR
                     or hit.group("type") in WINDOWS_TYPEDEF):
@@ -233,6 +280,17 @@ def members_of(body: str, seen=()):
             # cannot see, so it refuses below.
             if re.search(r"\bvirtual\b|\bunion\b", stripped):
                 return None
+            continue
+        # A NESTED TYPE DEFINITION IS NOT STORAGE. `struct SpotInternal {` is
+        # the head of a type, and whatever it declares reaches this loop as a
+        # separate statement - `statements()` re-emits the trailing declarator
+        # as `SpotInternal *spots_;`. Refusing on the head cost Spot, then
+        # Buffer for holding one, then GraphicWin for holding a Buffer, then
+        # every class deriving from GraphicWin.
+        #
+        # `union {` is NOT skipped here and must not be: it IS storage, it is
+        # caught by REFUSE above, and swallowing one drops members silently.
+        if re.match(r"^(?:struct|class)\s+\w+\s*\{", stripped):
             continue
         pointer_member = FUNCTION_POINTER_MEMBER.match(stripped)
         if pointer_member:
@@ -341,7 +399,27 @@ def _with_bases(name: str, seen=()):
     inherited = _with_bases(base, seen + (name,))
     if inherited is None:
         return None
-    return inherited + list(members)
+    flattened = inherited + list(members)
+
+    # A DERIVED CLASS THAT RE-DECLARES A BASE MEMBER'S NAME REFUSES. That is
+    # legal C++ - name hiding - and the object really carries both, so the
+    # LAYOUT is not in doubt. What is in doubt is the scaffolding: the emitter
+    # writes one flat class, and `Buffer buffer_;` from GraphicWin beside
+    # `Buffer *buffer_;` from Scroll is
+    # `C2040: differs in levels of indirection`. Renaming one is worse than
+    # refusing, because a recovered body that says `buffer_` means a
+    # particular one and nothing here knows which.
+    #
+    # Measured, and it is the reason this refusal exists rather than a
+    # precaution: the moment enough of the tree became readable for these to
+    # be emitted, 70 byte-exact bodies went NO_COMPILE in a single census.
+    # Twelve classes shadow a base member today - BasePop, BaseWin, Credits,
+    # DesignWin, NetMsg, PopMenu, Popup, PullDown, ReportWin, Scroll,
+    # SetupWin, WorldWin.
+    names = [member for _, member, _ in flattened]
+    if len(names) != len(set(names)):
+        return None
+    return flattened
 
 
 @functools.lru_cache(maxsize=1)
@@ -418,9 +496,29 @@ def declaration_for(name: str) -> list:
 
 
 def unverified_declaration_for(name: str) -> list:
-    """The extracted members WITHOUT the verification gate, for the verifier."""
+    """The extracted members WITHOUT the verification gate, for the verifier.
+
+    NAMES ARE MADE UNIQUE, because the probe FLATTENS a base and its derived
+    class into one struct and C++ allows the same name at both levels. A
+    derived class re-declaring a base member is legal name hiding and the
+    object really does carry both, so the layout is right - but
+    `struct Probe { Heap heap_; ... Heap heap_; };` is
+    `C2086: 'heap_' : redefinition` and the class was reported as having no
+    verdict. Three classes were in that state the moment enough of the tree
+    became readable for it to matter: BasePop::heap_ over Win::heap_,
+    PullDown::menu_, and Scroll::buffer_ - which additionally differs in
+    indirection from GraphicWin's, `Buffer *` against `Buffer`.
+
+    Only the SPELLING changes here, never the order or the width, so every
+    offset and the total are exactly what the real class has.
+    """
     members = pinned_layouts().get(name)
-    return [f"    {type_} {member}{array};" for type_, member, array in members or []]
+    lines, seen = [], {}
+    for type_, member, array in members or []:
+        seen[member] = seen.get(member, 0) + 1
+        spelled = member if seen[member] == 1 else f"{member}_shadow{seen[member]}"
+        lines.append(f"    {type_} {spelled}{array};")
+    return lines
 
 
 # Spelled here rather than imported so this module stays independent of the
