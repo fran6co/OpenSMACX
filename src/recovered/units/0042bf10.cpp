@@ -3,20 +3,20 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x0042AE80
-// name           ?set_cat_facility@Datalink@@QAEXXZ
-// size           345 bytes
+// address        0x0042BF10
+// name           ?draw_entry@Datalink@@QAEXXZ
+// size           906 bytes
 // measured tier  NO_COMPILE
-// refusal        u0042ae80.cpp(214) : error C2079: 'buffer_' uses undefined class 'Buffer' u0042ae80.cpp(415) : error C2079: 'buffer_' uses undefined class 'Buffer'
+// refusal        u0042bf10.cpp(217) : error C2079: 'buffer_' uses undefined class 'Buffer' u0042bf10.cpp(358) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/0042ae80/unit.cpp
+//   build/byte-match/0042bf10/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?set_cat_facility@Datalink@@QAEXXZ  at 0x0042AE80  (345 bytes)
+// subject: ?draw_entry@Datalink@@QAEXXZ  at 0x0042BF10  (906 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -69,13 +69,16 @@ typedef void * HRGN;
 class Heap;
 typedef char * LPSTR;
 typedef void * LPVOID;
-class ListBox;
 class Menu;
 typedef void * PVOID;
 struct RECT;
+class ReportWin;
 class Scroll;
 class Spot;
 class Sprite;
+class StringBox;
+class StringList;
+struct StringStructEntry;
 class Strings;
 class Time;
 typedef unsigned int UINT_PTR;
@@ -279,66 +282,6 @@ class ButtonGroup { public:
     uint32_t field_88_;
     uint32_t field_8C_;
     uint32_t field_90_;
-};
-
-class Dialog { public:
-    LPVOID vtable_;
-    Heap heap_;
-    Heap * heap_ptr_;
-    uint32_t field_1C_;
-    uint32_t field_20_;
-    uint32_t field_24_;
-    uint32_t field_28_;
-    uint32_t field_2C_;
-    uint32_t field_30_;
-    uint32_t field_34_;
-    uint32_t field_38_;
-    uint32_t field_3C_;
-    uint32_t field_40_;
-    uint32_t field_44_;
-    uint32_t field_48_;
-    uint32_t field_4C_;
-    uint32_t field_50_;
-    uint32_t field_54_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    uint32_t field_60_;
-    uint32_t field_64_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    Font * font1_;
-    Font * font2_;
-    Font * font3_;
-    uint32_t text_color_a_;
-    uint32_t text_color_2a_;
-    uint32_t text_color_3a_;
-    uint32_t text_color_b_;
-    uint32_t text_color_2b_;
-    uint32_t text_color_3b_;
-    uint32_t text_color_c_;
-    uint32_t text_color_2c_;
-    uint32_t text_color_3c_;
-    uint32_t text_color_d_;
-    uint32_t text_color_2d_;
-    uint32_t text_color_3d_;
-    uint32_t field_AC_;
-    uint32_t field_B0_;
-    uint32_t field_B4_;
-    uint32_t field_B8_;
-    uint32_t field_BC_;
-    uint32_t field_C0_;
-    DialogEntry * entry_head_;
-    DialogEntry * current_entry_;
-    int entry_count_;
-    int entry_position_;
-    uint32_t field_D4_;
-    uint32_t field_D8_;
-    uint32_t field_DC_;
-    uint32_t field_E0_;
-    uint32_t field_E4_;
-    uint32_t field_E8_;
-    int selected_position_;
-    uint32_t field_F0_;
 };
 
 struct DialogEntry {
@@ -546,6 +489,16 @@ class Sprite { public:
     int fObj1Exists_;
 };
 
+struct StringStructEntry {
+    uint32_t abi_word;
+    int id;
+    int payload;
+    StringStructEntry * next;
+    StringStructEntry * previous;
+    uint32_t secondary_abi_word;
+    void * allocation_owner;
+};
+
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -699,9 +652,71 @@ class Buffer { public:
     int8_t field_580_;
     uint32_t field_584_;
     int box_sprite(RECT *, BoxSpriteParams *);
+    int set_clip(RECT *);
     int set_font(Font *, Font *, Font *, Font *);
     int write_cent_l(char *, RECT *, int);
+    void clear_links();
     void set_text_color(int, int, int, int);
+};
+class Dialog { public:
+    LPVOID vtable_;
+    Heap heap_;
+    Heap * heap_ptr_;
+    uint32_t field_1C_;
+    uint32_t field_20_;
+    uint32_t field_24_;
+    uint32_t field_28_;
+    uint32_t field_2C_;
+    uint32_t field_30_;
+    uint32_t field_34_;
+    uint32_t field_38_;
+    uint32_t field_3C_;
+    uint32_t field_40_;
+    uint32_t field_44_;
+    uint32_t field_48_;
+    uint32_t field_4C_;
+    uint32_t field_50_;
+    uint32_t field_54_;
+    uint32_t field_58_;
+    uint32_t field_5C_;
+    uint32_t field_60_;
+    uint32_t field_64_;
+    uint32_t field_68_;
+    uint32_t field_6C_;
+    Font * font1_;
+    Font * font2_;
+    Font * font3_;
+    uint32_t text_color_a_;
+    uint32_t text_color_2a_;
+    uint32_t text_color_3a_;
+    uint32_t text_color_b_;
+    uint32_t text_color_2b_;
+    uint32_t text_color_3b_;
+    uint32_t text_color_c_;
+    uint32_t text_color_2c_;
+    uint32_t text_color_3c_;
+    uint32_t text_color_d_;
+    uint32_t text_color_2d_;
+    uint32_t text_color_3d_;
+    uint32_t field_AC_;
+    uint32_t field_B0_;
+    uint32_t field_B4_;
+    uint32_t field_B8_;
+    uint32_t field_BC_;
+    uint32_t field_C0_;
+    DialogEntry * entry_head_;
+    DialogEntry * current_entry_;
+    int entry_count_;
+    int entry_position_;
+    uint32_t field_D4_;
+    uint32_t field_D8_;
+    uint32_t field_DC_;
+    uint32_t field_E0_;
+    uint32_t field_E4_;
+    uint32_t field_E8_;
+    int selected_position_;
+    uint32_t field_F0_;
+    int get_selected_id();
 };
 class GraphicWin { public:
     AutoSound auto_sound_;
@@ -802,29 +817,28 @@ class GraphicWin { public:
     uint32_t field_A10_;
     void soft_update(RECT *);
 };
-class ListBox { public:
-    uint32_t vbtable_pointer_;
-    uint32_t field_4_;
-    uint32_t field_8_;
-    uint32_t field_C_;
-    uint32_t field_10_;
-    uint32_t field_14_;
-    uint32_t field_18_;
+class ReportWin { public:
+    void draw_labs();
+    void reset();
+};
+class StringBox { public:
+    void add_fixup();
+    void clear();
+};
+class StringList { public:
+    uint32_t primary_abi_word_;
+    uint32_t virtual_base_abi_word_;
+    StringStructEntry * head_;
+    StringStructEntry * current_;
+    int entry_count_;
+    int current_position_;
+    void * allocator_;
     uint32_t field_1C_;
     uint32_t field_20_;
     uint32_t field_24_;
-    uint32_t field_28_;
-    uint32_t field_2C_;
-    uint32_t field_30_;
-    uint32_t field_34_;
-    uint32_t field_38_;
-    uint32_t field_3C_;
-    uint32_t field_40_;
-    uint32_t graphic_vbase_adjust_;
-    GraphicWin virtual_base_;
-    uint32_t dialog_vbase_adjust_;
-    Dialog dialog_;
-    int item(char *, int);
+    uint32_t allocation_base_abi_word_;
+    void * allocation_owner_;
+    int load(char *, char *, int, void (__cdecl *)(char *));
 };
 class Strings { public:
     int8_t err_flags_;
@@ -839,16 +853,36 @@ extern "C" char *strcat(char *, const char *);
 extern "C" int __cdecl _itoa();
 extern "C" unsigned int strlen(const char *);
 
+// Vtable shim. VC6 rejects a free `__thiscall` function pointer
+// (C4234), so an indirect virtual call is spelled by calling the Nth
+// virtual of a class that is never defined and never instantiated.
+// Only DECLARATION ORDER matters - change a slot's signature freely
+// to match the call you need; it will not move.
+// This body dispatches through slot(s): 1, 2
+class VCall { public:
+    virtual void slot000();
+    virtual void slot001();  // <-- used
+    virtual void slot002();  // <-- used
+};
+
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_006832e4 = (int *)0x006832E4;
+static int *const g_0042c29c = (int *)0x0042C29C;
+static int *const g_0066931c = (int *)0x0066931C;
+static int *const g_006834d8 = (int *)0x006834D8;
+static int *const g_00691b04 = (int *)0x00691B04;
+static int *const g_0078d528 = (int *)0x0078D528;
 static int *const g_0078d618 = (int *)0x0078D618;
-static int *const g_009a4b98 = (int *)0x009A4B98;
-static int *const g_009a64c0 = (int *)0x009A64C0;
+static int *const g_0078d690 = (int *)0x0078D690;
+static int *const g_007ae820 = (int *)0x007AE820;
+static int *const g_007d3930 = (int *)0x007D3930;
+static int *const g_00876478 = (int *)0x00876478;
+static int *const g_00885f30 = (int *)0x00885F30;
+static int *const g_00885f40 = (int *)0x00885F40;
+static int *const g_0094f35c = (int *)0x0094F35C;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b90d8 = (int *)0x009B90D8;
-static int *const g_009b90f8 = (int *)0x009B90F8;
 
 class Datalink { public:
     AutoSound auto_sound_;
@@ -974,66 +1008,139 @@ class Datalink { public:
     uint8_t field_F628_[0x4];
     uint8_t field_F62C_[0xBD68];
 
-    void set_cat_facility();
+    void draw_concept();
+    void draw_adv_concept();
+    void draw_unit();
+    void draw_chassis();
+    void draw_reactor();
+    void draw_weapon();
+    void draw_defense();
+    void draw_ability();
+    void draw_facility();
+    void draw_project();
+    void draw_social();
+    void draw_effect();
+    void draw_faction();
+    void draw_terraform();
+    void draw_entry();
 };
 
-// NOTE: this unit NO_COMPILEs on the SCAFFOLD, not on this body - confirmed
-// by testing an empty `{}` body and getting the same two errors. Some
-// earlier class in this file's emitted dependency chain (visible around the
-// generated "Buffer buffer_;" member at roughly line 214/415, inside a Win-
-// shaped class emitted before Buffer's own full definition) uses `Buffer`
-// by value ahead of `class Buffer { ... };`'s definition later in the same
-// file (C2079 'buffer_' uses undefined class 'Buffer', x2). That ordering
-// is generated by tools/emit_translation_unit.py + mizuchi_declfix for this
-// function's specific callee/derived-type set and is not reachable from the
-// body appended at the end of the unit - nothing here can move it earlier.
-extern uint8_t g_009a4b98_tbl[];
-extern "C" int __cdecl itoa_(int value, char *buf, int radix);
+typedef char *(__cdecl *ItoaFn)(int, char *, int);
+extern "C" __declspec(dllimport) char *__stdcall CharUpperA(char *);
 
-void Datalink::set_cat_facility() {
-    char *self = reinterpret_cast<char *>(this);
+// slot001 needs an int argument for the final vtable dispatch in the
+// facility-report case; the emitter's VCall only declares it nullary.
+class VCall1 { public:
+    virtual void slot000();
+    virtual void slot001(int);
+};
 
-    uint8_t *entry = g_009a4b98_tbl;
-    for (int i = 0x186A1; i - 0x186A0 < 0x46; i++, entry += 0x30) {
-        if (*reinterpret_cast<int *>(entry + 0x14) >= -1) {
-            *g_009b86a0 = 0;
-            char *text = reinterpret_cast<char *>(
-                reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(entry)));
-            strcat(reinterpret_cast<char *>(g_009b86a0), text);
-            if (*g_009a64c0 & 0x1000) {
-                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_006832e4));
-                char buf[80];
-                itoa_(i, buf, 10);
-                strcat(reinterpret_cast<char *>(g_009b86a0), buf);
+void Datalink::draw_entry() {
+    Buffer *panel = (Buffer *)((char *)this + 0x444);
+    panel->set_clip((RECT *)((char *)panel + 0x30));
+
+    if (*(int32_t *)((char *)this + 0x29dc) == 2) {
+        ((ReportWin *)g_00876478)->reset();
+    }
+    panel->clear_links();
+
+    void *dlgBase = *(void **)((char *)this + 0xf628);
+    int32_t dlgOff = *(int32_t *)((char *)dlgBase + 8);
+    Dialog *dlg = (Dialog *)((char *)this + 0xf628 + dlgOff);
+    int selectedId = dlg->get_selected_id();
+
+    int32_t quotient = selectedId / 10000;
+    facilityID_ = selectedId % 10000;
+
+    if (field_2A38_ == 0) {
+        int32_t restored = quotient * 10000 + facilityID_;
+        int32_t *hist = &facilityID_;
+        int32_t count = field_2A34_;
+        if (count == 0 || hist[count] != restored) {
+            if (count == 20) {
+                int32_t *p = hist + 1;
+                int32_t n = 19;
+                do {
+                    *p = p[1];
+                    ++p;
+                } while (--n);
+                --field_2A34_;
             }
-            reinterpret_cast<ListBox *>(self + 0xf628)->item(reinterpret_cast<char *>(g_009b86a0), i);
+            count = field_2A34_;
+            hist[count + 1] = restored;
+            ++field_2A34_;
         }
     }
 
-    RECT rect;
-    int *src = reinterpret_cast<int *>(self + 0x103d4);
-    rect.left = src[0];
-    rect.top = src[1];
-    rect.right = src[2];
-    rect.bottom = src[3];
+    panel->set_clip((RECT *)((char *)this + 0x103a4));
 
-    Buffer *buf444 = reinterpret_cast<Buffer *>(self + 0x444);
-    buf444->box_sprite(&rect, reinterpret_cast<BoxSpriteParams *>(g_0078d618));
+    RECT box1 = *(RECT *)((char *)this + 0x103c4);
+    box1.left -= 0x17;
+    box1.right -= 9;
+    panel->box_sprite(&box1, (BoxSpriteParams *)g_0078d690);
 
-    rect.left += 3;
-    rect.right -= 3;
-    rect.top += 3;
-    rect.bottom -= 3;
-    buf444->set_text_color(0xE0, -1, 1, 1);
-    buf444->set_font(reinterpret_cast<Font *>(self + 0x101cc), 0, 0, 0);
+    panel->set_clip((RECT *)((char *)panel + 0x30));
+    panel->box_sprite((RECT *)((char *)this + 0x10334), (BoxSpriteParams *)g_0078d528);
+    panel->box_sprite((RECT *)((char *)this + 0x10364), (BoxSpriteParams *)g_0078d618);
 
-    char *base = reinterpret_cast<char *>(*g_009b90f8);
-    int id2 = *reinterpret_cast<int *>(base + 0xb48);
-    char *text2 = reinterpret_cast<char *>(reinterpret_cast<Strings *>(g_009b90d8)->get(id2));
-    if (text2 != 0) {
-        unsigned int len = strlen(text2);
-        buf444->write_cent_l(text2, &rect, len);
+    char *stringBoxBase = (char *)this + 0x130b4;
+    ((VCall *)stringBoxBase)->slot002();
+    ((VCall *)((char *)this + 0x10514))->slot002();
+    ((VCall *)((char *)this + 0x15c54))->slot002();
+    ((VCall *)((char *)this + 0x187f4))->slot002();
+
+    switch (quotient) {
+    case 0: draw_concept(); break;
+    case 1: draw_adv_concept(); break;
+    case 2: break;
+    case 3: draw_unit(); break;
+    case 4: draw_chassis(); break;
+    case 5: draw_reactor(); break;
+    case 6: draw_weapon(); break;
+    case 7: draw_defense(); break;
+    case 8: draw_ability(); break;
+    case 9: draw_terraform(); break;
+    case 10: draw_facility(); break;
+    case 11: draw_project(); break;
+    case 12: draw_social(); break;
+    case 13: draw_effect(); break;
+    case 14: {
+        panel->set_font((Font *)((char *)this + 0x1017c), 0, 0, 0);
+        panel->set_text_color(0xe0, -1, 1, 1);
+        *(char *)g_009b86a0 = 0;
+        int32_t idx = facilityID_ * 11;
+        int strId = g_0094f35c[idx];
+        int textId = ((Strings *)g_009b90d8)->get(strId);
+        strcat((char *)g_009b86a0, (const char *)textId);
+        CharUpperA((char *)g_009b86a0);
+        if (*(char *)g_009b86a0 != 0) {
+            unsigned int len = strlen((char *)g_009b86a0);
+            panel->write_cent_l((char *)g_009b86a0, (RECT *)((char *)this + 0x10364), (int)len);
+        }
+        ((ReportWin *)g_00876478)->reset();
+        *g_00885f40 = 2;
+        *g_00885f30 = facilityID_;
+        ((ReportWin *)g_00876478)->draw_labs();
+
+        *(char *)g_009b86a0 = 0;
+        strcat((char *)g_009b86a0, (const char *)g_006834d8);
+
+        char numBuf[80];
+        ((ItoaFn)_itoa)(facilityID_, numBuf, 10);
+        strcat((char *)g_009b86a0, numBuf);
+
+        if (*g_007d3930 != 0) {
+            void *blurbPtr = *(void **)g_00691b04;
+            ((StringBox *)stringBoxBase)->clear();
+            ((StringList *)((char *)this + 0x15c24))->load((char *)blurbPtr, (char *)g_009b86a0, 1, 0);
+            ((StringBox *)stringBoxBase)->add_fixup();
+            ((VCall1 *)stringBoxBase)->slot001(0);
+        }
+        break;
+    }
+    case 15: draw_faction(); break;
     }
 
-    reinterpret_cast<GraphicWin *>(this)->soft_update(reinterpret_cast<RECT *>(self + 0x103d4));
+    ((GraphicWin *)this)->soft_update((RECT *)((char *)this + 0x103b4));
+    ((GraphicWin *)g_007ae820)->soft_update((RECT *)((char *)this + 0x10374));
 }
