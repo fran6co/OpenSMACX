@@ -7,7 +7,7 @@
 // name           ?set_cat_facility@Datalink@@QAEXXZ
 // size           345 bytes
 // measured tier  NO_COMPILE
-// refusal        u0042ae80.cpp(214) : error C2079: 'buffer_' uses undefined class 'Buffer' u0042ae80.cpp(415) : error C2079: 'buffer_' uses undefined class 'Buffer' Generating C
+// refusal        u0042ae80.cpp(214) : error C2079: 'buffer_' uses undefined class 'Buffer' u0042ae80.cpp(415) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

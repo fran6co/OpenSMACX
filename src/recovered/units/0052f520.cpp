@@ -1,0 +1,145 @@
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE, not as a claim. Nothing reads this directory:
+// it is on no ratchet, in no build, and scored by no collect.
+//
+// address        0x0052F520
+// name           ?send_rules@NetDaemon@@QAEXXZ
+// size           950 bytes
+// measured tier  MISMATCH
+// divergence     28
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0052f520/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?send_rules@NetDaemon@@QAEXXZ  at 0x0052F520  (950 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+
+class Net;
+class NetDaemon;
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class Net { public:
+    int get(unsigned long *, unsigned long *);
+};
+
+// ---- fixed globals this body references ----
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const g_0093cd90 = (int *)0x0093CD90;
+
+class NetDaemon { public:
+    void synch(short, int, int, int, char *, int, short);
+    void process_message(char *, unsigned long, int);
+    void send_rules();
+};
+
+// 14 fully-unrolled synch/drain blocks for message ids 0x80..0x8D - the
+// original never loops over the id, it repeats the whole synch+while
+// straight-line (matches the disassembly: no counter, no indirect id load).
+void NetDaemon::send_rules() {
+    unsigned long v4, v8;
+
+    synch(0x80, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x81, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x82, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x83, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x84, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x85, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x86, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x87, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x88, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x89, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x8a, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x8b, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x8c, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+
+    synch(0x8d, 0, 0, 0, 0, 1, 0x2101);
+    while (int result = reinterpret_cast<Net *>(g_0093cd90)->get(&v4, &v8)) {
+        process_message(reinterpret_cast<char *>(result), v8, v4);
+    }
+}

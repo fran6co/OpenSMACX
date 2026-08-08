@@ -7,7 +7,7 @@
 // name           ?on_redraw@SocialWin@@QAEXXZ
 // size           377 bytes
 // measured tier  NO_COMPILE
-// refusal        u004b19a0.cpp(211) : error C2079: 'buffer_' uses undefined class 'Buffer' u004b19a0.cpp(342) : error C2079: 'buffer_' uses undefined class 'Buffer' Generating C
+// refusal        u004b19a0.cpp(211) : error C2079: 'buffer_' uses undefined class 'Buffer' u004b19a0.cpp(342) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

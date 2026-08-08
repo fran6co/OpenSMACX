@@ -7,7 +7,7 @@
 // name           ??__Fg_NEWTECHWIN_SPRITES@@YAXXZ
 // size           40 bytes
 // measured tier  NO_COMPILE
-// refusal        u004838b0.cpp(44) : error C4234: nonstandard extension used : '__thiscall' keyword reserved for future use
+// refusal        u004838b0.cpp(44) : error C4234: nonstandard extension used : '__thiscall' keyword reserved for future use Generating Code... Compiling...
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
