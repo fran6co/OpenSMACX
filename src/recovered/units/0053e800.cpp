@@ -7,7 +7,7 @@
 // name           ?tech_analysis@@YAXHH@Z
 // size           834 bytes
 // measured tier  MISMATCH
-// divergence     0
+// divergence     3
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -83,6 +83,122 @@ static int *const g_009a650c = (int *)0x009A650C;
 static int *const g_009a6510 = (int *)0x009A6510;
 static int *const g_009a6514 = (int *)0x009A6514;
 
+extern int g_0096c9e8arr[];
+extern char g_00946a54arr[];
+
 void __cdecl tech_analysis(int a1, int a2) {
-    // Minimal body for coverage
+    *g_0093f7f4 = -1;
+    *g_0093fa28 = -1;
+    *g_0093fa1c = -1;
+    *g_0093fa18 = -1;
+    *g_0093faa8 = -1;
+    *g_0093f80c = -1;
+    *g_0093f800 = -1;
+    *g_0093f7ec = 0;
+    *g_0093fa44 = 0;
+    *g_0093faa4 = 0;
+    *g_0093f814 = 0;
+    *g_0093f7c0 = 0;
+    *g_0093fa20 = 0;
+    *g_0093fa84 = -1;
+    *g_0093fa6c = -1;
+
+    if ((*g_009a649c & 0x2000000) == 0) {
+        for (int i = 0; i < 0x59; i++) {
+            if (!has_tech(i, a2)) {
+                if (has_tech(i, a1)) {
+                    int v = tech_val(i, a2, 0);
+                    int oldA20 = *g_0093fa20;
+                    int oldA814 = *g_0093f814;
+                    if (v < *g_0093f814) {
+                        if (v < *g_0093fa44) {
+                            if (v < *g_0093fa20) {
+                                if (*g_0093f7c0 <= v) {
+                                    *g_0093f7c0 = v;
+                                    *g_0093fa28 = i;
+                                }
+                            } else {
+                                *g_0093f7c0 = *g_0093fa20;
+                                *g_0093fa28 = *g_0093fa1c;
+                                *g_0093fa1c = i;
+                                *g_0093fa20 = v;
+                            }
+                        } else {
+                            *g_0093fa20 = *g_0093fa44;
+                            *g_0093f7c0 = oldA20;
+                            *g_0093fa28 = *g_0093fa1c;
+                            *g_0093fa1c = *g_0093fa18;
+                            *g_0093fa18 = i;
+                            *g_0093fa44 = v;
+                        }
+                    } else {
+                        *g_0093fa28 = *g_0093fa1c;
+                        *g_0093fa1c = *g_0093fa18;
+                        *g_0093fa18 = *g_0093faa8;
+                        *g_0093f7c0 = *g_0093fa20;
+                        *g_0093f814 = v;
+                        *g_0093fa20 = *g_0093fa44;
+                        *g_0093fa44 = oldA814;
+                        *g_0093faa8 = i;
+                    }
+                }
+            } else if (!has_tech(i, a1)) {
+                int matched = -1;
+                if (g_0096c9e8arr[a1 * 0x833] > 2 ||
+                    strcmp((const char *)(g_00946a54arr + a2 * 0x59c), (const char *)g_0068d6a4) == 0) {
+                    int j = 0;
+                    int rank = -2;
+                    int *p1 = g_009a6514;
+                    int *p2 = g_009a589c;
+                    do {
+                        if (*p1 == -1 && *p2 == i) {
+                            if (*g_009a64cc > 0) {
+                                int *rec = g_0097d090;
+                                int k = *g_009a64cc;
+                                do {
+                                    if (*((unsigned char *)rec - 0x4C) == a2 && *rec == rank - 0x44) {
+                                        *g_0093f7f4 = j;
+                                        matched = j;
+                                    }
+                                    rec = (int *)((char *)rec + 0x134);
+                                    k--;
+                                } while (k != 0);
+                            }
+                            if (((g_0096c9e8arr[a1 * 0x833] > 4 && (*g_0093f660 == 0 || a1 != *g_009a6510)) ||
+                                 (*g_0093f660 != 0 && a1 == *g_009a650c)) &&
+                                *g_0093f7f4 == -1) {
+                                *g_0093f7f4 = rank;
+                                matched = rank;
+                            }
+                        }
+                        j++;
+                        p2 = (int *)((char *)p2 + 0xc);
+                        p1++;
+                        rank--;
+                    } while (p2 < g_009a649c);
+                }
+                int v = tech_val(i, a1, 0);
+                if (matched != -1) {
+                    v = (v + 1) / 2;
+                }
+                if (v < *g_0093faa4) {
+                    if (*g_0093f7ec <= v) {
+                        *g_0093f7ec = v;
+                        *g_0093f80c = i;
+                        *g_0093fa84 = matched;
+                    }
+                } else {
+                    *g_0093f7ec = *g_0093faa4;
+                    *g_0093fa84 = *g_0093fa6c;
+                    *g_0093f80c = *g_0093f800;
+                    *g_0093f800 = i;
+                    *g_0093fa6c = matched;
+                    *g_0093faa4 = v;
+                }
+            }
+        }
+        if (*g_0093fa84 != -1) {
+            *g_0093f80c = -1;
+        }
+    }
 }

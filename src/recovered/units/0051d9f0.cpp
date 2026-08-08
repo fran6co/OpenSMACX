@@ -7,7 +7,7 @@
 // name           ??1Console@@QAE@XZ
 // size           864 bytes
 // measured tier  MISMATCH
-// divergence     0
+// divergence     7
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -75,7 +75,6 @@ class Time;
 typedef unsigned int UINT_PTR;
 class Win;
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
 class AutoSound { public:
     PVOID vtable_;
     int val_1_;
@@ -117,6 +116,14 @@ class AutoSound { public:
     int val_37_;
 };
 
+class Heap { public:
+    int8_t err_flags_;
+    LPVOID base_;
+    LPVOID current_;
+    size_t base_size_;
+    size_t free_size_;
+};
+
 struct RECT {
     long left;
     long top;
@@ -130,6 +137,87 @@ class Spot { public:
     uint32_t add_count_;
 };
 
+class Win { public:
+    AutoSound auto_sound_;
+    uint32_t iFlags_;
+    uint32_t iSomeFlag_;
+    uint32_t field_A0_;
+    uint32_t field_A4_;
+    uint32_t poWinBase_;
+    uint32_t iVertScaleDenom_;
+    uint32_t iVertScaleNum_;
+    Buffer * buffer1_;
+    Buffer * buffer2_;
+    Buffer * buffer3_;
+    Buffer * buffer4_;
+    Win * win_parent_;
+    uint32_t field_C8_;
+    uint32_t field_CC_;
+    uint32_t field_D0_;
+    uint32_t field_D4_;
+    uint32_t field_D8_;
+    Heap heap_;
+    Menu * menu_;
+    uint32_t field_F4_;
+    uint32_t field_F8_;
+    uint32_t field_FC_;
+    uint32_t field_100_;
+    uint32_t field_104_;
+    uint32_t field_108_;
+    uint32_t field_10C_;
+    uint32_t field_110_;
+    int caption_height_;
+    int border_thickness_;
+    int bottom_border_thickness_;
+    uint32_t field_120_;
+    uint32_t field_124_;
+    uint32_t field_128_;
+    uint32_t field_12C_;
+    uint32_t field_130_;
+    uint32_t field_134_;
+    uint32_t field_138_;
+    RECT outer_rect_;
+    RECT client_rect_;
+    uint32_t field_15C_;
+    uint32_t field_160_;
+    uint32_t field_164_;
+    uint32_t field_168_;
+    uint32_t field_16C_;
+    uint32_t field_170_;
+    uint32_t field_174_;
+    uint32_t field_178_;
+    uint32_t field_17C_;
+    uint32_t field_180_;
+    uint32_t field_184_;
+    Sprite * cursor_sprite_;
+    uint32_t field_18C_;
+    uint32_t field_190_;
+    HCURSOR * cursor_handle_;
+    int cursor_name_;
+    uint32_t field_19C_;
+    uint32_t field_1A0_;
+    Win * children_[150];
+    int child_count_;
+    uint32_t field_400_;
+    uint32_t field_404_;
+    uint32_t field_408_;
+    uint32_t field_40C_;
+    uint32_t field_410_;
+    uint32_t field_414_;
+    uint32_t field_418_;
+    uint32_t field_41C_;
+    uint32_t field_420_;
+    uint32_t field_424_;
+    uint32_t field_428_;
+    uint32_t field_42C_;
+    uint32_t field_430_;
+    uint32_t field_434_;
+    uint32_t field_438_;
+    Scroll * scroll_vert_;
+    Scroll * scroll_horz_;
+};
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
 class Buffer { public:
     LPVOID vtable_;
     uint32_t poOwner_;
@@ -203,29 +291,6 @@ class Buffer { public:
     uint32_t field_584_;
     ~Buffer();
 };
-
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-    ~Font();
-};
-
-class Heap { public:
-    int8_t err_flags_;
-    LPVOID base_;
-    LPVOID current_;
-    size_t base_size_;
-    size_t free_size_;
-};
-
 class GraphicWin { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -325,7 +390,19 @@ class GraphicWin { public:
     uint32_t field_A10_;
     ~GraphicWin();
 };
-
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+    ~Font();
+};
 class MapWin { public:
     uint32_t vbtable_pointer_;
     void * owned_;
@@ -333,11 +410,9 @@ class MapWin { public:
     GraphicWin virtual_base_;
     void clear(int);
 };
-
 class Menu { public:
     ~Menu();
 };
-
 class Sprite { public:
     int ppszFileName_;
     int pcBits_;
@@ -355,11 +430,9 @@ class Sprite { public:
     int fObj1Exists_;
     void close();
 };
-
 class TextureStore { public:
     ~TextureStore();
 };
-
 class Time { public:
     int unk_tgl_;
     UINT_PTR id_event_;
@@ -373,87 +446,6 @@ class Time { public:
     int unk_2_;
     ~Time();
 };
-
-class Win { public:
-    AutoSound auto_sound_;
-    uint32_t iFlags_;
-    uint32_t iSomeFlag_;
-    uint32_t field_A0_;
-    uint32_t field_A4_;
-    uint32_t poWinBase_;
-    uint32_t iVertScaleDenom_;
-    uint32_t iVertScaleNum_;
-    Buffer * buffer1_;
-    Buffer * buffer2_;
-    Buffer * buffer3_;
-    Buffer * buffer4_;
-    Win * win_parent_;
-    uint32_t field_C8_;
-    uint32_t field_CC_;
-    uint32_t field_D0_;
-    uint32_t field_D4_;
-    uint32_t field_D8_;
-    Heap heap_;
-    Menu * menu_;
-    uint32_t field_F4_;
-    uint32_t field_F8_;
-    uint32_t field_FC_;
-    uint32_t field_100_;
-    uint32_t field_104_;
-    uint32_t field_108_;
-    uint32_t field_10C_;
-    uint32_t field_110_;
-    int caption_height_;
-    int border_thickness_;
-    int bottom_border_thickness_;
-    uint32_t field_120_;
-    uint32_t field_124_;
-    uint32_t field_128_;
-    uint32_t field_12C_;
-    uint32_t field_130_;
-    uint32_t field_134_;
-    uint32_t field_138_;
-    RECT outer_rect_;
-    RECT client_rect_;
-    uint32_t field_15C_;
-    uint32_t field_160_;
-    uint32_t field_164_;
-    uint32_t field_168_;
-    uint32_t field_16C_;
-    uint32_t field_170_;
-    uint32_t field_174_;
-    uint32_t field_178_;
-    uint32_t field_17C_;
-    uint32_t field_180_;
-    uint32_t field_184_;
-    Sprite * cursor_sprite_;
-    uint32_t field_18C_;
-    uint32_t field_190_;
-    HCURSOR * cursor_handle_;
-    int cursor_name_;
-    uint32_t field_19C_;
-    uint32_t field_1A0_;
-    Win * children_[150];
-    int child_count_;
-    uint32_t field_400_;
-    uint32_t field_404_;
-    uint32_t field_408_;
-    uint32_t field_40C_;
-    uint32_t field_410_;
-    uint32_t field_414_;
-    uint32_t field_418_;
-    uint32_t field_41C_;
-    uint32_t field_420_;
-    uint32_t field_424_;
-    uint32_t field_428_;
-    uint32_t field_42C_;
-    uint32_t field_430_;
-    uint32_t field_434_;
-    uint32_t field_438_;
-    Scroll * scroll_vert_;
-    Scroll * scroll_horz_;
-};
-
 void __stdcall fn_006456e4(void*, unsigned int, int, void (*)(void*));
 
 // ---- fixed globals this body references ----
@@ -478,5 +470,72 @@ class Console { public:
 };
 
 Console::~Console() {
-    // Minimal body for coverage
+    char *self = reinterpret_cast<char *>(this);
+
+    // Virtual-base vtable-slot fixups: each is a vbtable dereference
+    // (load the vptr, read its second entry as a this-adjustment, store
+    // through the adjusted address) reproduced literally from the disasm.
+    char *vbase = self - 0x23d94;
+    int32_t vtbl_a = *reinterpret_cast<int32_t *>(vbase);
+    int32_t off_a = *reinterpret_cast<int32_t *>(vtbl_a + 4);
+    *reinterpret_cast<int32_t *>(vbase + off_a) = *g_0066ec18;
+
+    int32_t vtbl_b = *reinterpret_cast<int32_t *>(vbase);
+    int32_t off_b = *reinterpret_cast<int32_t *>(vtbl_b + 4);
+    *reinterpret_cast<int32_t *>(self - 0x23950 + off_b) = *g_0066ec10;
+
+    int32_t vtbl_c = *reinterpret_cast<int32_t *>(vbase);
+    int32_t off_c = *reinterpret_cast<int32_t *>(vtbl_c + 4);
+    *reinterpret_cast<int32_t *>(self - 0x23d98 + off_c) = off_c - 0x23d94;
+
+    close();
+
+    reinterpret_cast<Sprite *>(self - 0x40)->close();
+    reinterpret_cast<Sprite *>(self - 0x6c)->close();
+
+    char *edi = self - 0x1368;
+    fn_006456e4(edi + 0x1118, 0x2c, 3,
+                reinterpret_cast<void (*)(void *)>(g_00406850));
+    reinterpret_cast<Sprite *>(edi + 0x10ec)->close();
+    reinterpret_cast<Buffer *>(edi + 0xb64)->~Buffer();
+    reinterpret_cast<Menu *>(edi)->~Menu();
+
+    reinterpret_cast<Time *>(self - 0x1390)->~Time();
+    reinterpret_cast<Buffer *>(self - 0x1918)->~Buffer();
+    reinterpret_cast<GraphicWin *>(self - 0x232c)->~GraphicWin();
+
+    self += 0xffffdcd8;  // -0x2328: rebase onto the MapWin virtual base
+
+    char *vbase2 = self - 0x21a6c;
+    int32_t vtbl2_a = *reinterpret_cast<int32_t *>(vbase2);
+    int32_t off2_a = *reinterpret_cast<int32_t *>(vtbl2_a + 4);
+    *reinterpret_cast<int32_t *>(vbase2 + off2_a) = *g_0066a57c;
+
+    int32_t vtbl2_b = *reinterpret_cast<int32_t *>(vbase2);
+    int32_t off2_b = *reinterpret_cast<int32_t *>(vtbl2_b + 4);
+    *reinterpret_cast<int32_t *>(self - 0x21628 + off2_b) = *g_0066a574;
+
+    int32_t vtbl2_c = *reinterpret_cast<int32_t *>(vbase2);
+    int32_t off2_c = *reinterpret_cast<int32_t *>(vtbl2_c + 4);
+    *reinterpret_cast<int32_t *>(self - 0x21a70 + off2_c) = off2_c - 0x21a6c;
+
+    reinterpret_cast<MapWin *>(self)->clear(0);
+
+    fn_006456e4(self - 0x2b18, 0xabc, 4,
+                reinterpret_cast<void (*)(void *)>(g_00625310));
+
+    reinterpret_cast<Font *>(self - 0x2b4c)->~Font();
+    reinterpret_cast<Font *>(self - 0x2b78)->~Font();
+    reinterpret_cast<Font *>(self - 0x2ba4)->~Font();
+    reinterpret_cast<Buffer *>(self - 0x3134)->~Buffer();
+    reinterpret_cast<Buffer *>(self - 0x36bc)->~Buffer();
+    reinterpret_cast<Buffer *>(self - 0x3c44)->~Buffer();
+    reinterpret_cast<TextureStore *>(self - 0x3f60)->~TextureStore();
+
+    fn_006456e4(self - 0x210e0, 0x260, 0xc4,
+                reinterpret_cast<void (*)(void *)>(g_006252b0));
+
+    self += 0xfffde5a0;  // rebase again before the final array teardown
+    fn_006456e4(self, 0x260, 4,
+                reinterpret_cast<void (*)(void *)>(g_006252b0));
 }

@@ -7,7 +7,7 @@
 // name           ?zoom@Console@@QAEXHH@Z
 // size           783 bytes
 // measured tier  MISMATCH
-// divergence     0
+// divergence     3
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -73,7 +73,6 @@ class Sprite;
 class Win;
 class WorldWin;
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
 class AutoSound { public:
     PVOID vtable_;
     int val_1_;
@@ -222,6 +221,24 @@ class Heap { public:
     size_t free_size_;
 };
 
+class Sprite { public:
+    int ppszFileName_;
+    int pcBits_;
+    char cTransparentIndex_;
+    char pad1_;
+    char pad2_;
+    char pad3_;
+    int iSpriteWidth2_;
+    int iSpriteWidth_;
+    int iSpriteHeight_;
+    int iWidth_;
+    int iHeight_;
+    int iLeftOffset_;
+    int iTopOffset_;
+    int fObj1Exists_;
+};
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
 class GraphicWin { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -321,7 +338,6 @@ class GraphicWin { public:
     uint32_t field_A10_;
     void redraw();
 };
-
 class MapWin { public:
     uint32_t vbtable_pointer_;
     void * owned_;
@@ -330,24 +346,6 @@ class MapWin { public:
     int pixel_to_tile(int, int, int *, int *);
     void draw_map(int);
 };
-
-class Sprite { public:
-    int ppszFileName_;
-    int pcBits_;
-    char cTransparentIndex_;
-    char pad1_;
-    char pad2_;
-    char pad3_;
-    int iSpriteWidth2_;
-    int iSpriteWidth_;
-    int iSpriteHeight_;
-    int iWidth_;
-    int iHeight_;
-    int iLeftOffset_;
-    int iTopOffset_;
-    int fObj1Exists_;
-};
-
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -428,11 +426,9 @@ class Win { public:
     Scroll * scroll_horz_;
     void get_mouse_pos(int *, int *);
 };
-
 class WorldWin { public:
     int pixel_to_tile(int, int, int *, int *);
 };
-
 int __cdecl in_box(int, int, int, int, int, int);
 
 // ---- fixed globals this body references ----
@@ -460,6 +456,162 @@ class Console { public:
     void zoom(int, int);
 };
 
+extern int *g_city_table[];
+extern unsigned int g_civ_visible_flags[];
+
 void Console::zoom(int a1, int a2) {
-    // Minimal body for coverage
+    int idx;
+
+    if (a2 < 0) {
+        idx = 0;
+        int mx, my;
+        reinterpret_cast<Win *>(g_008e9f60)->get_mouse_pos(&mx, &my);
+
+        bool matched = false;
+        int tx = 0, ty = 0;
+
+        if (in_box(mx, my, 0, 0, *g_008ea424, -*g_008ea428) != 0 &&
+            reinterpret_cast<WorldWin *>(g_008e9f60)->pixel_to_tile(mx, my, &tx, &ty) == 0 &&
+            tx >= 0 && tx < *g_00949874 &&
+            ty >= 0 && ty < *g_00949870) {
+
+            int civ = *g_00939284;
+            int rec = civ << 6;
+            rec = rec + civ;
+            rec = civ + rec * 2;
+            rec = civ + rec * 8;
+            rec = civ + rec * 2;
+
+            if ((g_civ_visible_flags[rec] & 0x200) != 0) {
+                matched = true;
+            } else {
+                int stride = *g_0068faf0;
+                int cell = stride * tx + (ty >> 1);
+                int bitidx = cell + cell * 4;
+                bitidx = cell + bitidx * 2;
+                unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
+                unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
+                if ((explored[bitidx * 4 + 4] & bit) != 0) {
+                    matched = true;
+                } else if ((*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0) {
+                    matched = true;
+                }
+            }
+        }
+
+        if (matched) {
+            char *city = reinterpret_cast<char *>(g_city_table[0]);
+            *reinterpret_cast<int *>(city + 0x1dd9c) = ty;
+            *reinterpret_cast<int *>(city + 0x1dda0) = tx;
+            idx = 0;
+        } else {
+            for (int i = 0; i < 8; ++i) {
+                char *city = reinterpret_cast<char *>(g_city_table[i]);
+                if (city == 0) {
+                    continue;
+                }
+                if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
+                    continue;
+                }
+                if (*reinterpret_cast<int *>(city + 0x1dd98) >= 0) {
+                    continue;
+                }
+
+                int m8, m4;
+                int *vbtable = *reinterpret_cast<int **>(city);
+                int adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
+                reinterpret_cast<Win *>(city + adj)->get_mouse_pos(&m8, &m4);
+
+                vbtable = *reinterpret_cast<int **>(city);
+                adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
+                int w = *reinterpret_cast<int *>(city + adj + 0x4c8);
+                int h = *reinterpret_cast<int *>(city + adj + 0x4c4);
+
+                int ttx = 0, tty = 0;
+                bool hit = in_box(m8, m4, 0, 0, h, -w) != 0 &&
+                    reinterpret_cast<MapWin *>(city)->pixel_to_tile(m8, m4, &ttx, &tty) == 0 &&
+                    ttx >= 0 && ttx < *g_00949874 &&
+                    tty >= 0 && tty < *g_00949870;
+                if (!hit) {
+                    continue;
+                }
+
+                int civ = *g_00939284;
+                int rec = civ << 6;
+                rec = rec + civ;
+                rec = civ + rec * 2;
+                rec = civ + rec * 8;
+                rec = civ + rec * 2;
+
+                bool found = (reinterpret_cast<unsigned char *>(g_civ_visible_flags)[rec * 4 + 1] & 2) != 0;
+                if (!found) {
+                    int stride = *g_0068faf0;
+                    int cell = stride * ttx + (tty >> 1);
+                    int bitidx = cell + cell * 4;
+                    bitidx = cell + bitidx * 2;
+                    unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
+                    unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
+                    found = (explored[bitidx * 4 + 4] & bit) != 0;
+                    if (!found) {
+                        found = (*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0;
+                    }
+                }
+                if (!found) {
+                    continue;
+                }
+
+                *reinterpret_cast<int *>(city + 0x1dd9c) = tty;
+                *reinterpret_cast<int *>(city + 0x1dda0) = ttx;
+                idx = i;
+                break;
+            }
+        }
+
+        a2 = idx;
+    }
+
+    int ebx = a1;
+    for (int i = 0; i < 8; ++i) {
+        char *city = reinterpret_cast<char *>(g_city_table[i]);
+        if (city == 0) {
+            continue;
+        }
+        if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
+            continue;
+        }
+        if (a2 >= 0 && i != a2) {
+            continue;
+        }
+
+        switch (ebx) {
+        case 0x203:
+            if (*reinterpret_cast<int *>(city + 0x1dd98) < 0x10) {
+                *reinterpret_cast<int *>(city + 0x1dd98) += 2;
+            }
+            break;
+        case 0x204:
+            if (*reinterpret_cast<int *>(city + 0x1dd98) > -0xE) {
+                *reinterpret_cast<int *>(city + 0x1dd98) -= 2;
+            }
+            break;
+        case 0x205:
+            *reinterpret_cast<int *>(city + 0x1dd98) = 0;
+            break;
+        case 0x206:
+            *reinterpret_cast<int *>(city + 0x1dd98) = -6;
+            break;
+        case 0x207:
+            *reinterpret_cast<int *>(city + 0x1dd98) = 0x10;
+            break;
+        case 0x208:
+            *reinterpret_cast<int *>(city + 0x1dd98) = -0xE;
+            break;
+        default:
+            break;
+        }
+
+        reinterpret_cast<MapWin *>(city)->draw_map(1);
+    }
+
+    reinterpret_cast<GraphicWin *>(g_008e9f60)->redraw();
 }
