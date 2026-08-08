@@ -261,57 +261,69 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
     pe_fast = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
     subjects = units + stored
     tiers, regressions = collections.Counter(), []
-    with tempfile.TemporaryDirectory() as tmp:
-        work = Path(tmp)
-        skipped = 0
-        for index, (address, source, kind) in enumerate(subjects, start=1):
-            key = f"0x{address:08X}"
-            if key in settled:
-                skipped += 1
+    skipped = 0
+    # BUILT FIRST, COMPILED IN BATCHES. This loop used to invoke the
+    # compiler once per unit, and with 1,210 units that is the "over an
+    # hour" the comment above describes - which is how a ratchet stops
+    # being checked. byte_match.match_functions does the identical
+    # arithmetic with one compiler process per BATCH; measured on 40
+    # unsettled units, 191.3 s serial against 6.4 s, 29.7x, with every
+    # tier identical. The only field that changes is `refusal_reason`,
+    # which gets BETTER: the batch path reports cl's actual diagnostic
+    # where the per-unit path could only say "CL produced no object".
+    prepared = []
+    for address, source, kind in subjects:
+        key = f"0x{address:08X}"
+        if key in settled:
+            skipped += 1
+            continue
+        row = functions.get(address, {})
+        if kind == "unit":
+            text = source()
+        else:
+            # A stored body is a DEFINITION, not a unit: the scaffolding
+            # around it is regenerated rather than committed, because it is
+            # derived from the pinned executable.
+            try:
+                text = writeback.build_unit(
+                    address, writeback.read_matched_body(source),
+                    functions, callees, derived, pe_fast)
+            except emit.Unsettled as error:
+                tiers["REFUSED"] += 1
+                if ledger.get(key, {}).get("tier", "") in MATCHED:
+                    regressions.append((key, "BYTE_EXACT",
+                                        f"no scaffolding: {error}"))
                 continue
-            row = functions.get(address, {})
-            if kind == "unit":
-                text = source()
-            else:
-                # A stored body is a DEFINITION, not a unit: the scaffolding
-                # around it is regenerated rather than committed, because it is
-                # derived from the pinned executable.
-                try:
-                    text = writeback.build_unit(
-                        address, writeback.read_matched_body(source),
-                        functions, callees, derived, pe_fast)
-                except emit.Unsettled as error:
-                    tiers["REFUSED"] += 1
-                    if ledger.get(key, {}).get("tier", "") in MATCHED:
-                        regressions.append((key, "BYTE_EXACT",
-                                            f"no scaffolding: {error}"))
-                    continue
-            outcome = byte_match.match_function(
-                pe, catalogue, shared, address,
-                text, work, byte_match.MEASURED_FLAGS,
-                f"v{address:08x}")
-            if index % 25 == 0:
-                print(f"  {index}/{len(subjects)}", flush=True)
-            tier = outcome.get("tier", "NO_COMPILE")
-            was = ledger.get(key, {}).get("tier", "")
-            if was in MATCHED and tier not in MATCHED:
-                regressions.append((key, was, tier))
-            tiers[tier] += 1
-            entry = ledger.setdefault(key, {})
-            entry.update(
-                address=key, name=row.get("name", ""),
-                source_location="", generated=0,
-                size=row.get("size", ""), tier=tier,
-                span_classes=";".join(
-                    f"{k}={v}" for k, v in
-                    (outcome.get("span_classes") or {}).items()),
-                original_bytes=outcome.get("original_bytes", ""),
-                rebuilt_bytes=outcome.get("rebuilt_bytes", ""),
-                original_mnemonics=outcome.get("original_mnemonics", ""),
-                rebuilt_mnemonics=outcome.get("rebuilt_mnemonics", ""),
-                first_divergence=outcome.get("first_divergence", ""),
-                note=outcome.get("note", ""),
-                refusal_reason=outcome.get("refusal_reason", ""))
+        prepared.append((address, text, f"v{address:08x}"))
+
+    print(f"  compiling {len(prepared)} unit(s) in batches", flush=True)
+    measured = byte_match.match_functions(
+        pe, catalogue, shared, prepared, byte_match.MEASURED_FLAGS)
+
+    for address, _text, _stem in prepared:
+        key = f"0x{address:08X}"
+        row = functions.get(address, {})
+        outcome = measured.get(address, {"tier": "NO_COMPILE"})
+        tier = outcome.get("tier", "NO_COMPILE")
+        was = ledger.get(key, {}).get("tier", "")
+        if was in MATCHED and tier not in MATCHED:
+            regressions.append((key, was, tier))
+        tiers[tier] += 1
+        entry = ledger.setdefault(key, {})
+        entry.update(
+            address=key, name=row.get("name", ""),
+            source_location="", generated=0,
+            size=row.get("size", ""), tier=tier,
+            span_classes=";".join(
+                f"{k}={v}" for k, v in
+                (outcome.get("span_classes") or {}).items()),
+            original_bytes=outcome.get("original_bytes", ""),
+            rebuilt_bytes=outcome.get("rebuilt_bytes", ""),
+            original_mnemonics=outcome.get("original_mnemonics", ""),
+            rebuilt_mnemonics=outcome.get("rebuilt_mnemonics", ""),
+            first_divergence=outcome.get("first_divergence", ""),
+            note=outcome.get("note", ""),
+            refusal_reason=outcome.get("refusal_reason", ""))
 
     write_ledger(ledger)
     print(f"\nmeasured tiers: {dict(tiers)}")
@@ -386,8 +398,14 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # parser never learned nested aliases; and function-pointer members were
 # refused by a branch whose comment said "no pinned class has one today",
 # which `Time` had since made false.
-BASELINE_MATCHED_FUNCTIONS = 888
-BASELINE_MATCHED_BYTES = 18738
+#
+# 902 / 19468. Fourteen of the fourteen came from one fan-out of sonnet agents
+# over 48 unrecovered functions in the 8-55 byte band. The agents claimed 28
+# BYTE_EXACT and the harness measured 16; --collect recompiles every unit
+# itself for exactly that reason, and the twelve that did not survive cost
+# nothing but the compile.
+BASELINE_MATCHED_FUNCTIONS = 902
+BASELINE_MATCHED_BYTES = 19468
 
 
 def summarise(ledger: dict) -> tuple:
