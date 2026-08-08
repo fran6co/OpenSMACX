@@ -16,6 +16,12 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "time.h"
+#include "spot.h"
+#include "listbox.h"
+#include "flatbutton.h"
+#include "buttongroup.h"
+#include "buffer.h"
 #include "graphicwin.h"
 
  /*
@@ -51,7 +57,7 @@ class DLLEXPORT ReportWin : GraphicWin {
   uint32_t field_A2C_;  // 0xA2C
   uint32_t field_A30_;  // 0xA30
   uint32_t field_A34_;  // 0xA34
-  uint8_t flatButtons1_[0x4F14];  // 0xA38
+  FlatButton flatButtons1_[7];  // 0xA38
   uint32_t field_594C_;  // 0x594C
   uint32_t field_5950_;  // 0x5950
   uint32_t field_5954_;  // 0x5954
@@ -70,7 +76,7 @@ class DLLEXPORT ReportWin : GraphicWin {
   uint32_t field_5988_;  // 0x5988
   uint32_t field_598C_;  // 0x598C
   uint32_t field_5990_;  // 0x5990
-  uint8_t spot_[0xC];  // 0x5994
+  Spot spot_;  // 0x5994
   uint32_t field_59A0_;  // 0x59A0
   uint32_t field_59A4_;  // 0x59A4
   uint32_t field_59A8_;  // 0x59A8
@@ -98,21 +104,21 @@ class DLLEXPORT ReportWin : GraphicWin {
   uint32_t field_5A00_;  // 0x5A00
   uint32_t field_5A04_;  // 0x5A04
   uint32_t field_5A08_;  // 0x5A08
-  uint8_t listBox_[0xB54];  // 0x5A0C
-  uint8_t flatButton2_[0xB4C];  // 0x6560
-  uint8_t flatButton3_[0xB4C];  // 0x70AC
+  ListBox listBox_;  // 0x5A0C
+  FlatButton flatButton2_;  // 0x6560
+  FlatButton flatButton3_;  // 0x70AC
   uint32_t field_7BF8_;  // 0x7BF8
   uint32_t field_7BFC_;  // 0x7BFC
   uint32_t field_7C00_;  // 0x7C00
   uint32_t field_7C04_;  // 0x7C04
-  uint8_t buttonGroup1_[0x94];  // 0x7C08
-  uint8_t flatButton4_[0xB4C];  // 0x7C9C
-  uint8_t flatButton5_[0xB4C];  // 0x87E8
-  uint8_t flatButton6_[0xB4C];  // 0x9334
-  uint8_t buttonGroup2_[0x94];  // 0x9E80
-  uint8_t flatButton7_[0xB4C];  // 0x9F14
-  uint8_t flatButton8_[0xB4C];  // 0xAA60
-  uint8_t flatButton9_[0xB4C];  // 0xB5AC
+  ButtonGroup buttonGroup1_;  // 0x7C08
+  FlatButton flatButton4_;  // 0x7C9C
+  FlatButton flatButton5_;  // 0x87E8
+  FlatButton flatButton6_;  // 0x9334
+  ButtonGroup buttonGroup2_;  // 0x9E80
+  FlatButton flatButton7_;  // 0x9F14
+  FlatButton flatButton8_;  // 0xAA60
+  FlatButton flatButton9_;  // 0xB5AC
   uint32_t field_C0F8_;  // 0xC0F8
   uint32_t field_C0FC_;  // 0xC0FC
   uint32_t field_C100_;  // 0xC100
@@ -126,7 +132,7 @@ class DLLEXPORT ReportWin : GraphicWin {
   uint32_t field_E268_;  // 0xE268
   uint32_t field_E26C_;  // 0xE26C
   uint32_t field_E270_;  // 0xE270
-  uint8_t time1_[0x28];  // 0xE274
+  Time time1_;  // 0xE274
   uint32_t field_E29C_;  // 0xE29C
   uint32_t field_E2A0_;  // 0xE2A0
   uint32_t field_E2A4_;  // 0xE2A4
@@ -136,14 +142,14 @@ class DLLEXPORT ReportWin : GraphicWin {
   uint32_t field_E2B4_;  // 0xE2B4
   uint32_t field_E2B8_;  // 0xE2B8
   uint32_t field_E2BC_;  // 0xE2BC
-  uint8_t time2_[0x28];  // 0xE2C0
-  uint8_t time3_[0x28];  // 0xE2E8
+  Time time2_;  // 0xE2C0
+  Time time3_;  // 0xE2E8
   uint32_t field_E310_;  // 0xE310
   uint32_t field_E314_;  // 0xE314
   uint32_t field_E318_;  // 0xE318
   uint32_t field_E31C_;  // 0xE31C
-  uint8_t buffer1_[0x588];  // 0xE320
-  uint8_t buffer2_[0x588];  // 0xE8A8
+  Buffer buffer1_;  // 0xE320
+  Buffer buffer2_;  // 0xE8A8
   uint8_t flic_[0xAE4];  // 0xEE30
   uint8_t field_F914_[0x1A8];  // 0xF914
 };

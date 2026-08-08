@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "flatbutton.h"
+#include "buttongroup.h"
 
 #include "original_seam.h"
 #include "graphicwin.h"
@@ -88,25 +90,25 @@ class DLLEXPORT Datalink : GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 20 member(s) from the IDA database, 20 named; it starts a member at 0x2A3C, which is where src/ ends.
 
-  uint8_t flatButton1_[0xB4C];  // 0x2A3C
-  uint8_t flatButton2_[0xB4C];  // 0x3588
-  uint8_t flatButton3_[0xB4C];  // 0x40D4
-  uint8_t flatButton4_[0xB4C];  // 0x4C20
-  uint8_t flatButton5_[0xB4C];  // 0x576C
-  uint8_t flatButton6_[0xB4C];  // 0x62B8
-  uint8_t flatButton7_[0xB4C];  // 0x6E04
-  uint8_t flatButton8_[0xB4C];  // 0x7950
-  uint8_t flatButton9_[0xB4C];  // 0x849C
-  uint8_t flatButton10_[0xB4C];  // 0x8FE8
-  uint8_t flatButton11_[0xB4C];  // 0x9B34
-  uint8_t flatButton12_[0xB4C];  // 0xA680
-  uint8_t flatButton13_[0xB4C];  // 0xB1CC
-  uint8_t flatButton14_[0xB4C];  // 0xBD18
-  uint8_t flatButton15_[0xB4C];  // 0xC864
-  uint8_t flatButton16_[0xB4C];  // 0xD3B0
-  uint8_t flatButton17_[0xB4C];  // 0xDEFC
-  uint8_t flatButton18_[0xB4C];  // 0xEA48
-  uint8_t buttonGroup_[0x94];  // 0xF594
+  FlatButton flatButton1_;  // 0x2A3C
+  FlatButton flatButton2_;  // 0x3588
+  FlatButton flatButton3_;  // 0x40D4
+  FlatButton flatButton4_;  // 0x4C20
+  FlatButton flatButton5_;  // 0x576C
+  FlatButton flatButton6_;  // 0x62B8
+  FlatButton flatButton7_;  // 0x6E04
+  FlatButton flatButton8_;  // 0x7950
+  FlatButton flatButton9_;  // 0x849C
+  FlatButton flatButton10_;  // 0x8FE8
+  FlatButton flatButton11_;  // 0x9B34
+  FlatButton flatButton12_;  // 0xA680
+  FlatButton flatButton13_;  // 0xB1CC
+  FlatButton flatButton14_;  // 0xBD18
+  FlatButton flatButton15_;  // 0xC864
+  FlatButton flatButton16_;  // 0xD3B0
+  FlatButton flatButton17_;  // 0xDEFC
+  FlatButton flatButton18_;  // 0xEA48
+  ButtonGroup buttonGroup_;  // 0xF594
   uint8_t field_F628_[0x4];  // 0xF628
 
   // Storage the image proves is here: its own methods reach 0x1B394.

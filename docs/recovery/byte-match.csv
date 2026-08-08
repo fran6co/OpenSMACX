@@ -565,9 +565,9 @@ c0041e4f0.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0041E890,?show@BaseWin@@QAEXH@Z,,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x0041E8B0,?hide@BaseWin@@QAEXXZ,,0,25,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,25,25,,,,,
 0x00420A40,?on_nc_hittest@BaseWin@@QAEHHH@Z,,0,47,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,47,47,,,,,
-0x004213A0,??_GProdPicker@@UAEPAXI@Z,src/deleting_thunks.cpp:370,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004213a0.cpp(455) : error C2065: 'ProdPickerDtorTarget' : undeclared identifier
-c004213a0.cpp(455) : error C2297: '->*' : illegal, right operand has type 'int'
-c004213a0.cpp(457) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x004213A0,??_GProdPicker@@UAEPAXI@Z,src/deleting_thunks.cpp:370,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004213a0.cpp(763) : error C2065: 'ProdPickerDtorTarget' : undeclared identifier
+c004213a0.cpp(763) : error C2297: '->*' : illegal, right operand has type 'int'
+c004213a0.cpp(765) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004213D0,??_GBaseWin@@UAEPAXI@Z,src/deleting_thunks.cpp:388,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004213d0.cpp(72) : error C2065: 'BaseWinDtorTarget' : undeclared identifier
 c004213d0.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'
 c004213d0.cpp(74) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
@@ -715,10 +715,10 @@ c00428d70.cpp(136) : error C2783: 'Method __cdecl original_method(unsigned long)
 c00428e60.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'
 c00428e60.cpp(73) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x00428F80,??3Credits@@SAXPAXI@Z,src/deleting_thunks.cpp:533,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00428f80.cpp(44) : error C2065: 'scalar_delete_credits' : undeclared identifier
-0x00428F90,??__Eg_DATALINK@@YAXXZ,src/init_thunks.cpp:538,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00428f90.cpp(458) : error C2065: 'DatalinkCtorTarget' : undeclared identifier
-c00428f90.cpp(458) : error C2297: '->*' : illegal, right operand has type 'int'
-c00428f90.cpp(459) : error C2065: 'GameAtexit' : undeclared identifier
-c00428f90.cpp(459) : error C2061: syntax error : identifier 'func_atexit_callback'
+0x00428F90,??__Eg_DATALINK@@YAXXZ,src/init_thunks.cpp:538,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00428f90.cpp(766) : error C2065: 'DatalinkCtorTarget' : undeclared identifier
+c00428f90.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'
+c00428f90.cpp(767) : error C2065: 'GameAtexit' : undeclared identifier
+c00428f90.cpp(767) : error C2061: syntax error : identifier 'func_atexit_callback'
 Generating Code...
 Compiling..."
 0x00428FB0,??__Fg_DATALINK@@YAXXZ,src/atexit_thunks.cpp:706,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00428fb0.cpp(63) : error C2065: 'DatalinkDtorTarget' : undeclared identifier
@@ -801,9 +801,9 @@ u0042def0.cpp(86) : error C2061: syntax error : identifier 'BOOL'"
 0x00432770,??_GStringBox@@UAEPAXI@Z,src/deleting_thunks.cpp:547,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00432770.cpp(72) : error C2065: 'StringBoxDtorTarget' : undeclared identifier
 c00432770.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'
 c00432770.cpp(74) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
-0x00432800,??_GDatalink@@UAEPAXI@Z,src/deleting_thunks.cpp:565,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00432800.cpp(457) : error C2065: 'DatalinkDtorTarget' : undeclared identifier
-c00432800.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'
-c00432800.cpp(459) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x00432800,??_GDatalink@@UAEPAXI@Z,src/deleting_thunks.cpp:565,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00432800.cpp(765) : error C2065: 'DatalinkDtorTarget' : undeclared identifier
+c00432800.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'
+c00432800.cpp(767) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x00432830,??3StringBox@@SAXPAXI@Z,src/deleting_thunks.cpp:581,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00432830.cpp(45) : error C2065: 'scalar_delete_string_box' : undeclared identifier
 0x00432840,??3Datalink@@SAXPAXI@Z,src/deleting_thunks.cpp:594,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00432840.cpp(44) : error C2065: 'scalar_delete_datalink' : undeclared identifier
 0x00432850,??__Eg_DESIGNWIN@@YAXXZ,src/init_thunks.cpp:549,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00432850.cpp(71) : error C2065: 'DesignWinCtorTarget' : undeclared identifier
@@ -1277,9 +1277,9 @@ c0044b300.cpp(74) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x0044C870,sub_44c870,src/global_arith.cpp:77,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c870.cpp(45) : error C2065: 'GlobalSlot007591C4' : undeclared identifier
 c0044c870.cpp(45) : error C2100: illegal indirection
 c0044c870.cpp(45) : error C2100: illegal indirection"
-0x0044C880,?help_tech@@YAXH@Z,src/datalink.cpp:269,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c880.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044c880.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044c880.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044C880,?help_tech@@YAXH@Z,src/datalink.cpp:269,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c880.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044c880.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044c880.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C8A0,nullsub_226,src/nullsub_thunks.cpp:82,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C8B0,nullsub_227,src/nullsub_thunks.cpp:92,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C8C0,sub_44c8c0,src/nullsub_thunks.cpp:102,1,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -1287,52 +1287,52 @@ c0044c880.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C8E0,nullsub_230,src/nullsub_thunks.cpp:123,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C8F0,nullsub_231,src/nullsub_thunks.cpp:133,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C900,nullsub_232,src/nullsub_thunks.cpp:143,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044C910,?help_weapon@@YAXH@Z,src/datalink.cpp:279,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c910.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044c910.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044c910.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044C910,?help_weapon@@YAXH@Z,src/datalink.cpp:279,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c910.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044c910.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044c910.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C930,nullsub_233,src/nullsub_thunks.cpp:153,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044C940,?help_armor@@YAXH@Z,src/datalink.cpp:289,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c940.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044c940.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044c940.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044C940,?help_armor@@YAXH@Z,src/datalink.cpp:289,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c940.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044c940.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044c940.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C960,nullsub_234,src/nullsub_thunks.cpp:163,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C970,sub_44c970,src/nullsub_thunks.cpp:173,1,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x0044C980,?help_chassis@@YAXH@Z,src/datalink.cpp:299,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c980.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044c980.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044c980.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'
+0x0044C980,?help_chassis@@YAXH@Z,src/datalink.cpp:299,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c980.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044c980.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044c980.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'
 Generating Code...
 Compiling..."
 0x0044C9A0,nullsub_235,src/nullsub_thunks.cpp:184,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044C9B0,?help_facility@@YAXH@Z,src/datalink.cpp:309,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c9b0.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044c9b0.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044c9b0.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044C9B0,?help_facility@@YAXH@Z,src/datalink.cpp:309,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044c9b0.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044c9b0.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044c9b0.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C9D0,nullsub_236,src/nullsub_thunks.cpp:194,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C9E0,?help_project@@YAXH@Z,,0,24,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,24,24,,,,,
 0x0044CA00,nullsub_237,src/nullsub_thunks.cpp:204,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044CA10,?help_abil@@YAXH@Z,src/datalink.cpp:319,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044ca10.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044ca10.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044ca10.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044CA10,?help_abil@@YAXH@Z,src/datalink.cpp:319,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044ca10.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044ca10.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044ca10.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CA30,nullsub_238,src/nullsub_thunks.cpp:214,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044CA40,?help_social@@YAXH@Z,src/datalink.cpp:329,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044ca40.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044ca40.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044ca40.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044CA40,?help_social@@YAXH@Z,src/datalink.cpp:329,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044ca40.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044ca40.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044ca40.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CA60,nullsub_239,src/nullsub_thunks.cpp:224,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044CA70,?help_faction@@YAXH@Z,src/datalink.cpp:339,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044ca70.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044ca70.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044ca70.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044CA70,?help_faction@@YAXH@Z,src/datalink.cpp:339,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044ca70.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044ca70.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044ca70.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CA90,sub_44ca90,,0,42,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,42,42,,,,,
 0x0044CAC0,nullsub_240,src/nullsub_thunks.cpp:234,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044CAD0,?help_veh@@YAXH@Z,src/datalink.cpp:349,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044cad0.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044cad0.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044cad0.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044CAD0,?help_veh@@YAXH@Z,src/datalink.cpp:349,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044cad0.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044cad0.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044cad0.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CAF0,nullsub_241,src/nullsub_thunks.cpp:244,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044CB00,nullsub_242,src/nullsub_thunks.cpp:254,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044CB10,nullsub_243,src/nullsub_thunks.cpp:264,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044CB20,nullsub_244,src/nullsub_thunks.cpp:274,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044CB30,?help_any@@YAXXZ,,0,15,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,15,15,,,,,
 0x0044CB40,sub_44cb40,,0,22,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,22,22,,,,,
-0x0044CB60,?help_topic@@YAXIH@Z,src/datalink.cpp:361,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044cb60.cpp(457) : error C2065: 'DatalinkMain' : undeclared identifier
-c0044cb60.cpp(457) : error C2065: 'DatalinkExec' : undeclared identifier
-c0044cb60.cpp(457) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044CB60,?help_topic@@YAXIH@Z,src/datalink.cpp:361,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0044cb60.cpp(765) : error C2065: 'DatalinkMain' : undeclared identifier
+c0044cb60.cpp(765) : error C2065: 'DatalinkExec' : undeclared identifier
+c0044cb60.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CB80,?help_create_link@@YAXPAD00@Z,,0,66,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,66,1,25,1,0,#0: original 'push' vs rebuilt 'ret',
 0x0044CBD0,sub_44cbd0,,0,72,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044cbd0.cpp(44) : error C2065: 'int8' : undeclared identifier
 u0044cbd0.cpp(44) : error C2059: syntax error : ','"
@@ -4119,7 +4119,7 @@ u00491400.cpp(89) : error C2062: type 'int' unexpected"
 c004923e0.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
 c004923e0.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x00492410,??3PrefWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1124,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00492410.cpp(44) : error C2065: 'scalar_delete_pref_win' : undeclared identifier
-0x004926B0,?close@ProdPicker@@QAEXXZ,src/prodpicker.cpp:65,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004926b0.cpp(433) : error C2653: 'GraphicWin' : is not a class or namespace name
+0x004926B0,?close@ProdPicker@@QAEXXZ,src/prodpicker.cpp:65,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004926b0.cpp(741) : error C2653: 'GraphicWin' : is not a class or namespace name
 0x004926C0,?show@ProdPicker@@QAEXH@Z,,0,117,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004926c0.cpp(54) : error C2065: 'GraphicWin' : undeclared identifier
 u004926c0.cpp(54) : error C2059: syntax error : ','
 u004926c0.cpp(55) : error C2059: syntax error : ','"
@@ -4131,13 +4131,13 @@ u00492740.cpp(55) : error C2059: syntax error : ','"
 0x00493C10,?UNK1@ProdPicker@@QAEHH@Z,src/prodpicker.cpp:24,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x00493C20,?on_mousewheel@ProdPicker@@QAEXH@Z,,0,72,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,72,3,33,1,0,#0: original 'push' vs rebuilt 'ret 4',
 0x00493C70,?on_redraw@ProdPicker@@QAEXXZ,,0,54,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,54,1,21,1,0,#0: original 'push' vs rebuilt 'ret',
-0x00493E70,?on_scrolling@ProdPicker@@QAEXHH@Z,src/delegation_thunks.cpp:167,1,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00493e70.cpp(509) : error C2065: 'func_delegation_2' : undeclared identifier
-c00493e70.cpp(509) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
+0x00493E70,?on_scrolling@ProdPicker@@QAEXHH@Z,src/delegation_thunks.cpp:167,1,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00493e70.cpp(817) : error C2065: 'func_delegation_2' : undeclared identifier
+c00493e70.cpp(817) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
 0x00493E90,?on_mouse_move@ProdPicker@@QAEXHH@Z,src/prodpicker.cpp:38,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004941C0,?on_left_click@ProdPicker@@QAEXHH@Z,,0,111,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,111,3,36,1,0,#0: original 'push' vs rebuilt 'ret 8',
 0x00494230,?on_left_double_click@ProdPicker@@QAEXHH@Z,,0,65,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,65,3,28,1,0,#0: original 'push' vs rebuilt 'ret 8',
-0x004945C0,?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z,src/prodpicker.cpp:80,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004945c0.cpp(431) : error C2511: 'on_redraw_nc' : overloaded member function 'void (int,int)' not found in 'ProdPicker'
-c004945c0.cpp(301) : see declaration of 'ProdPicker'"
+0x004945C0,?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z,src/prodpicker.cpp:80,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004945c0.cpp(739) : error C2511: 'on_redraw_nc' : overloaded member function 'void (int,int)' not found in 'ProdPicker'
+c004945c0.cpp(609) : see declaration of 'ProdPicker'"
 0x004946D0,?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z,,0,39,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,39,39,,,,,
 0x00495160,?UNK3@ProdPicker@@QAEXH@Z,src/prodpicker.cpp:51,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00495170,??__Eg_QUAYLEWIN@@YAXXZ,src/init_thunks.cpp:4070,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00495170.cpp(71) : error C2065: 'QuayleWinCtorTarget' : undeclared identifier
@@ -4248,10 +4248,10 @@ u004ae380.cpp(62) : see declaration of 'SetupWin'"
 c004ae760.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
 c004ae760.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004AE9A0,??3SetupWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1216,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004ae9a0.cpp(44) : error C2065: 'scalar_delete_setup_win' : undeclared identifier
-0x004AE9B0,??__ESocialWinParent@@YAXXZ,src/init_thunks.cpp:4103,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ae9b0.cpp(688) : error C2065: 'SocialWinCtorTarget' : undeclared identifier
-c004ae9b0.cpp(688) : error C2297: '->*' : illegal, right operand has type 'int'
-c004ae9b0.cpp(689) : error C2065: 'GameAtexit' : undeclared identifier
-c004ae9b0.cpp(689) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x004AE9B0,??__ESocialWinParent@@YAXXZ,src/init_thunks.cpp:4103,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ae9b0.cpp(996) : error C2065: 'SocialWinCtorTarget' : undeclared identifier
+c004ae9b0.cpp(996) : error C2297: '->*' : illegal, right operand has type 'int'
+c004ae9b0.cpp(997) : error C2065: 'GameAtexit' : undeclared identifier
+c004ae9b0.cpp(997) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x004AE9D0,??__FSocialWinParent@@YAXXZ,src/atexit_thunks.cpp:3916,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ae9d0.cpp(63) : error C2065: 'SocialWinDtorTarget' : undeclared identifier
 c004ae9d0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004AEF00,?UNK2@SocialWin@@QAEXXZ,src/socialwin.cpp:25,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
@@ -4273,14 +4273,14 @@ u004b1b70.cpp(59) : error C2447: missing function header (old-style formal list?
 0x004B2210,?on_iface_left_click@SocialWin@@QAEHHH@Z,,0,13,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
 0x004B2400,?on_iface_left_down@SocialWin@@QAEXHH@Z,src/socialwin.cpp:51,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2410,?on_iface_right_down@SocialWin@@QAEXHH@Z,src/socialwin.cpp:64,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x004B2420,?on_iface_mouse_move@SocialWin@@QAEXHH@Z,src/socialwin.cpp:149,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2420.cpp(666) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2420.cpp(306) : see declaration of 'clear_bubble_text'
-c004b2420.cpp(667) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2420.cpp(306) : see declaration of 'clear_bubble_text'"
-0x004B2430,?on_iface_mouse_leave@SocialWin@@QAEXHH@Z,src/socialwin.cpp:171,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2430.cpp(666) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2430.cpp(306) : see declaration of 'clear_bubble_text'
-c004b2430.cpp(667) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2430.cpp(306) : see declaration of 'clear_bubble_text'"
+0x004B2420,?on_iface_mouse_move@SocialWin@@QAEXHH@Z,src/socialwin.cpp:149,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2420.cpp(974) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2420.cpp(614) : see declaration of 'clear_bubble_text'
+c004b2420.cpp(975) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2420.cpp(614) : see declaration of 'clear_bubble_text'"
+0x004B2430,?on_iface_mouse_leave@SocialWin@@QAEXHH@Z,src/socialwin.cpp:171,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2430.cpp(974) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2430.cpp(614) : see declaration of 'clear_bubble_text'
+c004b2430.cpp(975) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2430.cpp(614) : see declaration of 'clear_bubble_text'"
 0x004B2440,?on_iface_selected@SocialWin@@QAEXHH@Z,src/socialwin.cpp:77,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2450,?on_iface_left_double_click@SocialWin@@QAEXHH@Z,src/socialwin.cpp:90,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2460,?on_iface_right_double_click@SocialWin@@QAEXHH@Z,src/socialwin.cpp:103,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -4300,9 +4300,9 @@ u004b2740.cpp(97) : fatal error C1903: unable to recover from previous error(s);
 0x004B3F20,??_GCheckButton@@UAEPAXI@Z,src/deleting_thunks.cpp:1230,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b3f20.cpp(437) : error C2065: 'CheckButtonDtorTarget' : undeclared identifier
 c004b3f20.cpp(437) : error C2297: '->*' : illegal, right operand has type 'int'
 c004b3f20.cpp(439) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
-0x004B3F50,??_GSocialWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1248,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b3f50.cpp(687) : error C2065: 'SocialWinDtorTarget' : undeclared identifier
-c004b3f50.cpp(687) : error C2297: '->*' : illegal, right operand has type 'int'
-c004b3f50.cpp(689) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x004B3F50,??_GSocialWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1248,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b3f50.cpp(995) : error C2065: 'SocialWinDtorTarget' : undeclared identifier
+c004b3f50.cpp(995) : error C2297: '->*' : illegal, right operand has type 'int'
+c004b3f50.cpp(997) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004B3F80,??3CheckButton@@SAXPAXI@Z,src/deleting_thunks.cpp:1264,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004b3f80.cpp(45) : error C2065: 'scalar_delete_check_button' : undeclared identifier
 0x004B3F90,??3SocialWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1277,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004b3f90.cpp(45) : error C2065: 'scalar_delete_social_win' : undeclared identifier
 0x004B3FA0,??__Eg_STATUSWIN@@YAXXZ,src/init_thunks.cpp:4114,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b3fa0.cpp(71) : error C2065: 'StatusWinCtorTarget' : undeclared identifier

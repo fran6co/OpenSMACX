@@ -16,6 +16,9 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "spot.h"
+#include "font.h"
+#include "flatbutton.h"
 #include "graphicwin.h"
 #include "subinterface.h"
 
@@ -83,7 +86,7 @@ class DLLEXPORT CouncWin : GraphicWin {
   uint32_t field_A3C_;  // 0xA3C
   uint32_t field_A40_;  // 0xA40
   uint32_t field_A44_;  // 0xA44
-  uint8_t spot_[0xC];  // 0xA48
+  Spot spot_;  // 0xA48
   uint32_t field_A54_;  // 0xA54
   uint32_t field_A58_;  // 0xA58
   uint32_t field_A5C_;  // 0xA5C
@@ -108,12 +111,12 @@ class DLLEXPORT CouncWin : GraphicWin {
   uint32_t field_AA8_;  // 0xAA8
   uint32_t field_AAC_;  // 0xAAC
   uint32_t field_AB0_;  // 0xAB0
-  uint8_t font1_[0x28];  // 0xAB4
-  uint8_t font2_[0x28];  // 0xADC
-  uint8_t font3_[0x28];  // 0xB04
-  uint8_t font4_[0x28];  // 0xB2C
-  uint8_t font5_[0x28];  // 0xB54
-  uint8_t font6_[0x28];  // 0xB7C
+  Font font1_;  // 0xAB4
+  Font font2_;  // 0xADC
+  Font font3_;  // 0xB04
+  Font font4_;  // 0xB2C
+  Font font5_;  // 0xB54
+  Font font6_;  // 0xB7C
   uint32_t field_BA4_;  // 0xBA4
   uint32_t field_BA8_;  // 0xBA8
   uint32_t field_BAC_;  // 0xBAC
@@ -238,11 +241,11 @@ class DLLEXPORT CouncWin : GraphicWin {
   uint32_t field_D88_;  // 0xD88
   uint32_t field_D8C_;  // 0xD8C
   uint32_t field_D90_;  // 0xD90
-  uint8_t flatButton1_[0xB4C];  // 0xD94
-  uint8_t flatButton2_[0xB4C];  // 0x18E0
-  uint8_t flatButton3_[0xB4C];  // 0x242C
-  uint8_t flatButton4_[0xB4C];  // 0x2F78
-  uint8_t flatButton5_[0xB4C];  // 0x3AC4
+  FlatButton flatButton1_;  // 0xD94
+  FlatButton flatButton2_;  // 0x18E0
+  FlatButton flatButton3_;  // 0x242C
+  FlatButton flatButton4_;  // 0x2F78
+  FlatButton flatButton5_;  // 0x3AC4
   uint8_t field_4610_[0x4];  // 0x4610
 };
 

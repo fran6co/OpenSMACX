@@ -16,6 +16,12 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "time.h"
+#include "spot.h"
+#include "font.h"
+#include "flatbutton.h"
+#include "caviar.h"
+#include "buffer.h"
 #include "graphicwin.h"
 #include "subinterface.h"
 
@@ -243,12 +249,12 @@ class DLLEXPORT DesignWin : GraphicWin {
   uint32_t field_CE0_;  // 0xCE0
   uint32_t field_CE4_;  // 0xCE4
   uint32_t field_CE8_;  // 0xCE8
-  uint8_t flatButtons_[0x11A6C];  // 0xCEC
-  uint8_t spot1_[0xC];  // 0x12758
-  uint8_t spot2_[0xC];  // 0x12764
+  FlatButton flatButtons_[25];  // 0xCEC
+  Spot spot1_;  // 0x12758
+  Spot spot2_;  // 0x12764
   uint32_t field_12770_;  // 0x12770
-  uint8_t time_[0x28];  // 0x12774
-  uint8_t caviar_[0x13D0];  // 0x1279C
+  Time time_;  // 0x12774
+  Caviar caviar_;  // 0x1279C
   uint32_t field_13B6C_;  // 0x13B6C
   uint32_t field_13B70_;  // 0x13B70
   uint32_t field_13B74_;  // 0x13B74
@@ -313,7 +319,7 @@ class DLLEXPORT DesignWin : GraphicWin {
   uint32_t field_13C60_;  // 0x13C60
   uint32_t field_13C64_;  // 0x13C64
   uint32_t field_13C68_;  // 0x13C68
-  uint8_t buffer_[0x588];  // 0x13C6C
+  Buffer buffer_;  // 0x13C6C
   uint32_t factionID_;  // 0x141F4
   uint32_t protoID_;  // 0x141F8
   uint32_t protoChassisType_;  // 0x141FC
@@ -351,8 +357,8 @@ class DLLEXPORT DesignWin : GraphicWin {
   uint32_t field_14268_;  // 0x14268
   uint32_t field_1426C_;  // 0x1426C
   uint8_t field_14270_[0x2D0];  // 0x14270
-  uint8_t font1_[0x28];  // 0x14540
-  uint8_t font2_[0x28];  // 0x14568
+  Font font1_;  // 0x14540
+  Font font2_;  // 0x14568
   uint8_t field_14590_[0x14];  // 0x14590
 };
 
