@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,7 @@
 // address        0x005156A0
 // name           ?toggle_grid@Console@@QAEXXZ
 // size           79 bytes
-// measured tier  NO_COMPILE
-// refusal        u005156a0.cpp(49) : error C2065: 'BOOL' : undeclared identifier u005156a0.cpp(49) : error C2146: syntax error : missing ')' before identifier 'saveFactions' u00
+// measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

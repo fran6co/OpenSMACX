@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured MISMATCH.
+// PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,7 @@
 // address        0x004C72A0
 // name           sub_4c72a0
 // size           85 bytes
-// measured tier  MISMATCH
-// divergence     0
+// measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -76,8 +75,7 @@ void *Sub4c72a0Owner::init() {
     memset(self + 0x204, 0, 4);
 
     int v = *reinterpret_cast<int *>(self + 0x204);
-    unsigned char *bp = reinterpret_cast<unsigned char *>(&v);
-    bp[0] = (bp[0] & 0xfb) | 2;
+    v = (v & ~4) | 2;
     *reinterpret_cast<int *>(self + 0x204) = v;
 
     *reinterpret_cast<int *>(self + 0x208) = 0;
