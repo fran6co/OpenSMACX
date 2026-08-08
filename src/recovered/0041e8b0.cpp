@@ -5,8 +5,15 @@
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
+// `sub_interface_` was a member of a BaseWin layout the emitter no longer
+// produces - it emits `pad_0_[0x40B10]` and one field - so the name had gone
+// undeclared and this scored NO_COMPILE. Reaching the sub-object by its
+// offset says the same thing without depending on a layout that moved:
+// BaseWin embeds the SubInterface at +0xA14, which src/basewin.h declares as
+// `subIFace_` and commit beb8e72 measured byte-exact for five classes.
 void BaseWin::hide() {
     if (reinterpret_cast<Win *>(this)->is_visible()) {
-        sub_interface_.release_iface_mode();
+        reinterpret_cast<SubInterface *>(
+            reinterpret_cast<char *>(this) + 0xA14)->release_iface_mode();
     }
 }
