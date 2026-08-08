@@ -1029,6 +1029,14 @@ def declare_callee(row: dict, derived: dict, pe=None,
             f"{signature.method}({', '.join(signature.params) or ''});")
 
 
+# `Buffer buffer_;` / `Spot spot_[4];` - a declarator whose type is a bare
+# identifier. Leading `unsigned`/`const` and the primitives are not classes
+# and impose no ordering, so an initial keyword disqualifies the line.
+BY_VALUE_MEMBER = re.compile(
+    r"^(?!return|const|static|unsigned|signed|struct|class|enum|typedef)"
+    r"([A-Z]\w*)\s+\w+\s*(?:\[[^\]]*\])?\s*;$")
+
+
 def by_value_first(names) -> list:
     """Order class definitions so a by-value member's type comes first.
 
@@ -1040,16 +1048,42 @@ def by_value_first(names) -> list:
     Stable: ties keep alphabetical order, so a unit does not reshuffle
     between runs. A cycle cannot happen - a class cannot contain itself by
     value - but is broken defensively rather than recursed into.
+
+    THE DEPENDENCIES ARE READ OFF WHAT WILL BE EMITTED, not off
+    `pinned_layouts()`. Those are two different sources - the body emitted
+    below comes from `class_layouts.declaration_for()` - and a member present
+    in the first and absent from the second is a dependency this sort cannot
+    see. It then ordered the classes confidently and wrongly: 27% of staged
+    units still failed with `C2079: uses undefined class` (Spot 21, Buffer 19,
+    Heap 15, Time 6 in a 150-unit sample) against the one function whose whole
+    job is preventing that. A sort and an emitter that disagree about what a
+    class contains cannot be reconciled by making the sort cleverer; they have
+    to read the same text.
     """
     ordered, placed = [], set()
+
+    def dependencies(name) -> list:
+        """By-value member types in the text that will actually be emitted."""
+        found = []
+        for line in class_layouts.declaration_for(name) or ():
+            stripped = line.strip()
+            # `Type name_;` and `Type name_[N];` need Type COMPLETE.
+            # `Type *name_;` does not - the forward declaration above is
+            # enough - and a function-pointer member is not a member type.
+            if "*" in stripped or "(" in stripped:
+                continue
+            match = BY_VALUE_MEMBER.match(stripped)
+            if match:
+                found.append(match.group(1))
+        for type_, _, _ in class_layouts.pinned_layouts().get(name, ()):
+            if "*" not in type_:
+                found.append(type_.replace("const", "").strip())
+        return found
 
     def place(name, seen):
         if name in placed or name in seen:
             return
-        for type_, _, _ in class_layouts.pinned_layouts().get(name, ()):
-            if "*" in type_:
-                continue
-            dependency = type_.replace("const", "").strip()
+        for dependency in dependencies(name):
             if dependency in names:
                 place(dependency, seen | {name})
         if name not in placed:
@@ -1189,37 +1223,45 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # and an incomplete type behind it, so it can reach the field only as
     # `reinterpret_cast<int *>(current_)[1]` - which is what the first
     # recovery of the run actually wrote, next to a perfectly good `head_`.
-    # Layouts never hold a member by value, so a forward declaration above is
-    # enough for these to be defined in any order.
-    defined_later = {signature.klass} | set(methods_by_class)
-    for name in by_value_first(wanted - defined_later):
-        layout = class_layouts.declaration_for(name)
-        if layout:
-            lines.append(declare(name, opening=True))
-            lines.extend(layout)
-            lines.append("};")
-            lines.append("")
-
+    #
+    # ONE ORDERED PASS, NOT TWO. This used to emit layout-only classes first
+    # and classes with called methods afterwards, under a comment asserting
+    # that "layouts never hold a member by value, so a forward declaration is
+    # enough". That stopped being true. A class holding `Spot spot_` by value
+    # got emitted in the first pass while `Spot` - which also had a method
+    # called, so it was deferred - was still only forward-declared, and the
+    # unit failed with `C2079: uses undefined class` before the body was even
+    # reached. 27% of staged units were unrecoverable for this reason, none of
+    # it visible to an agent, who sees a scaffold that cannot compile and no
+    # way to fix it from inside the body.
+    #
+    # Splitting by "does it have called methods" was never a dependency
+    # property, so no ordering within the two passes could fix it. Every class
+    # is now emitted exactly once, with its layout AND its called methods, in
+    # by_value_first order across the whole set.
+    defined_later = {signature.klass}
+    definable = (wanted | set(methods_by_class)) - defined_later
     if declarations or methods_by_class:
         lines.append("// ---- callees, declared and never defined "
                      "(a definition would be inlined) ----")
-
-    for klass in by_value_first(set(methods_by_class)):
-        if klass == signature.klass:
-            continue
+    for name in by_value_first(definable):
+        layout = class_layouts.declaration_for(name)
         body = []
-        for entry in methods_by_class[klass]:
+        for entry in methods_by_class.get(name, ()):
             if entry.kind == "ctor":
-                body.append(f"    {klass}({', '.join(entry.params)});")
+                body.append(f"    {name}({', '.join(entry.params)});")
             elif entry.kind == "dtor":
-                body.append(f"    ~{klass}();")
+                body.append(f"    ~{name}();")
             else:
                 body.append(f"    {entry.returns} {entry.member_convention()}"
                             f"{entry.method}({', '.join(entry.params)});")
-        lines.append(declare(klass, opening=True))
-        lines.extend(class_layouts.declaration_for(klass))
+        if not layout and not body:
+            continue
+        lines.append(declare(name, opening=True))
+        lines.extend(layout or [])
         lines.extend(sorted(set(body)))
         lines.append("};")
+        lines.append("")
     for text in sorted(set(d for d in declarations if d)):
         lines.append(text)
     if declarations or methods_by_class:

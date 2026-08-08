@@ -11,7 +11,13 @@ class Sub4c38e0VCall {
   virtual void slot001(int);
 };
 
-class Win {
+// Named for this address rather than `Win`. The emitter defines the real
+// `Win` with its layout in this unit, so a second definition here is a
+// C2011 redefinition - and the emitter's `Win` has no `hide()`, because the
+// call was always spelled through this shim and so was never catalogued as
+// one of its methods. The class name is masked at comparison, so the call
+// encodes identically either way.
+class Sub4c38e0Win {
  public:
   void hide();
 };
@@ -22,5 +28,5 @@ extern "C" void __cdecl sub_4c38e0() {
     reinterpret_cast<Sub4c38e0VCall *>(
         obj + *reinterpret_cast<int *>(*reinterpret_cast<char **>(obj) + 4))
         ->slot001(0);
-    reinterpret_cast<Win *>(g_008e9f60)->hide();
+    reinterpret_cast<Sub4c38e0Win *>(g_008e9f60)->hide();
 }
