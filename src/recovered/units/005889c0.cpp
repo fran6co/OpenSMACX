@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x005889C0
+// name           ?popups_medium@@YAXXZ
+// size           106 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/005889c0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?popups_medium@@YAXXZ  at 0x005889C0  (106 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +63,43 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+// The on-disk prototypes carried a leading BasePop*/Dialog* parameter that
+// the live catalogue no longer has: `?set_def_string_font@BasePop@@QAAHP
+// AUFont@@PAUFont@@PAUFont@@PAUFont@@@Z` mangles to four Font* parameters
+// and nothing else - these are static members, called with no `this` setup
+// in the disassembly (no `mov ecx` precedes any of the three calls).
+struct Font;
+int __cdecl fn_006048c0(Font*, Font*, Font*, Font*);
+int __cdecl fn_006049c0(Font*, Font*, Font*);
+int __cdecl fn_00609d20(Font*, Font*, Font*);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00696ed0 = (int *)0x00696ED0;
+static int *const g_00696ed4 = (int *)0x00696ED4;
+static int *const g_006a721c = (int *)0x006A721C;
+static int *const g_0094576c = (int *)0x0094576C;
+static int *const g_00945808 = (int *)0x00945808;
+static int *const g_0094580c = (int *)0x0094580C;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
+void __cdecl popups_medium() {
+    Font *f1 = *reinterpret_cast<Font **>(g_00945808);
+    Font *f2 = *reinterpret_cast<Font **>(g_0094580c);
+    Font *f3 = *reinterpret_cast<Font **>(g_0094576c);
+    *g_006a721c = 3;
+    fn_006048c0(f3, f2, f1, 0);
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+    f1 = *reinterpret_cast<Font **>(g_00945808);
+    f2 = *reinterpret_cast<Font **>(g_0094580c);
+    f3 = *reinterpret_cast<Font **>(g_0094576c);
+    fn_00609d20(f3, f2, f1);
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+    f1 = *reinterpret_cast<Font **>(g_00945808);
+    f2 = *reinterpret_cast<Font **>(g_0094580c);
+    f3 = *reinterpret_cast<Font **>(g_0094576c);
+    fn_006049c0(f3, f2, f1);
+
+    *g_00696ed0 = 2;
+    *g_00696ed4 = 2;
 }

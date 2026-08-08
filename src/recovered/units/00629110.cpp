@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x00629110
+// name           ??0StringBox@@QAE@XZ
+// size           266 bytes
+// measured tier  MISMATCH
+// divergence     3
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00629110/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ??0StringBox@@QAE@XZ  at 0x00629110  (266 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -55,41 +56,69 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
-typedef int int32;
-typedef unsigned int uint32;
-typedef short int16;
-typedef unsigned short uint16;
-typedef signed char int8;
-typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class GraphicWin { public:
+    GraphicWin();
+};
+class Scroll { public:
+    Scroll();
+};
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00663308 = (int *)0x00663308;
+static int *const g_006693a0 = (int *)0x006693A0;
+static int *const g_006693a4 = (int *)0x006693A4;
+static int *const g_006693ac = (int *)0x006693AC;
+static int *const g_006698c0 = (int *)0x006698C0;
+static int *const g_006698c4 = (int *)0x006698C4;
+static int *const g_0066adc0 = (int *)0x0066ADC0;
+static int *const g_0066adc8 = (int *)0x0066ADC8;
+static int *const g_0066b0ec = (int *)0x0066B0EC;
+static int *const g_0067ff88 = (int *)0x0067FF88;
+static int *const g_009b3374 = (int *)0x009B3374;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class StringBox { public:
+    StringBox();
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+// Placement-new, declared locally rather than pulling in <new>: the
+// scaffolding's VC6 dialect note says nothing about it either way, and this
+// keeps the unit self-contained.
+inline void *operator new(unsigned int, void *place) { return place; }
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+StringBox::StringBox() {
+    char *self = reinterpret_cast<char *>(this);
+    new (self) GraphicWin();
+    new (self + 0xa20) Scroll();
+
+    *reinterpret_cast<void **>(self + 0x2b74) = g_0066b0ec;
+    *reinterpret_cast<void **>(self + 0x2b98) = g_006693ac;
+    int saved = *g_009b3374;
+    *reinterpret_cast<int *>(self + 0x2b9c) = saved;
+    *g_009b3374 = 0;
+
+    char *p1 = *reinterpret_cast<char **>(self + 0x2b74);
+    *reinterpret_cast<void **>(self + 0x2b70) = g_006693a4;
+    int disp1 = *reinterpret_cast<int *>(p1 + 4);
+    *reinterpret_cast<void **>(self + 0x2b74 + disp1) = g_006693a0;
+
+    char *p2 = *reinterpret_cast<char **>(self + 0x2b74);
+    *reinterpret_cast<int *>(self + 0x2b78) = 0;
+    *reinterpret_cast<int *>(self + 0x2b7c) = 0;
+    *reinterpret_cast<int *>(self + 0x2b80) = 0;
+    *reinterpret_cast<int *>(self + 0x2b84) = 0;
+    *reinterpret_cast<int *>(self + 0x2b88) = 0;
+    *reinterpret_cast<void **>(self + 0x2b70) = g_006698c4;
+    int disp2 = *reinterpret_cast<int *>(p2 + 4);
+    *reinterpret_cast<void **>(self + 0x2b74 + disp2) = g_006698c0;
+
+    *reinterpret_cast<int *>(self + 0xa1c) = 0;
+    *reinterpret_cast<int *>(self + 0x2b6c) = 0;
+    *reinterpret_cast<int *>(self + 0xa14) = 0;
+    *reinterpret_cast<void **>(self) = g_0066adc8;
+    *reinterpret_cast<void **>(self + 0x444) = g_0066adc0;
+    *reinterpret_cast<int *>(self + 0xa18) = -1;
 }

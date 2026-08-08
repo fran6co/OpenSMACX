@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x00633A50
+// name           ?close@NetFifo@@QAEXXZ
+// size           91 bytes
+// measured tier  MISMATCH
+// divergence     15
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00633a50/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?close@NetFifo@@QAEXXZ  at 0x00633A50  (91 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +64,50 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+// Respelled from the scaffold's `int __cdecl _free();`: VC6 mangles an
+// extern "C" `free` to the `_free` symbol the catalogue expects, and the
+// real CRT signature takes the pointer the body frees.
+extern "C" void free(void *);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00669174 = (int *)0x00669174;
+static int *const g_0066917c = (int *)0x0066917C;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class NetFifo { public:
+    void close();
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+typedef void (__stdcall *CritSectionFn)(void *);
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+// Shadow struct: the fields this body needs, reached at the offsets the
+// disassembly proves - 0xc is a payload pointer, 0x14 the intrusive
+// singly-linked next pointer.
+struct NetFifoNode {
+    uint8_t pad_0_[0xc];
+    void *data_;
+    uint8_t pad_10_[0x14 - 0xc - 4];
+    NetFifoNode *next_;
+};
+
+void NetFifo::close() {
+    char *self = reinterpret_cast<char *>(this);
+    (*reinterpret_cast<CritSectionFn *>(g_0066917c))(self + 0xc);
+    while (*reinterpret_cast<NetFifoNode **>(self) != 0) {
+        NetFifoNode *node = *reinterpret_cast<NetFifoNode **>(self);
+        NetFifoNode *next = node->next_;
+        void *data = node->data_;
+        if (data != 0) {
+            free(data);
+        }
+        (*reinterpret_cast<NetFifoNode **>(self))->data_ = 0;
+        if (*reinterpret_cast<NetFifoNode **>(self) != 0) {
+            free(*reinterpret_cast<NetFifoNode **>(self));
+        }
+        *reinterpret_cast<NetFifoNode **>(self) = next;
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+    *reinterpret_cast<int *>(self + 4) = 0;
+    *reinterpret_cast<int *>(self + 8) = 0;
+    (*reinterpret_cast<CritSectionFn *>(g_00669174))(self + 0xc);
 }

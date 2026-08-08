@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x004BDEA0
+// name           ?draw_arrow@TutWin@@QAEXXZ
+// size           118 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/004bdea0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?draw_arrow@TutWin@@QAEXXZ  at 0x004BDEA0  (118 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +62,42 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
+struct xCoord;
+struct yCoord;
+
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class Win { public:
+    void window_line_raw(int, int, int xCoord, int yCoord, int, int, unsigned int);
+};
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_0068a5a0 = (int *)0x0068A5A0;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class TutWin { public:
+    void draw_arrow();
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void TutWin::draw_arrow() {
+    char *self = reinterpret_cast<char *>(this);
+    if (*reinterpret_cast<int *>(self + 0x53A4) != 0) {
+        (*reinterpret_cast<Win **>(self + 0x53D4))->window_line_raw(
+            *reinterpret_cast<int *>(self + 0x538C),
+            *reinterpret_cast<int *>(self + 0x5390),
+            *reinterpret_cast<int *>(self + 0x5384),
+            *reinterpret_cast<int *>(self + 0x5388),
+            *g_0068a5a0,
+            2, 2);
+        int v = *reinterpret_cast<int *>(self + 0x539C);
+        if (v >= 0) {
+            (*reinterpret_cast<Win **>(self + 0x53D4))->window_line_raw(
+                v,
+                *reinterpret_cast<int *>(self + 0x53A0),
+                *reinterpret_cast<int *>(self + 0x5394),
+                *reinterpret_cast<int *>(self + 0x5398),
+                *g_0068a5a0,
+                2, 2);
+        }
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
 }

@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x0048BC60
+// name           ?init@PlanWin@@QAEXPAD@Z
+// size           101 bytes
+// measured tier  MISMATCH
+// divergence     18
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/0048bc60/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?init@PlanWin@@QAEXPAD@Z  at 0x0048BC60  (101 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +63,55 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
+struct ExtDirectDraw;
+struct height;
+struct width;
+
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
-
-// ---- fixed globals this body references ----
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
-
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class Buffer { public:
+    int init(int width, int height, int, ExtDirectDraw*);
+};
+class MapWin { public:
+    void clear(int);
+    void init(int, int);
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+class PlanWin { public:
+    void init(char*);
+};
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+// NOTE: the LIVE emitter's fresh scaffold for this address is currently
+// broken - it declares `class GraphicWin { ... Buffer buffer_; ... };`
+// (an embedded-by-value member) before Buffer's own definition, so any
+// body against it fails with C2079 regardless of content. Confirmed with
+// an empty body. This unit therefore keeps the simpler (working) Buffer/
+// MapWin shells rather than adopting the fresh ones, per the "on-disk
+// scaffold is stale" rule's other direction: prefer whichever compiles.
+// Only int8* -> char* was pulled from the fresh brief (PlanWin::init's
+// own parameter, unrelated to the GraphicWin/Buffer ordering bug).
+void PlanWin::init(char* a1) {
+    char *self = reinterpret_cast<char *>(this);
+
+    *reinterpret_cast<int *>(self + 0x21a68) = 1;
+    *reinterpret_cast<int *>(self + 0x21ff8) = 0;
+    *reinterpret_cast<int *>(self + 0x1dd78) = 1;
+
+    // clear()/init() are called with the SAME `this` pointer PlanWin was
+    // given - the disassembly never re-derives ecx before either call, so
+    // this PlanWin's address is directly a valid MapWin this-pointer (a
+    // base subobject at offset 0), reproduced here without redeclaring the
+    // (already complete) PlanWin class above.
+    reinterpret_cast<MapWin *>(this)->clear(1);
+    reinterpret_cast<MapWin *>(this)->init(3, 0);
+
+    *reinterpret_cast<int *>(self + 0x1dd98) = -0xe;
+
+    // vbtable indirection: [this] is the vbtable pointer, slot 1 is the
+    // byte displacement to a virtual base subobject.
+    int *vbtable = *reinterpret_cast<int **>(self);
+    int disp = vbtable[1];
+    int height = -*reinterpret_cast<int *>(self + disp + 0x4c8);
+    int width = *reinterpret_cast<int *>(self + disp + 0x4c4);
+
+    reinterpret_cast<Buffer *>(self + 0x21a70)->init(width, height, 0, 0);
 }

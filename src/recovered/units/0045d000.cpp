@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x0045D000
+// name           ?on_iface_mouse_move@MainInterface@@QAEXHH@Z
+// size           261 bytes
+// measured tier  MISMATCH
+// divergence     2
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/0045d000/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?on_iface_mouse_move@MainInterface@@QAEXHH@Z  at 0x0045D000  (261 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -55,41 +56,61 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
-typedef int int32;
-typedef unsigned int uint32;
-typedef short int16;
-typedef unsigned short uint16;
-typedef signed char int8;
-typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class Spot { public:
+    int check(int xCoord, int yCoord, int* spotPos, int* spotType);
+};
+class StatusWin { public:
+    void draw_active(int, int, int);
+    void reset_active();
+};
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_008c5568 = (int *)0x008C5568;
+static int *const g_008c6b2c = (int *)0x008C6B2C;
+static int *const g_008c6b30 = (int *)0x008C6B30;
+static int *const g_008c6b48 = (int *)0x008C6B48;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class MainInterface { public:
+    void redraw_complete();
+    void on_iface_mouse_move(int xCoord, int yCoord);
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+void MainInterface::on_iface_mouse_move(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+    if (reinterpret_cast<Spot *>(self + 0x24620)->check(a1, a2, &a2, &a1) != -1
+            && a2 == 5) {
+        if (*reinterpret_cast<int *>(self + 0x20cd8) != 0) {
+            return;
+        }
+        *reinterpret_cast<int *>(self + 0x20cd8) = 1;
+        reinterpret_cast<MainInterface *>(self - 0xa14)->redraw_complete();
+        return;
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+
+    int check2 = reinterpret_cast<Spot *>(g_008c6b48)->check(a1, a2, &a2, &a1);
+    if (check2 >= 0 && a1 == 0xb) {
+        if (a2 != *g_008c6b30) {
+            *g_008c6b30 = a2;
+            *g_008c6b2c = -1;
+            reinterpret_cast<StatusWin *>(g_008c5568)->draw_active(-1, a2, 0);
+        }
+    } else if (check2 >= 0 && a1 == 0) {
+        if (a2 != *g_008c6b2c) {
+            *g_008c6b30 = -1;
+            *g_008c6b2c = a2;
+            reinterpret_cast<StatusWin *>(g_008c5568)->draw_active(a2, -1, 0);
+        }
+    } else {
+        reinterpret_cast<StatusWin *>(g_008c5568)->reset_active();
+    }
+
+    if (*reinterpret_cast<int *>(self + 0x20cd8) == 1) {
+        *reinterpret_cast<int *>(self + 0x20cd8) = 0;
+        reinterpret_cast<MainInterface *>(self - 0xa14)->redraw_complete();
+    }
 }

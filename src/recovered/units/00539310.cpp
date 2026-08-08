@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x00539310
+// name           ?net_agenda_on@@YAXHHHH@Z
+// size           106 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00539310/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?net_agenda_on@@YAXHHHH@Z  at 0x00539310  (106 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +63,33 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class NetDaemon { public:
+    void await_diplo(int);
+};
+void __cdecl agenda_on(int, int, int);
+void __cdecl log_say(int8*, int, int, int);
+void __cdecl message_data(int, int, int, int, int, int);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_0068d480 = (int *)0x0068D480;
+static int *const g_0093cd90 = (int *)0x0093CD90;
+static int *const g_0093f660 = (int *)0x0093F660;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
+// Respelled from the scaffold's `int8*` (signed char*): the catalogue's
+// call target mangles this parameter as `char*` (PAD), not `signed char*`
+// (PAC) - see the emitter's own note on int8 vs char.
+void __cdecl log_say(char *, int, int, int);
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void __cdecl net_agenda_on(int a1, int a2, int a3, int a4) {
+    if (*g_0093f660 != 0) {
+        log_say(reinterpret_cast<char *>(g_0068d480), a1, a2, a3);
+        message_data(0x2444, 0, a1, a2, a3, 0);
+        if (a4 != 0) {
+            reinterpret_cast<NetDaemon *>(g_0093cd90)->await_diplo(0x444);
+        }
+    } else {
+        agenda_on(a1, a2, a3);
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
 }

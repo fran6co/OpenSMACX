@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x00486110
-// name           ?on_right_click@PickTech@@QAEXHH@Z
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x004271C0
+// name           ?arrived@CouncWin@@QAEXH@Z
+// size           109 bytes
+// measured tier  MISMATCH
+// divergence     17
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/00486110/unit.cpp
+//   build/byte-match/004271c0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?on_right_click@PickTech@@QAEXHH@Z  at 0x00486110  (90 bytes)
+// subject: ?arrived@CouncWin@@QAEXH@Z  at 0x004271C0  (109 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,25 +64,23 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-// ?exec@Datalink@@QAEXIH@Z mangles its args `I`,`H` - unsigned int, int -
-// not the `DatalinkID` struct an earlier scaffold guessed; that name was
-// IDA's applied type for the same underlying scalar and does not survive
-// as an incomplete type passed by value.
-class Datalink { public:
-    void exec(unsigned int, int);
+// Fixed: the catalogue's mangled name (?pop@NetMsg@@QAEXPBDHHPBD@Z) is
+// `PBD` - pointer to CONST char - for both string parameters, not the
+// signed `int8*` the on-disk scaffold carried.
+class NetMsg { public:
+    void pop(const char*, int, int, const char*);
 };
-void __cdecl do_all_draws();
 
 // Vtable shim. VC6 rejects a free `__thiscall` function pointer
 // (C4234), so an indirect virtual call is spelled by calling the Nth
 // virtual of a class that is never defined and never instantiated.
 // Only DECLARATION ORDER matters - change a slot's signature freely
 // to match the call you need; it will not move.
-// This body dispatches through slot(s): 2, 17, 57
+// This body dispatches through slot(s): 62
 class VCall { public:
     virtual void slot000();
     virtual void slot001();
-    virtual void slot002();  // <-- used
+    virtual void slot002();
     virtual void slot003();
     virtual void slot004();
     virtual void slot005();
@@ -96,7 +95,7 @@ class VCall { public:
     virtual void slot014();
     virtual void slot015();
     virtual void slot016();
-    virtual void slot017(int, int);  // <-- used
+    virtual void slot017();
     virtual void slot018();
     virtual void slot019();
     virtual void slot020();
@@ -136,32 +135,39 @@ class VCall { public:
     virtual void slot054();
     virtual void slot055();
     virtual void slot056();
-    virtual void slot057(int, int, int);  // <-- used
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual void slot061();
+    virtual void slot062();  // <-- used
 };
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static Datalink *const g_00703ea0 = (Datalink *)0x00703EA0;
+static int *const g_00683228 = (int *)0x00683228;
+static int *const g_00703de0 = (int *)0x00703DE0;
+static int *const g_00805338 = (int *)0x00805338;
+static int *const g_009a64e8 = (int *)0x009A64E8;
 
-class PickTech { public:
-    void on_right_click(int, int);
+class CouncWin { public:
+    void arrived(int);
 };
 
-void PickTech::on_right_click(int a1, int a2) {
-    // Reach fields by offset - the class is deliberately empty.
+void CouncWin::arrived(int a1) {
     char *self = reinterpret_cast<char *>(this);
+    *reinterpret_cast<int *>(self + 0xa44) |= (1 << a1);
 
-    reinterpret_cast<VCall *>(this)->slot017(a1, a2);
+    if (*g_00703de0 != 0) {
+        reinterpret_cast<VCall *>(this)->slot062();
 
-    if (*reinterpret_cast<int *>(self + 0xa3c) != 0) {
-        reinterpret_cast<VCall *>(this)->slot002();
-        do_all_draws();
-
-        int index = *reinterpret_cast<int *>(self + 0xa38);
-        int value = *reinterpret_cast<int *>(self + 0xa58 + index * 4);
-        g_00703ea0->exec(0xe, value);
-
-        reinterpret_cast<VCall *>(this)->slot057(0, 0, 0);
+        int g = *g_009a64e8;
+        unsigned char lo = static_cast<unsigned char>(g);
+        unsigned char hi = static_cast<unsigned char>(g >> 8);
+        if (((hi & lo) & *reinterpret_cast<int *>(self + 0xa44)) == lo) {
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                reinterpret_cast<const char *>(g_00683228), 1000, 1, 0);
+        }
     }
 }

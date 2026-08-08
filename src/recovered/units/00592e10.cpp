@@ -1,21 +1,21 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x00592E10
+// name           ?message_veh@@YAXHHHH@Z
+// size           96 bytes
+// measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00592e10/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?message_veh@@YAXHHHH@Z  at 0x00592E10  (96 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +62,56 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
+struct vehID;
+struct xCoord;
+struct yCoord;
+
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class NetDaemon { public:
+    void send_message(int8*, unsigned int, int);
+};
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00669368 = (int *)0x00669368;
+static int *const g_00939284 = (int *)0x00939284;
+static int *const g_0093cd90 = (int *)0x0093CD90;
+static int *const g_0093e8bc = (int *)0x0093E8BC;
+static int *const g_0093f664 = (int *)0x0093F664;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
+// `int vehID a2` / `int xCoord a3` / `int yCoord a4` in the emitted head was
+// not valid C++ - the emitter's naming heuristic pasted a hinted struct tag
+// into the type position. The contract's own function head confirms plain
+// `int` for all four parameters, so that is what is written below.
+typedef unsigned long (__stdcall *TimeGetTimeFn)(void);
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+// g_0093f664 is `in_flight_sends`, a send-in-flight counter (see the
+// neighbouring src/recovered/00592de0.cpp): the static-const-pointer
+// spelling folds the increment/decrement into a load/modify/store under
+// /O2 where the original keeps a single RMW instruction. An `extern`
+// declaration keeps the single instruction.
+extern int in_flight_sends;
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+void __cdecl message_veh(int a1, int a2, int a3, int a4) {
+    struct Msg {
+        short f0;
+        int f1;
+        int f2;
+        int f3;
+        int f4;
+        int f5;
+    } msg;
+
+    msg.f0 = static_cast<short>(a1);
+    msg.f1 = *g_00939284;
+    msg.f2 = (*reinterpret_cast<TimeGetTimeFn *>(g_00669368))();
+    msg.f3 = *g_0093e8bc;
+    msg.f5 = a3;
+    msg.f4 = a2;
+
+    in_flight_sends++;
+    reinterpret_cast<NetDaemon *>(g_0093cd90)->send_message(
+        reinterpret_cast<int8 *>(&msg), 0x18, a4);
+    in_flight_sends--;
 }

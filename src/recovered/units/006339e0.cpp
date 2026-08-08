@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x006339E0
+// name           ??1NetFifo@@QAE@XZ
+// size           98 bytes
+// measured tier  MISMATCH
+// divergence     15
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/006339e0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ??1NetFifo@@QAE@XZ  at 0x006339E0  (98 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +64,68 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+extern "C" void free(void *);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00669170 = (int *)0x00669170;
+static int *const g_00669174 = (int *)0x00669174;
+static int *const g_0066917c = (int *)0x0066917C;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class NetFifo { public:
+    ~NetFifo();
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+struct NetFifoNode {
+    int pad0[3];
+    void *data_;
+    int pad1;
+    NetFifoNode *next_;
+};
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+typedef void (__stdcall *EnterCriticalSectionFn)(void *);
+typedef void (__stdcall *LeaveCriticalSectionFn)(void *);
+typedef void (__stdcall *DeleteCriticalSectionFn)(void *);
+
+// NOT BYTE_EXACT. Closest reached: 96/98 bytes, mnemonic similarity
+// 0.988, edit_count 1 (verify_recovered_function.py --json). The only
+// divergence: the original reads the freed node's `next_` and `data_`
+// fields through TWO registers (`mov eax,[esi]; mov ecx,eax; mov
+// edi,[eax+0x14]; mov eax,[ecx+0xc]`) - it copies the node pointer to
+// ecx before using it a second time even though eax is still live and
+// unclobbered. Every source spelling tried here (inlining both field
+// reads, naming an intermediate `node` local, reordering data-before-
+// next and next-before-data) instead has the compiler reuse eax
+// directly for the second read (`mov eax,[esi]; mov edi,[eax+0x14];
+// mov eax,[eax+0xc]`), one mov shorter. Ruled out as a source-form
+// question: this is REGISTER ALLOCATION - same field reads, same
+// order, the backend's choice of a redundant copy versus reuse of a
+// still-live register, not reachable from C++ call-site spelling.
+// Everything else - the EnterCriticalSection/LeaveCriticalSection/
+// DeleteCriticalSection calls, the free-list walk, the loop's
+// rotated shape reusing `next` for the trailing `head_ != 0` check -
+// matches exactly.
+NetFifo::~NetFifo() {
+    char *self = reinterpret_cast<char *>(this);
+    NetFifoNode **head = reinterpret_cast<NetFifoNode **>(self);
+    void *cs = self + 0xc;
+
+    (reinterpret_cast<EnterCriticalSectionFn>(*g_0066917c))(cs);
+    while (*head != 0) {
+        NetFifoNode *node = *head;
+        NetFifoNode *next = node->next_;
+        if (node->data_ != 0) {
+            free(node->data_);
+        }
+        (*head)->data_ = 0;
+        if (*head != 0) {
+            free(*head);
+        }
+        *head = next;
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+    *reinterpret_cast<int *>(self + 4) = 0;
+    *reinterpret_cast<int *>(self + 8) = 0;
+    (reinterpret_cast<LeaveCriticalSectionFn>(*g_00669174))(cs);
+    (reinterpret_cast<DeleteCriticalSectionFn>(*g_00669170))(cs);
 }

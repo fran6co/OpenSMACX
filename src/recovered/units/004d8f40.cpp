@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x004D8F40
+// name           ?explore@Console@@QAEXH@Z
+// size           96 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/004d8f40/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?explore@Console@@QAEXH@Z  at 0x004D8F40  (96 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +62,45 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
+struct vehID;
+
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class NetDaemon { public:
+    int lock_veh(int*, int, int, int, int);
+    void await_synch();
+    void unlock_veh();
+};
+void __cdecl synch_veh(int vehID);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_0093cd90 = (int *)0x0093CD90;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class Console { public:
+    void explore(int vehID);
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+// Shadow struct: one array of these at a fixed base, stride 0x34 -
+// a dword flags field at offset 0 and a byte field at offset 0xD, proven
+// by the two addressing constants (0x95282C and 0x952839 = base + 0xD)
+// sharing the same `index * 0x34` scale.
+struct VehRecord {
+    uint32_t flags_;
+    uint8_t pad_4_[0xD - 4];
+    uint8_t byte_d_;
+    uint8_t pad_e_[0x34 - 0xD - 1];
+};
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+extern VehRecord g_vehRecords[];
+
+void Console::explore(int a1) {
+    int result = reinterpret_cast<NetDaemon *>(g_0093cd90)->lock_veh(&a1, 0, -1, -1, 0);
+    if (result == 0) {
+        g_vehRecords[a1].byte_d_ = 0;
+        g_vehRecords[a1].flags_ |= 0x4000;
+        synch_veh(a1);
+        reinterpret_cast<NetDaemon *>(g_0093cd90)->await_synch();
+        reinterpret_cast<NetDaemon *>(g_0093cd90)->unlock_veh();
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
 }

@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x00616030
+// name           ?text_position@EditBox@@QAEXH@Z
+// size           261 bytes
+// measured tier  MISMATCH
+// divergence     67
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00616030/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?text_position@EditBox@@QAEXH@Z  at 0x00616030  (261 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -55,41 +56,70 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
-typedef int int32;
-typedef unsigned int uint32;
-typedef short int16;
-typedef unsigned short uint16;
-typedef signed char int8;
-typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class Buffer { public:
+    int text_width(char*, int);
+};
+// `_strcat`/`_strlen` are the real CRT functions; the stale nullary
+// scaffolding here could not be called with the arguments the call sites
+// push. VC6's /O2 substitutes an inline expansion for both when it
+// recognises the name, so the intrinsic form is turned off explicitly -
+// the original calls the real functions (0x645470, 0x6453e0).
+extern "C" char *strcat(char *, const char *);
+extern "C" unsigned int strlen(const char *);
+#pragma function(strcat, strlen)
 
-// ---- fixed globals this body references ----
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
-
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class EditBox { public:
+    int text_position(int);
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+int EditBox::text_position(int a1) {
+    // Reach fields by offset - the class is deliberately empty.
+    char *self = reinterpret_cast<char *>(this);
+    if (a1 < *reinterpret_cast<int *>(self + 0xb34)) {
+        return *reinterpret_cast<int *>(self + 0xb18);
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+
+    a1 -= *reinterpret_cast<int *>(self + 0xb34);
+    char local[256];
+    char *text;
+
+    if ((*reinterpret_cast<unsigned char *>(self + 0xb3c) & 2) != 0) {
+        local[0] = 0;
+        strcat(local, self + 0xa14);
+        char *p = local;
+        if (*p != 0) {
+            char c;
+            do {
+                *p = '*';
+                c = p[1];
+                ++p;
+            } while (c != 0);
+        }
+        text = local;
+    } else {
+        text = self + 0xa14 + *reinterpret_cast<int *>(self + 0xb18);
+    }
+
+    if (*text == 0) {
+        return 0;
+    }
+
+    int length = static_cast<int>(strlen(text));
+    int count = 1;
+    if (length > 1) {
+        Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+        do {
+            if (buffer->text_width(text, count) > a1) {
+                break;
+            }
+            ++count;
+        } while (count < length);
+    }
+
+    if (count < *reinterpret_cast<int *>(self + 0xb44)) {
+        return *reinterpret_cast<int *>(self + 0xb18) + count - 1;
+    }
+    return *reinterpret_cast<int *>(self + 0xb18) + count;
 }

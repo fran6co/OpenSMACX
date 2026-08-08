@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x00479900
+// name           ?UNK2@MultiWin@@QAEXXZ
+// size           100 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00479900/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?UNK2@MultiWin@@QAEXXZ  at 0x00479900  (100 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +62,29 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
-
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00939ed8 = (int *)0x00939ED8;
+static int *const g_0093f660 = (int *)0x0093F660;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class MultiWin { public:
+    void UNK2();
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void MultiWin::UNK2() {
+    char *self = reinterpret_cast<char *>(this);
+    int v1158 = *reinterpret_cast<int *>(self + 0x1158);
+    int v11b4 = *reinterpret_cast<int *>(self + 0x11b4);
+    int v1100 = *reinterpret_cast<int *>(self + 0x1100);
+    int total = v1158 * 7 + v1100 + v11b4;
+    if (*g_0093f660 != 0) {
+        int v112c = *reinterpret_cast<int *>(self + 0x112c);
+        total += v112c + v11b4 + 0xe;
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+    *reinterpret_cast<int *>(self + 0xa38) = 0;
+    *reinterpret_cast<int *>(self + 0xa3c) = 0;
+    *reinterpret_cast<int *>(self + 0xa40) = 0x8a;
+    *reinterpret_cast<int *>(self + 0xa44) = total;
+    *g_00939ed8 |= 0x40;
 }

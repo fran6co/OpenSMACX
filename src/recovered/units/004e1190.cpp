@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x004E1190
+// name           ?editor_randomize@Console@@QAEXXZ
+// size           103 bytes
+// measured tier  MISMATCH
+// divergence     11
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/004e1190/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?editor_randomize@Console@@QAEXXZ  at 0x004E1190  (103 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +64,40 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+unsigned int __cdecl random(int, int);
+void __cdecl auto_undo();
+void __cdecl draw_map(int);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00949878 = (int *)0x00949878;
+static int *const g_00949884 = (int *)0x00949884;
+static int *const g_0094a30c = (int *)0x0094A30C;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class Console { public:
+    void editor_randomize();
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void Console::editor_randomize() {
+    auto_undo();
+    unsigned int r = random(0, 0x7fff);
+    int guard = *g_00949884;
+    *g_00949878 = r + 1;
+    int i = 0;
+    int *record = reinterpret_cast<int *>(*g_0094a30c) + 2;
+    if (0 < guard) {
+        do {
+            *record &= 0xcfeffbff;
+            int *dest = record + 2;
+            int n = 7;
+            do {
+                *dest = *record;
+                ++dest;
+            } while (--n);
+            ++i;
+            record += 0xb;
+        } while (i < *g_00949884);
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+    draw_map(1);
 }

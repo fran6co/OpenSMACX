@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x005D55D0
+// name           ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z
+// size           95 bytes
+// measured tier  MISMATCH
+// divergence     25
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/005d55d0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z  at 0x005D55D0  (95 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +63,37 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
-
-// ---- fixed globals this body references ----
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
-
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+// A fresh brief shows RECT as a concrete, real struct (not opaque) and
+// `flip` as an ordinary thiscall member of Win, not the free `__cdecl`
+// shim this scaffold guessed - fixed to match.
+struct RECT {
+    long left;
+    long top;
+    long right;
+    long bottom;
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class Win { public:
+    int is_visible();
+    int update_window(RECT* lprcSrc2);
+    void flip(RECT*);
+    void client_to_screen(RECT*);
+};
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+class GraphicWin { public:
+    void update(int, int, int, int, GraphicWin*);
+};
+
+void GraphicWin::update(int a1, int a2, int a3, int a4, GraphicWin* a5) {
+    if (reinterpret_cast<Win *>(this)->is_visible()) {
+        RECT rect;
+        rect.left = a1;
+        rect.top = a2;
+        rect.right = a1 + a3;
+        rect.bottom = a2 + a4;
+        reinterpret_cast<Win *>(this)->update_window(&rect);
+        reinterpret_cast<Win *>(this)->client_to_screen(&rect);
+        reinterpret_cast<Win *>(this)->flip(&rect);
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
 }

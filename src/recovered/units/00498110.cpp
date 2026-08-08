@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x00498110
+// name           ?UNK1@ReportWin@@QAEXHHHH@Z
+// size           100 bytes
+// measured tier  MISMATCH
+// divergence     20
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00498110/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?UNK1@ReportWin@@QAEXHHHH@Z  at 0x00498110  (100 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +63,27 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
+struct position;
+
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
-
-// ---- fixed globals this body references ----
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
-
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class Scroll { public:
+    void set_pos(int position);
+    void set_range(int, int);
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+class ReportWin { public:
+    void UNK1(int, int, int, int);
+};
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+void ReportWin::UNK1(int a1, int a2, int a3, int a4) {
+    char *self = reinterpret_cast<char *>(this);
+    *reinterpret_cast<int *>(self + 0xC0FC) = a1;
+    *reinterpret_cast<int *>(self + 0xC100) = a2;
+    *reinterpret_cast<int *>(self + 0xC104) = a3;
+    *reinterpret_cast<int *>(self + 0xC108) = a4;
+    Scroll *scroll = reinterpret_cast<Scroll *>(self + 0xC10C);
+    scroll->set_range(a2, a3);
+    *reinterpret_cast<int *>(self + 0xCB4C) = *reinterpret_cast<int *>(self + 0xC108);
+    scroll->set_pos(*reinterpret_cast<int *>(self + 0xC0FC));
+    *reinterpret_cast<int *>(self + 0xE270) = 0;
 }

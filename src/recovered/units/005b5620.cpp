@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x005B5620
+// name           ?social_select@@YAXH@Z
+// size           104 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/005b5620/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?social_select@@YAXH@Z  at 0x005B5620  (104 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +63,47 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class Console { public:
+    int editor_who(int, int);
+};
+class SocialWin { public:
+    void close();
+    void init(int factionID);
+};
+void __cdecl social_set(int);
+void __cdecl synch_soc(int);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_008a6270 = (int *)0x008A6270;
+static int *const g_009156b0 = (int *)0x009156B0;
+static int *const g_0093f660 = (int *)0x0093F660;
+static int *const g_009a64c0 = (int *)0x009A64C0;
+static int *const g_009a681c = (int *)0x009A681C;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
-
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void __cdecl social_select(int a1) {
+    unsigned char flags = *reinterpret_cast<unsigned char *>(g_009a64c0);
+    if ((flags & 0xc0) == 0) {
+        if ((*reinterpret_cast<unsigned char *>(g_009a681c) & 8) != 0) {
+            return;
+        }
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+
+    int idx;
+    if ((flags & 0x80) != 0) {
+        idx = reinterpret_cast<Console *>(g_009156b0)->editor_who(a1, 1);
+        if (idx < 0) {
+            return;
+        }
+    } else {
+        idx = a1;
+    }
+
+    reinterpret_cast<SocialWin *>(g_008a6270)->init(idx);
+    reinterpret_cast<SocialWin *>(g_008a6270)->close();
+    synch_soc(idx);
+    if (*g_0093f660 == 0) {
+        social_set(idx);
+    }
 }

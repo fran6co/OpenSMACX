@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x00422C50
+// name           ?clear@BattleWin@@QAEXXZ
+// size           101 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00422c50/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?clear@BattleWin@@QAEXXZ  at 0x00422C50  (101 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +62,42 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
+struct BoxSpriteParams;
+struct RECT;
+
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class Buffer { public:
+    int box_sprite(RECT*, BoxSpriteParams*);
+};
+class GraphicWin { public:
+    void soft_update();
+};
+class MainInterface { public:
+    void redraw_complete();
+};
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_0078d528 = (int *)0x0078D528;
+static int *const g_007ae820 = (int *)0x007AE820;
+static int *const g_007aec64 = (int *)0x007AEC64;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class BattleWin { public:
+    void clear();
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+void BattleWin::clear() {
+    // Reach fields by offset - the class is deliberately empty.
+    char *self = reinterpret_cast<char *>(this);
+    Buffer *buffer = reinterpret_cast<Buffer *>(g_007aec64);
+    BoxSpriteParams *params = reinterpret_cast<BoxSpriteParams *>(g_0078d528);
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0x30), params);
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0x40), params);
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0x50), params);
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0x60), params);
+
+    reinterpret_cast<MainInterface *>(g_007ae820)->redraw_complete();
+    reinterpret_cast<GraphicWin *>(g_007ae820)->soft_update();
 }

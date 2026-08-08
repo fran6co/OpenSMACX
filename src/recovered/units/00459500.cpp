@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x00459500
+// name           ??0InfoWin@@QAE@XZ
+// size           118 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00459500/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ??0InfoWin@@QAE@XZ  at 0x00459500  (118 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +63,47 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+// Destructors added: the two unwind funclets at 0x655260/0x65526b tear down
+// Time_/Font_ if a LATER member's constructor throws, and VC6 only emits
+// that partial-construction protection when it can see there IS something
+// to destroy - a class with a declared ctor but no dtor gets none (measured:
+// probe with 3 ctor-only members compiles the plain 3-call body, no SEH
+// frame at all; adding `~Type();` to each reproduces the frame exactly).
+class Font { public:
+    Font();
+    ~Font();
+};
+class PushButton { public:
+    PushButton();
+    ~PushButton();
+};
+class Time { public:
+    Time();
+    ~Time();
+};
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00655276 = (int *)0x00655276;
+static int *const g_006754b8 = (int *)0x006754B8;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+// Real members, spaced with raw padding to land Time_/Font_/PushButton_ at
+// the offsets the disassembly reads (0x30, 0x58, 0x9d0): no vtable pointer
+// is ever stored in this constructor, so nothing else here is virtual, and
+// giving these THREE members real (non-trivial) constructors is what makes
+// the compiler emit the SEH partial-construction unwind frame on its own -
+// placement-new into an opaque empty class does not.
+class InfoWin { public:
+    InfoWin();
+private:
+    char pad0_[0x30];
+    Time time_;
+    char pad1_[0x58 - 0x30 - sizeof(Time)];
+    Font font_;
+    char pad2_[0x9d0 - 0x58 - sizeof(Font)];
+    PushButton pushbutton_;
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+InfoWin::InfoWin() {
 }

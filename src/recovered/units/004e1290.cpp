@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x004E1290
+// name           ?editor_clear@Console@@QAEXXZ
+// size           107 bytes
+// measured tier  MISMATCH
+// divergence     2
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/004e1290/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?editor_clear@Console@@QAEXXZ  at 0x004E1290  (107 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +64,51 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class Path { public:
+    void init();
+};
+int __cdecl size_of_planet(int);
+void __cdecl auto_undo();
+void __cdecl draw_map(int);
+void __cdecl map_init();
+void __cdecl map_shutdown();
+void __cdecl map_wipe();
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_008e9f60 = (int *)0x008E9F60;
+static int *const g_00939288 = (int *)0x00939288;
+static int *const g_0093928c = (int *)0x0093928C;
+static int *const g_00945b00 = (int *)0x00945B00;
+static int *const g_009a64c0 = (int *)0x009A64C0;
+static int *const g_009a64c8 = (int *)0x009A64C8;
+static int *const g_009a64cc = (int *)0x009A64CC;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class Console { public:
+    void editor_clear();
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+// `redraw` is a tail-jmp target the emitter did not surface a class for;
+// the direct call's target bytes are relocated and masked regardless of
+// which class name they mangle through.
+class GraphicWinRedraw { public:
+    void redraw();
+};
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+void Console::editor_clear() {
+    auto_undo();
+    *g_009a64c0 |= 4;
+    *g_009a64c8 = 0;
+    *g_009a64cc = 0;
+    *g_00939288 = 0;
+    *g_0093928c = -1;
+    map_wipe();
+    size_of_planet(2);
+    map_shutdown();
+    map_init();
+    reinterpret_cast<Path *>(g_00945b00)->init();
+    map_wipe();
+    draw_map(1);
+    reinterpret_cast<GraphicWinRedraw *>(g_008e9f60)->redraw();
 }

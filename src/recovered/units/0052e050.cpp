@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x0052E050
+// name           ?hang_up@NetDaemon@@QAEXXZ
+// size           257 bytes
+// measured tier  MISMATCH
+// divergence     16
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/0052e050/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?hang_up@NetDaemon@@QAEXXZ  at 0x0052E050  (257 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -55,41 +56,61 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
-typedef int int32;
-typedef unsigned int uint32;
-typedef short int16;
-typedef unsigned short uint16;
-typedef signed char int8;
-typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class NetMsg { public:
+    void close();
+};
+class PlayerLock { public:
+    void clear();
+};
+void __cdecl message_data(int, int, int, int, int, int);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00805338 = (int *)0x00805338;
+static int *const g_00939284 = (int *)0x00939284;
+static int *const g_0093a938 = (int *)0x0093A938;
+static int *const g_0093e8c0 = (int *)0x0093E8C0;
+static int *const g_0093f660 = (int *)0x0093F660;
+static int *const g_009a681c = (int *)0x009A681C;
+static int *const g_009a6820 = (int *)0x009A6820;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class NetDaemon { public:
+    void hang_up();
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void NetDaemon::hang_up() {
+    char *self = reinterpret_cast<char *>(this);
+    if (*reinterpret_cast<int *>(self + 0x1b3c) != 0) {
+        return;
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+    if (*g_0093f660 == 0) {
+        return;
+    }
+    *reinterpret_cast<int *>(self + 0x1b3c) = 1;
+    if (*reinterpret_cast<unsigned char *>(g_009a681c) & 0x10) {
+        if (*g_0093a938 == 0) {
+            if (*g_009a6820 != *g_00939284) {
+                goto L0cc;
+            }
+        } else if (*g_0093e8c0 == 0) {
+            goto L145;
+        }
+        message_data(0x8301, 0, 0, 0, 0, 0);
+    }
+L0cc:
+    if (*g_0093e8c0 != 0) {
+        reinterpret_cast<PlayerLock *>(self + *g_00939284 * 28 + 0x14a0)->clear();
+        if (*reinterpret_cast<int *>(self + 0x1580) == *g_00939284) {
+            *reinterpret_cast<int *>(self + 0x1584) = 0;
+            *reinterpret_cast<int *>(self + 0x1580) = 0;
+        }
+        *reinterpret_cast<unsigned int *>(self + 0x1b7c) &=
+            ~*reinterpret_cast<unsigned int *>(self + 0x1b80 + *g_00939284 * 4);
+        message_data(0x4b00, 0, 0, 0, 0, 0);
+    }
+L145:
+    reinterpret_cast<NetMsg *>(g_00805338)->close();
 }

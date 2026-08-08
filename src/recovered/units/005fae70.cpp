@@ -1,21 +1,21 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x005FAE70
+// name           ?UNK1@Menu@@QAEXXZ
+// size           104 bytes
+// measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/005fae70/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?UNK1@Menu@@QAEXXZ  at 0x005FAE70  (104 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +63,58 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+// Named `_free` in the disassembly - the C runtime's free(), one pointer
+// argument, cdecl. `extern "C"` gives the mangling the leading underscore
+// back; the stale nullary `int __cdecl _free();` an earlier scaffold left
+// here cannot even be called with the argument the call site pushes.
+extern "C" void free(void *);
 
-// ---- fixed globals this body references ----
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
-
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+// Vtable shim. VC6 rejects a free `__thiscall` function pointer
+// (C4234), so an indirect virtual call is spelled by calling the Nth
+// virtual of a class that is never defined and never instantiated.
+// Only DECLARATION ORDER matters - change a slot's signature freely
+// to match the call you need; it will not move.
+// This body dispatches through slot(s): 0
+class VCall { public:
+    virtual void slot000(int);  // <-- used
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+class Menu { public:
+    void UNK1();
+};
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+void Menu::UNK1() {
+    // Reach fields by offset - the class is deliberately empty.
+    // 15 entries of a 0x14-byte record starting at this+0xa38:
+    //   +0x0  int   sentinel, always reset to -1
+    //   +0x4  void* heap block, freed and cleared if non-null
+    //   +0x8  char  flag, cleared
+    //   +0xc  int   cleared
+    //   +0x10 obj*  if non-null, obj->vtbl[0](1), then cleared
+    int count = 15;
+    char *entry = reinterpret_cast<char *>(this) + 0xa38;
+    do {
+        int *block = reinterpret_cast<int *>(entry + 4);
+        if (*block != 0) {
+            free(reinterpret_cast<void *>(*block));
+            *block = 0;
+        }
+        *reinterpret_cast<int *>(entry) = -1;
+        *reinterpret_cast<char *>(entry + 8) = 0;
+        *reinterpret_cast<int *>(entry + 0xc) = 0;
+
+        int *slot = reinterpret_cast<int *>(entry + 0x10);
+        if (*slot != 0) {
+            reinterpret_cast<VCall *>(*slot)->slot000(1);
+            *slot = 0;
+        }
+
+        entry += 0x14;
+    } while (--count);
+
+    char *self = reinterpret_cast<char *>(this);
+    *reinterpret_cast<int *>(self + 0xa14) = 0;
+    *reinterpret_cast<int *>(self + 0xa18) = 0;
+    *reinterpret_cast<int *>(self + 0xa20) = 0;
+    *reinterpret_cast<int *>(self + 0xa24) = -1;
 }

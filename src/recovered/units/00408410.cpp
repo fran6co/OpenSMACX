@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x00408410
+// name           ?load_inverts@@YAXXZ
+// size           91 bytes
+// measured tier  MISMATCH
+// divergence     3
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00408410/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?load_inverts@@YAXXZ  at 0x00408410  (91 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -59,37 +60,43 @@ typedef int int32;
 typedef unsigned int uint32;
 typedef short int16;
 typedef unsigned short uint16;
-typedef signed char int8;
+typedef char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+// Fixed to match a fresh brief: the live catalogue emits `strcpy`/`char*`
+// here, not `_strcpy`/`int8*` - this scaffold predates that.
+char *text_get();
+extern "C" char *strcpy(char *, const char *);
+int text_item_number();
+int text_open(char *, char *);
+void text_close();
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00682824 = (int *)0x00682824;
+static int *const g_00682830 = (int *)0x00682830;
+static int *const g_006a7528 = (int *)0x006A7528;
+static int *const g_006eee60 = (int *)0x006EEE60;
+static int *const g_009b7d00 = (int *)0x009B7D00;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
-
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void __cdecl load_inverts() {
+    if (text_open((char *)g_00682830, (char *)g_00682824) == 0) {
+        text_get();
+        int count = text_item_number();
+        *g_006eee60 = count;
+        if (count > 0) {
+            char *dest = reinterpret_cast<char *>(g_006a7528);
+            int i = 0;
+            do {
+                text_get();
+                strcpy(dest, *reinterpret_cast<char **>(g_009b7d00));
+                count = *g_006eee60;
+                i++;
+                dest += 0x20;
+            } while (i < count);
+        }
+        text_close();
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
 }

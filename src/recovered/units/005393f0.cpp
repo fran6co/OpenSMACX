@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x005393F0
+// name           ?net_set_agenda@@YAXHHHHH@Z
+// size           112 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/005393f0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?net_set_agenda@@YAXHHHHH@Z  at 0x005393F0  (112 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +63,29 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class NetDaemon { public:
+    void await_diplo(int);
+};
+void __cdecl log_say(int8*, int, int, int);
+void __cdecl message_data(int, int, int, int, int, int);
+void __cdecl set_agenda(int factionID, int factionIDWith, int agenda, int set);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_0068d4a8 = (int *)0x0068D4A8;
+static int *const g_0093cd90 = (int *)0x0093CD90;
+static int *const g_0093f660 = (int *)0x0093F660;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
-
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void __cdecl net_set_agenda(int a1, int a2, int a3, int a4, int a5) {
+    if (*g_0093f660 != 0) {
+        log_say(reinterpret_cast<int8 *>(g_0068d4a8), a1, a2, a3);
+        message_data(0x2446, 0, a1, a2, a3, a4);
+        if (a5 != 0) {
+            reinterpret_cast<NetDaemon *>(g_0093cd90)->await_diplo(0x446);
+            return;
+        }
+    } else {
+        set_agenda(a1, a2, a3, a4);
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
 }

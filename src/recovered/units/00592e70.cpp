@@ -1,21 +1,21 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x00592E70
+// name           ?message_base@@YAXHHPADH@Z
+// size           106 bytes
+// measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00592e70/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?message_base@@YAXHHPADH@Z  at 0x00592E70  (106 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +63,65 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class NetDaemon { public:
+    void send_message(char*, unsigned int, int);
+};
+// `_strcpy` is the CRT's strcpy(char*, const char*) -> char*; the earlier
+// nullary `int _strcpy()` scaffold could not even be called with the
+// arguments the call site pushes.
+extern "C" char *strcpy(char *, const char *);
+// VC6's /O2 substitutes an inline rep-movs expansion for a handful of CRT
+// functions including strcpy; the original calls the real function, so the
+// intrinsic form has to be turned off for it explicitly.
+#pragma function(strcpy)
+// `call dword ptr [0x669368]` is the IAT-indirect shape MSVC always emits
+// for a call to a DLL-imported function - `dllimport` reproduces it without
+// needing to model the slot as a global.
+extern "C" __declspec(dllimport) unsigned long __stdcall timeGetTime();
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_00939284 = (int *)0x00939284;
+static int *const g_0093cd90 = (int *)0x0093CD90;
+static int *const g_0093e8bc = (int *)0x0093E8BC;
+// 0x93f664 is incremented before the call and decremented after it (a
+// reentrancy guard). The decrement compiles to a bare `dec dword ptr
+// [addr]` in the original - a read-modify-write ON the address itself,
+// which the fixed-address-pointer spelling folds into a load/modify/store
+// under /O2 (measured on other addresses). `extern int` keeps it.
+extern int g_0093f664;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
+void __cdecl message_base(int a1, int a2, char* a3, int a4) {
+    // Reach fields by offset - the class is deliberately empty.
+    // A 0x2c-byte message assembled on the stack and handed to
+    // NetDaemon::send_message, matching the `push 0x2c` length constant.
+    struct Message {
+        short id;
+        int global_1;
+        int time;
+        int global_2;
+        int a2;
+        char text[24];
+    } msg;
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+    short id = static_cast<short>(a1);
+    int global_1 = *g_00939284;
+    msg.id = id;
+    msg.global_1 = global_1;
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+    unsigned long time = timeGetTime();
+    int global_2 = *g_0093e8bc;
+    char *src = a3;
+    msg.global_2 = global_2;
+    msg.time = time;
+    int a2_val = a2;
+    char *dest = msg.text;
+    msg.a2 = a2_val;
+    strcpy(dest, src);
+
+    ++g_0093f664;
+    reinterpret_cast<NetDaemon *>(g_0093cd90)
+        ->send_message(reinterpret_cast<char *>(&msg), 0x2c, a4);
+    --g_0093f664;
 }

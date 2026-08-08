@@ -1,21 +1,21 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x004455F0
+// name           ?wave_it@@YAXH@Z
+// size           93 bytes
+// measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/004455f0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?wave_it@@YAXH@Z  at 0x004455F0  (93 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +63,37 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class Wave { public:
+    int is_playing();
+    int load();
+    int play();
+};
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_0074c5f0 = (int *)0x0074C5F0;
+static int *const g_0074daa4 = (int *)0x0074DAA4;
+static int *const g_00945ed0 = (int *)0x00945ED0;
+static int *const g_009a6490 = (int *)0x009A6490;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
+// Indexed table base: the literal-address spelling above folds to an
+// immediate and the compiler emits `add` instead of `lea` once it is
+// combined with a scaled index. A real extern symbol keeps the `lea` -
+// the relocation it needs is masked by the comparison.
+extern char g_wave_table_0074c5f0[];
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void __cdecl wave_it(int a1) {
+    if ((*g_009a6490 & 0x400) != 0) {
+        if (!reinterpret_cast<Wave *>(g_00945ed0)->is_playing()) {
+            int idx = *g_0074daa4;
+            Wave *cur = reinterpret_cast<Wave *>(g_wave_table_0074c5f0 + idx * 0x6C);
+            if (!cur->is_playing()) {
+                *g_0074daa4 = a1;
+                Wave *w = reinterpret_cast<Wave *>(g_wave_table_0074c5f0 + a1 * 0x6C);
+                w->load();
+                w->play();
+            }
+        }
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
 }

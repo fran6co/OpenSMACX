@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x005F2C40
+// name           ?set_display_mode@Win@@QAAHHHHH@Z
+// size           31 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/005f2c40/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?set_display_mode@Win@@QAAHHHHH@Z  at 0x005F2C40  (31 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -55,41 +55,25 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
-typedef int int32;
-typedef unsigned int uint32;
-typedef short int16;
-typedef unsigned short uint16;
-typedef signed char int8;
-typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class DisplayTarget { public:
+    int invoke(int, int, int, int);
+};
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static int *const g_009be618 = (int *)0x009BE618;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
-
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+// Free function, not a Win member, despite the catalogue's mangled name
+// decoding to a non-static __cdecl member (QAA...). A non-static __cdecl
+// member's `this` occupies an explicit stack slot under this project's
+// compiler (see docs/recovery/agent-structure-observations.csv, the
+// 0x00618E10/Caviar row: an isolated 1-parameter non-static __cdecl member
+// puts a1 at [esp+8], with `this` at [esp+4]). The disassembly here reads
+// a1..a4 starting at [esp+4] with no extra slot ahead of them, so there is
+// no `this` - PROPOSAL: re-catalogue as static, not non-static.
+int __cdecl set_display_mode(int a1, int a2, int a3, int a4) {
+    return reinterpret_cast<DisplayTarget *>(g_009be618)->invoke(a1, a2, a3, a4);
 }

@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x0051E090
+// name           ?set_tamper@@YAXXZ
+// size           114 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/0051e090/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?set_tamper@@YAXXZ  at 0x0051E090  (114 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +62,44 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+// ---- callees ----
+// `call dword ptr [0x669004/8/10]` are IAT-indirect calls to advapi32
+// registry functions - `dllimport` reproduces the shape without modelling
+// the slots as data (see 0x00592E70's `timeGetTime`, the same pattern).
+typedef unsigned long DWORD;
+typedef long LONG;
+typedef void *HKEY;
+typedef HKEY *PHKEY;
+typedef unsigned char BYTE;
+typedef DWORD *LPDWORD;
+typedef const char *LPCSTR;
+typedef void *LPSECURITY_ATTRIBUTES;
+
+extern "C" __declspec(dllimport) LONG __stdcall RegCreateKeyExA(
+    HKEY, LPCSTR, DWORD, char *, DWORD, DWORD, LPSECURITY_ATTRIBUTES,
+    PHKEY, LPDWORD);
+extern "C" __declspec(dllimport) LONG __stdcall RegSetValueExA(
+    HKEY, LPCSTR, DWORD, DWORD, const BYTE *, DWORD);
+extern "C" __declspec(dllimport) LONG __stdcall RegCloseKey(HKEY);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+static char *const g_0068add8 = (char *)0x0068ADD8;
+static char *const g_0068ae20 = (char *)0x0068AE20;
+static char *const g_0068ae24 = (char *)0x0068AE24;
+static BYTE *const g_0093a060 = (BYTE *)0x0093A060;
+static BYTE *const g_0093a9f8 = (BYTE *)0x0093A9F8;
+static char *const g_0093aa00 = (char *)0x0093AA00;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
-
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+void __cdecl set_tamper() {
+    HKEY key;
+    LONG status = RegCreateKeyExA(
+        reinterpret_cast<HKEY>(0x80000002), g_0068add8, 0, g_0093aa00, 0,
+        0xf003f, 0, &key, 0);
+    if (status == 0) {
+        RegSetValueExA(key, g_0068ae20, 0, 3, g_0093a9f8, 4);
+        RegSetValueExA(key, g_0068ae24, 0, 3, g_0093a060, 0x4b0);
+        RegCloseKey(key);
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
 }

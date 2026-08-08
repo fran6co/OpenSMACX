@@ -3,19 +3,19 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
+// address        0x0054B140
+// name           ?battle_routine@@YAXH@Z
+// size           118 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/0054b140/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?battle_routine@@YAXH@Z  at 0x0054B140  (118 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,33 +63,34 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
+class PlanWin { public:
+    void add_line(int, int, int);
+    void clear_lines();
+    void on_redraw();
+};
+int __cdecl attack_from(int baseID, int factionID);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
+// `g_0068f9f0` is an INDEXED TABLE BASE (`[edx*4 + 0x68f9f0]`) - the
+// fixed-address-pointer spelling folds that address arithmetic away under
+// /O2, so this one is `extern T[]` instead (measured elsewhere in this
+// codebase: indexed table base `lea` became `add` under the pointer form).
+extern int g_0068f9f0[];
+static int *const g_00834d70 = (int *)0x00834D70;
+static int *const g_00856dc0 = (int *)0x00856DC0;
+static int *const g_0093f7bc = (int *)0x0093F7BC;
+static int *const g_0093f810 = (int *)0x0093F810;
 
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
-};
+void __cdecl battle_routine(int a1) {
+    int result1 = attack_from(a1, *g_0093f7bc);
+    int result2 = attack_from(a1, *g_0093f810);
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
-
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
-    }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
+    reinterpret_cast<PlanWin *>(g_00834d70)->clear_lines();
+    reinterpret_cast<PlanWin *>(g_00834d70)
+        ->add_line(result1, a1, g_0068f9f0[*g_0093f7bc]);
+    reinterpret_cast<PlanWin *>(g_00834d70)
+        ->add_line(result2, a1, g_0068f9f0[*g_0093f810]);
+    reinterpret_cast<PlanWin *>(g_00856dc0)->on_redraw();
 }

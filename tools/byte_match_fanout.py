@@ -410,8 +410,22 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # change initially cost 72 bodies to a stale hand-synced Win32 list (HDC) and
 # 70 more to base/derived member shadowing, and both were found by reading the
 # refusal text the census now carries rather than by guessing.
-BASELINE_MATCHED_FUNCTIONS = 908
-BASELINE_MATCHED_BYTES = 19689
+# 1209 / 43354, after four sonnet recovery waves. What took four waves rather
+# than one was not the recoveries: it was that a matched row has to be BACKED
+# before it may be ratcheted. At the start of that run 260 of the matched rows
+# existed only as `build/byte-match/<address>/unit.cpp` - gitignored, one
+# `git clean` from gone, with the ledger still recording BYTE_EXACT because the
+# ledger records that a body EXISTED, not that anyone kept it.
+#
+# So the floor moved only once every matched row had a committed body: 439
+# owned by a `src/` file, 389 in `src/recovered/`, 381 preserved whole under
+# `src/recovered/units/`, and zero backed by nothing. That audit is the
+# precondition, not a formality - it caught 7 rows reading BYTE_EXACT whose
+# unit.cpp had been reset to `// BODY GOES HERE.` after the proof, which
+# --collect could never have found because it skips rows already settled.
+# Raising to 1209 before re-proving those 7 would have baked them in forever.
+BASELINE_MATCHED_FUNCTIONS = 1209
+BASELINE_MATCHED_BYTES = 43354
 
 
 def summarise(ledger: dict) -> tuple:

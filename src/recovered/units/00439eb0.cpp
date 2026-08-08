@@ -1,21 +1,22 @@
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
-// measured tier  BYTE_EXACT
+// address        0x00439EB0
+// name           ?delete_abil@DesignWin@@QAEXH@Z
+// size           104 bytes
+// measured tier  MISMATCH
+// divergence     10
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005fd220/unit.cpp
+//   build/byte-match/00439eb0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?flush_mouse@@YAXXZ  at 0x005FD220  (90 bytes)
+// subject: ?delete_abil@DesignWin@@QAEXH@Z  at 0x00439EB0  (104 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -62,34 +63,40 @@ typedef unsigned short uint16;
 typedef signed char int8;
 typedef unsigned char uint8;
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-void __cdecl check_net();
-
-// ---- fixed globals this body references ----
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const g_00669358 = (int *)0x00669358;
-static int *const g_009b7acc = (int *)0x009B7ACC;
-static int *const g_009b7ad0 = (int *)0x009B7AD0;
-
-struct MSG {
-    void *hwnd;
-    unsigned int message;
-    unsigned int wParam;
-    long lParam;
-    unsigned long time;
-    long pt_x;
-    long pt_y;
+class DesignWin { public:
+    void delete_abil(int);
 };
 
-typedef int (__stdcall *PeekMessageAFn)(MSG *, void *, unsigned int, unsigned int, unsigned int);
+void DesignWin::delete_abil(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    unsigned int *flags = reinterpret_cast<unsigned int *>(self + 0x14208);
 
-void __cdecl flush_mouse() {
-    PeekMessageAFn peekMessage = reinterpret_cast<PeekMessageAFn>(*g_00669358);
-    MSG msg;
-    while (peekMessage(&msg, 0, 0x200, 0x209, 1)) {
+    if (a1 & *flags) {
+        // WALL: register allocation. Every one of the 40 mnemonics below
+        // matches the original in order; only WHICH callee-saved register
+        // (esi vs edi) holds `this` versus the `slots` pointer is swapped
+        // throughout (the original saves `this` unconditionally into esi
+        // and the slots pointer conditionally into edi; this compile makes
+        // the opposite choice). No reordering of these declarations changed
+        // which register the backend picked - ruled out as unfixable via
+        // source spelling.
+        int *slots = reinterpret_cast<int *>(self + 0x14218);
+        *flags = ~a1 & *flags;
+        slots[0] = -1;
+        slots[1] = -1;
+        int i = 0;
+        do {
+            if (*flags & (1 << i)) {
+                int j = 0;
+                do {
+                    if (slots[j] < 0) {
+                        slots[j] = i;
+                        break;
+                    }
+                    j++;
+                } while (j < 2);
+            }
+            i++;
+        } while (i < 0x1d);
     }
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
-    check_net();
 }
