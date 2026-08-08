@@ -171,3 +171,14 @@ Status: Forwarder
 void SpriteBox::close() {
     (ORIGINAL(this)->*SpriteBoxClose)();
 }
+
+/*
+Original Offset: 006104D0
+Status: Complete
+*/
+int SpriteBox::init(int a1, int a2, int a3, int a4, Heap * a5) {
+    close();
+    return reinterpret_cast<Dialog *>(reinterpret_cast<char *>(this)
+        + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))
+        ->init(a1, a2, a3, a4, a5);
+}

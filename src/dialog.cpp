@@ -369,3 +369,17 @@ int Dialog::init(Heap *a1) {
     return (ORIGINAL(this)->*DialogInitHeap)(a1);
 }
 #pragma auto_inline(on)
+
+func_dialog_init_five DialogInitFive =
+    original_method<func_dialog_init_five>(0x00609730);
+
+/*
+ * The five-argument init, on the same terms as the three above: a forwarder,
+ * not a recovery. The recovered SpriteBox::init (0x006104D0) tail-forwards to
+ * it, so the DLL cannot link without a definition.
+ */
+#pragma auto_inline(off)
+int Dialog::init(int a1, int a2, int a3, int a4, Heap *a5) {
+    return (ORIGINAL(this)->*DialogInitFive)(a1, a2, a3, a4, a5);
+}
+#pragma auto_inline(on)

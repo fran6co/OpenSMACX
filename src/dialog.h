@@ -64,11 +64,16 @@ class DLLEXPORT Dialog {
   void set_selected_id(int id);
   int get_selected_id();
   int pos_to_id(int position);
-  // Three of Dialog's seven init overloads; the three SpriteBox::init forwards
+  // Four of Dialog's seven init overloads; the four SpriteBox::init forwards
   // to. All unrecovered - declared so the recovered callers can name them.
   int init(RECT *a1, int a2);  // ?init@Dialog@@QAEHPAURECT@@H@Z  0x00609470
   int init(int a1);            // ?init@Dialog@@QAEHH@Z           0x006095F0
   int init(Heap *a1);          // ?init@Dialog@@QAEHPAUHeap@@@Z   0x006098D0
+  // The five-argument one, which the recovered SpriteBox::init (0x006104D0)
+  // tail-forwards to. Its absence was the only thing stopping that body from
+  // being integrated out of src/recovered/.
+  int init(int a1, int a2, int a3, int a4, Heap *a5);
+  // ?init@Dialog@@QAEHHHHHPAUHeap@@@Z  0x00609730
 
  private:
   LPVOID vtable_;
@@ -182,6 +187,7 @@ extern uint32_t *DialogPublishedGlobal;                 // 0x009B3374
 typedef int (OriginalObject::*func_dialog_init_int)(int a1);
 typedef int (OriginalObject::*func_dialog_init_rect)(RECT *, int);
 typedef int (OriginalObject::*func_dialog_init_heap)(Heap *);
+typedef int (OriginalObject::*func_dialog_init_five)(int, int, int, int, Heap *);
 extern func_dialog_init_int DialogInitInt;
 
 void __fastcall dialog_destructor_redirect(Dialog *self, void *);

@@ -34,6 +34,10 @@ class DLLEXPORT SpriteBox {
   int init(RECT* a1, int a2);
   int init(int a1);
   int init(Heap *a1);
+  // 0x006104D0  ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z - the five-argument
+  // overload, recovered and byte-exact. It was the only one of the four with
+  // no declaration, which is why its body could not be integrated.
+  int init(int a1, int a2, int a3, int a4, Heap *a5);
   SpriteBox() { ; }
   ~SpriteBox() { ; }
   uint32_t id_to_pos(int id);

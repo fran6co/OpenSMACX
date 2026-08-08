@@ -84,7 +84,6 @@ src/councwin.cpp,211,0x00426EC0,CouncWin,BYTE_EXACT,this,,char *,alias-binding,,
 src/councwin.cpp,212,0x00426EC0,CouncWin,BYTE_EXACT,self,0xa34,int *,exact-member-typeable,field_A34_,0xa34,4,0xa34,,proved,
 src/councwin.cpp,214,0x00426EC0,CouncWin,BYTE_EXACT,self,0xa34,int *,exact-member-typeable,field_A34_,0xa34,4,0xa34,,proved,
 src/councwin.cpp,234,0x00427130,CouncWin,BYTE_EXACT,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/councwin.cpp,238,0x00427130,CouncWin,BYTE_EXACT,this,0xa14,char *,exact-member-typeable,subIFace_,0xa14,8,0xa14,,proved,
 src/datalink.cpp,440,0x00432040,Datalink,BYTE_EXACT,this,,char *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/datalink.cpp,441,0x00432040,Datalink,BYTE_EXACT,self,0x2a38,int *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/datalink.cpp,452,0x0042BD40,Datalink,BYTE_EXACT,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
@@ -188,9 +187,7 @@ src/scroll.cpp,778,0x00406E60,Scroll,NO_COMPILE,this,,volatile uint32_t *,whole-
 src/setupwin.cpp,73,0x004ADA80,SetupWin,BYTE_EXACT,this,0xa14,const uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/setupwin.cpp,103,0x004ADAA0,SetupWin,BYTE_EXACT,this,0xa18,const uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/socialwin.cpp,189,0x004B2690,SocialWin,BYTE_EXACT,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/socialwin.cpp,190,0x004B2690,SocialWin,BYTE_EXACT,this,0xa14,char *,exact-member-typeable,subIFace_,0xa14,8,0xa14,,proved,
 src/socialwin.cpp,199,0x004B26B0,SocialWin,BYTE_EXACT,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/socialwin.cpp,200,0x004B26B0,SocialWin,BYTE_EXACT,this,0xa14,char *,exact-member-typeable,subIFace_,0xa14,8,0xa14,,proved,
 src/sound.cpp,46,0x004C6600,,NO_COMPILE,this,,uint8_t **,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
 src/sound.cpp,50,0x004C6600,,NO_COMPILE,this,,uint8_t **,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
 src/sound.cpp,199,0x004C6540,Sound,REFUSED,this,0x30,uint8_t *,exact-member-typeable,loop_flag_30_,0x30,4,,,derived,
@@ -219,6 +216,8 @@ src/spritebox.cpp,147,0x00610420,SpriteBox,BYTE_EXACT,this,,char *,whole-object-
 src/spritebox.cpp,148,0x00610420,,BYTE_EXACT,this,0x8,char **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/spritebox.cpp,157,0x006104B0,SpriteBox,BYTE_EXACT,this,,char *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/spritebox.cpp,158,0x006104B0,,BYTE_EXACT,this,0x8,char **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
+src/spritebox.cpp,181,0x006104D0,SpriteBox,BYTE_EXACT,this,,char *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
+src/spritebox.cpp,182,0x006104D0,,BYTE_EXACT,this,0x8,char **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/stringbox.cpp,56,0x00629D20,StringBox,BYTE_EXACT,this,,char *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/stringbox.cpp,57,0x00629D20,StringBox,BYTE_EXACT,self,0xa1c,int *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/stringbox.cpp,58,0x00629D20,StringBox,BYTE_EXACT,this,,VCall *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
@@ -250,10 +249,6 @@ src/win.cpp,49,0x005EB3D0,Win,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,
 src/win.cpp,434,0x005F2CA0,Win,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/win.cpp,896,0x005ECE80,Win,REFUSED,this,0x3fc,uint8_t *,exact-member-typeable,child_count_,0x3fc,4,,,derived,
 src/win.cpp,897,0x005ECE80,Win,REFUSED,this,0x1a4,uint8_t *,exact-member-typeable,children_,0x1a4,600,,,derived,
-src/win.cpp,966,0x005F8530,Win,BYTE_EXACT,this,0x43c,char *,exact-member-typeable,scroll_vert_,0x43c,4,,,proved,
-src/win.cpp,977,0x005F8590,Win,BYTE_EXACT,this,0x440,char *,exact-member-typeable,scroll_horz_,0x440,4,,,proved,
-src/win.cpp,1005,0x005F8550,Win,BYTE_EXACT,this,0x440,char *,exact-member-typeable,scroll_horz_,0x440,4,,,proved,
-src/win.cpp,1016,0x005F8570,Win,BYTE_EXACT,this,0x43c,char *,exact-member-typeable,scroll_vert_,0x43c,4,,,proved,
 src/worldwin.cpp,84,0x004C45F0,WorldWin,BYTE_EXACT,this,,VCall *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/worldwin.cpp,85,0x004C45F0,WorldWin,BYTE_EXACT,this,,GraphicWin *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/worldwin.cpp,93,0x004C4610,WorldWin,BYTE_EXACT,this,,VCall *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
