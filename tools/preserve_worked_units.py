@@ -58,6 +58,31 @@ LEDGER = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
 
 PLACEHOLDER = "// BODY GOES HERE."
 
+# A body has to be big enough to BE a body. Measured on a haiku trial wave:
+# 57% of its units held three code lines or fewer for functions averaging 786
+# bytes - empty stubs that compile, score MISMATCH at instruction 0, and would
+# have been preserved here and counted as covered. Sonnet's median body over
+# the same size band is 241-340 code lines.
+#
+# A stub is worse than an untouched placeholder, and not by a little. A
+# placeholder is honestly uncovered and stays in the queue. A stub LOOKS
+# covered, leaves the queue, and the next pass opens it expecting a starting
+# point and finds `return;`. The only reason coverage counts a MISMATCH at all
+# is that a real attempt is worth something to whoever comes next.
+#
+# Deliberately crude, because the failure is crude: only bodies that cannot
+# possibly implement their function are refused, and anything near the
+# boundary is kept.
+MIN_BODY_LINES = 6
+STUB_ABOVE_BYTES = 200
+
+
+def body_lines(text: str) -> int:
+    """Code lines after the emitted scaffolding, comments and blanks aside."""
+    tail = text.rsplit(PLACEHOLDER, 1)[-1] if PLACEHOLDER in text else text
+    return len([line for line in tail.splitlines()
+                if line.strip() and not line.lstrip().startswith("//")])
+
 
 def ledger_rows() -> dict:
     if not LEDGER.is_file():
@@ -66,10 +91,10 @@ def ledger_rows() -> dict:
         return {row["address"].upper(): row for row in csv.DictReader(handle)}
 
 
-def candidates(functions: dict, rows: dict) -> list:
-    """Worked units with no committed copy anywhere."""
+def candidates(functions: dict, rows: dict) -> tuple:
+    """Worked units with no committed copy anywhere, and the stubs refused."""
     proved = {int(path.stem, 16) for path in PROVED.glob("*.cpp")}
-    found = []
+    found, stubs = [], []
     for unit in sorted(WORK_ROOT.glob("*/unit.cpp")):
         try:
             address = int(unit.parent.name, 16)
@@ -85,9 +110,13 @@ def candidates(functions: dict, rows: dict) -> list:
         # confusion `harvest_proven_units` documents at length.
         if (functions.get(address, {}).get("source_locations") or "").strip():
             continue
+        size = int(functions.get(address, {}).get("size") or 0)
+        if size >= STUB_ABOVE_BYTES and body_lines(text) <= MIN_BODY_LINES:
+            stubs.append((address, size, body_lines(text)))
+            continue
         row = rows.get(f"0X{address:08X}") or {}
         found.append((address, unit, row, text))
-    return found
+    return found, stubs
 
 
 def preamble(address: int, row: dict, function: dict) -> str:
@@ -134,8 +163,18 @@ def main(argv=None) -> int:
 
     functions = emit.load_functions()
     rows = ledger_rows()
-    found = candidates(functions, rows)
+    found, stubs = candidates(functions, rows)
     print(f"{len(found)} worked units have no committed copy")
+    if stubs:
+        # Never silent: a refused stub is an address that still needs work,
+        # and saying so is the difference between a queue and a guess.
+        print(f"REFUSED {len(stubs)} stub(s) - too small to be a body, and "
+              f"they stay uncovered:")
+        for address, size, lines in sorted(stubs)[:8]:
+            print(f"  0x{address:08X}  {size:>6} B function, "
+                  f"{lines} code line(s)")
+        if len(stubs) > 8:
+            print(f"  ... and {len(stubs) - 8} more")
     if not found:
         return 0
 
