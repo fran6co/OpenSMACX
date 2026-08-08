@@ -57,9 +57,13 @@ class DLLEXPORT Credits : GraphicWin {
   uint32_t field_1228_;  // 0x1228
   uint32_t field_122C_;  // 0x122C
   uint32_t field_1230_;  // 0x1230
-  uint8_t graphicWin2_[0xA14];  // 0x1234
-  uint8_t font_[0x28];  // 0x1C48
-  uint8_t buffer_[0x588];  // 0x1C70
+  // Typed from the sizes the tree already asserts: GraphicWin 0xA14,
+  // Font 0x28, Buffer 0x588, each verified against the real class by
+  // tools/verify_class_layouts.py. Size-neutral by construction, and
+  // the byte comparison is what confirms it.
+  GraphicWin graphicWin2_;  // 0x1234
+  Font font_;  // 0x1C48
+  Buffer buffer_;  // 0x1C70
   uint8_t field_21F8_[0x448];  // 0x21F8
 };
 

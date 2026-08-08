@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "spot.h"
+#include "flatbutton.h"
 #include "graphicwin.h"
 
  /*
@@ -248,12 +250,12 @@ class DLLEXPORT NetWin : GraphicWin {
   uint32_t field_D28_;  // 0xD28
   uint32_t field_D2C_;  // 0xD2C
   uint32_t field_D30_;  // 0xD30
-  uint8_t spot_[0xC];  // 0xD34
+  Spot spot_;  // 0xD34
   uint8_t stringBox_[0x2BA0];  // 0xD40
   uint8_t editBox_[0xB74];  // 0x38E0
   uint8_t checkBox_[0xB28];  // 0x4454
-  uint8_t flatButton1_[0xB4C];  // 0x4F7C
-  uint8_t flatButton2_[0xB4C];  // 0x5AC8
+  FlatButton flatButton1_;  // 0x4F7C
+  FlatButton flatButton2_;  // 0x5AC8
   uint8_t field_6614_[0x111C];  // 0x6614
 
   // Storage the image proves is here: its own methods reach 0x7734.

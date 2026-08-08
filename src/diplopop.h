@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "time.h"
+#include "font.h"
 #include "graphicwin.h"
 #include "subinterface.h"
 
@@ -57,11 +59,11 @@ class DLLEXPORT DiploPop : GraphicWin {
   // this substitution is exactly size-neutral. The byte comparison is
   // the arbiter and it does not move.
   SubInterface subIFace_;  // 0xA14
-  uint8_t font1_[0x28];  // 0xA1C
-  uint8_t font2_[0x28];  // 0xA44
-  uint8_t font3_[0x28];  // 0xA6C
-  uint8_t time1_[0x28];  // 0xA94
-  uint8_t time2_[0x28];  // 0xABC
+  Font font1_;  // 0xA1C
+  Font font2_;  // 0xA44
+  Font font3_;  // 0xA6C
+  Time time1_;  // 0xA94
+  Time time2_;  // 0xABC
   uint8_t flic1_[0xAE4];  // 0xAE4
   uint8_t flic2_[0xAE4];  // 0x15C8
   uint32_t field_20AC_;  // 0x20AC
