@@ -921,6 +921,103 @@ def _better(candidate: dict, incumbent: dict) -> bool:
     return mine < theirs
 
 
+def match_functions(pe, rows: dict, shared: set, subjects: list,
+                    flags: str, chunk: int = 120) -> dict:
+    """`match_function` for MANY units at once. {address: outcome}.
+
+    Identical arithmetic to the singular form and deliberately so - it is the
+    ratchet's measurement, and a faster answer that is a different answer is
+    worthless. What changes is only WHEN the compiler is invoked: one process
+    per unit becomes one per batch, and batches run concurrently.
+
+    `collect` compiled 1,210 units one at a time and this file's own caller
+    describes that pass as "over an hour", which is the comment's words for
+    how a ratchet stops being checked. The census had the same shape and went
+    from 12-19 minutes to 58 seconds on this change.
+
+    THE FLAG SETS STAY SEQUENTIAL, and that is not incidental. `match_function`
+    tries them in order and STOPS at the first BYTE_EXACT; running them
+    together would compile every unit four times to learn nothing new. Each
+    pass here compiles only what is still unsettled, which reproduces the
+    early exit exactly.
+    """
+    outcomes, pending, layouts, bases = {}, {}, {}, {}
+    for address, source, _stem in subjects:
+        row = rows.get(address)
+        if row is None:
+            outcomes[address] = {
+                "address": address, "tier": "REFUSED",
+                "refusal_reason": "address is not a catalogued function"}
+            continue
+        layout = classify_body(pe, row, shared)
+        base = {
+            "address": address, "name": row.get("name", ""),
+            "size": int(row.get("size") or 0),
+            "span_classes": {
+                "primary": len(layout.primary), "eh": len(layout.eh),
+                "shared": len(layout.shared), "selfmod": len(layout.selfmod)},
+        }
+        if layout.refusal:
+            outcomes[address] = {**base, "tier": "REFUSED",
+                                 "refusal_reason": layout.refusal}
+            continue
+        if layout.shared:
+            outcomes[address] = {
+                **base, "tier": "SHARED_TAIL",
+                "refusal_reason": (
+                    f"{len(layout.shared)} span(s) are COMDAT-folded and "
+                    f"claimed by another function; no per-function verdict "
+                    f"is well defined")}
+            continue
+        layouts[address], bases[address], pending[address] = layout, base, source
+
+    attempts = [flags] if flags and flags not in FLAG_SETS else list(FLAG_SETS)
+    best = {}
+    for attempt in attempts:
+        if not pending:
+            break
+        stems = {f"u{address:08x}": address for address in sorted(pending)}
+        groups = [dict(list(stems.items())[at:at + chunk])
+                  for at in range(0, len(stems), chunk)]
+        batches = compile_batches(
+            [{stem: pending[stems[stem]] for stem in group} for group in groups],
+            attempt)
+        for objects, diagnostics in batches:
+            for stem, data in objects.items():
+                address = stems[stem]
+                layout = layouts[address]
+                low, high = layout.primary[0]
+                if data is None:
+                    candidate = {"tier": "NO_COMPILE",
+                                 "refusal_reason": diagnostics.get(
+                                     stem, "CL emitted no object")}
+                else:
+                    try:
+                        rebuilt, rebuilt_mask = object_code(data)
+                        candidate = compare(
+                            original_span_bytes(pe, low, high),
+                            original_relocation_mask(pe, low, high),
+                            low, rebuilt, rebuilt_mask)
+                    except ValueError as error:
+                        candidate = {"tier": "NO_COMPILE",
+                                     "refusal_reason": str(error)}
+                candidate["flags"] = attempt
+                if address not in best or _better(candidate, best[address]):
+                    best[address] = candidate
+        for address in [a for a in pending
+                        if best.get(a, {}).get("tier") == "BYTE_EXACT"]:
+            del pending[address]
+
+    for address, base in bases.items():
+        outcome = dict(base)
+        outcome.update(best.get(address, {"tier": "NO_COMPILE",
+                                          "refusal_reason": "not compiled"}))
+        outcome["eh_spans_uncompared"] = sum(
+            high - low for low, high in layouts[address].eh)
+        outcomes[address] = outcome
+    return outcomes
+
+
 def match_function(pe, rows: dict, shared: set, address: int, source: str,
                    work: Path, flags: str, stem: str = "") -> dict:
     """One function, end to end. The unit of the fan-out."""
