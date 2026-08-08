@@ -3728,7 +3728,7 @@ c004595b0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0045C200,?timer_callback_daemon@MainInterface@@QAAXHH@Z,,0,115,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,115,115,,,,,
 0x0045C280,?UNK1@MainInterface@@QAEXH@Z,src/maininterface.cpp:94,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x0045C290,?restore_back@MainInterface@@QAEXH@Z,,0,259,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,259,267,109,104,4,#4: original 'push' vs rebuilt 'test',
-0x0045C3A0,?redraw_complete@MainInterface@@QAEXXZ,,0,527,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,527,1,151,1,0,#0: original 'push' vs rebuilt 'ret',
+0x0045C3A0,?redraw_complete@MainInterface@@QAEXXZ,,0,527,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,527,500,151,145,5,#5: original 'push' vs rebuilt 'xor',
 0x0045C5B0,?UNK2@MainInterface@@QAEXXZ,src/maininterface.cpp:51,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0045C5C0,?on_scrolling@MainInterface@@QAEXHH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,52,52,,,,,
 0x0045C600,?on_scrolled@MainInterface@@QAEXHH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,52,52,,,,,
@@ -4702,7 +4702,9 @@ c004ae9d0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004AEF00,?UNK2@SocialWin@@QAEXXZ,src/socialwin.cpp:25,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x004AEF10,?exit@SocialWin@@QAEXXZ,,0,508,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,508,508,,,,,
 0x004AF1E0,?draw_presets@SocialWin@@QAEXXZ,,0,295,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004af1e0.cpp(212) : error C2079: 'buffer_' uses undefined class 'Buffer'
-u004af1e0.cpp(343) : error C2079: 'buffer_' uses undefined class 'Buffer'"
+u004af1e0.cpp(343) : error C2079: 'buffer_' uses undefined class 'Buffer'
+Generating Code...
+Compiling..."
 0x004AF310,?draw_social@SocialWin@@QAEXH@Z,,0,1452,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004af310.cpp(212) : error C2079: 'buffer_' uses undefined class 'Buffer'
 u004af310.cpp(343) : error C2079: 'buffer_' uses undefined class 'Buffer'"
 0x004AF8C0,?draw_faction_basal@SocialWin@@QAEXXZ,,0,669,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004af8c0.cpp(211) : error C2079: 'buffer_' uses undefined class 'Buffer'
@@ -5866,7 +5868,9 @@ u004e05e0.cpp(252) : error C2079: 'heap_' uses undefined class 'Heap'"
 0x004E0A00,?editor_load@Console@@QAEXXZ,,0,80,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,80,82,17,18,4,#4: original 'push' vs rebuilt 'xor',
 0x004E0AD0,?editor_minor@Console@@QAEXXZ,,0,37,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,37,37,,,,,
 0x004E0B00,?editor_terrain@Console@@QAEXXZ,,0,1147,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004e0b00.cpp(156) : error C2079: 'spot_' uses undefined class 'Spot'
-u004e0b00.cpp(265) : error C2079: 'heap_' uses undefined class 'Heap'"
+u004e0b00.cpp(265) : error C2079: 'heap_' uses undefined class 'Heap'
+Generating Code...
+Compiling..."
 0x004E0F30,?editor_flat@Console@@QAEXXZ,,0,77,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,77,77,,,,,
 0x004E0F80,?editor_polar@Console@@QAEXXZ,,0,24,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,24,24,,,,,
 0x004E0FA0,?editor_climate@Console@@QAEXXZ,,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
@@ -7574,7 +7578,7 @@ c005108a0.cpp(594) : error C2065: 'ConsoleOriginalFlushInput' : undeclared ident
 0x00510B70,?next_cursor@Console@@QAEXXZ,,0,281,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,281,283,69,71,53,#53: original 'mov' vs rebuilt 'shl',
 0x00510C90,sub_510c90,,0,80,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,76,76,,,,,
 0x00510CE0,?ready_search@Console@@QAEHH@Z,,0,616,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,616,5,202,2,0,#0: original 'push' vs rebuilt 'xor',
-0x00510F50,?ready@Console@@QAEXXZ,,0,1313,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1313,1,352,1,0,#0: original 'push' vs rebuilt 'ret',
+0x00510F50,?ready@Console@@QAEXXZ,,0,1313,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1313,1288,352,335,10,#10: original 'je' vs rebuilt 'jne',
 0x00511520,?set_move@Console@@QAEXH@Z,,0,733,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,733,3,188,1,0,#0: original 'push' vs rebuilt 'ret 4',
 0x00511800,?turn_hints@Console@@QAEXXZ,,0,936,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,936,932,270,269,12,#12: original 'xor' vs rebuilt 'test',
 0x00511BB0,?give_hints@Console@@QAEXXZ,,0,8149,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,8149,1,2459,1,0,#0: original 'push' vs rebuilt 'ret',
@@ -8438,7 +8442,8 @@ u00543bc0.cpp(72) : error C2062: type 'int' unexpected"
 0x00544E40,?propose_treaty@@YAHHH@Z,,0,3861,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,3861,3,1168,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00545D60,?propose_trade_maps@@YAXHH@Z,,0,288,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,288,296,92,92,10,#10: original 'lea' vs rebuilt 'mov',
 0x00545E80,?propose_attack@@YAHHH@Z,,0,8344,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00545e80.cpp(159) : error C2079: 'spot_' uses undefined class 'Spot'
-u00545e80.cpp(258) : error C2079: 'heap_' uses undefined class 'Heap'"
+u00545e80.cpp(258) : error C2079: 'heap_' uses undefined class 'Heap'
+Generating Code..."
 0x00547C10,?make_gift@@YAXHH@Z,,0,4950,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00547c10.cpp(43) : error C2059: syntax error : ';'
 u00547c10.cpp(113) : error C2061: syntax error : identifier 'BOOL'
 u00547c10.cpp(202) : error C2146: syntax error : missing ',' before identifier 'a1'
@@ -9773,9 +9778,7 @@ u0057f4b0.cpp(58) : error C2059: syntax error : ','"
 0x00583CB0,?design_new_veh@@YAXHH@Z,,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
 0x00583CD0,?hq_list_draw@@YAXPAUGraphicWin@@HHHHH@Z,,0,346,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,346,336,117,115,95,#95: original 'jmp' vs rebuilt 'mov',
 0x00583E30,?design_workshop@@YAHHH@Z,,0,3972,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00583e30.cpp(159) : error C2079: 'spot_' uses undefined class 'Spot'
-u00583e30.cpp(268) : error C2079: 'heap_' uses undefined class 'Heap'
-Generating Code...
-Compiling..."
+u00583e30.cpp(268) : error C2079: 'heap_' uses undefined class 'Heap'"
 0x00584B50,?abil_cond@@YAHHHHH@Z,,0,431,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,431,3,186,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00584D00,??__Eg_TOP_MENU_WAVE@@YAXXZ,src/init_thunks.cpp:4268,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00584d00.cpp(92) : error C2065: 'g_TOP_MENU_WAVE' : undeclared identifier
 c00584d00.cpp(92) : error C2065: 'WaveInitCtor' : undeclared identifier
@@ -11039,9 +11042,7 @@ u00593a00.cpp(104) : error C2355: 'this' : can only be referenced inside non-sta
 u00593a00.cpp(104) : error C2059: syntax error : ','
 u00593a00.cpp(158) : error C2146: syntax error : missing ',' before identifier 'a1'
 u00593a00.cpp(158) : error C2061: syntax error : identifier 'a1'"
-0x005947C0,?order_veh@@YAHHHH@Z,,0,23716,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u005947c0.cpp(189) : error C2079: 'heap_' uses undefined class 'Heap'
-Generating Code...
-Compiling..."
+0x005947C0,?order_veh@@YAHHHH@Z,,0,23716,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,u005947c0.cpp(189) : error C2079: 'heap_' uses undefined class 'Heap'
 0x0059A1B0,??__EPaths@@YAXXZ,,0,12,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,12,12,,,,,
 0x0059A1C0,??__FPaths@@YAXXZ,,0,85,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,85,85,,,,,
 0x0059A220,?init@Path@@QAEXXZ,src/path.cpp:29,0,163,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0059a220.cpp(56) : error C2065: 'shutdown' : undeclared identifier
@@ -15359,7 +15360,9 @@ c005f1060.cpp(206) : see declaration of 'set_active_window'"
 u005f1340.cpp(53) : error C2059: syntax error : ','
 u005f1340.cpp(54) : error C2059: syntax error : ','
 u005f1340.cpp(62) : error C2146: syntax error : missing ',' before identifier 'a1'
-u005f1340.cpp(62) : error C2061: syntax error : identifier 'a1'"
+u005f1340.cpp(62) : error C2061: syntax error : identifier 'a1'
+Generating Code...
+Compiling..."
 0x005F13B0,sub_5f13b0,,0,107,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,107,3,38,2,0,#0: original 'sub' vs rebuilt 'xor',
 0x005F1420,?OnNCHitTest@Win@@QAAJPAXHH@Z,,0,81,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,81,81,,,,,
 0x005F1480,?OnActivate@Win@@QAAJPAXIPAXJ@Z,,0,310,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,310,3,86,2,0,#0: original 'mov' vs rebuilt 'xor',
@@ -15427,8 +15430,7 @@ u005f5020.cpp(41) : error C2227: left of '->iSomeFlag_' must point to class/stru
 u005f5020.cpp(42) : error C2065: 'recurse_zorder' : undeclared identifier
 u005f5020.cpp(42) : error C2109: subscript requires array or pointer type
 u005f5020.cpp(43) : error C2061: syntax error : identifier 'Win'
-u005f5020.cpp(46) : error C2100: illegal indirection
-Generating Code..."
+u005f5020.cpp(46) : error C2100: illegal indirection"
 0x005F5080,?add_parent@Win@@QAAXPAUWin@@@Z,,0,85,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,85,85,,,,,
 0x005F50E0,?remove_parent@Win@@QAAXPAUWin@@@Z,,0,86,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,86,86,,,,,
 0x005F5200,?add_child@Win@@QAEXPAUWin@@@Z,,0,104,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,104,104,,,,,
@@ -17179,9 +17181,7 @@ c006183b0.cpp(55) : error C2065: 'load_scaling_bits' : undeclared identifier"
 0x00618560,?UNK14@Caviar@@QAEXH@Z,,0,64,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,64,64,,,,,
 0x006185A0,?init_class@Caviar@@QAAHXZ,,0,2327,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u006185a0.cpp(149) : error C2079: 'heap_' uses undefined class 'Heap'
 u006185a0.cpp(208) : error C2079: 'buffer_' uses undefined class 'Buffer'
-u006185a0.cpp(313) : error C2079: 'heap_' uses undefined class 'Heap'
-Generating Code...
-Compiling..."
+u006185a0.cpp(313) : error C2079: 'heap_' uses undefined class 'Heap'"
 0x00618D20,?close_class@Caviar@@QAAXXZ,,0,117,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00618d20.cpp(22) : error C2653: 'Caviar' : is not a class or namespace name
 u00618d20.cpp(23) : error C2065: 'g_009bb478' : undeclared identifier
 u00618d20.cpp(23) : error C2100: illegal indirection
@@ -17197,7 +17197,9 @@ u00618d20.cpp(31) : error C2100: illegal indirection
 u00618d20.cpp(32) : error C2100: illegal indirection
 u00618d20.cpp(33) : error C2100: illegal indirection
 u00618d20.cpp(34) : error C2100: illegal indirection
-u00618d20.cpp(36) : error C2065: 'nullsub_16' : undeclared identifier"
+u00618d20.cpp(36) : error C2065: 'nullsub_16' : undeclared identifier
+Generating Code...
+Compiling..."
 0x00618DA0,?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z,,0,102,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,102,105,32,32,,,
 0x00618E10,?vx_malloc@Caviar@@SAXK@Z,,0,14,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,14,12,5,5,3,#3: original 'add' vs rebuilt 'pop',
 0x00618E20,?vx_free@Caviar@@QAAXPAX@Z,,0,16,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,16,16,,,,,
@@ -17604,7 +17606,9 @@ c0062ed30.cpp(37) : see declaration of 'Net'"
 0x00630BF0,sub_630bf0,,0,57,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,57,57,,,,,
 0x00630C30,sub_630c30,,0,76,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,76,77,29,30,3,#3: original 'ret 0x10' vs rebuilt 'xor',
 0x00630D70,sub_630d70,,0,792,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
-0x00631050,sub_631050,,0,3001,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00631050.cpp(252) : error C2079: 'heap_' uses undefined class 'Heap'
+0x00631050,sub_631050,,0,3001,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00631050.cpp(252) : error C2079: 'heap_' uses undefined class 'Heap'
+Generating Code...
+Compiling..."
 0x00631A10,nullsub_256,src/nullsub_thunks.cpp:558,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x00631A20,?get_player_name@Net@@QAEPADK@Z,src/net_class.cpp:59,0,53,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x00631B30,?close_game@Net@@QAEXXZ,,0,106,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,106,115,42,43,11,#11: original 'push' vs rebuilt 'mov',
