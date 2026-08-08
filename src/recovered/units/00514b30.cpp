@@ -519,8 +519,12 @@ void Console::retire_game() {
 
     if (X_pop(msg, 0) != 0) {
         if (*g_0093a95c != 0) {
+            // No `& 0x1f` mask on the shift count: `shl` masks its count to 5
+            // bits in hardware, and the original does not mask in software
+            // either (mov dl,1; shl dl,cl with no `and cl,0x1f` first) - an
+            // explicit mask here just added a spurious `and ecx, 0x1f`.
             *reinterpret_cast<uint8_t *>(g_009a64e8) =
-                *reinterpret_cast<uint8_t *>(g_009a64e8) & ~(1 << (*g_00939284 & 0x1f));
+                *reinterpret_cast<uint8_t *>(g_009a64e8) & ~(1 << *g_00939284);
             save_game(0);
         }
         if (*g_0093f660 != 0) {

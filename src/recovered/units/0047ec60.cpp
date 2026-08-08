@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,8 @@
 // address        0x0047EC60
 // name           ?pick_ocean@NetWin@@QAEXXZ
 // size           1028 bytes
-// measured tier  NO_COMPILE
-// refusal        u0047ec60.cpp(43) : error C2059: syntax error : ';' u0047ec60.cpp(167) : error C2664: 'item' : cannot convert parameter 1 from 'char *' to 'struct int8 *' Types
+// measured tier  MISMATCH
+// divergence     3
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -57,10 +57,14 @@ typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
 
-struct __cdecl;
-struct int8;
-struct lpString;
-struct position;
+// `char`, NOT `signed char` (mangles PAD vs PAC); the catalogue's `int8`
+// means the former. The on-disk scaffold declared `struct __cdecl;` (a
+// reserved word used as an identifier - a hard syntax error under any
+// compiler) plus `struct int8;`, `struct lpString;` and `struct position;`,
+// all bogus forward-declares evidently produced by mis-parsing a parameter
+// list's names as type names. Replaced with the typedef a fresh brief
+// emits; the parameter names below need no forward-declared type at all.
+typedef char int8;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
 class AlphaNet { public:

@@ -7,7 +7,7 @@
 // name           ?on_redraw@DesignWin@@QAEXXZ
 // size           501 bytes
 // measured tier  MISMATCH
-// divergence     11
+// divergence     9
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -65,19 +65,7 @@ struct RECT;
 class Spot;
 class Strings;
 
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-};
-
+// ---- callees, declared and never defined (a definition would be inlined) ----
 struct RECT {
     long left;
     long top;
@@ -91,7 +79,6 @@ class Spot { public:
     uint32_t add_count_;
 };
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
 class Buffer { public:
     LPVOID vtable_;
     uint32_t poOwner_;
@@ -169,9 +156,24 @@ class Buffer { public:
     int write_cent_l(char *, RECT *, int);
     void set_text_color(int, int, int, int);
 };
+
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+};
+
 class MainInterface { public:
     void restore_back(int);
 };
+
 class Strings { public:
     int8_t err_flags_;
     LPVOID base_;
@@ -181,6 +183,7 @@ class Strings { public:
     BOOL is_populated_;
     int get(int);
 };
+
 extern "C" char *strcat(char *, const char *);
 extern "C" unsigned int strlen(const char *);
 
@@ -219,52 +222,73 @@ class DesignWin { public:
 
 typedef char *(__stdcall *CharUpperAFn)(char *);
 typedef int (__stdcall *UnionRectFn)(RECT *, const RECT *, const RECT *);
+// Underscore-prefixed, not the scaffold's bare `strcat`/`strlen` above: the
+// catalogue's name for both call targets (0x00645470, 0x006453E0) is
+// `_strcat`/`_strlen`, matching the disassembly's own comments. The bare
+// ANSI names are VC6-recognized intrinsics and get expanded inline
+// (`repne scasb` + `rep movsd/movsb`) instead of calling out, which also
+// perturbs register allocation for the whole function - measured: fixing
+// the name alone put `this` back in esi to match the original.
+extern "C" char *_strcat(char *, const char *);
+extern "C" unsigned int _strlen(const char *);
+// Extern, not the fixed-address pointer constant above: the guard below
+// tests this buffer's own address for non-null, and a literal `(char*)0xADDR`
+// is a compile-time-nonzero constant that /O2 folds the test away for -
+// exactly the "guard vanished entirely" failure mode. An extern symbol needs
+// a relocation, so the compiler cannot fold it and the branch survives.
+extern char g_009b86a0_arr[];
 
-// MISMATCH, first divergence at mnemonic #11 (original 'mov ecx,edi' vs
-// rebuilt 'lea ecx,[esi+0x444]'), 536 vs 501 bytes: REGISTER ALLOCATION /
-// INSTRUCTION SCHEDULING wall. The embedded Buffer at self+0x444 (`buf`) is
-// held live in edi across the whole function in the original and its
-// address reused with a plain `mov`; the rebuilt recomputes it with `lea`
-// at at least one use site instead of caching the register across the
-// intervening calls. Tried both a `char *` and a typed `Buffer *` local for
-// `buf` (both reached the identical divergence), so this is not a source-
-// typing issue - ruled out. Every call, argument, and struct-field write
-// below is otherwise faithful to the disassembly and to the Ghidra
-// hypothesis (which drops `this` on every thiscall, as documented).
+// MISMATCH, first divergence at mnemonic #9 (original 'call' vs rebuilt
+// 'lea'), 501 vs 508 bytes: INSTRUCTION SCHEDULING wall. The rebuilt hoists
+// `lea edi, [esi+0x444]` (computing the second Buffer, dead until after the
+// first set_clip call) one call earlier than the original, which computes it
+// only once the first set_clip has returned; every call target, argument,
+// and register role from that point on lines up exactly, just shifted by
+// this one reordering (confirmed instruction-by-instruction). Every
+// box_sprite/set_clip/set_font/set_text_color/write_cent_l argument order,
+// the two UnionRect calls and their argument roles (dst/src1/src2), the
+// pre- and post-3-pixel RECT adjustments (shrink before the font draws,
+// grow after), and the eleven draw_* dispatch calls are otherwise faithful
+// to the disassembly.
 void DesignWin::on_redraw() {
     char *self = reinterpret_cast<char *>(this);
-    Buffer *screen = reinterpret_cast<Buffer *>(g_007aec64);
+    Buffer *buf = reinterpret_cast<Buffer *>(g_007aec64);
+    Buffer *buf2 = reinterpret_cast<Buffer *>(self + 0x444);
 
-    screen->set_clip(reinterpret_cast<RECT *>(g_007aec94));
-
-    Buffer *buf = reinterpret_cast<Buffer *>(self + 0x444);
-    buf->set_clip(reinterpret_cast<RECT *>(reinterpret_cast<char *>(buf) + 0x30));
-
+    buf->set_clip(reinterpret_cast<RECT *>(g_007aec94));
+    buf2->set_clip(reinterpret_cast<RECT *>(self + 0x444 + 0x30));
     reinterpret_cast<MainInterface *>(g_007ae820)->restore_back(1);
 
-    screen->box_sprite(reinterpret_cast<RECT *>(self + 0xa8c),
-                        reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
+    buf->box_sprite(reinterpret_cast<RECT *>(self + 0xa8c),
+                     reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
 
-    RECT local_14 = *reinterpret_cast<RECT *>(self + 0xa6c);
-    screen->box_sprite(&local_14, reinterpret_cast<BoxSpriteParams *>(g_0078d618));
+    RECT local;
+    int *src = reinterpret_cast<int *>(self + 0xa6c);
+    local.left = src[0];
+    local.top = src[1];
+    local.right = src[2];
+    local.bottom = src[3];
+    buf->box_sprite(&local, reinterpret_cast<BoxSpriteParams *>(g_0078d618));
 
-    local_14.left += 3;
-    local_14.top += 3;
-    local_14.right -= 3;
-    local_14.bottom -= 3;
-    *reinterpret_cast<char *>(g_009b86a0) = 0;
-    screen->set_font(reinterpret_cast<Font *>(g_007cfe8c), 0, 0, 0);
+    local.left += 3;
+    local.top += 3;
+    local.right -= 3;
+    local.bottom -= 3;
 
-    strcat(reinterpret_cast<char *>(g_009b86a0),
-           reinterpret_cast<char *>(reinterpret_cast<Strings *>(g_009b90d8)->get(
-               *reinterpret_cast<int *>(*reinterpret_cast<char **>(g_009b90f8) + 0xa70))));
+    char *msg = g_009b86a0_arr;
+    *msg = 0;
+    buf->set_font(reinterpret_cast<Font *>(g_007cfe8c), 0, 0, 0);
 
-    screen->set_text_color(0xf0, -1, 1, 1);
+    int base = *reinterpret_cast<int *>(g_009b90f8);
+    int arg = *reinterpret_cast<int *>(base + 0xa70);
+    char *piece = reinterpret_cast<char *>(
+        reinterpret_cast<Strings *>(g_009b90d8)->get(arg));
+    _strcat(msg, piece);
 
-    (*reinterpret_cast<CharUpperAFn *>(g_0066931c))(reinterpret_cast<char *>(g_009b86a0));
-    if (reinterpret_cast<char *>(g_009b86a0)) {
-        screen->write_cent_l(reinterpret_cast<char *>(g_009b86a0), &local_14,
-                              strlen(reinterpret_cast<char *>(g_009b86a0)));
+    buf->set_text_color(0xf0, -1, 1, 1);
+    (*reinterpret_cast<CharUpperAFn *>(g_0066931c))(msg);
+    if (msg) {
+        buf->write_cent_l(msg, &local, _strlen(msg));
     }
 
     check_abil();
@@ -279,16 +303,16 @@ void DesignWin::on_redraw() {
     draw_stack();
     draw_flash();
 
-    buf->set_clip(reinterpret_cast<RECT *>(reinterpret_cast<char *>(buf) + 0x30));
+    buf2->set_clip(reinterpret_cast<RECT *>(self + 0x444 + 0x30));
 
-    (*reinterpret_cast<UnionRectFn *>(g_00669328))(&local_14, reinterpret_cast<RECT *>(self + 0xbcc),
+    UnionRectFn union_rect = *reinterpret_cast<UnionRectFn *>(g_00669328);
+    union_rect(&local, reinterpret_cast<RECT *>(self + 0xbcc),
                reinterpret_cast<RECT *>(self + 0xb8c));
-    (*reinterpret_cast<UnionRectFn *>(g_00669328))(&local_14, &local_14,
-               reinterpret_cast<RECT *>(self + 0xb9c));
+    union_rect(&local, &local, reinterpret_cast<RECT *>(self + 0xb9c));
 
-    local_14.left -= 3;
-    local_14.top -= 3;
-    local_14.right += 3;
-    local_14.bottom += 3;
-    buf->box_sprite(&local_14, reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
+    local.left -= 3;
+    local.top -= 3;
+    local.right += 3;
+    local.bottom += 3;
+    buf2->box_sprite(&local, reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
 }

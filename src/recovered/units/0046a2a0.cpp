@@ -515,28 +515,40 @@ void MapWin::draw_radius(int a1, int a2, int a3, int a4) {
                     *reinterpret_cast<int *>(self + 0x1ddcc) + latx2;
         if (x >= xlim2) goto after;
 
-        Texture *tex = (*reinterpret_cast<int *>(self + 0x1dd98) > -8)
-                           ? reinterpret_cast<Texture *>(g_00787fb8)
-                           : reinterpret_cast<Texture *>(g_0075b858);
-        Buffer *buf;
-        if (this) {
-            int *vb = *reinterpret_cast<int **>(this);
-            buf = reinterpret_cast<Buffer *>(self + vb[1] + 0x444);
+        if (*reinterpret_cast<int *>(self + 0x1dd98) <= -8) {
+            Buffer *buf;
+            if (!this) {
+                buf = 0;
+            } else {
+                int *vb = *reinterpret_cast<int **>(this);
+                buf = reinterpret_cast<Buffer *>(self + vb[1] + 0x444);
+            }
+            reinterpret_cast<Texture *>(g_0075b858)->draw_trans(
+                buf, reinterpret_cast<Vert *>(g_007d3be8), 0);
         } else {
-            buf = 0;
+            Buffer *buf;
+            if (!this) {
+                buf = 0;
+            } else {
+                int *vb = *reinterpret_cast<int **>(this);
+                buf = reinterpret_cast<Buffer *>(self + vb[1] + 0x444);
+            }
+            reinterpret_cast<Texture *>(g_00787fb8)->draw_trans(
+                buf, reinterpret_cast<Vert *>(g_007d3be8), 0);
         }
-        tex->draw_trans(buf, reinterpret_cast<Vert *>(g_007d3be8), 0);
     }
 after:
     if (a4 != 0) {
         RECT rect;
         if (compute_clip(a1, a2, a3, &rect)) {
-            int *vb = *reinterpret_cast<int **>(this);
-            GraphicWin *gw = reinterpret_cast<GraphicWin *>(self + vb[1]);
             if (a4 < 2) {
+                int *vb = *reinterpret_cast<int **>(this);
+                GraphicWin *gw = reinterpret_cast<GraphicWin *>(self + vb[1]);
                 gw->soft_update(&rect);
                 return;
             }
+            int *vb = *reinterpret_cast<int **>(this);
+            GraphicWin *gw = reinterpret_cast<GraphicWin *>(self + vb[1]);
             gw->soft_update(&rect);
             do_all_draws();
         }

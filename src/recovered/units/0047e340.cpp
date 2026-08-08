@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,8 @@
 // address        0x0047E340
 // name           ?pick_global_diff@NetWin@@QAEXXZ
 // size           984 bytes
-// measured tier  NO_COMPILE
-// refusal        u0047e340.cpp(158) : error C2079: 'spot_' uses undefined class 'Spot'
+// measured tier  MISMATCH
+// divergence     15
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -86,6 +86,13 @@ class Time;
 typedef unsigned int UINT_PTR;
 class Win;
 
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class AlphaNet { public:
+    uint32_t alignment_;
+    uint8_t data_[0x149C];
+    int pid_2_idx(unsigned long);
+};
+
 class AutoSound { public:
     PVOID vtable_;
     int val_1_;
@@ -127,11 +134,27 @@ class AutoSound { public:
     int val_37_;
 };
 
+class Heap { public:
+    int8_t err_flags_;
+    LPVOID base_;
+    LPVOID current_;
+    size_t base_size_;
+    size_t free_size_;
+    void shutdown();
+};
+
 struct RECT {
     long left;
     long top;
     long right;
     long bottom;
+};
+
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+    ~Spot();
 };
 
 class Buffer { public:
@@ -207,38 +230,6 @@ class Buffer { public:
     uint32_t field_584_;
 };
 
-class ButtonGroup { public:
-    BaseButton * buttons_[32];
-    uint32_t count_;
-    uint32_t field_84_;
-    uint32_t field_88_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
-};
-
-struct DialogEntry {
-    uint32_t vtable;
-    int id;
-    void * payload;
-    DialogEntry * next;
-    DialogEntry * previous;
-    uint32_t secondary_vtable;
-    void * heap;
-};
-
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-};
-
 class Time { public:
     int unk_tgl_;
     UINT_PTR id_event_;
@@ -252,20 +243,6 @@ class Time { public:
     int unk_2_;
 };
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-class AlphaNet { public:
-    uint32_t alignment_;
-    uint8_t data_[0x149C];
-    int pid_2_idx(unsigned long);
-};
-class Heap { public:
-    int8_t err_flags_;
-    LPVOID base_;
-    LPVOID current_;
-    size_t base_size_;
-    size_t free_size_;
-    void shutdown();
-};
 class BaseButton { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -388,9 +365,20 @@ class BaseButton { public:
     uint32_t field_AB4_;
     ~BaseButton();
 };
+
 class BasePop { public:
     void close();
 };
+
+class ButtonGroup { public:
+    BaseButton * buttons_[32];
+    uint32_t count_;
+    uint32_t field_84_;
+    uint32_t field_88_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+};
+
 class Dialog { public:
     LPVOID vtable_;
     Heap heap_;
@@ -451,10 +439,22 @@ class Dialog { public:
     uint32_t field_F0_;
     ~Dialog();
 };
+
+struct DialogEntry {
+    uint32_t vtable;
+    int id;
+    void * payload;
+    DialogEntry * next;
+    DialogEntry * previous;
+    uint32_t secondary_vtable;
+    void * heap;
+};
+
 class Dialogs { public:
     int item(char *, int);
     ~Dialogs();
 };
+
 class FlatButton { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -615,6 +615,20 @@ class FlatButton { public:
     void close();
     ~FlatButton();
 };
+
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+};
+
 class GraphicWin { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -714,30 +728,30 @@ class GraphicWin { public:
     uint32_t field_A10_;
     ~GraphicWin();
 };
+
 class Net { public:
     int send(void *, int, unsigned long, int);
 };
+
 class PopMenu { public:
     int init();
     void exec(int, int, int (__cdecl *)());
 };
+
 class Popup { public:
     Popup();
     void close();
 };
+
 class PullDown { public:
     PullDown();
     ~PullDown();
 };
+
 class Scroll { public:
     void close();
 };
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
-    ~Spot();
-};
+
 class Sprite { public:
     int ppszFileName_;
     int pcBits_;
@@ -755,6 +769,7 @@ class Sprite { public:
     int fObj1Exists_;
     void close();
 };
+
 class Strings { public:
     int8_t err_flags_;
     LPVOID base_;
@@ -764,6 +779,7 @@ class Strings { public:
     BOOL is_populated_;
     int get(int);
 };
+
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -845,6 +861,7 @@ class Win { public:
     void client_to_screen(int *, int *);
     void get_mouse_pos(int *, int *);
 };
+
 extern "C" int __cdecl _alloca_probe();
 extern "C" int __cdecl sub_4066c0();
 extern "C" int __cdecl sub_406820();

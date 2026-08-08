@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,8 @@
 // address        0x0047E640
 // name           ?pick_time@NetWin@@QAEXXZ
 // size           956 bytes
-// measured tier  NO_COMPILE
-// refusal        u0047e640.cpp(157) : error C2079: 'spot_' uses undefined class 'Spot' u0047e640.cpp(876) : warning C4291: 'void *__cdecl operator new(unsigned int,void *)' : no
+// measured tier  MISMATCH
+// divergence     3
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -85,6 +85,13 @@ class Time;
 typedef unsigned int UINT_PTR;
 class Win;
 
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class AlphaNet { public:
+    uint32_t alignment_;
+    uint8_t data_[0x149C];
+    int pid_2_idx(unsigned long);
+};
+
 class AutoSound { public:
     PVOID vtable_;
     int val_1_;
@@ -126,11 +133,27 @@ class AutoSound { public:
     int val_37_;
 };
 
+class Heap { public:
+    int8_t err_flags_;
+    LPVOID base_;
+    LPVOID current_;
+    size_t base_size_;
+    size_t free_size_;
+    void shutdown();
+};
+
 struct RECT {
     long left;
     long top;
     long right;
     long bottom;
+};
+
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+    ~Spot();
 };
 
 class Buffer { public:
@@ -206,38 +229,6 @@ class Buffer { public:
     uint32_t field_584_;
 };
 
-class ButtonGroup { public:
-    BaseButton * buttons_[32];
-    uint32_t count_;
-    uint32_t field_84_;
-    uint32_t field_88_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
-};
-
-struct DialogEntry {
-    uint32_t vtable;
-    int id;
-    void * payload;
-    DialogEntry * next;
-    DialogEntry * previous;
-    uint32_t secondary_vtable;
-    void * heap;
-};
-
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-};
-
 class Time { public:
     int unk_tgl_;
     UINT_PTR id_event_;
@@ -251,20 +242,6 @@ class Time { public:
     int unk_2_;
 };
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-class AlphaNet { public:
-    uint32_t alignment_;
-    uint8_t data_[0x149C];
-    int pid_2_idx(unsigned long);
-};
-class Heap { public:
-    int8_t err_flags_;
-    LPVOID base_;
-    LPVOID current_;
-    size_t base_size_;
-    size_t free_size_;
-    void shutdown();
-};
 class BaseButton { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -387,9 +364,20 @@ class BaseButton { public:
     uint32_t field_AB4_;
     ~BaseButton();
 };
+
 class BasePop { public:
     void close();
 };
+
+class ButtonGroup { public:
+    BaseButton * buttons_[32];
+    uint32_t count_;
+    uint32_t field_84_;
+    uint32_t field_88_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+};
+
 class Dialog { public:
     LPVOID vtable_;
     Heap heap_;
@@ -450,9 +438,21 @@ class Dialog { public:
     uint32_t field_F0_;
     ~Dialog();
 };
+
+struct DialogEntry {
+    uint32_t vtable;
+    int id;
+    void * payload;
+    DialogEntry * next;
+    DialogEntry * previous;
+    uint32_t secondary_vtable;
+    void * heap;
+};
+
 class Dialogs { public:
     ~Dialogs();
 };
+
 class FlatButton { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -613,6 +613,20 @@ class FlatButton { public:
     void close();
     ~FlatButton();
 };
+
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+};
+
 class GraphicWin { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -712,30 +726,30 @@ class GraphicWin { public:
     uint32_t field_A10_;
     ~GraphicWin();
 };
+
 class Net { public:
     int send(void *, int, unsigned long, int);
 };
+
 class PopMenu { public:
     int init();
     void exec(int, int, int (__cdecl *)());
 };
+
 class Popup { public:
     Popup();
     void close();
 };
+
 class PullDown { public:
     PullDown();
     ~PullDown();
 };
+
 class Scroll { public:
     void close();
 };
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
-    ~Spot();
-};
+
 class Sprite { public:
     int ppszFileName_;
     int pcBits_;
@@ -753,6 +767,7 @@ class Sprite { public:
     int fObj1Exists_;
     void close();
 };
+
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -834,6 +849,7 @@ class Win { public:
     void client_to_screen(int *, int *);
     void get_mouse_pos(int *, int *);
 };
+
 extern "C" int __cdecl _alloca_probe();
 extern "C" int __cdecl sub_4066c0();
 extern "C" int __cdecl sub_406820();
@@ -869,97 +885,107 @@ class NetWin { public:
     void pick_time();
 };
 
-// This subject builds ~15 local UI/network objects on a ~0x6300-byte
-// stack frame and relies on the compiler's own SEH unwind machinery
-// (frame-based __except_handler3, EH funclets at 0x00656F4D-0x00657020)
-// to tear them down on an exception. That machinery only appears when the
-// compiler itself owns automatic destruction of complete local objects;
-// the catalogue's scaffold gives most of these types as opaque shells with
-// a handful of named cleanup methods (close()/shutdown()) rather than real
-// RAII types, so there is no way to make the compiler emit that frame from
-// plain C++ here. This reproduces the NORMAL (non-exceptional) call
-// sequence faithfully - object construction, PopMenu::init/exec, the
-// mouse-position + net-send bookkeeping, and the teardown chain in the
-// order and with the arguments the disassembly shows - without attempting
-// to reproduce the SEH prologue/epilogue or the funclets themselves.
 
-inline void *operator new(unsigned int, void *p) { return p; }
+// The original builds a LOCAL, unnamed C++ type here (Popup joined with
+// PopMenu/BasePop/GraphicWin bases) whose vtable is re-stamped once per
+// inheritance level as it tears down - that type has no address of its
+// own, so the catalogue can never name it. Reproducing its automatic
+// storage would also need real sizeof() for Popup/PullDown/PopMenu/
+// BasePop/Scroll/Dialogs/Sprite, none of which are pinned here (every
+// one is an opaque, zero-sized shell). Both are required for the
+// compiler to emit the matching SEH prologue and frame size, so this
+// body follows the CALL SEQUENCE and every argument faithfully without
+// chasing those bytes - see the CHANGE note for the ruled-out approach.
+inline void *__cdecl operator new(unsigned int, void *p) { return p; }
 
 void NetWin::pick_time() {
-    unsigned char frame[0x6300 + 0x20];
-    unsigned char *base = frame + 0x6300;
-#define AT(off) (base - (off))
+    unsigned char menuBuf[0x400];
+    unsigned char dropdownBuf[0x400];
+    unsigned char scrollBuf[0x400];
+    unsigned char flatBtn1Buf[0x400];
+    unsigned char flatBtn2Buf[0x400];
+    unsigned char spotBuf[0x100];
+    unsigned char dialogsBuf[0x400];
+    unsigned char dialogBuf[0x100];
+    unsigned char helper1Buf[0x100];
+    unsigned char helper2Buf[0x100];
+    unsigned char spriteBuf[0x100];
+    unsigned char flatBtn3Buf[0x400];
+    unsigned char flatBtn4Buf[0x400];
+    unsigned char heapBuf[0x100];
 
-    new (AT(0x6300)) Popup();
-    new (AT(0xf84)) PullDown();
+    Popup *menu = new (menuBuf) Popup();
+    PullDown *dropdown = new (dropdownBuf) PullDown();
 
-    *(void **)AT(0x6300) = (void *)g_0066a8a8;
-    *(void **)AT(0x5ebc) = (void *)g_0066a8a0;
-    *(void **)AT(0xf84) = (void *)g_0066a738;
-    *(void **)AT(0xb40) = (void *)g_0066a730;
+    *(void **)(menuBuf + 0x0) = g_0066a8a8;
+    *(void **)(menuBuf + 0x444) = g_0066a8a0;
+    *(void **)(dropdownBuf + 0x0) = g_0066a738;
+    *(void **)(dropdownBuf + 0x444) = g_0066a730;
 
-    ((PopMenu *)AT(0x6300))->init();
-    time_controls_dialog((Popup *)AT(0x6300));
+    ((PopMenu *)menu)->init();
+    time_controls_dialog(menu);
 
     int mouseX, mouseY;
     ((Win *)this)->get_mouse_pos(&mouseX, &mouseY);
-    ((Win *)this)->client_to_screen(&mouseX, &mouseY);
-    ((PopMenu *)AT(0x6300))->exec(mouseX, mouseY, (int(__cdecl *)())g_00483240);
+    int screenX = mouseX, screenY = mouseY;
+    ((Win *)this)->client_to_screen(&screenX, &screenY);
 
-    ((AlphaNet *)g_0093cd90)->pid_2_idx(*(unsigned long *)g_0093d4f0);
+    ((PopMenu *)menu)->exec(screenX, screenY, (int(__cdecl *)())g_00483240);
 
-    unsigned char netMsg[0x28];
-    *(short *)netMsg = 0x2f02;
-    for (int i = 0; i < 6; ++i) {
-        ((int *)(netMsg + 0x10))[i] = ((int *)g_0090e8e0)[i];
+    int idx = ((AlphaNet *)g_0093cd90)->pid_2_idx(*(unsigned long *)g_0093d4f0);
+    (void)idx;
+
+    unsigned char packet[0x28];
+    *(unsigned short *)packet = 0x2f02;
+    unsigned int *src = (unsigned int *)g_0090e8e0;
+    unsigned int *dst = (unsigned int *)(packet + 0x10);
+    for (int word = 0; word < 6; ++word) {
+        dst[word] = src[word];
     }
-    ((Net *)g_0093cd90)->send(netMsg, 0x28, *(unsigned long *)g_0093d4f4, 1);
+    ((Net *)g_0093cd90)->send(packet, 0x28, *(unsigned long *)g_0093d4f4, 1);
 
-    ((PullDown *)AT(0xf84))->~PullDown();
+    dropdown->~PullDown();
 
-    *(void **)AT(0x6300) = (void *)g_006695c8;
-    *(void **)AT(0x5ebc) = (void *)g_006695c0;
-    ((Popup *)AT(0x6300))->close();
+    *(void **)(menuBuf + 0x0) = g_006695c8;
+    *(void **)(menuBuf + 0x444) = g_006695c0;
+    ((Popup *)menu)->close();
 
-    *(void **)AT(0x30d0) = (void *)g_00669d58;
-    *(void **)AT(0x2c8c) = (void *)g_00669d50;
-    ((Scroll *)AT(0x30d0))->close();
+    *(void **)(scrollBuf + 0x0) = g_00669d58;
+    *(void **)(scrollBuf + 0x444) = g_00669d50;
+    ((Scroll *)scrollBuf)->close();
 
-    *(void **)AT(0x1ad8) = (void *)g_00669754;
-    *(void **)AT(0x1694) = (void *)g_0066974c;
-    ((FlatButton *)AT(0x1ad8))->close();
-    ((BaseButton *)AT(0x1ad8))->~BaseButton();
+    *(void **)(flatBtn1Buf + 0x0) = g_00669754;
+    *(void **)(flatBtn1Buf + 0x444) = g_0066974c;
+    ((FlatButton *)flatBtn1Buf)->close();
+    ((BaseButton *)flatBtn1Buf)->~BaseButton();
 
-    *(void **)AT(0x2624) = (void *)g_00669754;
-    *(void **)AT(0x21e0) = (void *)g_0066974c;
-    ((FlatButton *)AT(0x2624))->close();
-    ((BaseButton *)AT(0x2624))->~BaseButton();
+    *(void **)(flatBtn2Buf + 0x0) = g_00669754;
+    *(void **)(flatBtn2Buf + 0x444) = g_0066974c;
+    ((FlatButton *)flatBtn2Buf)->close();
+    ((BaseButton *)flatBtn2Buf)->~BaseButton();
 
-    ((GraphicWin *)AT(0x30d0))->~GraphicWin();
+    ((GraphicWin *)scrollBuf)->~GraphicWin();
 
-    *(void **)AT(0x6300) = (void *)g_006698d4;
-    *(void **)AT(0x5ebc) = (void *)g_006698cc;
-    ((BasePop *)AT(0x6300))->close();
+    *(void **)(menuBuf + 0x0) = g_006698d4;
+    *(void **)(menuBuf + 0x444) = g_006698cc;
+    ((BasePop *)menu)->close();
 
-    ((Spot *)AT(0x3268))->~Spot();
-    ((Dialogs *)AT(0x3fa8))->~Dialogs();
-    ((Dialog *)AT(0x3590))->~Dialog();
-    ((GraphicWin *)AT(0x3fa8))->~GraphicWin();
+    ((Spot *)spotBuf)->~Spot();
+    ((Dialogs *)dialogsBuf)->~Dialogs();
+    ((Dialog *)dialogBuf)->~Dialog();
+    ((GraphicWin *)dialogsBuf)->~GraphicWin();
 
     sub_4066c0();
-
-    int tmp = *(int *)AT(0x4154);
-    *(void **)AT(0x4158) = (void *)g_006693ac;
-    *g_009b3374 = tmp;
+    unsigned long helperField = *(unsigned long *)(helper1Buf + 0x4);
+    *(void **)(helper1Buf + 0x0) = g_006693ac;
+    *(unsigned long *)g_009b3374 = helperField;
 
     sub_406820();
 
-    ((Sprite *)AT(0x41e8))->close();
-    ((FlatButton *)AT(0x4d58))->~FlatButton();
-    ((FlatButton *)AT(0x58a4))->~FlatButton();
-    ((Heap *)AT(0x58d8))->shutdown();
-    ((GraphicWin *)AT(0x6300))->~GraphicWin();
+    ((Sprite *)spriteBuf)->close();
+    ((FlatButton *)flatBtn3Buf)->~FlatButton();
+    ((FlatButton *)flatBtn4Buf)->~FlatButton();
+    ((Heap *)heapBuf)->shutdown();
 
-#undef AT
-
+    ((GraphicWin *)menuBuf)->~GraphicWin();
 }

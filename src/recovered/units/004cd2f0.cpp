@@ -7,7 +7,7 @@
 // name           ?action_destruct@@YAXH@Z
 // size           481 bytes
 // measured tier  MISMATCH
-// divergence     26
+// divergence     60
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -65,7 +65,6 @@ static int *const g_00949870 = (int *)0x00949870;
 static int *const g_00949874 = (int *)0x00949874;
 static int *const g_0094988c = (int *)0x0094988C;
 static int *const g_009ab88f = (int *)0x009AB88F;
-
 // ---- indexed table bases: the ADDRESS itself does work (SIB-scaled), so
 // these are `extern T name[]`, not the const-pointer spelling above, which
 // /O2 would fold into the addressing and change the instruction shape.
@@ -92,7 +91,16 @@ void __cdecl action_destruct(int a1) {
     int protoId = g_veh_proto[a1 * 0x1a];
     int factionId = g_veh_faction[a1 * 0x34];
     int weapVal = weap_val(protoId, factionId);
-    int wclamp = (weapVal < 1) ? 1 : ((weapVal <= 0x14) ? weapVal : 0x14);
+    int wclamp;
+    if (weapVal >= 1) {
+        if (weapVal > 0x14) {
+            wclamp = 0x14;
+        } else {
+            wclamp = weapVal;
+        }
+    } else {
+        wclamp = 1;
+    }
 
     int cost = g_proto_cost[g_veh_proto[a1 * 0x1a] * 0x34];
     char damage = (char)((cost * wclamp) / 2);
@@ -100,14 +108,15 @@ void __cdecl action_destruct(int a1) {
     kill(a1);
 
     a1 = 0;
+    int mapW = *g_00949870;
     while (a1 < 0x24) {
         int dx = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066efbc) + a1);
         int cx = dx + x;
         if ((*g_0094988c & 1) == 0) {
             if (cx < 0) {
-                cx += *g_00949870;
-            } else if (*g_00949870 <= cx) {
-                cx -= *g_00949870;
+                cx += mapW;
+            } else if (mapW <= cx) {
+                cx -= mapW;
             }
         }
         int dy = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066f440) + a1);
@@ -116,9 +125,10 @@ void __cdecl action_destruct(int a1) {
         if (cy < 0) goto next_tile;
         if (*g_00949874 <= cy) goto next_tile;
         if (cx < 0) goto next_tile;
-        if (*g_00949870 <= cx) goto next_tile;
+        if (mapW <= cx) goto next_tile;
 
         if (base_at(cx, cy) >= 0) goto next_tile;
+        mapW = *g_00949870;
 
         {
             int v = veh_at(cx, cy);

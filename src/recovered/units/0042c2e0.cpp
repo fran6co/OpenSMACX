@@ -7,7 +7,7 @@
 // name           ?draw_concept@Datalink@@QAEXXZ
 // size           1071 bytes
 // measured tier  NO_COMPILE
-// refusal        u0042c2e0.cpp(45) : error C2059: syntax error : ';' u0042c2e0.cpp(47) : error C2143: syntax error : missing ';' before 'this' u0042c2e0.cpp(47) : error C2143: s
+// refusal        u0042c2e0.cpp(206) : error C2065: 'strcat' : undeclared identifier u0042c2e0.cpp(212) : error C2065: 'strlen' : undeclared identifier
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -56,12 +56,17 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
+// `char`, NOT `signed char` - distinct MSVC types that mangle differently
+// (PAD vs PAC); the catalogue's `int8` means the former. The on-disk
+// scaffold had `struct int8;` (an incomplete-type forward decl that cannot
+// satisfy pointer arithmetic below) plus two outright illegal declarations,
+// `struct __cdecl;` and `struct this;` - both reserved words, so both are
+// hard syntax errors under any compiler. Replaced with the typedef a fresh
+// brief emits.
+typedef char int8;
 
 struct Font;
 struct RECT;
-struct __cdecl;
-struct int8;
-struct this;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
 class BaseButton { public:
@@ -110,7 +115,7 @@ class StringBox { public:
     void clear();
 };
 class StringList { public:
-    int load(int8*, int8*, int, void (__cdecl *)(int8* this));
+    int load(int8*, int8*, int, void (__cdecl *)(int8*));
 };
 int __cdecl __alloca_probe();
 int __cdecl __itoa();
@@ -292,6 +297,4 @@ void Datalink::draw_concept() {
     reinterpret_cast<FlatButton *>(popup + 0x4984)->~FlatButton();
     reinterpret_cast<Heap *>(popup + 0x49b8)->shutdown();
     reinterpret_cast<GraphicWin *>(popup)->~GraphicWin();
-}
-
 }

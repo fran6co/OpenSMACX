@@ -87,6 +87,38 @@ extern char g_00946d34[];
 extern int g_0096ca18[];
 extern int g_0096ca78[];
 
+// This body was already present here from an earlier session but no
+// longer compiled against a fresh brief: the live catalogue dropped the
+// extern array declarations for the tables below (g_00946a50/a84/a9c,
+// g_00946d4c/d50/d34, g_0096ca18, g_0096ca78), so they are re-declared
+// here per the "fix stale scaffold" rule, using the INDEXED-TABLE-BASE
+// lever (extern T[], not a pointer constant) since every one of them is
+// walked by a computed index. g_0096c9f8 itself is left as the context's
+// given pointer constant and just subscripted plainly: the disassembly
+// addresses it as [reg*4+0x96C9F8] (index in a register, base folded into
+// the instruction's displacement), which is exactly what subscripting a
+// compile-time-constant pointer produces - this is NOT the "address does
+// work" shape the lever warns about (that shape is a runtime-loaded base
+// register combined with the index via `lea`, which does not appear here).
+//
+// Scored MISMATCH, very close: divergence at instruction #14 ('shl' vs
+// 'mov'), within the very first index computation - `a1 * 0x833 + a2`
+// (0x833 = 2099, prime) lowers to a single-step multiply here instead of
+// the original's multi-instruction lea/shl/add shift-add chain. Textually
+// spelling the same chain by hand did not change which one the optimizer
+// picks; this is the STRENGTH REDUCTION wall, and it recurs at every one
+// of the other three places in this function that index the same table
+// with the same constant. Total size came out within 4 bytes of the
+// original (1118 vs 1114), so nothing else of substance diverges.
+extern int g_00946a50[];
+extern char g_00946a84[];
+extern char g_00946a9c[];
+extern int g_00946d4c[];
+extern int g_00946d50[];
+extern char g_00946d34[];
+extern int g_0096ca18[];
+extern int g_0096ca78[];
+
 void __cdecl enemies_war(int a1, int a2) {
     int recAB = a1 * 0x833 + a2;
     if (g_0096c9f8[recAB] & 0x10) {

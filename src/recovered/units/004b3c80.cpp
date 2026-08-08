@@ -7,7 +7,7 @@
 // name           ??1SocialWin@@QAE@XZ
 // size           943 bytes
 // measured tier  NO_COMPILE
-// refusal        u004b3c80.cpp(157) : error C2079: 'spot_' uses undefined class 'Spot'
+// refusal        expected one external .text symbol, found 3: ['??1SocialWin@@QAE@XZ', '??1Buffer@@QAE@XZ', '??1FlatButton@@QAE@XZ']. A translation unit must define the SUBJECT 
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -77,6 +77,7 @@ class Time;
 typedef unsigned int UINT_PTR;
 class Win;
 
+// ---- callees, declared and never defined (a definition would be inlined) ----
 class AutoSound { public:
     PVOID vtable_;
     int val_1_;
@@ -131,6 +132,13 @@ struct RECT {
     long top;
     long right;
     long bottom;
+};
+
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+    ~Spot();
 };
 
 class Buffer { public:
@@ -341,6 +349,16 @@ class BaseButton { public:
     uint32_t field_AB4_;
 };
 
+class ButtonGroup { public:
+    BaseButton * buttons_[32];
+    uint32_t count_;
+    uint32_t field_84_;
+    uint32_t field_88_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+    void close();
+};
+
 class FlatButton { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -500,6 +518,120 @@ class FlatButton { public:
     uint32_t field_B48_;
 };
 
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+    ~Font();
+};
+
+class GraphicWin { public:
+    AutoSound auto_sound_;
+    uint32_t iFlags_;
+    uint32_t iSomeFlag_;
+    uint32_t field_A0_;
+    uint32_t field_A4_;
+    uint32_t poWinBase_;
+    uint32_t iVertScaleDenom_;
+    uint32_t iVertScaleNum_;
+    Buffer * buffer1_;
+    Buffer * buffer2_;
+    Buffer * buffer3_;
+    Buffer * buffer4_;
+    Win * win_parent_;
+    uint32_t field_C8_;
+    uint32_t field_CC_;
+    uint32_t field_D0_;
+    uint32_t field_D4_;
+    uint32_t field_D8_;
+    Heap heap_;
+    Menu * menu_;
+    uint32_t field_F4_;
+    uint32_t field_F8_;
+    uint32_t field_FC_;
+    uint32_t field_100_;
+    uint32_t field_104_;
+    uint32_t field_108_;
+    uint32_t field_10C_;
+    uint32_t field_110_;
+    int caption_height_;
+    int border_thickness_;
+    int bottom_border_thickness_;
+    uint32_t field_120_;
+    uint32_t field_124_;
+    uint32_t field_128_;
+    uint32_t field_12C_;
+    uint32_t field_130_;
+    uint32_t field_134_;
+    uint32_t field_138_;
+    RECT outer_rect_;
+    RECT client_rect_;
+    uint32_t field_15C_;
+    uint32_t field_160_;
+    uint32_t field_164_;
+    uint32_t field_168_;
+    uint32_t field_16C_;
+    uint32_t field_170_;
+    uint32_t field_174_;
+    uint32_t field_178_;
+    uint32_t field_17C_;
+    uint32_t field_180_;
+    uint32_t field_184_;
+    Sprite * cursor_sprite_;
+    uint32_t field_18C_;
+    uint32_t field_190_;
+    HCURSOR * cursor_handle_;
+    int cursor_name_;
+    uint32_t field_19C_;
+    uint32_t field_1A0_;
+    Win * children_[150];
+    int child_count_;
+    uint32_t field_400_;
+    uint32_t field_404_;
+    uint32_t field_408_;
+    uint32_t field_40C_;
+    uint32_t field_410_;
+    uint32_t field_414_;
+    uint32_t field_418_;
+    uint32_t field_41C_;
+    uint32_t field_420_;
+    uint32_t field_424_;
+    uint32_t field_428_;
+    uint32_t field_42C_;
+    uint32_t field_430_;
+    uint32_t field_434_;
+    uint32_t field_438_;
+    Scroll * scroll_vert_;
+    Scroll * scroll_horz_;
+    Buffer buffer_;
+    uint32_t field_9CC_;
+    uint32_t field_9D0_;
+    uint32_t field_9D4_;
+    uint32_t field_9D8_;
+    uint32_t field_9DC_;
+    uint32_t field_9E0_;
+    uint32_t field_9E4_;
+    uint32_t field_9E8_;
+    uint32_t field_9EC_;
+    uint32_t field_9F0_;
+    uint32_t field_9F4_;
+    uint32_t field_9F8_;
+    uint32_t field_9FC_;
+    uint32_t field_A00_;
+    uint32_t field_A04_;
+    uint32_t poCanvas_;
+    uint32_t field_A0C_;
+    uint32_t field_A10_;
+    ~GraphicWin();
+};
+
 class Sprite { public:
     int ppszFileName_;
     int pcBits_;
@@ -602,134 +734,6 @@ class Win { public:
     Scroll * scroll_horz_;
 };
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-class ButtonGroup { public:
-    BaseButton * buttons_[32];
-    uint32_t count_;
-    uint32_t field_84_;
-    uint32_t field_88_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
-    void close();
-};
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-    ~Font();
-};
-class GraphicWin { public:
-    AutoSound auto_sound_;
-    uint32_t iFlags_;
-    uint32_t iSomeFlag_;
-    uint32_t field_A0_;
-    uint32_t field_A4_;
-    uint32_t poWinBase_;
-    uint32_t iVertScaleDenom_;
-    uint32_t iVertScaleNum_;
-    Buffer * buffer1_;
-    Buffer * buffer2_;
-    Buffer * buffer3_;
-    Buffer * buffer4_;
-    Win * win_parent_;
-    uint32_t field_C8_;
-    uint32_t field_CC_;
-    uint32_t field_D0_;
-    uint32_t field_D4_;
-    uint32_t field_D8_;
-    Heap heap_;
-    Menu * menu_;
-    uint32_t field_F4_;
-    uint32_t field_F8_;
-    uint32_t field_FC_;
-    uint32_t field_100_;
-    uint32_t field_104_;
-    uint32_t field_108_;
-    uint32_t field_10C_;
-    uint32_t field_110_;
-    int caption_height_;
-    int border_thickness_;
-    int bottom_border_thickness_;
-    uint32_t field_120_;
-    uint32_t field_124_;
-    uint32_t field_128_;
-    uint32_t field_12C_;
-    uint32_t field_130_;
-    uint32_t field_134_;
-    uint32_t field_138_;
-    RECT outer_rect_;
-    RECT client_rect_;
-    uint32_t field_15C_;
-    uint32_t field_160_;
-    uint32_t field_164_;
-    uint32_t field_168_;
-    uint32_t field_16C_;
-    uint32_t field_170_;
-    uint32_t field_174_;
-    uint32_t field_178_;
-    uint32_t field_17C_;
-    uint32_t field_180_;
-    uint32_t field_184_;
-    Sprite * cursor_sprite_;
-    uint32_t field_18C_;
-    uint32_t field_190_;
-    HCURSOR * cursor_handle_;
-    int cursor_name_;
-    uint32_t field_19C_;
-    uint32_t field_1A0_;
-    Win * children_[150];
-    int child_count_;
-    uint32_t field_400_;
-    uint32_t field_404_;
-    uint32_t field_408_;
-    uint32_t field_40C_;
-    uint32_t field_410_;
-    uint32_t field_414_;
-    uint32_t field_418_;
-    uint32_t field_41C_;
-    uint32_t field_420_;
-    uint32_t field_424_;
-    uint32_t field_428_;
-    uint32_t field_42C_;
-    uint32_t field_430_;
-    uint32_t field_434_;
-    uint32_t field_438_;
-    Scroll * scroll_vert_;
-    Scroll * scroll_horz_;
-    Buffer buffer_;
-    uint32_t field_9CC_;
-    uint32_t field_9D0_;
-    uint32_t field_9D4_;
-    uint32_t field_9D8_;
-    uint32_t field_9DC_;
-    uint32_t field_9E0_;
-    uint32_t field_9E4_;
-    uint32_t field_9E8_;
-    uint32_t field_9EC_;
-    uint32_t field_9F0_;
-    uint32_t field_9F4_;
-    uint32_t field_9F8_;
-    uint32_t field_9FC_;
-    uint32_t field_A00_;
-    uint32_t field_A04_;
-    uint32_t poCanvas_;
-    uint32_t field_A0C_;
-    uint32_t field_A10_;
-    ~GraphicWin();
-};
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
-    ~Spot();
-};
 void __stdcall fn_006456e4(void*, unsigned int, int, void (*)(void*));
 
 // Vtable shim. VC6 rejects a free `__thiscall` function pointer
@@ -1196,7 +1200,6 @@ class SocialWin { public:
 
     ~SocialWin();
 };
-
 SocialWin::~SocialWin() {
     char *self = reinterpret_cast<char *>(this);
 

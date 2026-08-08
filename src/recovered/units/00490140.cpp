@@ -7,7 +7,7 @@
 // name           ?update_pref_buttons@PrefWin@@QAEXXZ
 // size           486 bytes
 // measured tier  MISMATCH
-// divergence     29
+// divergence     125
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -499,6 +499,11 @@ class PrefWin { public:
     void update_pref_buttons();
 };
 
+// `#pragma function` stops VC6 recognising `strcat` as an intrinsic and
+// inlining a strlen+memcpy byte-copy loop in its place; the disassembly
+// shows a real `call _strcat`.
+#pragma function(strcat)
+
 // This body's delta-adjusted virtual calls need an int argument on slot 1,
 // where VCall above is nullary; and the two calls that pass the fixed
 // receiver's ADDRESS (not its contents) need `extern` symbols distinct from
@@ -530,10 +535,29 @@ void PrefWin::update_pref_buttons() {
         int delta = *reinterpret_cast<int *>(*reinterpret_cast<int *>(obj) + 4);
         reinterpret_cast<VCallArg *>(obj + delta)->slot001(0);
 
-        int id = *reinterpret_cast<int *>(*g_009b90f8 + 0x1100);
         self += 0x1a868;
         reinterpret_cast<BaseButton *>(self)->set_name(
-            reinterpret_cast<char *>(g_x9b90d8.get(id)));
+            reinterpret_cast<char *>(g_x9b90d8.get(
+                *reinterpret_cast<int *>(*g_009b90f8 + 0x1100))));
+        reinterpret_cast<VCallArg *>(self)->slot001(0);
+        return;
+    }
+    // Written here, not after case 5, because the compiled layout places
+    // this block immediately after case 2's - the compiler lays case
+    // bodies out in SOURCE order, not by case value, and the disassembly's
+    // block order (0x8614 body, then 0x913c body, then 0x6fc4, 0x7aec,
+    // 0x9c64) only reproduces byte-for-byte if the switch is written in
+    // that same order.
+    case 6: {
+        char *obj = self + 0x913c;
+        int delta = *reinterpret_cast<int *>(*reinterpret_cast<int *>(obj) + 4);
+        reinterpret_cast<VCallArg *>(obj + delta)->slot001(0);
+
+        g_x9b86a0[0] = 0;
+        int id = *reinterpret_cast<int *>(*g_009b90f8 + 0xa60);
+        strcat(g_x9b86a0, reinterpret_cast<char *>(g_x9b90d8.get(id)));
+        self += 0x1a868;
+        reinterpret_cast<BaseButton *>(self)->set_name(g_x9b86a0);
         reinterpret_cast<VCallArg *>(self)->slot001(0);
         return;
     }
@@ -563,19 +587,6 @@ void PrefWin::update_pref_buttons() {
         int delta = *reinterpret_cast<int *>(*reinterpret_cast<int *>(obj) + 4);
         reinterpret_cast<VCallArg *>(obj + delta)->slot001(0);
         break;
-    }
-    case 6: {
-        char *obj = self + 0x913c;
-        int delta = *reinterpret_cast<int *>(*reinterpret_cast<int *>(obj) + 4);
-        reinterpret_cast<VCallArg *>(obj + delta)->slot001(0);
-
-        g_x9b86a0[0] = 0;
-        int id = *reinterpret_cast<int *>(*g_009b90f8 + 0xa60);
-        strcat(g_x9b86a0, reinterpret_cast<char *>(g_x9b90d8.get(id)));
-        self += 0x1a868;
-        reinterpret_cast<BaseButton *>(self)->set_name(g_x9b86a0);
-        reinterpret_cast<VCallArg *>(self)->slot001(0);
-        return;
     }
     }
 }

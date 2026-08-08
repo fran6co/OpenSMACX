@@ -115,6 +115,8 @@ extern int raw_0090e8f4;
 extern int raw_0093d6b8[];
 extern unsigned char raw_0090dd14[];
 
+extern "C" void *memcpy(void *, const void *, unsigned int);
+
 void NetWin::on_left_click(int a1, int a2) {
     Spot *spot = reinterpret_cast<Spot *>(reinterpret_cast<char *>(this) + 0xd34);
     spot->check(a1, a2, &a2, &a1);
@@ -178,8 +180,7 @@ void NetWin::on_left_click(int a1, int a2) {
 
             short local_2c[8];
             int local_1c[6];
-            int *src = reinterpret_cast<int *>(0x90e8e0);
-            for (int i = 0; i < 6; i++) local_1c[i] = src[i];
+            memcpy(local_1c, reinterpret_cast<void *>(0x90e8e0), sizeof(local_1c));
             local_2c[0] = 0x2f02;
             reinterpret_cast<Net *>(0x93cd90)->send(local_2c, 0x28, *g_0093d4f4, 1);
             return;

@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,8 @@
 // address        0x004AD170
 // name           ??0ReportIf@@QAE@XZ
 // size           1006 bytes
-// measured tier  NO_COMPILE
-// refusal        u004ad170.cpp(159) : error C2079: 'spot_' uses undefined class 'Spot' u004ad170.cpp(837) : warning C4291: 'void *__cdecl operator new(unsigned int,void *)' : no
+// measured tier  MISMATCH
+// divergence     1
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -79,6 +79,7 @@ class Time;
 typedef unsigned int UINT_PTR;
 class Win;
 
+// ---- callees, declared and never defined (a definition would be inlined) ----
 class AutoSound { public:
     PVOID vtable_;
     int val_1_;
@@ -133,6 +134,13 @@ struct RECT {
     long top;
     long right;
     long bottom;
+};
+
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+    Spot();
 };
 
 class Buffer { public:
@@ -343,6 +351,16 @@ class BaseButton { public:
     uint32_t field_AB4_;
 };
 
+class ButtonGroup { public:
+    BaseButton * buttons_[32];
+    uint32_t count_;
+    uint32_t field_84_;
+    uint32_t field_88_;
+    uint32_t field_8C_;
+    uint32_t field_90_;
+    ButtonGroup();
+};
+
 class Dialog { public:
     LPVOID vtable_;
     Heap heap_;
@@ -413,225 +431,6 @@ struct DialogEntry {
     void * heap;
 };
 
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-};
-
-class GraphicWin { public:
-    AutoSound auto_sound_;
-    uint32_t iFlags_;
-    uint32_t iSomeFlag_;
-    uint32_t field_A0_;
-    uint32_t field_A4_;
-    uint32_t poWinBase_;
-    uint32_t iVertScaleDenom_;
-    uint32_t iVertScaleNum_;
-    Buffer * buffer1_;
-    Buffer * buffer2_;
-    Buffer * buffer3_;
-    Buffer * buffer4_;
-    Win * win_parent_;
-    uint32_t field_C8_;
-    uint32_t field_CC_;
-    uint32_t field_D0_;
-    uint32_t field_D4_;
-    uint32_t field_D8_;
-    Heap heap_;
-    Menu * menu_;
-    uint32_t field_F4_;
-    uint32_t field_F8_;
-    uint32_t field_FC_;
-    uint32_t field_100_;
-    uint32_t field_104_;
-    uint32_t field_108_;
-    uint32_t field_10C_;
-    uint32_t field_110_;
-    int caption_height_;
-    int border_thickness_;
-    int bottom_border_thickness_;
-    uint32_t field_120_;
-    uint32_t field_124_;
-    uint32_t field_128_;
-    uint32_t field_12C_;
-    uint32_t field_130_;
-    uint32_t field_134_;
-    uint32_t field_138_;
-    RECT outer_rect_;
-    RECT client_rect_;
-    uint32_t field_15C_;
-    uint32_t field_160_;
-    uint32_t field_164_;
-    uint32_t field_168_;
-    uint32_t field_16C_;
-    uint32_t field_170_;
-    uint32_t field_174_;
-    uint32_t field_178_;
-    uint32_t field_17C_;
-    uint32_t field_180_;
-    uint32_t field_184_;
-    Sprite * cursor_sprite_;
-    uint32_t field_18C_;
-    uint32_t field_190_;
-    HCURSOR * cursor_handle_;
-    int cursor_name_;
-    uint32_t field_19C_;
-    uint32_t field_1A0_;
-    Win * children_[150];
-    int child_count_;
-    uint32_t field_400_;
-    uint32_t field_404_;
-    uint32_t field_408_;
-    uint32_t field_40C_;
-    uint32_t field_410_;
-    uint32_t field_414_;
-    uint32_t field_418_;
-    uint32_t field_41C_;
-    uint32_t field_420_;
-    uint32_t field_424_;
-    uint32_t field_428_;
-    uint32_t field_42C_;
-    uint32_t field_430_;
-    uint32_t field_434_;
-    uint32_t field_438_;
-    Scroll * scroll_vert_;
-    Scroll * scroll_horz_;
-    Buffer buffer_;
-    uint32_t field_9CC_;
-    uint32_t field_9D0_;
-    uint32_t field_9D4_;
-    uint32_t field_9D8_;
-    uint32_t field_9DC_;
-    uint32_t field_9E0_;
-    uint32_t field_9E4_;
-    uint32_t field_9E8_;
-    uint32_t field_9EC_;
-    uint32_t field_9F0_;
-    uint32_t field_9F4_;
-    uint32_t field_9F8_;
-    uint32_t field_9FC_;
-    uint32_t field_A00_;
-    uint32_t field_A04_;
-    uint32_t poCanvas_;
-    uint32_t field_A0C_;
-    uint32_t field_A10_;
-};
-
-class Sprite { public:
-    int ppszFileName_;
-    int pcBits_;
-    char cTransparentIndex_;
-    char pad1_;
-    char pad2_;
-    char pad3_;
-    int iSpriteWidth2_;
-    int iSpriteWidth_;
-    int iSpriteHeight_;
-    int iWidth_;
-    int iHeight_;
-    int iLeftOffset_;
-    int iTopOffset_;
-    int fObj1Exists_;
-};
-
-class Win { public:
-    AutoSound auto_sound_;
-    uint32_t iFlags_;
-    uint32_t iSomeFlag_;
-    uint32_t field_A0_;
-    uint32_t field_A4_;
-    uint32_t poWinBase_;
-    uint32_t iVertScaleDenom_;
-    uint32_t iVertScaleNum_;
-    Buffer * buffer1_;
-    Buffer * buffer2_;
-    Buffer * buffer3_;
-    Buffer * buffer4_;
-    Win * win_parent_;
-    uint32_t field_C8_;
-    uint32_t field_CC_;
-    uint32_t field_D0_;
-    uint32_t field_D4_;
-    uint32_t field_D8_;
-    Heap heap_;
-    Menu * menu_;
-    uint32_t field_F4_;
-    uint32_t field_F8_;
-    uint32_t field_FC_;
-    uint32_t field_100_;
-    uint32_t field_104_;
-    uint32_t field_108_;
-    uint32_t field_10C_;
-    uint32_t field_110_;
-    int caption_height_;
-    int border_thickness_;
-    int bottom_border_thickness_;
-    uint32_t field_120_;
-    uint32_t field_124_;
-    uint32_t field_128_;
-    uint32_t field_12C_;
-    uint32_t field_130_;
-    uint32_t field_134_;
-    uint32_t field_138_;
-    RECT outer_rect_;
-    RECT client_rect_;
-    uint32_t field_15C_;
-    uint32_t field_160_;
-    uint32_t field_164_;
-    uint32_t field_168_;
-    uint32_t field_16C_;
-    uint32_t field_170_;
-    uint32_t field_174_;
-    uint32_t field_178_;
-    uint32_t field_17C_;
-    uint32_t field_180_;
-    uint32_t field_184_;
-    Sprite * cursor_sprite_;
-    uint32_t field_18C_;
-    uint32_t field_190_;
-    HCURSOR * cursor_handle_;
-    int cursor_name_;
-    uint32_t field_19C_;
-    uint32_t field_1A0_;
-    Win * children_[150];
-    int child_count_;
-    uint32_t field_400_;
-    uint32_t field_404_;
-    uint32_t field_408_;
-    uint32_t field_40C_;
-    uint32_t field_410_;
-    uint32_t field_414_;
-    uint32_t field_418_;
-    uint32_t field_41C_;
-    uint32_t field_420_;
-    uint32_t field_424_;
-    uint32_t field_428_;
-    uint32_t field_42C_;
-    uint32_t field_430_;
-    uint32_t field_434_;
-    uint32_t field_438_;
-    Scroll * scroll_vert_;
-    Scroll * scroll_horz_;
-};
-
-// ---- callees, declared and never defined (a definition would be inlined) ----
-class ButtonGroup { public:
-    BaseButton * buttons_[32];
-    uint32_t count_;
-    uint32_t field_84_;
-    uint32_t field_88_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
-    ButtonGroup();
-};
 class FlatButton { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -791,6 +590,119 @@ class FlatButton { public:
     uint32_t field_B48_;
     FlatButton();
 };
+
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+};
+
+class GraphicWin { public:
+    AutoSound auto_sound_;
+    uint32_t iFlags_;
+    uint32_t iSomeFlag_;
+    uint32_t field_A0_;
+    uint32_t field_A4_;
+    uint32_t poWinBase_;
+    uint32_t iVertScaleDenom_;
+    uint32_t iVertScaleNum_;
+    Buffer * buffer1_;
+    Buffer * buffer2_;
+    Buffer * buffer3_;
+    Buffer * buffer4_;
+    Win * win_parent_;
+    uint32_t field_C8_;
+    uint32_t field_CC_;
+    uint32_t field_D0_;
+    uint32_t field_D4_;
+    uint32_t field_D8_;
+    Heap heap_;
+    Menu * menu_;
+    uint32_t field_F4_;
+    uint32_t field_F8_;
+    uint32_t field_FC_;
+    uint32_t field_100_;
+    uint32_t field_104_;
+    uint32_t field_108_;
+    uint32_t field_10C_;
+    uint32_t field_110_;
+    int caption_height_;
+    int border_thickness_;
+    int bottom_border_thickness_;
+    uint32_t field_120_;
+    uint32_t field_124_;
+    uint32_t field_128_;
+    uint32_t field_12C_;
+    uint32_t field_130_;
+    uint32_t field_134_;
+    uint32_t field_138_;
+    RECT outer_rect_;
+    RECT client_rect_;
+    uint32_t field_15C_;
+    uint32_t field_160_;
+    uint32_t field_164_;
+    uint32_t field_168_;
+    uint32_t field_16C_;
+    uint32_t field_170_;
+    uint32_t field_174_;
+    uint32_t field_178_;
+    uint32_t field_17C_;
+    uint32_t field_180_;
+    uint32_t field_184_;
+    Sprite * cursor_sprite_;
+    uint32_t field_18C_;
+    uint32_t field_190_;
+    HCURSOR * cursor_handle_;
+    int cursor_name_;
+    uint32_t field_19C_;
+    uint32_t field_1A0_;
+    Win * children_[150];
+    int child_count_;
+    uint32_t field_400_;
+    uint32_t field_404_;
+    uint32_t field_408_;
+    uint32_t field_40C_;
+    uint32_t field_410_;
+    uint32_t field_414_;
+    uint32_t field_418_;
+    uint32_t field_41C_;
+    uint32_t field_420_;
+    uint32_t field_424_;
+    uint32_t field_428_;
+    uint32_t field_42C_;
+    uint32_t field_430_;
+    uint32_t field_434_;
+    uint32_t field_438_;
+    Scroll * scroll_vert_;
+    Scroll * scroll_horz_;
+    Buffer buffer_;
+    uint32_t field_9CC_;
+    uint32_t field_9D0_;
+    uint32_t field_9D4_;
+    uint32_t field_9D8_;
+    uint32_t field_9DC_;
+    uint32_t field_9E0_;
+    uint32_t field_9E4_;
+    uint32_t field_9E8_;
+    uint32_t field_9EC_;
+    uint32_t field_9F0_;
+    uint32_t field_9F4_;
+    uint32_t field_9F8_;
+    uint32_t field_9FC_;
+    uint32_t field_A00_;
+    uint32_t field_A04_;
+    uint32_t poCanvas_;
+    uint32_t field_A0C_;
+    uint32_t field_A10_;
+};
+
 class ListBox { public:
     uint32_t vbtable_pointer_;
     uint32_t field_4_;
@@ -815,12 +727,104 @@ class ListBox { public:
     Dialog dialog_;
     ListBox(int);
 };
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
-    Spot();
+
+class Sprite { public:
+    int ppszFileName_;
+    int pcBits_;
+    char cTransparentIndex_;
+    char pad1_;
+    char pad2_;
+    char pad3_;
+    int iSpriteWidth2_;
+    int iSpriteWidth_;
+    int iSpriteHeight_;
+    int iWidth_;
+    int iHeight_;
+    int iLeftOffset_;
+    int iTopOffset_;
+    int fObj1Exists_;
 };
+
+class Win { public:
+    AutoSound auto_sound_;
+    uint32_t iFlags_;
+    uint32_t iSomeFlag_;
+    uint32_t field_A0_;
+    uint32_t field_A4_;
+    uint32_t poWinBase_;
+    uint32_t iVertScaleDenom_;
+    uint32_t iVertScaleNum_;
+    Buffer * buffer1_;
+    Buffer * buffer2_;
+    Buffer * buffer3_;
+    Buffer * buffer4_;
+    Win * win_parent_;
+    uint32_t field_C8_;
+    uint32_t field_CC_;
+    uint32_t field_D0_;
+    uint32_t field_D4_;
+    uint32_t field_D8_;
+    Heap heap_;
+    Menu * menu_;
+    uint32_t field_F4_;
+    uint32_t field_F8_;
+    uint32_t field_FC_;
+    uint32_t field_100_;
+    uint32_t field_104_;
+    uint32_t field_108_;
+    uint32_t field_10C_;
+    uint32_t field_110_;
+    int caption_height_;
+    int border_thickness_;
+    int bottom_border_thickness_;
+    uint32_t field_120_;
+    uint32_t field_124_;
+    uint32_t field_128_;
+    uint32_t field_12C_;
+    uint32_t field_130_;
+    uint32_t field_134_;
+    uint32_t field_138_;
+    RECT outer_rect_;
+    RECT client_rect_;
+    uint32_t field_15C_;
+    uint32_t field_160_;
+    uint32_t field_164_;
+    uint32_t field_168_;
+    uint32_t field_16C_;
+    uint32_t field_170_;
+    uint32_t field_174_;
+    uint32_t field_178_;
+    uint32_t field_17C_;
+    uint32_t field_180_;
+    uint32_t field_184_;
+    Sprite * cursor_sprite_;
+    uint32_t field_18C_;
+    uint32_t field_190_;
+    HCURSOR * cursor_handle_;
+    int cursor_name_;
+    uint32_t field_19C_;
+    uint32_t field_1A0_;
+    Win * children_[150];
+    int child_count_;
+    uint32_t field_400_;
+    uint32_t field_404_;
+    uint32_t field_408_;
+    uint32_t field_40C_;
+    uint32_t field_410_;
+    uint32_t field_414_;
+    uint32_t field_418_;
+    uint32_t field_41C_;
+    uint32_t field_420_;
+    uint32_t field_424_;
+    uint32_t field_428_;
+    uint32_t field_42C_;
+    uint32_t field_430_;
+    uint32_t field_434_;
+    uint32_t field_438_;
+    Scroll * scroll_vert_;
+    Scroll * scroll_horz_;
+};
+
 void __stdcall fn_006456e4(void*, unsigned int, int, void (*)(void*));
 void __stdcall fn_006457c2(void*, unsigned int, int, void (*)(void*), void (*)(void*));
 
@@ -839,7 +843,6 @@ static int *const g_00678560 = (int *)0x00678560;
 class ReportIf { public:
     ReportIf();
 };
-
 inline void *operator new(unsigned int, void *p) { return p; }
 
 ReportIf::ReportIf() {
@@ -847,9 +850,9 @@ ReportIf::ReportIf() {
 
     *reinterpret_cast<uint32_t *>(self) = 0x66a6e4;
 
-    fn_006457c2(self + 0x80, 0xb4c, 7, (void(*)(void*))0x607cf0, (void(*)(void*))0x406880);
-    fn_006457c2(self + 0x4f94, 0x2c, 0x15, (void(*)(void*))0x5e37e0, (void(*)(void*))0x406850);
-    fn_006457c2(self + 0x5384, 0xb4c, 7, (void(*)(void*))0x607cf0, (void(*)(void*))0x406880);
+    fn_006457c2(self + 0x80, 0xb4c, 7, (void(*)(void*))g_00607cf0, (void(*)(void*))g_00406880);
+    fn_006457c2(self + 0x4f94, 0x2c, 0x15, (void(*)(void*))g_005e37e0, (void(*)(void*))g_00406850);
+    fn_006457c2(self + 0x5384, 0xb4c, 7, (void(*)(void*))g_00607cf0, (void(*)(void*))g_00406880);
 
     new (self + 0xa2d0) ListBox(1);
     new (self + 0xae24) ListBox(1);
@@ -868,18 +871,18 @@ ReportIf::ReportIf() {
     new (self + 0x12b98) FlatButton();
     new (self + 0x136e4) ButtonGroup();
 
-    fn_006457c2(self + 0x13778, 0xb4c, 7, (void(*)(void*))0x607cf0, (void(*)(void*))0x406880);
+    fn_006457c2(self + 0x13778, 0xb4c, 7, (void(*)(void*))g_00607cf0, (void(*)(void*))g_00406880);
 
     new (self + 0x1868c) ButtonGroup();
 
-    fn_006457c2(self + 0x18720, 0xb4c, 5, (void(*)(void*))0x607cf0, (void(*)(void*))0x406880);
+    fn_006457c2(self + 0x18720, 0xb4c, 5, (void(*)(void*))g_00607cf0, (void(*)(void*))g_00406880);
 
     new (self + 0x1bf9c) FlatButton();
     new (self + 0x1cae8) FlatButton();
     new (self + 0x1d634) FlatButton();
     new (self + 0x1e1bc) Spot();
 
-    fn_006457c2(self + 0x20254, 0x2c, 4, (void(*)(void*))0x5e37e0, (void(*)(void*))0x406850);
+    fn_006457c2(self + 0x20254, 0x2c, 4, (void(*)(void*))g_005e37e0, (void(*)(void*))g_00406850);
 
     *reinterpret_cast<uint32_t *>(self) = 0x66d700;
 }
