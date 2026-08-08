@@ -1,0 +1,89 @@
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE, not as a claim. Nothing reads this directory:
+// it is on no ratchet, in no build, and scored by no collect.
+//
+// address        0x004478D0
+// name           ??0BAmbience@@QAE@XZ
+// size           65 bytes
+// measured tier  MISMATCH
+// divergence     0
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/004478d0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ??0BAmbience@@QAE@XZ  at 0x004478D0  (65 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under BOTH cl 12.00.8168 and
+// i686-w64-mingw32-g++ -std=c++11. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class Ambience { public:
+    Ambience();
+};
+
+// ---- fixed globals this body references ----
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const g_0066b9f0 = (int *)0x0066B9F0;
+
+class BAmbience { public:
+    BAmbience();
+};
+
+BAmbience::BAmbience() {
+    reinterpret_cast<Ambience *>(this)->Ambience::Ambience();
+    char *self = reinterpret_cast<char *>(this);
+    *reinterpret_cast<int *>(self) = reinterpret_cast<int>(g_0066b9f0);
+    *reinterpret_cast<int *>(self + 0x58) = 0;
+    *reinterpret_cast<int *>(self + 0x5c) = 0;
+    *reinterpret_cast<int *>(self + 0x60) = 0;
+    *reinterpret_cast<int *>(self + 0x64) = 0;
+    *reinterpret_cast<char *>(self + 0x6c) = 0;
+    *reinterpret_cast<char *>(self + 0x6d) = 0;
+    *reinterpret_cast<int *>(self + 0x68) = 0;
+    *reinterpret_cast<int *>(self + 0x74) = 0;
+    *reinterpret_cast<int *>(self + 0x70) = 1;
+    *reinterpret_cast<int *>(self + 0x78) = 0x14;
+    *reinterpret_cast<int *>(self + 0x7c) = 0xf;
+}
