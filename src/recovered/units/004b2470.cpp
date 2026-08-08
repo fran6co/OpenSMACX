@@ -1187,5 +1187,5 @@ void SocialWin::on_iface_button_clicked(int a1) {
     social_calc(&g_arr_96cc08[faction * 2099], &g_arr_96cc2c[faction * 2099],
                 faction, 0, 0);
 
-    reinterpret_cast<VCall *>(self - 0xa14)->slot062();
+    reinterpret_cast<VCall *>(base)->slot062();
 }

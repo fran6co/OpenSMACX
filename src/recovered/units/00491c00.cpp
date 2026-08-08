@@ -258,28 +258,29 @@ class PrefWin { public:
 };
 
 void PrefWin::on_redraw() {
-    int rightBase1 = *g_008578a8;
-    int top1 = *g_00857898;
     char *self = reinterpret_cast<char *>(this);
+    Buffer *buf = reinterpret_cast<Buffer *>(self + 0x444);
 
-    RECT rect1;
-    rect1.left = *g_0085789c;
-    rect1.right = rightBase1 + rect1.left;
-    rect1.bottom = *g_008578a4 + top1;
-    rect1.top = top1;
-    reinterpret_cast<Buffer *>(self + 0x444)->box_sprite(
-        &rect1, reinterpret_cast<BoxSpriteParams *>(g_0078d7f8));
+    // A SINGLE RECT local, reused for both box_sprite calls: the disassembly
+    // stores both rectangles into the same [ebp-0x10 .. ebp-4] slots (sub
+    // esp, 0x10, not 0x20), and the Ghidra locals (local_14/c/8/10) are
+    // likewise reassigned rather than duplicated.
+    RECT rect;
+    int top1 = *g_00857898;
+    int rightBase1 = *g_008578a8;
+    rect.left = *g_0085789c;
+    rect.right = rightBase1 + rect.left;
+    rect.bottom = *g_008578a4 + top1;
+    rect.top = top1;
+    buf->box_sprite(&rect, reinterpret_cast<BoxSpriteParams *>(g_0078d7f8));
 
     int top2 = *g_008577dc - *g_00872ca8;
-    int rightBase2 = *g_008577e4;
-    RECT rect2;
-    rect2.left = *g_008577d8;
-    rect2.top = top2;
-    rect2.right = rightBase2 + rect2.left;
-    rect2.bottom = *g_008577e0 + top2;
+    rect.top = top2;
+    rect.left = *g_008577d8;
+    rect.right = *g_008577e4 + rect.left;
+    rect.bottom = *g_008577e0 + top2;
     if (*reinterpret_cast<int *>(self + 0xa14) == 4) {
-        reinterpret_cast<Buffer *>(self + 0x444)->box_sprite(
-            &rect2, reinterpret_cast<BoxSpriteParams *>(g_0078d690));
+        buf->box_sprite(&rect, reinterpret_cast<BoxSpriteParams *>(g_0078d690));
     }
 
     hide_option_buttons();

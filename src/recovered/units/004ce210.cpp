@@ -7,7 +7,7 @@
 // name           ?action_tectonic@@YAXHHH@Z
 // size           1169 bytes
 // measured tier  MISMATCH
-// divergence     24
+// divergence     4
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -72,6 +72,7 @@ class Spot;
 class Sprite;
 class Win;
 
+// ---- callees, declared and never defined (a definition would be inlined) ----
 class AutoSound { public:
     PVOID vtable_;
     int val_1_;
@@ -199,19 +200,6 @@ class Buffer { public:
     uint32_t field_584_;
 };
 
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-};
-
 class Heap { public:
     int8_t err_flags_;
     LPVOID base_;
@@ -319,6 +307,31 @@ class GraphicWin { public:
     uint32_t field_A10_;
 };
 
+class Console { public:
+    uint8_t derived_storage_[0x23D94];
+    GraphicWin virtual_base_;
+    void focus(int, int, int);
+};
+
+class FX { public:
+    uint8_t effects_[0x61 * 0x6C];
+    uint32_t field_28EC_;
+    void play(int, int, int);
+};
+
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+};
+
 class Sprite { public:
     int ppszFileName_;
     int pcBits_;
@@ -416,28 +429,17 @@ class Win { public:
     Scroll * scroll_horz_;
 };
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
-class Console { public:
-    uint8_t derived_storage_[0x23D94];
-    GraphicWin virtual_base_;
-    void focus(int, int, int);
-};
-class FX { public:
-    uint8_t effects_[0x61 * 0x6C];
-    uint32_t field_28EC_;
-    void play(int, int, int);
-};
-int __cdecl base_find(int, int);
-int __cdecl parse_says(int, char *, int, int);
+int base_find(int, int);
+int parse_says(int, char *, int, int);
 int __cdecl popp(char *, const char *, int, const char *, int (__cdecl *)());
-int __cdecl shoot_it(int, int, int, int, int);
-int __cdecl stack_fix(int);
-int __cdecl veh_at(int, int);
-int __cdecl whose_territory(int, int, int, int *, int);
-void __cdecl draw_map(int);
-void __cdecl kill(int);
-void __cdecl world_climate();
-void __cdecl world_raise_alt(int, int);
+int shoot_it(int, int, int, int, int);
+int stack_fix(int);
+int veh_at(int, int);
+int whose_territory(int, int, int, int *, int);
+void draw_map(int);
+void kill(int);
+void world_climate();
+void world_raise_alt(int, int);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -468,10 +470,8 @@ static int *const g_0097d053 = (int *)0x0097D053;
 static int *const g_009ab88f = (int *)0x009AB88F;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
-
-extern short g_00952828[];
-extern short g_0095282a[];
-extern short g_00952832[];
+extern char g_00952828[];  // per-faction struct, stride 0x34 bytes:
+                            // +0x0 short, +0x2 short, +0xA short, +0xE byte
 extern int g_00946a50[];
 extern char g_00946a84[];
 extern char g_00946a9c[];
@@ -479,118 +479,127 @@ extern int g_00946d4c[];
 extern int g_00946d50[];
 extern char g_00946d34[];
 
+// Translated directly from the Ghidra hypothesis (spot-checked against the
+// raw disassembly for the trickiest arithmetic: the per-faction struct at
+// 0x952828 (stride 0x34: short/short/short/byte at +0,+2,+0xA,+0xE), the
+// 0x2099-stride relation-flag tables, and the shift-amount bug where CL at
+// the has_project-style guard is *g_00939284's low byte, not the earlier
+// owner byte, because ecx gets reloaded in between).
+// Scored MISMATCH, very close: divergence at instruction #4 (push vs mov,
+// within the FX::play argument setup) and only 8 bytes of total size
+// difference (1161 rebuilt vs 1169 original) - consistent with a
+// REGISTER ALLOCATION or scheduling near-miss rather than a structural one.
 void __cdecl action_tectonic(int a1, int a2, int a3) {
-    int didFocus = 0;
-    int shootResult = 0;
-    int unitOff = a1 * 0x34;
+    int played_focus = 0;
+    int shot_result = 0;
+    int faction_off = a1 * 0x34;
 
-    reinterpret_cast<FX *>(g_00749cf8)->play(0x53, g_00952828[a1 * 0x1a], g_0095282a[a1 * 0x1a]);
+    short fx_y = *reinterpret_cast<short *>(g_00952828 + faction_off + 2);
+    short fx_x = *reinterpret_cast<short *>(g_00952828 + faction_off);
+    reinterpret_cast<FX *>(g_00749cf8)->play(0x53, fx_x, fx_y);
 
-    int fxIndex = g_00952832[a1 * 0x1a];
-    unsigned char cls = *(reinterpret_cast<unsigned char *>(g_009ab88f) + fxIndex * 0x34);
-    int radius = g_0066f8c4[cls];
+    short base_idx_raw = *reinterpret_cast<short *>(g_00952828 + faction_off + 0xA);
+    unsigned char land_id = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_009ab88f) + base_idx_raw * 0x34);
+    int raise_count = g_0066f8c4[land_id];
 
-    int baseIdx = base_find(a2, a3);
+    int missile_base = base_find(a2, a3);
 
-    unsigned char owner = *(reinterpret_cast<unsigned char *>(g_00952836) + unitOff);
-    int me = *g_00939284;
+    unsigned char owner = *reinterpret_cast<unsigned char *>(g_00952828 + faction_off + 0xE);
 
-    if (owner != me &&
-        ((g_0096c9e1[me * 0x833] & 2) ||
-         (*(reinterpret_cast<unsigned char *>(*g_0094a30c) + (*g_0068faf0 * a3 + (a2 >> 1)) * 0x2c + 4) &
-          (1 << (me & 0x1f)))) &&
-        baseIdx >= 0 &&
-        *(reinterpret_cast<unsigned char *>(g_0097d044) + baseIdx * 0x34) == me) {
+    if (owner != *g_00939284 &&
+        ((*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_0096c9e1) + *g_00939284 * 0x20CC) & 2) ||
+         (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_0094a30c) + 4 +
+              (*g_0068faf0 * a3 + (a2 >> 1)) * 0x2C) & (1 << (*g_00939284 & 0x1f)))) &&
+        missile_base >= 0 &&
+        *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_0097d044) + missile_base * 0x134) == *g_00939284) {
         reinterpret_cast<Console *>(g_009156b0)->focus(a2, a3, owner);
-        didFocus = 1;
+        played_focus = 1;
     }
 
-    unsigned char owner2 = *(reinterpret_cast<unsigned char *>(g_00952836) + unitOff);
+    unsigned int enemy = owner;
     kill(a1);
 
-    me = *g_00939284;
-    if (owner2 != me && baseIdx >= 0) {
-        *g_009bbff0 = 0;
-        *g_009bbfec = g_00946a50[owner2 * 0x167];
-        parse_says(0, &g_00946a9c[owner2 * 0x59c], -1, -1);
-        *g_009bbfec = g_00946a50[owner2 * 0x167];
-        *g_009bbff0 = 0;
-        parse_says(1, &g_00946a84[owner2 * 0x59c], -1, -1);
-        *g_009bbfec = g_00946d4c[owner2 * 0x167];
-        *g_009bbff0 = g_00946d50[owner2 * 0x167];
-        parse_says(2, &g_00946d34[owner2 * 0x59c], -1, -1);
-        parse_says(3, reinterpret_cast<char *>(g_0097d053) + baseIdx * 0x34, -1, -1);
-        popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(g_0068821c), 0,
-             reinterpret_cast<const char *>(g_0068820c), 0);
+    if (enemy != static_cast<unsigned int>(*g_00939284) && missile_base >= 0) {
+        int rec = enemy * 0x168 - enemy;
+        int recBytes = rec * 4;
+        *g_009bbff0 = -1;
+        *g_009bbfec = g_00946a50[rec];
+        parse_says(0, g_00946a9c + recBytes, -1, -1);
+        *g_009bbfec = g_00946a50[rec];
+        *g_009bbff0 = -1;
+        parse_says(1, g_00946a84 + recBytes, -1, -1);
+        *g_009bbfec = g_00946d4c[rec];
+        *g_009bbff0 = g_00946d50[rec];
+        parse_says(2, g_00946d34 + recBytes, -1, -1);
+        parse_says(3, reinterpret_cast<char *>(g_0097d053) + missile_base * 0x134, -1, -1);
+        popp(*reinterpret_cast<char **>(g_00691b0c), reinterpret_cast<const char *>(g_0068821c),
+             0, reinterpret_cast<const char *>(g_0068820c), 0);
+        enemy = owner;
     }
 
-    int shot[8] = {0};
+    int hit[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    if (radius > 0) {
+    if (raise_count > 0) {
         int i = 0;
         do {
-            int wx = g_0066efbc[i] + a2;
+            int vx = g_0066efbc[i] + a2;
             if (!(*g_0094988c & 1)) {
-                if (wx < 0) {
-                    wx += *g_00949870;
-                } else if (wx >= *g_00949870) {
-                    wx -= *g_00949870;
+                if (vx < 0) {
+                    vx += *g_00949870;
+                } else if (vx >= *g_00949870) {
+                    vx -= *g_00949870;
                 }
             }
-            int wy = g_0066f440[i] + a3;
-            if (wy >= 0 && wy < *g_00949874 && wx >= 0 && wx < *g_00949870) {
-                int vehIdx = veh_at(wx, wy);
-                int stackIdx = stack_fix(vehIdx);
-                if (stackIdx >= 0) {
-                    unsigned char stOwner = *(reinterpret_cast<unsigned char *>(g_00952836) + stackIdx * 0x34);
-                    if (stOwner != owner2 && !(g_0096c9f8[owner2 * 0x833 + stOwner] & 1) &&
-                        shot[stOwner] == 0) {
-                        shootResult = shoot_it(owner2, stOwner, a2, a3, 0);
-                        if (shootResult != 0) {
+            int vy = g_0066f440[i] + a3;
+            if (vy >= 0 && vy < *g_00949874 && vx >= 0 && vx < *g_00949870) {
+                int veh = veh_at(vx, vy);
+                veh = stack_fix(veh);
+                if (veh >= 0) {
+                    unsigned int veh_owner = *reinterpret_cast<unsigned char *>(g_00952828 + veh * 0x34 + 0xE);
+                    if (enemy != veh_owner &&
+                        !(*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_0096c9f8) +
+                              veh_owner * 4 + enemy * 0x20CC) & 1) &&
+                        hit[veh_owner] == 0) {
+                        shot_result = shoot_it(enemy, veh_owner, a2, a3, 0);
+                        if (shot_result != 0) {
                             break;
                         }
-                        shot[stOwner] = 1;
+                        hit[veh_owner] = 1;
                     }
                 }
             }
             ++i;
-        } while (i < radius);
+        } while (i < raise_count);
     }
 
-    int terr = whose_territory(owner2, a2, a3, static_cast<int *>(0), 0);
-    if (terr >= 0 && terr != owner2 && shot[terr] == 0) {
-        shootResult = shoot_it(owner2, terr, a2, a3, 0);
+    int territory = whose_territory(enemy, a2, a3, 0, 0);
+    if (territory >= 0 && static_cast<unsigned int>(territory) != enemy && hit[territory] == 0) {
+        shot_result = shoot_it(enemy, territory, a2, a3, 0);
     }
 
-    if (shootResult == 0) {
-        if (cls > 0) {
-            int n = cls;
-            do {
-                world_raise_alt(a2, a3);
-                --n;
-            } while (n != 0);
+    if (shot_result == 0) {
+        for (int n = land_id; n > 0; --n) {
+            world_raise_alt(a2, a3);
         }
         world_climate();
         draw_map(1);
-        if (didFocus != 0) {
-            parse_says(0, reinterpret_cast<char *>(g_0097d053) + baseIdx * 0x34, -1, -1);
-            unsigned char o1 = *(reinterpret_cast<unsigned char *>(g_00952836) + unitOff);
-            *g_009bbff0 = 0;
-            *g_009bbfec = g_00946a50[o1 * 0x167];
-            parse_says(1, &g_00946a9c[o1 * 0x59c], -1, -1);
-            unsigned char o2 = *(reinterpret_cast<unsigned char *>(g_00952836) + unitOff);
-            *g_009bbff0 = 0;
-            *g_009bbfec = g_00946a50[o2 * 0x167];
-            parse_says(2, &g_00946a84[o2 * 0x59c], -1, -1);
-            unsigned char o3 = *(reinterpret_cast<unsigned char *>(g_00952836) + unitOff);
-            *g_009bbfec = g_00946d4c[o3 * 0x167];
-            *g_009bbff0 = g_00946d50[o3 * 0x167];
-            parse_says(3, &g_00946d34[o3 * 0x59c], -1, -1);
-            popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(g_0068823c), 0,
-                 reinterpret_cast<const char *>(g_0068822c), 0);
+
+        if (played_focus) {
+            parse_says(0, reinterpret_cast<char *>(g_0097d053) + missile_base * 0x134, -1, -1);
+            *g_009bbff0 = -1;
+            *g_009bbfec = g_00946a50[owner * 0x167];
+            parse_says(1, g_00946a9c + owner * 0x59c, -1, -1);
+            *g_009bbff0 = -1;
+            *g_009bbfec = g_00946a50[owner * 0x167];
+            parse_says(2, g_00946a84 + owner * 0x59c, -1, -1);
+            *g_009bbfec = g_00946d4c[owner * 0x167];
+            *g_009bbff0 = g_00946d50[owner * 0x167];
+            parse_says(3, g_00946d34 + owner * 0x59c, -1, -1);
+            popp(*reinterpret_cast<char **>(g_00691b0c), reinterpret_cast<const char *>(g_0068823c),
+                 0, reinterpret_cast<const char *>(g_0068822c), 0);
         }
-        unsigned char o4 = *(reinterpret_cast<unsigned char *>(g_00952836) + unitOff);
-        g_00946138[o4] += 1;
+
+        g_00946138[owner] = g_00946138[owner] + 1;
         *g_0090d91c |= 4;
     }
 }

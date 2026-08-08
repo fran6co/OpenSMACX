@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured NO_COMPILE.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,8 @@
 // address        0x004834E0
 // name           ??1NetWin@@QAE@XZ
 // size           963 bytes
-// measured tier  NO_COMPILE
-// refusal        u004834e0.cpp(153) : error C2079: 'spot_' uses undefined class 'Spot'
+// measured tier  MISMATCH
+// divergence     1
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -127,6 +127,19 @@ struct RECT {
     long top;
     long right;
     long bottom;
+};
+
+// Moved ahead of `Buffer`, which embeds it BY VALUE at `spot_` below - the
+// on-disk scaffold had this definition further down (after Buffer), which
+// is a C2079 ('spot_' uses undefined class 'Spot') under any compiler: a
+// by-value member needs a complete type in scope at the point of use, not
+// merely the forward declaration above.
+class Spot { public:
+    void * spots_;
+    uint32_t max_count_;
+    uint32_t add_count_;
+    void shutdown();
+    ~Spot();
 };
 
 class Buffer { public:
@@ -802,13 +815,6 @@ class GraphicWin { public:
 };
 class Scroll { public:
     void close();
-};
-class Spot { public:
-    void * spots_;
-    uint32_t max_count_;
-    uint32_t add_count_;
-    void shutdown();
-    ~Spot();
 };
 class StringBox { public:
     void close();

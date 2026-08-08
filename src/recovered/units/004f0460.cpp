@@ -83,7 +83,7 @@ void __cdecl upgrade_prototypes(int a1, int a2) {
 
     for (int i = 0; i < 0x80; i++) {
         int other = i;
-        if (other > 0x3f) {
+        if (other >= 0x40) {
             int t = other & 0x8000003f;
             if (t < 0) {
                 t = ((t - 1) | 0xffffffc0) + 1;

@@ -7,7 +7,7 @@
 // name           ?timer_callback@ReplayWin@@QAEXXZ
 // size           492 bytes
 // measured tier  MISMATCH
-// divergence     6
+// divergence     8
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -168,10 +168,13 @@ void ReplayWin::timer_callback() {
     // Reach fields by offset - the class is deliberately empty.
     char *self = reinterpret_cast<char *>(this);
 
-    if (*reinterpret_cast<int *>(self + 0xa18) < *g_009a64d4) {
+    int cur_turn = *reinterpret_cast<int *>(self + 0xa18);
+    int limit = *g_009a64d4;
+    if (cur_turn < limit) {
         goto process;
     }
-    if (*reinterpret_cast<int *>(self + 0xa18) < *g_009a64d4 + 0x32) {
+    limit += 0x32;
+    if (cur_turn < limit) {
         return;
     }
     reinterpret_cast<VCall *>(this)->slot058();

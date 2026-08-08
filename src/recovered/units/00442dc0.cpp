@@ -255,40 +255,42 @@ void DiploWin::draw_whom() {
     idx = *reinterpret_cast<int *>(self + 0xab8);
     buf->set_text_color(g_0068fa30[idx], g_0068fa50[idx], 1, 1);
 
-    RECT rect1 = *reinterpret_cast<RECT *>(self + 0xf8c);
-    buf->box_sprite(&rect1, reinterpret_cast<BoxSpriteParams *>(g_0078d618));
-    rect1.left += 3;
-    rect1.right -= 3;
-    rect1.top += 3;
-    rect1.bottom -= 3;
+    // The original reuses one 20-byte local slot for both rects in turn
+    // (same ebp-relative offsets throughout); mirrored here with one `rect`.
+    RECT rect = *reinterpret_cast<RECT *>(self + 0xf8c);
+    buf->box_sprite(&rect, reinterpret_cast<BoxSpriteParams *>(g_0078d618));
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
     (*reinterpret_cast<CharUpperFn *>(g_0066931c))(reinterpret_cast<char *>(g_009b86a0));
     if (reinterpret_cast<char *>(g_009b86a0) != 0) {
-        buf->write_cent_l(reinterpret_cast<char *>(g_009b86a0), &rect1,
+        buf->write_cent_l(reinterpret_cast<char *>(g_009b86a0), &rect,
                            strlen(reinterpret_cast<char *>(g_009b86a0)));
     }
 
-    RECT rect2 = *reinterpret_cast<RECT *>(self + 0xf6c);
-    buf->box_sprite(&rect2, reinterpret_cast<BoxSpriteParams *>(g_0078d528));
+    rect = *reinterpret_cast<RECT *>(self + 0xf6c);
+    buf->box_sprite(&rect, reinterpret_cast<BoxSpriteParams *>(g_0078d528));
 
     idx = *reinterpret_cast<int *>(self + 0xab8);
     Sprite *spr = reinterpret_cast<Sprite *>(mz_0078eecc + idx * 0x65c);
     int spriteHeight = spr->iHeight_;
-    int top = rect2.top + 1;
-    rect2.top = top;
-    int right = rect2.right;
+    int top = rect.top + 1;
+    int right = rect.right;
     int spriteWidth = spr->iWidth_;
     int left = right - spriteWidth - 1;
-    rect2.left = left;
-    rect2.right = spriteWidth + left;
-    rect2.bottom = spriteHeight + top;
+    rect.top = top;
+    rect.left = left;
+    rect.right = spriteWidth + left;
+    rect.bottom = spriteHeight + top;
     Buffer *target = this ? buf : 0;
     int flag = static_cast<unsigned char>(spr->cTransparentIndex_);
     spr->draw(target, flag, left, top, 1, 1);
 
-    rect2.left += 4;
-    rect2.bottom -= 4;
-    rect2.right -= 4;
-    rect2.top = rect2.bottom - 0x14;
+    rect.left += 4;
+    rect.bottom -= 4;
+    rect.right -= 4;
+    rect.top = rect.bottom - 0x14;
     buf->set_font(reinterpret_cast<Font *>(find_font(0xe, 1)), 0, 0, 0);
     *reinterpret_cast<char *>(g_009b86a0) = 0;
 
@@ -327,13 +329,13 @@ void DiploWin::draw_whom() {
 
 after_switch:
     (*reinterpret_cast<CharUpperFn *>(g_0066931c))(reinterpret_cast<char *>(g_009b86a0));
-    buf->map_colors(&rect2, reinterpret_cast<unsigned char *>(g_006f107c));
-    rect2.left += 3;
-    rect2.right -= 3;
-    rect2.top += 3;
-    rect2.bottom -= 3;
+    buf->map_colors(&rect, reinterpret_cast<unsigned char *>(g_006f107c));
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
     if (reinterpret_cast<char *>(g_009b86a0) != 0) {
-        buf->write_cent_l(reinterpret_cast<char *>(g_009b86a0), &rect2,
+        buf->write_cent_l(reinterpret_cast<char *>(g_009b86a0), &rect,
                            strlen(reinterpret_cast<char *>(g_009b86a0)));
     }
 }

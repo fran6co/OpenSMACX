@@ -73,6 +73,7 @@ class Sprite;
 class Wave;
 class Win;
 
+// ---- callees, declared and never defined (a definition would be inlined) ----
 class AutoSound { public:
     PVOID vtable_;
     int val_1_;
@@ -114,27 +115,6 @@ class AutoSound { public:
     int val_37_;
 };
 
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-};
-
-class Heap { public:
-    int8_t err_flags_;
-    LPVOID base_;
-    LPVOID current_;
-    size_t base_size_;
-    size_t free_size_;
-};
-
 struct RECT {
     long left;
     long top;
@@ -148,24 +128,6 @@ class Spot { public:
     uint32_t add_count_;
 };
 
-class Sprite { public:
-    int ppszFileName_;
-    int pcBits_;
-    char cTransparentIndex_;
-    char pad1_;
-    char pad2_;
-    char pad3_;
-    int iSpriteWidth2_;
-    int iSpriteWidth_;
-    int iSpriteHeight_;
-    int iWidth_;
-    int iHeight_;
-    int iLeftOffset_;
-    int iTopOffset_;
-    int fObj1Exists_;
-};
-
-// ---- callees, declared and never defined (a definition would be inlined) ----
 class Buffer { public:
     LPVOID vtable_;
     uint32_t poOwner_;
@@ -247,9 +209,49 @@ class Buffer { public:
     void resize(int, int);
     ~Buffer();
 };
+
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+};
+
+class Heap { public:
+    int8_t err_flags_;
+    LPVOID base_;
+    LPVOID current_;
+    size_t base_size_;
+    size_t free_size_;
+};
+
 class Sound { public:
     void fade(unsigned long);
 };
+
+class Sprite { public:
+    int ppszFileName_;
+    int pcBits_;
+    char cTransparentIndex_;
+    char pad1_;
+    char pad2_;
+    char pad3_;
+    int iSpriteWidth2_;
+    int iSpriteWidth_;
+    int iSpriteHeight_;
+    int iWidth_;
+    int iHeight_;
+    int iLeftOffset_;
+    int iTopOffset_;
+    int fObj1Exists_;
+};
+
 class Wave { public:
     uint32_t vtable_storage_;
     uint32_t volume_;
@@ -273,6 +275,7 @@ class Wave { public:
     uint32_t group_slot_;
     int play();
 };
+
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -357,6 +360,7 @@ class Win { public:
     void screen_to_client(RECT *);
     void update_window_to_buffer(Buffer *);
 };
+
 int __cdecl do_sound();
 
 // Vtable shim. VC6 rejects a free `__thiscall` function pointer

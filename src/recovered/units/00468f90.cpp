@@ -436,15 +436,20 @@ class MapWin { public:
     void draw_vehicles(int, int, int, int);
 };
 
-// NEAR MISS, 92% mnemonic similarity, 499/499 bytes (same length as the
-// original): diverges only in how the compiler enters the outer do-while.
-// The original computes `outer_j = -outer_i` right before the loop, then
-// `jmp`s past the loop-top reload straight into the loop body's second half
-// (register already holds the fresh value); this candidate's identical
-// source shape gets the loop-top reload on entry instead - loop-rotation /
-// entry code motion the compiler chose differently, not a logic gap. RULED
-// OUT further chasing of that one `jmp`; everything else in the body,
-// including all six 0x1ddxx bound reads and both nested calls, matches.
+// MISMATCH, re-measured: 92.7% mnemonic similarity (159/175 mnemonics in
+// common), 499 original bytes vs 509 rebuilt. `verify_recovered_function.py`
+// tries every flag set in FLAG_SETS and keeps the closest; the closest is
+// still a FRAMELESS build (`/Oy`, no `push ebp; mov ebp,esp`), while the
+// original span opens `push ebp / mov ebp,esp / sub esp,N / push ebx / mov
+// esi,ecx / push esi / push edi` - a kept frame pointer. Forcing `/Oy-`
+// (frame kept) on this same source compiles but scores a LOWER mnemonic
+// similarity than the frameless build, because the rest of the body's
+// codegen shifts too - so the frame is not the only thing that would need
+// to change, and "closest available" is the frameless one. RULED OUT: the
+// remaining edits are one insert/delete pair around the loop-entry `jmp`
+// (loop-rotation on the outer do-while, unchanged across the source shapes
+// tried) layered on top of the frame-pointer disagreement. Everything else -
+// all six 0x1ddxx bound reads and both nested calls - matches in order.
 void MapWin::draw_vehicles(int a1, int a2, int a3, int a4) {
     char *self = reinterpret_cast<char *>(this);
 

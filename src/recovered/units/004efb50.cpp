@@ -7,7 +7,7 @@
 // name           ?do_upgrade@@YAXHHH@Z
 // size           506 bytes
 // measured tier  MISMATCH
-// divergence     2
+// divergence     4
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -444,30 +444,29 @@ extern unsigned char g_0096d238_tbl[];
 extern unsigned char g_009ab898_tbl[];
 
 void __cdecl do_upgrade(int a1, int a2, int a3) {
-    int orig_a1 = a1;
-    int orig_a2 = a2;
     int cost = upgrade_cost(a1, a2, a3);
     int off = a1 * 0x20cc;
+    int a2_saved = a2;
     a2 = 0;
     unsigned char bVar1 = g_0096d238_tbl[off + a3];
-    int local4 = cost * bVar1 * 10;
-    g_0096cc00_tbl[a1 * 0x833] -= local4;
+    int product = cost * bVar1 * 10;
+    g_0096cc00_tbl[a1 * 0x833] -= product;
 
     if (*g_009a64c8 > 0) {
         unsigned char *rec = reinterpret_cast<unsigned char *>(g_0095284c);
         do {
-            if (rec[-0x16] == orig_a1 && *reinterpret_cast<short *>(rec - 0x1a) == a3) {
+            if (rec[-0x16] == a1 && *reinterpret_cast<short *>(rec - 0x1a) == a3) {
                 g_0096d238_tbl[off + a3]--;
-                g_0096d238_tbl[off + orig_a2]++;
-                *reinterpret_cast<short *>(rec - 0x1a) = static_cast<short>(orig_a2);
+                g_0096d238_tbl[off + a2_saved]++;
+                *reinterpret_cast<short *>(rec - 0x1a) = static_cast<short>(a2_saved);
 
-                if (has_abil(orig_a2, 0x4000) != 0 && has_abil(a3, 0x4000) == 0) {
+                if (has_abil(a2_saved, 0x4000) != 0 && has_abil(a3, 0x4000) == 0) {
                     int v = *rec + 1;
                     if (v < 0) v = 0;
                     else if (v > 6) v = 6;
                     *rec = static_cast<unsigned char>(v);
                 }
-                if (has_abil(orig_a2, 0x4000) == 0 && has_abil(a3, 0x4000) != 0) {
+                if (has_abil(a2_saved, 0x4000) == 0 && has_abil(a3, 0x4000) != 0) {
                     int v = *rec - 1;
                     if (v < 0) v = 0;
                     else if (v > 6) v = 6;
@@ -481,9 +480,9 @@ void __cdecl do_upgrade(int a1, int a2, int a3) {
 
     if (*g_009a64cc > 0) {
         unsigned char *rec2 = reinterpret_cast<unsigned char *>(g_0097d08c);
-        a1 = *g_009a64cc;
+        int j = *g_009a64cc;
         do {
-            if (rec2[-0x48] == orig_a1) {
+            if (rec2[-0x48] == a1) {
                 int *countp = reinterpret_cast<int *>(rec2);
                 if (*countp >= 0) {
                     int *ip = countp;
@@ -491,28 +490,28 @@ void __cdecl do_upgrade(int a1, int a2, int a3) {
                     do {
                         ip++;
                         if (*ip == a3) {
-                            *ip = orig_a2;
+                            *ip = a2_saved;
                         }
                         k++;
                     } while (k <= *countp);
                 }
             }
             rec2 += 0x134;
-            a1--;
-        } while (a1 != 0);
+            j--;
+        } while (j != 0);
     }
 
-    if (orig_a2 > 0x3f && local4 != 0) {
-        g_009ab898_tbl[orig_a2 * 0x34] |= 4;
+    if (a2_saved > 0x3f && product != 0) {
+        g_009ab898_tbl[a2_saved * 0x34] |= 4;
     }
     if (a3 > 0x3f) {
         g_009ab898_tbl[a3 * 0x34] &= 0xfe;
     }
 
-    if ((*reinterpret_cast<unsigned char *>(g_009a64e8) & (1 << orig_a1)) != 0) {
+    if ((*reinterpret_cast<unsigned char *>(g_009a64e8) & (1 << a1)) != 0) {
         draw_map(1);
     }
-    if (orig_a1 == *g_00939284) {
+    if (a1 == *g_00939284) {
         reinterpret_cast<Console *>(g_009156b0)->update_data(0);
     }
 }
