@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "mapwin.h"
+#include "buffer.h"
 
 #include "original_seam.h"
 #include "graphicwin.h"
@@ -52,9 +54,9 @@ class DLLEXPORT WorldWin : GraphicWin {
 
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18
-  uint8_t buffer1_[0x588];  // 0xA1C
-  uint8_t buffer2_[0x588];  // 0xFA4
-  uint8_t mapWin_[0x22480];  // 0x152C
+  Buffer buffer1_;  // 0xA1C
+  Buffer buffer2_;  // 0xFA4
+  MapWin mapWin_;  // 0x152C
   uint8_t field_239AC_[0x24];  // 0x239AC
 
   // Storage the image proves is here: its own methods reach 0x239D4.

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "font.h"
 #include "graphicwin.h"
 
  /*
@@ -60,7 +61,7 @@ class DLLEXPORT Gamma : GraphicWin {
   uint32_t field_A60_;  // 0xA60
   uint32_t field_A64_;  // 0xA64
   uint8_t palette_[0x454];  // 0xA68
-  uint8_t font_[0x28];  // 0xEBC
+  Font font_;  // 0xEBC
   uint32_t field_EE4_;  // 0xEE4
   uint32_t field_EE8_;  // 0xEE8
   uint32_t field_EEC_;  // 0xEEC

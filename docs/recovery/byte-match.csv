@@ -833,10 +833,10 @@ c00433f50.cpp(123) : error C2783: 'Method __cdecl original_method(unsigned long)
 u00437ba0.cpp(52) : error C2355: 'this' : can only be referenced inside non-static member functions
 u00437ba0.cpp(52) : warning C4229: anachronism used : modifiers on data are ignored
 u00437ba0.cpp(52) : error C2182: 'fn_005f8500' : illegal use of type 'void'
-u00437ba0.cpp(58) : error C2146: syntax error : missing ',' before identifier 'a1'
-u00437ba0.cpp(58) : error C2061: syntax error : identifier 'a1'
-u00437ba0.cpp(58) : error C2511: 'on_mouse_move' : overloaded member function 'void (int)' not found in 'DesignWin'
-u00437ba0.cpp(54) : see declaration of 'DesignWin'"
+u00437ba0.cpp(81) : error C2061: syntax error : identifier 'Win'
+u00437ba0.cpp(82) : error C2061: syntax error : identifier 'Win'
+u00437ba0.cpp(83) : error C2065: 'spot_' : undeclared identifier
+u00437ba0.cpp(83) : error C2228: left of '.check' must have class/struct/union type"
 0x00437BE0,?on_mouse_leave@DesignWin@@QAEXHH@Z,src/designwin.cpp:135,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00437be0.cpp(316) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
 c00437be0.cpp(300) : see declaration of 'clear_bubble_text'
 c00437be0.cpp(317) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
@@ -1222,7 +1222,7 @@ c00447b90.cpp(80) : error C2065: 'field_70_' : undeclared identifier"
 0x00447CA0,?production@GAmbience@@QAEXXZ,src/ambience.cpp:160,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x00447CB0,?popup1@GAmbience@@QAEXXZ,src/ambience.cpp:169,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x00447CC0,?eot@GAmbience@@QAEXXZ,src/ambience.cpp:178,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x00447CD0,?new_base@GAmbience@@QAEXXZ,,0,55,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,55,1,16,1,0,#0: original 'push' vs rebuilt 'ret',
+0x00447CD0,?new_base@GAmbience@@QAEXXZ,,0,55,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,55,55,,,,,
 0x00447DB0,?begin@AAmbience@@QAEXXZ,,0,22,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,22,22,,,,,
 0x00447DD0,?general@AAmbience@@QAEXXZ,,0,1187,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1187,1175,357,350,2,#2: original 'push' vs rebuilt 'inc',
 0x00448280,?tech@AAmbience@@QAEXXZ,src/field_accessors.cpp:85,1,4,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,4,4,,,,,
@@ -3502,11 +3502,11 @@ c004595b0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0045C780,?on_left_down@MainInterface@@QAEXHH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,52,52,,,,,
 0x0045C7C0,?on_right_down@MainInterface@@QAEXHH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,52,52,,,,,
 0x0045C800,?on_button_clicked@MainInterface@@QAEXH@Z,,0,48,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,48,48,,,,,
-0x0045C830,?on_button_pressed@MainInterface@@QAEHH@Z,,0,54,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,54,5,18,2,0,#0: original 'push' vs rebuilt 'xor',
+0x0045C830,?on_button_pressed@MainInterface@@QAEHH@Z,,0,54,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,54,54,,,,,
 0x0045C870,?on_button_toggled@MainInterface@@QAEXHH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,52,52,,,,,
 0x0045C8B0,?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z,,0,54,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,54,5,18,2,0,#0: original 'push' vs rebuilt 'xor',
 0x0045C8F0,?on_dialog_item_back_draw@MainInterface@@QAEHPAUGraphicWin@@HHPAURECT@@@Z,,0,66,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,66,5,24,2,0,#0: original 'push' vs rebuilt 'xor',
-0x0045C940,?on_group_clicked@MainInterface@@QAEXHHH@Z,,0,56,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,56,3,19,1,0,#0: original 'push' vs rebuilt 'ret 0xc',
+0x0045C940,?on_group_clicked@MainInterface@@QAEXHHH@Z,,0,56,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,56,56,,,,,
 0x0045C980,?on_mouse_move@MainInterface@@QAEXHH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,52,52,,,,,
 0x0045C9C0,?on_mouse_leave@MainInterface@@QAEXHH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,52,52,,,,,
 0x0045CA00,?on_selected@MainInterface@@QAEXHH@Z,,0,52,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,52,52,,,,,
@@ -3672,10 +3672,10 @@ c004712a0.cpp(47) : error C2100: illegal indirection"
 u004712d0.cpp(44) : error C2355: 'this' : can only be referenced inside non-static member functions
 u004712d0.cpp(44) : error C2065: 'Buffer' : undeclared identifier
 u004712d0.cpp(44) : error C2059: syntax error : ','"
-0x00471320,??__Eg_MESSAGEWIN@@YAXXZ,src/init_thunks.cpp:3916,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00471320.cpp(92) : error C2065: 'MessageWinCtorTarget' : undeclared identifier
-c00471320.cpp(92) : error C2297: '->*' : illegal, right operand has type 'int'
-c00471320.cpp(93) : error C2065: 'GameAtexit' : undeclared identifier
-c00471320.cpp(93) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x00471320,??__Eg_MESSAGEWIN@@YAXXZ,src/init_thunks.cpp:3916,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00471320.cpp(109) : error C2065: 'MessageWinCtorTarget' : undeclared identifier
+c00471320.cpp(109) : error C2297: '->*' : illegal, right operand has type 'int'
+c00471320.cpp(110) : error C2065: 'GameAtexit' : undeclared identifier
+c00471320.cpp(110) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x00471340,??__Fg_MESSAGEWIN@@YAXXZ,src/atexit_thunks.cpp:3766,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00471340.cpp(63) : error C2065: 'MessageWinDtorTarget' : undeclared identifier
 c00471340.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00471350,??__Eg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ,src/init_thunks.cpp:3927,1,36,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00471350.cpp(69) : error C2065: 'g_IFACE_GREEN_RIGHT_ARROW_SPRITE' : undeclared identifier
@@ -3814,10 +3814,10 @@ c004837c0.cpp(70) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004837F0,?UNK4@NetWin@@QAEXXZ,,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
 0x00483820,?UNK5@NetWin@@QAEXXZ,src/netwin.cpp:122,0,28,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,28,26,9,8,0,#0: original 'mov' vs rebuilt 'xor',
 0x00483840,??3NetWin@@SAXPAXI@Z,src/deleting_thunks.cpp:989,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00483840.cpp(44) : error C2065: 'scalar_delete_net_win' : undeclared identifier
-0x00483850,??__Eg_NEWTECHWIN@@YAXXZ,src/init_thunks.cpp:4004,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00483850.cpp(506) : error C2065: 'NewTechWinCtorTarget' : undeclared identifier
-c00483850.cpp(506) : error C2297: '->*' : illegal, right operand has type 'int'
-c00483850.cpp(507) : error C2065: 'GameAtexit' : undeclared identifier
-c00483850.cpp(507) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x00483850,??__Eg_NEWTECHWIN@@YAXXZ,src/init_thunks.cpp:4004,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00483850.cpp(814) : error C2065: 'NewTechWinCtorTarget' : undeclared identifier
+c00483850.cpp(814) : error C2297: '->*' : illegal, right operand has type 'int'
+c00483850.cpp(815) : error C2065: 'GameAtexit' : undeclared identifier
+c00483850.cpp(815) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x00483870,??__Fg_NEWTECHWIN@@YAXXZ,src/atexit_thunks.cpp:3846,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00483870.cpp(63) : error C2065: 'NewTechWinDtorTarget' : undeclared identifier
 c00483870.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'
 Generating Code...
@@ -3830,13 +3830,13 @@ c00483880.cpp(70) : error C2061: syntax error : identifier 'func_atexit_callback
 0x004838B0,??__Fg_NEWTECHWIN_SPRITES@@YAXXZ,,0,40,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004838b0.cpp(44) : error C4234: nonstandard extension used : '__thiscall' keyword reserved for future use
 0x004838E0,?on_link_clicked@NewTechWin@@QAEHHPAD@Z,,0,63,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,63,5,25,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00483920,?info@NewTechWin@@QAAXPAD@Z,,0,48,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,48,48,,,,,
-0x00483E80,?on_button_clicked@NewTechWin@@QAEXH@Z,src/delegation_thunks.cpp:155,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00483e80.cpp(569) : error C2065: 'func_delegation_0' : undeclared identifier
-c00483e80.cpp(569) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
+0x00483E80,?on_button_clicked@NewTechWin@@QAEXH@Z,src/delegation_thunks.cpp:155,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00483e80.cpp(877) : error C2065: 'func_delegation_0' : undeclared identifier
+c00483e80.cpp(877) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
 0x00483E90,?on_left_click@NewTechWin@@QAEXHH@Z,src/newtechwin.cpp:23,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00483EA0,?on_key_click@NewTechWin@@QAEHHH@Z,src/newtechwin.cpp:36,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
-0x00484A80,??_GNewTechWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1003,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00484a80.cpp(505) : error C2065: 'NewTechWinDtorTarget' : undeclared identifier
-c00484a80.cpp(505) : error C2297: '->*' : illegal, right operand has type 'int'
-c00484a80.cpp(507) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x00484A80,??_GNewTechWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1003,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00484a80.cpp(813) : error C2065: 'NewTechWinDtorTarget' : undeclared identifier
+c00484a80.cpp(813) : error C2297: '->*' : illegal, right operand has type 'int'
+c00484a80.cpp(815) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x00484AB0,??3NewTechWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1019,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c00484ab0.cpp(45) : error C2065: 'scalar_delete_new_tech_win' : undeclared identifier
 0x00484B60,?close@PickTech@@QAEXXZ,src/leaf_recoveries.cpp:1311,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00484b60.cpp(49) : error C2065: 'store32' : undeclared identifier
 c00484b60.cpp(53) : error C2065: 'graphic_win_close_redirect' : undeclared identifier
@@ -3907,9 +3907,7 @@ Generating Code...
 Compiling..."
 0x0048BF10,??3PlanWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1092,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0048bf10.cpp(61) : error C2065: 'PlanWinScalarDeleteTarget' : undeclared identifier
 c0048bf10.cpp(61) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0048BF20,??_GPlanWin@@UAEPAXI@Z,,0,54,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"Generating Code...
-u0048bf20.cpp(61) : error C4716: 'PlanWin::m_0048bf20' : must return a value
-Compiling..."
+0x0048BF20,??_GPlanWin@@UAEPAXI@Z,,0,54,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,54,54,,,,,
 0x0048BF60,?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ,src/adjustor_thunks.cpp:1001,1,14,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0048bf60.cpp(67) : error C2065: 'MapWinOnLoseMouseCaptureTarget' : undeclared identifier
 c0048bf60.cpp(67) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0048BF70,?on_redraw@thunk1_PlanWin@@QAEXXZ,src/adjustor_thunks.cpp:1015,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0048bf70.cpp(67) : error C2065: 'PlanWinOnRedrawTarget' : undeclared identifier
@@ -4130,7 +4128,7 @@ u00492740.cpp(55) : error C2059: syntax error : ','"
 0x00493B70,?edbc_fac@ProdPicker@@QAEHH@Z,,0,67,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,67,5,23,2,0,#0: original 'push' vs rebuilt 'xor',
 0x00493C10,?UNK1@ProdPicker@@QAEHH@Z,src/prodpicker.cpp:24,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x00493C20,?on_mousewheel@ProdPicker@@QAEXH@Z,,0,72,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,72,3,33,1,0,#0: original 'push' vs rebuilt 'ret 4',
-0x00493C70,?on_redraw@ProdPicker@@QAEXXZ,,0,54,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,54,1,21,1,0,#0: original 'push' vs rebuilt 'ret',
+0x00493C70,?on_redraw@ProdPicker@@QAEXXZ,,0,54,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,54,54,,,,,
 0x00493E70,?on_scrolling@ProdPicker@@QAEXHH@Z,src/delegation_thunks.cpp:167,1,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00493e70.cpp(817) : error C2065: 'func_delegation_2' : undeclared identifier
 c00493e70.cpp(817) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
 0x00493E90,?on_mouse_move@ProdPicker@@QAEXHH@Z,src/prodpicker.cpp:38,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -4319,7 +4317,7 @@ c004b43c0.cpp(48) : error C2227: left of '->str' must point to class/struct/unio
 0x004B4970,?say_orders@@YAXH@Z,,0,22,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,22,22,,,,,
 0x004B4CD0,?UNK2@StatusWin@@QAEXXZ,,0,20,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,20,20,,,,,
 0x004B4CF0,?draw_active@StatusWin@@QAEXHHH@Z,,0,6203,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004b4cf0.cpp(83) : error C2061: syntax error : identifier 'BOOL'
-0x004B6530,?reset_active@StatusWin@@QAEXXZ,,0,57,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,57,1,16,1,0,#0: original 'mov' vs rebuilt 'ret',
+0x004B6530,?reset_active@StatusWin@@QAEXXZ,,0,57,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,57,57,,,,,
 0x004B8830,?draw@StatusWin@@QAEXHHHHH@Z,,0,90,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,90,3,35,1,0,#0: original 'push' vs rebuilt 'ret 0x14',
 0x004B8970,?reset@StatusWin@@QAEXXZ,src/statuswin.cpp:60,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b8970.cpp(69) : error C2065: 'field_15D4_' : undeclared identifier
 c004b8970.cpp(71) : error C2065: 'SubInterfaceGlobal' : undeclared identifier
@@ -4449,7 +4447,7 @@ c004c38d0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004C3990,?set_world_map@WorldWin@@QAEXXZ,,0,59,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,59,1,15,1,0,#0: original 'mov' vs rebuilt 'ret',
 0x004C39D0,?show_all@WorldWin@@QAEXXZ,,0,105,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,105,1,29,1,0,#0: original 'mov' vs rebuilt 'ret',
 0x004C3A40,?hide_all@WorldWin@@QAEXXZ,,0,43,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,43,43,,,,,
-0x004C3A70,?UNK1@WorldWin@@QAEXXZ,,0,57,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,57,1,12,1,0,#0: original 'mov' vs rebuilt 'ret',
+0x004C3A70,?UNK1@WorldWin@@QAEXXZ,,0,57,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,57,57,12,12,,,
 0x004C3D40,?click@WorldWin@@QAEXHHHH@Z,,0,264,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,264,3,89,1,0,#0: original 'push' vs rebuilt 'ret 0x10',
 0x004C3E50,?on_left_click@WorldWin@@QAEXHH@Z,src/worldwin.cpp:53,0,24,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004c3e50.cpp(67) : error C2065: 'WorldWinClick' : undeclared identifier
 c004c3e50.cpp(67) : error C2297: '->*' : illegal, right operand has type 'int'"
@@ -4647,7 +4645,7 @@ c004c56a0.cpp(117) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004C5920,?is_disabled@Midi_Device@@QAEHXZ,src/sounddevice.cpp:397,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004c5920.cpp(55) : error C2065: 'query_device_at_14' : undeclared identifier
 0x004C5940,??0Wave_In_Device@@QAE@XZ,,0,60,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,60,3,22,2,0,#0: original 'push' vs rebuilt 'mov',
 0x004C5980,??1Wave_In_Device@@QAE@XZ,,0,19,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,19,19,,,,,
-0x004C59A0,?create_device@Wave_In_Device@@QAEHK@Z,,0,55,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,55,5,22,2,0,#0: original 'push' vs rebuilt 'xor',
+0x004C59A0,?create_device@Wave_In_Device@@QAEHK@Z,,0,55,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,55,55,,,,,
 0x004C59E0,?delete_device@Wave_In_Device@@QAEHXZ,,0,39,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,39,39,,,,,
 0x004C5A10,?init@Wave_In_Device@@QAEHPAXK@Z,,0,61,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,61,5,33,2,0,#0: original 'push' vs rebuilt 'xor',
 0x004C5A50,?release@Wave_In_Device@@QAEHXZ,,0,33,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,33,33,,,,,
@@ -4701,7 +4699,7 @@ c004c5cb0.cpp(80) : error C2065: 'GameAtexit' : undeclared identifier
 c004c5cb0.cpp(80) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x004C5CD0,??__Fg_WAVE_IN_DEVICE@@YAXXZ,src/atexit_thunks.cpp:3996,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004c5cd0.cpp(63) : error C2065: 'Wave_In_DeviceDtorTarget' : undeclared identifier
 c004c5cd0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004C5F70,?unload_sound_dll@@YAXXZ,,0,53,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,53,1,14,1,0,#0: original 'mov' vs rebuilt 'ret',
+0x004C5F70,?unload_sound_dll@@YAXXZ,,0,53,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,53,53,,,,,
 0x004C5FB0,?init_sound_timer@@YAHKK@Z,,0,38,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,38,38,,,,,
 0x004C5FE0,?get_sound_version@@YAHXZ,,0,18,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,18,18,,,,,
 0x004C6000,sub_4c6000,,0,42,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,42,42,,,,,
@@ -5020,7 +5018,7 @@ c004c7f40.cpp(135) : error C2783: 'Method __cdecl original_method(unsigned long)
 0x004C8100,sub_4c8100,src/field_accessors.cpp:232,1,11,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,11,11,,,,,
 0x004C8110,sub_4c8110,,0,43,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,43,43,,,,,
 0x004C8140,nullsub_223,src/nullsub_thunks.cpp:344,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x004C8150,sub_4c8150,,0,56,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,56,3,23,2,0,#0: original 'push' vs rebuilt 'xor',
+0x004C8150,sub_4c8150,,0,56,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,56,56,,,,,
 0x004C8190,sub_4c8190,,0,37,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,37,37,,,,,
 0x004C8350,sub_4c8350,,0,70,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,70,3,34,2,0,#0: original 'push' vs rebuilt 'xor',
 0x004C83A0,sub_4c83a0,,0,75,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,75,5,33,2,0,#0: original 'push' vs rebuilt 'xor',
@@ -6270,7 +6268,7 @@ c004eb490.cpp(57) : error C2228: left of '.faction_id_current' must have class/s
 c004eb490.cpp(59) : error C2109: subscript requires array or pointer type
 c004eb490.cpp(59) : error C2228: left of '.energy_intake_1' must have class/struct/union type
 c004eb490.cpp(65) : error C2065: 'sort_descending' : undeclared identifier"
-0x004EC3B0,?base_compute@@YAHH@Z,,0,55,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,55,3,16,2,0,#0: original 'push' vs rebuilt 'xor',
+0x004EC3B0,?base_compute@@YAHH@Z,,0,55,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,55,55,,,,,
 0x004ECB90,?crappy@@YAHHH@Z,src/map.cpp:138,0,81,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ecb90.cpp(47) : error C2065: 'climate_at' : undeclared identifier
 c004ecb90.cpp(48) : error C2065: 'RAINFALL_ARID' : undeclared identifier
 c004ecb90.cpp(51) : error C2065: 'rocky_at' : undeclared identifier
@@ -6713,6 +6711,7 @@ u00504aa0.cpp(85) : error C4234: nonstandard extension used : '__thiscall' keywo
 u00504aa0.cpp(138) : error C2146: syntax error : missing ',' before identifier 'a1'
 u00504aa0.cpp(138) : error C2061: syntax error : identifier 'a1'
 Generating Code...
+u004ec3b0.cpp(77) : warning C4715: 'base_compute' : not all control paths return a value
 Compiling..."
 0x00505D20,??__Eg_BOOM_BUFFER1@@YAXXZ,src/guarded_teardowns.cpp:135,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c00505d20.cpp(63) : error C2065: 'TeardownObject00915068' : undeclared identifier
 c00505d20.cpp(63) : error C2065: 'original_address' : undeclared identifier
@@ -7041,7 +7040,7 @@ c0051dc90.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x0051DCC0,sub_51dcc0,,0,54,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,54,3,20,2,0,#0: original 'push' vs rebuilt 'xor',
 0x0051DDE0,??_Gthunk1_Console@@UAEPAXI@Z,src/adjustor_thunks.cpp:1223,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0051dde0.cpp(436) : error C2065: 'ConsoleScalarDeleteTarget' : undeclared identifier
 c0051dde0.cpp(436) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x0051DDF0,??_GConsole@@UAEPAXI@Z,,0,54,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,CL emitted no object
+0x0051DDF0,??_GConsole@@UAEPAXI@Z,,0,54,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,54,54,,,,,
 0x0051DE30,?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ,src/adjustor_thunks.cpp:1238,1,14,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0051de30.cpp(67) : error C2065: 'MapWinOnLoseMouseCaptureTarget' : undeclared identifier
 c0051de30.cpp(67) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0051DE40,?on_redraw@thunk4_MapWin@@QAEXXZ,src/adjustor_thunks.cpp:1252,1,14,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c0051de40.cpp(67) : error C2065: 'MapWinOnRedrawTarget' : undeclared identifier
@@ -14368,7 +14367,7 @@ c005ee160.cpp(308) : error C2227: left of '->field_2148_' must point to class/st
 c005ee160.cpp(311) : error C2027: use of undefined type 'Scroll'
 c005ee160.cpp(50) : see declaration of 'Scroll'
 c005ee160.cpp(311) : error C2227: left of '->field_2148_' must point to class/struct/union"
-0x005EE460,sub_5ee460,,0,55,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,55,3,23,2,0,#0: original 'push' vs rebuilt 'xor',
+0x005EE460,sub_5ee460,,0,55,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,55,55,,,,,
 0x005EE4A0,sub_5ee4a0,,0,48,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,48,48,,,,,
 0x005EFD00,sub_5efd00,,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x005F04E0,?close_class@Win@@QAAXXZ,,0,64,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u005f04e0.cpp(44) : error C2143: syntax error : missing ';' before 'this'
@@ -14379,8 +14378,7 @@ u005f04e0.cpp(61) : error C2143: syntax error : missing ';' before 'this'
 u005f04e0.cpp(61) : error C2059: syntax error : ')'
 u005f04e0.cpp(61) : error C2143: syntax error : missing ';' before '{'
 u005f04e0.cpp(61) : error C2447: missing function header (old-style formal list?)"
-0x005F0540,?adjust_menus@Win@@QAGHPAX@Z,,0,57,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u005f0540.cpp(154) : error C2146: syntax error : missing ',' before identifier 'a1'
-u005f0540.cpp(154) : error C2061: syntax error : identifier 'a1'"
+0x005F0540,?adjust_menus@Win@@QAGHPAX@Z,,0,57,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,57,57,,,,,
 0x005F0580,?set_caption_height@Win@@QAEXH@Z,,0,61,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,61,3,18,1,0,#0: original 'test' vs rebuilt 'ret 4',
 0x005F05C0,sub_5f05c0,src/field_accessors.cpp:885,1,13,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
 0x005F05D0,?set_border_thickness@Win@@QAEXH@Z,,0,61,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u005f05d0.cpp(62) : error C2146: syntax error : missing ',' before identifier 'a1'
@@ -15047,7 +15045,7 @@ c005fed10.cpp(47) : error C2109: subscript requires array or pointer type
 c005fed10.cpp(47) : error C2228: left of '.field_0' must have class/struct/union type"
 0x005FF220,?UNK6@Palette@@QAEHHHH@Z,,0,87,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,87,5,39,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x005FFD80,??0MCIVideo@@QAE@XZ,,0,33,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,33,44,12,17,2,#2: original 'lea' vs rebuilt 'push',
-0x005FFE40,sub_5ffe40,,0,56,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,56,3,17,2,0,#0: original 'mov' vs rebuilt 'xor',
+0x005FFE40,sub_5ffe40,,0,56,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,56,56,,,,,
 0x005FFE80,sub_5ffe80,,0,61,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,61,3,19,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x006002F0,?status@MCIVideo@@QAEHXZ,,0,47,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,47,47,,,,,
 0x00600320,?is_playing@MCIVideo@@QAEHXZ,src/field_accessors.cpp:453,1,6,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,6,6,,,,,
@@ -15890,7 +15888,7 @@ c00612a70.cpp(543) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00612FC0,?on_mousewheel@Dialogs@@QAEXH@Z,src/dialogs_recovery.cpp:244,0,27,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x006130E0,?on_dialog_focus@Dialogs@@QAEXH@Z,,0,116,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,116,3,32,1,0,#0: original 'mov' vs rebuilt 'ret 4',
 0x00613180,?pass_dialog_focus@Dialogs@@QAEXXZ,,0,117,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,117,1,26,1,0,#0: original 'mov' vs rebuilt 'ret',
-0x00613220,?on_scroll_create@Dialogs@@QAEHXZ,,0,52,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,52,44,17,13,5,#5: original 'lea' vs rebuilt 'test',
+0x00613220,?on_scroll_create@Dialogs@@QAEHXZ,,0,52,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,52,51,17,16,13,#13: original 'call' vs rebuilt 'jmp',
 0x00613260,?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z,,0,63,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,63,5,19,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x006132A0,?calculate_dimensions@Dialogs@@QAEHXZ,,0,88,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,88,3,24,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x00613740,?get_num_items@Dialogs@@QAEHXZ,src/dialogs_recovery.cpp:71,0,50,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
@@ -16175,7 +16173,7 @@ u0061f790.cpp(50) : error C2059: syntax error : ','"
 0x00624C70,sub_624c70,,0,45,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,45,45,16,16,4,#4: original 'push' vs rebuilt 'mov',
 0x00624CA0,sub_624ca0,,0,40,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,40,40,,,,,
 0x00624CD0,sub_624cd0,,0,45,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,45,45,16,16,4,#4: original 'push' vs rebuilt 'mov',
-0x00624D00,sub_624d00,,0,55,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,55,5,20,2,0,#0: original 'cmp' vs rebuilt 'xor',
+0x00624D00,sub_624d00,,0,55,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,55,55,20,20,4,#4: original 'push' vs rebuilt 'mov',
 0x00624D40,sub_624d40,,0,50,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,50,50,18,18,4,#4: original 'push' vs rebuilt 'mov',
 0x006252A0,??0TextureStore@@QAE@XZ,src/texture.cpp:122,0,16,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c006252a0.cpp(45) : error C2039: 'construct' : is not a member of 'TextureStore'
 c006252a0.cpp(36) : see declaration of 'TextureStore'
@@ -16421,7 +16419,7 @@ c0062c830.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
 c0062c830.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x0062C850,??3PushButton@@SAXPAXI@Z,src/deleting_thunks.cpp:1767,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c0062c850.cpp(45) : error C2065: 'scalar_delete_push_button' : undeclared identifier
 0x0062C860,Callback,,0,119,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,119,5,36,2,0,#0: original 'mov' vs rebuilt 'xor',
-0x0062CD10,sub_62cd10,,0,56,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,56,5,18,2,0,#0: original 'mov' vs rebuilt 'xor',
+0x0062CD10,sub_62cd10,,0,56,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,56,56,,,,,
 0x0062D0F0,sub_62d0f0,,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x0062D100,sub_62d100,,0,58,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,58,3,17,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0062D140,sub_62d140,src/nullsub_thunks.cpp:517,1,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -16474,12 +16472,7 @@ c0062ed30.cpp(37) : see declaration of 'Net'"
 0x00630A00,?get@Net@@QAEHPAKPAK@Z,,0,58,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,58,5,19,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x00630A40,sub_630a40,,0,61,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,61,5,20,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x00630B80,sub_630b80,,0,99,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,99,5,36,2,0,#0: original 'mov' vs rebuilt 'xor',
-0x00630BF0,sub_630bf0,,0,57,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00630bf0.cpp(66) : error C2146: syntax error : missing ',' before identifier 'a1'
-u00630bf0.cpp(66) : error C2061: syntax error : identifier 'a1'
-u00630bf0.cpp(66) : error C2027: use of undefined type 'BOOL'
-u00630bf0.cpp(43) : see declaration of 'BOOL'
-u00630bf0.cpp(73) : error C2440: 'type cast' : cannot convert from 'const int' to 'struct BOOL'
-Source or target has incomplete type"
+0x00630BF0,sub_630bf0,,0,57,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,57,57,,,,,
 0x00630C30,sub_630c30,,0,76,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,76,5,29,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x00631A10,nullsub_256,src/nullsub_thunks.cpp:558,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x00631A20,?get_player_name@Net@@QAEPADK@Z,src/net_class.cpp:59,0,53,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
@@ -16665,10 +16658,21 @@ c0063e7f0.cpp(48) : error C2065: 'store32' : undeclared identifier"
 0x0065BFC7,sub_65bfc7,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
 0x0065BFD2,sub_65bfd2,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
 0x0065BFDD,sub_65bfdd,,0,8,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,8,3,2,2,0,#0: original 'mov' vs rebuilt 'xor',
+0x0065BFE5,sub_65bfe5,,0,14,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,14,3,3,2,0,#0: original 'mov' vs rebuilt 'xor',
+0x0065BFF3,sub_65bff3,,0,14,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,14,3,3,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0065C001,sub_65c001,,0,8,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,8,7,2,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0065C009,sub_65c009,,0,8,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,8,3,2,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0065C011,sub_65c011,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
 0x0065C01C,sub_65c01c,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
+0x0065C027,sub_65c027,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
+0x0065C032,sub_65c032,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
+0x0065C03D,sub_65c03d,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
+0x0065C048,sub_65c048,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
+0x0065C053,sub_65c053,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
+0x0065C05E,sub_65c05e,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
+0x0065C069,sub_65c069,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
+0x0065C074,sub_65c074,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
+0x0065C07F,sub_65c07f,,0,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,3,2,2,0,#0: original 'lea' vs rebuilt 'xor',
 0x0065C08A,sub_65c08a,,0,8,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,8,3,2,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0065C0AE,sub_65c0ae,,0,8,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,8,3,2,2,0,#0: original 'mov' vs rebuilt 'xor',
 0x0065C0B6,sub_65c0b6,,0,8,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,8,3,2,2,0,#0: original 'mov' vs rebuilt 'xor',

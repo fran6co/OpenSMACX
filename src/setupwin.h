@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "spot.h"
+#include "buffer.h"
 #include "original_seam.h"
 #include "graphicwin.h"
 
@@ -66,10 +68,10 @@ class DLLEXPORT SetupWin : GraphicWin {
   uint32_t field_A38_;  // 0xA38
   uint32_t field_A3C_;  // 0xA3C
   uint32_t field_A40_;  // 0xA40
-  uint8_t buffer_[0x588];  // 0xA44
+  Buffer buffer_;  // 0xA44
   uint32_t field_FCC_;  // 0xFCC
   uint32_t field_FD0_;  // 0xFD0
-  uint8_t spot_[0xC];  // 0xFD4
+  Spot spot_;  // 0xFD4
   uint32_t field_FE0_;  // 0xFE0
   uint32_t field_FE4_;  // 0xFE4
   uint32_t field_FE8_;  // 0xFE8

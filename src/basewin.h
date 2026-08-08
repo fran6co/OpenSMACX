@@ -16,6 +16,13 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "time.h"
+#include "sprite.h"
+#include "prodpicker.h"
+#include "mapwin.h"
+#include "flatbutton.h"
+#include "caviar.h"
+#include "buffer.h"
 
 #include "original_seam.h"
 #include "graphicwin.h"
@@ -70,27 +77,27 @@ class DLLEXPORT BaseWin : GraphicWin {
   // 293 member(s) from the IDA database, 30 named; it starts a member at 0xA14, which is where src/ ends.
 
   uint32_t subIFace_;  // 0xA14
-  uint8_t prodPicker_[0xA840];  // 0xA18
+  ProdPicker prodPicker_;  // 0xA18
   uint32_t field_B258_;  // 0xB258
-  uint8_t graphicWin2_[0xA14];  // 0xB25C
-  uint8_t sprites1_[0x58];  // 0xBC70
-  uint8_t sprites2_[0x58];  // 0xBCC8
-  uint8_t sprites3_[0x58];  // 0xBD20
-  uint8_t sprite4_[0x2C];  // 0xBD78
-  uint8_t sprite5_[0x2C];  // 0xBDA4
-  uint8_t sprite6_[0x2C];  // 0xBDD0
-  uint8_t sprites7_[0x84];  // 0xBDFC
-  uint8_t flatButton_[0xB4C];  // 0xBE80
-  uint8_t sprites8_[0x738];  // 0xC9CC
-  uint8_t sprite9_[0x2C];  // 0xD104
-  uint8_t sprite10_[0x2C];  // 0xD130
-  uint8_t sprite11_[0x2C];  // 0xD15C
-  uint8_t sprite12_[0x2C];  // 0xD188
-  uint8_t sprite13_[0x2C];  // 0xD1B4
-  uint8_t sprite14_[0x2C];  // 0xD1E0
-  uint8_t sprite15_[0x2C];  // 0xD20C
-  uint8_t buffer1_[0x588];  // 0xD238
-  uint8_t flatButtons_[0xF888];  // 0xD7C0
+  GraphicWin graphicWin2_;  // 0xB25C
+  Sprite sprites1_[2];  // 0xBC70
+  Sprite sprites2_[2];  // 0xBCC8
+  Sprite sprites3_[2];  // 0xBD20
+  Sprite sprite4_;  // 0xBD78
+  Sprite sprite5_;  // 0xBDA4
+  Sprite sprite6_;  // 0xBDD0
+  Sprite sprites7_[3];  // 0xBDFC
+  FlatButton flatButton_;  // 0xBE80
+  Sprite sprites8_[42];  // 0xC9CC
+  Sprite sprite9_;  // 0xD104
+  Sprite sprite10_;  // 0xD130
+  Sprite sprite11_;  // 0xD15C
+  Sprite sprite12_;  // 0xD188
+  Sprite sprite13_;  // 0xD1B4
+  Sprite sprite14_;  // 0xD1E0
+  Sprite sprite15_;  // 0xD20C
+  Buffer buffer1_;  // 0xD238
+  FlatButton flatButtons_[22];  // 0xD7C0
   uint32_t field_1D048_;  // 0x1D048
   uint32_t field_1D04C_;  // 0x1D04C
   uint32_t field_1D050_;  // 0x1D050
@@ -155,8 +162,8 @@ class DLLEXPORT BaseWin : GraphicWin {
   uint32_t field_1D13C_;  // 0x1D13C
   uint32_t field_1D140_;  // 0x1D140
   uint32_t field_1D144_;  // 0x1D144
-  uint8_t time_[0x28];  // 0x1D148
-  uint8_t caviar_[0x13D0];  // 0x1D170
+  Time time_;  // 0x1D148
+  Caviar caviar_;  // 0x1D170
   uint32_t field_1E540_;  // 0x1E540
   uint32_t field_1E544_;  // 0x1E544
   uint32_t field_1E548_;  // 0x1E548
@@ -234,7 +241,7 @@ class DLLEXPORT BaseWin : GraphicWin {
   uint32_t field_1E668_;  // 0x1E668
   uint32_t field_1E66C_;  // 0x1E66C
   uint32_t field_1E670_;  // 0x1E670
-  uint8_t mapWin_[0x22480];  // 0x1E674
+  MapWin mapWin_;  // 0x1E674
   uint32_t field_40AF4_;  // 0x40AF4
   uint32_t field_40AF8_;  // 0x40AF8
   uint32_t field_40AFC_;  // 0x40AFC

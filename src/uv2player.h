@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "buffer.h"
 
  /*
   * UV2Player class
@@ -602,7 +603,7 @@ class DLLEXPORT UV2Player {
   uint32_t field_8D0_;  // 0x8D0
   uint32_t field_8D4_;  // 0x8D4
   uint32_t field_8D8_;  // 0x8D8
-  uint8_t buffer_[0x588];  // 0x8DC
+  Buffer buffer_;  // 0x8DC
   uint8_t field_E64_[0x4];  // 0xE64
 };
 
