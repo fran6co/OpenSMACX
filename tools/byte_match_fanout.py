@@ -424,8 +424,8 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # unit.cpp had been reset to `// BODY GOES HERE.` after the proof, which
 # --collect could never have found because it skips rows already settled.
 # Raising to 1209 before re-proving those 7 would have baked them in forever.
-BASELINE_MATCHED_FUNCTIONS = 1209
-BASELINE_MATCHED_BYTES = 43354
+BASELINE_MATCHED_FUNCTIONS = 1231
+BASELINE_MATCHED_BYTES = 50783
 
 
 def summarise(ledger: dict) -> tuple:
