@@ -180,6 +180,39 @@ Anything under `src/hypothesis_layouts.h` or the twelve generated `.cpp`
 files is out of scope by construction: those are regenerated, and a hand edit
 is reverted by the next build.
 
+## 2c. One-symbol verification against implicit member code
+
+Not a property of the original at all — a property of the harness meeting the
+C++ ABI. `byte_match` refuses a candidate that defines more than the subject:
+*"expected one external .text symbol, found 2"*. That rule is right, and it
+makes two shapes unreachable no matter how the body is written. Both were
+found by agents testing an EMPTY body first, so neither is a guess about a
+body that was merely hard.
+
+**A destructor for a class with non-trivial members.** `Datalink::~Datalink`
+(0x00432290, 1,260 bytes) embeds 18 `FlatButton` members, each holding a
+`Buffer` with a declared non-trivial `~Buffer()`. Any user-defined
+out-of-line `~Datalink()` — even an empty one — makes VC6 synthesise an
+implicit `~FlatButton()` for the ABI-mandated member-destruction epilogue,
+`/Gy` gives it its own COMDAT, and the unit now exports two symbols. No
+source spelling avoids it: the second symbol is required by the language, not
+chosen by the body. It becomes reachable only if those members are ever
+remodelled as pointers.
+
+**A local whose type is an opaque shell.** `InfoWin::right_menu`
+(0x004589C0) declares a local `PullDown`, which the emitter supplies as a
+method-only shell with no members, so the local occupies 1 byte instead of
+the original's 0xF40 and `sub esp, 0xF40` never appears. The obvious fix —
+`struct PullDownFrame : PullDown { char pad[...]; };` — compiles, and then
+VC6 emits `PullDownFrame`'s implicit destructor as a real second `.text`
+symbol, which the verifier refuses. The workaround scores NO_COMPILE where
+doing nothing scores MISMATCH, so it is strictly worse. This one is not
+permanent: it retires when `PullDown` gets a pinned size, which is ordinary
+layout work.
+
+The distinction matters for planning. The first shape is a wall. The second
+is a missing measurement wearing a wall's clothes.
+
 ## 3. Port I/O — expressibility, and it is one function
 
 Exactly one body in this image does port I/O on a directly reachable path:
