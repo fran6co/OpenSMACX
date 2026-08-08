@@ -235,7 +235,7 @@ int CouncWin::show(int a1) {
     if (visible) {
         return visible;
     }
-    reinterpret_cast<SubInterface *>(subIFace_)->set_iface_mode();
+    subIFace_.set_iface_mode();
 }
 
 // The seam and definition for the unrecovered draw_leader, at the end of the

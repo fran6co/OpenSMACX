@@ -4248,10 +4248,10 @@ u004ae380.cpp(62) : see declaration of 'SetupWin'"
 c004ae760.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
 c004ae760.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004AE9A0,??3SetupWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1216,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004ae9a0.cpp(44) : error C2065: 'scalar_delete_setup_win' : undeclared identifier
-0x004AE9B0,??__ESocialWinParent@@YAXXZ,src/init_thunks.cpp:4103,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ae9b0.cpp(682) : error C2065: 'SocialWinCtorTarget' : undeclared identifier
-c004ae9b0.cpp(682) : error C2297: '->*' : illegal, right operand has type 'int'
-c004ae9b0.cpp(683) : error C2065: 'GameAtexit' : undeclared identifier
-c004ae9b0.cpp(683) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x004AE9B0,??__ESocialWinParent@@YAXXZ,src/init_thunks.cpp:4103,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ae9b0.cpp(688) : error C2065: 'SocialWinCtorTarget' : undeclared identifier
+c004ae9b0.cpp(688) : error C2297: '->*' : illegal, right operand has type 'int'
+c004ae9b0.cpp(689) : error C2065: 'GameAtexit' : undeclared identifier
+c004ae9b0.cpp(689) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x004AE9D0,??__FSocialWinParent@@YAXXZ,src/atexit_thunks.cpp:3916,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004ae9d0.cpp(63) : error C2065: 'SocialWinDtorTarget' : undeclared identifier
 c004ae9d0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004AEF00,?UNK2@SocialWin@@QAEXXZ,src/socialwin.cpp:25,0,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
@@ -4273,14 +4273,14 @@ u004b1b70.cpp(59) : error C2447: missing function header (old-style formal list?
 0x004B2210,?on_iface_left_click@SocialWin@@QAEHHH@Z,,0,13,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
 0x004B2400,?on_iface_left_down@SocialWin@@QAEXHH@Z,src/socialwin.cpp:51,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2410,?on_iface_right_down@SocialWin@@QAEXHH@Z,src/socialwin.cpp:64,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x004B2420,?on_iface_mouse_move@SocialWin@@QAEXHH@Z,src/socialwin.cpp:149,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2420.cpp(660) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2420.cpp(300) : see declaration of 'clear_bubble_text'
-c004b2420.cpp(661) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2420.cpp(300) : see declaration of 'clear_bubble_text'"
-0x004B2430,?on_iface_mouse_leave@SocialWin@@QAEXHH@Z,src/socialwin.cpp:171,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2430.cpp(660) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2430.cpp(300) : see declaration of 'clear_bubble_text'
-c004b2430.cpp(661) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-c004b2430.cpp(300) : see declaration of 'clear_bubble_text'"
+0x004B2420,?on_iface_mouse_move@SocialWin@@QAEXHH@Z,src/socialwin.cpp:149,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2420.cpp(666) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2420.cpp(306) : see declaration of 'clear_bubble_text'
+c004b2420.cpp(667) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2420.cpp(306) : see declaration of 'clear_bubble_text'"
+0x004B2430,?on_iface_mouse_leave@SocialWin@@QAEXHH@Z,src/socialwin.cpp:171,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b2430.cpp(666) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2430.cpp(306) : see declaration of 'clear_bubble_text'
+c004b2430.cpp(667) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+c004b2430.cpp(306) : see declaration of 'clear_bubble_text'"
 0x004B2440,?on_iface_selected@SocialWin@@QAEXHH@Z,src/socialwin.cpp:77,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2450,?on_iface_left_double_click@SocialWin@@QAEXHH@Z,src/socialwin.cpp:90,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2460,?on_iface_right_double_click@SocialWin@@QAEXHH@Z,src/socialwin.cpp:103,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -4300,9 +4300,9 @@ u004b2740.cpp(97) : fatal error C1903: unable to recover from previous error(s);
 0x004B3F20,??_GCheckButton@@UAEPAXI@Z,src/deleting_thunks.cpp:1230,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b3f20.cpp(437) : error C2065: 'CheckButtonDtorTarget' : undeclared identifier
 c004b3f20.cpp(437) : error C2297: '->*' : illegal, right operand has type 'int'
 c004b3f20.cpp(439) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
-0x004B3F50,??_GSocialWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1248,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b3f50.cpp(681) : error C2065: 'SocialWinDtorTarget' : undeclared identifier
-c004b3f50.cpp(681) : error C2297: '->*' : illegal, right operand has type 'int'
-c004b3f50.cpp(683) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x004B3F50,??_GSocialWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1248,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b3f50.cpp(687) : error C2065: 'SocialWinDtorTarget' : undeclared identifier
+c004b3f50.cpp(687) : error C2297: '->*' : illegal, right operand has type 'int'
+c004b3f50.cpp(689) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004B3F80,??3CheckButton@@SAXPAXI@Z,src/deleting_thunks.cpp:1264,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004b3f80.cpp(45) : error C2065: 'scalar_delete_check_button' : undeclared identifier
 0x004B3F90,??3SocialWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1277,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,c004b3f90.cpp(45) : error C2065: 'scalar_delete_social_win' : undeclared identifier
 0x004B3FA0,??__Eg_STATUSWIN@@YAXXZ,src/init_thunks.cpp:4114,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"c004b3fa0.cpp(71) : error C2065: 'StatusWinCtorTarget' : undeclared identifier
