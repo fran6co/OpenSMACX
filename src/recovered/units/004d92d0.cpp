@@ -1,22 +1,22 @@
-// PRESERVED UNIT - measured MISMATCH.
+// PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005150D0
-// name           ?zoom@Console@@QAEXHH@Z
-// size           783 bytes
-// measured tier  MISMATCH
-// divergence     3
+// address        0x004D92D0
+// name           ?group@Console@@QAEXH@Z
+// size           791 bytes
+// measured tier  NO_COMPILE
+// refusal        u004d92d0.cpp(1) : error C2653: 'Console' : is not a class or namespace name
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005150d0/unit.cpp
+//   build/byte-match/004d92d0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?zoom@Console@@QAEXHH@Z  at 0x005150D0  (783 bytes)
+// subject: ?group@Console@@QAEXH@Z  at 0x004D92D0  (791 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -71,7 +71,6 @@ class Scroll;
 class Spot;
 class Sprite;
 class Win;
-class WorldWin;
 
 class AutoSound { public:
     PVOID vtable_;
@@ -221,24 +220,6 @@ class Heap { public:
     size_t free_size_;
 };
 
-class Sprite { public:
-    int ppszFileName_;
-    int pcBits_;
-    char cTransparentIndex_;
-    char pad1_;
-    char pad2_;
-    char pad3_;
-    int iSpriteWidth2_;
-    int iSpriteWidth_;
-    int iSpriteHeight_;
-    int iWidth_;
-    int iHeight_;
-    int iLeftOffset_;
-    int iTopOffset_;
-    int fObj1Exists_;
-};
-
-// ---- callees, declared and never defined (a definition would be inlined) ----
 class GraphicWin { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -336,16 +317,25 @@ class GraphicWin { public:
     uint32_t poCanvas_;
     uint32_t field_A0C_;
     uint32_t field_A10_;
-    void redraw();
 };
-class MapWin { public:
-    uint32_t vbtable_pointer_;
-    void * owned_;
-    uint8_t derived_tail_[0x21A6C - 0x8];
-    GraphicWin virtual_base_;
-    int pixel_to_tile(int, int, int *, int *);
-    void draw_map(int);
+
+class Sprite { public:
+    int ppszFileName_;
+    int pcBits_;
+    char cTransparentIndex_;
+    char pad1_;
+    char pad2_;
+    char pad3_;
+    int iSpriteWidth2_;
+    int iSpriteWidth_;
+    int iSpriteHeight_;
+    int iWidth_;
+    int iHeight_;
+    int iLeftOffset_;
+    int iTopOffset_;
+    int fObj1Exists_;
 };
+
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -424,194 +414,236 @@ class Win { public:
     uint32_t field_438_;
     Scroll * scroll_vert_;
     Scroll * scroll_horz_;
-    void get_mouse_pos(int *, int *);
 };
-class WorldWin { public:
-    int pixel_to_tile(int, int, int *, int *);
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class MapWin { public:
+    uint32_t vbtable_pointer_;
+    void * owned_;
+    uint8_t derived_tail_[0x21A6C - 0x8];
+    GraphicWin virtual_base_;
+    void dest_line(int, int, int, int, int, int, int, int, int, int, int);
 };
-int __cdecl in_box(int, int, int, int, int, int);
+int __cdecl base_at(int, int);
+int __cdecl port_to_port(int, int);
+void __cdecl draw_map(int);
+
+// Vtable shim. VC6 rejects a free `__thiscall` function pointer
+// (C4234), so an indirect virtual call is spelled by calling the Nth
+// virtual of a class that is never defined and never instantiated.
+// Only DECLARATION ORDER matters - change a slot's signature freely
+// to match the call you need; it will not move.
+// This body dispatches through slot(s): 63
+class VCall { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036();
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039();
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044();
+    virtual void slot045();
+    virtual void slot046();
+    virtual void slot047();
+    virtual void slot048();
+    virtual void slot049();
+    virtual void slot050();
+    virtual void slot051();
+    virtual void slot052();
+    virtual void slot053();
+    virtual void slot054();
+    virtual void slot055();
+    virtual void slot056();
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual void slot061();
+    virtual void slot062();
+    virtual void slot063();  // <-- used
+};
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_005153e0 = (int *)0x005153E0;
 static int *const g_0068faf0 = (int *)0x0068FAF0;
 static int *const g_007d3c3c = (int *)0x007D3C3C;
 static int *const g_007d3c5c = (int *)0x007D3C5C;
-static int *const g_008e9f60 = (int *)0x008E9F60;
-static int *const g_008ea424 = (int *)0x008EA424;
-static int *const g_008ea428 = (int *)0x008EA428;
 static int *const g_00939284 = (int *)0x00939284;
-static int *const g_00949870 = (int *)0x00949870;
-static int *const g_00949874 = (int *)0x00949874;
 static int *const g_0094a30c = (int *)0x0094A30C;
-static int *const g_0096c9e0 = (int *)0x0096C9E0;
-static int *const g_0096c9e1 = (int *)0x0096C9E1;
-static int *const g_009a64c0 = (int *)0x009A64C0;
+static int *const g_00952832 = (int *)0x00952832;
+static int *const g_00952836 = (int *)0x00952836;
+static int *const g_009a64c8 = (int *)0x009A64C8;
+static int *const g_009ab88c = (int *)0x009AB88C;
 
 class Console { public:
     uint8_t derived_storage_[0x23D94];
     GraphicWin virtual_base_;
 
-    void zoom(int, int);
+    void group(int);
 };
 
-extern int *g_city_table[];
-extern unsigned int g_civ_visible_flags[];
+struct S0x34 { uint8_t pad[0x34]; };
 
-void Console::zoom(int a1, int a2) {
-    int idx;
+extern S0x34 g_units[];
+extern uint8_t g_factionRegion[];
+extern uint8_t g_terrainClass[];
 
-    if (a2 < 0) {
-        idx = 0;
-        int mx, my;
-        reinterpret_cast<Win *>(g_008e9f60)->get_mouse_pos(&mx, &my);
+void Console::group(int a1) {
+    uint8_t *rec_a1 = (uint8_t *)&g_units[a1];
 
-        bool matched = false;
-        int tx = 0, ty = 0;
+    short x0 = *(short *)(rec_a1 + 0x0);
+    char tribe0 = *(char *)(rec_a1 + 0xE);
+    short y0 = *(short *)(rec_a1 + 0x2);
 
-        if (in_box(mx, my, 0, 0, *g_008ea424, -*g_008ea428) != 0 &&
-            reinterpret_cast<WorldWin *>(g_008e9f60)->pixel_to_tile(mx, my, &tx, &ty) == 0 &&
-            tx >= 0 && tx < *g_00949874 &&
-            ty >= 0 && ty < *g_00949870) {
+    int t = *(short *)(rec_a1 + 0x1C);
+    t *= *g_0068faf0;
+    t += (*(short *)(rec_a1 + 0x14)) >> 1;
 
-            int civ = *g_00939284;
-            int rec = civ << 6;
-            rec = rec + civ;
-            rec = civ + rec * 2;
-            rec = civ + rec * 8;
-            rec = civ + rec * 2;
+    char *terrainBase = *(char **)g_0094a30c;
+    char terrainType0 = terrainBase[t * 0x2c + 3];
 
-            if ((g_civ_visible_flags[rec] & 0x200) != 0) {
-                matched = true;
-            } else {
-                int stride = *g_0068faf0;
-                int cell = stride * tx + (ty >> 1);
-                int bitidx = cell + cell * 4;
-                bitidx = cell + bitidx * 2;
-                unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
-                unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
-                if ((explored[bitidx * 4 + 4] & bit) != 0) {
-                    matched = true;
-                } else if ((*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0) {
-                    matched = true;
+    uint32_t *flags_a1 = (uint32_t *)(rec_a1 + 0x4);
+    *flags_a1 |= 0x8000000;
+
+    int i = 0;
+    if (*g_009a64c8 > 0) {
+        uint8_t *rec = (uint8_t *)&g_units[0];
+        do {
+            if (i != a1 && *(char *)(rec + 0xE) == tribe0) {
+                bool proceed;
+                if (*(int *)((char *)this + 0x23d1c) == 0) {
+                    proceed = *(short *)(rec + 0x0) == x0 && *(short *)(rec + 0x2) == y0;
+                } else {
+                    proceed = (*(uint32_t *)(rec + 0x4) & 0x8000000) != 0;
                 }
-            }
-        }
+                if (proceed) {
+                    int t2 = *(short *)(rec + 0x2);
+                    t2 *= *g_0068faf0;
+                    t2 += (*(short *)(rec + 0x0)) >> 1;
+                    char terrainType = terrainBase[t2 * 0x2c + 3];
 
-        if (matched) {
-            char *city = reinterpret_cast<char *>(g_city_table[0]);
-            *reinterpret_cast<int *>(city + 0x1dd9c) = ty;
-            *reinterpret_cast<int *>(city + 0x1dda0) = tx;
-            idx = 0;
-        } else {
-            for (int i = 0; i < 8; ++i) {
-                char *city = reinterpret_cast<char *>(g_city_table[i]);
-                if (city == 0) {
-                    continue;
-                }
-                if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
-                    continue;
-                }
-                if (*reinterpret_cast<int *>(city + 0x1dd98) >= 0) {
-                    continue;
-                }
-
-                int m8, m4;
-                int *vbtable = *reinterpret_cast<int **>(city);
-                int adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-                reinterpret_cast<Win *>(city + adj)->get_mouse_pos(&m8, &m4);
-
-                vbtable = *reinterpret_cast<int **>(city);
-                adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-                int w = *reinterpret_cast<int *>(city + adj + 0x4c8);
-                int h = *reinterpret_cast<int *>(city + adj + 0x4c4);
-
-                int ttx = 0, tty = 0;
-                bool hit = in_box(m8, m4, 0, 0, h, -w) != 0 &&
-                    reinterpret_cast<MapWin *>(city)->pixel_to_tile(m8, m4, &ttx, &tty) == 0 &&
-                    ttx >= 0 && ttx < *g_00949874 &&
-                    tty >= 0 && tty < *g_00949870;
-                if (!hit) {
-                    continue;
-                }
-
-                int civ = *g_00939284;
-                int rec = civ << 6;
-                rec = rec + civ;
-                rec = civ + rec * 2;
-                rec = civ + rec * 8;
-                rec = civ + rec * 2;
-
-                bool found = (reinterpret_cast<unsigned char *>(g_civ_visible_flags)[rec * 4 + 1] & 2) != 0;
-                if (!found) {
-                    int stride = *g_0068faf0;
-                    int cell = stride * ttx + (tty >> 1);
-                    int bitidx = cell + cell * 4;
-                    bitidx = cell + bitidx * 2;
-                    unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
-                    unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
-                    found = (explored[bitidx * 4 + 4] & bit) != 0;
-                    if (!found) {
-                        found = (*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0;
+                    if (terrainType != terrainType0) {
+                        short faction = *(short *)(rec + 0xA);
+                        int idx = g_factionRegion[faction * 0x34];
+                        char cls = (char)g_terrainClass[idx * 0x90];
+                        if (cls != 2) {
+                            bool sameSide = (terrainType < 0x40) == (terrainType0 < 0x40);
+                            if (sameSide || cls == 0) {
+                                goto skip;
+                            }
+                            if (cls == 1) {
+                                int base1 = base_at(*(short *)(rec_a1 + 0x14), *(short *)(rec_a1 + 0x1C));
+                                int base2 = base_at(*(short *)(rec + 0x0), *(short *)(rec + 0x2));
+                                if (base1 >= 0 && base2 >= 0 && port_to_port(base1, base2) == 0) {
+                                    goto skip;
+                                }
+                            }
+                        }
                     }
-                }
-                if (!found) {
-                    continue;
-                }
 
-                *reinterpret_cast<int *>(city + 0x1dd9c) = tty;
-                *reinterpret_cast<int *>(city + 0x1dda0) = ttx;
-                idx = i;
-                break;
+                    *(uint32_t *)(rec + 0x4) &= 0xfcffbdff;
+                    *(uint8_t *)(rec + 0x11) = *(uint8_t *)(rec_a1 + 0x11);
+                    *(uint8_t *)(rec + 0x12) = *(uint8_t *)(rec_a1 + 0x12);
+                    *(uint8_t *)(rec + 0x13) = *(uint8_t *)(rec_a1 + 0x13);
+
+                    {
+                        short *dst = (short *)(rec + 0x1C);
+                        short *src = (short *)(rec_a1 + 0x1C);
+                        int k = 4;
+                        do {
+                            dst[-4] = src[-4];
+                            dst[0] = src[0];
+                            dst++;
+                            src++;
+                            k--;
+                        } while (k != 0);
+                    }
+
+                    *(uint32_t *)(rec + 0x4) |= (*(uint32_t *)(rec_a1 + 0x4) & 0x2000200) | 0x8000000;
+                }
             }
-        }
-
-        a2 = idx;
+        skip:
+            i++;
+            rec += 0x34;
+        } while (i < *g_009a64c8);
     }
 
-    int ebx = a1;
-    for (int i = 0; i < 8; ++i) {
-        char *city = reinterpret_cast<char *>(g_city_table[i]);
-        if (city == 0) {
-            continue;
-        }
-        if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
-            continue;
-        }
-        if (a2 >= 0 && i != a2) {
-            continue;
-        }
+    int *p = g_007d3c3c;
+    do {
+        int who = *p;
+        if (who != 0 && (p == g_007d3c3c || *(int *)((char *)who + 0x1dd74) != 0)) {
+            *(int *)((char *)who + 0x1dd84) = 1;
 
-        switch (ebx) {
-        case 0x203:
-            if (*reinterpret_cast<int *>(city + 0x1dd98) < 0x10) {
-                *reinterpret_cast<int *>(city + 0x1dd98) += 2;
+            int j = 0;
+            if (*g_009a64c8 > 0) {
+                uint8_t *rec2 = (uint8_t *)&g_units[0];
+                do {
+                    if (*(char *)(rec2 + 0xE) == *g_00939284 &&
+                        (*(uint32_t *)(rec2 + 0x4) & 0x8000000) != 0) {
+                        short faction = *(short *)(rec2 + 0xA);
+                        int idx = g_factionRegion[faction * 0x34];
+                        char cls = (char)g_terrainClass[idx * 0x90];
+                        ((MapWin *)who)->dest_line(
+                            *(short *)(rec2 + 0x0),
+                            *(short *)(rec2 + 0x2),
+                            *(short *)(rec2 + 0x14),
+                            *(short *)(rec2 + 0x1C),
+                            faction,
+                            *(unsigned char *)(rec2 + 0xE),
+                            cls, 0, 2, 2, 0);
+                    }
+                    j++;
+                    rec2 += 0x34;
+                } while (j < *g_009a64c8);
             }
-            break;
-        case 0x204:
-            if (*reinterpret_cast<int *>(city + 0x1dd98) > -0xE) {
-                *reinterpret_cast<int *>(city + 0x1dd98) -= 2;
-            }
-            break;
-        case 0x205:
-            *reinterpret_cast<int *>(city + 0x1dd98) = 0;
-            break;
-        case 0x206:
-            *reinterpret_cast<int *>(city + 0x1dd98) = -6;
-            break;
-        case 0x207:
-            *reinterpret_cast<int *>(city + 0x1dd98) = 0x10;
-            break;
-        case 0x208:
-            *reinterpret_cast<int *>(city + 0x1dd98) = -0xE;
-            break;
-        default:
-            break;
+
+            int *vbptr = *(int **)this;
+            void *base = (char *)this + vbptr[1];
+            ((VCall *)base)->slot063();
+            *(int *)(*p + 0x1dd84) = 0;
         }
+        p++;
+    } while (p < g_007d3c5c);
 
-        reinterpret_cast<MapWin *>(city)->draw_map(1);
-    }
-
-    reinterpret_cast<GraphicWin *>(g_008e9f60)->redraw();
+    *(int *)((char *)this + 0x23d1c) = 1;
+    draw_map(1);
 }

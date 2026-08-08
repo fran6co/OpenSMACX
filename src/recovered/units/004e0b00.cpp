@@ -3,20 +3,20 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x004DD6F0
-// name           ?editor_diff@Console@@QAEXXZ
-// size           1130 bytes
+// address        0x004E0B00
+// name           ?editor_terrain@Console@@QAEXXZ
+// size           1147 bytes
 // measured tier  NO_COMPILE
-// refusal        u004dd6f0.cpp(152) : error C2079: 'spot_' uses undefined class 'Spot' u004dd6f0.cpp(241) : error C2079: 'heap_' uses undefined class 'Heap' Generating Code... C
+// refusal        u004e0b00.cpp(156) : error C2079: 'spot_' uses undefined class 'Spot' u004e0b00.cpp(265) : error C2079: 'heap_' uses undefined class 'Heap'
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/004dd6f0/unit.cpp
+//   build/byte-match/004e0b00/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?editor_diff@Console@@QAEXXZ  at 0x004DD6F0  (1130 bytes)
+// subject: ?editor_terrain@Console@@QAEXXZ  at 0x004E0B00  (1147 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -56,6 +56,8 @@ class BasePop;
 class Buffer;
 class ButtonGroup;
 class Console;
+class Dialog;
+struct DialogEntry;
 class Dialogs;
 class FlatButton;
 class Font;
@@ -75,6 +77,8 @@ struct RECT;
 class Scroll;
 class Spot;
 class Sprite;
+class StringStruct;
+struct StringStructEntry;
 class Strings;
 class Time;
 typedef unsigned int UINT_PTR;
@@ -210,6 +214,16 @@ class ButtonGroup { public:
     uint32_t field_90_;
 };
 
+struct DialogEntry {
+    uint32_t vtable;
+    int id;
+    void * payload;
+    DialogEntry * next;
+    DialogEntry * previous;
+    uint32_t secondary_vtable;
+    void * heap;
+};
+
 class Font { public:
     int unk_1_;
     BOOL is_fot_set_;
@@ -221,6 +235,16 @@ class Font { public:
     int descent_;
     int pad_;
     LPSTR fot_file_name_;
+};
+
+struct StringStructEntry {
+    uint32_t abi_word;
+    int id;
+    int payload;
+    StringStructEntry * next;
+    StringStructEntry * previous;
+    uint32_t secondary_abi_word;
+    void * allocation_owner;
 };
 
 class Time { public:
@@ -450,10 +474,169 @@ class BaseButton { public:
 class BasePop { public:
     int exec(int, int (__cdecl *)());
     void close();
-    ~BasePop();
+};
+class GraphicWin { public:
+    AutoSound auto_sound_;
+    uint32_t iFlags_;
+    uint32_t iSomeFlag_;
+    uint32_t field_A0_;
+    uint32_t field_A4_;
+    uint32_t poWinBase_;
+    uint32_t iVertScaleDenom_;
+    uint32_t iVertScaleNum_;
+    Buffer * buffer1_;
+    Buffer * buffer2_;
+    Buffer * buffer3_;
+    Buffer * buffer4_;
+    Win * win_parent_;
+    uint32_t field_C8_;
+    uint32_t field_CC_;
+    uint32_t field_D0_;
+    uint32_t field_D4_;
+    uint32_t field_D8_;
+    Heap heap_;
+    Menu * menu_;
+    uint32_t field_F4_;
+    uint32_t field_F8_;
+    uint32_t field_FC_;
+    uint32_t field_100_;
+    uint32_t field_104_;
+    uint32_t field_108_;
+    uint32_t field_10C_;
+    uint32_t field_110_;
+    int caption_height_;
+    int border_thickness_;
+    int bottom_border_thickness_;
+    uint32_t field_120_;
+    uint32_t field_124_;
+    uint32_t field_128_;
+    uint32_t field_12C_;
+    uint32_t field_130_;
+    uint32_t field_134_;
+    uint32_t field_138_;
+    RECT outer_rect_;
+    RECT client_rect_;
+    uint32_t field_15C_;
+    uint32_t field_160_;
+    uint32_t field_164_;
+    uint32_t field_168_;
+    uint32_t field_16C_;
+    uint32_t field_170_;
+    uint32_t field_174_;
+    uint32_t field_178_;
+    uint32_t field_17C_;
+    uint32_t field_180_;
+    uint32_t field_184_;
+    Sprite * cursor_sprite_;
+    uint32_t field_18C_;
+    uint32_t field_190_;
+    HCURSOR * cursor_handle_;
+    int cursor_name_;
+    uint32_t field_19C_;
+    uint32_t field_1A0_;
+    Win * children_[150];
+    int child_count_;
+    uint32_t field_400_;
+    uint32_t field_404_;
+    uint32_t field_408_;
+    uint32_t field_40C_;
+    uint32_t field_410_;
+    uint32_t field_414_;
+    uint32_t field_418_;
+    uint32_t field_41C_;
+    uint32_t field_420_;
+    uint32_t field_424_;
+    uint32_t field_428_;
+    uint32_t field_42C_;
+    uint32_t field_430_;
+    uint32_t field_434_;
+    uint32_t field_438_;
+    Scroll * scroll_vert_;
+    Scroll * scroll_horz_;
+    Buffer buffer_;
+    uint32_t field_9CC_;
+    uint32_t field_9D0_;
+    uint32_t field_9D4_;
+    uint32_t field_9D8_;
+    uint32_t field_9DC_;
+    uint32_t field_9E0_;
+    uint32_t field_9E4_;
+    uint32_t field_9E8_;
+    uint32_t field_9EC_;
+    uint32_t field_9F0_;
+    uint32_t field_9F4_;
+    uint32_t field_9F8_;
+    uint32_t field_9FC_;
+    uint32_t field_A00_;
+    uint32_t field_A04_;
+    uint32_t poCanvas_;
+    uint32_t field_A0C_;
+    uint32_t field_A10_;
+    ~GraphicWin();
+};
+class Dialog { public:
+    LPVOID vtable_;
+    Heap heap_;
+    Heap * heap_ptr_;
+    uint32_t field_1C_;
+    uint32_t field_20_;
+    uint32_t field_24_;
+    uint32_t field_28_;
+    uint32_t field_2C_;
+    uint32_t field_30_;
+    uint32_t field_34_;
+    uint32_t field_38_;
+    uint32_t field_3C_;
+    uint32_t field_40_;
+    uint32_t field_44_;
+    uint32_t field_48_;
+    uint32_t field_4C_;
+    uint32_t field_50_;
+    uint32_t field_54_;
+    uint32_t field_58_;
+    uint32_t field_5C_;
+    uint32_t field_60_;
+    uint32_t field_64_;
+    uint32_t field_68_;
+    uint32_t field_6C_;
+    Font * font1_;
+    Font * font2_;
+    Font * font3_;
+    uint32_t text_color_a_;
+    uint32_t text_color_2a_;
+    uint32_t text_color_3a_;
+    uint32_t text_color_b_;
+    uint32_t text_color_2b_;
+    uint32_t text_color_3b_;
+    uint32_t text_color_c_;
+    uint32_t text_color_2c_;
+    uint32_t text_color_3c_;
+    uint32_t text_color_d_;
+    uint32_t text_color_2d_;
+    uint32_t text_color_3d_;
+    uint32_t field_AC_;
+    uint32_t field_B0_;
+    uint32_t field_B4_;
+    uint32_t field_B8_;
+    uint32_t field_BC_;
+    uint32_t field_C0_;
+    DialogEntry * entry_head_;
+    DialogEntry * current_entry_;
+    int entry_count_;
+    int entry_position_;
+    uint32_t field_D4_;
+    uint32_t field_D8_;
+    uint32_t field_DC_;
+    uint32_t field_E0_;
+    uint32_t field_E4_;
+    uint32_t field_E8_;
+    int selected_position_;
+    uint32_t field_F0_;
+    ~Dialog();
 };
 class Dialogs { public:
     int item(char *, int);
+    ~Dialogs();
 };
 class FlatButton { public:
     AutoSound auto_sound_;
@@ -613,106 +796,6 @@ class FlatButton { public:
     uint32_t field_B44_;
     uint32_t field_B48_;
     void close();
-    ~FlatButton();
-};
-class GraphicWin { public:
-    AutoSound auto_sound_;
-    uint32_t iFlags_;
-    uint32_t iSomeFlag_;
-    uint32_t field_A0_;
-    uint32_t field_A4_;
-    uint32_t poWinBase_;
-    uint32_t iVertScaleDenom_;
-    uint32_t iVertScaleNum_;
-    Buffer * buffer1_;
-    Buffer * buffer2_;
-    Buffer * buffer3_;
-    Buffer * buffer4_;
-    Win * win_parent_;
-    uint32_t field_C8_;
-    uint32_t field_CC_;
-    uint32_t field_D0_;
-    uint32_t field_D4_;
-    uint32_t field_D8_;
-    Heap heap_;
-    Menu * menu_;
-    uint32_t field_F4_;
-    uint32_t field_F8_;
-    uint32_t field_FC_;
-    uint32_t field_100_;
-    uint32_t field_104_;
-    uint32_t field_108_;
-    uint32_t field_10C_;
-    uint32_t field_110_;
-    int caption_height_;
-    int border_thickness_;
-    int bottom_border_thickness_;
-    uint32_t field_120_;
-    uint32_t field_124_;
-    uint32_t field_128_;
-    uint32_t field_12C_;
-    uint32_t field_130_;
-    uint32_t field_134_;
-    uint32_t field_138_;
-    RECT outer_rect_;
-    RECT client_rect_;
-    uint32_t field_15C_;
-    uint32_t field_160_;
-    uint32_t field_164_;
-    uint32_t field_168_;
-    uint32_t field_16C_;
-    uint32_t field_170_;
-    uint32_t field_174_;
-    uint32_t field_178_;
-    uint32_t field_17C_;
-    uint32_t field_180_;
-    uint32_t field_184_;
-    Sprite * cursor_sprite_;
-    uint32_t field_18C_;
-    uint32_t field_190_;
-    HCURSOR * cursor_handle_;
-    int cursor_name_;
-    uint32_t field_19C_;
-    uint32_t field_1A0_;
-    Win * children_[150];
-    int child_count_;
-    uint32_t field_400_;
-    uint32_t field_404_;
-    uint32_t field_408_;
-    uint32_t field_40C_;
-    uint32_t field_410_;
-    uint32_t field_414_;
-    uint32_t field_418_;
-    uint32_t field_41C_;
-    uint32_t field_420_;
-    uint32_t field_424_;
-    uint32_t field_428_;
-    uint32_t field_42C_;
-    uint32_t field_430_;
-    uint32_t field_434_;
-    uint32_t field_438_;
-    Scroll * scroll_vert_;
-    Scroll * scroll_horz_;
-    Buffer buffer_;
-    uint32_t field_9CC_;
-    uint32_t field_9D0_;
-    uint32_t field_9D4_;
-    uint32_t field_9D8_;
-    uint32_t field_9DC_;
-    uint32_t field_9E0_;
-    uint32_t field_9E4_;
-    uint32_t field_9E8_;
-    uint32_t field_9EC_;
-    uint32_t field_9F0_;
-    uint32_t field_9F4_;
-    uint32_t field_9F8_;
-    uint32_t field_9FC_;
-    uint32_t field_A00_;
-    uint32_t field_A04_;
-    uint32_t poCanvas_;
-    uint32_t field_A0C_;
-    uint32_t field_A10_;
-    ~GraphicWin();
 };
 class Popup { public:
     Popup();
@@ -745,6 +828,18 @@ class Sprite { public:
     int fObj1Exists_;
     void close();
 };
+class StringStruct { public:
+    uint32_t primary_abi_word_;
+    uint32_t virtual_base_abi_word_;
+    StringStructEntry * head_;
+    StringStructEntry * current_;
+    int entry_count_;
+    int current_position_;
+    void * allocator_;
+    uint32_t allocation_base_abi_word_;
+    void * allocation_owner_;
+    void close();
+};
 class Strings { public:
     int8_t err_flags_;
     LPVOID base_;
@@ -756,29 +851,33 @@ class Strings { public:
 };
 extern "C" char *strcat(char *, const char *);
 extern "C" int __cdecl _alloca_probe();
-extern "C" int __cdecl sub_406820();
-extern "C" int __cdecl sub_406af0();
-void __cdecl auto_undo();
+extern "C" int __cdecl fn_00402970();
+extern "C" int __cdecl sub_4066c0();
+extern "C" int strcmp(const char *, const char *);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_0065b974 = (int *)0x0065B974;
+static int *const g_0065c382 = (int *)0x0065C382;
+static int *const g_006693ac = (int *)0x006693AC;
 static int *const g_006695c0 = (int *)0x006695C0;
 static int *const g_006695c8 = (int *)0x006695C8;
 static int *const g_0066974c = (int *)0x0066974C;
 static int *const g_00669754 = (int *)0x00669754;
+static int *const g_006698c0 = (int *)0x006698C0;
+static int *const g_006698c4 = (int *)0x006698C4;
 static int *const g_006698cc = (int *)0x006698CC;
 static int *const g_006698d4 = (int *)0x006698D4;
 static int *const g_00669d50 = (int *)0x00669D50;
 static int *const g_00669d58 = (int *)0x00669D58;
-static int *const g_0067a5a8 = (int *)0x0067A5A8;
-static int *const g_0068900c = (int *)0x0068900C;
-static int *const g_0096c85c = (int *)0x0096C85C;
-static int *const g_0096c874 = (int *)0x0096C874;
-static int *const g_0096c9e8 = (int *)0x0096C9E8;
-static int *const g_0097d048 = (int *)0x0097D048;
-static int *const g_009a64c4 = (int *)0x009A64C4;
+static int *const g_0067adf8 = (int *)0x0067ADF8;
+static int *const g_0068912c = (int *)0x0068912C;
+static int *const g_0068913c = (int *)0x0068913C;
+static int *const g_00691878 = (int *)0x00691878;
+static int *const g_00691af8 = (int *)0x00691AF8;
+static int *const g_006a721c = (int *)0x006A721C;
+static int *const g_00945ae0 = (int *)0x00945AE0;
+static int *const g_009b3374 = (int *)0x009B3374;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b8aa8 = (int *)0x009B8AA8;
 static int *const g_009b90d8 = (int *)0x009B90D8;
@@ -787,70 +886,93 @@ class Console { public:
     uint8_t derived_storage_[0x23D94];
     GraphicWin virtual_base_;
 
-    void editor_diff();
+    void editor_paints(int);
+    void editor_terrain();
 };
 
-void Console::editor_diff() {
-    // Popup/Scroll/BasePop/Dialogs/Spot are opaque callee types here (methods
-    // only, no agreed size), so these local (stack, non-pointer) instances
-    // cannot get the original's real frame slots - see the WALL note filed
-    // for this address (same class of issue as 0x004589C0/0x00497AC0/
-    // 0x004055A0/0x004E0290, this time for Popup/BasePop/Scroll/Dialogs/Spot).
+struct Shim4066c0 { void teardown(); };
+
+void Console::editor_terrain() {
+    char *self = reinterpret_cast<char *>(this);
     Popup popup;
-    char *popup_base = reinterpret_cast<char *>(&popup);
+    char *base = reinterpret_cast<char *>(&popup);
 
-    auto_undo();
-    popup.start(reinterpret_cast<int8 *>(g_009b8aa8), reinterpret_cast<int8 *>(g_0068900c),
-                -1, 0, 0x40, 0);
+    *reinterpret_cast<int32_t *>(g_006a721c) = 6;
+    popup.start(reinterpret_cast<char *>(g_009b8aa8), reinterpret_cast<const char *>(g_0068912c),
+                -1, 0, 0, 0);
 
-    for (int i = 0; i < 6; ++i) {
-        *reinterpret_cast<char *>(g_009b86a0) = 0;
-        strcat(reinterpret_cast<char *>(g_009b86a0),
-               reinterpret_cast<char *>(reinterpret_cast<Strings *>(g_009b90d8)->get(g_0096c85c[i])));
-        reinterpret_cast<Dialogs *>(popup_base + 0x21D0)->item(reinterpret_cast<char *>(g_009b86a0), i);
-    }
+    char *msg = reinterpret_cast<char *>(g_009b86a0);
+    int32_t selected = -1;
+    int32_t *rec = reinterpret_cast<int32_t *>(g_00691878);
+    int32_t index = 0;
+    do {
+        if (rec[4] != 0) {
+            *msg = 0;
+            strcat(msg, reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9b90d8)->get(rec[0])));
+            char *label2 = reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9b90d8)->get(rec[1]));
+            char *label1 = reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9b90d8)->get(rec[0]));
+            if (strcmp(label1, label2) != 0) {
+                strcat(msg, reinterpret_cast<char *>(g_0068913c));
+                strcat(msg, reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9b90d8)->get(rec[1])));
+            }
+            Dialogs itemDialogs;
+            itemDialogs.item(msg, index);
+            if (index == *g_00945ae0 - 6) {
+                selected = index;
+            }
+        }
+        rec += 8;
+        ++index;
+    } while (reinterpret_cast<char *>(rec) < reinterpret_cast<char *>(g_00691af8));
 
-    *reinterpret_cast<int *>(popup_base + 0x944) = *g_009a64c4;
-    int selected = reinterpret_cast<BasePop *>(popup_base)->exec(0, 0);
+    int32_t result = reinterpret_cast<BasePop *>(base)->exec(0, 0);
+    editor_paints(result + 6);
 
-    if (selected < 0) {
-        popup.close();
-        Scroll scroll1;
-        scroll1.close();
-        FlatButton fb1;
-        fb1.close();
-        BaseButton bb1;
-        FlatButton fb2;
-        fb2.close();
-        BaseButton bb2;
-        GraphicWin gw1;
-        reinterpret_cast<BasePop *>(popup_base)->close();
-        Spot spot1;
-        sub_406af0();
-        sub_406820();
-        sub_406820();
-        Sprite spr1;
-        spr1.close();
-        FlatButton fb3;
-        FlatButton fb4;
-        Heap heap1;
-        heap1.shutdown();
-        return;
-    }
-
-    *g_009a64c4 = selected;
-    for (int *p = g_0096c9e8; p < g_0097d048; p += 0x833) {
-        *p = selected;
-    }
-
+    *reinterpret_cast<int32_t *>(base) = 0x6695C8;
+    *reinterpret_cast<int32_t *>(base + 0x400) = 0x6695C0;
     popup.close();
-    Scroll scroll2;
-    scroll2.close();
-    FlatButton fb5;
-    fb5.close();
-    BaseButton bb3;
-    FlatButton fb6;
-    fb6.close();
-    BaseButton bb4;
-    GraphicWin gw2;
+
+    char *scroll = base + 0x3230;
+    *reinterpret_cast<int32_t *>(scroll) = 0x669D58;
+    *reinterpret_cast<int32_t *>(scroll + 0x400) = 0x669D50;
+    reinterpret_cast<Scroll *>(scroll)->close();
+
+    char *fb1 = base + 0x4828;
+    *reinterpret_cast<int32_t *>(fb1) = 0x669754;
+    *reinterpret_cast<int32_t *>(fb1 + 0x400) = 0x66974C;
+    reinterpret_cast<FlatButton *>(fb1)->close();
+    reinterpret_cast<BaseButton *>(fb1)->~BaseButton();
+
+    char *fb2 = base + 0x3CDC;
+    *reinterpret_cast<int32_t *>(fb2) = 0x669754;
+    *reinterpret_cast<int32_t *>(fb2 + 0x400) = 0x66974C;
+    reinterpret_cast<FlatButton *>(fb2)->close();
+    reinterpret_cast<BaseButton *>(fb2)->~BaseButton();
+
+    reinterpret_cast<GraphicWin *>(scroll)->~GraphicWin();
+
+    *reinterpret_cast<int32_t *>(base) = 0x6698D4;
+    *reinterpret_cast<int32_t *>(base + 0x400) = 0x6698CC;
+    reinterpret_cast<BasePop *>(base)->close();
+
+    reinterpret_cast<Spot *>(base + 0x3098)->~Spot();
+    reinterpret_cast<Dialogs *>(base + 0x2358)->~Dialogs();
+    reinterpret_cast<Dialog *>(base + 0x2D70)->~Dialog();
+    reinterpret_cast<GraphicWin *>(base + 0x2358)->~GraphicWin();
+
+    char *shim1 = base + 0x21A8;
+    reinterpret_cast<Shim4066c0 *>(shim1)->teardown();
+    int32_t saved1 = *reinterpret_cast<int32_t *>(shim1 + 4);
+    *reinterpret_cast<int32_t *>(shim1) = 0x6693AC;
+    *g_009b3374 = saved1;
+
+    StringStruct ss;
+    ss.close();
+
+    reinterpret_cast<Sprite *>(base + 0x2118)->close();
+    reinterpret_cast<FlatButton *>(base + 0x15A8)->~FlatButton();
+    reinterpret_cast<FlatButton *>(base + 0x0A5C)->~FlatButton();
+    reinterpret_cast<Heap *>(base + 0x0A28)->shutdown();
+
+    reinterpret_cast<GraphicWin *>(base)->~GraphicWin();
 }

@@ -3,20 +3,20 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005150D0
-// name           ?zoom@Console@@QAEXHH@Z
-// size           783 bytes
+// address        0x004BAF20
+// name           ?tour7@TutWin@@QAEXXZ
+// size           1107 bytes
 // measured tier  MISMATCH
-// divergence     3
+// divergence     24
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005150d0/unit.cpp
+//   build/byte-match/004baf20/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?zoom@Console@@QAEXHH@Z  at 0x005150D0  (783 bytes)
+// subject: ?tour7@TutWin@@QAEXXZ  at 0x004BAF20  (1107 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -52,7 +52,7 @@ class AutoSound;
 struct BITMAPINFO;
 typedef int BOOL;
 class Buffer;
-class Console;
+class DesignWin;
 class Font;
 class GraphicWin;
 typedef void * HBITMAP;
@@ -63,15 +63,14 @@ typedef void * HRGN;
 class Heap;
 typedef char * LPSTR;
 typedef void * LPVOID;
-class MapWin;
 class Menu;
 typedef void * PVOID;
 struct RECT;
 class Scroll;
 class Spot;
 class Sprite;
+class TutWin;
 class Win;
-class WorldWin;
 
 class AutoSound { public:
     PVOID vtable_;
@@ -221,24 +220,6 @@ class Heap { public:
     size_t free_size_;
 };
 
-class Sprite { public:
-    int ppszFileName_;
-    int pcBits_;
-    char cTransparentIndex_;
-    char pad1_;
-    char pad2_;
-    char pad3_;
-    int iSpriteWidth2_;
-    int iSpriteWidth_;
-    int iSpriteHeight_;
-    int iWidth_;
-    int iHeight_;
-    int iLeftOffset_;
-    int iTopOffset_;
-    int fObj1Exists_;
-};
-
-// ---- callees, declared and never defined (a definition would be inlined) ----
 class GraphicWin { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -336,15 +317,29 @@ class GraphicWin { public:
     uint32_t poCanvas_;
     uint32_t field_A0C_;
     uint32_t field_A10_;
-    void redraw();
 };
-class MapWin { public:
-    uint32_t vbtable_pointer_;
-    void * owned_;
-    uint8_t derived_tail_[0x21A6C - 0x8];
-    GraphicWin virtual_base_;
-    int pixel_to_tile(int, int, int *, int *);
-    void draw_map(int);
+
+class Sprite { public:
+    int ppszFileName_;
+    int pcBits_;
+    char cTransparentIndex_;
+    char pad1_;
+    char pad2_;
+    char pad3_;
+    int iSpriteWidth2_;
+    int iSpriteWidth_;
+    int iSpriteHeight_;
+    int iWidth_;
+    int iHeight_;
+    int iLeftOffset_;
+    int iTopOffset_;
+    int fObj1Exists_;
+};
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class DesignWin { public:
+    int exec(int, int);
+    void shut_that_badboy_down();
 };
 class Win { public:
     AutoSound auto_sound_;
@@ -424,194 +419,204 @@ class Win { public:
     uint32_t field_438_;
     Scroll * scroll_vert_;
     Scroll * scroll_horz_;
-    void get_mouse_pos(int *, int *);
+    int is_visible();
 };
-class WorldWin { public:
-    int pixel_to_tile(int, int, int *, int *);
-};
-int __cdecl in_box(int, int, int, int, int, int);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_005153e0 = (int *)0x005153E0;
-static int *const g_0068faf0 = (int *)0x0068FAF0;
+static int *const g_00687578 = (int *)0x00687578;
+static int *const g_00687584 = (int *)0x00687584;
+static int *const g_00687590 = (int *)0x00687590;
+static int *const g_0068759c = (int *)0x0068759C;
+static int *const g_006875ac = (int *)0x006875AC;
+static int *const g_006875bc = (int *)0x006875BC;
+static int *const g_006875c8 = (int *)0x006875C8;
+static int *const g_006875d8 = (int *)0x006875D8;
+static int *const g_006875e4 = (int *)0x006875E4;
+static int *const g_006875f4 = (int *)0x006875F4;
+static int *const g_00687604 = (int *)0x00687604;
+static int *const g_00687610 = (int *)0x00687610;
+static int *const g_00687620 = (int *)0x00687620;
+static int *const g_00687630 = (int *)0x00687630;
+static int *const g_0068763c = (int *)0x0068763C;
+static int *const g_0068764c = (int *)0x0068764C;
+static int *const g_0068765c = (int *)0x0068765C;
+static int *const g_0071f2b0 = (int *)0x0071F2B0;
+static int *const g_0071fd1c = (int *)0x0071FD1C;
+static int *const g_0071fd5c = (int *)0x0071FD5C;
+static int *const g_0071fd6c = (int *)0x0071FD6C;
+static int *const g_0071fd7c = (int *)0x0071FD7C;
+static int *const g_0071fd8c = (int *)0x0071FD8C;
+static int *const g_0071fd9c = (int *)0x0071FD9C;
+static int *const g_0071fdbc = (int *)0x0071FDBC;
+static int *const g_0071fddc = (int *)0x0071FDDC;
+static int *const g_0071fdec = (int *)0x0071FDEC;
+static int *const g_0071fdfc = (int *)0x0071FDFC;
+static int *const g_0071fe0c = (int *)0x0071FE0C;
+static int *const g_0071fe3c = (int *)0x0071FE3C;
+static int *const g_0071fe4c = (int *)0x0071FE4C;
+static int *const g_0071fe5c = (int *)0x0071FE5C;
+static int *const g_0071fe6c = (int *)0x0071FE6C;
+static int *const g_0071fe7c = (int *)0x0071FE7C;
+static int *const g_0071ff6c = (int *)0x0071FF6C;
 static int *const g_007d3c3c = (int *)0x007D3C3C;
-static int *const g_007d3c5c = (int *)0x007D3C5C;
-static int *const g_008e9f60 = (int *)0x008E9F60;
-static int *const g_008ea424 = (int *)0x008EA424;
-static int *const g_008ea428 = (int *)0x008EA428;
 static int *const g_00939284 = (int *)0x00939284;
-static int *const g_00949870 = (int *)0x00949870;
-static int *const g_00949874 = (int *)0x00949874;
-static int *const g_0094a30c = (int *)0x0094A30C;
-static int *const g_0096c9e0 = (int *)0x0096C9E0;
-static int *const g_0096c9e1 = (int *)0x0096C9E1;
-static int *const g_009a64c0 = (int *)0x009A64C0;
 
-class Console { public:
-    uint8_t derived_storage_[0x23D94];
-    GraphicWin virtual_base_;
+class TutWin { public:
+    uint8_t unmapped_0_[0x537C];
+    int32_t field_537C_;
+    int32_t field_5380_;
+    uint8_t unmapped_5384_[0x539C - 0x5384];
+    int32_t field_539C_;
+    uint8_t unmapped_53A0_[0x53A4 - 0x53A0];
+    int32_t field_53A4_;
+    int32_t field_53A8_;
+    int32_t field_53AC_;
+    uint8_t unmapped_53B0_[0x53B8 - 0x53B0];
+    int32_t field_53B8_;
+    uint8_t unmapped_53BC_[0x53C4 - 0x53BC];
+    int32_t field_53C4_;
+    uint8_t unmapped_53C8_[0x53D4 - 0x53C8];
+    int32_t field_53D4_;
 
-    void zoom(int, int);
+    void do_des(RECT *, const char *, int);
+    void iface_rect(RECT *, int *, int *);
+    void des_rect(RECT *, int *, int *);
+    int tut_win(GraphicWin *, const char *, int, int, Sprite *, int, int, int);
+    void tour7();
 };
 
-extern int *g_city_table[];
-extern unsigned int g_civ_visible_flags[];
+// The double-indirect "active window" resolve below reads a value from
+// this global and chases its vtable (vtbl = *ptr; adjusted = ptr +
+// *(int*)(vtbl+4)); the address of the global itself is a plain load, so
+// the context's folded pointer constant is fine here.
+static GraphicWin *resolve_win() {
+    int *ptr = *reinterpret_cast<int **>(g_007d3c3c);
+    if (ptr == 0) {
+        return 0;
+    }
+    int *vtbl = reinterpret_cast<int *>(*ptr);
+    int offset = *reinterpret_cast<int *>(reinterpret_cast<char *>(vtbl) + 4);
+    return reinterpret_cast<GraphicWin *>(reinterpret_cast<char *>(ptr) + offset);
+}
 
-void Console::zoom(int a1, int a2) {
-    int idx;
+// do_des is declared returning void in the catalogue, but the call site
+// tests eax afterward (`test eax,eax; je ...`) - it returns int. A shim
+// with the same "this" and a corrected return type sidesteps the
+// declared-void signature without touching the scaffold's declaration.
+class TutWinDoDes { public:
+    int do_des(RECT *, const char *, int);
+};
 
-    if (a2 < 0) {
-        idx = 0;
-        int mx, my;
-        reinterpret_cast<Win *>(g_008e9f60)->get_mouse_pos(&mx, &my);
-
-        bool matched = false;
-        int tx = 0, ty = 0;
-
-        if (in_box(mx, my, 0, 0, *g_008ea424, -*g_008ea428) != 0 &&
-            reinterpret_cast<WorldWin *>(g_008e9f60)->pixel_to_tile(mx, my, &tx, &ty) == 0 &&
-            tx >= 0 && tx < *g_00949874 &&
-            ty >= 0 && ty < *g_00949870) {
-
-            int civ = *g_00939284;
-            int rec = civ << 6;
-            rec = rec + civ;
-            rec = civ + rec * 2;
-            rec = civ + rec * 8;
-            rec = civ + rec * 2;
-
-            if ((g_civ_visible_flags[rec] & 0x200) != 0) {
-                matched = true;
-            } else {
-                int stride = *g_0068faf0;
-                int cell = stride * tx + (ty >> 1);
-                int bitidx = cell + cell * 4;
-                bitidx = cell + bitidx * 2;
-                unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
-                unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
-                if ((explored[bitidx * 4 + 4] & bit) != 0) {
-                    matched = true;
-                } else if ((*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0) {
-                    matched = true;
-                }
-            }
-        }
-
-        if (matched) {
-            char *city = reinterpret_cast<char *>(g_city_table[0]);
-            *reinterpret_cast<int *>(city + 0x1dd9c) = ty;
-            *reinterpret_cast<int *>(city + 0x1dda0) = tx;
-            idx = 0;
-        } else {
-            for (int i = 0; i < 8; ++i) {
-                char *city = reinterpret_cast<char *>(g_city_table[i]);
-                if (city == 0) {
-                    continue;
-                }
-                if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
-                    continue;
-                }
-                if (*reinterpret_cast<int *>(city + 0x1dd98) >= 0) {
-                    continue;
-                }
-
-                int m8, m4;
-                int *vbtable = *reinterpret_cast<int **>(city);
-                int adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-                reinterpret_cast<Win *>(city + adj)->get_mouse_pos(&m8, &m4);
-
-                vbtable = *reinterpret_cast<int **>(city);
-                adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-                int w = *reinterpret_cast<int *>(city + adj + 0x4c8);
-                int h = *reinterpret_cast<int *>(city + adj + 0x4c4);
-
-                int ttx = 0, tty = 0;
-                bool hit = in_box(m8, m4, 0, 0, h, -w) != 0 &&
-                    reinterpret_cast<MapWin *>(city)->pixel_to_tile(m8, m4, &ttx, &tty) == 0 &&
-                    ttx >= 0 && ttx < *g_00949874 &&
-                    tty >= 0 && tty < *g_00949870;
-                if (!hit) {
-                    continue;
-                }
-
-                int civ = *g_00939284;
-                int rec = civ << 6;
-                rec = rec + civ;
-                rec = civ + rec * 2;
-                rec = civ + rec * 8;
-                rec = civ + rec * 2;
-
-                bool found = (reinterpret_cast<unsigned char *>(g_civ_visible_flags)[rec * 4 + 1] & 2) != 0;
-                if (!found) {
-                    int stride = *g_0068faf0;
-                    int cell = stride * ttx + (tty >> 1);
-                    int bitidx = cell + cell * 4;
-                    bitidx = cell + bitidx * 2;
-                    unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
-                    unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
-                    found = (explored[bitidx * 4 + 4] & bit) != 0;
-                    if (!found) {
-                        found = (*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0;
-                    }
-                }
-                if (!found) {
-                    continue;
-                }
-
-                *reinterpret_cast<int *>(city + 0x1dd9c) = tty;
-                *reinterpret_cast<int *>(city + 0x1dda0) = ttx;
-                idx = i;
-                break;
-            }
-        }
-
-        a2 = idx;
+void TutWin::tour7() {
+    int wasVisible = reinterpret_cast<Win *>(g_0071f2b0)->is_visible();
+    if (!wasVisible) {
+        reinterpret_cast<DesignWin *>(g_0071f2b0)->exec(*g_00939284, -2);
     }
 
-    int ebx = a1;
-    for (int i = 0; i < 8; ++i) {
-        char *city = reinterpret_cast<char *>(g_city_table[i]);
-        if (city == 0) {
-            continue;
-        }
-        if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
-            continue;
-        }
-        if (a2 >= 0 && i != a2) {
-            continue;
-        }
+    int a3, a4;
 
-        switch (ebx) {
-        case 0x203:
-            if (*reinterpret_cast<int *>(city + 0x1dd98) < 0x10) {
-                *reinterpret_cast<int *>(city + 0x1dd98) += 2;
-            }
-            break;
-        case 0x204:
-            if (*reinterpret_cast<int *>(city + 0x1dd98) > -0xE) {
-                *reinterpret_cast<int *>(city + 0x1dd98) -= 2;
-            }
-            break;
-        case 0x205:
-            *reinterpret_cast<int *>(city + 0x1dd98) = 0;
-            break;
-        case 0x206:
-            *reinterpret_cast<int *>(city + 0x1dd98) = -6;
-            break;
-        case 0x207:
-            *reinterpret_cast<int *>(city + 0x1dd98) = 0x10;
-            break;
-        case 0x208:
-            *reinterpret_cast<int *>(city + 0x1dd98) = -0xE;
-            break;
-        default:
-            break;
-        }
-
-        reinterpret_cast<MapWin *>(city)->draw_map(1);
+    this->des_rect(reinterpret_cast<RECT *>(0x71fd5c), &a4, &a3);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x687578), a4,
+                       a3, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
     }
 
-    reinterpret_cast<GraphicWin *>(g_008e9f60)->redraw();
+    this->des_rect(reinterpret_cast<RECT *>(0x71fd6c), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x687584), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->des_rect(reinterpret_cast<RECT *>(0x71fd7c), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x687590), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->des_rect(reinterpret_cast<RECT *>(0x71fd8c), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x68759c), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->des_rect(reinterpret_cast<RECT *>(0x71fd9c), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x6875ac), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->des_rect(reinterpret_cast<RECT *>(0x71fddc), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x6875bc), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->des_rect(reinterpret_cast<RECT *>(0x71fdec), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x6875c8), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->iface_rect(reinterpret_cast<RECT *>(0x71fdbc), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x6875d8), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->iface_rect(reinterpret_cast<RECT *>(0x71ff6c), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x6875e4), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->iface_rect(reinterpret_cast<RECT *>(0x71fd1c), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x6875f4), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->des_rect(reinterpret_cast<RECT *>(0x71fe3c), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x687604), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    this->des_rect(reinterpret_cast<RECT *>(0x71fe0c), &a3, &a4);
+    if (this->tut_win(resolve_win(), reinterpret_cast<const char *>(0x687610), a3,
+                       a4, reinterpret_cast<Sprite *>(0), 2, -1, -1) == 0) {
+        goto fail;
+    }
+
+    if (reinterpret_cast<TutWinDoDes *>(this)->do_des(
+            reinterpret_cast<RECT *>(0x71fe4c), reinterpret_cast<const char *>(0x687620),
+            2) == 0) {
+        goto fail;
+    }
+    if (reinterpret_cast<TutWinDoDes *>(this)->do_des(
+            reinterpret_cast<RECT *>(0x71fe5c), reinterpret_cast<const char *>(0x687630),
+            2) == 0) {
+        goto fail;
+    }
+    if (reinterpret_cast<TutWinDoDes *>(this)->do_des(
+            reinterpret_cast<RECT *>(0x71fe6c), reinterpret_cast<const char *>(0x68763c),
+            2) == 0) {
+        goto fail;
+    }
+    if (reinterpret_cast<TutWinDoDes *>(this)->do_des(
+            reinterpret_cast<RECT *>(0x71fdfc), reinterpret_cast<const char *>(0x68764c),
+            2) == 0) {
+        goto fail;
+    }
+    if (reinterpret_cast<TutWinDoDes *>(this)->do_des(
+            reinterpret_cast<RECT *>(0x71fe7c), reinterpret_cast<const char *>(0x68765c),
+            2) == 0) {
+        goto fail;
+    }
+
+fail:
+    if (!wasVisible) {
+        reinterpret_cast<DesignWin *>(g_0071f2b0)->shut_that_badboy_down();
+    }
 }

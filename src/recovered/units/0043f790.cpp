@@ -7,7 +7,7 @@
 // name           ?draw_portrait@DiploPop@@QAEXXZ
 // size           766 bytes
 // measured tier  MISMATCH
-// divergence     0
+// divergence     4
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -64,7 +64,19 @@ struct RECT;
 class Spot;
 class Strings;
 
-// ---- callees, declared and never defined (a definition would be inlined) ----
+class Font { public:
+    int unk_1_;
+    BOOL is_fot_set_;
+    HFONT font_obj_;
+    int line_height_;
+    int height_;
+    int internal_leading_;
+    int ascent_;
+    int descent_;
+    int pad_;
+    LPSTR fot_file_name_;
+};
+
 struct RECT {
     long left;
     long top;
@@ -78,6 +90,7 @@ class Spot { public:
     uint32_t add_count_;
 };
 
+// ---- callees, declared and never defined (a definition would be inlined) ----
 class Buffer { public:
     LPVOID vtable_;
     uint32_t poOwner_;
@@ -156,20 +169,6 @@ class Buffer { public:
     void hline(int, int, int, int);
     void set_text_color(int, int, int, int);
 };
-
-class Font { public:
-    int unk_1_;
-    BOOL is_fot_set_;
-    HFONT font_obj_;
-    int line_height_;
-    int height_;
-    int internal_leading_;
-    int ascent_;
-    int descent_;
-    int pad_;
-    LPSTR fot_file_name_;
-};
-
 class Strings { public:
     int8_t err_flags_;
     LPVOID base_;
@@ -179,7 +178,6 @@ class Strings { public:
     BOOL is_populated_;
     int get(int);
 };
-
 extern "C" char *strcat(char *, const char *);
 extern "C" unsigned int strlen(const char *);
 int __cdecl get_mood(int);
@@ -209,6 +207,115 @@ class DiploPop { public:
     void draw_portrait();
 };
 
+// Indexed table bases: the scaffold spells these as fixed-address pointer
+// constants, which is right for a plain load/store but wrong here because
+// each is indexed by a register (faction id). `extern T name[]` keeps the
+// indexed-addressing instruction form instead of letting /O2 fold the
+// constant base into the arithmetic.
+extern int g_0096cb04_tbl[];
+extern int g_00946a30_tbl[];
+extern int g_0096ca38_tbl[];
+extern int g_0094c9e4_tbl[];
+extern int g_00939284_val;
+
 void DiploPop::draw_portrait() {
-    // Minimal body for coverage
+    char *self = reinterpret_cast<char *>(this);
+
+    RECT rect = *reinterpret_cast<RECT *>(self + 0x20e4);
+    reinterpret_cast<Buffer *>(g_007aec64)->box_sprite(
+        &rect, reinterpret_cast<BoxSpriteParams *>(g_0078d528));
+
+    int left1   = rect.left + 1;
+    int right1  = rect.right - 1;
+    int top1    = rect.top + 1;
+    int bottom1 = rect.bottom - 1;
+    rect.left   = left1;
+    rect.right  = right1;
+    rect.top    = top1;
+    rect.bottom = bottom1;
+    int extra = *reinterpret_cast<int *>(*reinterpret_cast<int *>(self + 0x20b4) + 0x1c);
+    top1 += extra;
+    int orig_left = left1 - 1;
+    int pixel = reinterpret_cast<Buffer *>(g_007aec64)->get_pixel(orig_left, top1);
+    rect.top = top1;
+    reinterpret_cast<Buffer *>(g_007aec64)->hline(rect.left, rect.right, rect.top, pixel);
+
+    reinterpret_cast<Buffer *>(g_007aec64)->set_font(
+        reinterpret_cast<Font *>(self + 0xa6c), 0, 0, 0);
+    reinterpret_cast<Buffer *>(g_007aec64)->set_text_color(0xa0, -1, 1, 1);
+
+    rect.left += 4;
+    rect.right -= 4;
+    rect.top += 4;
+    rect.bottom -= 4;
+
+    char *buf = reinterpret_cast<char *>(g_009b86a0);
+    *buf = 0;
+    strcat(buf, reinterpret_cast<char *>(reinterpret_cast<char *>(g_00946a84) +
+                                          *reinterpret_cast<int *>(self + 0xa94) * 0x59c));
+    (*reinterpret_cast<char *(__stdcall **)(char *)>(0x0066931C))(buf);
+
+    if (buf) {
+        int save_left = rect.left;
+        unsigned int len = strlen(buf);
+        reinterpret_cast<Buffer *>(g_007aec64)->write_l(buf, save_left, rect.top, static_cast<int>(len));
+    }
+
+    int a6c = *reinterpret_cast<int *>(self + 0xa6c);
+    int y_adv;
+    if (a6c < 0)
+        y_adv = *reinterpret_cast<int *>(self + 0xa78);
+    else
+        y_adv = *reinterpret_cast<int *>(self + 0xa7c) + a6c;
+    rect.top += y_adv;
+
+    reinterpret_cast<Buffer *>(g_007aec64)->set_font(
+        reinterpret_cast<Font *>(self + 0xa44), 0, 0, 0);
+
+    *buf = 0;
+    int leader_offset = *reinterpret_cast<int *>(*reinterpret_cast<int *>(g_009b90f8) + 0xe90);
+    char *s1 = reinterpret_cast<char *>(reinterpret_cast<Strings *>(g_009b90d8)->get(leader_offset));
+    strcat(buf, s1);
+    strcat(buf, reinterpret_cast<char *>(g_00682e94));
+
+    int faction = *reinterpret_cast<int *>(self + 0xa94);
+    int mood_idx = g_0096cb04_tbl[faction * 2099];
+    if (mood_idx < 0)
+        mood_idx = 0;
+    else if (mood_idx > 7)
+        mood_idx = 7;
+    char *s2 = reinterpret_cast<char *>(reinterpret_cast<Strings *>(g_009b90d8)->get(g_00946a30_tbl[mood_idx]));
+    say_special(buf, s2, faction);
+
+    if (buf) {
+        int save_left = rect.left;
+        unsigned int len = strlen(buf);
+        reinterpret_cast<Buffer *>(g_007aec64)->write_l(buf, save_left, rect.top, static_cast<int>(len));
+    }
+
+    int a44 = *reinterpret_cast<int *>(self + 0xa44);
+    int y_adv2;
+    if (a44 < 0)
+        y_adv2 = *reinterpret_cast<int *>(self + 0xa50);
+    else
+        y_adv2 = *reinterpret_cast<int *>(self + 0xa54) + a44;
+    rect.top += y_adv2;
+
+    *buf = 0;
+    int spouse_offset = *reinterpret_cast<int *>(*reinterpret_cast<int *>(g_009b90f8) + 0xe94);
+    char *s3 = reinterpret_cast<char *>(reinterpret_cast<Strings *>(g_009b90d8)->get(spouse_offset));
+    strcat(buf, s3);
+    strcat(buf, reinterpret_cast<char *>(g_00682e94));
+
+    faction = *reinterpret_cast<int *>(self + 0xa94);
+    int mood_val = g_0096ca38_tbl[g_00939284_val + faction * 2099];
+    int mood = get_mood(mood_val);
+    char *s4 = reinterpret_cast<char *>(reinterpret_cast<Strings *>(g_009b90d8)->get(g_0094c9e4_tbl[mood]));
+    say_special(buf, s4, faction);
+
+    if (buf) {
+        int save_left = rect.left;
+        unsigned int len = strlen(buf);
+        reinterpret_cast<Buffer *>(g_007aec64)->write_l(buf, save_left, rect.top, static_cast<int>(len));
+    }
 }

@@ -3,20 +3,20 @@
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005150D0
-// name           ?zoom@Console@@QAEXHH@Z
-// size           783 bytes
+// address        0x004BAA70
+// name           ?tour6@TutWin@@QAEXXZ
+// size           1186 bytes
 // measured tier  MISMATCH
-// divergence     3
+// divergence     4
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005150d0/unit.cpp
+//   build/byte-match/004baa70/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?zoom@Console@@QAEXHH@Z  at 0x005150D0  (783 bytes)
+// subject: ?tour6@TutWin@@QAEXXZ  at 0x004BAA70  (1186 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -51,8 +51,8 @@ typedef unsigned char uint8;
 class AutoSound;
 struct BITMAPINFO;
 typedef int BOOL;
+class BaseWin;
 class Buffer;
-class Console;
 class Font;
 class GraphicWin;
 typedef void * HBITMAP;
@@ -63,15 +63,14 @@ typedef void * HRGN;
 class Heap;
 typedef char * LPSTR;
 typedef void * LPVOID;
-class MapWin;
 class Menu;
 typedef void * PVOID;
 struct RECT;
 class Scroll;
 class Spot;
 class Sprite;
+class TutWin;
 class Win;
-class WorldWin;
 
 class AutoSound { public:
     PVOID vtable_;
@@ -221,24 +220,6 @@ class Heap { public:
     size_t free_size_;
 };
 
-class Sprite { public:
-    int ppszFileName_;
-    int pcBits_;
-    char cTransparentIndex_;
-    char pad1_;
-    char pad2_;
-    char pad3_;
-    int iSpriteWidth2_;
-    int iSpriteWidth_;
-    int iSpriteHeight_;
-    int iWidth_;
-    int iHeight_;
-    int iLeftOffset_;
-    int iTopOffset_;
-    int fObj1Exists_;
-};
-
-// ---- callees, declared and never defined (a definition would be inlined) ----
 class GraphicWin { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -336,15 +317,32 @@ class GraphicWin { public:
     uint32_t poCanvas_;
     uint32_t field_A0C_;
     uint32_t field_A10_;
-    void redraw();
 };
-class MapWin { public:
-    uint32_t vbtable_pointer_;
-    void * owned_;
-    uint8_t derived_tail_[0x21A6C - 0x8];
-    GraphicWin virtual_base_;
-    int pixel_to_tile(int, int, int *, int *);
-    void draw_map(int);
+
+class Sprite { public:
+    int ppszFileName_;
+    int pcBits_;
+    char cTransparentIndex_;
+    char pad1_;
+    char pad2_;
+    char pad3_;
+    int iSpriteWidth2_;
+    int iSpriteWidth_;
+    int iSpriteHeight_;
+    int iWidth_;
+    int iHeight_;
+    int iLeftOffset_;
+    int iTopOffset_;
+    int fObj1Exists_;
+};
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
+class BaseWin { public:
+    void draw_energy_alloc(int);
+    void draw_expenses(int);
+    void draw_farm(int);
+    void focus();
+    void zoom(int, int);
 };
 class Win { public:
     AutoSound auto_sound_;
@@ -424,194 +422,182 @@ class Win { public:
     uint32_t field_438_;
     Scroll * scroll_vert_;
     Scroll * scroll_horz_;
-    void get_mouse_pos(int *, int *);
+    int is_visible();
+    void client_to_screen(int *, int *);
 };
-class WorldWin { public:
-    int pixel_to_tile(int, int, int *, int *);
-};
-int __cdecl in_box(int, int, int, int, int, int);
+int __cdecl parse_says(int, char *, int, int);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_005153e0 = (int *)0x005153E0;
-static int *const g_0068faf0 = (int *)0x0068FAF0;
+static int *const g_00687510 = (int *)0x00687510;
+static int *const g_0068751c = (int *)0x0068751C;
+static int *const g_00687528 = (int *)0x00687528;
+static int *const g_00687534 = (int *)0x00687534;
+static int *const g_00687540 = (int *)0x00687540;
+static int *const g_0068754c = (int *)0x0068754C;
+static int *const g_00687558 = (int *)0x00687558;
+static int *const g_00687564 = (int *)0x00687564;
+static int *const g_006a7628 = (int *)0x006A7628;
+static int *const g_006c0df4 = (int *)0x006C0DF4;
+static int *const g_006e8254 = (int *)0x006E8254;
+static int *const g_006e8258 = (int *)0x006E8258;
+static int *const g_006e825c = (int *)0x006E825C;
+static int *const g_006e8260 = (int *)0x006E8260;
+static int *const g_006e8284 = (int *)0x006E8284;
+static int *const g_006e8288 = (int *)0x006E8288;
+static int *const g_006e828c = (int *)0x006E828C;
+static int *const g_006e8290 = (int *)0x006E8290;
+static int *const g_006e8334 = (int *)0x006E8334;
+static int *const g_006e8338 = (int *)0x006E8338;
+static int *const g_006e833c = (int *)0x006E833C;
+static int *const g_006e8340 = (int *)0x006E8340;
+static int *const g_006e8404 = (int *)0x006E8404;
+static int *const g_006e8408 = (int *)0x006E8408;
+static int *const g_006e840c = (int *)0x006E840C;
+static int *const g_006e8410 = (int *)0x006E8410;
+static int *const g_006e8414 = (int *)0x006E8414;
+static int *const g_006e8418 = (int *)0x006E8418;
+static int *const g_006e841c = (int *)0x006E841C;
+static int *const g_006e8420 = (int *)0x006E8420;
+static int *const g_006e8454 = (int *)0x006E8454;
+static int *const g_006e8458 = (int *)0x006E8458;
+static int *const g_006e845c = (int *)0x006E845C;
+static int *const g_006e8460 = (int *)0x006E8460;
+static int *const g_006e8464 = (int *)0x006E8464;
+static int *const g_006e8468 = (int *)0x006E8468;
+static int *const g_006e846c = (int *)0x006E846C;
+static int *const g_006e8470 = (int *)0x006E8470;
+static int *const g_007ae820 = (int *)0x007AE820;
 static int *const g_007d3c3c = (int *)0x007D3C3C;
-static int *const g_007d3c5c = (int *)0x007D3C5C;
-static int *const g_008e9f60 = (int *)0x008E9F60;
-static int *const g_008ea424 = (int *)0x008EA424;
-static int *const g_008ea428 = (int *)0x008EA428;
+static int *const g_0090ea30 = (int *)0x0090EA30;
 static int *const g_00939284 = (int *)0x00939284;
-static int *const g_00949870 = (int *)0x00949870;
-static int *const g_00949874 = (int *)0x00949874;
-static int *const g_0094a30c = (int *)0x0094A30C;
-static int *const g_0096c9e0 = (int *)0x0096C9E0;
-static int *const g_0096c9e1 = (int *)0x0096C9E1;
-static int *const g_009a64c0 = (int *)0x009A64C0;
+static int *const g_0097d044 = (int *)0x0097D044;
+static int *const g_009a64cc = (int *)0x009A64CC;
 
-class Console { public:
-    uint8_t derived_storage_[0x23D94];
-    GraphicWin virtual_base_;
+class TutWin { public:
+    uint8_t unmapped_0_[0x537C];
+    int32_t field_537C_;
+    int32_t field_5380_;
+    uint8_t unmapped_5384_[0x539C - 0x5384];
+    int32_t field_539C_;
+    uint8_t unmapped_53A0_[0x53A4 - 0x53A0];
+    int32_t field_53A4_;
+    int32_t field_53A8_;
+    int32_t field_53AC_;
+    uint8_t unmapped_53B0_[0x53B8 - 0x53B0];
+    int32_t field_53B8_;
+    uint8_t unmapped_53BC_[0x53C4 - 0x53BC];
+    int32_t field_53C4_;
+    uint8_t unmapped_53C8_[0x53D4 - 0x53C8];
+    int32_t field_53D4_;
 
-    void zoom(int, int);
+    int tut_win(GraphicWin *, const char *, int, int, Sprite *, int, int, int);
+    void tour6();
 };
 
-extern int *g_city_table[];
-extern unsigned int g_civ_visible_flags[];
+// Walked with a computed stride starting from this literal address, so the
+// address itself does work (pointer increment) - needs a real relocation,
+// not the scaffold's folded constant.
+extern uint8_t g_0097d044_arr[];
 
-void Console::zoom(int a1, int a2) {
-    int idx;
+static GraphicWin *tut_target() {
+    void *obj = reinterpret_cast<void *>(*g_007d3c3c);
+    if (obj == 0) {
+        return 0;
+    }
+    int vtbl = *reinterpret_cast<int *>(obj);
+    int adj = *reinterpret_cast<int *>(vtbl + 4);
+    return reinterpret_cast<GraphicWin *>(reinterpret_cast<char *>(obj) + adj);
+}
 
-    if (a2 < 0) {
-        idx = 0;
-        int mx, my;
-        reinterpret_cast<Win *>(g_008e9f60)->get_mouse_pos(&mx, &my);
-
-        bool matched = false;
-        int tx = 0, ty = 0;
-
-        if (in_box(mx, my, 0, 0, *g_008ea424, -*g_008ea428) != 0 &&
-            reinterpret_cast<WorldWin *>(g_008e9f60)->pixel_to_tile(mx, my, &tx, &ty) == 0 &&
-            tx >= 0 && tx < *g_00949874 &&
-            ty >= 0 && ty < *g_00949870) {
-
-            int civ = *g_00939284;
-            int rec = civ << 6;
-            rec = rec + civ;
-            rec = civ + rec * 2;
-            rec = civ + rec * 8;
-            rec = civ + rec * 2;
-
-            if ((g_civ_visible_flags[rec] & 0x200) != 0) {
-                matched = true;
-            } else {
-                int stride = *g_0068faf0;
-                int cell = stride * tx + (ty >> 1);
-                int bitidx = cell + cell * 4;
-                bitidx = cell + bitidx * 2;
-                unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
-                unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
-                if ((explored[bitidx * 4 + 4] & bit) != 0) {
-                    matched = true;
-                } else if ((*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0) {
-                    matched = true;
+void TutWin::tour6() {
+    if (!reinterpret_cast<Win *>(g_006a7628)->is_visible()) {
+        if (*g_009a64cc > 0) {
+            int i = 0;
+            uint8_t *p = g_0097d044_arr;
+            do {
+                if (*p == *g_00939284) {
+                    reinterpret_cast<BaseWin *>(g_006a7628)->zoom(i, 0);
+                    break;
                 }
-            }
+                i++;
+                p += 0x134;
+            } while (i < *g_009a64cc);
         }
-
-        if (matched) {
-            char *city = reinterpret_cast<char *>(g_city_table[0]);
-            *reinterpret_cast<int *>(city + 0x1dd9c) = ty;
-            *reinterpret_cast<int *>(city + 0x1dda0) = tx;
-            idx = 0;
-        } else {
-            for (int i = 0; i < 8; ++i) {
-                char *city = reinterpret_cast<char *>(g_city_table[i]);
-                if (city == 0) {
-                    continue;
-                }
-                if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
-                    continue;
-                }
-                if (*reinterpret_cast<int *>(city + 0x1dd98) >= 0) {
-                    continue;
-                }
-
-                int m8, m4;
-                int *vbtable = *reinterpret_cast<int **>(city);
-                int adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-                reinterpret_cast<Win *>(city + adj)->get_mouse_pos(&m8, &m4);
-
-                vbtable = *reinterpret_cast<int **>(city);
-                adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-                int w = *reinterpret_cast<int *>(city + adj + 0x4c8);
-                int h = *reinterpret_cast<int *>(city + adj + 0x4c4);
-
-                int ttx = 0, tty = 0;
-                bool hit = in_box(m8, m4, 0, 0, h, -w) != 0 &&
-                    reinterpret_cast<MapWin *>(city)->pixel_to_tile(m8, m4, &ttx, &tty) == 0 &&
-                    ttx >= 0 && ttx < *g_00949874 &&
-                    tty >= 0 && tty < *g_00949870;
-                if (!hit) {
-                    continue;
-                }
-
-                int civ = *g_00939284;
-                int rec = civ << 6;
-                rec = rec + civ;
-                rec = civ + rec * 2;
-                rec = civ + rec * 8;
-                rec = civ + rec * 2;
-
-                bool found = (reinterpret_cast<unsigned char *>(g_civ_visible_flags)[rec * 4 + 1] & 2) != 0;
-                if (!found) {
-                    int stride = *g_0068faf0;
-                    int cell = stride * ttx + (tty >> 1);
-                    int bitidx = cell + cell * 4;
-                    bitidx = cell + bitidx * 2;
-                    unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
-                    unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
-                    found = (explored[bitidx * 4 + 4] & bit) != 0;
-                    if (!found) {
-                        found = (*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0;
-                    }
-                }
-                if (!found) {
-                    continue;
-                }
-
-                *reinterpret_cast<int *>(city + 0x1dd9c) = tty;
-                *reinterpret_cast<int *>(city + 0x1dda0) = ttx;
-                idx = i;
-                break;
-            }
+        if (!reinterpret_cast<Win *>(g_006a7628)->is_visible()) {
+            return;
         }
-
-        a2 = idx;
     }
 
-    int ebx = a1;
-    for (int i = 0; i < 8; ++i) {
-        char *city = reinterpret_cast<char *>(g_city_table[i]);
-        if (city == 0) {
-            continue;
-        }
-        if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
-            continue;
-        }
-        if (a2 >= 0 && i != a2) {
-            continue;
-        }
+    reinterpret_cast<BaseWin *>(g_006a7628)->focus();
+    parse_says(0, reinterpret_cast<char *>(*g_0090ea30 + 0x13), -1, -1);
 
-        switch (ebx) {
-        case 0x203:
-            if (*reinterpret_cast<int *>(city + 0x1dd98) < 0x10) {
-                *reinterpret_cast<int *>(city + 0x1dd98) += 2;
-            }
-            break;
-        case 0x204:
-            if (*reinterpret_cast<int *>(city + 0x1dd98) > -0xE) {
-                *reinterpret_cast<int *>(city + 0x1dd98) -= 2;
-            }
-            break;
-        case 0x205:
-            *reinterpret_cast<int *>(city + 0x1dd98) = 0;
-            break;
-        case 0x206:
-            *reinterpret_cast<int *>(city + 0x1dd98) = -6;
-            break;
-        case 0x207:
-            *reinterpret_cast<int *>(city + 0x1dd98) = 0x10;
-            break;
-        case 0x208:
-            *reinterpret_cast<int *>(city + 0x1dd98) = -0xE;
-            break;
-        default:
-            break;
-        }
-
-        reinterpret_cast<MapWin *>(city)->draw_map(1);
+    int x, y;
+    x = *g_006e8284 + (*g_006e828c - *g_006e8284) / 2;
+    y = *g_006e8288 + (*g_006e8290 - *g_006e8288) / 2;
+    reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&x, &y);
+    if (!tut_win(tut_target(), reinterpret_cast<const char *>(g_00687510), *g_006e8284 + 5, y, 0,
+                 2, -1, -1)) {
+        return;
     }
 
-    reinterpret_cast<GraphicWin *>(g_008e9f60)->redraw();
+    x = *g_006e8254 + (*g_006e825c - *g_006e8254) / 2;
+    y = *g_006e8258 + (*g_006e8260 - *g_006e8258) / 2;
+    reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&x, &y);
+    if (!tut_win(tut_target(), reinterpret_cast<const char *>(g_0068751c), x, y, 0, 2, -1, -1)) {
+        return;
+    }
+
+    x = *g_006e8454 + (*g_006e845c - *g_006e8454) / 2;
+    y = *g_006e8458 + (*g_006e8460 - *g_006e8458) / 2;
+    reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&x, &y);
+    if (!tut_win(tut_target(), reinterpret_cast<const char *>(g_00687528), x, y, 0, 2, -1, -1)) {
+        return;
+    }
+
+    x = *g_006e8414 + (*g_006e841c - *g_006e8414) / 2;
+    y = *g_006e8418 + (*g_006e8420 - *g_006e8418) / 2;
+    reinterpret_cast<Win *>(g_006a7628)->client_to_screen(&x, &y);
+    if (!tut_win(tut_target(), reinterpret_cast<const char *>(g_00687534), x, y, 0, 2, -1, -1)) {
+        return;
+    }
+
+    x = *g_006e8284 + (*g_006e828c - *g_006e8284) / 2;
+    y = *g_006e8288 + (*g_006e8290 - *g_006e8288) / 2;
+    reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&x, &y);
+    if (!tut_win(tut_target(), reinterpret_cast<const char *>(g_00687540), *g_006e8284 + 5, y, 0,
+                 2, -1, -1)) {
+        return;
+    }
+
+    reinterpret_cast<BaseWin *>(g_006a7628)->draw_energy_alloc(2);
+
+    if (!reinterpret_cast<Win *>(g_006c0df4)->is_visible()) {
+        x = *g_006e8334 + (*g_006e833c - *g_006e8334) / 2;
+        y = *g_006e8338 + (*g_006e8340 - *g_006e8338) / 2;
+        reinterpret_cast<Win *>(g_006a7628)->client_to_screen(&x, &y);
+        if (!tut_win(tut_target(), reinterpret_cast<const char *>(g_0068754c), x, y, 0, 2, -1,
+                     -1)) {
+            return;
+        }
+    } else {
+        x = *g_006e8464 + (*g_006e846c - *g_006e8464) / 2;
+        y = *g_006e8468 + (*g_006e8470 - *g_006e8468) / 2;
+        reinterpret_cast<Win *>(g_006a7628)->client_to_screen(&x, &y);
+        if (!tut_win(tut_target(), reinterpret_cast<const char *>(g_00687558), x, y, 0, 2, -1,
+                     -1)) {
+            return;
+        }
+    }
+
+    reinterpret_cast<BaseWin *>(g_006a7628)->draw_expenses(1);
+    reinterpret_cast<BaseWin *>(g_006a7628)->draw_farm(2);
+
+    x = *g_006e8404 + (*g_006e840c - *g_006e8404) / 2;
+    y = *g_006e8408 + (*g_006e8410 - *g_006e8408) / 2;
+    reinterpret_cast<Win *>(g_006a7628)->client_to_screen(&x, &y);
+    if (tut_win(tut_target(), reinterpret_cast<const char *>(g_00687564), x, y, 0, 2, -1, -1)) {
+        reinterpret_cast<BaseWin *>(g_006a7628)->draw_farm(1);
+    }
 }

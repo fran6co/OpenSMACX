@@ -1,22 +1,22 @@
-// PRESERVED UNIT - measured MISMATCH.
+// PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
-// address        0x005150D0
-// name           ?zoom@Console@@QAEXHH@Z
-// size           783 bytes
-// measured tier  MISMATCH
-// divergence     3
+// address        0x004D95F0
+// name           ?assemble@Console@@QAEXXZ
+// size           896 bytes
+// measured tier  NO_COMPILE
+// refusal        u004d95f0.cpp(1) : error C2653: 'Console' : is not a class or namespace name
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/005150d0/unit.cpp
+//   build/byte-match/004d95f0/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?zoom@Console@@QAEXHH@Z  at 0x005150D0  (783 bytes)
+// subject: ?assemble@Console@@QAEXXZ  at 0x004D95F0  (896 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -63,7 +63,6 @@ typedef void * HRGN;
 class Heap;
 typedef char * LPSTR;
 typedef void * LPVOID;
-class MapWin;
 class Menu;
 typedef void * PVOID;
 struct RECT;
@@ -71,7 +70,6 @@ class Scroll;
 class Spot;
 class Sprite;
 class Win;
-class WorldWin;
 
 class AutoSound { public:
     PVOID vtable_;
@@ -221,24 +219,6 @@ class Heap { public:
     size_t free_size_;
 };
 
-class Sprite { public:
-    int ppszFileName_;
-    int pcBits_;
-    char cTransparentIndex_;
-    char pad1_;
-    char pad2_;
-    char pad3_;
-    int iSpriteWidth2_;
-    int iSpriteWidth_;
-    int iSpriteHeight_;
-    int iWidth_;
-    int iHeight_;
-    int iLeftOffset_;
-    int iTopOffset_;
-    int fObj1Exists_;
-};
-
-// ---- callees, declared and never defined (a definition would be inlined) ----
 class GraphicWin { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -336,16 +316,25 @@ class GraphicWin { public:
     uint32_t poCanvas_;
     uint32_t field_A0C_;
     uint32_t field_A10_;
-    void redraw();
 };
-class MapWin { public:
-    uint32_t vbtable_pointer_;
-    void * owned_;
-    uint8_t derived_tail_[0x21A6C - 0x8];
-    GraphicWin virtual_base_;
-    int pixel_to_tile(int, int, int *, int *);
-    void draw_map(int);
+
+class Sprite { public:
+    int ppszFileName_;
+    int pcBits_;
+    char cTransparentIndex_;
+    char pad1_;
+    char pad2_;
+    char pad3_;
+    int iSpriteWidth2_;
+    int iSpriteWidth_;
+    int iSpriteHeight_;
+    int iWidth_;
+    int iHeight_;
+    int iLeftOffset_;
+    int iTopOffset_;
+    int fObj1Exists_;
 };
+
 class Win { public:
     AutoSound auto_sound_;
     uint32_t iFlags_;
@@ -424,194 +413,156 @@ class Win { public:
     uint32_t field_438_;
     Scroll * scroll_vert_;
     Scroll * scroll_horz_;
-    void get_mouse_pos(int *, int *);
 };
-class WorldWin { public:
-    int pixel_to_tile(int, int, int *, int *);
-};
-int __cdecl in_box(int, int, int, int, int, int);
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
+extern "C" int abs(int);
+int __cdecl X_pop(const char *, int, int (__cdecl *)());
+int __cdecl prefs_get(char *, int, int);
+void __cdecl draw_map(int);
+void __cdecl prefs_put(char *, int, int);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_005153e0 = (int *)0x005153E0;
+static int *const g_00688f0c = (int *)0x00688F0C;
+static int *const g_00688f1c = (int *)0x00688F1C;
+static int *const g_00688f2c = (int *)0x00688F2C;
 static int *const g_0068faf0 = (int *)0x0068FAF0;
-static int *const g_007d3c3c = (int *)0x007D3C3C;
-static int *const g_007d3c5c = (int *)0x007D3C5C;
-static int *const g_008e9f60 = (int *)0x008E9F60;
-static int *const g_008ea424 = (int *)0x008EA424;
-static int *const g_008ea428 = (int *)0x008EA428;
-static int *const g_00939284 = (int *)0x00939284;
+static int *const g_009392b8 = (int *)0x009392B8;
+static int *const g_009392c0 = (int *)0x009392C0;
+static int *const g_00939340 = (int *)0x00939340;
 static int *const g_00949870 = (int *)0x00949870;
-static int *const g_00949874 = (int *)0x00949874;
-static int *const g_0094a30c = (int *)0x0094A30C;
-static int *const g_0096c9e0 = (int *)0x0096C9E0;
-static int *const g_0096c9e1 = (int *)0x0096C9E1;
-static int *const g_009a64c0 = (int *)0x009A64C0;
+static int *const g_0094988c = (int *)0x0094988C;
+static int *const g_0095282c = (int *)0x0095282C;
+static int *const g_00952832 = (int *)0x00952832;
+static int *const g_009a64c8 = (int *)0x009A64C8;
+static int *const g_009ab88c = (int *)0x009AB88C;
+static int *const g_009ab892 = (int *)0x009AB892;
+static int *const g_009bc06c = (int *)0x009BC06C;
+static int *const g_009bc070 = (int *)0x009BC070;
 
 class Console { public:
     uint8_t derived_storage_[0x23D94];
     GraphicWin virtual_base_;
 
-    void zoom(int, int);
+    void group(int);
+    void clear_group();
+    void assemble();
 };
 
-extern int *g_city_table[];
-extern unsigned int g_civ_visible_flags[];
+extern uint8_t g_0094a379[];
 
-void Console::zoom(int a1, int a2) {
-    int idx;
+void Console::assemble() {
+    char *self = reinterpret_cast<char *>(this);
 
-    if (a2 < 0) {
-        idx = 0;
-        int mx, my;
-        reinterpret_cast<Win *>(g_008e9f60)->get_mouse_pos(&mx, &my);
-
-        bool matched = false;
-        int tx = 0, ty = 0;
-
-        if (in_box(mx, my, 0, 0, *g_008ea424, -*g_008ea428) != 0 &&
-            reinterpret_cast<WorldWin *>(g_008e9f60)->pixel_to_tile(mx, my, &tx, &ty) == 0 &&
-            tx >= 0 && tx < *g_00949874 &&
-            ty >= 0 && ty < *g_00949870) {
-
-            int civ = *g_00939284;
-            int rec = civ << 6;
-            rec = rec + civ;
-            rec = civ + rec * 2;
-            rec = civ + rec * 8;
-            rec = civ + rec * 2;
-
-            if ((g_civ_visible_flags[rec] & 0x200) != 0) {
-                matched = true;
-            } else {
-                int stride = *g_0068faf0;
-                int cell = stride * tx + (ty >> 1);
-                int bitidx = cell + cell * 4;
-                bitidx = cell + bitidx * 2;
-                unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
-                unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
-                if ((explored[bitidx * 4 + 4] & bit) != 0) {
-                    matched = true;
-                } else if ((*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0) {
-                    matched = true;
-                }
-            }
-        }
-
-        if (matched) {
-            char *city = reinterpret_cast<char *>(g_city_table[0]);
-            *reinterpret_cast<int *>(city + 0x1dd9c) = ty;
-            *reinterpret_cast<int *>(city + 0x1dda0) = tx;
-            idx = 0;
+    int result = prefs_get(reinterpret_cast<char *>(g_00688f0c), 7, 0);
+    for (int i = 0; i < 0xc; ++i) {
+        uint32_t bit = 1u << i;
+        if (result & bit) {
+            *reinterpret_cast<uint32_t *>(g_009bc06c) |= bit;
         } else {
-            for (int i = 0; i < 8; ++i) {
-                char *city = reinterpret_cast<char *>(g_city_table[i]);
-                if (city == 0) {
-                    continue;
-                }
-                if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
-                    continue;
-                }
-                if (*reinterpret_cast<int *>(city + 0x1dd98) >= 0) {
-                    continue;
-                }
-
-                int m8, m4;
-                int *vbtable = *reinterpret_cast<int **>(city);
-                int adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-                reinterpret_cast<Win *>(city + adj)->get_mouse_pos(&m8, &m4);
-
-                vbtable = *reinterpret_cast<int **>(city);
-                adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-                int w = *reinterpret_cast<int *>(city + adj + 0x4c8);
-                int h = *reinterpret_cast<int *>(city + adj + 0x4c4);
-
-                int ttx = 0, tty = 0;
-                bool hit = in_box(m8, m4, 0, 0, h, -w) != 0 &&
-                    reinterpret_cast<MapWin *>(city)->pixel_to_tile(m8, m4, &ttx, &tty) == 0 &&
-                    ttx >= 0 && ttx < *g_00949874 &&
-                    tty >= 0 && tty < *g_00949870;
-                if (!hit) {
-                    continue;
-                }
-
-                int civ = *g_00939284;
-                int rec = civ << 6;
-                rec = rec + civ;
-                rec = civ + rec * 2;
-                rec = civ + rec * 8;
-                rec = civ + rec * 2;
-
-                bool found = (reinterpret_cast<unsigned char *>(g_civ_visible_flags)[rec * 4 + 1] & 2) != 0;
-                if (!found) {
-                    int stride = *g_0068faf0;
-                    int cell = stride * ttx + (tty >> 1);
-                    int bitidx = cell + cell * 4;
-                    bitidx = cell + bitidx * 2;
-                    unsigned char bit = static_cast<unsigned char>(1 << (civ & 0x1f));
-                    unsigned char *explored = *reinterpret_cast<unsigned char **>(g_0094a30c);
-                    found = (explored[bitidx * 4 + 4] & bit) != 0;
-                    if (!found) {
-                        found = (*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0;
-                    }
-                }
-                if (!found) {
-                    continue;
-                }
-
-                *reinterpret_cast<int *>(city + 0x1dd9c) = tty;
-                *reinterpret_cast<int *>(city + 0x1dda0) = ttx;
-                idx = i;
-                break;
-            }
+            *reinterpret_cast<uint32_t *>(g_009bc06c) &= ~bit;
         }
-
-        a2 = idx;
     }
 
-    int ebx = a1;
-    for (int i = 0; i < 8; ++i) {
-        char *city = reinterpret_cast<char *>(g_city_table[i]);
-        if (city == 0) {
-            continue;
-        }
-        if (i != 0 && *reinterpret_cast<int *>(city + 0x1dd74) == 0) {
-            continue;
-        }
-        if (a2 >= 0 && i != a2) {
-            continue;
-        }
-
-        switch (ebx) {
-        case 0x203:
-            if (*reinterpret_cast<int *>(city + 0x1dd98) < 0x10) {
-                *reinterpret_cast<int *>(city + 0x1dd98) += 2;
-            }
-            break;
-        case 0x204:
-            if (*reinterpret_cast<int *>(city + 0x1dd98) > -0xE) {
-                *reinterpret_cast<int *>(city + 0x1dd98) -= 2;
-            }
-            break;
-        case 0x205:
-            *reinterpret_cast<int *>(city + 0x1dd98) = 0;
-            break;
-        case 0x206:
-            *reinterpret_cast<int *>(city + 0x1dd98) = -6;
-            break;
-        case 0x207:
-            *reinterpret_cast<int *>(city + 0x1dd98) = 0x10;
-            break;
-        case 0x208:
-            *reinterpret_cast<int *>(city + 0x1dd98) = -0xE;
-            break;
-        default:
-            break;
-        }
-
-        reinterpret_cast<MapWin *>(city)->draw_map(1);
+    if (X_pop(reinterpret_cast<const char *>(g_00688f1c), 0x41, 0) < 0) {
+        return;
     }
 
-    reinterpret_cast<GraphicWin *>(g_008e9f60)->redraw();
+    clear_group();
+
+    uint32_t flags = 0;
+    for (int j = 0; j < 0xc; ++j) {
+        uint32_t bit = 1u << j;
+        if (*reinterpret_cast<uint32_t *>(g_009bc06c) & bit) {
+            flags |= bit;
+        }
+    }
+
+    *reinterpret_cast<int32_t *>(self + 0x23d1c) = 1;
+
+    int32_t best = -1;
+    if (*g_009a64c8 > 0) {
+        char *rec = reinterpret_cast<char *>(g_00952832);
+        for (int32_t idx = 0; idx < *g_009a64c8; ++idx, rec += 0x34) {
+            if (static_cast<uint32_t>(*reinterpret_cast<uint8_t *>(rec + 4)) !=
+                *reinterpret_cast<uint32_t *>(self + 0x23bd4)) {
+                continue;
+            }
+
+            if (flags & 1) {
+                int16_t sVar2 = *reinterpret_cast<int16_t *>(rec - 8);
+                int32_t iv8 = g_00939340[*g_009392b8];
+                int32_t iv6 = abs(static_cast<int32_t>(*reinterpret_cast<int16_t *>(rec - 0xa)) -
+                                   g_009392c0[*g_009392b8]);
+                if ((*reinterpret_cast<uint8_t *>(g_0094988c) & 1) == 0 && iv6 > *g_0068faf0) {
+                    iv6 = *g_00949870 - iv6;
+                }
+                iv8 = abs(static_cast<int32_t>(sVar2) - iv8);
+                if (((iv8 + iv6) & ~1) > 4) {
+                    continue;
+                }
+            }
+
+            int16_t protoIdx = *reinterpret_cast<int16_t *>(rec);
+            uint8_t abVal = reinterpret_cast<uint8_t *>(g_009ab88c)[protoIdx * 0x34];
+            uint8_t chassisVal = g_0094a379[abVal * 0x90];
+            uint8_t typeVal = reinterpret_cast<uint8_t *>(g_009ab892)[protoIdx * 0x34];
+
+            bool ok =
+                ((flags & 2) == 0 ||
+                 (*reinterpret_cast<int8_t *>(rec + 7) != 1 &&
+                  *reinterpret_cast<int8_t *>(rec + 7) != 2)) &&
+                ((flags & 4) == 0 ||
+                 ((*reinterpret_cast<uint32_t *>(rec - 6) & 0x1000200) != 0x1000200 &&
+                  (*reinterpret_cast<uint32_t *>(rec - 6) & 0x4200) == 0)) &&
+                ((flags & 8) == 0 || chassisVal != 0) &&
+                ((flags & 0x10) == 0 || chassisVal != 1) &&
+                ((flags & 0x20) == 0 || chassisVal != 2) &&
+                ((flags & 0x40) == 0 ||
+                 (typeVal != 0 && typeVal != 1 && typeVal != 5 && typeVal != 6)) &&
+                ((flags & 0x80) == 0 || (typeVal != 2 && typeVal != 4)) &&
+                ((flags & 0x100) == 0 || typeVal != 9) &&
+                ((flags & 0x200) == 0 || typeVal != 0xb) &&
+                ((flags & 0x400) == 0 ||
+                 (typeVal != 8 && typeVal != 0xa && typeVal != 7 && typeVal != 0xc));
+
+            if (ok) {
+                *reinterpret_cast<uint32_t *>(rec - 6) |= 0x8000000;
+                best = idx;
+            }
+        }
+    }
+
+    if (*g_009bc070 == 1) {
+        if (best >= 0) {
+            int16_t uVar3 = static_cast<int16_t>(g_009392c0[*g_009392b8]);
+            int16_t uVar4 = static_cast<int16_t>(g_00939340[*g_009392b8]);
+            char *bestRec = reinterpret_cast<char *>(g_00952832) + best * 0x34;
+            *reinterpret_cast<uint8_t *>(bestRec + 7) = 0x18;
+            *reinterpret_cast<int16_t *>(bestRec + 0xa) = uVar3;
+            *reinterpret_cast<int16_t *>(bestRec + 0x12) = uVar4;
+            *reinterpret_cast<uint32_t *>(bestRec - 6) &= 0xfcffbdff;
+            group(best);
+        }
+    }
+
+    if (*g_009bc070 == 2 && *g_009a64c8 > 0) {
+        char *rec = reinterpret_cast<char *>(g_0095282c);
+        int32_t count = *g_009a64c8;
+        do {
+            if (static_cast<uint32_t>(*reinterpret_cast<uint8_t *>(rec + 0xa)) ==
+                    *reinterpret_cast<uint32_t *>(self + 0x23bd4) &&
+                (*reinterpret_cast<uint32_t *>(rec) & 0x8000000) != 0) {
+                *reinterpret_cast<uint8_t *>(rec + 0xd) = 0;
+                *reinterpret_cast<uint32_t *>(rec) &= 0xfcffbdff;
+            }
+            rec += 0x34;
+            --count;
+        } while (count != 0);
+    }
+
+    draw_map(1);
+    prefs_put(reinterpret_cast<char *>(g_00688f2c), static_cast<int>(flags), 0);
 }
