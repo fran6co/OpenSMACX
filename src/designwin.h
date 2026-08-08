@@ -17,6 +17,7 @@
  */
 #pragma once
 #include "graphicwin.h"
+#include "subinterface.h"
 
  /*
   * DesignWin class
@@ -56,7 +57,12 @@ class DLLEXPORT DesignWin : GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 259 member(s) from the IDA database, 14 named; it starts a member at 0xA14, which is where src/ ends.
 
-  uint8_t subIFace_[0x8];  // 0xA14
+  // PROVED, and now a real type rather than eight opaque bytes:
+  // src/subinterface.h measures SubInterface at 0x8 from its own
+  // methods (both reach +0x4 with a 4-byte access) and asserts it, so
+  // this substitution is exactly size-neutral. The byte comparison is
+  // the arbiter and it does not move.
+  SubInterface subIFace_;  // 0xA14
   uint32_t field_A1C_;  // 0xA1C
   uint32_t field_A20_;  // 0xA20
   uint32_t field_A24_;  // 0xA24
