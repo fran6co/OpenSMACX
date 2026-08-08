@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured MISMATCH.
+// PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,8 @@
 // address        0x004C5940
 // name           ??0Wave_In_Device@@QAE@XZ
 // size           60 bytes
-// measured tier  MISMATCH
-// divergence     0
+// measured tier  NO_COMPILE
+// refusal        u004c5940.cpp(63) : error C2065: 'memset' : undeclared identifier
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured MISMATCH.
+// PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,7 @@
 // address        0x00630A40
 // name           sub_630a40
 // size           61 bytes
-// measured tier  MISMATCH
-// divergence     0
+// measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -71,7 +70,7 @@ static int *const g_009be600 = (int *)0x009BE600;
 // ecx is read with no matching stack access (`add ecx, 0x10c` right before
 // the call to NetFifo::get, its result never spilled) - the receiver is
 // `this`, a __thiscall member with a NetFifo embedded at offset 0x10c. Same
-// shape as 0x00630980, which reaches an unnamed sub-object at the same
+// shape as address 630980, which reaches an unnamed sub-object at the same
 // offset the same way.
 class NetHost { public:
     int sub_630a40(int a1, int a2);

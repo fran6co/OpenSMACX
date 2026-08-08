@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured MISMATCH.
+// PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,8 @@
 // address        0x004D04A0
 // name           ?wait@Console@@QAEXH@Z
 // size           64 bytes
-// measured tier  MISMATCH
-// divergence     0
+// measured tier  NO_COMPILE
+// refusal        u004d04a0.cpp(3) : error C2653: 'Console' : is not a class or namespace name u004d04a0.cpp(4) : error C2673: 'wait' : global functions do not have 'this' pointe
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

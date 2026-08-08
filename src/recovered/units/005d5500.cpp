@@ -7,7 +7,7 @@
 // name           ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z
 // size           54 bytes
 // measured tier  NO_COMPILE
-// refusal        u005d5500.cpp(63) : error C2146: syntax error : missing ',' before identifier 'a1' u005d5500.cpp(63) : error C2061: syntax error : identifier 'a1' u005d5500.cpp
+// refusal        u005d5500.cpp(63) : error C2511: 'load_pcx' : overloaded member function 'int (char *,struct Palette *,int,int)' not found in 'GraphicWin' u005d5500.cpp(59) : s
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the

@@ -1,4 +1,4 @@
-// PRESERVED UNIT - measured MISMATCH.
+// PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
@@ -6,8 +6,7 @@
 // address        0x00630980
 // name           sub_630980
 // size           58 bytes
-// measured tier  MISMATCH
-// divergence     0
+// measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -70,7 +69,7 @@ static int *const g_009be600 = (int *)0x009BE600;
 // right before the call, whose result is never spilled), so the receiver is
 // `this`: this is a __thiscall member, not the free stdcall function the
 // scaffold guessed. It calls a submember at this+0x10c the same way
-// 0x0062D5D0/0x0062D5B0 (src/recovered) call through Net's g_009be608 - so it
+// src/recovered/0062d5d0.cpp and 0062d5b0.cpp call through Net's g_009be608, so it
 // is modeled as a Net method reaching a NetSub embedded at 0x10c.
 class NetSub { public:
     int method(int, int, int, int);

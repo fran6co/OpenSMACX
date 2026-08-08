@@ -7,7 +7,7 @@
 // name           ?portrait_anim@DiploPop@@QAEXXZ
 // size           47 bytes
 // measured tier  MISMATCH
-// divergence     0
+// divergence     4
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
