@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "flatbutton.h"
+#include "buttongroup.h"
 #include "graphicwin.h"
 
  /*
@@ -111,8 +113,8 @@ class DLLEXPORT NewTechWin : GraphicWin {
   uint32_t field_B20_;  // 0xB20
   uint32_t field_B24_;  // 0xB24
   uint32_t field_B28_;  // 0xB28
-  uint8_t flatButtons_[0x21E4];  // 0xB2C
-  uint8_t buttonGroup_[0x94];  // 0x2D10
+  FlatButton flatButtons_[3];  // 0xB2C
+  ButtonGroup buttonGroup_;  // 0x2D10
   uint8_t stringBoxes_[0xAE80];  // 0x2DA4
   uint8_t stringBox2_[0x2BA0];  // 0xDC24
 };
