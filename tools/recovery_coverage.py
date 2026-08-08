@@ -22,10 +22,20 @@ A function counts as covered when a body for it exists somewhere committed:
   preserved  `src/recovered/units/<address>.cpp`, a whole unit kept for
              coverage and stamped with the tier it measured, proved or not
 
-EH unwind funclets are reported separately rather than counted as debt.
-`docs/EXCLUSIONS.md` records why a standalone compile cannot reproduce one:
-they borrow the enclosing function's frame, and it has been measured three
-times over.
+Two populations are reported apart rather than counted as debt, and both are
+`docs/EXCLUSIONS.md` decisions this tool follows rather than re-litigates:
+
+  EH unwind funclets (section 2a) borrow the enclosing function's frame, so a
+  standalone compile cannot reproduce one. Measured three times over.
+
+  The MSVC 6 CRT (section 1), `recovery_state == external_library`. It is in
+  the executable and it is not Alpha Centauri: 278 of the 327 carry the
+  leading-underscore C convention. The section's own conclusion is that
+  linking the ISO's `LIBC.LIB` makes these identical rather than
+  assumed-equivalent, which is a linking job, not a recovery one.
+
+`--include-crt` counts them anyway, for the question "how much of the
+executable", as distinct from "how much of the game".
 
     tools/recovery_coverage.py           # the numbers
     tools/recovery_coverage.py --left    # what is still uncovered, by size
@@ -63,7 +73,7 @@ def addresses(directory: Path) -> set:
     return found
 
 
-def survey(functions: dict) -> dict:
+def survey(functions: dict, include_crt: bool = False) -> dict:
     owned = {address for address, row in functions.items()
              if (row.get("source_locations") or "").strip()}
     proved = addresses(PROVED) - owned
@@ -71,10 +81,14 @@ def survey(functions: dict) -> dict:
     covered = owned | proved | preserved
     rest = [a for a in functions if a not in covered]
     funclets = [a for a in rest if EH_LOW <= a <= EH_HIGH]
+    crt = [] if include_crt else [
+        a for a in rest if not EH_LOW <= a <= EH_HIGH
+        and functions[a].get("recovery_state") == "external_library"]
+    excluded = set(funclets) | set(crt)
     return {"functions": functions, "owned": owned, "proved": proved,
             "preserved": preserved, "covered": covered,
-            "uncovered": [a for a in rest if not EH_LOW <= a <= EH_HIGH],
-            "funclets": funclets}
+            "uncovered": [a for a in rest if a not in excluded],
+            "funclets": funclets, "crt": crt}
 
 
 def band(size: int) -> str:
@@ -91,14 +105,16 @@ def main(argv=None) -> int:
     parser.add_argument("--left", action="store_true",
                         help="list what is still uncovered, smallest first")
     parser.add_argument("--limit", type=int, default=40)
+    parser.add_argument("--include-crt", action="store_true",
+                        help="count the MSVC 6 CRT as debt (EXCLUSIONS.md #1)")
     arguments = parser.parse_args(argv)
 
     functions = emit.load_functions()
-    state = survey(functions)
-    total = len(functions)
+    state = survey(functions, include_crt=arguments.include_crt)
+    total = len(functions) - len(state["funclets"]) - len(state["crt"])
     covered = len(state["covered"])
 
-    print(f"catalogued functions   {total}")
+    print(f"in scope               {total}")
     print(f"  owned by src/        {len(state['owned']):>6}")
     print(f"  proved store         {len(state['proved']):>6}")
     print(f"  preserved units      {len(state['preserved']):>6}")
@@ -106,7 +122,10 @@ def main(argv=None) -> int:
           f"({100 * covered / total:.1f}%)")
     print(f"  uncovered            {len(state['uncovered']):>6}")
     print(f"  EH funclets          {len(state['funclets']):>6}  "
-          f"(excluded, see docs/EXCLUSIONS.md)")
+          f"(excluded, EXCLUSIONS.md 2a)")
+    if state["crt"]:
+        print(f"  MSVC 6 CRT           {len(state['crt']):>6}  "
+              f"(excluded, EXCLUSIONS.md 1; --include-crt to count)")
 
     sizes = {}
     for address in state["uncovered"]:
