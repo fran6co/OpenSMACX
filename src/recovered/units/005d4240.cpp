@@ -7,7 +7,7 @@
 // name           sub_5d4240
 // size           60 bytes
 // measured tier  MISMATCH
-// divergence     0
+// divergence     3
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
