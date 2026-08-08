@@ -16,6 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "spot.h"
+#include "font.h"
+#include "flatbutton.h"
+#include "buttongroup.h"
 #include "graphicwin.h"
 #include "subinterface.h"
 
@@ -62,7 +66,7 @@ class DLLEXPORT SocialWin : GraphicWin {
   // the arbiter and it does not move.
   SubInterface subIFace_;  // 0xA14
   uint32_t field_A1C_;  // 0xA1C
-  uint8_t spot_[0xC];  // 0xA20
+  Spot spot_;  // 0xA20
   uint32_t field_A2C_;  // 0xA2C
   uint32_t field_A30_;  // 0xA30
   uint32_t field_A34_;  // 0xA34
@@ -287,18 +291,18 @@ class DLLEXPORT SocialWin : GraphicWin {
   uint8_t energyAllocLock_[0x58];  // 0x3D90
   uint8_t energyAllocArrow_[0x108];  // 0x3DE8
   uint8_t energyAllocSlider_[0x2130];  // 0x3EF0
-  uint8_t flatButtons_[0x18B64];  // 0x6020
-  uint8_t buttonGroups_[0x250];  // 0x1EB84
-  uint8_t buttonGroup_[0x94];  // 0x1EDD4
-  uint8_t font1_[0x28];  // 0x1EE68
-  uint8_t font2_[0x28];  // 0x1EE90
-  uint8_t font3_[0x28];  // 0x1EEB8
-  uint8_t font4_[0x28];  // 0x1EEE0
-  uint8_t font5_[0x28];  // 0x1EF08
-  uint8_t font6_[0x28];  // 0x1EF30
-  uint8_t font7_[0x28];  // 0x1EF58
-  uint8_t font8_[0x28];  // 0x1EF80
-  uint8_t font9_[0x28];  // 0x1EFA8
+  FlatButton flatButtons_[35];  // 0x6020
+  ButtonGroup buttonGroups_[4];  // 0x1EB84
+  ButtonGroup buttonGroup_;  // 0x1EDD4
+  Font font1_;  // 0x1EE68
+  Font font2_;  // 0x1EE90
+  Font font3_;  // 0x1EEB8
+  Font font4_;  // 0x1EEE0
+  Font font5_;  // 0x1EF08
+  Font font6_;  // 0x1EF30
+  Font font7_;  // 0x1EF58
+  Font font8_;  // 0x1EF80
+  Font font9_;  // 0x1EFA8
   uint8_t tutRects1_[0x90];  // 0x1EFD0
   uint8_t tutRect1_[0x10];  // 0x1F060
   uint8_t tutRects2_[0xA0];  // 0x1F070
