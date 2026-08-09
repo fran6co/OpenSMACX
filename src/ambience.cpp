@@ -22,7 +22,7 @@
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447220
+ORIGINAL: 0x00447220
 Return Value: n/a
 Status: Complete
 */
@@ -31,7 +31,7 @@ void FactionAmbience::begin() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447230
+ORIGINAL: 0x00447230
 Return Value: n/a
 Status: Complete
 */
@@ -40,7 +40,7 @@ void FactionAmbience::tech() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447240
+ORIGINAL: 0x00447240
 Return Value: n/a
 Status: Complete
 */
@@ -49,7 +49,7 @@ void FactionAmbience::terraform() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447250
+ORIGINAL: 0x00447250
 Return Value: n/a
 Status: Complete
 */
@@ -58,7 +58,7 @@ void FactionAmbience::production() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447260
+ORIGINAL: 0x00447260
 Return Value: n/a
 Status: Complete
 */
@@ -67,7 +67,7 @@ void FactionAmbience::general() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 004472B0
+ORIGINAL: 0x004472B0
 Return Value: n/a
 Status: Complete
 */
@@ -76,7 +76,7 @@ void FactionAmbience::new_base() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 004472C0
+ORIGINAL: 0x004472C0
 Return Value: n/a
 Status: Complete
 */
@@ -85,7 +85,7 @@ void FactionAmbience::popup1() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 004472D0
+ORIGINAL: 0x004472D0
 Return Value: n/a
 Status: Complete
 */
@@ -94,7 +94,7 @@ void FactionAmbience::eot() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 004472E0
+ORIGINAL: 0x004472E0
 Return Value: n/a
 Status: Complete
 */
@@ -103,7 +103,7 @@ void FactionAmbience::hostility() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 004472F0
+ORIGINAL: 0x004472F0
 Return Value: n/a
 Status: Complete
 */
@@ -112,7 +112,7 @@ void FactionAmbience::energy_resources() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447300
+ORIGINAL: 0x00447300
 Return Value: n/a
 Status: Complete
 */
@@ -121,7 +121,7 @@ void FactionAmbience::base_liberated() {
 
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447690
+ORIGINAL: 0x00447690
 Return Value: n/a
 Status: Complete
 */
@@ -130,7 +130,7 @@ void UAmbience::tech() {
 
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 004476A0
+ORIGINAL: 0x004476A0
 Return Value: n/a
 Status: Complete
 */
@@ -139,7 +139,7 @@ void UAmbience::popup1() {
 
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 004476B0
+ORIGINAL: 0x004476B0
 Return Value: n/a
 Status: Complete
 */
@@ -148,7 +148,7 @@ void UAmbience::eot() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447C60
+ORIGINAL: 0x00447C60
 Return Value: n/a
 Status: Complete
 */
@@ -157,7 +157,7 @@ void GAmbience::tech() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447CA0
+ORIGINAL: 0x00447CA0
 Return Value: n/a
 Status: Complete
 */
@@ -166,7 +166,7 @@ void GAmbience::production() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447CB0
+ORIGINAL: 0x00447CB0
 Return Value: n/a
 Status: Complete
 */
@@ -175,7 +175,7 @@ void GAmbience::popup1() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-Original Offset: 00447CC0
+ORIGINAL: 0x00447CC0
 Return Value: n/a
 Status: Complete
 */
@@ -280,7 +280,7 @@ Purpose: Destroy an ambience. Its own stage frees the remembered filename
          global sound chain when the chained bit is set. The original's
          exception frame is omitted as unreachable. The vtable is staged
          through all three levels.
-Original Offset: 004C7670
+ORIGINAL: 0x004C7670
 Return Value: n/a
 Status: Complete
 */
@@ -359,7 +359,7 @@ Purpose: Build the ambience. The original constructs in four vtable stages -
          clear is four bytes wide, this one is a single byte, so 0x55..0x57
          keep whatever the storage held - and nothing at or above 0x58 is
          written at all, which is what pins the shared base's extent there.
-Original Offset: 004C8460
+ORIGINAL: 0x004C8460
 Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete
@@ -433,7 +433,7 @@ Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-Original Offset: 00447270
+ORIGINAL: 0x00447270
 Return Value: n/a
 Status: Complete
 */
@@ -448,7 +448,7 @@ void __fastcall faction_ambience_basewin_show_redirect(FactionAmbience *self, vo
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-Original Offset: 00447280
+ORIGINAL: 0x00447280
 Return Value: n/a
 Status: Complete
 */
@@ -463,7 +463,7 @@ void __fastcall faction_ambience_basewin_hide_redirect(FactionAmbience *self, vo
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-Original Offset: 00447290
+ORIGINAL: 0x00447290
 Return Value: n/a
 Status: Complete
 */
@@ -478,7 +478,7 @@ void __fastcall faction_ambience_design_window_show_redirect(FactionAmbience *se
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-Original Offset: 004472A0
+ORIGINAL: 0x004472A0
 Return Value: n/a
 Status: Complete
 */
@@ -500,7 +500,7 @@ Purpose: GAmbience raises the flag byte only when it is CLEAR.
          unconditionally, and an unconditional store here would agree for the
          values 0 and 1 and differ for every other: a byte holding 5 keeps 5,
          where `field_6C_ = 1` would overwrite it.
-Original Offset: 00447BE0
+ORIGINAL: 0x00447BE0
 Return Value: n/a
 Status: Complete
 */
@@ -517,7 +517,7 @@ void __fastcall g_ambience_basewin_show_redirect(GAmbience *self, void *) {
 /*
 Purpose: GAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-Original Offset: 00447BF0
+ORIGINAL: 0x00447BF0
 Return Value: n/a
 Status: Complete
 */
@@ -558,7 +558,7 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
          0x6c and 0x6d are BYTES. 0x6e and 0x6f are not written, so whatever
          the storage held survives there.
 
-Original Offset: 004471F0
+ORIGINAL: 0x004471F0
 Return Value: `this`
 Status: Complete
 */
@@ -582,7 +582,7 @@ FactionAmbience *__fastcall faction_ambience_construct_redirect(
 
 /*
 Purpose: As 004471F0, with the MAmbience vtable and one more field.
-Original Offset: 00447310
+ORIGINAL: 0x00447310
 Return Value: `this`
 Status: Complete
 */
@@ -606,7 +606,7 @@ MAmbience *__fastcall m_ambience_construct_redirect(MAmbience *self, void *) {
 
 /*
 Purpose: As 004471F0, with the SAmbience vtable and two more fields.
-Original Offset: 00447850
+ORIGINAL: 0x00447850
 Return Value: `this`
 Status: Complete
 */
@@ -631,7 +631,7 @@ SAmbience *__fastcall s_ambience_construct_redirect(SAmbience *self, void *) {
 
 /*
 Purpose: As 004471F0, with the GAmbience vtable and one more field.
-Original Offset: 00447B90
+ORIGINAL: 0x00447B90
 Return Value: `this`
 Status: Complete
 */

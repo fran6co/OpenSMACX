@@ -23,7 +23,7 @@
 /*
 Purpose: Read the specified file and create an index of section headers ("#EXAMPLE"). Store the file 
          offset of each section for improved search time.
-Original Offset: 005FDF80
+ORIGINAL: 0x005FDF80
 Return Value: n/a
 Status: Complete
 */
@@ -63,7 +63,7 @@ void TextIndex::make_index(LPCSTR source_txt) {
 
 /*
 Purpose: Search the source text file for a section header.
-Original Offset: 005FE120
+ORIGINAL: 0x005FE120
 Return Value: File offset if found, otherwise -1
 Status: Complete
 */
@@ -92,6 +92,7 @@ int TextIndex::search_index(LPCSTR source_txt, LPCSTR section_txt) {
 // global
 TextIndex *TxtIndex = (TextIndex *)0x009B7D08;
 
-void __cdecl text_clear_index() { // 005FE270
+// ORIGINAL: 0x005FE270
+void __cdecl text_clear_index() {
     text_clear_index_source(TxtIndex);
 }

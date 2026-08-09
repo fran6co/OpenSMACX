@@ -20,7 +20,7 @@
 
 /*
 Purpose: Initialize the class instance with a new string table of the specified size.
-Original Offset: 006168F0
+ORIGINAL: 0x006168F0
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -38,7 +38,7 @@ BOOL Strings::init(size_t mem_size) {
 
 /*
 Purpose: Shutdown the class instance.
-Original Offset: 00616950
+ORIGINAL: 0x00616950
 Return Value: n/a
 Status: Complete
 */
@@ -49,7 +49,7 @@ void Strings::shutdown() {
 
 /*
 Purpose: Put the input string into the string table.
-Original Offset: 00616970
+ORIGINAL: 0x00616970
 Return Value: Address of the stored string
 Status: Complete
 */
@@ -62,7 +62,7 @@ LPSTR Strings::put(LPCSTR input) {
 
 /*
 Purpose: Check if the string address is within the table.
-Original Offset: 006169A0
+ORIGINAL: 0x006169A0
 Return Value: Address of the stored string
 Status: Complete
 */

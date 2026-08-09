@@ -31,7 +31,7 @@ func_thiscall_teardown FontQueueElementTeardown =
 Purpose: Destroy the queue: hand the three-slot walk to the CRT vector
          iterator with the queue itself as the array base and the Font
          destructor as the per-element teardown.
-Original Offset: 0055B740
+ORIGINAL: 0x0055B740
 Return Value: n/a
 Status: Complete
 */
@@ -50,7 +50,7 @@ Font *FontTable = (Font *)0x0093FC58;
 /*
 Purpose: Select the Font whose point size is closest to the requested one,
          then index that size's row by style.
-Original Offset: 005882F0
+ORIGINAL: 0x005882F0
 Status: Complete
 */
 Font *__cdecl find_font(int size, int style) {
@@ -77,7 +77,7 @@ Font *__cdecl find_font(int size, int style) {
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-Original Offset: 00618F30
+ORIGINAL: 0x00618F30
 Status: Complete
 */
 int Font::UNK1(int, int, int, int) {

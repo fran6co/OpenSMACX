@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00618E30 FILE
 // PRESERVED UNIT - measured SHAPE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

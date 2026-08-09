@@ -39,7 +39,7 @@ int int_from_bits(uint32_t bits) {
 
 /*
 Purpose: Hide the first item with the requested ID.
-Original Offset: 005F8CB0
+ORIGINAL: 0x005F8CB0
 Status: Complete
 */
 int PullDown::hide_item(int id) {
@@ -58,7 +58,7 @@ int PullDown::hide_item(int id) {
 
 /*
 Purpose: Show the first item with the requested ID.
-Original Offset: 005F8D20
+ORIGINAL: 0x005F8D20
 Status: Complete
 */
 int PullDown::show_item(int id) {
@@ -77,7 +77,7 @@ int PullDown::show_item(int id) {
 
 /*
 Purpose: Disable the first item with the requested ID.
-Original Offset: 005F8D90
+ORIGINAL: 0x005F8D90
 Status: Complete
 */
 int PullDown::disable_item(int id) {
@@ -92,7 +92,7 @@ int PullDown::disable_item(int id) {
 
 /*
 Purpose: Enable the first item with the requested ID.
-Original Offset: 005F8DF0
+ORIGINAL: 0x005F8DF0
 Status: Complete
 */
 int PullDown::enable_item(int id) {
@@ -107,7 +107,7 @@ int PullDown::enable_item(int id) {
 
 /*
 Purpose: Check the first item with the requested ID.
-Original Offset: 005F9040
+ORIGINAL: 0x005F9040
 Status: Complete
 */
 int PullDown::check_item(int id) {
@@ -122,7 +122,7 @@ int PullDown::check_item(int id) {
 
 /*
 Purpose: Uncheck the first item with the requested ID.
-Original Offset: 005F90A0
+ORIGINAL: 0x005F90A0
 Status: Complete
 */
 int PullDown::uncheck_item(int id) {
@@ -137,7 +137,7 @@ int PullDown::uncheck_item(int id) {
 
 /*
 Purpose: Return the selected item index unless that item is disabled.
-Original Offset: 005F9F40
+ORIGINAL: 0x005F9F40
 Status: Complete
 */
 int PullDown::get_selected() {
@@ -197,7 +197,7 @@ uint32_t *PullDownFieldF3CDefault = (uint32_t *)0x009B7B5C;
 Purpose: Destroy a PullDown by releasing every item's text pair, resetting
          the trailing fields from their global defaults, and delegating to
          the GraphicWin destructor.
-Original Offset: 005F88A0
+ORIGINAL: 0x005F88A0
 Status: Complete
 Verification note: the two virtual-table stores are dead - the GraphicWin
 delegation unconditionally overwrites both slots with its own tables - so
@@ -236,7 +236,7 @@ PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
 /*
 Purpose: Legacy stub; the original body returns 8 without reading its
          arguments.
-Original Offset: 005F8C90
+ORIGINAL: 0x005F8C90
 Status: Complete
 */
 int PullDown::UNK2(int) {
@@ -251,7 +251,7 @@ int __fastcall pull_down_unk2_redirect(
 /*
 Purpose: Legacy stub; the original body returns 8 without reading its
          arguments.
-Original Offset: 005F8CA0
+ORIGINAL: 0x005F8CA0
 Status: Complete
 */
 int PullDown::UNK3(int, int, int) {
@@ -266,7 +266,7 @@ int __fastcall pull_down_unk3_redirect(
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-Original Offset: 005FA750
+ORIGINAL: 0x005FA750
 Status: Complete
 */
 int PullDown::UNK5() {
@@ -281,7 +281,7 @@ int __fastcall pull_down_unk5_redirect(
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-Original Offset: 005FA760
+ORIGINAL: 0x005FA760
 Status: Complete
 */
 int PullDown::UNK6() {
@@ -295,7 +295,7 @@ int __fastcall pull_down_unk6_redirect(
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 005FA740
+ORIGINAL: 0x005FA740
 Return Value: n/a
 Status: Complete
 */
@@ -310,7 +310,7 @@ void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1
 Purpose: Find a menu item by its id and return its index, scanning up to the
          64 item slots. Stops at the first slot whose id is the -1 sentinel,
          and returns -1 when the id is not found or that sentinel is reached.
-Original Offset: 005F9D00
+ORIGINAL: 0x005F9D00
 Return Value: the item's index, or -1 when absent
 Status: Complete
 */
@@ -332,7 +332,7 @@ int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id) {
 }
 
 /*
-Original Offset: 005F93A0
+ORIGINAL: 0x005F93A0
 Status: Complete
 */
 void PullDown::hide() {

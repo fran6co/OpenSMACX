@@ -23,7 +23,7 @@ func_base_pop_init BasePopOriginalInit = original_method<func_base_pop_init>(0x0
 
 /*
 Purpose: Initialise the pop-up menu with the base defaults.
-Original Offset: 0059D3A0
+ORIGINAL: 0x0059D3A0
 Return Value: whatever BasePop::init returns
 Status: Complete
 */

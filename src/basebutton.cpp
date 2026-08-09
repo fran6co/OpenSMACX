@@ -30,7 +30,7 @@ uint32_t *BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
 /*
 Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.
-Original Offset: 00606F30
+ORIGINAL: 0x00606F30
 Status: Complete
 Verification note: the surviving swap mutants reorder construction of the
 GraphicWin base against the Time members, which occupy disjoint storage, so
@@ -76,7 +76,7 @@ BaseButton *__fastcall base_button_construct_redirect(
 /*
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
          process defaults, then release the owned name and bubble strings.
-Original Offset: 006070C0
+ORIGINAL: 0x006070C0
 Return Value: Zero when no bubble string is released; otherwise the executable
               free routine's EAX residue
 Status: Complete; string storage remains owned by the executable CRT
@@ -130,7 +130,7 @@ uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
 /*
 Purpose: Destroy a BaseButton by installing its two virtual tables, closing
          it, destroying Time2 then Time1, and finally destroying GraphicWin.
-Original Offset: 00607040
+ORIGINAL: 0x00607040
 Return Value: Instance pointer in EAX
 Status: Complete
 */
@@ -154,7 +154,7 @@ BaseButton *__fastcall base_button_destructor_redirect(
 
 /*
 Purpose: Set the button's bubble text.
-Original Offset: 00607550
+ORIGINAL: 0x00607550
 Return Value: Zero on success, non-zero on error
 Status: Complete with redirect for free to prevent hang/freeze. Incompatibility between older
         version of free with newer SDK version of free CRT. Revisit once more of code is redirected
@@ -178,7 +178,7 @@ int BaseButton::set_bubble_text(LPCSTR input) {
 
 /*
 Purpose: Set the button's name string.
-Original Offset: 006074E0
+ORIGINAL: 0x006074E0
 Return Value: Zero on success, non-zero on error
 Status: Complete with redirect for free to prevent hang/freeze. Incompatibility between older
         version of free with newer SDK version of free CRT. Revisit once more of code is redirected
@@ -223,7 +223,7 @@ void store_default_text_colors(size_t tier, int color1, int color2,
 
 /*
 Purpose: Set the primary default text colours shared by every button.
-Original Offset: 00607420
+ORIGINAL: 0x00607420
 Status: Complete
 */
 void BaseButton::set_def_text_color(int color1, int color2, int color3, int color4) {
@@ -232,7 +232,7 @@ void BaseButton::set_def_text_color(int color1, int color2, int color3, int colo
 
 /*
 Purpose: Set the secondary default text colours shared by every button.
-Original Offset: 00607450
+ORIGINAL: 0x00607450
 Status: Complete
 */
 void BaseButton::set_def_text_color2(int color1, int color2, int color3, int color4) {
@@ -241,7 +241,7 @@ void BaseButton::set_def_text_color2(int color1, int color2, int color3, int col
 
 /*
 Purpose: Set the tertiary default text colours shared by every button.
-Original Offset: 00607480
+ORIGINAL: 0x00607480
 Status: Complete
 */
 void BaseButton::set_def_text_color3(int color1, int color2, int color3, int color4) {
@@ -250,7 +250,7 @@ void BaseButton::set_def_text_color3(int color1, int color2, int color3, int col
 
 /*
 Purpose: Set the default fonts shared by every button.
-Original Offset: 006074B0
+ORIGINAL: 0x006074B0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -310,7 +310,7 @@ void recolour(Buffer &buffer, BufferColourSetter setter,
 
 /*
 Purpose: Set the button's primary text colours.
-Original Offset: 00607360
+ORIGINAL: 0x00607360
 Status: Complete
 Verification note: the parentless guard on all three setters carries no
 literal or comparison operator, so the mutation harness cannot perturb it;
@@ -330,7 +330,7 @@ void BaseButton::set_text_color(int color1, int color2, int color3, int color4) 
 
 /*
 Purpose: Set the button's secondary text colours.
-Original Offset: 006073A0
+ORIGINAL: 0x006073A0
 Status: Complete
 */
 void BaseButton::set_text_color2(int color1, int color2, int color3, int color4) {
@@ -342,7 +342,7 @@ void BaseButton::set_text_color2(int color1, int color2, int color3, int color4)
 
 /*
 Purpose: Set the button's tertiary text colours.
-Original Offset: 006073E0
+ORIGINAL: 0x006073E0
 Status: Complete
 */
 void BaseButton::set_text_color3(int color1, int color2, int color3, int color4) {
@@ -383,7 +383,7 @@ constexpr size_t WinValueChangedSlot = 0xB4;
 /*
 Purpose: Give the button a new value, redrawing and notifying its parent only
          when the value actually changes.
-Original Offset: 00607C80
+ORIGINAL: 0x00607C80
 Return Value: n/a
 Status: Complete
 
@@ -415,7 +415,7 @@ void __fastcall base_button_set_redirect(BaseButton *self, void *, int value) {
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-Original Offset: 006077F0
+ORIGINAL: 0x006077F0
 Return Value: zero - the base class handles no key click
 Status: Complete
 */
@@ -430,7 +430,7 @@ void __fastcall base_button_on_key_click_redirect(
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-Original Offset: 00607800
+ORIGINAL: 0x00607800
 Return Value: zero - the base class handles no key down
 Status: Complete
 */
@@ -445,7 +445,7 @@ void __fastcall base_button_on_key_down_redirect(
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-Original Offset: 00607810
+ORIGINAL: 0x00607810
 Return Value: zero - the base class handles no key up
 Status: Complete
 */
@@ -478,7 +478,7 @@ Purpose: Reinitialise a button - close whatever it currently holds, take a
          private copy of its name, build the GraphicWin base with the button
          style word, publish the shared default colours and fonts into the
          window buffer, then show it.
-Original Offset: 00607210
+ORIGINAL: 0x00607210
 Return Value: No parent (3); name allocation failed (4); otherwise
               GraphicWin::init's own code, which is zero on success
 Status: Complete
@@ -581,7 +581,7 @@ int __fastcall base_button_init_redirect(
 }
 
 /*
-Original Offset: 00607A00
+ORIGINAL: 0x00607A00
 Status: Complete
 */
 void BaseButton::on_right_click(int a1, int a2) {
@@ -593,7 +593,7 @@ void BaseButton::on_right_click(int a1, int a2) {
 }
 
 /*
-Original Offset: 00607B10
+ORIGINAL: 0x00607B10
 Status: Complete
 */
 void __cdecl fn_00607b10(int a1, BaseButton* a2) {

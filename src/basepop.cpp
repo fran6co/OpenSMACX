@@ -23,7 +23,7 @@
 
 /*
 Purpose: Update either base-popup coordinate unless its keep-current sentinel is supplied.
-Original Offset: 00601B80
+ORIGINAL: 0x00601B80
 Return Value: n/a
 Status: Complete
 */
@@ -66,7 +66,7 @@ int publish_default_fonts(Font **slots, Font *const *fonts, size_t count) {
 
 /*
 Purpose: Set the default string fonts shared by every popup.
-Original Offset: 006048C0
+ORIGINAL: 0x006048C0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -78,7 +78,7 @@ int BasePop::set_def_string_font(Font *font1, Font *font2, Font *font3,
 
 /*
 Purpose: Set the default button fonts shared by every popup.
-Original Offset: 006049C0
+ORIGINAL: 0x006049C0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -122,7 +122,7 @@ void store_colors(uint32_t *table, size_t stride, size_t tier,
 
 /*
 Purpose: Set default string colour tier 0 shared by every popup.
-Original Offset: 00604900
+ORIGINAL: 0x00604900
 Status: Complete
 */
 void BasePop::set_def_string_color(int c1, int c2, int c3, int c4) {
@@ -135,7 +135,7 @@ void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int 
 
 /*
 Purpose: Set default string colour tier 1 shared by every popup.
-Original Offset: 00604930
+ORIGINAL: 0x00604930
 Status: Complete
 */
 void BasePop::set_def_string_color2(int c1, int c2, int c3, int c4) {
@@ -148,7 +148,7 @@ void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set default string colour tier 2 shared by every popup.
-Original Offset: 00604960
+ORIGINAL: 0x00604960
 Status: Complete
 */
 void BasePop::set_def_string_color3(int c1, int c2, int c3, int c4) {
@@ -161,7 +161,7 @@ void __cdecl base_pop_set_def_string_color3_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set default string colour tier 3 shared by every popup.
-Original Offset: 00604990
+ORIGINAL: 0x00604990
 Status: Complete
 */
 void BasePop::set_def_string_color_hyper(int c1, int c2, int c3, int c4) {
@@ -174,7 +174,7 @@ void __cdecl base_pop_set_def_string_color_hyper_redirect(int c1, int c2, int c3
 
 /*
 Purpose: Set default button colour tier 0 shared by every popup.
-Original Offset: 006049F0
+ORIGINAL: 0x006049F0
 Status: Complete
 */
 void BasePop::set_def_button_color(int c1, int c2, int c3, int c4) {
@@ -187,7 +187,7 @@ void __cdecl base_pop_set_def_button_color_redirect(int c1, int c2, int c3, int 
 
 /*
 Purpose: Set default button colour tier 1 shared by every popup.
-Original Offset: 00604A20
+ORIGINAL: 0x00604A20
 Status: Complete
 */
 void BasePop::set_def_button_color2(int c1, int c2, int c3, int c4) {
@@ -200,7 +200,7 @@ void __cdecl base_pop_set_def_button_color2_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set default button colour tier 2 shared by every popup.
-Original Offset: 00604A50
+ORIGINAL: 0x00604A50
 Status: Complete
 */
 void BasePop::set_def_button_color3(int c1, int c2, int c3, int c4) {
@@ -213,7 +213,7 @@ void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set this popup's string color slots.
-Original Offset: 00604730
+ORIGINAL: 0x00604730
 Status: Complete
 */
 void BasePop::set_string_color(int c1, int c2, int c3, int c4) {
@@ -230,7 +230,7 @@ void __fastcall base_pop_set_string_color_redirect(
 
 /*
 Purpose: Set this popup's string color2 slots.
-Original Offset: 00604760
+ORIGINAL: 0x00604760
 Status: Complete
 */
 void BasePop::set_string_color2(int c1, int c2, int c3, int c4) {
@@ -247,7 +247,7 @@ void __fastcall base_pop_set_string_color2_redirect(
 
 /*
 Purpose: Set this popup's string color3 slots.
-Original Offset: 00604790
+ORIGINAL: 0x00604790
 Status: Complete
 */
 void BasePop::set_string_color3(int c1, int c2, int c3, int c4) {
@@ -264,7 +264,7 @@ void __fastcall base_pop_set_string_color3_redirect(
 
 /*
 Purpose: Set this popup's string color hyper slots.
-Original Offset: 006047C0
+ORIGINAL: 0x006047C0
 Status: Complete
 */
 void BasePop::set_string_color_hyper(int c1, int c2, int c3, int c4) {
@@ -281,7 +281,7 @@ void __fastcall base_pop_set_string_color_hyper_redirect(
 
 /*
 Purpose: Set this popup's button color slots.
-Original Offset: 00604830
+ORIGINAL: 0x00604830
 Status: Complete
 Verification note: the first slot is a byte while the other three are dwords,
 which the decompiler renders as four indistinguishable stores. Writing a dword
@@ -301,7 +301,7 @@ void __fastcall base_pop_set_button_color_redirect(
 
 /*
 Purpose: Set this popup's button color2 slots.
-Original Offset: 00604860
+ORIGINAL: 0x00604860
 Status: Complete
 Verification note: the first slot is a byte while the other three are dwords,
 which the decompiler renders as four indistinguishable stores. Writing a dword
@@ -321,7 +321,7 @@ void __fastcall base_pop_set_button_color2_redirect(
 
 /*
 Purpose: Set this popup's button color3 slots.
-Original Offset: 00604890
+ORIGINAL: 0x00604890
 Status: Complete
 Verification note: the first slot is a byte while the other three are dwords,
 which the decompiler renders as four indistinguishable stores. Writing a dword
@@ -344,7 +344,7 @@ int *BasePopFalloutFlag = reinterpret_cast<int *>(0x009B8CFC);
 
 /*
 Purpose: Raise the fallout flag, but only while the gate is set.
-Original Offset: 00604A90
+ORIGINAL: 0x00604A90
 Status: Complete
 */
 void BasePop::fallout() {
@@ -362,7 +362,7 @@ func_set_state_flag CheckBoxOriginalSetStateFlag =
 
 /*
 Purpose: Set the popup's embedded check box, at 0x2228, to the given state.
-Original Offset: 00601BB0
+ORIGINAL: 0x00601BB0
 Return Value: n/a
 Status: Complete
 */
@@ -384,7 +384,7 @@ Purpose: Set the dialog width, scaled to three-halves in the high-resolution
          subobject of the embedded Dialogs, located through that Dialogs'
          own vbtable exactly as the original does rather than at a hardcoded
          offset.
-Original Offset: 00601B20
+ORIGINAL: 0x00601B20
 Return Value: n/a
 Status: Complete
 */
@@ -408,7 +408,7 @@ func_base_pop_exec BasePopExec = original_method<func_base_pop_exec>(0x00602600)
 
 /*
 Purpose: Run the popup modally with no completion callback.
-Original Offset: 005A5900
+ORIGINAL: 0x005A5900
 Return Value: the exec result
 Status: Complete
 */
@@ -418,7 +418,7 @@ int BasePop::exec() {
 
 /*
 Purpose: Run the popup modally with a completion callback.
-Original Offset: 00558FC0
+ORIGINAL: 0x00558FC0
 Return Value: the exec result
 Status: Complete
 */
@@ -444,7 +444,7 @@ Purpose: Report whether the popup will accept a key click. Both this and
          so the answer is bit 14 of field_30A8_ INVERTED - one when the bit is
          clear. The arguments are ignored; the two differ only in how many they
          clean off the stack.
-Original Offset: 00604490
+ORIGINAL: 0x00604490
 Return Value: 1 when bit 14 of field_30A8_ is clear, 0 when it is set
 Status: Complete
 */
@@ -461,7 +461,7 @@ Purpose: As on_key_click above, over the same field and the same bit. Kept as
          its own body rather than delegating, because the original is a
          separate function with a different stack cleanup and a delegation
          would change the instruction the caller returns to.
-Original Offset: 006044B0
+ORIGINAL: 0x006044B0
 Return Value: 1 when bit 14 of field_30A8_ is clear, 0 when it is set
 Status: Complete
 */
@@ -491,7 +491,7 @@ Purpose: Set or clear bit 0 of the flags word at offset 0x20 - set when the
          header says its layout is not established. Reaching through it by name
          would state a relationship this function does not need and cannot
          confirm; the offset is the thing the original encodes.
-Original Offset: 00605180
+ORIGINAL: 0x00605180
 Return Value: n/a
 Status: Complete
 */
@@ -512,7 +512,7 @@ void __fastcall base_pop_unk3_redirect(BasePop *self, void *, int a1) {
 /*
 Purpose: As UNK3 above, over the same flags word but bit 1 (`or al, 2` /
          `and al, 0xFD`).
-Original Offset: 006051A0
+ORIGINAL: 0x006051A0
 Return Value: n/a
 Status: Complete
 */
@@ -544,7 +544,7 @@ Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
          Dialogs::item takes the Dialog's address from the EMBEDDING object's
          own vbtable rather than from where a Dialogs sits when it is
          most-derived, which is why this can hand it a subobject at all.
-Original Offset: 00558FE0
+ORIGINAL: 0x00558FE0
 Return Value: whatever Dialogs::item returns
 Status: Complete
 */
@@ -578,7 +578,7 @@ Purpose: Read the state word of the CheckBox embedded at 0x2228.
          SpriteBox::id_to_pos and Dialogs::destroy are: the body ends by
          loading the word into EAX and a void body cannot promise that. The
          return type does not change the thiscall cleanup.
-Original Offset: 00601BD0
+ORIGINAL: 0x00601BD0
 Return Value: the embedded CheckBox's state word
 Status: Complete
 */

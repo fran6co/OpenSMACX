@@ -28,7 +28,7 @@ uint32_t *CheckBoxDefault2 = (uint32_t *)0x00697108;
 Purpose: Reset the check box to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
-Original Offset: 0060E7C0
+ORIGINAL: 0x0060E7C0
 Return Value: n/a
 Status: Complete
 */
@@ -76,7 +76,7 @@ Purpose: Toggle one bit of the state word - clear it when set, set it when
          The shift count is whatever CL holds, so the position is masked to
          five bits by the hardware; `pos & 31` states that rather than relying
          on C++ shift-overflow, which is undefined rather than truncating.
-Original Offset: 0060EB50
+ORIGINAL: 0x0060EB50
 Return Value: n/a
 Status: Complete
 */
@@ -103,7 +103,7 @@ Purpose: Report whether one bit of the state word is set. Returns the MASKED
          WORD, not a normalised 0 or 1 - the body ends `and eax, esi` with no
          further narrowing, so a caller testing it against 1 would read a
          different answer than the original gives.
-Original Offset: 0060ECC0
+ORIGINAL: 0x0060ECC0
 Return Value: the state word masked to the requested bit
 Status: Complete
 */
@@ -124,7 +124,7 @@ int __fastcall check_box_unk2_redirect(CheckBox *self, void *, int pos) {
 /*
 Purpose: Set or clear one bit of the state word, chosen by the second argument.
          Unlike UNK1 this does not depend on the bit's current value.
-Original Offset: 0060EC80
+ORIGINAL: 0x0060EC80
 Return Value: n/a
 Status: Complete
 */
@@ -149,7 +149,7 @@ void __fastcall check_box_set_state_pos_redirect(CheckBox *self, void *,
 
 /*
 Purpose: Repaint on dialog focus, dispatching through the enclosing object.
-Original Offset: 0060FB90
+ORIGINAL: 0x0060FB90
 Return Value: n/a
 Status: Complete
 */
@@ -170,7 +170,7 @@ void CheckBox::on_dialog_focus(int a1) {
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
-Original Offset: 0060FC30
+ORIGINAL: 0x0060FC30
 Return Value: n/a
 Status: Complete
 */

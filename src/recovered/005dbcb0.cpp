@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005DBCB0
 // 0x005DBCB0  ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z  ->  ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

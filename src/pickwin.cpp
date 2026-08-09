@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00489B10
+ORIGINAL: 0x00489B10
 Return Value: n/a
 Status: Complete
 */

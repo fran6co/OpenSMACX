@@ -25,7 +25,7 @@
 
 /*
 Purpose: Initialize the class instance.
-Original Offset: 005FD8D0
+ORIGINAL: 0x005FD8D0
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -44,7 +44,7 @@ int Text::init(size_t size) {
 
 /*
 Purpose: Shutdown the class instance.
-Original Offset: 005FD970
+ORIGINAL: 0x005FD970
 Return Value: n/a
 Status: Complete
 */
@@ -62,7 +62,7 @@ void Text::shutdown() {
 
 /*
 Purpose: If open, close the text file.
-Original Offset: 005FD9D0
+ORIGINAL: 0x005FD9D0
 Return Value: n/a
 Status: Complete
 */
@@ -75,7 +75,7 @@ void Text::close() {
 
 /*
 Purpose: Open the specified text file and copy the section into the buffer for parsing.
-Original Offset: 005FDA00
+ORIGINAL: 0x005FDA00
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -135,7 +135,7 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
 
 /*
 Purpose: Parse text from the opened file until a newline is reached. Copy this text into the buffer.
-Original Offset: 005FDC10
+ORIGINAL: 0x005FDC10
 Return Value: Pointer to string
 Status: Complete
 */
@@ -156,7 +156,7 @@ LPSTR Text::get() {
 
 /*
 Purpose: Get the string and put it into the string table.
-Original Offset: 005FDC80
+ORIGINAL: 0x005FDC80
 Return Value: Pointer to string table
 Status: Complete
 */
@@ -166,7 +166,7 @@ LPSTR Text::string() {
 
 /*
 Purpose: Parse the current item into the string buffer.
-Original Offset: 005FDD10
+ORIGINAL: 0x005FDD10
 Return Value: Pointer to string buffer
 Status: Complete
 */
@@ -185,7 +185,7 @@ LPSTR Text::item() {
 
 /*
 Purpose: Parse the current string item into the buffer and add it to the string table.
-Original Offset: 005FDD80
+ORIGINAL: 0x005FDD80
 Return Value: Pointer to string table
 Status: Complete
 */
@@ -195,7 +195,7 @@ LPSTR Text::item_string() {
 
 /*
 Purpose: Parse the current number item.
-Original Offset: 005FDDF0
+ORIGINAL: 0x005FDDF0
 Return Value: Integer value of the number item
 Status: Complete
 */
@@ -205,7 +205,7 @@ int Text::item_number() {
 
 /*
 Purpose: Parse the current binary item.
-Original Offset: 005FDE60
+ORIGINAL: 0x005FDE60
 Return Value: Integer value of the binary item
 Status: Complete
 */
@@ -215,7 +215,7 @@ int Text::item_binary() {
 
 /*
 Purpose: Parse the current hex item.
-Original Offset: 005FDED0
+ORIGINAL: 0x005FDED0
 Return Value: Integer value of the hex item
 Status: Complete
 */
@@ -228,32 +228,43 @@ Text *Txt = (Text *)0x009B7BA0;
 LPSTR *TextBufferGetPtr = (LPSTR *)0x009B7D00;
 LPSTR *TextBufferItemPtr = (LPSTR *)0x009B7D04;
 
-void __cdecl text_set_get_ptr() { // 005FD4C0
+// ORIGINAL: 0x005FD4C0
+void __cdecl text_set_get_ptr() {
     text_set_get_ptr_source(Txt, TextBufferGetPtr);
 }
 
-void __cdecl text_set_item_ptr() { // 005FD4D0
+// ORIGINAL: 0x005FD4D0
+void __cdecl text_set_item_ptr() {
     text_set_item_ptr_source(Txt, TextBufferItemPtr);
 }
 
-void __cdecl text_close() { text_close_source(Txt); } // 005FD530
+// ORIGINAL: 0x005FD530
+void __cdecl text_close() { text_close_source(Txt); }
 
-LPSTR __cdecl text_get() { return text_get_source(Txt); } // 005FD570
+// ORIGINAL: 0x005FD570
+LPSTR __cdecl text_get() { return text_get_source(Txt); }
 
-LPSTR __cdecl text_string() { return text_string_source(Txt, StringTable); } // 005FD5E0
+// ORIGINAL: 0x005FD5E0
+LPSTR __cdecl text_string() { return text_string_source(Txt, StringTable); }
 
-LPSTR __cdecl text_item() { return text_item_source(Txt); } // 005FD670
+// ORIGINAL: 0x005FD670
+LPSTR __cdecl text_item() { return text_item_source(Txt); }
 
+// ORIGINAL: 0x005FD6D0
 LPSTR __cdecl text_item_string() {
     return text_item_string_source(Txt, StringTable);
-} // 005FD6D0
+}
 
-int __cdecl text_item_number() { return text_item_number_source(Txt); } // 005FD740
+// ORIGINAL: 0x005FD740
+int __cdecl text_item_number() { return text_item_number_source(Txt); }
 
-int __cdecl text_item_binary() { return text_item_binary_source(Txt); } // 005FD7A0
+// ORIGINAL: 0x005FD7A0
+int __cdecl text_item_binary() { return text_item_binary_source(Txt); }
 
-int __cdecl text_item_hex() { return text_item_hex_source(Txt); } // 005FD800
+// ORIGINAL: 0x005FD800
+int __cdecl text_item_hex() { return text_item_hex_source(Txt); }
 
-int __cdecl text_get_number(int min, int max) { // 00585120
+// ORIGINAL: 0x00585120
+int __cdecl text_get_number(int min, int max) {
     return text_get_number_source(Txt, min, max);
 }

@@ -159,7 +159,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaMovie@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 004043A0
+ORIGINAL: 0x004043A0
 Return Value: the object pointer
 Status: Complete
 */
@@ -175,7 +175,7 @@ void *__fastcall scalar_delete_alpha_movie(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject sub_4042b0 expects, then
          forward unchanged.
-Original Offset: 00404420
+ORIGINAL: 0x00404420
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -187,7 +187,7 @@ void *__fastcall adjust_this_sub_404420(void *self, void *) {
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaMovie@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00404430
+ORIGINAL: 0x00404430
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -202,7 +202,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GFlatButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 004068E0
+ORIGINAL: 0x004068E0
 Return Value: the object pointer
 Status: Complete
 */
@@ -221,7 +221,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBasePop@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00406B40
+ORIGINAL: 0x00406B40
 Return Value: the object pointer
 Status: Complete
 */
@@ -239,7 +239,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPopup@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00406BD0
+ORIGINAL: 0x00406BD0
 Return Value: the object pointer
 Status: Complete
 */
@@ -254,7 +254,7 @@ void *__fastcall scalar_delete_popup(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GBasePop@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004070B0
+ORIGINAL: 0x004070B0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -266,7 +266,7 @@ void *__fastcall adjust_this_base_pop(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
          then forward unchanged.
-Original Offset: 004070C0
+ORIGINAL: 0x004070C0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -279,7 +279,7 @@ void *__fastcall adjust_this_scroll(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GPopup@@UAEPAXI@Z expects,
          then forward unchanged.
-Original Offset: 004070D0
+ORIGINAL: 0x004070D0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -291,7 +291,7 @@ void *__fastcall adjust_this_popup(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GFlatButton@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004070E0
+ORIGINAL: 0x004070E0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -306,7 +306,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GEditBox@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00408080
+ORIGINAL: 0x00408080
 Return Value: the object pointer
 Status: Complete
 */
@@ -324,7 +324,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaSave@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 00408140
+ORIGINAL: 0x00408140
 Return Value: the object pointer
 Status: Complete
 */
@@ -340,7 +340,7 @@ void *__fastcall scalar_delete_alpha_save(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaSave@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00408390
+ORIGINAL: 0x00408390
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -353,7 +353,7 @@ void *__fastcall adjust_this_alpha_save(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GEditBox@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004083A0
+ORIGINAL: 0x004083A0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -367,7 +367,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GProdPicker@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 004213A0
+ORIGINAL: 0x004213A0
 Return Value: the object pointer
 Status: Complete
 */
@@ -385,7 +385,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBaseWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004213D0
+ORIGINAL: 0x004213D0
 Return Value: the object pointer
 Status: Complete
 */
@@ -403,7 +403,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPopMenu@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00421640
+ORIGINAL: 0x00421640
 Return Value: the object pointer
 Status: Complete
 */
@@ -419,7 +419,7 @@ void *__fastcall scalar_delete_pop_menu(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GBaseWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00421810
+ORIGINAL: 0x00421810
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -431,7 +431,7 @@ void *__fastcall adjust_this_base_win(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GProdPicker@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00421970
+ORIGINAL: 0x00421970
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -444,7 +444,7 @@ void *__fastcall adjust_this_prod_picker(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00421980
+ORIGINAL: 0x00421980
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -457,7 +457,7 @@ void *__fastcall adjust_this_pop_menu_delete1(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00421990
+ORIGINAL: 0x00421990
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -470,7 +470,7 @@ void *__fastcall adjust_this_pop_menu_delete2(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004219A0
+ORIGINAL: 0x004219A0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -485,7 +485,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GCouncWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00428710
+ORIGINAL: 0x00428710
 Return Value: the object pointer
 Status: Complete
 */
@@ -501,7 +501,7 @@ void *__fastcall scalar_delete_counc_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GCouncWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00428740
+ORIGINAL: 0x00428740
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -515,7 +515,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GCredits@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00428E60
+ORIGINAL: 0x00428E60
 Return Value: the object pointer
 Status: Complete
 */
@@ -530,7 +530,7 @@ void *__fastcall scalar_delete_credits(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GCredits@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00428F80
+ORIGINAL: 0x00428F80
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -544,7 +544,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GStringBox@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 00432770
+ORIGINAL: 0x00432770
 Return Value: the object pointer
 Status: Complete
 */
@@ -562,7 +562,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDatalink@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00432800
+ORIGINAL: 0x00432800
 Return Value: the object pointer
 Status: Complete
 */
@@ -578,7 +578,7 @@ void *__fastcall scalar_delete_datalink(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00432830
+ORIGINAL: 0x00432830
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -591,7 +591,7 @@ void *__fastcall adjust_this_string_box(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDatalink@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00432840
+ORIGINAL: 0x00432840
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -605,7 +605,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDesignWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 0043EDB0
+ORIGINAL: 0x0043EDB0
 Return Value: the object pointer
 Status: Complete
 */
@@ -623,7 +623,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GSelectPartWin@@UAEPAXI@Z: run the complete destructor, then
          release the storage through the executable's operator delete only when
          bit 0 of the flags asks.
-Original Offset: 0043EDE0
+ORIGINAL: 0x0043EDE0
 Return Value: the object pointer
 Status: Complete
 */
@@ -639,7 +639,7 @@ void *__fastcall scalar_delete_select_part_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDesignWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 0043EFA0
+ORIGINAL: 0x0043EFA0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -652,7 +652,7 @@ void *__fastcall adjust_this_design_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GSelectPartWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 0043EFB0
+ORIGINAL: 0x0043EFB0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -667,7 +667,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDiploPop@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00440EC0
+ORIGINAL: 0x00440EC0
 Return Value: the object pointer
 Status: Complete
 */
@@ -683,7 +683,7 @@ void *__fastcall scalar_delete_diplo_pop(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDiploPop@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00440EF0
+ORIGINAL: 0x00440EF0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -697,7 +697,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDiploWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00445080
+ORIGINAL: 0x00445080
 Return Value: the object pointer
 Status: Complete
 */
@@ -713,7 +713,7 @@ void *__fastcall scalar_delete_diplo_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDiploWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00445120
+ORIGINAL: 0x00445120
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -727,7 +727,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GEffect@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00448350
+ORIGINAL: 0x00448350
 Return Value: the object pointer
 Status: Complete
 */
@@ -743,7 +743,7 @@ void *__fastcall scalar_delete_effect(void *self, void *, unsigned int arg0) {
 Purpose: The compiler-generated scalar deleting destructor at sub_448390: run
          the complete destructor, then release the storage through the
          executable's operator delete only when bit 0 of the flags asks.
-Original Offset: 00448390
+ORIGINAL: 0x00448390
 Return Value: the object pointer
 Status: Complete
 */
@@ -762,7 +762,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GFameWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 0044B300
+ORIGINAL: 0x0044B300
 Return Value: the object pointer
 Status: Complete
 */
@@ -778,7 +778,7 @@ void *__fastcall scalar_delete_fame_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GFameWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 0044B330
+ORIGINAL: 0x0044B330
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -792,7 +792,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GGamma@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00456280
+ORIGINAL: 0x00456280
 Return Value: the object pointer
 Status: Complete
 */
@@ -807,7 +807,7 @@ void *__fastcall scalar_delete_gamma(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
          then forward unchanged.
-Original Offset: 004562B0
+ORIGINAL: 0x004562B0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -821,7 +821,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMainInterface@@UAEPAXI@Z: run the complete destructor, then
          release the storage through the executable's operator delete only when
          bit 0 of the flags asks.
-Original Offset: 0045F1C0
+ORIGINAL: 0x0045F1C0
 Return Value: the object pointer
 Status: Complete
 */
@@ -837,7 +837,7 @@ void *__fastcall scalar_delete_main_interface(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMainInterface@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 0045F1F0
+ORIGINAL: 0x0045F1F0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -852,7 +852,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GInterlude@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 0045F710
+ORIGINAL: 0x0045F710
 Return Value: the object pointer
 Status: Complete
 */
@@ -868,7 +868,7 @@ void *__fastcall scalar_delete_interlude(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GInterlude@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 0045F910
+ORIGINAL: 0x0045F910
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -882,7 +882,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMonuWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00477DD0
+ORIGINAL: 0x00477DD0
 Return Value: the object pointer
 Status: Complete
 */
@@ -898,7 +898,7 @@ void *__fastcall scalar_delete_monu_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMonuWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00477E00
+ORIGINAL: 0x00477E00
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -912,7 +912,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMultiWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 0047A6C0
+ORIGINAL: 0x0047A6C0
 Return Value: the object pointer
 Status: Complete
 */
@@ -928,7 +928,7 @@ void *__fastcall scalar_delete_multi_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMultiWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 0047A760
+ORIGINAL: 0x0047A760
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -942,7 +942,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GNetMsg@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 0047AD70
+ORIGINAL: 0x0047AD70
 Return Value: the object pointer
 Status: Complete
 */
@@ -957,7 +957,7 @@ void *__fastcall scalar_delete_net_msg(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GNetMsg@@UAEPAXI@Z expects,
          then forward unchanged.
-Original Offset: 0047AFE0
+ORIGINAL: 0x0047AFE0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -971,7 +971,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GNetWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004837C0
+ORIGINAL: 0x004837C0
 Return Value: the object pointer
 Status: Complete
 */
@@ -986,7 +986,7 @@ void *__fastcall scalar_delete_net_win(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GNetWin@@UAEPAXI@Z expects,
          then forward unchanged.
-Original Offset: 00483840
+ORIGINAL: 0x00483840
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1000,7 +1000,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GNewTechWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 00484A80
+ORIGINAL: 0x00484A80
 Return Value: the object pointer
 Status: Complete
 */
@@ -1016,7 +1016,7 @@ void *__fastcall scalar_delete_new_tech_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GNewTechWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00484AB0
+ORIGINAL: 0x00484AB0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1031,7 +1031,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPickTech@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 00488660
+ORIGINAL: 0x00488660
 Return Value: the object pointer
 Status: Complete
 */
@@ -1047,7 +1047,7 @@ void *__fastcall scalar_delete_pick_tech(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPickTech@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00488740
+ORIGINAL: 0x00488740
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1061,7 +1061,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPickWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 0048ADC0
+ORIGINAL: 0x0048ADC0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1077,7 +1077,7 @@ void *__fastcall scalar_delete_pick_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPickWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 0048ADF0
+ORIGINAL: 0x0048ADF0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1089,7 +1089,7 @@ void *__fastcall adjust_this_pick_win(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
          ??_GPlanWin@@UAEPAXI@Z expects, then forward unchanged.
-Original Offset: 0048BF10
+ORIGINAL: 0x0048BF10
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1105,7 +1105,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPrefWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004923E0
+ORIGINAL: 0x004923E0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1121,7 +1121,7 @@ void *__fastcall scalar_delete_pref_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPrefWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00492410
+ORIGINAL: 0x00492410
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1135,7 +1135,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GQuayleWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 004968C0
+ORIGINAL: 0x004968C0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1151,7 +1151,7 @@ void *__fastcall scalar_delete_quayle_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GQuayleWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004968F0
+ORIGINAL: 0x004968F0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1166,7 +1166,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GReportWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 004AD840
+ORIGINAL: 0x004AD840
 Return Value: the object pointer
 Status: Complete
 */
@@ -1182,7 +1182,7 @@ void *__fastcall scalar_delete_report_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004AD870
+ORIGINAL: 0x004AD870
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1197,7 +1197,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GSetupWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004AE760
+ORIGINAL: 0x004AE760
 Return Value: the object pointer
 Status: Complete
 */
@@ -1213,7 +1213,7 @@ void *__fastcall scalar_delete_setup_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GSetupWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004AE9A0
+ORIGINAL: 0x004AE9A0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1227,7 +1227,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GCheckButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 004B3F20
+ORIGINAL: 0x004B3F20
 Return Value: the object pointer
 Status: Complete
 */
@@ -1245,7 +1245,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GSocialWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 004B3F50
+ORIGINAL: 0x004B3F50
 Return Value: the object pointer
 Status: Complete
 */
@@ -1261,7 +1261,7 @@ void *__fastcall scalar_delete_social_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GCheckButton@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004B3F80
+ORIGINAL: 0x004B3F80
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1274,7 +1274,7 @@ void *__fastcall adjust_this_check_button(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GSocialWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004B3F90
+ORIGINAL: 0x004B3F90
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1289,7 +1289,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GTutWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004BE9F0
+ORIGINAL: 0x004BE9F0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1304,7 +1304,7 @@ void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GTutWin@@UAEPAXI@Z expects,
          then forward unchanged.
-Original Offset: 004BEA20
+ORIGINAL: 0x004BEA20
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1318,7 +1318,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GWorldWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004C4C70
+ORIGINAL: 0x004C4C70
 Return Value: the object pointer
 Status: Complete
 */
@@ -1334,7 +1334,7 @@ void *__fastcall scalar_delete_world_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GWorldWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004C4CA0
+ORIGINAL: 0x004C4CA0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1348,7 +1348,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAmbience@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004C9330
+ORIGINAL: 0x004C9330
 Return Value: the object pointer
 Status: Complete
 */
@@ -1367,7 +1367,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GVideo@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004C9360
+ORIGINAL: 0x004C9360
 Return Value: the object pointer
 Status: Complete
 */
@@ -1384,7 +1384,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GVoiceRx@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004C93B0
+ORIGINAL: 0x004C93B0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1402,7 +1402,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GVoiceTx@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004C93F0
+ORIGINAL: 0x004C93F0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1420,7 +1420,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GDipEdit@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 004E23C0
+ORIGINAL: 0x004E23C0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1436,7 +1436,7 @@ void *__fastcall scalar_delete_dip_edit(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 004E23F0
+ORIGINAL: 0x004E23F0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1450,7 +1450,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaMenu@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 0051DC90
+ORIGINAL: 0x0051DC90
 Return Value: the object pointer
 Status: Complete
 */
@@ -1466,7 +1466,7 @@ void *__fastcall scalar_delete_alpha_menu(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaMenu@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 0051DF70
+ORIGINAL: 0x0051DF70
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1481,7 +1481,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GReplayWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 005AE0B0
+ORIGINAL: 0x005AE0B0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1497,7 +1497,7 @@ void *__fastcall scalar_delete_replay_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GReplayWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 005AE0E0
+ORIGINAL: 0x005AE0E0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1512,7 +1512,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMultiDebug@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 005C9E80
+ORIGINAL: 0x005C9E80
 Return Value: the object pointer
 Status: Complete
 */
@@ -1528,7 +1528,7 @@ void *__fastcall scalar_delete_multi_debug(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GMultiDebug@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 005C9EB0
+ORIGINAL: 0x005C9EB0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1543,7 +1543,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GGraphicWin@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 005D7140
+ORIGINAL: 0x005D7140
 Return Value: the object pointer
 Status: Complete
 */
@@ -1560,7 +1560,7 @@ void *__fastcall scalar_delete_graphic_win(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 005D7160
+ORIGINAL: 0x005D7160
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1575,7 +1575,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBuffer@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 005E3610
+ORIGINAL: 0x005E3610
 Return Value: the object pointer
 Status: Complete
 */
@@ -1593,7 +1593,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GWin@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 005F8610
+ORIGINAL: 0x005F8610
 Return Value: the object pointer
 Status: Complete
 */
@@ -1610,7 +1610,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPullDown@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 005FA770
+ORIGINAL: 0x005FA770
 Return Value: the object pointer
 Status: Complete
 */
@@ -1627,7 +1627,7 @@ void *__fastcall scalar_delete_pull_down(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPullDown@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 005FA790
+ORIGINAL: 0x005FA790
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1641,7 +1641,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GMenu@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-Original Offset: 005FC6D0
+ORIGINAL: 0x005FC6D0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1656,7 +1656,7 @@ void *__fastcall scalar_delete_menu(void *self, void *, unsigned int arg0) {
 /*
 Purpose: Step the receiver back to the subobject ??_GMenu@@UAEPAXI@Z expects,
          then forward unchanged.
-Original Offset: 005FC6F0
+ORIGINAL: 0x005FC6F0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1670,7 +1670,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBaseButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 00607CC0
+ORIGINAL: 0x00607CC0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1687,7 +1687,7 @@ void *__fastcall scalar_delete_base_button(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 00607CE0
+ORIGINAL: 0x00607CE0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1700,7 +1700,7 @@ void *__fastcall adjust_this_base_button(void *self, void *,
 /*
 Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
          sub_612710 expects, then forward unchanged.
-Original Offset: 00612700
+ORIGINAL: 0x00612700
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1717,7 +1717,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GImageButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 006256D0
+ORIGINAL: 0x006256D0
 Return Value: the object pointer
 Status: Complete
 */
@@ -1733,7 +1733,7 @@ void *__fastcall scalar_delete_image_button(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GImageButton@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 006256F0
+ORIGINAL: 0x006256F0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1748,7 +1748,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPushButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-Original Offset: 0062C830
+ORIGINAL: 0x0062C830
 Return Value: the object pointer
 Status: Complete
 */
@@ -1764,7 +1764,7 @@ void *__fastcall scalar_delete_push_button(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject ??_GPushButton@@UAEPAXI@Z
          expects, then forward unchanged.
-Original Offset: 0062C850
+ORIGINAL: 0x0062C850
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1778,7 +1778,7 @@ void *__fastcall adjust_this_push_button(void *self, void *,
 Purpose: The compiler-generated scalar deleting destructor at sub_633160: run
          the complete destructor, then release the storage through the
          executable's operator delete only when bit 0 of the flags asks.
-Original Offset: 00633160
+ORIGINAL: 0x00633160
 Return Value: the object pointer
 Status: Complete
 */
@@ -1794,7 +1794,7 @@ void *__fastcall scalar_delete_sub_633160(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject sub_6336d0 expects, then
          forward unchanged.
-Original Offset: 00633730
+ORIGINAL: 0x00633730
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1807,7 +1807,7 @@ void *__fastcall adjust_this_sub_633730(void *self, void *,
 /*
 Purpose: Step the receiver back to the subobject sub_633160 expects, then
          forward unchanged.
-Original Offset: 00633740
+ORIGINAL: 0x00633740
 Return Value: the forwarded call's
 Status: Complete
 */

@@ -28,7 +28,7 @@ uint32_t *RadioButtonDefault2 = (uint32_t *)0x006970F4;
 Purpose: Reset the radio button to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
-Original Offset: 0060D1B0
+ORIGINAL: 0x0060D1B0
 Return Value: n/a
 Status: Complete
 */
@@ -55,7 +55,7 @@ void __fastcall radio_button_close_redirect(RadioButton *self, void *) {
 }
 
 /*
-Original Offset: 0060E300
+ORIGINAL: 0x0060E300
 Status: Complete
 */
 void RadioButton::on_dialog_focus(int a1) {
@@ -68,7 +68,7 @@ void RadioButton::on_dialog_focus(int a1) {
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
-Original Offset: 0060E4A0
+ORIGINAL: 0x0060E4A0
 Return Value: n/a
 Status: Complete
 */

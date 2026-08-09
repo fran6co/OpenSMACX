@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00608770
 // 0x00608770  ?kill_entry@StringList@@QAEXPAUStringStruct@@@Z  ->  ?kill_entry@StringList@@QAEXPAUStringStruct@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

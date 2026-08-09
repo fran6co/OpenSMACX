@@ -22,7 +22,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 004C45E0
+ORIGINAL: 0x004C45E0
 Return Value: n/a
 Status: Complete
 */
@@ -35,7 +35,7 @@ void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 004C3E90
+ORIGINAL: 0x004C3E90
 Return Value: n/a
 Status: Complete
 */
@@ -50,7 +50,7 @@ func_world_win_click WorldWinClick = original_method<func_world_win_click>(0x004
 
 /*
 Purpose: Report a left click to the world window's shared click handler.
-Original Offset: 004C3E50
+ORIGINAL: 0x004C3E50
 Return Value: n/a
 Status: Complete
 */
@@ -60,7 +60,7 @@ void WorldWin::on_left_click(int a1, int a2) {
 
 /*
 Purpose: Report a right click to the world window's shared click handler.
-Original Offset: 004C3E70
+ORIGINAL: 0x004C3E70
 Return Value: n/a
 Status: Complete
 */
@@ -77,7 +77,7 @@ void __fastcall world_win_on_right_click_redirect(WorldWin *self, void *, int a1
 }
 
 /*
-Original Offset: 004C45F0
+ORIGINAL: 0x004C45F0
 Status: Complete
 */
 void WorldWin::set_center(int a1, int a2) {
@@ -86,7 +86,7 @@ void WorldWin::set_center(int a1, int a2) {
 }
 
 /*
-Original Offset: 004C4610
+ORIGINAL: 0x004C4610
 Status: Complete
 */
 void WorldWin::focus(int a1, int a2) {
@@ -95,7 +95,7 @@ void WorldWin::focus(int a1, int a2) {
 }
 
 /*
-Original Offset: 004C3EA0
+ORIGINAL: 0x004C3EA0
 Status: Complete
 */
 void WorldWin::follow_center(int xCoord, int yCoord) {

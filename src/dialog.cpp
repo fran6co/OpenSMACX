@@ -22,7 +22,7 @@
 
 /*
 Purpose: Set the three fonts used by the dialog.
-Original Offset: 00609C60
+ORIGINAL: 0x00609C60
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -40,7 +40,7 @@ int Dialog::set_dialog_font(Font *font1, Font *font2, Font *font3) {
 
 /*
 Purpose: Set the primary text colors for the four dialog color slots.
-Original Offset: 00609C90
+ORIGINAL: 0x00609C90
 Return Value: n/a
 Status: Complete
 */
@@ -53,7 +53,7 @@ void Dialog::set_dialog_text_color(int color1, int color2, int color3, int color
 
 /*
 Purpose: Set the secondary text colors for the four dialog color slots.
-Original Offset: 00609CC0
+ORIGINAL: 0x00609CC0
 Return Value: n/a
 Status: Complete
 */
@@ -66,7 +66,7 @@ void Dialog::set_dialog_text_color2(int color1, int color2, int color3, int colo
 
 /*
 Purpose: Set the tertiary text colors for the four dialog color slots.
-Original Offset: 00609CF0
+ORIGINAL: 0x00609CF0
 Return Value: n/a
 Status: Complete
 */
@@ -79,13 +79,13 @@ void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int colo
 
 /*
 Purpose: Find an item ID's bounded position in the dialog string list.
-Original Offset: 00609AF0
+ORIGINAL: 0x00609AF0
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
 /*
 Purpose: Find an item ID's bounded position in the dialog string list.
-Original Offset: 00609AF0
+ORIGINAL: 0x00609AF0
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
@@ -108,7 +108,7 @@ int Dialog::id_to_pos(int id) {
 
 /*
 Purpose: Select a dialog item by its bounded list ID.
-Original Offset: 006099D0
+ORIGINAL: 0x006099D0
 Return Value: n/a
 Status: Complete
 */
@@ -118,7 +118,7 @@ void Dialog::set_selected_id(int id) {
 
 /*
 Purpose: Restore the selected list position and return its item ID.
-Original Offset: 00609A50
+ORIGINAL: 0x00609A50
 Return Value: Selected item ID, or zero when the list head is null
 Status: Complete
 */
@@ -153,7 +153,7 @@ int Dialog::get_selected_id() {
 
 /*
 Purpose: Restore an explicit list position and return its item ID.
-Original Offset: 00609B50
+ORIGINAL: 0x00609B50
 Return Value: Item ID at the requested position, or zero when the list head is null
 Status: Complete
 */
@@ -226,7 +226,7 @@ Font **DialogDefaultFonts = reinterpret_cast<Font **>(0x009B8EC0);
 
 /*
 Purpose: Set the default fonts shared by every dialog.
-Original Offset: 00609D20
+ORIGINAL: 0x00609D20
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -275,7 +275,7 @@ Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then
          and finally shut down the embedded Heap. The original's C++ exception
          frame targets __CxxFrameHandler and is omitted as unreachable per
          policy.
-Original Offset: 00608E10
+ORIGINAL: 0x00608E10
 Return Value: n/a (the original leaves Heap::shutdown's EAX residue; the
               scalar deleting destructor overwrites it and the 116 direct
               callers ignore it, so void is faithful)
@@ -324,7 +324,7 @@ void __fastcall dialog_destructor_redirect(Dialog *self, void *) {
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and free the storage through the executable's operator
          delete only when bit 0 of the mode asks. Always returns the object.
-Original Offset: 00609D90
+ORIGINAL: 0x00609D90
 Return Value: the object
 Status: Complete
 */

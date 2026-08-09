@@ -22,7 +22,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 004AEF00
+ORIGINAL: 0x004AEF00
 Return Value: n/a
 Status: Complete
 */
@@ -31,7 +31,7 @@ void SocialWin::UNK2() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 004B1790
+ORIGINAL: 0x004B1790
 Return Value: n/a
 Status: Complete
 */
@@ -48,7 +48,7 @@ void __fastcall social_win_unk3_redirect(SocialWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 004B2400
+ORIGINAL: 0x004B2400
 Return Value: n/a
 Status: Complete
 */
@@ -61,7 +61,7 @@ void __fastcall social_win_on_iface_left_down_redirect(SocialWin *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 004B2410
+ORIGINAL: 0x004B2410
 Return Value: n/a
 Status: Complete
 */
@@ -74,7 +74,7 @@ void __fastcall social_win_on_iface_right_down_redirect(SocialWin *self, void *,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 004B2440
+ORIGINAL: 0x004B2440
 Return Value: n/a
 Status: Complete
 */
@@ -87,7 +87,7 @@ void __fastcall social_win_on_iface_selected_redirect(SocialWin *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 004B2450
+ORIGINAL: 0x004B2450
 Return Value: n/a
 Status: Complete
 */
@@ -100,7 +100,7 @@ void __fastcall social_win_on_iface_left_double_click_redirect(SocialWin *self, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 004B2460
+ORIGINAL: 0x004B2460
 Return Value: n/a
 Status: Complete
 */
@@ -113,7 +113,7 @@ void __fastcall social_win_on_iface_right_double_click_redirect(SocialWin *self,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 004B2670
+ORIGINAL: 0x004B2670
 Return Value: n/a
 Status: Complete
 */
@@ -126,7 +126,7 @@ void __fastcall social_win_on_iface_button_toggled_redirect(SocialWin *self, voi
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 004B2680
+ORIGINAL: 0x004B2680
 Return Value: n/a
 Status: Complete
 */
@@ -146,7 +146,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          and the two are observationally identical unless something re-arms the
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
-Original Offset: 004B2420
+ORIGINAL: 0x004B2420
 Return Value: n/a
 Status: Complete
 */
@@ -168,7 +168,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          and the two are observationally identical unless something re-arms the
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
-Original Offset: 004B2430
+ORIGINAL: 0x004B2430
 Return Value: n/a
 Status: Complete
 */
@@ -182,7 +182,7 @@ void __fastcall social_win_on_iface_mouse_leave_redirect(SocialWin *self, void *
 }
 
 /*
-Original Offset: 004B2690
+ORIGINAL: 0x004B2690
 Status: Complete
 */
 void SocialWin::show(int a1) {
@@ -192,7 +192,7 @@ void SocialWin::show(int a1) {
 }
 
 /*
-Original Offset: 004B26B0
+ORIGINAL: 0x004B26B0
 Status: Complete
 */
 void SocialWin::hide() {

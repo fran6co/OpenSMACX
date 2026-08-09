@@ -234,7 +234,7 @@ func_adjustor_v_ii SpriteBoxOnRightUpTarget =
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::dtor expects, then forward unchanged.
-Original Offset: 00406F50
+ORIGINAL: 0x00406F50
 Return Value: n/a
 Status: Complete
 */
@@ -248,7 +248,7 @@ void __fastcall adjust_radio_button1_dtor(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_redraw expects, then forward unchanged.
-Original Offset: 00406FF0
+ORIGINAL: 0x00406FF0
 Return Value: n/a
 Status: Complete
 */
@@ -262,7 +262,7 @@ void __fastcall adjust_radio_button1_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_mouse_move expects, then forward unchanged.
-Original Offset: 00407000
+ORIGINAL: 0x00407000
 Return Value: n/a
 Status: Complete
 */
@@ -277,7 +277,7 @@ void __fastcall adjust_radio_button1_on_mouse_move(void *self, void *,
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_mouse_leave expects, then forward unchanged.
-Original Offset: 00407010
+ORIGINAL: 0x00407010
 Return Value: n/a
 Status: Complete
 */
@@ -292,7 +292,7 @@ void __fastcall adjust_radio_button1_on_mouse_leave(void *self, void *,
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_left_down expects, then forward unchanged.
-Original Offset: 00407020
+ORIGINAL: 0x00407020
 Return Value: n/a
 Status: Complete
 */
@@ -307,7 +307,7 @@ void __fastcall adjust_radio_button1_on_left_down(void *self, void *,
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_key_down expects, then forward unchanged.
-Original Offset: 00407030
+ORIGINAL: 0x00407030
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -321,7 +321,7 @@ int __fastcall adjust_radio_button1_on_key_down(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_left_double_click expects, then forward unchanged.
-Original Offset: 00407040
+ORIGINAL: 0x00407040
 Return Value: n/a
 Status: Complete
 */
@@ -336,7 +336,7 @@ void __fastcall adjust_radio_button1_on_left_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_dialog_focus expects, then forward unchanged.
-Original Offset: 00407050
+ORIGINAL: 0x00407050
 Return Value: n/a
 Status: Complete
 */
@@ -351,7 +351,7 @@ void __fastcall adjust_radio_button1_on_dialog_focus(void *self, void *,
 /*
 Purpose: Adjust the receiver from RadioButton's thunk2 subobject to the one
          RadioButton::dtor expects, then forward unchanged.
-Original Offset: 00407060
+ORIGINAL: 0x00407060
 Return Value: n/a
 Status: Complete
 */
@@ -365,7 +365,7 @@ void __fastcall adjust_radio_button2_dtor(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
          RadioButton::dtor expects, then forward unchanged.
-Original Offset: 00407080
+ORIGINAL: 0x00407080
 Return Value: n/a
 Status: Complete
 */
@@ -379,7 +379,7 @@ void __fastcall adjust_radio_button3_dtor(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::attach expects, then forward unchanged.
-Original Offset: 00407090
+ORIGINAL: 0x00407090
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -394,7 +394,7 @@ int __fastcall adjust_radio_button1_attach(void *self, void *, void *arg0,
 /*
 Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
          RadioButton::on_redraw expects, then forward unchanged.
-Original Offset: 004070A0
+ORIGINAL: 0x004070A0
 Return Value: n/a
 Status: Complete
 */
@@ -408,7 +408,7 @@ void __fastcall adjust_radio_button3_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::scalar_delete expects, then forward unchanged.
-Original Offset: 004070F0
+ORIGINAL: 0x004070F0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -423,7 +423,7 @@ void * __fastcall adjust_dialogs1_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_scroll_create expects, then forward unchanged.
-Original Offset: 00407150
+ORIGINAL: 0x00407150
 Return Value: n/a
 Status: Complete
 */
@@ -437,7 +437,7 @@ void __fastcall adjust_dialogs1_on_scroll_create(void *self, void *) {
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_scroll_delete expects, then forward unchanged.
-Original Offset: 00407160
+ORIGINAL: 0x00407160
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -452,7 +452,7 @@ int __fastcall adjust_dialogs1_on_scroll_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_redraw expects, then forward unchanged.
-Original Offset: 00407170
+ORIGINAL: 0x00407170
 Return Value: n/a
 Status: Complete
 */
@@ -466,7 +466,7 @@ void __fastcall adjust_dialogs1_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_mousewheel expects, then forward unchanged.
-Original Offset: 00407180
+ORIGINAL: 0x00407180
 Return Value: n/a
 Status: Complete
 */
@@ -480,7 +480,7 @@ void __fastcall adjust_dialogs1_on_mousewheel(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_mouse_move expects, then forward unchanged.
-Original Offset: 00407190
+ORIGINAL: 0x00407190
 Return Value: n/a
 Status: Complete
 */
@@ -495,7 +495,7 @@ void __fastcall adjust_dialogs1_on_mouse_move(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_mouse_leave expects, then forward unchanged.
-Original Offset: 004071A0
+ORIGINAL: 0x004071A0
 Return Value: n/a
 Status: Complete
 */
@@ -510,7 +510,7 @@ void __fastcall adjust_dialogs1_on_mouse_leave(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_left_click expects, then forward unchanged.
-Original Offset: 004071B0
+ORIGINAL: 0x004071B0
 Return Value: n/a
 Status: Complete
 */
@@ -525,7 +525,7 @@ void __fastcall adjust_dialogs1_on_left_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_left_down expects, then forward unchanged.
-Original Offset: 004071C0
+ORIGINAL: 0x004071C0
 Return Value: n/a
 Status: Complete
 */
@@ -540,7 +540,7 @@ void __fastcall adjust_dialogs1_on_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_left_up expects, then forward unchanged.
-Original Offset: 004071D0
+ORIGINAL: 0x004071D0
 Return Value: n/a
 Status: Complete
 */
@@ -555,7 +555,7 @@ void __fastcall adjust_dialogs1_on_left_up(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_right_click expects, then forward unchanged.
-Original Offset: 004071E0
+ORIGINAL: 0x004071E0
 Return Value: n/a
 Status: Complete
 */
@@ -570,7 +570,7 @@ void __fastcall adjust_dialogs1_on_right_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_right_down expects, then forward unchanged.
-Original Offset: 004071F0
+ORIGINAL: 0x004071F0
 Return Value: n/a
 Status: Complete
 */
@@ -585,7 +585,7 @@ void __fastcall adjust_dialogs1_on_right_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_right_up expects, then forward unchanged.
-Original Offset: 00407200
+ORIGINAL: 0x00407200
 Return Value: n/a
 Status: Complete
 */
@@ -600,7 +600,7 @@ void __fastcall adjust_dialogs1_on_right_up(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_key_down expects, then forward unchanged.
-Original Offset: 00407210
+ORIGINAL: 0x00407210
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -614,7 +614,7 @@ int __fastcall adjust_dialogs1_on_key_down(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_left_double_click expects, then forward unchanged.
-Original Offset: 00407220
+ORIGINAL: 0x00407220
 Return Value: n/a
 Status: Complete
 */
@@ -629,7 +629,7 @@ void __fastcall adjust_dialogs1_on_left_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_right_double_click expects, then forward unchanged.
-Original Offset: 00407230
+ORIGINAL: 0x00407230
 Return Value: n/a
 Status: Complete
 */
@@ -644,7 +644,7 @@ void __fastcall adjust_dialogs1_on_right_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_scrolled expects, then forward unchanged.
-Original Offset: 00407240
+ORIGINAL: 0x00407240
 Return Value: n/a
 Status: Complete
 */
@@ -659,7 +659,7 @@ void __fastcall adjust_dialogs1_on_scrolled(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_scrolling expects, then forward unchanged.
-Original Offset: 00407250
+ORIGINAL: 0x00407250
 Return Value: n/a
 Status: Complete
 */
@@ -674,7 +674,7 @@ void __fastcall adjust_dialogs1_on_scrolling(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_dialog_focus expects, then forward unchanged.
-Original Offset: 00407260
+ORIGINAL: 0x00407260
 Return Value: n/a
 Status: Complete
 */
@@ -688,7 +688,7 @@ void __fastcall adjust_dialogs1_on_dialog_focus(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::pass_dialog_focus expects, then forward unchanged.
-Original Offset: 00407270
+ORIGINAL: 0x00407270
 Return Value: n/a
 Status: Complete
 */
@@ -702,7 +702,7 @@ void __fastcall adjust_dialogs1_pass_dialog_focus(void *self, void *) {
 /*
 Purpose: Adjust the receiver from Dialogs's thunk2 subobject to the one
          Dialogs::scalar_delete expects, then forward unchanged.
-Original Offset: 00407280
+ORIGINAL: 0x00407280
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -717,7 +717,7 @@ void * __fastcall adjust_dialogs2_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk3 subobject to the one
          Dialogs::scalar_delete expects, then forward unchanged.
-Original Offset: 004072A0
+ORIGINAL: 0x004072A0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -732,7 +732,7 @@ void * __fastcall adjust_dialogs3_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::attach expects, then forward unchanged.
-Original Offset: 004072B0
+ORIGINAL: 0x004072B0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -747,7 +747,7 @@ int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
 /*
 Purpose: Adjust the receiver from Dialogs's thunk3 subobject to the one
          Dialogs::on_redraw expects, then forward unchanged.
-Original Offset: 004072C0
+ORIGINAL: 0x004072C0
 Return Value: n/a
 Status: Complete
 */
@@ -761,7 +761,7 @@ void __fastcall adjust_dialogs3_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::scalar_delete expects, then forward unchanged.
-Original Offset: 00421820
+ORIGINAL: 0x00421820
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -776,7 +776,7 @@ void * __fastcall adjust_map_win1_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_lose_mouse_capture expects, then forward unchanged.
-Original Offset: 00421870
+ORIGINAL: 0x00421870
 Return Value: n/a
 Status: Complete
 */
@@ -790,7 +790,7 @@ void __fastcall adjust_map_win1_on_lose_mouse_capture(void *self, void *) {
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_redraw expects, then forward unchanged.
-Original Offset: 00421880
+ORIGINAL: 0x00421880
 Return Value: n/a
 Status: Complete
 */
@@ -804,7 +804,7 @@ void __fastcall adjust_map_win1_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_resize expects, then forward unchanged.
-Original Offset: 00421890
+ORIGINAL: 0x00421890
 Return Value: n/a
 Status: Complete
 */
@@ -819,7 +819,7 @@ void __fastcall adjust_map_win1_on_resize(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_sys_close expects, then forward unchanged.
-Original Offset: 004218A0
+ORIGINAL: 0x004218A0
 Return Value: n/a
 Status: Complete
 */
@@ -833,7 +833,7 @@ void __fastcall adjust_map_win1_on_sys_close(void *self, void *) {
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_mouse_move expects, then forward unchanged.
-Original Offset: 004218B0
+ORIGINAL: 0x004218B0
 Return Value: n/a
 Status: Complete
 */
@@ -848,7 +848,7 @@ void __fastcall adjust_map_win1_on_mouse_move(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_left_click expects, then forward unchanged.
-Original Offset: 004218C0
+ORIGINAL: 0x004218C0
 Return Value: n/a
 Status: Complete
 */
@@ -863,7 +863,7 @@ void __fastcall adjust_map_win1_on_left_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_left_down expects, then forward unchanged.
-Original Offset: 004218D0
+ORIGINAL: 0x004218D0
 Return Value: n/a
 Status: Complete
 */
@@ -878,7 +878,7 @@ void __fastcall adjust_map_win1_on_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_left_up expects, then forward unchanged.
-Original Offset: 004218E0
+ORIGINAL: 0x004218E0
 Return Value: n/a
 Status: Complete
 */
@@ -893,7 +893,7 @@ void __fastcall adjust_map_win1_on_left_up(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_right_click expects, then forward unchanged.
-Original Offset: 004218F0
+ORIGINAL: 0x004218F0
 Return Value: n/a
 Status: Complete
 */
@@ -908,7 +908,7 @@ void __fastcall adjust_map_win1_on_right_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_right_down expects, then forward unchanged.
-Original Offset: 00421900
+ORIGINAL: 0x00421900
 Return Value: n/a
 Status: Complete
 */
@@ -923,7 +923,7 @@ void __fastcall adjust_map_win1_on_right_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_left_double_click expects, then forward unchanged.
-Original Offset: 00421910
+ORIGINAL: 0x00421910
 Return Value: n/a
 Status: Complete
 */
@@ -938,7 +938,7 @@ void __fastcall adjust_map_win1_on_left_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_nc_left_down expects, then forward unchanged.
-Original Offset: 00421920
+ORIGINAL: 0x00421920
 Return Value: n/a
 Status: Complete
 */
@@ -953,7 +953,7 @@ void __fastcall adjust_map_win1_on_nc_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_button_clicked expects, then forward unchanged.
-Original Offset: 00421930
+ORIGINAL: 0x00421930
 Return Value: n/a
 Status: Complete
 */
@@ -968,7 +968,7 @@ void __fastcall adjust_map_win1_on_button_clicked(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_nc_hittest expects, then forward unchanged.
-Original Offset: 00421940
+ORIGINAL: 0x00421940
 Return Value: n/a
 Status: Complete
 */
@@ -983,7 +983,7 @@ void __fastcall adjust_map_win1_on_nc_hittest(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk2 subobject to the one
          MapWin::scalar_delete expects, then forward unchanged.
-Original Offset: 00421950
+ORIGINAL: 0x00421950
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -998,7 +998,7 @@ void * __fastcall adjust_map_win2_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_lose_mouse_capture expects, then forward unchanged.
-Original Offset: 0048BF60
+ORIGINAL: 0x0048BF60
 Return Value: n/a
 Status: Complete
 */
@@ -1012,7 +1012,7 @@ void __fastcall adjust_map_win5_on_lose_mouse_capture(void *self, void *) {
 /*
 Purpose: Adjust the receiver from PlanWin's thunk1 subobject to the one
          PlanWin::on_redraw expects, then forward unchanged.
-Original Offset: 0048BF70
+ORIGINAL: 0x0048BF70
 Return Value: n/a
 Status: Complete
 */
@@ -1026,7 +1026,7 @@ void __fastcall adjust_plan_win1_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_resize expects, then forward unchanged.
-Original Offset: 0048BF80
+ORIGINAL: 0x0048BF80
 Return Value: n/a
 Status: Complete
 */
@@ -1041,7 +1041,7 @@ void __fastcall adjust_map_win5_on_resize(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_sys_close expects, then forward unchanged.
-Original Offset: 0048BF90
+ORIGINAL: 0x0048BF90
 Return Value: n/a
 Status: Complete
 */
@@ -1055,7 +1055,7 @@ void __fastcall adjust_map_win5_on_sys_close(void *self, void *) {
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_mouse_move expects, then forward unchanged.
-Original Offset: 0048BFA0
+ORIGINAL: 0x0048BFA0
 Return Value: n/a
 Status: Complete
 */
@@ -1070,7 +1070,7 @@ void __fastcall adjust_map_win5_on_mouse_move(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_left_click expects, then forward unchanged.
-Original Offset: 0048BFB0
+ORIGINAL: 0x0048BFB0
 Return Value: n/a
 Status: Complete
 */
@@ -1085,7 +1085,7 @@ void __fastcall adjust_map_win5_on_left_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_left_down expects, then forward unchanged.
-Original Offset: 0048BFC0
+ORIGINAL: 0x0048BFC0
 Return Value: n/a
 Status: Complete
 */
@@ -1100,7 +1100,7 @@ void __fastcall adjust_map_win5_on_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_left_up expects, then forward unchanged.
-Original Offset: 0048BFD0
+ORIGINAL: 0x0048BFD0
 Return Value: n/a
 Status: Complete
 */
@@ -1115,7 +1115,7 @@ void __fastcall adjust_map_win5_on_left_up(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_right_click expects, then forward unchanged.
-Original Offset: 0048BFE0
+ORIGINAL: 0x0048BFE0
 Return Value: n/a
 Status: Complete
 */
@@ -1130,7 +1130,7 @@ void __fastcall adjust_map_win5_on_right_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_right_down expects, then forward unchanged.
-Original Offset: 0048BFF0
+ORIGINAL: 0x0048BFF0
 Return Value: n/a
 Status: Complete
 */
@@ -1145,7 +1145,7 @@ void __fastcall adjust_map_win5_on_right_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_left_double_click expects, then forward unchanged.
-Original Offset: 0048C000
+ORIGINAL: 0x0048C000
 Return Value: n/a
 Status: Complete
 */
@@ -1160,7 +1160,7 @@ void __fastcall adjust_map_win5_on_left_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_nc_left_down expects, then forward unchanged.
-Original Offset: 0048C010
+ORIGINAL: 0x0048C010
 Return Value: n/a
 Status: Complete
 */
@@ -1175,7 +1175,7 @@ void __fastcall adjust_map_win5_on_nc_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_button_clicked expects, then forward unchanged.
-Original Offset: 0048C020
+ORIGINAL: 0x0048C020
 Return Value: n/a
 Status: Complete
 */
@@ -1190,7 +1190,7 @@ void __fastcall adjust_map_win5_on_button_clicked(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_nc_hittest expects, then forward unchanged.
-Original Offset: 0048C030
+ORIGINAL: 0x0048C030
 Return Value: n/a
 Status: Complete
 */
@@ -1205,7 +1205,7 @@ void __fastcall adjust_map_win5_on_nc_hittest(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from PlanWin's thunk2 subobject to the one
          PlanWin::scalar_delete expects, then forward unchanged.
-Original Offset: 0048C040
+ORIGINAL: 0x0048C040
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1220,7 +1220,7 @@ void * __fastcall adjust_plan_win2_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::scalar_delete expects, then forward unchanged.
-Original Offset: 0051DDE0
+ORIGINAL: 0x0051DDE0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1235,7 +1235,7 @@ void * __fastcall adjust_console1_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_lose_mouse_capture expects, then forward unchanged.
-Original Offset: 0051DE30
+ORIGINAL: 0x0051DE30
 Return Value: n/a
 Status: Complete
 */
@@ -1249,7 +1249,7 @@ void __fastcall adjust_map_win4_on_lose_mouse_capture(void *self, void *) {
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_redraw expects, then forward unchanged.
-Original Offset: 0051DE40
+ORIGINAL: 0x0051DE40
 Return Value: n/a
 Status: Complete
 */
@@ -1263,7 +1263,7 @@ void __fastcall adjust_map_win4_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_resize expects, then forward unchanged.
-Original Offset: 0051DE50
+ORIGINAL: 0x0051DE50
 Return Value: n/a
 Status: Complete
 */
@@ -1278,7 +1278,7 @@ void __fastcall adjust_map_win4_on_resize(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_sys_close expects, then forward unchanged.
-Original Offset: 0051DE60
+ORIGINAL: 0x0051DE60
 Return Value: n/a
 Status: Complete
 */
@@ -1292,7 +1292,7 @@ void __fastcall adjust_console1_on_sys_close(void *self, void *) {
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_mouse_move expects, then forward unchanged.
-Original Offset: 0051DE70
+ORIGINAL: 0x0051DE70
 Return Value: n/a
 Status: Complete
 */
@@ -1307,7 +1307,7 @@ void __fastcall adjust_map_win4_on_mouse_move(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_left_click expects, then forward unchanged.
-Original Offset: 0051DE80
+ORIGINAL: 0x0051DE80
 Return Value: n/a
 Status: Complete
 */
@@ -1322,7 +1322,7 @@ void __fastcall adjust_map_win4_on_left_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_left_down expects, then forward unchanged.
-Original Offset: 0051DE90
+ORIGINAL: 0x0051DE90
 Return Value: n/a
 Status: Complete
 */
@@ -1337,7 +1337,7 @@ void __fastcall adjust_map_win4_on_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_left_up expects, then forward unchanged.
-Original Offset: 0051DEA0
+ORIGINAL: 0x0051DEA0
 Return Value: n/a
 Status: Complete
 */
@@ -1352,7 +1352,7 @@ void __fastcall adjust_map_win4_on_left_up(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_right_click expects, then forward unchanged.
-Original Offset: 0051DEB0
+ORIGINAL: 0x0051DEB0
 Return Value: n/a
 Status: Complete
 */
@@ -1367,7 +1367,7 @@ void __fastcall adjust_map_win4_on_right_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_right_down expects, then forward unchanged.
-Original Offset: 0051DEC0
+ORIGINAL: 0x0051DEC0
 Return Value: n/a
 Status: Complete
 */
@@ -1382,7 +1382,7 @@ void __fastcall adjust_map_win4_on_right_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_key_click expects, then forward unchanged.
-Original Offset: 0051DED0
+ORIGINAL: 0x0051DED0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1397,7 +1397,7 @@ int __fastcall adjust_console1_on_key_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_left_double_click expects, then forward unchanged.
-Original Offset: 0051DEE0
+ORIGINAL: 0x0051DEE0
 Return Value: n/a
 Status: Complete
 */
@@ -1412,7 +1412,7 @@ void __fastcall adjust_map_win4_on_left_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_nc_mouse_move expects, then forward unchanged.
-Original Offset: 0051DEF0
+ORIGINAL: 0x0051DEF0
 Return Value: n/a
 Status: Complete
 */
@@ -1427,7 +1427,7 @@ void __fastcall adjust_console1_on_nc_mouse_move(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_nc_left_down expects, then forward unchanged.
-Original Offset: 0051DF00
+ORIGINAL: 0x0051DF00
 Return Value: n/a
 Status: Complete
 */
@@ -1442,7 +1442,7 @@ void __fastcall adjust_console1_on_nc_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_nc_left_up expects, then forward unchanged.
-Original Offset: 0051DF10
+ORIGINAL: 0x0051DF10
 Return Value: n/a
 Status: Complete
 */
@@ -1457,7 +1457,7 @@ void __fastcall adjust_console1_on_nc_left_up(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_button_clicked expects, then forward unchanged.
-Original Offset: 0051DF20
+ORIGINAL: 0x0051DF20
 Return Value: n/a
 Status: Complete
 */
@@ -1472,7 +1472,7 @@ void __fastcall adjust_map_win4_on_button_clicked(void *self, void *,
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_post_redraw_nc_buffer expects, then forward unchanged.
-Original Offset: 0051DF30
+ORIGINAL: 0x0051DF30
 Return Value: n/a
 Status: Complete
 */
@@ -1488,7 +1488,7 @@ void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_nc_hittest expects, then forward unchanged.
-Original Offset: 0051DF40
+ORIGINAL: 0x0051DF40
 Return Value: n/a
 Status: Complete
 */
@@ -1503,7 +1503,7 @@ void __fastcall adjust_console1_on_nc_hittest(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from Console's thunk2 subobject to the one
          Console::scalar_delete expects, then forward unchanged.
-Original Offset: 0051DF50
+ORIGINAL: 0x0051DF50
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1518,7 +1518,7 @@ void * __fastcall adjust_console2_scalar_delete(void *self, void *,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_redraw expects, then forward unchanged.
-Original Offset: 0060CF50
+ORIGINAL: 0x0060CF50
 Return Value: n/a
 Status: Complete
 */
@@ -1532,7 +1532,7 @@ void __fastcall adjust_list_box1_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_mousewheel expects, then forward unchanged.
-Original Offset: 0060CF60
+ORIGINAL: 0x0060CF60
 Return Value: n/a
 Status: Complete
 */
@@ -1546,7 +1546,7 @@ void __fastcall adjust_list_box1_on_mousewheel(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_mouse_move expects, then forward unchanged.
-Original Offset: 0060CF70
+ORIGINAL: 0x0060CF70
 Return Value: n/a
 Status: Complete
 */
@@ -1561,7 +1561,7 @@ void __fastcall adjust_list_box1_on_mouse_move(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_mouse_leave expects, then forward unchanged.
-Original Offset: 0060CF80
+ORIGINAL: 0x0060CF80
 Return Value: n/a
 Status: Complete
 */
@@ -1576,7 +1576,7 @@ void __fastcall adjust_list_box1_on_mouse_leave(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_left_down expects, then forward unchanged.
-Original Offset: 0060CF90
+ORIGINAL: 0x0060CF90
 Return Value: n/a
 Status: Complete
 */
@@ -1591,7 +1591,7 @@ void __fastcall adjust_list_box1_on_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_right_down expects, then forward unchanged.
-Original Offset: 0060CFA0
+ORIGINAL: 0x0060CFA0
 Return Value: n/a
 Status: Complete
 */
@@ -1606,7 +1606,7 @@ void __fastcall adjust_list_box1_on_right_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_key_down expects, then forward unchanged.
-Original Offset: 0060CFB0
+ORIGINAL: 0x0060CFB0
 Return Value: n/a
 Status: Complete
 */
@@ -1620,7 +1620,7 @@ void __fastcall adjust_list_box1_on_key_down(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_left_double_click expects, then forward unchanged.
-Original Offset: 0060CFC0
+ORIGINAL: 0x0060CFC0
 Return Value: n/a
 Status: Complete
 */
@@ -1635,7 +1635,7 @@ void __fastcall adjust_list_box1_on_left_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_right_double_click expects, then forward unchanged.
-Original Offset: 0060CFD0
+ORIGINAL: 0x0060CFD0
 Return Value: n/a
 Status: Complete
 */
@@ -1650,7 +1650,7 @@ void __fastcall adjust_list_box1_on_right_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_scrolled expects, then forward unchanged.
-Original Offset: 0060CFE0
+ORIGINAL: 0x0060CFE0
 Return Value: n/a
 Status: Complete
 */
@@ -1665,7 +1665,7 @@ void __fastcall adjust_list_box1_on_scrolled(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_scrolling expects, then forward unchanged.
-Original Offset: 0060CFF0
+ORIGINAL: 0x0060CFF0
 Return Value: n/a
 Status: Complete
 */
@@ -1680,7 +1680,7 @@ void __fastcall adjust_list_box1_on_scrolling(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_dialog_focus expects, then forward unchanged.
-Original Offset: 0060D000
+ORIGINAL: 0x0060D000
 Return Value: n/a
 Status: Complete
 */
@@ -1695,7 +1695,7 @@ void __fastcall adjust_list_box1_on_dialog_focus(void *self, void *,
 /*
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::attach expects, then forward unchanged.
-Original Offset: 0060D040
+ORIGINAL: 0x0060D040
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1710,7 +1710,7 @@ int __fastcall adjust_list_box1_attach(void *self, void *, void *arg0,
 /*
 Purpose: Adjust the receiver from ListBox's thunk3 subobject to the one
          ListBox::on_redraw expects, then forward unchanged.
-Original Offset: 0060D050
+ORIGINAL: 0x0060D050
 Return Value: n/a
 Status: Complete
 */
@@ -1724,7 +1724,7 @@ void __fastcall adjust_list_box3_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_redraw expects, then forward unchanged.
-Original Offset: 0060FE40
+ORIGINAL: 0x0060FE40
 Return Value: n/a
 Status: Complete
 */
@@ -1738,7 +1738,7 @@ void __fastcall adjust_check_box1_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_mouse_move expects, then forward unchanged.
-Original Offset: 0060FE50
+ORIGINAL: 0x0060FE50
 Return Value: n/a
 Status: Complete
 */
@@ -1753,7 +1753,7 @@ void __fastcall adjust_check_box1_on_mouse_move(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_mouse_leave expects, then forward unchanged.
-Original Offset: 0060FE60
+ORIGINAL: 0x0060FE60
 Return Value: n/a
 Status: Complete
 */
@@ -1768,7 +1768,7 @@ void __fastcall adjust_check_box1_on_mouse_leave(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_left_down expects, then forward unchanged.
-Original Offset: 0060FE70
+ORIGINAL: 0x0060FE70
 Return Value: n/a
 Status: Complete
 */
@@ -1783,7 +1783,7 @@ void __fastcall adjust_check_box1_on_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_key_down expects, then forward unchanged.
-Original Offset: 0060FE80
+ORIGINAL: 0x0060FE80
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1797,7 +1797,7 @@ int __fastcall adjust_check_box1_on_key_down(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_left_double_click expects, then forward unchanged.
-Original Offset: 0060FE90
+ORIGINAL: 0x0060FE90
 Return Value: n/a
 Status: Complete
 */
@@ -1812,7 +1812,7 @@ void __fastcall adjust_check_box1_on_left_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_dialog_focus expects, then forward unchanged.
-Original Offset: 0060FEA0
+ORIGINAL: 0x0060FEA0
 Return Value: n/a
 Status: Complete
 */
@@ -1827,7 +1827,7 @@ void __fastcall adjust_check_box1_on_dialog_focus(void *self, void *,
 /*
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::attach expects, then forward unchanged.
-Original Offset: 0060FEE0
+ORIGINAL: 0x0060FEE0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1842,7 +1842,7 @@ int __fastcall adjust_check_box1_attach(void *self, void *, void *arg0,
 /*
 Purpose: Adjust the receiver from CheckBox's thunk3 subobject to the one
          CheckBox::on_redraw expects, then forward unchanged.
-Original Offset: 0060FEF0
+ORIGINAL: 0x0060FEF0
 Return Value: n/a
 Status: Complete
 */
@@ -1856,7 +1856,7 @@ void __fastcall adjust_check_box3_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_redraw expects, then forward unchanged.
-Original Offset: 00611820
+ORIGINAL: 0x00611820
 Return Value: n/a
 Status: Complete
 */
@@ -1870,7 +1870,7 @@ void __fastcall adjust_sprite_box1_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_mouse_move expects, then forward unchanged.
-Original Offset: 00611830
+ORIGINAL: 0x00611830
 Return Value: n/a
 Status: Complete
 */
@@ -1885,7 +1885,7 @@ void __fastcall adjust_sprite_box1_on_mouse_move(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_mouse_leave expects, then forward unchanged.
-Original Offset: 00611840
+ORIGINAL: 0x00611840
 Return Value: n/a
 Status: Complete
 */
@@ -1900,7 +1900,7 @@ void __fastcall adjust_sprite_box1_on_mouse_leave(void *self, void *,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_click expects, then forward unchanged.
-Original Offset: 00611850
+ORIGINAL: 0x00611850
 Return Value: n/a
 Status: Complete
 */
@@ -1915,7 +1915,7 @@ void __fastcall adjust_sprite_box1_on_left_click(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_down expects, then forward unchanged.
-Original Offset: 00611860
+ORIGINAL: 0x00611860
 Return Value: n/a
 Status: Complete
 */
@@ -1930,7 +1930,7 @@ void __fastcall adjust_sprite_box1_on_left_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_up expects, then forward unchanged.
-Original Offset: 00611870
+ORIGINAL: 0x00611870
 Return Value: n/a
 Status: Complete
 */
@@ -1945,7 +1945,7 @@ void __fastcall adjust_sprite_box1_on_left_up(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_click expects, then forward unchanged.
-Original Offset: 00611880
+ORIGINAL: 0x00611880
 Return Value: n/a
 Status: Complete
 */
@@ -1960,7 +1960,7 @@ void __fastcall adjust_sprite_box1_on_right_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_down expects, then forward unchanged.
-Original Offset: 00611890
+ORIGINAL: 0x00611890
 Return Value: n/a
 Status: Complete
 */
@@ -1975,7 +1975,7 @@ void __fastcall adjust_sprite_box1_on_right_down(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_up expects, then forward unchanged.
-Original Offset: 006118A0
+ORIGINAL: 0x006118A0
 Return Value: n/a
 Status: Complete
 */
@@ -1990,7 +1990,7 @@ void __fastcall adjust_sprite_box1_on_right_up(void *self, void *, int arg0,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_key_down expects, then forward unchanged.
-Original Offset: 006118B0
+ORIGINAL: 0x006118B0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2004,7 +2004,7 @@ int __fastcall adjust_sprite_box1_on_key_down(void *self, void *, int arg0) {
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_double_click expects, then forward unchanged.
-Original Offset: 006118C0
+ORIGINAL: 0x006118C0
 Return Value: n/a
 Status: Complete
 */
@@ -2019,7 +2019,7 @@ void __fastcall adjust_sprite_box1_on_left_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_double_click expects, then forward unchanged.
-Original Offset: 006118D0
+ORIGINAL: 0x006118D0
 Return Value: n/a
 Status: Complete
 */
@@ -2034,7 +2034,7 @@ void __fastcall adjust_sprite_box1_on_right_double_click(void *self, void *,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_dialog_focus expects, then forward unchanged.
-Original Offset: 006118E0
+ORIGINAL: 0x006118E0
 Return Value: n/a
 Status: Complete
 */
@@ -2049,7 +2049,7 @@ void __fastcall adjust_sprite_box1_on_dialog_focus(void *self, void *,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::attach expects, then forward unchanged.
-Original Offset: 00611920
+ORIGINAL: 0x00611920
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2064,7 +2064,7 @@ int __fastcall adjust_sprite_box1_attach(void *self, void *, void *arg0,
 /*
 Purpose: Adjust the receiver from SpriteBox's thunk3 subobject to the one
          SpriteBox::on_redraw expects, then forward unchanged.
-Original Offset: 00611930
+ORIGINAL: 0x00611930
 Return Value: n/a
 Status: Complete
 */
@@ -2078,7 +2078,7 @@ void __fastcall adjust_sprite_box3_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::on_redraw expects, then forward unchanged.
-Original Offset: 006127B0
+ORIGINAL: 0x006127B0
 Return Value: n/a
 Status: Complete
 */
@@ -2092,7 +2092,7 @@ void __fastcall adjust_edit_group1_on_redraw(void *self, void *) {
 /*
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::on_dialog_focus expects, then forward unchanged.
-Original Offset: 006127C0
+ORIGINAL: 0x006127C0
 Return Value: n/a
 Status: Complete
 */
@@ -2107,7 +2107,7 @@ void __fastcall adjust_edit_group1_on_dialog_focus(void *self, void *,
 /*
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::pass_dialog_focus expects, then forward unchanged.
-Original Offset: 006127D0
+ORIGINAL: 0x006127D0
 Return Value: n/a
 Status: Complete
 */
@@ -2121,7 +2121,7 @@ void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
 /*
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::attach expects, then forward unchanged.
-Original Offset: 00612810
+ORIGINAL: 0x00612810
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2136,7 +2136,7 @@ int __fastcall adjust_edit_group1_attach(void *self, void *, void *arg0,
 /*
 Purpose: Adjust the receiver from EditGroup's thunk3 subobject to the one
          EditGroup::on_redraw expects, then forward unchanged.
-Original Offset: 00612820
+ORIGINAL: 0x00612820
 Return Value: n/a
 Status: Complete
 */

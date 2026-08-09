@@ -23,7 +23,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 00467960
+ORIGINAL: 0x00467960
 Return Value: n/a
 Status: Complete
 */
@@ -33,7 +33,7 @@ void MapWin::UNK3() {
 /*
 Purpose: Refresh the map's image buttons; the legacy implementation is a bare
          return, so the buttons are never rebuilt here.
-Original Offset: 0046FB80
+ORIGINAL: 0x0046FB80
 Return Value: n/a
 Status: Complete
 */
@@ -56,7 +56,7 @@ char *MapWinMainCaption = (char *)0x009B86A0;
 Purpose: Push the map's caption into the main interface's date field. The
          original acts on the interface and caption it keeps at fixed
          addresses rather than on anything reached through the map window.
-Original Offset: 0046FB10
+ORIGINAL: 0x0046FB10
 Return Value: n/a
 Status: Complete
 */
@@ -74,7 +74,7 @@ func_map_win_free *MapWinFree = (func_map_win_free *)0x00644EF2;
 Purpose: Close the map window - free the buffer it owns at 0x4, then close its
          graphic base. The base is located through the object's own vbtable,
          not a fixed offset, so an embedded MapWin closes its own base.
-Original Offset: 00470F70
+ORIGINAL: 0x00470F70
 Return Value: n/a
 Status: Complete
 */
@@ -100,7 +100,7 @@ int32_t *MapWinInputEnabled = reinterpret_cast<int32_t *>(0x0090D938);
 Purpose: Report a left click on the map, but only when map input is enabled.
          Reached through the GraphicWin virtual base, so `this` points there
          and is adjusted back 0x21A6C to the MapWin before dispatching.
-Original Offset: 0046EBA0
+ORIGINAL: 0x0046EBA0
 Return Value: n/a
 Status: Complete
 */
@@ -116,7 +116,7 @@ void MapWin::on_left_click(int a1, int a2) {
 /*
 Purpose: Report a right click on the map, but only when map input is enabled.
          Same virtual-base adjustment as the left click.
-Original Offset: 0046EBE0
+ORIGINAL: 0x0046EBE0
 Return Value: n/a
 Status: Complete
 */
@@ -139,7 +139,7 @@ void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, in
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-Original Offset: 0046EBD0
+ORIGINAL: 0x0046EBD0
 Return Value: n/a
 Status: Complete
 */
@@ -148,7 +148,7 @@ void MapWin::on_left_double_click(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-Original Offset: 0046EFF0
+ORIGINAL: 0x0046EFF0
 Return Value: n/a
 Status: Complete
 */
@@ -165,7 +165,7 @@ void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-Original Offset: 00462970
+ORIGINAL: 0x00462970
 Return Value: 0, always
 Status: Complete
 */
@@ -200,7 +200,7 @@ Purpose: Broadcast a single-tile redraw to every live map window. Walks the
          walk, the null guard, the slot-0 exemption, the activity gate and the
          argument order from mutation testing entirely, leaving both functions
          with zero mutants. The duplication buys verification.
-Original Offset: 0046AF40
+ORIGINAL: 0x0046AF40
 Return Value: n/a. EAX on return is path-dependent leftover (draw_radius's own
               residue, the zero flag read at 0x0046AF5F, or a stale value when
               the last slot is empty), not a computed result, so unlike
@@ -247,7 +247,7 @@ Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
          activity gate, argument order, loop bound and epilogue all match
          instruction for instruction. Transcribed in full for the mutation
          coverage reason recorded on draw_tile.
-Original Offset: 0046B140
+ORIGINAL: 0x0046B140
 Return Value: n/a; same path-dependent EAX leftover as draw_tile.
 Status: Complete with temporary MapWin::draw_radius original dependency
 */
@@ -292,7 +292,7 @@ Purpose: Report whether this object IS the process-wide Console.
          this adds no NEW fixed-address binding, it reuses the one the Console
          recovery already declared, and the comparison is written against the
          name rather than the literal.
-Original Offset: 00462960
+ORIGINAL: 0x00462960
 Return Value: 1 when this is ConsoleGlobal, 0 otherwise
 Status: Complete
 */
@@ -305,7 +305,7 @@ int __fastcall map_win_unk1_redirect(MapWin *self, void *) {
 }
 
 /*
-Original Offset: 0046B1D0
+ORIGINAL: 0x0046B1D0
 Status: Complete
 */
 void MapWin::on_redraw() {
@@ -315,7 +315,7 @@ void MapWin::on_redraw() {
 }
 
 /*
-Original Offset: 0046FA00
+ORIGINAL: 0x0046FA00
 Status: Complete
 */
 void MapWin::on_resize(int a1, int a2) {

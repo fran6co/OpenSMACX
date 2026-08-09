@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004289C0
 // 0x004289C0  ?close@Credits@@QAEXXZ  ->  ?close@Credits@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

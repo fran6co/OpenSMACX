@@ -25,7 +25,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 00408710
+ORIGINAL: 0x00408710
 Return Value: n/a
 Status: Complete
 */
@@ -34,7 +34,7 @@ void BaseWin::close() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 00416DD0
+ORIGINAL: 0x00416DD0
 Return Value: n/a
 Status: Complete
 */
@@ -43,7 +43,7 @@ void BaseWin::UNK4() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 0041AF20
+ORIGINAL: 0x0041AF20
 Return Value: n/a
 Status: Complete
 */
@@ -52,7 +52,7 @@ void BaseWin::UNK6() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 0041AF30
+ORIGINAL: 0x0041AF30
 Return Value: n/a
 Status: Complete
 */
@@ -77,7 +77,7 @@ void __fastcall base_win_unk7_redirect(BaseWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0041A610
+ORIGINAL: 0x0041A610
 Return Value: n/a
 Status: Complete
 */
@@ -90,7 +90,7 @@ void __fastcall base_win_unk5_redirect(BaseWin *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0041B4E0
+ORIGINAL: 0x0041B4E0
 Return Value: n/a
 Status: Complete
 */
@@ -103,7 +103,7 @@ void __fastcall base_win_on_button_toggled_redirect(BaseWin *self, void *, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0041DF40
+ORIGINAL: 0x0041DF40
 Return Value: n/a
 Status: Complete
 */
@@ -116,7 +116,7 @@ void __fastcall base_win_on_iface_right_down_redirect(BaseWin *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0041E4C0
+ORIGINAL: 0x0041E4C0
 Return Value: n/a
 Status: Complete
 */
@@ -133,7 +133,7 @@ func_base_win_iface_click BaseWinIfaceClick =
 /*
 Purpose: Report a left click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
-Original Offset: 0041DCD0
+ORIGINAL: 0x0041DCD0
 Return Value: n/a
 Status: Complete
 */
@@ -146,7 +146,7 @@ void BaseWin::on_iface_left_click(int a1, int a2) {
 /*
 Purpose: Report a right click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
-Original Offset: 0041DCF0
+ORIGINAL: 0x0041DCF0
 Return Value: n/a
 Status: Complete
 */
@@ -159,7 +159,7 @@ void BaseWin::on_iface_right_click(int a1, int a2) {
 /*
 Purpose: Report a left double-click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
-Original Offset: 0041E4D0
+ORIGINAL: 0x0041E4D0
 Return Value: n/a
 Status: Complete
 */
@@ -172,7 +172,7 @@ void BaseWin::on_iface_left_double_click(int a1, int a2) {
 /*
 Purpose: Report a right double-click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
-Original Offset: 0041E4F0
+ORIGINAL: 0x0041E4F0
 Return Value: n/a
 Status: Complete
 */
@@ -206,7 +206,7 @@ Purpose: Handle an interface scroll, but only for scroll kind 2 - stash the
          new position at 0x40100 (interface-relative) and redraw the supported
          markers. Like the click handlers, `this` arrives at the interface
          subobject and is adjusted back to the BaseWin for that redraw.
-Original Offset: 0041DC80
+ORIGINAL: 0x0041DC80
 Return Value: n/a
 Status: Complete
 */
@@ -229,7 +229,7 @@ func_base_win_click BaseWinClick = original_method<func_base_win_click>(0x004165
 /*
 Purpose: Report a left click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
-Original Offset: 0041AF70
+ORIGINAL: 0x0041AF70
 Return Value: n/a
 Status: Complete
 */
@@ -240,7 +240,7 @@ void BaseWin::on_left_click(int a1, int a2) {
 /*
 Purpose: Report a right click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
-Original Offset: 0041AF90
+ORIGINAL: 0x0041AF90
 Return Value: n/a
 Status: Complete
 */
@@ -251,7 +251,7 @@ void BaseWin::on_right_click(int a1, int a2) {
 /*
 Purpose: Report a left double-click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
-Original Offset: 0041AFB0
+ORIGINAL: 0x0041AFB0
 Return Value: n/a
 Status: Complete
 */
@@ -274,7 +274,7 @@ void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, in
 /*
 Purpose: Interface timer tick; the legacy implementation ignores it and
          returns.
-Original Offset: 0041AF40
+ORIGINAL: 0x0041AF40
 Return Value: n/a
 Status: Complete
 */
@@ -294,7 +294,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          and the two are observationally identical unless something re-arms the
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
-Original Offset: 0041B1E0
+ORIGINAL: 0x0041B1E0
 Return Value: n/a
 Status: Complete
 */
@@ -308,7 +308,7 @@ void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, 
 }
 
 /*
-Original Offset: 0041E890
+ORIGINAL: 0x0041E890
 Status: Complete
 */
 void BaseWin::show(int a1) {
@@ -319,7 +319,7 @@ void BaseWin::show(int a1) {
 }
 
 /*
-Original Offset: 0040B120
+ORIGINAL: 0x0040B120
 Status: Complete
 */
 void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
@@ -327,7 +327,7 @@ void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
 }
 
 /*
-Original Offset: 0041B4A0
+ORIGINAL: 0x0041B4A0
 Status: Complete
 */
 void BaseWin::on_scrolled(int a1, int a2) {

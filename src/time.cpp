@@ -24,7 +24,7 @@ int Time::TimeInitCount;
 
 /*
 Purpose: Initialize an instance of the class with a single parameter callback.
-Original Offset: 00616260
+ORIGINAL: 0x00616260
 Return Value: n/a
 Status: Complete
 */
@@ -43,7 +43,7 @@ void Time::init(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t 
 
 /*
 Purpose: Initialize an instance of the class with a two parameter callback.
-Original Offset: 006162D0
+ORIGINAL: 0x006162D0
 Return Value: n/a
 Status: Complete
 */
@@ -63,7 +63,7 @@ void Time::init(void(__cdecl *callback)(int, int), int param, int param2, uint32
 
 /*
 Purpose: Start an instance of the class with a single parameter callback.
-Original Offset: 00616350
+ORIGINAL: 0x00616350
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -84,7 +84,7 @@ uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
 
 /*
 Purpose: Start an instance of the class with a two parameter callback.
-Original Offset: 00616410
+ORIGINAL: 0x00616410
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -106,7 +106,7 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
 
 /*
 Purpose: Start a pulse instance of the class with a single parameter callback.
-Original Offset: 006164D0
+ORIGINAL: 0x006164D0
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -130,7 +130,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
 
 /*
 Purpose: Start a pulse instance of the class with a two parameter callback.
-Original Offset: 00616590
+ORIGINAL: 0x00616590
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -152,7 +152,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
 
 /*
 Purpose: Start an instance of the timer.
-Original Offset: 00616650
+ORIGINAL: 0x00616650
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -172,7 +172,7 @@ uint32_t Time::start() {
 
 /*
 Purpose: Start an instance of the pulse timer.
-Original Offset: 006166C0
+ORIGINAL: 0x006166C0
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -192,7 +192,7 @@ uint32_t Time::pulse() {
 
 /*
 Purpose: Stop an instance of the class.
-Original Offset: 00616730
+ORIGINAL: 0x00616730
 Return Value: n/a
 Status: Complete
 */
@@ -212,7 +212,7 @@ void Time::stop() {
 
 /*
 Purpose: Close out an instance of the class.
-Original Offset: 00616780
+ORIGINAL: 0x00616780
 Return Value: n/a
 Status: Complete
 */
@@ -231,7 +231,7 @@ void Time::close() {
 
 /*
 Purpose: Callback function that processes WM_TIMER messages (SetTimer).
-Original Offset: 006167E0
+ORIGINAL: 0x006167E0
 Return Value: n/a
 Status: Complete
 */
@@ -246,7 +246,7 @@ void Time::TimerProc(HWND UNUSED(hwnd), uint32_t UNUSED(msg), UINT_PTR id_timer,
 
 /*
 Purpose: Callback function for the timeSetEvent. Effectively the same as TimerProc.
-Original Offset: 00616820
+ORIGINAL: 0x00616820
 Return Value: n/a
 Status: Complete
 */
@@ -269,7 +269,7 @@ Time *ConsoleTimer = (Time *)0x00939E88;
 
 /*
 Purpose: Start global timers.
-Original Offset: 0050F3D0
+ORIGINAL: 0x0050F3D0
 Return Value: n/a
 Status: Complete
 */
@@ -282,7 +282,7 @@ void __cdecl start_timers() {
 
 /*
 Purpose: Stop global timers.
-Original Offset: 0050F440
+ORIGINAL: 0x0050F440
 Return Value: n/a
 Status: Complete
 */
@@ -295,7 +295,7 @@ void __cdecl stop_timers() {
 
 /*
 Purpose: Clear timer message queue.
-Original Offset: 005FD370
+ORIGINAL: 0x005FD370
 Return Value: n/a
 Status: Complete
 */

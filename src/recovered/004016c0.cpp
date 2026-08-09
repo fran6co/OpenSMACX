@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004016C0
 // 0x004016C0  ?close@ServiceStruct@@QAEXXZ  ->  ?close@ServiceStruct@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

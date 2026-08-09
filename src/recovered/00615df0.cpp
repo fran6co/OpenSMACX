@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00615DF0
 // 0x00615DF0  ?on_dialog_focus@EditBox@@QAEXH@Z  ->  ?on_dialog_focus@EditBox@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -74,7 +74,7 @@ int32_t *GlobalSlot009B3A54 = reinterpret_cast<int32_t *>(0x009B3A54);
 /*
 Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
          statement per original instruction.
-Original Offset: 0044C870
+ORIGINAL: 0x0044C870
 Return Value: n/a
 Status: Complete
 */
@@ -85,7 +85,7 @@ void __fastcall global_arith_0044c870_redirect(void *, void *) {
 /*
 Purpose: sub_48d550 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D550
+ORIGINAL: 0x0048D550
 Return Value: n/a
 Status: Complete
 */
@@ -98,7 +98,7 @@ void __fastcall global_arith_0048d550_redirect(void *, void *) {
 /*
 Purpose: sub_48d560 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D560
+ORIGINAL: 0x0048D560
 Return Value: n/a
 Status: Complete
 */
@@ -110,7 +110,7 @@ void __fastcall global_arith_0048d560_redirect(void *, void *) {
 /*
 Purpose: sub_48d570 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D570
+ORIGINAL: 0x0048D570
 Return Value: n/a
 Status: Complete
 */
@@ -125,7 +125,7 @@ void __fastcall global_arith_0048d570_redirect(void *, void *) {
 /*
 Purpose: sub_48d590 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D590
+ORIGINAL: 0x0048D590
 Return Value: n/a
 Status: Complete
 */
@@ -140,7 +140,7 @@ void __fastcall global_arith_0048d590_redirect(void *, void *) {
 /*
 Purpose: sub_48d5b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D5B0
+ORIGINAL: 0x0048D5B0
 Return Value: n/a
 Status: Complete
 */
@@ -154,7 +154,7 @@ void __fastcall global_arith_0048d5b0_redirect(void *, void *) {
 /*
 Purpose: sub_48d5d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D5D0
+ORIGINAL: 0x0048D5D0
 Return Value: n/a
 Status: Complete
 */
@@ -168,7 +168,7 @@ void __fastcall global_arith_0048d5d0_redirect(void *, void *) {
 /*
 Purpose: sub_48d5f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D5F0
+ORIGINAL: 0x0048D5F0
 Return Value: n/a
 Status: Complete
 */
@@ -183,7 +183,7 @@ void __fastcall global_arith_0048d5f0_redirect(void *, void *) {
 /*
 Purpose: sub_48d610 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D610
+ORIGINAL: 0x0048D610
 Return Value: n/a
 Status: Complete
 */
@@ -199,7 +199,7 @@ void __fastcall global_arith_0048d610_redirect(void *, void *) {
 /*
 Purpose: sub_48d630 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D630
+ORIGINAL: 0x0048D630
 Return Value: n/a
 Status: Complete
 */
@@ -213,7 +213,7 @@ void __fastcall global_arith_0048d630_redirect(void *, void *) {
 /*
 Purpose: sub_48d670 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D670
+ORIGINAL: 0x0048D670
 Return Value: n/a
 Status: Complete
 */
@@ -228,7 +228,7 @@ void __fastcall global_arith_0048d670_redirect(void *, void *) {
 /*
 Purpose: sub_48d690 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D690
+ORIGINAL: 0x0048D690
 Return Value: n/a
 Status: Complete
 */
@@ -242,7 +242,7 @@ void __fastcall global_arith_0048d690_redirect(void *, void *) {
 /*
 Purpose: sub_48d6b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D6B0
+ORIGINAL: 0x0048D6B0
 Return Value: n/a
 Status: Complete
 */
@@ -256,7 +256,7 @@ void __fastcall global_arith_0048d6b0_redirect(void *, void *) {
 /*
 Purpose: sub_48d6d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D6D0
+ORIGINAL: 0x0048D6D0
 Return Value: n/a
 Status: Complete
 */
@@ -271,7 +271,7 @@ void __fastcall global_arith_0048d6d0_redirect(void *, void *) {
 /*
 Purpose: sub_48d6f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D6F0
+ORIGINAL: 0x0048D6F0
 Return Value: n/a
 Status: Complete
 */
@@ -285,7 +285,7 @@ void __fastcall global_arith_0048d6f0_redirect(void *, void *) {
 /*
 Purpose: sub_48d710 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D710
+ORIGINAL: 0x0048D710
 Return Value: n/a
 Status: Complete
 */
@@ -299,7 +299,7 @@ void __fastcall global_arith_0048d710_redirect(void *, void *) {
 /*
 Purpose: sub_48d730 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D730
+ORIGINAL: 0x0048D730
 Return Value: n/a
 Status: Complete
 */
@@ -314,7 +314,7 @@ void __fastcall global_arith_0048d730_redirect(void *, void *) {
 /*
 Purpose: sub_48d750 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D750
+ORIGINAL: 0x0048D750
 Return Value: n/a
 Status: Complete
 */
@@ -326,7 +326,7 @@ void __fastcall global_arith_0048d750_redirect(void *, void *) {
 /*
 Purpose: sub_48d760 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D760
+ORIGINAL: 0x0048D760
 Return Value: n/a
 Status: Complete
 */
@@ -339,7 +339,7 @@ void __fastcall global_arith_0048d760_redirect(void *, void *) {
 /*
 Purpose: sub_48d770 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D770
+ORIGINAL: 0x0048D770
 Return Value: n/a
 Status: Complete
 */
@@ -354,7 +354,7 @@ void __fastcall global_arith_0048d770_redirect(void *, void *) {
 /*
 Purpose: sub_48d790 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D790
+ORIGINAL: 0x0048D790
 Return Value: n/a
 Status: Complete
 */
@@ -370,7 +370,7 @@ void __fastcall global_arith_0048d790_redirect(void *, void *) {
 /*
 Purpose: sub_48d7b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D7B0
+ORIGINAL: 0x0048D7B0
 Return Value: n/a
 Status: Complete
 */
@@ -384,7 +384,7 @@ void __fastcall global_arith_0048d7b0_redirect(void *, void *) {
 /*
 Purpose: sub_48d7d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D7D0
+ORIGINAL: 0x0048D7D0
 Return Value: n/a
 Status: Complete
 */
@@ -398,7 +398,7 @@ void __fastcall global_arith_0048d7d0_redirect(void *, void *) {
 /*
 Purpose: sub_48d7f0 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D7F0
+ORIGINAL: 0x0048D7F0
 Return Value: n/a
 Status: Complete
 */
@@ -414,7 +414,7 @@ void __fastcall global_arith_0048d7f0_redirect(void *, void *) {
 /*
 Purpose: sub_48d810 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
-Original Offset: 0048D810
+ORIGINAL: 0x0048D810
 Return Value: n/a
 Status: Complete
 */
@@ -427,7 +427,7 @@ void __fastcall global_arith_0048d810_redirect(void *, void *) {
 /*
 Purpose: sub_5d8360 - arithmetic over 1 fixed global(s), one
          statement per original instruction.
-Original Offset: 005D8360
+ORIGINAL: 0x005D8360
 Return Value: n/a
 Status: Complete
 */

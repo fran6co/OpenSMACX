@@ -25,7 +25,7 @@ uint32_t load_scaling_bits(const void *source) {
 
 /*
 Purpose: Initialize an empty Caviar object-data record.
-Original Offset: 00616BC0
+ORIGINAL: 0x00616BC0
 Return Value: n/a
 Status: Complete
 */
@@ -40,7 +40,7 @@ Purpose: Release the record this data slot owns. A slot with no record is left
          entirely untouched; otherwise the helper walks the record and frees
          its members, and the slot forgets it. The two leading fields keep
          whatever they held either way.
-Original Offset: 00616C60
+ORIGINAL: 0x00616C60
 Return Value: n/a
 Status: Complete
 */
@@ -53,7 +53,7 @@ void CaviarData::close() {
 
 /*
 Purpose: Initialize the Caviar renderer's object records and default scalar fields.
-Original Offset: 00616DA0
+ORIGINAL: 0x00616DA0
 Return Value: n/a
 Status: Complete
 */
@@ -70,7 +70,7 @@ Caviar::Caviar() {
 
 /*
 Purpose: Copy a camera position and orientation directly into the renderer state.
-Original Offset: 006182A0
+ORIGINAL: 0x006182A0
 Return Value: n/a
 Status: Complete
 */
@@ -84,7 +84,7 @@ void Caviar::set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix)
 
 /*
 Purpose: Set the Caviar renderer scaling factor.
-Original Offset: 006183B0
+ORIGINAL: 0x006183B0
 Return Value: n/a
 Status: Complete
 */
@@ -99,7 +99,7 @@ void Caviar::set_scaling_bits(uint32_t scaling_bits) {
 
 /*
 Purpose: Read the Caviar renderer scaling factor.
-Original Offset: 006183C0
+ORIGINAL: 0x006183C0
 Return Value: Current scaling factor
 Status: Complete
 */
@@ -138,7 +138,7 @@ float __fastcall caviar_get_scaling_redirect(Caviar *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-Original Offset: 006176C0
+ORIGINAL: 0x006176C0
 Return Value: 0, always
 Status: Complete
 */
@@ -152,7 +152,7 @@ int __fastcall caviar_unk3_redirect(Caviar *self, void *, int a1, int a2, int a3
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-Original Offset: 006176D0
+ORIGINAL: 0x006176D0
 Return Value: 0, always
 Status: Complete
 */
@@ -166,7 +166,7 @@ int __fastcall caviar_unk4_redirect(Caviar *self, void *, int a1, int a2, int a3
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00618250
+ORIGINAL: 0x00618250
 Return Value: n/a
 Status: Complete
 */
@@ -179,7 +179,7 @@ void __fastcall caviar_unk5_redirect(Caviar *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00618260
+ORIGINAL: 0x00618260
 Return Value: n/a
 Status: Complete
 */
@@ -192,7 +192,7 @@ void __fastcall caviar_unk6_redirect(Caviar *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00618270
+ORIGINAL: 0x00618270
 Return Value: n/a
 Status: Complete
 */
@@ -205,7 +205,7 @@ void __fastcall caviar_unk7_redirect(Caviar *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00618290
+ORIGINAL: 0x00618290
 Return Value: n/a
 Status: Complete
 */
@@ -218,7 +218,7 @@ void __fastcall caviar_unk9_redirect(Caviar *self, void *, int a1, int a2, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 006183A0
+ORIGINAL: 0x006183A0
 Return Value: n/a
 Status: Complete
 */
@@ -231,7 +231,7 @@ void __fastcall caviar_unk12_redirect(Caviar *self, void *, int a1, int a2, int 
 
 /*
 Purpose: Store a single value at 0x108.
-Original Offset: 00618280
+ORIGINAL: 0x00618280
 Return Value: n/a
 Status: Complete
 */
@@ -241,7 +241,7 @@ void Caviar::UNK8(int a1) {
 
 /*
 Purpose: Store three values into the triplet at 0x2C.
-Original Offset: 00618320
+ORIGINAL: 0x00618320
 Return Value: n/a
 Status: Complete
 */
@@ -265,7 +265,7 @@ func_apply_rotation *CaviarOriginalApplyRotation =
 /*
 Purpose: Set the scene's rotation, handing the three angles and the matrix at
          0x38 to the helper that applies them.
-Original Offset: 00618370
+ORIGINAL: 0x00618370
 Return Value: n/a
 Status: Complete
 */
@@ -294,7 +294,7 @@ Purpose: Read back the three values at 0x2C, 0x30 and 0x34, skipping any output
          The mangled name declares three ints; they are used as pointers, and
          the parameters are typed that way here because that is what the body
          does with them.
-Original Offset: 00618340
+ORIGINAL: 0x00618340
 Return Value: n/a
 Status: Complete
 */

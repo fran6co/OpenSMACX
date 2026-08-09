@@ -21,7 +21,7 @@
 
 /*
 Purpose: Reset the square lock to its unset sentinels.
-Original Offset: 0058FD70
+ORIGINAL: 0x0058FD70
 Return Value: n/a
 Status: Complete
 */
@@ -44,7 +44,7 @@ Purpose: Release the square this lock holds and every tile in its footprint.
          tiles (81 when the 0x8 flag is also set) walked through the shared
          RadiusOffset tables and wrapped in x by xrange. The record is reset to
          its unset sentinels on the way out.
-Original Offset: 0058FD90
+ORIGINAL: 0x0058FD90
 Return Value: n/a
 Status: Complete
 */
@@ -89,7 +89,7 @@ Purpose: Take a square and every tile in its footprint for a faction. The
          tiles walked through the shared RadiusOffset tables and wrapped in x by
          xrange; if any tile is already held by another faction the attempt is
          abandoned at that tile.
-Original Offset: 0058FE80
+ORIGINAL: 0x0058FE80
 Return Value: 1 when a footprint tile is already locked by another faction,
               0 otherwise (including an off-map coordinate)
 Status: Complete

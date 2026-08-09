@@ -22,7 +22,7 @@
 
 /*
 Purpose: Update the seed value. The original code had some convoluted XORs that served no purpose.
-Original Offset: 00625750
+ORIGINAL: 0x00625750
 Return Value: n/a
 Status: Complete
 */
@@ -30,7 +30,7 @@ void Random::reseed(uint32_t new_seed) { seed_ = new_seed; }
 
 /*
 Purpose: Get a random value between min and (max - 1).
-Original Offset: 00625770
+ORIGINAL: 0x00625770
 Return Value: Random unsigned integer within bounds
 Status: Complete
 */
@@ -46,7 +46,7 @@ uint32_t Random::get(int min, int max) {
 
 /*
 Purpose: Get a random double value.
-Original Offset: 006257B0
+ORIGINAL: 0x006257B0
 Return Value: Random double value
 Status: Complete
 */
@@ -61,14 +61,20 @@ double Random::get() {
 // global
 Random *Rand = (Random *)0x009BB568;
 
-void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); } // 00625700
+// ORIGINAL: 0x00625700
+void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); }
 
-void __cdecl random_rand_exit() { Rand->~Random(); } // 00625720
+// ORIGINAL: 0x00625720
+void __cdecl random_rand_exit() { Rand->~Random(); }
 
-void __cdecl random_reseed(uint32_t new_seed) { Rand->reseed(new_seed); } // 006257E0
+// ORIGINAL: 0x006257E0
+void __cdecl random_reseed(uint32_t new_seed) { Rand->reseed(new_seed); }
 
-uint32_t __cdecl random_get() { return Rand->get_seed(); } // 00625800
+// ORIGINAL: 0x00625800
+uint32_t __cdecl random_get() { return Rand->get_seed(); }
 
-uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand->get(min, max); } // 00625810
+// ORIGINAL: 0x00625810
+uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand->get(min, max); }
 
-double __cdecl random() { return Rand->get(); } // 00625850
+// ORIGINAL: 0x00625850
+double __cdecl random() { return Rand->get(); }

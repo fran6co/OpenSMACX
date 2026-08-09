@@ -20,7 +20,7 @@ uint8_t *SpyingFactionFlagBytes = (uint8_t *)0x00946F58;
 /*
 Purpose: Determine whether the current faction has intelligence visibility of
          the given subject faction.
-Original Offset: 0055BC00
+ORIGINAL: 0x0055BC00
 Status: Complete
 
 Verification note: a mutation sweep of this function against the default

@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 004345C0
+ORIGINAL: 0x004345C0
 Return Value: n/a
 Status: Complete
 */
@@ -34,7 +34,7 @@ void __fastcall design_win_unk1_redirect(DesignWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0043D330
+ORIGINAL: 0x0043D330
 Return Value: n/a
 Status: Complete
 */
@@ -47,7 +47,7 @@ void __fastcall design_win_on_iface_left_down_redirect(DesignWin *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0043D340
+ORIGINAL: 0x0043D340
 Return Value: n/a
 Status: Complete
 */
@@ -60,7 +60,7 @@ void __fastcall design_win_on_iface_right_down_redirect(DesignWin *self, void *,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0043D400
+ORIGINAL: 0x0043D400
 Return Value: n/a
 Status: Complete
 */
@@ -73,7 +73,7 @@ void __fastcall design_win_on_iface_selected_redirect(DesignWin *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0043D410
+ORIGINAL: 0x0043D410
 Return Value: n/a
 Status: Complete
 */
@@ -86,7 +86,7 @@ void __fastcall design_win_on_iface_left_double_click_redirect(DesignWin *self, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0043D420
+ORIGINAL: 0x0043D420
 Return Value: n/a
 Status: Complete
 */
@@ -99,7 +99,7 @@ void __fastcall design_win_on_iface_right_double_click_redirect(DesignWin *self,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0043D470
+ORIGINAL: 0x0043D470
 Return Value: n/a
 Status: Complete
 */
@@ -112,7 +112,7 @@ void __fastcall design_win_on_iface_button_toggled_redirect(DesignWin *self, voi
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 0043D480
+ORIGINAL: 0x0043D480
 Return Value: n/a
 Status: Complete
 */
@@ -132,7 +132,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          and the two are observationally identical unless something re-arms the
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
-Original Offset: 00437BE0
+ORIGINAL: 0x00437BE0
 Return Value: n/a
 Status: Complete
 */
@@ -146,7 +146,7 @@ void __fastcall design_win_on_mouse_leave_redirect(DesignWin *self, void *, int 
 }
 
 /*
-Original Offset: 0043BE10
+ORIGINAL: 0x0043BE10
 Status: Complete
 */
 void DesignWin::select_special_1() {
@@ -154,7 +154,7 @@ void DesignWin::select_special_1() {
 }
 
 /*
-Original Offset: 0043BE20
+ORIGINAL: 0x0043BE20
 Status: Complete
 */
 void DesignWin::select_special_2() {

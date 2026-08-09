@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00646886
 // 0x00646886  _fputc  ->  _fputc
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -104,7 +104,7 @@ int *UnkGlobal0093A934 = (int *)0x0093A934;
 
 /*
 Purpose: Check if the base already has a particular facility built or if it's in the queue.
-Original Offset: 00421670
+ORIGINAL: 0x00421670
 Return Value: Does base already have or planning on building facility? true/false
 Status: Complete
 */
@@ -129,7 +129,7 @@ BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
 
 /*
 Purpose: Set the current base globals.
-Original Offset: 004E39D0
+ORIGINAL: 0x004E39D0
 Return Value: n/a
 Status: Complete
 */
@@ -140,7 +140,7 @@ void __cdecl set_base(int base_id) {
 
 /*
 Purpose: Get base name string from base id and store it in base_str. If base id is -1, use 'NONE'.
-Original Offset: 004E3A00
+ORIGINAL: 0x004E3A00
 Return Value: n/a
 Status: Complete
 */
@@ -152,7 +152,7 @@ void __cdecl say_base(LPSTR base_str, int base_id) {
 
 /*
 Purpose: Return the base at the specified map coordinates and repair stale base map bits.
-Original Offset: 004E3A50
+ORIGINAL: 0x004E3A50
 Return Value: Base id or -1 when no base is present
 Status: Complete - testing
 
@@ -175,7 +175,7 @@ int __cdecl base_at(int x, int y) {
 
 /*
 Purpose: Find the base id closest to the specified coordinates.
-Original Offset: 004E3B80
+ORIGINAL: 0x004E3B80
 Return Value: Base id or -1 if not found 
 Status: Complete
 */
@@ -200,7 +200,7 @@ int __cdecl base_find(int x, int y) {
 
 /*
 Purpose: Find the base id closest to the specified coordinates owned by faction.
-Original Offset: 004E3C60
+ORIGINAL: 0x004E3C60
 Return Value: Base id or -1 if not found
 Status: Complete
 */
@@ -227,7 +227,7 @@ int __cdecl base_find(int x, int y, int faction_id) {
 
 /*
 Purpose: Find the base id closest to the specified coordinates meeting various conditional checks.
-Original Offset: 004E3D50
+ORIGINAL: 0x004E3D50
 Return Value: Base id or -1 if not found
 Status: Complete
 */
@@ -264,7 +264,7 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
 
 /*
 Purpose: Find the best specialist available to the current base with more weight placed on psych.
-Original Offset: 004E4020
+ORIGINAL: 0x004E4020
 Return Value: Best citizen id (always going to be 1, 4, or 6 based on default weights)
 Status: Complete
 */
@@ -289,7 +289,7 @@ uint32_t  __cdecl best_specialist() {
 /*
 Purpose: Generate a base name. Added some minor randomization for sea bases and ensuring offset gets
          increased for default base name. TODO: Eventually improve base name shuffling.
-Original Offset: 004E4090
+ORIGINAL: 0x004E4090
 Return Value: n/a
 Status: Complete
 */
@@ -393,7 +393,7 @@ void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_se
 
 /*
 Purpose: TBD
-Original Offset: 004E4350
+ORIGINAL: 0x004E4350
 Return Value: n/a
 Status: Complete - testing
 */
@@ -424,7 +424,7 @@ void __cdecl base_mark(int base_id) {
 
 /*
 Purpose: Calculate the cost factor for the specified faction and resource type. Optional base param.
-Original Offset: 004E4430
+ORIGINAL: 0x004E4430
 Return Value: Cost factor
 Status: Complete
 */
@@ -488,7 +488,7 @@ int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
 
 /*
 Purpose: Determine if the specified base has any restrictions around production item retooling.
-Original Offset: 004E4700
+ORIGINAL: 0x004E4700
 Return Value: Fixed value (-1, 0, 1, 2, 3, -70) or productionID
 Status: Complete
 */
@@ -531,7 +531,7 @@ int __cdecl base_making(int production_id, int base_id) {
 
 /*
 Purpose: Calculate the mineral loss if production were to changed at the specified base.
-Original Offset: 004E4810
+ORIGINAL: 0x004E4810
 Return Value: Minerals that would be lost or 0 if not applicable.
 Status: Complete
 */
@@ -550,7 +550,7 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
 
 /*
 Purpose: Set or unset the specified base's facility.
-Original Offset: 004E48B0
+ORIGINAL: 0x004E48B0
 Return Value: n/a
 Status: Complete
 */
@@ -567,7 +567,7 @@ void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
 
 /*
 Purpose: Check whether the facility audio blurb announcement has played for the faction.
-Original Offset: 004E4900
+ORIGINAL: 0x004E4900
 Return Value: Has the facility audio blurb played? true/false
 Status: Complete
 */
@@ -582,7 +582,7 @@ BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id) {
 
 /*
 Purpose: Set or unset whether a particular facility audio blurb has played for specified faction.
-Original Offset: 004E4960
+ORIGINAL: 0x004E4960
 Return Value: n/a
 Status: Complete
 */
@@ -599,7 +599,7 @@ void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL s
 
 /*
 Purpose: Determine what unit the specified base should start building 1st then add it to the queue.
-Original Offset: 004E4AA0
+ORIGINAL: 0x004E4AA0
 Return Value: n/a
 Status: Complete
 */
@@ -635,7 +635,7 @@ void __cdecl base_first(int base_id) {
 
 /*
 Purpose: Calculate the new unit morale bonus modifier provided by the base and faction for a triad.
-Original Offset: 004E6400
+ORIGINAL: 0x004E6400
 Return Value: Morale bonus modifier
 Status: Complete
 */
@@ -669,7 +669,7 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
 
 /*
 Purpose: Calculate the new native unit lifecycle bonus modifier provided by a base and faction.
-Original Offset: 004E65C0
+ORIGINAL: 0x004E65C0
 Return Value: Lifecycle bonus
 Status: Complete
 */
@@ -699,7 +699,7 @@ int __cdecl breed_mod(int base_id, int faction_id) {
 
 /*
 Purpose: Calculate the count of lifecycle/psi bonuses that are provided by a base and faction.
-Original Offset: 004E6740
+ORIGINAL: 0x004E6740
 Return Value: Native life modifier count
 Status: Complete
 */
@@ -753,7 +753,7 @@ static int yield_tile_owner(const Map *tile) {
 
 /*
 Purpose: Calculate the nutrients produced by a single map square.
-Original Offset: 004E6E50
+ORIGINAL: 0x004E6E50
 Return Value: Nutrients from the square
 Status: Complete
 
@@ -913,7 +913,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
 
 /*
 Purpose: Calculate the minerals produced by a single map square.
-Original Offset: 004E7310
+ORIGINAL: 0x004E7310
 Return Value: Minerals from the square
 Status: Complete
 
@@ -1048,7 +1048,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
 
 /*
 Purpose: Calculate the energy produced by a single map square.
-Original Offset: 004E7750
+ORIGINAL: 0x004E7750
 Return Value: Energy from the square
 Status: Complete
 
@@ -1265,7 +1265,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
 Purpose: Tally what the current base's forces cost it: the resources its supply
          convoys move in and out, the units it supports, the minerals their
          maintenance takes, and the pacifism drones they cause.
-Original Offset: 004E9550
+ORIGINAL: 0x004E9550
 Return Value: n/a
 Status: Complete
 
@@ -1463,7 +1463,7 @@ void __cdecl base_support() {
 
 /*
 Purpose: Calculate nutrients and growth for the current base.
-Original Offset: 004E9B70
+ORIGINAL: 0x004E9B70
 Return Value: n/a
 Status: Complete
 */
@@ -1496,7 +1496,7 @@ void __cdecl base_nutrient() {
 
 /*
 Purpose: Calculate minerals and ecological damage for the current base.
-Original Offset: 004E9CB0
+ORIGINAL: 0x004E9CB0
 Return Value: n/a
 Status: Complete
 */
@@ -1589,7 +1589,7 @@ void __cdecl base_minerals() {
 
 /*
 Purpose: Calculate the current base's energy loss/inefficiency for an amount of energy.
-Original Offset: 004EA1F0
+ORIGINAL: 0x004EA1F0
 Return Value: Amount of energy inefficiency
 Status: Complete
 */
@@ -1645,7 +1645,7 @@ uint32_t __cdecl black_market(int energy) {
 
 /*
 Purpose: Calculate the current base's psych values.
-Original Offset: 004EA540
+ORIGINAL: 0x004EA540
 Return Value: n/a
 Status: WIP
 */
@@ -1741,7 +1741,7 @@ void __cdecl base_psych() {
 
 /*
 Purpose: Determine the faction's base with the specified position sorted by the most energy output.
-Original Offset: 004EB490
+ORIGINAL: 0x004EB490
 Return Value: Base id for the specified rank position or -1 for invalid requests
 Status: Complete
 */
@@ -1768,7 +1768,7 @@ int __cdecl base_rank(int faction_id, int rank_position) {
 /*
 Purpose: Check what facility (if any) a base needs for additional population growth. Stand alone
          function unused in original game and likely optimized out.
-Original Offset: 004EEF80
+ORIGINAL: 0x004EEF80
 Return Value: Facility id needed for pop growth or zero if base already has Hab Complex and Dome.
 Status: Complete
 */
@@ -1788,7 +1788,7 @@ int __cdecl pop_goal_fac(int base_id) {
 
 /*
 Purpose: Calculate population goal for a base.
-Original Offset: 004EF090
+ORIGINAL: 0x004EF090
 Return Value: Goal population
 Status: Complete
 */
@@ -1818,7 +1818,7 @@ int __cdecl pop_goal(int base_id) {
 
 /*
 Purpose: Move the specified base's production queue forward if applicable.
-Original Offset: 004F06E0
+ORIGINAL: 0x004F06E0
 Return Value: Is there a valid item in queue to be built? true/false
 Status: Complete
 */
@@ -1849,7 +1849,7 @@ BOOL __cdecl base_queue(int base_id) {
 /*
 Purpose: Check if current base has had an energy shortfall. If so, reset all existing energy convoy
          orders for the faction. TODO: Revisit and find a way to only reset specific base convoys.
-Original Offset: 004F4DC0
+ORIGINAL: 0x004F4DC0
 Return Value: n/a
 Status: Complete
 */
@@ -1870,7 +1870,7 @@ void __cdecl base_energy_costs() {
 
 /*
 Purpose: Calculate facility maintenance cost for specified faction.
-Original Offset: 004F6510
+ORIGINAL: 0x004F6510
 Return Value: Facility maintenance cost
 Status: Complete
 */
@@ -1897,7 +1897,7 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
 
 /*
 Purpose: Calculate overall maintenance cost for the currently selected base.
-Original Offset: 004F65F0
+ORIGINAL: 0x004F65F0
 Return Value: Base maintenance cost
 Status: Complete
 */
@@ -1938,7 +1938,7 @@ void __cdecl base_maint() {
 /*
 Purpose: Check if the initial base name is unique. If not, append a sequential number after it.
          The function has been rewritten to work as intended.
-Original Offset: 004F7FE0
+ORIGINAL: 0x004F7FE0
 Return Value: n/a
 Status: Complete
 */
@@ -1962,7 +1962,7 @@ void __cdecl make_base_unique(int base_id) {
 
 /*
 Purpose: Check if a faction has the specified secret project built in a base they control.
-Original Offset: 004F80D0
+ORIGINAL: 0x004F80D0
 Return Value: Does faction have Secret Project? true/false
 Status: Complete
 */
@@ -1973,7 +1973,7 @@ BOOL __cdecl has_project(int project_id, int faction_id) {
 
 /*
 Purpose: Checks whether the facility (non-SP) has been build in the currently selected base.
-Original Offset: 00500290
+ORIGINAL: 0x00500290
 Return Value: Does current base have facility? true/false
 Status: Complete
 */
@@ -1997,7 +1997,7 @@ bool __cdecl has_fac_built(int facility_id, int base_id) {
 
 /*
 Purpose: Get the current status of the specified project.
-Original Offset: 005002E0
+ORIGINAL: 0x005002E0
 Return Value: Base id, if not built (-1) or destroyed (-2)
 Status: Complete
 */
@@ -2007,7 +2007,7 @@ int __cdecl base_project(int project_id) {
 
 /*
 Purpose: Suggest the base the specified pair of factions should agree to attack together.
-Original Offset: 0054ACC0
+ORIGINAL: 0x0054ACC0
 Return Value: Base id of the suggested target, or -1 if the pair has no shared target
 Status: Complete
 
@@ -2099,7 +2099,7 @@ int __cdecl suggest_plan(int faction_id, int faction_id_2) {
 
 /*
 Purpose: Determine the faction's best base to attack the specified base from.
-Original Offset: 0054AFA0
+ORIGINAL: 0x0054AFA0
 Return Value: Base id to attack from or 0 
 Status: Complete
 */
@@ -2129,7 +2129,7 @@ int __cdecl attack_from(int base_id_to_atk, int faction_id) {
 /*
 Purpose: Determine the value of the specified base between the requester and the respondent faction.
          This valuation could be triggered either from a gift, a threat or a base swap.
-Original Offset: 0054CB50
+ORIGINAL: 0x0054CB50
 Return Value: Value of base or -1 for invalid requests
 Status: Complete - testing
 */
@@ -2239,7 +2239,7 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
 
 /*
 Purpose: Determine ideal non-offense (defense, combat, recon) unit count for the specified base.
-Original Offset: 00560B30
+ORIGINAL: 0x00560B30
 Return Value: Amount of non-offensive units needed (1-10)
 Status: Complete
 */
@@ -2283,12 +2283,12 @@ int __cdecl garrison_check(int base_id) {
 
 /*
 Purpose: Determine the number of defensive units needed to protect the specified base.
-Original Offset: 00560D30
+ORIGINAL: 0x00560D30
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */
 /*
-Original Offset: 00560D30
+ORIGINAL: 0x00560D30
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */
@@ -2305,7 +2305,7 @@ int __cdecl defensive_check(int base_id) {
 
 /*
 Purpose: Determine if base is a port.
-Original Offset: 00579A00
+ORIGINAL: 0x00579A00
 Return Value: Is base a port? true/false
 Status: Complete
 */
@@ -2316,7 +2316,7 @@ BOOL __cdecl is_port(int base_id, BOOL is_base_radius) {
 /*
 Purpose: Calculate how vulnerable the coordinates are for the specified faction based on how far
          away this tile is from the faction's Headquarters.
-Original Offset: 0059E980
+ORIGINAL: 0x0059E980
 Return Value: Radial distance between coordinates and faction's HQ or 12 if no HQ/bases
 Status: Complete
 */
@@ -2333,7 +2333,7 @@ int __cdecl vulnerable(int faction_id, int x, int y) {
 
 /*
 Purpose: Determine whether the specified base is considered an objective.
-Original Offset: 005AC060
+ORIGINAL: 0x005AC060
 Return Value: Is base an objective? true/false
 Status: Complete
 */
@@ -2358,7 +2358,7 @@ BOOL __cdecl is_objective(int base_id) {
 /*
 Purpose: Count how far the specified faction has got towards the scenario's
          objectives.
-Original Offset: 005AC110
+ORIGINAL: 0x005AC110
 Return Value: Objective count, or zero for an eliminated faction
 Status: Complete
 
@@ -2497,7 +2497,7 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
 /*
 Purpose: Check if specified faction is currently building Ascent to Transcendence. This code isn't
          used by original game. There was also a bug where it compares to a non-negative queue id.
-Original Offset: 005AC630
+ORIGINAL: 0x005AC630
 Return Value: Is faction transcending? true/false
 Status: Complete
 */
@@ -2516,7 +2516,7 @@ BOOL __cdecl transcending(int faction_id) {
 
 /*
 Purpose: Check if Voice of Planet has been built that starts the Ascent to Transcendence sequence.
-Original Offset: 005AC680
+ORIGINAL: 0x005AC680
 Return Value: Has Voice of Planet been built? true/false
 Status: Complete
 */
@@ -2526,7 +2526,7 @@ BOOL __cdecl ascending(int UNUSED(faction_id)) {
 
 /*
 Purpose: Determine if the facility is redundant due to a Secret Project counting as that facility.
-Original Offset: 005BA030
+ORIGINAL: 0x005BA030
 Return Value: Is facility redundant? true/false
 Status: Complete
 */
@@ -2564,7 +2564,7 @@ BOOL __cdecl redundant(int facility_id, int faction_id) {
 Purpose: Determine if the provided faction can build a specific facility or Secret Project in the
          specified base. Checks are included to prevent SMACX specific facilities from being built
          in SMAC mode.
-Original Offset: 005BA0E0
+ORIGINAL: 0x005BA0E0
 Return Value: Is facility or Secret Project available to faction, base and game mode? true/false
 Status: Complete
 */

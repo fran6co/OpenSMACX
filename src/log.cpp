@@ -23,7 +23,7 @@
 
 /*
 Purpose: Initialize a log file.
-Original Offset: 00626040
+ORIGINAL: 0x00626040
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -48,7 +48,7 @@ int Log::init(LPCSTR input) {
 
 /*
 Purpose: Reset the log file.
-Original Offset: 006260D0
+ORIGINAL: 0x006260D0
 Return Value: n/a
 Status: Complete
 */
@@ -61,7 +61,7 @@ void Log::reset() {
 
 /*
 Purpose: Write to the log file with the numbers displayed in base 10.
-Original Offset: 006260F0
+ORIGINAL: 0x006260F0
 Return Value: n/a
 Status: Complete
 */
@@ -79,7 +79,7 @@ void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 
 /*
 Purpose: Write to the log file with the numbers displayed in base 16.
-Original Offset: 00626190
+ORIGINAL: 0x00626190
 Return Value: n/a
 Status: Complete
 */
@@ -99,29 +99,37 @@ void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 Log *Logging = (Log *)0x009BBFF8;
 BOOL *IsLoggingDisabled = (BOOL *)0x009BC004;
 
-void __cdecl log_logging() { // 00625F20
+// ORIGINAL: 0x00625F20
+void __cdecl log_logging() {
     new (Logging) Log("logfile.txt");
     atexit(log_logging_exit);
 }
 
-void __cdecl log_logging_exit() { Logging->~Log(); } // 00625F90
+// ORIGINAL: 0x00625F90
+void __cdecl log_logging_exit() { Logging->~Log(); }
 
-void __cdecl log_reset() { Logging->reset(); } // 00626230
+// ORIGINAL: 0x00626230
+void __cdecl log_reset() { Logging->reset(); }
 
-void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) { // 00626250
+// ORIGINAL: 0x00626250
+void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     Logging->say(str1, str2, num1, num2, num3);
 }
 
-void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) { // 006262F0
+// ORIGINAL: 0x006262F0
+void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
     Logging->say(str1, NULL, num1, num2, num3);
 }
 
-void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) { // 00626350
+// ORIGINAL: 0x00626350
+void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     Logging->say_hex(str1, str2, num1, num2, num3);
 }
 
-void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) { // 006263F0
+// ORIGINAL: 0x006263F0
+void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) {
     Logging->say_hex(str1, NULL, num1, num2, num3);
 }
 
-void __cdecl log_set_state(BOOL state) { Logging->set_state(state); } // 00626450
+// ORIGINAL: 0x00626450
+void __cdecl log_set_state(BOOL state) { Logging->set_state(state); }

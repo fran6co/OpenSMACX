@@ -65,7 +65,7 @@ LPCSTR MapExtension = "MP";
 
 /*
 Purpose: Check whether the coordinates are on the map.
-Original Offset: 004712A0
+ORIGINAL: 0x004712A0
 Return Value: Are the coordinates on the map? true/false
 Status: Complete
 */
@@ -75,7 +75,7 @@ BOOL __cdecl on_map(int x, int y) {
 
 /*
 Purpose: Bounds check and handling of x coordinate for round maps.
-Original Offset: 0048BEE0
+ORIGINAL: 0x0048BEE0
 Return Value: X coordinate
 Status: Complete
 */
@@ -94,7 +94,7 @@ int __cdecl xrange(int x) {
 
 /*
 Purpose: Check who owns a tile. Optional parameter to get closest base.
-Original Offset: 004E3EF0
+ORIGINAL: 0x004E3EF0
 Return Value: Faction id of the territory's owner or -1 if no owner or unknown faction
 Status: Complete
 */
@@ -119,7 +119,7 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
 
 /*
 Purpose: Find closest base to territory owned by another faction not at war with specified faction.
-Original Offset: 004E3FA0
+ORIGINAL: 0x004E3FA0
 Return Value: Base id or -1
 Status: Complete
 */
@@ -135,7 +135,7 @@ int __cdecl base_territory(int faction_id, int x, int y) {
 
 /*
 Purpose: For the specified tile, calculate the quality of the terrain.
-Original Offset: 004ECB90
+ORIGINAL: 0x004ECB90
 Return Value: Quality of terrain, lower is better (0-2)
 Status: Complete
 */
@@ -158,7 +158,7 @@ int __cdecl crappy(int x, int y) {
 Purpose: Take the absolute distance between two points as parameters to calculate how far out they
          radiate. This is mainly used to determine proximity or how far away the two points are from
          each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
-Original Offset: 004F8090
+ORIGINAL: 0x004F8090
 Return Value: Distance radius
 Status: Complete
 */
@@ -179,7 +179,7 @@ int __cdecl vector_dist(int x_distance, int y_distance) {
 /*
 Purpose: Take two points and calculate how far out they radiate. This is mainly used to determine
          proximity or how far away the two points are from each other in a rough circle shape.
-Original Offset: 005A5910
+ORIGINAL: 0x005A5910
 Return Value: Distance radius
 Status: Complete
 */
@@ -190,7 +190,7 @@ int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point
 /*
 Purpose: Check whether there is a path between two regions. It seems to only take into account land
          destinations. TODO: Revisit in the future when Continent/Path is complete.
-Original Offset: 0050DDC0
+ORIGINAL: 0x0050DDC0
 Return Value: Is there a path? true/false
 Status: Complete
 */
@@ -204,7 +204,7 @@ BOOL __cdecl sea_coast(int region_dst, int region_src) {
 /*
 Purpose: Count the number of paths from the source region. It seems to only take into account land 
          source and destination ranges. TODO: Revisit in the future when Continent/Path is complete.
-Original Offset: 0050DE00
+ORIGINAL: 0x0050DE00
 Return Value: Sea coasts valid path count
 Status: Complete
 */
@@ -222,7 +222,7 @@ int __cdecl sea_coasts(int region_src) {
 Purpose: Check to see whether base is within a one tile radius of a sea tile with specified region.
          If you pass a land region (<63) as the 2nd parameter, it is possible to get collision
          behavior due to region bounding. TODO: Revisit in the future to see whether to remove them.
-Original Offset: 0050DE50
+ORIGINAL: 0x0050DE50
 Return Value: Is base connected to specified sea region? true/false
 Status: Complete
 */
@@ -253,7 +253,7 @@ Purpose: Determine the ocean region for coastal bases. There is an issue if a ba
          positioned, the AI might make assumptions not to prioritize building naval units. Also,
          the Continents compare logic isn't used by anything. This might be the root cause of
          outlined bug. TODO: Revisit in the future once more is known about Continent structure.
-Original Offset: 0050DF30
+ORIGINAL: 0x0050DF30
 Return Value: Ocean region or -1 if landlocked
 Status: Complete
 */
@@ -279,7 +279,7 @@ int __cdecl base_coast(int base_id) {
 
 /*
 Purpose: Check to see if a port base shares a common body of water with destination coastal region.
-Original Offset: 0050E030
+ORIGINAL: 0x0050E030
 Return Value: Is port and coastal region accessible by water to each other? true/false
 Status: Complete
 */
@@ -304,7 +304,7 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
 
 /*
 Purpose: Check to see if two port bases share a common body of water determined by region.
-Original Offset: 0050E160
+ORIGINAL: 0x0050E160
 Return Value: Are both ports accessible by water to each other? true/false
 Status: Complete
 */
@@ -331,7 +331,7 @@ BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
 /*
 Purpose: Determine if a base has access to ports or more than one coastal region. This helps
          prioritize whether naval transports should be built.
-Original Offset: 0050E310
+ORIGINAL: 0x0050E310
 Return Value: Should base build naval transports? true/false
 Status: Complete
 */
@@ -348,7 +348,7 @@ BOOL __cdecl transport_base(int base_id) {
 
 /*
 Purpose: Determine if there are other faction's ports in the vicinity of the specified base.
-Original Offset: 0050E3C0
+ORIGINAL: 0x0050E3C0
 Return Value: Does base have a strategic naval importance? true/false
 Status: Complete
 */
@@ -369,7 +369,7 @@ BOOL __cdecl naval_base(int base_id) {
 
 /*
 Purpose: Determine if specified unit can set up a convoy route with specified base.
-Original Offset: 0050E5C0
+ORIGINAL: 0x0050E5C0
 Return Value: Is a convoy route possible? true/false
 Status: Complete
 */
@@ -395,7 +395,7 @@ BOOL __cdecl convoy(int veh_id, int base_id) {
 
 /*
 Purpose: Validate region bounds. Bad regions include: 0, 63, 64, 127, 128.
-Original Offset: 005591C0
+ORIGINAL: 0x005591C0
 Return Value: Is region bad? true/false
 Status: Complete
 */
@@ -405,7 +405,7 @@ BOOL __cdecl bad_reg(int region) {
 
 /*
 Purpose: Determine whether specified unit can physically reach the destination coordinates.
-Original Offset: 0056B320
+ORIGINAL: 0x0056B320
 Return Value: Can unit reach tile? true/false
 Status: Complete
 */
@@ -440,7 +440,7 @@ Purpose: Determine whether point A is a coast or border tile. It seems that the 
          effectively disabled since usage of this function passes same coordinates for both points.
          Modified return value to boolean rather than returning i. It is always treated as boolean
          and makes a lot more sense than returning the iterator position.
-Original Offset: 0056B480
+ORIGINAL: 0x0056B480
 Return Value: Is point A considered a border or coast? true/false
 Status: Complete
 */
@@ -485,7 +485,7 @@ uint32_t __cdecl temp_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the temperature for the specified tile.
-Original Offset: 00591AD0
+ORIGINAL: 0x00591AD0
 Return Value: n/a
 Status: Complete
 */
@@ -507,7 +507,7 @@ uint32_t __cdecl climate_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the rainfall (climate) for the specified tile.
-Original Offset: 00591A80
+ORIGINAL: 0x00591A80
 Return Value: n/a
 Status: Complete
 */
@@ -521,7 +521,7 @@ void __cdecl climate_set(int x, int y, int rainfall) {
 
 /*
 Purpose: Calculate the elevation of the specified tile.
-Original Offset: 005919C0
+ORIGINAL: 0x005919C0
 Return Value: Elevation (bounded to: -3000 to 3500)
 Status: Complete
 */
@@ -535,7 +535,7 @@ int __cdecl elev_at(int x, int y) {
 
 /*
 Purpose: Calculate the natural altitude of the specified tile.
-Original Offset: 005918A0
+ORIGINAL: 0x005918A0
 Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain tops)
 Status: Complete
 */
@@ -551,7 +551,7 @@ int __cdecl alt_natural(int x, int y) {
 /*
 Purpose: Set both the altitude and natural altitude for the specified tile. The altitude_natural
          parameter can be between 0 to 9.
-Original Offset: 005918F0
+ORIGINAL: 0x005918F0
 Return Value: n/a
 Status: Complete
 */
@@ -565,7 +565,7 @@ void __cdecl alt_set_both(int x, int y, int altitude_natural) {
 
 /*
 Purpose: Get the bit shifted (down) altitude of the specified tile.
-Original Offset: 00500150
+ORIGINAL: 0x00500150
 Return Value: Altitude
 Status: Complete
 */
@@ -585,7 +585,7 @@ int __cdecl altitude_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Get the altitude details of the specified tile.
-Original Offset: 00500180
+ORIGINAL: 0x00500180
 Return Value: Altitude detail
 Status: Complete
 */
@@ -595,7 +595,7 @@ int __cdecl alt_detail_at(int x, int y) {
 
 /*
 Purpose: Set the altitude details for the specified tile.
-Original Offset: 00591260
+ORIGINAL: 0x00591260
 Return Value: n/a
 Status: Complete
 */
@@ -615,7 +615,7 @@ uint32_t __cdecl owner_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the faction owner for the specified tile.
-Original Offset: 00591B10
+ORIGINAL: 0x00591B10
 Return Value: n/a
 Status: Complete
 */
@@ -627,7 +627,7 @@ void __cdecl owner_set(int x, int y, int faction_id) {
 
 /*
 Purpose: Set the site for the specified tile.
-Original Offset: 00591B50
+ORIGINAL: 0x00591B50
 Return Value: n/a
 Status: Complete
 */
@@ -639,7 +639,7 @@ void __cdecl site_set(int x, int y, int site) {
 
 /*
 Purpose: Get the region of the specified tile.
-Original Offset: 00500220
+ORIGINAL: 0x00500220
 Return Value: Region
 Status: Complete
 */
@@ -649,7 +649,7 @@ int __cdecl region_at(int x, int y) {
 
 /*
 Purpose: Set the region for the specified tile.
-Original Offset: 00591B90
+ORIGINAL: 0x00591B90
 Return Value: n/a
 Status: Complete
 */
@@ -669,7 +669,7 @@ uint32_t __cdecl using_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the using faction id for the specified tile.
-Original Offset: 00591C10
+ORIGINAL: 0x00591C10
 Return Value: n/a
 Status: Complete
 */
@@ -691,7 +691,7 @@ uint32_t __cdecl lock_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the lock faction id for the specified tile.
-Original Offset: 00591C50
+ORIGINAL: 0x00591C50
 Return Value: n/a
 Status: Complete
 */
@@ -703,7 +703,7 @@ void __cdecl lock_set(int x, int y, int faction_id) {
 
 /*
 Purpose: Lock the specified tile for the faction id.
-Original Offset: 00591C90
+ORIGINAL: 0x00591C90
 Return Value: True if already locked by another faction, otherwise false
 Status: Complete
 */
@@ -720,7 +720,7 @@ BOOL __cdecl lock_map(int x, int y, int faction_id) {
 
 /*
 Purpose: Unlock the specified tile for faction id.
-Original Offset: 00591CF0
+ORIGINAL: 0x00591CF0
 Return Value: n/a
 Status: Complete
 */
@@ -742,7 +742,7 @@ uint32_t __cdecl rocky_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the rockiness for the specified tile.
-Original Offset: 00591BC0
+ORIGINAL: 0x00591BC0
 Return Value: n/a
 Status: Complete
 */
@@ -756,7 +756,7 @@ void __cdecl rocky_set(int x, int y, int rocky) {
 
 /*
 Purpose: Get the bit of the specified tile.
-Original Offset: 005001B0
+ORIGINAL: 0x005001B0
 Return Value: Bitfield
 Status: Complete
 */
@@ -766,7 +766,7 @@ int __cdecl bit_at(int x, int y) {
 
 /*
 Purpose: Set the bit for the specified tile.
-Original Offset: 00591D30
+ORIGINAL: 0x00591D30
 Return Value: n/a
 Status: Complete
 */
@@ -776,7 +776,7 @@ void __cdecl bit_put(int x, int y, int bit) {
 
 /*
 Purpose: Set or unset bit for the specified tile.
-Original Offset: 00591D60
+ORIGINAL: 0x00591D60
 Return Value: n/a
 Status: Complete
 */
@@ -800,7 +800,7 @@ uint32_t __cdecl bit2_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set or unset bit2 for the specified tile.
-Original Offset: 00591DB0
+ORIGINAL: 0x00591DB0
 Return Value: n/a
 Status: Complete
 */
@@ -824,7 +824,7 @@ uint32_t __cdecl code_at(uint32_t x, uint32_t y) {
 
 /*
 Purpose: Set the code for the specified tile which keeps track of tile sequence order for landmarks.
-Original Offset: 00591E00
+ORIGINAL: 0x00591E00
 Return Value: n/a
 Status: Complete
 */
@@ -837,7 +837,7 @@ void __cdecl code_set(int x, int y, int code) {
 
 /*
 Purpose: Synchronize the actual tile bit with the faction visible bit.
-Original Offset: 00591E50
+ORIGINAL: 0x00591E50
 Return Value: n/a
 Status: Complete
 */
@@ -849,7 +849,7 @@ void __cdecl synch_bit(int x, int y, int faction_id) {
 
 /*
 Purpose: Determine the tile's mineral count that translates to rockiness.
-Original Offset: 00591F00
+ORIGINAL: 0x00591F00
 Return Value: 0 (Flat), 1 (Rolling), 2 (Rocky)
 Status: Complete
 */
@@ -894,7 +894,7 @@ int __cdecl minerals_at(int x, int y) {
 /*
 Purpose: Determine if the tile has a resource bonus. While the last parameter is unused, it's set to
          1 by two calls inside world_site(). Otherwise, all other calls have it set to 0.
-Original Offset: 00592030
+ORIGINAL: 0x00592030
 Return Value: 0 (no bonus), 1 (nutrient), 2 (mineral), 3 (energy)
 Status: Complete
 */
@@ -927,7 +927,7 @@ int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
 
 /*
 Purpose: Determine if the tile has a supply pod and if so what type.
-Original Offset: 00592140
+ORIGINAL: 0x00592140
 Return Value: 0 (no supply pod), 1 (standard supply pod), 2 (unity pod?)
 Status: Complete
 */
@@ -957,7 +957,7 @@ int __cdecl goody_at(int x, int y) {
 
 /*
 Purpose: Clear the map's site values in a radius from the tile.
-Original Offset: 00592400
+ORIGINAL: 0x00592400
 Return Value: n/a
 Status: Complete
 */
@@ -974,7 +974,7 @@ void __cdecl site_radius(int x, int y, int UNUSED(unk_val)) {
 
 /*
 Purpose: Search for the first landmark found within the radius range of the specified tile.
-Original Offset: 00592550
+ORIGINAL: 0x00592550
 Return Value: Landmark offset or -1 if none found
 Status: Complete
 */
@@ -996,7 +996,7 @@ int __cdecl find_landmark(int x, int y, int radius_range_offset) {
 
 /*
 Purpose: Set up a new landmark with the provided name at the specified tile.
-Original Offset: 00592600
+ORIGINAL: 0x00592600
 Return Value: Landmark offset or -1 if max landmark count is reached
 Status: Complete
 */
@@ -1015,7 +1015,7 @@ int __cdecl new_landmark(int x, int y, LPCSTR name) {
 
 /*
 Purpose: Check whether the specified faction has permission to name a landmark on the provided tile.
-Original Offset: 00592650
+ORIGINAL: 0x00592650
 Return Value: Does the faction have control of the tile to set a landmark? true/false
 Status: Complete
 */
@@ -1034,7 +1034,7 @@ BOOL __cdecl valid_landmark(int x, int y, int faction_id) {
 
 /*
 Purpose: Remove the landmark at the specified tile.
-Original Offset: 005926F0
+ORIGINAL: 0x005926F0
 Return Value: n/a
 Status: Complete
 */
@@ -1053,7 +1053,7 @@ void __cdecl kill_landmark(int x, int y) {
 /*
 Purpose: Check if coordinates are considered near or on coast. Radius (excludes actual coordinates)
          can either be all the squares directly around the coordinates or same as Base '+' radius.
-Original Offset: 004E49D0
+ORIGINAL: 0x004E49D0
 Return Value: Is tile coast? true/false
 Status: Complete
 */
@@ -1071,7 +1071,7 @@ BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius) {
 
 /*
 Purpose: Check whether the specified tile is part of an ocean.
-Original Offset: 005001E0
+ORIGINAL: 0x005001E0
 Return Value: Is tile ocean? true/false
 Status: Complete
 */
@@ -1081,7 +1081,7 @@ BOOL __cdecl is_ocean(int x, int y) {
 
 /*
 Purpose: Get the owner of the specified tile if there is a unit in it.
-Original Offset: 00500250
+ORIGINAL: 0x00500250
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
@@ -1098,7 +1098,7 @@ int __cdecl veh_who(int x, int y) {
 
 /*
 Purpose: Rebuild the Map's unit related values.
-Original Offset: 00532A90
+ORIGINAL: 0x00532A90
 Return Value: n/a
 Status: Complete
 */
@@ -1121,7 +1121,7 @@ void __cdecl rebuild_vehicle_bits() {
 
 /*
 Purpose: Rebuild the Map's base related values.
-Original Offset: 00532B70
+ORIGINAL: 0x00532B70
 Return Value: n/a
 Status: Complete
 */
@@ -1142,7 +1142,7 @@ void __cdecl rebuild_base_bits() {
 
 /*
 Purpose: Calculate the distance between two x coordinates with handling for round maps.
-Original Offset: 00579790
+ORIGINAL: 0x00579790
 Return Value: Distance
 Status: Complete
 */
@@ -1156,7 +1156,7 @@ int __cdecl x_dist(int x_point_a, int x_point_b) {
 
 /*
 Purpose: Check whether a faction can see the specified tile.
-Original Offset: 00579840
+ORIGINAL: 0x00579840
 Return Value: Is tile visible/known to faction? true/false
 Status: Complete
 */
@@ -1167,7 +1167,7 @@ BOOL __cdecl is_known(int x, int y, int faction_id) {
 
 /*
 Purpose: If a base exists, get the owner of the specified tile.
-Original Offset: 005798A0
+ORIGINAL: 0x005798A0
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
@@ -1184,7 +1184,7 @@ int __cdecl base_who(int x, int y) {
 
 /*
 Purpose: If a base or unit exists, get the owner of the specified tile.
-Original Offset: 005798E0
+ORIGINAL: 0x005798E0
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
@@ -1201,7 +1201,7 @@ int __cdecl anything_at(int x, int y) {
 
 /*
 Purpose: Shutdown allocated map variables.
-Original Offset: 00590E90
+ORIGINAL: 0x00590E90
 Return Value: n/a
 Status: Complete
 */
@@ -1218,7 +1218,7 @@ void __cdecl map_shutdown() {
 
 /*
 Purpose: Initialize map variables.
-Original Offset: 00590ED0
+ORIGINAL: 0x00590ED0
 Return Value: n/a
 Status: Complete
 */
@@ -1245,7 +1245,7 @@ BOOL __cdecl map_init() {
 
 /*
 Purpose: Reset the map to a blank state. Doesn't wipe unk_1 and territory fields.
-Original Offset: 00591040
+ORIGINAL: 0x00591040
 Return Value: n/a
 Status: Complete
 */
@@ -1269,7 +1269,7 @@ void __cdecl map_wipe() {
 
 /*
 Purpose: Write map data to a file.
-Original Offset: 005910B0
+ORIGINAL: 0x005910B0
 Return Value: Did an error occur? true/false
 Status: Complete
 */
@@ -1284,7 +1284,7 @@ BOOL __cdecl map_write(FILE *map_file) {
 
 /*
 Purpose: Read the map data from a file and write it into memory.
-Original Offset: 00591130
+ORIGINAL: 0x00591130
 Return Value: Did an error occur? true/false
 Status: Complete
 */
@@ -1308,7 +1308,7 @@ BOOL __cdecl map_read(FILE *map_file) {
 
 /*
 Purpose: Get the region value for the specified tile.
-Original Offset: 00591210
+ORIGINAL: 0x00591210
 Return Value: Abstract value (region)
 Status: Complete
 */
@@ -1318,7 +1318,7 @@ uint8_t __cdecl abstract_at(int x, int y) {
 
 /*
 Purpose: Set the region value for the specified tile.
-Original Offset: 00591230
+ORIGINAL: 0x00591230
 Return Value: n/a
 Status: Complete
 */
@@ -1329,7 +1329,7 @@ void __cdecl abstract_set(int x, int y, uint8_t region) {
 /*
 Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conflict is found, store
          the coordinates of the tile inside ZOC pointers.
-Original Offset: 00593830
+ORIGINAL: 0x00593830
 Return Value: n/a
 Status: Complete
 */
@@ -1358,7 +1358,7 @@ void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int 
 
 /*
 Purpose: Determine if the specified offsets are within the range radius.
-Original Offset: 005A65A0
+ORIGINAL: 0x005A65A0
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
@@ -1373,7 +1373,7 @@ int __cdecl radius_move(int x_radius_off, int y_radius_off, int range) {
 
 /*
 Purpose: Determine if the specified two tiles are within the range radius of each other.
-Original Offset: 005A65D0
+ORIGINAL: 0x005A65D0
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
@@ -1390,7 +1390,7 @@ int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range) {
 
 /*
 Purpose: Determine if the specified two tiles are within the radius directionally of each other.
-Original Offset: 005A6630
+ORIGINAL: 0x005A6630
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
@@ -1442,7 +1442,7 @@ static int site_xrange(int x) {
 
 /*
 Purpose: Check whether there is a sensor available in the specified tile.
-Original Offset: 005BF010
+ORIGINAL: 0x005BF010
 Return Value: 0 (no sensor), 1 (sensor array via terraforming), 2 (Geosynchronous Survey Pod)
 Status: Complete
 */
@@ -1467,7 +1467,7 @@ int __cdecl is_sensor(int x, int y) {
 
 /*
 Purpose: Check whether a sensor array is worth building on the specified tile.
-Original Offset: 00564EB0
+ORIGINAL: 0x00564EB0
 Return Value: Is the tile a good sensor site? true/false
 Status: Complete
 
@@ -1600,7 +1600,7 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
 
 /*
 Purpose: Check if faction controls the initial tile (code offset 0) of the Manifold Nexus.
-Original Offset: 005BF130
+ORIGINAL: 0x005BF130
 Return Value: Does faction control Nexus? true/false
 Status: Complete
 */
@@ -1620,7 +1620,7 @@ BOOL __cdecl has_temple(int faction_id) {
 
 /*
 Purpose: Handle setting the world altitude.
-Original Offset: 005C2020
+ORIGINAL: 0x005C2020
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1678,7 +1678,7 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
 
 /*
 Purpose: Handle raising the altitude of the specified tile.
-Original Offset: 005C2380
+ORIGINAL: 0x005C2380
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1693,7 +1693,7 @@ void __cdecl world_raise_alt(int x, int y) {
 
 /*
 Purpose: Handle lowering the altitude of the specified tile.
-Original Offset: 005C23E0
+ORIGINAL: 0x005C23E0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1708,7 +1708,7 @@ void __cdecl world_lower_alt(int x, int y) {
 
 /*
 Purpose: Set up the brush for creating world terrain.
-Original Offset: 005C2440
+ORIGINAL: 0x005C2440
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1770,7 +1770,7 @@ void __cdecl brush(int x, int y, int altitude) {
 
 /*
 Purpose: Paint land to assist in the creation of the world terrain.
-Original Offset: 005C27F0
+ORIGINAL: 0x005C27F0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1801,7 +1801,7 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
 
 /*
 Purpose: Build out the map continents.
-Original Offset: 005C28F0
+ORIGINAL: 0x005C28F0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1859,7 +1859,7 @@ void __cdecl build_continent(int size) {
 
 /*
 Purpose: Build out the map hills.
-Original Offset: 005C2B40
+ORIGINAL: 0x005C2B40
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1904,7 +1904,7 @@ void __cdecl build_hills(int altitude) {
 
 /*
 Purpose: Build out the world river beds.
-Original Offset: 005C3680
+ORIGINAL: 0x005C3680
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1955,7 +1955,7 @@ void __cdecl world_riverbeds() {
 
 /*
 Purpose: Determine if there are any issues with how the world continents are set up.
-Original Offset: 005C40F0
+ORIGINAL: 0x005C40F0
 Return Value: Are there any issues with the world continents? true/false
 Status: Complete - testing
 */
@@ -1981,7 +1981,7 @@ BOOL __cdecl world_validate() {
 
 /*
 Purpose: Set up the world temperature.
-Original Offset: 005C4170
+ORIGINAL: 0x005C4170
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2048,7 +2048,7 @@ static Map *site_tile(int x, int y) {
 
 /*
 Purpose: Score the specified tile as a site for a new base.
-Original Offset: 005C4FD0
+ORIGINAL: 0x005C4FD0
 Return Value: Site value 0 (unusable) or 1-15
 Status: Complete
 
@@ -2240,7 +2240,7 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
 
 /*
 Purpose: Analysis of the world map.
-Original Offset: 005C55C0
+ORIGINAL: 0x005C55C0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2305,7 +2305,7 @@ void __cdecl world_analysis() {
 
 /*
 Purpose: Set the default altitude details for the specified tile.
-Original Offset: 005C58C0
+ORIGINAL: 0x005C58C0
 Return Value: n/a
 Status: Complete
 */
@@ -2315,7 +2315,7 @@ void __cdecl world_alt_put_detail(int x, int y) {
 
 /*
 Purpose: Set up the world polar caps.
-Original Offset: 005C58E0
+ORIGINAL: 0x005C58E0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2335,7 +2335,7 @@ void __cdecl world_polar_caps() {
 
 /*
 Purpose: Set up the world contours.
-Original Offset: 005C5AE0
+ORIGINAL: 0x005C5AE0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2355,7 +2355,7 @@ void __cdecl world_linearize_contours() {
 
 /*
 Purpose: Determine if the specified tile is near a landmark.
-Original Offset: 005C5BD0
+ORIGINAL: 0x005C5BD0
 Return Value: Is the tile near a landmark? true/false
 Status: Complete
 */
@@ -2372,7 +2372,7 @@ BOOL __cdecl near_landmark(int x, int y) {
 
 /*
 Purpose: Setup the 'Garland Crater' landmark.
-Original Offset: 005C5C70
+ORIGINAL: 0x005C5C70
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2417,7 +2417,7 @@ void __cdecl world_crater(int x, int y) {
 
 /*
 Purpose: Setup the 'Monsoon Jungle' landmark.
-Original Offset: 005C5EF0
+ORIGINAL: 0x005C5EF0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2465,7 +2465,7 @@ void __cdecl world_monsoon(int x, int y) {
 
 /*
 Purpose: Setup the 'New Sargasso' landmark.
-Original Offset: 005C6200
+ORIGINAL: 0x005C6200
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2510,7 +2510,7 @@ void __cdecl world_sargasso(int x, int y) {
 
 /*
 Purpose: Setup 'The Ruins' landmark.
-Original Offset: 005C64A0
+ORIGINAL: 0x005C64A0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2559,7 +2559,7 @@ void __cdecl world_ruin(int x, int y) {
 
 /*
 Purpose: Setup the 'Great Dunes' landmark.
-Original Offset: 005C6740
+ORIGINAL: 0x005C6740
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2602,7 +2602,7 @@ void __cdecl world_dune(int x, int y) {
 
 /*
 Purpose: Setup the 'Uranium Flats' landmark.
-Original Offset: 005C69E0
+ORIGINAL: 0x005C69E0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2641,7 +2641,7 @@ void __cdecl world_diamond(int x, int y) {
 
 /*
 Purpose: Setup the 'Freshwater Sea' landmark.
-Original Offset: 005C6C40
+ORIGINAL: 0x005C6C40
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2688,7 +2688,7 @@ void __cdecl world_fresh(int x, int y) {
 
 /*
 Purpose: Setup the 'Mount Planet' landmark.
-Original Offset: 005C6DB0
+ORIGINAL: 0x005C6DB0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2737,7 +2737,7 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
 
 /*
 Purpose: Setup the 'Borehole Cluster' landmark. Added to SMAC in 3.0 patch.
-Original Offset: 005C7020
+ORIGINAL: 0x005C7020
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2825,7 +2825,7 @@ void __cdecl world_borehole(int x, int y) {
 
 /*
 Purpose: Setup 'The Manifold Nexus' landmark. Added to SMAC in 4.0 patch.
-Original Offset: 005C7540
+ORIGINAL: 0x005C7540
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2861,7 +2861,7 @@ void __cdecl world_temple(int x, int y) {
 
 /*
 Purpose: Setup the 'Unity Wreckage' landmark (SMACX only).
-Original Offset: 005C7750
+ORIGINAL: 0x005C7750
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2925,7 +2925,7 @@ void __cdecl world_unity(int x, int y) {
 
 /*
 Purpose: Setup the 'Fossil Ridge' landmark (SMACX only).
-Original Offset: 005C7A80
+ORIGINAL: 0x005C7A80
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2962,7 +2962,7 @@ void __cdecl world_fossil(int x, int y) {
 
 /*
 Purpose: Setup the 'Nessus Canyon' landmark.
-Original Offset: 005C7CB0
+ORIGINAL: 0x005C7CB0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2999,7 +2999,7 @@ void __cdecl world_canyon(int x, int y) {
 
 /*
 Purpose: Setup the 'Sunny Mesa' landmark.
-Original Offset: 005C7F40
+ORIGINAL: 0x005C7F40
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3034,7 +3034,7 @@ void __cdecl world_mesa(int x, int y) {
 
 /*
 Purpose: Setup the 'Pholus Ridge' landmark.
-Original Offset: 005C8150
+ORIGINAL: 0x005C8150
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3070,7 +3070,7 @@ void __cdecl world_ridge(int x, int y) {
 
 /*
 Purpose: Setup the 'Geothermal Shallows' landmark.
-Original Offset: 005C83B0
+ORIGINAL: 0x005C83B0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3113,7 +3113,7 @@ void __cdecl world_geothermal(int x, int y) {
 
 /*
 Purpose: Set up all the landmarks.
-Original Offset: 005C8630
+ORIGINAL: 0x005C8630
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3139,7 +3139,7 @@ void __cdecl world_landmarks() {
 
 /*
 Purpose: Check for any type of zone of control conflicts (base and/or unit).
-Original Offset: 005C89F0
+ORIGINAL: 0x005C89F0
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3160,7 +3160,7 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
 
 /*
 Purpose: Check for unit related zone of control conflicts.
-Original Offset: 005C8AC0
+ORIGINAL: 0x005C8AC0
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3185,7 +3185,7 @@ int __cdecl zoc_veh(int x, int y, int faction_id) {
 
 /*
 Purpose: Check for unit related zone of control conflicts taking into account land or ocean.
-Original Offset: 005C8BA0
+ORIGINAL: 0x005C8BA0
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3215,7 +3215,7 @@ int __cdecl zoc_sea(int x, int y, int faction_id) {
 
 /*
 Purpose: Check for unit related zone of control conflicts when moving to a non-base tile.
-Original Offset: 005C8D40
+ORIGINAL: 0x005C8D40
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3273,7 +3273,7 @@ static int alt_shore_detail(int corner, int west, int north, int east, int south
 Purpose: Interpolate the rendered altitude detail at one point of a tile's
          terrain polygon, so that the map renderer can slope the tile towards
          its neighbours and break the contour at the water's edge.
-Original Offset: 00462190
+ORIGINAL: 0x00462190
 Return Value: Altitude detail, 0 to 79; 0 for a tile off the map
 Status: Complete
 

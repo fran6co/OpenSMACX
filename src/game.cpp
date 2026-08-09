@@ -80,7 +80,7 @@ static int territory_xrange(int x) {
 /*
 Purpose: Recompute which faction owns each tile of the map, and rebuild every
          per-faction and per-region tally that ownership feeds.
-Original Offset: 00523DD0
+ORIGINAL: 0x00523DD0
 Return Value: n/a
 Status: Complete
 
@@ -261,7 +261,7 @@ void __cdecl reset_territory() {
 /*
 Purpose: Determine whether the turn currently belongs to another faction in a
          networked game, which is what gates local input.
-Original Offset: 0052DC70
+ORIGINAL: 0x0052DC70
 Return Value: TRUE only in a net game that is handing the turn around and whose
               active faction is not the local one
 Status: Complete
@@ -282,7 +282,7 @@ BOOL __cdecl not_my_turn() {
 
 /*
 Purpose: Handle creation of pop-up message on Planetfall.
-Original Offset: 00589180
+ORIGINAL: 0x00589180
 Return Value: n/a
 Status: Complete
 */
@@ -314,7 +314,7 @@ void __cdecl planetfall(int faction_id) {
 
 /*
 Purpose: Clear and reset scenario game variables.
-Original Offset: 005B38D0
+ORIGINAL: 0x005B38D0
 Return Value: n/a
 Status: Complete
 */
@@ -330,7 +330,7 @@ void __cdecl clear_scenario() {
 
 /*
 Purpose: Calculate game year from start date and turn number.
-Original Offset: 005C89A0
+ORIGINAL: 0x005C89A0
 Return Value: Game year
 Status: Complete
 */
@@ -340,7 +340,7 @@ uint32_t __cdecl game_year(int turn) {
 
 /*
 Purpose: Craft game year string. Assume buffer of at least 80. Revisit and convert to std::string.
-Original Offset: 005C89B0
+ORIGINAL: 0x005C89B0
 Return Value: n/a
 Status: Complete
 */
@@ -353,7 +353,7 @@ void __cdecl say_year(LPSTR output) {
 /*
 Purpose: Run the repair phase for the specified faction: reset the per-turn unit state, heal every
          damaged unit by its reactor-weighted repair rate, and redraw the tiles the units stand on.
-Original Offset: 00526030
+ORIGINAL: 0x00526030
 Return Value: n/a
 Status: Complete
 

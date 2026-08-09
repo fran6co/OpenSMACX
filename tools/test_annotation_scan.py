@@ -307,8 +307,10 @@ class ExtractorEquivalence(unittest.TestCase):
             if annotation.mode != scan.MODE_BODY or not annotation.line \
                     or annotation.extract_error \
                     or annotation.state != scan.STATE_IMPLEMENTED \
-                    or annotation.deprecated and annotation.recipe == \
-                    "writeback":
+                    or annotation.recipe == "writeback":
+                # writeback-recipe bodies are the definition after the
+                # header run, never a brace count from the marker line, so
+                # the census span does not apply to them.
                 continue
             line_text = (scan.REPO_ROOT / annotation.path).read_text() \
                 .splitlines()[annotation.line - 1]

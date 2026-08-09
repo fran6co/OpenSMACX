@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0045CD80
 // 0x0045CD80  ?on_iface_left_double_click@MainInterface@@QAEXHH@Z  ->  ?on_iface_left_double_click@MainInterface@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

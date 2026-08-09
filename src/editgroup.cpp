@@ -24,7 +24,7 @@ func_edit_box_set_text EditBoxOriginalSetText =
 
 /*
 Purpose: Apply one length limit to all ten edit boxes in the group.
-Original Offset: 006120B0
+ORIGINAL: 0x006120B0
 Return Value: n/a
 Status: Complete
 */
@@ -36,7 +36,7 @@ void EditGroup::set_text_limits(int limit) {
 
 /*
 Purpose: Return one box's text buffer, or nothing when that box is absent.
-Original Offset: 00612060
+ORIGINAL: 0x00612060
 Return Value: pointer to the box's text, null when there is no box
 Status: Complete
 */
@@ -50,7 +50,7 @@ char *EditGroup::get_text(int index) {
 
 /*
 Purpose: Set one box's text, doing nothing when that box is absent.
-Original Offset: 00612040
+ORIGINAL: 0x00612040
 Return Value: n/a
 Status: Complete
 */

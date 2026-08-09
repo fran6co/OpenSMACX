@@ -32,7 +32,7 @@ func_message_data *LockMessageData = (func_message_data *)0x00592EE0;
 Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
          map-tile record, at the record stride of 0x2C. Operates entirely on
          the global map table, ignoring the Lock instance.
-Original Offset: 00590140
+ORIGINAL: 0x00590140
 Return Value: n/a
 Status: Complete
 */
@@ -51,7 +51,7 @@ void __fastcall lock_reset_map_redirect(Lock *self, void *) {
 /*
 Purpose: Reset the lock to empty - clear its three trailing dwords, reset all
          eight records to their unset sentinels, and run the global map reset.
-Original Offset: 005900D0
+ORIGINAL: 0x005900D0
 Return Value: n/a
 Status: Complete
 */
@@ -80,7 +80,7 @@ Purpose: Report whether any lock is engaged. The trailing dword at 0xE0 forces
          those whose slot bit is set in both the low and second bytes of the
          enable mask, and a record counts when either of its two entries has
          its flag's low bit set. Record 0 is never scanned.
-Original Offset: 005904A0
+ORIGINAL: 0x005904A0
 Return Value: 1 when a lock is engaged, 0 otherwise
 Status: Complete
 */
@@ -113,7 +113,7 @@ int __fastcall lock_any_locks_redirect(Lock *self, void *) {
 Purpose: Release the lock on one slot - forget it as the active lock if it was,
          unlock both of the slot record's square entries, and clear the
          record's flag byte.
-Original Offset: 00590170
+ORIGINAL: 0x00590170
 Return Value: n/a
 Status: Complete
 */
@@ -137,7 +137,7 @@ void __fastcall lock_unlock_redirect(Lock *self, void *, int slot) {
 Purpose: Take the global lock for an owner. Succeeds when the lock is free or
          already held by that owner, recording the owner and marking it held;
          fails without change when another owner holds it.
-Original Offset: 005902C0
+ORIGINAL: 0x005902C0
 Return Value: 0 on success, 1 when another owner holds the lock
 Status: Complete
 */
@@ -159,7 +159,7 @@ Purpose: Report whether the global lock this owner holds can now be released -
          true only on the server, when the lock is marked held by this owner
          and none of its slot records still has an active square. On success it
          also drops the held flag. Any other case reports no.
-Original Offset: 00590240
+ORIGINAL: 0x00590240
 Return Value: 1 when the lock may be released, 0 otherwise
 Status: Complete
 */
@@ -192,7 +192,7 @@ int __fastcall lock_check_global_2_redirect(Lock *self, void *, int owner) {
 Purpose: On the server, when a held lock has no square still active, broadcast
          its release and drop the held flag. Does nothing off the server, when
          no lock is held, or while any slot record still has an active square.
-Original Offset: 005901D0
+ORIGINAL: 0x005901D0
 Return Value: n/a
 Status: Complete
 */
@@ -222,7 +222,7 @@ void __fastcall lock_check_global_redirect(Lock *self, void *) {
 Purpose: Add a lock on one slot - forward to SquareLock::lock on the slot
          record's second square entry, with the mask bit 0x10 forced into the
          flags argument.
-Original Offset: 00590470
+ORIGINAL: 0x00590470
 Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
@@ -245,7 +245,7 @@ Purpose: Lock both of a slot's square entries in one call. Refuses when another
          the 0x2 bit was set and this is the server, the same release check
          check_global runs (but skipping this slot's own record) fires the
          release broadcast if no other slot still holds an active square.
-Original Offset: 00590300
+ORIGINAL: 0x00590300
 Return Value: 1 on refusal or lock failure, 0 on success
 Status: Complete
 */

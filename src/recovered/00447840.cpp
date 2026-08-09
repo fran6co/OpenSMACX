@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00447840
 // 0x00447840  ?production@SAmbience@@QAEXXZ  ->  ?production@SAmbience@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

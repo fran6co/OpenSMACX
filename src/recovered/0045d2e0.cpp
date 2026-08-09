@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0045D2E0
 // 0x0045D2E0  ?delete_iface_mode@SubInterface@@QAEXXZ  ->  ?delete_iface_mode@SubInterface@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

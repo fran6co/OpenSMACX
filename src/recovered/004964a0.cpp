@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004964A0
 // 0x004964A0  ?close@QuayleWin@@QAEXXZ  ->  ?close@QuayleWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -36,7 +36,7 @@ char TechName[80];
 
 /*
 Purpose: Get tech string for techID and store it into stringTemp buffer.
-Original Offset: 005591A0
+ORIGINAL: 0x005591A0
 Return Value: n/a
 Status: Complete
 */
@@ -46,7 +46,7 @@ void __cdecl say_tech(int tech_id, BOOL category_lvl) {
 
 /*
 Purpose: Determine whether a faction is able to jump up the tech tree for the specified tech.
-Original Offset: 0057CE50
+ORIGINAL: 0x0057CE50
 Return Value: Is a tech leap possible? true/false
 Status: Complete
 */
@@ -83,7 +83,7 @@ BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
 /*
 Purpose: Craft an output string related to a specific technology. For techIDs outside the standard
          range, craft a string related to world map, comm links or prototypes.
-Original Offset: 005B9C40
+ORIGINAL: 0x005B9C40
 Return Value: n/a
 Status: Complete
 */
@@ -117,7 +117,7 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
 
 /*
 Purpose: Get tech string for tech_id and store it into TechName buffer.
-Original Offset: 005B9EF0
+ORIGINAL: 0x005B9EF0
 Return Value: Pointer to TechName
 Status: Complete
 */
@@ -129,7 +129,7 @@ LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
 
 /*
 Purpose: Check whether faction has a particular tech or not.
-Original Offset: 005B9F20
+ORIGINAL: 0x005B9F20
 Return Value: Faction has tech? true/false
 Status: Complete
 */
@@ -152,7 +152,7 @@ BOOL __cdecl has_tech(int tech_id, int faction_id) {
 
 /*
 Purpose: Determine technology level for tech_id.
-Original Offset: 005B9F90
+ORIGINAL: 0x005B9F90
 Return Value: Level
 Status: Complete
 */
@@ -168,7 +168,7 @@ int __cdecl tech_recurse(int tech_id, int base_lvl) {
 /*
 Purpose: Determine what category is dominate for tech_id. If there is a tie, the order of precedence
          is as follows: growth > tech > wealth > power.
-Original Offset: 005B9FE0
+ORIGINAL: 0x005B9FE0
 Return Value: Tech category id: growth (0), tech (1), wealth (2) or power (3).
 Status: Complete
 */
@@ -189,7 +189,7 @@ int __cdecl tech_category(int tech_id) {
 /*
 Purpose: Check to see whether provided faction can research a specific technology. Checks are
          included to prevent SMACX specific Veh from being built in SMAC mode.
-Original Offset: 005BAC20
+ORIGINAL: 0x005BAC20
 Return Value: Is tech available to faction? true/false
 Status: Complete
 */
@@ -210,7 +210,7 @@ BOOL __cdecl tech_avail(int tech_id, int faction_id) {
 
 /*
 Purpose: Calculate faction's tech related bonuses for commerce and resource production in fungus.
-Original Offset: 005BAE60
+ORIGINAL: 0x005BAE60
 Return Value: n/a
 Status: Complete
 */
@@ -269,7 +269,7 @@ void __cdecl tech_effects(int faction_id) {
 
 /*
 Purpose: Determine if preqTechID is a prerequisite of parentTechID within descending range.
-Original Offset: 005BCB60
+ORIGINAL: 0x005BCB60
 Return Value: Is preqTechID prerequisite of parentTechID? true/false
 Status: Complete
 */
@@ -291,7 +291,7 @@ BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, int range) {
 Purpose: Determine how valuable the specified techID is to a faction. This id either corresponds to
          a technology (0-88), another faction (89-96) or a prototype (97-608). The 3rd parameter
          determines whether a simplistic or extended calculation is required for a technology id.
-Original Offset: 005BCBE0
+ORIGINAL: 0x005BCBE0
 Return Value: Value of techID to the specified faction
 Status: Complete
 */
@@ -527,7 +527,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
 
 /*
 Purpose: Determine a tech the specified faction should research.
-Original Offset: 005BDC10
+ORIGINAL: 0x005BDC10
 Return Value: techID or -1
 Status: Complete
 */
@@ -561,7 +561,7 @@ int __cdecl tech_ai(int faction_id) {
 
 /*
 Purpose: Get power_value from technology struct for tech id.
-Original Offset: 005BDD70
+ORIGINAL: 0x005BDD70
 Return Value: power_value or 0 if tech_id is greater than max
 Status: Complete
 */
@@ -572,7 +572,7 @@ int __cdecl tech_mil(int tech_id) {
 
 /*
 Purpose: Get tech_value from technology struct for tech id.
-Original Offset: 005BDD90
+ORIGINAL: 0x005BDD90
 Return Value: tech_value or 1 if tech_id is greater than max
 Status: Complete
 */
@@ -582,7 +582,7 @@ int __cdecl tech_tech(int tech_id) {
 
 /*
 Purpose: Get wealth_value from technology struct for tech id.
-Original Offset: 005BDDC0
+ORIGINAL: 0x005BDDC0
 Return Value: wealth_value or 1 if tech_id is greater than max
 Status: Complete
 */
@@ -592,7 +592,7 @@ int __cdecl tech_infra(int tech_id) {
 
 /*
 Purpose: Get growth_value from technology struct for tech id.
-Original Offset: 005BDDF0
+ORIGINAL: 0x005BDDF0
 Return Value: growth_value or 1 if tech_id is greater than max
 Status: Complete
 */
@@ -602,7 +602,7 @@ int __cdecl tech_colonize(int tech_id) {
 
 /*
 Purpose: Calculate how much researching a tech will cost the specified faction.
-Original Offset: 005BE6B0
+ORIGINAL: 0x005BE6B0
 Return Value: tech rate/cost
 Status: Complete
 */

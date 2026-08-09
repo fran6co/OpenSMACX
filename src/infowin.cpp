@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 004562F0
+ORIGINAL: 0x004562F0
 Return Value: n/a
 Status: Complete
 */
@@ -30,7 +30,7 @@ void InfoWin::UNK1() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 00458910
+ORIGINAL: 0x00458910
 Return Value: n/a
 Status: Complete
 */
@@ -47,7 +47,7 @@ void __fastcall info_win_on_redraw_redirect(InfoWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00458900
+ORIGINAL: 0x00458900
 Return Value: n/a
 Status: Complete
 */
@@ -60,7 +60,7 @@ void __fastcall info_win_change_redirect(InfoWin *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00458920
+ORIGINAL: 0x00458920
 Return Value: n/a
 Status: Complete
 */
@@ -76,7 +76,7 @@ func_info_win_timer_proc InfoWinOriginalTimerProc =
 
 /*
 Purpose: Cancel the pending info-window timer, if one is outstanding.
-Original Offset: 00459280
+ORIGINAL: 0x00459280
 Return Value: n/a
 Status: Complete
 */
@@ -92,7 +92,7 @@ void __fastcall info_win_reset_redirect(InfoWin *self, void *) {
 }
 
 /*
-Original Offset: 00458D40
+ORIGINAL: 0x00458D40
 Status: Complete
 */
 void InfoWin::on_right_click(int a1, int a2) {

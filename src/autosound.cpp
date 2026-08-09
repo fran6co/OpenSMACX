@@ -25,7 +25,7 @@ func_auto_sound_delete *AutoSoundOperatorDelete = (func_auto_sound_delete *)0x00
 /*
 Purpose: Construct an AutoSound by installing its virtual table and copying
          the complete process-default block in legacy store order.
-Original Offset: 0062BA80
+ORIGINAL: 0x0062BA80
 Status: Complete
 */
 void AutoSound::construct() {
@@ -51,7 +51,7 @@ AutoSound *__fastcall auto_sound_construct_redirect(AutoSound *self, void *) {
 Purpose: Reset every field from the process-default block, in the same
          legacy store order as construction but without touching the
          virtual table.
-Original Offset: 0062BBF0
+ORIGINAL: 0x0062BBF0
 Return Value: n/a
 Status: Complete
 */
@@ -76,7 +76,7 @@ void __fastcall auto_sound_close_redirect(AutoSound *self, void *) {
 Purpose: Reset every field from the process-default block, exactly as close
          does but storing in ascending field order - the two differ only in
          which of the shuffled leading fields lands first.
-Original Offset: 0062BDD0
+ORIGINAL: 0x0062BDD0
 Return Value: n/a
 Status: Complete
 */
@@ -100,14 +100,14 @@ void __fastcall auto_sound_close2_redirect(AutoSound *self, void *) {
 /*
 Purpose: Zero every field, in the same legacy store order as construction,
          leaving the virtual table alone.
-Original Offset: 0062BD40
+ORIGINAL: 0x0062BD40
 Return Value: n/a
 Status: Complete
 */
 /*
 Purpose: Zero every field, in the legacy store order construction uses,
          leaving the virtual table alone.
-Original Offset: 0062BD40
+ORIGINAL: 0x0062BD40
 Return Value: n/a
 Status: Complete
 */
@@ -164,7 +164,7 @@ void __fastcall auto_sound_init_redirect(AutoSound *self, void *) {
 Purpose: The compiler-generated scalar deleting destructor: re-install the
          virtual table, reset the fields through close, and, when bit 0 of
          the mode asks, free the storage to the game heap.
-Original Offset: 005F8640
+ORIGINAL: 0x005F8640
 Return Value: the object pointer
 Status: Complete
 */
@@ -180,7 +180,7 @@ void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
 
 /*
 Purpose: Legacy sound processing hook retained as a no-op.
-Original Offset: 005FD2B0
+ORIGINAL: 0x005FD2B0
 Return Value: zero
 Status: Complete
 */

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00448D60
 // 0x00448D60  ?close@FameWin@@QAEXXZ  ->  ?close@FameWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

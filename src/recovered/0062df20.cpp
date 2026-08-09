@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0062DF20
 // 0x0062DF20  ?start_voice@Net@@QAEHK@Z  ->  ?start_voice@Net@@QAEHK@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

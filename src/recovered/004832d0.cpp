@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004832D0
 // 0x004832D0  ?string_callback@NetWin@@QAAXHH@Z  ->  ?string_callback@NetWin@@QAAXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

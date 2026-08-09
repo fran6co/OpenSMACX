@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00625310
 // 0x00625310  ??1ImageButton@@QAE@XZ  ->  ??1ImageButton@@QAE@XZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

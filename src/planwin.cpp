@@ -23,7 +23,7 @@
 
 /*
 Purpose: Clear the plan window's line count.
-Original Offset: 0048AF20
+ORIGINAL: 0x0048AF20
 Return Value: n/a
 Status: Complete
 */
@@ -38,7 +38,7 @@ void __fastcall plan_win_clear_lines_redirect(PlanWin *self, void *) {
 /*
 Purpose: Close the plan window by dropping its blink state and running the
          close it inherits from MapWin.
-Original Offset: 0048BC50
+ORIGINAL: 0x0048BC50
 Return Value: n/a
 Status: Complete
 
@@ -80,7 +80,7 @@ uint8_t *virtual_base_of(void *self) {
 
 /*
 Purpose: Toggle the plan window's blink phase and redraw, when blinking is on.
-Original Offset: 0048BC20
+ORIGINAL: 0x0048BC20
 Return Value: n/a
 Status: Complete
 */
@@ -100,7 +100,7 @@ void __fastcall plan_win_blink_redirect(PlanWin *self, void *) {
 
 /*
 Purpose: Restore the window's backing image from the plan window's own buffer.
-Original Offset: 0048B3C0
+ORIGINAL: 0x0048B3C0
 Return Value: n/a
 Status: Complete
 

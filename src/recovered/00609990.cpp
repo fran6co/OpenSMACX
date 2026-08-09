@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00609990
 // 0x00609990  ?item@Dialog@@QAEHPADH@Z  ->  ?item@Dialog@@QAEHPADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

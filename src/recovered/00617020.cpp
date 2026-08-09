@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00617020
 // 0x00617020  ?close@Caviar@@QAEXXZ  ->  ?close@Caviar@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

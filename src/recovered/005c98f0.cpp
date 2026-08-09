@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005C98F0
 // 0x005C98F0  ?timer_callback@MultiDebug@@QAEXXZ  ->  ?timer_callback@MultiDebug@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

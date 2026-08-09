@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-Original Offset: 00403610
+ORIGINAL: 0x00403610
 Return Value: 0
 Status: Complete
 */

@@ -15,7 +15,7 @@
 
 /*
 Purpose: Initialize a zero vector.
-Original Offset: 006343C0
+ORIGINAL: 0x006343C0
 Status: Complete
 */
 Vector::Vector() {
@@ -27,7 +27,7 @@ Vector::Vector() {
 
 /*
 Purpose: Clear all vector components.
-Original Offset: 006343D0
+ORIGINAL: 0x006343D0
 Status: Complete
 */
 void Vector::close() {
@@ -39,7 +39,7 @@ void Vector::close() {
 
 /*
 Purpose: Subtract another vector into a separate output vector.
-Original Offset: 00634430
+ORIGINAL: 0x00634430
 Status: Complete
 */
 void Vector::__mi(Vector &output, Vector &right) {
@@ -61,7 +61,7 @@ void Vector::__mi(Vector &output, Vector &right) {
 
 /*
 Purpose: Add another vector sequentially into this vector.
-Original Offset: 00634480
+ORIGINAL: 0x00634480
 Status: Complete
 */
 void Vector::__apl(Vector &right) {
@@ -77,7 +77,7 @@ void Vector::__apl(Vector &right) {
 
 /*
 Purpose: Subtract another vector sequentially from this vector.
-Original Offset: 006344B0
+ORIGINAL: 0x006344B0
 Status: Complete
 */
 void Vector::__ami(Vector &right) {
@@ -93,7 +93,7 @@ void Vector::__ami(Vector &right) {
 
 /*
 Purpose: Scale this vector and copy the updated components into an output vector.
-Original Offset: 00634670
+ORIGINAL: 0x00634670
 Status: Complete
 */
 void Vector::scale(Vector &output, float scalar) {
@@ -146,7 +146,7 @@ Vector *__fastcall vector_scale_redirect(
 
 /*
 Purpose: Add two vectors component-wise into an output vector.
-Original Offset: 00628150
+ORIGINAL: 0x00628150
 Status: Complete
 */
 void __cdecl vector_add(Vector *left, Vector *right, Vector *output) {

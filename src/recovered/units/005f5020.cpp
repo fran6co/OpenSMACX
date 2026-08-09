@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005F5020 FILE
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

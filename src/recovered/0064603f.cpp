@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0064603F
 // 0x0064603F  __fwrite  ->  __fwrite
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

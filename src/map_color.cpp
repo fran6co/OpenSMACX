@@ -28,7 +28,7 @@ Purpose: Return the display colour for a mandate selector. Selectors 0, 1, and 2
          map to the first three table entries; any other value returns the
          fourth. The original decrements the selector twice against zero, so the
          branch structure is preserved for exactness.
-Original Offset: 0050E820
+ORIGINAL: 0x0050E820
 Return Value: Colour dword from the mandate colour table
 Status: Complete
 */

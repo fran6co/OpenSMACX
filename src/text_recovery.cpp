@@ -52,16 +52,19 @@ Text::~Text() OPENSMACX_NOEXCEPT_FALSE {
     shutdown();
 }
 
-void __cdecl text_txt() { // 005FD400
+// ORIGINAL: 0x005FD400
+void __cdecl text_txt() {
     new (Txt) Text(512);
     atexit(text_txt_exit);
 }
 
-void __cdecl text_txt_exit() { // 005FD460
+// ORIGINAL: 0x005FD460
+void __cdecl text_txt_exit() {
     Txt->~Text();
 }
 
-BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) { // 005FD550
+// ORIGINAL: 0x005FD550
+BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
     return Txt->open(src_id, section_id);
 }
 

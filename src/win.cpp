@@ -29,7 +29,7 @@ uint32_t *WinDynamicDefaults = reinterpret_cast<uint32_t *>(0x009B7AF0);
 /*
 Purpose: Construct a Win from its AutoSound subobject and the process window
          defaults, preserving every sparse write and legacy return residue.
-Original Offset: 005EB3D0
+ORIGINAL: 0x005EB3D0
 Status: Complete
 */
 void Win::construct() {
@@ -159,7 +159,7 @@ void move_rect(RECT &rect, int x, int y) {
 
 /*
 Purpose: Move the active window rectangle while preserving its dimensions.
-Original Offset: 005ED7D0
+ORIGINAL: 0x005ED7D0
 Status: Complete
 */
 int Win::move(int x, int y) {
@@ -169,7 +169,7 @@ int Win::move(int x, int y) {
 
 /*
 Purpose: Determine whether this window and every ancestor are visible.
-Original Offset: 005F7E90
+ORIGINAL: 0x005F7E90
 Status: Complete
 */
 int Win::is_visible() {
@@ -187,7 +187,7 @@ int Win::is_visible() {
 /*
 Purpose: Translate a client-relative point into screen coordinates by walking
          the parent chain.
-Original Offset: 005ED240
+ORIGINAL: 0x005ED240
 Status: Complete
 */
 void Win::client_to_screen(int *x, int *y) {
@@ -217,7 +217,7 @@ Purpose: Announce this window as the one the palette should follow, then report
 
          `this` is passed as the only argument and the caller cleans it, which
          is the cdecl convention the callee's mangled name declares.
-Original Offset: 005F1060
+ORIGINAL: 0x005F1060
 Return Value: 1, always
 Status: Complete
 Verification note: the call to Palette::set_active_window is NOT observed by
@@ -240,7 +240,7 @@ int __fastcall win_on_query_new_palette_redirect(Win *self, void *) {
 
 /*
 Purpose: Read the vertical scroll bar's current position.
-Original Offset: 005EE050
+ORIGINAL: 0x005EE050
 Return Value: The scroll's position, or 0 when the window has no vertical
               scroll bar. The null check is the original's, not a guard added
               here: it loads the pointer, tests it, and branches to `xor eax,
@@ -257,7 +257,7 @@ int __fastcall win_get_vert_pos_redirect(Win *self, void *) {
 
 /*
 Purpose: Read the horizontal scroll bar's current position.
-Original Offset: 005EE090
+ORIGINAL: 0x005EE090
 Return Value: The scroll's position, or 0 when the window has no horizontal
               scroll bar. Identical to get_vert_pos above but reading the
               other pointer; the two differ only in which member they load,
@@ -274,7 +274,7 @@ int __fastcall win_get_horz_pos_redirect(Win *self, void *) {
 
 /*
 Purpose: Set vertical scrollbar paging when a scrollbar is attached.
-Original Offset: 005EE0F0
+ORIGINAL: 0x005EE0F0
 Status: Complete
 */
 void Win::set_vert_paging(int paging) {
@@ -285,7 +285,7 @@ void Win::set_vert_paging(int paging) {
 
 /*
 Purpose: Set horizontal scrollbar paging when a scrollbar is attached.
-Original Offset: 005EE110
+ORIGINAL: 0x005EE110
 Status: Complete
 */
 void Win::set_horz_paging(int paging) {
@@ -317,7 +317,7 @@ void __fastcall win_set_horz_paging_redirect(Win *self, void *, int paging) {
 
 /*
 Purpose: Determine whether a point is inside a rectangle using Win32 edge semantics.
-Original Offset: 005FA7E0
+ORIGINAL: 0x005FA7E0
 Return Value: Is the point inside the rectangle? true/false
 Status: Complete
 */
@@ -334,7 +334,7 @@ Purpose: Slide a rectangle by a delta on each axis, the wrapping counterpart of
          rectangle pointer at the return because nothing overwrites it after
          the load at 0x005F8670, but that is a residue and not a value: the
          one caller clobbers EAX two instructions later at 0x005EDC95.
-Original Offset: 005F8670
+ORIGINAL: 0x005F8670
 Status: Complete
 Verification note: the original writes left, right, top, bottom in that
          interleaved order, reloading the y delta between the right and top
@@ -355,7 +355,7 @@ void __cdecl offset_rect(RECT *rect, int dx, int dy) {
 
 /*
 Purpose: Build a rectangle from an origin and dimensions using wrapping coordinates.
-Original Offset: 005F86C0
+ORIGINAL: 0x005F86C0
 Status: Complete
 */
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height) {
@@ -371,7 +371,7 @@ RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height) {
 
 /*
 Purpose: Determine whether a point is inside an origin-and-dimensions rectangle.
-Original Offset: 005FA7A0
+ORIGINAL: 0x005FA7A0
 Status: Complete
 */
 int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
@@ -390,7 +390,7 @@ int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
 
 /*
 Purpose: Compute a rectangle center with wrapping subtraction and truncation toward zero.
-Original Offset: 004BA830
+ORIGINAL: 0x004BA830
 Status: Complete
 */
 int __cdecl rect_center(RECT *rect, int *x, int *y) {
@@ -415,7 +415,7 @@ int __fastcall tutwin_rect_center_redirect(
 /*
 Purpose: Report whether this window holds the dialog focus, either directly or
          as its parent's current focus target.
-Original Offset: 005F2CA0
+ORIGINAL: 0x005F2CA0
 Return Value: Holds focus (1); does not (0)
 Status: Complete
 */
@@ -465,7 +465,7 @@ void *win_surface_slot(void *object, size_t offset) {
 
 /*
 Purpose: Acquire the process-wide device context, taking one reference.
-Original Offset: 005EC690
+ORIGINAL: 0x005EC690
 Return Value: The shared device context, or zero when none could be obtained
 Status: Complete
 */
@@ -494,7 +494,7 @@ HDC Win::get_hdc() {
 /*
 Purpose: Drop one reference to the process-wide device context, releasing it
          once the last reference is gone.
-Original Offset: 005EC6F0
+ORIGINAL: 0x005EC6F0
 Status: Complete
 Verification note: the two surviving mutants both concern the ReleaseDC call
 on the no-surface path. It is a real GDI import whose effect no fixture can
@@ -536,7 +536,7 @@ func_win_update_cursor *WinUpdateCursorOriginal =
 
 /*
 Purpose: Select a system cursor by name and refresh the displayed cursor.
-Original Offset: 005EC7C0
+ORIGINAL: 0x005EC7C0
 Return Value: No errors (0); name outside the accepted range (3)
 Status: Complete with a temporary dependency on the cursor refresh
 Verification note: ordering the cursor_handle_ clear against the refresh is
@@ -570,7 +570,7 @@ func_win_flip *WinFlipOriginal = (func_win_flip *)0x005EFD20;
 
 /*
 Purpose: Dismiss any pending bubble text and repaint the area it covered.
-Original Offset: 005F8500
+ORIGINAL: 0x005F8500
 Status: Complete with temporary dependencies on the screen refresh and flip
 */
 void Win::clear_bubble_text() {
@@ -591,7 +591,7 @@ void __cdecl win_clear_bubble_text_redirect() {
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-Original Offset: 005EC680
+ORIGINAL: 0x005EC680
 Status: Complete
 */
 int Win::UNK1(int, int, int, int, int, int, int, int, int) {
@@ -606,7 +606,7 @@ int __fastcall win_unk1_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-Original Offset: 005ED7C0
+ORIGINAL: 0x005ED7C0
 Status: Complete
 */
 int Win::UNK5() {
@@ -621,7 +621,7 @@ int __fastcall win_unk5_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-Original Offset: 005EDFE0
+ORIGINAL: 0x005EDFE0
 Status: Complete
 */
 int Win::UNK6(int) {
@@ -636,7 +636,7 @@ int __fastcall win_unk6_redirect(
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-Original Offset: 005F6A30
+ORIGINAL: 0x005F6A30
 Status: Complete
 */
 int Win::on_set_cursor(void *, unsigned int, unsigned int) {
@@ -652,7 +652,7 @@ int *WinDefaultFocus = reinterpret_cast<int *>(0x009B7AEC);
 
 /*
 Purpose: Record the window that receives focus by default.
-Original Offset: 005F2CE0
+ORIGINAL: 0x005F2CE0
 Status: Complete
 */
 void Win::set_def_focus(int focus) {
@@ -665,7 +665,7 @@ void __cdecl win_set_def_focus_redirect(int focus) {
 
 /*
 Purpose: Publish a value into both attached scrollbars' first shared slot.
-Original Offset: 005EE130
+ORIGINAL: 0x005EE130
 Status: Complete
 */
 void Win::UNK8(int value) {
@@ -681,7 +681,7 @@ void Win::UNK8(int value) {
 
 /*
 Purpose: Publish a value into both attached scrollbars' second shared slot.
-Original Offset: 005EE160
+ORIGINAL: 0x005EE160
 Status: Complete
 */
 void Win::UNK9(int value) {
@@ -703,7 +703,7 @@ void __fastcall win_unk9_redirect(Win *self, void *, int value) {
 
 /*
 Purpose: Reset the window clip; the legacy implementation is a bare return.
-Original Offset: 005EE020
+ORIGINAL: 0x005EE020
 Return Value: n/a
 Status: Complete
 */
@@ -716,7 +716,7 @@ void __fastcall win_reset_window_clip_redirect(Win *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 005F54B0
+ORIGINAL: 0x005F54B0
 Return Value: n/a
 Status: Complete
 */
@@ -729,7 +729,7 @@ void __fastcall win_on_move_redirect(Win *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 005F54C0
+ORIGINAL: 0x005F54C0
 Return Value: n/a
 Status: Complete
 */
@@ -742,7 +742,7 @@ void __fastcall win_on_size_redirect(Win *self, void *, unsigned int a1, int a2,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 005F54D0
+ORIGINAL: 0x005F54D0
 Return Value: n/a
 Status: Complete
 */
@@ -755,7 +755,7 @@ void __fastcall win_on_size_nc_redirect(Win *self, void *, unsigned int a1, int 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 005F6A40
+ORIGINAL: 0x005F6A40
 Return Value: n/a
 Status: Complete
 */
@@ -774,7 +774,7 @@ Palette **WinActivePalette = reinterpret_cast<Palette **>(0x009B8180);
 Purpose: Bring this window's palette into step with the active one, but only
          when it has fallen behind - set_active_window is skipped when the
          cached generation at 0x184 already matches the palette's at 0x400.
-Original Offset: 005F2C60
+ORIGINAL: 0x005F2C60
 Return Value: n/a
 Status: Complete
 */
@@ -800,7 +800,7 @@ void __fastcall win_sync_palette_redirect(Win *self, void *) {
 /*
 Purpose: Forward a scrollbar position to the vertical Scroll the window owns,
          doing nothing when that scrollbar is absent.
-Original Offset: 005EE030
+ORIGINAL: 0x005EE030
 Return Value: n/a
 Status: Complete
 */
@@ -813,7 +813,7 @@ void Win::set_vert_pos(int position) {
 /*
 Purpose: Forward a scrollbar position to the horizontal Scroll the window owns,
          doing nothing when that scrollbar is absent.
-Original Offset: 005EE070
+ORIGINAL: 0x005EE070
 Return Value: n/a
 Status: Complete
 */
@@ -826,7 +826,7 @@ void Win::set_horz_pos(int position) {
 /*
 Purpose: Forward a scrollbar range to the vertical Scroll the window owns,
          doing nothing when that scrollbar is absent.
-Original Offset: 005EE0B0
+ORIGINAL: 0x005EE0B0
 Return Value: n/a
 Status: Complete
 */
@@ -839,7 +839,7 @@ void Win::set_vert_range(int minimum, int maximum) {
 /*
 Purpose: Forward a scrollbar range to the horizontal Scroll the window owns,
          doing nothing when that scrollbar is absent.
-Original Offset: 005EE0D0
+ORIGINAL: 0x005EE0D0
 Return Value: n/a
 Status: Complete
 */
@@ -868,7 +868,7 @@ void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int 
 /*
 Purpose: Window cursor-set hook; the legacy implementation returns 1 to report
          it handled the message and does nothing else.
-Original Offset: 005F2670
+ORIGINAL: 0x005F2670
 Return Value: 1, always
 Status: Complete
 */
@@ -884,7 +884,7 @@ int __cdecl win_onsetcursor_redirect(void *a1, void *a2, unsigned int a3, unsign
 Purpose: Report whether a value is present in the window's id table - the
          array at 0x1A4 with its count at 0x3FC. A zero value and an empty
          table both report absent.
-Original Offset: 005ECE80
+ORIGINAL: 0x005ECE80
 Return Value: 1 when the value is in the table, 0 otherwise
 Status: Complete
 */
@@ -913,7 +913,7 @@ int __fastcall win_unk3_redirect(Win *self, void *, int value) {
 Purpose: Report whether a window is anywhere below this one in the child
          tree, searching depth first. A direct child counts, and so does any
          descendant of one.
-Original Offset: 005ECE20
+ORIGINAL: 0x005ECE20
 Return Value: 1 when the candidate is a descendant, 0 otherwise
 Status: Complete
 Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
@@ -959,7 +959,7 @@ int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate) {
 }
 
 /*
-Original Offset: 005F8530
+ORIGINAL: 0x005F8530
 Status: Complete
 */
 void Win::on_mousewheel_down_vert(int a1) {
@@ -970,7 +970,7 @@ void Win::on_mousewheel_down_vert(int a1) {
 }
 
 /*
-Original Offset: 005F8590
+ORIGINAL: 0x005F8590
 Status: Complete
 */
 void Win::on_mousewheel_up_horz(int a1) {
@@ -983,7 +983,7 @@ void Win::on_mousewheel_up_horz(int a1) {
 /*
 Purpose: Report the left mouse button state, honouring a swapped-buttons
          system setting.
-Original Offset: 005EC960
+ORIGINAL: 0x005EC960
 Return Value: nonzero while the logical left button is down
 Status: Complete
 */
@@ -998,7 +998,7 @@ int Win::get_lbutton_state() {
 }
 
 /*
-Original Offset: 005F8550
+ORIGINAL: 0x005F8550
 Status: Complete
 */
 void Win::on_mousewheel_down_horz(int a1) {
@@ -1009,7 +1009,7 @@ void Win::on_mousewheel_down_horz(int a1) {
 }
 
 /*
-Original Offset: 005F8570
+ORIGINAL: 0x005F8570
 Status: Complete
 */
 void Win::on_mousewheel_up_vert(int a1) {

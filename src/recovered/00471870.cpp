@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00471870
 // 0x00471870  ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z  ->  ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

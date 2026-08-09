@@ -45,7 +45,7 @@ Dialog *dialog_of(void *self) {
 /*
 Purpose: Fetch one item's text, from whichever widget this kind of dialog
          keeps its items in.
-Original Offset: 00612A70
+ORIGINAL: 0x00612A70
 Return Value: the widget's result, zero for kinds that hold no items
 Status: Complete
 */
@@ -68,7 +68,7 @@ int Dialogs::item(char *text, int index) {
 
 /*
 Purpose: Count the items this kind of dialog holds.
-Original Offset: 00613740
+ORIGINAL: 0x00613740
 Return Value: the count, zero for kinds that hold no items
 Status: Complete
 */
@@ -115,7 +115,7 @@ Purpose: Forward on right down to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-Original Offset: 00612ED0
+ORIGINAL: 0x00612ED0
 Return Value: n/a
 Status: Complete
 */
@@ -133,7 +133,7 @@ Purpose: Forward on right double click to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-Original Offset: 00612EF0
+ORIGINAL: 0x00612EF0
 Return Value: n/a
 Status: Complete
 */
@@ -151,7 +151,7 @@ Purpose: Forward on left up to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-Original Offset: 00612F10
+ORIGINAL: 0x00612F10
 Return Value: n/a
 Status: Complete
 */
@@ -169,7 +169,7 @@ Purpose: Forward on right up to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-Original Offset: 00612F40
+ORIGINAL: 0x00612F40
 Return Value: n/a
 Status: Complete
 */
@@ -187,7 +187,7 @@ Purpose: Forward on right click to the embedded widget, but only when the
          active dialog is the sprite-box kind (8). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x8C.
-Original Offset: 00612F60
+ORIGINAL: 0x00612F60
 Return Value: n/a
 Status: Complete
 */
@@ -205,7 +205,7 @@ Purpose: Forward on scrolled to the embedded widget, but only when the
          active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
-Original Offset: 00612F80
+ORIGINAL: 0x00612F80
 Return Value: n/a
 Status: Complete
 */
@@ -223,7 +223,7 @@ Purpose: Forward on scrolling to the embedded widget, but only when the
          active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
-Original Offset: 00612FA0
+ORIGINAL: 0x00612FA0
 Return Value: n/a
 Status: Complete
 */
@@ -241,7 +241,7 @@ Purpose: Forward on mousewheel to the embedded widget, but only when the
          active dialog is the list-box kind (2). `this` arrives at the interface subobject, so
          the discriminator sits 8 bytes before it and the target is reached by
          adjusting back 0x140.
-Original Offset: 00612FC0
+ORIGINAL: 0x00612FC0
 Return Value: n/a
 Status: Complete
 */
@@ -348,7 +348,7 @@ Purpose: Destroy a Dialogs. Stage the Dialogs tables into the GraphicWin/Win
          allocation base, so each staging overwrites the previous tables in
          the original's exact order. The original's C++ exception frame
          targets __CxxFrameHandler and is omitted as unreachable per policy.
-Original Offset: 00406910
+ORIGINAL: 0x00406910
 Return Value: EAX residue (ListBox::destroy's constant 0); declared void in
               the mangled name, modelled as uint32_t like ListBox::destroy.
 Status: Complete with temporary EditGroup, SpriteBox and CheckBox destructor
@@ -409,7 +409,7 @@ Purpose: The compiler-generated scalar deleting destructor: run ~Dialogs, the
          Always returns the allocation base (this - 0x188), the original's
          EAX. The fixed +0xBA0/+0x188 subobject offsets are complete-object
          facts: this thunk is only ever entered on a most-derived Dialogs.
-Original Offset: 00407100
+ORIGINAL: 0x00407100
 Return Value: the allocation base
 Status: Complete
 */

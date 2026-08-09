@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 00404280
+ORIGINAL: 0x00404280
 Return Value: n/a
 Status: Complete
 */
@@ -34,7 +34,7 @@ void __fastcall alpha_movie_unk7_redirect(AlphaMovie *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-Original Offset: 00404220
+ORIGINAL: 0x00404220
 Return Value: 0, always
 Status: Complete
 */
@@ -48,7 +48,7 @@ int __fastcall alpha_movie_unk2_redirect(AlphaMovie *self, void *, int a1, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-Original Offset: 00404240
+ORIGINAL: 0x00404240
 Return Value: 0, always
 Status: Complete
 */
@@ -71,7 +71,7 @@ Purpose: Unknown; the legacy implementation returns its argument unchanged.
          width and with no truncation or re-extension. It touches no field,
          which is why it can be replaced ahead of the class layout like its
          neighbours.
-Original Offset: 00404230
+ORIGINAL: 0x00404230
 Return Value: the argument, unchanged
 Status: Complete
 */
@@ -85,7 +85,7 @@ int __fastcall alpha_movie_unk3_redirect(AlphaMovie *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-Original Offset: 00404250
+ORIGINAL: 0x00404250
 Return Value: 0, always
 Status: Complete
 */
@@ -99,7 +99,7 @@ int __fastcall alpha_movie_unk5_redirect(AlphaMovie *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00404260
+ORIGINAL: 0x00404260
 Return Value: n/a
 Status: Complete
 */
@@ -112,7 +112,7 @@ void __fastcall alpha_movie_unk6_00404260_redirect(AlphaMovie *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00404270
+ORIGINAL: 0x00404270
 Return Value: n/a
 Status: Complete
 */
@@ -125,7 +125,7 @@ void __fastcall alpha_movie_unk6_00404270_redirect(AlphaMovie *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-Original Offset: 004042A0
+ORIGINAL: 0x004042A0
 Return Value: 1, always
 Status: Complete
 */
@@ -138,7 +138,7 @@ int __fastcall alpha_movie_unk8_redirect(AlphaMovie *self, void *, int a1, int a
 }
 
 /*
-Original Offset: 004041E0
+ORIGINAL: 0x004041E0
 Status: Complete
 */
 void AlphaMovie::close() {
@@ -148,7 +148,7 @@ void AlphaMovie::close() {
 }
 
 /*
-Original Offset: 00404290
+ORIGINAL: 0x00404290
 Status: Complete
 */
 void AlphaMovie::update() {

@@ -21,7 +21,7 @@
 
 /*
 Purpose: Shutdown the class instance.
-Original Offset: 005FA830
+ORIGINAL: 0x005FA830
 Return Value: n/a
 Status: Complete
 */
@@ -34,7 +34,7 @@ void Spot::shutdown() {
 
 /*
 Purpose: Initialize the class instance with count.
-Original Offset: 005FA8A0
+ORIGINAL: 0x005FA8A0
 Return Value: n/a
 Status: Complete
 */
@@ -49,7 +49,7 @@ void Spot::init(int count) {
 
 /*
 Purpose: Search for a specific spot and replace the RECT value.
-Original Offset: 005FA900
+ORIGINAL: 0x005FA900
 Return Value: n/a
 Status: Complete
 */
@@ -66,7 +66,7 @@ void Spot::replace(int position, int type, int left, int top, int length, int wi
 
 /*
 Purpose: Add a new spot from the specified values.
-Original Offset: 005FA960
+ORIGINAL: 0x005FA960
 Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
@@ -96,7 +96,7 @@ int Spot::add(int position, int type, RECT *rect) {
 
 /*
 Purpose: Remove all spots at a specific position.
-Original Offset: 005FA9C0
+ORIGINAL: 0x005FA9C0
 Return Value: n/a
 Status: Complete
 */
@@ -113,7 +113,7 @@ void Spot::kill_pos(int position) {
 
 /*
 Purpose: Remove a specific spot.
-Original Offset: 005FAA10
+ORIGINAL: 0x005FAA10
 Return Value: n/a
 Status: Complete
 */
@@ -127,7 +127,7 @@ void Spot::kill_specific(int position, int type) {
 
 /*
 Purpose: Remove all spots of a specific type.
-Original Offset: 005FAA90
+ORIGINAL: 0x005FAA90
 Return Value: n/a
 Status: Complete
 */
@@ -141,7 +141,7 @@ void Spot::kill_type(int type) {
 
 /*
 Purpose: Check if the coordinates fall inside a spot. If so, return information about the spot.
-Original Offset: 005FAB00
+ORIGINAL: 0x005FAB00
 Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
@@ -167,7 +167,7 @@ int Spot::check(int x, int y, int *spot_pos, int *spot_type) {
 
 /*
 Purpose: Check if the coordinates fall within a spot. If so, return information about the spot.
-Original Offset: 005FAB70
+ORIGINAL: 0x005FAB70
 Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
@@ -196,7 +196,7 @@ int Spot::check(int x, int y, int *spot_pos, int *spot_type, RECT *spot_rect) {
 
 /*
 Purpose: Get the RECT for a specific spot.
-Original Offset: 005FAC00
+ORIGINAL: 0x005FAC00
 Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */

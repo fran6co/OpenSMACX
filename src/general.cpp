@@ -30,7 +30,7 @@ BOOL *PluralityDefault = (BOOL *)0x009BBFF0;
 
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
-Original Offset: 00600780
+ORIGINAL: 0x00600780
 Return Value: n/a
 Status: Complete
 */
@@ -44,7 +44,7 @@ void __cdecl purge_trailing(LPSTR input) {
 
 /*
 Purpose: Trim the leading spaces in-line from the start of the string.
-Original Offset: 00600760
+ORIGINAL: 0x00600760
 Return Value: n/a
 Status: Complete
 */
@@ -58,7 +58,7 @@ void __cdecl purge_leading(LPSTR input) {
 
 /*
 Purpose: Trim the leading and trailing spaces from the string.
-Original Offset: 006007B0
+ORIGINAL: 0x006007B0
 Return Value: n/a
 Status: Complete
 */
@@ -69,7 +69,7 @@ void __cdecl purge_spaces(LPSTR input) {
 
 /*
 Purpose: Truncate the string at the line feed (LF). Doesn't take into account carriage return (CR).
-Original Offset: 00600820
+ORIGINAL: 0x00600820
 Return Value: n/a
 Status: Complete
 */
@@ -97,7 +97,7 @@ void __cdecl kill_nl(LPSTR str) {
 /*
 Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer has an extra byte and 
          doesn't take into account a carriage return (CR).
-Original Offset: 00600840
+ORIGINAL: 0x00600840
 Return Value: n/a
 Status: Complete
 */
@@ -109,7 +109,7 @@ void __cdecl add_lf(LPSTR str) {
 
 /*
 Purpose: Use the min and max parameters to bound the input.
-Original Offset: 00422F00
+ORIGINAL: 0x00422F00
 Return Value: Bounded input
 Status: Complete
 */
@@ -125,7 +125,7 @@ int __cdecl range(int input, int min, int max) {
 
 /*
 Purpose: Allocate memory with error checking.
-Original Offset: 005D4510
+ORIGINAL: 0x005D4510
 Return Value: Pointer to allocated memory
 Status: Complete with two versions of malloc to prevent crash. Incompatibility with newer SDK 
         version of malloc CRT. Revisit once more code is redirected to dll.
@@ -157,7 +157,7 @@ LPVOID __cdecl mem_get(size_t size) {
 }
 /*
 Purpose: Check the source file path and attempt to open a handle to the file.
-Original Offset: 00634BB0
+ORIGINAL: 0x00634BB0
 Return Value: FILE pointer
 Status: Complete with two versions of fopen to prevent a crash. Incompatibility with newer SDK 
         version of fopen/fopen_s. Revisit once more code is redirected to dll.
@@ -182,7 +182,7 @@ FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
 
 /*
 Purpose: Set the global gender and plurality variables used by various parse functions.
-Original Offset: 005A58E0
+ORIGINAL: 0x005A58E0
 Return Value: n/a
 Status: Complete
 */
@@ -193,7 +193,7 @@ void __cdecl parse_set(int gender, BOOL plurality) {
 
 /*
 Purpose: Copies the value into a number global message buffer using id.
-Original Offset: 00625E30
+ORIGINAL: 0x00625E30
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
@@ -207,7 +207,7 @@ int __cdecl parse_num(int id, int value) {
 
 /*
 Purpose: Use the string table input reference to copy a string into the global message buffer.
-Original Offset: 00625E50
+ORIGINAL: 0x00625E50
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
@@ -229,7 +229,7 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
 
 /*
 Purpose: Copies the input string into the global message buffer.
-Original Offset: 00625EC0
+ORIGINAL: 0x00625EC0
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
@@ -251,7 +251,7 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
 
 /*
 Purpose: Convert the binary string to an integer.
-Original Offset: 006288D0
+ORIGINAL: 0x006288D0
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -265,7 +265,7 @@ int __cdecl btoi(LPCSTR str) {
 
 /*
 Purpose: Convert the hex string to an integer.
-Original Offset: 006288F0
+ORIGINAL: 0x006288F0
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -285,7 +285,7 @@ int __cdecl htoi(LPCSTR str) {
 
 /*
 Purpose: Converts a binary, hex or decimal string to an integer.
-Original Offset: 00628950
+ORIGINAL: 0x00628950
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -314,7 +314,7 @@ int __cdecl stoi(LPCSTR str) {
 
 /*
 Purpose: Locates the first number in a string.
-Original Offset: 00628B30
+ORIGINAL: 0x00628B30
 Return Value: Pointer to the first number, otherwise zero
 Status: Complete
 */
@@ -337,7 +337,7 @@ char *__cdecl findnum(char *str) {
 /*
 Purpose: Checks to see if the JACKAL library version is up to date. Pretty pointless but might add 
          an OpenSMACX check in the future.
-Original Offset: 0062D570
+ORIGINAL: 0x0062D570
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -355,7 +355,7 @@ BOOL __cdecl jackal_version_check(LPCSTR version) {
 
 /*
 Purpose: This handles parsing the input string and storing it in the output.
-Original Offset: 00625880
+ORIGINAL: 0x00625880
 Return Value: No errors (0); Error (3)
 Status: WIP
 */
@@ -615,7 +615,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
 
 /*
 Purpose: Get the drive letter of the CD path.
-Original Offset: 006003A0
+ORIGINAL: 0x006003A0
 Return Value: CD drive letter
 Status: Complete
 */
@@ -623,7 +623,7 @@ char __cdecl filefind_cd_drive_letter() { return FilefindPath->cd_path[0]; }
 
 /*
 Purpose: Set an alternative path for the Filefind checks.
-Original Offset: 006003B0
+ORIGINAL: 0x006003B0
 Return Value: n/a
 Status: Complete
 */
@@ -640,7 +640,7 @@ void __cdecl filefind_set_alternative(LPCSTR path) {
 /*
 Purpose: Initialize the Filefind global along with a CD check if there isn't a complete install. 
          Optimized logic since most installs will be on a HDD making the CD check less important.
-Original Offset: 00600400
+ORIGINAL: 0x00600400
 Return Value: No errors (0) otherwise error
 Status: WIP
 */
@@ -699,7 +699,7 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
 
 /*
 Purpose: Check to see if the specified file can be found at some other path.
-Original Offset: 006005D0
+ORIGINAL: 0x006005D0
 Return Value: File path string or NULL if not found
 Status: Complete
 */
@@ -748,7 +748,7 @@ LPSTR __cdecl filefind_get(LPCSTR file_name) {
 
 /*
 Purpose: Count the number of unsigned bits set. Replaced the original code with Brian Kernighan's 
-Original Offset: 0050BA30
+ORIGINAL: 0x0050BA30
 Return Value: the number of set bits
 Status: Complete
 */
@@ -770,12 +770,12 @@ int __cdecl bit_count(int bitfield) {
 
 /*
 Purpose: Count the number of signed bits set. Added a fix to prevent an infinite loop.
-Original Offset: 00628AB0
+ORIGINAL: 0x00628AB0
 Return Value: Bit count
 Status: Complete
 */
 /*
-Original Offset: 00628AB0
+ORIGINAL: 0x00628AB0
 Return Value: Bit count
 Status: Complete
 */
@@ -792,7 +792,7 @@ uint32_t __cdecl bit_count_signed(int input) {
 
 /*
 Purpose: Initialize the pseudo-random number generator.
-Original Offset: 00538FB0
+ORIGINAL: 0x00538FB0
 Return Value: n/a
 Status: Complete with built in version of srand(). Revisit once more code is redirected to dll.
 */
@@ -805,12 +805,12 @@ void __cdecl my_srand(int reseed) {
 /*
 Purpose: Swap the values of two 32-bit variables. Added an additional check when swapping the same
          memory location.
-Original Offset: 00628A50
+ORIGINAL: 0x00628A50
 Return Value: n/a
 Status: Complete
 */
 /*
-Original Offset: 00628A50
+ORIGINAL: 0x00628A50
 Return Value: n/a
 Status: Complete
 */
@@ -823,12 +823,12 @@ void __cdecl swap(int *var1, int *var2) {
 /*
 Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
          memory location.
-Original Offset: 00628A80
+ORIGINAL: 0x00628A80
 Return Value: n/a
 Status: Complete
 */
 /*
-Original Offset: 00628A80
+ORIGINAL: 0x00628A80
 Return Value: n/a
 Status: Complete
 */
@@ -841,7 +841,7 @@ void __cdecl swap(uint8_t *var1, uint8_t *var2) {
 /*
 Purpose: Shift the numerator to the left by 16 then divide by the denominator. Added a check to 
          prevent a divide by zero crash.
-Original Offset: 00628AD0
+ORIGINAL: 0x00628AD0
 Return Value: Quotient
 Status: Complete
 */
@@ -856,7 +856,7 @@ int __cdecl fixed_div(int numerator, int denominator) {
 Purpose: Reverse string search for the last occurrence of the specified character. Replaced the
          original searching logic with strrchr() that does same thing. The end parameter can be 
          removed in the future.
-Original Offset: 00628AF0
+ORIGINAL: 0x00628AF0
 Return Value: Position of character or NULL if not found.
 Status: Complete
 */
@@ -869,7 +869,7 @@ const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value) {
 
 /*
 Purpose: Calculate the square root of the input.
-Original Offset: 006290E0
+ORIGINAL: 0x006290E0
 Return Value: Square root
 Status: Complete
 */
@@ -888,7 +888,7 @@ int __cdecl quick_root(int input) {
 
 /*
 Purpose: Calculate the offset and bitmask for the specified input.
-Original Offset: 0050BA00
+ORIGINAL: 0x0050BA00
 Return Value: n/a
 Status: Complete
 */
@@ -899,7 +899,7 @@ void __cdecl bitmask(int input, int *offset, int *mask) {
 
 /*
 Purpose: Calculate a basic XOR checksum for the data buffer.
-Original Offset: 00539090
+ORIGINAL: 0x00539090
 Return Value: the XOR checksum of the buffer, seeded
 Status: Complete
 */
@@ -918,7 +918,7 @@ uint8_t __cdecl checksum(char *buffer, int size, uint8_t seed) {
 
 /*
 Purpose: Calculate a basic XOR checksum for a password string.
-Original Offset: 005390C0
+ORIGINAL: 0x005390C0
 Return Value: Checksum
 Status: Complete
 */
@@ -940,7 +940,7 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
 /*
 Purpose: Calculate a random value within the provided bounds. The unused 2nd parameter was possibly 
          meant to have the random value append to it.
-Original Offset: 00579770
+ORIGINAL: 0x00579770
 Return Value: Bounded random value
 Status: Complete
 */
@@ -950,7 +950,7 @@ uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
 
 /*
 Purpose: Create a debug error pop-up then write all the parameters to the log file.
-Original Offset: 00538F30
+ORIGINAL: 0x00538F30
 Return Value: n/a
 Status: Complete
 */
@@ -966,7 +966,7 @@ void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3) {
 
 /*
 Purpose: Delete the initial auto-save game file.
-Original Offset: 005ABD10
+ORIGINAL: 0x005ABD10
 Return Value: n/a
 Status: Complete
 */
@@ -976,7 +976,7 @@ void __cdecl kill_auto_save() {
 
 /*
 Purpose: Handle the creation and management of the auto-save game files.
-Original Offset: 005ABD20
+ORIGINAL: 0x005ABD20
 Return Value: n/a
 Status: Complete
 */
@@ -1051,7 +1051,7 @@ void __cdecl auto_save_debug() {
 /*
 Purpose: Load a Scenario Editor undo (type: 1) or redo (type: -1) auto-save. TODO: Revisit in the 
          future to fix some of the underlying issues with the undo/redo process.
-Original Offset: 005ABE40
+ORIGINAL: 0x005ABE40
 Return Value: n/a
 Status: Complete
 */
@@ -1073,7 +1073,7 @@ void __cdecl load_undo(int type) {
 
 /*
 Purpose: Remove all the existing Scenario Editor undo auto-saves.
-Original Offset: 005ABEC0
+ORIGINAL: 0x005ABEC0
 Return Value: n/a
 Status: Complete
 */
@@ -1087,7 +1087,7 @@ void __cdecl wipe_undo() {
 
 /*
 Purpose: Handle the creation of an undo auto-save when certain Scenario Editor changes are made.
-Original Offset: 005ABF20
+ORIGINAL: 0x005ABF20
 Return Value: n/a
 Status: Complete
 */
@@ -1109,7 +1109,7 @@ void __cdecl auto_undo() {
 /*
 Purpose: Read the specified header from a file. This assumes the header string buffer is at least 
          256 characters. TODO: Replace built-in versions of _fgetc and change return to std::string.
-Original Offset: 0057D1F0
+ORIGINAL: 0x0057D1F0
 Return Value: n/a
 Status: Complete
 */
@@ -1131,7 +1131,7 @@ void __cdecl header_check(LPSTR header, FILE *file) {
 
 /*
 Purpose: Write the specified header to a file. TODO: Replace built-in versions of _fputc.
-Original Offset: 0057D240
+ORIGINAL: 0x0057D240
 Return Value: n/a
 Status: Complete
 */
@@ -1146,7 +1146,7 @@ void __cdecl header_write(LPCSTR header, FILE *file) {
 
 /*
 Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
-Original Offset: 005B5690
+ORIGINAL: 0x005B5690
 Return Value: n/a
 Status: Complete
 */

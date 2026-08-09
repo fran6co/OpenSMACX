@@ -22,7 +22,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-Original Offset: 0060C7C0
+ORIGINAL: 0x0060C7C0
 Return Value: n/a
 Status: Complete
 */
@@ -51,7 +51,7 @@ Purpose: Close the ListBox: close its GraphicWin virtual base (source-owned) and
          its Dialog virtual base (original dependency via seam), both located
          through the runtime vbtable, then reset the ListBox-owned fields from
          the process defaults and re-arm Dialog::field_B4_.
-Original Offset: 00609F20
+ORIGINAL: 0x00609F20
 Return Value: EAX residue (constant 0). Declared void (?close@ListBox@@QAEXXZ);
               modelled as uint32_t to preserve the residue like GraphicWin::close.
 Status: Complete with temporary Dialog::close original dependency
@@ -101,7 +101,7 @@ Purpose: Destroy a ListBox: re-stage the GraphicWin, Buffer, and Dialog subobjec
          vtables and refresh the two vbase-adjust fields (all located through the
          runtime vbtable), then run close(). The original opens no exception
          frame; there is nothing to omit.
-Original Offset: 00609EC0
+ORIGINAL: 0x00609EC0
 Return Value: EAX residue (close()'s residue, constant 0). The void destructor is
               entered adjusted to L + 0x48; see the redirect.
 Status: Complete with temporary Dialog::close original dependency (through close)
@@ -152,7 +152,7 @@ uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
-Original Offset: 0060CE10
+ORIGINAL: 0x0060CE10
 Return Value: n/a
 Status: Complete
 */

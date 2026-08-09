@@ -28,7 +28,7 @@ func_string_box_add_fixup StringBoxAddFixup = original_method<func_string_box_ad
 Purpose: Add a string to the box - stage the text, index and a cleared flag
          into the string struct at 0x2B70, add it, and run the fixup pass when
          the struct reports it did not take.
-Original Offset: 00629710
+ORIGINAL: 0x00629710
 Return Value: n/a
 Status: Complete
 */
@@ -48,7 +48,7 @@ void __fastcall string_box_add_redirect(StringBox *self, void *, char *text,
 
 /*
 Purpose: Record the scroll position and repaint through virtual slot 62.
-Original Offset: 00629D20
+ORIGINAL: 0x00629D20
 Return Value: n/a
 Status: Complete
 */

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0043F5C0
 // 0x0043F5C0  ?stop@DiploPop@@QAEXXZ  ->  ?stop@DiploPop@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

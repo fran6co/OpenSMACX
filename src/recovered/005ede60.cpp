@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005EDE60
 // 0x005EDE60  ?maximize@Win@@QAEHXZ  ->  ?maximize@Win@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

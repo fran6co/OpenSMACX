@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 004980F0
+ORIGINAL: 0x004980F0
 Return Value: n/a
 Status: Complete
 */
@@ -33,7 +33,7 @@ void __fastcall report_win_on_mouse_move_redirect(ReportWin *self, void *, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00498100
+ORIGINAL: 0x00498100
 Return Value: n/a
 Status: Complete
 */

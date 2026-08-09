@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00583CB0
 // 0x00583CB0  ?design_new_veh@@YAXHH@Z  ->  ?design_new_veh@@YAXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

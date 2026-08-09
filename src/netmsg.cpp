@@ -24,7 +24,7 @@ func_popup_hide PopupOriginalHide = original_method<func_popup_hide>(0x00404A80)
 /*
 Purpose: Close an outstanding network message - stop its timer and hide the
          popup - doing nothing when none is showing.
-Original Offset: 0047A7D0
+ORIGINAL: 0x0047A7D0
 Return Value: n/a
 Status: Complete
 */

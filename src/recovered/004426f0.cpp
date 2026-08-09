@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004426F0
 // 0x004426F0  ?check_done@DiploWin@@QAEXXZ  ->  ?check_done@DiploWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 004B9F80
+ORIGINAL: 0x004B9F80
 Return Value: n/a
 Status: Complete
 */
@@ -35,7 +35,7 @@ void __fastcall status_win_close_redirect(StatusWin *self, void *) {
 /*
 Purpose: Place the status window, invalidating the two cached values that
          follow its position.
-Original Offset: 004B9F90
+ORIGINAL: 0x004B9F90
 Return Value: n/a
 Status: Complete
 */
@@ -57,7 +57,7 @@ void *SubInterfaceGlobal = (void *)0x006EEED8;
 /*
 Purpose: Release the status window's hold on the interface mode, if it holds
          one. The original tail-jumps into the release, so nothing follows it.
-Original Offset: 004B8970
+ORIGINAL: 0x004B8970
 Return Value: n/a
 Status: Complete
 */

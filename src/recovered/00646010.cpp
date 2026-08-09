@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00646010
 // 0x00646010  _srand  ->  _srand
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005F4CA0
 // 0x005F4CA0  ?update_nc_buffer@Win@@QAEXH@Z  ->  ?update_nc_buffer@Win@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

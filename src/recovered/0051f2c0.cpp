@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0051F2C0
 // 0x0051F2C0  ?wait_2@@YAXXZ  ->  ?wait_2@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

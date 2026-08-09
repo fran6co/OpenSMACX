@@ -3,7 +3,7 @@
 
 /*
 Purpose: Set the four fonts used by popup strings.
-Original Offset: 006046F0
+ORIGINAL: 0x006046F0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -41,7 +41,7 @@ Purpose: Install the three button fonts, refusing a null primary.
          installed. Those are different failures and the return code does not
          distinguish them, which is the original's behaviour and not an
          oversight here.
-Original Offset: 006047F0
+ORIGINAL: 0x006047F0
 Return Value: 3 when the primary font is null, otherwise 0
 Status: Complete
 */

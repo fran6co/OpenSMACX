@@ -85,7 +85,7 @@ Purpose: Subtract two three-component float vectors into a third.
          and is rounded to float only by the store, so a version that computed
          in float throughout could round differently.
 
-Original Offset: 00628180
+ORIGINAL: 0x00628180
 Return Value: n/a
 Status: Complete
 */
@@ -111,12 +111,12 @@ Purpose: Scale a three-component float vector by a scalar.
          the value is the same extended-precision number either way, since it
          came from the same float32.
 
-Original Offset: 006281B0
+ORIGINAL: 0x006281B0
 Return Value: n/a
 Status: Complete
 */
 /*
-Original Offset: 006281B0
+ORIGINAL: 0x006281B0
 Return Value: n/a
 Status: Complete
 */
@@ -155,12 +155,12 @@ Purpose: Dot product of `this` with a three-component float vector.
          The C++ below compiles to this instruction sequence exactly, `ret 4`
          included - checked with objdump rather than assumed.
 
-Original Offset: 00634650
+ORIGINAL: 0x00634650
 Return Value: the dot product, in ST(0)
 Status: Complete
 */
 /*
-Original Offset: 00634650
+ORIGINAL: 0x00634650
 Return Value: the dot product, in ST(0)
 Status: Complete
 */
@@ -191,7 +191,7 @@ Purpose: Round an integer DOWN to a multiple of another, toward zero.
          go through one `idiv`: y == 0 and INT_MIN / -1 raise #DE here exactly
          as they do in the original.
 
-Original Offset: 00559210
+ORIGINAL: 0x00559210
 Return Value: the largest multiple of `step` no further from zero than `value`
 Status: Complete
 */
@@ -210,12 +210,12 @@ Purpose: Follow a two-link chain, or return zero when the first link is unset.
          DIFFERENT fields, which is easy to lose when transcribing and produces
          a body that works whenever the two happen to agree.
 
-Original Offset: 005E3630
+ORIGINAL: 0x005E3630
 Return Value: the dword two links away, or 0
 Status: Complete
 */
 /*
-Original Offset: 005E3630
+ORIGINAL: 0x005E3630
 Return Value: the dword two links away, or 0
 Status: Complete
 */
@@ -247,7 +247,7 @@ Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
          bit rather than on a large unsigned value - the difference shows up
          for any field with the top bit set.
 
-Original Offset: 005E3650
+ORIGINAL: 0x005E3650
 Return Value: field 0x10 + field 0, or field 0xc
 Status: Complete
 */
@@ -280,7 +280,7 @@ Purpose: Store an argument into three fields, clamping anything outside 0..3
          transcription that tidied it would still be correct only because the
          value stored is the same for all three.
 
-Original Offset: 005E3660
+ORIGINAL: 0x005E3660
 Return Value: n/a
 Status: Complete
 */
@@ -304,7 +304,7 @@ Purpose: Store a non-zero argument into field 0x38, or refuse with code 10.
          whatever it held. Returning 10 without that being true of the object
          would be a different function.
 
-Original Offset: 004482F0
+ORIGINAL: 0x004482F0
 Return Value: 0 on success, 10 when the argument is zero
 Status: Complete
 */
@@ -327,7 +327,7 @@ Purpose: Clear field 4, set the low bit of field 8, put 0x24 in field 0.
          the result. EAX still holds `this` at the `ret` - the residue this
          tree treats as a return value.
 
-Original Offset: 004C8070
+ORIGINAL: 0x004C8070
 Return Value: `this`
 Status: Complete
 */
@@ -351,12 +351,12 @@ Purpose: Add another 3x3 float matrix into this one, element by element.
          the two nested threes are nine consecutive floats, not three rows of
          three restarted each time.
 
-Original Offset: 006347C0
+ORIGINAL: 0x006347C0
 Return Value: n/a
 Status: Complete
 */
 /*
-Original Offset: 006347C0
+ORIGINAL: 0x006347C0
 Return Value: n/a
 Status: Complete
 */
@@ -386,7 +386,7 @@ Purpose: Subtract another 3x3 float matrix from this one.
          The same nine-element walk as 006347C0, but loading THIS first: the
          result is this - other, and subtraction does not commute.
 
-Original Offset: 006348F0
+ORIGINAL: 0x006348F0
 Return Value: n/a
 Status: Complete
 */
@@ -408,12 +408,12 @@ Purpose: Scale a 3x3 float matrix by a scalar.
          re-loaded inside the inner loop, which changes nothing - it is the
          same float32 every time.
 
-Original Offset: 006348C0
+ORIGINAL: 0x006348C0
 Return Value: n/a
 Status: Complete
 */
 /*
-Original Offset: 006348C0
+ORIGINAL: 0x006348C0
 Return Value: n/a
 Status: Complete
 */
@@ -447,12 +447,12 @@ Purpose: Are two three-component float vectors equal?
          returning `bool` matches, because a caller of a byte-returning
          function reads AL.
 
-Original Offset: 006344E0
+ORIGINAL: 0x006344E0
 Return Value: true when every component matches, or is unordered
 Status: Complete
 */
 /*
-Original Offset: 006344E0
+ORIGINAL: 0x006344E0
 Return Value: true when the three components compare equal or unordered
 Status: Complete
 */
@@ -487,7 +487,7 @@ Purpose: Length of a three-component float vector.
          reproducing it would be copying an implementation detail, not the
          function.
 
-Original Offset: 006281E0
+ORIGINAL: 0x006281E0
 Return Value: the length, in ST(0)
 Status: Complete
 */
@@ -524,7 +524,7 @@ Purpose: Scale a field by an argument and divide by 600.
          unsigned and casting back keeps that defined, which signed overflow
          in C++ would not be.
 
-Original Offset: 0063BEB0
+ORIGINAL: 0x0063BEB0
 Return Value: (field 0x3798 * argument) / 600
 Status: Complete
 */
@@ -543,7 +543,7 @@ Purpose: Scale a field by an argument and divide by 440.
          0x94f2095 is ceil(2^36 / 440). Confirmed the same way, over the same
          206,006 inputs, with no disagreement.
 
-Original Offset: 0063BEE0
+ORIGINAL: 0x0063BEE0
 Return Value: (field 0x379c * argument) / 440
 Status: Complete
 */
@@ -567,12 +567,12 @@ Purpose: Fill the eight bytes at a pointer with 0xff.
          writes the first four bytes as a dword and the next four one at a
          time; the result is eight 0xff bytes either way.
 
-Original Offset: 0057DEE0
+ORIGINAL: 0x0057DEE0
 Return Value: n/a
 Status: Complete
 */
 /*
-Original Offset: 0057DEE0
+ORIGINAL: 0x0057DEE0
 Return Value: n/a
 Status: Complete
 */
@@ -602,12 +602,12 @@ Purpose: Hand out the next of ten 60-byte slots, wrapping back to the first.
          before the store either way; writing the wrap first would return the
          wrong slot on the tenth call and only then.
 
-Original Offset: 006252C0
+ORIGINAL: 0x006252C0
 Return Value: a pointer to the slot that was current on entry
 Status: Complete
 */
 /*
-Original Offset: 006252C0
+ORIGINAL: 0x006252C0
 Return Value: a pointer to the slot that was current on entry
 Status: Complete
 */
@@ -637,7 +637,7 @@ Purpose: Half the sum of an argument and a span read out of a structure.
          truncates toward zero: the `sub` adds one first when the value is
          negative, which is exactly what a bare `sar` would get wrong.
 
-Original Offset: 00408470
+ORIGINAL: 0x00408470
 Return Value: (a->[0x14] - a->[0x10] + b) / 2
 Status: Complete
 */
@@ -662,12 +662,12 @@ Purpose: Fill 1,536 dwords with -1, starting at offset 0xa20.
          region actually begins at 0xa20 and runs to 0x261f. Reading the
          `lea` as the start would put the whole thing four bytes too high.
 
-Original Offset: 005AD450
+ORIGINAL: 0x005AD450
 Return Value: n/a
 Status: Complete
 */
 /*
-Original Offset: 005AD450
+ORIGINAL: 0x005AD450
 Return Value: n/a
 Status: Complete
 */
@@ -700,7 +700,7 @@ Purpose: Count the set bits in the low THIRTY-ONE bits of ECX.
          ECX carries a VALUE here, not a `this` pointer, which is why this one
          does not take the (void *, void *) shape the rest of these do.
 
-Original Offset: 005CC430
+ORIGINAL: 0x005CC430
 Return Value: how many of bits 0..30 are set
 Status: Complete
 */
@@ -730,7 +730,7 @@ Purpose: Three when there is no structure, otherwise zero or seven.
          `ret 0x10` cleans four dwords while only the first is read; the other
          three are declared so the adapter cleans what the original cleans.
 
-Original Offset: 005D7A10
+ORIGINAL: 0x005D7A10
 Return Value: 3 with no structure, 0 when field 0xc is set, 7 when it is not
 Status: Complete
 */
@@ -761,7 +761,7 @@ Purpose: Forward all four arguments to 005D7A10.
          checked: see its recovery above, which reads `[esp+4]` and nothing
          else.
 
-Original Offset: 005D5470
+ORIGINAL: 0x005D5470
 Return Value: whatever 005D7A10 returns
 Status: Complete
 */
@@ -785,12 +785,12 @@ Purpose: Reverse the low `count` bits of a value.
          The trailing `shr eax,1` undoes the last of the `shl`s, which is why
          the shift happens after the OR rather than before it.
 
-Original Offset: 00642940
+ORIGINAL: 0x00642940
 Return Value: the low `count` bits, reversed
 Status: Complete
 */
 /*
-Original Offset: 00642940
+ORIGINAL: 0x00642940
 Return Value: the low `count` bits of `value`, reversed
 Status: Complete
 */
@@ -825,7 +825,7 @@ Purpose: Report a node's neighbours through two optional out-parameters.
          out-parameter points at `[ecx]` itself, the second read sees the value
          just written, and a cached version would not.
 
-Original Offset: 0063E7F0
+ORIGINAL: 0x0063E7F0
 Return Value: node->[8]
 Status: Complete
 */
@@ -860,12 +860,12 @@ Purpose: Divide, rounding the quotient AWAY from zero when there is a
          becomes -2. Both traps of the original are kept, because both
          spellings go through one division: a zero divisor and INT_MIN / -1.
 
-Original Offset: 00532A50
+ORIGINAL: 0x00532A50
 Return Value: the quotient that was stored
 Status: Complete
 */
 /*
-Original Offset: 00532A50
+ORIGINAL: 0x00532A50
 Return Value: the quotient, rounded up when the division is not exact
 Status: Complete
 */
@@ -899,7 +899,7 @@ Purpose: Is a point inside an inclusive rectangle?
          `jl` and `jg` are SIGNED, and both bounds are INCLUSIVE: a point
          exactly on an edge is inside.
 
-Original Offset: 00592DB0
+ORIGINAL: 0x00592DB0
 Return Value: 1 when inside, 0 otherwise
 Status: Complete
 */
@@ -927,7 +927,7 @@ Purpose: Does this window hold the dialog focus, and its partner too?
          from it just before. A NULL parent is not a failure: the answer is
          yes.
 
-Original Offset: 006161A0
+ORIGINAL: 0x006161A0
 Return Value: 1 when both hold focus, 0 otherwise
 Status: Complete
 */
@@ -963,7 +963,7 @@ Purpose: Find the table entry matching two keys and set its third word.
          the loop counter's final value, which is a valid-looking index and not
          -1.
 
-Original Offset: 005AD4C0
+ORIGINAL: 0x005AD4C0
 Return Value: 3 * index on a hit, 512 on a miss
 Status: Complete
 */
@@ -1001,7 +1001,7 @@ Purpose: Swap two pairs of fields in the object this one points at.
          each swap, exactly as the original does, so a swap that wrote over
          `[ecx]` would be seen.
 
-Original Offset: 005CBBC0
+ORIGINAL: 0x005CBBC0
 Return Value: n/a
 Status: Complete
 */
@@ -1039,7 +1039,7 @@ Purpose: Initialise 24 sixty-byte slots and the count that follows them.
 
          EAX still holds `this` at the `ret`.
 
-Original Offset: 0052DCA0
+ORIGINAL: 0x0052DCA0
 Return Value: `this`
 Status: Complete
 */
@@ -1074,7 +1074,7 @@ Purpose: Is the movie still playing?
          MCIVideo sits at 0xa14, and its is_playing is the bit-0 read
          recovered as field_accessor_00600320_redirect.
 
-Original Offset: 004041C0
+ORIGINAL: 0x004041C0
 Return Value: 1 when playing, 0 otherwise
 Status: Complete
 */
@@ -1094,7 +1094,7 @@ Purpose: Construct the Buffer subobject, then clear one field.
          inside the subobject. It happens after the constructor, which is the
          order that would matter if the constructor ever reached that far back.
 
-Original Offset: 004BEA30
+ORIGINAL: 0x004BEA30
 Return Value: `this`
 Status: Complete
 */
@@ -1122,7 +1122,7 @@ Purpose: Reset six fields, then close the window and its Buffer.
          GraphicWin::close is called on `this` itself; Buffer::close on the
          subobject at 0x406c.
 
-Original Offset: 00432970
+ORIGINAL: 0x00432970
 Return Value: n/a
 Status: Complete
 */
@@ -1167,7 +1167,7 @@ Purpose: Append a 16-bit value to a byte stream, most significant byte first.
          portably. Two mutants of that line survive the sweep for that reason
          and are left alone rather than papered over.
 
-Original Offset: 0063D420
+ORIGINAL: 0x0063D420
 Return Value: n/a
 Status: Complete
 */
@@ -1210,7 +1210,7 @@ Purpose: Construct the BaseButton base, publish ImageButton's vtables, clear
          raw offsets claim only what the instructions show, which is the same
          rule src/net_class.h states for Net.
 
-Original Offset: 006252E0
+ORIGINAL: 0x006252E0
 Return Value: `this`
 Status: Complete
 */
@@ -1233,7 +1233,7 @@ Purpose: Clear the field, then close as a BaseButton.
          void to match the name, and the value is discarded rather than
          quietly re-typed.
 
-Original Offset: 00625330
+ORIGINAL: 0x00625330
 Return Value: n/a
 Status: Complete
 */
@@ -1254,7 +1254,7 @@ Purpose: Keep the first argument, hand the other eight to BaseButton::init.
          arguments and re-push them in order. Nine arguments in (`ret 0x24`),
          the first kept at 0xab8 and the remaining eight passed straight on.
 
-Original Offset: 00625340
+ORIGINAL: 0x00625340
 Return Value: whatever BaseButton::init returns
 Status: Complete
 */
@@ -1286,7 +1286,7 @@ Purpose: Add one fixed item to the Dialogs at 0x21d0.
          which is the sort of thing that gets "tidied" to 2 or 0 by someone
          reading quickly.
 
-Original Offset: 0059D230
+ORIGINAL: 0x0059D230
 Return Value: whatever Dialogs::item returns
 Status: Complete
 */
@@ -1308,7 +1308,7 @@ Purpose: Clear four fields, then close as a GraphicWin.
          return is this function's, and the mangled name says void, so nothing
          reads it.
 
-Original Offset: 00484B60
+ORIGINAL: 0x00484B60
 Return Value: n/a
 Status: Complete
 */
@@ -1359,7 +1359,7 @@ Purpose: Destroy the ListBox at 0x48, the Dialog at 0xa60, and the GraphicWin
          takes exactly that already-adjusted pointer, so it is passed through
          rather than recomputed.
 
-Original Offset: 004080B0
+ORIGINAL: 0x004080B0
 Return Value: n/a
 Status: Complete
 */
@@ -1379,7 +1379,7 @@ Purpose: Destroy the Dialogs at 0x188, the Dialog at 0xba0, and the GraphicWin
          place of the ListBox. 0x188 is DialogsDestructorAdjustment, and is
          likewise computed once and used twice.
 
-Original Offset: 00406AF0
+ORIGINAL: 0x00406AF0
 Return Value: n/a
 Status: Complete
 */
@@ -1422,7 +1422,7 @@ Purpose: Construct a Buffer on the stack and immediately destroy it.
          the alignment from the fact that a Buffer lives there. Saying so
          beats an assertion that would only appear to cover them.
 
-Original Offset: 00455E50
+ORIGINAL: 0x00455E50
 Return Value: n/a
 Status: Complete
 */
@@ -1434,7 +1434,7 @@ void __cdecl leaf_00455e50_redirect() {
 }
 
 /*
-Original Offset: 0049FFC0
+ORIGINAL: 0x0049FFC0
 Status: Complete
 */
 void __cdecl sat_anim_daemon(int a1) {
@@ -1442,7 +1442,7 @@ void __cdecl sat_anim_daemon(int a1) {
 }
 
 /*
-Original Offset: 004A0250
+ORIGINAL: 0x004A0250
 Status: Complete
 */
 void __cdecl sat_expl_daemon(int a1) {
@@ -1450,7 +1450,7 @@ void __cdecl sat_expl_daemon(int a1) {
 }
 
 /*
-Original Offset: 004A4050
+ORIGINAL: 0x004A4050
 Status: Complete
 */
 void __cdecl bl_daemon(int a1) {
@@ -1458,7 +1458,7 @@ void __cdecl bl_daemon(int a1) {
 }
 
 /*
-Original Offset: 00401520
+ORIGINAL: 0x00401520
 Status: Complete
 */
 extern "C" int __stdcall sub_401520(int a1) {
@@ -1499,7 +1499,7 @@ extern "C" int __stdcall sub_401520(int a1) {
 }
 
 /*
-Original Offset: 00401BE0
+ORIGINAL: 0x00401BE0
 Status: Complete
 */
 extern "C" __declspec(naked) int __cdecl sub_401be0() {
@@ -1577,7 +1577,7 @@ end_lbl:
 }
 
 /*
-Original Offset: 0044C860
+ORIGINAL: 0x0044C860
 Return Value: n/a
 Status: Complete
 */
@@ -1586,7 +1586,7 @@ extern "C" void __cdecl sub_44c860(int value) {
 }
 
 /*
-Original Offset: 004E2450
+ORIGINAL: 0x004E2450
 Return Value: n/a
 Status: Complete
 */
@@ -1596,7 +1596,7 @@ extern "C" void __cdecl sub_4e2450() {
 }
 
 /*
-Original Offset: 004E7DB0
+ORIGINAL: 0x004E7DB0
 Return Value: zero
 Status: Complete
 */
@@ -1606,7 +1606,7 @@ extern "C" int __cdecl sub_4e7db0() {
 }
 
 /*
-Original Offset: 006051C0
+ORIGINAL: 0x006051C0
 Return Value: n/a
 Status: Complete
 */
@@ -1626,7 +1626,7 @@ extern "C" void __cdecl sub_6051c0() {
 int __cdecl pop_ask(char *a1, char *a2, int a3, char *a4, int (__cdecl *a5)(), int a6);
 
 /*
-Original Offset: 00627830
+ORIGINAL: 0x00627830
 Status: Complete
 */
 int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
@@ -1639,7 +1639,7 @@ int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
 int __cdecl sin(int a1, int a2);
 
 /*
-Original Offset: 0063BAC0
+ORIGINAL: 0x0063BAC0
 Status: Complete
 */
 int __cdecl cos(int a1, int a2) {

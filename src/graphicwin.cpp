@@ -49,7 +49,7 @@ uint32_t *GraphicWinFieldA0CDefault = (uint32_t *)0x009B33C0;
 /*
 Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
          tables and initialize its trailing window state.
-Original Offset: 005D4CF0
+ORIGINAL: 0x005D4CF0
 Status: Complete
 Verification note: the 0x134 and 0x138 stores are redundant - Win::construct
 runs first and already zeroes both - so dropping either is unobservable. They
@@ -113,7 +113,7 @@ typedef uint32_t (OriginalObject::*func_scalar_deleting_destructor)(uint32_t);
 Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          resetting its window-specific state, and deleting the trailing
          owned interface when present.
-Original Offset: 005D4E40
+ORIGINAL: 0x005D4E40
 Return Value: field_A0C_ default when no interface is present; otherwise the
               scalar-deleting virtual call's return residue
 Status: Complete with temporary Win close dependency
@@ -168,7 +168,7 @@ uint32_t __fastcall graphic_win_close_redirect(GraphicWin *self, void *) {
 Purpose: Destroy a GraphicWin by installing the original virtual tables,
          clearing the trailing field, and destroying the Buffer subobject
          before the Win base.
-Original Offset: 005D4DD0
+ORIGINAL: 0x005D4DD0
 Status: Complete with temporary Buffer and Win subobject dependencies
 */
 GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *) {
@@ -204,7 +204,7 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
 
 /*
 Purpose: Fill a rectangle in the window's own buffer.
-Original Offset: 005D5440
+ORIGINAL: 0x005D5440
 Return Value: whatever Buffer::fill returns
 Status: Complete
 */
@@ -251,7 +251,7 @@ const uintptr_t GraphicWinInvalidateRectImport = 0x00669304;
 Purpose: Paint the window's surface in one colour. A window that is marked
          transparent and whose parent agrees copies the parent's pixels in
          instead, then remaps them through the process colour table.
-Original Offset: 005D5250
+ORIGINAL: 0x005D5250
 Return Value: n/a
 Status: Complete
 Verification note: three loads the original performs are deliberately absent.
@@ -317,7 +317,7 @@ void __fastcall graphic_win_fill_color_redirect(GraphicWin *self, void *,
 Purpose: Repaint the window and invalidate the screen area it occupies. A
          window already inside a redraw is skipped, so a paint hook that
          redraws again cannot recurse.
-Original Offset: 005D5A70
+ORIGINAL: 0x005D5A70
 Return Value: n/a
 Status: Complete
 Verification note: the calling convention of the 0xA10 paint hook is inferred,
@@ -404,7 +404,7 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
          allocate the owned Buffer the window parks at 0xA08, initialise the
          Win base, then size and initialise the window's own drawing surface
          and sync it to the active palette.
-Original Offset: 005D4EF0
+ORIGINAL: 0x005D4EF0
 Return Value: 0 on success; otherwise the nonzero failure code passed straight
               through from Win::init or from Buffer::init
 Status: Complete with temporary Win init/nonclient_to_client, GraphicWin
@@ -549,7 +549,7 @@ int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
 }
 
 /*
-Original Offset: 005D6310
+ORIGINAL: 0x005D6310
 Status: Complete
 */
 void GraphicWin::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {

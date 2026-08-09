@@ -35,7 +35,7 @@ func_net_message_data *NetDaemonMessageData =
 Purpose: Poll the network for one message; dispatch it when one arrives and
          report whether it did. The message and its two parameters come back
          from Net::get through out-parameters.
-Original Offset: 00530320
+ORIGINAL: 0x00530320
 Return Value: 1 when a message was received and dispatched, 0 when none was
 Status: Complete
 Verification note: the original leaves both out-params as uninitialized stack
@@ -62,7 +62,7 @@ int __fastcall net_daemon_receive_redirect(NetDaemon *self, void *) {
 Purpose: Announce a vehicle's synched state to the network. All four "no
          text, one repeated flag" parameters are fixed by the caller, so only
          the opcode and the id vary across this family.
-Original Offset: 00593220
+ORIGINAL: 0x00593220
 Return Value: none
 Status: Complete
 */
@@ -72,7 +72,7 @@ void __cdecl synch_veh(int id) {
 
 /*
 Purpose: Announce a base's synched state to the network.
-Original Offset: 00593250
+ORIGINAL: 0x00593250
 Return Value: none
 Status: Complete
 */
@@ -82,7 +82,7 @@ void __cdecl synch_base(int id) {
 
 /*
 Purpose: Announce a faction's energy synched state to the network.
-Original Offset: 00593280
+ORIGINAL: 0x00593280
 Return Value: none
 Status: Complete
 */
@@ -92,7 +92,7 @@ void __cdecl synch_energy(int id) {
 
 /*
 Purpose: Announce a faction's current research target to the network.
-Original Offset: 005932B0
+ORIGINAL: 0x005932B0
 Return Value: none
 Status: Complete
 */
@@ -102,7 +102,7 @@ void __cdecl synch_researching(int id) {
 
 /*
 Purpose: Announce a faction's leader to the network.
-Original Offset: 005932E0
+ORIGINAL: 0x005932E0
 Return Value: none
 Status: Complete
 */
@@ -112,7 +112,7 @@ void __cdecl synch_leader(int id) {
 
 /*
 Purpose: Announce a faction's AI state to the network.
-Original Offset: 00593310
+ORIGINAL: 0x00593310
 Return Value: none
 Status: Complete
 */
@@ -122,7 +122,7 @@ void __cdecl synch_ai(int id) {
 
 /*
 Purpose: Announce a faction's completed research to the network.
-Original Offset: 00593340
+ORIGINAL: 0x00593340
 Return Value: none
 Status: Complete
 */
@@ -133,7 +133,7 @@ void __cdecl synch_research(int id) {
 /*
 Purpose: Announce a faction's social/resource allocation state to the
          network.
-Original Offset: 00593390
+ORIGINAL: 0x00593390
 Return Value: none
 Status: Complete
 */
@@ -143,7 +143,7 @@ void __cdecl synch_alloc(int id) {
 
 /*
 Purpose: Announce a faction's social engineering state to the network.
-Original Offset: 005933C0
+ORIGINAL: 0x005933C0
 Return Value: none
 Status: Complete
 */
@@ -153,7 +153,7 @@ void __cdecl synch_soc(int id) {
 
 /*
 Purpose: Announce a faction's protocol/pact state to the network.
-Original Offset: 005933F0
+ORIGINAL: 0x005933F0
 Return Value: none
 Status: Complete
 */
@@ -163,7 +163,7 @@ void __cdecl synch_proto(int id) {
 
 /*
 Purpose: Announce an observer's state to the network.
-Original Offset: 00593420
+ORIGINAL: 0x00593420
 Return Value: none
 Status: Complete
 */
@@ -175,7 +175,7 @@ void __cdecl synch_obs(int id) {
 Purpose: Announce a diplomatic state change between two factions to the
          network. Unlike the rest of this family, both leading arguments
          come from the caller instead of the second being a fixed zero.
-Original Offset: 00593450
+ORIGINAL: 0x00593450
 Return Value: none
 Status: Complete
 */
@@ -185,7 +185,7 @@ void __cdecl synch_diplo(int a, int b) {
 
 /*
 Purpose: Announce a faction's template/design state to the network.
-Original Offset: 005934B0
+ORIGINAL: 0x005934B0
 Return Value: none
 Status: Complete
 */
@@ -195,7 +195,7 @@ void __cdecl synch_template(int id) {
 
 /*
 Purpose: Announce a faction's sensor/territory radius state to the network.
-Original Offset: 005934E0
+ORIGINAL: 0x005934E0
 Return Value: none
 Status: Complete
 */
@@ -210,7 +210,7 @@ Purpose: Release the vehicle lock this client is holding. In a net game, tell
          four announce-side fields; in every game, clear the locked vehicle
          record at 0x1B78 and the flag at 0x1BC4. Only the transport flag at
          0x0093F660 gates the announce; any nonzero value is a net game.
-Original Offset: 005310F0
+ORIGINAL: 0x005310F0
 Return Value: EAX residue. The original is ?unlock_veh@NetDaemon@@QAEXXZ, but
               EAX is live at its ret: on the non-net path it is the loaded
               transport flag, which is zero exactly because that path was

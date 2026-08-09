@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
-Original Offset: 0062ED30
+ORIGINAL: 0x0062ED30
 Return Value: 1, always
 Status: Complete
 */
@@ -56,7 +56,7 @@ Purpose: Find a player's name by key, or nothing.
          not established and this function is not evidence enough to establish
          it - it only shows that something 0x58 bytes wide lives at 0x154.
 
-Original Offset: 00631A20
+ORIGINAL: 0x00631A20
 Return Value: a pointer to the name, or nullptr
 Status: Complete
 */
