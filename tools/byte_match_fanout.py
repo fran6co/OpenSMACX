@@ -424,8 +424,20 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # unit.cpp had been reset to `// BODY GOES HERE.` after the proof, which
 # --collect could never have found because it skips rows already settled.
 # Raising to 1209 before re-proving those 7 would have baked them in forever.
-BASELINE_MATCHED_FUNCTIONS = 1231
-BASELINE_MATCHED_BYTES = 50783
+#
+# 1233 / 51540, when tools/decomp_status.py measured the whole source map.
+# The map had rows the census route could never reach - annotations in
+# forms its extractor does not read, bodies whose ledger entries predated
+# the emitter learning to emit every class in dependency order - and the
+# full-tree pass scored them: one NO_COMPILE body became BYTE_EXACT once
+# its scaffolding could compile, and others joined the ledger for the
+# first time. Every matched row is backed by a committed annotation: the
+# map itself is now the audit. Nine BYTE_EXACT rows the standard recipes
+# cannot reproduce were KEPT, not re-proved - they are the UNREPRODUCED
+# list in the tool's report, and they need a human before anyone counts
+# them again.
+BASELINE_MATCHED_FUNCTIONS = 1233
+BASELINE_MATCHED_BYTES = 51540
 
 
 def summarise(ledger: dict) -> tuple:

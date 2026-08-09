@@ -54,12 +54,27 @@ SUPPORTED_IDB_HASHES = {
     "6ffdcf2d6644f2c1b19c218d3b1b293b4e442d56b8cf1f537b0403608ff866fa",
 }
 
-OFFSET_RE = re.compile(r"Original Offset:\s*(?:0x)?([0-9A-Fa-f]{6,8})\b")
+# The source-map grammar (docs/DECOMP_MAP.md) is `ORIGINAL: 0x...`; the
+# legacy `Original Offset:` spelling is still read while any straggler
+# exists. The lookbehind keeps `PROVEN-AGAINST-ORIGINAL: 0x...` provenance
+# comments out of the map.
+OFFSET_RE = re.compile(
+    r"(?<![A-Za-z0-9_-])(?:ORIGINAL:|Original Offset:)\s*"
+    r"(?:0x)?([0-9A-Fa-f]{6,8})\b")
 STATUS_RE = re.compile(r"Status:\s*(.+)")
 DEFINITION_RE = re.compile(r'^\s*"([^"]+)"\s*=')
 BINDING_RE = re.compile(
     r"^(?P<declaration>.+?)\s*=\s*\((?P<cast>[^)]+)\)\s*"
     r"(?P<address>0x[0-9A-Fa-f]+)\s*;",
+    re.MULTILINE,
+)
+# The pointer-to-member seam that replaced the __thiscall typedefs VC6
+# refuses: `Type name = original_method<Type>(0xADDR);` (the literal may
+# carry a U suffix and sit on the next line). Seams addressing through a
+# variable have no fixed target and are not bindings.
+BINDING_METHOD_RE = re.compile(
+    r"^(?P<declaration>.+?)\s*=\s*original_method<[^>]+>\s*\(\s*"
+    r"(?P<address>0x[0-9A-Fa-f]+)[UL]?\s*\)\s*;",
     re.MULTILINE,
 )
 FUNCTION_CAST_RE = re.compile(r"func\w*\s*\*\s*$")
@@ -173,6 +188,20 @@ def load_source_bindings(source_dir):
                 "address": int(match.group("address"), 16),
                 "kind": "function" if FUNCTION_CAST_RE.search(cast) else "data",
                 "type": cast,
+                "location": f"{repo_path(path)}:{uncommented.count(chr(10), 0, match.start()) + 1}",
+            })
+        for match in BINDING_METHOD_RE.finditer(uncommented):
+            declaration = " ".join(match.group("declaration").split())
+            names = re.findall(r"[A-Za-z_]\w*", declaration)
+            if not names:
+                continue
+            bindings.append({
+                "symbol": names[-1],
+                "address": int(match.group("address"), 16),
+                # original_method casts an address to a member-function
+                # pointer: always code, whatever the type spelling.
+                "kind": "function",
+                "type": "original_method",
                 "location": f"{repo_path(path)}:{uncommented.count(chr(10), 0, match.start()) + 1}",
             })
     return bindings

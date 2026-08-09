@@ -7,140 +7,45 @@ _free,crt_ownership,replace_after_ownership_boundary,Allocations currently cross
 _fwrite,crt_ownership,replace_after_file_boundary,FILE objects currently cross the executable/DLL CRT boundary
 _malloc,crt_ownership,replace_after_ownership_boundary,Allocations currently cross the executable/DLL CRT boundary
 _srand,crt_ownership,replace_with_owned_rng,Preserve original random sequence until deterministic tests exist
+AlphaMenuDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0051DC10 that the recovered AlphaMenu scalar deleting thunk runs before releasing the object; recovering AlphaMenu's destructor retires this
+AlphaMovieDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00404310 that the recovered AlphaMovie scalar deleting thunk runs before releasing the object; recovering AlphaMovie's destructor retires this
+AlphaSaveDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00408170 that the recovered AlphaSave scalar deleting thunk runs before releasing the object; recovering AlphaSave's destructor retires this
 alt_set,game_service,recover_map_mutation,Complete altitude mutation and dependent updates
 AutoSoundOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the AutoSound scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
+BaseButtonTimerCallback,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until BaseButton::timer_callback is source-owned
+BasePopDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004064D0 that the recovered BasePop scalar deleting thunk runs before releasing the object; recovering BasePop's destructor retires this
 BasePopExec,ui_dependency,recover_base_pop_exec,Temporary dependency for the recovered BasePop exec overloads until the two-argument exec is source-owned
 BasePopOriginalClose,ui_dependency,recover_base_pop_close,Temporary dependency for the recovered Popup close wrapper until BasePop close is source-owned
 BasePopOriginalInit,ui_dependency,recover_base_pop_init,Temporary dependency for the recovered PopMenu init wrapper until BasePop init is source-owned
 BaseWinClick,ui_dependency,recover_base_win_click,Temporary dependency for the recovered BaseWin click handlers until the shared click is source-owned
+BaseWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00408490 that the recovered BaseWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering BaseWin's constructor retires this
+BaseWinDrawFacilities,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until BaseWin::draw_facilities is source-owned
 BaseWinDrawSupported,ui_dependency,recover_base_win_draw_supported,Temporary dependency for the recovered BaseWin scroll handler until draw_supported is source-owned
+BaseWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00420A70 that the recovered BaseWin scalar deleting thunk runs before releasing the object; recovering BaseWin's destructor retires this
+BaseWinGarrisonClick,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until BaseWin::garrison_click is source-owned
 BaseWinIfaceClick,ui_dependency,recover_base_win_iface_click,Temporary dependency for the recovered BaseWin interface-click handlers until iface_click is source-owned
+BattleWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00422EE0 that the recovered BattleWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering BattleWin's constructor retires this
 blink2_timer,timer_callback,recover_timer_callback,Replace secondary UI blink callback
 blink_timer,timer_callback,recover_timer_callback,Replace original UI blink callback
 BufferCopyFull,ui_dependency,recover_buffer_copy_full,Temporary dependency for the recovered five-argument Buffer copy until the seven-argument blitter is source-owned
 BufferElementCtor,ui_dependency,recover_buffer_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
 BufferElementTeardown,ui_dependency,recover_buffer_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Buffer destructor jump thunk is source-owned
 BufferFree,crt_ownership,replace_after_ownership_boundary,Buffer allocations come from the executable CRT and must be released through its free until that ownership boundary moves
+BufferHLine,ui_dependency,recover_buffer_hline,Temporary dependency for the recovered two-color box outline until the clipped horizontal line primitive is source-owned
 BufferOriginalFill,ui_dependency,recover_buffer_fill,Temporary dependency for the recovered GraphicWin fill until Buffer fill is source-owned
+BufferOriginalFillColor,ui_dependency,recover_buffer_fill,Buffer::fill(int) at 0x005DFB50, the whole-surface paint the recovered GraphicWin::fill(int) uses on its opaque path; recovering Buffer's fill retires this
+BufferOriginalInit,ui_dependency,recover_owning_class,Buffer::init at 0x005D7670; 847 bytes of DirectDraw and GDI surface creation GraphicWin::init hands its computed size to
+BufferOriginalMapColors,ui_dependency,recover_buffer_map_colors,Buffer::map_colors at 0x005DA330, the table remap the recovered GraphicWin::fill(int) runs after a transparent copy; bounds are inclusive
 BufferTextWidthMeasured,ui_dependency,recover_buffertextwidthmeasured_body,Temporary dependency for the recovered null-terminated text-width wrapper until the measured overload and its three call targets are source-owned
+BufferVLine,ui_dependency,recover_buffer_vline,Temporary dependency for the recovered two-color box outline until the clipped vertical line primitive is source-owned
+BufferWriteMultiFontRawL,ui_dependency,recover_buffer_write_multi_font_raw_l,Temporary dependency for the four recovered length-limited text writers until the multi-font raster writer at 0x005DCAE0 is source-owned
 ButtonGroupOriginalButtonClick,ui_dependency,recover_button_group_button_click,Temporary dependency for the recovered ButtonGroup set wrapper until button_click and its BaseButton vtable dispatch are source-owned
+CaviarCloseTarget,ui_dependency,recover_owning_class,Teardown entry point at 0x00617020 the recovered Caviar atexit thunk calls on the process-global storage
 CaviarDataElementCtor,ui_dependency,recover_caviardata_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
 CaviarDataElementTeardown,ui_dependency,recover_caviar_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the CaviarData destructor jump thunk is source-owned
 CaviarDataFreeRecord,ui_dependency,recover_caviar_free_record,Temporary dependency for the recovered CaviarData close until the record-walking free helper is source-owned
 CaviarOriginalApplyRotation,ui_dependency,recover_caviar_apply_rotation,Temporary dependency for the recovered scene rotation until the matrix helper is source-owned
 check_net,platform_service,recover_network_pump,Define network polling service and no-network behavior
-CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
-CheckBoxOriginalSetStateFlag,ui_dependency,recover_check_box_set_state_flag,Temporary dependency for the recovered BasePop write_check until CheckBox set_state_flag is source-owned
-consider_designs,game_service,recover_ai_design,Recover AI unit design orchestration
-ConsoleOriginalStatusWinRedraw,ui_dependency,recover_status_win_redraw,Temporary dependency for the recovered Console update_data until StatusWin redraw is source-owned
-ConsolePrefWinDisplay,ui_dependency,recover_pref_win_display,Temporary dependency for the recovered Console preference openers until PrefWin display is source-owned
-DatalinkExec,ui_dependency,recover_datalink_exec,Temporary dependency for the recovered help forwarders until Datalink exec is source-owned
-DialogOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Dialog scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
-DialogOriginalClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered Dialog destructor until Dialog close is source-owned
-DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
-DialogsCheckBoxDestructor,ui_dependency,recover_check_box_destructor,Temporary dependency for the recovered Dialogs destructor until the CheckBox destructor is source-owned
-DialogsEditGroupDestructor,ui_dependency,recover_edit_group_destructor,Temporary dependency for the recovered Dialogs destructor until the EditGroup destructor is source-owned
-DialogsListBoxOnMousewheel,ui_dependency,recover_dialogslistboxonmousewheel,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsListBoxOnScrolling,ui_dependency,recover_dialogslistboxonscrolling,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Dialogs scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
-DialogsSpriteBoxDestructor,ui_dependency,recover_sprite_box_destructor,Temporary dependency for the recovered Dialogs destructor until the SpriteBox destructor is source-owned
-DialogsSpriteBoxOnLeftUp,ui_dependency,recover_dialogsspriteboxonleftup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsSpriteBoxOnRightClick,ui_dependency,recover_dialogsspriteboxonrightclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsSpriteBoxOnRightDoubleClick,ui_dependency,recover_dialogsspriteboxonrightdoubleclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsSpriteBoxOnRightDown,ui_dependency,recover_dialogsspriteboxonrightdown,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-DialogsSpriteBoxOnRightUp,ui_dependency,recover_dialogsspriteboxonrightup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
-do_net,platform_service,recover_network_pump,Define network dispatch service and no-network behavior
-do_non_input_,source_fallback,validate_source_implementation,Retain original fallback until Win32 message-loop behavior is tested
-do_video,platform_service,recover_video_pump,Separate video processing from Win32 message pumping
-draw_map,game_service,recover_map_render,Separate map-state updates from presentation
-draw_radius,game_service,recover_map_render,Separate radius state from map presentation
-EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary dependency for the recovered EditGroup text setter until EditBox is source-owned
-EffectElementTeardown,ui_dependency,recover_wave_destructor,Per-element teardown the recovered FX bank destructor passes to the vector iterator; a jump thunk onto the Wave destructor and retires with it
-FactionArtElementTeardown,ui_dependency,recover_faction_art_teardown,Per-element teardown the recovered array thunk passes to the vector iterator until the FactionArt destructor is source-owned
-fixup_landmarks,game_service,recover_map_fixup,Complete landmark reconstruction after map loading
-FontElementCtor,ui_dependency,recover_font_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
-FontElementTeardown,ui_dependency,recover_font_element_teardown,Per-element teardown the recovered array thunk passes to the vector iterator; retires when the Font destructor jump thunk is source-owned
-FontQueueElementTeardown,ui_dependency,recover_font_element_teardown,Per-element teardown the recovered FontQueue destructor passes to the vector iterator; binds the recovered Font destructor's original entry and retires with FontElementTeardown
-GameAtexit,crt_ownership,replace_after_exit_list_boundary,The game CRT atexit the recovered dynamic initializers register their teardown thunks with; the exit list must stay in that CRT so teardown order remains inside its LIFO walk
-InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
-line_timer,timer_callback,recover_timer_callback,Replace line animation callback
-ListBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered ListBox close until Dialog close is source-owned
-ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned
-load_daemon,game_service,recover_load_orchestration,Own load deserialization and state restoration
-load_faction_art,game_service,recover_faction_art,Own faction art loading and refresh state
-LockCurrentServer,ui_dependency,recover_current_server,Temporary dependency for the recovered Lock check_global_2 until current_server is source-owned
-LockMessageData,ui_dependency,recover_message_data,Temporary dependency for the recovered Lock check_global until message_data is source-owned
-LockSquareLock,ui_dependency,recover_square_lock_lock,Temporary dependency for the recovered Lock add_lock until SquareLock lock is source-owned
-LockSquareUnlock,ui_dependency,recover_square_lock_unlock,Temporary dependency for the recovered Lock unlock until SquareLock unlock is source-owned
-MainInterfaceOriginalSetDate,ui_dependency,recover_main_interface_set_date,Temporary dependency for the recovered MapWin caption until the date setter is source-owned
-mapwin_terrain_fixup,game_service,recover_map_render,Replace map-window terrain cache updates
-MapWinClick,ui_dependency,recover_map_win_click,Temporary dependency for the recovered MapWin click handlers until the shared click is source-owned
-MapWinFree,crt_ownership,replace_after_ownership_boundary,MapWin frees its owned buffer through the executable CRT until that ownership boundary moves
-NetCloseOriginal,ui_dependency,recover_netcloseoriginal_body,Temporary dependency for the recovered AlphaNet close until the network close and its three call targets are source-owned
-NetDaemonMessageData,ui_dependency,recover_message_data,Temporary dependency for the recovered NetDaemon unlock_veh until message_data is source-owned
-NetDaemonNetGet,ui_dependency,recover_net_get,Temporary dependency for the recovered NetDaemon receive until Net get is source-owned
-NetDaemonProcessMessage,ui_dependency,recover_net_daemon_process_message,Temporary dependency for the recovered NetDaemon receive until process_message is source-owned
-NetDaemonSynch,ui_dependency,recover_net_daemon_synch,Temporary dependency for the recovered synch forwarders until the network synch builder is source-owned
-parse_string_OG,source_fallback,finish_source_implementation,Remove fallback after parse_string differential tests pass
-popb,game_service,recover_script_popup,Replace base popup orchestration
-popp,game_service,recover_script_popup,Replace parameterized popup orchestration
-PopsOriginalFull,ui_dependency,recover_pops_full,Temporary dependency for the recovered popup forwarders until the nine-argument pop builder is source-owned
-PopupFxPlay,ui_dependency,recover_fx_play,Temporary dependency for the popup wave callback until FX::play is source-owned
-PopupOriginalHide,ui_dependency,recover_popup_hide,Temporary dependency for the recovered NetMsg close until Popup hide is source-owned
-PopupOriginalStartFull,ui_dependency,recover_popup_start_full,Temporary dependency for the recovered five-argument Popup start until the six-argument form is source-owned
-PopupWaveIsPlaying,ui_dependency,runtime_redirect_entry,The popup wave callback queries Wave::is_playing through the original entry; the runtime redirect routes it into the recovered body
-PopupWaveLoad,ui_dependency,runtime_redirect_entry,The popup wave callback loads bank waves through the original no-argument Wave::load entry; the runtime redirect routes it into the recovered body
-PopupWavePlay,ui_dependency,runtime_redirect_entry,The popup wave callback plays bank waves through the original Wave::play entry; the runtime redirect routes it into the recovered body
-PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
-RadioButtonOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered RadioButton close until Dialog close is source-owned
-save_daemon,game_service,recover_save_orchestration,Own save serialization and filesystem lifecycle
-ScrollOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Scroll scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
-ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
-social_set,game_service,recover_social_model,Complete social model state application
-SoundOriginalLoad,ui_dependency,recover_sound_load,Temporary dependency for the recovered Wave load until the base Sound::load is source-owned
-SoundSetType,ui_dependency,recover_sound,Temporary dependency for the recovered Wave constructor until Sound::set_type is source-owned
-SpriteDrawOriginal,ui_dependency,recover_sprite_draw_body,Temporary dependency for the recovered draw-origin wrapper until the four-argument overload and its eleven call targets are source-owned
-SpriteElementCtor,ui_dependency,recover_sprite_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
-SpriteElementTeardown,ui_dependency,recover_sprite_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Sprite destructor jump thunk is source-owned
-SpriteFree,crt_ownership,replace_after_ownership_boundary,Sprite allocations come from the executable CRT and must be released through its free until that ownership boundary moves
-StringBoxAddFixup,ui_dependency,recover_string_box_add_fixup,Temporary dependency for the recovered StringBox add until its fixup pass is source-owned
-StringBoxStructAdd,ui_dependency,recover_string_struct_add,Temporary dependency for the recovered StringBox add until StringStruct add is source-owned
-SubInterfaceOriginalReleaseIfaceMode,ui_dependency,recover_sub_interface_release_iface_mode,Temporary dependency for the recovered StatusWin reset until the interface-mode release is source-owned
-tech_val_OG,legacy_diagnostic,preserve_exported_diagnostic,Staged patching redirects tech_val so comparison is useful only with an unpatched executable
-TextIndexElementCtor,ui_dependency,recover_textindex_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
-TextIndexElementTeardown,ui_dependency,recover_textindex_teardown,Per-element teardown the recovered array thunk passes to the vector iterator; retires when the TextIndex destructor jump thunk is source-owned
-TextureElementCtor,ui_dependency,recover_texture_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
-TextureElementTeardown,ui_dependency,recover_texture_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Texture destructor jump thunk is source-owned
-TextureFree,crt_ownership,replace_after_ownership_boundary,Texture frees its owned pixel block through the executable CRT until that ownership boundary moves
-turn_timer,timer_callback,recover_timer_callback,Replace turn timing callback
-VectorCtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector constructor iterator the recovered Wave_Device constructor builds its group table through
-VectorDtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector destructor iterator the recovered array thunks dispatch through
-wants_to_attack_,source_fallback,validate_source_implementation,Retain original fallback until faction pseudo-tech valuation is differentially tested
-wave_it,game_service,recover_audio_event,Route game audio events through a platform service
-WaveControlGroupOriginalCtor,ui_dependency,recover_wave_control_group,Per-group constructor handed to the vector iterators; the runtime redirect routes it into the recovered body
-WaveControlGroupOriginalDtor,ui_dependency,recover_wave_control_group,Per-group destructor handed to the vector iterators; the runtime redirect routes it into the recovered body
-WaveDeviceGroupInsert,ui_dependency,recover_wave_device,Temporary dependency for the recovered add_to_group until the group list-insert helper is source-owned
-WaveDeviceIsGroupDisabled,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave play until Wave_Device::is_group_disabled is source-owned
-WaveDevicePullFromGroup,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave destructor until Wave_Device::pull_from_group is source-owned
-WaveElementCtor,ui_dependency,recover_wave_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
-WaveElementTeardown,ui_dependency,recover_wave_destructor,Per-element teardown binding the same Wave destructor address WaveOriginalDestructor holds; both retire together
-WaveOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the recovered Wave destructor frees its sample buffer through; the block was allocated by the game CRT so it must return to that heap
-WaveOperatorNew,crt_ownership,replace_after_ownership_boundary,The game CRT operator new the recovered set_fname allocates the filename copy on; the destructor and set_fname free it with the matching game delete
-WaveOriginalDestructor,ui_dependency,recover_wave_destructor,Temporary dependency for the recovered Wave atexit thunks until the Wave destructor is source-owned
-WaveOriginalLoad,ui_dependency,recover_wave_load,Temporary dependency for the recovered Wave play until the no-argument Wave::load is source-owned
-WinFlipOriginal,ui_dependency,recover_winfliporiginal_body,Temporary dependency for the recovered bubble dismissal until the flip and its fourteen call targets are source-owned
-WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recovered GraphicWin close until Win teardown is source-owned
-WinOriginalDestructor,ui_dependency,recover_win_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
-WinUpdateCursorOriginal,ui_dependency,recover_winupdatecursororiginal_body,Temporary dependency for the recovered cursor setter until the cursor refresh and its six call targets are source-owned
-WinUpdateScreenOriginal,ui_dependency,recover_winupdatescreenoriginal_body,Temporary dependency for the recovered bubble dismissal until the screen refresh and its four call targets are source-owned
-world_rainfall,game_service,recover_world_generation,Complete deterministic rainfall generation
-WorldWinClick,ui_dependency,recover_world_win_click,Temporary dependency for the recovered WorldWin click handlers until the shared click is source-owned
-X_pop,game_service,recover_script_popup,Replace script-driven popup orchestration
-XPopOriginalFull,ui_dependency,recover_x_pop_full,Temporary dependency for the recovered caption-less popup forwarders until the six-argument builder is source-owned
-XPopsOriginalFull,ui_dependency,recover_x_pops_full,Temporary dependency for the recovered short popup wrapper until the nine-argument builder is source-owned
-MapWinOriginalDrawRadius,ui_dependency,recover_map_win_draw_radius,Temporary dependency for the recovered draw_tile and draw_tiles broadcasts until MapWin::draw_radius is source-owned
-BufferHLine,ui_dependency,recover_buffer_hline,Temporary dependency for the recovered two-color box outline until the clipped horizontal line primitive is source-owned
-BufferVLine,ui_dependency,recover_buffer_vline,Temporary dependency for the recovered two-color box outline until the clipped vertical line primitive is source-owned
 CheckBoxAttachTarget,ui_dependency,recover_check_box_attach,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060E800 is source-owned
 CheckBoxOnDialogFocusTarget,ui_dependency,recover_check_box_on_dialog_focus,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060FB90 is source-owned
 CheckBoxOnKeyDownTarget,ui_dependency,recover_check_box_on_key_down,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060F8B0 is source-owned
@@ -149,6 +54,11 @@ CheckBoxOnLeftDownTarget,ui_dependency,recover_check_box_on_left_down,Temporary 
 CheckBoxOnMouseLeaveTarget,ui_dependency,recover_check_box_on_mouse_leave,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060FC30 is source-owned
 CheckBoxOnMouseMoveTarget,ui_dependency,recover_check_box_on_mouse_move,Temporary dependency for the recovered CheckBox::thunk1 adjustor thunks until the method at 0x0060FBB0 is source-owned
 CheckBoxOnRedrawTarget,ui_dependency,recover_check_box_on_redraw,"Temporary dependency for the recovered CheckBox::thunk1, CheckBox::thunk3 adjustor thunks until the method at 0x0060FAB0 is source-owned"
+CheckBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered CheckBox close until Dialog close is source-owned
+CheckBoxOriginalSetStateFlag,ui_dependency,recover_check_box_set_state_flag,Temporary dependency for the recovered BasePop write_check until CheckBox set_state_flag is source-owned
+CheckButtonDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004B3EC0 that the recovered CheckButton scalar deleting thunk runs before releasing the object; recovering CheckButton's destructor retires this
+consider_designs,game_service,recover_ai_design,Recover AI unit design orchestration
+ConsoleCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0050F460 that the recovered Console initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Console's constructor retires this
 ConsoleOnKeyClickTarget,ui_dependency,recover_console_on_key_click,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x005178C0 is source-owned
 ConsoleOnNcHittestTarget,ui_dependency,recover_console_on_nc_hittest,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x0050F680 is source-owned
 ConsoleOnNcLeftDownTarget,ui_dependency,recover_console_on_nc_left_down,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x0050FB10 is source-owned
@@ -156,8 +66,37 @@ ConsoleOnNcLeftUpTarget,ui_dependency,recover_console_on_nc_left_up,Temporary de
 ConsoleOnNcMouseMoveTarget,ui_dependency,recover_console_on_nc_mouse_move,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x00510110 is source-owned
 ConsoleOnPostRedrawNcBufferTarget,ui_dependency,recover_console_on_post_redraw_nc_buffer,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x0050F960 is source-owned
 ConsoleOnSysCloseTarget,ui_dependency,recover_console_on_sys_close,Temporary dependency for the recovered Console::thunk1 adjustor thunks until the method at 0x0051D7C0 is source-owned
+ConsoleOriginalCursorNext,ui_dependency,recover_owning_class,Console::cursor_next at 0x005109B0; focus runs it on the process-wide Console at 0x009156B0 rather than on this
+ConsoleOriginalFlushInput,ui_dependency,recover_owning_class,flush_input at 0x005FD120; drains queued input once the primary view actually moved and pumps the message loop through check_net
+ConsoleOriginalMainMenuCheck,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until MainMenu::check is source-owned
+ConsoleOriginalMapWinFocus,ui_dependency,recover_owning_class,MapWin::focus at 0x0046B310; reports whether the window moved its view and is what decides Console::focus own answer
+ConsoleOriginalStatusWinRedraw,ui_dependency,recover_status_win_redraw,Temporary dependency for the recovered Console update_data until StatusWin redraw is source-owned
+ConsolePrefWinDisplay,ui_dependency,recover_pref_win_display,Temporary dependency for the recovered Console preference openers until PrefWin display is source-owned
 ConsoleScalarDeleteTarget,ui_dependency,recover_console_scalar_delete,"Temporary dependency for the recovered Console::thunk1, Console::thunk2 adjustor thunks until the method at 0x0051DDF0 is source-owned"
+CouncWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00428620 that the recovered CouncWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering CouncWin's constructor retires this
+CouncWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00428550 that the recovered CouncWin scalar deleting thunk runs before releasing the object; recovering CouncWin's destructor retires this
+CouncWinOriginalDrawLeader,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until CouncWin::draw_leader is source-owned
+CreditsDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00428E90 that the recovered Credits scalar deleting thunk runs before releasing the object; recovering Credits's destructor retires this
+custom_planet,game_service,recover_world_generation,Planet customization still in the original image; recover with deterministic world generation
+DatalinkCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00428FC0 that the recovered Datalink initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Datalink's constructor retires this
+DatalinkDrawEntry,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Datalink::draw_entry is source-owned
+DatalinkDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00432290 that the recovered Datalink scalar deleting thunk runs before releasing the object; recovering Datalink's destructor retires this
+DatalinkExec,ui_dependency,recover_datalink_exec,Temporary dependency for the recovered help forwarders until Datalink exec is source-owned
+DesignWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00434480 that the recovered DesignWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering DesignWin's constructor retires this
+DesignWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0043ECB0 that the recovered DesignWin scalar deleting thunk runs before releasing the object; recovering DesignWin's destructor retires this
+DesignWinSelectSpecial,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until DesignWin::select_special is source-owned
+DialogInitFive,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Dialog::five-argument init overload is source-owned
+DialogInitHeap,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Dialog::Heap init overload is source-owned
+DialogInitInt,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Dialog::int init overload is source-owned
+DialogInitRect,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Dialog::RECT init overload is source-owned
+DialogOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Dialog scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
+DialogOriginalClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered Dialog destructor until Dialog close is source-owned
+DialogOriginalItem,ui_dependency,recover_dialog_item,Temporary dependency for the recovered Dialogs item dispatch until Dialog item is source-owned
 DialogsAttachTarget,ui_dependency,recover_dialogs_attach,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612FE0 is source-owned
+DialogsCheckBoxDestructor,ui_dependency,recover_check_box_destructor,Temporary dependency for the recovered Dialogs destructor until the CheckBox destructor is source-owned
+DialogsEditGroupDestructor,ui_dependency,recover_edit_group_destructor,Temporary dependency for the recovered Dialogs destructor until the EditGroup destructor is source-owned
+DialogsListBoxOnMousewheel,ui_dependency,recover_dialogslistboxonmousewheel,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsListBoxOnScrolling,ui_dependency,recover_dialogslistboxonscrolling,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
 DialogsOnDialogFocusTarget,ui_dependency,recover_dialogs_on_dialog_focus,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x006130E0 is source-owned
 DialogsOnKeyDownTarget,ui_dependency,recover_dialogs_on_key_down,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612CC0 is source-owned
 DialogsOnLeftClickTarget,ui_dependency,recover_dialogs_on_left_click,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00612E80 is source-owned
@@ -176,12 +115,59 @@ DialogsOnScrollCreateTarget,ui_dependency,recover_dialogs_on_scroll_create,Tempo
 DialogsOnScrollDeleteTarget,ui_dependency,recover_dialogs_on_scroll_delete,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00613260 is source-owned
 DialogsOnScrolledTarget,ui_dependency,recover_dialogs_on_scrolled,Adjustor thunks bind 0x00612F80 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
 DialogsOnScrollingTarget,ui_dependency,recover_dialogs_on_scrolling,Adjustor thunks bind 0x00612FA0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Dialogs scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
 DialogsPassDialogFocusTarget,ui_dependency,recover_dialogs_pass_dialog_focus,Temporary dependency for the recovered Dialogs::thunk1 adjustor thunks until the method at 0x00613180 is source-owned
 DialogsScalarDeleteTarget,ui_dependency,recover_dialogs_scalar_delete,Adjustor thunks bind 0x00407100 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
+DialogsSpriteBoxDestructor,ui_dependency,recover_sprite_box_destructor,Temporary dependency for the recovered Dialogs destructor until the SpriteBox destructor is source-owned
+DialogsSpriteBoxOnLeftUp,ui_dependency,recover_dialogsspriteboxonleftup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightClick,ui_dependency,recover_dialogsspriteboxonrightclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightDoubleClick,ui_dependency,recover_dialogsspriteboxonrightdoubleclick,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightDown,ui_dependency,recover_dialogsspriteboxonrightdown,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DialogsSpriteBoxOnRightUp,ui_dependency,recover_dialogsspriteboxonrightup,Temporary dependency for the recovered Dialogs event forwarders until the embedded widget handler is source-owned
+DipEditDoCheck,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until DipEdit::do_check is source-owned
+DipEditDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004E2240 that the recovered DipEdit scalar deleting thunk runs before releasing the object; recovering DipEdit's destructor retires this
+DipEditReadCheck,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until DipEdit::read_check is source-owned
+DiploPopCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0043EFF0 that the recovered DiploPop initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering DiploPop's constructor retires this
+DiploPopDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00440D50 that the recovered DiploPop scalar deleting thunk runs before releasing the object; recovering DiploPop's destructor retires this
+DiploWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00444FC0 that the recovered DiploWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering DiploWin's constructor retires this
+DiploWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00444DB0 that the recovered DiploWin scalar deleting thunk runs before releasing the object; recovering DiploWin's destructor retires this
+do_net,platform_service,recover_network_pump,Define network dispatch service and no-network behavior
+do_non_input_,source_fallback,validate_source_implementation,Retain original fallback until Win32 message-loop behavior is tested
+do_video,platform_service,recover_video_pump,Separate video processing from Win32 message pumping
+draw_map,game_service,recover_map_render,Separate map-state updates from presentation
+draw_radius,game_service,recover_map_render,Separate radius state from map presentation
+EditBoxDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00408010 that the recovered EditBox scalar deleting thunk runs before releasing the object; recovering EditBox's destructor retires this
+EditBoxOriginalSetText,ui_dependency,recover_edit_box_set_text,Temporary dependency for the recovered EditGroup text setter until EditBox is source-owned
 EditGroupAttachTarget,ui_dependency,recover_edit_group_attach,Temporary dependency for the recovered EditGroup::thunk1 adjustor thunks until the method at 0x00611AF0 is source-owned
 EditGroupOnDialogFocusTarget,ui_dependency,recover_edit_group_on_dialog_focus,Temporary dependency for the recovered EditGroup::thunk1 adjustor thunks until the method at 0x00612670 is source-owned
 EditGroupOnRedrawTarget,ui_dependency,recover_edit_group_on_redraw,"Temporary dependency for the recovered EditGroup::thunk1, EditGroup::thunk3 adjustor thunks until the method at 0x00612450 is source-owned"
 EditGroupPassDialogFocusTarget,ui_dependency,recover_edit_group_pass_dialog_focus,Temporary dependency for the recovered EditGroup::thunk1 adjustor thunks until the method at 0x006126C0 is source-owned
+EffectElementCtor,ui_dependency,recover_wave_destructor,Per-element constructor the recovered FX bank constructor passes to the vector iterator; ??0Effect@@QAE@XZ at 0x004482D0 and retires with the Wave work alongside its teardown twin
+EffectElementTeardown,ui_dependency,recover_wave_destructor,Per-element teardown the recovered FX bank destructor passes to the vector iterator; a jump thunk onto the Wave destructor and retires with it
+FactionArtCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00455F10 that the recovered FactionArt initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering FactionArt's constructor retires this
+FactionArtElementTeardown,ui_dependency,recover_faction_art_teardown,Per-element teardown the recovered array thunk passes to the vector iterator until the FactionArt destructor is source-owned
+FameWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0044B200 that the recovered FameWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering FameWin's constructor retires this
+FameWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0044B100 that the recovered FameWin scalar deleting thunk runs before releasing the object; recovering FameWin's destructor retires this
+FileWinUNK4,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until FileWin::UNK4 is source-owned
+fixup_landmarks,game_service,recover_map_fixup,Complete landmark reconstruction after map loading
+FontElementCtor,ui_dependency,recover_font_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
+FontElementTeardown,ui_dependency,recover_font_element_teardown,Per-element teardown the recovered array thunk passes to the vector iterator; retires when the Font destructor jump thunk is source-owned
+FontQueueCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00559290 that the recovered FontQueue initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering FontQueue's constructor retires this
+FontQueueElementTeardown,ui_dependency,recover_font_element_teardown,Per-element teardown the recovered FontQueue destructor passes to the vector iterator; binds the recovered Font destructor's original entry and retires with FontElementTeardown
+GameAtexit,crt_ownership,replace_after_exit_list_boundary,The game CRT atexit the recovered dynamic initializers register their teardown thunks with; the exit list must stay in that CRT so teardown order remains inside its LIFO walk
+GammaDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00456110 that the recovered Gamma scalar deleting thunk runs before releasing the object; recovering Gamma's destructor retires this
+GammaOriginalAdjustPalette,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Gamma::adjust_palette is source-owned
+GraphicWinOriginalComputeMinSize,ui_dependency,recover_owning_class,GraphicWin::compute_min_size at 0x005D7030; 272 bytes of frame arithmetic init runs after publishing the buffer back pointer
+GraphicWinOriginalSoftUpdate,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until GraphicWin::soft_update is source-owned
+GraphicWinOriginalUpdate,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until GraphicWin::update is source-owned
+GraphicWinOverlayNonclient,ui_dependency,recover_graphic_win_overlay,GraphicWin::overlay_nonclient at 0x005D6AC0, the frame repaint the recovered GraphicWin::redraw calls with a null rectangle
+ImageButtonDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00625310 that the recovered ImageButton scalar deleting thunk runs before releasing the object; recovering ImageButton's destructor retires this
+InfoWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00459500 that the recovered InfoWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering InfoWin's constructor retires this
+InfoWinDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004594A0 that the recovered InfoWin atexit thunk runs on the process-global storage; recovering InfoWin's destructor retires this
+InfoWinOriginalRightMenu,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until InfoWin::right_menu is source-owned
+InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
+InterludeDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0045F740 that the recovered Interlude scalar deleting thunk runs before releasing the object; recovering Interlude's destructor retires this
+line_timer,timer_callback,recover_timer_callback,Replace line animation callback
 ListBoxAttachTarget,ui_dependency,recover_list_box_attach,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060A670 is source-owned
 ListBoxOnDialogFocusTarget,ui_dependency,recover_list_box_on_dialog_focus,Adjustor thunks bind 0x0060C7C0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
 ListBoxOnKeyDownTarget,ui_dependency,recover_list_box_on_key_down,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060AF90 is source-owned
@@ -195,6 +181,22 @@ ListBoxOnRightDoubleClickTarget,ui_dependency,recover_list_box_on_right_double_c
 ListBoxOnRightDownTarget,ui_dependency,recover_list_box_on_right_down,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060AA20 is source-owned
 ListBoxOnScrolledTarget,ui_dependency,recover_list_box_on_scrolled,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060C6A0 is source-owned
 ListBoxOnScrollingTarget,ui_dependency,recover_list_box_on_scrolling,Temporary dependency for the recovered ListBox::thunk1 adjustor thunks until the method at 0x0060C5D0 is source-owned
+ListBoxOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered ListBox close until Dialog close is source-owned
+ListBoxOriginalItem,ui_dependency,recover_list_box_item,Temporary dependency for the recovered Dialogs item dispatch until ListBox item is source-owned
+load_daemon,game_service,recover_load_orchestration,Own load deserialization and state restoration
+load_faction_art,game_service,recover_faction_art,Own faction art loading and refresh state
+LockCurrentServer,ui_dependency,recover_current_server,Temporary dependency for the recovered Lock check_global_2 until current_server is source-owned
+LockMessageData,ui_dependency,recover_message_data,Temporary dependency for the recovered Lock check_global until message_data is source-owned
+LockSquareLock,ui_dependency,recover_square_lock_lock,Temporary dependency for the recovered Lock add_lock until SquareLock lock is source-owned
+LockSquareUnlock,ui_dependency,recover_square_lock_unlock,Temporary dependency for the recovered Lock unlock until SquareLock unlock is source-owned
+MainInterfaceCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0045EF10 that the recovered MainInterface initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MainInterface's constructor retires this
+MainInterfaceDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0045EB80 that the recovered MainInterface scalar deleting thunk runs before releasing the object; recovering MainInterface's destructor retires this
+MainInterfaceOnIfaceButtonClicked,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until MainInterface::on_iface_button_clicked is source-owned
+MainInterfaceOriginalSetDate,ui_dependency,recover_main_interface_set_date,Temporary dependency for the recovered MapWin caption until the date setter is source-owned
+mapwin_terrain_fixup,game_service,recover_map_render,Replace map-window terrain cache updates
+MapWinClick,ui_dependency,recover_map_win_click,Temporary dependency for the recovered MapWin click handlers until the shared click is source-owned
+MapWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004626E0 that the recovered MapWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MapWin's constructor retires this
+MapWinFree,crt_ownership,replace_after_ownership_boundary,MapWin frees its owned buffer through the executable CRT until that ownership boundary moves
 MapWinOnButtonClickedTarget,ui_dependency,recover_map_win_on_button_clicked,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk4, MapWin::thunk5 adjustor thunks until the method at 0x0046F8C0 is source-owned"
 MapWinOnLeftClickTarget,ui_dependency,recover_map_win_on_left_click,Adjustor thunks bind 0x0046EBA0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
 MapWinOnLeftDoubleClickTarget,ui_dependency,recover_map_win_on_left_double_click,Adjustor thunks bind 0x0046EBD0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
@@ -209,9 +211,67 @@ MapWinOnResizeTarget,ui_dependency,recover_map_win_on_resize,"Temporary dependen
 MapWinOnRightClickTarget,ui_dependency,recover_map_win_on_right_click,Adjustor thunks bind 0x0046EBE0 at its original address so the hybrid's own redirect reaches the recovered body; no further work needed
 MapWinOnRightDownTarget,ui_dependency,recover_map_win_on_right_down,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk4, MapWin::thunk5 adjustor thunks until the method at 0x0046EC10 is source-owned"
 MapWinOnSysCloseTarget,ui_dependency,recover_map_win_on_sys_close,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk5 adjustor thunks until the method at 0x0046F880 is source-owned"
+MapWinOriginalDrawMap,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until MapWin::draw_map is source-owned; 0x0046A550 - 2049 bytes; the seam previously named ConsoleOriginalMapWinDrawMap was inlined by the VC6 link commit
+MapWinOriginalDrawRadius,ui_dependency,recover_map_win_draw_radius,Temporary dependency for the recovered draw_tile and draw_tiles broadcasts until MapWin::draw_radius is source-owned
 MapWinScalarDeleteTarget,ui_dependency,recover_map_win_scalar_delete,"Temporary dependency for the recovered MapWin::thunk1, MapWin::thunk2 adjustor thunks until the method at 0x00421830 is source-owned"
+MCIVideoOriginalClose,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until MCIVideo::close is source-owned
+MenuDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x005FAD00 that the recovered Menu scalar deleting thunk runs before releasing the object; recovering Menu's destructor retires this
+MenuMouseMove,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Menu::mouse_move is source-owned
+MessageWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00472190 that the recovered MessageWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MessageWin's constructor retires this
+MessageWinDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x00472020 that the recovered MessageWin atexit thunk runs on the process-global storage; recovering MessageWin's destructor retires this
+Midi_DeviceCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004C5740 that the recovered Midi_Device initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Midi_Device's constructor retires this
+Midi_DeviceDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004C5780 that the recovered Midi_Device atexit thunk runs on the process-global storage; recovering Midi_Device's destructor retires this
+MonuWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00477C80 that the recovered MonuWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MonuWin's constructor retires this
+MonuWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00477B10 that the recovered MonuWin scalar deleting thunk runs before releasing the object; recovering MonuWin's destructor retires this
+MultiDebugCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x005C97F0 that the recovered MultiDebug initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MultiDebug's constructor retires this
+MultiDebugDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x005C9E00 that the recovered MultiDebug scalar deleting thunk runs before releasing the object; recovering MultiDebug's destructor retires this
+MultiWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0047A590 that the recovered MultiWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MultiWin's constructor retires this
+MultiWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0047A430 that the recovered MultiWin scalar deleting thunk runs before releasing the object; recovering MultiWin's destructor retires this
+NetCloseOriginal,ui_dependency,recover_netcloseoriginal_body,Temporary dependency for the recovered AlphaNet close until the network close and its three call targets are source-owned
+NetDaemonCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x005389F0 that the recovered NetDaemon initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering NetDaemon's constructor retires this
+NetDaemonDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x00538D10 that the recovered NetDaemon atexit thunk runs on the process-global storage; recovering NetDaemon's destructor retires this
+NetDaemonMessageData,ui_dependency,recover_message_data,Temporary dependency for the recovered NetDaemon unlock_veh until message_data is source-owned
+NetDaemonNetGet,ui_dependency,recover_net_get,Temporary dependency for the recovered NetDaemon receive until Net get is source-owned
+NetDaemonProcessMessage,ui_dependency,recover_net_daemon_process_message,Temporary dependency for the recovered NetDaemon receive until process_message is source-owned
+NetDaemonSynch,ui_dependency,recover_net_daemon_synch,Temporary dependency for the recovered synch forwarders until the network synch builder is source-owned
+NetMsgCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0047ACF0 that the recovered NetMsg initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering NetMsg's constructor retires this
+NetMsgDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0047ADA0 that the recovered NetMsg scalar deleting thunk runs before releasing the object; recovering NetMsg's destructor retires this
+NetWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00481C50 that the recovered NetWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering NetWin's constructor retires this
+NetWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004834E0 that the recovered NetWin scalar deleting thunk runs before releasing the object; recovering NetWin's destructor retires this
+NewTechWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004849D0 that the recovered NewTechWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering NewTechWin's constructor retires this
+NewTechWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00484810 that the recovered NewTechWin scalar deleting thunk runs before releasing the object; recovering NewTechWin's destructor retires this
+original,oracle_reference,differential_fixture,buffer_oracle.cpp calls the original Buffer::get_data as the reference side of its differential suite
+original_bar,oracle_reference,differential_fixture,scroll_oracle.cpp calls the original Scroll::set_bar_thickness as the reference side of its differential suite
+original_rect,oracle_reference,differential_fixture,scroll_oracle.cpp calls the original Scroll::init as the reference side of its differential suite
+original_thumb,oracle_reference,differential_fixture,scroll_oracle.cpp calls the original Scroll::set_thumb_rect as the reference side of its differential suite
+OriginalSin,source_fallback,validate_source_implementation,Fixed-point sine forwarded to the original image until the seam is differentially tested
+PaletteCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x005FE2A0 that the recovered Palette initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Palette's constructor retires this
+PaletteDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x005FE2E0 that the recovered Palette atexit thunk runs on the process-global storage; recovering Palette's destructor retires this
+parse_string_OG,source_fallback,finish_source_implementation,Remove fallback after parse_string differential tests pass
+PickTechDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00488690 that the recovered PickTech scalar deleting thunk runs before releasing the object; recovering PickTech's destructor retires this
+PickWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0048AC10 that the recovered PickWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering PickWin's constructor retires this
+PickWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0048A8E0 that the recovered PickWin scalar deleting thunk runs before releasing the object; recovering PickWin's destructor retires this
+PlanWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0048BCD0 that the recovered PlanWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering PlanWin's constructor retires this
 PlanWinOnRedrawTarget,ui_dependency,recover_plan_win_on_redraw,Temporary dependency for the recovered PlanWin::thunk1 adjustor thunks until the method at 0x0048AF30 is source-owned
 PlanWinScalarDeleteTarget,ui_dependency,recover_plan_win_scalar_delete,Temporary dependency for the recovered PlanWin::thunk2 adjustor thunks until the method at 0x0048BF20 is source-owned
+popb,game_service,recover_script_popup,Replace base popup orchestration
+PopMenuDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00421400 that the recovered PopMenu scalar deleting thunk runs before releasing the object; recovering PopMenu's destructor retires this
+popp,game_service,recover_script_popup,Replace parameterized popup orchestration
+PopsOriginalFull,ui_dependency,recover_pops_full,Temporary dependency for the recovered popup forwarders until the nine-argument pop builder is source-owned
+PopupDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00406C00 that the recovered Popup scalar deleting thunk runs before releasing the object; recovering Popup's destructor retires this
+PopupFxPlay,ui_dependency,recover_fx_play,Temporary dependency for the popup wave callback until FX::play is source-owned
+PopupOriginalHide,ui_dependency,recover_popup_hide,Temporary dependency for the recovered NetMsg close until Popup hide is source-owned
+PopupOriginalStartFull,ui_dependency,recover_popup_start_full,Temporary dependency for the recovered five-argument Popup start until the six-argument form is source-owned
+PopupWaveIsPlaying,ui_dependency,runtime_redirect_entry,The popup wave callback queries Wave::is_playing through the original entry; the runtime redirect routes it into the recovered body
+PopupWaveLoad,ui_dependency,runtime_redirect_entry,The popup wave callback loads bank waves through the original no-argument Wave::load entry; the runtime redirect routes it into the recovered body
+PopupWavePlay,ui_dependency,runtime_redirect_entry,The popup wave callback plays bank waves through the original Wave::play entry; the runtime redirect routes it into the recovered body
+PrefWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004921E0 that the recovered PrefWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering PrefWin's constructor retires this
+PrefWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00491DF0 that the recovered PrefWin scalar deleting thunk runs before releasing the object; recovering PrefWin's destructor retires this
+ProdPickerDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00421100 that the recovered ProdPicker scalar deleting thunk runs before releasing the object; recovering ProdPicker's destructor retires this
+PullDownFree,crt_ownership,replace_after_ownership_boundary,PullDown item text allocations come from the executable CRT and must be released through its free until that ownership boundary moves
+PushButtonDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0062C010 that the recovered PushButton scalar deleting thunk runs before releasing the object; recovering PushButton's destructor retires this
+QuayleWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00496810 that the recovered QuayleWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering QuayleWin's constructor retires this
+QuayleWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00496710 that the recovered QuayleWin scalar deleting thunk runs before releasing the object; recovering QuayleWin's destructor retires this
 RadioButtonAttachTarget,ui_dependency,recover_radio_button_attach,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060D1F0 is source-owned
 RadioButtonDtorTarget,ui_dependency,recover_radio_button_dtor,"Temporary dependency for the recovered RadioButton::thunk1, RadioButton::thunk2, RadioButton::thunk3 adjustor thunks until the method at 0x00406F60 is source-owned"
 RadioButtonOnDialogFocusTarget,ui_dependency,recover_radio_button_on_dialog_focus,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060E300 is source-owned
@@ -221,7 +281,31 @@ RadioButtonOnLeftDownTarget,ui_dependency,recover_radio_button_on_left_down,Temp
 RadioButtonOnMouseLeaveTarget,ui_dependency,recover_radio_button_on_mouse_leave,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060E4A0 is source-owned
 RadioButtonOnMouseMoveTarget,ui_dependency,recover_radio_button_on_mouse_move,Temporary dependency for the recovered RadioButton::thunk1 adjustor thunks until the method at 0x0060E320 is source-owned
 RadioButtonOnRedrawTarget,ui_dependency,recover_radio_button_on_redraw,"Temporary dependency for the recovered RadioButton::thunk1, RadioButton::thunk3 adjustor thunks until the method at 0x0060E220 is source-owned"
+RadioButtonOriginalDialogClose,ui_dependency,recover_dialog_close,Temporary dependency for the recovered RadioButton close until Dialog close is source-owned
+ReplayWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x005ADF10 that the recovered ReplayWin scalar deleting thunk runs before releasing the object; recovering ReplayWin's destructor retires this
+ReplayWinTimerCallback,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until ReplayWin::timer_callback is source-owned
+ReportIfBlAnim,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until ReportIf::bl_anim is source-owned
+ReportIfCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004AD170 that the recovered ReportIf initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering ReportIf's constructor retires this
+ReportIfDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004ACDA0 that the recovered ReportIf atexit thunk runs on the process-global storage; recovering ReportIf's destructor retires this
+ReportWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004AD6B0 that the recovered ReportWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering ReportWin's constructor retires this
+ReportWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004AD3B0 that the recovered ReportWin scalar deleting thunk runs before releasing the object; recovering ReportWin's destructor retires this
+ReportWinExpAnim,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until ReportWin::exp_anim is source-owned
+ReportWinSatAnim,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until ReportWin::sat_anim is source-owned
+save_daemon,game_service,recover_save_orchestration,Own save serialization and filesystem lifecycle
+ScrollOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the Scroll scalar deleting destructor frees the object through; the block was allocated by the game CRT so it must return to that heap
+ScrollOriginalInit,ui_dependency,recover_scroll_primary_init,Temporary dependency for recovered Scroll wrappers until the primary initializer and its UI dependencies are source-owned
+ScrollOriginalOnMousewheelDown,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Scroll::on_mousewheel_down is source-owned
+ScrollOriginalOnMousewheelUp,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Scroll::on_mousewheel_up is source-owned
+SelectPartWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0043EE10 that the recovered SelectPartWin scalar deleting thunk runs before releasing the object; recovering SelectPartWin's destructor retires this
+SetupWinDoMenuRightside,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until SetupWin::do_menu_rightside is source-owned
+SetupWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004AE790 that the recovered SetupWin scalar deleting thunk runs before releasing the object; recovering SetupWin's destructor retires this
+social_set,game_service,recover_social_model,Complete social model state application
+SocialWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004AE9E0 that the recovered SocialWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering SocialWin's constructor retires this
+SocialWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004B3C80 that the recovered SocialWin scalar deleting thunk runs before releasing the object; recovering SocialWin's destructor retires this
+SoundOriginalLoad,ui_dependency,recover_sound_load,Temporary dependency for the recovered Wave load until the base Sound::load is source-owned
+SoundSetType,ui_dependency,recover_sound,Temporary dependency for the recovered Wave constructor until Sound::set_type is source-owned
 SpriteBoxAttachTarget,ui_dependency,recover_sprite_box_attach,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00610540 is source-owned
+SpriteBoxClose,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until SpriteBox::close is source-owned
 SpriteBoxOnDialogFocusTarget,ui_dependency,recover_sprite_box_on_dialog_focus,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x006115E0 is source-owned
 SpriteBoxOnKeyDownTarget,ui_dependency,recover_sprite_box_on_key_down,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611400 is source-owned
 SpriteBoxOnLeftClickTarget,ui_dependency,recover_sprite_box_on_left_click,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611060 is source-owned
@@ -235,118 +319,77 @@ SpriteBoxOnRightClickTarget,ui_dependency,recover_sprite_box_on_right_click,Temp
 SpriteBoxOnRightDoubleClickTarget,ui_dependency,recover_sprite_box_on_right_double_click,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611330 is source-owned
 SpriteBoxOnRightDownTarget,ui_dependency,recover_sprite_box_on_right_down,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611240 is source-owned
 SpriteBoxOnRightUpTarget,ui_dependency,recover_sprite_box_on_right_up,Temporary dependency for the recovered SpriteBox::thunk1 adjustor thunks until the method at 0x00611290 is source-owned
-BufferWriteMultiFontRawL,ui_dependency,recover_buffer_write_multi_font_raw_l,Temporary dependency for the four recovered length-limited text writers until the multi-font raster writer at 0x005DCAE0 is source-owned
-AlphaMenuDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0051DC10 that the recovered AlphaMenu scalar deleting thunk runs before releasing the object; recovering AlphaMenu's destructor retires this
-AlphaMovieDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00404310 that the recovered AlphaMovie scalar deleting thunk runs before releasing the object; recovering AlphaMovie's destructor retires this
-AlphaSaveDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00408170 that the recovered AlphaSave scalar deleting thunk runs before releasing the object; recovering AlphaSave's destructor retires this
-BasePopDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004064D0 that the recovered BasePop scalar deleting thunk runs before releasing the object; recovering BasePop's destructor retires this
-BaseWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00420A70 that the recovered BaseWin scalar deleting thunk runs before releasing the object; recovering BaseWin's destructor retires this
-CheckButtonDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004B3EC0 that the recovered CheckButton scalar deleting thunk runs before releasing the object; recovering CheckButton's destructor retires this
-CouncWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00428550 that the recovered CouncWin scalar deleting thunk runs before releasing the object; recovering CouncWin's destructor retires this
-CreditsDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00428E90 that the recovered Credits scalar deleting thunk runs before releasing the object; recovering Credits's destructor retires this
-DatalinkDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00432290 that the recovered Datalink scalar deleting thunk runs before releasing the object; recovering Datalink's destructor retires this
-DesignWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0043ECB0 that the recovered DesignWin scalar deleting thunk runs before releasing the object; recovering DesignWin's destructor retires this
-DipEditDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004E2240 that the recovered DipEdit scalar deleting thunk runs before releasing the object; recovering DipEdit's destructor retires this
-DiploPopDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00440D50 that the recovered DiploPop scalar deleting thunk runs before releasing the object; recovering DiploPop's destructor retires this
-DiploWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00444DB0 that the recovered DiploWin scalar deleting thunk runs before releasing the object; recovering DiploWin's destructor retires this
-EditBoxDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00408010 that the recovered EditBox scalar deleting thunk runs before releasing the object; recovering EditBox's destructor retires this
-FameWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0044B100 that the recovered FameWin scalar deleting thunk runs before releasing the object; recovering FameWin's destructor retires this
-GammaDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00456110 that the recovered Gamma scalar deleting thunk runs before releasing the object; recovering Gamma's destructor retires this
-ImageButtonDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00625310 that the recovered ImageButton scalar deleting thunk runs before releasing the object; recovering ImageButton's destructor retires this
-InterludeDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0045F740 that the recovered Interlude scalar deleting thunk runs before releasing the object; recovering Interlude's destructor retires this
-MainInterfaceDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0045EB80 that the recovered MainInterface scalar deleting thunk runs before releasing the object; recovering MainInterface's destructor retires this
-MenuDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x005FAD00 that the recovered Menu scalar deleting thunk runs before releasing the object; recovering Menu's destructor retires this
-MonuWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00477B10 that the recovered MonuWin scalar deleting thunk runs before releasing the object; recovering MonuWin's destructor retires this
-MultiDebugDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x005C9E00 that the recovered MultiDebug scalar deleting thunk runs before releasing the object; recovering MultiDebug's destructor retires this
-MultiWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0047A430 that the recovered MultiWin scalar deleting thunk runs before releasing the object; recovering MultiWin's destructor retires this
-NetMsgDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0047ADA0 that the recovered NetMsg scalar deleting thunk runs before releasing the object; recovering NetMsg's destructor retires this
-NetWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004834E0 that the recovered NetWin scalar deleting thunk runs before releasing the object; recovering NetWin's destructor retires this
-NewTechWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00484810 that the recovered NewTechWin scalar deleting thunk runs before releasing the object; recovering NewTechWin's destructor retires this
-PickTechDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00488690 that the recovered PickTech scalar deleting thunk runs before releasing the object; recovering PickTech's destructor retires this
-PickWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0048A8E0 that the recovered PickWin scalar deleting thunk runs before releasing the object; recovering PickWin's destructor retires this
-PopMenuDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00421400 that the recovered PopMenu scalar deleting thunk runs before releasing the object; recovering PopMenu's destructor retires this
-PopupDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00406C00 that the recovered Popup scalar deleting thunk runs before releasing the object; recovering Popup's destructor retires this
-PrefWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00491DF0 that the recovered PrefWin scalar deleting thunk runs before releasing the object; recovering PrefWin's destructor retires this
-ProdPickerDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00421100 that the recovered ProdPicker scalar deleting thunk runs before releasing the object; recovering ProdPicker's destructor retires this
-PushButtonDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0062C010 that the recovered PushButton scalar deleting thunk runs before releasing the object; recovering PushButton's destructor retires this
-QuayleWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00496710 that the recovered QuayleWin scalar deleting thunk runs before releasing the object; recovering QuayleWin's destructor retires this
-ReplayWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x005ADF10 that the recovered ReplayWin scalar deleting thunk runs before releasing the object; recovering ReplayWin's destructor retires this
-ReportWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004AD3B0 that the recovered ReportWin scalar deleting thunk runs before releasing the object; recovering ReportWin's destructor retires this
-SelectPartWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0043EE10 that the recovered SelectPartWin scalar deleting thunk runs before releasing the object; recovering SelectPartWin's destructor retires this
-SetupWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004AE790 that the recovered SetupWin scalar deleting thunk runs before releasing the object; recovering SetupWin's destructor retires this
-SocialWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004B3C80 that the recovered SocialWin scalar deleting thunk runs before releasing the object; recovering SocialWin's destructor retires this
+SpriteDrawOriginal,ui_dependency,recover_sprite_draw_body,Temporary dependency for the recovered draw-origin wrapper until the four-argument overload and its eleven call targets are source-owned
+SpriteElementCtor,ui_dependency,recover_sprite_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
+SpriteElementTeardown,ui_dependency,recover_sprite_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Sprite destructor jump thunk is source-owned
+SpriteFree,crt_ownership,replace_after_ownership_boundary,Sprite allocations come from the executable CRT and must be released through its free until that ownership boundary moves
+StatusWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004BA1A0 that the recovered StatusWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering StatusWin's constructor retires this
+StatusWinDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004BA120 that the recovered StatusWin atexit thunk runs on the process-global storage; recovering StatusWin's destructor retires this
+StringBoxAddFixup,ui_dependency,recover_string_box_add_fixup,Temporary dependency for the recovered StringBox add until its fixup pass is source-owned
 StringBoxDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004325C0 that the recovered StringBox scalar deleting thunk runs before releasing the object; recovering StringBox's destructor retires this
+StringBoxStructAdd,ui_dependency,recover_string_struct_add,Temporary dependency for the recovered StringBox add until StringStruct add is source-owned
+StringsDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x006169C0 that the recovered Strings atexit thunk runs on the process-global storage; recovering Strings's destructor retires this
 Sub004042B0Target,ui_dependency,recover_owning_class,Tail-jump target at 0x004042B0 of a recovered receiver-adjusting thunk; still an original body, so the adjusted receiver is handed to the executable's own code
 Sub004C86D0Target,ui_dependency,recover_owning_class,Tail-jump target at 0x004C86D0 of a recovered receiver-adjusting thunk; still an original body, so the adjusted receiver is handed to the executable's own code
 Sub00612710Target,ui_dependency,recover_owning_class,Tail-jump target at 0x00612710 of a recovered receiver-adjusting thunk; still an original body, so the adjusted receiver is handed to the executable's own code
 Sub00633010Target,ui_dependency,recover_owning_class,Tail-jump target at 0x00633010 of a recovered receiver-adjusting thunk; still an original body, so the adjusted receiver is handed to the executable's own code
 Sub006336D0Target,ui_dependency,recover_owning_class,Tail-jump target at 0x006336D0 of a recovered receiver-adjusting thunk; still an original body, so the adjusted receiver is handed to the executable's own code
-TutWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004BE7D0 that the recovered TutWin scalar deleting thunk runs before releasing the object; recovering TutWin's destructor retires this
-VoiceRxDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004C8A50 that the recovered VoiceRx scalar deleting thunk runs before releasing the object; recovering VoiceRx's destructor retires this
-VoiceTxDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004C8DB0 that the recovered VoiceTx scalar deleting thunk runs before releasing the object; recovering VoiceTx's destructor retires this
-WorldWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004C4A70 that the recovered WorldWin scalar deleting thunk runs before releasing the object; recovering WorldWin's destructor retires this
-BufferOriginalFillColor,ui_dependency,recover_buffer_fill,Buffer::fill(int) at 0x005DFB50, the whole-surface paint the recovered GraphicWin::fill(int) uses on its opaque path; recovering Buffer's fill retires this
-BufferOriginalMapColors,ui_dependency,recover_buffer_map_colors,Buffer::map_colors at 0x005DA330, the table remap the recovered GraphicWin::fill(int) runs after a transparent copy; bounds are inclusive
-GraphicWinOverlayNonclient,ui_dependency,recover_graphic_win_overlay,GraphicWin::overlay_nonclient at 0x005D6AC0, the frame repaint the recovered GraphicWin::redraw calls with a null rectangle
-BaseWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00408490 that the recovered BaseWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering BaseWin's constructor retires this
-BattleWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00422EE0 that the recovered BattleWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering BattleWin's constructor retires this
-CaviarCloseTarget,ui_dependency,recover_owning_class,Teardown entry point at 0x00617020 the recovered Caviar atexit thunk calls on the process-global storage
-ConsoleCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0050F460 that the recovered Console initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Console's constructor retires this
-CouncWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00428620 that the recovered CouncWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering CouncWin's constructor retires this
-DatalinkCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00428FC0 that the recovered Datalink initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Datalink's constructor retires this
-DesignWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00434480 that the recovered DesignWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering DesignWin's constructor retires this
-DiploPopCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0043EFF0 that the recovered DiploPop initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering DiploPop's constructor retires this
-DiploWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00444FC0 that the recovered DiploWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering DiploWin's constructor retires this
-FactionArtCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00455F10 that the recovered FactionArt initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering FactionArt's constructor retires this
-FameWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0044B200 that the recovered FameWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering FameWin's constructor retires this
-FontQueueCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00559290 that the recovered FontQueue initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering FontQueue's constructor retires this
-InfoWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00459500 that the recovered InfoWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering InfoWin's constructor retires this
-InfoWinDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004594A0 that the recovered InfoWin atexit thunk runs on the process-global storage; recovering InfoWin's destructor retires this
-MainInterfaceCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0045EF10 that the recovered MainInterface initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MainInterface's constructor retires this
-MapWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004626E0 that the recovered MapWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MapWin's constructor retires this
-MessageWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00472190 that the recovered MessageWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MessageWin's constructor retires this
-MessageWinDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x00472020 that the recovered MessageWin atexit thunk runs on the process-global storage; recovering MessageWin's destructor retires this
-Midi_DeviceCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004C5740 that the recovered Midi_Device initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Midi_Device's constructor retires this
-Midi_DeviceDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004C5780 that the recovered Midi_Device atexit thunk runs on the process-global storage; recovering Midi_Device's destructor retires this
-MonuWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00477C80 that the recovered MonuWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MonuWin's constructor retires this
-MultiDebugCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x005C97F0 that the recovered MultiDebug initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MultiDebug's constructor retires this
-MultiWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0047A590 that the recovered MultiWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering MultiWin's constructor retires this
-NetDaemonCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x005389F0 that the recovered NetDaemon initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering NetDaemon's constructor retires this
-NetDaemonDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x00538D10 that the recovered NetDaemon atexit thunk runs on the process-global storage; recovering NetDaemon's destructor retires this
-NetMsgCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0047ACF0 that the recovered NetMsg initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering NetMsg's constructor retires this
-NetWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00481C50 that the recovered NetWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering NetWin's constructor retires this
-NewTechWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004849D0 that the recovered NewTechWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering NewTechWin's constructor retires this
-PaletteCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x005FE2A0 that the recovered Palette initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Palette's constructor retires this
-PaletteDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x005FE2E0 that the recovered Palette atexit thunk runs on the process-global storage; recovering Palette's destructor retires this
-PickWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0048AC10 that the recovered PickWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering PickWin's constructor retires this
-PlanWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x0048BCD0 that the recovered PlanWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering PlanWin's constructor retires this
-PrefWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004921E0 that the recovered PrefWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering PrefWin's constructor retires this
-QuayleWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00496810 that the recovered QuayleWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering QuayleWin's constructor retires this
-ReportIfCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004AD170 that the recovered ReportIf initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering ReportIf's constructor retires this
-ReportIfDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004ACDA0 that the recovered ReportIf atexit thunk runs on the process-global storage; recovering ReportIf's destructor retires this
-ReportWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004AD6B0 that the recovered ReportWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering ReportWin's constructor retires this
-SocialWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004AE9E0 that the recovered SocialWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering SocialWin's constructor retires this
-StatusWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004BA1A0 that the recovered StatusWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering StatusWin's constructor retires this
-StatusWinDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004BA120 that the recovered StatusWin atexit thunk runs on the process-global storage; recovering StatusWin's destructor retires this
-StringsDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x006169C0 that the recovered Strings atexit thunk runs on the process-global storage; recovering Strings's destructor retires this
-TimeDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x00616200 that the recovered Time atexit thunk runs on the process-global storage; recovering Time's destructor retires this
-TutWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004BA6B0 that the recovered TutWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering TutWin's constructor retires this
-Wave_DeviceDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004C4E60 that the recovered Wave_Device atexit thunk runs on the process-global storage; recovering Wave_Device's destructor retires this
-Wave_In_DeviceCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004C5940 that the recovered Wave_In_Device initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Wave_In_Device's constructor retires this
-Wave_In_DeviceDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004C5980 that the recovered Wave_In_Device atexit thunk runs on the process-global storage; recovering Wave_In_Device's destructor retires this
-WorldWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004C4BF0 that the recovered WorldWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering WorldWin's constructor retires this
-EffectElementCtor,ui_dependency,recover_wave_destructor,Per-element constructor the recovered FX bank constructor passes to the vector iterator; ??0Effect@@QAE@XZ at 0x004482D0 and retires with the Wave work alongside its teardown twin
-WinOriginalInit,ui_dependency,recover_owning_class,The 2285-byte Win::init window-creation closure GraphicWin::init delegates to at 0x005EBD80; retires when Win::init is recovered
-GraphicWinOriginalComputeMinSize,ui_dependency,recover_owning_class,GraphicWin::compute_min_size at 0x005D7030; 272 bytes of frame arithmetic init runs after publishing the buffer back pointer
-WinOriginalNonclientToClient,ui_dependency,recover_owning_class,Win::nonclient_to_client at 0x005EEF60; converts an outer size to a client size in place on the non-0x800 arm of GraphicWin::init
-BufferOriginalInit,ui_dependency,recover_owning_class,Buffer::init at 0x005D7670; 847 bytes of DirectDraw and GDI surface creation GraphicWin::init hands its computed size to
-ConsoleOriginalCursorNext,ui_dependency,recover_owning_class,Console::cursor_next at 0x005109B0; focus runs it on the process-wide Console at 0x009156B0 rather than on this
-ConsoleOriginalMapWinFocus,ui_dependency,recover_owning_class,MapWin::focus at 0x0046B310; reports whether the window moved its view and is what decides Console::focus own answer
-ConsoleOriginalMapWinDrawMap,ui_dependency,recover_owning_class,MapWin::draw_map at 0x0046A550; 2049 bytes repainting one map window when the primary refused the coordinate
-ConsoleOriginalFlushInput,ui_dependency,recover_owning_class,flush_input at 0x005FD120; drains queued input once the primary view actually moved and pumps the message loop through check_net
+SubInterfaceOriginalReleaseIfaceMode,ui_dependency,recover_sub_interface_release_iface_mode,Temporary dependency for the recovered StatusWin reset until the interface-mode release is source-owned
+SubInterfaceReleaseIfaceMode,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until SubInterface::release_iface_mode is source-owned
+SubInterfaceSetIfaceMode,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until SubInterface::set_iface_mode is source-owned
+target,oracle_reference,differential_fixture,generated_signature_oracle.cpp calls the original seek_id to verify the recovered signature
 TeardownTarget00420F90,ui_dependency,recover_owning_class,MapWin destructor at 0x00420F90 that the ??__F g_MAPWIN teardown runs before descending to the GraphicWin base
 TeardownTarget004327A0,ui_dependency,recover_owning_class,Flic destructor at 0x004327A0 that the recovered g_BOOM_FLIC teardown thunk runs on the process global
 TeardownTarget0048BD80,ui_dependency,recover_owning_class,PlanWin destructor at 0x0048BD80 that the ??__F g_PLANWIN teardown runs before descending to the GraphicWin base
 TeardownTarget0051D9F0,ui_dependency,recover_owning_class,Console destructor at 0x0051D9F0 that the ??__F g_CONSOLE teardown runs before descending to the GraphicWin base
 TeardownTarget005D4DD0,ui_dependency,recover_owning_class,GraphicWin destructor at 0x005D4DD0 that three of the recovered two-step teardown thunks tail-jump to after the derived destructor
+tech_val_OG,legacy_diagnostic,preserve_exported_diagnostic,Staged patching redirects tech_val so comparison is useful only with an unpatched executable
+TextIndexElementCtor,ui_dependency,recover_textindex_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
+TextIndexElementTeardown,ui_dependency,recover_textindex_teardown,Per-element teardown the recovered array thunk passes to the vector iterator; retires when the TextIndex destructor jump thunk is source-owned
+TextureElementCtor,ui_dependency,recover_texture_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
+TextureElementTeardown,ui_dependency,recover_texture_element_teardown,Per-element teardown the recovered array thunks pass to the vector iterator; retires when the Texture destructor jump thunk is source-owned
+TextureFree,crt_ownership,replace_after_ownership_boundary,Texture frees its owned pixel block through the executable CRT until that ownership boundary moves
+TimeDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x00616200 that the recovered Time atexit thunk runs on the process-global storage; recovering Time's destructor retires this
+turn_timer,timer_callback,recover_timer_callback,Replace turn timing callback
+TutWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004BA6B0 that the recovered TutWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering TutWin's constructor retires this
+TutWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004BE7D0 that the recovered TutWin scalar deleting thunk runs before releasing the object; recovering TutWin's destructor retires this
 TutWinOriginalShow,ui_dependency,recover_owning_class,TutWin::tut_win at 0x004BDFE0; the shared tail of the four do_* helpers that actually paints the tutorial callout
+VectorCtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector constructor iterator the recovered Wave_Device constructor builds its group table through
+VectorDtorIterator,crt_ownership,replace_after_ownership_boundary,The CRT vector destructor iterator the recovered array thunks dispatch through
+VoiceRxDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004C8A50 that the recovered VoiceRx scalar deleting thunk runs before releasing the object; recovering VoiceRx's destructor retires this
+VoiceTxDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004C8DB0 that the recovered VoiceTx scalar deleting thunk runs before releasing the object; recovering VoiceTx's destructor retires this
+wants_to_attack_,source_fallback,validate_source_implementation,Retain original fallback until faction pseudo-tech valuation is differentially tested
+Wave_DeviceDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004C4E60 that the recovered Wave_Device atexit thunk runs on the process-global storage; recovering Wave_Device's destructor retires this
+Wave_In_DeviceCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004C5940 that the recovered Wave_In_Device initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering Wave_In_Device's constructor retires this
+Wave_In_DeviceDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004C5980 that the recovered Wave_In_Device atexit thunk runs on the process-global storage; recovering Wave_In_Device's destructor retires this
+wave_it,game_service,recover_audio_event,Route game audio events through a platform service
+WaveControlGroupOriginalCtor,ui_dependency,recover_wave_control_group,Per-group constructor handed to the vector iterators; the runtime redirect routes it into the recovered body
+WaveControlGroupOriginalDtor,ui_dependency,recover_wave_control_group,Per-group destructor handed to the vector iterators; the runtime redirect routes it into the recovered body
+WaveDeviceGroupInsert,ui_dependency,recover_wave_device,Temporary dependency for the recovered add_to_group until the group list-insert helper is source-owned
+WaveDeviceIsGroupDisabled,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave play until Wave_Device::is_group_disabled is source-owned
+WaveDevicePullFromGroup,ui_dependency,recover_wave_device,Temporary dependency for the recovered Wave destructor until Wave_Device::pull_from_group is source-owned
+WaveElementCtor,ui_dependency,recover_wave_element_ctor,Per-element constructor the recovered array initializers pass through the vector iterator; bound at the original address the ??_L call sites pass
+WaveElementTeardown,ui_dependency,recover_wave_destructor,Per-element teardown binding the same Wave destructor address WaveOriginalDestructor holds; both retire together
+WaveOperatorDelete,crt_ownership,replace_after_ownership_boundary,The game CRT operator delete the recovered Wave destructor frees its sample buffer through; the block was allocated by the game CRT so it must return to that heap
+WaveOperatorNew,crt_ownership,replace_after_ownership_boundary,The game CRT operator new the recovered set_fname allocates the filename copy on; the destructor and set_fname free it with the matching game delete
+WaveOriginalDestructor,ui_dependency,recover_wave_destructor,Temporary dependency for the recovered Wave atexit thunks until the Wave destructor is source-owned
+WaveOriginalLoad,ui_dependency,recover_wave_load,Temporary dependency for the recovered Wave play until the no-argument Wave::load is source-owned
+WinFlipOriginal,ui_dependency,recover_winfliporiginal_body,Temporary dependency for the recovered bubble dismissal until the flip and its fourteen call targets are source-owned
+WinOriginalClose,ui_dependency,recover_win_close,Temporary dependency for recovered GraphicWin close until Win teardown is source-owned
+WinOriginalDestructor,ui_dependency,recover_win_close,Temporary dependency for the recovered GraphicWin destructor until the Buffer and Win teardown closure is source-owned
+WinOriginalHide,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Win::hide is source-owned
+WinOriginalInit,ui_dependency,recover_owning_class,The 2285-byte Win::init window-creation closure GraphicWin::init delegates to at 0x005EBD80; retires when Win::init is recovered
+WinOriginalNonclientToClient,ui_dependency,recover_owning_class,Win::nonclient_to_client at 0x005EEF60; converts an outer size to a client size in place on the non-0x800 arm of GraphicWin::init
+WinOriginalOnMouseMove,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Win::on_mouse_move is source-owned
+WinOriginalOnNcHittest,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Win::on_nc_hittest is source-owned
+WinOriginalReleaseModal,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until Win::release_modal is source-owned
+WinUpdateCursorOriginal,ui_dependency,recover_winupdatecursororiginal_body,Temporary dependency for the recovered cursor setter until the cursor refresh and its six call targets are source-owned
+WinUpdateScreenOriginal,ui_dependency,recover_winupdatescreenoriginal_body,Temporary dependency for the recovered bubble dismissal until the screen refresh and its four call targets are source-owned
+world_climate,game_service,recover_world_generation,Climate computation still in the original image; recover with deterministic world generation
+world_rainfall,game_service,recover_world_generation,Complete deterministic rainfall generation
+WorldWinClick,ui_dependency,recover_world_win_click,Temporary dependency for the recovered WorldWin click handlers until the shared click is source-owned
+WorldWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x004C4BF0 that the recovered WorldWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering WorldWin's constructor retires this
+WorldWinDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x004C4A70 that the recovered WorldWin scalar deleting thunk runs before releasing the object; recovering WorldWin's destructor retires this
+X_pop,game_service,recover_script_popup,Replace script-driven popup orchestration
+XPopOriginalFull,ui_dependency,recover_x_pop_full,Temporary dependency for the recovered caption-less popup forwarders until the six-argument builder is source-owned
+XPopsOriginalFull,ui_dependency,recover_x_pops_full,Temporary dependency for the recovered short popup wrapper until the nine-argument builder is source-owned
