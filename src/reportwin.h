@@ -53,7 +53,7 @@ class DLLEXPORT ReportWin : GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 100 member(s) from the IDA database, 21 named; it starts a member at 0xA14, which is where src/ ends.
 
-  uint8_t rect1_[0x10];  // 0xA14
+  RECT rect1_;  // 0xA14, IDB `rect1`
   uint32_t field_A24_;  // 0xA24
   uint32_t field_A28_;  // 0xA28
   uint32_t field_A2C_;  // 0xA2C

@@ -23,6 +23,9 @@
 #include "flatbutton.h"
 #include "caviar.h"
 #include "buffer.h"
+#include "font.h"
+#include "spot.h"
+#include "scroll.h"
 
 #include "original_seam.h"
 #include "graphicwin.h"
@@ -393,9 +396,38 @@ class DLLEXPORT BaseWin : GraphicWin {
   uint32_t field_40DF8_;  // 0x40DF8
   uint32_t field_40DFC_;  // 0x40DFC
 
+  uint32_t field_40E00_;  // 0x40E00
+  uint32_t field_40E04_;  // 0x40E04
+  uint32_t field_40E08_;  // 0x40E08
+  uint32_t field_40E0C_;  // 0x40E0C
+  uint32_t field_40E10_;  // 0x40E10
+  uint32_t field_40E14_;  // 0x40E14
+  uint32_t field_40E18_;  // 0x40E18
+  uint32_t field_40E1C_;  // 0x40E1C
+  uint32_t field_40E20_;  // 0x40E20
+  uint32_t field_40E24_;  // 0x40E24
+  uint32_t field_40E28_;  // 0x40E28
+  RECT rect12_;  // 0x40E2C
+  RECT rect13_;  // 0x40E3C
+  RECT rect16_;  // 0x40E4C
+  RECT rect17_;  // 0x40E5C
+  uint32_t field_40E6C_;  // 0x40E6C
+  uint32_t field_40E70_;  // 0x40E70
+  uint32_t field_40E74_;  // 0x40E74
+  uint32_t field_40E78_;  // 0x40E78
+  RECT rect20_;  // 0x40E7C
+  Font font1_;  // 0x40E8C, IDB `font1`, size == sizeof(Font)
+  Spot spot1_;  // 0x40EB4, size == sizeof(Spot)
+  Spot spot2_;  // 0x40EC0, size == sizeof(Spot)
+  Buffer buffer2_;  // 0x40ECC, size == sizeof(Buffer)
+  Scroll scroll1_;  // 0x41454, size == sizeof(Scroll)
+  Scroll scroll2_;  // 0x435A0, size == sizeof(Scroll)
+
   // Storage the image proves is here: its own methods reach 0x45B34.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_40E00_[0x4D34];  // 0x40E00
+  // The IDB begins a scroll3 (sizeof(Scroll)) at 0x456EC, beyond the proven
+  // extent; it is not declared until a body reaches it.
+  uint8_t field_456EC_[0x48];  // 0x456EC
 };
 
 void __fastcall base_win_close_redirect(BaseWin *self, void *);

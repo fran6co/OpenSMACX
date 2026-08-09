@@ -19,6 +19,7 @@
 
 #include "menu.h"
 #include "buffer.h"
+#include "sprite.h"
 
  /*
   * AlphaMenu class
@@ -41,9 +42,11 @@ class DLLEXPORT AlphaMenu {
 
   Buffer buffer_;  // 0xB64, IDB `buffer`, size == sizeof(Buffer)
 
+  Sprite sprite1_;  // 0x10EC, IDB `sprite1`, size == sizeof(Sprite)
+
   // Storage the image proves is here: its own methods reach 0x1138.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_10EC_[0x4C];  // 0x10EC
+  uint8_t field_1118_[0x20];  // 0x1118
 };
 
 int __fastcall alpha_menu_requested_height_redirect(AlphaMenu *self, void *);
