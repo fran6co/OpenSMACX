@@ -19,6 +19,7 @@
 #include "font.h"
 #include "sprite.h"
 #include "listbox.h"
+#include "stringbox.h"
 
  /*
   * MessageWin class
@@ -52,7 +53,7 @@ class DLLEXPORT MessageWin : Sprite {
 
   // Storage the image proves is here: its own methods reach 0x3758.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_BB8_[0x2BA0];  // 0xBB8
+  StringBox stringBox_;  // 0xBB8, IDB `stringBox`, size == sizeof(StringBox)
 };
 
 static_assert(sizeof(MessageWin) == 0x3758,

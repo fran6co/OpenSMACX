@@ -21,6 +21,7 @@
 #include "flatbutton.h"
 #include "graphicwin.h"
 #include "buttongroup.h"
+#include "popup.h"
 
  /*
   * PickWin class
@@ -48,7 +49,7 @@ class DLLEXPORT PickWin : GraphicWin {
   uint32_t field_A18_;  // 0xA18
   uint32_t field_A1C_;  // 0xA1C
   uint32_t field_A20_;  // 0xA20
-  uint8_t popup_[0x537C];  // 0xA24
+  Popup popup_;  // 0xA24, declared Popup extent == sizeof(BasePop) + sizeof(Scroll)
   uint32_t field_5DA0_;  // 0x5DA0
   uint32_t field_5DA4_;  // 0x5DA4
   uint32_t field_5DA8_;  // 0x5DA8

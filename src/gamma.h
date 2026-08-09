@@ -18,6 +18,10 @@
 #pragma once
 #include "font.h"
 #include "graphicwin.h"
+#include "palette.h"
+#include "scroll.h"
+#include "editbox.h"
+#include "pushbutton.h"
 
  /*
   * Gamma class
@@ -60,16 +64,20 @@ class DLLEXPORT Gamma : GraphicWin {
   uint32_t field_A5C_;  // 0xA5C
   uint32_t field_A60_;  // 0xA60
   uint32_t field_A64_;  // 0xA64
-  uint8_t palette_[0x454];  // 0xA68
+  Palette palette_;  // 0xA68, IDB `palette`, size == sizeof(Palette)
   Font font_;  // 0xEBC
   uint32_t field_EE4_;  // 0xEE4
   uint32_t field_EE8_;  // 0xEE8
   uint32_t field_EEC_;  // 0xEEC
-  uint8_t field_EF0_[0xA30];  // 0xEF0
+  Scroll scroll_;  // 0xEF0, IDB `scroll`, size == sizeof(Scroll)
+  EditBox editBox_;  // 0x303C, IDB `editBox`, size == sizeof(EditBox)
+  PushButton pushButton1_;  // 0x3BB0, IDB `pushButton1`, 0xB00
 
   // Storage the image proves is here: its own methods reach 0x46B4.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_1920_[0x2D94];
+  // The IDB additionally claims pushButton2 (0xB00) at 0x46B0, beyond the
+  // proven extent; it is not declared until a body reaches it.
+  uint8_t field_46B0_[0x4];  // 0x46B0
 };
 
 int __fastcall gamma_on_key_click_redirect(Gamma *self, void *, int a1, int a2);

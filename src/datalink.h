@@ -112,9 +112,11 @@ class DLLEXPORT Datalink : GraphicWin {
   ButtonGroup buttonGroup_;  // 0xF594
   ListBox listBox_;  // 0xF628
 
+  Font font1_;  // 0x1017C, IDB `font1`, size == sizeof(Font)
+
   // Storage the image proves is here: its own methods reach 0x1B394.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_1017C_[0xB218];  // 0x1017C
+  uint8_t field_101A4_[0xB1F0];  // 0x101A4
 };
 
 static_assert(sizeof(Datalink) == 0x1B394,

@@ -23,6 +23,8 @@
 #include "buttongroup.h"
 #include "buffer.h"
 #include "graphicwin.h"
+#include "scroll.h"
+#include "flic.h"
 
  /*
   * ReportWin class
@@ -124,7 +126,7 @@ class DLLEXPORT ReportWin : GraphicWin {
   uint32_t field_C100_;  // 0xC100
   uint32_t field_C104_;  // 0xC104
   uint32_t field_C108_;  // 0xC108
-  uint8_t scroll_[0x214C];  // 0xC10C
+  Scroll scroll_;  // 0xC10C, size == sizeof(Scroll)
   uint32_t field_E258_;  // 0xE258
   uint32_t field_E25C_;  // 0xE25C
   uint32_t field_E260_;  // 0xE260
@@ -150,7 +152,7 @@ class DLLEXPORT ReportWin : GraphicWin {
   uint32_t field_E31C_;  // 0xE31C
   Buffer buffer1_;  // 0xE320
   Buffer buffer2_;  // 0xE8A8
-  uint8_t flic_[0xAE4];  // 0xEE30
+  Flic flic_;  // 0xEE30, declared Flic extent == 0xAE4
   uint8_t field_F914_[0x1A8];  // 0xF914
 };
 

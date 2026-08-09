@@ -19,6 +19,7 @@
 #include "flatbutton.h"
 #include "buttongroup.h"
 #include "graphicwin.h"
+#include "stringbox.h"
 
  /*
   * NewTechWin class
@@ -115,8 +116,8 @@ class DLLEXPORT NewTechWin : GraphicWin {
   uint32_t field_B28_;  // 0xB28
   FlatButton flatButtons_[3];  // 0xB2C
   ButtonGroup buttonGroup_;  // 0x2D10
-  uint8_t stringBoxes_[0xAE80];  // 0x2DA4
-  uint8_t stringBox2_[0x2BA0];  // 0xDC24
+  StringBox stringBoxes_[4];  // 0x2DA4, 4 * sizeof(StringBox) == 0xAE80
+  StringBox stringBox2_;  // 0xDC24, size == sizeof(StringBox)
 };
 
 static_assert(sizeof(NewTechWin) == 0x107C4,
