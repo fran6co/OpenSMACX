@@ -359,7 +359,7 @@ class DLLEXPORT DesignWin : GraphicWin {
   uint8_t field_14270_[0x2D0];  // 0x14270
   Font font1_;  // 0x14540
   Font font2_;  // 0x14568
-  uint8_t field_14590_[0x14];  // 0x14590
+  Font font3_;  // 0x14590, the IDB's third font; the class grows by 0x14
 };
 
 void __fastcall design_win_unk1_redirect(DesignWin *self, void *);

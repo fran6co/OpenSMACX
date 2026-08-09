@@ -18,6 +18,7 @@
 #pragma once
 #include "time.h"
 #include "sprite.h"
+#include "scroll.h"
 #include "font.h"
 #include "flatbutton.h"
 #include "graphicwin.h"
@@ -75,11 +76,11 @@ class DLLEXPORT ProdPicker : GraphicWin {
   FlatButton flatButton7_;  // 0x4F3C
   FlatButton flatButton8_;  // 0x5A88
   FlatButton flatButton9_;  // 0x65D4
-  uint8_t field_7120_[0x4];  // 0x7120
+  Scroll scroll_;  // 0x7120
 
   // Storage the image proves is here: its own methods reach 0xA840.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_7124_[0x371C];
+  uint8_t field_926C_[0x15D4];  // 0x926C
 };
 
 static_assert(sizeof(ProdPicker) == 0xA840,

@@ -18,6 +18,7 @@
 #pragma once
 #include "flatbutton.h"
 #include "buttongroup.h"
+#include "listbox.h"
 
 #include "original_seam.h"
 #include "graphicwin.h"
@@ -109,11 +110,11 @@ class DLLEXPORT Datalink : GraphicWin {
   FlatButton flatButton17_;  // 0xDEFC
   FlatButton flatButton18_;  // 0xEA48
   ButtonGroup buttonGroup_;  // 0xF594
-  uint8_t field_F628_[0x4];  // 0xF628
+  ListBox listBox_;  // 0xF628
 
   // Storage the image proves is here: its own methods reach 0x1B394.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_F62C_[0xBD68];
+  uint8_t field_1017C_[0xB218];  // 0x1017C
 };
 
 static_assert(sizeof(Datalink) == 0x1B394,
