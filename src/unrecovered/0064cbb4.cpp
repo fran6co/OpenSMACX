@@ -1,0 +1,7 @@
+// ORIGINAL: 0x0064CBB4 EXCLUDED S1
+// excluded - availability - MSVC 6 CRT and Windows library code; linked, not rewritten (docs/EXCLUSIONS.md section 1)
+// name      ?_ValidateWrite@@YAHPAXI@Z
+// size      28 bytes
+// spans     0x0064CBB4-0x0064CBD0
+// prototype int (__cdecl ?_ValidateWrite@@YAHPAXI@Z)(void* lp, UINT_PTR ucb)
+// callers   1   call targets   0

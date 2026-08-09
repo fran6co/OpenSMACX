@@ -1,0 +1,10 @@
+// ORIGINAL: 0x005F8770 FILE
+// placeholder - not yet decompiled
+// name      sub_5f8770
+// size      134 bytes
+// spans     0x005F8770-0x005F87F6
+// prototype 
+// callers   0   call targets   2
+// To start: tools/decomp_status.py --work 0x005F8770
+
+// BODY GOES HERE.
