@@ -16,7 +16,7 @@
 
 /*
 Purpose: Return the current string-list item ID.
-Original Offset: 00401640
+ORIGINAL: 0x00401640
 Return Value: Current ID, or zero when the list is empty
 Status: Complete
 */
@@ -29,7 +29,7 @@ int StringStruct::current_id() {
 
 /*
 Purpose: Return the current string-list payload.
-Original Offset: 00402530
+ORIGINAL: 0x00402530
 Return Value: Current payload, or zero when the list is empty
 Status: Complete
 */
@@ -42,7 +42,7 @@ int StringStruct::current_entry() {
 
 /*
 Purpose: Advance the current string-list entry and return its payload.
-Original Offset: 00402500
+ORIGINAL: 0x00402500
 Return Value: New current payload, or zero when the list is empty
 Status: Complete
 */
@@ -65,7 +65,7 @@ int StringStruct::next_entry() {
 
 /*
 Purpose: Position the string-list cursor at the first matching item ID.
-Original Offset: 00401560
+ORIGINAL: 0x00401560
 Return Value: One when found, otherwise zero
 Status: Complete
 */
@@ -140,7 +140,7 @@ void *payload_pointer(int payload) {
 /*
 Purpose: Release every entry in the list, notifying the owner about each
          payload before destroying the payload and its entry.
-Original Offset: 00402970
+ORIGINAL: 0x00402970
 Status: Complete
 */
 void StringStruct::remove_all() {
@@ -183,7 +183,7 @@ const uint32_t StringStructVirtualBaseVtable = 0x006693A0;
 /*
 Purpose: Reset the list to its constructed state, installing both virtual
          tables and releasing every entry.
-Original Offset: 00401060
+ORIGINAL: 0x00401060
 Status: Complete
 */
 void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_base) {
@@ -222,7 +222,7 @@ const uint32_t StringStructDerivedVirtualBaseVtable = 0x006698C0;
 /*
 Purpose: Close a derived string list, releasing its entries under its own
          virtual tables before closing its StringStruct base the same way.
-Original Offset: 004066C0
+ORIGINAL: 0x004066C0
 Status: Complete
 Verification note: the base stage overwrites the derived tables, so with the
 non-walking fixtures the oracle can safely drive, the derived stage leaves no
@@ -246,7 +246,7 @@ uint32_t *StringVirtualBaseOwner = (uint32_t *)0x009B3374;
 Purpose: Destroy a most-derived StringList: run the source-owned two-stage
          derived close, then hand the virtual base back its own vtable and
          republish the pending-allocation owner the constructor captured.
-Original Offset: 00406820
+ORIGINAL: 0x00406820
 Return Value: EAX residue - the saved owner value, republished into
               *StringVirtualBaseOwner. The original is a void destructor;
               modelled as uint32_t to preserve the residue, as
@@ -291,7 +291,7 @@ uint32_t __fastcall string_list_destructor_redirect(StringList *self, void *) {
 }
 
 /*
-Original Offset: 004015B0
+ORIGINAL: 0x004015B0
 Status: Complete
 */
 typedef int (__cdecl *AbsFnT)(int);

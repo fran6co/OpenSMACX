@@ -1164,6 +1164,15 @@ if(BUILD_TESTING)
     # never fires is indistinguishable from one that cannot.
     opensmacx_add_python_tool_test(byte-match-tests test_byte_match.py)
 
+    # The source-map grammar and the status tool built on it. Both are fully
+    # offline: the scanner's modes, precedence and drift categories, and the
+    # status tool's cache, ledger merge law (never truncate, never downgrade
+    # BYTE_EXACT) and placeholder generator. The VC6 measurement itself is the
+    # ratchet's job and the pilot's; these pin everything around it.
+    opensmacx_add_python_tool_test(annotation-scan-tests
+                                   test_annotation_scan.py)
+    opensmacx_add_python_tool_test(decomp-status-tests test_decomp_status.py)
+
     # Exact matches are kept in a committed ledger and may rise but never fall.
     # This check is compiler-free: it reads the ledger and the checked-in floor,
     # so CI can enforce the result even though the VC6 recompile oracle itself

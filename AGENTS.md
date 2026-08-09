@@ -30,6 +30,12 @@ describe are assumed everywhere below and are not repeated here:
   where the body was written to match: read it before writing a body you intend
   to verify this way, because the flag set is `/c /O2 /Gy /GR- /Oy-` and the
   source *form* matters — a ternary and an `if` are not the same object code.
+- `docs/DECOMP_MAP.md` — the single source-map convention: `ORIGINAL: 0x...`
+  annotations in `.cpp` files are the one record of what is decompiled,
+  placeholder and exclusion files included; `tools/decomp_status.py` asks VC6
+  for the state of every annotated piece (parallel, cached) and merges the
+  verdicts into the ledger without ever downgrading a BYTE_EXACT row. New
+  recoveries and new placeholders use this grammar, not the legacy spellings.
 - `docs/STATIC_RECOMPILATION.md`, `docs/PORTING.md` — the stopped static-recompile
   pilot and the general porting notes.
 
