@@ -19,6 +19,9 @@
 #include "spot.h"
 #include "flatbutton.h"
 #include "graphicwin.h"
+#include "stringbox.h"
+#include "editbox.h"
+#include "checkbox.h"
 
  /*
   * NetWin class
@@ -251,9 +254,9 @@ class DLLEXPORT NetWin : GraphicWin {
   uint32_t field_D2C_;  // 0xD2C
   uint32_t field_D30_;  // 0xD30
   Spot spot_;  // 0xD34
-  uint8_t stringBox_[0x2BA0];  // 0xD40
-  uint8_t editBox_[0xB74];  // 0x38E0
-  uint8_t checkBox_[0xB28];  // 0x4454
+  StringBox stringBox_;  // 0xD40, size == sizeof(StringBox)
+  EditBox editBox_;  // 0x38E0, size == sizeof(EditBox)
+  CheckBox checkBox_;  // 0x4454, declared CheckBox extent == 0xB28
   FlatButton flatButton1_;  // 0x4F7C
   FlatButton flatButton2_;  // 0x5AC8
   uint8_t field_6614_[0x111C];  // 0x6614

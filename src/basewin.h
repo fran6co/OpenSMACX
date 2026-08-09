@@ -280,12 +280,12 @@ class DLLEXPORT BaseWin : GraphicWin {
   uint32_t field_40B80_;  // 0x40B80
   uint32_t field_40B84_;  // 0x40B84
   uint32_t field_40B88_;  // 0x40B88
-  uint8_t rect1_[0x10];  // 0x40B8C
+  RECT rect1_;  // 0x40B8C, IDB `rect1`
   uint32_t field_40B9C_;  // 0x40B9C
   uint32_t field_40BA0_;  // 0x40BA0
   uint32_t field_40BA4_;  // 0x40BA4
   uint32_t field_40BA8_;  // 0x40BA8
-  uint8_t rect2_[0x10];  // 0x40BAC
+  RECT rect2_;  // 0x40BAC, IDB `rect2`
   uint32_t field_40BBC_;  // 0x40BBC
   uint32_t field_40BC0_;  // 0x40BC0
   uint32_t field_40BC4_;  // 0x40BC4
@@ -294,12 +294,12 @@ class DLLEXPORT BaseWin : GraphicWin {
   uint32_t field_40BD0_;  // 0x40BD0
   uint32_t field_40BD4_;  // 0x40BD4
   uint32_t field_40BD8_;  // 0x40BD8
-  uint8_t rect3_[0x10];  // 0x40BDC
+  RECT rect3_;  // 0x40BDC, IDB `rect3`
   uint32_t field_40BEC_;  // 0x40BEC
   uint32_t field_40BF0_;  // 0x40BF0
   uint32_t field_40BF4_;  // 0x40BF4
   uint32_t field_40BF8_;  // 0x40BF8
-  uint8_t rect4_[0x10];  // 0x40BFC
+  RECT rect4_;  // 0x40BFC, IDB `rect4`
   uint32_t field_40C0C_;  // 0x40C0C
   uint32_t field_40C10_;  // 0x40C10
   uint32_t field_40C14_;  // 0x40C14

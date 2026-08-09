@@ -1827,31 +1827,6 @@ class PrefWin {
   uint32_t ptrFont7_;  // 0x1B3CC
 };
 
-/* Derives from BaseButton: its constructor builds one on an unadjusted `this`. See docs/recovery/base-edges.csv. */
-/* 0xB00 bytes, 19 member(s), 1 named. From the IDB. 6 function(s) in the image. */
-class PushButton {
- public:
-  uint8_t baseButton_[0xAB8];  // 0x0
-  uint32_t field_AB8_;  // 0xAB8
-  uint32_t field_ABC_;  // 0xABC
-  uint32_t field_AC0_;  // 0xAC0
-  uint32_t field_AC4_;  // 0xAC4
-  uint32_t field_AC8_;  // 0xAC8
-  uint32_t field_ACC_;  // 0xACC
-  uint32_t field_AD0_;  // 0xAD0
-  uint32_t field_AD4_;  // 0xAD4
-  uint32_t field_AD8_;  // 0xAD8
-  uint32_t field_ADC_;  // 0xADC
-  uint32_t field_AE0_;  // 0xAE0
-  uint32_t field_AE4_;  // 0xAE4
-  uint32_t field_AE8_;  // 0xAE8
-  uint32_t field_AEC_;  // 0xAEC
-  uint32_t field_AF0_;  // 0xAF0
-  uint32_t field_AF4_;  // 0xAF4
-  uint32_t field_AF8_;  // 0xAF8
-  uint32_t field_AFC_;  // 0xAFC
-};
-
 /* 0x37BC bytes, 47 member(s), 9 named. From the IDB. 11 function(s) in the image. */
 class QuayleWin {
  public:
