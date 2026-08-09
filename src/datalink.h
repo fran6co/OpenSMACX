@@ -19,6 +19,7 @@
 #include "flatbutton.h"
 #include "buttongroup.h"
 #include "listbox.h"
+#include "font.h"
 
 #include "original_seam.h"
 #include "graphicwin.h"
@@ -114,9 +115,11 @@ class DLLEXPORT Datalink : GraphicWin {
 
   Font font1_;  // 0x1017C, IDB `font1`, size == sizeof(Font)
 
+  Font font2_;  // 0x101A4, IDB `font2`, size == sizeof(Font)
+
   // Storage the image proves is here: its own methods reach 0x1B394.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_101A4_[0xB1F0];  // 0x101A4
+  uint8_t field_101CC_[0xB1C8];  // 0x101CC
 };
 
 static_assert(sizeof(Datalink) == 0x1B394,

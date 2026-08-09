@@ -22,6 +22,7 @@
 #include "buttongroup.h"
 #include "graphicwin.h"
 #include "subinterface.h"
+#include "checkbutton.h"
 
  /*
   * SocialWin class
@@ -247,11 +248,11 @@ class DLLEXPORT SocialWin : GraphicWin {
   uint32_t field_CF0_;  // 0xCF0
   uint32_t factionID_;  // 0xCF4
   uint8_t socCategory_[0x10];  // 0xCF8
-  uint8_t socEffect_[0x2C];  // 0xD08
-  uint8_t socEffectOrig_[0x2C];  // 0xD34
+  Sprite socEffect_;  // 0xD08, size == sizeof(Sprite)
+  Sprite socEffectOrig_;  // 0xD34, size == sizeof(Sprite)
   uint32_t netIncome_;  // 0xD60
   uint32_t breakthroughTurns_;  // 0xD64
-  uint8_t energyLockButtons_[0x1E84];  // 0xD68
+  CheckButton energyLockButtons_[3];  // 0xD68, 3 * sizeof(CheckButton) == 0x1E84
   uint32_t field_2BEC_;  // 0x2BEC
   uint32_t field_2BF0_;  // 0x2BF0
   uint32_t field_2BF4_;  // 0x2BF4
@@ -303,22 +304,22 @@ class DLLEXPORT SocialWin : GraphicWin {
   Font font7_;  // 0x1EF58
   Font font8_;  // 0x1EF80
   Font font9_;  // 0x1EFA8
-  uint8_t tutRects1_[0x90];  // 0x1EFD0
-  uint8_t tutRect1_[0x10];  // 0x1F060
-  uint8_t tutRects2_[0xA0];  // 0x1F070
+  RECT tutRects1_[9];  // 0x1EFD0, 9 RECTs
+  RECT tutRect1_;  // 0x1F060
+  RECT tutRects2_[10];  // 0x1F070, 10 RECTs
   uint8_t tooltipSocEng_[0x10];  // 0x1F110
-  uint8_t tutRect4_[0x10];  // 0x1F120
-  uint8_t tutRects3_[0x120];  // 0x1F130
+  RECT tutRect4_;  // 0x1F120
+  RECT tutRects3_[18];  // 0x1F130, 18 RECTs
   uint8_t tooltipEffects_[0x10];  // 0x1F250
   uint8_t tooltipEconomy_[0x10];  // 0x1F260
   uint8_t tooltipLabs_[0x10];  // 0x1F270
   uint8_t tooltipPsych_[0x10];  // 0x1F280
-  uint8_t tutRect9_[0x10];  // 0x1F290
+  RECT tutRect9_;  // 0x1F290
   uint8_t tooltipFactionPower_[0x10];  // 0x1F2A0
-  uint8_t tutRect11_[0x10];  // 0x1F2B0
-  uint8_t tutRect12_[0x10];  // 0x1F2C0
-  uint8_t tutRect13_[0x10];  // 0x1F2D0
-  uint8_t tutRect14_[0x10];  // 0x1F2E0
+  RECT tutRect11_;  // 0x1F2B0
+  RECT tutRect12_;  // 0x1F2C0
+  RECT tutRect13_;  // 0x1F2D0
+  RECT tutRect14_;  // 0x1F2E0
 };
 
 static_assert(sizeof(SocialWin) == 0x1F2F0,

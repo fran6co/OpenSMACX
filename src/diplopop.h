@@ -20,6 +20,8 @@
 #include "font.h"
 #include "graphicwin.h"
 #include "subinterface.h"
+#include "flic.h"
+#include "flatbutton.h"
 
  /*
   * DiploPop class
@@ -64,8 +66,8 @@ class DLLEXPORT DiploPop : GraphicWin {
   Font font3_;  // 0xA6C
   Time time1_;  // 0xA94
   Time time2_;  // 0xABC
-  uint8_t flic1_[0xAE4];  // 0xAE4
-  uint8_t flic2_[0xAE4];  // 0x15C8
+  Flic flic1_;  // 0xAE4, declared Flic extent == 0xAE4
+  Flic flic2_;  // 0x15C8, declared Flic extent == 0xAE4
   uint32_t field_20AC_;  // 0x20AC
   uint32_t field_20B0_;  // 0x20B0
   uint32_t field_20B4_;  // 0x20B4
@@ -84,7 +86,7 @@ class DLLEXPORT DiploPop : GraphicWin {
   uint32_t field_20E8_;  // 0x20E8
   uint32_t field_20EC_;  // 0x20EC
   uint32_t field_20F0_;  // 0x20F0
-  uint8_t rect1_[0x10];  // 0x20F4
+  RECT rect1_;  // 0x20F4, IDB `rect1`
   uint32_t field_2104_;  // 0x2104
   uint32_t field_2108_;  // 0x2108
   uint32_t field_210C_;  // 0x210C
@@ -106,7 +108,10 @@ class DLLEXPORT DiploPop : GraphicWin {
   uint32_t field_214C_;  // 0x214C
   uint32_t field_2150_;  // 0x2150
   uint32_t field_2154_;  // 0x2154
-  uint8_t field_2158_[0x20B4];  // 0x2158
+  // The IDB's last member: three FlatButtons ending at 0x433C, which is
+  // 0x130 past the hole this used to declare; the class carries no size
+  // assertion, so the declaration follows the member table.
+  FlatButton flatButtons_[3];  // 0x2158, IDB `flatButtons`, 3 * sizeof(FlatButton)
 };
 
 void __fastcall diplo_pop_on_iface_left_click_redirect(DiploPop *self, void *, int a1, int a2);
