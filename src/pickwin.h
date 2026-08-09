@@ -20,6 +20,7 @@
 #include "listbox.h"
 #include "flatbutton.h"
 #include "graphicwin.h"
+#include "buttongroup.h"
 
  /*
   * PickWin class
@@ -435,7 +436,7 @@ class DLLEXPORT PickWin : GraphicWin {
   uint32_t field_D6A0_;  // 0xD6A0
   uint32_t field_D6A4_;  // 0xD6A4
   FlatButton flatButtons10_[7];  // 0xD6A8
-  uint8_t field_125BC_[0x88];  // 0x125BC
+  ButtonGroup buttonGroup_;  // 0x125BC, IDB `buttonGroup`, size == sizeof(ButtonGroup)
 };
 
 void __fastcall pick_win_on_button_passover_redirect(PickWin *self, void *, int a1, int a2);

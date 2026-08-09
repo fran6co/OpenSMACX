@@ -150,7 +150,7 @@ class DLLEXPORT SetupWin : GraphicWin {
   uint32_t field_110C_;  // 0x110C
   uint32_t field_1110_;  // 0x1110
   uint32_t field_1114_;  // 0x1114
-  uint8_t field_1118_[0x88];  // 0x1118
+  Buffer buffer2_;  // 0x1118, IDB `buffer2`, size == sizeof(Buffer); ends 0x16A0
 };
 
 int __fastcall setup_win_unk1_redirect(SetupWin *self, void *, int a1);

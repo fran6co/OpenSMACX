@@ -17,6 +17,8 @@
  */
 #pragma once
 #include "graphicwin.h"
+#include "flatbutton.h"
+#include "time.h"
 
  /*
   * Credits class
@@ -64,7 +66,8 @@ class DLLEXPORT Credits : GraphicWin {
   GraphicWin graphicWin2_;  // 0x1234
   Font font_;  // 0x1C48
   Buffer buffer_;  // 0x1C70
-  uint8_t field_21F8_[0x448];  // 0x21F8
+  FlatButton flatButton_;  // 0x21F8, IDB `flatButton`, size == sizeof(FlatButton)
+  Time time_;  // 0x2D44, IDB `time`, size == sizeof(Time); ends 0x2D6C
 };
 
 void __fastcall credits_on_left_down_redirect(Credits *self, void *, int a1, int a2);
