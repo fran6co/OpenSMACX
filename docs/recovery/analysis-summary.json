@@ -50,31 +50,33 @@
   "canonical_functions": 6000,
   "format_version": 1,
   "inputs": {
-    "binding_classifications_sha256": "7185cd1b0d0d57baef47761ca8a4a61a8e4c402d1f8278402d856d396d041dca",
-    "canonical_inventory_sha256": "793ecc36dceb0cf99261e7c0b841bdd25b752654f841891d5e468a1081930346",
-    "canonical_summary_sha256": "a45479b32414565aef87d3c0bcf6303a638f7389be6ea25dda120500c98bb1aa"
+    "binding_classifications_sha256": "95d57e366a8956fc8d74394934a924d4018e953034278ba4a0cffebd40c82e88",
+    "canonical_inventory_sha256": "31dcd3bf27f70d9ed7966c59f5577a20fcab09a195282bce53965e8f498ada6a",
+    "canonical_summary_sha256": "4b809c57fa468352059f008e9b6c20e44c4ebdb8ae40dbce521c5be4af814f5a"
   },
   "outputs": {
-    "analysis_correlation_sha256": "6ad073c3fca68984f85609f5429f413029cc27f44110a331190a5dadca9696ce",
-    "priorities_sha256": "857d8ff72d433f0b4d89448aa269702a0654da0cd3abb396f050df03b6e4ab57"
+    "analysis_correlation_sha256": "bc5c68fefcf9ebcf4c58888469d285c10ec3609b8cc1f1c337714aa0597d799d",
+    "priorities_sha256": "78d4a1840c87d31cc876a36827d825547b8bfd241e259e70f248446e0bdf23e9"
   },
   "priorities": {
     "bindings_by_category": {
       "crt_ownership": 13,
-      "game_service": 15,
+      "game_service": 17,
       "legacy_diagnostic": 1,
+      "oracle_reference": 129,
+      "oracle_reference;ui_dependency": 5,
       "platform_service": 3,
-      "source_fallback": 3,
+      "source_fallback": 4,
       "timer_callback": 4,
-      "ui_dependency": 289
+      "ui_dependency": 318
     },
     "by_tier": {
-      "P0": 328,
-      "P1": 34,
-      "P2": 257,
-      "P3": 2492
+      "P0": 494,
+      "P1": 32,
+      "P2": 248,
+      "P3": 2398
     },
-    "original_dependencies": 328,
-    "total": 3111
+    "original_dependencies": 494,
+    "total": 3172
   }
 }

@@ -1,21 +1,22 @@
 priority,score,address,name,size,caller_count,call_target_count,recovery_state,binding_category,binding_strategy,analysis_entry_agreement,ida9_relation,ghidra_relation,prototype
 P2,12021,0x00401000,??0StringStruct@@QAE@H@Z,88,12,0,unrecovered,,,2,exact,exact,"void (__thiscall ??0StringStruct@@QAE@H@Z)(StringStruct* this, int)"
 P0,1021321,0x00401100,?add@StringStruct@@QAEHH@Z,1043,21,3,original_dependency,ui_dependency,recover_string_struct_add,2,exact,exact,"int (__thiscall ?add@StringStruct@@QAEHH@Z)(StringStruct* this, int)"
-P3,120,0x00401520,sub_401520,62,0,1,unrecovered,,,2,exact,exact,
-P3,2121,0x004015B0,?seek_pos@StringStruct@@QAEHH@Z,134,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?seek_pos@StringStruct@@QAEHH@Z)(StringStruct* this, int)"
+P0,1001021,0x00401560,?seek_id@StringStruct@@QAEHH@Z,78,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?seek_id@StringStruct@@QAEHH@Z)(StringStruct* this, int)"
+P0,1001021,0x00401640,?current_id@StringStruct@@QAEHXZ,17,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?current_id@StringStruct@@QAEHXZ)(StringStruct* this)
 P3,2021,0x00401660,??0ServiceStruct@@QAE@H@Z,88,2,0,unrecovered,,,2,exact,exact,"void (__thiscall ??0ServiceStruct@@QAE@H@Z)(ServiceStruct* this, int)"
 P3,1021,0x004016C0,?close@ServiceStruct@@QAEXXZ,153,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?close@ServiceStruct@@QAEXXZ)(ServiceStruct* this)
 P3,1321,0x00401760,?add@ServiceStruct@@QAEHH@Z,1043,1,3,unrecovered,,,2,exact,exact,"int (__thiscall ?add@ServiceStruct@@QAEHH@Z)(ServiceStruct* this, int)"
 P3,1020,0x00401B80,sub_401b80,88,1,0,unrecovered,,,2,exact,exact,
-P3,3020,0x00401BE0,sub_401be0,153,3,0,unrecovered,,,2,exact,exact,
 P3,1020,0x00401C80,SessionStruct::SessionStruct,88,1,0,unrecovered,,,2,exact,exact,
-P3,1020,0x00401CE0,SessionStruct::close,153,1,0,unrecovered,,,2,exact,exact,
 P3,1620,0x00401D80,sub_401d80,1568,1,6,unrecovered,,,2,exact,entry_range,
 P3,1020,0x00402310,sub_402310,15,1,0,unrecovered,,,2,exact,exact,
 P3,2120,0x00402320,sub_402320,41,2,1,unrecovered,,,2,exact,exact,
 P3,220,0x00402350,sub_402350,75,0,2,unrecovered,,,2,exact,exact,
 P3,1020,0x004023A0,sub_4023a0,365,1,0,unrecovered,,,2,exact,entry_range,
+P0,1009021,0x00402500,?next_entry@StringStruct@@QAEHXZ,47,9,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?next_entry@StringStruct@@QAEHXZ)(StringStruct* this)
+P0,1009021,0x00402530,?current_entry@StringStruct@@QAEHXZ,17,9,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?current_entry@StringStruct@@QAEHXZ)(StringStruct* this)
 P3,1320,0x00402550,SpriteStruct::add,1043,1,3,unrecovered,,,2,exact,exact,
+P0,1079020,0x00402970,StringStruct::remove_all,115,79,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,
 P3,221,0x004029F0,??1StringStruct@@QAE@H@Z,102,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ??1StringStruct@@QAE@H@Z)(StringStruct* this, unsigned int)"
 P3,220,0x00402A60,ServiceStruct::dt,102,0,2,unrecovered,,,2,exact,exact,
 P3,220,0x00402AD0,sub_402ad0,102,0,2,unrecovered,,,2,exact,exact,
@@ -42,9 +43,7 @@ P3,2420,0x00403BA0,?amovie_project@@YAXH@Z,63,2,4,unrecovered,,,2,exact,exact,
 P2,6620,0x00403BE0,?amovie_project@@YAXPAD@Z,1321,5,16,unrecovered,,,2,exact,entry_range,
 P3,221,0x00404010,??0AlphaMovie@@QAE@XZ,105,0,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0AlphaMovie@@QAE@XZ)(AlphaMovie* this)
 P3,1921,0x00404070,?exec@AlphaMovie@@QAEHPAD@Z,335,1,9,unrecovered,,,2,exact,exact,"int (__thiscall ?exec@AlphaMovie@@QAEHPAD@Z)(AlphaMovie* this, int8* lpszPath)"
-P3,211,0x004041E0,?close@AlphaMovie@@QAEXXZ,23,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?close@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 P3,1,0x00404200,?UNK1@AlphaMovie@@QAEXXZ,8,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?UNK1@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
-P3,111,0x00404290,?update@AlphaMovie@@QAEXXZ,8,0,1,unrecovered,,,1,exact,missing,void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 P0,1000010,0x004042B0,sub_4042b0,3,0,0,original_dependency,ui_dependency,recover_owning_class,1,exact,missing,
 P3,1221,0x004042C0,??1MCIVideo@@QAE@XZ,94,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??1MCIVideo@@QAE@XZ)(MCIVideo* this)
 P0,1001421,0x00404310,??1AlphaMovie@@QAE@XZ,176,1,4,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1AlphaMovie@@QAE@XZ)(AlphaMovie* this)
@@ -55,7 +54,6 @@ P3,721,0x00404920,?show@Popup@@QAEXH@Z,348,0,7,unrecovered,,,2,exact,exact,"void
 P0,1004421,0x00404A80,?hide@Popup@@QAEXXZ,127,4,4,original_dependency,ui_dependency,recover_popup_hide,2,exact,exact,void (__thiscall ?hide@Popup@@QAEXXZ)(Popup* this)
 P3,321,0x00404B10,?calculate_dimensions@Popup@@QAEHXZ,991,0,3,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@Popup@@QAEHXZ)(Popup* this)
 P3,321,0x00404EF0,?on_post_window_init@Popup@@QAEXXZ,138,0,3,unrecovered,,,2,exact,exact,void (__thiscall ?on_post_window_init@Popup@@QAEXXZ)(Popup* this)
-P3,121,0x00404F90,?on_nc_hittest@Popup@@QAEHHH@Z,20,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_nc_hittest@Popup@@QAEHHH@Z)(Popup* this, int, int)"
 P3,420,0x00404FB0,?alloc@Popup@@QAAHXZ,137,0,4,unrecovered,,,2,exact,entry_range,
 P3,21,0x00405050,?on_adjust_button_placement@Popup@@QAEXPAH00@Z,67,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_adjust_button_placement@Popup@@QAEXPAH00@Z)(Popup* this, int*, int*, int*)"
 P3,321,0x004050A0,?on_link_clicked@Popup@@QAEHHPAD@Z,145,0,3,unrecovered,,,2,exact,exact,"int (__thiscall ?on_link_clicked@Popup@@QAEHHPAD@Z)(Popup* this, int, int8*)"
@@ -105,14 +103,13 @@ P3,4221,0x00409100,?farm_get@BaseWin@@QAEHHH@Z,251,4,2,unrecovered,,,2,exact,exa
 P3,5121,0x00409200,?queue_click@BaseWin@@QAEXHHHH@Z,4888,1,41,unrecovered,,,2,exact,entry_range,"void (__thiscall ?queue_click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int, int, int, int)"
 P3,2121,0x0040A1D0,?farm_click@BaseWin@@QAEXHHH@Z,1711,1,11,unrecovered,,,2,exact,exact,"void (__thiscall ?farm_click@BaseWin@@QAEXHHH@Z)(BaseWin* this, int, int, int)"
 P3,5621,0x0040A880,?pop_click@BaseWin@@QAEXHHHH@Z,2600,2,36,unrecovered,,,2,exact,entry_range,"void (__thiscall ?pop_click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int, int, int, int)"
-P3,111,0x0040B120,?UNK2@BaseWin@@QAEXHHHH@Z,28,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK2@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int, int, int, int)"
-P3,7421,0x0040B140,?garrison_click@BaseWin@@QAEXHHHH@Z,3768,4,34,unrecovered,,,2,exact,entry_range,"void (__thiscall ?garrison_click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int vehID, int, int, int)"
+P0,1007421,0x0040B140,?garrison_click@BaseWin@@QAEXHHHH@Z,3768,4,34,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ?garrison_click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int vehID, int, int, int)"
 P3,2721,0x0040C070,?facilities_click@BaseWin@@QAEHHHHH@Z,2002,1,17,unrecovered,,,2,exact,exact,"int (__thiscall ?facilities_click@BaseWin@@QAEHHHHH@Z)(BaseWin* this, int, int, int, int)"
 P0,1004621,0x0040C850,?draw_supported@BaseWin@@QAEXH@Z,2577,2,26,original_dependency,ui_dependency,recover_base_win_draw_supported,2,exact,entry_range,"void (__thiscall ?draw_supported@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
 P3,4121,0x0040D250,?draw_flash@BaseWin@@QAEXH@Z,4406,1,31,unrecovered,,,2,exact,entry_range,"void (__thiscall ?draw_flash@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
 P2,9921,0x0040E360,?draw_production@BaseWin@@QAEXH@Z,3504,6,39,unrecovered,,,2,exact,entry_range,"void (__thiscall ?draw_production@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
 P3,5921,0x0040F0F0,?draw_farm@BaseWin@@QAEXH@Z,3011,3,29,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_farm@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
-P3,4721,0x0040FCC0,?draw_facilities@BaseWin@@QAEXH@Z,1788,2,27,unrecovered,,,2,exact,entry_range,"void (__thiscall ?draw_facilities@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
+P0,1004721,0x0040FCC0,?draw_facilities@BaseWin@@QAEXH@Z,1788,2,27,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ?draw_facilities@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
 P3,4021,0x004103B0,?draw_garrison@BaseWin@@QAEXH@Z,1229,2,20,unrecovered,,,2,exact,entry_range,"void (__thiscall ?draw_garrison@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
 P3,2521,0x00410870,?draw_commerce@BaseWin@@QAEXH@Z,2522,1,15,unrecovered,,,2,exact,entry_range,"void (__thiscall ?draw_commerce@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
 P3,2921,0x00411240,?draw_nutrients@BaseWin@@QAEXH@Z,1864,1,19,unrecovered,,,2,exact,entry_range,"void (__thiscall ?draw_nutrients@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
@@ -150,7 +147,6 @@ P3,121,0x0041AF50,?on_key_click@BaseWin@@QAEXHH@Z,25,0,1,unrecovered,,,2,exact,e
 P3,421,0x0041AFD0,?on_left_up@BaseWin@@QAEXHH@Z,317,0,4,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_up@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)"
 P3,321,0x0041B110,?on_left_down@BaseWin@@QAEXHH@Z,201,0,3,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_down@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)"
 P3,1121,0x0041B1F0,?on_mouse_move@BaseWin@@QAEXHH@Z,673,0,11,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@BaseWin@@QAEXHH@Z)(Win* this, int xCoord, int yCoord)"
-P3,121,0x0041B4A0,?on_scrolled@BaseWin@@QAEXHH@Z,29,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_scrolled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)"
 P3,2021,0x0041B4F0,?staple_the_bastards@BaseWin@@QAEXXZ,669,1,10,unrecovered,,,2,exact,exact,void (__thiscall ?staple_the_bastards@BaseWin@@QAEXXZ)(BaseWin* this)
 P3,3621,0x0041B790,?base_editor_fac@BaseWin@@QAEXXZ,1262,1,26,unrecovered,,,2,exact,entry_range,void (__thiscall ?base_editor_fac@BaseWin@@QAEXXZ)(BaseWin* this)
 P3,3521,0x0041BBC0,?base_editor_proj@BaseWin@@QAEXXZ,2038,1,25,unrecovered,,,2,exact,entry_range,void (__thiscall ?base_editor_proj@BaseWin@@QAEXXZ)(BaseWin* this)
@@ -166,7 +162,6 @@ P3,21,0x0041E510,?on_iface_button_clicked@BaseWin@@QAEXH@Z,29,0,0,unrecovered,,,
 P3,21,0x0041E530,?on_iface_button_toggled@BaseWin@@QAEXHH@Z,33,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_button_toggled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)"
 P3,1121,0x0041E560,?update_gov_buttons@BaseWin@@QAEXXZ,552,1,1,unrecovered,,,2,exact,exact,void (__thiscall ?update_gov_buttons@BaseWin@@QAEXXZ)(BaseWin* this)
 P3,4621,0x0041E790,?on_redraw@BaseWin@@QAEXXZ,245,3,16,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@BaseWin@@QAEXXZ)(BaseWin* this)
-P3,221,0x0041E890,?show@BaseWin@@QAEXH@Z,27,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?show@BaseWin@@QAEXH@Z)(BaseWin* this, int)"
 P3,221,0x0041E8B0,?hide@BaseWin@@QAEXXZ,25,0,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide@BaseWin@@QAEXXZ)(BaseWin* this)
 P3,4021,0x0041E8D0,?init@BaseWin@@QAEXXZ,8578,1,30,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@BaseWin@@QAEXXZ)(BaseWin* this)
 P3,121,0x00420A40,?on_nc_hittest@BaseWin@@QAEHHH@Z,47,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_nc_hittest@BaseWin@@QAEHHH@Z)(BaseWin* this, int, int)"
@@ -182,7 +177,6 @@ P3,2021,0x00421B40,?stop_timer@BattleWin@@QAEXXZ,8,2,0,unrecovered,,,2,exact,exa
 P3,3821,0x00421B50,?battle_report@BattleWin@@QAEXHHHHH@Z,4311,1,28,unrecovered,,,2,exact,entry_range,"void (__thiscall ?battle_report@BattleWin@@QAEXHHHHH@Z)(BattleWin* this, int, int, int, int, int)"
 P3,1321,0x00422C50,?clear@BattleWin@@QAEXXZ,101,1,3,unrecovered,,,2,exact,exact,void (__thiscall ?clear@BattleWin@@QAEXXZ)(BattleWin* this)
 P3,721,0x00422CC0,?on_status@BattleWin@@QAEXH@Z,249,0,7,unrecovered,,,2,exact,exact,"void (__thiscall ?on_status@BattleWin@@QAEXH@Z)(BattleWin* this, int)"
-P3,221,0x00422DC0,?on_iface_button_clicked@BattleWin@@QAEXH@Z,26,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_button_clicked@BattleWin@@QAEXH@Z)(BattleWin* this, int)"
 P3,221,0x00422DE0,?on_iface_group_clicked@BattleWin@@QAEXHHH@Z,38,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z)(BattleWin* this, int, int, int)"
 P3,221,0x00422E30,?on_iface_left_down@BattleWin@@QAEXHH@Z,52,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_left_down@BattleWin@@QAEXHH@Z)(BattleWin* this, int xCoord, int yCoord)"
 P0,1001121,0x00422EE0,??0BattleWin@@QAE@XZ,27,1,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??0BattleWin@@QAE@XZ)(BattleWin* this)
@@ -196,15 +190,12 @@ P3,4321,0x00424720,?set_vote@CouncWin@@QAEXHH@Z,332,4,3,unrecovered,,,2,exact,ex
 P3,3021,0x00424870,?on_button_clicked@CouncWin@@QAEXH@Z,2374,0,30,unrecovered,,,2,exact,entry_range,"void (__thiscall ?on_button_clicked@CouncWin@@QAEXH@Z)(CouncWin* this, int)"
 P3,3221,0x00425050,?on_left_click@CouncWin@@QAEXHH@Z,3439,0,32,unrecovered,,,2,exact,entry_range,"void (__thiscall ?on_left_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int xCoord, int yCoord)"
 P3,421,0x00425BA0,?on_key_click@CouncWin@@QAEHHH@Z,493,0,4,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@CouncWin@@QAEHHH@Z)(CouncWin* this, int, int)"
-P3,111,0x00425D90,?draw_all_leaders@CouncWin@@QAEXXZ,26,0,1,unrecovered,,,1,missing,exact,void (__thiscall ?draw_all_leaders@CouncWin@@QAEXXZ)(CouncWin* this)
-P2,6321,0x00425DB0,?draw_leader@CouncWin@@QAEXH@Z,1705,5,13,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_leader@CouncWin@@QAEXH@Z)(CouncWin* this, int factionID)"
+P0,1006321,0x00425DB0,?draw_leader@CouncWin@@QAEXH@Z,1705,5,13,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?draw_leader@CouncWin@@QAEXH@Z)(CouncWin* this, int factionID)"
 P3,2521,0x00426470,?draw_info@CouncWin@@QAEXXZ,1573,1,15,unrecovered,,,2,exact,exact,void (__thiscall ?draw_info@CouncWin@@QAEXXZ)(CouncWin* this)
 P3,1021,0x00426AA0,?on_redraw@CouncWin@@QAEXXZ,1025,0,10,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@CouncWin@@QAEXXZ)(CouncWin* this)
-P3,111,0x00426EC0,?on_mouse_leave@CouncWin@@QAEXHH@Z,30,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_leave@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)"
 P3,321,0x00426EE0,?on_mouse_move@CouncWin@@QAEXHH@Z,152,0,3,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@CouncWin@@QAEXHH@Z)(CouncWin* this, int xCoord, int yCoord)"
 P3,721,0x00426FA0,?on_status@CouncWin@@QAEXH@Z,180,0,7,unrecovered,,,2,exact,exact,"void (__thiscall ?on_status@CouncWin@@QAEXH@Z)(CouncWin* this, int)"
 P3,21,0x004270F0,?on_iface_button_clicked@CouncWin@@QAEXH@Z,29,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_button_clicked@CouncWin@@QAEXH@Z)(CouncWin* this, int)"
-P3,221,0x00427130,?show@CouncWin@@QAEHH@Z,27,0,2,unrecovered,,,2,exact,exact,"int (__thiscall ?show@CouncWin@@QAEHH@Z)(CouncWin* this, int)"
 P3,111,0x00427160,?close@CouncWin@@QAEXXZ,94,0,1,unrecovered,,,1,exact,missing,void (__thiscall ?close@CouncWin@@QAEXXZ)(CouncWin* this)
 P3,1121,0x004271C0,?arrived@CouncWin@@QAEXH@Z,109,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?arrived@CouncWin@@QAEXH@Z)(CouncWin* this, int)"
 P3,4321,0x00427230,?init@CouncWin@@QAEXHH@Z,4396,1,33,unrecovered,,,2,exact,entry_range,"void (__thiscall ?init@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)"
@@ -224,6 +215,7 @@ P0,1001821,0x00428E90,??1Credits@@QAE@XZ,322,1,8,original_dependency,ui_dependen
 P0,1001921,0x00428FC0,??0Datalink@@QAE@XZ,737,1,9,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0Datalink@@QAE@XZ)(Datalink* this)
 P0,1018821,0x00429180,?exec@Datalink@@QAEXIH@Z,380,18,8,original_dependency,ui_dependency,recover_datalink_exec,2,exact,exact,"void (__thiscall ?exec@Datalink@@QAEXIH@Z)(Datalink* this, DatalinkID datalinkID, int)"
 P3,4421,0x00429300,?init@Datalink@@QAEXXZ,3367,2,24,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@Datalink@@QAEXXZ)(Datalink* this)
+P0,1000011,0x0042A020,?UNK1@Datalink@@QAEHHH@Z,30,0,0,source_complete,oracle_reference,differential_fixture,1,missing,exact,"int (__thiscall ?UNK1@Datalink@@QAEHHH@Z)(Datalink* this, int, int)"
 P3,2121,0x0042A080,?construct_id@Datalink@@QAEXPADIH@Z,45,2,1,unrecovered,,,2,exact,exact,"void (__thiscall ?construct_id@Datalink@@QAEXPADIH@Z)(Datalink* this, int8*, DatalinkID, int)"
 P3,111,0x0042A0B0,?UNK2@Datalink@@QAEXPADPAHPAH@Z,65,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK2@Datalink@@QAEXPADPAHPAH@Z)(Datalink* this, int8*, int*, int*)"
 P3,121,0x0042A100,?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z,80,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z)(Datalink* this, GraphicWin*)"
@@ -247,12 +239,10 @@ P3,3021,0x0042B7E0,?set_cat_effect@Datalink@@QAEXXZ,340,2,10,unrecovered,,,2,exa
 P3,3021,0x0042B940,?set_cat_faction@Datalink@@QAEXXZ,355,2,10,unrecovered,,,2,exact,exact,void (__thiscall ?set_cat_faction@Datalink@@QAEXXZ)(Datalink* this)
 P3,3021,0x0042BAB0,?set_cat_terraform@Datalink@@QAEXXZ,513,2,10,unrecovered,,,2,exact,exact,void (__thiscall ?set_cat_terraform@Datalink@@QAEXXZ)(Datalink* this)
 P3,1121,0x0042BCC0,?set_index@Datalink@@QAEXHH@Z,84,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?set_index@Datalink@@QAEXHH@Z)(Datalink* this, int, int)"
-P3,1221,0x0042BD40,?show@Datalink@@QAEXH@Z,27,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?show@Datalink@@QAEXH@Z)(Datalink* this, int)"
-P3,221,0x0042BD60,?hide@Datalink@@QAEXXZ,25,0,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide@Datalink@@QAEXXZ)(Datalink* this)
 P3,11,0x0042BD80,?UNK4@Datalink@@QAEXHH@Z,122,0,0,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK4@Datalink@@QAEXHH@Z)(Datalink* this, int, int)"
 P3,311,0x0042BE00,?UNK5@Datalink@@QAEXXZ,157,0,3,unrecovered,,,1,missing,exact,void (__thiscall ?UNK5@Datalink@@QAEXXZ)(Datalink* this)
 P3,311,0x0042BEB0,?UNK7@Datalink@@QAEXPADPAD@Z,74,0,3,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK7@Datalink@@QAEXPADPAD@Z)(Datalink* this, int8*, int8*)"
-P2,9121,0x0042BF10,?draw_entry@Datalink@@QAEXXZ,906,6,31,unrecovered,,,2,exact,exact,void (__thiscall ?draw_entry@Datalink@@QAEXXZ)(Datalink* this)
+P0,1009121,0x0042BF10,?draw_entry@Datalink@@QAEXXZ,906,6,31,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?draw_entry@Datalink@@QAEXXZ)(Datalink* this)
 P3,3521,0x0042C2E0,?draw_concept@Datalink@@QAEXXZ,1071,1,25,unrecovered,,,2,exact,entry_range,void (__thiscall ?draw_concept@Datalink@@QAEXXZ)(Datalink* this)
 P3,3521,0x0042C650,?draw_adv_concept@Datalink@@QAEXXZ,1074,1,25,unrecovered,,,2,exact,entry_range,void (__thiscall ?draw_adv_concept@Datalink@@QAEXXZ)(Datalink* this)
 P3,3221,0x0042C9C0,?draw_unit@Datalink@@QAEXXZ,3196,1,22,unrecovered,,,2,exact,entry_range,void (__thiscall ?draw_unit@Datalink@@QAEXXZ)(Datalink* this)
@@ -273,7 +263,6 @@ P3,321,0x00431E70,?on_redraw@Datalink@@QAEXXZ,54,0,3,unrecovered,,,2,exact,exact
 P3,421,0x00431EC0,?on_button_clicked@Datalink@@QAEXH@Z,233,0,4,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_clicked@Datalink@@QAEXH@Z)(Datalink* this, int)"
 P3,21,0x00431FC0,?on_key_click@Datalink@@QAEHHH@Z,59,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@Datalink@@QAEHHH@Z)(Datalink* this, int, int)"
 P3,121,0x00432010,?on_button_passover@Datalink@@QAEXHH@Z,34,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_passover@Datalink@@QAEXHH@Z)(Datalink* this, int, int)"
-P3,111,0x00432040,?on_selected@Datalink@@QAEXH@Z,18,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_selected@Datalink@@QAEXH@Z)(Datalink* this, int)"
 P3,521,0x00432060,?on_status@Datalink@@QAEXH@Z,242,0,5,unrecovered,,,2,exact,exact,"void (__thiscall ?on_status@Datalink@@QAEXH@Z)(Datalink* this, int)"
 P3,321,0x00432210,?on_iface_group_clicked@Datalink@@QAEXHHH@Z,123,0,3,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_group_clicked@Datalink@@QAEXHHH@Z)(Datalink* this, int, int, int)"
 P0,1002321,0x00432290,??1Datalink@@QAE@XZ,1260,1,13,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Datalink@@QAE@XZ)(Datalink* this)
@@ -319,9 +308,7 @@ P3,3321,0x00439F20,?select_chassis@DesignWin@@QAEXXZ,1125,1,23,unrecovered,,,2,e
 P3,3321,0x0043A300,?select_weapon@DesignWin@@QAEXXZ,1241,1,23,unrecovered,,,2,exact,entry_range,void (__thiscall ?select_weapon@DesignWin@@QAEXXZ)(DesignWin* this)
 P3,3021,0x0043A760,?select_armor@DesignWin@@QAEXXZ,797,1,20,unrecovered,,,2,exact,entry_range,void (__thiscall ?select_armor@DesignWin@@QAEXXZ)(DesignWin* this)
 P3,2921,0x0043AA00,?select_reactor@DesignWin@@QAEXXZ,750,1,19,unrecovered,,,2,exact,entry_range,void (__thiscall ?select_reactor@DesignWin@@QAEXXZ)(DesignWin* this)
-P3,6421,0x0043AC70,?select_special@DesignWin@@QAEXH@Z,5166,3,34,unrecovered,,,2,exact,entry_range,"void (__thiscall ?select_special@DesignWin@@QAEXH@Z)(DesignWin* this, int)"
-P3,101,0x0043BE10,?select_special_1@DesignWin@@QAEXXZ,8,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?select_special_1@DesignWin@@QAEXXZ)(DesignWin* this)
-P3,101,0x0043BE20,?select_special_2@DesignWin@@QAEXXZ,8,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?select_special_2@DesignWin@@QAEXXZ)(DesignWin* this)
+P0,1006421,0x0043AC70,?select_special@DesignWin@@QAEXH@Z,5166,3,34,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ?select_special@DesignWin@@QAEXH@Z)(DesignWin* this, int)"
 P3,1721,0x0043BE30,?select_name@DesignWin@@QAEXXZ,284,1,7,unrecovered,,,2,exact,exact,void (__thiscall ?select_name@DesignWin@@QAEXXZ)(DesignWin* this)
 P3,1521,0x0043BF50,?construct_vehicle@DesignWin@@QAEXXZ,274,1,5,unrecovered,,,2,exact,exact,void (__thiscall ?construct_vehicle@DesignWin@@QAEXXZ)(DesignWin* this)
 P3,101,0x0043C070,?construct_chassis@DesignWin@@QAEXXZ,46,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?construct_chassis@DesignWin@@QAEXXZ)(DesignWin* this)
@@ -351,7 +338,6 @@ P0,1001921,0x0043EE10,??1SelectPartWin@@QAE@XZ,486,1,9,original_dependency,ui_de
 P0,1001521,0x0043EFF0,??0DiploPop@@QAE@XZ,366,1,5,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0DiploPop@@QAE@XZ)(DiploPop* this)
 P3,211,0x0043F0F0,?close@DiploPop@@QAEXXZ,71,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?close@DiploPop@@QAEXXZ)(DiploPop* this)
 P3,221,0x0043F140,?show@DiploPop@@QAEXH@Z,34,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?show@DiploPop@@QAEXH@Z)(DiploPop* this, int)"
-P3,221,0x0043F170,?hide@DiploPop@@QAEXXZ,21,0,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide@DiploPop@@QAEXXZ)(DiploPop* this)
 P3,211,0x0043F190,?portrait_anim@DiploPop@@QAEXXZ,47,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?portrait_anim@DiploPop@@QAEXXZ)(DiploPop* this)
 P3,211,0x0043F1C0,?bioscan_anim@DiploPop@@QAEXXZ,60,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?bioscan_anim@DiploPop@@QAEXXZ)(DiploPop* this)
 P3,220,0x0043F200,?timer_callback_daemon@DiploPop@@QAAXHH@Z,69,0,2,unrecovered,,,2,exact,exact,
@@ -393,8 +379,6 @@ P3,2021,0x00442A10,?draw_who@DiploWin@@QAEXXZ,904,1,10,unrecovered,,,2,exact,exa
 P3,2021,0x00442DC0,?draw_whom@DiploWin@@QAEXXZ,905,1,10,unrecovered,,,2,exact,exact,void (__thiscall ?draw_whom@DiploWin@@QAEXXZ)(DiploWin* this)
 P3,2221,0x00443170,?draw_offers@DiploWin@@QAEXXZ,1327,1,12,unrecovered,,,2,exact,exact,void (__thiscall ?draw_offers@DiploWin@@QAEXXZ)(DiploWin* this)
 P3,1321,0x004436C0,?on_redraw@DiploWin@@QAEXXZ,1381,0,13,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@DiploWin@@QAEXXZ)(DiploWin* this)
-P3,221,0x00443C30,?show@DiploWin@@QAEXH@Z,27,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?show@DiploWin@@QAEXH@Z)(DiploWin* this, int)"
-P3,121,0x00443C50,?hide@DiploWin@@QAEXXZ,24,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?hide@DiploWin@@QAEXXZ)(DiploWin* this)
 P3,721,0x00443C70,?on_status@DiploWin@@QAEXH@Z,263,0,7,unrecovered,,,2,exact,exact,"void (__thiscall ?on_status@DiploWin@@QAEXH@Z)(DiploWin* this, int)"
 P3,421,0x00443E50,?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z,188,0,4,unrecovered,,,2,exact,exact,"int (__thiscall ?on_iface_dialog_item_back_draw@DiploWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(DiploWin* this, GraphicWin*, int, int, RECT*)"
 P3,3421,0x00443F10,?exec@DiploWin@@QAEXHH@Z,3707,1,24,unrecovered,,,2,exact,exact,"void (__thiscall ?exec@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)"
@@ -412,9 +396,6 @@ P3,1721,0x00445CD0,?init@FX@@QAEXXZ,3089,1,7,unrecovered,,,2,exact,exact,void (_
 P3,10,0x004468F0,sub_4468f0,107,0,0,unrecovered,,,1,missing,exact,
 P3,4021,0x00446960,?play@FX@@QAEXHHH@Z,153,4,0,unrecovered,,,2,exact,exact,"void (__thiscall ?play@FX@@QAEXHHH@Z)(FX* this, int, int xCoord, int yCoord)"
 P0,1024021,0x00446A00,?play@FX@@QAEXH@Z,142,24,0,original_dependency,ui_dependency,recover_fx_play,2,exact,exact,"void (__thiscall ?play@FX@@QAEXH@Z)(FX* this, int)"
-P3,1021,0x00446A90,?stop@FX@@QAEXH@Z,25,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?stop@FX@@QAEXH@Z)(FX* this, int)"
-P3,11,0x00446AB0,?release@FX@@QAEXH@Z,25,0,0,unrecovered,,,1,missing,exact,"void (__thiscall ?release@FX@@QAEXH@Z)(FX* this, int)"
-P3,4021,0x00446AD0,?fade@FX@@QAEXH@Z,25,4,0,unrecovered,,,2,exact,exact,"void (__thiscall ?fade@FX@@QAEXH@Z)(FX* this, int)"
 P3,11,0x00446AF0,?set_pitch@FX@@QAEXHH@Z,32,0,0,unrecovered,,,1,missing,exact,"void (__thiscall ?set_pitch@FX@@QAEXHH@Z)(FX* this, int, int)"
 P3,1021,0x00446B10,?engine_pitch@FX@@QAEXH@Z,39,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?engine_pitch@FX@@QAEXH@Z)(FX* this, int)"
 P2,18120,0x00446B40,?ambience@@YAHH@Z,406,18,1,unrecovered,,,2,exact,exact,
@@ -473,7 +454,6 @@ P3,3620,0x0044B9E0,?help_tech_info@@YAXP6AXPAD@ZHHH@Z,3561,3,6,unrecovered,,,2,e
 P3,120,0x0044C7D0,?help_info_pop@@YAXPAD@Z,20,0,1,unrecovered,,,2,exact,exact,
 P3,1120,0x0044C7F0,?help_tech_info@@YAXPAUPopup@@HH@Z,36,1,1,unrecovered,,,2,exact,exact,
 P3,110,0x0044C830,sub_44c830,28,0,1,unrecovered,,,1,missing,exact,
-P3,10,0x0044C860,sub_44c860,13,0,0,unrecovered,,,1,missing,exact,
 P3,1120,0x0044C9E0,?help_project@@YAXH@Z,24,1,1,unrecovered,,,2,exact,exact,
 P3,110,0x0044CA90,sub_44ca90,42,0,1,unrecovered,,,1,missing,exact,
 P2,5120,0x0044CB30,?help_any@@YAXXZ,15,5,1,unrecovered,,,2,exact,exact,
@@ -511,14 +491,14 @@ P3,6121,0x00456300,?setup_text@InfoWin@@QAEXXZ,8333,4,21,unrecovered,,,2,exact,e
 P2,7121,0x00458420,?draw_text@InfoWin@@QAEXH@Z,1161,6,11,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_text@InfoWin@@QAEXH@Z)(InfoWin* this, int)"
 P3,311,0x004588B0,?UNK2@InfoWin@@QAEXXZ,78,0,3,unrecovered,,,1,missing,exact,void (__thiscall ?UNK2@InfoWin@@QAEXXZ)(InfoWin* this)
 P3,1321,0x00458930,?on_left_click@InfoWin@@QAEXHH@Z,144,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_click@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)"
-P3,2421,0x004589C0,?right_menu@InfoWin@@QAEXHH@Z,911,1,14,unrecovered,,,2,exact,entry_range,"void (__thiscall ?right_menu@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)"
-P3,1121,0x00458D40,?on_right_click@InfoWin@@QAEXHH@Z,20,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_right_click@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)"
+P0,1002421,0x004589C0,?right_menu@InfoWin@@QAEXHH@Z,911,1,14,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ?right_menu@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)"
 P3,1,0x00458D60,?UNK4@InfoWin@@QAEXXZ,91,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?UNK4@InfoWin@@QAEXXZ)(InfoWin* this)
 P3,3021,0x00458DC0,?state_valid@InfoWin@@QAEHH@Z,282,3,0,unrecovered,,,2,exact,exact,"int (__thiscall ?state_valid@InfoWin@@QAEHH@Z)(InfoWin* this, int)"
 P3,3421,0x00458F10,?set_state@InfoWin@@QAEXHH@Z,218,3,4,unrecovered,,,2,exact,exact,"void (__thiscall ?set_state@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)"
 P3,2421,0x00458FF0,?timer_change@InfoWin@@QAEXH@Z,337,2,4,unrecovered,,,2,exact,exact,"void (__thiscall ?timer_change@InfoWin@@QAEXH@Z)(InfoWin* this, int)"
 P0,1002521,0x00459150,?timer_proc@InfoWin@@QAEXH@Z,272,2,5,original_dependency,ui_dependency,recover_info_win_timer_proc,2,exact,exact,"void (__thiscall ?timer_proc@InfoWin@@QAEXH@Z)(InfoWin* this, int)"
 P3,120,0x00459260,?timer_daemon@InfoWin@@QAAXH@Z,28,0,1,unrecovered,,,2,exact,exact,
+P0,1007121,0x00459280,?reset@InfoWin@@QAEXXZ,28,7,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?reset@InfoWin@@QAEXXZ)(InfoWin* this)
 P3,1221,0x004592A0,?init@InfoWin@@QAEXXZ,372,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?init@InfoWin@@QAEXXZ)(InfoWin* this)
 P3,221,0x00459420,?UNK5@InfoWin@@QAEXHHHHH@Z,160,0,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ?UNK5@InfoWin@@QAEXHHHHH@Z)(InfoWin* this, int, int, int, int, int)"
 P0,1000321,0x004594A0,??1InfoWin@@QAE@XZ,123,0,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1InfoWin@@QAE@XZ)(InfoWin* this)
@@ -562,11 +542,11 @@ P3,421,0x0045CF80,?on_iface_right_down@MainInterface@@QAEXHH@Z,125,0,4,unrecover
 P3,421,0x0045D000,?on_iface_mouse_move@MainInterface@@QAEXHH@Z,261,0,4,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_mouse_move@MainInterface@@QAEXHH@Z)(MainInterface* this, int xCoord, int yCoord)"
 P3,221,0x0045D110,?on_iface_mouse_leave@MainInterface@@QAEXHH@Z,47,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_mouse_leave@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)"
 P3,121,0x0045D140,?on_iface_selected@MainInterface@@QAEXHH@Z,25,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_selected@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)"
-P3,3021,0x0045D170,?on_iface_button_clicked@MainInterface@@QAEXH@Z,257,2,10,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_button_clicked@MainInterface@@QAEXH@Z)(MainInterface* this, int)"
+P0,1003021,0x0045D170,?on_iface_button_clicked@MainInterface@@QAEXH@Z,257,2,10,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?on_iface_button_clicked@MainInterface@@QAEXH@Z)(MainInterface* this, int)"
 P3,1121,0x0045D2A0,?set_alert@MainInterface@@QAEXH@Z,49,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?set_alert@MainInterface@@QAEXH@Z)(MainInterface* this, int)"
 P3,1021,0x0045D2E0,?delete_iface_mode@SubInterface@@QAEXXZ,35,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?delete_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)
-P2,9121,0x0045D310,?set_iface_mode@SubInterface@@QAEXXZ,109,9,1,unrecovered,,,2,exact,exact,void (__thiscall ?set_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)
-P0,1024121,0x0045D380,?release_iface_mode@SubInterface@@QAEXXZ,191,24,1,original_dependency,ui_dependency,recover_sub_interface_release_iface_mode,2,exact,exact,void (__thiscall ?release_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)
+P0,1009121,0x0045D310,?set_iface_mode@SubInterface@@QAEXXZ,109,9,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?set_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)
+P0,1024121,0x0045D380,?release_iface_mode@SubInterface@@QAEXXZ,191,24,1,original_dependency,ui_dependency,recover_owning_class;recover_sub_interface_release_iface_mode,2,exact,exact,void (__thiscall ?release_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)
 P2,14720,0x0045D440,?slide_show@@YAXPAUGraphicWin@@H@Z,1350,13,17,unrecovered,,,2,exact,entry_range,
 P2,15020,0x0045D970,?slide_hide@@YAXPAUGraphicWin@@H@Z,1371,13,20,unrecovered,,,2,exact,entry_range,
 P2,9720,0x0045DEA0,?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z,1728,8,17,unrecovered,,,2,exact,entry_range,
@@ -580,7 +560,7 @@ P3,1221,0x0045F640,?close@Interlude@@QAEXXZ,165,1,2,unrecovered,,,2,exact,exact,
 P0,1001521,0x0045F740,??1Interlude@@QAE@XZ,510,1,5,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Interlude@@QAE@XZ)(Interlude* this)
 P3,2121,0x0045F950,_WinMain@16,459,1,11,unrecovered,,,2,exact,exact,"int (__stdcall _WinMain@16)(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)"
 P3,2121,0x0045FB20,?menu_init@MainMenu@@QAEHXZ,4784,1,11,unrecovered,,,2,exact,exact,int (__thiscall ?menu_init@MainMenu@@QAEHXZ)(MainMenu* this)
-P2,16721,0x00460DD0,?check@MainMenu@@QAEXH@Z,4782,15,17,unrecovered,,,2,exact,exact,"void (__thiscall ?check@MainMenu@@QAEXH@Z)(MainMenu* this, int vehID)"
+P0,1016721,0x00460DD0,?check@MainMenu@@QAEXH@Z,4782,15,17,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?check@MainMenu@@QAEXH@Z)(MainMenu* this, int vehID)"
 P3,10,0x004620C0,sub_4620c0,196,0,0,unrecovered,,,1,missing,exact,
 P0,1007621,0x004626E0,??0MapWin@@QAE@H@Z,584,7,6,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ??0MapWin@@QAE@H@Z)(MapWin* this, BOOL)"
 P2,12121,0x00462870,?clear@MapWin@@QAEXH@Z,233,12,1,unrecovered,,,2,exact,exact,"void (__thiscall ?clear@MapWin@@QAEXH@Z)(MapWin* this, int)"
@@ -613,7 +593,7 @@ P0,1017120,0x0046AEF0,?draw_radius@@YAXHHHH@Z,72,17,1,original_dependency,game_s
 P2,7120,0x0046AF90,?draw_tile_fixup@@YAXHHHH@Z,161,7,1,unrecovered,,,2,exact,exact,
 P3,1120,0x0046B040,?draw_tile_fixup@@YAXHHHHHH@Z,242,1,1,unrecovered,,,2,exact,exact,
 P0,1068120,0x0046B190,?draw_map@@YAXH@Z,58,68,1,original_dependency,game_service,recover_map_render,2,exact,exact,
-P0,1000111,0x0046B1D0,?on_redraw@MapWin@@QAEXXZ,24,0,1,original_dependency,ui_dependency,recover_map_win_on_redraw,1,missing,exact,void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this)
+P0,1000111,0x0046B1D0,?on_redraw@MapWin@@QAEXXZ,24,0,1,source_complete,ui_dependency,recover_map_win_on_redraw,1,missing,exact,void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this)
 P1,22521,0x0046B1F0,?set_center@MapWin@@QAEXHHH@Z,275,22,5,unrecovered,,,2,exact,exact,"void (__thiscall ?set_center@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)"
 P0,1009221,0x0046B310,?focus@MapWin@@QAEHHH@Z,508,9,2,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?focus@MapWin@@QAEHHH@Z)(MapWin* this, int, int)"
 P3,5221,0x0046B510,?editor@MapWin@@QAEXHHH@Z,2751,4,12,unrecovered,,,2,exact,exact,"void (__thiscall ?editor@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)"
@@ -621,9 +601,9 @@ P3,311,0x0046C020,?UNK4@MapWin@@QAEXHH@Z,169,0,3,unrecovered,,,1,missing,exact,"
 P3,6521,0x0046C0D0,?right_menu@MapWin@@QAEXHHHH@Z,5271,1,55,unrecovered,,,2,exact,entry_range,"void (__thiscall ?right_menu@MapWin@@QAEXHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int)"
 P0,1007921,0x0046D5D0,?click@MapWin@@QAEXHHH@Z,6865,2,59,original_dependency,ui_dependency,recover_map_win_click,2,exact,start_only,"void (__thiscall ?click@MapWin@@QAEXHHH@Z)(MapWin* this, int, int, int)"
 P0,1000021,0x0046EB90,?on_lose_mouse_capture@MapWin@@QAEXXZ,5,0,0,original_dependency,ui_dependency,recover_map_win_on_lose_mouse_capture,2,exact,exact,void (__thiscall ?on_lose_mouse_capture@MapWin@@QAEXXZ)(MapWin* this)
-P0,1000121,0x0046EBA0,?on_left_click@MapWin@@QAEXHH@Z,37,0,1,source_complete,ui_dependency,recover_map_win_on_left_click,2,exact,exact,"void (__thiscall ?on_left_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000121,0x0046EBA0,?on_left_click@MapWin@@QAEXHH@Z,37,0,1,source_complete,oracle_reference;ui_dependency,differential_fixture;recover_map_win_on_left_click,2,exact,exact,"void (__thiscall ?on_left_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
 P0,1000011,0x0046EBD0,?on_left_double_click@MapWin@@QAEXHH@Z,3,0,0,source_complete,ui_dependency,recover_map_win_on_left_double_click,1,exact,missing,"void (__thiscall ?on_left_double_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
-P0,1000121,0x0046EBE0,?on_right_click@MapWin@@QAEXHH@Z,37,0,1,source_complete,ui_dependency,recover_map_win_on_right_click,2,exact,exact,"void (__thiscall ?on_right_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000121,0x0046EBE0,?on_right_click@MapWin@@QAEXHH@Z,37,0,1,source_complete,oracle_reference;ui_dependency,differential_fixture;recover_map_win_on_right_click,2,exact,exact,"void (__thiscall ?on_right_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
 P0,1000121,0x0046EC10,?on_right_down@MapWin@@QAEXHH@Z,273,0,1,original_dependency,ui_dependency,recover_map_win_on_right_down,2,exact,exact,"void (__thiscall ?on_right_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
 P0,1000921,0x0046ED30,?on_left_down@MapWin@@QAEXHH@Z,689,0,9,original_dependency,ui_dependency,recover_map_win_on_left_down,2,exact,exact,"void (__thiscall ?on_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
 P0,1000011,0x0046EFF0,?on_left_up@MapWin@@QAEXHH@Z,3,0,0,source_complete,ui_dependency,recover_map_win_on_left_up,1,exact,missing,"void (__thiscall ?on_left_up@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
@@ -632,8 +612,9 @@ P0,1000221,0x0046F660,?on_nc_hittest@MapWin@@QAEXHH@Z,153,0,2,original_dependenc
 P0,1000121,0x0046F700,?on_nc_left_down@MapWin@@QAEXHH@Z,384,0,1,original_dependency,ui_dependency,recover_map_win_on_nc_left_down,2,exact,exact,"void (__thiscall ?on_nc_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
 P0,1000211,0x0046F880,?on_sys_close@MapWin@@QAEXXZ,64,0,2,original_dependency,ui_dependency,recover_map_win_on_sys_close,1,missing,exact,void (__thiscall ?on_sys_close@MapWin@@QAEXXZ)(MapWin* this)
 P0,1000821,0x0046F8C0,?on_button_clicked@MapWin@@QAEXH@Z,294,0,8,original_dependency,ui_dependency,recover_map_win_on_button_clicked,2,exact,exact,"void (__thiscall ?on_button_clicked@MapWin@@QAEXH@Z)(MapWin* this, int)"
-P0,1000111,0x0046FA00,?on_resize@MapWin@@QAEXHH@Z,26,0,1,original_dependency,ui_dependency,recover_map_win_on_resize,1,missing,exact,"void (__thiscall ?on_resize@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
+P0,1000111,0x0046FA00,?on_resize@MapWin@@QAEXHH@Z,26,0,1,source_complete,ui_dependency,recover_map_win_on_resize,1,missing,exact,"void (__thiscall ?on_resize@MapWin@@QAEXHH@Z)(MapWin* this, int, int)"
 P3,1021,0x0046FA20,?UNK5@MapWin@@QAEXH@Z,240,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?UNK5@MapWin@@QAEXH@Z)(MapWin* this, int)"
+P0,1011121,0x0046FB10,?main_caption@MapWin@@QAEXXZ,16,11,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?main_caption@MapWin@@QAEXXZ)(MapWin* this)
 P3,311,0x0046FB20,?standard_caption@MapWin@@QAEXXZ,91,0,3,unrecovered,,,1,missing,exact,void (__thiscall ?standard_caption@MapWin@@QAEXXZ)(MapWin* this)
 P3,2021,0x0046FB90,?clear_alt@MapWin@@QAEXHHH@Z,153,2,0,unrecovered,,,2,exact,exact,"void (__thiscall ?clear_alt@MapWin@@QAEXHHH@Z)(MapWin* this, int, int, int)"
 P3,11,0x0046FC30,?clear_alt@MapWin@@QAEXXZ,75,0,0,unrecovered,,,1,missing,exact,void (__thiscall ?clear_alt@MapWin@@QAEXXZ)(MapWin* this)
@@ -759,6 +740,7 @@ P3,821,0x00483310,?on_key_down@NetWin@@QAEHH@Z,260,0,8,unrecovered,,,2,exact,exa
 P3,1321,0x00483420,?new_chat@NetWin@@QAEXPADH@Z,165,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?new_chat@NetWin@@QAEXPADH@Z)(NetWin* this, int8*, int)"
 P0,1002421,0x004834E0,??1NetWin@@QAE@XZ,963,1,14,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1NetWin@@QAE@XZ)(NetWin* this)
 P3,2321,0x004837F0,?UNK4@NetWin@@QAEXXZ,35,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this)
+P0,1000011,0x00483820,?UNK5@NetWin@@QAEXXZ,28,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,void (__thiscall ?UNK5@NetWin@@QAEXXZ)(NetWin* this)
 P3,110,0x004838B0,??__Fg_NEWTECHWIN_SPRITES@@YAXXZ,40,0,1,unrecovered,,,1,exact,missing,
 P3,121,0x004838E0,?on_link_clicked@NewTechWin@@QAEHHPAD@Z,63,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_link_clicked@NewTechWin@@QAEHHPAD@Z)(NewTechWin* this, int, int8*)"
 P3,120,0x00483920,?info@NewTechWin@@QAAXPAD@Z,48,0,1,unrecovered,,,2,exact,exact,
@@ -796,6 +778,7 @@ P3,1421,0x0048B630,?opticenter@PlanWin@@QAEXHHHHH@Z,678,1,4,unrecovered,,,2,exac
 P3,3421,0x0048B8E0,?monocenter@PlanWin@@QAEXHHH@Z,449,3,4,unrecovered,,,2,exact,exact,"void (__thiscall ?monocenter@PlanWin@@QAEXHHH@Z)(PlanWin* this, int, int, int)"
 P3,211,0x0048BAB0,?draw_line_base@PlanWin@@QAEXHHH@Z,194,0,2,unrecovered,,,1,missing,exact,"void (__thiscall ?draw_line_base@PlanWin@@QAEXHHH@Z)(PlanWin* this, int, int, int)"
 P3,211,0x0048BB80,?draw_line@PlanWin@@QAEXHHHHH@Z,148,0,2,unrecovered,,,1,missing,exact,"void (__thiscall ?draw_line@PlanWin@@QAEXHHHHH@Z)(PlanWin* this, int xCoord, int yCoord, int, int, int)"
+P0,1001021,0x0048BC20,?blink@PlanWin@@QAEXXZ,43,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?blink@PlanWin@@QAEXXZ)(PlanWin* this)
 P3,3321,0x0048BC60,?init@PlanWin@@QAEXPAD@Z,101,3,3,unrecovered,,,2,exact,exact,"void (__thiscall ?init@PlanWin@@QAEXPAD@Z)(PlanWin* this, int8*)"
 P0,1001321,0x0048BCD0,??0PlanWin@@QAE@H@Z,227,1,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ??0PlanWin@@QAE@H@Z)(PlanWin* this, int)"
 P0,1002521,0x0048BD80,??1PlanWin@@QAE@XZ,548,2,5,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1PlanWin@@QAE@XZ)(PlanWin* this)
@@ -840,6 +823,7 @@ P3,2021,0x00493B70,?edbc_fac@ProdPicker@@QAEHH@Z,67,2,0,unrecovered,,,2,exact,ex
 P3,221,0x00493C20,?on_mousewheel@ProdPicker@@QAEXH@Z,72,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel@ProdPicker@@QAEXH@Z)(ProdPicker* this, int)"
 P3,121,0x00493C70,?on_redraw@ProdPicker@@QAEXXZ,54,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@ProdPicker@@QAEXXZ)(ProdPicker* this)
 P3,421,0x00493CB0,?on_scrolled@ProdPicker@@QAEXHH@Z,447,0,4,unrecovered,,,2,exact,exact,"void (__thiscall ?on_scrolled@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)"
+P0,1000021,0x00493E70,?on_scrolling@ProdPicker@@QAEXHH@Z,23,0,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?on_scrolling@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)"
 P3,1121,0x00493EA0,?on_right_click@ProdPicker@@QAEXHH@Z,788,0,11,unrecovered,,,2,exact,entry_range,"void (__thiscall ?on_right_click@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)"
 P3,221,0x004941C0,?on_left_click@ProdPicker@@QAEXHH@Z,111,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_click@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)"
 P3,21,0x00494230,?on_left_double_click@ProdPicker@@QAEXHH@Z,65,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_double_click@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)"
@@ -879,23 +863,19 @@ P3,521,0x0049D490,?on_selected@ReportWin@@QAEXHH@Z,165,0,5,unrecovered,,,2,exact
 P3,5621,0x0049D540,?draw_ops@ReportWin@@QAEXXZ,5565,2,36,unrecovered,,,2,exact,entry_range,void (__thiscall ?draw_ops@ReportWin@@QAEXXZ)(ReportWin* this)
 P2,6821,0x0049EB10,?draw_projects@ReportWin@@QAEXXZ,2099,5,18,unrecovered,,,2,exact,exact,void (__thiscall ?draw_projects@ReportWin@@QAEXXZ)(ReportWin* this)
 P3,3421,0x0049F350,?draw_sat@ReportWin@@QAEXXZ,2766,1,24,unrecovered,,,2,exact,exact,void (__thiscall ?draw_sat@ReportWin@@QAEXXZ)(ReportWin* this)
-P3,3621,0x0049FE40,?sat_anim@ReportWin@@QAEXXZ,375,3,6,unrecovered,,,2,exact,exact,void (__thiscall ?sat_anim@ReportWin@@QAEXXZ)(ReportWin* this)
-P3,120,0x0049FFC0,?sat_anim_daemon@@YAXH@Z,13,0,1,unrecovered,,,2,exact,exact,
+P0,1003621,0x0049FE40,?sat_anim@ReportWin@@QAEXXZ,375,3,6,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?sat_anim@ReportWin@@QAEXXZ)(ReportWin* this)
 P3,1621,0x0049FFD0,?start_attack@ReportWin@@QAEXHHHH@Z,289,1,6,unrecovered,,,2,exact,exact,"void (__thiscall ?start_attack@ReportWin@@QAEXHHHH@Z)(ReportWin* this, int, int, int, int)"
-P3,1621,0x004A0100,?exp_anim@ReportWin@@QAEXXZ,328,1,6,unrecovered,,,2,exact,exact,void (__thiscall ?exp_anim@ReportWin@@QAEXXZ)(ReportWin* this)
-P3,120,0x004A0250,?sat_expl_daemon@@YAXH@Z,13,0,1,unrecovered,,,2,exact,exact,
+P0,1001621,0x004A0100,?exp_anim@ReportWin@@QAEXXZ,328,1,6,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?exp_anim@ReportWin@@QAEXXZ)(ReportWin* this)
 P3,3321,0x004A0260,?sat_attack@@YAXHHH@Z,1765,1,23,unrecovered,,,2,exact,entry_range,"void (__cdecl ?sat_attack@@YAXHHH@Z)(int factionIDAtk, int factionIDDef, int type)"
 P3,1221,0x004A0810,?sat_edit@@YAXHHH@Z,194,1,2,unrecovered,,,2,exact,exact,"void (__cdecl ?sat_edit@@YAXHHH@Z)(int a1, int factionID, int type)"
 P3,4021,0x004A08E0,?draw_security@ReportWin@@QAEXXZ,2132,2,20,unrecovered,,,2,exact,exact,void (__thiscall ?draw_security@ReportWin@@QAEXXZ)(ReportWin* this)
 P3,3021,0x004A1140,?draw_score@ReportWin@@QAEXXZ,4296,1,20,unrecovered,,,2,exact,exact,void (__thiscall ?draw_score@ReportWin@@QAEXXZ)(ReportWin* this)
 P3,2721,0x004A2210,?draw_intel@ReportWin@@QAEXXZ,4687,1,17,unrecovered,,,2,exact,exact,void (__thiscall ?draw_intel@ReportWin@@QAEXXZ)(ReportWin* this)
 P3,1921,0x004A3460,?init@ReportIf@@QAEXXZ,1244,1,9,unrecovered,,,2,exact,entry_range,void (__thiscall ?init@ReportIf@@QAEXXZ)(ReportIf* this)
-P3,2221,0x004A3930,?done@ReportIf@@QAEXXZ,22,2,2,unrecovered,,,2,exact,exact,void (__thiscall ?done@ReportIf@@QAEXXZ)(ReportIf* this)
 P2,13821,0x004A3950,?report@ReportIf@@QAEXHHH@Z,899,12,18,unrecovered,,,2,exact,exact,"void (__thiscall ?report@ReportIf@@QAEXHHH@Z)(ReportIf* this, int, int factionID, int)"
 P2,5721,0x004A3D20,?reset@ReportIf@@QAEXXZ,671,5,7,unrecovered,,,2,exact,exact,void (__thiscall ?reset@ReportIf@@QAEXXZ)(ReportIf* this)
 P3,1921,0x004A3FC0,?on_redraw@ReportIf@@QAEXXZ,95,1,9,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@ReportIf@@QAEXXZ)(ReportIf* this)
-P3,120,0x004A4050,?bl_daemon@@YAXH@Z,13,0,1,unrecovered,,,2,exact,exact,
-P3,2321,0x004A4060,?bl_anim@ReportIf@@QAEXXZ,305,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?bl_anim@ReportIf@@QAEXXZ)(ReportIf* this)
+P0,1002321,0x004A4060,?bl_anim@ReportIf@@QAEXXZ,305,2,3,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?bl_anim@ReportIf@@QAEXXZ)(ReportIf* this)
 P3,2721,0x004A41D0,?on_status@ReportIf@@QAEXH@Z,7426,0,27,unrecovered,,,2,exact,exact,"void (__thiscall ?on_status@ReportIf@@QAEXH@Z)(ReportIf* this, int)"
 P3,211,0x004A5F00,?show@ReportWin@@QAEXH@Z,22,0,2,unrecovered,,,1,exact,missing,"void (__thiscall ?show@ReportWin@@QAEXH@Z)(ReportWin* this, int)"
 P3,111,0x004A5F20,?hide@ReportWin@@QAEXXZ,20,0,1,unrecovered,,,1,exact,missing,void (__thiscall ?hide@ReportWin@@QAEXXZ)(ReportWin* this)
@@ -932,9 +912,8 @@ P0,1002421,0x004AD3B0,??1ReportWin@@QAE@XZ,1191,1,14,original_dependency,ui_depe
 P0,1002121,0x004AD6B0,??0ReportWin@@QAE@XZ,689,1,11,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0ReportWin@@QAE@XZ)(ReportWin* this)
 P2,5321,0x004AD880,??0SetupWin@@QAE@XZ,380,5,3,unrecovered,,,2,exact,entry_range,void (__thiscall ??0SetupWin@@QAE@XZ)(SetupWin* this)
 P2,5221,0x004AD9C0,?close@SetupWin@@QAEXXZ,187,5,2,unrecovered,,,2,exact,exact,void (__thiscall ?close@SetupWin@@QAEXXZ)(SetupWin* this)
-P3,1121,0x004ADAF0,?do_menu@SetupWin@@QAEHPADHH@Z,33,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?do_menu@SetupWin@@QAEHPADHH@Z)(SetupWin* this, int8*, int, int)"
 P2,5121,0x004ADB20,?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z,70,5,1,unrecovered,,,2,exact,exact,"int (__thiscall ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z)(SetupWin* this, Popup*, int, int)"
-P3,6021,0x004ADB70,?do_menu_rightside@SetupWin@@QAEHPADH@Z,2129,2,40,unrecovered,,,2,exact,entry_range,"int (__thiscall ?do_menu_rightside@SetupWin@@QAEHPADH@Z)(SetupWin* this, int8*, int)"
+P0,1006021,0x004ADB70,?do_menu_rightside@SetupWin@@QAEHPADH@Z,2129,2,40,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"int (__thiscall ?do_menu_rightside@SetupWin@@QAEHPADH@Z)(SetupWin* this, int8*, int)"
 P3,121,0x004AE340,?on_left_click@SetupWin@@QAEXHH@Z,64,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_click@SetupWin@@QAEXHH@Z)(SetupWin* this, int xCoord, int yCoord)"
 P3,321,0x004AE380,?on_mouse_move@SetupWin@@QAEHHH@Z,90,0,3,unrecovered,,,2,exact,exact,"int (__thiscall ?on_mouse_move@SetupWin@@QAEHHH@Z)(SetupWin* this, int xCoord, int yCoord)"
 P3,221,0x004AE3E0,?on_key_click@SetupWin@@QAEHHH@Z,189,0,2,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@SetupWin@@QAEHHH@Z)(SetupWin* this, int, int)"
@@ -972,8 +951,6 @@ P3,621,0x004B2120,?on_status@SocialWin@@QAEXH@Z,228,0,6,unrecovered,,,2,exact,ex
 P3,111,0x004B2210,?on_iface_left_click@SocialWin@@QAEHHH@Z,13,0,1,unrecovered,,,1,exact,missing,"int (__thiscall ?on_iface_left_click@SocialWin@@QAEHHH@Z)(SocialWin* this, int, int)"
 P3,521,0x004B2220,?on_iface_right_click@SocialWin@@QAEXHH@Z,474,0,5,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_right_click@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)"
 P3,621,0x004B2470,?on_iface_button_clicked@SocialWin@@QAEXH@Z,478,0,6,unrecovered,,,2,exact,exact,"void (__thiscall ?on_iface_button_clicked@SocialWin@@QAEXH@Z)(SocialWin* this, int)"
-P3,1221,0x004B2690,?show@SocialWin@@QAEXH@Z,27,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?show@SocialWin@@QAEXH@Z)(SocialWin* this, int)"
-P3,1221,0x004B26B0,?hide@SocialWin@@QAEXXZ,25,1,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide@SocialWin@@QAEXXZ)(SocialWin* this)
 P3,2121,0x004B26D0,?close@SocialWin@@QAEXXZ,108,2,1,unrecovered,,,2,exact,exact,void (__thiscall ?close@SocialWin@@QAEXXZ)(SocialWin* this)
 P3,4621,0x004B2740,?init@SocialWin@@QAEXH@Z,5458,2,26,unrecovered,,,2,exact,entry_range,"void (__thiscall ?init@SocialWin@@QAEXH@Z)(SocialWin* this, int factionID)"
 P0,1001521,0x004B3C80,??1SocialWin@@QAE@XZ,943,1,5,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1SocialWin@@QAE@XZ)(SocialWin* this)
@@ -989,6 +966,7 @@ P3,2121,0x004B6530,?reset_active@StatusWin@@QAEXXZ,57,2,1,unrecovered,,,2,exact,
 P2,10621,0x004B6570,?draw_status@StatusWin@@QAEXHHHHH@Z,8885,7,36,unrecovered,,,2,exact,exact,"void (__thiscall ?draw_status@StatusWin@@QAEXHHHHH@Z)(StatusWin* this, int, int, int, int, int)"
 P3,1221,0x004B8830,?draw@StatusWin@@QAEXHHHHH@Z,90,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?draw@StatusWin@@QAEXHHHHH@Z)(StatusWin* this, int, int, int, int, int)"
 P3,3321,0x004B8890,?on_redraw@StatusWin@@QAEXXZ,219,3,3,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@StatusWin@@QAEXXZ)(StatusWin* this)
+P0,1008021,0x004B8970,?reset@StatusWin@@QAEXXZ,31,8,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?reset@StatusWin@@QAEXXZ)(StatusWin* this)
 P3,1121,0x004B8990,?on_left_double_click@StatusWin@@QAEXHH@Z,46,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_double_click@StatusWin@@QAEXHH@Z)(StatusWin* this, int xCoord, int yCoord)"
 P3,1421,0x004B89C0,?arrow_left@StatusWin@@QAEXXZ,517,1,4,unrecovered,,,2,exact,exact,void (__thiscall ?arrow_left@StatusWin@@QAEXXZ)(StatusWin* this)
 P3,1421,0x004B8BD0,?arrow_right@StatusWin@@QAEXXZ,544,1,4,unrecovered,,,2,exact,exact,void (__thiscall ?arrow_right@StatusWin@@QAEXXZ)(StatusWin* this)
@@ -997,6 +975,7 @@ P3,3321,0x004B8E40,?on_left_click@StatusWin@@QAEXHH@Z,403,2,13,unrecovered,,,2,e
 P3,6121,0x004B9010,?on_right_click@StatusWin@@QAEXHHH@Z,3858,1,51,unrecovered,,,2,exact,entry_range,"void (__thiscall ?on_right_click@StatusWin@@QAEXHHH@Z)(StatusWin* this, int xCoord, int yCoord, int)"
 P3,11,0x004B9E90,?UNK4@StatusWin@@QAEXXZ,13,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?UNK4@StatusWin@@QAEXXZ)(StatusWin* this)
 P0,1017321,0x004B9EA0,?redraw@StatusWin@@QAEXXZ,219,17,3,original_dependency,ui_dependency,recover_status_win_redraw,2,exact,exact,void (__thiscall ?redraw@StatusWin@@QAEXXZ)(StatusWin* this)
+P0,1008021,0x004B9F90,?set_loc@StatusWin@@QAEXHH@Z,40,8,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_loc@StatusWin@@QAEXHH@Z)(StatusWin* this, int, int)"
 P3,1521,0x004B9FC0,?init@StatusWin@@QAEXXZ,350,1,5,unrecovered,,,2,exact,exact,void (__thiscall ?init@StatusWin@@QAEXXZ)(StatusWin* this)
 P0,1000321,0x004BA120,??1StatusWin@@QAE@XZ,187,0,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1StatusWin@@QAE@XZ)(StatusWin* this)
 P0,1001321,0x004BA1A0,??0StatusWin@@QAE@XZ,182,1,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0StatusWin@@QAE@XZ)(StatusWin* this)
@@ -1004,6 +983,7 @@ P3,1520,0x004BA220,?textcolor_init@@YAXXZ,936,1,5,unrecovered,,,2,exact,entry_ra
 P2,7020,0x004BA5F0,?tut_check@@YAHH@Z,94,7,0,unrecovered,,,2,exact,exact,
 P2,9020,0x004BA650,?tut_check2@@YAHH@Z,94,9,0,unrecovered,,,2,exact,exact,
 P0,1001121,0x004BA6B0,??0TutWin@@QAE@XZ,110,1,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??0TutWin@@QAE@XZ)(TutWin* this)
+P0,1001021,0x004BA720,?UNK1@TutWin@@QAEXXZ,65,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?UNK1@TutWin@@QAEXXZ)(TutWin* this)
 P3,121,0x004BA770,?on_key_click@TutWin@@QAEHHH@Z,190,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@TutWin@@QAEHHH@Z)(TutWin* this, int, int)"
 P3,1921,0x004BAA70,?tour6@TutWin@@QAEXXZ,1186,1,9,unrecovered,,,2,exact,exact,void (__thiscall ?tour6@TutWin@@QAEXXZ)(TutWin* this)
 P3,1721,0x004BAF20,?tour7@TutWin@@QAEXXZ,1107,1,7,unrecovered,,,2,exact,exact,void (__thiscall ?tour7@TutWin@@QAEXXZ)(TutWin* this)
@@ -1011,7 +991,7 @@ P3,2221,0x004BB380,?tour5@TutWin@@QAEXXZ,1041,1,12,unrecovered,,,2,exact,exact,v
 P3,2421,0x004BB7A0,?tour1@TutWin@@QAEXXZ,3569,1,14,unrecovered,,,2,exact,exact,void (__thiscall ?tour1@TutWin@@QAEXXZ)(TutWin* this)
 P2,7921,0x004BC6E0,?tour@TutWin@@QAEXXZ,5598,5,29,unrecovered,,,2,exact,exact,void (__thiscall ?tour@TutWin@@QAEXXZ)(TutWin* this)
 P3,121,0x004BDCC0,?on_button_clicked@TutWin@@QAEXH@Z,226,0,1,unrecovered,,,2,exact,start_only,"void (__thiscall ?on_button_clicked@TutWin@@QAEXH@Z)(TutWin* this, int)"
-P3,11,0x004BDDB0,?on_move@TutWin@@QAEXHH@Z,21,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_move@TutWin@@QAEXHH@Z)(TutWin* this, int, int)"
+P0,1000011,0x004BDDD0,?UNK3@TutWin@@QAEXH@Z,16,0,0,source_complete,oracle_reference,differential_fixture,1,missing,exact,"void (__thiscall ?UNK3@TutWin@@QAEXH@Z)(TutWin* this, int)"
 P1,22121,0x004BDDE0,?reset@TutWin@@QAEHXZ,183,22,1,unrecovered,,,2,exact,exact,int (__thiscall ?reset@TutWin@@QAEHXZ)(TutWin* this)
 P3,3121,0x004BDEA0,?draw_arrow@TutWin@@QAEXXZ,118,3,1,unrecovered,,,2,exact,exact,void (__thiscall ?draw_arrow@TutWin@@QAEXXZ)(TutWin* this)
 P3,120,0x004BDF20,?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,70,0,1,unrecovered,,,2,exact,exact,
@@ -1051,13 +1031,10 @@ P2,7121,0x004C3A40,?hide_all@WorldWin@@QAEXXZ,43,7,1,unrecovered,,,2,exact,exact
 P3,11,0x004C3A70,?UNK1@WorldWin@@QAEXXZ,57,0,0,unrecovered,,,1,exact,missing,void (__thiscall ?UNK1@WorldWin@@QAEXXZ)(WorldWin* this)
 P3,2521,0x004C3AB0,?right_menu@WorldWin@@QAEXHH@Z,625,1,15,unrecovered,,,2,exact,entry_range,"void (__thiscall ?right_menu@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)"
 P0,1002521,0x004C3D40,?click@WorldWin@@QAEXHHHH@Z,264,2,5,original_dependency,ui_dependency,recover_world_win_click,2,exact,exact,"void (__thiscall ?click@WorldWin@@QAEXHHHH@Z)(WorldWin* this, int, int, int, int)"
-P3,1121,0x004C3EA0,?follow_center@WorldWin@@QAEXHH@Z,19,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?follow_center@WorldWin@@QAEXHH@Z)(WorldWin* this, int xCoord, int yCoord)"
 P3,1211,0x004C3EC0,?on_redraw@WorldWin@@QAEXXZ,871,0,12,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@WorldWin@@QAEXXZ)(WorldWin* this)
 P3,611,0x004C4230,?UNK2@WorldWin@@QAEXH@Z,448,0,6,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK2@WorldWin@@QAEXH@Z)(WorldWin* this, int)"
 P3,3021,0x004C43F0,?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z,227,3,0,unrecovered,,,2,exact,exact,"int (__thiscall ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z)(WorldWin* this, int, int, int*, int*)"
 P3,3021,0x004C44E0,?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z,242,3,0,unrecovered,,,2,exact,exact,"int (__thiscall ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z)(WorldWin* this, int, int, int*, int*)"
-P3,1121,0x004C45F0,?set_center@WorldWin@@QAEXHH@Z,19,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?set_center@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)"
-P3,111,0x004C4610,?focus@WorldWin@@QAEXHH@Z,19,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?focus@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)"
 P3,1421,0x004C4630,?draw_box@WorldWin@@QAEXXZ,439,1,4,unrecovered,,,2,exact,exact,void (__thiscall ?draw_box@WorldWin@@QAEXXZ)(WorldWin* this)
 P3,411,0x004C47F0,?UNK3@WorldWin@@QAEXXZ,428,0,4,unrecovered,,,1,missing,exact,void (__thiscall ?UNK3@WorldWin@@QAEXXZ)(WorldWin* this)
 P3,1321,0x004C49A0,?init@WorldWin@@QAEXH@Z,198,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?init@WorldWin@@QAEXH@Z)(WorldWin* this, int)"
@@ -1076,12 +1053,14 @@ P0,1001121,0x004C5740,??0Midi_Device@@QAE@XZ,60,1,1,original_dependency,ui_depen
 P0,1000001,0x004C5780,??1Midi_Device@@QAE@XZ,19,0,0,original_dependency,ui_dependency,recover_owning_class,0,missing,missing,void (__thiscall ??1Midi_Device@@QAE@XZ)(Midi_Device* this)
 P3,1021,0x004C57A0,?init@Midi_Device@@QAEHPAXK@Z,68,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Midi_Device@@QAEHPAXK@Z)(Midi_Device* this, void*, unsigned int)"
 P3,1021,0x004C57F0,?release@Midi_Device@@QAEXXZ,51,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?release@Midi_Device@@QAEXXZ)(Midi_Device* this)
+P0,1000011,0x004C5920,?is_disabled@Midi_Device@@QAEHXZ,18,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,int (__thiscall ?is_disabled@Midi_Device@@QAEHXZ)(Midi_Device* this)
 P0,1001121,0x004C5940,??0Wave_In_Device@@QAE@XZ,60,1,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??0Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
 P0,1000001,0x004C5980,??1Wave_In_Device@@QAE@XZ,19,0,0,original_dependency,ui_dependency,recover_owning_class,0,missing,missing,void (__thiscall ??1Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
 P3,21,0x004C59A0,?create_device@Wave_In_Device@@QAEHK@Z,55,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?create_device@Wave_In_Device@@QAEHK@Z)(Wave_In_Device* this, unsigned int)"
 P3,21,0x004C59E0,?delete_device@Wave_In_Device@@QAEHXZ,39,0,0,unrecovered,,,2,exact,exact,int (__thiscall ?delete_device@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 P3,1021,0x004C5A10,?init@Wave_In_Device@@QAEHPAXK@Z,61,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Wave_In_Device@@QAEHPAXK@Z)(Wave_In_Device* this, void*, unsigned int)"
 P3,1021,0x004C5A50,?release@Wave_In_Device@@QAEXXZ,33,1,0,unrecovered,,,2,exact,exact,void (__thiscall ?release@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
+P0,1000021,0x004C5A80,?set_codec@Wave_In_Device@@QAEHK@Z,32,0,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?set_codec@Wave_In_Device@@QAEHK@Z)(Wave_In_Device* this, unsigned int)"
 P0,1000121,0x004C5B80,??1WaveControlGroup@@QAE@XZ,111,0,1,source_complete,ui_dependency,recover_wave_control_group,2,exact,exact,void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 P0,1001120,0x004C5BF0,sub_4c5bf0,90,1,1,source_complete,ui_dependency,recover_wave_device,2,exact,exact,
 P3,1420,0x004C5CE0,?init_sound@@YAHPAXK@Z,174,1,4,unrecovered,,,2,exact,exact,
@@ -1213,13 +1192,12 @@ P3,2721,0x004D95F0,?assemble@Console@@QAEXXZ,896,2,7,unrecovered,,,2,exact,exact
 P3,3021,0x004D9970,?editor_on@Console@@QAEXXZ,341,2,10,unrecovered,,,2,exact,exact,void (__thiscall ?editor_on@Console@@QAEXXZ)(Console* this)
 P3,5721,0x004D9AD0,?editor_who@Console@@QAEHHH@Z,950,4,17,unrecovered,,,2,exact,entry_range,"int (__thiscall ?editor_who@Console@@QAEHHH@Z)(Console* this, int, int)"
 P3,3021,0x004D9DE0,?on_button_clicked@DipEdit@@QAEXH@Z,2689,0,30,unrecovered,,,2,exact,entry_range,"void (__thiscall ?on_button_clicked@DipEdit@@QAEXH@Z)(DipEdit* this, int)"
-P3,221,0x004DA740,?on_selected@DipEdit@@QAEXH@Z,32,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_selected@DipEdit@@QAEXH@Z)(DipEdit* this, int)"
 P3,311,0x004DA760,?UNK1@DipEdit@@QAEXH@Z,128,0,3,unrecovered,,,1,missing,exact,"void (__thiscall ?UNK1@DipEdit@@QAEXH@Z)(DipEdit* this, int)"
 P3,1321,0x004DA7E0,?UNK2@DipEdit@@QAEXH@Z,135,1,3,unrecovered,,,2,exact,exact,"void (__thiscall ?UNK2@DipEdit@@QAEXH@Z)(DipEdit* this, int)"
 P3,1221,0x004DA870,?UNK3@DipEdit@@QAEXH@Z,132,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?UNK3@DipEdit@@QAEXH@Z)(DipEdit* this, int)"
 P3,1221,0x004DA900,?UNK4@DipEdit@@QAEXH@Z,139,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?UNK4@DipEdit@@QAEXH@Z)(DipEdit* this, int)"
-P3,2821,0x004DA990,?read_check@DipEdit@@QAEXXZ,1035,2,8,unrecovered,,,2,exact,exact,void (__thiscall ?read_check@DipEdit@@QAEXXZ)(DipEdit* this)
-P3,3121,0x004DADA0,?do_check@DipEdit@@QAEXXZ,721,3,1,unrecovered,,,2,exact,exact,void (__thiscall ?do_check@DipEdit@@QAEXXZ)(DipEdit* this)
+P0,1002821,0x004DA990,?read_check@DipEdit@@QAEXXZ,1035,2,8,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?read_check@DipEdit@@QAEXXZ)(DipEdit* this)
+P0,1003121,0x004DADA0,?do_check@DipEdit@@QAEXXZ,721,3,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?do_check@DipEdit@@QAEXXZ)(DipEdit* this)
 P3,3321,0x004DB080,?init@DipEdit@@QAEXH@Z,2024,1,23,unrecovered,,,2,exact,exact,"void (__thiscall ?init@DipEdit@@QAEXH@Z)(DipEdit* this, int)"
 P3,4221,0x004DB870,?editor_diplomacy@Console@@QAEXXZ,966,2,22,unrecovered,,,2,exact,entry_range,void (__thiscall ?editor_diplomacy@Console@@QAEXXZ)(Console* this)
 P3,2321,0x004DBB40,?editor_reset_faction@Console@@QAEXXZ,242,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?editor_reset_faction@Console@@QAEXXZ)(Console* this)
@@ -1249,8 +1227,6 @@ P3,1221,0x004E0AD0,?editor_minor@Console@@QAEXXZ,37,1,2,unrecovered,,,2,exact,ex
 P3,4321,0x004E0B00,?editor_terrain@Console@@QAEXXZ,1147,2,23,unrecovered,,,2,exact,entry_range,void (__thiscall ?editor_terrain@Console@@QAEXXZ)(Console* this)
 P3,2421,0x004E0EA0,?editor_set_brush@Console@@QAEXXZ,130,2,4,unrecovered,,,2,exact,exact,void (__thiscall ?editor_set_brush@Console@@QAEXXZ)(Console* this)
 P3,1421,0x004E0F30,?editor_flat@Console@@QAEXXZ,77,1,4,unrecovered,,,2,exact,exact,void (__thiscall ?editor_flat@Console@@QAEXXZ)(Console* this)
-P3,1421,0x004E0F80,?editor_polar@Console@@QAEXXZ,24,1,4,unrecovered,,,2,exact,exact,void (__thiscall ?editor_polar@Console@@QAEXXZ)(Console* this)
-P3,2421,0x004E0FA0,?editor_climate@Console@@QAEXXZ,35,2,4,unrecovered,,,2,exact,exact,void (__thiscall ?editor_climate@Console@@QAEXXZ)(Console* this)
 P3,2421,0x004E0FD0,?editor_generate@Console@@QAEXXZ,236,2,4,unrecovered,,,2,exact,exact,void (__thiscall ?editor_generate@Console@@QAEXXZ)(Console* this)
 P3,2321,0x004E10C0,?editor_fast@Console@@QAEXXZ,205,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?editor_fast@Console@@QAEXXZ)(Console* this)
 P3,1321,0x004E1190,?editor_randomize@Console@@QAEXXZ,103,1,3,unrecovered,,,2,exact,exact,void (__thiscall ?editor_randomize@Console@@QAEXXZ)(Console* this)
@@ -1261,14 +1237,17 @@ P3,1221,0x004E1380,?editor_clear_terrain@Console@@QAEXXZ,82,1,2,unrecovered,,,2,
 P3,1421,0x004E13E0,?editor_fungus@Console@@QAEXXZ,187,1,4,unrecovered,,,2,exact,exact,void (__thiscall ?editor_fungus@Console@@QAEXXZ)(Console* this)
 P3,1421,0x004E14A0,?editor_rockiness@Console@@QAEXXZ,40,1,4,unrecovered,,,2,exact,exact,void (__thiscall ?editor_rockiness@Console@@QAEXXZ)(Console* this)
 P3,5621,0x004E14D0,?editor_natural@Console@@QAEXH@Z,2977,1,46,unrecovered,,,2,exact,entry_range,"void (__thiscall ?editor_natural@Console@@QAEXH@Z)(Console* this, int)"
-P3,1121,0x004E1F30,?editor_redo@Console@@QAEXXZ,9,1,1,unrecovered,,,2,exact,exact,void (__thiscall ?editor_redo@Console@@QAEXXZ)(Console* this)
+P0,1008021,0x004E1F40,?edit_lock@Console@@QAEHXZ,48,8,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?edit_lock@Console@@QAEHXZ)(Console* this)
 P3,2321,0x004E1F70,?editor_lock2@Console@@QAEXXZ,134,2,3,unrecovered,,,2,exact,exact,void (__thiscall ?editor_lock2@Console@@QAEXXZ)(Console* this)
 P3,3221,0x004E2000,?corner_the_market@Console@@QAEXXZ,565,2,12,unrecovered,,,2,exact,exact,void (__thiscall ?corner_the_market@Console@@QAEXXZ)(Console* this)
 P0,1002721,0x004E2240,??1DipEdit@@QAE@XZ,534,2,7,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1DipEdit@@QAE@XZ)(DipEdit* this)
 P3,10,0x004E2400,sub_4e2400,68,0,0,unrecovered,,,1,exact,missing,
-P3,10,0x004E2450,sub_4e2450,13,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x004E2460,sub_4e2460,47,0,0,unrecovered,,,1,exact,missing,
 P3,1221,0x004E2490,??0AlphaNet@@QAE@XZ,309,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0AlphaNet@@QAE@XZ)(AlphaNet* this)
+P0,1020021,0x004E25E0,?pid_2_idx@AlphaNet@@QAEHK@Z,39,20,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?pid_2_idx@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)"
+P0,1002021,0x004E2610,?pid_2_who@AlphaNet@@QAEHK@Z,67,2,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?pid_2_who@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)"
+P0,1004021,0x004E2660,?who_2_pid@AlphaNet@@QAEHH@Z,72,4,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?who_2_pid@AlphaNet@@QAEHH@Z)(AlphaNet* this, int)"
+P0,1001021,0x004E26B0,?who_2_idx@AlphaNet@@QAEXH@Z,44,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?who_2_idx@AlphaNet@@QAEXH@Z)(AlphaNet* this, int)"
 P3,2221,0x004E26E0,?pick_service@AlphaNet@@QAEHPAH@Z,846,1,12,unrecovered,,,2,exact,entry_range,"int (__thiscall ?pick_service@AlphaNet@@QAEHPAH@Z)(AlphaNet* this, int*)"
 P3,301,0x004E29E0,?do_join_or_create@AlphaNet@@QAEHXZ,79,0,3,unrecovered,,,0,missing,missing,int (__thiscall ?do_join_or_create@AlphaNet@@QAEHXZ)(AlphaNet* this)
 P3,3621,0x004E2A30,?create@AlphaNet@@QAEHXZ,1320,2,16,unrecovered,,,2,exact,entry_range,int (__thiscall ?create@AlphaNet@@QAEHXZ)(AlphaNet* this)
@@ -1288,7 +1267,6 @@ P3,1821,0x004E5A60,?base_change@@YAXHH@Z,1404,1,8,unrecovered,,,2,exact,exact,"v
 P2,12621,0x004E5FE0,?base_reset@@YAXHH@Z,795,12,6,unrecovered,,,2,exact,exact,"void (__cdecl ?base_reset@@YAXHH@Z)(int baseID, int)"
 P3,4120,0x004E6300,?bases_reset@@YAXHHH@Z,252,4,1,unrecovered,,,2,exact,exact,
 P3,1720,0x004E68B0,?farm_compute@@YAXXZ,1438,1,7,unrecovered,,,2,exact,exact,
-P3,10,0x004E7DB0,sub_4e7db0,13,0,0,unrecovered,,,1,exact,missing,
 P2,7321,0x004E7DC0,?resource_yield@@YAHHHHHH@Z,116,7,3,unrecovered,,,2,exact,exact,"int (__cdecl ?resource_yield@@YAHHHHHH@Z)(int type, int factionID, int baseID, int xCoord, int yCoord)"
 P3,310,0x004E7E50,sub_4e7e50,276,0,3,unrecovered,,,1,missing,exact,
 P3,310,0x004E7F80,sub_4e7f80,276,0,3,unrecovered,,,1,missing,exact,
@@ -1352,6 +1330,7 @@ P2,7420,0x0050EF50,?go_reset@@YAXXZ,534,7,4,unrecovered,,,2,exact,exact,
 P3,1820,0x0050F170,?go_timer@@YAXH@Z,596,1,8,unrecovered,,,2,exact,exact,
 P0,1001721,0x0050F460,??0Console@@QAE@H@Z,616,1,7,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,"void (__thiscall ??0Console@@QAE@H@Z)(Console* this, int)"
 P3,100,0x0050F630,sub_50f630,16,0,1,unrecovered,,,0,missing,missing,
+P0,1001021,0x0050F650,?clear_group@Console@@QAEXXZ,43,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?clear_group@Console@@QAEXXZ)(Console* this)
 P0,1000121,0x0050F680,?on_nc_hittest@Console@@QAEXHH@Z,721,0,1,original_dependency,ui_dependency,recover_console_on_nc_hittest,2,exact,exact,"void (__thiscall ?on_nc_hittest@Console@@QAEXHH@Z)(Console* this, int, int)"
 P0,1000121,0x0050F960,?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z,424,0,1,original_dependency,ui_dependency,recover_console_on_post_redraw_nc_buffer,2,exact,exact,"void (__thiscall ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)"
 P0,1000321,0x0050FB10,?on_nc_left_down@Console@@QAEXHH@Z,857,0,3,original_dependency,ui_dependency,recover_console_on_nc_left_down,2,exact,exact,"void (__thiscall ?on_nc_left_down@Console@@QAEXHH@Z)(Console* this, int, int)"
@@ -1362,6 +1341,7 @@ P2,5221,0x00510490,?cursor_on@Console@@QAEXHH@Z,141,5,2,unrecovered,,,2,exact,ex
 P3,1321,0x00510520,?cursor_off@Console@@QAEXXZ,158,1,3,unrecovered,,,2,exact,exact,void (__thiscall ?cursor_off@Console@@QAEXXZ)(Console* this)
 P3,1421,0x005105C0,?selecting@Console@@QAEHHH@Z,533,1,4,unrecovered,,,2,exact,exact,"int (__thiscall ?selecting@Console@@QAEHHH@Z)(Console* this, int xCoord, int yCoord)"
 P3,1321,0x005107E0,?selected@Console@@QAEXXZ,185,1,3,unrecovered,,,2,exact,exact,void (__thiscall ?selected@Console@@QAEXXZ)(Console* this)
+P0,1032421,0x005108A0,?focus@Console@@QAEXHHH@Z,259,32,4,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?focus@Console@@QAEXHHH@Z)(Console* this, int xCoord, int yCoord, int factionID)"
 P0,1011221,0x005109B0,?cursor_next@Console@@QAEXHH@Z,169,11,2,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?cursor_next@Console@@QAEXHH@Z)(Console* this, int, int)"
 P3,1011,0x00510A60,?prev_cursor@Console@@QAEXXZ,272,0,10,unrecovered,,,1,missing,start_only,void (__thiscall ?prev_cursor@Console@@QAEXXZ)(Console* this)
 P3,3021,0x00510B70,?next_cursor@Console@@QAEXXZ,281,2,10,unrecovered,,,2,exact,exact,void (__thiscall ?next_cursor@Console@@QAEXXZ)(Console* this)
@@ -1376,6 +1356,7 @@ P3,3121,0x00513B90,?veh_turn@Console@@QAEHXZ,1065,1,21,unrecovered,,,2,exact,exa
 P3,321,0x00513FC0,?end_of_turn@Console@@QAEXXZ,144,0,3,unrecovered,,,2,start_only,start_only,void (__thiscall ?end_of_turn@Console@@QAEXXZ)(Console* this)
 P3,5221,0x00514050,?human_turn@Console@@QAEXXZ,1930,2,32,unrecovered,,,2,exact,exact,void (__thiscall ?human_turn@Console@@QAEXXZ)(Console* this)
 P2,6421,0x005147E0,?set_cursor@Console@@QAEXHH@Z,157,6,4,unrecovered,,,2,exact,exact,"void (__thiscall ?set_cursor@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)"
+P0,1033321,0x00514880,?update_data@Console@@QAEXH@Z,42,33,3,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?update_data@Console@@QAEXH@Z)(Console* this, int)"
 P3,511,0x005148B0,?move_cursor@Console@@QAEXH@Z,224,0,5,unrecovered,,,1,missing,start_only,"void (__thiscall ?move_cursor@Console@@QAEXH@Z)(Console* this, int)"
 P3,801,0x00514990,?quit_game@Console@@QAEXXZ,412,0,8,unrecovered,,,0,missing,missing,void (__thiscall ?quit_game@Console@@QAEXXZ)(Console* this)
 P3,3321,0x00514B30,?retire_game@Console@@QAEXXZ,507,2,13,unrecovered,,,2,exact,exact,void (__thiscall ?retire_game@Console@@QAEXXZ)(Console* this)
@@ -1413,9 +1394,8 @@ P0,1019621,0x005178C0,?on_key_click@Console@@QAEHHH@Z,15809,2,176,original_depen
 P3,2921,0x0051BBA0,?load_proc@Console@@QAEXHH@Z,194,2,9,unrecovered,,,2,exact,exact,"void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)"
 P3,15821,0x0051BC70,?menu_proc@Console@@QAEXH@Z,5582,1,148,unrecovered,,,2,exact,exact,"void (__thiscall ?menu_proc@Console@@QAEXH@Z)(Console* this, int)"
 P3,120,0x0051D720,?menu_daemon@Console@@QAAXH@Z,19,0,1,unrecovered,,,2,exact,exact,
-P3,101,0x0051D740,?menu_update@Console@@QAEXXZ,19,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this)
 P3,0,0x0051D760,sub_51d760,85,0,0,unrecovered,,,0,missing,missing,
-P0,1000021,0x0051D7C0,?on_sys_close@Console@@QAEXXZ,11,0,0,original_dependency,ui_dependency,recover_console_on_sys_close,2,exact,exact,void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
+P0,1000021,0x0051D7C0,?on_sys_close@Console@@QAEXXZ,11,0,0,source_complete,ui_dependency,recover_console_on_sys_close,2,exact,exact,void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
 P3,3421,0x0051D7D0,?close@Console@@QAEXXZ,190,3,4,unrecovered,,,2,exact,exact,void (__thiscall ?close@Console@@QAEXXZ)(Console* this)
 P3,1821,0x0051D890,?init@Console@@QAEXH@Z,319,1,8,unrecovered,,,2,exact,exact,"void (__thiscall ?init@Console@@QAEXH@Z)(Console* this, int)"
 P0,1003021,0x0051D9F0,??1Console@@QAE@XZ,864,2,10,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1Console@@QAE@XZ)(Console* this)
@@ -1490,6 +1470,7 @@ P3,1321,0x0052E900,?send_game@NetDaemon@@QAEXXZ,1075,1,3,unrecovered,,,2,exact,e
 P3,4021,0x0052ED40,?send_files@NetDaemon@@QAEHXZ,2025,1,30,unrecovered,,,2,exact,entry_range,int (__thiscall ?send_files@NetDaemon@@QAEHXZ)(NetDaemon* this)
 P3,1321,0x0052F520,?send_rules@NetDaemon@@QAEXXZ,950,1,3,unrecovered,,,2,exact,exact,void (__thiscall ?send_rules@NetDaemon@@QAEXXZ)(NetDaemon* this)
 P3,1221,0x0052F8E0,?game_checksum@NetDaemon@@QAEXPAH@Z,2622,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?game_checksum@NetDaemon@@QAEXPAH@Z)(NetDaemon* this, int*)"
+P0,1009221,0x00530320,?receive@NetDaemon@@QAEHXZ,62,9,2,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?receive@NetDaemon@@QAEHXZ)(NetDaemon* this)
 P2,6521,0x00530360,?net_tasks@NetDaemon@@QAEXXZ,73,6,5,unrecovered,,,2,exact,exact,void (__thiscall ?net_tasks@NetDaemon@@QAEXXZ)(NetDaemon* this)
 P3,2721,0x005303B0,?wait@NetDaemon@@QAEHPADPAHHH@Z,227,2,7,unrecovered,,,2,exact,exact,"int (__thiscall ?wait@NetDaemon@@QAEHPADPAHHH@Z)(NetDaemon* this, int8*, int*, int, int)"
 P3,3921,0x005304A0,?open_channel@NetDaemon@@QAEHHH@Z,351,3,9,unrecovered,,,2,exact,exact,"int (__thiscall ?open_channel@NetDaemon@@QAEHHH@Z)(NetDaemon* this, int, int)"
@@ -1501,6 +1482,7 @@ P2,10221,0x00530D00,?unlock@NetDaemon@@QAEXXZ,78,10,2,unrecovered,,,2,exact,exac
 P1,26321,0x00530D50,?lock_base@NetDaemon@@QAEHHHHH@Z,248,26,3,unrecovered,,,2,exact,exact,"int (__thiscall ?lock_base@NetDaemon@@QAEHHHHH@Z)(NetDaemon* this, int, int, int, int)"
 P1,27021,0x00530E50,?unlock_base@NetDaemon@@QAEXH@Z,463,26,10,unrecovered,,,2,exact,exact,"void (__thiscall ?unlock_base@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)"
 P1,32221,0x00531020,?lock_veh@NetDaemon@@QAEHPAHHHHH@Z,203,32,2,unrecovered,,,2,exact,exact,"int (__thiscall ?lock_veh@NetDaemon@@QAEHPAHHHHH@Z)(NetDaemon* this, int*, int, int, int, int)"
+P0,1033221,0x005310F0,?unlock_veh@NetDaemon@@QAEXXZ,90,33,2,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?unlock_veh@NetDaemon@@QAEXXZ)(NetDaemon* this)
 P3,2921,0x00531150,?automated_lock@NetDaemon@@QAEHPAHH@Z,422,2,9,unrecovered,,,2,exact,exact,"int (__thiscall ?automated_lock@NetDaemon@@QAEHPAHH@Z)(NetDaemon* this, int*, int)"
 P2,17921,0x00531300,?await_exec@NetDaemon@@QAEXH@Z,375,17,9,unrecovered,,,2,exact,exact,"void (__thiscall ?await_exec@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)"
 P1,22821,0x00531480,?await_synch@NetDaemon@@QAEXXZ,310,22,8,unrecovered,,,2,exact,exact,void (__thiscall ?await_synch@NetDaemon@@QAEXXZ)(NetDaemon* this)
@@ -1662,7 +1644,7 @@ P3,1421,0x00589A30,?change_opening@@YAHPAD@Z,258,1,4,unrecovered,,,2,exact,entry
 P3,2020,0x00589B20,?close_opening@@YAXXZ,55,2,0,unrecovered,,,2,exact,exact,
 P3,1120,0x00589B60,?init_opening@@YAHPBD@Z,489,0,11,unrecovered,,,2,exact,entry_range,
 P3,9620,0x00589D30,?config_game@@YAHH@Z,10376,2,76,unrecovered,,,2,exact,entry_range,
-P3,4920,0x0058C2A0,?custom_planet@@YAHHH@Z,3630,2,29,unrecovered,,,2,exact,entry_range,
+P0,1004920,0x0058C2A0,?custom_planet@@YAHHH@Z,3630,2,29,original_dependency,game_service,recover_world_generation,2,exact,entry_range,
 P3,6520,0x0058CED0,?size_of_planet@@YAHH@Z,2438,3,35,unrecovered,,,2,exact,entry_range,
 P3,3421,0x0058D6B0,?map_menu@@YAHH@Z,1396,1,24,unrecovered,,,2,exact,entry_range,int (__cdecl ?map_menu@@YAHH@Z)(BOOL isQuickStart)
 P3,6420,0x0058DB30,?multiplayer_init@@YAHH@Z,2094,2,44,unrecovered,,,2,exact,exact,
@@ -1687,9 +1669,17 @@ P3,10,0x0058FB70,sub_58fb70,66,0,0,unrecovered,,,1,missing,exact,
 P3,4220,0x0058FBC0,?get_his_her@@YAPADHH@Z,139,4,2,unrecovered,,,2,exact,exact,
 P2,5220,0x0058FC50,?get_him_her@@YAPADHH@Z,139,5,2,unrecovered,,,2,exact,exact,
 P2,6220,0x0058FCE0,?get_he_she@@YAPADHH@Z,139,6,2,unrecovered,,,2,exact,exact,
-P0,1004121,0x0058FD90,?unlock@SquareLock@@QAEXH@Z,231,4,1,source_complete,ui_dependency,recover_square_lock_unlock,2,exact,exact,"void (__thiscall ?unlock@SquareLock@@QAEXH@Z)(SquareLock* this, int)"
+P0,1004121,0x0058FD90,?unlock@SquareLock@@QAEXH@Z,231,4,1,source_complete,oracle_reference;ui_dependency,differential_fixture;recover_square_lock_unlock,2,exact,exact,"void (__thiscall ?unlock@SquareLock@@QAEXH@Z)(SquareLock* this, int)"
 P0,1004121,0x0058FE80,?lock@SquareLock@@QAEHHHHH@Z,232,4,1,source_complete,ui_dependency,recover_square_lock_lock,2,exact,exact,"BOOL (__thiscall ?lock@SquareLock@@QAEHHHHH@Z)(SquareLock* this, int factionID, int flags, int xCoord, int yCoord)"
 P3,211,0x00590000,?lock@PlayerLock@@QAEHHHHHHHH@Z,147,0,2,unrecovered,,,1,missing,exact,"int (__thiscall ?lock@PlayerLock@@QAEHHHHHHHH@Z)(PlayerLock* this, int, int, int, int, int, int, int)"
+P0,1000001,0x00590140,?reset_map@Lock@@QAEXXZ,43,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this)
+P0,1001121,0x00590170,?unlock@Lock@@QAEXH@Z,83,1,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?unlock@Lock@@QAEXH@Z)(Lock* this, int)"
+P0,1015221,0x005901D0,?check_global@Lock@@QAEXXZ,105,15,2,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?check_global@Lock@@QAEXXZ)(Lock* this)
+P0,1001121,0x00590240,?check_global_2@Lock@@QAEHH@Z,126,1,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?check_global_2@Lock@@QAEHH@Z)(Lock* this, int)"
+P0,1001021,0x005902C0,?global_lock@Lock@@QAEHH@Z,51,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?global_lock@Lock@@QAEHH@Z)(Lock* this, int)"
+P0,1001421,0x00590300,?lock@Lock@@QAEHHHHHHHH@Z,361,1,4,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?lock@Lock@@QAEHHHHHHHH@Z)(Lock* this, int, int, int, int, int, int, int)"
+P0,1001121,0x00590470,?add_lock@Lock@@QAEHHHHH@Z,43,1,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?add_lock@Lock@@QAEHHHHH@Z)(Lock* this, int, int, int, int)"
+P0,1003021,0x005904A0,?any_locks@Lock@@QAEHXZ,94,3,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?any_locks@Lock@@QAEHXZ)(Lock* this)
 P3,10,0x00590500,sub_590500,153,0,0,unrecovered,,,1,exact,missing,
 P3,320,0x00590510,?say_reactor@@YAXPAXHH@Z,165,0,3,unrecovered,,,2,exact,exact,
 P3,320,0x005905C0,?say_weapon@@YAXPAXHH@Z,300,0,3,unrecovered,,,2,exact,exact,
@@ -1765,8 +1755,7 @@ P3,2321,0x005AD560,?make_bases@ReplayWin@@QAEXXZ,167,2,3,unrecovered,,,2,exact,e
 P3,721,0x005AD610,?on_redraw@ReplayWin@@QAEXXZ,271,0,7,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@ReplayWin@@QAEXXZ)(ReplayWin* this)
 P3,2121,0x005AD720,?init@ReplayWin@@QAEXXZ,634,1,11,unrecovered,,,2,exact,exact,void (__thiscall ?init@ReplayWin@@QAEXXZ)(ReplayWin* this)
 P3,311,0x005AD9A0,?close@ReplayWin@@QAEXXZ,64,0,3,unrecovered,,,1,missing,start_only,void (__thiscall ?close@ReplayWin@@QAEXXZ)(ReplayWin* this)
-P3,1521,0x005AD9E0,?timer_callback@ReplayWin@@QAEXXZ,492,1,5,unrecovered,,,2,exact,exact,void (__thiscall ?timer_callback@ReplayWin@@QAEXXZ)(ReplayWin* this)
-P3,120,0x005ADBD0,?timer_callback_daemon@ReplayWin@@QAAXH@Z,17,0,1,unrecovered,,,2,exact,exact,
+P0,1001521,0x005AD9E0,?timer_callback@ReplayWin@@QAEXXZ,492,1,5,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?timer_callback@ReplayWin@@QAEXXZ)(ReplayWin* this)
 P3,6320,0x005ADBF0,?show_replay@@YAXXZ,951,4,23,unrecovered,,,2,exact,entry_range,
 P2,5220,0x005ADE80,?replay_base@@YAXHHHH@Z,131,5,2,unrecovered,,,2,exact,exact,
 P0,1002021,0x005ADF10,??1ReplayWin@@QAE@XZ,667,1,10,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1ReplayWin@@QAE@XZ)(ReplayWin* this)
@@ -1828,20 +1817,18 @@ P3,1420,0x005C38B0,?world_rivers@@YAXXZ,1718,1,4,unrecovered,,,2,exact,exact,
 P3,3720,0x005C3F70,?world_shorelines@@YAXXZ,371,3,7,unrecovered,,,2,exact,exact,
 P3,111,0x005C4410,?world_UNK1@@YAXHH@Z,87,0,1,unrecovered,,,1,missing,exact,"void (__cdecl ?world_UNK1@@YAXHH@Z)(int xCoord, int yCoord)"
 P0,1003420,0x005C4470,?world_rainfall@@YAXXZ,2897,3,4,original_dependency,game_service,recover_world_generation,2,exact,exact,
-P2,19220,0x005C5A30,?world_climate@@YAXXZ,171,18,12,unrecovered,,,2,exact,exact,
+P0,1019220,0x005C5A30,?world_climate@@YAXXZ,171,18,12,original_dependency,game_service,recover_world_generation,2,exact,exact,
 P3,7320,0x005C86E0,?world_build@@YAXXZ,701,4,33,unrecovered,,,2,exact,exact,
 P3,2621,0x005C8DA0,??0Gamma@@QAE@XZ,280,2,6,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Gamma@@QAE@XZ)(Gamma* this)
 P3,4421,0x005C8E60,?exec@Gamma@@QAEXPAUPalette@@MH@Z,1221,2,24,unrecovered,,,2,exact,exact,"void (__thiscall ?exec@Gamma@@QAEXPAUPalette@@MH@Z)(Gamma* this, Palette*, float, int)"
 P3,3421,0x005C9330,?close@Gamma@@QAEXXZ,91,3,4,unrecovered,,,2,exact,exact,void (__thiscall ?close@Gamma@@QAEXXZ)(Gamma* this)
-P3,111,0x005C9390,?on_scrolled@Gamma@@QAEXHH@Z,8,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_scrolled@Gamma@@QAEXHH@Z)(Gamma* this, int, int)"
 P3,21,0x005C93C0,?on_button_clicked@Gamma@@QAEXH@Z,70,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_clicked@Gamma@@QAEXH@Z)(Gamma* this, int)"
 P3,821,0x005C9420,?on_redraw@Gamma@@QAEXXZ,253,0,8,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@Gamma@@QAEXXZ)(Gamma* this)
-P3,2421,0x005C9520,?adjust_palette@Gamma@@QAEXXZ,192,2,4,unrecovered,,,2,exact,exact,void (__thiscall ?adjust_palette@Gamma@@QAEXXZ)(Gamma* this)
+P0,1002421,0x005C9520,?adjust_palette@Gamma@@QAEXXZ,192,2,4,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?adjust_palette@Gamma@@QAEXXZ)(Gamma* this)
 P3,1421,0x005C95E0,?adjust_pal@Gamma@@QAEXN@Z,465,1,4,unrecovered,,,2,exact,exact,"void (__thiscall ?adjust_pal@Gamma@@QAEXN@Z)(Gamma* this, unknown float)"
 P0,1001321,0x005C97F0,??0MultiDebug@@QAE@XZ,144,1,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??0MultiDebug@@QAE@XZ)(MultiDebug* this)
 P3,1421,0x005C9860,?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z,123,1,4,unrecovered,,,2,exact,exact,"int (__thiscall ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z)(MultiDebug* this, Net*, Win*, LPBYTE)"
 P3,1,0x005C98F0,?timer_callback@MultiDebug@@QAEXXZ,8,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?timer_callback@MultiDebug@@QAEXXZ)(MultiDebug* this)
-P3,20,0x005C9900,?timer_callback_daemon@MultiDebug@@QAAXH@Z,20,0,0,unrecovered,,,2,exact,exact,
 P3,821,0x005C9920,?on_redraw@MultiDebug@@QAEXXZ,1241,0,8,unrecovered,,,2,exact,exact,void (__thiscall ?on_redraw@MultiDebug@@QAEXXZ)(MultiDebug* this)
 P0,1001321,0x005C9E00,??1MultiDebug@@QAE@XZ,151,1,3,original_dependency,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1MultiDebug@@QAE@XZ)(MultiDebug* this)
 P3,3420,0x005C9EC0,sub_5c9ec0,876,3,4,unrecovered,,,2,exact,exact,
@@ -1936,9 +1923,12 @@ P3,1020,0x005D4BB0,sub_5d4bb0,145,1,0,unrecovered,,,2,exact,exact,
 P3,420,0x005D4C50,sub_5d4c50,108,0,4,unrecovered,,,2,exact,exact,
 P3,120,0x005D4CC0,sub_5d4cc0,39,0,1,unrecovered,,,2,exact,exact,
 P0,1185221,0x005D4DD0,??1GraphicWin@@QAE@XZ,121,185,2,source_complete,ui_dependency,recover_owning_class,2,exact,entry_range,void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
+P0,1066221,0x005D4E40,?close@GraphicWin@@QAEXXZ,166,66,2,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?close@GraphicWin@@QAEXXZ)(GraphicWin* this)
 P2,7121,0x005D50A0,?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z,72,7,1,unrecovered,,,2,exact,exact,"int (__thiscall ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)"
 P3,610,0x005D50F0,sub_5d50f0,325,0,6,unrecovered,,,1,missing,exact,
+P0,1058321,0x005D5250,?fill@GraphicWin@@QAEXH@Z,246,58,3,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)"
 P2,18321,0x005D5350,?fill@GraphicWin@@QAEHPAURECT@@H@Z,238,18,3,unrecovered,,,2,exact,exact,"int (__thiscall ?fill@GraphicWin@@QAEHPAURECT@@H@Z)(GraphicWin* this, RECT*, int)"
+P0,1006121,0x005D5440,?fill@GraphicWin@@QAEHHHHHH@Z,39,6,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?fill@GraphicWin@@QAEHHHHHH@Z)(GraphicWin* this, int xLeft, int yTop, int length, int width, int)"
 P3,100,0x005D54A0,sub_5d54a0,34,0,1,unrecovered,,,0,missing,missing,
 P3,100,0x005D54D0,sub_5d54d0,34,0,1,unrecovered,,,0,missing,missing,
 P3,2121,0x005D5500,?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z,54,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z)(GraphicWin* this, int8* lpszFileName, Palette*, int, int)"
@@ -1946,15 +1936,15 @@ P3,1321,0x005D5540,?resize@GraphicWin@@QAEXHHH@Z,80,1,3,unrecovered,,,2,exact,ex
 P3,200,0x005D5590,sub_5d5590,60,0,2,unrecovered,,,0,missing,missing,
 P3,2421,0x005D55D0,?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z,95,2,4,unrecovered,,,2,exact,exact,"void (__thiscall ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z)(GraphicWin* this, int, int, int, int, GraphicWin*)"
 P1,21421,0x005D5630,?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z,122,21,4,unrecovered,,,2,exact,exact,"void (__thiscall ?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z)(GraphicWin* this, RECT*, GraphicWin*)"
-P2,8421,0x005D56B0,?update@GraphicWin@@QAEXPAUGraphicWin@@@Z,109,8,4,unrecovered,,,2,exact,exact,"void (__thiscall ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z)(GraphicWin* this, GraphicWin*)"
+P0,1008421,0x005D56B0,?update@GraphicWin@@QAEXPAUGraphicWin@@@Z,109,8,4,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z)(GraphicWin* this, GraphicWin*)"
 P3,1221,0x005D5720,?soft_update@GraphicWin@@QAEXHHHH@Z,364,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?soft_update@GraphicWin@@QAEXHHHH@Z)(GraphicWin* this, int, int, int, int)"
-P1,41221,0x005D5890,?soft_update@GraphicWin@@QAEXXZ,157,41,2,unrecovered,,,2,exact,exact,void (__thiscall ?soft_update@GraphicWin@@QAEXXZ)(GraphicWin* this)
+P0,1041221,0x005D5890,?soft_update@GraphicWin@@QAEXXZ,157,41,2,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?soft_update@GraphicWin@@QAEXXZ)(GraphicWin* this)
 P1,82221,0x005D5930,?soft_update@GraphicWin@@QAEXPAURECT@@@Z,318,82,2,unrecovered,,,2,exact,exact,"void (__thiscall ?soft_update@GraphicWin@@QAEXPAURECT@@@Z)(GraphicWin* this, RECT*)"
+P0,1042321,0x005D5A70,?redraw@GraphicWin@@QAEXXZ,244,42,3,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?redraw@GraphicWin@@QAEXXZ)(GraphicWin* this)
 P3,800,0x005D5B80,sub_5d5b80,206,0,8,unrecovered,,,0,missing,missing,
 P3,10,0x005D5C50,PrevWndFunc,154,0,0,unrecovered,,,1,exact,missing,
 P3,811,0x005D5CF0,?on_paint@GraphicWin@@QAEHPAURECT@@@Z,1306,0,8,unrecovered,,,1,exact,missing,"int (__thiscall ?on_paint@GraphicWin@@QAEHPAURECT@@@Z)(GraphicWin* this, RECT*)"
 P3,511,0x005D6210,?on_size@GraphicWin@@QAEXIHH@Z,248,0,5,unrecovered,,,1,exact,missing,"void (__thiscall ?on_size@GraphicWin@@QAEXIHH@Z)(GraphicWin* this, unsigned int, int, int)"
-P3,111,0x005D6310,?on_mouse_move@GraphicWin@@QAEXHHIH@Z,28,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@GraphicWin@@QAEXHHIH@Z)(GraphicWin* this, int, int, unsigned int, int)"
 P3,111,0x005D6330,?on_set_cursor@GraphicWin@@QAEHPAXII@Z,32,0,1,unrecovered,,,1,exact,missing,"int (__thiscall ?on_set_cursor@GraphicWin@@QAEHPAXII@Z)(GraphicWin* this, void*, unsigned int, unsigned int)"
 P3,0,0x005D6350,sub_5d6350,43,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x005D6380,sub_5d6380,42,0,0,unrecovered,,,0,missing,missing,
@@ -1969,7 +1959,8 @@ P0,1003021,0x005D7030,?compute_min_size@GraphicWin@@QAEXXZ,272,3,0,original_depe
 P3,210,0x005D7170,sub_5d7170,36,0,2,unrecovered,,,1,exact,missing,
 P3,110,0x005D71A0,sub_5d71a0,40,0,1,unrecovered,,,1,exact,missing,
 P0,1080221,0x005D7210,??0Buffer@@QAE@XZ,530,80,2,source_complete,ui_dependency,recover_buffer_element_ctor,2,exact,entry_range,void (__thiscall ??0Buffer@@QAE@XZ)(Buffer* this)
-P0,1087221,0x005D7410,??1Buffer@@QAE@XZ,107,87,2,source_complete,ui_dependency,recover_buffer_element_teardown,2,exact,entry_range,void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
+P0,1087221,0x005D7410,??1Buffer@@QAE@XZ,107,87,2,source_complete,oracle_reference;ui_dependency,differential_fixture;recover_buffer_element_teardown,2,exact,entry_range,void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
+P0,1044121,0x005D7470,?close@Buffer@@QAEXXZ,501,44,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?close@Buffer@@QAEXXZ)(Buffer* this)
 P0,1042621,0x005D7670,?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z,847,42,6,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z)(Buffer* this, int width, int height, int, ExtDirectDraw*)"
 P2,5121,0x005D79C0,?resize@Buffer@@QAEXHH@Z,69,5,1,unrecovered,,,2,exact,exact,"void (__thiscall ?resize@Buffer@@QAEXHH@Z)(Buffer* this, int width, int height)"
 P3,1320,0x005D7A30,sub_5d7a30,188,1,3,unrecovered,,,2,exact,entry_range,
@@ -2007,11 +1998,14 @@ P3,2821,0x005D9BE0,?copy_to_window@Buffer@@QAEHPAVWin@@HHHHHH@Z,975,2,8,unrecove
 P3,810,0x005D9FB0,sub_5d9fb0,888,0,8,unrecovered,,,1,exact,missing,
 P0,1002021,0x005DA330,?map_colors@Buffer@@QAEHHHHHPAE@Z,401,2,0,original_dependency,ui_dependency,recover_buffer_map_colors,2,exact,exact,"int (__thiscall ?map_colors@Buffer@@QAEHHHHHPAE@Z)(Buffer* this, int, int, int, int, unsigned int8*)"
 P3,2021,0x005DA4D0,?map_colors@Buffer@@QAEHPAURECT@@PAE@Z,429,2,0,unrecovered,,,2,exact,exact,"int (__thiscall ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z)(Buffer* this, RECT*, unsigned int8*)"
-P3,1120,0x005DA680,?poly@Buffer@@QAEHPAUVert@@HH@Z,27,1,1,unrecovered,,,2,exact,exact,
 P3,1221,0x005DA6C0,?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z,401,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int, int)"
 P2,12221,0x005DA860,?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z,396,12,2,unrecovered,,,2,exact,exact,"int (__thiscall ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)"
 P2,13221,0x005DA9F0,?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z,410,13,2,unrecovered,,,2,exact,exact,"int (__thiscall ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z)(Buffer* this, Sprite*, int, int, int, int, int, int)"
 P3,10,0x005DAB90,sub_5dab90,213,0,0,unrecovered,,,1,missing,exact,
+P0,1188021,0x005DACB0,?set_text_color@Buffer@@QAEXHHHH@Z,43,188,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_text_color@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)"
+P0,1046021,0x005DACE0,?set_text_color2@Buffer@@QAEXHHHH@Z,43,46,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_text_color2@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)"
+P0,1030021,0x005DAD10,?set_text_color3@Buffer@@QAEXHHHH@Z,43,30,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_text_color3@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)"
+P0,1020021,0x005DAD40,?set_text_color_hyper@Buffer@@QAEXHHHH@Z,43,20,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_text_color_hyper@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)"
 P3,5121,0x005DAD70,?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z,718,4,11,unrecovered,,,2,exact,exact,"int (__thiscall ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z)(Buffer* this, StringList*, int, int)"
 P2,20521,0x005DB040,?write_strings@Buffer@@QAEHPAUStringList@@HHHH@Z,950,19,15,unrecovered,,,2,exact,exact,"int (__thiscall ?write_strings@Buffer@@QAEHPAUStringList@@HHHH@Z)(Buffer* this, StringList*, int, int, int, int)"
 P3,120,0x005DB400,sub_5db400,79,0,1,unrecovered,,,2,exact,exact,
@@ -2037,6 +2031,8 @@ P3,10,0x005DC310,?get_special_link@@YAHPADPAH@Z,65,0,0,unrecovered,,,1,missing,e
 P2,18221,0x005DC360,?wrap_height@Buffer@@QAEHPADH@Z,170,18,2,unrecovered,,,2,exact,exact,"int (__thiscall ?wrap_height@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)"
 P2,15421,0x005DC410,?find_line_break_l@Buffer@@QAEHPADPAHH@Z,762,15,4,unrecovered,,,2,exact,exact,"int (__thiscall ?find_line_break_l@Buffer@@QAEHPADPAHH@Z)(Buffer* this, int8*, int*, int)"
 P0,1016321,0x005DC7C0,?text_width@Buffer@@QAEHPADH@Z,578,16,3,original_dependency,ui_dependency,recover_buffertextwidthmeasured_body,2,exact,exact,"int (__thiscall ?text_width@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)"
+P0,1005021,0x005DCA80,?text_height@Buffer@@QAEHXZ,37,5,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?text_height@Buffer@@QAEHXZ)(Buffer* this)
+P0,1021021,0x005DCAB0,?text_line_height@Buffer@@QAEHXZ,43,21,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?text_line_height@Buffer@@QAEHXZ)(Buffer* this)
 P0,1014621,0x005DCAE0,?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z,835,14,6,original_dependency,ui_dependency,recover_buffer_write_multi_font_raw_l,2,exact,exact,"int (__thiscall ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)"
 P3,2121,0x005DD0E0,?write_cent_l@Buffer@@QAEHPADHHHHH@Z,67,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHHHH@Z)(Buffer* this, int8*, int, int, int, int, int)"
 P3,3321,0x005DD250,?write_cent_l@Buffer@@QAEHPADHHH@Z,163,3,3,unrecovered,,,2,exact,exact,"int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)"
@@ -2063,6 +2059,7 @@ P2,12021,0x005DE580,?change_color@Buffer@@QAEHHH@Z,417,12,0,unrecovered,,,2,exac
 P3,1021,0x005DE730,?change_color@Buffer@@QAEHPAURECT@@HH@Z,443,1,0,unrecovered,,,2,exact,exact,"int (__thiscall ?change_color@Buffer@@QAEHPAURECT@@HH@Z)(Buffer* this, RECT*, int, int)"
 P3,1120,0x005DEA20,sub_5dea20,252,1,1,unrecovered,,,2,exact,exact,
 P3,110,0x005DEB20,sub_5deb20,1135,0,1,unrecovered,,,1,missing,exact,
+P0,1005221,0x005DEF90,?clear_links@Buffer@@QAEXXZ,68,5,2,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?clear_links@Buffer@@QAEXXZ)(Buffer* this)
 P3,610,0x005DEFE0,sub_5defe0,1419,0,6,unrecovered,,,1,missing,exact,
 P3,2821,0x005DF590,?write_pcx@Buffer@@QAEHPAD@Z,908,2,8,unrecovered,,,2,exact,entry_range,"int (__thiscall ?write_pcx@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)"
 P3,411,0x005DF910,?write_bmp@Buffer@@QAEHPAD@Z,568,0,4,unrecovered,,,1,start_only,missing,"int (__thiscall ?write_bmp@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)"
@@ -2088,11 +2085,16 @@ P1,127421,0x005E2DD3,?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z,949
 P3,1221,0x005E3193,?box@Buffer@@QAEHHHHHHH@Z,105,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?box@Buffer@@QAEHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int)"
 P3,211,0x005E3283,?dotted_box@Buffer@@QAEHHHHHH@Z,97,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?dotted_box@Buffer@@QAEHHHHHH@Z)(Buffer* this, int, int, int, int, int)"
 P3,2221,0x005E32F3,?dotted_box@Buffer@@QAEHPAURECT@@H@Z,125,2,2,unrecovered,,,2,exact,exact,"int (__thiscall ?dotted_box@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT*, int)"
+P0,1048021,0x005E3373,?get_data@Buffer@@QAEHXZ,119,48,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
 P2,9021,0x005E33F3,?get_data@Buffer@@QAEHHH@Z,170,9,0,unrecovered,,,2,exact,exact,"int (__thiscall ?get_data@Buffer@@QAEHHH@Z)(Buffer* this, int, int)"
+P0,1043021,0x005E34A3,?free_data@Buffer@@QAEXH@Z,88,43,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?free_data@Buffer@@QAEXH@Z)(Buffer* this, int)"
+P0,1009021,0x005E3503,?get_hdc@Buffer@@QAEHXZ,89,9,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
+P0,1008021,0x005E3563,?release_hdc@Buffer@@QAEXH@Z,96,8,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?release_hdc@Buffer@@QAEXH@Z)(Buffer* this, int)"
 P3,1221,0x005E3690,sub_5e3690,154,1,2,unrecovered,,,2,exact,exact,"int (__stdcall sub_5E3690)(LPCSTR lpString, int x, int y)"
 P3,1221,0x005E3730,sub_5e3730,59,1,2,unrecovered,,,2,exact,exact,"int (__stdcall sub_5E3730)(LPCSTR lpString, int, int y, int)"
 P3,1221,0x005E3770,sub_5e3770,57,1,2,unrecovered,,,2,exact,exact,"int (__stdcall sub_5E3770)(LPCSTR lpString, int)"
-P0,1154021,0x005E37E0,??0Sprite@@QAE@XZ,53,154,0,source_complete,ui_dependency,recover_sprite_element_ctor,2,exact,exact,void (__thiscall ??0Sprite@@QAE@XZ)(Sprite* this)
+P0,1154021,0x005E37E0,??0Sprite@@QAE@XZ,53,154,0,source_complete,oracle_reference;ui_dependency,differential_fixture;recover_sprite_element_ctor,2,exact,exact,void (__thiscall ??0Sprite@@QAE@XZ)(Sprite* this)
+P0,1111121,0x005E3820,?close@Sprite@@QAEXXZ,100,111,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?close@Sprite@@QAEXXZ)(Sprite* this)
 P2,15421,0x005E3890,?init@Sprite@@QAEHPADHH@Z,195,15,4,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Sprite@@QAEHPADHH@Z)(Sprite* this, int8*, int, int)"
 P3,1121,0x005E3960,?extract@Sprite@@QAEHPAUBuffer@@HPAURECT@@PAUTexHeap@@@Z,62,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?extract@Sprite@@QAEHPAUBuffer@@HPAURECT@@PAUTexHeap@@@Z)(Sprite* this, Buffer*, int, RECT*, #120*)"
 P1,29821,0x005E39A0,?extract@Sprite@@QAEHPAUBuffer@@HHHHHPAUTexHeap@@@Z,1105,29,8,unrecovered,,,2,exact,exact,"int (__thiscall ?extract@Sprite@@QAEHPAUBuffer@@HHHHHPAUTexHeap@@@Z)(Sprite* this, Buffer*, int, int xCoord, int yCoord, int width, int height, #120*)"
@@ -2130,20 +2132,22 @@ P0,1003721,0x005EBD80,?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@
 P3,101,0x005EC630,?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z,72,0,1,unrecovered,,,0,missing,missing,"int (__thiscall ?init@Win@@QAEHPAURECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z)(Win* this, RECT*, int8*, int, Win*, Menu*, BorderSizing*)"
 P2,6121,0x005EC740,?set_cursor@Win@@QAEHPAVSprite@@HH@Z,51,6,1,unrecovered,,,2,exact,exact,"int (__thiscall ?set_cursor@Win@@QAEHPAVSprite@@HH@Z)(Win* this, Sprite*, int, int)"
 P3,101,0x005EC780,?set_cursor@Win@@QAEHPAUHCURSOR@@@Z,60,0,1,unrecovered,,,0,missing,missing,"int (__thiscall ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z)(Win* this, HCURSOR* phCursor)"
+P0,1013121,0x005EC7C0,?set_cursor@Win@@QAEHH@Z,62,13,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?set_cursor@Win@@QAEHH@Z)(Win* this, int nCursorName)"
 P3,111,0x005EC800,?set_mouse_pos@Win@@QAEXHH@Z,155,0,1,unrecovered,,,1,missing,exact,"void (__thiscall ?set_mouse_pos@Win@@QAEXHH@Z)(Win* this, int xCoord, int yCoord)"
 P1,26121,0x005EC8A0,?get_mouse_pos@Win@@QAEXPAHPAH@Z,178,26,1,unrecovered,,,2,exact,exact,"void (__thiscall ?get_mouse_pos@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)"
-P3,2021,0x005EC960,?get_lbutton_state@Win@@QAEHXZ,27,2,0,unrecovered,,,2,exact,exact,int (__thiscall ?get_lbutton_state@Win@@QAEHXZ)(Win* this)
 P3,1,0x005EC980,?get_rbutton_state@Win@@QAEHXZ,27,0,0,unrecovered,,,0,missing,missing,int (__thiscall ?get_rbutton_state@Win@@QAEHXZ)(Win* this)
 P3,211,0x005EC9A0,?set_parent_dialog@Win@@QAEXPAVWin@@@Z,440,0,2,unrecovered,,,1,missing,exact,"void (__thiscall ?set_parent_dialog@Win@@QAEXPAVWin@@@Z)(Win* this, Win*)"
 P3,101,0x005ECB60,?remove_parent_dialog@Win@@QAEXXZ,224,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?remove_parent_dialog@Win@@QAEXXZ)(Win* this)
 P3,21,0x005ECC40,?set_dialog_focus@Win@@QAEXPAVWin@@@Z,219,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?set_dialog_focus@Win@@QAEXPAVWin@@@Z)(Win* this, Win*)"
 P3,21,0x005ECD20,?pass_dialog_focus@Win@@QAEXXZ,154,0,0,unrecovered,,,2,exact,exact,void (__thiscall ?pass_dialog_focus@Win@@QAEXXZ)(Win* this)
 P3,2111,0x005ECDC0,?UNK2@Win@@QAEHH@Z,85,2,1,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK2@Win@@QAEHH@Z)(Win* this, int)"
+P0,1000001,0x005ECE80,?UNK3@Win@@QAEHH@Z,54,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,"int (__thiscall ?UNK3@Win@@QAEHH@Z)(Win* this, int)"
 P3,111,0x005ECEC0,?UNK4@Win@@QAEHXZ,92,0,1,unrecovered,,,1,exact,missing,int (__thiscall ?UNK4@Win@@QAEHXZ)(Win* this)
 P3,4121,0x005ECF20,?screen_to_client@Win@@QAEXPAURECT@@@Z,184,4,1,unrecovered,,,2,exact,exact,"void (__thiscall ?screen_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)"
 P2,12121,0x005ECFE0,?client_to_screen@Win@@QAEXPAURECT@@@Z,180,12,1,unrecovered,,,2,exact,exact,"void (__thiscall ?client_to_screen@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)"
 P3,111,0x005ED0A0,?nonscreen_to_client@Win@@QAEXPAURECT@@@Z,202,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?nonscreen_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)"
 P3,1121,0x005ED170,?nonclient_to_screen@Win@@QAEXPAURECT@@@Z,198,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?nonclient_to_screen@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)"
+P0,1071121,0x005ED240,?client_to_screen@Win@@QAEXPAH0@Z,133,71,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?client_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)"
 P2,11121,0x005ED2D0,?screen_to_client@Win@@QAEXPAHPAH@Z,133,11,1,unrecovered,,,2,exact,exact,"void (__thiscall ?screen_to_client@Win@@QAEXPAHPAH@Z)(Win* this, int*, int*)"
 P3,1110,0x005ED360,sub_5ed360,137,1,1,unrecovered,,,1,exact,missing,
 P3,1121,0x005ED3F0,?nonclient_to_screen@Win@@QAEXPAH0@Z,157,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?nonclient_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)"
@@ -2151,17 +2155,28 @@ P3,1110,0x005ED490,sub_5ed490,137,1,1,unrecovered,,,1,exact,missing,
 P3,121,0x005ED520,?screen_to_nonclient@Win@@QAEXPAH0@Z,157,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?screen_to_nonclient@Win@@QAEXPAH0@Z)(Win* this, int*, int*)"
 P2,6221,0x005ED5C0,?center@Win@@QAEHXZ,311,6,2,unrecovered,,,2,exact,exact,int (__thiscall ?center@Win@@QAEHXZ)(Win* this)
 P3,110,0x005ED700,sub_5ed700,180,0,1,unrecovered,,,1,exact,missing,
+P0,1015021,0x005ED7D0,?move@Win@@QAEHHH@Z,167,15,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?move@Win@@QAEHHH@Z)(Win* this, int, int)"
 P3,1321,0x005ED880,?resize@Win@@QAEHHHH@Z,309,1,3,unrecovered,,,2,exact,exact,"int (__thiscall ?resize@Win@@QAEHHHH@Z)(Win* this, int, int, int)"
 P3,11,0x005ED9C0,?on_redraw@Win@@QAEHXZ,5,0,0,unrecovered,,,1,exact,missing,int (__thiscall ?on_redraw@Win@@QAEHXZ)(Win* this)
 P1,35621,0x005ED9D0,?show@Win@@QAEXH@Z,763,35,6,unrecovered,,,2,exact,exact,"void (__thiscall ?show@Win@@QAEXH@Z)(Win* this, int)"
-P1,34421,0x005EDCD0,?hide@Win@@QAEXXZ,390,34,4,unrecovered,,,2,exact,exact,void (__thiscall ?hide@Win@@QAEXXZ)(Win* this)
+P0,1034421,0x005EDCD0,?hide@Win@@QAEXXZ,390,34,4,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?hide@Win@@QAEXXZ)(Win* this)
 P3,1021,0x005EDE60,?maximize@Win@@QAEHXZ,72,1,0,unrecovered,,,2,exact,exact,int (__thiscall ?maximize@Win@@QAEHXZ)(Win* this)
 P3,1021,0x005EDEB0,?minimize@Win@@QAEHXZ,72,1,0,unrecovered,,,2,exact,exact,int (__thiscall ?minimize@Win@@QAEHXZ)(Win* this)
 P3,1,0x005EDF00,?show_maximize@Win@@QAEHXZ,72,0,0,unrecovered,,,0,missing,missing,int (__thiscall ?show_maximize@Win@@QAEHXZ)(Win* this)
 P2,6521,0x005EDF50,?set_caption@Win@@QAEXPAD@Z,133,6,5,unrecovered,,,2,exact,exact,"void (__thiscall ?set_caption@Win@@QAEXPAD@Z)(Win* this, int8*)"
 P3,11,0x005EDFF0,?UNK7@Win@@QAEXHHHH@Z,45,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?UNK7@Win@@QAEXHHHH@Z)(Win* this, int xLeft, int yTop, int, int)"
+P0,1003121,0x005EE030,?set_vert_pos@Win@@QAEXH@Z,23,3,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_vert_pos@Win@@QAEXH@Z)(Win* this, int)"
+P0,1000001,0x005EE050,?get_vert_pos@Win@@QAEHXZ,20,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,int (__thiscall ?get_vert_pos@Win@@QAEHXZ)(Win* this)
+P0,1003121,0x005EE070,?set_horz_pos@Win@@QAEXH@Z,23,3,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_horz_pos@Win@@QAEXH@Z)(Win* this, int)"
+P0,1000001,0x005EE090,?get_horz_pos@Win@@QAEHXZ,20,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,int (__thiscall ?get_horz_pos@Win@@QAEHXZ)(Win* this)
+P0,1002121,0x005EE0B0,?set_vert_range@Win@@QAEXHH@Z,28,2,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_vert_range@Win@@QAEXHH@Z)(Win* this, int, int)"
+P0,1002121,0x005EE0D0,?set_horz_range@Win@@QAEXHH@Z,28,2,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_horz_range@Win@@QAEXHH@Z)(Win* this, int, int)"
+P0,1002021,0x005EE0F0,?set_vert_paging@Win@@QAEXH@Z,23,2,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_vert_paging@Win@@QAEXH@Z)(Win* this, int)"
+P0,1002021,0x005EE110,?set_horz_paging@Win@@QAEXH@Z,23,2,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_horz_paging@Win@@QAEXH@Z)(Win* this, int)"
+P0,1000001,0x005EE130,?UNK8@Win@@QAEXH@Z,39,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,"void (__thiscall ?UNK8@Win@@QAEXH@Z)(Win* this, int)"
+P0,1000001,0x005EE160,?UNK9@Win@@QAEXH@Z,39,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,"void (__thiscall ?UNK9@Win@@QAEXH@Z)(Win* this, int)"
 P3,1221,0x005EE190,?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z,235,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?set_modal@Win@@QAEHHP6AHXZPAVWin@@@Z)(Win* this, int, int (__cdecl *)(), Win*)"
-P2,5021,0x005EE280,?release_modal@Win@@QAEXXZ,167,5,0,unrecovered,,,2,exact,exact,void (__thiscall ?release_modal@Win@@QAEXXZ)(Win* this)
+P0,1005021,0x005EE280,?release_modal@Win@@QAEXXZ,167,5,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?release_modal@Win@@QAEXXZ)(Win* this)
 P3,3221,0x005EE330,?resize_event@Win@@QAEHHH@Z,292,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?resize_event@Win@@QAEHHH@Z)(Win* this, int, int)"
 P3,10,0x005EE460,sub_5ee460,55,0,0,unrecovered,,,1,missing,exact,
 P3,0,0x005EE4A0,sub_5ee4a0,48,0,0,unrecovered,,,0,missing,missing,
@@ -2224,6 +2239,8 @@ P3,0,0x005F2830,sub_5f2830,267,0,0,unrecovered,,,0,missing,missing,
 P3,321,0x005F2940,?set_rects@Win@@QAEXXZ,378,0,3,unrecovered,,,2,exact,exact,void (__thiscall ?set_rects@Win@@QAEXXZ)(Win* this)
 P3,3121,0x005F2AC0,?window_line_raw@Win@@QAEXHHHHHHI@Z,375,3,1,unrecovered,,,2,exact,exact,"void (__thiscall ?window_line_raw@Win@@QAEXHHHHHHI@Z)(Win* this, int, int, int xCoord, int yCoord, int, int, unsigned int)"
 P3,2120,0x005F2C40,?set_display_mode@Win@@QAAHHHHH@Z,31,2,1,unrecovered,,,2,exact,exact,
+P0,1005121,0x005F2C60,?sync_palette@Win@@QAEXXZ,52,5,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?sync_palette@Win@@QAEXXZ)(Win* this)
+P0,1007021,0x005F2CA0,?is_dialog_focus@Win@@QAEHXZ,63,7,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?is_dialog_focus@Win@@QAEHXZ)(Win* this)
 P3,2021,0x005F2CF0,?on_redraw_nc@Win@@QAEXPAURECT@@H@Z,2762,1,10,unrecovered,,,2,exact,exact,"void (__thiscall ?on_redraw_nc@Win@@QAEXPAURECT@@H@Z)(Win* this, RECT*, int)"
 P3,110,0x005F37C0,sub_5f37c0,947,0,1,unrecovered,,,1,exact,missing,
 P3,110,0x005F3B80,sub_5f3b80,3879,0,1,unrecovered,,,1,exact,missing,
@@ -2246,14 +2263,14 @@ P3,211,0x005F53A0,?on_window_pos_changing@Win@@QAEJPAUWINDOWPOS@@@Z,224,0,2,unre
 P3,11,0x005F5480,?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z,33,0,0,unrecovered,,,1,exact,missing,"LRESULT (__thiscall ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z)(Win* this, WINDOWPOS*)"
 P3,211,0x005F54E0,?on_paint@Win@@QAEXPAURECT@@@Z,803,0,2,unrecovered,,,1,exact,missing,"void (__thiscall ?on_paint@Win@@QAEXPAURECT@@@Z)(Win* this, RECT* lprc)"
 P3,411,0x005F5810,?on_nc_paint@Win@@QAEXPAURECT@@H@Z,698,0,4,unrecovered,,,1,exact,missing,"void (__thiscall ?on_nc_paint@Win@@QAEXPAURECT@@H@Z)(Win* this, RECT* rect, int)"
-P3,3021,0x005F5AD0,?on_nc_hittest@Win@@QAEHHH@Z,294,3,0,unrecovered,,,2,exact,exact,"int (__thiscall ?on_nc_hittest@Win@@QAEHHH@Z)(Win* this, int, int)"
+P0,1003021,0x005F5AD0,?on_nc_hittest@Win@@QAEHHH@Z,294,3,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?on_nc_hittest@Win@@QAEHHH@Z)(Win* this, int, int)"
 P3,21,0x005F5C00,?on_activate@Win@@QAEJIPAXJ@Z,261,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?on_activate@Win@@QAEJIPAXJ@Z)(Win* this, unsigned int, LPARAM lParam, int)"
 P3,611,0x005F5D10,?on_key@Win@@QAEXIJHI@Z,579,0,6,unrecovered,,,1,exact,missing,"void (__thiscall ?on_key@Win@@QAEXIJHI@Z)(Win* this, unsigned int, int, int, unsigned int)"
 P3,0,0x005F5F60,?on_char@Win@@QAAHDH@Z,65,0,0,unrecovered,,,0,missing,missing,
 P3,710,0x005F5FB0,sub_5f5fb0,635,0,7,unrecovered,,,1,exact,missing,
 P3,11,0x005F6230,?on_sys_key@Win@@QAGHIJHI@Z,152,0,0,unrecovered,,,1,exact,missing,"LRESULT (__stdcall ?on_sys_key@Win@@QAGHIJHI@Z)(WPARAM wParam, int, int, unsigned int)"
 P3,10,0x005F62D0,sub_5f62d0,71,0,0,unrecovered,,,1,exact,missing,
-P3,1021,0x005F6320,?on_mouse_move@Win@@QAEXHHIH@Z,155,1,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)"
+P0,1001021,0x005F6320,?on_mouse_move@Win@@QAEXHHIH@Z,155,1,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?on_mouse_move@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)"
 P3,411,0x005F63C0,?on_l_button_down@Win@@QAEXJHHIH@Z,398,0,4,unrecovered,,,1,exact,missing,"void (__thiscall ?on_l_button_down@Win@@QAEXJHHIH@Z)(Win* this, int, int xCoord, int yCoord, unsigned int, int)"
 P3,211,0x005F6550,?on_l_button_up@Win@@QAEXHHIH@Z,445,0,2,unrecovered,,,1,exact,missing,"void (__thiscall ?on_l_button_up@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)"
 P3,221,0x005F6710,?on_r_button_down@Win@@QAEXJHHIH@Z,367,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_r_button_down@Win@@QAEXJHHIH@Z)(Win* this, int, int, int, unsigned int, int)"
@@ -2264,14 +2281,11 @@ P2,8220,0x005F6F10,?get_mouse_window@Win@@QAAHPAH0@Z,1033,8,2,unrecovered,,,2,ex
 P0,1012420,0x005F7320,?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z,383,12,4,original_dependency,ui_dependency,recover_winupdatescreenoriginal_body,2,exact,exact,
 P3,3221,0x005F74A0,?update_window@Win@@QAEHPAURECT@@@Z,223,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?update_window@Win@@QAEHPAURECT@@@Z)(Win* this, RECT* lprcSrc2)"
 P3,2621,0x005F7580,?do_tracking@Win@@QAEXHH@Z,2247,2,6,unrecovered,,,2,exact,exact,"void (__thiscall ?do_tracking@Win@@QAEXHH@Z)(Win* this, int, int)"
+P0,1120121,0x005F7E90,?is_visible@Win@@QAEHXZ,38,120,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?is_visible@Win@@QAEHXZ)(Win* this)
 P3,1421,0x005F7EC0,?update_back_to_window@Win@@QAEXPAUBuffer@@@Z,639,1,4,unrecovered,,,2,exact,exact,"void (__thiscall ?update_back_to_window@Win@@QAEXPAUBuffer@@@Z)(Win* this, Buffer*)"
 P2,6321,0x005F8140,?update_window_to_buffer@Win@@QAEXPAUBuffer@@@Z,624,6,3,unrecovered,,,2,exact,exact,"void (__thiscall ?update_window_to_buffer@Win@@QAEXPAUBuffer@@@Z)(Win* this, Buffer*)"
 P3,100,0x005F83B0,sub_5f83b0,21,0,1,unrecovered,,,0,missing,missing,
 P2,14421,0x005F83D0,?set_bubble_text@Win@@QAEXPADPAURECT@@@Z,299,14,4,unrecovered,,,2,exact,exact,"void (__thiscall ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z)(Win* this, int8*, RECT*)"
-P3,101,0x005F8530,?on_mousewheel_down_vert@Win@@QAEXH@Z,23,0,1,unrecovered,,,0,missing,missing,"void (__thiscall ?on_mousewheel_down_vert@Win@@QAEXH@Z)(Win* this, int)"
-P3,101,0x005F8550,?on_mousewheel_down_horz@Win@@QAEXH@Z,23,0,1,unrecovered,,,0,missing,missing,"void (__thiscall ?on_mousewheel_down_horz@Win@@QAEXH@Z)(Win* this, int)"
-P3,101,0x005F8570,?on_mousewheel_up_vert@Win@@QAEXH@Z,23,0,1,unrecovered,,,0,missing,missing,"void (__thiscall ?on_mousewheel_up_vert@Win@@QAEXH@Z)(Win* this, int)"
-P3,101,0x005F8590,?on_mousewheel_up_horz@Win@@QAEXH@Z,23,0,1,unrecovered,,,0,missing,missing,"void (__thiscall ?on_mousewheel_up_horz@Win@@QAEXH@Z)(Win* this, int)"
 P3,1121,0x005F85B0,?on_mousewheel_down@Win@@QAEXH@Z,45,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_down@Win@@QAEXH@Z)(Win* this, int)"
 P3,1121,0x005F85E0,?on_mousewheel_up@Win@@QAEXH@Z,45,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_up@Win@@QAEXH@Z)(Win* this, int)"
 P3,1020,0x005F86A0,sub_5f86a0,31,1,0,unrecovered,,,2,exact,exact,
@@ -2281,10 +2295,15 @@ P2,12121,0x005F8920,?init@PullDown@@QAEXPAUMenu@@@Z,71,12,1,unrecovered,,,2,exac
 P3,211,0x005F8970,?UNK1@PullDown@@QAEXXZ,88,0,2,unrecovered,,,1,missing,exact,void (__thiscall ?UNK1@PullDown@@QAEXXZ)(PullDown* this)
 P2,12521,0x005F89D0,?add_item@PullDown@@QAEHHPAD@Z,527,12,5,unrecovered,,,2,exact,exact,"int (__thiscall ?add_item@PullDown@@QAEHHPAD@Z)(PullDown* this, int, int8*)"
 P2,10021,0x005F8BE0,?add_separator@PullDown@@QAEHH@Z,161,10,0,unrecovered,,,2,exact,exact,"int (__thiscall ?add_separator@PullDown@@QAEHH@Z)(PullDown* this, int)"
+P0,1001021,0x005F8CB0,?hide_item@PullDown@@QAEHH@Z,111,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?hide_item@PullDown@@QAEHH@Z)(PullDown* this, int)"
+P0,1001021,0x005F8D20,?show_item@PullDown@@QAEHH@Z,111,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?show_item@PullDown@@QAEHH@Z)(PullDown* this, int)"
+P0,1002021,0x005F8D90,?disable_item@PullDown@@QAEHH@Z,95,2,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?disable_item@PullDown@@QAEHH@Z)(PullDown* this, int)"
+P0,1001021,0x005F8DF0,?enable_item@PullDown@@QAEHH@Z,95,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?enable_item@PullDown@@QAEHH@Z)(PullDown* this, int)"
 P3,1621,0x005F8E50,?rename_item@PullDown@@QAEHHPAD@Z,494,1,6,unrecovered,,,2,exact,exact,"int (__thiscall ?rename_item@PullDown@@QAEHHPAD@Z)(PullDown* this, int, int8*)"
+P0,1001021,0x005F9040,?check_item@PullDown@@QAEHH@Z,95,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?check_item@PullDown@@QAEHH@Z)(PullDown* this, int)"
+P0,1001021,0x005F90A0,?uncheck_item@PullDown@@QAEHH@Z,95,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?uncheck_item@PullDown@@QAEHH@Z)(PullDown* this, int)"
 P3,1121,0x005F9100,?UNK4@PullDown@@QAEXXZ,101,1,1,unrecovered,,,2,exact,exact,void (__thiscall ?UNK4@PullDown@@QAEXXZ)(PullDown* this)
 P2,14521,0x005F9170,?show@PullDown@@QAEHHHP6AHXZ@Z,551,14,5,unrecovered,,,2,exact,exact,"int (__thiscall ?show@PullDown@@QAEHHHP6AHXZ@Z)(PullDown* this, int, int, int (__cdecl *)())"
-P3,221,0x005F93A0,?hide@PullDown@@QAEXXZ,25,0,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide@PullDown@@QAEXXZ)(PullDown* this)
 P3,211,0x005F93C0,?on_left_down@PullDown@@QAEXHH@Z,155,0,2,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@PullDown@@QAEXHH@Z)(PullDown* this, int, int)"
 P3,11,0x005F9460,?on_right_down@PullDown@@QAEXHH@Z,18,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_down@PullDown@@QAEXHH@Z)(PullDown* this, int, int)"
 P3,11,0x005F9480,?on_left_up@PullDown@@QAEXHH@Z,227,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_up@PullDown@@QAEXHH@Z)(PullDown* this, int, int)"
@@ -2292,7 +2311,9 @@ P3,11,0x005F9570,?on_right_up@PullDown@@QAEXHH@Z,18,0,0,unrecovered,,,1,exact,mi
 P3,1121,0x005F9590,?mouse_move@PullDown@@QAEXHH@Z,161,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?mouse_move@PullDown@@QAEXHH@Z)(PullDown* this, int, int)"
 P3,311,0x005F9640,?on_key_click@PullDown@@QAEHHH@Z,512,0,3,unrecovered,,,1,exact,missing,"int (__thiscall ?on_key_click@PullDown@@QAEHHH@Z)(PullDown* this, int, int)"
 P3,1211,0x005F98B0,?on_redraw@PullDown@@QAEXXZ,1103,0,12,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@PullDown@@QAEXXZ)(PullDown* this)
+P0,1001011,0x005F9D00,?id_to_index@PullDown@@QAEHH@Z,40,1,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"int (__thiscall ?id_to_index@PullDown@@QAEHH@Z)(PullDown* this, int)"
 P3,2321,0x005F9D30,?compute_length@PullDown@@QAEHPAD@Z,516,2,3,unrecovered,,,2,exact,exact,"int (__thiscall ?compute_length@PullDown@@QAEHPAD@Z)(PullDown* this, int8*)"
+P0,1013021,0x005F9F40,?get_selected@PullDown@@QAEHXZ,28,13,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?get_selected@PullDown@@QAEHXZ)(PullDown* this)
 P3,3221,0x005F9F60,?pulldown_update@PullDown@@QAEXHH@Z,1867,2,12,unrecovered,,,2,exact,exact,"void (__thiscall ?pulldown_update@PullDown@@QAEXHH@Z)(PullDown* this, int, int)"
 P3,411,0x005FA6B0,?on_mouse_move@PullDown@@QAEXHH@Z,134,0,4,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@PullDown@@QAEXHH@Z)(PullDown* this, int, int)"
 P3,1221,0x005FAC60,??0Menu@@QAE@XZ,168,1,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Menu@@QAE@XZ)(Menu* this)
@@ -2303,21 +2324,33 @@ P3,1020,0x005FAEE0,?set_def_font@Menu@@QAAXPAUFont@@@Z,35,1,0,unrecovered,,,2,ex
 P3,1921,0x005FAEF0,?add_menu@Menu@@QAEHHPADH@Z,543,1,9,unrecovered,,,2,exact,entry_range,"int (__thiscall ?add_menu@Menu@@QAEHHPADH@Z)(Menu* this, int, int8*, int)"
 P3,1121,0x005FB100,?add_menu_item@Menu@@QAEHHHPAD@Z,89,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?add_menu_item@Menu@@QAEHHHPAD@Z)(Menu* this, int, int, int8*)"
 P3,1121,0x005FB160,?add_separator@Menu@@QAEHHH@Z,86,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?add_separator@Menu@@QAEHHH@Z)(Menu* this, int, int)"
+P0,1000111,0x005FB1D0,?UNK3@Menu@@QAEHHH@Z,84,0,1,source_complete,oracle_reference,differential_fixture,1,exact,missing,"int (__thiscall ?UNK3@Menu@@QAEHHH@Z)(Menu* this, int, int)"
 P3,111,0x005FB240,?UNK5@Menu@@QAEHHHHH@Z,94,0,1,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK5@Menu@@QAEHHHHH@Z)(Menu* this, int, int, int, int)"
+P0,1000011,0x005FB2A0,?UNK6@Menu@@QAEHH@Z,96,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"int (__thiscall ?UNK6@Menu@@QAEHH@Z)(Menu* this, int)"
+P0,1002121,0x005FB300,?hide_menu_item@Menu@@QAEHHH@Z,84,2,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?hide_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)"
+P0,1000011,0x005FB360,?UNK7@Menu@@QAEHH@Z,96,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"int (__thiscall ?UNK7@Menu@@QAEHH@Z)(Menu* this, int)"
+P0,1001121,0x005FB3C0,?show_menu_item@Menu@@QAEHHH@Z,84,1,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?show_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)"
+P0,1000011,0x005FB420,?UNK8@Menu@@QAEHH@Z,96,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"int (__thiscall ?UNK8@Menu@@QAEHH@Z)(Menu* this, int)"
+P0,1002121,0x005FB480,?disable_menu_item@Menu@@QAEHHH@Z,84,2,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?disable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)"
+P0,1000011,0x005FB4E0,?UNK9@Menu@@QAEHH@Z,96,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"int (__thiscall ?UNK9@Menu@@QAEHH@Z)(Menu* this, int)"
+P0,1001121,0x005FB540,?enable_menu_item@Menu@@QAEHHH@Z,84,1,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?enable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)"
 P3,511,0x005FB5A0,?UNK10@Menu@@QAEHHPAD@Z,349,0,5,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK10@Menu@@QAEHHPAD@Z)(Menu* this, int, int8*)"
 P3,1121,0x005FB700,?rename_menu_item@Menu@@QAEHHHPAD@Z,89,1,1,unrecovered,,,2,exact,exact,"int (__thiscall ?rename_menu_item@Menu@@QAEHHHPAD@Z)(Menu* this, int, int, int8*)"
+P0,1005121,0x005FB760,?check_menu_item@Menu@@QAEHHH@Z,84,5,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?check_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)"
+P0,1005121,0x005FB7C0,?uncheck_menu_item@Menu@@QAEHHH@Z,84,5,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?uncheck_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)"
 P3,1221,0x005FB830,?menu_event@Menu@@QAEHH@Z,168,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?menu_event@Menu@@QAEHH@Z)(Menu* this, int)"
 P3,111,0x005FB8E0,?UNK11@Menu@@QAEHHH@Z,80,0,1,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK11@Menu@@QAEHHH@Z)(Menu* this, int, int)"
 P3,11,0x005FB930,?UNK12@Menu@@QAEHHH@Z,81,0,0,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK12@Menu@@QAEHHH@Z)(Menu* this, int, int)"
+P0,1001021,0x005FB990,?id_to_index@Menu@@QAEHH@Z,40,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?id_to_index@Menu@@QAEHH@Z)(Menu* this, int)"
 P3,311,0x005FB9C0,?compute@Menu@@QAEXXZ,253,0,3,unrecovered,,,1,exact,missing,void (__thiscall ?compute@Menu@@QAEXXZ)(Menu* this)
 P3,521,0x005FBAC0,?on_left_up@Menu@@QAEXHH@Z,346,0,5,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_up@Menu@@QAEXHH@Z)(Menu* this, int xCoord, int yCoord)"
 P3,621,0x005FBC20,?on_left_down@Menu@@QAEXHH@Z,395,0,6,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_down@Menu@@QAEXHH@Z)(Menu* this, int xCoord, int yCoord)"
-P3,3321,0x005FBDB0,?mouse_move@Menu@@QAEXHH@Z,333,3,3,unrecovered,,,2,exact,exact,"void (__thiscall ?mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)"
+P0,1003321,0x005FBDB0,?mouse_move@Menu@@QAEXHH@Z,333,3,3,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)"
 P3,1011,0x005FBF00,?on_key_click@Menu@@QAEHHH@Z,799,0,10,unrecovered,,,1,exact,missing,"int (__thiscall ?on_key_click@Menu@@QAEHHH@Z)(Menu* this, int, int)"
 P3,1111,0x005FC290,?on_redraw@Menu@@QAEXXZ,772,0,11,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@Menu@@QAEXXZ)(Menu* this)
 P3,121,0x005FC5A0,?adjust@Menu@@QAEXXZ,123,0,1,unrecovered,,,2,exact,exact,void (__thiscall ?adjust@Menu@@QAEXXZ)(Menu* this)
 P3,2221,0x005FC620,?hide_menus@Menu@@QAEXXZ,92,2,2,unrecovered,,,2,exact,exact,void (__thiscall ?hide_menus@Menu@@QAEXXZ)(Menu* this)
-P3,1121,0x005FC680,?on_mouse_move@Menu@@QAEXHH@Z,18,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)"
+P0,1000011,0x005FC6A0,?requested_height@Menu@@QAEHXZ,20,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,int (__thiscall ?requested_height@Menu@@QAEHXZ)(Menu* this)
 P2,15420,0x005FC700,?wait_task@@YAXXZ,228,15,4,unrecovered,,,2,exact,exact,
 P3,4420,0x005FC7F0,?do_task@@YAHXZ,248,4,4,unrecovered,,,2,exact,exact,
 P3,2420,0x005FC8F0,?do_all_tasks@@YAXXZ,238,2,4,unrecovered,,,2,exact,exact,
@@ -2356,6 +2389,7 @@ P3,511,0x005FE950,?UNK3@Palette@@QAEXH@Z,372,0,5,unrecovered,,,1,exact,missing,"
 P3,20,0x005FEAD0,?timer_callback@Palette@@QAAXHH@Z,216,0,0,unrecovered,,,2,exact,exact,
 P3,1220,0x005FEBB0,?init_palette_class@Palette@@QAAXH@Z,320,1,2,unrecovered,,,2,exact,exact,
 P3,1020,0x005FECF0,?close_palette_class@Palette@@QAAXXZ,27,1,0,unrecovered,,,2,exact,exact,
+P0,1000001,0x005FED10,?get_pos@Palette@@QAEHH@Z,37,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,"int (__thiscall ?get_pos@Palette@@QAEHH@Z)(Palette* this, int)"
 P3,1321,0x005FED40,?create_table@Palette@@QAEHPAEHHH@Z,312,1,3,unrecovered,,,2,exact,exact,"int (__thiscall ?create_table@Palette@@QAEHPAEHHH@Z)(Palette* this, unsigned int8*, int, int, int)"
 P3,211,0x005FEE80,?UNK4@Palette@@QAEHPAXHHHHH@Z,359,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK4@Palette@@QAEHPAXHHHHH@Z)(Palette* this, void*, int, int, int, int, int)"
 P3,2121,0x005FEFF0,?create_table_from_color@Palette@@QAEHHPAEHHHH@Z,430,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z)(Palette* this, int, unsigned int8*, int, int, int, int)"
@@ -2367,7 +2401,7 @@ P3,1221,0x005FF630,?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z,765,1,2,
 P3,211,0x005FF930,?UNK8@Palette@@QAEHHHHHH@Z,475,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK8@Palette@@QAEHHHHHH@Z)(Palette* this, void*, UINT iStartIndex, UINT cEntries, int, int)"
 P3,311,0x005FFB10,?UNK9@Palette@@QAEHHHHHH@Z,623,0,3,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK9@Palette@@QAEHHHHHH@Z)(Palette* this, UINT, UINT iStartIndex, UINT cEntries, int, int)"
 P3,2121,0x005FFD80,??0MCIVideo@@QAE@XZ,33,2,1,unrecovered,,,2,exact,exact,void (__thiscall ??0MCIVideo@@QAE@XZ)(MCIVideo* this)
-P3,4121,0x005FFDB0,?close@MCIVideo@@QAEXXZ,141,4,1,unrecovered,,,2,exact,exact,void (__thiscall ?close@MCIVideo@@QAEXXZ)(MCIVideo* this)
+P0,1004121,0x005FFDB0,?close@MCIVideo@@QAEXXZ,141,4,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?close@MCIVideo@@QAEXXZ)(MCIVideo* this)
 P3,0,0x005FFE40,sub_5ffe40,56,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x005FFE80,sub_5ffe80,61,0,0,unrecovered,,,0,missing,missing,
 P3,0,0x005FFEC0,sub_5ffec0,203,0,0,unrecovered,,,0,missing,missing,
@@ -2387,15 +2421,25 @@ P2,5121,0x00601980,?string@BasePop@@QAEHPAD@Z,110,5,1,unrecovered,,,2,exact,exac
 P3,4121,0x006019F0,?button@BasePop@@QAEHPAD@Z,75,4,1,unrecovered,,,2,exact,exact,"int (__thiscall ?button@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)"
 P3,411,0x00601A40,?UNK1@BasePop@@QAEHPAD@Z,113,0,4,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK1@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)"
 P3,1,0x00601AC0,?set_height@BasePop@@QAEXH@Z,87,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ?set_height@BasePop@@QAEXH@Z)(BasePop* this, int)"
+P0,1004021,0x00601B20,?set_width@BasePop@@QAEXH@Z,87,4,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_width@BasePop@@QAEXH@Z)(BasePop* this, int)"
+P0,1007021,0x00601B80,?set_loc@BasePop@@QAEXHH@Z,37,7,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_loc@BasePop@@QAEXHH@Z)(BasePop* this, int, int)"
+P0,1006121,0x00601BB0,?write_check@BasePop@@QAEXJ@Z,19,6,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?write_check@BasePop@@QAEXJ@Z)(BasePop* this, int)"
+P0,1001021,0x00601BD0,?read_check@BasePop@@QAEXXZ,17,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?read_check@BasePop@@QAEXXZ)(BasePop* this)
 P2,15421,0x00601BF0,?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z,2569,13,24,unrecovered,,,2,exact,exact,"int (__thiscall ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z)(BasePop* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)"
 P0,1089421,0x00602600,?exec@BasePop@@QAEHHP6AHXZ@Z,4618,87,24,original_dependency,ui_dependency,recover_base_pop_exec,2,exact,entry_range,"int (__thiscall ?exec@BasePop@@QAEHHP6AHXZ@Z)(BasePop* this, int, int (__cdecl *)())"
 P3,2621,0x00603800,?calculate_dimensions@BasePop@@QAEHXZ,2770,1,16,unrecovered,,,2,exact,exact,int (__thiscall ?calculate_dimensions@BasePop@@QAEHXZ)(BasePop* this)
 P3,221,0x00604300,?on_button_clicked@BasePop@@QAEXH@Z,202,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_clicked@BasePop@@QAEXH@Z)(BasePop* this, int)"
 P3,1220,0x006043D0,?set_def_file@BasePop@@QAAHPAD@Z,55,1,2,unrecovered,,,2,exact,exact,
 P3,121,0x00604410,?on_key_down@BasePop@@QAEHH@Z,126,0,1,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_down@BasePop@@QAEHH@Z)(BasePop* this, int)"
+P0,1000011,0x00604490,?on_key_click@BasePop@@QAEHHH@Z,17,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"int (__thiscall ?on_key_click@BasePop@@QAEHHH@Z)(BasePop* this, int, int)"
+P0,1000011,0x006044B0,?on_key_up@BasePop@@QAEHH@Z,17,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"int (__thiscall ?on_key_up@BasePop@@QAEHH@Z)(BasePop* this, int)"
 P3,111,0x006044D0,?double_click@BasePop@@QAEXH@Z,177,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?double_click@BasePop@@QAEXH@Z)(BasePop* this, int)"
 P3,1420,0x00604590,?init_class@BasePop@@QAAHXZ,234,1,4,unrecovered,,,2,exact,exact,
 P3,1120,0x00604680,?close_class@BasePop@@QAAXXZ,109,1,1,unrecovered,,,2,exact,exact,
+P0,1000011,0x00604730,?set_string_color@BasePop@@QAEXHHHH@Z,43,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"void (__thiscall ?set_string_color@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)"
+P0,1000011,0x00604760,?set_string_color2@BasePop@@QAEXHHHH@Z,43,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"void (__thiscall ?set_string_color2@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)"
+P0,1000011,0x00604790,?set_string_color3@BasePop@@QAEXHHHH@Z,43,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"void (__thiscall ?set_string_color3@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)"
+P0,1000011,0x006047C0,?set_string_color_hyper@BasePop@@QAEXHHHH@Z,43,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"void (__thiscall ?set_string_color_hyper@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)"
 P3,10,0x00604A80,?on_modal@BasePop@@QAAHXZ,14,0,0,unrecovered,,,1,exact,missing,
 P3,1211,0x00604AB0,?on_redraw@BasePop@@QAEXXZ,897,0,12,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@BasePop@@QAEXXZ)(BasePop* this)
 P3,321,0x00604E40,?basepop_alloc@BasePop@@QAEHXZ,111,0,3,unrecovered,,,2,exact,entry_range,int (__thiscall ?basepop_alloc@BasePop@@QAEHXZ)(BasePop* this)
@@ -2403,29 +2447,43 @@ P3,211,0x00604EA0,?UNK2@BasePop@@QAEHXZ,362,0,2,unrecovered,,,1,missing,exact,in
 P3,11,0x00605010,?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z,215,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z)(BasePop* this, GraphicWin*, int, int, int, int)"
 P3,1020,0x006050F0,?set_def_external_window@BasePop@@QAAXPAUGraphicWin@@HHHH@Z,49,1,0,unrecovered,,,2,exact,exact,
 P3,111,0x00605130,?on_left_down@BasePop@@QAEXHH@Z,66,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@BasePop@@QAEXHH@Z)(BasePop* this, int xCoord, int yCoord)"
-P3,10,0x006051C0,sub_6051c0,14,0,0,unrecovered,,,1,exact,missing,
+P0,1001021,0x00605180,?UNK3@BasePop@@QAEXH@Z,27,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?UNK3@BasePop@@QAEXH@Z)(BasePop* this, int)"
+P0,1002021,0x006051A0,?UNK4@BasePop@@QAEXH@Z,27,2,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?UNK4@BasePop@@QAEXH@Z)(BasePop* this, int)"
 P2,13221,0x006051D0,??0Scroll@@QAE@XZ,439,13,2,unrecovered,,,2,exact,entry_range,Scroll* (__thiscall ??0Scroll@@QAE@XZ)(Scroll* this)
+P0,1136121,0x00605370,?close@Scroll@@QAEXXZ,350,136,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,void (__thiscall ?close@Scroll@@QAEXXZ)(Scroll* this)
 P0,1009521,0x006054D0,?init@Scroll@@QAEHHHHHPAUWin@@HH@Z,879,9,5,original_dependency,ui_dependency,recover_scroll_primary_init,2,exact,exact,"int (__thiscall ?init@Scroll@@QAEHHHHHPAUWin@@HH@Z)(Scroll* this, int, int, int, int, Win*, int, int)"
+P0,1004121,0x00605840,?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z,69,4,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z)(Scroll* this, RECT*, Win*, int, int)"
+P0,1012121,0x006059B0,?set_range@Scroll@@QAEXHH@Z,93,12,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_range@Scroll@@QAEXHH@Z)(Scroll* this, int, int)"
+P0,1001021,0x00605A10,?set_button_color@Scroll@@QAEXH@Z,61,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_button_color@Scroll@@QAEXH@Z)(Scroll* this, int)"
+P0,1001021,0x00605A50,?set_bevel_thickness@Scroll@@QAEXH@Z,61,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_bevel_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)"
+P0,1001021,0x00605A90,?set_bevel_upper@Scroll@@QAEXH@Z,61,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_bevel_upper@Scroll@@QAEXH@Z)(Scroll* this, int)"
+P0,1001021,0x00605AD0,?set_bevel_lower@Scroll@@QAEXH@Z,61,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_bevel_lower@Scroll@@QAEXH@Z)(Scroll* this, int)"
+P0,1001021,0x00605B10,?set_border_color@Scroll@@QAEXH@Z,100,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_border_color@Scroll@@QAEXH@Z)(Scroll* this, int)"
+P0,1000001,0x00605B80,?set_bar_thickness@Scroll@@QAEXH@Z,96,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,"void (__thiscall ?set_bar_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)"
+P0,1017021,0x00605D20,?set_pos@Scroll@@QAEXH@Z,106,17,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_pos@Scroll@@QAEXH@Z)(Scroll* this, int position)"
 P3,311,0x00605D90,?on_mouse_move@Scroll@@QAEXHH@Z,1099,0,3,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@Scroll@@QAEXHH@Z)(Scroll* this, int, int)"
 P3,21,0x006061E0,?on_left_down@Scroll@@QAEXHH@Z,216,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_down@Scroll@@QAEXHH@Z)(Scroll* this, int, int)"
 P3,21,0x006062C0,?on_left_up@Scroll@@QAEXHH@Z,68,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_left_up@Scroll@@QAEXHH@Z)(Scroll* this, int, int)"
-P3,4021,0x00606320,?on_mousewheel_down@Scroll@@QAEXH@Z,286,4,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_down@Scroll@@QAEXH@Z)(Scroll* this, int)"
-P3,4021,0x00606440,?on_mousewheel_up@Scroll@@QAEXH@Z,284,4,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mousewheel_up@Scroll@@QAEXH@Z)(Scroll* this, int)"
+P0,1004021,0x00606320,?on_mousewheel_down@Scroll@@QAEXH@Z,286,4,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?on_mousewheel_down@Scroll@@QAEXH@Z)(Scroll* this, int)"
+P0,1004021,0x00606440,?on_mousewheel_up@Scroll@@QAEXH@Z,284,4,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?on_mousewheel_up@Scroll@@QAEXH@Z)(Scroll* this, int)"
 P3,21,0x00606560,?on_key_click@Scroll@@QAEHHH@Z,396,0,0,unrecovered,,,2,exact,exact,"int (__thiscall ?on_key_click@Scroll@@QAEHHH@Z)(Scroll* this, int, int)"
 P3,611,0x006066F0,?on_redraw@Scroll@@QAEXXZ,356,0,6,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@Scroll@@QAEXXZ)(Scroll* this)
 P3,121,0x00606860,?on_resize@Scroll@@QAEXHH@Z,315,0,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_resize@Scroll@@QAEXHH@Z)(Scroll* this, int, int)"
 P3,21,0x006069A0,?on_button_pressed@Scroll@@QAEXH@Z,372,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_pressed@Scroll@@QAEXH@Z)(Scroll* this, int)"
 P3,21,0x00606B20,?on_button_clicked@Scroll@@QAEXH@Z,291,0,0,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_clicked@Scroll@@QAEXH@Z)(Scroll* this, int)"
+P0,1000001,0x00606EA0,?set_thumb_rect@Scroll@@QAEXXZ,88,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,void (__thiscall ?set_thumb_rect@Scroll@@QAEXXZ)(Scroll* this)
 P3,211,0x00607190,?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z,122,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z)(BaseButton* this, Font*, int8*, int, int, int, int, Win*, int)"
+P0,1011221,0x00607360,?set_text_color@BaseButton@@QAEXHHHH@Z,61,11,2,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_text_color@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)"
+P0,1001221,0x006073A0,?set_text_color2@BaseButton@@QAEXHHHH@Z,61,1,2,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_text_color2@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)"
+P0,1001221,0x006073E0,?set_text_color3@BaseButton@@QAEXHHHH@Z,61,1,2,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_text_color3@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)"
 P3,211,0x006075C0,?on_left_down@BaseButton@@QAEXHH@Z,348,0,2,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_down@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)"
 P3,111,0x00607720,?on_left_up@BaseButton@@QAEXHH@Z,198,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_up@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)"
 P3,11,0x00607820,?on_mouse_leave@BaseButton@@QAEXHH@Z,45,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_leave@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)"
 P3,1421,0x00607850,?on_mouse_move@BaseButton@@QAEXHH@Z,419,1,4,unrecovered,,,2,exact,exact,"void (__thiscall ?on_mouse_move@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)"
-P3,111,0x00607A00,?on_right_click@BaseButton@@QAEXHH@Z,20,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_right_click@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)"
 P3,111,0x00607A20,?on_left_click@BaseButton@@QAEXHH@Z,211,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?on_left_click@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)"
-P3,110,0x00607B10,?timer_callback_daemon@BaseButton@@QAAXHH@Z,19,0,1,unrecovered,,,1,exact,missing,
-P3,2421,0x00607B30,?timer_callback@BaseButton@@QAEXH@Z,249,2,4,unrecovered,,,2,exact,exact,"void (__thiscall ?timer_callback@BaseButton@@QAEXH@Z)(BaseButton* this, int)"
+P0,1002421,0x00607B30,?timer_callback@BaseButton@@QAEXH@Z,249,2,4,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"void (__thiscall ?timer_callback@BaseButton@@QAEXH@Z)(BaseButton* this, int)"
 P3,11,0x00607C30,?UNK2@BaseButton@@QAEXXZ,68,0,0,unrecovered,,,1,missing,exact,void (__thiscall ?UNK2@BaseButton@@QAEXXZ)(BaseButton* this)
+P0,1007021,0x00607C80,?set@BaseButton@@QAEXH@Z,61,7,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set@BaseButton@@QAEXH@Z)(BaseButton* this, int)"
 P2,17121,0x00607CF0,??0FlatButton@@QAE@XZ,166,17,1,unrecovered,,,2,exact,exact,void (__thiscall ??0FlatButton@@QAE@XZ)(FlatButton* this)
 P3,1611,0x00607E50,?on_redraw@FlatButton@@QAEXXZ,1705,0,16,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@FlatButton@@QAEXXZ)(FlatButton* this)
 P3,611,0x00608500,?on_mouse_move@FlatButton@@QAEXHH@Z,343,0,6,unrecovered,,,1,exact,missing,"void (__thiscall ?on_mouse_move@FlatButton@@QAEXHH@Z)(FlatButton* this, int, int)"
@@ -2439,14 +2497,21 @@ P2,6121,0x00608C10,??0Dialog@@QAE@XZ,505,6,1,unrecovered,,,2,exact,exact,void (_
 P0,1016121,0x00608F50,?close@Dialog@@QAEXXZ,499,16,1,original_dependency,ui_dependency,recover_dialog_close,2,exact,exact,void (__thiscall ?close@Dialog@@QAEXXZ)(Dialog* this)
 P3,111,0x00609150,?init@Dialog@@QAEHXZ,427,0,1,unrecovered,,,1,exact,missing,int (__thiscall ?init@Dialog@@QAEHXZ)(Dialog* this)
 P3,3221,0x00609300,?init@Dialog@@QAEHHHHHH@Z,357,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHHHHHH@Z)(Dialog* this, int, int, int, int, int)"
-P2,13221,0x00609470,?init@Dialog@@QAEHPAURECT@@H@Z,382,13,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHPAURECT@@H@Z)(Dialog* this, RECT*, int size)"
-P3,2221,0x006095F0,?init@Dialog@@QAEHH@Z,320,2,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHH@Z)(Dialog* this, int)"
-P3,2121,0x00609730,?init@Dialog@@QAEHHHHHPAUHeap@@@Z,190,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHHHHHPAUHeap@@@Z)(Dialog* this, int, int, int, int, Heap*)"
+P0,1013221,0x00609470,?init@Dialog@@QAEHPAURECT@@H@Z,382,13,2,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHPAURECT@@H@Z)(Dialog* this, RECT*, int size)"
+P0,1002221,0x006095F0,?init@Dialog@@QAEHH@Z,320,2,2,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHH@Z)(Dialog* this, int)"
+P0,1002121,0x00609730,?init@Dialog@@QAEHHHHHPAUHeap@@@Z,190,2,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHHHHHPAUHeap@@@Z)(Dialog* this, int, int, int, int, Heap*)"
 P3,4121,0x006097F0,?init@Dialog@@QAEHPAURECT@@PAUHeap@@@Z,216,4,1,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHPAURECT@@PAUHeap@@@Z)(Dialog* this, RECT*, Heap*)"
-P3,2121,0x006098D0,?init@Dialog@@QAEHPAUHeap@@@Z,159,2,1,unrecovered,,,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHPAUHeap@@@Z)(Dialog* this, Heap*)"
+P0,1002121,0x006098D0,?init@Dialog@@QAEHPAUHeap@@@Z,159,2,1,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,"int (__thiscall ?init@Dialog@@QAEHPAUHeap@@@Z)(Dialog* this, Heap*)"
 P3,1,0x00609970,?UNK1@Dialog@@QAEXHH@Z,26,0,0,unrecovered,,,0,missing,missing,"void (__thiscall ?UNK1@Dialog@@QAEXHH@Z)(Dialog* this, int, int)"
 P0,1001121,0x00609990,?item@Dialog@@QAEHPADH@Z,52,1,1,original_dependency,ui_dependency,recover_dialog_item,2,exact,exact,"int (__thiscall ?item@Dialog@@QAEHPADH@Z)(Dialog* this, int8*, int)"
+P0,1001021,0x006099D0,?set_selected_id@Dialog@@QAEXH@Z,115,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_selected_id@Dialog@@QAEXH@Z)(Dialog* this, int)"
+P0,1015121,0x00609A50,?get_selected_id@Dialog@@QAEHXZ,150,15,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,int (__thiscall ?get_selected_id@Dialog@@QAEHXZ)(Dialog* this)
+P0,1001021,0x00609AF0,?id_to_pos@Dialog@@QAEHH@Z,91,1,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?id_to_pos@Dialog@@QAEHH@Z)(Dialog* this, int)"
+P0,1007121,0x00609B50,?pos_to_id@Dialog@@QAEHH@Z,154,7,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?pos_to_id@Dialog@@QAEHH@Z)(Dialog* this, int)"
 P3,11,0x00609BF0,?UNK2@Dialog@@QAEXHHHH@Z,112,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?UNK2@Dialog@@QAEXHHHH@Z)(Dialog* this, HWND hWndParent, UINT Msg, HWND hWnd, LPARAM lParam)"
+P0,1009021,0x00609C90,?set_dialog_text_color@Dialog@@QAEXHHHH@Z,40,9,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_dialog_text_color@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)"
+P0,1007021,0x00609CC0,?set_dialog_text_color2@Dialog@@QAEXHHHH@Z,43,7,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)"
+P0,1006021,0x00609CF0,?set_dialog_text_color3@Dialog@@QAEXHHHH@Z,43,6,0,source_complete,oracle_reference,differential_fixture,2,exact,exact,"void (__thiscall ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)"
 P3,1020,0x00609D50,?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z,60,1,0,unrecovered,,,2,exact,exact,
 P2,11221,0x00609DB0,??0ListBox@@QAE@H@Z,299,11,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0ListBox@@QAE@H@Z)(ListBox* this, int)"
 P2,17121,0x00609FA0,?set_selected_id@ListBox@@QAEXH@Z,115,17,1,unrecovered,,,2,exact,exact,"void (__thiscall ?set_selected_id@ListBox@@QAEXH@Z)(ListBox* this, int)"
@@ -2469,7 +2534,7 @@ P0,1032221,0x0060C920,?item@ListBox@@QAEHPADH@Z,137,32,2,original_dependency,ui_
 P2,11021,0x0060C9B0,?update_changes@ListBox@@QAEHXZ,435,10,10,unrecovered,,,2,exact,exact,int (__thiscall ?update_changes@ListBox@@QAEHXZ)(ListBox* this)
 P0,1001221,0x0060CB70,?on_mousewheel@ListBox@@QAEXH@Z,74,1,2,original_dependency,ui_dependency,recover_dialogslistboxonmousewheel;recover_list_box_on_mousewheel,2,exact,exact,"void (__thiscall ?on_mousewheel@ListBox@@QAEXH@Z)(ListBox* this, int)"
 P0,1001321,0x0060CBC0,?on_mouse_move@ListBox@@QAEXHH@Z,587,1,3,original_dependency,ui_dependency,recover_list_box_on_mouse_move,2,exact,exact,"void (__thiscall ?on_mouse_move@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
-P0,1001021,0x0060CE10,?on_mouse_leave@ListBox@@QAEXHH@Z,40,1,0,original_dependency,ui_dependency,recover_list_box_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
+P0,1001021,0x0060CE10,?on_mouse_leave@ListBox@@QAEXHH@Z,40,1,0,source_complete,ui_dependency,recover_list_box_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)"
 P3,400,0x0060CE40,sub_60ce40,135,0,4,unrecovered,,,0,missing,missing,
 P3,10,0x0060CED0,sub_60ced0,49,0,0,unrecovered,,,1,exact,missing,
 P3,10,0x0060CF10,sub_60cf10,61,0,0,unrecovered,,,1,exact,missing,
@@ -2483,9 +2548,9 @@ P0,1001421,0x0060DE10,?on_left_down@RadioButton@@QAEXHH@Z,523,1,4,original_depen
 P0,1001221,0x0060E020,?on_key_down@RadioButton@@QAEHH@Z,355,1,2,original_dependency,ui_dependency,recover_radio_button_on_key_down,2,exact,exact,"int (__thiscall ?on_key_down@RadioButton@@QAEHH@Z)(RadioButton* this, int)"
 P0,1001121,0x0060E1E0,?on_left_double_click@RadioButton@@QAEXHH@Z,55,1,1,original_dependency,ui_dependency,recover_radio_button_on_left_double_click,2,exact,exact,"void (__thiscall ?on_left_double_click@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
 P0,1000321,0x0060E220,?on_redraw@RadioButton@@QAEXXZ,222,0,3,original_dependency,ui_dependency,recover_radio_button_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@RadioButton@@QAEXXZ)(RadioButton* this)
-P0,1001021,0x0060E300,?on_dialog_focus@RadioButton@@QAEXH@Z,23,1,0,original_dependency,ui_dependency,recover_radio_button_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@RadioButton@@QAEXH@Z)(RadioButton* this, int)"
+P0,1001021,0x0060E300,?on_dialog_focus@RadioButton@@QAEXH@Z,23,1,0,source_complete,ui_dependency,recover_radio_button_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@RadioButton@@QAEXH@Z)(RadioButton* this, int)"
 P0,1001221,0x0060E320,?on_mouse_move@RadioButton@@QAEXHH@Z,372,1,2,original_dependency,ui_dependency,recover_radio_button_on_mouse_move,2,exact,exact,"void (__thiscall ?on_mouse_move@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
-P0,1001021,0x0060E4A0,?on_mouse_leave@RadioButton@@QAEXHH@Z,40,1,0,original_dependency,ui_dependency,recover_radio_button_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
+P0,1001021,0x0060E4A0,?on_mouse_leave@RadioButton@@QAEXHH@Z,40,1,0,source_complete,ui_dependency,recover_radio_button_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)"
 P3,1520,0x0060E4D0,?init_class@RadioButton@@QAAHXZ,263,1,5,unrecovered,,,2,exact,entry_range,
 P3,4221,0x0060E670,??0CheckBox@@QAE@H@Z,233,4,2,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0CheckBox@@QAE@H@Z)(CheckBox* this, int)"
 P0,1024221,0x0060E740,??1CheckBox@@QAE@XZ,128,24,2,original_dependency,ui_dependency,recover_check_box_destructor,2,exact,exact,void (__thiscall ??1CheckBox@@QAE@XZ)(CheckBox* this)
@@ -2501,21 +2566,17 @@ P0,1001621,0x0060F700,?on_left_down@CheckBox@@QAEXHH@Z,432,1,6,original_dependen
 P0,1001221,0x0060F8B0,?on_key_down@CheckBox@@QAEHH@Z,360,1,2,original_dependency,ui_dependency,recover_check_box_on_key_down,2,exact,exact,"int (__thiscall ?on_key_down@CheckBox@@QAEHH@Z)(CheckBox* this, int)"
 P0,1001021,0x0060FA80,?on_left_double_click@CheckBox@@QAEXHH@Z,45,1,0,original_dependency,ui_dependency,recover_check_box_on_left_double_click,2,exact,exact,"void (__thiscall ?on_left_double_click@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
 P0,1000221,0x0060FAB0,?on_redraw@CheckBox@@QAEXXZ,221,0,2,original_dependency,ui_dependency,recover_check_box_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@CheckBox@@QAEXXZ)(CheckBox* this)
-P0,1001021,0x0060FB90,?on_dialog_focus@CheckBox@@QAEXH@Z,23,1,0,original_dependency,ui_dependency,recover_check_box_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@CheckBox@@QAEXH@Z)(CheckBox* this, int)"
+P0,1001021,0x0060FB90,?on_dialog_focus@CheckBox@@QAEXH@Z,23,1,0,source_complete,ui_dependency,recover_check_box_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@CheckBox@@QAEXH@Z)(CheckBox* this, int)"
 P0,1001021,0x0060FBB0,?on_mouse_move@CheckBox@@QAEXHH@Z,123,1,0,original_dependency,ui_dependency,recover_check_box_on_mouse_move,2,exact,exact,"void (__thiscall ?on_mouse_move@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
-P0,1001021,0x0060FC30,?on_mouse_leave@CheckBox@@QAEXHH@Z,40,1,0,original_dependency,ui_dependency,recover_check_box_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
+P0,1001021,0x0060FC30,?on_mouse_leave@CheckBox@@QAEXHH@Z,40,1,0,source_complete,ui_dependency,recover_check_box_on_mouse_leave,2,exact,exact,"void (__thiscall ?on_mouse_leave@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)"
 P3,1520,0x0060FC60,?init_class@CheckBox@@QAAHXZ,263,1,5,unrecovered,,,2,exact,entry_range,
 P3,500,0x0060FD80,sub_60fd80,184,0,5,unrecovered,,,0,missing,missing,
 P3,500,0x0060FEB0,sub_60feb0,193,0,5,unrecovered,,,0,missing,missing,
 P3,500,0x0060FED0,sub_60fed0,190,0,5,unrecovered,,,0,missing,missing,
 P3,1821,0x0060FF00,??0SpriteBox@@QAE@H@Z,656,1,8,unrecovered,,,2,exact,entry_range,"void (__thiscall ??0SpriteBox@@QAE@H@Z)(SpriteBox* this, int)"
 P0,1023321,0x00610120,??1SpriteBox@@QAE@XZ,399,23,3,original_dependency,ui_dependency,recover_sprite_box_destructor,2,exact,entry_range,void (__thiscall ??1SpriteBox@@QAE@XZ)(SpriteBox* this)
-P2,8721,0x00610280,?close@SpriteBox@@QAEXXZ,406,8,7,unrecovered,,,2,exact,exact,void (__thiscall ?close@SpriteBox@@QAEXXZ)(SpriteBox* this)
-P3,1221,0x00610420,?init@SpriteBox@@QAEHH@Z,29,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHH@Z)(SpriteBox* this, int)"
+P0,1008721,0x00610280,?close@SpriteBox@@QAEXXZ,406,8,7,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?close@SpriteBox@@QAEXXZ)(SpriteBox* this)
 P3,1221,0x00610440,?init@SpriteBox@@QAEHHHHHH@Z,49,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHHHHHH@Z)(SpriteBox* this, int, int, int, int, int)"
-P3,1221,0x00610480,?init@SpriteBox@@QAEHPAURECT@@H@Z,34,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHPAURECT@@H@Z)(SpriteBox* this, RECT*, int)"
-P3,1221,0x006104B0,?init@SpriteBox@@QAEHPAUHeap@@@Z,29,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@@Z)(SpriteBox* this, Heap*)"
-P3,1221,0x006104D0,?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z,49,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z)(SpriteBox* this, int, int, int, int, Heap*)"
 P3,1221,0x00610510,?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z,34,1,2,unrecovered,,,2,exact,exact,"int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z)(SpriteBox* this, RECT*, Heap*)"
 P0,1002921,0x00610540,?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z,917,2,9,original_dependency,ui_dependency,recover_sprite_box_attach,2,exact,exact,"int (__thiscall ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z)(SpriteBox* this, GraphicWin*, int, int, int)"
 P1,22221,0x006108E0,?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z,133,22,2,unrecovered,,,2,exact,exact,"int (__thiscall ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z)(SpriteBox* this, Sprite*, int8*, int)"
@@ -2533,7 +2594,7 @@ P0,1001121,0x006112E0,?on_left_double_click@SpriteBox@@QAEXHH@Z,80,1,1,original_
 P0,1001121,0x00611330,?on_right_double_click@SpriteBox@@QAEXHH@Z,80,1,1,original_dependency,ui_dependency,recover_dialogsspriteboxonrightdoubleclick;recover_sprite_box_on_right_double_click,2,exact,exact,"void (__thiscall ?on_right_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)"
 P0,1000221,0x00611380,?on_redraw@SpriteBox@@QAEXXZ,121,0,2,original_dependency,ui_dependency,recover_sprite_box_on_redraw,2,exact,exact,void (__thiscall ?on_redraw@SpriteBox@@QAEXXZ)(SpriteBox* this)
 P0,1001121,0x00611400,?on_key_down@SpriteBox@@QAEHH@Z,384,1,1,original_dependency,ui_dependency,recover_sprite_box_on_key_down,2,exact,exact,"int (__thiscall ?on_key_down@SpriteBox@@QAEHH@Z)(SpriteBox* this, int)"
-P0,1001021,0x006115E0,?on_dialog_focus@SpriteBox@@QAEXH@Z,32,1,0,original_dependency,ui_dependency,recover_sprite_box_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)"
+P0,1001021,0x006115E0,?on_dialog_focus@SpriteBox@@QAEXH@Z,32,1,0,source_complete,ui_dependency,recover_sprite_box_on_dialog_focus,2,exact,exact,"void (__thiscall ?on_dialog_focus@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)"
 P3,1121,0x00611640,?pos_to_id@SpriteBox@@QAEXH@Z,118,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?pos_to_id@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)"
 P3,200,0x006116E0,sub_6116e0,72,0,2,unrecovered,,,0,missing,missing,
 P3,3020,0x00611730,sub_611730,147,3,0,unrecovered,,,2,exact,exact,
@@ -2592,11 +2653,11 @@ P3,1821,0x00613F60,?load@FileWin@@QAEXXZ,467,1,8,unrecovered,,,2,exact,exact,voi
 P3,3221,0x00614140,?add_def_ext@FileWin@@QAEHPAD@Z,124,3,2,unrecovered,,,2,exact,exact,"int (__thiscall ?add_def_ext@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)"
 P2,5221,0x006141C0,?set_def_name@FileWin@@QAEHPAD@Z,265,5,2,unrecovered,,,2,exact,exact,"int (__thiscall ?set_def_name@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)"
 P3,211,0x006142D0,?set_directory@FileWin@@QAEHPAD@Z,78,0,2,unrecovered,,,1,exact,missing,"int (__thiscall ?set_directory@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)"
+P0,1000011,0x00614320,?UNK1@FileWin@@QAEXXZ,33,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,void (__thiscall ?UNK1@FileWin@@QAEXXZ)(FileWin* this)
 P3,4921,0x00614360,?UNK3@FileWin@@QAEHPAD@Z,820,4,9,unrecovered,,,2,exact,exact,"int (__thiscall ?UNK3@FileWin@@QAEHPAD@Z)(FileWin* this, int8* lpPathName)"
-P3,3021,0x006146A0,?UNK4@FileWin@@QAEXXZ,1209,2,10,unrecovered,,,2,exact,exact,void (__thiscall ?UNK4@FileWin@@QAEXXZ)(FileWin* this)
+P0,1003021,0x006146A0,?UNK4@FileWin@@QAEXXZ,1209,2,10,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ?UNK4@FileWin@@QAEXXZ)(FileWin* this)
 P3,1,0x00614B60,?UNK5@FileWin@@QAEXXZ,24,0,0,unrecovered,,,0,missing,missing,void (__thiscall ?UNK5@FileWin@@QAEXXZ)(FileWin* this)
 P3,1221,0x00614B90,?on_button_clicked@FileWin@@QAEXH@Z,176,1,2,unrecovered,,,2,exact,exact,"void (__thiscall ?on_button_clicked@FileWin@@QAEXH@Z)(FileWin* this, int)"
-P3,1121,0x00614C40,?on_double_clicked@FileWin@@QAEXH@Z,8,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?on_double_clicked@FileWin@@QAEXH@Z)(FileWin* this, int)"
 P3,1120,0x00614C50,?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z,308,1,1,unrecovered,,,2,exact,exact,
 P3,1620,0x00614D90,?init_class@FileWin@@QAAHXZ,158,1,6,unrecovered,,,2,exact,exact,
 P3,1120,0x00614E30,?close_class@FileWin@@QAAXXZ,29,1,1,unrecovered,,,2,exact,exact,
@@ -2639,6 +2700,8 @@ P3,11,0x00617DB0,?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@H@Z,36
 P2,10021,0x00617F20,?add_object@Caviar@@QAEHPAUCaviarData@@H@Z,345,10,0,unrecovered,,,2,exact,exact,"int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z)(Caviar* this, CaviarData*, int)"
 P3,3021,0x00618080,?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z,336,3,0,unrecovered,,,2,exact,exact,"int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z)(Caviar* this, CaviarData*, LPBYTE, int)"
 P3,221,0x006181D0,?set_shadow_vector@Caviar@@QAEXMM@Z,123,0,2,unrecovered,,,2,exact,exact,"void (__thiscall ?set_shadow_vector@Caviar@@QAEXMM@Z)(Caviar* this, float, float)"
+P0,1000011,0x00618320,?UNK10@Caviar@@QAEXHHH@Z,24,0,0,source_complete,oracle_reference,differential_fixture,1,exact,missing,"void (__thiscall ?UNK10@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)"
+P0,1000001,0x00618340,?UNK11@Caviar@@QAEXHHH@Z,42,0,0,source_complete,oracle_reference,differential_fixture,0,missing,missing,"void (__thiscall ?UNK11@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)"
 P3,1,0x006183D0,?set_buffer@Caviar@@QAEHPAUBuffer@@@Z,86,0,0,unrecovered,,,0,missing,missing,"int (__thiscall ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z)(Caviar* this, Buffer*)"
 P3,4121,0x00618430,?set_shadow_table@Caviar@@QAEHPAE@Z,56,4,1,unrecovered,,,2,exact,exact,"int (__thiscall ?set_shadow_table@Caviar@@QAEHPAE@Z)(Caviar* this, LPBYTE)"
 P2,8321,0x00618470,?clear_buffers@Caviar@@QAEXH@Z,173,8,3,unrecovered,,,2,exact,exact,"void (__thiscall ?clear_buffers@Caviar@@QAEXH@Z)(Caviar* this, int)"
@@ -2724,7 +2787,6 @@ P3,200,0x00627440,?pops@@YAHPADPADPADHPAUSprite@@P6AHXZ@Z,61,0,2,unrecovered,,,0
 P3,200,0x00627480,?pops@@YAHPADPADPADHPAUSprite@@HHP6AHXZ@Z,67,0,2,unrecovered,,,0,missing,missing,
 P0,1027920,0x006276A0,?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z,345,27,9,original_dependency,ui_dependency,recover_pops_full,2,exact,exact,
 P3,101,0x00627800,?pop_ask@@YAHPADHPADP6AHXZH@Z,39,0,1,unrecovered,,,0,missing,missing,"int (__cdecl ?pop_ask@@YAHPADHPADP6AHXZH@Z)(int8* sectionID, int, int8*, int (__cdecl *)(), int)"
-P3,101,0x00627830,?pop_ask@@YAHPADPADHP6AHXZH@Z,36,0,1,unrecovered,,,0,missing,missing,"int (__cdecl ?pop_ask@@YAHPADPADHP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int, int (__cdecl *)(), int)"
 P3,101,0x00627860,?pop_ask@@YAHPADHP6AHXZH@Z,36,0,1,unrecovered,,,0,missing,missing,"int (__cdecl ?pop_ask@@YAHPADHP6AHXZH@Z)(int8* sectionID, int, int (__cdecl *)(), int)"
 P3,201,0x00627890,?pop_ask@@YAHPADPADPADP6AHXZH@Z,52,0,2,unrecovered,,,0,missing,missing,"int (__cdecl ?pop_ask@@YAHPADPADPADP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int8*, int (__cdecl *)(), int)"
 P3,201,0x006278D0,?pop_ask@@YAHPADPADP6AHXZH@Z,52,0,2,unrecovered,,,0,missing,missing,"int (__cdecl ?pop_ask@@YAHPADPADP6AHXZH@Z)(int8* sectionID, int8*, int (__cdecl *)(), int)"
@@ -2753,7 +2815,6 @@ P3,111,0x006298B0,?UNK1@StringBox@@QAEXH@Z,203,0,1,unrecovered,,,1,exact,missing
 P3,111,0x00629980,?UNK2@StringBox@@QAEXHH@Z,227,0,1,unrecovered,,,1,exact,missing,"void (__thiscall ?UNK2@StringBox@@QAEXHH@Z)(StringBox* this, int, int)"
 P3,1121,0x00629A70,?clip_ids@StringBox@@QAEXK@Z,249,1,1,unrecovered,,,2,exact,exact,"void (__thiscall ?clip_ids@StringBox@@QAEXK@Z)(StringBox* this, unsigned int)"
 P3,711,0x00629B70,?on_redraw@StringBox@@QAEXXZ,428,0,7,unrecovered,,,1,exact,missing,void (__thiscall ?on_redraw@StringBox@@QAEXXZ)(StringBox* this)
-P3,11,0x00629D20,?on_scrolled@StringBox@@QAEXHH@Z,21,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_scrolled@StringBox@@QAEXHH@Z)(StringBox* this, int, int)"
 P3,11,0x00629D40,?on_scrolling@StringBox@@QAEXHH@Z,21,0,0,unrecovered,,,1,exact,missing,"void (__thiscall ?on_scrolling@StringBox@@QAEXHH@Z)(StringBox* this, int, int)"
 P2,9221,0x00629D60,??0Flic@@QAE@XZ,151,9,2,unrecovered,,,2,exact,entry_range,void (__thiscall ??0Flic@@QAE@XZ)(Flic* this)
 P2,11121,0x00629DF0,?close@Flic@@QAEXXZ,84,11,1,unrecovered,,,2,exact,exact,void (__thiscall ?close@Flic@@QAEXXZ)(Flic* this)
@@ -2773,6 +2834,7 @@ P3,1421,0x0062B190,?decode_delta_flc_trans@Flic@@QAEXXZ,1117,1,4,unrecovered,,,2
 P3,101,0x0062B600,?decode_black_trans@Flic@@QAEXXZ,110,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?decode_black_trans@Flic@@QAEXXZ)(Flic* this)
 P3,1321,0x0062B670,?decode_fli_copy_trans@Flic@@QAEXXZ,262,1,3,unrecovered,,,2,exact,exact,void (__thiscall ?decode_fli_copy_trans@Flic@@QAEXXZ)(Flic* this)
 P3,101,0x0062B780,?UNK9@Flic@@QAEXXZ,63,0,1,unrecovered,,,0,missing,missing,void (__thiscall ?UNK9@Flic@@QAEXXZ)(Flic* this)
+P0,1035121,0x0062B870,?set@ButtonGroup@@QAEHHH@Z,47,35,1,source_complete,oracle_reference,differential_fixture,2,exact,exact,"int (__thiscall ?set@ButtonGroup@@QAEHHH@Z)(ButtonGroup* this, int, int)"
 P0,1005121,0x0062B8A0,?button_click@ButtonGroup@@QAEHH@Z,471,5,1,original_dependency,ui_dependency,recover_button_group_button_click,2,exact,exact,"int (__thiscall ?button_click@ButtonGroup@@QAEHH@Z)(ButtonGroup* this, int)"
 P3,3121,0x0062BF20,??0PushButton@@QAE@XZ,238,3,1,unrecovered,,,2,exact,exact,void (__thiscall ??0PushButton@@QAE@XZ)(PushButton* this)
 P0,1007021,0x0062C010,??1PushButton@@QAE@XZ,21,7,0,original_dependency,ui_dependency,recover_owning_class,2,exact,exact,void (__thiscall ??1PushButton@@QAE@XZ)(PushButton* this)
@@ -2954,8 +3016,7 @@ P3,1511,0x0063B2E0,?init@Cursor@@QAEXPAUSprite@@HH@Z,1560,0,15,unrecovered,,,1,e
 P3,221,0x0063B8D0,??1Cursor@@QAE@XZ,58,0,2,unrecovered,,,2,exact,exact,void (__thiscall ??1Cursor@@QAE@XZ)(Cursor* this)
 P3,1020,0x0063B910,?init_cursor_class@Cursor@@QAAXXZ,29,1,0,unrecovered,,,2,exact,exact,
 P3,1320,0x0063B940,?trig_init@@YAHXZ,110,1,3,unrecovered,,,2,exact,exact,
-P3,2020,0x0063B9B0,?sin@@YAHHH@Z,267,2,0,unrecovered,,,2,exact,exact,
-P3,100,0x0063BAC0,?cos@@YAHHH@Z,25,0,1,unrecovered,,,0,missing,missing,
+P0,1002020,0x0063B9B0,?sin@@YAHHH@Z,267,2,0,original_dependency,source_fallback,validate_source_implementation,2,exact,exact,
 P3,210,0x0063BAE0,sub_63bae0,22,0,2,unrecovered,,,1,exact,missing,
 P3,1520,0x0063BB20,sub_63bb20,574,1,5,unrecovered,,,2,exact,entry_range,
 P3,2320,0x0063BD10,sub_63bd10,413,2,3,unrecovered,,,2,exact,exact,
