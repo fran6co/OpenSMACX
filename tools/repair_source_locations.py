@@ -44,11 +44,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
-OFFSET_LINE = re.compile(r"^\s*(?://\s*)?Original Offset:\s*([0-9A-Fa-f]{8})\s*$")
+# The source-map grammar (docs/DECOMP_MAP.md) speaks `ORIGINAL: 0x...`; the
+# legacy `Original Offset:` spelling is still read for stragglers and tests.
+OFFSET_LINE = re.compile(
+    r"^\s*(?://\s*)?(?:ORIGINAL:\s*0x|Original Offset:\s*)([0-9A-Fa-f]{8})\s*$")
 
 
 def offset_index(path: Path) -> dict:
-    """{address: line number} for every `Original Offset:` line in the file."""
+    """{address: line number} for every ORIGINAL marker line in the file."""
     found = {}
     for number, line in enumerate(path.read_text(errors="replace").splitlines(), 1):
         match = OFFSET_LINE.match(line)

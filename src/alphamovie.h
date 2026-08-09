@@ -32,6 +32,19 @@
 class MCIVideo {
  public:
   void close();  // ?close@MCIVideo@@QAEXXZ  0x005FFDB0
+
+  // Storage the image proves is here: its own methods reach 0x474.
+  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // 7 member(s) from the IDA database, 2 named; it starts a member at 0x0, which is where src/ ends.
+
+  uint32_t field_0_;  // 0x0
+  uint32_t mciId_;  // 0x4
+  uint32_t field_8_;  // 0x8
+  uint32_t field_C_;  // 0xC
+  uint8_t palette_[0x454];  // 0x10
+  uint32_t field_464_;  // 0x464
+  uint32_t field_468_;  // 0x468
+  uint8_t field_46C_[0x8];  // 0x46C
 };
 
  /*
