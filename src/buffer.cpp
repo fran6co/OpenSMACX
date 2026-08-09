@@ -29,7 +29,7 @@ Palette **BufferPalette = reinterpret_cast<Palette **>(0x009B8174);
 /*
 Purpose: Construct an empty Buffer, including its Spot subobject, text state,
          and either the process palette or the legacy grayscale fallback.
-Original Offset: 005D7210
+ORIGINAL: 0x005D7210
 Status: Complete
 Verification note: five mutation-harness survivors here are equivalent by
 construction. Widening the 0x4BC loop bound writes an extra zero at 0x50C,
@@ -138,7 +138,7 @@ Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *) {
 
 /*
 Purpose: Set the four fonts used by the buffer.
-Original Offset: 005DAC70
+ORIGINAL: 0x005DAC70
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -157,7 +157,7 @@ int Buffer::set_font(Font *font1, Font *font2, Font *font3, Font *font4) {
 
 /*
 Purpose: Set the primary text colors for the four color slots.
-Original Offset: 005DACB0
+ORIGINAL: 0x005DACB0
 Return Value: n/a
 Status: Complete
 */
@@ -170,7 +170,7 @@ void Buffer::set_text_color(int color1, int color2, int color3, int color4) {
 
 /*
 Purpose: Set the secondary text colors for the four color slots.
-Original Offset: 005DACE0
+ORIGINAL: 0x005DACE0
 Return Value: n/a
 Status: Complete
 */
@@ -183,7 +183,7 @@ void Buffer::set_text_color2(int color1, int color2, int color3, int color4) {
 
 /*
 Purpose: Set the tertiary text colors for the four color slots.
-Original Offset: 005DAD10
+ORIGINAL: 0x005DAD10
 Return Value: n/a
 Status: Complete
 */
@@ -196,7 +196,7 @@ void Buffer::set_text_color3(int color1, int color2, int color3, int color4) {
 
 /*
 Purpose: Set the hyperlink text colors for the four color slots.
-Original Offset: 005DAD40
+ORIGINAL: 0x005DAD40
 Return Value: n/a
 Status: Complete
 */
@@ -209,7 +209,7 @@ void Buffer::set_text_color_hyper(int color1, int color2, int color3, int color4
 
 /*
 Purpose: Initialize shared Buffer state; the legacy implementation has no state to initialize.
-Original Offset: 005DF570
+ORIGINAL: 0x005DF570
 Return Value: No errors (0)
 Status: Complete
 */
@@ -219,7 +219,7 @@ int Buffer::init_class() {
 
 /*
 Purpose: Close shared Buffer state; the legacy implementation is intentionally empty.
-Original Offset: 005DF580
+ORIGINAL: 0x005DF580
 Return Value: n/a
 Status: Complete
 */
@@ -273,7 +273,7 @@ constexpr size_t SurfaceDescriptorData = 0x24;
 /*
 Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
          first reference and counting every acquisition.
-Original Offset: 005E3373
+ORIGINAL: 0x005E3373
 Status: Complete
 */
 int Buffer::get_data() {
@@ -318,7 +318,7 @@ int Buffer::get_data() {
 /*
 Purpose: Release acquired references to the buffer's pixel data, unlocking the
          DirectDraw surface once the last reference is dropped.
-Original Offset: 005E34A3
+ORIGINAL: 0x005E34A3
 Status: Complete
 */
 void Buffer::free_data(int count) {
@@ -356,7 +356,7 @@ void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count) {
 /*
 Purpose: Report the line height of the buffer's primary font, falling back to
          the global default font when none is set.
-Original Offset: 005DCAB0
+ORIGINAL: 0x005DCAB0
 Status: Complete
 */
 int Buffer::text_line_height() {
@@ -413,7 +413,7 @@ func_buffer_copy_full BufferCopyFull = original_method<func_buffer_copy_full>(0x
 
 /*
 Purpose: Copy a region of another buffer into the same position in this one.
-Original Offset: 005D95B0
+ORIGINAL: 0x005D95B0
 Return Value: whatever the full copy returns
 Status: Complete with temporary full-copy dependency
 
@@ -436,7 +436,7 @@ int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
 /*
 Purpose: Copy the region a rectangle describes out of another buffer into the
          same position in this one.
-Original Offset: 005D95E0
+ORIGINAL: 0x005D95E0
 Return Value: whatever the full copy returns
 Status: Complete with temporary full-copy dependency
 
@@ -459,7 +459,7 @@ int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
 /*
 Purpose: Release every resource the buffer owns and reset it to its
          constructed state.
-Original Offset: 005D7470
+ORIGINAL: 0x005D7470
 Status: Complete
 */
 void Buffer::close() {
@@ -601,7 +601,7 @@ const uint32_t BufferVtable = 0x0066FDBC;
 /*
 Purpose: Destroy a Buffer by installing its virtual table, releasing every
          owned resource, and destroying the trailing Spot subobject.
-Original Offset: 005D7410
+ORIGINAL: 0x005D7410
 Status: Complete
 */
 void Buffer::destroy() {
@@ -620,7 +620,7 @@ void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
 
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.
-Original Offset: 005E3503
+ORIGINAL: 0x005E3503
 Return Value: The device context, or zero when the surface refuses one
 Status: Complete
 */
@@ -652,7 +652,7 @@ HDC Buffer::get_hdc() {
 /*
 Purpose: Drop the given number of device-context references, releasing the
          handle once the last one is gone.
-Original Offset: 005E3563
+ORIGINAL: 0x005E3563
 Status: Complete
 */
 void Buffer::release_hdc(int count) {
@@ -691,7 +691,7 @@ void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count) {
 /*
 Purpose: Republish a palette into the buffer's colour table and device context,
          skipping the work when the palette has not changed.
-Original Offset: 005DE8F0
+ORIGINAL: 0x005DE8F0
 Return Value: No errors (0); no pixel storage (7); null palette (3)
 Status: Complete
 Verification note: the publish branch is reachable - the fixture's surface
@@ -734,7 +734,7 @@ int __fastcall buffer_sync_to_palette_redirect(
 /*
 Purpose: Report the height of the buffer's text font, resolving the process
          default the first time it is needed.
-Original Offset: 005DCA80
+ORIGINAL: 0x005DCA80
 Return Value: The font's height
 Status: Complete
 */
@@ -756,7 +756,7 @@ int __fastcall buffer_text_height_redirect(Buffer *self, void *) {
 /*
 Purpose: Clip the buffer to a rectangle, updating the GDI clip region and the
          DirectDraw clipper to match.
-Original Offset: 005D8000
+ORIGINAL: 0x005D8000
 Return Value: No errors (0); empty intersection or region failure (1);
               null rectangle (3); no pixel storage and no surface (7)
 Status: Complete
@@ -846,7 +846,7 @@ func_buffer_text_width_measured BufferTextWidthMeasured =
 
 /*
 Purpose: Measure a null-terminated string with the buffer's text font.
-Original Offset: 005DC790
+ORIGINAL: 0x005DC790
 Return Value: The measured width, or zero for a null string
 Status: Complete with a temporary dependency on the measured overload
 */
@@ -894,7 +894,7 @@ Purpose: Outline a rectangle as a two-color bevel: the top and left edges in
          edge spans [left+1, right-1], the bottom [left, right-2] one row up
          from the bottom, the left column [top, bottom-2], and the right
          column [top+1, bottom-1] one column in from the right.
-Original Offset: 005E3203
+ORIGINAL: 0x005E3203
 Return Value: No errors (0); null rectangle (3)
 Status: Complete with temporary hline/vline dependencies
 
@@ -931,7 +931,7 @@ int __fastcall buffer_box_redirect(Buffer *self, void *, RECT *rect,
 Purpose: Reset the buffer's link table - reinitialise the spot list to 40
          entries, clear the count, and free the twenty owned link pointers,
          each through the executable's CRT boundary.
-Original Offset: 005DEF90
+ORIGINAL: 0x005DEF90
 Return Value: n/a
 Status: Complete
 */
@@ -957,7 +957,7 @@ func_buffer_write_multi_font_raw_l BufferWriteMultiFontRawL =
 /*
 Purpose: Draw at most `len` characters of a string at an explicit pen
          position, clamping the count to the string's own length first.
-Original Offset: 005DCEA0
+ORIGINAL: 0x005DCEA0
 Return Value: The raster writer's result; the incoming x for a null string or
               an empty draw; unusable font (3, `mov eax, 3` at 0x005DCF2B)
 Status: Complete with a temporary raster-writer dependency
@@ -1001,7 +1001,7 @@ int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
 /*
 Purpose: Draw at most `len` characters of a string flush against a
          rectangle's left edge and vertically centred on the text font.
-Original Offset: 005DCF40
+ORIGINAL: 0x005DCF40
 Return Value: The raster writer's result; zero for every rejected input
 Status: Complete with a temporary raster-writer dependency
 
@@ -1061,7 +1061,7 @@ int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,
 /*
 Purpose: Draw at most `len` characters of a string horizontally centred in a
          span of `width` pixels starting at an explicit pen position.
-Original Offset: 005DD020
+ORIGINAL: 0x005DD020
 Return Value: The raster writer's result; the incoming x for a null string or
               an empty draw; unusable font (3)
 Status: Complete with temporary raster-writer and text-width dependencies
@@ -1111,7 +1111,7 @@ int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
 /*
 Purpose: Draw at most `len` characters of a string centred both horizontally
          and vertically inside a rectangle.
-Original Offset: 005DD130
+ORIGINAL: 0x005DD130
 Return Value: The raster writer's result; unusable font (3); zero for a null
               string, a null rectangle or an empty draw
 Status: Complete with temporary raster-writer and text-width dependencies
@@ -1178,7 +1178,7 @@ int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
 }
 
 /*
-Original Offset: 005DA680
+ORIGINAL: 0x005DA680
 Status: Complete
 */
 int Buffer::poly(Vert *a1, int a2, int a3) {

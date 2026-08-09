@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0046F880
 // 0x0046F880  ?on_sys_close@MapWin@@QAEXXZ  ->  ?on_sys_close@MapWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

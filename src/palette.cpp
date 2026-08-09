@@ -22,7 +22,7 @@ int *PaletteInitialized = reinterpret_cast<int *>(0x009B8178);
 
 /*
 Purpose: Convert process palette RGB entries into Windows RGBQUAD order.
-Original Offset: 005FE560
+ORIGINAL: 0x005FE560
 Return Value: 3 for a null output, 7 while the palette is unavailable, or 0
 Status: Complete
 */
@@ -64,7 +64,7 @@ int __fastcall palette_get_rgbquad_redirect(
 
 /*
 Purpose: Record the window the palette applies to.
-Original Offset: 005FE4F0
+ORIGINAL: 0x005FE4F0
 Status: Complete
 Verification note: the original body is a single ret - it accepts the window
 and does nothing with it. There is no state to observe and no statement to
@@ -82,7 +82,7 @@ void __cdecl palette_set_active_window_redirect(Win *window) {
 Purpose: Find the slot for a value in the five-entry internal table, returning
          the index of the matching entry or the first empty one, and 5 when the
          table is full without a match.
-Original Offset: 005FED10
+ORIGINAL: 0x005FED10
 Return Value: the slot index, 0 to 5
 Status: Complete
 */

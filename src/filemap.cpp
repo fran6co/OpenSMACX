@@ -22,7 +22,7 @@
 /*
 Purpose: Initialize the class by opening a file with write permission. The boolean parameter toggles 
          if the file is accessed sequentially or randomly.
-Original Offset: 006283A0
+ORIGINAL: 0x006283A0
 Return Value: Pointer to the initialized class
 Status: Complete
 */
@@ -33,7 +33,7 @@ Filemap *Filemap::init(LPCSTR file_name, BOOL is_sequential) {
 
 /*
 Purpose: Initialize the class by opening a random access file with write permission.
-Original Offset: 006283C0
+ORIGINAL: 0x006283C0
 Return Value: Pointer to initialized class
 Status: Complete
 */
@@ -45,7 +45,7 @@ Filemap *Filemap::init(LPCSTR file_name) {
 /*
 Purpose: Open a file with read permission. The boolean parameter toggles if the file is accessed 
          sequentially or randomly.
-Original Offset: 00628430
+ORIGINAL: 0x00628430
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -76,7 +76,7 @@ LPVOID Filemap::open_read(LPCSTR file_name, BOOL is_sequential) {
 /*
 Purpose: Open a file with write permission. The boolean parameter toggles if the file is accessed
          sequentially or randomly.
-Original Offset: 00628540
+ORIGINAL: 0x00628540
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -107,7 +107,7 @@ LPVOID Filemap::open(LPCSTR file_name, BOOL is_sequential) {
 
 /*
 Purpose: Create a new file or overwrite an existing one with the specified size filled with zeros.
-Original Offset: 00628650
+ORIGINAL: 0x00628650
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -140,7 +140,7 @@ LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
 
 /*
 Purpose: Close the map and all handles to the file.
-Original Offset: 006287C0
+ORIGINAL: 0x006287C0
 Return Value: n/a
 Status: Complete
 */
@@ -163,7 +163,7 @@ void Filemap::close() {
 /*
 Purpose: Close and set the end of the file. This can be used to truncate existing files. It also 
          assumes the file has write permission.
-Original Offset: 00628810
+ORIGINAL: 0x00628810
 Return Value: n/a
 Status: Complete
 */

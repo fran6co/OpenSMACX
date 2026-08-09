@@ -22,7 +22,7 @@
 
 /*
 Purpose: Returns a fixed 11; the legacy implementation is a single constant load.
-Original Offset: 004C70E0
+ORIGINAL: 0x004C70E0
 Return Value: 11, always
 Status: Complete
 */
@@ -36,7 +36,7 @@ int __fastcall wave_set_asdr_redirect(Wave *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-Original Offset: 004C70D0
+ORIGINAL: 0x004C70D0
 Return Value: 11, always
 Status: Complete
 */
@@ -50,7 +50,7 @@ int __fastcall wave_set_bufflimit_redirect(Wave *self, void *, unsigned int a1) 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-Original Offset: 004C70F0
+ORIGINAL: 0x004C70F0
 Return Value: 11, always
 Status: Complete
 */
@@ -64,7 +64,7 @@ int __fastcall wave_set_attack_redirect(Wave *self, void *, unsigned int a1, uns
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-Original Offset: 004C7100
+ORIGINAL: 0x004C7100
 Return Value: 11, always
 Status: Complete
 */
@@ -78,7 +78,7 @@ int __fastcall wave_set_sustain_redirect(Wave *self, void *, unsigned int a1, un
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-Original Offset: 004C7110
+ORIGINAL: 0x004C7110
 Return Value: 11, always
 Status: Complete
 */
@@ -92,7 +92,7 @@ int __fastcall wave_set_decay_redirect(Wave *self, void *, unsigned int a1, unsi
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-Original Offset: 004C7120
+ORIGINAL: 0x004C7120
 Return Value: 11, always
 Status: Complete
 */
@@ -110,7 +110,7 @@ Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
          return value; the device is then forgotten. Unless bit 1 of the flag
          byte at 0x54 suppresses it, the object's own vtable slot 0x80 is run,
          and the loaded bit (bit 0) of the flag dword at 0x40 is cleared.
-Original Offset: 004C6EA0
+ORIGINAL: 0x004C6EA0
 Return Value: whatever the device's unload returned, or 0 when none was wrapped
 Status: Complete
 */
@@ -143,7 +143,7 @@ int __fastcall wave_unload_redirect(Wave *self, void *) {
 Purpose: Set the playback pitch, clamped to the range the engine accepts
          (-1200 to 1200). The clamped value is stored at 0x58 and handed to the
          wrapped device, if there is one, through its vtable slot 0x98.
-Original Offset: 004C6EE0
+ORIGINAL: 0x004C6EE0
 Return Value: n/a
 Status: Complete
 */
@@ -166,7 +166,7 @@ void Wave::set_pitch(int a1) {
 Purpose: Load a wave. The object's own vtable slot 0x88 does the loading; unless
          bit 2 of the second argument says otherwise, its own slot 0x8C then
          runs as the follow-up and supplies the result.
-Original Offset: 004C6DB0
+ORIGINAL: 0x004C6DB0
 Return Value: slot 0x8C's result, or 0 when bit 2 of a2 skipped it
 Status: Complete
 */
@@ -194,7 +194,7 @@ int __fastcall wave_load_redirect(Wave *self, void *, int a1, int a2) {
 /*
 Purpose: Report the wave's length in milliseconds, a plain read of the field
          at 0x60.
-Original Offset: 004C6B00
+ORIGINAL: 0x004C6B00
 Return Value: the stored length
 Status: Complete
 */
@@ -218,7 +218,7 @@ func_time_get_time **WaveTimeGetTimeSlot =
 Purpose: Report whether the wave is still sounding. A wrapped device answers
          for itself through its own vtable slot 0x5C; with no device the wave
          is timed against the clock instead.
-Original Offset: 004C6B10
+ORIGINAL: 0x004C6B10
 Return Value: nonzero while playing, 0 once finished or when not started
 Status: Complete
 */
@@ -257,7 +257,7 @@ Purpose: Start the wave playing. A wrapped device answers through its own
          vtable slot 0x94, as the receiver, with the play argument passed on;
          its result is returned verbatim. With no device the answer is a
          fixed 0x14.
-Original Offset: 004C68F0
+ORIGINAL: 0x004C68F0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -282,7 +282,7 @@ int __fastcall wave_play_redirect(Wave *self, void *, int a1) {
 /*
 Purpose: Ask the wrapped device, through its vtable slot 0xC8, whether the
          buffer is in hardware.
-Original Offset: 004C6AE0
+ORIGINAL: 0x004C6AE0
 Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
@@ -302,7 +302,7 @@ int __fastcall wave_is_hwbuffer_redirect(Wave *self, void *) {
 /*
 Purpose: Ask the wrapped device for a time value through its vtable slot 0xB4,
          passing the query argument on.
-Original Offset: 004C6FD0
+ORIGINAL: 0x004C6FD0
 Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
@@ -322,7 +322,7 @@ int __fastcall wave_get_time_redirect(Wave *self, void *, uint32_t a1) {
 /*
 Purpose: Ask the wrapped device for the current marker through its vtable
          slot 0xB8.
-Original Offset: 004C6FF0
+ORIGINAL: 0x004C6FF0
 Return Value: the device's answer, or -1 when no device is wrapped
 Status: Complete
 */
@@ -342,7 +342,7 @@ int __fastcall wave_get_current_marker_redirect(Wave *self, void *) {
 /*
 Purpose: Ask the wrapped device for the game window handle through its vtable
          slot 0x3C.
-Original Offset: 004C7010
+ORIGINAL: 0x004C7010
 Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
@@ -362,7 +362,7 @@ int __fastcall wave_get_game_hwnd_redirect(Wave *self, void *) {
 /*
 Purpose: Ask the wrapped device for the device count through its vtable
          slot 0xBC.
-Original Offset: 004C7020
+ORIGINAL: 0x004C7020
 Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
@@ -384,7 +384,7 @@ Purpose: Unknown. The original chases the pointer chain that starts at the
          wrapped device and continues through each node's own 0x3C slot until
          it runs out, reads nothing else, and always answers 1. The argument
          is ignored.
-Original Offset: 004C7080
+ORIGINAL: 0x004C7080
 Return Value: 1, always
 Status: Complete
 */
@@ -403,7 +403,7 @@ int __fastcall wave_unk1_redirect(Wave *self, void *, int a1) {
 /*
 Purpose: Set the reverb mix. The value is stored at 0x5C first, then the
          wrapped device is told through its vtable slot 0xE0.
-Original Offset: 004C70A0
+ORIGINAL: 0x004C70A0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -424,7 +424,7 @@ int __fastcall wave_set_reverb_mix_redirect(Wave *self, void *, float a1) {
 /*
 Purpose: Ask the wrapped device, through its vtable slot 0xDC, whether the
          wave is 3D positioned.
-Original Offset: 004C7250
+ORIGINAL: 0x004C7250
 Return Value: the device's answer, or 0 when no device is wrapped (the
               original defines only AL on that path; callers test the byte)
 Status: Complete
@@ -447,7 +447,7 @@ Purpose: Describe a device into the caller's buffer through the wrapped
          device's vtable slot 0xC0. With no device the buffer is terminated
          to an empty string - but only when the third argument is nonzero,
          and without any null check on the buffer - and the answer is 1.
-Original Offset: 004C7040
+ORIGINAL: 0x004C7040
 Return Value: the device's answer, or 1 when no device is wrapped
 Status: Complete
 */
@@ -471,7 +471,7 @@ int __fastcall wave_get_device_description_redirect(Wave *self, void *,
 /*
 Purpose: Position the wave in 3D through the wrapped device's vtable
          slot 0xCC.
-Original Offset: 004C7190
+ORIGINAL: 0x004C7190
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -492,7 +492,7 @@ int __fastcall wave_set_position3d_redirect(Wave *self, void *, float a1,
 /*
 Purpose: Set the wave's X position through the wrapped device's vtable
          slot 0xD0.
-Original Offset: 004C71C0
+ORIGINAL: 0x004C71C0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -512,7 +512,7 @@ int __fastcall wave_set_xpos_redirect(Wave *self, void *, float a1) {
 /*
 Purpose: Set the wave's Y position through the wrapped device's vtable
          slot 0xD4.
-Original Offset: 004C71F0
+ORIGINAL: 0x004C71F0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -532,7 +532,7 @@ int __fastcall wave_set_ypos_redirect(Wave *self, void *, float a1) {
 /*
 Purpose: Set the wave's Z position through the wrapped device's vtable
          slot 0xD8.
-Original Offset: 004C7220
+ORIGINAL: 0x004C7220
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -556,7 +556,7 @@ Purpose: Store the attribute mask into the wave's own fields, then tell the
          (bit 0 -> 1, bit 2 -> 2, bit 6 -> 8, bit 7 -> 0x10, and - only when
          bit 2 is clear - bit 4 -> 4 and bit 8 -> 0x20). Bits already set at
          0x54 are never cleared.
-Original Offset: 004C6F20
+ORIGINAL: 0x004C6F20
 Return Value: n/a
 Status: Complete
 */
@@ -599,7 +599,7 @@ Purpose: Compose the attribute mask back out of the wave's own fields, OR-ed
          slot 0x70 (0 with no device). The mapping inverts set_attrib's:
          the dword at 0x30 -> bit 1, and the 0x54 flag byte's bits
          1 -> 0, 8 -> 6, 2 -> 2, 4 -> 4, 0x10 -> 7, 0x20 -> 8.
-Original Offset: 004C6F80
+ORIGINAL: 0x004C6F80
 Return Value: the composed attribute mask
 Status: Complete
 */
@@ -649,7 +649,7 @@ Purpose: Set the wave's volume. The low seven bits of the argument are stored
          every 24 bytes in the singleton's table), as level/127 * group in
          double precision truncated back to an integer. The wrapped device,
          if any, hears the result through its vtable slot 0x40.
-Original Offset: 004C7130
+ORIGINAL: 0x004C7130
 Return Value: n/a
 Status: Complete
 */
@@ -681,7 +681,7 @@ Purpose: Remember the wave's filename. The previous copy, if any, goes back
          to the game CRT heap first; the new string is measured, allocated on
          that same heap, recorded at 0x4C, and copied in - in that order, so
          the field already names the block while it is still being filled.
-Original Offset: 004C6B60
+ORIGINAL: 0x004C6B60
 Return Value: 0, or 0xA when the name is null
 Status: Complete
 */
@@ -713,7 +713,7 @@ Purpose: Start the wave. While it holds a device group slot, a disabled group
          0x14. Finally a clocked wave stamps the start time from the game's
          timeGetTime import, runs its own vtable slot 0x80, and forgets the
          device.
-Original Offset: 004C6920
+ORIGINAL: 0x004C6920
 Return Value: the device's start answer, 0x14 when disabled or unstartable,
               0 when a clocked load wrapped no device
 Status: Complete
@@ -768,7 +768,7 @@ Purpose: Load the wave from its remembered filename. With no wrapped device
          the device hears through its slot 0x6C, the base Sound::load reads
          the file, and on success the device reports the length in
          milliseconds through its slot 0xC4 into the field at 0x60.
-Original Offset: 004C6CE0
+ORIGINAL: 0x004C6CE0
 Return Value: 0 on success, 8 with no filename, 1 with a dead creation hook,
               or the creation/load error
 Status: Complete
@@ -839,7 +839,7 @@ Purpose: Reload the wave from its remembered filename. The device is created
          loaded bit of the 0x40 flag dword is set BEFORE the wave's own
          vtable slot 0x7C runs, and a nonzero dword at 0x30 additionally
          starts the device looping through its slot 0x48 with argument 1.
-Original Offset: 004C6DF0
+ORIGINAL: 0x004C6DF0
 Return Value: 0 on success, 8 with no filename, 1 with a dead creation hook,
               or the creation/reload error
 Status: Complete
@@ -904,7 +904,7 @@ Purpose: Load the wave from in-memory data. Refuses (0xC) when a device is
          own slot 0x70 composes the attribute mask - the original dispatches
          the following slot 0x6C through that captured table on the re-read
          device - and the wave's own slot 0x7C finishes.
-Original Offset: 004C6BB0
+ORIGINAL: 0x004C6BB0
 Return Value: 0 on success, 0xC with a device already wrapped, 1 with a dead
               creation hook, or the creation error
 Status: Complete
@@ -944,7 +944,7 @@ Purpose: Load the wave from a caller-supplied filename. The guarded creation
          device answers the length through slot 0xC4 and then hears the
          stored volume, pitch, and the dword at 0x08 through its slots
          0x40, 0x98, and 0x44.
-Original Offset: 004C6C20
+ORIGINAL: 0x004C6C20
 Return Value: 0 on success, 1 with a dead creation hook, or the
               creation/load error
 Status: Complete
@@ -1022,7 +1022,7 @@ Purpose: Build the wave. The original constructs in the same three vtable
          under the same policy. The net field state: full volume, zeroed
          regions, a 1000ms default at 0x38, flag dword 4, Sound::set_type
          run with type 1, unit reverb mix, and the out-of-range group slot.
-Original Offset: 004C66E0
+ORIGINAL: 0x004C66E0
 Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete
@@ -1077,7 +1077,7 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
          0x6C. The mode bits then fold onto the flag byte as in set_attrib
          (bit 4 suppressed for streaming waves, bit 8 unsuppressed here), and
          bit 1 of the mode runs the wave's own vtable slot 0x48 with 1.
-Original Offset: 004C69B0
+ORIGINAL: 0x004C69B0
 Return Value: n/a
 Status: Complete
 */
@@ -1154,7 +1154,7 @@ void __fastcall wave_init_redirect(Wave *self, void *, char *a1, uint32_t a2) {
 Purpose: The compiler-generated scalar deleting destructor: destroy the wave
          and, when bit 0 of the mode argument asks for it, return the storage
          to the game CRT heap.
-Original Offset: 004C9300
+ORIGINAL: 0x004C9300
 Return Value: the object pointer
 Status: Complete
 */
@@ -1196,7 +1196,7 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          release hook re-arms them, exactly as in the original. The registered
          SEH frame is omitted: the binary has no throw entry point, so it is
          unreachable.
-Original Offset: 004C67C0
+ORIGINAL: 0x004C67C0
 Return Value: n/a
 Status: Complete
 */

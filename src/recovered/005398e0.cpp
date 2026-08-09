@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005398E0
 // 0x005398E0  ?pop_wait@@YAHXZ  ->  ?pop_wait@@YAHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

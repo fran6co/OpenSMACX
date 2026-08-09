@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0042BEB0
 // 0x0042BEB0  ?UNK7@Datalink@@QAEXPADPAD@Z  ->  ?UNK7@Datalink@@QAEXPAD0@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00515740
 // 0x00515740  ?toggle_dest@Console@@QAEXXZ  ->  ?toggle_dest@Console@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

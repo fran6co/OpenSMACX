@@ -21,7 +21,7 @@
 
 /*
 Purpose: Shutdown the class instance.
-Original Offset: 005D45B0
+ORIGINAL: 0x005D45B0
 Return Value: n/a
 Status: Complete
 */
@@ -38,7 +38,7 @@ void Heap::shutdown() {
 
 /*
 Purpose: Deflate the heap of any free memory.
-Original Offset: 005D45E0
+ORIGINAL: 0x005D45E0
 Return Value: n/a
 Status: Complete
 */
@@ -54,7 +54,7 @@ void Heap::squeeze(int UNUSED(toggle)) {
 
 /*
 Purpose: Initialize the class instance and allocate the requested memory size.
-Original Offset: 005D4620
+ORIGINAL: 0x005D4620
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -75,7 +75,7 @@ BOOL Heap::init(size_t req_size) {
 /*
 Purpose: Get the requested memory size. If there currently isn't enough memory to meet the request, 
          allocate additional memory in blocks of 1024 bytes until request is met.
-Original Offset: 005D4680
+ORIGINAL: 0x005D4680
 Return Value: Memory pointer with address to requested size
 Status: Complete
 */

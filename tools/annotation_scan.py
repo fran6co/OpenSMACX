@@ -463,21 +463,22 @@ def scan_tree(root: Path = SRC_ROOT) -> list:
 # ----------------------------------------------------------------- resolving
 
 
-def _precedence(annotation: Annotation) -> int:
+def _precedence(annotation: Annotation) -> tuple:
     """Which claimant owns an address when several annotate it.
 
-    Lower wins. The new grammar beats every legacy spelling; a proved body
-    (byte-exact, re-verified by every collect) beats the census-era inline
-    blocks; a preserved unit is a RECORD of a measurement, so it yields to
-    any live claim on the same address.
+    Lower wins. The new grammar beats every legacy spelling; within one
+    grammar a proved body (byte-exact, re-verified by every collect) beats
+    an inline block; a preserved unit is a RECORD of a measurement, so it
+    yields to any live claim on the same address. The second key matters
+    once both stores carry explicit markers: the tie is decided by what the
+    file IS, not by the spelling it used to carry.
     """
-    if not annotation.deprecated:
-        return 0
+    base = 0 if not annotation.deprecated else 1
     if annotation.recipe == "writeback":
-        return 1
+        return (base, 0)
     if annotation.recipe == "census":
-        return 2
-    return 3
+        return (base, 1)
+    return (base, 2)
 
 
 def _code_only(region: str) -> str:

@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 006339B0
+ORIGINAL: 0x006339B0
 Return Value: n/a
 Status: Complete
 */
@@ -33,7 +33,7 @@ void __cdecl check_button_close_class_redirect() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-Original Offset: 006339A0
+ORIGINAL: 0x006339A0
 Return Value: 0, always
 Status: Complete
 */

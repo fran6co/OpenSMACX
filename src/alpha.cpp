@@ -48,7 +48,7 @@ uint32_t *Language = (uint32_t *)0x009BC054;
 
 /*
 Purpose: Convert the tech name string to a numeric tech id.
-Original Offset: 00584D60
+ORIGINAL: 0x00584D60
 Return Value: Tech id; 'None' (-1); 'Disabled' (-2); or error (-2)
 Status: Complete
 */
@@ -74,7 +74,7 @@ int __cdecl tech_name(LPSTR name) {
 
 /*
 Purpose: Convert the chassis name string to a numeric chassis id.
-Original Offset: 00584E40
+ORIGINAL: 0x00584E40
 Return Value: Chassis id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
@@ -100,7 +100,7 @@ int __cdecl chas_name(LPSTR name) {
 
 /*
 Purpose: Convert the weapon name string to a numeric weapon id.
-Original Offset: 00584F40
+ORIGINAL: 0x00584F40
 Return Value: Weapon id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
@@ -126,7 +126,7 @@ int __cdecl weap_name(LPSTR name) {
 
 /*
 Purpose: Convert the armor name string to a numeric armor id.
-Original Offset: 00585030
+ORIGINAL: 0x00585030
 Return Value: Armor id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
@@ -152,7 +152,7 @@ int __cdecl arm_name(LPSTR name) {
 
 /*
 Purpose: Parse the current tech name inside the Txt item buffer into a tech id.
-Original Offset: 00585150
+ORIGINAL: 0x00585150
 Return Value: Tech id
 Status: Complete
 */
@@ -163,7 +163,7 @@ int __cdecl tech_item() {
 
 /*
 Purpose: Parse the #RULES & #WORLDBUILDER sections inside the alpha(x).txt.
-Original Offset: 00585170
+ORIGINAL: 0x00585170
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -293,7 +293,7 @@ BOOL __cdecl read_basic_rules() {
 
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
-Original Offset: 00585E30
+ORIGINAL: 0x00585E30
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -347,7 +347,7 @@ BOOL __cdecl read_tech() {
 
 /*
 Purpose: Clear the rule values for the specified player.
-Original Offset: 00585FE0
+ORIGINAL: 0x00585FE0
 Return Value: n/a
 Status: Complete
 */
@@ -371,7 +371,7 @@ void __cdecl clear_faction(Player *player) {
 
 /*
 Purpose: Parse the faction's file and art for the specified player id.
-Original Offset: 00586050
+ORIGINAL: 0x00586050
 Return Value: n/a
 Status: Complete
 */
@@ -385,7 +385,7 @@ void __cdecl read_faction(int player_id) {
 /*
 Purpose: Parse the 1st eight lines of the specified faction's file into a player structure. The 
          toggle parameter will end the function early if set to 2 (original code never uses this).
-Original Offset: 00586090
+ORIGINAL: 0x00586090
 Return Value: n/a
 Status: Complete
 */
@@ -672,7 +672,7 @@ void __cdecl read_faction(Player *player, int toggle) {
 
 /*
 Purpose: Parse the #BONUSNAMES, #FACTIONS, and #NEWFACTIONS sections inside the alpha(x).txt.
-Original Offset: 00586F30
+ORIGINAL: 0x00586F30
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -745,13 +745,13 @@ BOOL __cdecl read_factions() {
 
 /*
 Purpose: Parse and set the noun item's gender and plurality from the Txt buffer.
-Original Offset: 005871D0
+ORIGINAL: 0x005871D0
 Return Value: n/a
 Status: Complete
 */
 /*
 Purpose: Set the noun's gender and plurality from the current Txt item.
-Original Offset: 005871D0
+ORIGINAL: 0x005871D0
 Return Value: n/a
 Status: Complete
 */
@@ -782,7 +782,7 @@ void __cdecl noun_item(int *gender, int *plurality) {
 
 /*
 Purpose: Parse the #UNITS section inside the alpha(x).txt.
-Original Offset: 00587240
+ORIGINAL: 0x00587240
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -839,7 +839,7 @@ BOOL __cdecl read_units() {
 /*
 Purpose: Parse in all the game rules via alpha/x.txt. If the toggle param is set to true, parse the
          #UNITS & #FACTIONS sections. Otherwise, skip both. New game vs reload?
-Original Offset: 005873C0
+ORIGINAL: 0x005873C0
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -1231,7 +1231,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
 
 /*
 Purpose: Attempt to read the setting's value from the ini file.
-Original Offset: 0059D980
+ORIGINAL: 0x0059D980
 Return Value: Key's string value from the ini or default if not set
 Status: Complete
 */
@@ -1249,7 +1249,7 @@ LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default)
 
 /*
 Purpose: Get the default value for the 1st set of preferences.
-Original Offset: 0059DA20
+ORIGINAL: 0x0059DA20
 Return Value: Default preferences
 Status: Complete
 */
@@ -1268,7 +1268,7 @@ uint32_t __cdecl default_prefs() {
 
 /*
 Purpose: Get the default value for the 2nd set of preferences.
-Original Offset: 0059DAA0
+ORIGINAL: 0x0059DAA0
 Return Value: Default preferences 2nd set
 Status: Complete
 */
@@ -1283,7 +1283,7 @@ uint32_t __cdecl default_prefs2() {
 
 /*
 Purpose: Get the default value for the warning pop-up preferences.
-Original Offset: 0059DB20
+ORIGINAL: 0x0059DB20
 Return Value: Default warning preferences
 Status: Complete
 */
@@ -1296,7 +1296,7 @@ uint32_t __cdecl default_warn() {
 
 /*
 Purpose: Get the default value for the rule related preferences.
-Original Offset: 0059DB30
+ORIGINAL: 0x0059DB30
 Return Value: Default rule preferences
 Status: Complete
 */
@@ -1307,7 +1307,7 @@ uint32_t __cdecl default_rules() {
 
 /*
 Purpose: Attempt to read the setting's value from the ini file.
-Original Offset: 0059DB40
+ORIGINAL: 0x0059DB40
 Return Value: Key's integer value from the ini or default if not set
 Status: Complete
 */
@@ -1326,7 +1326,7 @@ int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
 Purpose: Read the faction filenames and search for keys from the ini file (SMACX only). This has 
          the added effect of forcing the player's search_key to be set to the filename value. 
          Rewrote almost the entire function because of how terrible the original code logic was.
-Original Offset: 0059DBD0
+ORIGINAL: 0x0059DBD0
 Return Value: n/a
 Status: Complete
 */
@@ -1355,7 +1355,7 @@ void __cdecl prefs_fac_load() {
 
 /*
 Purpose: Load the most common preferences from the game's ini to globals.
-Original Offset: 0059DCF0
+ORIGINAL: 0x0059DCF0
 Return Value: n/a
 Status: Complete
 */
@@ -1400,7 +1400,7 @@ void __cdecl prefs_load(BOOL use_default) {
 
 /*
 Purpose: Write the string value to the pref key of the ini.
-Original Offset: 0059E510
+ORIGINAL: 0x0059E510
 Return Value: n/a
 Status: Complete
 */
@@ -1410,7 +1410,7 @@ void __cdecl prefs_put(LPCSTR key_name, LPCSTR value) {
 
 /*
 Purpose: Write the value as either an integer or a binary string to the pref key inside the ini.
-Original Offset: 0059E530
+ORIGINAL: 0x0059E530
 Return Value: n/a
 Status: Complete
 */
@@ -1422,7 +1422,7 @@ void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
 
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
-Original Offset: 0059E5D0
+ORIGINAL: 0x0059E5D0
 Return Value: n/a
 Status: Complete
 */
@@ -1458,7 +1458,7 @@ void __cdecl prefs_save(BOOL save_factions) {
 
 /*
 Purpose: Set the internal game preference globals from the ini setting globals.
-Original Offset: 0059E950
+ORIGINAL: 0x0059E950
 Return Value: n/a
 Status: Complete
 */
@@ -1490,7 +1490,7 @@ std::string __cdecl prefs_get_binary(int value) {
 
 /*
 Purpose: Parse the #LABELS section inside the labels.txt file.
-Original Offset: 00616A00
+ORIGINAL: 0x00616A00
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -1514,7 +1514,7 @@ BOOL __cdecl labels_init() {
 
 /*
 Purpose: Shutdown or reset the labels global variable.
-Original Offset: 006169D0
+ORIGINAL: 0x006169D0
 Return Value: n/a
 Status: Complete
 */
@@ -1528,7 +1528,7 @@ void __cdecl labels_shutdown() {
 
 /*
 Purpose: Set the game's language.
-Original Offset: 00627100
+ORIGINAL: 0x00627100
 Return Value: n/a
 Status: Complete
 */
@@ -1538,7 +1538,7 @@ void __cdecl set_language(int language) {
 
 /*
 Purpose: Get the label string and concatenate it to the stringTemp buffer.
-Original Offset: 005A5880
+ORIGINAL: 0x005A5880
 Return Value: n/a
 Status: Complete
 */

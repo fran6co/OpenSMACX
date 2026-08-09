@@ -232,6 +232,19 @@ class ResolveIntegration(unittest.TestCase):
         self.assertEqual(resolved, [new])
         self.assertEqual(conflicts, {})
 
+    def test_proved_beats_preserved_once_both_migrated(self):
+        # After the migration both stores carry explicit markers; the tie
+        # breaks on what the file IS, not the spelling it used to carry.
+        proved = self.annotation(0x006116E0, "int f() { return 1; }\n",
+                                 recipe="writeback",
+                                 path="src/recovered/006116e0.cpp")
+        preserved = self.annotation(0x006116E0, "// unit\nint g() {}\n",
+                                    recipe="verbatim",
+                                    path="src/recovered/units/006116e0.cpp")
+        resolved, conflicts = annotation_scan.resolve([preserved, proved])
+        self.assertEqual(resolved, [proved])
+        self.assertEqual(conflicts, {})
+
     def test_tie_is_a_conflict(self):
         left = self.annotation(0x00401000, "int f() { return 1; }\n",
                                path="src/a.cpp")
@@ -387,9 +400,23 @@ class Migration(unittest.TestCase):
         self.assertIn("p[0] = 0;", annotations[0].region)
         self.assertNotIn("prose", annotations[0].region)
 
-    def test_guards_pass_on_every_real_file(self):
-        plan = decomp_status.plan_migration()
-        self.assertGreater(len(plan), 100)
+    def test_no_deprecated_spellings_remain_in_src(self):
+        # The migration ran once (1,607 files, guards recorded in the
+        # commit); the permanent invariant is that nothing regresses back.
+        # A legacy spelling reappearing means a writer emitted the old
+        # form, and the map is no longer one grammar.
+        annotations = annotation_scan.scan_tree()
+        deprecated = [a for a in annotations if a.deprecated]
+        self.assertEqual(
+            deprecated, [],
+            f"{len(deprecated)} deprecated annotation(s) remain, first: "
+            f"{deprecated[0].location if deprecated else ''}")
+
+    def test_migration_plan_guards_on_synthetic_files(self):
+        text = ("/*\nOriginal Offset: 00401640\n*/\n"
+                "int f() {\n    return 1;\n}\n")
+        new = decomp_status.plan_file_migration(Path("src/x.cpp"), text, "")
+        plan = [(Path("src/x.cpp"), text, new)]
         self.assertTrue(decomp_status.check_migration(plan))
 
     def test_guard_fails_when_code_would_change(self):

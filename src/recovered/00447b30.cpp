@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00447B30
 // 0x00447B30  ?new_base@BAmbience@@QAEXXZ  ->  ?new_base@BAmbience@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00618E20
 // 0x00618E20  ?vx_free@Caviar@@QAAXPAX@Z  ->  ?vx_free@Caviar@@QAAXPAX@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

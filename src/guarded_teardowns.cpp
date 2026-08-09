@@ -70,7 +70,7 @@ func_thiscall_teardown TeardownTarget005E3820 = original_method<func_thiscall_te
 Purpose: ?timer_callback_daemon@BattleWin@@QAAXHH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 00422EB0
+ORIGINAL: 0x00422EB0
 Return Value: n/a
 Status: Complete
 */
@@ -82,7 +82,7 @@ void __cdecl teardown_00422eb0() {
 Purpose: ?timer_callback_daemon@BattleWin@@QAAXH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 00422EC0
+ORIGINAL: 0x00422EC0
 Return Value: n/a
 Status: Complete
 */
@@ -94,7 +94,7 @@ void __cdecl teardown_00422ec0() {
 Purpose: ?passover_callback@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 004456A0
+ORIGINAL: 0x004456A0
 Return Value: n/a
 Status: Complete
 */
@@ -106,7 +106,7 @@ void __cdecl teardown_004456a0() {
 Purpose: ??__Fg_MAPWIN@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 004620A0
+ORIGINAL: 0x004620A0
 Return Value: n/a
 Status: Complete
 */
@@ -119,7 +119,7 @@ void __cdecl teardown_g_mapwin() {
 Purpose: ??__Fg_PLANWIN@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 0048AE20
+ORIGINAL: 0x0048AE20
 Return Value: n/a
 Status: Complete
 */
@@ -132,7 +132,7 @@ void __cdecl teardown_g_planwin() {
 Purpose: ??__Eg_BOOM_BUFFER1@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 00505D20
+ORIGINAL: 0x00505D20
 Return Value: n/a
 Status: Complete
 */
@@ -144,7 +144,7 @@ void __cdecl teardown_00505d20() {
 Purpose: ??__Eg_BOOM_FLIC@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 00505D30
+ORIGINAL: 0x00505D30
 Return Value: n/a
 Status: Complete
 */
@@ -156,7 +156,7 @@ void __cdecl teardown_00505d30() {
 Purpose: ??__Fg_CONSOLE@@YAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 0050E870
+ORIGINAL: 0x0050E870
 Return Value: n/a
 Status: Complete
 */
@@ -169,7 +169,7 @@ void __cdecl teardown_g_console() {
 Purpose: sub_589890 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 00589890
+ORIGINAL: 0x00589890
 Return Value: n/a
 Status: Complete
 */
@@ -181,7 +181,7 @@ void __cdecl teardown_00589890() {
 Purpose: ??__Fg_BUFFER_SPRITE@@YAXXZ - tear down the global at 0x9b3a50 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
          at 0x9b37cc.
-Original Offset: 005D71F0
+ORIGINAL: 0x005D71F0
 Return Value: n/a
 Status: Complete
 */
@@ -200,7 +200,7 @@ void __cdecl teardown_g_buffer_sprite() {
 Purpose: ??__Fg_WIN_BUFFER@@YAXXZ - tear down the global at 0x9b6f08 through
          ??1Buffer@@QAE@XZ, at most once, gated on bit 1 of the flag byte
          at 0x9b6e30.
-Original Offset: 005EB370
+ORIGINAL: 0x005EB370
 Return Value: n/a
 Status: Complete
 */
@@ -219,7 +219,7 @@ void __cdecl teardown_g_win_buffer() {
 Purpose: sub_5eb3b0 - tear down the global at 0x9b7490 through
          ??1Buffer@@QAE@XZ, at most once, gated on bit 2 of the flag byte
          at 0x9b6e30.
-Original Offset: 005EB3B0
+ORIGINAL: 0x005EB3B0
 Return Value: n/a
 Status: Complete
 */
@@ -238,7 +238,7 @@ void __cdecl teardown_005eb3b0() {
 Purpose: ??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ - tear down the global at 0x9b8ef8 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
          at 0x9b8ef0.
-Original Offset: 0060D080
+ORIGINAL: 0x0060D080
 Return Value: n/a
 Status: Complete
 */
@@ -257,7 +257,7 @@ void __cdecl teardown_g_radiobutton_sprite_1() {
 Purpose: ??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ - tear down the global at 0x9b8f28 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
          at 0x9b8ef0.
-Original Offset: 0060D0C0
+ORIGINAL: 0x0060D0C0
 Return Value: n/a
 Status: Complete
 */
@@ -276,7 +276,7 @@ void __cdecl teardown_g_radiobutton_sprite_2() {
 Purpose: ?close_class@RadioButton@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 0060E5D0
+ORIGINAL: 0x0060E5D0
 Return Value: n/a
 Status: Complete
 */
@@ -289,7 +289,7 @@ void __cdecl teardown_0060e5d0() {
 Purpose: ??__Fg_CHECKBOX_SPRITE_1@@YAXXZ - tear down the global at 0x9b8f60 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
          at 0x9b8f58.
-Original Offset: 0060E610
+ORIGINAL: 0x0060E610
 Return Value: n/a
 Status: Complete
 */
@@ -308,7 +308,7 @@ void __cdecl teardown_g_checkbox_sprite_1() {
 Purpose: ??__Fg_CHECKBOX_SPRITE_2@@YAXXZ - tear down the global at 0x9b8f90 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
          at 0x9b8f58.
-Original Offset: 0060E650
+ORIGINAL: 0x0060E650
 Return Value: n/a
 Status: Complete
 */
@@ -327,7 +327,7 @@ void __cdecl teardown_g_checkbox_sprite_2() {
 Purpose: ?close_class@CheckBox@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 0060FD60
+ORIGINAL: 0x0060FD60
 Return Value: n/a
 Status: Complete
 */
@@ -340,7 +340,7 @@ void __cdecl teardown_0060fd60() {
 Purpose: ??__Fg_FILEWIN_SPRITE_1@@YAXXZ - tear down the global at 0x9b9048 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
          at 0x9b9014.
-Original Offset: 006137B0
+ORIGINAL: 0x006137B0
 Return Value: n/a
 Status: Complete
 */
@@ -359,7 +359,7 @@ void __cdecl teardown_g_filewin_sprite_1() {
 Purpose: ??__Fg_FILEWIN_SPRITE_2@@YAXXZ - tear down the global at 0x9b9018 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
          at 0x9b9014.
-Original Offset: 006137F0
+ORIGINAL: 0x006137F0
 Return Value: n/a
 Status: Complete
 */
@@ -378,7 +378,7 @@ void __cdecl teardown_g_filewin_sprite_2() {
 Purpose: ??__Fg_FILEWIN_SPRITE_3@@YAXXZ - tear down the global at 0x9b9078 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 4 of the flag byte
          at 0x9b9014.
-Original Offset: 00613830
+ORIGINAL: 0x00613830
 Return Value: n/a
 Status: Complete
 */
@@ -397,7 +397,7 @@ void __cdecl teardown_g_filewin_sprite_3() {
 Purpose: ??__Fg_CAVIAR_BUFFER_1@@YAXXZ - tear down the global at 0x9b9108 through
          ??1Buffer@@QAE@XZ, at most once, gated on bit 1 of the flag byte
          at 0x9b9104.
-Original Offset: 00616AC0
+ORIGINAL: 0x00616AC0
 Return Value: n/a
 Status: Complete
 */
@@ -416,7 +416,7 @@ void __cdecl teardown_g_caviar_buffer_1() {
 Purpose: ??__Fg_CAVIAR_BUFFER_2@@YAXXZ - tear down the global at 0x9b96b0 through
          ??1Buffer@@QAE@XZ, at most once, gated on bit 2 of the flag byte
          at 0x9b9104.
-Original Offset: 00616B00
+ORIGINAL: 0x00616B00
 Return Value: n/a
 Status: Complete
 */
@@ -435,7 +435,7 @@ void __cdecl teardown_g_caviar_buffer_2() {
 Purpose: sub_63bb00 - tear down the global at 0x9beae8 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
          at 0x9beae0.
-Original Offset: 0063BB00
+ORIGINAL: 0x0063BB00
 Return Value: n/a
 Status: Complete
 */
@@ -454,7 +454,7 @@ void __cdecl teardown_0063bb00() {
 Purpose: sub_63cef0 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
-Original Offset: 0063CEF0
+ORIGINAL: 0x0063CEF0
 Return Value: n/a
 Status: Complete
 */

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0063CF00
 // 0x0063CF00  deflateInit_  ->  _deflateInit_
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

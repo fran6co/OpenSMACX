@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00421B40
 // 0x00421B40  ?stop_timer@BattleWin@@QAEXXZ  ->  ?stop_timer@BattleWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

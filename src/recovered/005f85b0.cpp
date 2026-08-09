@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005F85B0
 // 0x005F85B0  ?on_mousewheel_down@Win@@QAEXH@Z  ->  ?on_mousewheel_down@Win@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00609D50
 // 0x00609D50  ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z  ->  ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

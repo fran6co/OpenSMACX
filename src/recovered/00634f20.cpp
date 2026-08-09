@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00634F20
 // 0x00634F20  ?UNK1@FileBox@@QAEHPAD@Z  ->  ?UNK1@FileBox@@QAEHPAD@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

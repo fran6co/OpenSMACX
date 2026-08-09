@@ -36,8 +36,12 @@ substitute for it.
 
 ## Keeping them honest
 
-`tools/byte_match_fanout.py --collect` re-verifies every file here the same
-way it re-verifies the fan-out work area: it rebuilds the unit from the
-current emitter and re-measures against the original. A body that stops
-verifying because the scaffolding changed shows up as a ledger regression
-rather than as a stale file nobody reads.
+`tools/decomp_status.py` measures every file here as part of the source map
+(each carries its `ORIGINAL: 0x...` marker since the 2026-08-09 migration;
+`tools/annotation_scan.py` is the reader), and
+`tools/byte_match_fanout.py --collect` still re-verifies the fan-out work
+area the same way. A body that stops verifying because the scaffolding
+changed shows up as a ledger regression rather than as a stale file nobody
+reads. The precedence rule when a proved body and a preserved unit both
+annotate one address: the proved body owns it, the unit is the record of a
+measurement.

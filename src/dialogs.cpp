@@ -12,7 +12,7 @@
 
 /*
 Purpose: Close the dialog manager; the legacy implementation is intentionally empty.
-Original Offset: 00612960
+ORIGINAL: 0x00612960
 Return Value: n/a
 Status: Complete
 */

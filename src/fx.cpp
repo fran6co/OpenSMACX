@@ -35,7 +35,7 @@ Purpose: Build the effect bank: the mirror image of the destructor below, one
          immediates at 0x004482AD and 0x004482AF - note the original pushes
          them count-then-size, so they arrive at the callee in the opposite
          order from the way they are written here.
-Original Offset: 004482A0
+ORIGINAL: 0x004482A0
 Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete
@@ -53,7 +53,7 @@ FX *__fastcall fx_ctor_redirect(FX *self, void *) {
 Purpose: Destroy the effect bank: hand the whole 0x61-element walk to the CRT
          vector iterator with the bank itself as the array base. Everything
          else is the per-element destructor's business.
-Original Offset: 00448290
+ORIGINAL: 0x00448290
 Return Value: n/a
 Status: Complete
 */
@@ -66,7 +66,7 @@ void __fastcall fx_dtor_redirect(FX *self, void *) {
 }
 
 /*
-Original Offset: 00446A90
+ORIGINAL: 0x00446A90
 Status: Complete
 */
 void FX::stop(int a1) {
@@ -74,7 +74,7 @@ void FX::stop(int a1) {
 }
 
 /*
-Original Offset: 00446AB0
+ORIGINAL: 0x00446AB0
 Status: Complete
 */
 void FX::release(int a1) {
@@ -83,7 +83,7 @@ void FX::release(int a1) {
 }
 
 /*
-Original Offset: 00446AD0
+ORIGINAL: 0x00446AD0
 Status: Complete
 */
 void FX::fade(int a1) {

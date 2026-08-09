@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00615EC0
 // 0x00615EC0  ?on_left_up@EditBox@@QAEXHH@Z  ->  ?on_left_up@EditBox@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0060FF00 FILE
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

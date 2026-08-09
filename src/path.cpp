@@ -26,7 +26,7 @@
 
 /*
 Purpose: Initialize an instance of the class.
-Original Offset: 0059A220
+ORIGINAL: 0x0059A220
 Return Value: n/a
 Status: Complete
 */
@@ -42,7 +42,7 @@ void Path::init() {
 
 /*
  Purpose: Shutdown an instance of the class.
- Original Offset: 0059A2D0
+ ORIGINAL: 0x0059A2D0
  Return Value: n/a
  Status: Complete
 */
@@ -84,7 +84,7 @@ void Path::set(uint32_t x, uint32_t y, int val) {
 /*
  Purpose: Check for unit zone of control conflicts taking into account land or ocean. This is a 
           slightly modified version of zoc_move() or zoc_sea().
- Original Offset: 0059A370
+ ORIGINAL: 0x0059A370
  Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
  Status: Complete
 */
@@ -120,7 +120,7 @@ int Path::zoc_path(int x, int y, int faction_id) {
 
 /*
  Purpose: Find the path between two points that meets the conditions?
- Original Offset: 0059A530
+ ORIGINAL: 0x0059A530
  Return Value: TBD
  Status: WIP
 */
@@ -131,7 +131,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
 
 /*
  Purpose: TBD
- Original Offset: 0059BC10
+ ORIGINAL: 0x0059BC10
  Return Value: TBD
  Status: WIP
 */
@@ -172,7 +172,7 @@ int Path::move(int veh_id, int faction_id) {
 
 /*
  Purpose: Populate the abstract map with the radial region value.
- Original Offset: 0059C200
+ ORIGINAL: 0x0059C200
  Return Value: n/a
  Status: Complete
 */
@@ -195,7 +195,7 @@ void Path::make_abstract() {
 
 /*
  Purpose: Merge the old region into the new region.
- Original Offset: 0059C340
+ ORIGINAL: 0x0059C340
  Return Value: n/a
  Status: Complete
 */
@@ -212,7 +212,7 @@ void Path::merge(int region_old, int region_new) {
 /*
  Purpose: Build the pathing tables using the provided coordinates to radiate outward for connected 
           land tiles owned by the specified faction.
- Original Offset: 0059C3C0
+ ORIGINAL: 0x0059C3C0
  Return Value: n/a
  Status: Complete
 */
@@ -245,7 +245,7 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 
 /*
  Purpose: Populate the continent and path table for the specified tile and region.
- Original Offset: 0059C520
+ ORIGINAL: 0x0059C520
  Return Value: n/a
  Status: Complete
 */
@@ -294,7 +294,7 @@ void Path::continent(int x, int y, int region) {
 
 /*
  Purpose: Populate and set up all the continents and path tables.
- Original Offset: 0059C790
+ ORIGINAL: 0x0059C790
  Return Value: n/a
  Status: Complete
 */
@@ -393,7 +393,7 @@ void Path::continents() {
 
 /*
  Purpose: TBD
- Original Offset: 0059CCA0
+ ORIGINAL: 0x0059CCA0
  Return Value: true/false
  Status: Complete - testing
 */

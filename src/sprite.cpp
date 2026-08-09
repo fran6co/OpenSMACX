@@ -27,7 +27,7 @@ func_sprite_free *SpriteFree = (func_sprite_free *)0x00644EF2;
 /*
 Purpose: Initialize an empty sprite and charge its own size to the sprite
          memory total.
-Original Offset: 005E37E0
+ORIGINAL: 0x005E37E0
 Status: Complete
 */
 Sprite::Sprite() {
@@ -59,7 +59,7 @@ Sprite *__fastcall sprite_construct_redirect(Sprite *self, void *) {
 /*
 Purpose: Release a sprite's allocations, discount its pixel memory, and clear
          every field except the type byte.
-Original Offset: 005E3820
+ORIGINAL: 0x005E3820
 Status: Complete
 */
 void Sprite::close() {
@@ -98,7 +98,7 @@ func_sprite_draw_original SpriteDrawOriginal = original_method<func_sprite_draw_
 
 /*
 Purpose: Draw the sprite with a temporarily substituted draw origin.
-Original Offset: 005E4B4A
+ORIGINAL: 0x005E4B4A
 Return Value: Whatever the four-argument overload returns
 Status: Complete with a temporary dependency on the four-argument overload
 */
@@ -123,7 +123,7 @@ int __fastcall sprite_draw_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-Original Offset: 005E4ADA
+ORIGINAL: 0x005E4ADA
 Status: Complete
 */
 int Sprite::UNK1(int, int, int, int, int, int, int) {
@@ -138,7 +138,7 @@ int __fastcall sprite_unk1_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-Original Offset: 005E4AEA
+ORIGINAL: 0x005E4AEA
 Status: Complete
 */
 int Sprite::UNK2(int, int, int, int, int) {
@@ -152,7 +152,7 @@ int __fastcall sprite_unk2_redirect(
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 005EAAFF
+ORIGINAL: 0x005EAAFF
 Return Value: n/a
 Status: Complete
 */
@@ -165,7 +165,7 @@ void __fastcall sprite_unk3_redirect(Sprite *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 005EAD8F
+ORIGINAL: 0x005EAD8F
 Return Value: n/a
 Status: Complete
 */

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00455E80
 // 0x00455E80  ?load_fixed_sprites@@YAXXZ  ->  ?load_fixed_sprites@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

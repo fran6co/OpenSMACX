@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005EDF00
 // 0x005EDF00  ?show_maximize@Win@@QAEHXZ  ->  ?show_maximize@Win@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

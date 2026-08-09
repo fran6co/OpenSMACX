@@ -24,7 +24,7 @@ RulesProposal *Proposal = (RulesProposal *)0x009A6828;
 
 /*
 Purpose: Calculate faction's vote count. Used for Planetary Governor and Supreme Leader.
-Original Offset: 0052AD30
+ORIGINAL: 0x0052AD30
 Return Value: Faction vote count
 Status: Complete
 */
@@ -58,7 +58,7 @@ int __cdecl council_votes(int faction_id) {
 
 /*
 Purpose: Check whether a faction's leader is eligible to be a Planetary Governor candidate.
-Original Offset: 0052AE20
+ORIGINAL: 0x0052AE20
 Return Value: Is the leader eligible (top two vote totals)? true/false
 Status: Complete
 */

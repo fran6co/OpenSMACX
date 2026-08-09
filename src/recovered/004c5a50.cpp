@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004C5A50
 // 0x004C5A50  ?release@Wave_In_Device@@QAEHXZ  ->  ?release@Wave_In_Device@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

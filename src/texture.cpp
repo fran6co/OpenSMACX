@@ -23,7 +23,7 @@ func_texture_free *TextureFree = (func_texture_free *)0x00644EF2;
 
 /*
 Purpose: Start an empty texture - no pixels, no descriptors, not borrowed.
-Original Offset: 00619650
+ORIGINAL: 0x00619650
 Return Value: n/a
 Status: Complete
 */
@@ -39,7 +39,7 @@ Purpose: Destroy the texture. Unlike close, which resets every field, the
          destructor only settles the pixel block: freed and cleared when there
          are pixels and they are ours, left entirely alone otherwise. The
          descriptor fields and the borrowed flag keep whatever they held.
-Original Offset: 00619660
+ORIGINAL: 0x00619660
 Return Value: n/a
 Status: Complete
 */
@@ -62,7 +62,7 @@ Purpose: Release the texture. The pixels are freed only when they are ours -
          a borrowed texture keeps its block and is merely forgotten. Either way
          the same four fields the constructor set are reset, except that a
          borrowed texture leaves its pixel pointer alone.
-Original Offset: 00619690
+ORIGINAL: 0x00619690
 Return Value: n/a
 Status: Complete
 */
@@ -79,7 +79,7 @@ void Texture::close() {
 /*
 Purpose: Tear down the store, leaving a count of 3 at offset 0 and clearing
          the field at 4. Calls nothing.
-Original Offset: 006252B0
+ORIGINAL: 0x006252B0
 Return Value: n/a
 Status: Complete
 */
@@ -119,7 +119,7 @@ Purpose: Set the store's two fields to 3 and 0.
          `mov eax,ecx` first is the legacy EAX = this residue, carried by the
          redirect. The 3 is a constant the original writes and is reproduced as
          one; nothing here says what it means.
-Original Offset: 006252A0
+ORIGINAL: 0x006252A0
 Return Value: this
 Status: Complete
 */

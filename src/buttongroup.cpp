@@ -23,7 +23,7 @@
 
 /*
 Purpose: Initialize a button group while preserving the original selected ID and flags slots.
-Original Offset: 0062B7C0
+ORIGINAL: 0x0062B7C0
 Return Value: this
 Status: Complete
 */
@@ -40,7 +40,7 @@ ButtonGroup::~ButtonGroup() {
 
 /*
 Purpose: Clear the active group while retaining the original selected ID and flags slots.
-Original Offset: 0062B7F0
+ORIGINAL: 0x0062B7F0
 Return Value: n/a
 Status: Complete
 */
@@ -54,7 +54,7 @@ void ButtonGroup::close() {
 
 /*
 Purpose: Initialize all button-group state.
-Original Offset: 0062B810
+ORIGINAL: 0x0062B810
 Return Value: n/a
 Status: Complete
 */
@@ -69,7 +69,7 @@ void ButtonGroup::init(int group_id, int flags) {
 
 /*
 Purpose: Add a button to the group and link the button back to it.
-Original Offset: 0062B850
+ORIGINAL: 0x0062B850
 Return Value: n/a
 Status: Complete
 */
@@ -104,7 +104,7 @@ func_button_group_click ButtonGroupOriginalButtonClick =
 /*
 Purpose: Activate a button in the group, suppressing the group's own
          notification while the click is dispatched when notify is zero.
-Original Offset: 0062B870
+ORIGINAL: 0x0062B870
 Return Value: whatever button_click returns
 Status: Complete
 */

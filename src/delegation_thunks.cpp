@@ -43,7 +43,7 @@ Purpose: ?on_key_click@AlphaMovie@@QAEHHH@Z - dispatch to slot 0xe8 of this obje
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 00404210
+ORIGINAL: 0x00404210
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -56,7 +56,7 @@ int __fastcall alpha_movie_on_key_click_redirect(void *self, void *, int a1, int
 /*
 Purpose: ?on_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
-Original Offset: 0041B4C0
+ORIGINAL: 0x0041B4C0
 Return Value: n/a
 Status: Complete
 */
@@ -68,7 +68,7 @@ void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a
 /*
 Purpose: ?on_iface_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0x4 of this object's OWN
          vtable, forwarding 2 argument(s).
-Original Offset: 0041DCB0
+ORIGINAL: 0x0041DCB0
 Return Value: n/a
 Status: Complete
 */
@@ -82,7 +82,7 @@ Purpose: ?on_key_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object'
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 00428D60
+ORIGINAL: 0x00428D60
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -97,7 +97,7 @@ Purpose: ?on_left_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 00428D70
+ORIGINAL: 0x00428D70
 Return Value: n/a
 Status: Complete
 */
@@ -109,7 +109,7 @@ void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a
 /*
 Purpose: ?on_scrolling@SelectPartWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
-Original Offset: 00433F50
+ORIGINAL: 0x00433F50
 Return Value: n/a
 Status: Complete
 */
@@ -123,7 +123,7 @@ Purpose: ?on_key_down@Interlude@@QAEXH@Z - dispatch to slot 0xe8 of this object'
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 0045F6F0
+ORIGINAL: 0x0045F6F0
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -138,7 +138,7 @@ Purpose: ?on_left_down@Interlude@@QAEXHH@Z - dispatch to slot 0xe8 of this objec
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 0045F700
+ORIGINAL: 0x0045F700
 Return Value: n/a
 Status: Complete
 */
@@ -152,7 +152,7 @@ Purpose: ?on_button_clicked@NewTechWin@@QAEXH@Z - dispatch to slot 0xe8 of this 
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 00483E80
+ORIGINAL: 0x00483E80
 Return Value: n/a
 Status: Complete
 */
@@ -164,7 +164,7 @@ void __fastcall new_tech_win_on_button_clicked_redirect(void *self, void *, int 
 /*
 Purpose: ?on_scrolling@ProdPicker@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
-Original Offset: 00493E70
+ORIGINAL: 0x00493E70
 Return Value: n/a
 Status: Complete
 */
@@ -176,7 +176,7 @@ void __fastcall prod_picker_on_scrolling_redirect(void *self, void *, int a1, in
 /*
 Purpose: ?set_codec@Wave_In_Device@@QAEHK@Z - forward 1 argument(s) to slot 0x60 of the
          object at +0x14, answering 0x13 when that object is absent.
-Original Offset: 004C5A80
+ORIGINAL: 0x004C5A80
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -193,7 +193,7 @@ int __fastcall wave_in_device_set_codec_redirect(void *self, void *, uint32_t a1
 /*
 Purpose: ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z - forward 1 argument(s) to slot 0x64 of the
          object at +0x14, answering 0x13 when that object is absent.
-Original Offset: 004C5AA0
+ORIGINAL: 0x004C5AA0
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -210,7 +210,7 @@ int __fastcall wave_in_device_set_vxw_key_redirect(void *self, void *, int a1) {
 /*
 Purpose: ?play@Midi@@QAEHXZ - forward 0 argument(s) to slot 0x1c of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7760
+ORIGINAL: 0x004C7760
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -227,7 +227,7 @@ int __fastcall midi_play_redirect(void *self, void *) {
 /*
 Purpose: ?set_switch_type@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x100 of the
          object at +0x3c, answering 0x13 when that object is absent.
-Original Offset: 004C77D0
+ORIGINAL: 0x004C77D0
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -244,7 +244,7 @@ int __fastcall midi_set_switch_type_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?add_switch_range@Midi@@QAEHKK@Z - forward 2 argument(s) to slot 0x108 of the
          object at +0x3c, answering 0x13 when that object is absent.
-Original Offset: 004C7800
+ORIGINAL: 0x004C7800
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -261,7 +261,7 @@ int __fastcall midi_add_switch_range_redirect(void *self, void *, uint32_t a1, u
 /*
 Purpose: ?set_nswitch_threads@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x104 of the
          object at +0x3c, answering 0x13 when that object is absent.
-Original Offset: 004C7830
+ORIGINAL: 0x004C7830
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -278,7 +278,7 @@ int __fastcall midi_set_nswitch_threads_redirect(void *self, void *, uint32_t a1
 /*
 Purpose: ?map_patch@Midi@@QAEHPADKK@Z - forward 3 argument(s) to slot 0xdc of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7860
+ORIGINAL: 0x004C7860
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -295,7 +295,7 @@ int __fastcall midi_map_patch_3_redirect(void *self, void *, int a1, uint32_t a2
 /*
 Purpose: ?map_patch@Midi@@QAEHPADK@Z - forward 2 argument(s) to slot 0xd8 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7890
+ORIGINAL: 0x004C7890
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -312,7 +312,7 @@ int __fastcall midi_map_patch_2_redirect(void *self, void *, int a1, uint32_t a2
 /*
 Purpose: ?clear_patch@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xe0 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C78E0
+ORIGINAL: 0x004C78E0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -329,7 +329,7 @@ int __fastcall midi_clear_patch_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?reset@Midi@@QAEHXZ - forward 0 argument(s) to slot 0xc8 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7910
+ORIGINAL: 0x004C7910
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -346,7 +346,7 @@ int __fastcall midi_reset_redirect(void *self, void *) {
 /*
 Purpose: ?set_track@Midi@@QAEHPAEK@Z - forward 2 argument(s) to slot 0x84 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7930
+ORIGINAL: 0x004C7930
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -363,7 +363,7 @@ int __fastcall midi_set_track_redirect(void *self, void *, uint32_t a1, uint32_t
 /*
 Purpose: ?mute_track@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x8c of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7960
+ORIGINAL: 0x004C7960
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -380,7 +380,7 @@ int __fastcall midi_mute_track_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?unmute_track@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xac of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7990
+ORIGINAL: 0x004C7990
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -397,7 +397,7 @@ int __fastcall midi_unmute_track_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?set_active_tracks@Midi@@QAEHKK@Z - forward 2 argument(s) to slot 0x94 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C79C0
+ORIGINAL: 0x004C79C0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -414,7 +414,7 @@ int __fastcall midi_set_active_tracks_2_redirect(void *self, void *, uint32_t a1
 /*
 Purpose: ?set_active_tracks@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x90 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C79F0
+ORIGINAL: 0x004C79F0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -431,7 +431,7 @@ int __fastcall midi_set_active_tracks_1_redirect(void *self, void *, uint32_t a1
 /*
 Purpose: ?play_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x10c of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7A20
+ORIGINAL: 0x004C7A20
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -448,7 +448,7 @@ int __fastcall midi_play_trackset_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?xpose_trackset@Midi@@QAEHIH@Z - forward 2 argument(s) to slot 0x114 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7A50
+ORIGINAL: 0x004C7A50
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -465,7 +465,7 @@ int __fastcall midi_xpose_trackset_redirect(void *self, void *, uint32_t a1, int
 /*
 Purpose: ?stop_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x110 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7A80
+ORIGINAL: 0x004C7A80
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -482,7 +482,7 @@ int __fastcall midi_stop_trackset_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z - forward 1 argument(s) to slot 0x98 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7AD0
+ORIGINAL: 0x004C7AD0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -499,7 +499,7 @@ int __fastcall midi_add_active_trackset_redirect(void *self, void *, int a1) {
 /*
 Purpose: ?set_active_range_lo@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0xa0 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7B00
+ORIGINAL: 0x004C7B00
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -516,7 +516,7 @@ int __fastcall midi_set_active_range_lo_redirect(void *self, void *, uint32_t a1
 /*
 Purpose: ?set_active_range_hi@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0xa4 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7B30
+ORIGINAL: 0x004C7B30
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -533,7 +533,7 @@ int __fastcall midi_set_active_range_hi_redirect(void *self, void *, uint32_t a1
 /*
 Purpose: ?remove_active_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0xa8 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7B60
+ORIGINAL: 0x004C7B60
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -550,7 +550,7 @@ int __fastcall midi_remove_active_trackset_redirect(void *self, void *, uint32_t
 /*
 Purpose: ?get_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x9c of the
          object at +0x3c, answering 0x0 when that object is absent.
-Original Offset: 004C7B90
+ORIGINAL: 0x004C7B90
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -567,7 +567,7 @@ int __fastcall midi_get_trackset_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?get_ntracks@Midi@@QAEHXZ - forward 0 argument(s) to slot 0xc4 of the
          object at +0x3c, answering 0x0 when that object is absent.
-Original Offset: 004C7BB0
+ORIGINAL: 0x004C7BB0
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -584,7 +584,7 @@ int __fastcall midi_get_ntracks_redirect(void *self, void *) {
 /*
 Purpose: ?load_patch@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x120 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7BD0
+ORIGINAL: 0x004C7BD0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -601,7 +601,7 @@ int __fastcall midi_load_patch_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?unload_patch@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x124 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7C00
+ORIGINAL: 0x004C7C00
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -618,7 +618,7 @@ int __fastcall midi_unload_patch_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?set_patch@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0x128 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7C30
+ORIGINAL: 0x004C7C30
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -635,7 +635,7 @@ int __fastcall midi_set_patch_redirect(void *self, void *, uint32_t a1, uint32_t
 /*
 Purpose: ?set_tempo@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x88 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7D50
+ORIGINAL: 0x004C7D50
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -652,7 +652,7 @@ int __fastcall midi_set_tempo_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?get_time@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xd4 of the
          object at +0x3c, answering 0x0 when that object is absent.
-Original Offset: 004C7E80
+ORIGINAL: 0x004C7E80
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -669,7 +669,7 @@ int __fastcall midi_get_time_redirect(void *self, void *, uint32_t a1) {
 /*
 Purpose: ?get_control_track@Midi@@QAEHXZ - forward 0 argument(s) to slot 0xf4 of the
          object at +0x3c, answering 0x0 when that object is absent.
-Original Offset: 004C7EA0
+ORIGINAL: 0x004C7EA0
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -686,7 +686,7 @@ int __fastcall midi_get_control_track_redirect(void *self, void *) {
 /*
 Purpose: ?get_total_track_ticks@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xf8 of the
          object at +0x3c, answering 0x0 when that object is absent.
-Original Offset: 004C7EC0
+ORIGINAL: 0x004C7EC0
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -703,7 +703,7 @@ int __fastcall midi_get_total_track_ticks_redirect(void *self, void *, uint32_t 
 /*
 Purpose: ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z - forward 1 argument(s) to slot 0xe4 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7EE0
+ORIGINAL: 0x004C7EE0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -720,7 +720,7 @@ int __fastcall midi_set_channel_ctrl_redirect(void *self, void *, int a1) {
 /*
 Purpose: ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z - forward 1 argument(s) to slot 0xe8 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7F10
+ORIGINAL: 0x004C7F10
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -737,7 +737,7 @@ int __fastcall midi_set_program_ctrl_redirect(void *self, void *, int a1) {
 /*
 Purpose: ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z - forward 1 argument(s) to slot 0xc0 of the
          object at +0x3c, answering 0x14 when that object is absent.
-Original Offset: 004C7F40
+ORIGINAL: 0x004C7F40
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -756,7 +756,7 @@ Purpose: ?start@VoiceRx@@QAEHXZ - dispatch to slot 0x88 of the object at
          0x3c when it is present, and answer 0x0 either way: both
          paths land on the same zeroing, so the delegate's own result
          never reaches the caller.
-Original Offset: 004C8C20
+ORIGINAL: 0x004C8C20
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -776,7 +776,7 @@ Purpose: ?stop@VoiceRx@@QAEHXZ - dispatch to slot 0x20 of the object at
          0x3c when it is present, and answer 0x0 either way: both
          paths land on the same zeroing, so the delegate's own result
          never reaches the caller.
-Original Offset: 004C8C40
+ORIGINAL: 0x004C8C40
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -794,7 +794,7 @@ int __fastcall voice_rx_stop_redirect(void *self, void *) {
 /*
 Purpose: ?unload@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x14 of the
          object at +0x3c, answering 0x13 when that object is absent.
-Original Offset: 004C8C50
+ORIGINAL: 0x004C8C50
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -811,7 +811,7 @@ int __fastcall voice_rx_unload_redirect(void *self, void *) {
 /*
 Purpose: ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
          object at +0x3c, answering 0x13 when that object is absent.
-Original Offset: 004C8C70
+ORIGINAL: 0x004C8C70
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -828,7 +828,7 @@ int __fastcall voice_rx_add_buffer_redirect(void *self, void *, int a1) {
 /*
 Purpose: ?get_buffer_size@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x90 of the
          object at +0x3c, answering 0x0 when that object is absent.
-Original Offset: 004C8CA0
+ORIGINAL: 0x004C8CA0
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -847,7 +847,7 @@ Purpose: ?release@VoiceTx@@QAEXXZ - dispatch to slot 0x38 of the object at
          0x3c when it is present, and answer 0x0 either way: both
          paths land on the same zeroing, so the delegate's own result
          never reaches the caller.
-Original Offset: 004C8EA0
+ORIGINAL: 0x004C8EA0
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -865,7 +865,7 @@ int __fastcall voice_tx_release_redirect(void *self, void *) {
 /*
 Purpose: ?get_nbuffers@VoiceTx@@QAEHXZ - forward 0 argument(s) to slot 0x94 of the
          object at +0x3c, answering 0x0 when that object is absent.
-Original Offset: 004C9010
+ORIGINAL: 0x004C9010
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -882,7 +882,7 @@ int __fastcall voice_tx_get_nbuffers_redirect(void *self, void *) {
 /*
 Purpose: ?get_next_buffer@VoiceTx@@QAEHXZ - forward 0 argument(s) to slot 0x88 of the
          object at +0x3c, answering 0x0 when that object is absent.
-Original Offset: 004C9030
+ORIGINAL: 0x004C9030
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -899,7 +899,7 @@ int __fastcall voice_tx_get_next_buffer_redirect(void *self, void *) {
 /*
 Purpose: ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
          object at +0x3c, answering 0x13 when that object is absent.
-Original Offset: 004C9050
+ORIGINAL: 0x004C9050
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -918,7 +918,7 @@ Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obje
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 005AD3B0
+ORIGINAL: 0x005AD3B0
 Return Value: n/a
 Status: Complete
 */
@@ -932,7 +932,7 @@ Purpose: ?on_right_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obj
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 005AD3C0
+ORIGINAL: 0x005AD3C0
 Return Value: n/a
 Status: Complete
 */
@@ -946,7 +946,7 @@ Purpose: ?on_button_clicked@ReplayWin@@QAEXH@Z - dispatch to slot 0xe8 of this o
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 005AD430
+ORIGINAL: 0x005AD430
 Return Value: n/a
 Status: Complete
 */
@@ -960,7 +960,7 @@ Purpose: ?on_key_click@ReplayWin@@QAEHHH@Z - dispatch to slot 0xe8 of this objec
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 005AD440
+ORIGINAL: 0x005AD440
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -973,7 +973,7 @@ int __fastcall replay_win_on_key_click_redirect(void *self, void *, int a1, int 
 /*
 Purpose: ?on_scrolling@Gamma@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
-Original Offset: 005C93A0
+ORIGINAL: 0x005C93A0
 Return Value: n/a
 Status: Complete
 */
@@ -987,7 +987,7 @@ Purpose: ?on_dialog_focus@BaseButton@@QAEXH@Z - dispatch to slot 0xf8 of this ob
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-Original Offset: 00607B00
+ORIGINAL: 0x00607B00
 Return Value: n/a
 Status: Complete
 */

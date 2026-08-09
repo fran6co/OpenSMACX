@@ -30,7 +30,7 @@ RulesTerraforming *Terraforming = (RulesTerraforming *)0x00691878;
 
 /*
 Purpose: Calculate the credit cost to lower or raise the tile's terrain for the specified faction.
-Original Offset: 004C9420
+ORIGINAL: 0x004C9420
 Return Value: Credit cost
 Status: Complete
 */
@@ -73,7 +73,7 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
 
 /*
 Purpose: Calculate the Former rate to perform terrain enhancements.
-Original Offset: 004C9A50
+ORIGINAL: 0x004C9A50
 Return Value: Terraforming speed
 Status: Complete
 */
@@ -91,7 +91,7 @@ int __cdecl contribution(int veh_id, int terraform_id) {
 
 /*
 Purpose: Check to see whether the specified faction can construct a specific terrain enhancement.
-Original Offset: 005BAB40
+ORIGINAL: 0x005BAB40
 Return Value: Is terrain enhancement available to faction? true/false
 Status: Complete
 */
@@ -136,7 +136,7 @@ static int terraform_xrange(int x) {
 
 /*
 Purpose: Decide which Former order, if any, should be issued on the specified tile.
-Original Offset: 00565320
+ORIGINAL: 0x00565320
 Return Value: The ORDER_* to issue, or ORDER_NONE for none
 Status: Complete
 

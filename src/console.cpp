@@ -34,7 +34,7 @@ func_get_key_state **ConsoleEditKeyStateSlot =
 
 /*
 Purpose: Open the shared preferences window to the preferences page.
-Original Offset: 00514EF0
+ORIGINAL: 0x00514EF0
 Return Value: n/a
 Status: Complete
 */
@@ -44,7 +44,7 @@ void Console::set_preferences() {
 
 /*
 Purpose: Open the shared preferences window to the automation page.
-Original Offset: 00514F10
+ORIGINAL: 0x00514F10
 Return Value: n/a
 Status: Complete
 */
@@ -54,7 +54,7 @@ void Console::set_auto_preferences() {
 
 /*
 Purpose: Open the shared preferences window to the base page.
-Original Offset: 00514F20
+ORIGINAL: 0x00514F20
 Return Value: n/a
 Status: Complete
 */
@@ -64,7 +64,7 @@ void Console::set_base_preferences() {
 
 /*
 Purpose: Open the shared preferences window to the audiovisual page.
-Original Offset: 00514F30
+ORIGINAL: 0x00514F30
 Return Value: n/a
 Status: Complete
 */
@@ -74,7 +74,7 @@ void Console::set_audiovisual() {
 
 /*
 Purpose: Open the shared preferences window to the map-display page.
-Original Offset: 00514F40
+ORIGINAL: 0x00514F40
 Return Value: n/a
 Status: Complete
 */
@@ -108,7 +108,7 @@ uint8_t *ConsoleGroupTable = reinterpret_cast<uint8_t *>(0x0095282C);
 /*
 Purpose: Clear the console's active-group field and drop the highlight bit
          (0x08000000) from every entry of the group table, at its 0x34 stride.
-Original Offset: 0050F650
+ORIGINAL: 0x0050F650
 Return Value: n/a
 Status: Complete
 Verification note: the sweep's surviving swaps reorder the object-field clear
@@ -137,7 +137,7 @@ void __fastcall console_clear_group_redirect(Console *self, void *) {
 Purpose: Report whether editing is locked out. Only meaningful in the scenario
          editor; there editing is locked whenever Scroll Lock is toggled on or
          the game is in editor-only mode.
-Original Offset: 004E1F40
+ORIGINAL: 0x004E1F40
 Return Value: 1 when editing is locked, 0 otherwise
 Status: Complete
 */
@@ -158,7 +158,7 @@ int __fastcall console_edit_lock_redirect(Console *self, void *) {
 
 /*
 Purpose: Open the shared preferences window to the advanced page.
-Original Offset: 00514F00
+ORIGINAL: 0x00514F00
 Return Value: n/a
 Status: Complete
 */
@@ -169,7 +169,7 @@ void Console::set_adv_preferences() {
 /*
 Purpose: Undo the last scenario-editor change, by asking load_undo for the
          editor's undo slot.
-Original Offset: 004E1F20
+ORIGINAL: 0x004E1F20
 Return Value: n/a
 Status: Complete
 */
@@ -195,7 +195,7 @@ void **ConsoleMapWinSlot = reinterpret_cast<void **>(0x007D3C3C);
 Purpose: Refresh everything the console shows after a selection or turn change:
          hand the change code to the shared InfoWin, redraw the shared
          StatusWin, then push the map's caption into the main interface.
-Original Offset: 00514880
+ORIGINAL: 0x00514880
 Return Value: n/a
 Status: Complete with a temporary StatusWin::redraw original dependency
 Verification note: three properties of this body are unobservable at every
@@ -251,7 +251,7 @@ Purpose: Point the map windows at one tile on behalf of one faction. Build a
          selects. The primary window, slot 0, is handled quite differently from
          the rest, and only its success counts: when it moves, the queued input
          is flushed and 1 is returned.
-Original Offset: 005108A0
+ORIGINAL: 0x005108A0
 Return Value: 1 when the primary map window took the coordinate, 0 otherwise
 Status: Complete with temporary Console::cursor_next, MapWin::focus,
         MapWin::draw_map and flush_input original dependencies
@@ -406,7 +406,7 @@ int __fastcall console_focus_redirect(Console *self, void *, int x_coord,
 /*
 Purpose: Record that the console was closed from the system menu, by raising
          the flag the turn loop watches.
-Original Offset: 0051D7C0
+ORIGINAL: 0x0051D7C0
 Return Value: n/a
 Status: Complete
 */
@@ -415,7 +415,7 @@ void Console::on_sys_close() {
 }
 
 /*
-Original Offset: 004E0FA0
+ORIGINAL: 0x004E0FA0
 Status: Complete
 */
 void Console::editor_climate() {
@@ -427,7 +427,7 @@ void Console::editor_climate() {
 }
 
 /*
-Original Offset: 004E1F30
+ORIGINAL: 0x004E1F30
 Status: Complete
 */
 void Console::editor_redo() {
@@ -435,7 +435,7 @@ void Console::editor_redo() {
 }
 
 /*
-Original Offset: 0051D740
+ORIGINAL: 0x0051D740
 Status: Complete
 */
 void Console::menu_update() {
@@ -445,7 +445,7 @@ void Console::menu_update() {
 }
 
 /*
-Original Offset: 004E0F80
+ORIGINAL: 0x004E0F80
 Status: Complete
 */
 void Console::editor_polar() {

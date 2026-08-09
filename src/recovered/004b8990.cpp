@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004B8990
 // 0x004B8990  ?on_left_double_click@StatusWin@@QAEXHH@Z  ->  ?on_left_double_click@StatusWin@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0043D0F0
 // 0x0043D0F0  ?hide@DesignWin@@QAEXXZ  ->  ?hide@DesignWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

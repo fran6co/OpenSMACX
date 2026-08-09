@@ -149,7 +149,7 @@ ScrollPrimaryInitProc ScrollPrimaryInit = &call_original_scroll_init;
 Purpose: Reset Scroll-owned state from the process defaults, close the two
          embedded FlatButtons through their virtual close slots, then close
          the source-owned GraphicWin base.
-Original Offset: 00605370
+ORIGINAL: 0x00605370
 Return Value: GraphicWin::close return residue
 Status: Complete; embedded FlatButton close redirects are source-owned
 */
@@ -202,7 +202,7 @@ uint32_t Scroll::close() {
 
 /*
 Purpose: Initialize a scrollbar from a rectangle.
-Original Offset: 00605840
+ORIGINAL: 0x00605840
 Status: Complete
 */
 int Scroll::init(RECT *rect, Win *parent, int setting, int options) {
@@ -223,7 +223,7 @@ int Scroll::init(RECT *rect, Win *parent, int setting, int options) {
 
 /*
 Purpose: Initialize a vertical scrollbar using the process-default thickness.
-Original Offset: 00605890
+ORIGINAL: 0x00605890
 Status: Complete
 */
 int Scroll::init_vert(
@@ -237,7 +237,7 @@ int Scroll::init_vert(
 
 /*
 Purpose: Initialize a horizontal scrollbar using the process-default thickness.
-Original Offset: 006058D0
+ORIGINAL: 0x006058D0
 Status: Complete
 */
 int Scroll::init_horz(
@@ -251,7 +251,7 @@ int Scroll::init_horz(
 
 /*
 Purpose: Initialize a vertical nonclient scrollbar.
-Original Offset: 00605910
+ORIGINAL: 0x00605910
 Status: Complete
 */
 int Scroll::init_vert_nc(
@@ -266,7 +266,7 @@ int Scroll::init_vert_nc(
 
 /*
 Purpose: Initialize a horizontal nonclient scrollbar.
-Original Offset: 00605960
+ORIGINAL: 0x00605960
 Status: Complete
 */
 int Scroll::init_horz_nc(
@@ -281,7 +281,7 @@ int Scroll::init_horz_nc(
 
 /*
 Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
-Original Offset: 006059B0
+ORIGINAL: 0x006059B0
 Status: Complete
 */
 uint32_t Scroll::set_range(int minimum, int maximum) {
@@ -303,7 +303,7 @@ uint32_t Scroll::set_range(int minimum, int maximum) {
 
 /*
 Purpose: Set the color shared by the scrollbar and both end buttons.
-Original Offset: 00605A10
+ORIGINAL: 0x00605A10
 Status: Complete
 */
 uint32_t Scroll::set_button_color(int color) {
@@ -319,7 +319,7 @@ uint32_t Scroll::set_button_color(int color) {
 
 /*
 Purpose: Set the bevel thickness shared by the scrollbar and both end buttons.
-Original Offset: 00605A50
+ORIGINAL: 0x00605A50
 Status: Complete
 */
 uint32_t Scroll::set_bevel_thickness(int thickness) {
@@ -335,7 +335,7 @@ uint32_t Scroll::set_bevel_thickness(int thickness) {
 
 /*
 Purpose: Set the upper bevel color shared by the scrollbar and both end buttons.
-Original Offset: 00605A90
+ORIGINAL: 0x00605A90
 Status: Complete
 */
 uint32_t Scroll::set_bevel_upper(int color) {
@@ -351,7 +351,7 @@ uint32_t Scroll::set_bevel_upper(int color) {
 
 /*
 Purpose: Set the lower bevel color shared by the scrollbar and both end buttons.
-Original Offset: 00605AD0
+ORIGINAL: 0x00605AD0
 Status: Complete
 */
 uint32_t Scroll::set_bevel_lower(int color) {
@@ -367,7 +367,7 @@ uint32_t Scroll::set_bevel_lower(int color) {
 
 /*
 Purpose: Set the scrollbar thickness and reset its thumb rectangle.
-Original Offset: 00605B80
+ORIGINAL: 0x00605B80
 Status: Complete
 */
 uint32_t Scroll::set_bar_thickness(int thickness) {
@@ -396,7 +396,7 @@ uint32_t Scroll::set_bar_thickness(int thickness) {
 
 /*
 Purpose: Set the border color and reset the scrollbar thumb rectangle.
-Original Offset: 00605B10
+ORIGINAL: 0x00605B10
 Status: Complete
 */
 void Scroll::set_border_color(int color) {
@@ -413,7 +413,7 @@ void Scroll::set_border_color(int color) {
 
 /*
 Purpose: Expand a rectangle horizontally and vertically.
-Original Offset: 00606F00
+ORIGINAL: 0x00606F00
 Status: Complete
 */
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
@@ -433,7 +433,7 @@ RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
 
 /*
 Purpose: Set the left scrollbar sprites and horizontal button sprites.
-Original Offset: 00605BE0
+ORIGINAL: 0x00605BE0
 Status: Complete
 */
 void Scroll::set_sprite_left(
@@ -444,7 +444,7 @@ void Scroll::set_sprite_left(
 
 /*
 Purpose: Set the right scrollbar sprites and horizontal button sprites.
-Original Offset: 00605C30
+ORIGINAL: 0x00605C30
 Status: Complete
 */
 void Scroll::set_sprite_right(
@@ -455,7 +455,7 @@ void Scroll::set_sprite_right(
 
 /*
 Purpose: Set the upper scrollbar sprites and vertical upper-button sprites.
-Original Offset: 00605C80
+ORIGINAL: 0x00605C80
 Status: Complete
 */
 void Scroll::set_sprite_up(
@@ -466,7 +466,7 @@ void Scroll::set_sprite_up(
 
 /*
 Purpose: Set the lower scrollbar sprites and vertical lower-button sprites.
-Original Offset: 00605CD0
+ORIGINAL: 0x00605CD0
 Status: Complete
 */
 void Scroll::set_sprite_down(
@@ -477,7 +477,7 @@ void Scroll::set_sprite_down(
 
 /*
 Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
-Original Offset: 00605D20
+ORIGINAL: 0x00605D20
 Status: Complete
 */
 uint32_t Scroll::set_pos(int position) {
@@ -508,7 +508,7 @@ uint32_t Scroll::set_pos(int position) {
 
 /*
 Purpose: Compute and publish the scrollbar thumb rectangle.
-Original Offset: 00606C50
+ORIGINAL: 0x00606C50
 Status: Complete
 Verification note: several mutation-harness survivors in this body are
 equivalent by construction, not coverage gaps. The two interim stores to
@@ -618,7 +618,7 @@ void Scroll::compute_thumb_rect(RECT *rect) {
 
 /*
 Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
-Original Offset: 00606EA0
+ORIGINAL: 0x00606EA0
 Status: Complete
 */
 uint32_t Scroll::set_thumb_rect() {
@@ -749,7 +749,7 @@ uint32_t __fastcall scroll_close_redirect(Scroll *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00606310
+ORIGINAL: 0x00606310
 Return Value: n/a
 Status: Complete
 */
@@ -769,7 +769,7 @@ Purpose: Destroy a Scroll: stage its two virtual tables, run close, destroy
          the embedded right then left FlatButtons, and finish with the
          GraphicWin base teardown. The original's exception frame is omitted
          as unreachable per policy.
-Original Offset: 00406E60
+ORIGINAL: 0x00406E60
 Return Value: Instance pointer in EAX
 Status: Complete
 */
@@ -794,7 +794,7 @@ Scroll *__fastcall scroll_destructor_redirect(Scroll *self, void *) {
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and, when bit 0 of the mode asks, free the storage to the
          game heap.
-Original Offset: 00406F20
+ORIGINAL: 0x00406F20
 Return Value: the object pointer
 Status: Complete
 */

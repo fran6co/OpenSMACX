@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0047E340 FILE
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

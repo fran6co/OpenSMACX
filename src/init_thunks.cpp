@@ -227,7 +227,7 @@ Buffer *g_CAVIAR_BUFFER_2 = (Buffer *)0x009B96B0;
 
 /*
 Purpose: Dynamic initializer for g_ALPHAMENU_WAVE; registers its ??__F teardown.
-Original Offset: 00402F10
+ORIGINAL: 0x00402F10
 Return Value: n/a
 Status: Complete
 */
@@ -238,7 +238,7 @@ void __cdecl construct_alphamenu_wave() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR02; registers its ??__F teardown.
-Original Offset: 00404440
+ORIGINAL: 0x00404440
 Return Value: n/a
 Status: Complete
 */
@@ -249,7 +249,7 @@ void __cdecl construct_unused_sprite_var02() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR11; registers its ??__F teardown.
-Original Offset: 00404470
+ORIGINAL: 0x00404470
 Return Value: n/a
 Status: Complete
 */
@@ -260,7 +260,7 @@ void __cdecl construct_unused_sprite_var11() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR06; registers its ??__F teardown.
-Original Offset: 004044A0
+ORIGINAL: 0x004044A0
 Return Value: n/a
 Status: Complete
 */
@@ -271,7 +271,7 @@ void __cdecl construct_unused_sprite_var06() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR09; registers its ??__F teardown.
-Original Offset: 004044D0
+ORIGINAL: 0x004044D0
 Return Value: n/a
 Status: Complete
 */
@@ -282,7 +282,7 @@ void __cdecl construct_unused_sprite_var09() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR21; registers its ??__F teardown.
-Original Offset: 00404500
+ORIGINAL: 0x00404500
 Return Value: n/a
 Status: Complete
 */
@@ -293,7 +293,7 @@ void __cdecl construct_unused_sprite_var21() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR05; registers its ??__F teardown.
-Original Offset: 00404530
+ORIGINAL: 0x00404530
 Return Value: n/a
 Status: Complete
 */
@@ -304,7 +304,7 @@ void __cdecl construct_unused_sprite_var05() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR08; registers its ??__F teardown.
-Original Offset: 00404560
+ORIGINAL: 0x00404560
 Return Value: n/a
 Status: Complete
 */
@@ -315,7 +315,7 @@ void __cdecl construct_unused_sprite_var08() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR04; registers its ??__F teardown.
-Original Offset: 00404590
+ORIGINAL: 0x00404590
 Return Value: n/a
 Status: Complete
 */
@@ -326,7 +326,7 @@ void __cdecl construct_unused_sprite_var04() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR01; registers its ??__F teardown.
-Original Offset: 004045C0
+ORIGINAL: 0x004045C0
 Return Value: n/a
 Status: Complete
 */
@@ -337,7 +337,7 @@ void __cdecl construct_unused_sprite_var01() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR18; registers its ??__F teardown.
-Original Offset: 004045F0
+ORIGINAL: 0x004045F0
 Return Value: n/a
 Status: Complete
 */
@@ -348,7 +348,7 @@ void __cdecl construct_unused_sprite_var18() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR03; registers its ??__F teardown.
-Original Offset: 00404620
+ORIGINAL: 0x00404620
 Return Value: n/a
 Status: Complete
 */
@@ -359,7 +359,7 @@ void __cdecl construct_unused_sprite_var03() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR20; registers its ??__F teardown.
-Original Offset: 00404650
+ORIGINAL: 0x00404650
 Return Value: n/a
 Status: Complete
 */
@@ -370,7 +370,7 @@ void __cdecl construct_unused_sprite_var20() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR16; registers its ??__F teardown.
-Original Offset: 00404680
+ORIGINAL: 0x00404680
 Return Value: n/a
 Status: Complete
 */
@@ -381,7 +381,7 @@ void __cdecl construct_unused_sprite_var16() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR14; registers its ??__F teardown.
-Original Offset: 004046B0
+ORIGINAL: 0x004046B0
 Return Value: n/a
 Status: Complete
 */
@@ -392,7 +392,7 @@ void __cdecl construct_unused_sprite_var14() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR22; registers its ??__F teardown.
-Original Offset: 004046E0
+ORIGINAL: 0x004046E0
 Return Value: n/a
 Status: Complete
 */
@@ -403,7 +403,7 @@ void __cdecl construct_unused_sprite_var22() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR10; registers its ??__F teardown.
-Original Offset: 00404710
+ORIGINAL: 0x00404710
 Return Value: n/a
 Status: Complete
 */
@@ -414,7 +414,7 @@ void __cdecl construct_unused_sprite_var10() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR15; registers its ??__F teardown.
-Original Offset: 00404740
+ORIGINAL: 0x00404740
 Return Value: n/a
 Status: Complete
 */
@@ -425,7 +425,7 @@ void __cdecl construct_unused_sprite_var15() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR13; registers its ??__F teardown.
-Original Offset: 00404770
+ORIGINAL: 0x00404770
 Return Value: n/a
 Status: Complete
 */
@@ -436,7 +436,7 @@ void __cdecl construct_unused_sprite_var13() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR17; registers its ??__F teardown.
-Original Offset: 004047A0
+ORIGINAL: 0x004047A0
 Return Value: n/a
 Status: Complete
 */
@@ -447,7 +447,7 @@ void __cdecl construct_unused_sprite_var17() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR19; registers its ??__F teardown.
-Original Offset: 004047D0
+ORIGINAL: 0x004047D0
 Return Value: n/a
 Status: Complete
 */
@@ -458,7 +458,7 @@ void __cdecl construct_unused_sprite_var19() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR12; registers its ??__F teardown.
-Original Offset: 00404800
+ORIGINAL: 0x00404800
 Return Value: n/a
 Status: Complete
 */
@@ -469,7 +469,7 @@ void __cdecl construct_unused_sprite_var12() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR07; registers its ??__F teardown.
-Original Offset: 00404830
+ORIGINAL: 0x00404830
 Return Value: n/a
 Status: Complete
 */
@@ -480,7 +480,7 @@ void __cdecl construct_unused_sprite_var07() {
 
 /*
 Purpose: Dynamic initializer for g_BASEWIN; registers its ??__F teardown.
-Original Offset: 004083B0
+ORIGINAL: 0x004083B0
 Return Value: n/a
 Status: Complete
 */
@@ -491,7 +491,7 @@ void __cdecl construct_basewin() {
 
 /*
 Purpose: Dynamic initializer for g_BASEWIN_WAVE; registers its ??__F teardown.
-Original Offset: 004083E0
+ORIGINAL: 0x004083E0
 Return Value: n/a
 Status: Complete
 */
@@ -502,7 +502,7 @@ void __cdecl construct_basewin_wave() {
 
 /*
 Purpose: Dynamic initializer for g_BattleWin; registers its ??__F teardown.
-Original Offset: 004219B0
+ORIGINAL: 0x004219B0
 Return Value: n/a
 Status: Complete
 */
@@ -513,7 +513,7 @@ void __cdecl construct_battlewin() {
 
 /*
 Purpose: Dynamic initializer for g_COUNCWIN; registers its ??__F teardown.
-Original Offset: 004243A0
+ORIGINAL: 0x004243A0
 Return Value: n/a
 Status: Complete
 */
@@ -524,7 +524,7 @@ void __cdecl construct_councwin() {
 
 /*
 Purpose: Dynamic initializer for g_CREDITS_WAVE; registers its ??__F teardown.
-Original Offset: 00428750
+ORIGINAL: 0x00428750
 Return Value: n/a
 Status: Complete
 */
@@ -535,7 +535,7 @@ void __cdecl construct_credits_wave() {
 
 /*
 Purpose: Dynamic initializer for g_DATALINK; registers its ??__F teardown.
-Original Offset: 00428F90
+ORIGINAL: 0x00428F90
 Return Value: n/a
 Status: Complete
 */
@@ -546,7 +546,7 @@ void __cdecl construct_datalink() {
 
 /*
 Purpose: Dynamic initializer for g_DESIGNWIN; registers its ??__F teardown.
-Original Offset: 00432850
+ORIGINAL: 0x00432850
 Return Value: n/a
 Status: Complete
 */
@@ -557,7 +557,7 @@ void __cdecl construct_designwin() {
 
 /*
 Purpose: Dynamic initializer for g_DESIGNWIN_WAVE; registers its ??__F teardown.
-Original Offset: 00432880
+ORIGINAL: 0x00432880
 Return Value: n/a
 Status: Complete
 */
@@ -568,7 +568,7 @@ void __cdecl construct_designwin_wave() {
 
 /*
 Purpose: Dynamic initializer for g_DIPLOPOP; registers its ??__F teardown.
-Original Offset: 0043EFC0
+ORIGINAL: 0x0043EFC0
 Return Value: n/a
 Status: Complete
 */
@@ -579,7 +579,7 @@ void __cdecl construct_diplopop() {
 
 /*
 Purpose: Dynamic initializer for g_DIPLOWIN; registers its ??__F teardown.
-Original Offset: 00440F00
+ORIGINAL: 0x00440F00
 Return Value: n/a
 Status: Complete
 */
@@ -590,7 +590,7 @@ void __cdecl construct_diplowin() {
 
 /*
 Purpose: Dynamic initializer for g_CPU_WAVES; registers its ??__F teardown.
-Original Offset: 00445450
+ORIGINAL: 0x00445450
 Return Value: n/a
 Status: Complete
 */
@@ -601,7 +601,7 @@ void __cdecl construct_cpu_waves() {
 
 /*
 Purpose: Dynamic initializer for g_MENU_UP_WAVE; registers its ??__F teardown.
-Original Offset: 004454A0
+ORIGINAL: 0x004454A0
 Return Value: n/a
 Status: Complete
 */
@@ -612,7 +612,7 @@ void __cdecl construct_menu_up_wave() {
 
 /*
 Purpose: Dynamic initializer for g_MENU_DOWN_WAVE; registers its ??__F teardown.
-Original Offset: 004454D0
+ORIGINAL: 0x004454D0
 Return Value: n/a
 Status: Complete
 */
@@ -623,7 +623,7 @@ void __cdecl construct_menu_down_wave() {
 
 /*
 Purpose: Dynamic initializer for g_SCOOT_WAVE; registers its ??__F teardown.
-Original Offset: 00445500
+ORIGINAL: 0x00445500
 Return Value: n/a
 Status: Complete
 */
@@ -634,7 +634,7 @@ void __cdecl construct_scoot_wave() {
 
 /*
 Purpose: Dynamic initializer for g_OK_WAVE; registers its ??__F teardown.
-Original Offset: 00445530
+ORIGINAL: 0x00445530
 Return Value: n/a
 Status: Complete
 */
@@ -645,7 +645,7 @@ void __cdecl construct_ok_wave() {
 
 /*
 Purpose: Dynamic initializer for g_PASSOVER_WAVE; registers its ??__F teardown.
-Original Offset: 00445560
+ORIGINAL: 0x00445560
 Return Value: n/a
 Status: Complete
 */
@@ -656,7 +656,7 @@ void __cdecl construct_passover_wave() {
 
 /*
 Purpose: Dynamic initializer for g_FX; registers its ??__F teardown.
-Original Offset: 00445590
+ORIGINAL: 0x00445590
 Return Value: n/a
 Status: Complete
 */
@@ -667,7 +667,7 @@ void __cdecl construct_fx() {
 
 /*
 Purpose: Dynamic initializer for g_AMBIENCE; registers its ??__F teardown.
-Original Offset: 004455C0
+ORIGINAL: 0x004455C0
 Return Value: n/a
 Status: Complete
 */
@@ -678,7 +678,7 @@ void __cdecl construct_ambience() {
 
 /*
 Purpose: Dynamic initializer for g_FAMEWIN; registers its ??__F teardown.
-Original Offset: 004483D0
+ORIGINAL: 0x004483D0
 Return Value: n/a
 Status: Complete
 */
@@ -689,7 +689,7 @@ void __cdecl construct_famewin() {
 
 /*
 Purpose: Dynamic initializer for g_PCX_PARSE_TEMP_BUFFER1; registers its ??__F teardown.
-Original Offset: 0044CC20
+ORIGINAL: 0x0044CC20
 Return Value: n/a
 Status: Complete
 */
@@ -700,7 +700,7 @@ void __cdecl construct_pcx_parse_temp_buffer1() {
 
 /*
 Purpose: Dynamic initializer for FactionArt; registers its ??__F teardown.
-Original Offset: 0044CC50
+ORIGINAL: 0x0044CC50
 Return Value: n/a
 Status: Complete
 */
@@ -712,7 +712,7 @@ void __cdecl construct_factionart() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_CLOSE_X_SPRITES; registers its ??__F teardown.
-Original Offset: 0044CCA0
+ORIGINAL: 0x0044CCA0
 Return Value: n/a
 Status: Complete
 */
@@ -723,7 +723,7 @@ void __cdecl construct_iface_close_x_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES1; registers its ??__F teardown.
-Original Offset: 0044CCF0
+ORIGINAL: 0x0044CCF0
 Return Value: n/a
 Status: Complete
 */
@@ -734,7 +734,7 @@ void __cdecl construct_iface_box_sprites1() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES2; registers its ??__F teardown.
-Original Offset: 0044CD40
+ORIGINAL: 0x0044CD40
 Return Value: n/a
 Status: Complete
 */
@@ -745,7 +745,7 @@ void __cdecl construct_iface_box_sprites2() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES3; registers its ??__F teardown.
-Original Offset: 0044CD90
+ORIGINAL: 0x0044CD90
 Return Value: n/a
 Status: Complete
 */
@@ -756,7 +756,7 @@ void __cdecl construct_iface_box_sprites3() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES4; registers its ??__F teardown.
-Original Offset: 0044CDE0
+ORIGINAL: 0x0044CDE0
 Return Value: n/a
 Status: Complete
 */
@@ -767,7 +767,7 @@ void __cdecl construct_iface_box_sprites4() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES5; registers its ??__F teardown.
-Original Offset: 0044CE30
+ORIGINAL: 0x0044CE30
 Return Value: n/a
 Status: Complete
 */
@@ -778,7 +778,7 @@ void __cdecl construct_iface_box_sprites5() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES6; registers its ??__F teardown.
-Original Offset: 0044CE80
+ORIGINAL: 0x0044CE80
 Return Value: n/a
 Status: Complete
 */
@@ -789,7 +789,7 @@ void __cdecl construct_iface_box_sprites6() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES7; registers its ??__F teardown.
-Original Offset: 0044CED0
+ORIGINAL: 0x0044CED0
 Return Value: n/a
 Status: Complete
 */
@@ -800,7 +800,7 @@ void __cdecl construct_iface_box_sprites7() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITES8; registers its ??__F teardown.
-Original Offset: 0044CF20
+ORIGINAL: 0x0044CF20
 Return Value: n/a
 Status: Complete
 */
@@ -811,7 +811,7 @@ void __cdecl construct_iface_box_sprites8() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_BOX_SPRITE_BUFFERS; registers its ??__F teardown.
-Original Offset: 0044CF70
+ORIGINAL: 0x0044CF70
 Return Value: n/a
 Status: Complete
 */
@@ -822,7 +822,7 @@ void __cdecl construct_iface_box_sprite_buffers() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044CFC0
+ORIGINAL: 0x0044CFC0
 Return Value: n/a
 Status: Complete
 */
@@ -833,7 +833,7 @@ void __cdecl construct_iface_std_popups_top_left_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044CFF0
+ORIGINAL: 0x0044CFF0
 Return Value: n/a
 Status: Complete
 */
@@ -844,7 +844,7 @@ void __cdecl construct_iface_std_popups_top_right_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044D020
+ORIGINAL: 0x0044D020
 Return Value: n/a
 Status: Complete
 */
@@ -855,7 +855,7 @@ void __cdecl construct_iface_std_popups_bot_left_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044D050
+ORIGINAL: 0x0044D050
 Return Value: n/a
 Status: Complete
 */
@@ -866,7 +866,7 @@ void __cdecl construct_iface_std_popups_bot_right_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_TOP_MID_SPRITE; registers its ??__F teardown.
-Original Offset: 0044D080
+ORIGINAL: 0x0044D080
 Return Value: n/a
 Status: Complete
 */
@@ -877,7 +877,7 @@ void __cdecl construct_iface_std_popups_top_mid_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_BOT_MID_SPRITE; registers its ??__F teardown.
-Original Offset: 0044D0B0
+ORIGINAL: 0x0044D0B0
 Return Value: n/a
 Status: Complete
 */
@@ -888,7 +888,7 @@ void __cdecl construct_iface_std_popups_bot_mid_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_MID_LEFT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044D0E0
+ORIGINAL: 0x0044D0E0
 Return Value: n/a
 Status: Complete
 */
@@ -899,7 +899,7 @@ void __cdecl construct_iface_std_popups_mid_left_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044D110
+ORIGINAL: 0x0044D110
 Return Value: n/a
 Status: Complete
 */
@@ -910,7 +910,7 @@ void __cdecl construct_iface_std_popups_mid_right_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_STD_POPUPS_MIDDLE_BUFFER; registers its ??__F teardown.
-Original Offset: 0044D140
+ORIGINAL: 0x0044D140
 Return Value: n/a
 Status: Complete
 */
@@ -921,7 +921,7 @@ void __cdecl construct_iface_std_popups_middle_buffer() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR1; registers its ??__F teardown.
-Original Offset: 0044D170
+ORIGINAL: 0x0044D170
 Return Value: n/a
 Status: Complete
 */
@@ -932,7 +932,7 @@ void __cdecl construct_unused_caviardata_var1() {
 
 /*
 Purpose: Dynamic initializer for g_SSF_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D1A0
+ORIGINAL: 0x0044D1A0
 Return Value: n/a
 Status: Complete
 */
@@ -943,7 +943,7 @@ void __cdecl construct_ssf_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SDP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D1D0
+ORIGINAL: 0x0044D1D0
 Return Value: n/a
 Status: Complete
 */
@@ -954,7 +954,7 @@ void __cdecl construct_sdp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SAS_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D200
+ORIGINAL: 0x0044D200
 Return Value: n/a
 Status: Complete
 */
@@ -965,7 +965,7 @@ void __cdecl construct_sas_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SCD_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D230
+ORIGINAL: 0x0044D230
 Return Value: n/a
 Status: Complete
 */
@@ -976,7 +976,7 @@ void __cdecl construct_scd_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SCJ_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D260
+ORIGINAL: 0x0044D260
 Return Value: n/a
 Status: Complete
 */
@@ -987,7 +987,7 @@ void __cdecl construct_scj_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SAGS_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D290
+ORIGINAL: 0x0044D290
 Return Value: n/a
 Status: Complete
 */
@@ -998,7 +998,7 @@ void __cdecl construct_sags_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SFT_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D2C0
+ORIGINAL: 0x0044D2C0
 Return Value: n/a
 Status: Complete
 */
@@ -1009,7 +1009,7 @@ void __cdecl construct_sft_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VHR_CAVIARDATA1; registers its ??__F teardown.
-Original Offset: 0044D2F0
+ORIGINAL: 0x0044D2F0
 Return Value: n/a
 Status: Complete
 */
@@ -1020,7 +1020,7 @@ void __cdecl construct_vhr_caviardata1() {
 
 /*
 Purpose: Dynamic initializer for g_SHT_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D320
+ORIGINAL: 0x0044D320
 Return Value: n/a
 Status: Complete
 */
@@ -1031,7 +1031,7 @@ void __cdecl construct_sht_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SRB_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D350
+ORIGINAL: 0x0044D350
 Return Value: n/a
 Status: Complete
 */
@@ -1042,7 +1042,7 @@ void __cdecl construct_srb_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_ASAS_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D380
+ORIGINAL: 0x0044D380
 Return Value: n/a
 Status: Complete
 */
@@ -1053,7 +1053,7 @@ void __cdecl construct_asas_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_RESLASER_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D3B0
+ORIGINAL: 0x0044D3B0
 Return Value: n/a
 Status: Complete
 */
@@ -1064,7 +1064,7 @@ void __cdecl construct_reslaser_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_RESBOLT_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D3E0
+ORIGINAL: 0x0044D3E0
 Return Value: n/a
 Status: Complete
 */
@@ -1075,7 +1075,7 @@ void __cdecl construct_resbolt_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_FUNLOAD_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D410
+ORIGINAL: 0x0044D410
 Return Value: n/a
 Status: Complete
 */
@@ -1086,7 +1086,7 @@ void __cdecl construct_funload_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_TECLOAD_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D440
+ORIGINAL: 0x0044D440
 Return Value: n/a
 Status: Complete
 */
@@ -1097,7 +1097,7 @@ void __cdecl construct_tecload_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SP_DISSWAVE_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D470
+ORIGINAL: 0x0044D470
 Return Value: n/a
 Status: Complete
 */
@@ -1108,7 +1108,7 @@ void __cdecl construct_sp_disswave_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SP_MARINED_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D4A0
+ORIGINAL: 0x0044D4A0
 Return Value: n/a
 Status: Complete
 */
@@ -1119,7 +1119,7 @@ void __cdecl construct_sp_marined_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SP_NANOO_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D4D0
+ORIGINAL: 0x0044D4D0
 Return Value: n/a
 Status: Complete
 */
@@ -1130,7 +1130,7 @@ void __cdecl construct_sp_nanoo_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SP_SOPORIFIC_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D500
+ORIGINAL: 0x0044D500
 Return Value: n/a
 Status: Complete
 */
@@ -1141,7 +1141,7 @@ void __cdecl construct_sp_soporific_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_AA01_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D530
+ORIGINAL: 0x0044D530
 Return Value: n/a
 Status: Complete
 */
@@ -1152,7 +1152,7 @@ void __cdecl construct_aa01_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_AA_ROVER_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D560
+ORIGINAL: 0x0044D560
 Return Value: n/a
 Status: Complete
 */
@@ -1163,7 +1163,7 @@ void __cdecl construct_aa_rover_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_AA_WING_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D590
+ORIGINAL: 0x0044D590
 Return Value: n/a
 Status: Complete
 */
@@ -1174,7 +1174,7 @@ void __cdecl construct_aa_wing_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_ACP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D5E0
+ORIGINAL: 0x0044D5E0
 Return Value: n/a
 Status: Complete
 */
@@ -1185,7 +1185,7 @@ void __cdecl construct_acp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_AX_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D630
+ORIGINAL: 0x0044D630
 Return Value: n/a
 Status: Complete
 */
@@ -1196,7 +1196,7 @@ void __cdecl construct_ax_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_AA_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D660
+ORIGINAL: 0x0044D660
 Return Value: n/a
 Status: Complete
 */
@@ -1207,7 +1207,7 @@ void __cdecl construct_aa_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_ACOLPOD_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D690
+ORIGINAL: 0x0044D690
 Return Value: n/a
 Status: Complete
 */
@@ -1218,7 +1218,7 @@ void __cdecl construct_acolpod_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_AT_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D6C0
+ORIGINAL: 0x0044D6C0
 Return Value: n/a
 Status: Complete
 */
@@ -1229,7 +1229,7 @@ void __cdecl construct_at_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VTA_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D6F0
+ORIGINAL: 0x0044D6F0
 Return Value: n/a
 Status: Complete
 */
@@ -1240,7 +1240,7 @@ void __cdecl construct_vta_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_ATP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D720
+ORIGINAL: 0x0044D720
 Return Value: n/a
 Status: Complete
 */
@@ -1251,7 +1251,7 @@ void __cdecl construct_atp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SSFA_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D750
+ORIGINAL: 0x0044D750
 Return Value: n/a
 Status: Complete
 */
@@ -1262,7 +1262,7 @@ void __cdecl construct_ssfa_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_SFTA_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D780
+ORIGINAL: 0x0044D780
 Return Value: n/a
 Status: Complete
 */
@@ -1273,7 +1273,7 @@ void __cdecl construct_sfta_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VW00_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D7B0
+ORIGINAL: 0x0044D7B0
 Return Value: n/a
 Status: Complete
 */
@@ -1284,7 +1284,7 @@ void __cdecl construct_vw00_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VIPTAWL_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D7E0
+ORIGINAL: 0x0044D7E0
 Return Value: n/a
 Status: Complete
 */
@@ -1295,7 +1295,7 @@ void __cdecl construct_viptawl_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VIPTASGN_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D810
+ORIGINAL: 0x0044D810
 Return Value: n/a
 Status: Complete
 */
@@ -1306,7 +1306,7 @@ void __cdecl construct_viptasgn_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VIPTAPSI_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D840
+ORIGINAL: 0x0044D840
 Return Value: n/a
 Status: Complete
 */
@@ -1317,7 +1317,7 @@ void __cdecl construct_viptapsi_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VIPTR_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D870
+ORIGINAL: 0x0044D870
 Return Value: n/a
 Status: Complete
 */
@@ -1328,7 +1328,7 @@ void __cdecl construct_viptr_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VIPTA_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D8C0
+ORIGINAL: 0x0044D8C0
 Return Value: n/a
 Status: Complete
 */
@@ -1339,7 +1339,7 @@ void __cdecl construct_vipta_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_PTMOD_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D910
+ORIGINAL: 0x0044D910
 Return Value: n/a
 Status: Complete
 */
@@ -1350,7 +1350,7 @@ void __cdecl construct_ptmod_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VB_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D940
+ORIGINAL: 0x0044D940
 Return Value: n/a
 Status: Complete
 */
@@ -1361,7 +1361,7 @@ void __cdecl construct_vb_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VBP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D970
+ORIGINAL: 0x0044D970
 Return Value: n/a
 Status: Complete
 */
@@ -1372,7 +1372,7 @@ void __cdecl construct_vbp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VGMC_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D9A0
+ORIGINAL: 0x0044D9A0
 Return Value: n/a
 Status: Complete
 */
@@ -1383,7 +1383,7 @@ void __cdecl construct_vgmc_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VGMCP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044D9D0
+ORIGINAL: 0x0044D9D0
 Return Value: n/a
 Status: Complete
 */
@@ -1394,7 +1394,7 @@ void __cdecl construct_vgmcp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VLIGHTS_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DA00
+ORIGINAL: 0x0044DA00
 Return Value: n/a
 Status: Complete
 */
@@ -1405,7 +1405,7 @@ void __cdecl construct_vlights_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VPT_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DA30
+ORIGINAL: 0x0044DA30
 Return Value: n/a
 Status: Complete
 */
@@ -1416,7 +1416,7 @@ void __cdecl construct_vpt_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_A_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DA60
+ORIGINAL: 0x0044DA60
 Return Value: n/a
 Status: Complete
 */
@@ -1427,7 +1427,7 @@ void __cdecl construct_a_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_APWALL_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DA90
+ORIGINAL: 0x0044DA90
 Return Value: n/a
 Status: Complete
 */
@@ -1438,7 +1438,7 @@ void __cdecl construct_apwall_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_ASGEN_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DAC0
+ORIGINAL: 0x0044DAC0
 Return Value: n/a
 Status: Complete
 */
@@ -1449,7 +1449,7 @@ void __cdecl construct_asgen_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_APSID_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DAF0
+ORIGINAL: 0x0044DAF0
 Return Value: n/a
 Status: Complete
 */
@@ -1460,7 +1460,7 @@ void __cdecl construct_apsid_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VA01_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DB20
+ORIGINAL: 0x0044DB20
 Return Value: n/a
 Status: Complete
 */
@@ -1471,7 +1471,7 @@ void __cdecl construct_va01_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VR_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DB50
+ORIGINAL: 0x0044DB50
 Return Value: n/a
 Status: Complete
 */
@@ -1482,7 +1482,7 @@ void __cdecl construct_vr_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VHR_CAVIARDATA2; registers its ??__F teardown.
-Original Offset: 0044DBA0
+ORIGINAL: 0x0044DBA0
 Return Value: n/a
 Status: Complete
 */
@@ -1493,7 +1493,7 @@ void __cdecl construct_vhr_caviardata2() {
 
 /*
 Purpose: Dynamic initializer for g_VRC_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DBD0
+ORIGINAL: 0x0044DBD0
 Return Value: n/a
 Status: Complete
 */
@@ -1504,7 +1504,7 @@ void __cdecl construct_vrc_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VI_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DC20
+ORIGINAL: 0x0044DC20
 Return Value: n/a
 Status: Complete
 */
@@ -1515,7 +1515,7 @@ void __cdecl construct_vi_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VGMT_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DC50
+ORIGINAL: 0x0044DC50
 Return Value: n/a
 Status: Complete
 */
@@ -1526,7 +1526,7 @@ void __cdecl construct_vgmt_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VGMTP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DC80
+ORIGINAL: 0x0044DC80
 Return Value: n/a
 Status: Complete
 */
@@ -1537,7 +1537,7 @@ void __cdecl construct_vgmtp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR2; registers its ??__F teardown.
-Original Offset: 0044DCB0
+ORIGINAL: 0x0044DCB0
 Return Value: n/a
 Status: Complete
 */
@@ -1548,7 +1548,7 @@ void __cdecl construct_unused_caviardata_var2() {
 
 /*
 Purpose: Dynamic initializer for g_VWNTU_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DCE0
+ORIGINAL: 0x0044DCE0
 Return Value: n/a
 Status: Complete
 */
@@ -1559,7 +1559,7 @@ void __cdecl construct_vwntu_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VT_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DD10
+ORIGINAL: 0x0044DD10
 Return Value: n/a
 Status: Complete
 */
@@ -1570,7 +1570,7 @@ void __cdecl construct_vt_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_DROP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DD40
+ORIGINAL: 0x0044DD40
 Return Value: n/a
 Status: Complete
 */
@@ -1581,7 +1581,7 @@ void __cdecl construct_drop_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_DROPLET_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DD70
+ORIGINAL: 0x0044DD70
 Return Value: n/a
 Status: Complete
 */
@@ -1592,7 +1592,7 @@ void __cdecl construct_droplet_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCL_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DDA0
+ORIGINAL: 0x0044DDA0
 Return Value: n/a
 Status: Complete
 */
@@ -1603,7 +1603,7 @@ void __cdecl construct_vcl_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR3; registers its ??__F teardown.
-Original Offset: 0044DDD0
+ORIGINAL: 0x0044DDD0
 Return Value: n/a
 Status: Complete
 */
@@ -1614,7 +1614,7 @@ void __cdecl construct_unused_caviardata_var3() {
 
 /*
 Purpose: Dynamic initializer for g_VCLT00_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DE20
+ORIGINAL: 0x0044DE20
 Return Value: n/a
 Status: Complete
 */
@@ -1625,7 +1625,7 @@ void __cdecl construct_vclt00_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VHT_VBP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DE50
+ORIGINAL: 0x0044DE50
 Return Value: n/a
 Status: Complete
 */
@@ -1636,7 +1636,7 @@ void __cdecl construct_vht_vbp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VHTP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DE80
+ORIGINAL: 0x0044DE80
 Return Value: n/a
 Status: Complete
 */
@@ -1647,7 +1647,7 @@ void __cdecl construct_vhtp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VHTA0_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DEB0
+ORIGINAL: 0x0044DEB0
 Return Value: n/a
 Status: Complete
 */
@@ -1658,7 +1658,7 @@ void __cdecl construct_vhta0_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VHTTP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DF00
+ORIGINAL: 0x0044DF00
 Return Value: n/a
 Status: Complete
 */
@@ -1669,7 +1669,7 @@ void __cdecl construct_vhttp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VHTTPA0_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DF30
+ORIGINAL: 0x0044DF30
 Return Value: n/a
 Status: Complete
 */
@@ -1680,7 +1680,7 @@ void __cdecl construct_vhttpa0_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VSP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DF80
+ORIGINAL: 0x0044DF80
 Return Value: n/a
 Status: Complete
 */
@@ -1691,7 +1691,7 @@ void __cdecl construct_vsp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VSPA0_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044DFB0
+ORIGINAL: 0x0044DFB0
 Return Value: n/a
 Status: Complete
 */
@@ -1702,7 +1702,7 @@ void __cdecl construct_vspa0_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VSPTF_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E000
+ORIGINAL: 0x0044E000
 Return Value: n/a
 Status: Complete
 */
@@ -1713,7 +1713,7 @@ void __cdecl construct_vsptf_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VSPTB_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E030
+ORIGINAL: 0x0044E030
 Return Value: n/a
 Status: Complete
 */
@@ -1724,7 +1724,7 @@ void __cdecl construct_vsptb_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VFL_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E060
+ORIGINAL: 0x0044E060
 Return Value: n/a
 Status: Complete
 */
@@ -1735,7 +1735,7 @@ void __cdecl construct_vfl_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VGS_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E090
+ORIGINAL: 0x0044E090
 Return Value: n/a
 Status: Complete
 */
@@ -1746,7 +1746,7 @@ void __cdecl construct_vgs_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VGSP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E0C0
+ORIGINAL: 0x0044E0C0
 Return Value: n/a
 Status: Complete
 */
@@ -1757,7 +1757,7 @@ void __cdecl construct_vgsp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VJTP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E0F0
+ORIGINAL: 0x0044E0F0
 Return Value: n/a
 Status: Complete
 */
@@ -1768,7 +1768,7 @@ void __cdecl construct_vjtp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VJT0_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E120
+ORIGINAL: 0x0044E120
 Return Value: n/a
 Status: Complete
 */
@@ -1779,7 +1779,7 @@ void __cdecl construct_vjt0_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCU_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E170
+ORIGINAL: 0x0044E170
 Return Value: n/a
 Status: Complete
 */
@@ -1790,7 +1790,7 @@ void __cdecl construct_vcu_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCUP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E1A0
+ORIGINAL: 0x0044E1A0
 Return Value: n/a
 Status: Complete
 */
@@ -1801,7 +1801,7 @@ void __cdecl construct_vcup_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCUA0_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E1D0
+ORIGINAL: 0x0044E1D0
 Return Value: n/a
 Status: Complete
 */
@@ -1812,7 +1812,7 @@ void __cdecl construct_vcua0_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCUW_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E220
+ORIGINAL: 0x0044E220
 Return Value: n/a
 Status: Complete
 */
@@ -1823,7 +1823,7 @@ void __cdecl construct_vcuw_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCT_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E250
+ORIGINAL: 0x0044E250
 Return Value: n/a
 Status: Complete
 */
@@ -1834,7 +1834,7 @@ void __cdecl construct_vct_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCTP_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E280
+ORIGINAL: 0x0044E280
 Return Value: n/a
 Status: Complete
 */
@@ -1845,7 +1845,7 @@ void __cdecl construct_vctp_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCTB_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E2B0
+ORIGINAL: 0x0044E2B0
 Return Value: n/a
 Status: Complete
 */
@@ -1856,7 +1856,7 @@ void __cdecl construct_vctb_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VCT0_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E2E0
+ORIGINAL: 0x0044E2E0
 Return Value: n/a
 Status: Complete
 */
@@ -1867,7 +1867,7 @@ void __cdecl construct_vct0_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VWNTT_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E330
+ORIGINAL: 0x0044E330
 Return Value: n/a
 Status: Complete
 */
@@ -1878,7 +1878,7 @@ void __cdecl construct_vwntt_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VWNST_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E360
+ORIGINAL: 0x0044E360
 Return Value: n/a
 Status: Complete
 */
@@ -1889,7 +1889,7 @@ void __cdecl construct_vwnst_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VWNAA_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E390
+ORIGINAL: 0x0044E390
 Return Value: n/a
 Status: Complete
 */
@@ -1900,7 +1900,7 @@ void __cdecl construct_vwnaa_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VW_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E3C0
+ORIGINAL: 0x0044E3C0
 Return Value: n/a
 Status: Complete
 */
@@ -1911,7 +1911,7 @@ void __cdecl construct_vw_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VM_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E410
+ORIGINAL: 0x0044E410
 Return Value: n/a
 Status: Complete
 */
@@ -1922,7 +1922,7 @@ void __cdecl construct_vm_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VM13_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E440
+ORIGINAL: 0x0044E440
 Return Value: n/a
 Status: Complete
 */
@@ -1933,7 +1933,7 @@ void __cdecl construct_vm13_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_VPBR0_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E470
+ORIGINAL: 0x0044E470
 Return Value: n/a
 Status: Complete
 */
@@ -1944,7 +1944,7 @@ void __cdecl construct_vpbr0_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR4; registers its ??__F teardown.
-Original Offset: 0044E4C0
+ORIGINAL: 0x0044E4C0
 Return Value: n/a
 Status: Complete
 */
@@ -1955,7 +1955,7 @@ void __cdecl construct_unused_caviardata_var4() {
 
 /*
 Purpose: Dynamic initializer for g_NW_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E510
+ORIGINAL: 0x0044E510
 Return Value: n/a
 Status: Complete
 */
@@ -1966,7 +1966,7 @@ void __cdecl construct_nw_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_NI_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E540
+ORIGINAL: 0x0044E540
 Return Value: n/a
 Status: Complete
 */
@@ -1977,7 +1977,7 @@ void __cdecl construct_ni_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_NLC_CAVIARDATA; registers its ??__F teardown.
-Original Offset: 0044E570
+ORIGINAL: 0x0044E570
 Return Value: n/a
 Status: Complete
 */
@@ -1988,7 +1988,7 @@ void __cdecl construct_nlc_caviardata() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_CAVIARDATA_VAR5; registers its ??__F teardown.
-Original Offset: 0044E5A0
+ORIGINAL: 0x0044E5A0
 Return Value: n/a
 Status: Complete
 */
@@ -1999,7 +1999,7 @@ void __cdecl construct_unused_caviardata_var5() {
 
 /*
 Purpose: Dynamic initializer for g_RADIUS1_TEXTURE; registers its ??__F teardown.
-Original Offset: 0044E5F0
+ORIGINAL: 0x0044E5F0
 Return Value: n/a
 Status: Complete
 */
@@ -2010,7 +2010,7 @@ void __cdecl construct_radius1_texture() {
 
 /*
 Purpose: Dynamic initializer for g_RADIUS2_TEXTURE; registers its ??__F teardown.
-Original Offset: 0044E620
+ORIGINAL: 0x0044E620
 Return Value: n/a
 Status: Complete
 */
@@ -2021,7 +2021,7 @@ void __cdecl construct_radius2_texture() {
 
 /*
 Purpose: Dynamic initializer for g_ROCKY_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E650
+ORIGINAL: 0x0044E650
 Return Value: n/a
 Status: Complete
 */
@@ -2032,7 +2032,7 @@ void __cdecl construct_rocky_textures() {
 
 /*
 Purpose: Dynamic initializer for g_OCEAN_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E6A0
+ORIGINAL: 0x0044E6A0
 Return Value: n/a
 Status: Complete
 */
@@ -2043,7 +2043,7 @@ void __cdecl construct_ocean_textures() {
 
 /*
 Purpose: Dynamic initializer for g_FLAT_ARID_LAND_TEXTURE; registers its ??__F teardown.
-Original Offset: 0044E6F0
+ORIGINAL: 0x0044E6F0
 Return Value: n/a
 Status: Complete
 */
@@ -2054,7 +2054,7 @@ void __cdecl construct_flat_arid_land_texture() {
 
 /*
 Purpose: Dynamic initializer for g_MOIST_LAND_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E720
+ORIGINAL: 0x0044E720
 Return Value: n/a
 Status: Complete
 */
@@ -2065,7 +2065,7 @@ void __cdecl construct_moist_land_textures() {
 
 /*
 Purpose: Dynamic initializer for g_RAINY_LAND_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E770
+ORIGINAL: 0x0044E770
 Return Value: n/a
 Status: Complete
 */
@@ -2076,7 +2076,7 @@ void __cdecl construct_rainy_land_textures() {
 
 /*
 Purpose: Dynamic initializer for g_JUNGLE_LAND_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E7C0
+ORIGINAL: 0x0044E7C0
 Return Value: n/a
 Status: Complete
 */
@@ -2087,7 +2087,7 @@ void __cdecl construct_jungle_land_textures() {
 
 /*
 Purpose: Dynamic initializer for g_DUNE_LAND_TEXTURE; registers its ??__F teardown.
-Original Offset: 0044E810
+ORIGINAL: 0x0044E810
 Return Value: n/a
 Status: Complete
 */
@@ -2098,7 +2098,7 @@ void __cdecl construct_dune_land_texture() {
 
 /*
 Purpose: Dynamic initializer for g_SUNNY_MESA_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E840
+ORIGINAL: 0x0044E840
 Return Value: n/a
 Status: Complete
 */
@@ -2109,7 +2109,7 @@ void __cdecl construct_sunny_mesa_textures() {
 
 /*
 Purpose: Dynamic initializer for g_RAINFALL_SINGLE_TILE_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E890
+ORIGINAL: 0x0044E890
 Return Value: n/a
 Status: Complete
 */
@@ -2120,7 +2120,7 @@ void __cdecl construct_rainfall_single_tile_textures() {
 
 /*
 Purpose: Dynamic initializer for g_ROAD_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E8E0
+ORIGINAL: 0x0044E8E0
 Return Value: n/a
 Status: Complete
 */
@@ -2131,7 +2131,7 @@ void __cdecl construct_road_textures() {
 
 /*
 Purpose: Dynamic initializer for g_MAGTUBE_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E930
+ORIGINAL: 0x0044E930
 Return Value: n/a
 Status: Complete
 */
@@ -2142,7 +2142,7 @@ void __cdecl construct_magtube_textures() {
 
 /*
 Purpose: Dynamic initializer for g_RIVER_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E980
+ORIGINAL: 0x0044E980
 Return Value: n/a
 Status: Complete
 */
@@ -2153,7 +2153,7 @@ void __cdecl construct_river_textures() {
 
 /*
 Purpose: Dynamic initializer for g_MOUNT_PLANET_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044E9D0
+ORIGINAL: 0x0044E9D0
 Return Value: n/a
 Status: Complete
 */
@@ -2164,7 +2164,7 @@ void __cdecl construct_mount_planet_textures() {
 
 /*
 Purpose: Dynamic initializer for g_GARLAND_CRATER_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044EA20
+ORIGINAL: 0x0044EA20
 Return Value: n/a
 Status: Complete
 */
@@ -2175,7 +2175,7 @@ void __cdecl construct_garland_crater_textures() {
 
 /*
 Purpose: Dynamic initializer for g_FUNGUS_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044EA70
+ORIGINAL: 0x0044EA70
 Return Value: n/a
 Status: Complete
 */
@@ -2186,7 +2186,7 @@ void __cdecl construct_fungus_textures() {
 
 /*
 Purpose: Dynamic initializer for g_FARM_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044EAC0
+ORIGINAL: 0x0044EAC0
 Return Value: n/a
 Status: Complete
 */
@@ -2197,7 +2197,7 @@ void __cdecl construct_farm_textures() {
 
 /*
 Purpose: Dynamic initializer for g_FOREST_TEXTURES; registers its ??__F teardown.
-Original Offset: 0044EB10
+ORIGINAL: 0x0044EB10
 Return Value: n/a
 Status: Complete
 */
@@ -2208,7 +2208,7 @@ void __cdecl construct_forest_textures() {
 
 /*
 Purpose: Dynamic initializer for g_RAINFALL_SINGLE_TILE_TEXTURE; registers its ??__F teardown.
-Original Offset: 0044EB60
+ORIGINAL: 0x0044EB60
 Return Value: n/a
 Status: Complete
 */
@@ -2219,7 +2219,7 @@ void __cdecl construct_rainfall_single_tile_texture() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_WHITE_ORG_YEL_TILE_SPRITES; registers its ??__F teardown.
-Original Offset: 0044EB90
+ORIGINAL: 0x0044EB90
 Return Value: n/a
 Status: Complete
 */
@@ -2230,7 +2230,7 @@ void __cdecl construct_ter1_white_org_yel_tile_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_BOTTOM_LEFT_TILE_SPRITES; registers its ??__F teardown.
-Original Offset: 0044EBE0
+ORIGINAL: 0x0044EBE0
 Return Value: n/a
 Status: Complete
 */
@@ -2241,7 +2241,7 @@ void __cdecl construct_ter1_bottom_left_tile_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_UNUSED_SPRITES2; registers its ??__F teardown.
-Original Offset: 0044EC30
+ORIGINAL: 0x0044EC30
 Return Value: n/a
 Status: Complete
 */
@@ -2252,7 +2252,7 @@ void __cdecl construct_ter1_unused_sprites2() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_MINE_SPRITE; registers its ??__F teardown.
-Original Offset: 0044EC80
+ORIGINAL: 0x0044EC80
 Return Value: n/a
 Status: Complete
 */
@@ -2263,7 +2263,7 @@ void __cdecl construct_ter1_mine_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_SOLAR_COLLECTOR_SPRITE; registers its ??__F teardown.
-Original Offset: 0044ECB0
+ORIGINAL: 0x0044ECB0
 Return Value: n/a
 Status: Complete
 */
@@ -2274,7 +2274,7 @@ void __cdecl construct_ter1_solar_collector_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_TIDAL_HARNESS_SPRITE; registers its ??__F teardown.
-Original Offset: 0044ECE0
+ORIGINAL: 0x0044ECE0
 Return Value: n/a
 Status: Complete
 */
@@ -2285,7 +2285,7 @@ void __cdecl construct_ter1_tidal_harness_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_MINING_PLATFORM_SPRITE; registers its ??__F teardown.
-Original Offset: 0044ED10
+ORIGINAL: 0x0044ED10
 Return Value: n/a
 Status: Complete
 */
@@ -2296,7 +2296,7 @@ void __cdecl construct_ter1_mining_platform_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_TUT_BLANK_SPRITE; registers its ??__F teardown.
-Original Offset: 0044ED40
+ORIGINAL: 0x0044ED40
 Return Value: n/a
 Status: Complete
 */
@@ -2307,7 +2307,7 @@ void __cdecl construct_ter1_tut_blank_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_KELP_FARM_SPRITE; registers its ??__F teardown.
-Original Offset: 0044ED70
+ORIGINAL: 0x0044ED70
 Return Value: n/a
 Status: Complete
 */
@@ -2318,7 +2318,7 @@ void __cdecl construct_ter1_kelp_farm_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_CONDENSER_SPRITE; registers its ??__F teardown.
-Original Offset: 0044EDA0
+ORIGINAL: 0x0044EDA0
 Return Value: n/a
 Status: Complete
 */
@@ -2329,7 +2329,7 @@ void __cdecl construct_ter1_condenser_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_ECHELON_MIRROR_SPRITE; registers its ??__F teardown.
-Original Offset: 0044EDD0
+ORIGINAL: 0x0044EDD0
 Return Value: n/a
 Status: Complete
 */
@@ -2340,7 +2340,7 @@ void __cdecl construct_ter1_echelon_mirror_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_BOREHOLE_SPRITE; registers its ??__F teardown.
-Original Offset: 0044EE00
+ORIGINAL: 0x0044EE00
 Return Value: n/a
 Status: Complete
 */
@@ -2351,7 +2351,7 @@ void __cdecl construct_ter1_borehole_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_BOREHOLE_CLUSTER_SPRITE; registers its ??__F teardown.
-Original Offset: 0044EE30
+ORIGINAL: 0x0044EE30
 Return Value: n/a
 Status: Complete
 */
@@ -2362,7 +2362,7 @@ void __cdecl construct_ter1_borehole_cluster_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_MANIFOLD_NEXUS_SPRITES; registers its ??__F teardown.
-Original Offset: 0044EE60
+ORIGINAL: 0x0044EE60
 Return Value: n/a
 Status: Complete
 */
@@ -2373,7 +2373,7 @@ void __cdecl construct_ter1_manifold_nexus_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1WRECK_UNITY_WRECKAGE_SPRITES; registers its ??__F teardown.
-Original Offset: 0044EEB0
+ORIGINAL: 0x0044EEB0
 Return Value: n/a
 Status: Complete
 */
@@ -2384,7 +2384,7 @@ void __cdecl construct_ter1wreck_unity_wreckage_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES; registers its ??__F teardown.
-Original Offset: 0044EF00
+ORIGINAL: 0x0044EF00
 Return Value: n/a
 Status: Complete
 */
@@ -2395,7 +2395,7 @@ void __cdecl construct_ter1wreck_unity_wreckage_alt_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_FOSSIL_FIELD_RIDGE_SPRITES; registers its ??__F teardown.
-Original Offset: 0044EF50
+ORIGINAL: 0x0044EF50
 Return Value: n/a
 Status: Complete
 */
@@ -2406,7 +2406,7 @@ void __cdecl construct_fossil_field_ridge_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_UNUSED_SPRITES1; registers its ??__F teardown.
-Original Offset: 0044EFA0
+ORIGINAL: 0x0044EFA0
 Return Value: n/a
 Status: Complete
 */
@@ -2417,7 +2417,7 @@ void __cdecl construct_ter1_unused_sprites1() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_FARM_SPRITES; registers its ??__F teardown.
-Original Offset: 0044EFF0
+ORIGINAL: 0x0044EFF0
 Return Value: n/a
 Status: Complete
 */
@@ -2428,7 +2428,7 @@ void __cdecl construct_ter1_farm_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_SOIL_ENRICHER_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F040
+ORIGINAL: 0x0044F040
 Return Value: n/a
 Status: Complete
 */
@@ -2439,7 +2439,7 @@ void __cdecl construct_ter1_soil_enricher_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_SEA_LAND_RESOURCE_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F090
+ORIGINAL: 0x0044F090
 Return Value: n/a
 Status: Complete
 */
@@ -2450,7 +2450,7 @@ void __cdecl construct_ter1_sea_land_resource_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_LANDMARK_RESOURCE_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F0E0
+ORIGINAL: 0x0044F0E0
 Return Value: n/a
 Status: Complete
 */
@@ -2461,7 +2461,7 @@ void __cdecl construct_ter1_landmark_resource_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_GLOW_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F130
+ORIGINAL: 0x0044F130
 Return Value: n/a
 Status: Complete
 */
@@ -2472,7 +2472,7 @@ void __cdecl construct_glow_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_UNITY_POD_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F180
+ORIGINAL: 0x0044F180
 Return Value: n/a
 Status: Complete
 */
@@ -2483,7 +2483,7 @@ void __cdecl construct_ter1_unity_pod_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_MONOLITH_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F1D0
+ORIGINAL: 0x0044F1D0
 Return Value: n/a
 Status: Complete
 */
@@ -2494,7 +2494,7 @@ void __cdecl construct_ter1_monolith_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_BUNKER_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F200
+ORIGINAL: 0x0044F200
 Return Value: n/a
 Status: Complete
 */
@@ -2505,7 +2505,7 @@ void __cdecl construct_ter1_bunker_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_AIRBASE_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F230
+ORIGINAL: 0x0044F230
 Return Value: n/a
 Status: Complete
 */
@@ -2516,7 +2516,7 @@ void __cdecl construct_ter1_airbase_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TER1_SENSOR_ARRAY_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F260
+ORIGINAL: 0x0044F260
 Return Value: n/a
 Status: Complete
 */
@@ -2527,7 +2527,7 @@ void __cdecl construct_ter1_sensor_array_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_RAINFALL_DOUBLE_TILE_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F290
+ORIGINAL: 0x0044F290
 Return Value: n/a
 Status: Complete
 */
@@ -2538,7 +2538,7 @@ void __cdecl construct_rainfall_double_tile_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_VEH_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F2E0
+ORIGINAL: 0x0044F2E0
 Return Value: n/a
 Status: Complete
 */
@@ -2549,7 +2549,7 @@ void __cdecl construct_veh_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_FLAGS_VEH_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F330
+ORIGINAL: 0x0044F330
 Return Value: n/a
 Status: Complete
 */
@@ -2560,7 +2560,7 @@ void __cdecl construct_flags_veh_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_ICONS_GENERAL_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F380
+ORIGINAL: 0x0044F380
 Return Value: n/a
 Status: Complete
 */
@@ -2571,7 +2571,7 @@ void __cdecl construct_icons_general_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_RESOURCE_ICON_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F3D0
+ORIGINAL: 0x0044F3D0
 Return Value: n/a
 Status: Complete
 */
@@ -2582,7 +2582,7 @@ void __cdecl construct_resource_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_CITIZEN_LG_CURSOR_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F420
+ORIGINAL: 0x0044F420
 Return Value: n/a
 Status: Complete
 */
@@ -2593,7 +2593,7 @@ void __cdecl construct_citizen_lg_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SPECIALIST_LG_CURSOR_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F470
+ORIGINAL: 0x0044F470
 Return Value: n/a
 Status: Complete
 */
@@ -2604,7 +2604,7 @@ void __cdecl construct_specialist_lg_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_CITIZEN_SM_CURSOR_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F4C0
+ORIGINAL: 0x0044F4C0
 Return Value: n/a
 Status: Complete
 */
@@ -2615,7 +2615,7 @@ void __cdecl construct_citizen_sm_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SPECIALIST_SM_CURSOR_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F510
+ORIGINAL: 0x0044F510
 Return Value: n/a
 Status: Complete
 */
@@ -2626,7 +2626,7 @@ void __cdecl construct_specialist_sm_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_AL_CITIZEN_LG_CURSOR_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F560
+ORIGINAL: 0x0044F560
 Return Value: n/a
 Status: Complete
 */
@@ -2637,7 +2637,7 @@ void __cdecl construct_al_citizen_lg_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_AL_SPECIALIST_LG_CURSOR_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F5B0
+ORIGINAL: 0x0044F5B0
 Return Value: n/a
 Status: Complete
 */
@@ -2648,7 +2648,7 @@ void __cdecl construct_al_specialist_lg_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_AL_CITIZEN_SM_CURSOR_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F600
+ORIGINAL: 0x0044F600
 Return Value: n/a
 Status: Complete
 */
@@ -2659,7 +2659,7 @@ void __cdecl construct_al_citizen_sm_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_AL_SPECIALIST_SM_CURSOR_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F650
+ORIGINAL: 0x0044F650
 Return Value: n/a
 Status: Complete
 */
@@ -2670,7 +2670,7 @@ void __cdecl construct_al_specialist_sm_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_RED_ALIEN_HEAD_ICON_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F6A0
+ORIGINAL: 0x0044F6A0
 Return Value: n/a
 Status: Complete
 */
@@ -2681,7 +2681,7 @@ void __cdecl construct_red_alien_head_icon_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_SILVER_MENU_ICON_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F6D0
+ORIGINAL: 0x0044F6D0
 Return Value: n/a
 Status: Complete
 */
@@ -2692,7 +2692,7 @@ void __cdecl construct_silver_menu_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SILVER_CHECKBOX_ICON_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F720
+ORIGINAL: 0x0044F720
 Return Value: n/a
 Status: Complete
 */
@@ -2703,7 +2703,7 @@ void __cdecl construct_silver_checkbox_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_RED_MALE_HEAD_ICON_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F770
+ORIGINAL: 0x0044F770
 Return Value: n/a
 Status: Complete
 */
@@ -2714,7 +2714,7 @@ void __cdecl construct_red_male_head_icon_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_NULL_RESOURCE_ICON_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F7A0
+ORIGINAL: 0x0044F7A0
 Return Value: n/a
 Status: Complete
 */
@@ -2725,7 +2725,7 @@ void __cdecl construct_null_resource_icon_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_PEACE_SIGN_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F7D0
+ORIGINAL: 0x0044F7D0
 Return Value: n/a
 Status: Complete
 */
@@ -2736,7 +2736,7 @@ void __cdecl construct_peace_sign_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_ICON_TILE_SQUARE_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F820
+ORIGINAL: 0x0044F820
 Return Value: n/a
 Status: Complete
 */
@@ -2747,7 +2747,7 @@ void __cdecl construct_icon_tile_square_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_XI_BOOM_VEH_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F850
+ORIGINAL: 0x0044F850
 Return Value: n/a
 Status: Complete
 */
@@ -2758,7 +2758,7 @@ void __cdecl construct_xi_boom_veh_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_XF_BOOM_VEH_SPRITES; registers its ??__F teardown.
-Original Offset: 0044F8A0
+ORIGINAL: 0x0044F8A0
 Return Value: n/a
 Status: Complete
 */
@@ -2769,7 +2769,7 @@ void __cdecl construct_xf_boom_veh_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_MIND_WORM_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F8F0
+ORIGINAL: 0x0044F8F0
 Return Value: n/a
 Status: Complete
 */
@@ -2780,7 +2780,7 @@ void __cdecl construct_battle_mind_worm_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_ISLE_DEEP_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F920
+ORIGINAL: 0x0044F920
 Return Value: n/a
 Status: Complete
 */
@@ -2791,7 +2791,7 @@ void __cdecl construct_battle_isle_deep_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_LOCUSTS_CHIRON_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F950
+ORIGINAL: 0x0044F950
 Return Value: n/a
 Status: Complete
 */
@@ -2802,7 +2802,7 @@ void __cdecl construct_battle_locusts_chiron_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_FUNGAL_TOWER_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F980
+ORIGINAL: 0x0044F980
 Return Value: n/a
 Status: Complete
 */
@@ -2813,7 +2813,7 @@ void __cdecl construct_battle_fungal_tower_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_SPORE_LAUNCHER_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F9B0
+ORIGINAL: 0x0044F9B0
 Return Value: n/a
 Status: Complete
 */
@@ -2824,7 +2824,7 @@ void __cdecl construct_battle_spore_launcher_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_BATTLE_SEALURK_SPRITE; registers its ??__F teardown.
-Original Offset: 0044F9E0
+ORIGINAL: 0x0044F9E0
 Return Value: n/a
 Status: Complete
 */
@@ -2835,7 +2835,7 @@ void __cdecl construct_battle_sealurk_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_TECH_ICON_SPRITES; registers its ??__F teardown.
-Original Offset: 0044FA10
+ORIGINAL: 0x0044FA10
 Return Value: n/a
 Status: Complete
 */
@@ -2846,7 +2846,7 @@ void __cdecl construct_tech_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_FACILITY_ICON_SPRITES; registers its ??__F teardown.
-Original Offset: 0044FA60
+ORIGINAL: 0x0044FA60
 Return Value: n/a
 Status: Complete
 */
@@ -2857,7 +2857,7 @@ void __cdecl construct_facility_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SECRET_PROJECT_ICON_SPRITES; registers its ??__F teardown.
-Original Offset: 0044FAB0
+ORIGINAL: 0x0044FAB0
 Return Value: n/a
 Status: Complete
 */
@@ -2868,7 +2868,7 @@ void __cdecl construct_secret_project_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_MP_COMBO_ARROW_SPRITES; registers its ??__F teardown.
-Original Offset: 0044FB00
+ORIGINAL: 0x0044FB00
 Return Value: n/a
 Status: Complete
 */
@@ -2879,7 +2879,7 @@ void __cdecl construct_iface_mp_combo_arrow_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SCROLL_BAR_ARROW_ICON_SPRITES; registers its ??__F teardown.
-Original Offset: 0044FB50
+ORIGINAL: 0x0044FB50
 Return Value: n/a
 Status: Complete
 */
@@ -2890,7 +2890,7 @@ void __cdecl construct_scroll_bar_arrow_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES; registers its ??__F teardown.
-Original Offset: 0044FBA0
+ORIGINAL: 0x0044FBA0
 Return Value: n/a
 Status: Complete
 */
@@ -2901,7 +2901,7 @@ void __cdecl construct_scroll_bar_small_arrow_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SCROLL_BAR_FILLER_ICON_SPRITES; registers its ??__F teardown.
-Original Offset: 0044FBF0
+ORIGINAL: 0x0044FBF0
 Return Value: n/a
 Status: Complete
 */
@@ -2912,7 +2912,7 @@ void __cdecl construct_scroll_bar_filler_icon_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FC20
+ORIGINAL: 0x0044FC20
 Return Value: n/a
 Status: Complete
 */
@@ -2923,7 +2923,7 @@ void __cdecl construct_scroll_bar_small_filler_icon_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_LOCK_SPRITES; registers its ??__F teardown.
-Original Offset: 0044FC50
+ORIGINAL: 0x0044FC50
 Return Value: n/a
 Status: Complete
 */
@@ -2934,7 +2934,7 @@ void __cdecl construct_iface_lock_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR01; registers its ??__F teardown.
-Original Offset: 0044FCA0
+ORIGINAL: 0x0044FCA0
 Return Value: n/a
 Status: Complete
 */
@@ -2945,7 +2945,7 @@ void __cdecl construct_unused_sprites_var01() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FCF0
+ORIGINAL: 0x0044FCF0
 Return Value: n/a
 Status: Complete
 */
@@ -2956,7 +2956,7 @@ void __cdecl construct_iface_general_windows_top_left_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FD20
+ORIGINAL: 0x0044FD20
 Return Value: n/a
 Status: Complete
 */
@@ -2967,7 +2967,7 @@ void __cdecl construct_iface_general_windows_top_right_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FD50
+ORIGINAL: 0x0044FD50
 Return Value: n/a
 Status: Complete
 */
@@ -2978,7 +2978,7 @@ void __cdecl construct_iface_general_windows_bot_left_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FD80
+ORIGINAL: 0x0044FD80
 Return Value: n/a
 Status: Complete
 */
@@ -2989,7 +2989,7 @@ void __cdecl construct_iface_general_windows_bot_right_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FDB0
+ORIGINAL: 0x0044FDB0
 Return Value: n/a
 Status: Complete
 */
@@ -3000,7 +3000,7 @@ void __cdecl construct_iface_general_windows_mid_left_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FDE0
+ORIGINAL: 0x0044FDE0
 Return Value: n/a
 Status: Complete
 */
@@ -3011,7 +3011,7 @@ void __cdecl construct_iface_general_windows_mid_right_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FE10
+ORIGINAL: 0x0044FE10
 Return Value: n/a
 Status: Complete
 */
@@ -3022,7 +3022,7 @@ void __cdecl construct_iface_general_windows_top_mid_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FE40
+ORIGINAL: 0x0044FE40
 Return Value: n/a
 Status: Complete
 */
@@ -3033,7 +3033,7 @@ void __cdecl construct_iface_general_windows_bot_mid_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FE70
+ORIGINAL: 0x0044FE70
 Return Value: n/a
 Status: Complete
 */
@@ -3044,7 +3044,7 @@ void __cdecl construct_iface_general_windows_noncap_mid_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FEA0
+ORIGINAL: 0x0044FEA0
 Return Value: n/a
 Status: Complete
 */
@@ -3055,7 +3055,7 @@ void __cdecl construct_iface_general_windows_noncap_left_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE; registers its ??__F teardown.
-Original Offset: 0044FED0
+ORIGINAL: 0x0044FED0
 Return Value: n/a
 Status: Complete
 */
@@ -3066,7 +3066,7 @@ void __cdecl construct_iface_general_windows_noncap_right_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR23; registers its ??__F teardown.
-Original Offset: 0044FF00
+ORIGINAL: 0x0044FF00
 Return Value: n/a
 Status: Complete
 */
@@ -3077,7 +3077,7 @@ void __cdecl construct_unused_sprite_var23() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR24; registers its ??__F teardown.
-Original Offset: 0044FF30
+ORIGINAL: 0x0044FF30
 Return Value: n/a
 Status: Complete
 */
@@ -3088,7 +3088,7 @@ void __cdecl construct_unused_sprite_var24() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR25; registers its ??__F teardown.
-Original Offset: 0044FF60
+ORIGINAL: 0x0044FF60
 Return Value: n/a
 Status: Complete
 */
@@ -3099,7 +3099,7 @@ void __cdecl construct_unused_sprite_var25() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR26; registers its ??__F teardown.
-Original Offset: 0044FF90
+ORIGINAL: 0x0044FF90
 Return Value: n/a
 Status: Complete
 */
@@ -3110,7 +3110,7 @@ void __cdecl construct_unused_sprite_var26() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR27; registers its ??__F teardown.
-Original Offset: 0044FFC0
+ORIGINAL: 0x0044FFC0
 Return Value: n/a
 Status: Complete
 */
@@ -3121,7 +3121,7 @@ void __cdecl construct_unused_sprite_var27() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR28; registers its ??__F teardown.
-Original Offset: 0044FFF0
+ORIGINAL: 0x0044FFF0
 Return Value: n/a
 Status: Complete
 */
@@ -3132,7 +3132,7 @@ void __cdecl construct_unused_sprite_var28() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR29; registers its ??__F teardown.
-Original Offset: 00450020
+ORIGINAL: 0x00450020
 Return Value: n/a
 Status: Complete
 */
@@ -3143,7 +3143,7 @@ void __cdecl construct_unused_sprite_var29() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR30; registers its ??__F teardown.
-Original Offset: 00450050
+ORIGINAL: 0x00450050
 Return Value: n/a
 Status: Complete
 */
@@ -3154,7 +3154,7 @@ void __cdecl construct_unused_sprite_var30() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR31; registers its ??__F teardown.
-Original Offset: 00450080
+ORIGINAL: 0x00450080
 Return Value: n/a
 Status: Complete
 */
@@ -3165,7 +3165,7 @@ void __cdecl construct_unused_sprite_var31() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR32; registers its ??__F teardown.
-Original Offset: 004500B0
+ORIGINAL: 0x004500B0
 Return Value: n/a
 Status: Complete
 */
@@ -3176,7 +3176,7 @@ void __cdecl construct_unused_sprite_var32() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR33; registers its ??__F teardown.
-Original Offset: 004500E0
+ORIGINAL: 0x004500E0
 Return Value: n/a
 Status: Complete
 */
@@ -3187,7 +3187,7 @@ void __cdecl construct_unused_sprite_var33() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR34; registers its ??__F teardown.
-Original Offset: 00450110
+ORIGINAL: 0x00450110
 Return Value: n/a
 Status: Complete
 */
@@ -3198,7 +3198,7 @@ void __cdecl construct_unused_sprite_var34() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR35; registers its ??__F teardown.
-Original Offset: 00450140
+ORIGINAL: 0x00450140
 Return Value: n/a
 Status: Complete
 */
@@ -3209,7 +3209,7 @@ void __cdecl construct_unused_sprite_var35() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR36; registers its ??__F teardown.
-Original Offset: 00450170
+ORIGINAL: 0x00450170
 Return Value: n/a
 Status: Complete
 */
@@ -3220,7 +3220,7 @@ void __cdecl construct_unused_sprite_var36() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR37; registers its ??__F teardown.
-Original Offset: 004501A0
+ORIGINAL: 0x004501A0
 Return Value: n/a
 Status: Complete
 */
@@ -3231,7 +3231,7 @@ void __cdecl construct_unused_sprite_var37() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR38; registers its ??__F teardown.
-Original Offset: 004501D0
+ORIGINAL: 0x004501D0
 Return Value: n/a
 Status: Complete
 */
@@ -3242,7 +3242,7 @@ void __cdecl construct_unused_sprite_var38() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR39; registers its ??__F teardown.
-Original Offset: 00450200
+ORIGINAL: 0x00450200
 Return Value: n/a
 Status: Complete
 */
@@ -3253,7 +3253,7 @@ void __cdecl construct_unused_sprite_var39() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR40; registers its ??__F teardown.
-Original Offset: 00450230
+ORIGINAL: 0x00450230
 Return Value: n/a
 Status: Complete
 */
@@ -3264,7 +3264,7 @@ void __cdecl construct_unused_sprite_var40() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR41; registers its ??__F teardown.
-Original Offset: 00450260
+ORIGINAL: 0x00450260
 Return Value: n/a
 Status: Complete
 */
@@ -3275,7 +3275,7 @@ void __cdecl construct_unused_sprite_var41() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR42; registers its ??__F teardown.
-Original Offset: 00450290
+ORIGINAL: 0x00450290
 Return Value: n/a
 Status: Complete
 */
@@ -3286,7 +3286,7 @@ void __cdecl construct_unused_sprite_var42() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR43; registers its ??__F teardown.
-Original Offset: 004502C0
+ORIGINAL: 0x004502C0
 Return Value: n/a
 Status: Complete
 */
@@ -3297,7 +3297,7 @@ void __cdecl construct_unused_sprite_var43() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR44; registers its ??__F teardown.
-Original Offset: 004502F0
+ORIGINAL: 0x004502F0
 Return Value: n/a
 Status: Complete
 */
@@ -3308,7 +3308,7 @@ void __cdecl construct_unused_sprite_var44() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR45; registers its ??__F teardown.
-Original Offset: 00450320
+ORIGINAL: 0x00450320
 Return Value: n/a
 Status: Complete
 */
@@ -3319,7 +3319,7 @@ void __cdecl construct_unused_sprite_var45() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR46; registers its ??__F teardown.
-Original Offset: 00450350
+ORIGINAL: 0x00450350
 Return Value: n/a
 Status: Complete
 */
@@ -3330,7 +3330,7 @@ void __cdecl construct_unused_sprite_var46() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_TECH_TREE_ARROW_SPRITES; registers its ??__F teardown.
-Original Offset: 00450380
+ORIGINAL: 0x00450380
 Return Value: n/a
 Status: Complete
 */
@@ -3341,7 +3341,7 @@ void __cdecl construct_iface_tech_tree_arrow_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR47; registers its ??__F teardown.
-Original Offset: 004503D0
+ORIGINAL: 0x004503D0
 Return Value: n/a
 Status: Complete
 */
@@ -3352,7 +3352,7 @@ void __cdecl construct_unused_sprite_var47() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR48; registers its ??__F teardown.
-Original Offset: 00450400
+ORIGINAL: 0x00450400
 Return Value: n/a
 Status: Complete
 */
@@ -3363,7 +3363,7 @@ void __cdecl construct_unused_sprite_var48() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR49; registers its ??__F teardown.
-Original Offset: 00450430
+ORIGINAL: 0x00450430
 Return Value: n/a
 Status: Complete
 */
@@ -3374,7 +3374,7 @@ void __cdecl construct_unused_sprite_var49() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR50; registers its ??__F teardown.
-Original Offset: 00450460
+ORIGINAL: 0x00450460
 Return Value: n/a
 Status: Complete
 */
@@ -3385,7 +3385,7 @@ void __cdecl construct_unused_sprite_var50() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR51; registers its ??__F teardown.
-Original Offset: 00450490
+ORIGINAL: 0x00450490
 Return Value: n/a
 Status: Complete
 */
@@ -3396,7 +3396,7 @@ void __cdecl construct_unused_sprite_var51() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR52; registers its ??__F teardown.
-Original Offset: 004504C0
+ORIGINAL: 0x004504C0
 Return Value: n/a
 Status: Complete
 */
@@ -3407,7 +3407,7 @@ void __cdecl construct_unused_sprite_var52() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR53; registers its ??__F teardown.
-Original Offset: 004504F0
+ORIGINAL: 0x004504F0
 Return Value: n/a
 Status: Complete
 */
@@ -3418,7 +3418,7 @@ void __cdecl construct_unused_sprite_var53() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR54; registers its ??__F teardown.
-Original Offset: 00450520
+ORIGINAL: 0x00450520
 Return Value: n/a
 Status: Complete
 */
@@ -3429,7 +3429,7 @@ void __cdecl construct_unused_sprite_var54() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR55; registers its ??__F teardown.
-Original Offset: 00450550
+ORIGINAL: 0x00450550
 Return Value: n/a
 Status: Complete
 */
@@ -3440,7 +3440,7 @@ void __cdecl construct_unused_sprite_var55() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR56; registers its ??__F teardown.
-Original Offset: 00450580
+ORIGINAL: 0x00450580
 Return Value: n/a
 Status: Complete
 */
@@ -3451,7 +3451,7 @@ void __cdecl construct_unused_sprite_var56() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR57; registers its ??__F teardown.
-Original Offset: 004505B0
+ORIGINAL: 0x004505B0
 Return Value: n/a
 Status: Complete
 */
@@ -3462,7 +3462,7 @@ void __cdecl construct_unused_sprite_var57() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR58; registers its ??__F teardown.
-Original Offset: 004505E0
+ORIGINAL: 0x004505E0
 Return Value: n/a
 Status: Complete
 */
@@ -3473,7 +3473,7 @@ void __cdecl construct_unused_sprite_var58() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR59; registers its ??__F teardown.
-Original Offset: 00450610
+ORIGINAL: 0x00450610
 Return Value: n/a
 Status: Complete
 */
@@ -3484,7 +3484,7 @@ void __cdecl construct_unused_sprite_var59() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR60; registers its ??__F teardown.
-Original Offset: 00450640
+ORIGINAL: 0x00450640
 Return Value: n/a
 Status: Complete
 */
@@ -3495,7 +3495,7 @@ void __cdecl construct_unused_sprite_var60() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR61; registers its ??__F teardown.
-Original Offset: 00450670
+ORIGINAL: 0x00450670
 Return Value: n/a
 Status: Complete
 */
@@ -3506,7 +3506,7 @@ void __cdecl construct_unused_sprite_var61() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR62; registers its ??__F teardown.
-Original Offset: 004506A0
+ORIGINAL: 0x004506A0
 Return Value: n/a
 Status: Complete
 */
@@ -3517,7 +3517,7 @@ void __cdecl construct_unused_sprite_var62() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR63; registers its ??__F teardown.
-Original Offset: 004506D0
+ORIGINAL: 0x004506D0
 Return Value: n/a
 Status: Complete
 */
@@ -3528,7 +3528,7 @@ void __cdecl construct_unused_sprite_var63() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR64; registers its ??__F teardown.
-Original Offset: 00450700
+ORIGINAL: 0x00450700
 Return Value: n/a
 Status: Complete
 */
@@ -3539,7 +3539,7 @@ void __cdecl construct_unused_sprite_var64() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR65; registers its ??__F teardown.
-Original Offset: 00450730
+ORIGINAL: 0x00450730
 Return Value: n/a
 Status: Complete
 */
@@ -3550,7 +3550,7 @@ void __cdecl construct_unused_sprite_var65() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR66; registers its ??__F teardown.
-Original Offset: 00450760
+ORIGINAL: 0x00450760
 Return Value: n/a
 Status: Complete
 */
@@ -3561,7 +3561,7 @@ void __cdecl construct_unused_sprite_var66() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR67; registers its ??__F teardown.
-Original Offset: 00450790
+ORIGINAL: 0x00450790
 Return Value: n/a
 Status: Complete
 */
@@ -3572,7 +3572,7 @@ void __cdecl construct_unused_sprite_var67() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR68; registers its ??__F teardown.
-Original Offset: 004507C0
+ORIGINAL: 0x004507C0
 Return Value: n/a
 Status: Complete
 */
@@ -3583,7 +3583,7 @@ void __cdecl construct_unused_sprite_var68() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR69; registers its ??__F teardown.
-Original Offset: 004507F0
+ORIGINAL: 0x004507F0
 Return Value: n/a
 Status: Complete
 */
@@ -3594,7 +3594,7 @@ void __cdecl construct_unused_sprite_var69() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR70; registers its ??__F teardown.
-Original Offset: 00450820
+ORIGINAL: 0x00450820
 Return Value: n/a
 Status: Complete
 */
@@ -3605,7 +3605,7 @@ void __cdecl construct_unused_sprite_var70() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR71; registers its ??__F teardown.
-Original Offset: 00450850
+ORIGINAL: 0x00450850
 Return Value: n/a
 Status: Complete
 */
@@ -3616,7 +3616,7 @@ void __cdecl construct_unused_sprite_var71() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR72; registers its ??__F teardown.
-Original Offset: 00450880
+ORIGINAL: 0x00450880
 Return Value: n/a
 Status: Complete
 */
@@ -3627,7 +3627,7 @@ void __cdecl construct_unused_sprite_var72() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR73; registers its ??__F teardown.
-Original Offset: 004508B0
+ORIGINAL: 0x004508B0
 Return Value: n/a
 Status: Complete
 */
@@ -3638,7 +3638,7 @@ void __cdecl construct_unused_sprite_var73() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR74; registers its ??__F teardown.
-Original Offset: 004508E0
+ORIGINAL: 0x004508E0
 Return Value: n/a
 Status: Complete
 */
@@ -3649,7 +3649,7 @@ void __cdecl construct_unused_sprite_var74() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR02; registers its ??__F teardown.
-Original Offset: 00450910
+ORIGINAL: 0x00450910
 Return Value: n/a
 Status: Complete
 */
@@ -3660,7 +3660,7 @@ void __cdecl construct_unused_sprites_var02() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR03; registers its ??__F teardown.
-Original Offset: 00450960
+ORIGINAL: 0x00450960
 Return Value: n/a
 Status: Complete
 */
@@ -3671,7 +3671,7 @@ void __cdecl construct_unused_sprites_var03() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR04; registers its ??__F teardown.
-Original Offset: 004509B0
+ORIGINAL: 0x004509B0
 Return Value: n/a
 Status: Complete
 */
@@ -3682,7 +3682,7 @@ void __cdecl construct_unused_sprites_var04() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR05; registers its ??__F teardown.
-Original Offset: 00450A00
+ORIGINAL: 0x00450A00
 Return Value: n/a
 Status: Complete
 */
@@ -3693,7 +3693,7 @@ void __cdecl construct_unused_sprites_var05() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR06; registers its ??__F teardown.
-Original Offset: 00450A50
+ORIGINAL: 0x00450A50
 Return Value: n/a
 Status: Complete
 */
@@ -3704,7 +3704,7 @@ void __cdecl construct_unused_sprites_var06() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR07; registers its ??__F teardown.
-Original Offset: 00450AA0
+ORIGINAL: 0x00450AA0
 Return Value: n/a
 Status: Complete
 */
@@ -3715,7 +3715,7 @@ void __cdecl construct_unused_sprites_var07() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR08; registers its ??__F teardown.
-Original Offset: 00450AF0
+ORIGINAL: 0x00450AF0
 Return Value: n/a
 Status: Complete
 */
@@ -3726,7 +3726,7 @@ void __cdecl construct_unused_sprites_var08() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR09; registers its ??__F teardown.
-Original Offset: 00450B40
+ORIGINAL: 0x00450B40
 Return Value: n/a
 Status: Complete
 */
@@ -3737,7 +3737,7 @@ void __cdecl construct_unused_sprites_var09() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITES_VAR10; registers its ??__F teardown.
-Original Offset: 00450B90
+ORIGINAL: 0x00450B90
 Return Value: n/a
 Status: Complete
 */
@@ -3748,7 +3748,7 @@ void __cdecl construct_unused_sprites_var10() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR75; registers its ??__F teardown.
-Original Offset: 00450BE0
+ORIGINAL: 0x00450BE0
 Return Value: n/a
 Status: Complete
 */
@@ -3759,7 +3759,7 @@ void __cdecl construct_unused_sprite_var75() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR76; registers its ??__F teardown.
-Original Offset: 00450C10
+ORIGINAL: 0x00450C10
 Return Value: n/a
 Status: Complete
 */
@@ -3770,7 +3770,7 @@ void __cdecl construct_unused_sprite_var76() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR77; registers its ??__F teardown.
-Original Offset: 00450C40
+ORIGINAL: 0x00450C40
 Return Value: n/a
 Status: Complete
 */
@@ -3781,7 +3781,7 @@ void __cdecl construct_unused_sprite_var77() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR78; registers its ??__F teardown.
-Original Offset: 00450C70
+ORIGINAL: 0x00450C70
 Return Value: n/a
 Status: Complete
 */
@@ -3792,7 +3792,7 @@ void __cdecl construct_unused_sprite_var78() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR79; registers its ??__F teardown.
-Original Offset: 00450CA0
+ORIGINAL: 0x00450CA0
 Return Value: n/a
 Status: Complete
 */
@@ -3803,7 +3803,7 @@ void __cdecl construct_unused_sprite_var79() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR80; registers its ??__F teardown.
-Original Offset: 00450CD0
+ORIGINAL: 0x00450CD0
 Return Value: n/a
 Status: Complete
 */
@@ -3814,7 +3814,7 @@ void __cdecl construct_unused_sprite_var80() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR81; registers its ??__F teardown.
-Original Offset: 00450D00
+ORIGINAL: 0x00450D00
 Return Value: n/a
 Status: Complete
 */
@@ -3825,7 +3825,7 @@ void __cdecl construct_unused_sprite_var81() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR82; registers its ??__F teardown.
-Original Offset: 00450D30
+ORIGINAL: 0x00450D30
 Return Value: n/a
 Status: Complete
 */
@@ -3836,7 +3836,7 @@ void __cdecl construct_unused_sprite_var82() {
 
 /*
 Purpose: Dynamic initializer for g_UNUSED_SPRITE_VAR83; registers its ??__F teardown.
-Original Offset: 00450D60
+ORIGINAL: 0x00450D60
 Return Value: n/a
 Status: Complete
 */
@@ -3847,7 +3847,7 @@ void __cdecl construct_unused_sprite_var83() {
 
 /*
 Purpose: Dynamic initializer for g_BASEWIN_SPRITES; registers its ??__F teardown.
-Original Offset: 00450D90
+ORIGINAL: 0x00450D90
 Return Value: n/a
 Status: Complete
 */
@@ -3858,7 +3858,7 @@ void __cdecl construct_basewin_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_INFOWIN; registers its ??__F teardown.
-Original Offset: 004562C0
+ORIGINAL: 0x004562C0
 Return Value: n/a
 Status: Complete
 */
@@ -3869,7 +3869,7 @@ void __cdecl construct_infowin() {
 
 /*
 Purpose: Dynamic initializer for g_MAININTERFACE; registers its ??__F teardown.
-Original Offset: 00459560
+ORIGINAL: 0x00459560
 Return Value: n/a
 Status: Complete
 */
@@ -3880,7 +3880,7 @@ void __cdecl construct_maininterface() {
 
 /*
 Purpose: Dynamic initializer for g_MAININTERFACE_WAVE; registers its ??__F teardown.
-Original Offset: 00459590
+ORIGINAL: 0x00459590
 Return Value: n/a
 Status: Complete
 */
@@ -3891,7 +3891,7 @@ void __cdecl construct_maininterface_wave() {
 
 /*
 Purpose: Dynamic initializer for g_JACKAL_FONT; registers its ??__F teardown.
-Original Offset: 0045F920
+ORIGINAL: 0x0045F920
 Return Value: n/a
 Status: Complete
 */
@@ -3902,7 +3902,7 @@ void __cdecl construct_jackal_font() {
 
 /*
 Purpose: Dynamic initializer for g_MAPWIN; registers its ??__F teardown.
-Original Offset: 00462080
+ORIGINAL: 0x00462080
 Return Value: n/a
 Status: Complete
 */
@@ -3913,7 +3913,7 @@ void __cdecl construct_mapwin() {
 
 /*
 Purpose: Dynamic initializer for g_MESSAGEWIN; registers its ??__F teardown.
-Original Offset: 00471320
+ORIGINAL: 0x00471320
 Return Value: n/a
 Status: Complete
 */
@@ -3924,7 +3924,7 @@ void __cdecl construct_messagewin() {
 
 /*
 Purpose: Dynamic initializer for g_IFACE_GREEN_RIGHT_ARROW_SPRITE; registers its ??__F teardown.
-Original Offset: 00471350
+ORIGINAL: 0x00471350
 Return Value: n/a
 Status: Complete
 */
@@ -3935,7 +3935,7 @@ void __cdecl construct_iface_green_right_arrow_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_MONUWIN; registers its ??__F teardown.
-Original Offset: 00472200
+ORIGINAL: 0x00472200
 Return Value: n/a
 Status: Complete
 */
@@ -3946,7 +3946,7 @@ void __cdecl construct_monuwin() {
 
 /*
 Purpose: Dynamic initializer for g_MULTIWIN; registers its ??__F teardown.
-Original Offset: 00477E10
+ORIGINAL: 0x00477E10
 Return Value: n/a
 Status: Complete
 */
@@ -3957,7 +3957,7 @@ void __cdecl construct_multiwin() {
 
 /*
 Purpose: Dynamic initializer for g_MULTIWIN_WAVE; registers its ??__F teardown.
-Original Offset: 00477E40
+ORIGINAL: 0x00477E40
 Return Value: n/a
 Status: Complete
 */
@@ -3968,7 +3968,7 @@ void __cdecl construct_multiwin_wave() {
 
 /*
 Purpose: Dynamic initializer for g_NETMSG1; registers its ??__F teardown.
-Original Offset: 0047A770
+ORIGINAL: 0x0047A770
 Return Value: n/a
 Status: Complete
 */
@@ -3979,7 +3979,7 @@ void __cdecl construct_netmsg1() {
 
 /*
 Purpose: Dynamic initializer for g_NETMSG2; registers its ??__F teardown.
-Original Offset: 0047A7A0
+ORIGINAL: 0x0047A7A0
 Return Value: n/a
 Status: Complete
 */
@@ -3990,7 +3990,7 @@ void __cdecl construct_netmsg2() {
 
 /*
 Purpose: Dynamic initializer for g_NETWIN; registers its ??__F teardown.
-Original Offset: 0047AFF0
+ORIGINAL: 0x0047AFF0
 Return Value: n/a
 Status: Complete
 */
@@ -4001,7 +4001,7 @@ void __cdecl construct_netwin() {
 
 /*
 Purpose: Dynamic initializer for g_NEWTECHWIN; registers its ??__F teardown.
-Original Offset: 00483850
+ORIGINAL: 0x00483850
 Return Value: n/a
 Status: Complete
 */
@@ -4012,7 +4012,7 @@ void __cdecl construct_newtechwin() {
 
 /*
 Purpose: Dynamic initializer for g_NEWTECHWIN_SPRITES; registers its ??__F teardown.
-Original Offset: 00483880
+ORIGINAL: 0x00483880
 Return Value: n/a
 Status: Complete
 */
@@ -4023,7 +4023,7 @@ void __cdecl construct_newtechwin_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_PICKWIN; registers its ??__F teardown.
-Original Offset: 00488750
+ORIGINAL: 0x00488750
 Return Value: n/a
 Status: Complete
 */
@@ -4034,7 +4034,7 @@ void __cdecl construct_pickwin() {
 
 /*
 Purpose: Dynamic initializer for g_PLANWIN; registers its ??__F teardown.
-Original Offset: 0048AE00
+ORIGINAL: 0x0048AE00
 Return Value: n/a
 Status: Complete
 */
@@ -4045,7 +4045,7 @@ void __cdecl construct_planwin() {
 
 /*
 Purpose: Dynamic initializer for g_PREFWIN; registers its ??__F teardown.
-Original Offset: 0048D4F0
+ORIGINAL: 0x0048D4F0
 Return Value: n/a
 Status: Complete
 */
@@ -4056,7 +4056,7 @@ void __cdecl construct_prefwin() {
 
 /*
 Purpose: Dynamic initializer for g_PREFWIN_BUTTONGROUP; registers its ??__F teardown.
-Original Offset: 0048D520
+ORIGINAL: 0x0048D520
 Return Value: n/a
 Status: Complete
 */
@@ -4067,7 +4067,7 @@ void __cdecl construct_prefwin_buttongroup() {
 
 /*
 Purpose: Dynamic initializer for g_QUAYLEWIN; registers its ??__F teardown.
-Original Offset: 00495170
+ORIGINAL: 0x00495170
 Return Value: n/a
 Status: Complete
 */
@@ -4078,7 +4078,7 @@ void __cdecl construct_quaylewin() {
 
 /*
 Purpose: Dynamic initializer for g_REPORTIF; registers its ??__F teardown.
-Original Offset: 00496900
+ORIGINAL: 0x00496900
 Return Value: n/a
 Status: Complete
 */
@@ -4089,7 +4089,7 @@ void __cdecl construct_reportif() {
 
 /*
 Purpose: Dynamic initializer for g_REPORTWIN; registers its ??__F teardown.
-Original Offset: 00496930
+ORIGINAL: 0x00496930
 Return Value: n/a
 Status: Complete
 */
@@ -4100,7 +4100,7 @@ void __cdecl construct_reportwin() {
 
 /*
 Purpose: Dynamic initializer for SocialWinParent; registers its ??__F teardown.
-Original Offset: 004AE9B0
+ORIGINAL: 0x004AE9B0
 Return Value: n/a
 Status: Complete
 */
@@ -4111,7 +4111,7 @@ void __cdecl construct_socialwinparent() {
 
 /*
 Purpose: Dynamic initializer for g_STATUSWIN; registers its ??__F teardown.
-Original Offset: 004B3FA0
+ORIGINAL: 0x004B3FA0
 Return Value: n/a
 Status: Complete
 */
@@ -4122,7 +4122,7 @@ void __cdecl construct_statuswin() {
 
 /*
 Purpose: Dynamic initializer for g_TUTWIN; registers its ??__F teardown.
-Original Offset: 004BA5C0
+ORIGINAL: 0x004BA5C0
 Return Value: n/a
 Status: Complete
 */
@@ -4133,7 +4133,7 @@ void __cdecl construct_tutwin() {
 
 /*
 Purpose: Dynamic initializer for g_VEHDRAW_CAVIAR; registers its ??__F teardown.
-Original Offset: 004BF6E0
+ORIGINAL: 0x004BF6E0
 Return Value: n/a
 Status: Complete
 */
@@ -4144,7 +4144,7 @@ void __cdecl construct_vehdraw_caviar() {
 
 /*
 Purpose: Dynamic initializer for g_VEHDRAW_BUFFER; registers its ??__F teardown.
-Original Offset: 004BF710
+ORIGINAL: 0x004BF710
 Return Value: n/a
 Status: Complete
 */
@@ -4155,7 +4155,7 @@ void __cdecl construct_vehdraw_buffer() {
 
 /*
 Purpose: Dynamic initializer for g_WORLDWIN; registers its ??__F teardown.
-Original Offset: 004C38B0
+ORIGINAL: 0x004C38B0
 Return Value: n/a
 Status: Complete
 */
@@ -4166,7 +4166,7 @@ void __cdecl construct_worldwin() {
 
 /*
 Purpose: Dynamic initializer for g_WAVE_DEVICE; registers its ??__F teardown.
-Original Offset: 004C5C50
+ORIGINAL: 0x004C5C50
 Return Value: n/a
 Status: Complete
 */
@@ -4177,7 +4177,7 @@ void __cdecl construct_wave_device() {
 
 /*
 Purpose: Dynamic initializer for g_MIDI_DEVICE; registers its ??__F teardown.
-Original Offset: 004C5C80
+ORIGINAL: 0x004C5C80
 Return Value: n/a
 Status: Complete
 */
@@ -4188,7 +4188,7 @@ void __cdecl construct_midi_device() {
 
 /*
 Purpose: Dynamic initializer for g_WAVE_IN_DEVICE; registers its ??__F teardown.
-Original Offset: 004C5CB0
+ORIGINAL: 0x004C5CB0
 Return Value: n/a
 Status: Complete
 */
@@ -4199,7 +4199,7 @@ void __cdecl construct_wave_in_device() {
 
 /*
 Purpose: Dynamic initializer for g_CONSOLE; registers its ??__F teardown.
-Original Offset: 0050E850
+ORIGINAL: 0x0050E850
 Return Value: n/a
 Status: Complete
 */
@@ -4210,7 +4210,7 @@ void __cdecl construct_console() {
 
 /*
 Purpose: Dynamic initializer for g_CONSOLE_TIMER; registers its ??__F teardown.
-Original Offset: 0050E980
+ORIGINAL: 0x0050E980
 Return Value: n/a
 Status: Complete
 */
@@ -4221,7 +4221,7 @@ void __cdecl construct_console_timer() {
 
 /*
 Purpose: Dynamic initializer for g_CURSOR_SPRITES; registers its ??__F teardown.
-Original Offset: 0052DAC0
+ORIGINAL: 0x0052DAC0
 Return Value: n/a
 Status: Complete
 */
@@ -4232,7 +4232,7 @@ void __cdecl construct_cursor_sprites() {
 
 /*
 Purpose: Dynamic initializer for g_NETDAEMON; registers its ??__F teardown.
-Original Offset: 0052DB10
+ORIGINAL: 0x0052DB10
 Return Value: n/a
 Status: Complete
 */
@@ -4243,7 +4243,7 @@ void __cdecl construct_netdaemon() {
 
 /*
 Purpose: Dynamic initializer for g_FONTQUEUE_VAL2; registers its ??__F teardown.
-Original Offset: 00559230
+ORIGINAL: 0x00559230
 Return Value: n/a
 Status: Complete
 */
@@ -4254,7 +4254,7 @@ void __cdecl construct_fontqueue_val2() {
 
 /*
 Purpose: Dynamic initializer for g_FONTQUEUE_VAL1; registers its ??__F teardown.
-Original Offset: 00559260
+ORIGINAL: 0x00559260
 Return Value: n/a
 Status: Complete
 */
@@ -4265,7 +4265,7 @@ void __cdecl construct_fontqueue_val1() {
 
 /*
 Purpose: Dynamic initializer for g_TOP_MENU_WAVE; registers its ??__F teardown.
-Original Offset: 00584D00
+ORIGINAL: 0x00584D00
 Return Value: n/a
 Status: Complete
 */
@@ -4276,7 +4276,7 @@ void __cdecl construct_top_menu_wave() {
 
 /*
 Purpose: Dynamic initializer for g_FONTS; registers its ??__F teardown.
-Original Offset: 005882A0
+ORIGINAL: 0x005882A0
 Return Value: n/a
 Status: Complete
 */
@@ -4287,7 +4287,7 @@ void __cdecl construct_fonts() {
 
 /*
 Purpose: Dynamic initializer for g_CRASH_LANDING_WAVE; registers its ??__F teardown.
-Original Offset: 005AE0F0
+ORIGINAL: 0x005AE0F0
 Return Value: n/a
 Status: Complete
 */
@@ -4298,7 +4298,7 @@ void __cdecl construct_crash_landing_wave() {
 
 /*
 Purpose: Dynamic initializer for g_WAVE_GENERAL; registers its ??__F teardown.
-Original Offset: 005B9C10
+ORIGINAL: 0x005B9C10
 Return Value: n/a
 Status: Complete
 */
@@ -4309,7 +4309,7 @@ void __cdecl construct_wave_general() {
 
 /*
 Purpose: Dynamic initializer for g_PALETTE1; registers its ??__F teardown.
-Original Offset: 005BEC40
+ORIGINAL: 0x005BEC40
 Return Value: n/a
 Status: Complete
 */
@@ -4320,7 +4320,7 @@ void __cdecl construct_palette1() {
 
 /*
 Purpose: Dynamic initializer for g_PALETTE2; registers its ??__F teardown.
-Original Offset: 005BEC70
+ORIGINAL: 0x005BEC70
 Return Value: n/a
 Status: Complete
 */
@@ -4331,7 +4331,7 @@ void __cdecl construct_palette2() {
 
 /*
 Purpose: Dynamic initializer for g_MULTIDEBUG; registers its ??__F teardown.
-Original Offset: 005C97C0
+ORIGINAL: 0x005C97C0
 Return Value: n/a
 Status: Complete
 */
@@ -4342,7 +4342,7 @@ void __cdecl construct_multidebug() {
 
 /*
 Purpose: Dynamic initializer for g_BUFFER_SPRITE; registers its ??__F teardown.
-Original Offset: 005D71D0
+ORIGINAL: 0x005D71D0
 Return Value: n/a
 Status: Complete
 */
@@ -4353,7 +4353,7 @@ void __cdecl construct_buffer_sprite() {
 
 /*
 Purpose: Dynamic initializer for g_BUFFER; registers its ??__F teardown.
-Original Offset: 005E37B0
+ORIGINAL: 0x005E37B0
 Return Value: n/a
 Status: Complete
 */
@@ -4364,7 +4364,7 @@ void __cdecl construct_buffer() {
 
 /*
 Purpose: Dynamic initializer for g_WIN_BUFFER; registers its ??__F teardown.
-Original Offset: 005EB350
+ORIGINAL: 0x005EB350
 Return Value: n/a
 Status: Complete
 */
@@ -4375,7 +4375,7 @@ void __cdecl construct_win_buffer() {
 
 /*
 Purpose: Dynamic initializer for TxtIndex; registers its ??__F teardown.
-Original Offset: 005FD4E0
+ORIGINAL: 0x005FD4E0
 Return Value: n/a
 Status: Complete
 */
@@ -4386,7 +4386,7 @@ void __cdecl construct_txtindex() {
 
 /*
 Purpose: Dynamic initializer for g_RADIOBUTTON_SPRITE_1; registers its ??__F teardown.
-Original Offset: 0060D060
+ORIGINAL: 0x0060D060
 Return Value: n/a
 Status: Complete
 */
@@ -4397,7 +4397,7 @@ void __cdecl construct_radiobutton_sprite_1() {
 
 /*
 Purpose: Dynamic initializer for g_RADIOBUTTON_SPRITE_2; registers its ??__F teardown.
-Original Offset: 0060D0A0
+ORIGINAL: 0x0060D0A0
 Return Value: n/a
 Status: Complete
 */
@@ -4408,7 +4408,7 @@ void __cdecl construct_radiobutton_sprite_2() {
 
 /*
 Purpose: Dynamic initializer for g_CHECKBOX_SPRITE_1; registers its ??__F teardown.
-Original Offset: 0060E5F0
+ORIGINAL: 0x0060E5F0
 Return Value: n/a
 Status: Complete
 */
@@ -4419,7 +4419,7 @@ void __cdecl construct_checkbox_sprite_1() {
 
 /*
 Purpose: Dynamic initializer for g_CHECKBOX_SPRITE_2; registers its ??__F teardown.
-Original Offset: 0060E630
+ORIGINAL: 0x0060E630
 Return Value: n/a
 Status: Complete
 */
@@ -4430,7 +4430,7 @@ void __cdecl construct_checkbox_sprite_2() {
 
 /*
 Purpose: Dynamic initializer for g_FILEWIN_SPRITE_1; registers its ??__F teardown.
-Original Offset: 00613790
+ORIGINAL: 0x00613790
 Return Value: n/a
 Status: Complete
 */
@@ -4441,7 +4441,7 @@ void __cdecl construct_filewin_sprite_1() {
 
 /*
 Purpose: Dynamic initializer for g_FILEWIN_SPRITE_2; registers its ??__F teardown.
-Original Offset: 006137D0
+ORIGINAL: 0x006137D0
 Return Value: n/a
 Status: Complete
 */
@@ -4452,7 +4452,7 @@ void __cdecl construct_filewin_sprite_2() {
 
 /*
 Purpose: Dynamic initializer for g_FILEWIN_SPRITE_3; registers its ??__F teardown.
-Original Offset: 00613810
+ORIGINAL: 0x00613810
 Return Value: n/a
 Status: Complete
 */
@@ -4463,7 +4463,7 @@ void __cdecl construct_filewin_sprite_3() {
 
 /*
 Purpose: Dynamic initializer for StringTable; registers its ??__F teardown.
-Original Offset: 006168A0
+ORIGINAL: 0x006168A0
 Return Value: n/a
 Status: Complete
 */
@@ -4474,7 +4474,7 @@ void __cdecl construct_stringtable() {
 
 /*
 Purpose: Dynamic initializer for g_CAVIAR_BUFFER_1; registers its ??__F teardown.
-Original Offset: 00616AA0
+ORIGINAL: 0x00616AA0
 Return Value: n/a
 Status: Complete
 */
@@ -4485,7 +4485,7 @@ void __cdecl construct_caviar_buffer_1() {
 
 /*
 Purpose: Dynamic initializer for g_CAVIAR_BUFFER_2; registers its ??__F teardown.
-Original Offset: 00616AE0
+ORIGINAL: 0x00616AE0
 Return Value: n/a
 Status: Complete
 */

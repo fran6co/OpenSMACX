@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004406D0
 // 0x004406D0  ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z  ->  ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

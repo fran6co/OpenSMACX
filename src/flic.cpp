@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 0062A710
+ORIGINAL: 0x0062A710
 Return Value: n/a
 Status: Complete
 */
@@ -29,7 +29,7 @@ void Flic::UNK4() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 0062AAF0
+ORIGINAL: 0x0062AAF0
 Return Value: n/a
 Status: Complete
 */
@@ -38,7 +38,7 @@ void Flic::UNK5() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 0062AB00
+ORIGINAL: 0x0062AB00
 Return Value: n/a
 Status: Complete
 */
@@ -47,7 +47,7 @@ void Flic::UNK6() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 0062ACC0
+ORIGINAL: 0x0062ACC0
 Return Value: n/a
 Status: Complete
 */
@@ -56,7 +56,7 @@ void Flic::UNK7() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 0062B5F0
+ORIGINAL: 0x0062B5F0
 Return Value: n/a
 Status: Complete
 */

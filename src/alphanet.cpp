@@ -13,7 +13,7 @@
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
-Original Offset: 004E25E0
+ORIGINAL: 0x004E25E0
 Return Value: Player index (1-7); process ID not found (0)
 Status: Complete
 */
@@ -31,7 +31,7 @@ int AlphaNet::pid_2_idx(uint32_t process_id) {
 
 /*
 Purpose: Convert a multiplayer process ID to its signed player identity.
-Original Offset: 004E2610
+ORIGINAL: 0x004E2610
 Return Value: Player identity; process ID not found (0)
 Status: Complete
 */
@@ -51,7 +51,7 @@ int AlphaNet::pid_2_who(uint32_t process_id) {
 
 /*
 Purpose: Convert a signed multiplayer player identity to its process ID.
-Original Offset: 004E2660
+ORIGINAL: 0x004E2660
 Return Value: Process ID; player identity not found (0)
 Status: Complete
 */
@@ -71,7 +71,7 @@ int AlphaNet::who_2_pid(int identity) {
 
 /*
 Purpose: Convert a signed multiplayer player identity to its one-based index.
-Original Offset: 004E26B0
+ORIGINAL: 0x004E26B0
 Return Value: Player index (1-7); player identity not found (0)
 Status: Complete
 */
@@ -111,7 +111,7 @@ func_net_close NetCloseOriginal = original_method<func_net_close>(0x0062E010);
 
 /*
 Purpose: Clear every player's process slot and hand off to the network close.
-Original Offset: 004E25B0
+ORIGINAL: 0x004E25B0
 Status: Complete with a temporary dependency on the network close
 */
 void AlphaNet::close() {
@@ -133,7 +133,7 @@ void __fastcall alpha_net_close_redirect(AlphaNet *self, void *) {
 }
 
 /*
-Original Offset: 00401CE0
+ORIGINAL: 0x00401CE0
 Status: Complete
 */
 extern "C" __declspec(naked) int __cdecl fn_00401ce0() {

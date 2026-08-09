@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005D5540
 // 0x005D5540  ?resize@GraphicWin@@QAEXHHH@Z  ->  ?resize@GraphicWin@@QAEXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

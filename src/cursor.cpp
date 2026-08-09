@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-Original Offset: 0063B930
+ORIGINAL: 0x0063B930
 Return Value: n/a
 Status: Complete
 */
@@ -46,7 +46,7 @@ Purpose: Clear all four fields.
          observed: four independent stores of the same constant to distinct
          fields leave the same object whatever order they run in, and nothing
          interleaves. Saying so beats implying the sequence was matched.
-Original Offset: 0063B2D0
+ORIGINAL: 0x0063B2D0
 Return Value: this
 Status: Complete
 */

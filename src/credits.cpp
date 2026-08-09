@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00428D80
+ORIGINAL: 0x00428D80
 Return Value: n/a
 Status: Complete
 */
@@ -33,7 +33,7 @@ void __fastcall credits_on_left_down_redirect(Credits *self, void *, int a1, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00428D90
+ORIGINAL: 0x00428D90
 Return Value: n/a
 Status: Complete
 */
@@ -46,7 +46,7 @@ void __fastcall credits_on_right_down_redirect(Credits *self, void *, int a1, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00428DA0
+ORIGINAL: 0x00428DA0
 Return Value: n/a
 Status: Complete
 */
@@ -59,7 +59,7 @@ void __fastcall credits_on_mouse_move_redirect(Credits *self, void *, int a1, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00428DB0
+ORIGINAL: 0x00428DB0
 Return Value: n/a
 Status: Complete
 */

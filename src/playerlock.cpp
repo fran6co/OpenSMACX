@@ -23,7 +23,7 @@
 /*
 Purpose: Reset both lock entries to their unset sentinels and mark the lock
          inactive.
-Original Offset: 0058FF70
+ORIGINAL: 0x0058FF70
 Return Value: n/a
 Status: Complete
 */
@@ -45,7 +45,7 @@ Purpose: Report whether either lock entry is engaged - the low bit of its flag
          set. The original is typed as returning void but computes this boolean
          in EAX, so the value is returned here to match its behaviour rather
          than its declared type.
-Original Offset: 0058FFA0
+ORIGINAL: 0x0058FFA0
 Return Value: 1 when an entry is engaged, 0 when neither is
 Status: Complete
 */
@@ -77,7 +77,7 @@ Purpose: Lock the second square entry for a faction, forcing the 0x10 flag on.
          for the identical shape: PlayerLock::Entry and SquareLock are the same
          three-int triple, and routing through the seam is what lets a fixture
          observe the call rather than the map it would otherwise walk.
-Original Offset: 005900A0
+ORIGINAL: 0x005900A0
 Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
@@ -98,7 +98,7 @@ Purpose: Release both square entries for a faction and clear the active byte.
          in steps of twelve, then stores zero at `this+0` AFTER the loop - the
          byte write is the last thing it does, which is the ordering a fixture
          has to hold it to.
-Original Offset: 0058FFC0
+ORIGINAL: 0x0058FFC0
 Return Value: n/a
 Status: Complete
 */

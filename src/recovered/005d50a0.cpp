@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005D50A0
 // 0x005D50A0  ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z  ->  ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

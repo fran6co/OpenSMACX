@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-Original Offset: 005C9410
+ORIGINAL: 0x005C9410
 Return Value: 1, always
 Status: Complete
 */
@@ -36,7 +36,7 @@ func_gamma_adjust_palette GammaOriginalAdjustPalette =
     original_method<func_gamma_adjust_palette>(0x005C9520);
 
 /*
-Original Offset: 005C9390
+ORIGINAL: 0x005C9390
 Status: Complete
 */
 void Gamma::on_scrolled(int a1, int a2) {

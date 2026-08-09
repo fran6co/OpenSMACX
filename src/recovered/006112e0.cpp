@@ -1,3 +1,4 @@
+// ORIGINAL: 0x006112E0
 // 0x006112E0  ?on_left_double_click@SpriteBox@@QAEXHH@Z  ->  ?on_left_double_click@SpriteBox@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

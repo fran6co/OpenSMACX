@@ -24,7 +24,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 11.
-Original Offset: 004C6430
+ORIGINAL: 0x004C6430
 Return Value: 11, always
 Status: Complete
 */
@@ -36,7 +36,7 @@ int Sound::UNK1(int) {
 Purpose: Fade the sound out. The work is done by two of the object's own
          virtual methods: slot 0 is asked to fade with the given argument, and
          only when it declines (returns zero) is slot 0x28 run as the fallback.
-Original Offset: 004C6600
+ORIGINAL: 0x004C6600
 Return Value: n/a
 Status: Complete
 */
@@ -79,7 +79,7 @@ int query_sound_device(Sound *self, int vtable_offset) {
 
 /*
 Purpose: Ask the wrapped device whether it is playing, through vtable slot 0x5C.
-Original Offset: 004C64C0
+ORIGINAL: 0x004C64C0
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -89,7 +89,7 @@ int Sound::is_playing() {
 
 /*
 Purpose: Ask the wrapped device whether it is looping, through vtable slot 0x58.
-Original Offset: 004C6690
+ORIGINAL: 0x004C6690
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -99,7 +99,7 @@ int Sound::is_looping() {
 
 /*
 Purpose: Ask the wrapped device for its play position, through vtable slot 0x74.
-Original Offset: 004C66A0
+ORIGINAL: 0x004C66A0
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -147,7 +147,7 @@ int query_sound_device_default(Sound *self, int vtable_offset,
 
 /*
 Purpose: Ask the wrapped device to play, through vtable slot 0x1C.
-Original Offset: 004C6480
+ORIGINAL: 0x004C6480
 Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
@@ -158,7 +158,7 @@ int Sound::play() {
 /*
 Purpose: Ask the wrapped device to play the given sound, through vtable slot
          0x18.
-Original Offset: 004C64A0
+ORIGINAL: 0x004C64A0
 Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
@@ -168,7 +168,7 @@ int Sound::play(unsigned int a1) {
 
 /*
 Purpose: Ask the wrapped device to stop, through vtable slot 0x20.
-Original Offset: 004C64D0
+ORIGINAL: 0x004C64D0
 Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
@@ -178,7 +178,7 @@ int Sound::stop() {
 
 /*
 Purpose: Ask the wrapped device to release, through vtable slot 0x38.
-Original Offset: 004C64F0
+ORIGINAL: 0x004C64F0
 Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
@@ -190,7 +190,7 @@ int Sound::release() {
 Purpose: Record the loop state at 0x30 and hand it to the wrapped device,
          through vtable slot 0x48. The field is written whether or not a device
          is wrapped.
-Original Offset: 004C6540
+ORIGINAL: 0x004C6540
 Return Value: n/a
 Status: Complete
 */
@@ -204,7 +204,7 @@ void Sound::set_loop_state(long a1) {
 Purpose: Record the delay at 0x34 and hand it to the wrapped device, through
          vtable slot 0x4C. The field is written whether or not a device is
          wrapped.
-Original Offset: 004C6560
+ORIGINAL: 0x004C6560
 Return Value: n/a
 Status: Complete
 */
@@ -260,7 +260,7 @@ int guarded_query_sound_device(Sound *self, int vtable_offset) {
 /*
 Purpose: Ask the wrapped device to fade, through vtable slot 0x28. Refuses
          unless the gate field at 0x38 is set and a device is wrapped.
-Original Offset: 004C65E0
+ORIGINAL: 0x004C65E0
 Return Value: the device's answer, or 0x13 when either guard fails
 Status: Complete
 */
@@ -271,7 +271,7 @@ int Sound::fade() {
 /*
 Purpose: Ask the wrapped device to fade in, through vtable slot 0x30. Carries
          the same pair of guards fade does.
-Original Offset: 004C6620
+ORIGINAL: 0x004C6620
 Return Value: the device's answer, or 0x13 when either guard fails
 Status: Complete
 */
@@ -282,7 +282,7 @@ int Sound::fade_in() {
 /*
 Purpose: Hand a three-argument ramp to the wrapped device, through vtable slot
          0x34. Does nothing when no device is wrapped.
-Original Offset: 004C6640
+ORIGINAL: 0x004C6640
 Return Value: n/a
 Status: Complete
 */
@@ -316,7 +316,7 @@ Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
          a per-type class bit into the flag dword at 0x40: 1 -> 4, 2 -> 8,
          4 -> 0x10, 5 -> 0x28, 6 -> 0x100, 7 -> 0x80. Anything else stores
          type 0 and leaves the flags alone.
-Original Offset: 004C61E0
+ORIGINAL: 0x004C61E0
 Return Value: n/a
 Status: Complete
 */
@@ -366,7 +366,7 @@ Purpose: Load the sound from a filename. The name resolves through the
          loaded bit is cleared. Either way the resolved path is copied onto
          the game heap - new copy first, old one freed after - and remembered
          at 0x4C.
-Original Offset: 004C6280
+ORIGINAL: 0x004C6280
 Return Value: the device's load answer, 0xA for an unresolvable name, 1 for
               a dead creation hook, 0xF for a busy device, or the creation
               error
@@ -428,7 +428,7 @@ int __fastcall sound_load_redirect(Sound *self, void *, const char *a1) {
 Purpose: Set the sound's volume: the low seven bits are stored at 0x04 and
          the wrapped device, if any, hears them through its vtable slot 0x40.
          Unlike Wave's override there is no group rescaling here.
-Original Offset: 004C6510
+ORIGINAL: 0x004C6510
 Return Value: n/a
 Status: Complete
 */
@@ -450,7 +450,7 @@ void __fastcall sound_set_volume_redirect(Sound *self, void *, int a1) {
 Purpose: Set the fade time. Zero is refused with 0xA; otherwise the value is
          remembered at 0x38 and the wrapped device hears it through its
          vtable slot 0.
-Original Offset: 004C6580
+ORIGINAL: 0x004C6580
 Return Value: 0, or 0xA for a zero time
 Status: Complete
 */
@@ -475,7 +475,7 @@ int __fastcall sound_set_fade_redirect(Sound *self, void *, unsigned long a1) {
 Purpose: Set the fade-in time. Zero is refused with 0xA; otherwise the value
          shares the 0x38 field with set_fade and the wrapped device hears it
          through its vtable slot 0x54.
-Original Offset: 004C65B0
+ORIGINAL: 0x004C65B0
 Return Value: 0, or 0xA for a zero time
 Status: Complete
 */
@@ -500,7 +500,7 @@ int __fastcall sound_set_fade_in_redirect(Sound *self, void *,
 /*
 Purpose: Fade the sound in: its own vtable slot 0x54 takes the time, and only
          a zero answer lets its own slot 0x28 follow up.
-Original Offset: 004C6660
+ORIGINAL: 0x004C6660
 Return Value: n/a
 Status: Complete
 */
@@ -521,7 +521,7 @@ void __fastcall sound_fade_in_arg_redirect(Sound *self, void *,
 Purpose: Set the pan, clamped to the range the engine accepts (-0x40 to
          0x3F), stored at 0x08 and handed to the wrapped device through its
          vtable slot 0x44.
-Original Offset: 004C66B0
+ORIGINAL: 0x004C66B0
 Return Value: n/a
 Status: Complete
 */
@@ -548,7 +548,7 @@ Purpose: Release the loaded sound. The wrapped device, if any, is asked to
          result; the sound's own vtable slot 0x80 then runs UNCONDITIONALLY
          (Wave's override suppresses it by flag; the base does not), the
          device is forgotten, and the loaded bit at 0x40 is cleared.
-Original Offset: 004C6440
+ORIGINAL: 0x004C6440
 Return Value: whatever the device's unload returned, or 0 with none wrapped
 Status: Complete
 */
@@ -576,7 +576,7 @@ Purpose: Destroy the sound. This is exactly the body ~Wave inlines as its
          device through the guarded release hook and forget it, unlink from
          the sound chain, and publish the ultimate base's vtable on the way
          out. The registered SEH frame is omitted as unreachable.
-Original Offset: 004C6120
+ORIGINAL: 0x004C6120
 Return Value: n/a
 Status: Complete
 */
@@ -629,7 +629,7 @@ void __fastcall sound_dtor_redirect(Sound *self, void *) {
 Purpose: The compiler-generated scalar deleting destructor: destroy the
          sound and, when bit 0 of the mode asks, free the storage to the
          game heap.
-Original Offset: 004C92D0
+ORIGINAL: 0x004C92D0
 Return Value: the object pointer
 Status: Complete
 */
@@ -648,7 +648,7 @@ Purpose: Join the sound chain at the tail. A sound with either neighbour
          otherwise the old tail becomes its prev - re-read after the tail
          slot advances, as the original orders it - and learns its next.
          Either way the chained bit sets.
-Original Offset: 004C6370
+ORIGINAL: 0x004C6370
 Return Value: 0, always
 Status: Complete
 */
@@ -680,7 +680,7 @@ Purpose: Leave the sound chain: nothing at all for an unchained sound;
          otherwise the standard unlink with the head and tail slots
          maintained at the ends, both links cleared, and the chained bit
          dropped.
-Original Offset: 004C63D0
+ORIGINAL: 0x004C63D0
 Return Value: 0, always
 Status: Complete
 */

@@ -22,7 +22,7 @@
 
 /*
 Purpose: Set the callback invoked for menu events.
-Original Offset: 005FB820
+ORIGINAL: 0x005FB820
 Status: Complete
 */
 void Menu::set_menu_proc(MenuProc proc) {
@@ -31,7 +31,7 @@ void Menu::set_menu_proc(MenuProc proc) {
 
 /*
 Purpose: Find the first menu entry with the requested ID.
-Original Offset: 005FB990
+ORIGINAL: 0x005FB990
 Status: Complete
 */
 int Menu::id_to_index(int id) {
@@ -59,7 +59,7 @@ int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id) {
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-Original Offset: 005FB1C0
+ORIGINAL: 0x005FB1C0
 Status: Complete
 */
 int Menu::UNK2(int) {
@@ -74,7 +74,7 @@ int __fastcall menu_unk2_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-Original Offset: 005FB230
+ORIGINAL: 0x005FB230
 Status: Complete
 */
 int Menu::UNK4(int, int, int) {
@@ -90,7 +90,7 @@ Font **MenuFont = reinterpret_cast<Font **>(0x009B7B94);
 
 /*
 Purpose: Report the height a menu requests, two lines of its font.
-Original Offset: 005FC6A0
+ORIGINAL: 0x005FC6A0
 Return Value: Twice the resolved font's height
 Status: Complete
 */
@@ -127,7 +127,7 @@ int __fastcall menu_requested_height_redirect(Menu *self, void *) {
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-Original Offset: 005FB1D0
+ORIGINAL: 0x005FB1D0
 Return Value: PullDown::UNK2's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -164,7 +164,7 @@ int __fastcall menu_unk3_redirect(
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-Original Offset: 005FB300
+ORIGINAL: 0x005FB300
 Return Value: PullDown::hide_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -201,7 +201,7 @@ int __fastcall menu_hide_menu_item_redirect(
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-Original Offset: 005FB3C0
+ORIGINAL: 0x005FB3C0
 Return Value: PullDown::show_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -238,7 +238,7 @@ int __fastcall menu_show_menu_item_redirect(
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-Original Offset: 005FB480
+ORIGINAL: 0x005FB480
 Return Value: PullDown::disable_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -275,7 +275,7 @@ int __fastcall menu_disable_menu_item_redirect(
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-Original Offset: 005FB540
+ORIGINAL: 0x005FB540
 Return Value: PullDown::enable_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -312,7 +312,7 @@ int __fastcall menu_enable_menu_item_redirect(
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-Original Offset: 005FB760
+ORIGINAL: 0x005FB760
 Return Value: PullDown::check_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -349,7 +349,7 @@ int __fastcall menu_check_menu_item_redirect(
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-Original Offset: 005FB7C0
+ORIGINAL: 0x005FB7C0
 Return Value: PullDown::uncheck_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -393,7 +393,7 @@ int __fastcall menu_uncheck_menu_item_redirect(
 /*
 Purpose: Find the menu whose id matches and clear bit 0 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
-Original Offset: 005FB2A0
+ORIGINAL: 0x005FB2A0
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -432,7 +432,7 @@ int __fastcall menu_unk6_redirect(
 /*
 Purpose: Find the menu whose id matches and set bit 0 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
-Original Offset: 005FB360
+ORIGINAL: 0x005FB360
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -471,7 +471,7 @@ int __fastcall menu_unk7_redirect(
 /*
 Purpose: Find the menu whose id matches and set bit 1 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
-Original Offset: 005FB420
+ORIGINAL: 0x005FB420
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -510,7 +510,7 @@ int __fastcall menu_unk8_redirect(
 /*
 Purpose: Find the menu whose id matches and clear bit 1 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
-Original Offset: 005FB4E0
+ORIGINAL: 0x005FB4E0
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -558,7 +558,7 @@ Purpose: Legacy hook for adjusting a pull-down's position. The original body is
          not: on_redraw declares no parameters and still cleans eight bytes, so
          its arity is unresolved and it stays unrecovered until that is
          settled.
-Original Offset: 005FC6C0
+ORIGINAL: 0x005FC6C0
 Return Value: n/a
 Status: Complete
 */
@@ -570,7 +570,7 @@ void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1
 }
 
 /*
-Original Offset: 005FC680
+ORIGINAL: 0x005FC680
 Status: Complete
 */
 void Menu::on_mouse_move(int a1, int a2) {

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005FFD80
 // 0x005FFD80  ??0MCIVideo@@QAE@XZ  ->  ??0MCIVideo@@QAE@XZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

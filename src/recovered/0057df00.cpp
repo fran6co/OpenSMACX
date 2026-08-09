@@ -1,3 +1,4 @@
+// ORIGINAL: 0x0057DF00
 // 0x0057DF00  ?clear_bunglist@@YAXH@Z  ->  ?clear_bunglist@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

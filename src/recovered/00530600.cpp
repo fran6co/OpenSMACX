@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00530600
 // 0x00530600  ?close_channel@NetDaemon@@QAEXXZ  ->  ?close_channel@NetDaemon@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

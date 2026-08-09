@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00610440
 // 0x00610440  ?init@SpriteBox@@QAEHHHHHH@Z  ->  ?init@SpriteBox@@QAEHHHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

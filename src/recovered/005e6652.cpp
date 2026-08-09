@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005E6652
 // 0x005E6652  ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z  ->  ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

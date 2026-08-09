@@ -23,7 +23,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-Original Offset: 004C5180
+ORIGINAL: 0x004C5180
 Return Value: n/a
 Status: Complete
 */
@@ -32,7 +32,7 @@ void Wave_Device::set_pan(int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-Original Offset: 004C51A0
+ORIGINAL: 0x004C51A0
 Return Value: 0, always
 Status: Complete
 */
@@ -94,7 +94,7 @@ int forward_to_wrapped_device(Wave_Device *self, int vtable_offset, int a1,
 
 /*
 Purpose: Enable the wrapped device, if there is one, through vtable slot 0x60.
-Original Offset: 004C51C0
+ORIGINAL: 0x004C51C0
 Return Value: n/a
 Status: Complete
 */
@@ -104,7 +104,7 @@ void Wave_Device::enable() {
 
 /*
 Purpose: Disable the wrapped device, if there is one, through vtable slot 0x64.
-Original Offset: 004C51D0
+ORIGINAL: 0x004C51D0
 Return Value: n/a
 Status: Complete
 */
@@ -130,7 +130,7 @@ void __fastcall wave_device_disable_redirect(Wave_Device *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-Original Offset: 004C5170
+ORIGINAL: 0x004C5170
 Return Value: 0, always
 Status: Complete
 */
@@ -140,7 +140,7 @@ int Wave_Device::get_volume() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-Original Offset: 004C51B0
+ORIGINAL: 0x004C51B0
 Return Value: 0, always
 Status: Complete
 */
@@ -158,7 +158,7 @@ int __fastcall wave_device_stop_redirect(Wave_Device *self, void *) {
 
 /*
 Purpose: Ask the wrapped device to suspend, through its vtable slot 0x48.
-Original Offset: 004C4FC0
+ORIGINAL: 0x004C4FC0
 Return Value: n/a
 Status: Complete
 */
@@ -168,7 +168,7 @@ void Wave_Device::suspend() {
 
 /*
 Purpose: Ask the wrapped device to restart, through its vtable slot 0x4C.
-Original Offset: 004C4FD0
+ORIGINAL: 0x004C4FD0
 Return Value: n/a
 Status: Complete
 */
@@ -178,7 +178,7 @@ void Wave_Device::restart() {
 
 /*
 Purpose: Poll the wrapped device, through its vtable slot 0x34.
-Original Offset: 004C4FE0
+ORIGINAL: 0x004C4FE0
 Return Value: n/a
 Status: Complete
 */
@@ -189,7 +189,7 @@ void Wave_Device::update_sound() {
 /*
 Purpose: Ask the wrapped device how many devices it offers, through its vtable
          slot 0x14.
-Original Offset: 004C4FF0
+ORIGINAL: 0x004C4FF0
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -200,7 +200,7 @@ int Wave_Device::get_ndevices() {
 /*
 Purpose: Ask the wrapped device for its hardware memory size, through its
          vtable slot 0x58.
-Original Offset: 004C5020
+ORIGINAL: 0x004C5020
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -211,7 +211,7 @@ int Wave_Device::get_hw_mem_size() {
 /*
 Purpose: Ask the wrapped device for its sample rate, through its vtable
          slot 0x3C.
-Original Offset: 004C5140
+ORIGINAL: 0x004C5140
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -222,7 +222,7 @@ int Wave_Device::get_rate() {
 /*
 Purpose: Ask the wrapped device for its DirectSound interface, through its
          vtable slot 0x70.
-Original Offset: 004C5190
+ORIGINAL: 0x004C5190
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -234,7 +234,7 @@ int Wave_Device::get_ds() {
 Purpose: Ask the wrapped device whether it supports EAX, through its vtable
          slot 0x74. With no device wrapped the original clears only al, which
          is the codegen for a false of byte width; zero is that value.
-Original Offset: 004C54B0
+ORIGINAL: 0x004C54B0
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -277,7 +277,7 @@ int __fastcall wave_device_is_eax_redirect(Wave_Device *self, void *) {
 /*
 Purpose: Ask the wrapped device whether it is disabled, through vtable slot
          0x68. With no device wrapped the answer is yes.
-Original Offset: 004C51E0
+ORIGINAL: 0x004C51E0
 Return Value: the device's answer, or 1 when none is wrapped
 Status: Complete
 */
@@ -288,7 +288,7 @@ int Wave_Device::is_disabled() {
 /*
 Purpose: Ask the wrapped device to stop dumping raw audio, through vtable slot
          0x54.
-Original Offset: 004C5220
+ORIGINAL: 0x004C5220
 Return Value: the device's answer, or 3 when none is wrapped
 Status: Complete
 */
@@ -300,7 +300,7 @@ int Wave_Device::stop_raw_dump() {
 Purpose: Ask the wrapped device whether it does 3D audio, through vtable slot
          0x84. With no device wrapped the original clears only al, the codegen
          for a false of byte width; zero is that value.
-Original Offset: 004C5530
+ORIGINAL: 0x004C5530
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -310,7 +310,7 @@ int Wave_Device::is_3d() {
 
 /*
 Purpose: Hand the sample rate to the wrapped device, through vtable slot 0x38.
-Original Offset: 004C5120
+ORIGINAL: 0x004C5120
 Return Value: n/a
 Status: Complete
 */
@@ -320,7 +320,7 @@ void Wave_Device::set_rate(unsigned long a1) {
 
 /*
 Purpose: Hand the volume to the wrapped device, through vtable slot 0x20.
-Original Offset: 004C5150
+ORIGINAL: 0x004C5150
 Return Value: n/a
 Status: Complete
 */
@@ -330,7 +330,7 @@ void Wave_Device::set_volume(unsigned long a1) {
 
 /*
 Purpose: Hand the game window to the wrapped device, through vtable slot 0x6C.
-Original Offset: 004C5000
+ORIGINAL: 0x004C5000
 Return Value: the device's answer, or 0x13 when none is wrapped
 Status: Complete
 */
@@ -345,7 +345,7 @@ int Wave_Device::set_hwnd(void *a1) {
 Purpose: Read one group's volume from the sixteen-entry table of 24-byte
          records the object keeps at 0x28. Nothing is dispatched; an index past
          the table answers zero.
-Original Offset: 004C5380
+ORIGINAL: 0x004C5380
 Return Value: the group's volume, or 0 when the index is out of range
 Status: Complete
 */
@@ -399,7 +399,7 @@ Purpose: Put a wave into one of the sixteen groups. The list-insert helper
          threads it through the group's node list, and the wave's own group
          slot at 0x68 records the group AFTER the insert - the original
          writes the field last, so the helper still sees the old slot.
-Original Offset: 004C5240
+ORIGINAL: 0x004C5240
 Return Value: 0, or 0xA for a bad group or a null wave
 Status: Complete
 */
@@ -428,7 +428,7 @@ Purpose: Take a wave out of its group. The wave's slot names the group; its
          out. A wave whose node is not on the list - or a group with no list
          at all - just forgets its slot. Either way the wave's slot becomes
          the out-of-range 0x10.
-Original Offset: 004C5280
+ORIGINAL: 0x004C5280
 Return Value: 0, or 0xA for a null wave or an out-of-range slot
 Status: Complete
 */
@@ -482,7 +482,7 @@ Purpose: Report whether a group is disabled: out-of-range groups always are,
          and a real one is disabled while its enabled byte is zero. The
          original defines only AL on the out-of-range path; callers test the
          byte.
-Original Offset: 004C5460
+ORIGINAL: 0x004C5460
 Return Value: 1 when disabled, 0 when enabled
 Status: Complete
 */
@@ -508,7 +508,7 @@ Purpose: Append a wave to a group's node list. A fresh 12-byte node comes
          shapes are kept. With a live tail the new node's prev is the
          RE-READ tail field, after the old tail's next was written - an
          order the original's aliasing permits to matter.
-Original Offset: 004C5BF0
+ORIGINAL: 0x004C5BF0
 Return Value: n/a
 Status: Complete
 */
@@ -547,7 +547,7 @@ void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
 /*
 Purpose: Forward get_description to the wrapped device through its vtable slot
          0x1c.
-Original Offset: 004C50F0
+ORIGINAL: 0x004C50F0
 Return Value: n/a
 Status: Complete
 */
@@ -566,7 +566,7 @@ void __fastcall wave_device_get_description_redirect(Wave_Device *self, void *, 
 /*
 Purpose: Forward start_raw_dump to the wrapped device through its vtable slot
          0x50.
-Original Offset: 004C5200
+ORIGINAL: 0x004C5200
 Return Value: the device's answer, or 3 when no device is wrapped
 Status: Complete
 */
@@ -586,7 +586,7 @@ int __fastcall wave_device_start_raw_dump_redirect(Wave_Device *self, void *, ch
 /*
 Purpose: Forward set_eax to the wrapped device through its vtable slot
          0x7c.
-Original Offset: 004C54C0
+ORIGINAL: 0x004C54C0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -606,7 +606,7 @@ int __fastcall wave_device_set_eax_props_redirect(Wave_Device *self, void *, EAX
 /*
 Purpose: Forward set_eax to the wrapped device through its vtable slot
          0x78.
-Original Offset: 004C54E0
+ORIGINAL: 0x004C54E0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -626,7 +626,7 @@ int __fastcall wave_device_set_eax_redirect(Wave_Device *self, void *, unsigned 
 /*
 Purpose: Forward set_eax_mix to the wrapped device through its vtable slot
          0x80.
-Original Offset: 004C5500
+ORIGINAL: 0x004C5500
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -646,7 +646,7 @@ int __fastcall wave_device_set_eax_mix_redirect(Wave_Device *self, void *, float
 /*
 Purpose: Forward set_listener_position to the wrapped device through its vtable slot
          0x88.
-Original Offset: 004C5550
+ORIGINAL: 0x004C5550
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -666,7 +666,7 @@ int __fastcall wave_device_set_listener_position_redirect(Wave_Device *self, voi
 /*
 Purpose: Forward get_listener_position to the wrapped device through its vtable slot
          0x8c.
-Original Offset: 004C5580
+ORIGINAL: 0x004C5580
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -686,7 +686,7 @@ int __fastcall wave_device_get_listener_position_redirect(Wave_Device *self, voi
 /*
 Purpose: Forward set_listener_xpos to the wrapped device through its vtable slot
          0x90.
-Original Offset: 004C55B0
+ORIGINAL: 0x004C55B0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -706,7 +706,7 @@ int __fastcall wave_device_set_listener_xpos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward get_listener_xpos to the wrapped device through its vtable slot
          0x94.
-Original Offset: 004C55E0
+ORIGINAL: 0x004C55E0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -726,7 +726,7 @@ int __fastcall wave_device_get_listener_xpos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward set_listener_ypos to the wrapped device through its vtable slot
          0x98.
-Original Offset: 004C5610
+ORIGINAL: 0x004C5610
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -746,7 +746,7 @@ int __fastcall wave_device_set_listener_ypos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward get_listener_ypos to the wrapped device through its vtable slot
          0x9c.
-Original Offset: 004C5640
+ORIGINAL: 0x004C5640
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -766,7 +766,7 @@ int __fastcall wave_device_get_listener_ypos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward set_listener_zpos to the wrapped device through its vtable slot
          0xa0.
-Original Offset: 004C5670
+ORIGINAL: 0x004C5670
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -786,7 +786,7 @@ int __fastcall wave_device_set_listener_zpos_redirect(Wave_Device *self, void *,
 /*
 Purpose: Forward get_listener_zpos to the wrapped device through its vtable slot
          0xa4.
-Original Offset: 004C56A0
+ORIGINAL: 0x004C56A0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -898,7 +898,7 @@ void load_wave_by_name(Wave *wave, char *fname) {
 Purpose: Set a group's volume scale and replay every member wave's own
          stored volume through its vtable slot 0x40, so the new scale takes
          effect. Bad slots and volumes above 0x7F answer 0xA.
-Original Offset: 004C5320
+ORIGINAL: 0x004C5320
 Return Value: 0, or 0xA for a bad slot or volume
 Status: Complete
 */
@@ -923,7 +923,7 @@ Purpose: Enable a group. Only a disabled one does any work: every member
          wave resumes through its vtable slot 0x8C, and the enabled byte is
          written AFTER the walk. An already-enabled group is left exactly as
          it is, nonzero byte and all.
-Original Offset: 004C53A0
+ORIGINAL: 0x004C53A0
 Return Value: 0, or 0xA for a bad slot
 Status: Complete
 */
@@ -948,7 +948,7 @@ int __fastcall wave_device_enable_group_redirect(Wave_Device *self, void *,
 Purpose: Disable a group. Only an enabled one does any work: every member
          wave halts through its vtable slot 0x14, and the enabled byte is
          cleared AFTER the walk.
-Original Offset: 004C5400
+ORIGINAL: 0x004C5400
 Return Value: 0, or 0xA for a bad slot
 Status: Complete
 */
@@ -980,7 +980,7 @@ Purpose: Switch the wrapped device to another output. Every sound on the
          attribute word is fetched twice per chained sound, and a sound
          appended to the resume list keeps whatever its next link held until
          the replay clears it.
-Original Offset: 004C5030
+ORIGINAL: 0x004C5030
 Return Value: 0, or 2 when no device is wrapped
 Status: Complete
 */
@@ -1034,7 +1034,7 @@ func_wave_device_destroy **WaveDeviceDestroySlot =
 Purpose: Build the wrapped device of the requested kind through the factory
          hook, straight into the 0x14 field. A device already wrapped is
          refused with 0xC; a dead factory answers 0x14.
-Original Offset: 004C4ED0
+ORIGINAL: 0x004C4ED0
 Return Value: the factory's answer, 0xC with a device already wrapped, or
               0x14 with no factory installed
 Status: Complete
@@ -1057,7 +1057,7 @@ int __fastcall wave_device_create_device_redirect(Wave_Device *self, void *,
 /*
 Purpose: Tear the wrapped device down through the argument-less destroy hook
          and forget it. Without a device or a hook, 0x14 and nothing happens.
-Original Offset: 004C4F10
+ORIGINAL: 0x004C4F10
 Return Value: 0, or 0x14 with no device or no hook
 Status: Complete
 */
@@ -1084,7 +1084,7 @@ Purpose: Initialise the device stack: the Wave_Device's OWN virtual slot 0
          offset zero), then the wrapped device initialises through its slot
          0xC with both arguments, and a failure there runs the Wave_Device's
          own virtual slot 4 before the error propagates.
-Original Offset: 004C4F40
+ORIGINAL: 0x004C4F40
 Return Value: 0, or whichever stage's error came first
 Status: Complete
 */
@@ -1115,7 +1115,7 @@ Purpose: Release the wrapped device: its own vtable slot 0x10 winds it down,
          and only if the device is STILL there afterwards - the callback may
          have cleared it - does the destroy hook run. Either way the field is
          forgotten.
-Original Offset: 004C4F80
+ORIGINAL: 0x004C4F80
 Return Value: n/a
 Status: Complete
 */
@@ -1145,7 +1145,7 @@ func_thiscall_teardown WaveControlGroupOriginalDtor =
 /*
 Purpose: Construct one control group: the list fields - head, tail, cursor,
          count - zero out; the enabled byte and volume are left untouched.
-Original Offset: 004C5490
+ORIGINAL: 0x004C5490
 Return Value: n/a (the redirect leaves the object pointer where the original
               does)
 Status: Complete
@@ -1165,7 +1165,7 @@ Purpose: Destroy one control group by draining its node list from the head:
          and the count drops - but a node carrying a NULL wave stops the
          drain right after it is freed, leaving the rest of the list in
          place. The cursor is never touched.
-Original Offset: 004C5B80
+ORIGINAL: 0x004C5B80
 Return Value: n/a
 Status: Complete
 */
@@ -1200,7 +1200,7 @@ Purpose: Build the device singleton in two vtable stages: the base's vtable
          constructor iterator (their destructor rides along for the
          unreachable unwind path), the device's own vtable (0x0066E0E8)
          publishes, and the trailing dword clears. The SEH frame is omitted.
-Original Offset: 004C4DD0
+ORIGINAL: 0x004C4DD0
 Return Value: n/a (the redirect answers the object pointer)
 Status: Complete
 */
@@ -1229,7 +1229,7 @@ Purpose: Tear the device singleton down: its own vtable republishes, the
          iterator, the base vtable takes over, and a wrapped device is wound
          down through its slot 0x10 - kept in the field, since the object is
          dying anyway. The SEH frame is omitted.
-Original Offset: 004C4E60
+ORIGINAL: 0x004C4E60
 Return Value: n/a
 Status: Complete
 */

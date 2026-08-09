@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004C5780
 // 0x004C5780  ??1Midi_Device@@QAE@XZ  ->  ??1Midi_Device@@QAE@XZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

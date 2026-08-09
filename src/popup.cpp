@@ -24,7 +24,7 @@ func_base_pop_close BasePopOriginalClose = original_method<func_base_pop_close>(
 
 /*
 Purpose: Close the popup - its scroll bar first, then the popup base.
-Original Offset: 00404900
+ORIGINAL: 0x00404900
 Return Value: n/a
 Status: Complete
 */
@@ -43,7 +43,7 @@ func_popup_start_full PopupOriginalStartFull =
 /*
 Purpose: The five-argument start form, forwarding to the six-argument one with
          no parent graphic window.
-Original Offset: 0043EF70
+ORIGINAL: 0x0043EF70
 Return Value: n/a
 Status: Complete
 */
@@ -60,7 +60,7 @@ char *PopupStartCaption = reinterpret_cast<char *>(0x009B8AA8);
 
 /*
 Purpose: Start a popup from just a label, defaulting the rest.
-Original Offset: 005A5990
+ORIGINAL: 0x005A5990
 Return Value: n/a
 Status: Complete
 */
@@ -70,7 +70,7 @@ void Popup::start(const char *label) {
 
 /*
 Purpose: Start a popup from a label and a value, defaulting the rest.
-Original Offset: 00559040
+ORIGINAL: 0x00559040
 Return Value: n/a
 Status: Complete
 */
@@ -90,7 +90,7 @@ void __fastcall popup_start_label_value_redirect(Popup *self, void *,
 /*
 Purpose: Draw a popup's dialog background; the legacy implementation does
          nothing and returns 0.
-Original Offset: 00405B10
+ORIGINAL: 0x00405B10
 Return Value: 0, always
 Status: Complete
 */
@@ -108,7 +108,7 @@ func_pops_full *PopsOriginalFull = (func_pops_full *)0x006276A0;
 Purpose: The most minimal pop() form - just a label and callback; shared
          caption buffer, value -1, no override text, title 0, null sprite,
          both flags fixed at 1.
-Original Offset: 00627130
+ORIGINAL: 0x00627130
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -121,7 +121,7 @@ int __cdecl pop_label_cb(char *label, int (__cdecl *callback)()) {
 Purpose: Like pop_label_cb but with a caller-supplied caption in place of the
          shared buffer; value -1, no override text, title 0, null sprite,
          both flags fixed at 1.
-Original Offset: 00627160
+ORIGINAL: 0x00627160
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -135,7 +135,7 @@ int __cdecl pop_caption(char *caption, char *label,
 Purpose: Raise the caption-less, sprite-less popup with the shared caption
          buffer and caller-supplied value and title; no override text, both
          flags fixed at 1.
-Original Offset: 006271D0
+ORIGINAL: 0x006271D0
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -149,7 +149,7 @@ int __cdecl pop_value_title(char *label, int value, int title,
 Purpose: Like pop_value_title but with a caller-supplied caption instead of
          the shared buffer; no override text, null sprite, both flags fixed
          at 1.
-Original Offset: 00627200
+ORIGINAL: 0x00627200
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -163,7 +163,7 @@ int __cdecl pop_caption_value_title(char *caption, char *label, int value,
 Purpose: Raise the caption-less, sprite-less popup with the shared caption
          buffer, value defaulted to -1 and only the title exposed; no
          override text, both flags fixed at 1.
-Original Offset: 00627230
+ORIGINAL: 0x00627230
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -176,7 +176,7 @@ int __cdecl pop_title(char *label, int title, int (__cdecl *callback)()) {
 Purpose: Like pop_title but with a caller-supplied caption instead of the
          shared buffer; value -1, no override text, null sprite, both flags
          fixed at 1.
-Original Offset: 00627260
+ORIGINAL: 0x00627260
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -190,7 +190,7 @@ int __cdecl pop_caption_title(char *caption, char *label, int title,
 Purpose: Raise the caption-less, sprite-less popup against the shared
          caption buffer with value, override text and title all
          caller-supplied; both flags fixed at 1.
-Original Offset: 00627290
+ORIGINAL: 0x00627290
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -204,7 +204,7 @@ int __cdecl pop_value_text_title(char *label, int value, char *text,
 Purpose: The full caption-less, sprite-less popup form - caption, value,
          override text and title all caller-supplied; null sprite, both
          flags fixed at 1.
-Original Offset: 006272C0
+ORIGINAL: 0x006272C0
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -218,7 +218,7 @@ int __cdecl pop_full(char *caption, char *label, int value, char *text,
 Purpose: The most minimal pops() form - label, sprite and callback; shared
          caption buffer, value -1, no override text, title 0, both flags
          fixed at 1.
-Original Offset: 00627310
+ORIGINAL: 0x00627310
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -232,7 +232,7 @@ int __cdecl pops_minimal(char *label, Sprite *sprite,
 Purpose: Like pops_minimal but with both flags caller-supplied instead of
          fixed at 1; shared caption buffer, value -1, no override text,
          title 0.
-Original Offset: 00627340
+ORIGINAL: 0x00627340
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -246,7 +246,7 @@ int __cdecl pops_flags(char *label, Sprite *sprite, int flag_a, int flag_b,
 Purpose: Like pops_minimal but with a caller-supplied caption instead of the
          shared buffer; value -1, no override text, title 0, both flags
          fixed at 1.
-Original Offset: 00627370
+ORIGINAL: 0x00627370
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -259,7 +259,7 @@ int __cdecl pops_caption(char *caption, char *label, Sprite *sprite,
 /*
 Purpose: Like pops_flags but with a caller-supplied caption in place of the
          shared buffer; value -1, no override text, title 0.
-Original Offset: 006273A0
+ORIGINAL: 0x006273A0
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -274,7 +274,7 @@ int __cdecl pops_caption_flags(char *caption, char *label, Sprite *sprite,
 Purpose: Raise the full popup against the shared caption buffer with value
          and title exposed and the sprite caller-supplied; no override
          text, both flags fixed at 1.
-Original Offset: 006273D0
+ORIGINAL: 0x006273D0
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -287,7 +287,7 @@ int __cdecl pops_value_title(char *label, int value, int title,
 /*
 Purpose: Like pops_value_title but with both flags caller-supplied instead
          of fixed at 1; shared caption buffer, no override text.
-Original Offset: 00627400
+ORIGINAL: 0x00627400
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -301,7 +301,7 @@ int __cdecl pops_value_title_flags(char *label, int value, int title,
 /*
 Purpose: Like pops_value_title but with a caller-supplied caption instead of
          the shared buffer; no override text, both flags fixed at 1.
-Original Offset: 006274D0
+ORIGINAL: 0x006274D0
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -315,7 +315,7 @@ int __cdecl pops_caption_value_title(char *caption, char *label, int value,
 /*
 Purpose: Raise the full popup with everything but the override text
          caller-supplied - caption, value, title, sprite and both flags.
-Original Offset: 00627500
+ORIGINAL: 0x00627500
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -330,7 +330,7 @@ int __cdecl pops_no_text(char *caption, char *label, int value, int title,
 Purpose: Raise the full popup against the shared caption buffer with value
          defaulted to -1 and only the title and sprite exposed; no override
          text, both flags fixed at 1.
-Original Offset: 00627540
+ORIGINAL: 0x00627540
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -343,7 +343,7 @@ int __cdecl pops_title(char *label, int title, Sprite *sprite,
 /*
 Purpose: Like pops_title but with both flags caller-supplied instead of
          fixed at 1; shared caption buffer, value -1, no override text.
-Original Offset: 00627570
+ORIGINAL: 0x00627570
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -357,7 +357,7 @@ int __cdecl pops_title_flags(char *label, int title, Sprite *sprite,
 /*
 Purpose: Like pops_title but with a caller-supplied caption instead of the
          shared buffer; value -1, no override text, both flags fixed at 1.
-Original Offset: 006275A0
+ORIGINAL: 0x006275A0
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -370,7 +370,7 @@ int __cdecl pops_caption_title(char *caption, char *label, int title,
 /*
 Purpose: Like pops_caption_title but with both flags caller-supplied instead
          of fixed at 1; value -1, no override text.
-Original Offset: 006275D0
+ORIGINAL: 0x006275D0
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -385,7 +385,7 @@ int __cdecl pops_caption_title_flags(char *caption, char *label, int title,
 Purpose: Raise the full popup against the shared caption buffer with value,
          override text, title and sprite all caller-supplied; both flags
          fixed at 1.
-Original Offset: 00627600
+ORIGINAL: 0x00627600
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -400,7 +400,7 @@ int __cdecl pops_value_text_title(char *label, int value, char *text,
 Purpose: Like pops_value_text_title but with both flags caller-supplied
          instead of fixed at 1; only the caption defaults to the shared
          buffer.
-Original Offset: 00627630
+ORIGINAL: 0x00627630
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -415,7 +415,7 @@ int __cdecl pops_default_caption(char *label, int value, char *text,
 Purpose: Raise the full popup with everything but the flags caller-supplied
          - caption, value, override text, title and sprite; both flags
          fixed at 1.
-Original Offset: 00627670
+ORIGINAL: 0x00627670
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -449,7 +449,7 @@ Purpose: Sound a popup's wave. Nothing sounds unless bit 0x400 of the flag
          and its bank entry loads and plays. Afterwards - whether or not
          anything sounded - wave 0x19 fires the owner's virtual at 0x138
          and wave 0x10 plays effect 0x38.
-Original Offset: 004456B0
+ORIGINAL: 0x004456B0
 Return Value: n/a
 Status: Complete
 */
@@ -507,7 +507,7 @@ void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-Original Offset: 00404F80
+ORIGINAL: 0x00404F80
 Return Value: n/a
 Status: Complete
 */
@@ -535,7 +535,7 @@ Purpose: Reset the button width to 20 unless the field at 0x30AC scales to
 
          Popup models fields only as far as its Scroll member, so both offsets
          are reached through documented raw offsets, as BasePop::UNK3 does.
-Original Offset: 00405020
+ORIGINAL: 0x00405020
 Return Value: n/a
 Status: Complete
 */
@@ -553,7 +553,7 @@ void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *) {
 }
 
 /*
-Original Offset: 00404F90
+ORIGINAL: 0x00404F90
 Status: Complete
 */
 int Popup::on_nc_hittest(int a1, int a2) {

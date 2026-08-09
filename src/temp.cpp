@@ -698,7 +698,7 @@ uint32_t *MsgStatus = (uint32_t *)0x009B7B9C;
 
 /*
 Purpose: Process non-input related message.
-Original Offset: 005FCA30
+ORIGINAL: 0x005FCA30
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
@@ -729,7 +729,7 @@ BOOL __cdecl do_non_input() {
 
 /*
 Purpose: Process all non-input related messages.
-Original Offset: 005FCB20
+ORIGINAL: 0x005FCB20
 Return Value: n/a
 Status: Complete - testing
 */
@@ -744,7 +744,7 @@ void __cdecl do_all_non_input() {
 
 /*
 Purpose: Process draw related message.
-Original Offset: 005FCB60
+ORIGINAL: 0x005FCB60
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
@@ -763,7 +763,7 @@ BOOL __cdecl do_draw() {
 
 /*
 Purpose: Process all draw related messages.
-Original Offset: 005FCBB0
+ORIGINAL: 0x005FCBB0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -776,7 +776,7 @@ void __cdecl do_all_draws() {
 
 /*
 Purpose: Process keyboard related message.
-Original Offset: 005FCC20
+ORIGINAL: 0x005FCC20
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
@@ -794,7 +794,7 @@ BOOL __cdecl do_keyboard() {
 
 /*
 Purpose: Process all keyboard related messages.
-Original Offset: 005FCC70
+ORIGINAL: 0x005FCC70
 Return Value: n/a
 Status: Complete - testing
 */

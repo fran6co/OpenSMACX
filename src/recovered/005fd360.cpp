@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005FD360
 // 0x005FD360  ?do_all_sounds@@YAXXZ  ->  ?do_all_sounds@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

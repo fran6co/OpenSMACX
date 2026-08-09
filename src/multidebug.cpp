@@ -21,7 +21,7 @@
 
 /*
 Purpose: Close the debug window by clearing its single active flag.
-Original Offset: 005C98E0
+ORIGINAL: 0x005C98E0
 Return Value: n/a
 Status: Complete
 */
@@ -35,7 +35,7 @@ void __fastcall multi_debug_close_redirect(MultiDebug *self, void *) {
 
 /*
 Purpose: Forward the timer tick to the object's own virtual slot 62.
-Original Offset: 005C9900
+ORIGINAL: 0x005C9900
 Return Value: n/a
 Status: Complete
 */

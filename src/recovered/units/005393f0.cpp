@@ -1,3 +1,4 @@
+// ORIGINAL: 0x005393F0 FILE
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004AF8C0 FILE
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

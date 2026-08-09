@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-Original Offset: 00493C10
+ORIGINAL: 0x00493C10
 Return Value: 1, always
 Status: Complete
 */
@@ -35,7 +35,7 @@ int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00493E90
+ORIGINAL: 0x00493E90
 Return Value: n/a
 Status: Complete
 */
@@ -48,7 +48,7 @@ void __fastcall prod_picker_on_mouse_move_redirect(ProdPicker *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00495160
+ORIGINAL: 0x00495160
 Return Value: n/a
 Status: Complete
 */
@@ -62,7 +62,7 @@ void __fastcall prod_picker_unk3_redirect(ProdPicker *self, void *, int a1) {
 /*
 Purpose: Close the picker - clear the field at 0xA14 that marks it live, then
          run the GraphicWin close it inherits.
-Original Offset: 004926B0
+ORIGINAL: 0x004926B0
 Return Value: n/a
 Status: Complete
 */
@@ -77,7 +77,7 @@ void __fastcall prod_picker_close_redirect(ProdPicker *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-Original Offset: 004945C0
+ORIGINAL: 0x004945C0
 Return Value: n/a
 Status: Complete
 */

@@ -23,7 +23,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00422E10
+ORIGINAL: 0x00422E10
 Return Value: n/a
 Status: Complete
 */
@@ -34,7 +34,7 @@ void BattleWin::on_iface_left_click(int, int) {
 Purpose: Destroy the window. The whole teardown is the Time member at +8; the
          original advances `this` by 8 and tail-jumps into the Time
          destructor, and nothing else in the object is touched.
-Original Offset: 00422ED0
+ORIGINAL: 0x00422ED0
 Return Value: n/a
 Status: Complete
 */
@@ -52,7 +52,7 @@ void __fastcall battle_win_on_iface_left_click_redirect(BattleWin *self, void *,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00422E20
+ORIGINAL: 0x00422E20
 Return Value: n/a
 Status: Complete
 */
@@ -65,7 +65,7 @@ void __fastcall battle_win_on_iface_right_click_redirect(BattleWin *self, void *
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00422E70
+ORIGINAL: 0x00422E70
 Return Value: n/a
 Status: Complete
 */
@@ -78,7 +78,7 @@ void __fastcall battle_win_on_iface_right_down_redirect(BattleWin *self, void *,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00422E80
+ORIGINAL: 0x00422E80
 Return Value: n/a
 Status: Complete
 */
@@ -91,7 +91,7 @@ void __fastcall battle_win_on_iface_mouse_move_redirect(BattleWin *self, void *,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00422E90
+ORIGINAL: 0x00422E90
 Return Value: n/a
 Status: Complete
 */
@@ -104,7 +104,7 @@ void __fastcall battle_win_on_iface_mouse_leave_redirect(BattleWin *self, void *
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-Original Offset: 00422EA0
+ORIGINAL: 0x00422EA0
 Return Value: n/a
 Status: Complete
 */
@@ -116,7 +116,7 @@ void __fastcall battle_win_on_iface_selected_redirect(BattleWin *self, void *, i
 }
 
 /*
-Original Offset: 00422DC0
+ORIGINAL: 0x00422DC0
 Status: Complete
 */
 void BattleWin::on_iface_button_clicked(int a1) {

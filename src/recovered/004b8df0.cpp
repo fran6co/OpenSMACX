@@ -1,3 +1,4 @@
+// ORIGINAL: 0x004B8DF0
 // 0x004B8DF0  ?UNK3@StatusWin@@QAEXXZ  ->  ?UNK3@StatusWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

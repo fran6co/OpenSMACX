@@ -60,7 +60,7 @@ LPSTR VehBattleDisplayTerrain;
 
 /*
 Purpose: Generate an output string for the specified unit's morale.
-Original Offset: 004B3FD0
+ORIGINAL: 0x004B3FD0
 Return Value: n/a
 Status: Complete
 */
@@ -151,7 +151,7 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
 
 /*
 Purpose: Get the morale string for the specified unit and store it in the stringTemp buffer.
-Original Offset: 004B43C0
+ORIGINAL: 0x004B43C0
 Return Value: n/a
 Status: Complete
 */
@@ -161,7 +161,7 @@ void __cdecl say_morale(int veh_id, int faction_id_vs_native) {
 
 /*
 Purpose: Check whether the specified unit could ever reach the given tile as a patrol waypoint.
-Original Offset: 004CD6A0
+ORIGINAL: 0x004CD6A0
 Return Value: Is the waypoint reachable? true/false
 Status: Complete
 
@@ -280,7 +280,7 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
 
 /*
 Purpose: Calculate maximum range a faction's units can drop (air drops, Drop Pods).
-Original Offset: 00500320
+ORIGINAL: 0x00500320
 Return Value: Max range
 Status: Complete
 */
@@ -294,7 +294,7 @@ int __cdecl drop_range(int faction_id) {
 
 /*
 Purpose: Check whether the specified prototype is a planet buster.
-Original Offset: 005004F0
+ORIGINAL: 0x005004F0
 Return Value: Reactor id if planet buster, otherwise 0
 Status: Complete
 */
@@ -305,7 +305,7 @@ uint32_t __cdecl planet_buster2(int proto_id) {
 
 /*
 Purpose: Check whether the specified unit is a planet buster.
-Original Offset: 00500520
+ORIGINAL: 0x00500520
 Return Value: Reactor id if planet buster, otherwise 0
 Status: Complete
 */
@@ -315,7 +315,7 @@ uint32_t __cdecl planet_buster(int veh_id) {
 
 /*
 Purpose: Calculate how defensive the specified tile is to the defending unit based on the terrain.
-Original Offset: 005010C0
+ORIGINAL: 0x005010C0
 Return Value: Defense terrain value
 Status: Complete
 */
@@ -357,7 +357,7 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
 
 /*
 Purpose: Calculate the lifecycle (morale) of the specified native life unit.
-Original Offset: 00501350
+ORIGINAL: 0x00501350
 Return Value: Lifecycle (morale) value
 Status: Complete
 */
@@ -411,7 +411,7 @@ uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
 
 /*
 Purpose: Calculate the psi combat factor for an attacking or defending unit.
-Original Offset: 00501500
+ORIGINAL: 0x00501500
 Return Value: Psi factor
 Status: Complete
 */
@@ -435,7 +435,7 @@ int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack, BOOL is
 
 /*
 Purpose: Get the basic offense value for an attacking unit with an optional defender unit parameter.
-Original Offset: 005015B0
+ORIGINAL: 0x005015B0
 Return Value: Basic offense
 Status: Complete
 */
@@ -497,7 +497,7 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
 
 /*
 Purpose: Get the basic defense value for a defending unit with an optional attacker unit parameter.
-Original Offset: 00501940
+ORIGINAL: 0x00501940
 Return Value: Basic defense
 Status: Complete
 */
@@ -564,7 +564,7 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
 
 /*
 Purpose: Initialize or reset the battle related global variables.
-Original Offset: 00501D30
+ORIGINAL: 0x00501D30
 Return Value: n/a
 Status: Complete
 */
@@ -577,7 +577,7 @@ void __cdecl battle_init() {
 
 /*
 Purpose: Add combat battle modifier for type (offense, defense).
-Original Offset: 00501D50
+ORIGINAL: 0x00501D50
 Return Value: n/a
 Status: Complete
 */
@@ -593,7 +593,7 @@ void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
 
 /*
 Purpose: Calculate the battle outcome between two units.
-Original Offset: 00501DA0
+ORIGINAL: 0x00501DA0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1069,7 +1069,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
 
 /*
 Purpose: Determine the best defender in a stack.
-Original Offset: 005044D0
+ORIGINAL: 0x005044D0
 Return Value: Unit id of the best defender
 Status: Complete - testing
 */
@@ -1149,7 +1149,7 @@ uint32_t __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artill
 /*
 Purpose: Determine whether any enemy naval transports are carrying land units within range to 
          attack the specified base. If so, set the units to move towards the base.
-Original Offset: 00506490
+ORIGINAL: 0x00506490
 Return Value: n/a
 Status: Complete
 */
@@ -1177,7 +1177,7 @@ void __cdecl invasions(int base_id) {
 
 /*
 Purpose: Direct the unit to start moving automatically towards the specified tile.
-Original Offset: 00560AD0
+ORIGINAL: 0x00560AD0
 Return Value: n/a
 Status: Complete
 */
@@ -1218,7 +1218,7 @@ static int course_xrange(int x) {
 /*
 Purpose: Send the unit toward the given tile the long way round - by water - choosing the anchorage
          next to it that fronts the most of the destination's own landmass.
-Original Offset: 00564890
+ORIGINAL: 0x00564890
 Return Value: n/a
 Status: Complete
 
@@ -1318,7 +1318,7 @@ void __cdecl set_course(int veh_id, char type, int x, int y) {
 
 /*
 Purpose: Get the unit on the top of the stack.
-Original Offset: 00579920
+ORIGINAL: 0x00579920
 Return Value: Unit id if found, otherwise -1
 Status: Complete
 */
@@ -1335,7 +1335,7 @@ int __cdecl veh_top(int veh_id) {
 
 /*
 Purpose: Get the current moves left for the specified unit.
-Original Offset: 00579960
+ORIGINAL: 0x00579960
 Return Value: Remaining moves
 Status: Complete
 */
@@ -1345,7 +1345,7 @@ int __cdecl veh_moves(int veh_id) {
 
 /*
 Purpose: Get the specified unit's reactor power value from its prototype.
-Original Offset: 005799A0
+ORIGINAL: 0x005799A0
 Return Value: Power
 Status: Complete
 */
@@ -1359,7 +1359,7 @@ int __cdecl proto_power(int veh_id) {
 
 /*
 Purpose: Determine whether the specified unit is eligible for a monolith morale upgrade.
-Original Offset: 00579F80
+ORIGINAL: 0x00579F80
 Return Value: Is unit eligible for a monolith morale upgrade? true/false
 Status: Complete
 */
@@ -1374,7 +1374,7 @@ BOOL __cdecl want_monolith(int veh_id) {
 
 /*
 Purpose: Calculate the armor strategy for the specified armor id.
-Original Offset: 0057D270
+ORIGINAL: 0x0057D270
 Return Value: Armor strategy
 Status: Complete
 */
@@ -1393,7 +1393,7 @@ int __cdecl arm_strat(int armor_id, int faction_id) {
 
 /*
 Purpose: Calculate the weapon strategy for the specified weapon id.
-Original Offset: 0057D2E0
+ORIGINAL: 0x0057D2E0
 Return Value: Weapon strategy
 Status: Complete
 */
@@ -1412,7 +1412,7 @@ int __cdecl weap_strat(int weapon_id, int faction_id) {
 
 /*
 Purpose: Calculate the weapon value for the specified prototype.
-Original Offset: 0057D360
+ORIGINAL: 0x0057D360
 Return Value: Weapon value
 Status: Complete
 */
@@ -1422,7 +1422,7 @@ int __cdecl weap_val(int proto_id, int faction_id) {
 
 /*
 Purpose: Calculate the armor value for the specified armor id.
-Original Offset: 0057D3F0
+ORIGINAL: 0x0057D3F0
 Return Value: Armor value
 Status: Complete
 */
@@ -1433,7 +1433,7 @@ int __cdecl arm_val(int armor_id, int faction_id) {
 
 /*
 Purpose: Calculate the armor value for the specified prototype.
-Original Offset: 0057D480
+ORIGINAL: 0x0057D480
 Return Value: Armor value
 Status: Complete
 */
@@ -1443,7 +1443,7 @@ int __cdecl armor_val(int proto_id, int faction_id) {
 
 /*
 Purpose: Calculate the carrying/transport capacity for the specified chassis, abilities and reactor.
-Original Offset: 0057D510
+ORIGINAL: 0x0057D510
 Return Value: Transport capacity
 Status: Complete
 */
@@ -1465,7 +1465,7 @@ int __cdecl transport_val(int chassis_id, int ability, int reactor_id) {
 Purpose: Generate offensive display string for the specified prototype. Replaced existing non-safe
          strcat with string. Original function took a 2nd parameter with char buffer and didn't
          return anything.
-Original Offset: 0057D560
+ORIGINAL: 0x0057D560
 Return Value: Offensive display string
 Status: Complete
 */
@@ -1505,7 +1505,7 @@ std::string __cdecl say_offense(uint32_t proto_id) {
 Purpose: Generate defense display string for the specified prototype. Replaced existing non-safe 
          strcat with string. Original function took a 2nd parameter with char buffer and didn't 
          return anything.
-Original Offset: 0057D6D0
+ORIGINAL: 0x0057D6D0
 Return Value: Defense display string
 Status: Complete
 */
@@ -1533,7 +1533,7 @@ std::string __cdecl say_defense(uint32_t proto_id) {
 /*
 Purpose: Generate stats string for specified prototype. Replaced existing non-safe strcat with 
          string. Reworked to integrate with existing C code.
-Original Offset: 0057D7D0
+ORIGINAL: 0x0057D7D0
 Return Value: n/a
 Status: Complete
 */
@@ -1562,7 +1562,7 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
 
 /*
 Purpose: Generate prototype stats using stringTemp buffer.
-Original Offset: 0050B9A0
+ORIGINAL: 0x0050B9A0
 Return Value: n/a
 Status: Complete
 */
@@ -1573,7 +1573,7 @@ void __cdecl say_stats_3(int proto_id) {
 /*
 Purpose: Generate stats string for specified prototype. List whether prototype is psi, sea or air.
          Replaced existing non-safe strcat with string. Reworked to integrate with existing C code.
-Original Offset: 0057D8E0
+ORIGINAL: 0x0057D8E0
 Return Value: n/a
 Status: Complete
 */
@@ -1612,7 +1612,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
 Purpose: Generate verbose stats string for specified prototype. Used by Design Workshop and Military
          Command Nexus. Replaced existing non-safe strcat with string. Reworked to integrate with 
          existing C code.
-Original Offset: 0057DAA0
+ORIGINAL: 0x0057DAA0
 Return Value: n/a
 Status: Complete
 */
@@ -1682,7 +1682,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
 
 /*
 Purpose: Check against faction's available tech for best available reactor.
-Original Offset: 0057EFA0
+ORIGINAL: 0x0057EFA0
 Return Value: Best reactor available (1-4)
 Status: Complete
 */
@@ -1697,7 +1697,7 @@ uint32_t __cdecl best_reactor(int faction_id) {
 
 /*
 Purpose: Check against faction's available tech for best available chassis meeting requirements.
-Original Offset: 0057EFF0
+ORIGINAL: 0x0057EFF0
 Return Value: Best chassis available (0-8)
 Status: Complete
 */
@@ -1735,7 +1735,7 @@ int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk) {
 Purpose: Check against faction's available tech for the best available weapon meeting requirements.
          The condition variable has a dual purpose of either max cost or search for 1st instance of
          a particular weapon mode.
-Original Offset: 0057F0B0
+ORIGINAL: 0x0057F0B0
 Return Value: Best weapon available (0-25)
 Status: Complete
 */
@@ -1766,7 +1766,7 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
 /*
 Purpose: Check against the faction's available tech for the best available armor meeting the cost 
          requirement.
-Original Offset: 0057F150
+ORIGINAL: 0x0057F150
 Return Value: Best armor available (0-13)
 Status: Complete
 */
@@ -1792,7 +1792,7 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
 
 /*
 Purpose: Get the index value of a particular ability's bitfield.
-Original Offset: 00581170
+ORIGINAL: 0x00581170
 Return Value: Ability index
 Status: Complete
 */
@@ -1806,7 +1806,7 @@ int __cdecl abil_index(int ability_id) {
 
 /*
 Purpose: Calculate the movement penalty/cost.
-Original Offset: 00593510
+ORIGINAL: 0x00593510
 Return Value: Movement cost
 Status: Complete
 */
@@ -1875,7 +1875,7 @@ int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src, int x_d
 
 /*
 Purpose: Relocate an existing unit to the specified tile.
-Original Offset: 005A59B0
+ORIGINAL: 0x005A59B0
 Return Value: n/a
 Status: Complete
 */
@@ -1885,7 +1885,7 @@ void __cdecl veh_put(int veh_id, int x, int y) {
 
 /*
 Purpose: Get the current health of the specified unit factoring in damage.
-Original Offset: 005A59E0
+ORIGINAL: 0x005A59E0
 Return Value: Unit health
 Status: Complete
 */
@@ -1899,7 +1899,7 @@ int __cdecl veh_health(int veh_id) {
 /*
 Purpose: Calculates cost of the prototype based on various factors. Optimized logic flow from 
          the original without any differences to the final calculation.
-Original Offset: 005A5A60
+ORIGINAL: 0x005A5A60
 Return Value: Cost of prototype
 Status: Complete
 */
@@ -2019,7 +2019,7 @@ uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
 
 /*
 Purpose: Calculates the base cost of the specified prototype.
-Original Offset: 005A5D00
+ORIGINAL: 0x005A5D00
 Return Value: Base cost of the prototype
 Status: Complete
 */
@@ -2030,7 +2030,7 @@ int __cdecl base_cost(int proto_id) {
 
 /*
 Purpose: Create a new prototype. Sets initial values for everything except veh_name and preq_tech.
-Original Offset: 005A5D40
+ORIGINAL: 0x005A5D40
 Return Value: n/a
 Status: Complete
 */
@@ -2176,7 +2176,7 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
 
 /*
 Purpose: Search for the 1st prototype (basic + faction specific) that matches the specified plan.
-Original Offset: 005AED50
+ORIGINAL: 0x005AED50
 Return Value: Prototype id or -1 if not found
 Status: Complete
 */
@@ -2198,7 +2198,7 @@ int __cdecl get_plan(int faction_id, int plan) {
 /*
 Purpose: Reveal the specified tile to the specified faction and keep the
          faction's remembered copy of the tile's terrain bits in step with it.
-Original Offset: 005B5700
+ORIGINAL: 0x005B5700
 Return Value: n/a
 Status: Complete
 
@@ -2234,7 +2234,7 @@ void __cdecl spot_tile(int x, int y, int faction_id) {
 /*
 Purpose: Reveal the specified base, and the tile it stands on, to the specified
          faction.
-Original Offset: 005B57D0
+ORIGINAL: 0x005B57D0
 Return Value: n/a
 Status: Complete
 
@@ -2256,7 +2256,7 @@ void __cdecl spot_base(int base_id, int faction_id) {
 /*
 Purpose: Reveal the whole of the specified unit's stack, and the tile it stands
          on, to the specified faction.
-Original Offset: 005B58E0
+ORIGINAL: 0x005B58E0
 Return Value: n/a
 Status: Complete
 
@@ -2300,7 +2300,7 @@ void __cdecl spot_stack(int veh_id, int faction_id) {
 Purpose: Reveal whatever occupies the specified location - the tile itself, and
          then either the base standing on it or the whole unit stack - to the
          specified faction.
-Original Offset: 005B5AD0
+ORIGINAL: 0x005B5AD0
 Return Value: n/a
 Status: Complete
 
@@ -2338,7 +2338,7 @@ void __cdecl spot_loc(int x, int y, int faction_id) {
 /*
 Purpose: Determine if the specified unit wants to wake up based on certain conditions and
          preferences. Optional parameter for spotted veh_id (-1 to skip).
-Original Offset: 005B5EA0
+ORIGINAL: 0x005B5EA0
 Return Value: Does unit want to wake? true/false
 Status: Complete
 */
@@ -2392,7 +2392,7 @@ BOOL __cdecl want_to_wake(int faction_id, int veh_id, int spotted_veh_id) {
 
 /*
 Purpose: Wake up units meeting specific conditions from the stack where specified unit is located.
-Original Offset: 005B6060
+ORIGINAL: 0x005B6060
 Return Value: n/a
 Status: Complete
 */
@@ -2414,7 +2414,7 @@ void __cdecl wake_stack(int veh_id) {
 
 /*
 Purpose: Move a stack of units in the same stack as the specified unit to a destination.
-Original Offset: 005B8AF0
+ORIGINAL: 0x005B8AF0
 Return Value: n/a
 Status: Complete
 */
@@ -2432,7 +2432,7 @@ void __cdecl stack_put(int veh_id, int x, int y) {
 
 /*
 Purpose: Sort a stack of units with the transports moved to the top.
-Original Offset: 005B8B60
+ORIGINAL: 0x005B8B60
 Return Value: n/a
 Status: Complete
 */
@@ -2457,7 +2457,7 @@ void __cdecl stack_sort(int veh_id) {
 
 /*
 Purpose: Sort a stack of units with colony pods at the top followed by combat/offensive units.
-Original Offset: 005B8C90
+ORIGINAL: 0x005B8C90
 Return Value: n/a
 Status: Complete
 */
@@ -2493,7 +2493,7 @@ void __cdecl stack_sort_2(int veh_id) {
 
 /*
 Purpose: Refresh and fix the stack. Used by DirectPlay multiplayer only.
-Original Offset: 005B8E10
+ORIGINAL: 0x005B8E10
 Return Value: Either the parameter unit id or unit id of the stack top; Return is checked if >= 0
 Status: Complete
 */
@@ -2519,7 +2519,7 @@ Purpose: Board the eligible units stacked with the specified transport or carrie
          anything; mode 1 sorts the stack first and lifts each boarder plus the subject to the
          off-map holding square; mode 2+ makes a single pass and short-circuits to the lift when
          the subject already sits on a faction-owned base.
-Original Offset: 005B8EE0
+ORIGINAL: 0x005B8EE0
 Return Value: Remaining capacity for mode 0, otherwise the unit id
 Status: Complete
 */
@@ -2664,7 +2664,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
 
 /*
 Purpose: Various unit stack related calculations based on type parameter (0-19) and conditions.
-Original Offset: 005B9580
+ORIGINAL: 0x005B9580
 Return Value: Dependent on type parameter
 Status: Complete
 */
@@ -2803,7 +2803,7 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
 /*
 Purpose: Check to see whether provided faction and base can build a specific prototype. Checks are
          included to prevent SMACX specific units from being built in SMAC mode.
-Original Offset: 005BA910
+ORIGINAL: 0x005BA910
 Return Value: Is unit available to faction/base? true/false
 Status: Complete
 */
@@ -2848,7 +2848,7 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
 /*
 Purpose: Determine whether a faction wants the specified prototype based on the faction's current
          prototype designs.
-Original Offset: 005BE100
+ORIGINAL: 0x005BE100
 Return Value: Does faction want prototype? true/false
 Status: Complete
 */
@@ -2892,7 +2892,7 @@ BOOL __cdecl wants_prototype(int proto_id, int faction_id) {
 
 /*
 Purpose: Check the coordinates for units and if at least one is found return the top most id.
-Original Offset: 005BFE90
+ORIGINAL: 0x005BFE90
 Return Value: Unit id or -1 if nothing is found/error
 Status: Complete
 */
@@ -2923,7 +2923,7 @@ int __cdecl veh_at(int x, int y) {
 
 /*
 Purpose: Check whether the prototype has a specific ability.
-Original Offset: 005BF1F0
+ORIGINAL: 0x005BF1F0
 Return Value: Does prototype have ability? true/false
 Status: Complete
 */
@@ -2964,7 +2964,7 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
 /*
 Purpose: Temporarily remove the specified unit from its current square and stack in preparation for 
          another action such as interacting with the stack, moving or killing it.
-Original Offset: 005BFFA0
+ORIGINAL: 0x005BFFA0
 Return Value: Unit id
 Status: Complete
 */
@@ -2995,7 +2995,7 @@ int __cdecl veh_lift(int veh_id) {
 
 /*
 Purpose: Move the specified unit to the provided coordinates.
-Original Offset: 005C0080
+ORIGINAL: 0x005C0080
 Return Value: Unit id (1st param), doesn't seem to be used
 Status: Complete
 */
@@ -3026,7 +3026,7 @@ int __cdecl veh_drop(int veh_id, int x, int y) {
 
 /*
 Purpose: Set the unit's status to sentry/board.
-Original Offset: 005C01A0
+ORIGINAL: 0x005C01A0
 Return Value: n/a
 Status: Complete
 */
@@ -3038,7 +3038,7 @@ void __cdecl sleep(int veh_id) {
 
 /*
 Purpose: Move the specified unit to the bottom of the stack.
-Original Offset: 005C01D0
+ORIGINAL: 0x005C01D0
 Return Value: n/a
 Status: Complete
 */
@@ -3065,7 +3065,7 @@ void __cdecl veh_demote(int veh_id) {
 
 /*
 Purpose: Move the specified unit to the top of the stack.
-Original Offset: 005C0260
+ORIGINAL: 0x005C0260
 Return Value: n/a
 Status: Complete
 */
@@ -3078,7 +3078,7 @@ void __cdecl veh_promote(int veh_id) {
 
 /*
 Purpose: Clear the specified unit.
-Original Offset: 005C02D0
+ORIGINAL: 0x005C02D0
 Return Value: n/a
 Status: Complete
 */
@@ -3117,7 +3117,7 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
 /*
 Purpose: Check if the prototype can perform artillery combat. The 2nd parameter determines how sea 
          units are treated.
-Original Offset: 005C0DB0
+ORIGINAL: 0x005C0DB0
 Return Value: Has artillery ability? true/false
 Status: Complete
 */
@@ -3139,7 +3139,7 @@ BOOL __cdecl can_arty(int proto_id, BOOL sea_triad_retn) {
 /*
 Purpose: Calculate a unit's morale. TODO: Determine if 2nd param is a toggle for display vs actual 
          morale.
-Original Offset: 005C0E40
+ORIGINAL: 0x005C0E40
 Return Value: Morale value
 Status: Complete
 */
@@ -3203,7 +3203,7 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
 /*
 Purpose: Calculate the offense of the specified prototype. Optional param of the unit defending 
          against (-1 to ignore) as well as whether artillery or missile combat is being utilized.
-Original Offset: 005C1150
+ORIGINAL: 0x005C1150
 Return Value: Prototype's offense
 Status: Complete
 */
@@ -3235,7 +3235,7 @@ int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
 /*
 Purpose: Calculate the defense of the specified prototype. Optional param if unit is being attacked 
          (-1 to ignore) as well as whether artillery or missile combat is being utilized.
-Original Offset: 005C1290
+ORIGINAL: 0x005C1290
 Return Value: Prototype's defense
 Status: Complete
 */
@@ -3258,7 +3258,7 @@ int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard) {
 
 /*
 Purpose: Calculate the speed of the specified prototype on roads.
-Original Offset: 005C13B0
+ORIGINAL: 0x005C13B0
 Return Value: Prototype's speed on roads
 Status: Complete
 */
@@ -3304,7 +3304,7 @@ int __cdecl speed_proto(int proto_id) {
 Purpose: Calculate the speed of a unit on roads taking into consideration prototype speed, 
          elite morale, if the unit is damaged and other factors. The skip_morale parameter seems to 
          only be set to true for certain combat calculations in battle_fight().
-Original Offset: 005C1540
+ORIGINAL: 0x005C1540
 Return Value: Speed
 Status: Complete
 */
@@ -3342,7 +3342,7 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
 /*
 Purpose: Calculate the cargo capacity of a unit. It seems Spore Launchers were considered to have 
          cargo capacity at one time.
-Original Offset: 005C1760
+ORIGINAL: 0x005C1760
 Return Value: Cargo capacity
 Status: Complete
 */
@@ -3356,7 +3356,7 @@ int __cdecl veh_cargo(int veh_id) {
 /*
 Purpose: Determine the extra percent cost for building a prototype. Includes a check if the faction 
          has the free prototype flag set or if the player is using one of the easier difficulties.
-Original Offset: 005C17D0
+ORIGINAL: 0x005C17D0
 Return Value: Percent extra prototype cost
 Status: Complete
 */
@@ -3381,7 +3381,7 @@ int __cdecl prototype_factor(int proto_id) {
 /*
 Purpose: Calculate the specified prototype's overall cost to build. Optional output parameter
          whether there is an associated 1st time prototype cost (true) or just the base (false).
-Original Offset: 005C1850
+ORIGINAL: 0x005C1850
 Return Value: Mineral cost
 Status: Complete
 */
@@ -3411,7 +3411,7 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
 /*
 Purpose: Check if the land unit inside an air transport can disembark. The transport must be in 
          either a base or an airbase to do so.
-Original Offset: 005C1C40
+ORIGINAL: 0x005C1C40
 Return Value: Can the specified unit disembark? true/false
 Status: Complete
 */
@@ -3429,7 +3429,7 @@ BOOL __cdecl veh_jail(int veh_id) {
 
 /*
 Purpose: Sets all moves for the specified unit as expended.
-Original Offset: 005C1D20
+ORIGINAL: 0x005C1D20
 Return Value: n/a
 Status: Complete
 */
@@ -3441,7 +3441,7 @@ void __cdecl veh_skip(int veh_id) {
 
 /*
 Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for various UI elements.
-Original Offset: 005C1D50
+ORIGINAL: 0x005C1D50
 Return Value: Fake unit id (2048)
 Status: Complete
 */
@@ -3452,7 +3452,7 @@ int __cdecl veh_fake(int proto_id, int faction_id) {
 
 /*
 Purpose: Activate the specified unit and clear the current action.
-Original Offset: 005C1D70
+ORIGINAL: 0x005C1D70
 Return Value: Unit id (doesn't look to be used on return)
 Status: Complete
 */
@@ -3566,7 +3566,7 @@ Purpose: Send a unit home. Search the friendly and pacted bases, then - for an a
          friendly carriers and air supply convoys, then the airbases inside the search radius, for
          the closest place this unit could return to. Clear its orders if it is already standing
          there, otherwise point a move-to waypoint at it.
-Original Offset: 004CBAA0
+ORIGINAL: 0x004CBAA0
 Return Value: Was a destination resolved? true/false
 Status: Complete
 */
@@ -3772,7 +3772,7 @@ int __cdecl action_home(int veh_id, int flags) {
 Purpose: Weight the raw odds of an attack by how badly the faction's AI wants that particular
          stack dead. The odds arrive already computed by battle_fight; everything here is a
          strategic multiplier on top of them.
-Original Offset: 00565F20
+ORIGINAL: 0x00565F20
 Return Value: Weighted attack odds
 Status: Complete
 
@@ -4009,7 +4009,7 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
 
 /*
 Purpose: Choose which base a native life form standing on the specified tile should head for.
-Original Offset: 005665D0
+ORIGINAL: 0x005665D0
 Return Value: Base id of the most attractive target, or -1 when there is none
 Status: Complete
 

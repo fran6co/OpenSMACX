@@ -25,7 +25,7 @@ int Font::FontInitCount;
 
 /*
 Purpose: Initialize the class using the font name, height and style.
-Original Offset: 00618F40
+ORIGINAL: 0x00618F40
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -78,7 +78,7 @@ int Font::init(LPCSTR font_name, int height, int style) {
 
 /*
 Purpose: Initialize the class using the file, font name, height and style.
-Original Offset: 006190D0
+ORIGINAL: 0x006190D0
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -109,7 +109,7 @@ int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
 
 /*
 Purpose: Close an instance of the class.
-Original Offset: 00619230
+ORIGINAL: 0x00619230
 Return Value: n/a
 Status: Complete
 */
@@ -132,7 +132,7 @@ void Font::close() {
 
 /*
 Purpose: Get the width for the input text.
-Original Offset: 00619280
+ORIGINAL: 0x00619280
 Return Value: Width otherwise zero on error
 Status: Complete
 */
@@ -149,7 +149,7 @@ int Font::width(LPSTR input) {
 
 /*
 Purpose: Get the width for the input text with a maximum length.
-Original Offset: 006192F0
+ORIGINAL: 0x006192F0
 Return Value: Width otherwise zero on error
 Status: Complete
 */
@@ -170,7 +170,7 @@ int Font::width(LPSTR input, size_t max_len) {
 
 /*
 Purpose: Find a space in the input string that can be used as a natural line break.
-Original Offset: 00619370
+ORIGINAL: 0x00619370
 Return Value: Pointer to string section after the line break or NULL if not found
 Status: Complete
 */
@@ -211,7 +211,7 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
 
 /*
 Purpose: Initialize the class static variables.
-Original Offset: 006195B0
+ORIGINAL: 0x006195B0
 Return Value: Zero on success (or already initialized), non-zero on error
 Status: Complete
 */
@@ -235,7 +235,7 @@ int __cdecl Font::init_font_class(Font *font) {
 
 /*
 Purpose: Shutdown the class static variables.
-Original Offset: 00619610
+ORIGINAL: 0x00619610
 Return Value: n/a
 Status: Complete
 */

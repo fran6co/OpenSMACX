@@ -1,3 +1,4 @@
+// ORIGINAL: 0x00559140
 // 0x00559140  ?get_adjective_insult_faction@@YAPADH@Z  ->  ?get_adjective_insult_faction@@YAPADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

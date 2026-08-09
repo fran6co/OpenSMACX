@@ -37,7 +37,7 @@
 /*
 Purpose: sub_406a80 - a do-nothing leaf. The whole body is a return
          popping 8 bytes after zeroing EAX.
-Original Offset: 00406A80
+ORIGINAL: 0x00406A80
 Return Value: 0
 Status: Complete
 */
@@ -48,7 +48,7 @@ int __fastcall nullsub_00406a80_redirect(void *, void *, int, int) {
 /*
 Purpose: sub_406b30 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
-Original Offset: 00406B30
+ORIGINAL: 0x00406B30
 Return Value: 0
 Status: Complete
 */
@@ -59,7 +59,7 @@ int __fastcall nullsub_00406b30_redirect(void *, void *) {
 /*
 Purpose: nullsub_3 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C820
+ORIGINAL: 0x0044C820
 Return Value: n/a
 Status: Complete
 */
@@ -69,7 +69,7 @@ void __fastcall nullsub_0044c820_redirect(void *, void *) {
 /*
 Purpose: nullsub_191 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C850
+ORIGINAL: 0x0044C850
 Return Value: n/a
 Status: Complete
 */
@@ -79,7 +79,7 @@ void __fastcall nullsub_0044c850_redirect(void *, void *) {
 /*
 Purpose: nullsub_226 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C8A0
+ORIGINAL: 0x0044C8A0
 Return Value: n/a
 Status: Complete
 */
@@ -89,7 +89,7 @@ void __fastcall nullsub_0044c8a0_redirect(void *, void *) {
 /*
 Purpose: nullsub_227 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C8B0
+ORIGINAL: 0x0044C8B0
 Return Value: n/a
 Status: Complete
 */
@@ -99,7 +99,7 @@ void __fastcall nullsub_0044c8b0_redirect(void *, void *) {
 /*
 Purpose: sub_44c8c0 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
-Original Offset: 0044C8C0
+ORIGINAL: 0x0044C8C0
 Return Value: 0
 Status: Complete
 */
@@ -110,7 +110,7 @@ int __fastcall nullsub_0044c8c0_redirect(void *, void *) {
 /*
 Purpose: nullsub_229 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C8D0
+ORIGINAL: 0x0044C8D0
 Return Value: n/a
 Status: Complete
 */
@@ -120,7 +120,7 @@ void __fastcall nullsub_0044c8d0_redirect(void *, void *) {
 /*
 Purpose: nullsub_230 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C8E0
+ORIGINAL: 0x0044C8E0
 Return Value: n/a
 Status: Complete
 */
@@ -130,7 +130,7 @@ void __fastcall nullsub_0044c8e0_redirect(void *, void *) {
 /*
 Purpose: nullsub_231 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C8F0
+ORIGINAL: 0x0044C8F0
 Return Value: n/a
 Status: Complete
 */
@@ -140,7 +140,7 @@ void __fastcall nullsub_0044c8f0_redirect(void *, void *) {
 /*
 Purpose: nullsub_232 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C900
+ORIGINAL: 0x0044C900
 Return Value: n/a
 Status: Complete
 */
@@ -150,7 +150,7 @@ void __fastcall nullsub_0044c900_redirect(void *, void *) {
 /*
 Purpose: nullsub_233 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C930
+ORIGINAL: 0x0044C930
 Return Value: n/a
 Status: Complete
 */
@@ -160,7 +160,7 @@ void __fastcall nullsub_0044c930_redirect(void *, void *) {
 /*
 Purpose: nullsub_234 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C960
+ORIGINAL: 0x0044C960
 Return Value: n/a
 Status: Complete
 */
@@ -170,7 +170,7 @@ void __fastcall nullsub_0044c960_redirect(void *, void *) {
 /*
 Purpose: sub_44c970 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
-Original Offset: 0044C970
+ORIGINAL: 0x0044C970
 Return Value: 0
 Status: Complete
 */
@@ -181,7 +181,7 @@ int __fastcall nullsub_0044c970_redirect(void *, void *) {
 /*
 Purpose: nullsub_235 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C9A0
+ORIGINAL: 0x0044C9A0
 Return Value: n/a
 Status: Complete
 */
@@ -191,7 +191,7 @@ void __fastcall nullsub_0044c9a0_redirect(void *, void *) {
 /*
 Purpose: nullsub_236 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044C9D0
+ORIGINAL: 0x0044C9D0
 Return Value: n/a
 Status: Complete
 */
@@ -201,7 +201,7 @@ void __fastcall nullsub_0044c9d0_redirect(void *, void *) {
 /*
 Purpose: nullsub_237 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044CA00
+ORIGINAL: 0x0044CA00
 Return Value: n/a
 Status: Complete
 */
@@ -211,7 +211,7 @@ void __fastcall nullsub_0044ca00_redirect(void *, void *) {
 /*
 Purpose: nullsub_238 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044CA30
+ORIGINAL: 0x0044CA30
 Return Value: n/a
 Status: Complete
 */
@@ -221,7 +221,7 @@ void __fastcall nullsub_0044ca30_redirect(void *, void *) {
 /*
 Purpose: nullsub_239 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044CA60
+ORIGINAL: 0x0044CA60
 Return Value: n/a
 Status: Complete
 */
@@ -231,7 +231,7 @@ void __fastcall nullsub_0044ca60_redirect(void *, void *) {
 /*
 Purpose: nullsub_240 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044CAC0
+ORIGINAL: 0x0044CAC0
 Return Value: n/a
 Status: Complete
 */
@@ -241,7 +241,7 @@ void __fastcall nullsub_0044cac0_redirect(void *, void *) {
 /*
 Purpose: nullsub_241 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044CAF0
+ORIGINAL: 0x0044CAF0
 Return Value: n/a
 Status: Complete
 */
@@ -251,7 +251,7 @@ void __fastcall nullsub_0044caf0_redirect(void *, void *) {
 /*
 Purpose: nullsub_242 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044CB00
+ORIGINAL: 0x0044CB00
 Return Value: n/a
 Status: Complete
 */
@@ -261,7 +261,7 @@ void __fastcall nullsub_0044cb00_redirect(void *, void *) {
 /*
 Purpose: nullsub_243 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044CB10
+ORIGINAL: 0x0044CB10
 Return Value: n/a
 Status: Complete
 */
@@ -271,7 +271,7 @@ void __fastcall nullsub_0044cb10_redirect(void *, void *) {
 /*
 Purpose: nullsub_244 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0044CB20
+ORIGINAL: 0x0044CB20
 Return Value: n/a
 Status: Complete
 */
@@ -281,7 +281,7 @@ void __fastcall nullsub_0044cb20_redirect(void *, void *) {
 /*
 Purpose: mapwin_nullsub1 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
-Original Offset: 00471160
+ORIGINAL: 0x00471160
 Return Value: n/a
 Status: Complete
 */
@@ -291,7 +291,7 @@ void __fastcall mapwin_nullsub1_redirect(void *, void *, int, int) {
 /*
 Purpose: mapwin_nullsub2 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
-Original Offset: 00471170
+ORIGINAL: 0x00471170
 Return Value: n/a
 Status: Complete
 */
@@ -301,7 +301,7 @@ void __fastcall mapwin_nullsub2_redirect(void *, void *, int, int) {
 /*
 Purpose: mapwin_nullsub3 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
-Original Offset: 00471180
+ORIGINAL: 0x00471180
 Return Value: n/a
 Status: Complete
 */
@@ -311,7 +311,7 @@ void __fastcall mapwin_nullsub3_redirect(void *, void *, int, int) {
 /*
 Purpose: mapwin_nullsub4 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
-Original Offset: 00471190
+ORIGINAL: 0x00471190
 Return Value: n/a
 Status: Complete
 */
@@ -321,7 +321,7 @@ void __fastcall mapwin_nullsub4_redirect(void *, void *, int, int) {
 /*
 Purpose: vehdraw_nullsub1 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 004C1D00
+ORIGINAL: 0x004C1D00
 Return Value: n/a
 Status: Complete
 */
@@ -331,7 +331,7 @@ void __fastcall vehdraw_nullsub1_redirect(void *, void *) {
 /*
 Purpose: vehdraw_nullsub2 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 004C38A0
+ORIGINAL: 0x004C38A0
 Return Value: n/a
 Status: Complete
 */
@@ -341,7 +341,7 @@ void __fastcall vehdraw_nullsub2_redirect(void *, void *) {
 /*
 Purpose: nullsub_223 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 004C8140
+ORIGINAL: 0x004C8140
 Return Value: n/a
 Status: Complete
 */
@@ -351,7 +351,7 @@ void __fastcall nullsub_004c8140_redirect(void *, void *) {
 /*
 Purpose: sub_4c8950 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
-Original Offset: 004C8950
+ORIGINAL: 0x004C8950
 Return Value: 0
 Status: Complete
 */
@@ -362,7 +362,7 @@ int __fastcall nullsub_004c8950_redirect(void *, void *) {
 /*
 Purpose: nullsub_164 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
-Original Offset: 004E32C0
+ORIGINAL: 0x004E32C0
 Return Value: n/a
 Status: Complete
 */
@@ -372,7 +372,7 @@ void __fastcall nullsub_004e32c0_redirect(void *, void *, int, int) {
 /*
 Purpose: nullsub_165 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 004E32D0
+ORIGINAL: 0x004E32D0
 Return Value: n/a
 Status: Complete
 */
@@ -382,7 +382,7 @@ void __fastcall nullsub_004e32d0_redirect(void *, void *) {
 /*
 Purpose: nullsub_166 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 004E32E0
+ORIGINAL: 0x004E32E0
 Return Value: n/a
 Status: Complete
 */
@@ -392,7 +392,7 @@ void __fastcall nullsub_004e32e0_redirect(void *, void *) {
 /*
 Purpose: nullsub_20 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
-Original Offset: 004E32F0
+ORIGINAL: 0x004E32F0
 Return Value: n/a
 Status: Complete
 */
@@ -402,7 +402,7 @@ void __fastcall nullsub_004e32f0_redirect(void *, void *, int, int) {
 /*
 Purpose: nullsub_220 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 004E9B60
+ORIGINAL: 0x004E9B60
 Return Value: n/a
 Status: Complete
 */
@@ -412,7 +412,7 @@ void __fastcall nullsub_004e9b60_redirect(void *, void *) {
 /*
 Purpose: nullsub_186 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 00515760
+ORIGINAL: 0x00515760
 Return Value: n/a
 Status: Complete
 */
@@ -422,7 +422,7 @@ void __fastcall nullsub_00515760_redirect(void *, void *) {
 /*
 Purpose: nullsub_187 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0051D9D0
+ORIGINAL: 0x0051D9D0
 Return Value: n/a
 Status: Complete
 */
@@ -432,7 +432,7 @@ void __fastcall nullsub_0051d9d0_redirect(void *, void *) {
 /*
 Purpose: nullsub_188 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0051D9E0
+ORIGINAL: 0x0051D9E0
 Return Value: n/a
 Status: Complete
 */
@@ -442,7 +442,7 @@ void __fastcall nullsub_0051d9e0_redirect(void *, void *) {
 /*
 Purpose: nullsub_224 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 005D5240
+ORIGINAL: 0x005D5240
 Return Value: n/a
 Status: Complete
 */
@@ -452,7 +452,7 @@ void __fastcall nullsub_005d5240_redirect(void *, void *) {
 /*
 Purpose: sub_5fc9e0 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
-Original Offset: 005FC9E0
+ORIGINAL: 0x005FC9E0
 Return Value: 0
 Status: Complete
 */
@@ -463,7 +463,7 @@ int __fastcall nullsub_005fc9e0_redirect(void *, void *) {
 /*
 Purpose: nullsub_192 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 005FD280
+ORIGINAL: 0x005FD280
 Return Value: n/a
 Status: Complete
 */
@@ -473,7 +473,7 @@ void __fastcall nullsub_005fd280_redirect(void *, void *) {
 /*
 Purpose: nullsub_193 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 005FD290
+ORIGINAL: 0x005FD290
 Return Value: n/a
 Status: Complete
 */
@@ -483,7 +483,7 @@ void __fastcall nullsub_005fd290_redirect(void *, void *) {
 /*
 Purpose: nullsub_194 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 005FD2A0
+ORIGINAL: 0x005FD2A0
 Return Value: n/a
 Status: Complete
 */
@@ -493,7 +493,7 @@ void __fastcall nullsub_005fd2a0_redirect(void *, void *) {
 /*
 Purpose: sub_616b30 - a do-nothing leaf. The whole body is a return
          popping 8 bytes after zeroing EAX.
-Original Offset: 00616B30
+ORIGINAL: 0x00616B30
 Return Value: 0
 Status: Complete
 */
@@ -504,7 +504,7 @@ int __fastcall nullsub_00616b30_redirect(void *, void *, int, int) {
 /*
 Purpose: nullsub_195 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 00616D90
+ORIGINAL: 0x00616D90
 Return Value: n/a
 Status: Complete
 */
@@ -514,7 +514,7 @@ void __fastcall nullsub_00616d90_redirect(void *, void *) {
 /*
 Purpose: sub_62d140 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
-Original Offset: 0062D140
+ORIGINAL: 0x0062D140
 Return Value: 0
 Status: Complete
 */
@@ -525,7 +525,7 @@ int __fastcall nullsub_0062d140_redirect(void *, void *) {
 /*
 Purpose: nullsub_253 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0062D150
+ORIGINAL: 0x0062D150
 Return Value: n/a
 Status: Complete
 */
@@ -535,7 +535,7 @@ void __fastcall nullsub_0062d150_redirect(void *, void *) {
 /*
 Purpose: nullsub_261 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0062EE80
+ORIGINAL: 0x0062EE80
 Return Value: n/a
 Status: Complete
 */
@@ -545,7 +545,7 @@ void __fastcall nullsub_0062ee80_redirect(void *, void *) {
 /*
 Purpose: nullsub_262 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0062EE90
+ORIGINAL: 0x0062EE90
 Return Value: n/a
 Status: Complete
 */
@@ -555,7 +555,7 @@ void __fastcall nullsub_0062ee90_redirect(void *, void *) {
 /*
 Purpose: nullsub_256 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 00631A10
+ORIGINAL: 0x00631A10
 Return Value: n/a
 Status: Complete
 */
@@ -565,7 +565,7 @@ void __fastcall nullsub_00631a10_redirect(void *, void *) {
 /*
 Purpose: Video_unk7 - a do-nothing leaf. The whole body is a return
          popping 8 bytes after zeroing EAX.
-Original Offset: 00637190
+ORIGINAL: 0x00637190
 Return Value: 0
 Status: Complete
 */
@@ -576,7 +576,7 @@ int __fastcall video_unk7_redirect(void *, void *, int, int) {
 /*
 Purpose: nullsub_16 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 00639380
+ORIGINAL: 0x00639380
 Return Value: n/a
 Status: Complete
 */
@@ -586,7 +586,7 @@ void __fastcall nullsub_00639380_redirect(void *, void *) {
 /*
 Purpose: nullsub_175 - a do-nothing leaf. The whole body is a return
          popping 4 bytes.
-Original Offset: 0063C500
+ORIGINAL: 0x0063C500
 Return Value: n/a
 Status: Complete
 */
@@ -596,7 +596,7 @@ void __fastcall nullsub_0063c500_redirect(void *, void *, int) {
 /*
 Purpose: nullsub_266 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
-Original Offset: 0063C9C0
+ORIGINAL: 0x0063C9C0
 Return Value: n/a
 Status: Complete
 */
