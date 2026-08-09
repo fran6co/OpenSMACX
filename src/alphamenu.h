@@ -17,16 +17,18 @@
  */
 #pragma once
 
+#include "menu.h"
+
  /*
   * AlphaMenu class
   *
   * Eleven methods are catalogued - init, compute, adjust, on_redraw,
   * on_mouse_move and requested_height among them - and none of the ten
   * besides requested_height is recovered, so NOTHING here pins the layout.
-  * There are deliberately no fields: requested_height reads none, and
-  * inventing storage to make the class look complete would be a guess the
-  * rest of the tree would then inherit. Nothing may be appended without
-  * deriving it first.
+  * The one declared member is derived, not guessed: the IDB member table
+  * starts a member called `menu` at 0x0 whose size, 2916, is exactly the
+  * sizeof(Menu) this tree pins - the same evidence route the typing
+  * campaign uses everywhere else. Anything further still needs deriving.
   */
 class DLLEXPORT AlphaMenu {
  public:
@@ -34,15 +36,11 @@ class DLLEXPORT AlphaMenu {
   ~AlphaMenu() { ; }
   int requested_height();
 
-  // Storage the image proves is here: its own methods reach 0xA30.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // 1 member(s) from the IDA database, 1 named; it starts a member at 0x0, which is where src/ ends.
-
-  uint8_t field_0_[0xA30];  // 0x0
+  Menu menu_;  // 0x0, IDB `menu`, size == sizeof(Menu)
 
   // Storage the image proves is here: its own methods reach 0x1138.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_A30_[0x708];
+  uint8_t field_B64_[0x5D4];  // 0xB64
 };
 
 int __fastcall alpha_menu_requested_height_redirect(AlphaMenu *self, void *);

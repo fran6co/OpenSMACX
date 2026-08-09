@@ -20,6 +20,8 @@
 #include "listbox.h"
 #include "flatbutton.h"
 #include "graphicwin.h"
+#include "stringbox.h"
+#include "editbox.h"
 
  /*
   * DiploWin class
@@ -485,13 +487,10 @@ class DLLEXPORT DiploWin : GraphicWin {
   uint32_t field_10A4_;  // 0x10A4
   uint32_t field_10A8_;  // 0x10A8
   FlatButton flatButtons_[13];  // 0x10AC
-  uint8_t stringBox_[0x2BA0];  // 0xA388
+  StringBox stringBox_;  // 0xA388, size == sizeof(StringBox)
   ListBox listBox_;  // 0xCF28
-  uint8_t field_DA7C_[0x4];  // 0xDA7C
-
-  // Storage the image proves is here: its own methods reach 0xE5B0.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_DA80_[0xB30];
+  // The IDB's last member: the class ends where editBox_ ends, 0xE5F0.
+  EditBox editBox_;  // 0xDA7C, IDB `editBox`, size == sizeof(EditBox) == 0xB74
 };
 
 void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1);
