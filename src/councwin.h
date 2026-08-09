@@ -246,7 +246,7 @@ class DLLEXPORT CouncWin : GraphicWin {
   FlatButton flatButton3_;  // 0x242C
   FlatButton flatButton4_;  // 0x2F78
   FlatButton flatButton5_;  // 0x3AC4
-  uint8_t field_4610_[0x4];  // 0x4610
+  FlatButton flatButton6_;  // 0x4610, the IDB's last member; ends 0x515C
 };
 
 void __fastcall counc_win_on_group_clicked_redirect(CouncWin *self, void *, int a1, int a2);

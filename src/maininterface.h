@@ -261,10 +261,7 @@ class DLLEXPORT MainInterface : GraphicWin {
   uint32_t field_D74_;
   uint32_t field_D78_;
   uint32_t field_D7C_;
-  uint32_t field_D80_;
-  uint32_t field_D84_;
-  uint32_t field_D88_;
-  uint32_t field_D8C_;
+  RECT rect4_;  // 0xD80, the IDB names the 16 bytes at 0xD80 rect4
   uint32_t field_D90_;
   uint32_t field_D94_;
   uint32_t field_D98_;

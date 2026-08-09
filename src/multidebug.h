@@ -17,6 +17,7 @@
  */
 #pragma once
 #include "graphicwin.h"
+#include "font.h"
 
  /*
   * MultiDebug class
@@ -37,16 +38,7 @@ class DLLEXPORT MultiDebug : GraphicWin {
   void close();
 
  private:
-  uint32_t field_A14_;
-  uint32_t field_A18_;
-  uint32_t field_A1C_;
-  uint32_t field_A20_;
-  uint32_t field_A24_;
-  uint32_t field_A28_;
-  uint32_t field_A2C_;
-  uint32_t field_A30_;
-  uint32_t field_A34_;
-  uint32_t field_A38_;
+  Font font_;  // 0xA14, the IDB's 40-byte member covering 0xA14..0xA3C
   int32_t field_A3C_;
 };
 

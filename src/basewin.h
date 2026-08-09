@@ -368,11 +368,34 @@ class DLLEXPORT BaseWin : GraphicWin {
   uint32_t field_40D10_;  // 0x40D10
   uint32_t field_40D14_;  // 0x40D14
   uint32_t field_40D18_;  // 0x40D18
-  uint8_t field_40D1C_[0x4];  // 0x40D1C
+  RECT rect5_;  // 0x40D1C
+  RECT rect6_;  // 0x40D2C
+  RECT rect7_;  // 0x40D3C
+  uint32_t field_40D4C_;  // 0x40D4C
+  uint32_t field_40D50_;  // 0x40D50
+  uint32_t field_40D54_;  // 0x40D54
+  uint32_t field_40D58_;  // 0x40D58
+  uint32_t field_40D5C_;  // 0x40D5C
+  uint32_t field_40D60_;  // 0x40D60
+  uint32_t field_40D64_;  // 0x40D64
+  uint32_t field_40D68_;  // 0x40D68
+  RECT rect14_;  // 0x40D6C
+  RECT rect15_;  // 0x40D7C
+  RECT rect18_;  // 0x40D8C
+  RECT rect19_;  // 0x40D9C
+  RECT rect8_;  // 0x40DAC
+  RECT rect9_;  // 0x40DBC
+  RECT rect10_;  // 0x40DCC
+  RECT rect11_;  // 0x40DDC
+  uint32_t field_40DEC_;  // 0x40DEC
+  uint32_t field_40DF0_;  // 0x40DF0
+  uint32_t field_40DF4_;  // 0x40DF4
+  uint32_t field_40DF8_;  // 0x40DF8
+  uint32_t field_40DFC_;  // 0x40DFC
 
   // Storage the image proves is here: its own methods reach 0x45B34.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_40D20_[0x4E14];
+  uint8_t field_40E00_[0x4D34];  // 0x40E00
 };
 
 void __fastcall base_win_close_redirect(BaseWin *self, void *);
