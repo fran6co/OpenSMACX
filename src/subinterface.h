@@ -61,7 +61,7 @@ class SubInterface {
   void release_iface_mode();  // 0x0045D380  ?release_iface_mode@SubInterface@@QAEXXZ
 
  private:
-  uint32_t field_0_;  // 0x0  not touched by any method of this class
+  uint32_t vtable_;  // 0x0  not touched by any method of this class
   uint32_t field_4_;  // 0x4  PROVED: set_iface_mode and release_iface_mode
                       //      both access 4 bytes here
 };
