@@ -1,0 +1,10 @@
+// ORIGINAL: 0x005F1480 FILE
+// placeholder - not yet decompiled
+// name      ?OnActivate@Win@@QAAJPAXIPAXJ@Z
+// size      310 bytes
+// spans     0x005F1480-0x005F15B6
+// prototype LRESULT (__cdecl ?OnActivate@Win@@QAAJPAXIPAXJ@Z)(HWND hWnd, LPARAM lParam, void*, int)
+// callers   0   call targets   0
+// To start: tools/decomp_status.py --work 0x005F1480
+
+// BODY GOES HERE.
