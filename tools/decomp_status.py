@@ -686,12 +686,22 @@ def check_migration(plan: list) -> bool:
 def rewrite_source_locations(catalog: dict) -> int:
     """Invert the truth direction: locations derive from the scan.
 
-    Every address the scan maps gets its annotation's location; the
-    unlocated source_complete rows the scan can place are placed. Rows the
-    scan does not map keep whatever the catalogue had.
+    But the catalogue column is not the map - it is the SCORING ROUTE. A row
+    with a location belongs to the census; a body under src/recovered/ stays
+    scoreable only while its row is unowned (collect-ownership pins exactly
+    this), and a placeholder is a promise, not an implementation, so it must
+    not make its row owned either. Product source owned by an IMPLEMENTED
+    annotation is the only thing that may occupy the column; everything else
+    is cleared, and the map (the annotations) stays complete regardless.
     """
     annotations, _ = annotation_scan.resolve(annotation_scan.scan_tree())
-    locations = {a.address: a.location for a in annotations}
+    locations = {}
+    for annotation in annotations:
+        if annotation.state != annotation_scan.STATE_IMPLEMENTED:
+            continue
+        if "src/recovered/" in annotation.path:
+            continue
+        locations[annotation.address] = annotation.location
     path = byte_match.FUNCTIONS_CSV
     with path.open(newline="") as handle:
         rows = list(csv.DictReader(handle))
@@ -699,8 +709,8 @@ def rewrite_source_locations(catalog: dict) -> int:
     changed = 0
     for row in rows:
         address = int(row["address"], 16)
-        want = locations.get(address)
-        if want and row.get("source_locations", "") != want:
+        want = locations.get(address, "")
+        if row.get("source_locations", "") != want:
             row["source_locations"] = want
             changed += 1
     tmp = path.with_suffix(".tmp")
@@ -716,6 +726,11 @@ def run_migration(apply: bool, rewrite_locations: bool) -> int:
     plan = plan_migration()
     print(f"migration plan: {len(plan)} file(s) carry deprecated spellings")
     if not plan:
+        if apply and rewrite_locations:
+            changed = rewrite_source_locations(emit.load_functions())
+            print(f"functions.csv source_locations rewritten from the scan: "
+                  f"{changed} row(s); run promote -> classify -> promote, "
+                  f"then tools/run_gate.py")
         return 0
     if not check_migration(plan):
         print("guards FAILED; nothing written")
