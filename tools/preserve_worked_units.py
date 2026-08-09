@@ -123,10 +123,12 @@ def preamble(address: int, row: dict, function: dict) -> str:
     """What the next attempt needs, above the unit it starts from."""
     tier = row.get("tier") or "UNMEASURED"
     lines = [
+        f"// ORIGINAL: 0x{address:08X} FILE",
         f"// PRESERVED UNIT - measured {tier}.",
         "//",
-        "// Kept for COVERAGE, not as a claim. Nothing reads this directory:",
-        "// it is on no ratchet, in no build, and scored by no collect.",
+        "// Kept for COVERAGE, not as a claim: it is on no ratchet and in no",
+        "// build. The ORIGINAL marker makes it part of the source map",
+        "// (docs/DECOMP_MAP.md), where a proved body beats it if both exist.",
         "//",
         f"// address        0x{address:08X}",
         f"// name           {function.get('name') or row.get('name') or ''}",

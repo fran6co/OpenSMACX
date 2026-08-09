@@ -119,12 +119,24 @@ Generated thunk files (`init_thunks.cpp`, `atexit_thunks.cpp`, the rest of
 hand-written bodies and never totalled with them — the census rule, carried
 over.
 
-## Migration
+## Migration — done 2026-08-09
 
-Legacy spellings (`Original Offset:` blocks, the inline trailing form, the
-two `src/recovered/` header styles) are recognised read-only and flagged
-`deprecated` until `tools/decomp_status.py --migrate` rewrites them to the
-grammar above — guarded by address-set identity, tier identity against the
-ledger, and the promote/classify cycle. Once the tree is migrated,
-recognition of the old forms is deleted, not maintained: no backward
-compatibility is owed.
+The whole tree was migrated in one guarded pass
+(`tools/decomp_status.py --migrate --apply --rewrite-locations`): 1,607
+files rewritten, every rewrite proven comment-only (code content
+identical) and address-set-preserving before anything was written; the
+full VC6 re-measurement preserved every ledger tier; the DLL rebuilt
+clean. The legacy spellings (`Original Offset:` blocks, the inline
+trailing and opening-brace forms, the two `src/recovered/` header
+styles) are still RECOGNISED read-only and flagged `deprecated`, but an
+offline test now pins the convergence invariant: no deprecated spelling
+may remain in `src/`, and the writers (`mizuchi_writeback.py`,
+`preserve_worked_units.py`) emit the marker on every new file.
+
+One rule the migration surfaced: `functions.csv` `source_locations` is
+not the map — it is the SCORING ROUTE. A row with a location belongs to
+the census; a body under `src/recovered/` stays scoreable only while
+its row is unowned (`test_collect_ownership.py` pins this); a
+placeholder is a promise, not an implementation. Only an IMPLEMENTED
+annotation in product source may occupy the column;
+`--rewrite-locations` enforces exactly that.
