@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00638620 BYTE_EXACT FILE
+// name      sub_638620
+// size      46 bytes
+// spans     0x00638620-0x0063864E
+// prototype 
+// callers   8   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00639390
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00638620
-// name           sub_638620
-// size           46 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

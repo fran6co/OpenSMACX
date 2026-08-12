@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D4240 FILE
+// name      sub_5d4240
+// size      60 bytes
+// spans     0x005D4240-0x005D427C
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D4240
-// name           sub_5d4240
-// size           60 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

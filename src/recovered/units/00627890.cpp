@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00627890 BYTE_EXACT FILE
+// name      ?pop_ask@@YAHPADPADPADP6AHXZH@Z
+// size      52 bytes
+// spans     0x00627890-0x006278C4
+// prototype int (__cdecl ?pop_ask@@YAHPADPADPADP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int8*, int (__cdecl *)(), int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00627910 0x006453E0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00627890
-// name           ?pop_ask@@YAHPADPADPADP6AHXZH@Z
-// size           52 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

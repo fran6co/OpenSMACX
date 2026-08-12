@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0058F430 BYTE_EXACT FILE
+// name      ?game_close@@YAXH@Z
+// size      20 bytes
+// spans     0x0058F430-0x0058F444
+// prototype 
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0050F440 0x006169D0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0058F430
-// name           ?game_close@@YAXH@Z
-// size           20 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

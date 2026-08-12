@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004B1E00 FILE
+// name      ?on_button_clicked@SocialWin@@QAEXH@Z
+// size      73 bytes
+// spans     0x004B1E00-0x004B1E49
+// prototype void (__thiscall ?on_button_clicked@SocialWin@@QAEXH@Z)(SocialWin* this, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004AECE0 0x004AEF10 0x004BDDE0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004B1E00
-// name           ?on_button_clicked@SocialWin@@QAEXH@Z
-// size           73 bytes
 // measured tier  MISMATCH
 // divergence     25
 //

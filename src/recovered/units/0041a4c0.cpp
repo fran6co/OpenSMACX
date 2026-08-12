@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041A4C0 FILE
+// name      ?exit@BaseWin@@QAEXXZ
+// size      329 bytes
+// spans     0x0041A4C0-0x0041A609
+// prototype void (__thiscall ?exit@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   4   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D380 0x00515400 0x005F7E90 0x005FCBB0 0x00616730
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041A4C0
-// name           ?exit@BaseWin@@QAEXXZ
-// size           329 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

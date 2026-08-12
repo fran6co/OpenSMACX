@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0062EDD0 BYTE_EXACT FILE
+// name      ?add_to_group@Net@@QAEHJK@Z
+// size      42 bytes
+// spans     0x0062EDD0-0x0062EDFA
+// prototype int (__thiscall ?add_to_group@Net@@QAEHJK@Z)(Net* this, int, unsigned int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0062EDD0
-// name           ?add_to_group@Net@@QAEHJK@Z
-// size           42 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

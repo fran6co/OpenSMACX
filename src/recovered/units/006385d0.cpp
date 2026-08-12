@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006385D0 FILE
+// name      sub_6385d0
+// size      65 bytes
+// spans     0x006385D0-0x00638611
+// prototype 
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006385D0
-// name           sub_6385d0
-// size           65 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

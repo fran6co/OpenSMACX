@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00486110 BYTE_EXACT FILE
+// name      ?on_right_click@PickTech@@QAEXHH@Z
+// size      90 bytes
+// spans     0x00486110-0x0048616A
+// prototype void (__thiscall ?on_right_click@PickTech@@QAEXHH@Z)(PickTech* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00429180 0x005FCBB0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00486110
-// name           ?on_right_click@PickTech@@QAEXHH@Z
-// size           90 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

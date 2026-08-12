@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004E1290 FILE
+// name      ?editor_clear@Console@@QAEXXZ
+// size      107 bytes
+// spans     0x004E1290-0x004E12FB
+// prototype void (__thiscall ?editor_clear@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   7
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0058CED0 0x00590E90 0x00590ED0 0x00591040 0x0059A220 0x005ABF20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004E1290
-// name           ?editor_clear@Console@@QAEXXZ
-// size           107 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

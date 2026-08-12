@@ -4,6 +4,9 @@
 // spans     0x00447920-0x00447936
 // prototype void (__thiscall ?begin@BAmbience@@QAEXXZ)(BAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x00447920  ?begin@BAmbience@@QAEXXZ  ->  ?begin@BAmbience@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005EFD20 FILE
+// name      ?flip@Win@@QAAXPAURECT@@@Z
+// size      1223 bytes
+// spans     0x005EFD20-0x005F01E7
+// prototype 
+// callers   27   call targets   14
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005DAC70 0x005DACB0 0x005DD020 0x005DD130 0x005DE8F0 0x005DFCD0 0x005E3203 0x005E3503 0x005E3563 0x005E4B4A 0x005EC6F0 0x006453E0 0x00645DD0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005EFD20
-// name           ?flip@Win@@QAAXPAURECT@@@Z
-// size           1223 bytes
 // measured tier  MISMATCH
 // divergence     9
 //

@@ -4,6 +4,9 @@
 // spans     0x0043D0C0-0x0043D0E8
 // prototype void (__thiscall ?show@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x0045D310 0x005F7E90
 // 0x0043D0C0  ?show@DesignWin@@QAEXH@Z  ->  ?show@DesignWin@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

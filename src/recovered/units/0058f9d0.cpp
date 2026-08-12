@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0058F9D0 FILE
+// name      ?get_pact@@YAPADH@Z
+// size      73 bytes
+// spans     0x0058F9D0-0x0058FA19
+// prototype 
+// callers   8   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0058F9D0
-// name           ?get_pact@@YAPADH@Z
-// size           73 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

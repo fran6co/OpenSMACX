@@ -1,10 +1,13 @@
 // ORIGINAL: 0x0058C2A0 FILE
-// placeholder - not yet decompiled
 // name      ?custom_planet@@YAHHH@Z
 // size      3630 bytes
 // spans     0x0058C2A0-0x0058CE9C;0x006605A5-0x006607D7
 // prototype 
 // callers   2   call targets   29
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x004048A0 0x00404900 0x00406380 0x004066C0 0x00406820 0x00406880 0x00406910 0x004AD880 0x004AD9C0 0x004ADB20 0x0059E5D0 0x005D45B0 0x005D4DD0 0x005D7410 0x005D7DE0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00645470 0x00645550 0x006456E4 0x006457C2
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x0058C2A0
 
 // BODY GOES HERE.

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00615270 FILE
+// name      ?on_redraw@EditBox@@QAEXXZ
+// size      951 bytes
+// spans     0x00615270-0x00615627
+// prototype void (__thiscall ?on_redraw@EditBox@@QAEXXZ)(EditBox* this)
+// callers   0   call targets   10
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5250 0x005D8000 0x005DC7C0 0x005DCAB0 0x005DCF40 0x005E1BF0 0x005E2070 0x005E3203 0x006453E0 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00615270
-// name           ?on_redraw@EditBox@@QAEXXZ
-// size           951 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

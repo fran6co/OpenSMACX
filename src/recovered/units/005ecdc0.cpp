@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005ECDC0 FILE
+// name      ?UNK2@Win@@QAEHH@Z
+// size      85 bytes
+// spans     0x005ECDC0-0x005ECE15
+// prototype int (__thiscall ?UNK2@Win@@QAEHH@Z)(Win* this, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECDC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005ECDC0
-// name           ?UNK2@Win@@QAEHH@Z
-// size           85 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

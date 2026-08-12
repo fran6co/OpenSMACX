@@ -4,6 +4,9 @@
 // spans     0x005D5540-0x005D5590
 // prototype void (__thiscall ?resize@GraphicWin@@QAEXHHH@Z)(GraphicWin* this, int, int, int)
 // callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7670 0x005ED880 0x005EEF60
 // 0x005D5540  ?resize@GraphicWin@@QAEXHHH@Z  ->  ?resize@GraphicWin@@QAEXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004CEDE0 FILE
+// name      ?action_give@@YAXHH@Z
+// size      1433 bytes
+// spans     0x004CEDE0-0x004CF379
+// prototype void (__cdecl ?action_give@@YAXHH@Z)(int vehID, int protoID)
+// callers   3   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046AEF0 0x0047A890 0x004E3B80 0x004E3C60 0x005108A0 0x00580860 0x00591B10 0x005BF310 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004CEDE0
-// name           ?action_give@@YAXHH@Z
-// size           1433 bytes
 // measured tier  MISMATCH
 // divergence     6
 //

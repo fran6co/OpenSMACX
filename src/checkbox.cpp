@@ -34,6 +34,9 @@ ORIGINAL: 0x0060E7C0
 // spans     0x0060E7C0-0x0060E7F9
 // prototype void (__thiscall ?close@CheckBox@@QAEXXZ)(CheckBox* this)
 // callers   13   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00608F50
 Return Value: n/a
 Status: Complete
 */
@@ -87,6 +90,9 @@ ORIGINAL: 0x0060EB50
 // spans     0x0060EB50-0x0060EB7D
 // prototype void (__thiscall ?UNK1@CheckBox@@QAEXH@Z)(CheckBox* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -119,6 +125,9 @@ ORIGINAL: 0x0060ECC0
 // spans     0x0060ECC0-0x0060ECE0
 // prototype int (__thiscall ?UNK2@CheckBox@@QAEHH@Z)(CheckBox* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the state word masked to the requested bit
 Status: Complete
 */
@@ -145,6 +154,9 @@ ORIGINAL: 0x0060EC80
 // spans     0x0060EC80-0x0060ECB1
 // prototype void (__thiscall ?set_state_pos@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -175,6 +187,9 @@ ORIGINAL: 0x0060FB90 BYTE_EXACT
 // spans     0x0060FB90-0x0060FBA7
 // prototype void (__thiscall ?on_dialog_focus@CheckBox@@QAEXH@Z)(CheckBox* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -201,6 +216,9 @@ ORIGINAL: 0x0060FC30 BYTE_EXACT
 // spans     0x0060FC30-0x0060FC58
 // prototype void (__thiscall ?on_mouse_leave@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

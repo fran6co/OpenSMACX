@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005396D0 FILE
+// name      ?net_withdrawal@@YAXHHH@Z
+// size      104 bytes
+// spans     0x005396D0-0x00539738
+// prototype 
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x00548F80 0x00592EE0 0x006262F0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005396D0
-// name           ?net_withdrawal@@YAXHHH@Z
-// size           104 bytes
 // measured tier  NO_COMPILE
 // refusal        u005396d0.cpp(14) : error C2065: 'g_0093f660' : undeclared identifier u005396d0.cpp(14) : error C2100: illegal indirection u005396d0.cpp(15) : error C2065: 'log
 //

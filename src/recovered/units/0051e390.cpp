@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0051E390 FILE
+// name      ?clear_tamper@@YAXXZ
+// size      44 bytes
+// spans     0x0051E390-0x0051E3BC
+// prototype 
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0051E390
-// name           ?clear_tamper@@YAXXZ
-// size           44 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

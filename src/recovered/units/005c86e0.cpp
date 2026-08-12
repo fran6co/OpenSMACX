@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C86E0 FILE
+// name      ?world_build@@YAXXZ
+// size      701 bytes
+// spans     0x005C86E0-0x005C899D
+// prototype 
+// callers   4   call targets   33
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0046FD90 0x004C45E0 0x00591040 0x00592940 0x005C28F0 0x005C2B40 0x005C2CB0 0x005C32A0 0x005C3440 0x005C3680 0x005C3F70 0x005C40F0 0x005C4170 0x005C58E0 0x005C5A30 0x005C5AE0 0x005C5C70 0x005C5EF0 0x005C6200 0x005C64A0 0x005C6740 0x005C69E0 0x005C6C40 0x005C6DB0 0x005C7020 0x005C7540 0x005C7750 0x005C7A80 0x005C7F40 0x005C8150 0x005C83B0 0x0064601D
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C86E0
-// name           ?world_build@@YAXXZ
-// size           701 bytes
 // measured tier  MISMATCH
 // divergence     12
 //

@@ -26,6 +26,9 @@ ORIGINAL: 0x004404C0 BYTE_EXACT
 // spans     0x004404C0-0x004404C3
 // prototype void (__thiscall ?on_iface_left_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -44,6 +47,9 @@ ORIGINAL: 0x004404D0 BYTE_EXACT
 // spans     0x004404D0-0x004404D3
 // prototype void (__thiscall ?on_iface_right_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -62,6 +68,9 @@ ORIGINAL: 0x004404E0 BYTE_EXACT
 // spans     0x004404E0-0x004404E3
 // prototype void (__thiscall ?on_iface_left_down@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -80,6 +89,9 @@ ORIGINAL: 0x004404F0 BYTE_EXACT
 // spans     0x004404F0-0x004404F3
 // prototype void (__thiscall ?on_iface_right_down@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -98,6 +110,9 @@ ORIGINAL: 0x00440500 BYTE_EXACT
 // spans     0x00440500-0x00440503
 // prototype void (__thiscall ?on_iface_mouse_move@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -116,6 +131,9 @@ ORIGINAL: 0x00440510 BYTE_EXACT
 // spans     0x00440510-0x00440513
 // prototype void (__thiscall ?on_iface_mouse_leave@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -134,6 +152,9 @@ ORIGINAL: 0x00440520 BYTE_EXACT
 // spans     0x00440520-0x00440523
 // prototype void (__thiscall ?on_iface_selected@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -152,6 +173,9 @@ ORIGINAL: 0x00440530 BYTE_EXACT
 // spans     0x00440530-0x00440533
 // prototype void (__thiscall ?on_iface_left_double_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -170,6 +194,9 @@ ORIGINAL: 0x00440540 BYTE_EXACT
 // spans     0x00440540-0x00440543
 // prototype void (__thiscall ?on_iface_right_double_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -188,6 +215,9 @@ ORIGINAL: 0x00440610 BYTE_EXACT
 // spans     0x00440610-0x00440613
 // prototype void (__thiscall ?on_iface_button_toggled@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -205,6 +235,9 @@ ORIGINAL: 0x0043F170 BYTE_EXACT
 // spans     0x0043F170-0x0043F185
 // prototype void (__thiscall ?hide@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EDCD0 0x005F7E90
 Status: Complete
 */
 void DiploPop::hide() {

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005DA330 FILE
+// name      ?map_colors@Buffer@@QAEHHHHHPAE@Z
+// size      401 bytes
+// spans     0x005DA330-0x005DA4C1
+// prototype int (__thiscall ?map_colors@Buffer@@QAEHHHHHPAE@Z)(Buffer* this, int, int, int, int, unsigned int8*)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005DA330
-// name           ?map_colors@Buffer@@QAEHHHHHPAE@Z
-// size           401 bytes
 // measured tier  MISMATCH
 // divergence     6
 //

@@ -4,6 +4,9 @@
 // spans     0x0045CD80-0x0045CDB0
 // prototype void (__thiscall ?on_iface_left_double_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B8990 0x005FA7E0
 // 0x0045CD80  ?on_iface_left_double_click@MainInterface@@QAEXHH@Z  ->  ?on_iface_left_double_click@MainInterface@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004BDEA0 BYTE_EXACT FILE
+// name      ?draw_arrow@TutWin@@QAEXXZ
+// size      118 bytes
+// spans     0x004BDEA0-0x004BDF16
+// prototype void (__thiscall ?draw_arrow@TutWin@@QAEXXZ)(TutWin* this)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F2AC0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004BDEA0
-// name           ?draw_arrow@TutWin@@QAEXXZ
-// size           118 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

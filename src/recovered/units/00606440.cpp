@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00606440 FILE
+// name      ?on_mousewheel_up@Scroll@@QAEXH@Z
+// size      284 bytes
+// spans     0x00606440-0x0060655C
+// prototype void (__thiscall ?on_mousewheel_up@Scroll@@QAEXH@Z)(Scroll* this, int)
+// callers   4   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00606440
-// name           ?on_mousewheel_up@Scroll@@QAEXH@Z
-// size           284 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

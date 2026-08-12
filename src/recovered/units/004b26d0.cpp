@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004B26D0 BYTE_EXACT FILE
+// name      ?close@SocialWin@@QAEXXZ
+// size      108 bytes
+// spans     0x004B26D0-0x004B273C
+// prototype void (__thiscall ?close@SocialWin@@QAEXXZ)(SocialWin* this)
+// callers   2   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0062B7F0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004B26D0
-// name           ?close@SocialWin@@QAEXXZ
-// size           108 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

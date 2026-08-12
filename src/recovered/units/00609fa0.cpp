@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00609FA0 FILE
+// name      ?set_selected_id@ListBox@@QAEXH@Z
+// size      115 bytes
+// spans     0x00609FA0-0x0060A013
+// prototype void (__thiscall ?set_selected_id@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   17   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0060A020
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00609FA0
-// name           ?set_selected_id@ListBox@@QAEXH@Z
-// size           115 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

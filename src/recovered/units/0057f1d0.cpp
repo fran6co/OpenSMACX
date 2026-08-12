@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0057F1D0 FILE
+// name      ?retire_proto@@YAXHH@Z
+// size      736 bytes
+// spans     0x0057F1D0-0x0057F4B0
+// prototype 
+// callers   4   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x0057DF30 0x005B9580 0x005C0B00
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0057F1D0
-// name           ?retire_proto@@YAXHH@Z
-// size           736 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

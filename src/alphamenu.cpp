@@ -26,6 +26,9 @@ ORIGINAL: 0x00403610 BYTE_EXACT
 // spans     0x00403610-0x00403613
 // prototype int (__thiscall ?requested_height@AlphaMenu@@QAEHXZ)(AlphaMenu* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0
 Status: Complete
 */

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045D440 FILE
+// name      ?slide_show@@YAXPAUGraphicWin@@H@Z
+// size      1350 bytes
+// spans     0x0045D440-0x0045D966;0x00655757-0x00655777
+// prototype 
+// callers   13   call targets   17
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045C290 0x004C6600 0x004C6920 0x005D5890 0x005D7210 0x005D7410 0x005D7670 0x005D79C0 0x005D8000 0x005D84C0 0x005DFB50 0x005E4B4A 0x005ECFE0 0x005EFD20 0x005F7E90 0x005F8140 0x005FD2B0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045D440
-// name           ?slide_show@@YAXPAUGraphicWin@@H@Z
-// size           1350 bytes
 // measured tier  MISMATCH
 // divergence     9
 //

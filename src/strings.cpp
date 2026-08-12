@@ -26,6 +26,9 @@ ORIGINAL: 0x006168F0
 // spans     0x006168F0-0x00616950
 // prototype int (__thiscall ?init@Strings@@QAEHH@Z)(Strings* this, int)
 // callers   4   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4580 0x005D4620 0x005D4680 0x006453E0 0x00645460
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -49,6 +52,9 @@ ORIGINAL: 0x00616950
 // spans     0x00616950-0x00616963
 // prototype int (__thiscall ?shutdown@Strings@@QAEHXZ)(Strings* this)
 // callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4580
 Return Value: n/a
 Status: Complete
 */
@@ -65,6 +71,9 @@ ORIGINAL: 0x00616970
 // spans     0x00616970-0x0061699D
 // prototype int (__thiscall ?put@Strings@@QAEHPAD@Z)(Strings* this, int8*)
 // callers   5   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4680 0x006453E0 0x00645460
 Return Value: Address of the stored string
 Status: Complete
 */
@@ -83,6 +92,9 @@ ORIGINAL: 0x006169A0
 // spans     0x006169A0-0x006169BB
 // prototype int (__thiscall ?get@Strings@@QAEHH@Z)(Strings* this, int)
 // callers   290   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: Address of the stored string
 Status: Complete
 */

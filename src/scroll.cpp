@@ -155,6 +155,10 @@ ORIGINAL: 0x00605370
 // spans     0x00605370-0x006054CE
 // prototype void (__thiscall ?close@Scroll@@QAEXXZ)(Scroll* this)
 // callers   136   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40
+// notes     Runtime redirect installed by DllMain after byte-signature validation; retains two embedded FlatButton virtual-close dependencies and delegates to source-owned GraphicWin close
 Return Value: GraphicWin::close return residue
 Status: Complete; embedded FlatButton close redirects are source-owned
 */
@@ -213,6 +217,10 @@ ORIGINAL: 0x00605840
 // spans     0x00605840-0x00605885
 // prototype int (__thiscall ?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z)(Scroll* this, RECT*, Win*, int, int)
 // callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006054D0
+// notes     Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original primary initializer
 Status: Complete
 */
 int Scroll::init(RECT *rect, Win *parent, int setting, int options) {
@@ -239,6 +247,10 @@ ORIGINAL: 0x00605890
 // spans     0x00605890-0x006058CB
 // prototype int (__thiscall ?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006054D0
+// notes     Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original primary initializer
 Status: Complete
 */
 int Scroll::init_vert(
@@ -258,6 +270,10 @@ ORIGINAL: 0x006058D0
 // spans     0x006058D0-0x0060590C
 // prototype int (__thiscall ?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006054D0
+// notes     Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original primary initializer
 Status: Complete
 */
 int Scroll::init_horz(
@@ -277,6 +293,10 @@ ORIGINAL: 0x00605910
 // spans     0x00605910-0x00605955
 // prototype int (__thiscall ?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006054D0
+// notes     Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original primary initializer
 Status: Complete
 */
 int Scroll::init_vert_nc(
@@ -297,6 +317,10 @@ ORIGINAL: 0x00605960
 // spans     0x00605960-0x006059A6
 // prototype int (__thiscall ?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006054D0
+// notes     Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original primary initializer
 Status: Complete
 */
 int Scroll::init_horz_nc(
@@ -317,6 +341,10 @@ ORIGINAL: 0x006059B0
 // spans     0x006059B0-0x00605A0D
 // prototype void (__thiscall ?set_range@Scroll@@QAEXHH@Z)(Scroll* this, int, int)
 // callers   12   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00628A50
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 uint32_t Scroll::set_range(int minimum, int maximum) {
@@ -344,6 +372,10 @@ ORIGINAL: 0x00605A10
 // spans     0x00605A10-0x00605A4D
 // prototype void (__thiscall ?set_button_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 uint32_t Scroll::set_button_color(int color) {
@@ -365,6 +397,10 @@ ORIGINAL: 0x00605A50
 // spans     0x00605A50-0x00605A8D
 // prototype void (__thiscall ?set_bevel_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 uint32_t Scroll::set_bevel_thickness(int thickness) {
@@ -386,6 +422,10 @@ ORIGINAL: 0x00605A90
 // spans     0x00605A90-0x00605ACD
 // prototype void (__thiscall ?set_bevel_upper@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 uint32_t Scroll::set_bevel_upper(int color) {
@@ -407,6 +447,10 @@ ORIGINAL: 0x00605AD0
 // spans     0x00605AD0-0x00605B0D
 // prototype void (__thiscall ?set_bevel_lower@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 uint32_t Scroll::set_bevel_lower(int color) {
@@ -428,6 +472,10 @@ ORIGINAL: 0x00605B80
 // spans     0x00605B80-0x00605BE0
 // prototype void (__thiscall ?set_bar_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 uint32_t Scroll::set_bar_thickness(int thickness) {
@@ -462,6 +510,10 @@ ORIGINAL: 0x00605B10
 // spans     0x00605B10-0x00605B74
 // prototype void (__thiscall ?set_border_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Scroll::set_border_color(int color) {
@@ -484,6 +536,10 @@ ORIGINAL: 0x00606F00
 // spans     0x00606F00-0x00606F2B
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
@@ -509,6 +565,10 @@ ORIGINAL: 0x00605BE0
 // spans     0x00605BE0-0x00605C2B
 // prototype void (__thiscall ?set_sprite_left@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Scroll::set_sprite_left(
@@ -525,6 +585,10 @@ ORIGINAL: 0x00605C30
 // spans     0x00605C30-0x00605C7B
 // prototype void (__thiscall ?set_sprite_right@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Scroll::set_sprite_right(
@@ -541,6 +605,10 @@ ORIGINAL: 0x00605C80
 // spans     0x00605C80-0x00605CD0
 // prototype void (__thiscall ?UNK1@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Scroll::set_sprite_up(
@@ -557,6 +625,10 @@ ORIGINAL: 0x00605CD0
 // spans     0x00605CD0-0x00605D1B
 // prototype void (__thiscall ?UNK2@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Scroll::set_sprite_down(
@@ -573,6 +645,10 @@ ORIGINAL: 0x00605D20
 // spans     0x00605D20-0x00605D8A
 // prototype void (__thiscall ?set_pos@Scroll@@QAEXH@Z)(Scroll* this, int position)
 // callers   17   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 uint32_t Scroll::set_pos(int position) {
@@ -609,6 +685,10 @@ ORIGINAL: 0x00606C50
 // spans     0x00606C50-0x00606E9E
 // prototype void (__thiscall ?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z)(Scroll* this, RECT*)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 Verification note: several mutation-harness survivors in this body are
 equivalent by construction, not coverage gaps. The two interim stores to
@@ -724,6 +804,10 @@ ORIGINAL: 0x00606EA0
 // spans     0x00606EA0-0x00606EF8
 // prototype void (__thiscall ?set_thumb_rect@Scroll@@QAEXXZ)(Scroll* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 uint32_t Scroll::set_thumb_rect() {
@@ -860,6 +944,9 @@ ORIGINAL: 0x00606310 BYTE_EXACT
 // spans     0x00606310-0x00606313
 // prototype int (__thiscall ?on_left_click@Scroll@@QAEHHH@Z)(Scroll* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -893,6 +980,9 @@ ORIGINAL: 0x00406E60
 // spans     0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE
 // prototype void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this)
 // callers   41   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00605370 0x00607040 0x00607DA0
 Return Value: Instance pointer in EAX
 Status: Complete
 */
@@ -923,6 +1013,9 @@ ORIGINAL: 0x00406F20
 // spans     0x00406F20-0x00406F41
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00406E60 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */

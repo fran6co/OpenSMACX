@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005395F0 BYTE_EXACT FILE
+// name      ?net_tech@@YAXHHHH@Z
+// size      108 bytes
+// spans     0x005395F0-0x0053965C
+// prototype 
+// callers   3   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x00592EE0 0x005BB000 0x006262F0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005395F0
-// name           ?net_tech@@YAXHHHH@Z
-// size           108 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

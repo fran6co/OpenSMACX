@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004064D0 FILE
+// name      ??1BasePop@@QAE@XZ
+// size      583 bytes
+// spans     0x004064D0-0x0040666F;0x006508D0-0x00650978
+// prototype void (__thiscall ??1BasePop@@QAE@XZ)(BasePop* this)
+// callers   75   call targets   11
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x00406910 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00607040 0x00607DA0 0x00608E10
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004064D0
-// name           ??1BasePop@@QAE@XZ
-// size           583 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00472020 FILE
+// name      ??1MessageWin@@QAE@XZ
+// size      487 bytes
+// spans     0x00472020-0x00472184;0x00655EA0-0x00655F23
+// prototype void (__thiscall ??1MessageWin@@QAE@XZ)(MessageWin* this)
+// callers   0   call targets   12
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x00406880 0x005D4DD0 0x005E3820 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x00618EE0 0x00629210
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00472020
-// name           ??1MessageWin@@QAE@XZ
-// size           487 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

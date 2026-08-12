@@ -86,6 +86,9 @@ ORIGINAL: 0x00523DD0
 // spans     0x00523DD0-0x00524202
 // prototype 
 // callers   11   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x004E3D50 0x00579B70 0x00579D20 0x00591B50 0x00592140 0x005C4FD0
 Return Value: n/a
 Status: Complete
 
@@ -272,6 +275,9 @@ ORIGINAL: 0x0052DC70
 // spans     0x0052DC70-0x0052DC9C
 // prototype 
 // callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: TRUE only in a net game that is handing the turn around and whose
               active faction is not the local one
 Status: Complete
@@ -298,6 +304,9 @@ ORIGINAL: 0x00589180
 // spans     0x00589180-0x00589329
 // prototype void (__cdecl ?planetfall@@YAXH@Z)(int factionID)
 // callers   2   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BF310 0x00625E30 0x00625E50 0x00625EC0 0x00645470 0x00645660
 Return Value: n/a
 Status: Complete
 */
@@ -335,6 +344,9 @@ ORIGINAL: 0x005B38D0
 // spans     0x005B38D0-0x005B3919
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -356,6 +368,9 @@ ORIGINAL: 0x005C89A0
 // spans     0x005C89A0-0x005C89B0
 // prototype int (__cdecl ?game_year@@YAHH@Z)(int turn)
 // callers   30   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Game year
 Status: Complete
 */
@@ -371,6 +386,9 @@ ORIGINAL: 0x005C89B0
 // spans     0x005C89B0-0x005C89E4
 // prototype 
 // callers   19   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645470 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -389,6 +407,9 @@ ORIGINAL: 0x00526030
 // spans     0x00526030-0x005267A9
 // prototype void (__cdecl ?repair_phase@@YAXH@Z)(int factionID)
 // callers   1   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046AF40 0x004E3A50 0x004E3EF0 0x004E65C0 0x0050BA00 0x005BF1F0 0x005C1760 0x005FCBB0
 Return Value: n/a
 Status: Complete
 

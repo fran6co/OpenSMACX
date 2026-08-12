@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041A8B0 FILE
+// name      ?check_veh@BaseWin@@QAEXH@Z
+// size      109 bytes
+// spans     0x0041A8B0-0x0041A91D
+// prototype void (__thiscall ?check_veh@BaseWin@@QAEXH@Z)(BaseWin* this, int)
+// callers   3   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004EC3B0 0x005F7E90
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041A8B0
-// name           ?check_veh@BaseWin@@QAEXH@Z
-// size           109 bytes
 // measured tier  NO_COMPILE
 // refusal        u0041a8b0.cpp(44) : error C2653: 'BaseWin' : is not a class or namespace name u0041a8b0.cpp(45) : error C2061: syntax error : identifier 'Win' u0041a8b0.cpp(45)
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00408490 FILE
+// name      ??0BaseWin@@QAE@XZ
+// size      1147 bytes
+// spans     0x00408490-0x0040870D;0x004210D0-0x004210E7;0x00651380-0x00651567
+// prototype void (__thiscall ??0BaseWin@@QAE@XZ)(BaseWin* this)
+// callers   1   call targets   15
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00420F90 0x004626E0 0x00492420 0x005D4CF0 0x005D4DD0 0x005D7210 0x005E37E0 0x005FA860 0x006051D0 0x00607CF0 0x006161D0 0x00616DA0 0x00618EA0 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00408490
-// name           ??0BaseWin@@QAE@XZ
-// size           1147 bytes
 // measured tier  SHARED_TAIL
 // refusal        1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 //

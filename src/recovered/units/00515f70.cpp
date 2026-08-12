@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00515F70 FILE
+// name      ?show_movies@Console@@QAEXXZ
+// size      1022 bytes
+// spans     0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0
+// prototype void (__thiscall ?show_movies@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   23
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x00403BA0 0x004048A0 0x00404900 0x00406380 0x004066C0 0x00406910 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x006087A0 0x00608E10 0x00612A70 0x006169A0 0x00645470 0x00645550
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00515F70
-// name           ?show_movies@Console@@QAEXXZ
-// size           1022 bytes
 // measured tier  NO_COMPILE
 // refusal        u00515f70.cpp(157) : error C2079: 'spot_' uses undefined class 'Spot' u00515f70.cpp(266) : error C2079: 'heap_' uses undefined class 'Heap'
 //

@@ -66,6 +66,9 @@ ORIGINAL: 0x004B3FD0
 // spans     0x004B3FD0-0x004B43BF
 // prototype void (__cdecl ?say_morale@@YAXPADHH@Z)(int8* moraleOutput, int vehID, int factionIDvsNative)
 // callers   2   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x0050BA00 0x005C0E40 0x006169A0 0x00645470
 Return Value: n/a
 Status: Complete
 */
@@ -162,6 +165,9 @@ ORIGINAL: 0x004B43C0
 // spans     0x004B43C0-0x004B43DA
 // prototype void (__cdecl ?say_morale@@YAXHH@Z)(int vehID, int factionID)
 // callers   4   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004B3FD0
 Return Value: n/a
 Status: Complete
 */
@@ -177,6 +183,9 @@ ORIGINAL: 0x004CD6A0
 // spans     0x004CD6A0-0x004CDA23
 // prototype int (__cdecl ?valid_patrol@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   2   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x0050DE50 0x0050E160 0x005C1540 0x00644F3A
 Return Value: Is the waypoint reachable? true/false
 Status: Complete
 
@@ -301,6 +310,9 @@ ORIGINAL: 0x00500320
 // spans     0x00500320-0x0050037C
 // prototype int (__cdecl ?drop_range@@YAHH@Z)(int factionID)
 // callers   3   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: Max range
 Status: Complete
 */
@@ -320,6 +332,9 @@ ORIGINAL: 0x005004F0
 // spans     0x005004F0-0x00500518
 // prototype int (__cdecl ?planet_buster2@@YAHH@Z)(int protoID)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Reactor id if planet buster, otherwise 0
 Status: Complete
 */
@@ -336,6 +351,9 @@ ORIGINAL: 0x00500520
 // spans     0x00500520-0x00500556
 // prototype int (__cdecl ?planet_buster@@YAHH@Z)(int vehID)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Reactor id if planet buster, otherwise 0
 Status: Complete
 */
@@ -351,6 +369,9 @@ ORIGINAL: 0x005010C0
 // spans     0x005010C0-0x0050134F
 // prototype int (__cdecl ?defense_value@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int vehIDDef, int vehIDAtk)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Defense terrain value
 Status: Complete
 */
@@ -398,6 +419,9 @@ ORIGINAL: 0x00501350
 // spans     0x00501350-0x005014F1
 // prototype int (__cdecl ?morale_alien@@YAHHH@Z)(int vehID, int factionIDvsNative)
 // callers   9   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Lifecycle (morale) value
 Status: Complete
 */
@@ -457,6 +481,9 @@ ORIGINAL: 0x00501500
 // spans     0x00501500-0x005015AB
 // prototype int (__cdecl ?psi_factor@@YAHHHHH@Z)(int combatRatio, int factionID, BOOL isAttack, BOOL isFungalTower)
 // callers   7   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Psi factor
 Status: Complete
 */
@@ -486,6 +513,9 @@ ORIGINAL: 0x005015B0
 // spans     0x005015B0-0x00501940
 // prototype int (__cdecl ?get_basic_offense@@YAHHHHHH@Z)(int vehIDAtk, int vehIDDef, uint32_t psiCombatType, BOOL isBombardment, int isUnkTgl)
 // callers   2   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x00501350 0x0050BA00 0x005BF1F0 0x005C0E40 0x005C1150
 Return Value: Basic offense
 Status: Complete
 */
@@ -553,6 +583,9 @@ ORIGINAL: 0x00501940
 // spans     0x00501940-0x00501D26
 // prototype int (__cdecl ?get_basic_defense@@YAHHHHH@Z)(int vehIDDef, int vehIDAtk, uint32_t psiCombatType, BOOL isBombardment)
 // callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x00501350 0x0050BA00 0x005BF1F0 0x005C0E40 0x005C1290
 Return Value: Basic defense
 Status: Complete
 */
@@ -625,6 +658,9 @@ ORIGINAL: 0x00501D30
 // spans     0x00501D30-0x00501D47
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -643,6 +679,9 @@ ORIGINAL: 0x00501D50
 // spans     0x00501D50-0x00501D9A
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645460
 Return Value: n/a
 Status: Complete
 */
@@ -664,6 +703,9 @@ ORIGINAL: 0x00501DA0
 // spans     0x00501DA0-0x005044C4
 // prototype void (__cdecl ?battle_compute@@YAXHHPAHPAHH@Z)(int vehIDAtk, int vehIDDef, int* offenseOutput, int* defenseOutput, int combatType)
 // callers   2   call targets   15
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x004E3B80 0x004E3EF0 0x005010C0 0x005015B0 0x00501940 0x0050BA00 0x00581170 0x005B9F20 0x005BF010 0x005BF1F0 0x005C13B0 0x006169A0 0x00645460 0x00645470
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1145,6 +1187,9 @@ ORIGINAL: 0x005044D0
 // spans     0x005044D0-0x00504A9B
 // prototype int (__cdecl ?best_defender@@YAHHHH@Z)(int vehIDDef, int vehIDAtk, BOOL useArtillery)
 // callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x005015B0 0x00501DA0 0x005B9580 0x005BF1F0 0x005C0DB0
 Return Value: Unit id of the best defender
 Status: Complete - testing
 */
@@ -1230,6 +1275,9 @@ ORIGINAL: 0x00506490
 // spans     0x00506490-0x00506646
 // prototype void (__cdecl ?invasions@@YAXH@Z)(int baseID)
 // callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9580 0x005C1540 0x005C1760 0x00644F3A
 Return Value: n/a
 Status: Complete
 */
@@ -1263,6 +1311,9 @@ ORIGINAL: 0x00560AD0
 // spans     0x00560AD0-0x00560B25
 // prototype void (__cdecl ?go_to@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1309,6 +1360,9 @@ ORIGINAL: 0x00564890
 // spans     0x00564890-0x00564B82
 // prototype void (__cdecl ?set_course@@YAXHDHH@Z)(int vehID, int8 type, int xCoord, int yCoord)
 // callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3A50 0x0050DE50
 Return Value: n/a
 Status: Complete
 
@@ -1414,6 +1468,9 @@ ORIGINAL: 0x00579920
 // spans     0x00579920-0x0057995A
 // prototype int (__cdecl ?veh_top@@YAHH@Z)(int vehID)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Unit id if found, otherwise -1
 Status: Complete
 */
@@ -1436,6 +1493,9 @@ ORIGINAL: 0x00579960
 // spans     0x00579960-0x00579998
 // prototype int (__cdecl ?veh_moves@@YAHH@Z)(int vehID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1540
 Return Value: Remaining moves
 Status: Complete
 */
@@ -1451,6 +1511,9 @@ ORIGINAL: 0x005799A0
 // spans     0x005799A0-0x005799F9
 // prototype int (__cdecl ?proto_power@@YAHH@Z)(int vehID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Power
 Status: Complete
 */
@@ -1470,6 +1533,9 @@ ORIGINAL: 0x00579F80
 // spans     0x00579F80-0x00579FE6
 // prototype int (__cdecl ?want_monolith@@YAHH@Z)(int vehID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C0E40
 Return Value: Is unit eligible for a monolith morale upgrade? true/false
 Status: Complete
 */
@@ -1490,6 +1556,9 @@ ORIGINAL: 0x0057D270
 // spans     0x0057D270-0x0057D2D5
 // prototype int (__cdecl ?arm_strat@@YAHHH@Z)(int armorID, int factionID)
 // callers   7   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00501500
 Return Value: Armor strategy
 Status: Complete
 */
@@ -1514,6 +1583,9 @@ ORIGINAL: 0x0057D2E0
 // spans     0x0057D2E0-0x0057D35D
 // prototype int (__cdecl ?weap_strat@@YAHHH@Z)(int weaponID, int factionID)
 // callers   7   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00501500
 Return Value: Weapon strategy
 Status: Complete
 */
@@ -1538,6 +1610,9 @@ ORIGINAL: 0x0057D360
 // spans     0x0057D360-0x0057D3ED
 // prototype int (__cdecl ?weap_val@@YAHHH@Z)(int protoID, int factionID)
 // callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00501500
 Return Value: Weapon value
 Status: Complete
 */
@@ -1553,6 +1628,9 @@ ORIGINAL: 0x0057D3F0
 // spans     0x0057D3F0-0x0057D471
 // prototype int (__cdecl ?arm_val@@YAHHH@Z)(int armorID, int factionID)
 // callers   3   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00501500
 Return Value: Armor value
 Status: Complete
 */
@@ -1569,6 +1647,9 @@ ORIGINAL: 0x0057D480
 // spans     0x0057D480-0x0057D50D
 // prototype int (__cdecl ?armor_val@@YAHHH@Z)(int protoID, int factionID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00501500
 Return Value: Armor value
 Status: Complete
 */
@@ -1584,6 +1665,9 @@ ORIGINAL: 0x0057D510
 // spans     0x0057D510-0x0057D556
 // prototype int (__cdecl ?transport_val@@YAHHHH@Z)(int chassis, int ability, int reactor)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Transport capacity
 Status: Complete
 */
@@ -1611,6 +1695,9 @@ ORIGINAL: 0x0057D560
 // spans     0x0057D560-0x0057D6C5
 // prototype void (__cdecl ?say_offense@@YAXPADH@Z)(int8*, int protoID)
 // callers   3   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF1F0 0x005C0DB0 0x005C1150 0x00645470 0x0064FC88
 Return Value: Offensive display string
 Status: Complete
 */
@@ -1656,6 +1743,9 @@ ORIGINAL: 0x0057D6D0
 // spans     0x0057D6D0-0x0057D7C4
 // prototype void (__cdecl ?say_defense@@YAXPADH@Z)(int8*, int protoID)
 // callers   3   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF1F0 0x005C1290 0x00645470 0x0064FC88
 Return Value: Defense display string
 Status: Complete
 */
@@ -1689,6 +1779,9 @@ ORIGINAL: 0x0057D7D0
 // spans     0x0057D7D0-0x0057D8D3
 // prototype void (__cdecl ?say_stats_3@@YAXPADH@Z)(int8*, int protoID)
 // callers   13   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0057D560 0x0057D6D0 0x005C13B0 0x00645470 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1723,6 +1816,9 @@ ORIGINAL: 0x0050B9A0
 // spans     0x0050B9A0-0x0050B9B6
 // prototype void (__cdecl ?say_stats_3@@YAXH@Z)(int protoID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0057D7D0
 Return Value: n/a
 Status: Complete
 */
@@ -1739,6 +1835,9 @@ ORIGINAL: 0x0057D8E0
 // spans     0x0057D8E0-0x0057DA94
 // prototype void (__cdecl ?say_stats_2@@YAXPADH@Z)(int8*, int protoID)
 // callers   4   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0057D560 0x0057D6D0 0x005C13B0 0x006169A0 0x00645470 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1783,6 +1882,9 @@ ORIGINAL: 0x0057DAA0
 // spans     0x0057DAA0-0x0057DED8
 // prototype void (__cdecl ?say_stats@@YAXPADHPAD@Z)(int8*, int protoID, int8*)
 // callers   2   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057D560 0x0057D6D0 0x005C13B0 0x006169A0 0x00645470 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1858,6 +1960,9 @@ ORIGINAL: 0x0057EFA0
 // spans     0x0057EFA0-0x0057EFE2
 // prototype int (__cdecl ?best_reactor@@YAHH@Z)(int factionID)
 // callers   3   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: Best reactor available (1-4)
 Status: Complete
 */
@@ -1878,6 +1983,9 @@ ORIGINAL: 0x0057EFF0
 // spans     0x0057EFF0-0x0057F0A1
 // prototype int (__cdecl ?pick_chassis@@YAHHHH@Z)(int factionID, int triadChk, int speedChk)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: Best chassis available (0-8)
 Status: Complete
 */
@@ -1921,6 +2029,9 @@ ORIGINAL: 0x0057F0B0
 // spans     0x0057F0B0-0x0057F142
 // prototype int (__cdecl ?weapon_budget@@YAHHHH@Z)(int factionID, int condition, BOOL checkMode)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: Best weapon available (0-25)
 Status: Complete
 */
@@ -1957,6 +2068,9 @@ ORIGINAL: 0x0057F150
 // spans     0x0057F150-0x0057F1CF
 // prototype int (__cdecl ?armor_budget@@YAHHH@Z)(int factionID, int maxCost)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: Best armor available (0-13)
 Status: Complete
 */
@@ -1988,6 +2102,9 @@ ORIGINAL: 0x00581170 BYTE_EXACT
 // spans     0x00581170-0x00581187
 // prototype int (__cdecl ?abil_index@@YAHH@Z)(int abilityID)
 // callers   7   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Ability index
 Status: Complete
 */
@@ -2007,6 +2124,9 @@ ORIGINAL: 0x00593510
 // spans     0x00593510-0x0059382F
 // prototype int (__cdecl ?hex_cost@@YAHHHHHHHH@Z)(int protoID, int factionID, int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int toggle)
 // callers   5   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BF1F0 0x005C13B0 0x00644F3A
 Return Value: Movement cost
 Status: Complete
 */
@@ -2081,6 +2201,9 @@ ORIGINAL: 0x005A59B0
 // spans     0x005A59B0-0x005A59D2
 // prototype void (__cdecl ?veh_put@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BFFA0 0x005C0080
 Return Value: n/a
 Status: Complete
 */
@@ -2096,6 +2219,9 @@ ORIGINAL: 0x005A59E0
 // spans     0x005A59E0-0x005A5A52
 // prototype int (__cdecl ?veh_health@@YAHH@Z)(int vehID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Unit health
 Status: Complete
 */
@@ -2115,6 +2241,9 @@ ORIGINAL: 0x005A5A60
 // spans     0x005A5A60-0x005A5CE1
 // prototype int (__cdecl ?proto_cost@@YAHHHHHH@Z)(int chassisType, int weapType, int armorType, int ability, int reactorType)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Cost of prototype
 Status: Complete
 */
@@ -2240,6 +2369,9 @@ ORIGINAL: 0x005A5D00
 // spans     0x005A5D00-0x005A5D3F
 // prototype int (__cdecl ?base_cost@@YAHH@Z)(int protoID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005A5A60
 Return Value: Base cost of the prototype
 Status: Complete
 */
@@ -2256,6 +2388,9 @@ ORIGINAL: 0x005A5D40
 // spans     0x005A5D40-0x005A6269
 // prototype void (__cdecl ?make_proto@@YAXHHHHHH@Z)(int protoID, int chassisType, int weapType, int armorType, int ability, int reactorType)
 // callers   4   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057D510 0x005A5A60 0x005B9F20 0x005BF1F0
 Return Value: n/a
 Status: Complete
 */
@@ -2407,6 +2542,9 @@ ORIGINAL: 0x005AED50
 // spans     0x005AED50-0x005AEDE0
 // prototype int (__cdecl ?get_plan@@YAHHH@Z)(int factionID, int plan)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: Prototype id or -1 if not found
 Status: Complete
 */
@@ -2434,6 +2572,9 @@ ORIGINAL: 0x005B5700
 // spans     0x005B5700-0x005B57CA
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591E50
 Return Value: n/a
 Status: Complete
 
@@ -2475,6 +2616,9 @@ ORIGINAL: 0x005B57D0
 // spans     0x005B57D0-0x005B58D2
 // prototype void (__cdecl ?spot_base@@YAXHH@Z)(int baseID, int factionID)
 // callers   8   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591E50
 Return Value: n/a
 Status: Complete
 
@@ -2502,6 +2646,9 @@ ORIGINAL: 0x005B58E0
 // spans     0x005B58E0-0x005B5A61
 // prototype void (__cdecl ?spot_stack@@YAXHH@Z)(int vehID, int factionID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591E50
 Return Value: n/a
 Status: Complete
 
@@ -2551,6 +2698,9 @@ ORIGINAL: 0x005B5AD0
 // spans     0x005B5AD0-0x005B5E05
 // prototype void (__cdecl ?spot_loc@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   6   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x00591E50 0x005BFE90
 Return Value: n/a
 Status: Complete
 
@@ -2594,6 +2744,9 @@ ORIGINAL: 0x005B5EA0
 // spans     0x005B5EA0-0x005B6060
 // prototype int (__cdecl ?want_to_wake@@YAHHHH@Z)(unsigned int factionID, unsigned int vehID, int vehID2)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Does unit want to wake? true/false
 Status: Complete
 */
@@ -2653,6 +2806,9 @@ ORIGINAL: 0x005B6060
 // spans     0x005B6060-0x005B619A
 // prototype void (__cdecl ?wake_stack@@YAXH@Z)(int vehID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -2680,6 +2836,9 @@ ORIGINAL: 0x005B8AF0
 // spans     0x005B8AF0-0x005B8B5D
 // prototype void (__cdecl ?stack_put@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   5   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BFFA0 0x005C0080
 Return Value: n/a
 Status: Complete
 */
@@ -2703,6 +2862,9 @@ ORIGINAL: 0x005B8B60
 // spans     0x005B8B60-0x005B8C8D
 // prototype void (__cdecl ?stack_sort@@YAXH@Z)(int vehID)
 // callers   2   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BF1F0 0x005BFFA0 0x005C0080 0x005C1760
 Return Value: n/a
 Status: Complete
 */
@@ -2733,6 +2895,9 @@ ORIGINAL: 0x005B8C90
 // spans     0x005B8C90-0x005B8E0A
 // prototype void (__cdecl ?stack_sort_2@@YAXH@Z)(int vehID)
 // callers   2   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BFE90 0x005BFFA0 0x005C0080
 Return Value: n/a
 Status: Complete
 */
@@ -2774,6 +2939,9 @@ ORIGINAL: 0x005B8E10
 // spans     0x005B8E10-0x005B8ED9
 // prototype int (__cdecl ?stack_fix@@YAHH@Z)(int vehID)
 // callers   26   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B8B60 0x005C0260
 Return Value: Either the parameter unit id or unit id of the stack top; Return is checked if >= 0
 Status: Complete
 */
@@ -2805,6 +2973,9 @@ ORIGINAL: 0x005B8EE0
 // spans     0x005B8EE0-0x005B950F
 // prototype int (__cdecl ?stack_veh@@YAHHH@Z)(int vehID, int)
 // callers   10   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B8B60 0x005B8E10 0x005BF1F0 0x005BFFA0 0x005C0080 0x005C01A0 0x005C1760
 Return Value: Remaining capacity for mode 0, otherwise the unit id
 Status: Complete
 */
@@ -2955,6 +3126,9 @@ ORIGINAL: 0x005B9580
 // spans     0x005B9580-0x005B9BB8
 // prototype int (__cdecl ?stack_check@@YAHHHHHH@Z)(int vehID, int type, int cond1, int cond2, int cond3)
 // callers   39   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057D270 0x0057D2E0 0x005BF1F0 0x005C0DB0 0x005C1760
 Return Value: Dependent on type parameter
 Status: Complete
 */
@@ -3099,6 +3273,9 @@ ORIGINAL: 0x005BA910
 // spans     0x005BA910-0x005BAB39
 // prototype int (__cdecl ?veh_avail@@YAHHHH@Z)(int protoID, int factionID, int baseID)
 // callers   7   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E49D0
 Return Value: Is unit available to faction/base? true/false
 Status: Complete
 */
@@ -3149,6 +3326,9 @@ ORIGINAL: 0x005BE100
 // spans     0x005BE100-0x005BE29D
 // prototype int (__cdecl ?wants_prototype@@YAHHH@Z)(int protoID, int factionID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057D480
 Return Value: Does faction want prototype? true/false
 Status: Complete
 */
@@ -3198,6 +3378,9 @@ ORIGINAL: 0x005BFE90
 // spans     0x005BFE90-0x005BFF9E
 // prototype int (__cdecl ?veh_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   61   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00532A90 0x006262F0
 Return Value: Unit id or -1 if nothing is found/error
 Status: Complete
 */
@@ -3234,6 +3417,9 @@ ORIGINAL: 0x005BF1F0
 // spans     0x005BF1F0-0x005BF310
 // prototype int (__cdecl ?has_abil@@YAHHH@Z)(int protoID, int abilityID)
 // callers   54   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: Does prototype have ability? true/false
 Status: Complete
 */
@@ -3280,6 +3466,9 @@ ORIGINAL: 0x005BFFA0
 // spans     0x005BFFA0-0x005C007F
 // prototype void (__cdecl ?veh_lift@@YAXH@Z)(int vehID)
 // callers   18   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591D60
 Return Value: Unit id
 Status: Complete
 */
@@ -3316,6 +3505,9 @@ ORIGINAL: 0x005C0080
 // spans     0x005C0080-0x005C019C
 // prototype void (__cdecl ?veh_drop@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   17   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591B10 0x00591D60 0x005BFE90
 Return Value: Unit id (1st param), doesn't seem to be used
 Status: Complete
 */
@@ -3352,6 +3544,9 @@ ORIGINAL: 0x005C01A0
 // spans     0x005C01A0-0x005C01CA
 // prototype void (__cdecl ?sleep@@YAXH@Z)(int vehID)
 // callers   8   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -3369,6 +3564,9 @@ ORIGINAL: 0x005C01D0
 // spans     0x005C01D0-0x005C0256
 // prototype void (__cdecl ?veh_demote@@YAXH@Z)(int vehID)
 // callers   4   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BFFA0
 Return Value: n/a
 Status: Complete
 */
@@ -3401,6 +3599,9 @@ ORIGINAL: 0x005C0260
 // spans     0x005C0260-0x005C02CE
 // prototype 
 // callers   6   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BFFA0 0x005C0080
 Return Value: n/a
 Status: Complete
 */
@@ -3419,6 +3620,9 @@ ORIGINAL: 0x005C02D0
 // spans     0x005C02D0-0x005C03C3
 // prototype void (__cdecl ?veh_clear@@YAXHHH@Z)(int vehID, int protoID, int factionID)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -3463,6 +3667,9 @@ ORIGINAL: 0x005C0DB0
 // spans     0x005C0DB0-0x005C0E35
 // prototype int (__cdecl ?can_arty@@YAHHH@Z)(int protoID, int triad_sea_retn)
 // callers   14   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF1F0
 Return Value: Has artillery ability? true/false
 Status: Complete
 */
@@ -3490,6 +3697,9 @@ ORIGINAL: 0x005C0E40
 // spans     0x005C0E40-0x005C1143
 // prototype int (__cdecl ?morale_veh@@YAHHHH@Z)(int vehID, int checkDroneRiot, int factionIDvsNative)
 // callers   16   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00501350 0x0050BA00 0x005B9F20
 Return Value: Morale value
 Status: Complete
 */
@@ -3559,6 +3769,9 @@ ORIGINAL: 0x005C1150
 // spans     0x005C1150-0x005C128F
 // prototype int (__cdecl ?offense_proto@@YAHHHH@Z)(int protoID, int vehIDDef, BOOL isBombardment)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Prototype's offense
 Status: Complete
 */
@@ -3596,6 +3809,9 @@ ORIGINAL: 0x005C1290
 // spans     0x005C1290-0x005C13AD
 // prototype int (__cdecl ?armor_proto@@YAHHHH@Z)(int protoID, int vehIDAtk, int isBombardment)
 // callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Prototype's defense
 Status: Complete
 */
@@ -3624,6 +3840,9 @@ ORIGINAL: 0x005C13B0
 // spans     0x005C13B0-0x005C1532
 // prototype int (__cdecl ?speed_proto@@YAHH@Z)(int protoID)
 // callers   12   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BF1F0
 Return Value: Prototype's speed on roads
 Status: Complete
 */
@@ -3675,6 +3894,9 @@ ORIGINAL: 0x005C1540
 // spans     0x005C1540-0x005C1752
 // prototype int (__cdecl ?speed@@YAHHH@Z)(int vehID, int toggle)
 // callers   27   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C0E40 0x005C13B0
 Return Value: Speed
 Status: Complete
 */
@@ -3718,6 +3940,9 @@ ORIGINAL: 0x005C1760
 // spans     0x005C1760-0x005C17C4
 // prototype int (__cdecl ?veh_cargo@@YAHH@Z)(int vehID)
 // callers   19   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Cargo capacity
 Status: Complete
 */
@@ -3737,6 +3962,9 @@ ORIGINAL: 0x005C17D0
 // spans     0x005C17D0-0x005C184F
 // prototype int (__cdecl ?prototype_factor@@YAHH@Z)(int protoID)
 // callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Percent extra prototype cost
 Status: Complete
 */
@@ -3767,6 +3995,9 @@ ORIGINAL: 0x005C1850
 // spans     0x005C1850-0x005C1A1D
 // prototype int (__cdecl ?veh_cost@@YAHHHPAH@Z)(int protoID, int baseID, int* hasProtoCost)
 // callers   12   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x005A5D00
 Return Value: Mineral cost
 Status: Complete
 */
@@ -3802,6 +4033,9 @@ ORIGINAL: 0x005C1C40
 // spans     0x005C1C40-0x005C1D16
 // prototype int (__cdecl ?veh_jail@@YAHH@Z)(int vehID)
 // callers   8   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Can the specified unit disembark? true/false
 Status: Complete
 */
@@ -3825,6 +4059,9 @@ ORIGINAL: 0x005C1D20
 // spans     0x005C1D20-0x005C1D42
 // prototype void (__cdecl ?veh_skip@@YAXH@Z)(int vehID)
 // callers   19   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1540
 Return Value: n/a
 Status: Complete
 */
@@ -3842,6 +4079,9 @@ ORIGINAL: 0x005C1D50 BYTE_EXACT
 // spans     0x005C1D50-0x005C1D6F
 // prototype int (__cdecl ?veh_fake@@YAHHH@Z)(int protoID, int factionID)
 // callers   13   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C02D0
 Return Value: Fake unit id (2048)
 Status: Complete
 */
@@ -3858,6 +4098,9 @@ ORIGINAL: 0x005C1D70
 // spans     0x005C1D70-0x005C1E1F
 // prototype int (__cdecl ?veh_wake@@YAHH@Z)(int vehID)
 // callers   6   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C9A50 0x005C1540
 Return Value: Unit id (doesn't look to be used on return)
 Status: Complete
 */
@@ -3977,6 +4220,9 @@ ORIGINAL: 0x004CBAA0
 // spans     0x004CBAA0-0x004CC35F
 // prototype int (__cdecl ?action_home@@YAHHH@Z)(int vehID, int)
 // callers   8   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3EF0 0x0050DE50 0x005BF1F0 0x005C1540 0x005C1D20 0x00644F3A
 Return Value: Was a destination resolved? true/false
 Status: Complete
 */
@@ -4188,6 +4434,9 @@ ORIGINAL: 0x00565F20
 // spans     0x00565F20-0x005665CC
 // prototype int (__cdecl ?compute_odds@@YAHHHHHH@Z)(int, int factionID, int vehID1, int vehID2, int)
 // callers   2   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x00579CC0 0x005B9580 0x005BF1F0 0x005BFE90
 Return Value: Weighted attack odds
 Status: Complete
 
@@ -4430,6 +4679,9 @@ ORIGINAL: 0x005665D0
 // spans     0x005665D0-0x00566802
 // prototype int (__cdecl ?alien_base@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050DE50 0x005B9580 0x005BFE90 0x00644F3A
 Return Value: Base id of the most attractive target, or -1 when there is none
 Status: Complete
 

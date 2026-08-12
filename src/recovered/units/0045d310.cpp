@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045D310 FILE
+// name      ?set_iface_mode@SubInterface@@QAEXXZ
+// size      109 bytes
+// spans     0x0045D310-0x0045D37D
+// prototype void (__thiscall ?set_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)
+// callers   9   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D8000
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045D310
-// name           ?set_iface_mode@SubInterface@@QAEXXZ
-// size           109 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

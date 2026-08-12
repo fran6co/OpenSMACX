@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045F740 FILE
+// name      ??1Interlude@@QAE@XZ
+// size      510 bytes
+// spans     0x0045F740-0x0045F905;0x00655820-0x00655859
+// prototype void (__thiscall ??1Interlude@@QAE@XZ)(Interlude* this)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00402970 0x005D4DD0 0x005D4E40 0x005D7410 0x005D7470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045F740
-// name           ??1Interlude@@QAE@XZ
-// size           510 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

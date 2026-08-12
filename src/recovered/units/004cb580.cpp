@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004CB580 FILE
+// name      ?action_road_to@@YAXH@Z
+// size      1304 bytes
+// spans     0x004CB580-0x004CBA98
+// prototype void (__cdecl ?action_road_to@@YAXH@Z)(int vehID)
+// callers   2   call targets   13
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A890 0x004C9B00 0x005310F0 0x00531300 0x00531480 0x00531780 0x00592250 0x00592EE0 0x00593220 0x005947C0 0x0059A530 0x005B9F20 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004CB580
-// name           ?action_road_to@@YAXH@Z
-// size           1304 bytes
 // measured tier  MISMATCH
 // divergence     16
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C3A40 FILE
+// name      ?hide_all@WorldWin@@QAEXXZ
+// size      43 bytes
+// spans     0x004C3A40-0x004C3A6B
+// prototype void (__thiscall ?hide_all@WorldWin@@QAEXXZ)(WorldWin* this)
+// callers   7   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062B870
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C3A40
-// name           ?hide_all@WorldWin@@QAEXXZ
-// size           43 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

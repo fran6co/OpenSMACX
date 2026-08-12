@@ -26,6 +26,10 @@ ORIGINAL: 0x0055BC00
 // spans     0x0055BC00-0x0055BC7C
 // prototype 
 // callers   19   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 
 Verification note: a mutation sweep of this function against the default

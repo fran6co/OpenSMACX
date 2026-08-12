@@ -26,6 +26,9 @@ ORIGINAL: 0x004D9DC0 BYTE_EXACT
 // spans     0x004D9DC0-0x004D9DC3
 // prototype void (__thiscall ?on_left_click@DipEdit@@QAEXHH@Z)(DipEdit* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -40,6 +43,9 @@ ORIGINAL: 0x004D9DD0 BYTE_EXACT
 // spans     0x004D9DD0-0x004D9DD1
 // prototype void (__thiscall ?on_redraw@DipEdit@@QAEXXZ)(DipEdit* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -61,6 +67,9 @@ ORIGINAL: 0x004DA740 BYTE_EXACT
 // spans     0x004DA740-0x004DA760
 // prototype void (__thiscall ?on_selected@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004DA990 0x004DADA0
 Status: Complete
 */
 void DipEdit::on_selected(int a1) {

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0055EEE0 FILE
+// name      ?atrocity@@YAXHHHH@Z
+// size      1391 bytes
+// spans     0x0055EEE0-0x0055F44F
+// prototype void (__cdecl ?atrocity@@YAXHHHH@Z)(int factionID1, int factionID2, int, int)
+// callers   4   call targets   11
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A890 0x005399A0 0x00539C00 0x0053A030 0x0055B870 0x0055F450 0x005BF5D0 0x00625E30 0x00625EC0 0x00645470 0x0064601D
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0055EEE0
-// name           ?atrocity@@YAXHHHH@Z
-// size           1391 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

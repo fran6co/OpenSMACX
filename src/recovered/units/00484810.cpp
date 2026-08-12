@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00484810 FILE
+// name      ??1NewTechWin@@QAE@XZ
+// size      630 bytes
+// spans     0x00484810-0x004849CD;0x00657510-0x006575C9
+// prototype void (__thiscall ??1NewTechWin@@QAE@XZ)(NewTechWin* this)
+// callers   1   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00402970 0x005D4DD0 0x00605370 0x00607040 0x00607DA0 0x00629210 0x0062B7F0 0x006456E4
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00484810
-// name           ??1NewTechWin@@QAE@XZ
-// size           630 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

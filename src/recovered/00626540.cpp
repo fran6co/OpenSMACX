@@ -4,6 +4,9 @@
 // spans     0x00626540-0x00626597
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00626470
 // 0x00626540  sub_626540  ->  _sub_626540
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -4,6 +4,9 @@
 // spans     0x00615F10-0x00615F4E
 // prototype void (__thiscall ?on_mouse_move@EditBox@@QAEXHH@Z)(EditBox* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00616030
 // 0x00615F10  ?on_mouse_move@EditBox@@QAEXHH@Z  ->  ?on_mouse_move@EditBox@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -4,6 +4,9 @@
 // spans     0x005F2700-0x005F2753
 // prototype void (__thiscall ?do_caption_buttons@Win@@QAEXXZ)(Win* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x005F2700  ?do_caption_buttons@Win@@QAEXXZ  ->  ?do_caption_buttons@Win@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

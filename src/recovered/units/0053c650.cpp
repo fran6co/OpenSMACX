@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0053C650 FILE
+// name      ?pact_ends@@YAXHH@Z
+// size      1376 bytes
+// spans     0x0053C650-0x0053CAE6;0x0065E470-0x0065E53A
+// prototype void (__cdecl ?pact_ends@@YAXHH@Z)(int factionID1, int factionID2)
+// callers   9   call targets   25
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00406380 0x004066C0 0x00406880 0x00406910 0x0046B190 0x0053C370 0x0055B760 0x0055BC00 0x0058FB00 0x005BF310 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00625E30 0x00625EC0 0x00645550
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0053C650
-// name           ?pact_ends@@YAXHH@Z
-// size           1376 bytes
 // measured tier  NO_COMPILE
 // refusal        u0053c650.cpp(152) : error C2079: 'spot_' uses undefined class 'Spot' u0053c650.cpp(251) : error C2079: 'heap_' uses undefined class 'Heap' u0053c650.cpp(858) :
 //

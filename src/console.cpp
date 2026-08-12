@@ -40,6 +40,9 @@ ORIGINAL: 0x00514EF0
 // spans     0x00514EF0-0x00514EFD
 // prototype void (__thiscall ?set_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048FA00
 Return Value: n/a
 Status: Complete
 */
@@ -55,6 +58,9 @@ ORIGINAL: 0x00514F10
 // spans     0x00514F10-0x00514F1D
 // prototype void (__thiscall ?set_auto_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048FA00
 Return Value: n/a
 Status: Complete
 */
@@ -70,6 +76,9 @@ ORIGINAL: 0x00514F20
 // spans     0x00514F20-0x00514F2D
 // prototype void (__thiscall ?set_base_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048FA00
 Return Value: n/a
 Status: Complete
 */
@@ -85,6 +94,9 @@ ORIGINAL: 0x00514F30
 // spans     0x00514F30-0x00514F3D
 // prototype void (__thiscall ?set_audiovisual@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048FA00
 Return Value: n/a
 Status: Complete
 */
@@ -100,6 +112,9 @@ ORIGINAL: 0x00514F40
 // spans     0x00514F40-0x00514F4D
 // prototype void (__thiscall ?set_map_display@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048FA00
 Return Value: n/a
 Status: Complete
 */
@@ -139,6 +154,9 @@ ORIGINAL: 0x0050F650
 // spans     0x0050F650-0x0050F67B
 // prototype void (__thiscall ?clear_group@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 Verification note: the sweep's surviving swaps reorder the object-field clear
@@ -173,6 +191,9 @@ ORIGINAL: 0x004E1F40
 // spans     0x004E1F40-0x004E1F70
 // prototype int (__thiscall ?edit_lock@Console@@QAEHXZ)(Console* this)
 // callers   8   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: 1 when editing is locked, 0 otherwise
 Status: Complete
 */
@@ -199,6 +220,9 @@ ORIGINAL: 0x00514F00
 // spans     0x00514F00-0x00514F0D
 // prototype void (__thiscall ?set_adv_preferences@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048FA00
 Return Value: n/a
 Status: Complete
 */
@@ -215,6 +239,9 @@ ORIGINAL: 0x004E1F20 BYTE_EXACT
 // spans     0x004E1F20-0x004E1F29
 // prototype void (__thiscall ?editor_undo@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ABE40
 Return Value: n/a
 Status: Complete
 */
@@ -246,6 +273,9 @@ ORIGINAL: 0x00514880
 // spans     0x00514880-0x005148AA
 // prototype void (__thiscall ?update_data@Console@@QAEXH@Z)(Console* this, int)
 // callers   33   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00458900 0x0046FB10 0x004B9EA0
 Return Value: n/a
 Status: Complete with a temporary StatusWin::redraw original dependency
 Verification note: three properties of this body are unobservable at every
@@ -307,6 +337,9 @@ ORIGINAL: 0x005108A0
 // spans     0x005108A0-0x005109A3
 // prototype void (__thiscall ?focus@Console@@QAEXHHH@Z)(Console* this, int xCoord, int yCoord, int factionID)
 // callers   32   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x0046B310 0x005109B0 0x005FD120
 Return Value: 1 when the primary map window took the coordinate, 0 otherwise
 Status: Complete with temporary Console::cursor_next, MapWin::focus,
         MapWin::draw_map and flush_input original dependencies
@@ -467,6 +500,9 @@ ORIGINAL: 0x0051D7C0
 // spans     0x0051D7C0-0x0051D7CB
 // prototype void (__thiscall ?on_sys_close@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -481,6 +517,9 @@ ORIGINAL: 0x004E0FA0 BYTE_EXACT
 // spans     0x004E0FA0-0x004E0FC3
 // prototype void (__thiscall ?editor_climate@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0058C2A0 0x005ABF20 0x005C5A30
 Status: Complete
 */
 void Console::editor_climate() {
@@ -498,6 +537,9 @@ ORIGINAL: 0x004E1F30 BYTE_EXACT
 // spans     0x004E1F30-0x004E1F39
 // prototype void (__thiscall ?editor_redo@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005ABE40
 Status: Complete
 */
 void Console::editor_redo() {
@@ -511,6 +553,9 @@ ORIGINAL: 0x0051D740
 // spans     0x0051D740-0x0051D753
 // prototype void (__thiscall ?menu_update@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00460DD0
 Status: Complete
 */
 void Console::menu_update() {
@@ -526,6 +571,9 @@ ORIGINAL: 0x004E0F80 BYTE_EXACT
 // spans     0x004E0F80-0x004E0F98
 // prototype void (__thiscall ?editor_polar@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x005ABF20 0x005C58E0 0x005C5A30
 Status: Complete
 */
 void Console::editor_polar() {

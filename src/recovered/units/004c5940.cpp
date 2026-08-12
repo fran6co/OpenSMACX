@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C5940 FILE
+// name      ??0Wave_In_Device@@QAE@XZ
+// size      60 bytes
+// spans     0x004C5940-0x004C597C
+// prototype void (__thiscall ??0Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006465F0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C5940
-// name           ??0Wave_In_Device@@QAE@XZ
-// size           60 bytes
 // measured tier  NO_COMPILE
 // refusal        u004c5940.cpp(63) : error C2065: 'memset' : undeclared identifier
 //

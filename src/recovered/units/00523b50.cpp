@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00523B50 FILE
+// name      ?ascent@@YAXXZ
+// size      264 bytes
+// spans     0x00523B50-0x00523C58
+// prototype 
+// callers   0   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048C0A0 0x005230E0 0x005AC680 0x005B9F20 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00523B50
-// name           ?ascent@@YAXXZ
-// size           264 bytes
 // measured tier  MISMATCH
 // divergence     37
 //

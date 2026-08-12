@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00628DB0 FILE
+// name      ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z
+// size      375 bytes
+// spans     0x00628DB0-0x00628F27
+// prototype 
+// callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00628DB0
-// name           ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z
-// size           375 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

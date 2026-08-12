@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004D04A0 FILE
+// name      ?wait@Console@@QAEXH@Z
+// size      64 bytes
+// spans     0x004D04A0-0x004D04E0
+// prototype void (__thiscall ?wait@Console@@QAEXH@Z)(Console* this, int)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00510F50
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004D04A0
-// name           ?wait@Console@@QAEXH@Z
-// size           64 bytes
 // measured tier  NO_COMPILE
 // refusal        u004d04a0.cpp(3) : error C2653: 'Console' : is not a class or namespace name u004d04a0.cpp(4) : error C2673: 'wait' : global functions do not have 'this' pointe
 //

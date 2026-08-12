@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00447CD0 BYTE_EXACT FILE
+// name      ?new_base@GAmbience@@QAEXXZ
+// size      55 bytes
+// spans     0x00447CD0-0x00447D07
+// prototype void (__thiscall ?new_base@GAmbience@@QAEXXZ)(GAmbience* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00447CD0
-// name           ?new_base@GAmbience@@QAEXXZ
-// size           55 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

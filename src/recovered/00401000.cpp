@@ -4,6 +4,9 @@
 // spans     0x00401000-0x00401058
 // prototype void (__thiscall ??0StringStruct@@QAE@H@Z)(StringStruct* this, int)
 // callers   12   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 // 0x00401000  ??0StringStruct@@QAE@H@Z  ->  ??0StringStruct@@QAE@H@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

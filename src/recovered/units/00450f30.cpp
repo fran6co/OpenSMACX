@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00450F30 BYTE_EXACT FILE
+// name      sub_450f30
+// size      81 bytes
+// spans     0x00450F30-0x00450F81
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005DE580 0x005E39A0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00450F30
-// name           sub_450f30
-// size           81 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

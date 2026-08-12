@@ -4,6 +4,9 @@
 // spans     0x004E09E0-0x004E09F9
 // prototype void (__thiscall ?editor_save@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ABB90
 // 0x004E09E0  ?editor_save@Console@@QAEXXZ  ->  ?editor_save@Console@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

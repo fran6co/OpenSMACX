@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0044A4B0 BYTE_EXACT FILE
+// name      ?on_key_click@FameWin@@QAEHHH@Z
+// size      67 bytes
+// spans     0x0044A4B0-0x0044A4F3
+// prototype int (__thiscall ?on_key_click@FameWin@@QAEHHH@Z)(FameWin* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x005D7470
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0044A4B0
-// name           ?on_key_click@FameWin@@QAEHHH@Z
-// size           67 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

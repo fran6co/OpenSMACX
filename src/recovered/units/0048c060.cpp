@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048C060 BYTE_EXACT FILE
+// name      ?parse_it@@YAXPADPBD@Z
+// size      57 bytes
+// spans     0x0048C060-0x0048C099
+// prototype void (__cdecl ?parse_it@@YAXPADPBD@Z)(int8* srcFileID, int8* sectionID)
+// callers   5   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BECA0 0x005FD570 0x00625880
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048C060
-// name           ?parse_it@@YAXPADPBD@Z
-// size           57 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

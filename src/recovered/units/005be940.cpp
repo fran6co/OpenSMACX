@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005BE940 FILE
+// name      ?tech_research@@YAXHH@Z
+// size      560 bytes
+// spans     0x005BE940-0x005BEB70
+// prototype 
+// callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00476C90 0x00539E40 0x005BE380 0x005BE530 0x005BE6B0 0x00626250
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005BE940
-// name           ?tech_research@@YAXHH@Z
-// size           560 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

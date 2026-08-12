@@ -29,6 +29,9 @@ ORIGINAL: 0x0059D3A0
 // spans     0x0059D3A0-0x0059D3AA
 // prototype int (__thiscall ?init@PopMenu@@QAEHXZ)(PopMenu* this)
 // callers   14   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006015B0
 Return Value: whatever BasePop::init returns
 Status: Complete
 */

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00496960 FILE
+// name      ?init@ReportWin@@QAEXXZ
+// size      581 bytes
+// spans     0x00496960-0x00496BA5
+// prototype void (__thiscall ?init@ReportWin@@QAEXXZ)(ReportWin* this)
+// callers   1   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4EF0 0x005FA8A0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00496960
-// name           ?init@ReportWin@@QAEXXZ
-// size           581 bytes
 // measured tier  NO_COMPILE
 // refusal        u00496960.cpp(144) : error C2079: 'spot_' uses undefined class 'Spot'
 //

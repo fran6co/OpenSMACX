@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0050BA50 FILE
+// name      ?intervention@@YAXHH@Z
+// size      614 bytes
+// spans     0x0050BA50-0x0050BCB6
+// prototype 
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0055B870 0x0055BB30 0x005BF310 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0050BA50
-// name           ?intervention@@YAXHH@Z
-// size           614 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043C0F0 FILE
+// name      ?construct_armor@DesignWin@@QAEXH@Z
+// size      54 bytes
+// spans     0x0043C0F0-0x0043C126
+// prototype void (__thiscall ?construct_armor@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C3090
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043C0F0
-// name           ?construct_armor@DesignWin@@QAEXH@Z
-// size           54 bytes
 // measured tier  NO_COMPILE
 // refusal        u0043c0f0.cpp(44) : error C2061: syntax error : identifier 'Caviar' u0043c0f0.cpp(63) : error C2061: syntax error : identifier 'Caviar'
 //

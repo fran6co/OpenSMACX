@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00493B70 BYTE_EXACT FILE
+// name      ?edbc_fac@ProdPicker@@QAEHH@Z
+// size      67 bytes
+// spans     0x00493B70-0x00493BB3
+// prototype int (__thiscall ?edbc_fac@ProdPicker@@QAEHH@Z)(ProdPicker* this, int)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00493B70
-// name           ?edbc_fac@ProdPicker@@QAEHH@Z
-// size           67 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00611640 FILE
+// name      ?pos_to_id@SpriteBox@@QAEXH@Z
+// size      118 bytes
+// spans     0x00611640-0x006116B6
+// prototype void (__thiscall ?pos_to_id@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644F3A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00611640
-// name           ?pos_to_id@SpriteBox@@QAEXH@Z
-// size           118 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

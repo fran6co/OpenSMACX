@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00592E10 FILE
+// name      ?message_veh@@YAXHHHH@Z
+// size      96 bytes
+// spans     0x00592E10-0x00592E70
+// prototype void (__cdecl ?message_veh@@YAXHHHH@Z)(int, int vehID, int xCoord, int yCoord)
+// callers   12   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00532940
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00592E10
-// name           ?message_veh@@YAXHHHH@Z
-// size           96 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

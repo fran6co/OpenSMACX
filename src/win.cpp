@@ -35,6 +35,10 @@ ORIGINAL: 0x005EB3D0
 // spans     0x005EB3D0-0x005EB63D
 // prototype void (__thiscall ??0Win@@QAE@XZ)(Win* this)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062BA80
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Win::construct() {
@@ -170,6 +174,10 @@ ORIGINAL: 0x005ED7D0
 // spans     0x005ED7D0-0x005ED877
 // prototype int (__thiscall ?move@Win@@QAEHHH@Z)(Win* this, int, int)
 // callers   15   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int Win::move(int x, int y) {
@@ -185,6 +193,10 @@ ORIGINAL: 0x005F7E90 BYTE_EXACT
 // spans     0x005F7E90-0x005F7EB6
 // prototype int (__thiscall ?is_visible@Win@@QAEHXZ)(Win* this)
 // callers   120   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int Win::is_visible() {
@@ -208,6 +220,9 @@ ORIGINAL: 0x005ED240
 // spans     0x005ED240-0x005ED2C5
 // prototype void (__thiscall ?client_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
 // callers   71   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED240
 Status: Complete
 */
 void Win::client_to_screen(int *x, int *y) {
@@ -243,6 +258,9 @@ ORIGINAL: 0x005F1060
 // spans     0x005F1060-0x005F106F
 // prototype int (__thiscall ?on_query_new_palette@Win@@QAEHXZ)(Win* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FE4F0
 Return Value: 1, always
 Status: Complete
 Verification note: the call to Palette::set_active_window is NOT observed by
@@ -271,6 +289,9 @@ ORIGINAL: 0x005EE050
 // spans     0x005EE050-0x005EE064
 // prototype int (__thiscall ?get_vert_pos@Win@@QAEHXZ)(Win* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: The scroll's position, or 0 when the window has no vertical
               scroll bar. The null check is the original's, not a guard added
               here: it loads the pointer, tests it, and branches to `xor eax,
@@ -293,6 +314,9 @@ ORIGINAL: 0x005EE090
 // spans     0x005EE090-0x005EE0A4
 // prototype int (__thiscall ?get_horz_pos@Win@@QAEHXZ)(Win* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: The scroll's position, or 0 when the window has no horizontal
               scroll bar. Identical to get_vert_pos above but reading the
               other pointer; the two differ only in which member they load,
@@ -315,6 +339,10 @@ ORIGINAL: 0x005EE0F0
 // spans     0x005EE0F0-0x005EE107
 // prototype void (__thiscall ?set_vert_paging@Win@@QAEXH@Z)(Win* this, int)
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Win::set_vert_paging(int paging) {
@@ -331,6 +359,10 @@ ORIGINAL: 0x005EE110
 // spans     0x005EE110-0x005EE127
 // prototype void (__thiscall ?set_horz_paging@Win@@QAEXH@Z)(Win* this, int)
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Win::set_horz_paging(int paging) {
@@ -368,6 +400,10 @@ ORIGINAL: 0x005FA7E0
 // spans     0x005FA7E0-0x005FA814
 // prototype 
 // callers   24   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Is the point inside the rectangle? true/false
 Status: Complete
 */
@@ -390,6 +426,9 @@ ORIGINAL: 0x005F8670
 // spans     0x005F8670-0x005F869B
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 Verification note: the original writes left, right, top, bottom in that
          interleaved order, reloading the y delta between the right and top
@@ -416,6 +455,10 @@ ORIGINAL: 0x005F86C0
 // spans     0x005F86C0-0x005F86E6
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height) {
@@ -437,6 +480,10 @@ ORIGINAL: 0x005FA7A0
 // spans     0x005FA7A0-0x005FA7DB
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
@@ -461,6 +508,10 @@ ORIGINAL: 0x004BA830
 // spans     0x004BA830-0x004BA863
 // prototype void (__thiscall ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z)(TutWin* this, RECT*, int*, int*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int __cdecl rect_center(RECT *rect, int *x, int *y) {
@@ -491,6 +542,9 @@ ORIGINAL: 0x005F2CA0
 // spans     0x005F2CA0-0x005F2CDF
 // prototype int (__thiscall ?is_dialog_focus@Win@@QAEHXZ)(Win* this)
 // callers   7   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Holds focus (1); does not (0)
 Status: Complete
 */
@@ -546,6 +600,9 @@ ORIGINAL: 0x005EC690
 // spans     0x005EC690-0x005EC6E1
 // prototype 
 // callers   7   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: The shared device context, or zero when none could be obtained
 Status: Complete
 */
@@ -580,6 +637,9 @@ ORIGINAL: 0x005EC6F0
 // spans     0x005EC6F0-0x005EC73C
 // prototype 
 // callers   9   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 Verification note: the two surviving mutants both concern the ReleaseDC call
 on the no-surface path. It is a real GDI import whose effect no fixture can
@@ -627,6 +687,9 @@ ORIGINAL: 0x005EC7C0
 // spans     0x005EC7C0-0x005EC7FE
 // prototype int (__thiscall ?set_cursor@Win@@QAEHH@Z)(Win* this, int nCursorName)
 // callers   13   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F1820
 Return Value: No errors (0); name outside the accepted range (3)
 Status: Complete with a temporary dependency on the cursor refresh
 Verification note: ordering the cursor_handle_ clear against the refresh is
@@ -666,6 +729,9 @@ ORIGINAL: 0x005F8500
 // spans     0x005F8500-0x005F852F
 // prototype 
 // callers   15   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EFD20 0x005F7320
 Status: Complete with temporary dependencies on the screen refresh and flip
 */
 void Win::clear_bubble_text() {
@@ -692,6 +758,9 @@ ORIGINAL: 0x005EC680 BYTE_EXACT
 // spans     0x005EC680-0x005EC685
 // prototype int (__thiscall ?UNK1@Win@@QAEHHHHHHHHHH@Z)(Win* this, int, int, int, int, int, int, int, int, int)
 // callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int Win::UNK1(int, int, int, int, int, int, int, int, int) {
@@ -712,6 +781,9 @@ ORIGINAL: 0x005ED7C0 BYTE_EXACT
 // spans     0x005ED7C0-0x005ED7C3
 // prototype int (__thiscall ?UNK5@Win@@QAEHXZ)(Win* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int Win::UNK5() {
@@ -732,6 +804,9 @@ ORIGINAL: 0x005EDFE0 BYTE_EXACT
 // spans     0x005EDFE0-0x005EDFE5
 // prototype int (__thiscall ?UNK6@Win@@QAEHH@Z)(Win* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int Win::UNK6(int) {
@@ -752,6 +827,9 @@ ORIGINAL: 0x005F6A30 BYTE_EXACT
 // spans     0x005F6A30-0x005F6A38
 // prototype int (__thiscall ?on_set_cursor@Win@@QAEHPAXII@Z)(Win* this, void*, unsigned int, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int Win::on_set_cursor(void *, unsigned int, unsigned int) {
@@ -773,6 +851,9 @@ ORIGINAL: 0x005F2CE0
 // spans     0x005F2CE0-0x005F2CEA
 // prototype 
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 void Win::set_def_focus(int focus) {
@@ -791,6 +872,9 @@ ORIGINAL: 0x005EE130
 // spans     0x005EE130-0x005EE157
 // prototype void (__thiscall ?UNK8@Win@@QAEXH@Z)(Win* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 void Win::UNK8(int value) {
@@ -812,6 +896,9 @@ ORIGINAL: 0x005EE160
 // spans     0x005EE160-0x005EE187
 // prototype void (__thiscall ?UNK9@Win@@QAEXH@Z)(Win* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 void Win::UNK9(int value) {
@@ -839,6 +926,9 @@ ORIGINAL: 0x005EE020 BYTE_EXACT
 // spans     0x005EE020-0x005EE021
 // prototype void (__thiscall ?reset_window_clip@Win@@QAEXXZ)(Win* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -857,6 +947,9 @@ ORIGINAL: 0x005F54B0 BYTE_EXACT
 // spans     0x005F54B0-0x005F54B3
 // prototype void (__thiscall ?on_move@Win@@QAEXHH@Z)(Win* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -875,6 +968,9 @@ ORIGINAL: 0x005F54C0 BYTE_EXACT
 // spans     0x005F54C0-0x005F54C3
 // prototype void (__thiscall ?on_size@Win@@QAEXIHH@Z)(Win* this, unsigned int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -893,6 +989,9 @@ ORIGINAL: 0x005F54D0 BYTE_EXACT
 // spans     0x005F54D0-0x005F54D3
 // prototype void (__thiscall ?on_size_nc@Win@@QAEXIHH@Z)(Win* this, unsigned int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -911,6 +1010,9 @@ ORIGINAL: 0x005F6A40 BYTE_EXACT
 // spans     0x005F6A40-0x005F6A43
 // prototype int (__thiscall ?on_sys_command@Win@@QAEHIHH@Z)(Win* this, unsigned int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -941,6 +1043,9 @@ ORIGINAL: 0x005F2C60
 // spans     0x005F2C60-0x005F2C94
 // prototype void (__thiscall ?sync_palette@Win@@QAEXXZ)(Win* this)
 // callers   5   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FE4F0
 Return Value: n/a
 Status: Complete
 */
@@ -972,6 +1077,9 @@ ORIGINAL: 0x005EE030 BYTE_EXACT
 // spans     0x005EE030-0x005EE047
 // prototype void (__thiscall ?set_vert_pos@Win@@QAEXH@Z)(Win* this, int)
 // callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00605D20
 Return Value: n/a
 Status: Complete
 */
@@ -990,6 +1098,9 @@ ORIGINAL: 0x005EE070 BYTE_EXACT
 // spans     0x005EE070-0x005EE087
 // prototype void (__thiscall ?set_horz_pos@Win@@QAEXH@Z)(Win* this, int)
 // callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00605D20
 Return Value: n/a
 Status: Complete
 */
@@ -1008,6 +1119,9 @@ ORIGINAL: 0x005EE0B0 BYTE_EXACT
 // spans     0x005EE0B0-0x005EE0CC
 // prototype void (__thiscall ?set_vert_range@Win@@QAEXHH@Z)(Win* this, int, int)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006059B0
 Return Value: n/a
 Status: Complete
 */
@@ -1026,6 +1140,9 @@ ORIGINAL: 0x005EE0D0 BYTE_EXACT
 // spans     0x005EE0D0-0x005EE0EC
 // prototype void (__thiscall ?set_horz_range@Win@@QAEXHH@Z)(Win* this, int, int)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006059B0
 Return Value: n/a
 Status: Complete
 */
@@ -1060,6 +1177,9 @@ ORIGINAL: 0x005F2670 BYTE_EXACT
 // spans     0x005F2670-0x005F2676
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1, always
 Status: Complete
 */
@@ -1081,6 +1201,9 @@ ORIGINAL: 0x005ECE80
 // spans     0x005ECE80-0x005ECEB6
 // prototype int (__thiscall ?UNK3@Win@@QAEHH@Z)(Win* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1 when the value is in the table, 0 otherwise
 Status: Complete
 */
@@ -1115,6 +1238,9 @@ ORIGINAL: 0x005ECE20
 // spans     0x005ECE20-0x005ECE73
 // prototype int (__thiscall ?is_descendant@Win@@QAEHPAVWin@@@Z)(Win* this, Win*)
 // callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECE20
 Return Value: 1 when the candidate is a descendant, 0 otherwise
 Status: Complete
 Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
@@ -1166,6 +1292,9 @@ ORIGINAL: 0x005F8530 BYTE_EXACT
 // spans     0x005F8530-0x005F8547
 // prototype void (__thiscall ?on_mousewheel_down_vert@Win@@QAEXH@Z)(Win* this, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00606320
 Status: Complete
 */
 void Win::on_mousewheel_down_vert(int a1) {
@@ -1182,6 +1311,9 @@ ORIGINAL: 0x005F8590 BYTE_EXACT
 // spans     0x005F8590-0x005F85A7
 // prototype void (__thiscall ?on_mousewheel_up_horz@Win@@QAEXH@Z)(Win* this, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00606440
 Status: Complete
 */
 void Win::on_mousewheel_up_horz(int a1) {
@@ -1200,6 +1332,9 @@ ORIGINAL: 0x005EC960 BYTE_EXACT
 // spans     0x005EC960-0x005EC97B
 // prototype int (__thiscall ?get_lbutton_state@Win@@QAEHXZ)(Win* this)
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: nonzero while the logical left button is down
 Status: Complete
 */
@@ -1220,6 +1355,9 @@ ORIGINAL: 0x005F8550 BYTE_EXACT
 // spans     0x005F8550-0x005F8567
 // prototype void (__thiscall ?on_mousewheel_down_horz@Win@@QAEXH@Z)(Win* this, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00606320
 Status: Complete
 */
 void Win::on_mousewheel_down_horz(int a1) {
@@ -1236,6 +1374,9 @@ ORIGINAL: 0x005F8570 BYTE_EXACT
 // spans     0x005F8570-0x005F8587
 // prototype void (__thiscall ?on_mousewheel_up_vert@Win@@QAEXH@Z)(Win* this, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00606440
 Status: Complete
 */
 void Win::on_mousewheel_up_vert(int a1) {

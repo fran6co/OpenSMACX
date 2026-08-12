@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048FF60 BYTE_EXACT FILE
+// name      ?on_group_clicked@PrefWin@@QAEXHHH@Z
+// size      65 bytes
+// spans     0x0048FF60-0x0048FFA1
+// prototype void (__thiscall ?on_group_clicked@PrefWin@@QAEXHHH@Z)(PrefWin* this, int, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048FF60
-// name           ?on_group_clicked@PrefWin@@QAEXHHH@Z
-// size           65 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

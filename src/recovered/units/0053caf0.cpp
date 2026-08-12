@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0053CAF0 FILE
+// name      ?pact_of_brotherhood@@YAXHH@Z
+// size      789 bytes
+// spans     0x0053CAF0-0x0053CE05
+// prototype 
+// callers   2   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BA650 0x005315C0 0x005399A0 0x0053A230 0x0053A4A0 0x0053A980 0x00543A20 0x0055B870 0x0058F810 0x0058F9D0 0x00592EE0 0x005BF330 0x005BF7D0 0x00625EC0 0x006262F0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0053CAF0
-// name           ?pact_of_brotherhood@@YAXHH@Z
-// size           789 bytes
 // measured tier  MISMATCH
 // divergence     13
 //

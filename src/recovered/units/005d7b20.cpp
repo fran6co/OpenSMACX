@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D7B20 BYTE_EXACT FILE
+// name      ?load_tga@Buffer@@QAGHPBD@Z
+// size      22 bytes
+// spans     0x005D7B20-0x005D7B36
+// prototype int (__stdcall ?load_tga@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7B40
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D7B20
-// name           ?load_tga@Buffer@@QAGHPBD@Z
-// size           22 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

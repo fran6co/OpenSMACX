@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00407C60 FILE
+// name      ?hide@AlphaSave@@QAEXXZ
+// size      100 bytes
+// spans     0x00407C60-0x00407CC4
+// prototype void (__thiscall ?hide@AlphaSave@@QAEXXZ)(AlphaSave* this)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D970 0x0045E540 0x005EDCD0 0x005F7E90
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00407C60
-// name           ?hide@AlphaSave@@QAEXXZ
-// size           100 bytes
 // measured tier  NO_COMPILE
 // refusal        u00407c60.cpp(24) : error C2653: 'AlphaSave' : is not a class or namespace name u00407c60.cpp(25) : error C2061: syntax error : identifier 'Win' u00407c60.cpp(2
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00440380 BYTE_EXACT FILE
+// name      ?on_status@DiploPop@@QAEXH@Z
+// size      308 bytes
+// spans     0x00440380-0x004404B4
+// prototype void (__thiscall ?on_status@DiploPop@@QAEXH@Z)(DiploPop* this, int)
+// callers   0   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045D440 0x0045D970 0x005ED9D0 0x005EDCD0 0x00607C80 0x00616650 0x00616730 0x0062A280 0x0062B870
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00440380
-// name           ?on_status@DiploPop@@QAEXH@Z
-// size           308 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

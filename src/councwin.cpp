@@ -27,6 +27,9 @@ ORIGINAL: 0x00426EB0 BYTE_EXACT
 // spans     0x00426EB0-0x00426EB3
 // prototype void (__thiscall ?on_group_clicked@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -45,6 +48,9 @@ ORIGINAL: 0x00426F80 BYTE_EXACT
 // spans     0x00426F80-0x00426F83
 // prototype void (__thiscall ?on_button_passover@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -63,6 +69,9 @@ ORIGINAL: 0x00427060 BYTE_EXACT
 // spans     0x00427060-0x00427063
 // prototype void (__thiscall ?on_iface_left_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -81,6 +90,9 @@ ORIGINAL: 0x00427070 BYTE_EXACT
 // spans     0x00427070-0x00427073
 // prototype void (__thiscall ?on_iface_right_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -99,6 +111,9 @@ ORIGINAL: 0x00427080 BYTE_EXACT
 // spans     0x00427080-0x00427083
 // prototype void (__thiscall ?on_iface_left_down@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -117,6 +132,9 @@ ORIGINAL: 0x00427090 BYTE_EXACT
 // spans     0x00427090-0x00427093
 // prototype void (__thiscall ?on_iface_right_down@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -135,6 +153,9 @@ ORIGINAL: 0x004270A0 BYTE_EXACT
 // spans     0x004270A0-0x004270A3
 // prototype void (__thiscall ?on_iface_mouse_move@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -153,6 +174,9 @@ ORIGINAL: 0x004270B0 BYTE_EXACT
 // spans     0x004270B0-0x004270B3
 // prototype void (__thiscall ?on_iface_mouse_leave@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -171,6 +195,9 @@ ORIGINAL: 0x004270C0 BYTE_EXACT
 // spans     0x004270C0-0x004270C3
 // prototype void (__thiscall ?on_iface_selected@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -189,6 +216,9 @@ ORIGINAL: 0x004270D0 BYTE_EXACT
 // spans     0x004270D0-0x004270D3
 // prototype void (__thiscall ?on_iface_left_double_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -207,6 +237,9 @@ ORIGINAL: 0x004270E0 BYTE_EXACT
 // spans     0x004270E0-0x004270E3
 // prototype void (__thiscall ?on_iface_right_double_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -225,6 +258,9 @@ ORIGINAL: 0x00427110 BYTE_EXACT
 // spans     0x00427110-0x00427113
 // prototype void (__thiscall ?on_iface_button_toggled@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -243,6 +279,9 @@ ORIGINAL: 0x00427120 BYTE_EXACT
 // spans     0x00427120-0x00427123
 // prototype void (__thiscall ?on_iface_group_clicked@CouncWin@@QAEXHHH@Z)(CouncWin* this, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -261,6 +300,9 @@ ORIGINAL: 0x00426F90 BYTE_EXACT
 // spans     0x00426F90-0x00426F95
 // prototype int (__thiscall ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z)(CouncWin* this, GraphicWin*, int8*, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0
 Status: Complete
 */
@@ -280,6 +322,9 @@ ORIGINAL: 0x00426EC0 BYTE_EXACT
 // spans     0x00426EC0-0x00426EDE
 // prototype void (__thiscall ?on_mouse_leave@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00425DB0
 Status: Complete
 */
 void CouncWin::on_mouse_leave(int a1, int a2) {
@@ -298,6 +343,9 @@ ORIGINAL: 0x00425D90 BYTE_EXACT
 // spans     0x00425D90-0x00425DAA
 // prototype void (__thiscall ?draw_all_leaders@CouncWin@@QAEXXZ)(CouncWin* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00425DB0
 Status: Complete
 */
 void CouncWin::draw_all_leaders() {
@@ -313,6 +361,9 @@ ORIGINAL: 0x00427130
 // spans     0x00427130-0x0042714B
 // prototype int (__thiscall ?show@CouncWin@@QAEHH@Z)(CouncWin* this, int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D310 0x005F7E90
 Status: Complete
 */
 int CouncWin::show(int a1) {

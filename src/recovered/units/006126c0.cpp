@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006126C0 FILE
+// name      ?pass_dialog_focus@EditGroup@@QAEXXZ
+// size      56 bytes
+// spans     0x006126C0-0x006126F8
+// prototype void (__thiscall ?pass_dialog_focus@EditGroup@@QAEXXZ)(EditGroup* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006126C0
-// name           ?pass_dialog_focus@EditGroup@@QAEXXZ
-// size           56 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

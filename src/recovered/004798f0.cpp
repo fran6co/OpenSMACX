@@ -4,6 +4,9 @@
 // spans     0x004798F0-0x004798F8
 // prototype void (__thiscall ?on_redraw@MultiWin@@QAEXXZ)(MultiWin* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00479330
 // 0x004798F0  ?on_redraw@MultiWin@@QAEXXZ  ->  ?on_redraw@MultiWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -4,6 +4,9 @@
 // spans     0x0047A860-0x0047A88D
 // prototype void (__thiscall ?on_button_clicked@NetMsg@@QAEXH@Z)(NetMsg* this, int)
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00404A80 0x00616780
 // 0x0047A860  ?on_button_clicked@NetMsg@@QAEXH@Z  ->  ?on_button_clicked@NetMsg@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

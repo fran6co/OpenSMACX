@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F4C30 FILE
+// name      ?redraw_nc_buffer@Win@@QAEHH@Z
+// size      82 bytes
+// spans     0x005F4C30-0x005F4C82
+// prototype int (__thiscall ?redraw_nc_buffer@Win@@QAEHH@Z)(Win* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F4C30
-// name           ?redraw_nc_buffer@Win@@QAEHH@Z
-// size           82 bytes
 // measured tier  MISMATCH
 // divergence     31
 //

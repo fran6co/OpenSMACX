@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060DE10 FILE
+// name      ?on_left_down@RadioButton@@QAEXHH@Z
+// size      523 bytes
+// spans     0x0060DE10-0x0060E01B
+// prototype void (__thiscall ?on_left_down@RadioButton@@QAEXHH@Z)(RadioButton* this, int xCoord, int yCoord)
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5890 0x005DCAB0 0x0060D750 0x00644F3A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060DE10
-// name           ?on_left_down@RadioButton@@QAEXHH@Z
-// size           523 bytes
 // measured tier  MISMATCH
 // divergence     6
 //

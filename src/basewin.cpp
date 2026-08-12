@@ -31,6 +31,9 @@ ORIGINAL: 0x00408710 BYTE_EXACT
 // spans     0x00408710-0x00408711
 // prototype void (__thiscall ?close@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -45,6 +48,9 @@ ORIGINAL: 0x00416DD0 BYTE_EXACT
 // spans     0x00416DD0-0x00416DD1
 // prototype void (__thiscall ?UNK4@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -59,6 +65,9 @@ ORIGINAL: 0x0041AF20 BYTE_EXACT
 // spans     0x0041AF20-0x0041AF21
 // prototype void (__thiscall ?UNK6@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -73,6 +82,9 @@ ORIGINAL: 0x0041AF30 BYTE_EXACT
 // spans     0x0041AF30-0x0041AF31
 // prototype void (__thiscall ?UNK7@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -103,6 +115,9 @@ ORIGINAL: 0x0041A610 BYTE_EXACT
 // spans     0x0041A610-0x0041A613
 // prototype void (__thiscall ?UNK5@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -121,6 +136,9 @@ ORIGINAL: 0x0041B4E0 BYTE_EXACT
 // spans     0x0041B4E0-0x0041B4E3
 // prototype void (__thiscall ?on_button_toggled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -139,6 +157,9 @@ ORIGINAL: 0x0041DF40 BYTE_EXACT
 // spans     0x0041DF40-0x0041DF43
 // prototype void (__thiscall ?on_iface_right_down@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -157,6 +178,9 @@ ORIGINAL: 0x0041E4C0 BYTE_EXACT
 // spans     0x0041E4C0-0x0041E4C3
 // prototype void (__thiscall ?on_iface_selected@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -179,6 +203,9 @@ ORIGINAL: 0x0041DCD0
 // spans     0x0041DCD0-0x0041DCEE
 // prototype void (__thiscall ?on_iface_left_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004160F0
 Return Value: n/a
 Status: Complete
 */
@@ -197,6 +224,9 @@ ORIGINAL: 0x0041DCF0
 // spans     0x0041DCF0-0x0041DD0E
 // prototype void (__thiscall ?on_iface_right_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004160F0
 Return Value: n/a
 Status: Complete
 */
@@ -215,6 +245,9 @@ ORIGINAL: 0x0041E4D0
 // spans     0x0041E4D0-0x0041E4EE
 // prototype void (__thiscall ?on_iface_left_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004160F0
 Return Value: n/a
 Status: Complete
 */
@@ -233,6 +266,9 @@ ORIGINAL: 0x0041E4F0
 // spans     0x0041E4F0-0x0041E50E
 // prototype void (__thiscall ?on_iface_right_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004160F0
 Return Value: n/a
 Status: Complete
 */
@@ -272,6 +308,9 @@ ORIGINAL: 0x0041DC80
 // spans     0x0041DC80-0x0041DCA5
 // prototype void (__thiscall ?on_iface_scrolled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0040C850
 Return Value: n/a
 Status: Complete
 */
@@ -300,6 +339,9 @@ ORIGINAL: 0x0041AF70
 // spans     0x0041AF70-0x0041AF88
 // prototype void (__thiscall ?on_left_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004165D0
 Return Value: n/a
 Status: Complete
 */
@@ -316,6 +358,9 @@ ORIGINAL: 0x0041AF90
 // spans     0x0041AF90-0x0041AFA8
 // prototype void (__thiscall ?on_right_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004165D0
 Return Value: n/a
 Status: Complete
 */
@@ -332,6 +377,9 @@ ORIGINAL: 0x0041AFB0
 // spans     0x0041AFB0-0x0041AFC8
 // prototype void (__thiscall ?on_left_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004165D0
 Return Value: n/a
 Status: Complete
 */
@@ -360,6 +408,9 @@ ORIGINAL: 0x0041AF40 BYTE_EXACT
 // spans     0x0041AF40-0x0041AF41
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -385,6 +436,9 @@ ORIGINAL: 0x0041B1E0
 // spans     0x0041B1E0-0x0041B1ED
 // prototype void (__thiscall ?on_mouse_leave@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8500
 Return Value: n/a
 Status: Complete
 */
@@ -404,6 +458,9 @@ ORIGINAL: 0x0041E890 BYTE_EXACT
 // spans     0x0041E890-0x0041E8AB
 // prototype void (__thiscall ?show@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D310 0x005F7E90
 Status: Complete
 */
 void BaseWin::show(int a1) {
@@ -420,6 +477,9 @@ ORIGINAL: 0x0040B120 BYTE_EXACT
 // spans     0x0040B120-0x0040B13C
 // prototype void (__thiscall ?UNK2@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int, int, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0040B140
 Status: Complete
 */
 void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
@@ -433,6 +493,9 @@ ORIGINAL: 0x0041B4A0 BYTE_EXACT
 // spans     0x0041B4A0-0x0041B4BD
 // prototype void (__thiscall ?on_scrolled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0040FCC0
 Status: Complete
 */
 void BaseWin::on_scrolled(int a1, int a2) {

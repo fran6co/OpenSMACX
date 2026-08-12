@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00414B40 FILE
+// name      ?draw_pop@BaseWin@@QAEXH@Z
+// size      1365 bytes
+// spans     0x00414B40-0x00415078;0x00651B76-0x00651B93
+// prototype void (__thiscall ?draw_pop@BaseWin@@QAEXH@Z)(BaseWin* this, int)
+// callers   1   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E4020 0x005D5630 0x005D5930 0x005D8000 0x005E2DD3 0x005E4B4A 0x005FA960 0x005FAA90 0x00618EA0 0x00618EE0 0x00618F40 0x00625730 0x00625740 0x00625750 0x00625770
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00414B40
-// name           ?draw_pop@BaseWin@@QAEXH@Z
-// size           1365 bytes
 // measured tier  MISMATCH
 // divergence     35
 //

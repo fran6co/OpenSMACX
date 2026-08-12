@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005166D0 FILE
+// name      ?cursor_key@Console@@QAEXHHH@Z
+// size      487 bytes
+// spans     0x005166D0-0x005168B7
+// prototype void (__thiscall ?cursor_key@Console@@QAEXHHH@Z)(Console* this, int, int, int)
+// callers   1   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0041A920 0x00467970 0x0046A550 0x004D2F00 0x004D61A0 0x004E3A50 0x004E3C60 0x0055BC00
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005166D0
-// name           ?cursor_key@Console@@QAEXHHH@Z
-// size           487 bytes
 // measured tier  MISMATCH
 // divergence     27
 //

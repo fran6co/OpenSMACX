@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004B1B30 FILE
+// name      ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z
+// size      64 bytes
+// spans     0x004B1B30-0x004B1B70
+// prototype void (__thiscall ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z)(SocialWin* this, LPCSTR, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005ED240 0x005F83D0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004B1B30
-// name           ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z
-// size           64 bytes
 // measured tier  NO_COMPILE
 // refusal        u004b1b30.cpp(64) : error C2027: use of undefined type 'LPCSTR' u004b1b30.cpp(43) : see declaration of 'LPCSTR'
 //

@@ -27,6 +27,9 @@ ORIGINAL: 0x0058FD70 BYTE_EXACT
 // spans     0x0058FD70-0x0058FD85
 // prototype void (__thiscall ?clear@SquareLock@@QAEXXZ)(SquareLock* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -55,6 +58,9 @@ ORIGINAL: 0x0058FD90
 // spans     0x0058FD90-0x0058FE77
 // prototype void (__thiscall ?unlock@SquareLock@@QAEXH@Z)(SquareLock* this, int)
 // callers   4   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591CF0
 Return Value: n/a
 Status: Complete
 */
@@ -105,6 +111,9 @@ ORIGINAL: 0x0058FE80
 // spans     0x0058FE80-0x0058FF68
 // prototype BOOL (__thiscall ?lock@SquareLock@@QAEHHHHH@Z)(SquareLock* this, int factionID, int flags, int xCoord, int yCoord)
 // callers   4   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591C90
 Return Value: 1 when a footprint tile is already locked by another faction,
               0 otherwise (including an off-map coordinate)
 Status: Complete

@@ -1,10 +1,13 @@
 // ORIGINAL: 0x005AB600 FILE
-// placeholder - not yet decompiled
 // name      ?load_map@@YAHXZ
 // size      1797 bytes
 // spans     0x005AB600-0x005ABB8D;0x006620A7-0x0066221F
 // prototype 
 // callers   4   call targets   34
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00406E60 0x00407350 0x00407410 0x00407910 0x00407A80 0x00407F00 0x0059D980 0x0059E510 0x005A9C10 0x005BF310 0x005D4DD0 0x005E3820 0x005FCBB0 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x00613900 0x00614140 0x006141C0 0x00614F30 0x00616200 0x00625E30 0x00625EC0 0x00634BE0 0x00634C20 0x006453E0 0x00645460 0x00645470 0x00645550 0x006456E4 0x00645DD0 0x00645E90
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x005AB600
 
 // BODY GOES HERE.

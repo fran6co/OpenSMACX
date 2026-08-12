@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D8240 BYTE_EXACT FILE
+// name      ?fill@Buffer@@QAEHHHHHH@Z
+// size      66 bytes
+// spans     0x005D8240-0x005D8282
+// prototype int (__thiscall ?fill@Buffer@@QAEHHHHHH@Z)(Buffer* this, int xLeft, int yTop, int length, int width, int)
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DFCD0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D8240
-// name           ?fill@Buffer@@QAEHHHHHH@Z
-// size           66 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

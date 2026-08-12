@@ -30,6 +30,9 @@ ORIGINAL: 0x006120B0
 // spans     0x006120B0-0x006120C3
 // prototype void (__thiscall ?set_text_limits@EditGroup@@QAEXH@Z)(EditGroup* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -47,6 +50,9 @@ ORIGINAL: 0x00612060
 // spans     0x00612060-0x00612079
 // prototype int8* (__thiscall ?get_text@EditGroup@@QAEPADH@Z)(EditGroup* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: pointer to the box's text, null when there is no box
 Status: Complete
 */
@@ -66,6 +72,9 @@ ORIGINAL: 0x00612040
 // spans     0x00612040-0x00612059
 // prototype void (__thiscall ?set_text@EditGroup@@QAEXPADH@Z)(EditGroup* this, int8*, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006151E0
 Return Value: n/a
 Status: Complete
 */

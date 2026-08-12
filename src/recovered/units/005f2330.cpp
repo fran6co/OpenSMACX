@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F2330 FILE
+// name      ?OnLButtonDown@Win@@QAAXPAXJHHI@Z
+// size      571 bytes
+// spans     0x005F2330-0x005F256B
+// prototype 
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F4EC0 0x005F6F10
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F2330
-// name           ?OnLButtonDown@Win@@QAAXPAXJHHI@Z
-// size           571 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043F250 FILE
+// name      ?timer_callback_daemon2@DiploPop@@QAAXHH@Z
+// size      56 bytes
+// spans     0x0043F250-0x0043F288
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D5930 0x0062A070
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043F250
-// name           ?timer_callback_daemon2@DiploPop@@QAAXHH@Z
-// size           56 bytes
 // measured tier  NO_COMPILE
 // refusal        u0043f250.cpp(1) : error C2653: 'DiploPop' : is not a class or namespace name u0043f250.cpp(2) : error C2065: 'DiploPop' : undeclared identifier u0043f250.cpp(2
 //

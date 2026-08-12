@@ -4,6 +4,9 @@
 // spans     0x00630BF0-0x00630C29
 // prototype BOOL (__stdcall sub_630BF0)(LPGUID lpguidSP, LPSTR lpSPName, DWORD dwMajorVersion, DWORD dwMinorVersion, LPVOID lpContext)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401760 0x00645C70
 // 0x00630BF0  sub_630bf0  ->  _sub_630bf0
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

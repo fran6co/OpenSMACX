@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0042A100 BYTE_EXACT FILE
+// name      ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z
+// size      80 bytes
+// spans     0x0042A100-0x0042A150
+// prototype int (__thiscall ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z)(Datalink* this, GraphicWin*)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005DA860
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0042A100
-// name           ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z
-// size           80 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

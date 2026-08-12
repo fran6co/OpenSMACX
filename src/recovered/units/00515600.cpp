@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00515600 FILE
+// name      ?base_names@Console@@QAEXXZ
+// size      56 bytes
+// spans     0x00515600-0x00515638
+// prototype void (__thiscall ?base_names@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0059E5D0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00515600
-// name           ?base_names@Console@@QAEXXZ
-// size           56 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

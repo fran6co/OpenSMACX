@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004CA7F0 FILE
+// name      ?action_staple@@YAXH@Z
+// size      603 bytes
+// spans     0x004CA7F0-0x004CAA4B
+// prototype void (__cdecl ?action_staple@@YAXH@Z)(int baseID)
+// callers   3   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046AF40 0x0047A890 0x0048C0A0 0x0055EEE0 0x00625EC0 0x0064601D
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004CA7F0
-// name           ?action_staple@@YAXH@Z
-// size           603 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

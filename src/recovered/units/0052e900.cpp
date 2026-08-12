@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0052E900 FILE
+// name      ?send_game@NetDaemon@@QAEXXZ
+// size      1075 bytes
+// spans     0x0052E900-0x0052ED33
+// prototype void (__thiscall ?send_game@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00 0x00534400 0x00630A00
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0052E900
-// name           ?send_game@NetDaemon@@QAEXXZ
-// size           1075 bytes
 // measured tier  NO_COMPILE
 // refusal        u0052e900.cpp(73) : error C2664: 'synch' : cannot convert parameter 1 from 'const int' to 'struct int16' Source or target has incomplete type u0052e900.cpp(75) 
 //

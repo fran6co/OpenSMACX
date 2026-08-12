@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00437BA0 FILE
+// name      ?on_mouse_move@DesignWin@@QAEXHH@Z
+// size      53 bytes
+// spans     0x00437BA0-0x00437BD5
+// prototype void (__thiscall ?on_mouse_move@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005F8500 0x005FAB00
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00437BA0
-// name           ?on_mouse_move@DesignWin@@QAEXHH@Z
-// size           53 bytes
 // measured tier  NO_COMPILE
 // refusal        u00437ba0.cpp(52) : error C2065: 'Win' : undeclared identifier u00437ba0.cpp(52) : error C2355: 'this' : can only be referenced inside non-static member functio
 //

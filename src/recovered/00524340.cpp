@@ -4,6 +4,9 @@
 // spans     0x00524340-0x00524363
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x00524340  Demo::timer_callback  ->  _fn_00524340
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

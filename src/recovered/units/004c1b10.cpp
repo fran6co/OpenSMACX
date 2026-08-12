@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C1B10 FILE
+// name      ?vehdraw_compute_facet_normals@@YAXXZ
+// size      487 bytes
+// spans     0x004C1B10-0x004C1CF7
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00628220 0x00628290
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C1B10
-// name           ?vehdraw_compute_facet_normals@@YAXXZ
-// size           487 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

@@ -110,6 +110,9 @@ ORIGINAL: 0x00421670
 // spans     0x00421670-0x004216E9
 // prototype bool (__cdecl ?has_fac@@YA_NHHH@Z)(int facilityID, int baseID, int queueCount)
 // callers   14   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Does base already have or planning on building facility? true/false
 Status: Complete
 */
@@ -140,6 +143,9 @@ ORIGINAL: 0x004E39D0
 // spans     0x004E39D0-0x004E39F3
 // prototype void (__cdecl ?set_base@@YAXH@Z)(int baseID)
 // callers   40   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -156,6 +162,9 @@ ORIGINAL: 0x004E3A00
 // spans     0x004E3A00-0x004E3A4B
 // prototype void (__cdecl ?say_base@@YAXPADH@Z)(int8* strBase, int baseID)
 // callers   13   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
 Return Value: n/a
 Status: Complete
 */
@@ -173,6 +182,10 @@ ORIGINAL: 0x004E3A50
 // spans     0x004E3A50-0x004E3B7F
 // prototype int (__cdecl ?base_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   62   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005108A0 0x00532B70 0x005BF310 0x00625E30 0x006262F0
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Base id or -1 when no base is present
 Status: Complete - testing
 
@@ -201,6 +214,9 @@ ORIGINAL: 0x004E3B80
 // spans     0x004E3B80-0x004E3C5F
 // prototype int (__cdecl ?base_find@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   23   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00644F3A
 Return Value: Base id or -1 if not found 
 Status: Complete
 */
@@ -231,6 +247,9 @@ ORIGINAL: 0x004E3C60
 // spans     0x004E3C60-0x004E3D4B
 // prototype int (__cdecl ?base_find@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   27   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
 Return Value: Base id or -1 if not found
 Status: Complete
 */
@@ -263,6 +282,9 @@ ORIGINAL: 0x004E3D50
 // spans     0x004E3D50-0x004E3EEB
 // prototype int (__cdecl ?base_find@@YAHHHHHHH@Z)(int xCoord, int yCoord, int factionID, int region, int factionID2, int factionID3)
 // callers   14   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
 Return Value: Base id or -1 if not found
 Status: Complete
 */
@@ -305,6 +327,9 @@ ORIGINAL: 0x004E4020
 // spans     0x004E4020-0x004E4090
 // prototype 
 // callers   9   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: Best citizen id (always going to be 1, 4, or 6 based on default weights)
 Status: Complete
 */
@@ -335,6 +360,9 @@ ORIGINAL: 0x004E4090
 // spans     0x004E4090-0x004E4350
 // prototype void (__cdecl ?name_base@@YAXHPADHH@Z)(int factionID, LPSTR nameOut, BOOL isFinal, BOOL isSeaBase)
 // callers   3   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005FD530 0x005FD550 0x005FD570 0x005FD670 0x006453E0 0x00645470 0x00645E90 0x0064FC88 0x0064FDF0
 Return Value: n/a
 Status: Complete
 */
@@ -444,6 +472,9 @@ ORIGINAL: 0x004E4350
 // spans     0x004E4350-0x004E442D
 // prototype void (__cdecl ?base_mark@@YAXH@Z)(int baseID)
 // callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00579E70 0x00591B50 0x00591C10 0x00591D60
 Return Value: n/a
 Status: Complete - testing
 */
@@ -480,6 +511,9 @@ ORIGINAL: 0x004E4430
 // spans     0x004E4430-0x004E46C2
 // prototype int (__cdecl ?cost_factor@@YAHHHH@Z)(uint32_t factionID, uint32_t rscType, int baseID)
 // callers   24   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x00539C00
 Return Value: Cost factor
 Status: Complete
 */
@@ -549,6 +583,9 @@ ORIGINAL: 0x004E4700
 // spans     0x004E4700-0x004E4802
 // prototype int (__cdecl ?base_making@@YAHHH@Z)(int productionID, int baseID)
 // callers   4   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Fixed value (-1, 0, 1, 2, 3, -70) or productionID
 Status: Complete
 */
@@ -597,6 +634,9 @@ ORIGINAL: 0x004E4810
 // spans     0x004E4810-0x004E48B0
 // prototype int (__cdecl ?base_lose_minerals@@YAHHH@Z)(int baseID, int)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E4700
 Return Value: Minerals that would be lost or 0 if not applicable.
 Status: Complete
 */
@@ -621,6 +661,9 @@ ORIGINAL: 0x004E48B0
 // spans     0x004E48B0-0x004E48FA
 // prototype void (__cdecl ?set_fac@@YAXHHH@Z)(int facilityID, int baseID, BOOL set)
 // callers   10   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: n/a
 Status: Complete
 */
@@ -643,6 +686,9 @@ ORIGINAL: 0x004E4900
 // spans     0x004E4900-0x004E4952
 // prototype int (__cdecl has_fac_announced)(int factionID, int facilityID)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Has the facility audio blurb played? true/false
 Status: Complete
 */
@@ -663,6 +709,9 @@ ORIGINAL: 0x004E4960
 // spans     0x004E4960-0x004E49CA
 // prototype int (__cdecl set_fac_announced)(int factionID, int facilityID, int set)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: n/a
 Status: Complete
 */
@@ -685,6 +734,9 @@ ORIGINAL: 0x004E4AA0
 // spans     0x004E4AA0-0x004E4B7B
 // prototype void (__cdecl ?base_first@@YAXH@Z)(int baseID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BA910
 Return Value: n/a
 Status: Complete
 */
@@ -726,6 +778,9 @@ ORIGINAL: 0x004E6400
 // spans     0x004E6400-0x004E65B1
 // prototype int (__cdecl ?morale_mod@@YAHHHH@Z)(int baseID, int factionID, int triad)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Morale bonus modifier
 Status: Complete
 */
@@ -765,6 +820,9 @@ ORIGINAL: 0x004E65C0
 // spans     0x004E65C0-0x004E673D
 // prototype int (__cdecl ?breed_mod@@YAHHH@Z)(int baseID, int factionID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Lifecycle bonus
 Status: Complete
 */
@@ -800,6 +858,9 @@ ORIGINAL: 0x004E6740
 // spans     0x004E6740-0x004E68AB
 // prototype int (__cdecl ?worm_mod@@YAHHH@Z)(int baseID, int factionID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00421670
 Return Value: Native life modifier count
 Status: Complete
 */
@@ -859,6 +920,9 @@ ORIGINAL: 0x004E6E50
 // spans     0x004E6E50-0x004E7306
 // prototype int (__cdecl ?crop_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)
 // callers   10   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x00592030 0x005B9F20
 Return Value: Nutrients from the square
 Status: Complete
 
@@ -1024,6 +1088,9 @@ ORIGINAL: 0x004E7310
 // spans     0x004E7310-0x004E7748
 // prototype int (__cdecl ?mine_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)
 // callers   6   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00 0x00592030 0x005B9F20
 Return Value: Minerals from the square
 Status: Complete
 
@@ -1164,6 +1231,9 @@ ORIGINAL: 0x004E7750
 // spans     0x004E7750-0x004E7DA3
 // prototype int (__cdecl ?energy_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)
 // callers   8   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x00592030 0x005B9F20
 Return Value: Energy from the square
 Status: Complete
 
@@ -1386,6 +1456,9 @@ ORIGINAL: 0x004E9550
 // spans     0x004E9550-0x004E9B4A
 // prototype 
 // callers   7   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0 0x004E6E50 0x004E7310 0x004E7750 0x0050BA00 0x005BF1F0
 Return Value: n/a
 Status: Complete
 
@@ -1589,6 +1662,9 @@ ORIGINAL: 0x004E9B70
 // spans     0x004E9B70-0x004E9CAD
 // prototype 
 // callers   7   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: n/a
 Status: Complete
 */
@@ -1627,6 +1703,9 @@ ORIGINAL: 0x004E9CB0
 // spans     0x004E9CB0-0x004EA1EF
 // prototype 
 // callers   7   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00421670 0x0050BA00
 Return Value: n/a
 Status: Complete
 */
@@ -1725,6 +1804,9 @@ ORIGINAL: 0x004EA1F0
 // spans     0x004EA1F0-0x004EA495
 // prototype 
 // callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x00644F3A
 Return Value: Amount of energy inefficiency
 Status: Complete
 */
@@ -1786,6 +1868,9 @@ ORIGINAL: 0x004EA540
 // spans     0x004EA540-0x004EB481
 // prototype 
 // callers   1   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00421670 0x0050BA00 0x005B8E10 0x005BF1F0 0x005BFE90
 Return Value: n/a
 Status: WIP
 */
@@ -1887,6 +1972,9 @@ ORIGINAL: 0x004EB490
 // spans     0x004EB490-0x004EB551
 // prototype int (__cdecl ?base_rank@@YAHHH@Z)(int factionID, int minBasesToRank)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00628A50 0x00645550
 Return Value: Base id for the specified rank position or -1 for invalid requests
 Status: Complete
 */
@@ -1919,6 +2007,9 @@ ORIGINAL: 0x004EEF80
 // spans     0x004EEF80-0x004EF087
 // prototype int (__cdecl ?pop_goal_fac@@YAHH@Z)(int baseID)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Facility id needed for pop growth or zero if base already has Hab Complex and Dome.
 Status: Complete
 */
@@ -1944,6 +2035,9 @@ ORIGINAL: 0x004EF090
 // spans     0x004EF090-0x004EF1B2
 // prototype int (__cdecl ?pop_goal@@YAHH@Z)(int baseID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Goal population
 Status: Complete
 */
@@ -1979,6 +2073,9 @@ ORIGINAL: 0x004F06E0
 // spans     0x004F06E0-0x004F07D8
 // prototype int (__cdecl ?base_queue@@YAHH@Z)(int baseID)
 // callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004455F0 0x0046AEF0 0x005BA0E0 0x005BA910
 Return Value: Is there a valid item in queue to be built? true/false
 Status: Complete
 */
@@ -2015,6 +2112,9 @@ ORIGINAL: 0x004F4DC0
 // spans     0x004F4DC0-0x004F4E73
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -2041,6 +2141,9 @@ ORIGINAL: 0x004F6510
 // spans     0x004F6510-0x004F65E7
 // prototype int (__cdecl ?fac_maint@@YAHHH@Z)(int facilityID, int factionID)
 // callers   7   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057EFA0 0x005B9F20
 Return Value: Facility maintenance cost
 Status: Complete
 */
@@ -2073,6 +2176,9 @@ ORIGINAL: 0x004F65F0
 // spans     0x004F65F0-0x004F67E3
 // prototype 
 // callers   1   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048C650 0x004E4430 0x004F6510 0x0050BA00 0x00625E50
 Return Value: Base maintenance cost
 Status: Complete
 */
@@ -2119,6 +2225,9 @@ ORIGINAL: 0x004F7FE0
 // spans     0x004F7FE0-0x004F8087
 // prototype void (__cdecl ?make_base_unique@@YAXH@Z)(int baseID)
 // callers   3   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645470 0x00645660 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -2148,6 +2257,9 @@ ORIGINAL: 0x004F80D0
 // spans     0x004F80D0-0x004F8103
 // prototype int (__cdecl ?has_project@@YAHHH@Z)(int projectID, int factionID)
 // callers   8   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Does faction have Secret Project? true/false
 Status: Complete
 */
@@ -2164,6 +2276,9 @@ ORIGINAL: 0x00500290
 // spans     0x00500290-0x005002DE
 // prototype bool (__cdecl ?has_fac_built@@YA_NH@Z)(int facilityID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Does current base have facility? true/false
 Status: Complete
 */
@@ -2193,6 +2308,9 @@ ORIGINAL: 0x005002E0
 // spans     0x005002E0-0x005002EF
 // prototype int (__cdecl ?base_project@@YAHH@Z)(int projectID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Base id, if not built (-1) or destroyed (-2)
 Status: Complete
 */
@@ -2208,6 +2326,9 @@ ORIGINAL: 0x0054ACC0
 // spans     0x0054ACC0-0x0054AF9D
 // prototype 
 // callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3C60 0x004E3D50 0x00644F3A
 Return Value: Base id of the suggested target, or -1 if the pair has no shared target
 Status: Complete
 
@@ -2305,6 +2426,9 @@ ORIGINAL: 0x0054AFA0
 // spans     0x0054AFA0-0x0054B137
 // prototype int (__cdecl ?attack_from@@YAHHH@Z)(int baseID, int factionID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
 Return Value: Base id to attack from or 0 
 Status: Complete
 */
@@ -2340,6 +2464,9 @@ ORIGINAL: 0x0054CB50
 // spans     0x0054CB50-0x0054CF39
 // prototype int (__cdecl ?value_of_base@@YAHHHHHH@Z)(int baseID, int factionIDReq, int factionIDRes, int baseIDCounter, int tgl)
 // callers   3   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x0050BA00 0x0059E980 0x005AC060 0x005B8E10 0x005BFE90 0x00645660
 Return Value: Value of base or -1 for invalid requests
 Status: Complete - testing
 */
@@ -2455,6 +2582,9 @@ ORIGINAL: 0x00560B30
 // spans     0x00560B30-0x00560D30
 // prototype int (__cdecl ?garrison_check@@YAHH@Z)(int baseID)
 // callers   4   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x005AC060 0x005C8BA0
 Return Value: Amount of non-offensive units needed (1-10)
 Status: Complete
 */
@@ -2504,6 +2634,9 @@ ORIGINAL: 0x00560D30 BYTE_EXACT
 // spans     0x00560D30-0x00560D4D
 // prototype int (__cdecl ?defensive_check@@YAHH@Z)(int baseID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00560B30
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */
@@ -2514,6 +2647,9 @@ ORIGINAL: 0x00560D30
 // spans     0x00560D30-0x00560D4D
 // prototype int (__cdecl ?defensive_check@@YAHH@Z)(int baseID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00560B30
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */
@@ -2536,6 +2672,9 @@ ORIGINAL: 0x00579A00
 // spans     0x00579A00-0x00579A30
 // prototype int (__cdecl ?is_port@@YAHHH@Z)(int baseID, int isBaseRadius)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E49D0
 Return Value: Is base a port? true/false
 Status: Complete
 */
@@ -2552,6 +2691,9 @@ ORIGINAL: 0x0059E980
 // spans     0x0059E980-0x0059EA73
 // prototype int (__cdecl ?vulnerable@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00 0x00644F3A
 Return Value: Radial distance between coordinates and faction's HQ or 12 if no HQ/bases
 Status: Complete
 */
@@ -2574,6 +2716,9 @@ ORIGINAL: 0x005AC060
 // spans     0x005AC060-0x005AC10B
 // prototype int (__cdecl ?is_objective@@YAHH@Z)(int baseID)
 // callers   14   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Is base an objective? true/false
 Status: Complete
 */
@@ -2604,6 +2749,9 @@ ORIGINAL: 0x005AC110
 // spans     0x005AC110-0x005AC599
 // prototype int (__cdecl ?num_objectives@@YAHHH@Z)(int factionID, int)
 // callers   9   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x0050BA00 0x0050BA30 0x005AC110 0x005B9F20
 Return Value: Objective count, or zero for an eliminated faction
 Status: Complete
 
@@ -2748,6 +2896,9 @@ ORIGINAL: 0x005AC630
 // spans     0x005AC630-0x005AC67A
 // prototype int (__cdecl ?transcending@@YAHH@Z)(int factionID)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is faction transcending? true/false
 Status: Complete
 */
@@ -2772,6 +2923,9 @@ ORIGINAL: 0x005AC680
 // spans     0x005AC680-0x005AC68F
 // prototype int (__cdecl ?ascending@@YAHH@Z)(int factionID)
 // callers   4   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Has Voice of Planet been built? true/false
 Status: Complete
 */
@@ -2787,6 +2941,9 @@ ORIGINAL: 0x005BA030
 // spans     0x005BA030-0x005BA0DD
 // prototype int (__cdecl ?redundant@@YAHHH@Z)(int facilityID, int factionID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is facility redundant? true/false
 Status: Complete
 */
@@ -2830,6 +2987,9 @@ ORIGINAL: 0x005BA0E0
 // spans     0x005BA0E0-0x005BA90A
 // prototype int (__cdecl ?facility_avail@@YAHHHHH@Z)(int facilityID, int factionID, int baseID, int queueCount)
 // callers   5   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00421670 0x004E49D0 0x004F80D0 0x0050BA00 0x00645470 0x00645660
 Return Value: Is facility or Secret Project available to faction, base and game mode? true/false
 Status: Complete
 */

@@ -4,6 +4,9 @@
 // spans     0x00618E50-0x00618E68
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00649EAC
 // 0x00618E50  ?vx_write@Caviar@@SAXHPAXJ@Z  ->  ?vx_write@Caviar@@SAXHPAXJ@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

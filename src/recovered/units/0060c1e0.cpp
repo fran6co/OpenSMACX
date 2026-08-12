@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060C1E0 FILE
+// name      ?UNK1@ListBox@@QAEXH@Z
+// size      351 bytes
+// spans     0x0060C1E0-0x0060C33F
+// prototype void (__thiscall ?UNK1@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005DFF00
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060C1E0
-// name           ?UNK1@ListBox@@QAEXH@Z
-// size           351 bytes
 // measured tier  NO_COMPILE
 // refusal        u0060c1e0.cpp(276) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

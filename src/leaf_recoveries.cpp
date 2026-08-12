@@ -91,6 +91,9 @@ ORIGINAL: 0x00628180 BYTE_EXACT
 // spans     0x00628180-0x006281A5
 // prototype 
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -122,6 +125,9 @@ ORIGINAL: 0x006281B0 BYTE_EXACT
 // spans     0x006281B0-0x006281D5
 // prototype 
 // callers   5   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -132,6 +138,9 @@ ORIGINAL: 0x006281B0
 // spans     0x006281B0-0x006281D5
 // prototype 
 // callers   5   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -176,6 +185,9 @@ ORIGINAL: 0x00634650 BYTE_EXACT
 // spans     0x00634650-0x0063466B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the dot product, in ST(0)
 Status: Complete
 */
@@ -186,6 +198,9 @@ ORIGINAL: 0x00634650
 // spans     0x00634650-0x0063466B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the dot product, in ST(0)
 Status: Complete
 */
@@ -222,6 +237,9 @@ ORIGINAL: 0x00559210 BYTE_EXACT
 // spans     0x00559210-0x00559221
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: the largest multiple of `step` no further from zero than `value`
 Status: Complete
 */
@@ -246,6 +264,9 @@ ORIGINAL: 0x005E3630
 // spans     0x005E3630-0x005E3644
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the dword two links away, or 0
 Status: Complete
 */
@@ -256,6 +277,9 @@ ORIGINAL: 0x005E3630
 // spans     0x005E3630-0x005E3644
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the dword two links away, or 0
 Status: Complete
 */
@@ -293,6 +317,9 @@ ORIGINAL: 0x005E3650 BYTE_EXACT
 // spans     0x005E3650-0x005E3660
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: field 0x10 + field 0, or field 0xc
 Status: Complete
 */
@@ -331,6 +358,9 @@ ORIGINAL: 0x005E3660 BYTE_EXACT
 // spans     0x005E3660-0x005E368E
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -360,6 +390,9 @@ ORIGINAL: 0x004482F0 BYTE_EXACT
 // spans     0x004482F0-0x0044830C
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0 on success, 10 when the argument is zero
 Status: Complete
 */
@@ -388,6 +421,9 @@ ORIGINAL: 0x004C8070 BYTE_EXACT
 // spans     0x004C8070-0x004C8089
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: `this`
 Status: Complete
 */
@@ -417,6 +453,9 @@ ORIGINAL: 0x006347C0
 // spans     0x006347C0-0x006347F0
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -427,6 +466,9 @@ ORIGINAL: 0x006347C0
 // spans     0x006347C0-0x006347F0
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -462,6 +504,9 @@ ORIGINAL: 0x006348F0
 // spans     0x006348F0-0x00634920
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -489,6 +534,9 @@ ORIGINAL: 0x006348C0
 // spans     0x006348C0-0x006348E7
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -499,6 +547,9 @@ ORIGINAL: 0x006348C0
 // spans     0x006348C0-0x006348E7
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -538,6 +589,9 @@ ORIGINAL: 0x006344E0 BYTE_EXACT
 // spans     0x006344E0-0x00634513
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: true when every component matches, or is unordered
 Status: Complete
 */
@@ -548,6 +602,9 @@ ORIGINAL: 0x006344E0
 // spans     0x006344E0-0x00634513
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: true when the three components compare equal or unordered
 Status: Complete
 */
@@ -588,6 +645,9 @@ ORIGINAL: 0x006281E0
 // spans     0x006281E0-0x00628217
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the length, in ST(0)
 Status: Complete
 */
@@ -630,6 +690,9 @@ ORIGINAL: 0x0063BEB0 BYTE_EXACT
 // spans     0x0063BEB0-0x0063BED1
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: (field 0x3798 * argument) / 600
 Status: Complete
 */
@@ -654,6 +717,9 @@ ORIGINAL: 0x0063BEE0 BYTE_EXACT
 // spans     0x0063BEE0-0x0063BF01
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: (field 0x379c * argument) / 440
 Status: Complete
 */
@@ -683,6 +749,9 @@ ORIGINAL: 0x0057DEE0 BYTE_EXACT
 // spans     0x0057DEE0-0x0057DEFC
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -693,6 +762,9 @@ ORIGINAL: 0x0057DEE0
 // spans     0x0057DEE0-0x0057DEFC
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -728,6 +800,9 @@ ORIGINAL: 0x006252C0 BYTE_EXACT
 // spans     0x006252C0-0x006252DE
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: a pointer to the slot that was current on entry
 Status: Complete
 */
@@ -738,6 +813,9 @@ ORIGINAL: 0x006252C0
 // spans     0x006252C0-0x006252DE
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: a pointer to the slot that was current on entry
 Status: Complete
 */
@@ -773,6 +851,9 @@ ORIGINAL: 0x00408470 BYTE_EXACT
 // spans     0x00408470-0x0040848A
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: (a->[0x14] - a->[0x10] + b) / 2
 Status: Complete
 */
@@ -803,6 +884,9 @@ ORIGINAL: 0x005AD450 BYTE_EXACT
 // spans     0x005AD450-0x005AD470
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -813,6 +897,9 @@ ORIGINAL: 0x005AD450
 // spans     0x005AD450-0x005AD470
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -851,6 +938,9 @@ ORIGINAL: 0x005CC430 BYTE_EXACT
 // spans     0x005CC430-0x005CC44B
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: how many of bits 0..30 are set
 Status: Complete
 */
@@ -886,6 +976,9 @@ ORIGINAL: 0x005D7A10 BYTE_EXACT
 // spans     0x005D7A10-0x005D7A2F
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 3 with no structure, 0 when field 0xc is set, 7 when it is not
 Status: Complete
 */
@@ -922,6 +1015,9 @@ ORIGINAL: 0x005D5470
 // spans     0x005D5470-0x005D5492
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7A10
 Return Value: whatever 005D7A10 returns
 Status: Complete
 */
@@ -951,6 +1047,9 @@ ORIGINAL: 0x00642940 BYTE_EXACT
 // spans     0x00642940-0x0064295F
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the low `count` bits, reversed
 Status: Complete
 */
@@ -961,6 +1060,9 @@ ORIGINAL: 0x00642940
 // spans     0x00642940-0x0064295F
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the low `count` bits of `value`, reversed
 Status: Complete
 */
@@ -1001,6 +1103,9 @@ ORIGINAL: 0x0063E7F0
 // spans     0x0063E7F0-0x0063E81C
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: node->[8]
 Status: Complete
 */
@@ -1041,6 +1146,9 @@ ORIGINAL: 0x00532A50 BYTE_EXACT
 // spans     0x00532A50-0x00532A81
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the quotient that was stored
 Status: Complete
 */
@@ -1051,6 +1159,9 @@ ORIGINAL: 0x00532A50
 // spans     0x00532A50-0x00532A81
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the quotient, rounded up when the division is not exact
 Status: Complete
 */
@@ -1090,6 +1201,9 @@ ORIGINAL: 0x00592DB0 BYTE_EXACT
 // spans     0x00592DB0-0x00592DDC
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1 when inside, 0 otherwise
 Status: Complete
 */
@@ -1123,6 +1237,9 @@ ORIGINAL: 0x006161A0
 // spans     0x006161A0-0x006161CA
 // prototype void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F2CA0
 Return Value: 1 when both hold focus, 0 otherwise
 Status: Complete
 */
@@ -1164,6 +1281,9 @@ ORIGINAL: 0x005AD4C0
 // spans     0x005AD4C0-0x005AD500
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 3 * index on a hit, 512 on a miss
 Status: Complete
 */
@@ -1207,6 +1327,9 @@ ORIGINAL: 0x005CBBC0
 // spans     0x005CBBC0-0x005CBBF5
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1250,6 +1373,9 @@ ORIGINAL: 0x0052DCA0
 // spans     0x0052DCA0-0x0052DCC1
 // prototype void (__thiscall ??0DeletionList@@QAE@XZ)(DeletionList* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: `this`
 Status: Complete
 */
@@ -1290,6 +1416,9 @@ ORIGINAL: 0x004041C0
 // spans     0x004041C0-0x004041D2
 // prototype bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00600320
 Return Value: 1 when playing, 0 otherwise
 Status: Complete
 */
@@ -1315,6 +1444,9 @@ ORIGINAL: 0x004BEA30
 // spans     0x004BEA30-0x004BEA4C
 // prototype void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7210
 Return Value: `this`
 Status: Complete
 */
@@ -1348,6 +1480,9 @@ ORIGINAL: 0x00432970
 // spans     0x00432970-0x004329AF
 // prototype void (__thiscall ?close@SelectPartWin@@QAEXXZ)(SelectPartWin* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x005D7470
 Return Value: n/a
 Status: Complete
 */
@@ -1398,6 +1533,9 @@ ORIGINAL: 0x0063D420
 // spans     0x0063D420-0x0063D44F
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1446,6 +1584,9 @@ ORIGINAL: 0x006252E0
 // spans     0x006252E0-0x00625306
 // prototype void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00606F30
 Return Value: `this`
 Status: Complete
 */
@@ -1474,6 +1615,9 @@ ORIGINAL: 0x00625330
 // spans     0x00625330-0x0062533F
 // prototype void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1500,6 +1644,9 @@ ORIGINAL: 0x00625340
 // spans     0x00625340-0x0062537A
 // prototype int (__thiscall ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z)(ImageButton* this, int, int8*, int, int, int, int, int, Win*, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00607210
 Return Value: whatever BaseButton::init returns
 Status: Complete
 */
@@ -1537,6 +1684,9 @@ ORIGINAL: 0x0059D230
 // spans     0x0059D230-0x0059D243
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00612A70
 Return Value: whatever Dialogs::item returns
 Status: Complete
 */
@@ -1564,6 +1714,9 @@ ORIGINAL: 0x00484B60
 // spans     0x00484B60-0x00484B7F
 // prototype void (__thiscall ?close@PickTech@@QAEXXZ)(PickTech* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1620,6 +1773,9 @@ ORIGINAL: 0x004080B0
 // spans     0x004080B0-0x004080D3
 // prototype 
 // callers   3   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00608E10 0x00609EC0
 Return Value: n/a
 Status: Complete
 */
@@ -1645,6 +1801,9 @@ ORIGINAL: 0x00406AF0
 // spans     0x00406AF0-0x00406B16
 // prototype 
 // callers   9   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00406910 0x005D4DD0 0x00608E10
 Return Value: n/a
 Status: Complete
 */
@@ -1693,6 +1852,9 @@ ORIGINAL: 0x00455E50
 // spans     0x00455E50-0x00455E73
 // prototype 
 // callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410
 Return Value: n/a
 Status: Complete
 */
@@ -1710,6 +1872,9 @@ ORIGINAL: 0x0049FFC0 BYTE_EXACT
 // spans     0x0049FFC0-0x0049FFCD
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0049FE40
 Status: Complete
 */
 void __cdecl sat_anim_daemon(int a1) {
@@ -1723,6 +1888,9 @@ ORIGINAL: 0x004A0250 BYTE_EXACT
 // spans     0x004A0250-0x004A025D
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004A0100
 Status: Complete
 */
 void __cdecl sat_expl_daemon(int a1) {
@@ -1736,6 +1904,9 @@ ORIGINAL: 0x004A4050 BYTE_EXACT
 // spans     0x004A4050-0x004A405D
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004A4060
 Status: Complete
 */
 void __cdecl bl_daemon(int a1) {
@@ -1749,6 +1920,9 @@ ORIGINAL: 0x00401520
 // spans     0x00401520-0x0040155E
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00644EF2
 Status: Complete
 */
 extern "C" int __stdcall sub_401520(int a1) {
@@ -1795,6 +1969,9 @@ ORIGINAL: 0x00401BE0
 // spans     0x00401BE0-0x00401C79
 // prototype 
 // callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 extern "C" __declspec(naked) int __cdecl sub_401be0() {
@@ -1878,6 +2055,9 @@ ORIGINAL: 0x0044C860 BYTE_EXACT
 // spans     0x0044C860-0x0044C86D
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1892,6 +2072,9 @@ ORIGINAL: 0x004E2450 BYTE_EXACT
 // spans     0x004E2450-0x004E245D
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1907,6 +2090,9 @@ ORIGINAL: 0x004E7DB0 BYTE_EXACT
 // spans     0x004E7DB0-0x004E7DBD
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: zero
 Status: Complete
 */
@@ -1922,6 +2108,9 @@ ORIGINAL: 0x006051C0 BYTE_EXACT
 // spans     0x006051C0-0x006051CE
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1947,6 +2136,9 @@ ORIGINAL: 0x00627830 BYTE_EXACT
 // spans     0x00627830-0x00627854
 // prototype int (__cdecl ?pop_ask@@YAHPADPADHP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int, int (__cdecl *)(), int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00627910
 Status: Complete
 */
 int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
@@ -1965,6 +2157,9 @@ ORIGINAL: 0x0063BAC0 BYTE_EXACT
 // spans     0x0063BAC0-0x0063BAD9
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0063B9B0
 Status: Complete
 */
 int __cdecl cos(int a1, int a2) {

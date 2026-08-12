@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0050F680 FILE
+// name      ?on_nc_hittest@Console@@QAEXHH@Z
+// size      721 bytes
+// spans     0x0050F680-0x0050F951
+// prototype void (__thiscall ?on_nc_hittest@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FA7E0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0050F680
-// name           ?on_nc_hittest@Console@@QAEXHH@Z
-// size           721 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

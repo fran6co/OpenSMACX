@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00476A00 BYTE_EXACT FILE
+// name      ?on_key_click@MonuWin@@QAEHHH@Z
+// size      66 bytes
+// spans     0x00476A00-0x00476A42
+// prototype int (__thiscall ?on_key_click@MonuWin@@QAEHHH@Z)(MonuWin* this, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4E40
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00476A00
-// name           ?on_key_click@MonuWin@@QAEHHH@Z
-// size           66 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

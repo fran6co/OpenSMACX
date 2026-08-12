@@ -4,6 +4,9 @@
 // spans     0x00646855-0x00646886
 // prototype 
 // callers   1   call targets   3
+// kind      library
+// flags     lib;hidden;sp_ready;purged_ok
+// calls     0x00647C37 0x00647C89 0x0064A09C
 // 0x00646855  _fgetc  ->  _fgetc
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

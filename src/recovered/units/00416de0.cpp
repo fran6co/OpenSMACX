@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00416DE0 FILE
+// name      ?add_queue@BaseWin@@QAEXHH@Z
+// size      456 bytes
+// spans     0x00416DE0-0x00416FA8
+// prototype void (__thiscall ?add_queue@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0040E360 0x00415080
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00416DE0
-// name           ?add_queue@BaseWin@@QAEXHH@Z
-// size           456 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

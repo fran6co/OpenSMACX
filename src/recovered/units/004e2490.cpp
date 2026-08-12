@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004E2490 FILE
+// name      ??0AlphaNet@@QAE@XZ
+// size      309 bytes
+// spans     0x004E2490-0x004E25A5;0x0065C610-0x0065C630
+// prototype void (__thiscall ??0AlphaNet@@QAE@XZ)(AlphaNet* this)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4560 0x0062D6A0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004E2490
-// name           ??0AlphaNet@@QAE@XZ
-// size           309 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

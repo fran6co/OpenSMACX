@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004BFC70 FILE
+// name      ?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z
+// size      394 bytes
+// spans     0x004BFC70-0x004BFDFA
+// prototype 
+// callers   1   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C1D20 0x004C3090 0x006171A0 0x00617230 0x00618370 0x006183B0 0x00618470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004BFC70
-// name           ?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z
-// size           394 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

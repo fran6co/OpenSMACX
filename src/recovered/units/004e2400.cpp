@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004E2400 FILE
+// name      sub_4e2400
+// size      68 bytes
+// spans     0x004E2400-0x004E2444
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004E2400
-// name           sub_4e2400
-// size           68 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

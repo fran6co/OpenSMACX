@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004D6070 FILE
+// name      ?goto_routine@Console@@QAAXH@Z
+// size      294 bytes
+// spans     0x004D6070-0x004D6196
+// prototype 
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0048AE40 0x0048AF20 0x0048AF30 0x0048B3F0 0x0048B630 0x0048B8E0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004D6070
-// name           ?goto_routine@Console@@QAAXH@Z
-// size           294 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

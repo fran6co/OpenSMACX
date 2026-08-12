@@ -4,6 +4,9 @@
 // spans     0x00422DE0-0x00422E06
 // prototype void (__thiscall ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z)(BattleWin* this, int, int, int)
 // callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045CCB0 0x0045D380
 // 0x00422DE0  ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z  ->  ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

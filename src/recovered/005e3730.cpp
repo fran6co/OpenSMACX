@@ -4,6 +4,9 @@
 // spans     0x005E3730-0x005E376B
 // prototype int (__stdcall sub_5E3730)(LPCSTR lpString, int, int y, int)
 // callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD020 0x006453E0
 // 0x005E3730  sub_5e3730  ->  _sub_5e3730
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

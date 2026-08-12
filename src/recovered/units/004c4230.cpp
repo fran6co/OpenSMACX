@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C4230 FILE
+// name      ?UNK2@WorldWin@@QAEXH@Z
+// size      448 bytes
+// spans     0x004C4230-0x004C43F0
+// prototype void (__thiscall ?UNK2@WorldWin@@QAEXH@Z)(WorldWin* this, int)
+// callers   0   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x00592A80 0x00592AF0 0x005D5250 0x005D79C0 0x005DFF00
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C4230
-// name           ?UNK2@WorldWin@@QAEXH@Z
-// size           448 bytes
 // measured tier  MISMATCH
 // divergence     44
 //

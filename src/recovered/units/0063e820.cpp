@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0063E820 FILE
+// name      sub_63e820
+// size      59 bytes
+// spans     0x0063E820-0x0063E85B
+// prototype 
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0063E820
-// name           sub_63e820
-// size           59 bytes
 // measured tier  MISMATCH
 // divergence     14
 //

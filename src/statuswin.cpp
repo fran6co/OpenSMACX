@@ -27,6 +27,9 @@ ORIGINAL: 0x004B9F80 BYTE_EXACT
 // spans     0x004B9F80-0x004B9F81
 // prototype void (__thiscall ?close@StatusWin@@QAEXXZ)(StatusWin* this)
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -46,6 +49,9 @@ ORIGINAL: 0x004B9F90
 // spans     0x004B9F90-0x004B9FB8
 // prototype void (__thiscall ?set_loc@StatusWin@@QAEXHH@Z)(StatusWin* this, int, int)
 // callers   8   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -73,6 +79,9 @@ ORIGINAL: 0x004B8970
 // spans     0x004B8970-0x004B898F
 // prototype void (__thiscall ?reset@StatusWin@@QAEXXZ)(StatusWin* this)
 // callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

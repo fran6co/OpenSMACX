@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F2940 FILE
+// name      ?set_rects@Win@@QAEXXZ
+// size      378 bytes
+// spans     0x005F2940-0x005F2ABA
+// prototype void (__thiscall ?set_rects@Win@@QAEXXZ)(Win* this)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7670 0x005DE8F0 0x005DFB50
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F2940
-// name           ?set_rects@Win@@QAEXXZ
-// size           378 bytes
 // measured tier  MISMATCH
 // divergence     29
 //

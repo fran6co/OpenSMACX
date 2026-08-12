@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0046EC10 FILE
+// name      ?on_right_down@MapWin@@QAEXHH@Z
+// size      273 bytes
+// spans     0x0046EC10-0x0046ED21
+// prototype void (__thiscall ?on_right_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B4A20
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0046EC10
-// name           ?on_right_down@MapWin@@QAEXHH@Z
-// size           273 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

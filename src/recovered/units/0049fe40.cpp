@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0049FE40 FILE
+// name      ?sat_anim@ReportWin@@QAEXXZ
+// size      375 bytes
+// spans     0x0049FE40-0x0049FFB7
+// prototype void (__thiscall ?sat_anim@ReportWin@@QAEXXZ)(ReportWin* this)
+// callers   3   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5350 0x005D5440 0x005D5930 0x005D8370 0x0062A070 0x006458C8
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0049FE40
-// name           ?sat_anim@ReportWin@@QAEXXZ
-// size           375 bytes
 // measured tier  MISMATCH
 // divergence     36
 //

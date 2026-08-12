@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0044CB80 FILE
+// name      ?help_create_link@@YAXPAD00@Z
+// size      66 bytes
+// spans     0x0044CB80-0x0044CBC2
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645470
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0044CB80
-// name           ?help_create_link@@YAXPAD00@Z
-// size           66 bytes
 // measured tier  NO_COMPILE
 // refusal        u0044cb80.cpp(65) : error C2664: 'my_strcat' : cannot convert parameter 1 from 'struct int8 *' to 'char *' Types pointed to are unrelated; conversion requires r
 //

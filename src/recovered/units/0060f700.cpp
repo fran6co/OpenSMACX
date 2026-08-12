@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060F700 FILE
+// name      ?on_left_down@CheckBox@@QAEXHH@Z
+// size      432 bytes
+// spans     0x0060F700-0x0060F8B0
+// prototype void (__thiscall ?on_left_down@CheckBox@@QAEXHH@Z)(CheckBox* this, int xCoord, int yCoord)
+// callers   1   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401560 0x005D5890 0x00609AF0 0x00609B50 0x0060EB80 0x0060F030
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060F700
-// name           ?on_left_down@CheckBox@@QAEXHH@Z
-// size           432 bytes
 // measured tier  MISMATCH
 // divergence     12
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00454FC0 FILE
+// name      ?load_cursors@@YAXXZ
+// size      1075 bytes
+// spans     0x00454FC0-0x004553F3
+// prototype 
+// callers   2   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D7470 0x005D7DE0 0x005DE580 0x005E2210 0x005E39A0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00454FC0
-// name           ?load_cursors@@YAXXZ
-// size           1075 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

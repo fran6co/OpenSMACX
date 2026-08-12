@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005EC9A0 BYTE_EXACT FILE
+// name      ?set_parent_dialog@Win@@QAEXPAVWin@@@Z
+// size      440 bytes
+// spans     0x005EC9A0-0x005ECB58
+// prototype void (__thiscall ?set_parent_dialog@Win@@QAEXPAVWin@@@Z)(Win* this, Win*)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005D4680
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005EC9A0
-// name           ?set_parent_dialog@Win@@QAEXPAVWin@@@Z
-// size           440 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

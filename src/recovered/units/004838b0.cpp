@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004838B0 FILE
+// name      ??__Fg_NEWTECHWIN_SPRITES@@YAXXZ
+// size      40 bytes
+// spans     0x004838B0-0x004838D8
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006456E4
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004838B0
-// name           ??__Fg_NEWTECHWIN_SPRITES@@YAXXZ
-// size           40 bytes
 // measured tier  NO_COMPILE
 // refusal        u004838b0.cpp(44) : error C4234: nonstandard extension used : '__thiscall' keyword reserved for future use
 //

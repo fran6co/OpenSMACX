@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00633750 FILE
+// name      ??0CheckButton@@QAE@XZ
+// size      77 bytes
+// spans     0x00633750-0x0063379D
+// prototype void (__thiscall ??0CheckButton@@QAE@XZ)(CheckButton* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4CF0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00633750
-// name           ??0CheckButton@@QAE@XZ
-// size           77 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

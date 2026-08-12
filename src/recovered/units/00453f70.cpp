@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00453F70 FILE
+// name      ?load_flags@@YAXXZ
+// size      785 bytes
+// spans     0x00453F70-0x00454261;0x0065513A-0x0065515A
+// prototype 
+// callers   4   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D7470 0x005D7DE0 0x005DE580 0x005E39A0 0x005EAD9F 0x005EAE4F 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00453F70
-// name           ?load_flags@@YAXXZ
-// size           785 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

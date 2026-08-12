@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048BD80 FILE
+// name      ??1PlanWin@@QAE@XZ
+// size      548 bytes
+// spans     0x0048BD80-0x0048BED6;0x00658210-0x006582DE
+// prototype void (__thiscall ??1PlanWin@@QAE@XZ)(PlanWin* this)
+// callers   2   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462870 0x005D7410 0x00618EE0 0x006252B0 0x006456E4
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048BD80
-// name           ??1PlanWin@@QAE@XZ
-// size           548 bytes
 // measured tier  NO_COMPILE
 // refusal        u0048bd80.cpp(193) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

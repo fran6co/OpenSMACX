@@ -29,6 +29,9 @@ ORIGINAL: 0x00619650 BYTE_EXACT
 // spans     0x00619650-0x00619660
 // prototype void (__thiscall ??0Texture@@QAE@XZ)(Texture* this)
 // callers   5   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -50,6 +53,9 @@ ORIGINAL: 0x00619660
 // spans     0x00619660-0x00619685
 // prototype void (__thiscall ??1Texture@@QAE@XZ)(Texture* this)
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -78,6 +84,9 @@ ORIGINAL: 0x00619690
 // spans     0x00619690-0x006196CA
 // prototype void (__thiscall ?close@Texture@@QAEXXZ)(Texture* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -100,6 +109,9 @@ ORIGINAL: 0x006252B0 BYTE_EXACT
 // spans     0x006252B0-0x006252BE
 // prototype void (__thiscall ??1TextureStore@@QAE@XZ)(TextureStore* this)
 // callers   6   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -145,6 +157,9 @@ ORIGINAL: 0x006252A0
 // spans     0x006252A0-0x006252B0
 // prototype void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: this
 Status: Complete
 */

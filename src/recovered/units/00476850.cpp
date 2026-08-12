@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00476850 FILE
+// name      ?on_mouse_move@MonuWin@@QAEXHH@Z
+// size      345 bytes
+// spans     0x00476850-0x004769A9
+// prototype void (__thiscall ?on_mouse_move@MonuWin@@QAEXHH@Z)(MonuWin* this, int xCoord, int yCoord)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D5890 0x005E4B9A 0x005FAB00
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00476850
-// name           ?on_mouse_move@MonuWin@@QAEXHH@Z
-// size           345 bytes
 // measured tier  NO_COMPILE
 // refusal        u00476850.cpp(143) : error C2079: 'spot_' uses undefined class 'Spot'
 //

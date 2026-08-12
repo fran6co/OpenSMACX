@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0059D250 FILE
+// name      ?exec@PopMenu@@QAEXHHP6AHXZ@Z
+// size      322 bytes
+// spans     0x0059D250-0x0059D392
+// prototype void (__thiscall ?exec@PopMenu@@QAEXHHP6AHXZ@Z)(PopMenu* this, int, int, int (__cdecl *)())
+// callers   16   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005F8920 0x005F89D0 0x005F8BE0 0x005F9170 0x005F9F40 0x00613740 0x00644F3A 0x00645660
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0059D250
-// name           ?exec@PopMenu@@QAEXHHP6AHXZ@Z
-// size           322 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

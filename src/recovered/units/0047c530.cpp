@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047C530 FILE
+// name      ?pick_faction@NetWin@@QAEXH@Z
+// size      1280 bytes
+// spans     0x0047C530-0x0047C965;0x006568F9-0x006569C4
+// prototype void (__thiscall ?pick_faction@NetWin@@QAEXH@Z)(NetWin* this, int)
+// callers   1   call targets   19
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004064D0 0x00406880 0x00406E60 0x0047C970 0x0059D250 0x0059D3A0 0x005D4DD0 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x00605370 0x00612A70 0x006169A0 0x00630080 0x00645550 0x00645930
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047C530
-// name           ?pick_faction@NetWin@@QAEXH@Z
-// size           1280 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

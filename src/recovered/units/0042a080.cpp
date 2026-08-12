@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0042A080 BYTE_EXACT FILE
+// name      ?construct_id@Datalink@@QAEXPADIH@Z
+// size      45 bytes
+// spans     0x0042A080-0x0042A0AD
+// prototype void (__thiscall ?construct_id@Datalink@@QAEXPADIH@Z)(Datalink* this, int8*, DatalinkID, int)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064FC88
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0042A080
-// name           ?construct_id@Datalink@@QAEXPADIH@Z
-// size           45 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

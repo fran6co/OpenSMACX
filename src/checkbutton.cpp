@@ -26,6 +26,9 @@ ORIGINAL: 0x006339B0 BYTE_EXACT
 // spans     0x006339B0-0x006339B1
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -44,6 +47,9 @@ ORIGINAL: 0x006339A0 BYTE_EXACT
 // spans     0x006339A0-0x006339A3
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */

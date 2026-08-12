@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00632DB0 FILE
+// name      ?handle_sys_msg@Net@@QAEXXZ
+// size      487 bytes
+// spans     0x00632DB0-0x00632F97
+// prototype void (__thiscall ?handle_sys_msg@Net@@QAEXXZ)(Net* this)
+// callers   7   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062E010 0x00632350 0x00632CC0 0x00633F70
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00632DB0
-// name           ?handle_sys_msg@Net@@QAEXXZ
-// size           487 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

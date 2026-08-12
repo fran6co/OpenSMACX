@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045D170 FILE
+// name      ?on_iface_button_clicked@MainInterface@@QAEXH@Z
+// size      257 bytes
+// spans     0x0045D170-0x0045D271
+// prototype void (__thiscall ?on_iface_button_clicked@MainInterface@@QAEXH@Z)(MainInterface* this, int)
+// callers   2   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00403680 0x00403830 0x00479970 0x00479C00 0x004B8890 0x005BFE90 0x005C01D0 0x005C0260 0x005F7E90 0x005FC620
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045D170
-// name           ?on_iface_button_clicked@MainInterface@@QAEXH@Z
-// size           257 bytes
 // measured tier  MISMATCH
 // divergence     69
 //

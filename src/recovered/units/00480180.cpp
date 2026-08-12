@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00480180 FILE
+// name      ?draw_diffs@NetWin@@QAEXXZ
+// size      495 bytes
+// spans     0x00480180-0x0048036F
+// prototype void (__thiscall ?draw_diffs@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   13
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00480180
-// name           ?draw_diffs@NetWin@@QAEXXZ
-// size           495 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00405050 BYTE_EXACT FILE
+// name      ?on_adjust_button_placement@Popup@@QAEXPAH00@Z
+// size      67 bytes
+// spans     0x00405050-0x00405093
+// prototype void (__thiscall ?on_adjust_button_placement@Popup@@QAEXPAH00@Z)(Popup* this, int*, int*, int*)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00405050
-// name           ?on_adjust_button_placement@Popup@@QAEXPAH00@Z
-// size           67 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

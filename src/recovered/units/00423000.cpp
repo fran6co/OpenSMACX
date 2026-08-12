@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00423000 FILE
+// name      ?colortables_init_faction@@YAXH@Z
+// size      1422 bytes
+// spans     0x00423000-0x00423566;0x00652BE2-0x00652C0A
+// prototype 
+// callers   1   call targets   20
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00422F20 0x005D7210 0x005D7410 0x005D7DE0 0x005E2210 0x005FE2A0 0x005FE2E0 0x005FEFF0 0x005FF470 0x00628380 0x006283E0 0x00628540 0x00628650 0x006287C0 0x00628810 0x00628DB0 0x00645470 0x006458C8 0x00645930 0x00645C70
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00423000
-// name           ?colortables_init_faction@@YAXH@Z
-// size           1422 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

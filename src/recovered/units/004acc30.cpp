@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004ACC30 FILE
+// name      ?merge_sort@ReportIf@@QAEXHH@Z
+// size      360 bytes
+// spans     0x004ACC30-0x004ACD98
+// prototype void (__thiscall ?merge_sort@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004ACC30 0x00628A50
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004ACC30
-// name           ?merge_sort@ReportIf@@QAEXHH@Z
-// size           360 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00636400 FILE
+// name      ??0Video@@QAE@XZ
+// size      359 bytes
+// spans     0x00636400-0x0063652E;0x00663890-0x006638C9
+// prototype void (__thiscall ??0Video@@QAE@XZ)(Video* this)
+// callers   0   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C8620 0x005D7210 0x005FE2A0 0x00626230 0x0063E520 0x006465F0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00636400
-// name           ??0Video@@QAE@XZ
-// size           359 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

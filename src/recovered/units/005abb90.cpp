@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005ABB90 FILE
+// name      ?save_map@@YAXXZ
+// size      401 bytes
+// spans     0x005ABB90-0x005ABD0C;0x0066221F-0x00662234
+// prototype 
+// callers   1   call targets   15
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0059E510 0x005A9B20 0x005FCBB0 0x006169A0 0x00634BE0 0x00634C20 0x00634C30 0x00634DB0 0x00634E80 0x00634ED0 0x00645460 0x00645470 0x00645660 0x00645DD0 0x00645E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005ABB90
-// name           ?save_map@@YAXXZ
-// size           401 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

@@ -29,6 +29,9 @@ ORIGINAL: 0x00626040
 // spans     0x00626040-0x006260C3
 // prototype int (__thiscall ?init@Log@@QAEHPAD@Z)(Log* this, int8*)
 // callers   2   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00634BB0 0x00644EF2 0x006453E0 0x00645470 0x00645598
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -59,6 +62,9 @@ ORIGINAL: 0x006260D0
 // spans     0x006260D0-0x006260EC
 // prototype void (__thiscall ?reset@Log@@QAEXXZ)(Log* this)
 // callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598
 Return Value: n/a
 Status: Complete
 */
@@ -77,6 +83,9 @@ ORIGINAL: 0x006260F0
 // spans     0x006260F0-0x0062618B
 // prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
 // callers   1   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
 Return Value: n/a
 Status: Complete
 */
@@ -100,6 +109,9 @@ ORIGINAL: 0x00626190
 // spans     0x00626190-0x0062622B
 // prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
 // callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
 Return Value: n/a
 Status: Complete
 */
@@ -125,6 +137,10 @@ BOOL *IsLoggingDisabled = (BOOL *)0x009BC004;
 // spans     0x00625F20-0x00625F8B
 // prototype 
 // callers   0   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00634BB0 0x00645398 0x006453E0 0x00645470 0x00645598
+// notes     Staged hybrid export redirect calls the source-owned initializer
 void __cdecl log_logging() {
     new (Logging) Log("logfile.txt");
     atexit(log_logging_exit);
@@ -136,6 +152,10 @@ void __cdecl log_logging() {
 // spans     0x00625F90-0x00625FAD
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
+// notes     Staged hybrid export redirect calls the source-owned exit cleanup
 void __cdecl log_logging_exit() { Logging->~Log(); }
 
 // ORIGINAL: 0x00626230
@@ -144,6 +164,10 @@ void __cdecl log_logging_exit() { Logging->~Log(); }
 // spans     0x00626230-0x0062624F
 // prototype 
 // callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598
+// notes     Staged hybrid export redirect calls the source-owned reset wrapper
 void __cdecl log_reset() { Logging->reset(); }
 
 // ORIGINAL: 0x00626250
@@ -152,6 +176,10 @@ void __cdecl log_reset() { Logging->reset(); }
 // spans     0x00626250-0x006262E9
 // prototype 
 // callers   25   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     Logging->say(str1, str2, num1, num2, num3);
 }
@@ -162,6 +190,10 @@ void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 // spans     0x006262F0-0x0062634C
 // prototype 
 // callers   98   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
     Logging->say(str1, NULL, num1, num2, num3);
 }
@@ -172,6 +204,10 @@ void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
 // spans     0x00626350-0x006263E9
 // prototype 
 // callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     Logging->say_hex(str1, str2, num1, num2, num3);
 }
@@ -182,6 +218,10 @@ void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)
 // spans     0x006263F0-0x0062644C
 // prototype 
 // callers   4   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645598 0x00647815
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) {
     Logging->say_hex(str1, NULL, num1, num2, num3);
 }
@@ -192,4 +232,8 @@ void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) {
 // spans     0x00626450-0x00626461
 // prototype 
 // callers   5   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned state wrapper
 void __cdecl log_set_state(BOOL state) { Logging->set_state(state); }

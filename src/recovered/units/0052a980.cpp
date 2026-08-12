@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0052A980 FILE
+// name      sub_52a980
+// size      37 bytes
+// spans     0x0052A980-0x0052A9A5
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0052A980
-// name           sub_52a980
-// size           37 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

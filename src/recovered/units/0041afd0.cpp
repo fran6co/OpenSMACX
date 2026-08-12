@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041AFD0 FILE
+// name      ?on_left_up@BaseWin@@QAEXHH@Z
+// size      317 bytes
+// spans     0x0041AFD0-0x0041B10D
+// prototype void (__thiscall ?on_left_up@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005EC7C0 0x005ED240 0x005ED2D0 0x005FA7E0
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041AFD0
-// name           ?on_left_up@BaseWin@@QAEXHH@Z
-// size           317 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

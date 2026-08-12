@@ -21,6 +21,10 @@ ORIGINAL: 0x006343C0 BYTE_EXACT
 // spans     0x006343C0-0x006343CD
 // prototype void (__thiscall ??0Vector@@QAE@XZ)(Vector* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 Vector::Vector() {
@@ -37,6 +41,10 @@ ORIGINAL: 0x006343D0 BYTE_EXACT
 // spans     0x006343D0-0x006343DB
 // prototype void (__thiscall ?close@Vector@@QAEXXZ)(Vector* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Vector::close() {
@@ -57,6 +65,10 @@ ORIGINAL: 0x00634430
 // spans     0x00634430-0x0063447B
 // prototype void (__thiscall ?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z)(Vector* this, Vector*, Vector*)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Vector::__mi(Vector &output, Vector &right) {
@@ -78,6 +90,10 @@ ORIGINAL: 0x00634480 BYTE_EXACT
 // spans     0x00634480-0x006344A1
 // prototype void (__thiscall ?__apl@Vector@@QAEXAAVVector@@@Z)(Vector* this, Vector*)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: this vector
 Status: Complete
 */
@@ -96,6 +112,10 @@ ORIGINAL: 0x006344B0 BYTE_EXACT
 // spans     0x006344B0-0x006344D1
 // prototype void (__thiscall ?__ami@Vector@@QAEXAAVVector@@@Z)(Vector* this, Vector*)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: this vector
 Status: Complete
 */
@@ -119,6 +139,10 @@ ORIGINAL: 0x00634670
 // spans     0x00634670-0x006346B1
 // prototype void (__thiscall ?scale@Vector@@QAEXAAVVector@@M@Z)(Vector* this, Vector*, float)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Vector::scale(Vector &output, float scalar) {
@@ -170,6 +194,10 @@ ORIGINAL: 0x00628150
 // spans     0x00628150-0x00628175
 // prototype 
 // callers   17   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void __cdecl vector_add(Vector *left, Vector *right, Vector *output) {

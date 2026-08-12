@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060CBC0 FILE
+// name      ?on_mouse_move@ListBox@@QAEXHH@Z
+// size      587 bytes
+// spans     0x0060CBC0-0x0060CE0B
+// prototype void (__thiscall ?on_mouse_move@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5890 0x0060B530 0x00644F3A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060CBC0
-// name           ?on_mouse_move@ListBox@@QAEXHH@Z
-// size           587 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

@@ -1,10 +1,13 @@
 // ORIGINAL: 0x00448D90 FILE
-// placeholder - not yet decompiled
 // name      ?on_redraw@FameWin@@QAEXXZ
 // size      5938 bytes
 // spans     0x00448D90-0x0044A4AD;0x00654EA5-0x00654EBA
 // prototype void (__thiscall ?on_redraw@FameWin@@QAEXXZ)(FameWin* this)
 // callers   0   call targets   22
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D5440 0x005D7210 0x005D7410 0x005D7DE0 0x005D8000 0x005DAC70 0x005DACB0 0x005DC360 0x005DC790 0x005DCEA0 0x005DD020 0x005DD300 0x005DD3B0 0x005DD920 0x005DFF00 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0 0x00645470 0x0064FC88
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00448D90
 
 // BODY GOES HERE.

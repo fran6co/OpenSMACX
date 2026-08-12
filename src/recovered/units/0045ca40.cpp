@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045CA40 FILE
+// name      ?on_status@MainInterface@@QAEXH@Z
+// size      568 bytes
+// spans     0x0045CA40-0x0045CC78
+// prototype void (__thiscall ?on_status@MainInterface@@QAEXH@Z)(MainInterface* this, int)
+// callers   0   call targets   14
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00403830 0x00479C00 0x004B8890 0x004C39D0 0x004C3A40 0x0050F3D0 0x0050F440 0x005D5890 0x005ED9D0 0x005EDCD0 0x00616650 0x00616730 0x0062A280 0x0062B870
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045CA40
-// name           ?on_status@MainInterface@@QAEXH@Z
-// size           568 bytes
 // measured tier  NO_COMPILE
 // refusal        u0045ca40.cpp(300) : error C2079: 'time1_' uses undefined class 'Time' u0045ca40.cpp(303) : error C2079: 'time2_' uses undefined class 'Time'
 //

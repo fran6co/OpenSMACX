@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004E1380 BYTE_EXACT FILE
+// name      ?editor_clear_terrain@Console@@QAEXXZ
+// size      82 bytes
+// spans     0x004E1380-0x004E13D2
+// prototype void (__thiscall ?editor_clear_terrain@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x005ABF20
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004E1380
-// name           ?editor_clear_terrain@Console@@QAEXXZ
-// size           82 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -31,6 +31,9 @@ ORIGINAL: 0x00607DA0
 // spans     0x00607DA0-0x00607E41
 // prototype void (__thiscall ?close@FlatButton@@QAEXXZ)(FlatButton* this)
 // callers   134   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006070C0 0x00616780
 Return Value: Legacy final-loop residue (this + 0xAEC)
 Status: Complete
 */
@@ -70,6 +73,9 @@ ORIGINAL: 0x00406880
 // spans     0x00406880-0x004068D8;0x006509A0-0x006509B2
 // prototype void (__thiscall ??1FlatButton@@QAE@XZ)(FlatButton* this)
 // callers   93   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00607040 0x00607DA0
 Return Value: Instance pointer in EAX
 Status: Complete
 */

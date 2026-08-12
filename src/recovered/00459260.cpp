@@ -4,6 +4,9 @@
 // spans     0x00459260-0x0045927C
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00459150
 // 0x00459260  ?timer_daemon@InfoWin@@QAAXH@Z  ->  ?timer_daemon@InfoWin@@QAAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

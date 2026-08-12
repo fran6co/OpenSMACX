@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004B1FF0 FILE
+// name      ?allocate_energy@SocialWin@@QAEXHH@Z
+// size      300 bytes
+// spans     0x004B1FF0-0x004B211C
+// prototype void (__thiscall ?allocate_energy@SocialWin@@QAEXHH@Z)(SocialWin* this, int energyAllocID, int energyAllocSet)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00445440
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004B1FF0
-// name           ?allocate_energy@SocialWin@@QAEXHH@Z
-// size           300 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

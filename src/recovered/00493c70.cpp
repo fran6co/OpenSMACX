@@ -4,6 +4,9 @@
 // spans     0x00493C70-0x00493CA6
 // prototype void (__thiscall ?on_redraw@ProdPicker@@QAEXXZ)(ProdPicker* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004927C0
 // 0x00493C70  ?on_redraw@ProdPicker@@QAEXXZ  ->  ?on_redraw@ProdPicker@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

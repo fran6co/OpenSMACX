@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00469190 FILE
+// name      ?gen_radius@MapWin@@QAEXHHHHH@Z
+// size      1416 bytes
+// spans     0x00469190-0x00469718
+// prototype void (__thiscall ?gen_radius@MapWin@@QAEXHHHHH@Z)(MapWin* this, int, int, int, int, int)
+// callers   1   call targets   13
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004216F0 0x00462F00 0x00463040 0x004632D0 0x00467DE0 0x004688E0 0x00468CD0 0x00468F90 0x00469720 0x004712A0 0x004712D0 0x005D5350 0x005D8000
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00469190
-// name           ?gen_radius@MapWin@@QAEXHHHHH@Z
-// size           1416 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

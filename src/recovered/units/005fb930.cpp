@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FB930 FILE
+// name      ?UNK12@Menu@@QAEHHH@Z
+// size      81 bytes
+// spans     0x005FB930-0x005FB981
+// prototype int (__thiscall ?UNK12@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FB930
-// name           ?UNK12@Menu@@QAEHHH@Z
-// size           81 bytes
 // measured tier  MISMATCH
 // divergence     13
 //

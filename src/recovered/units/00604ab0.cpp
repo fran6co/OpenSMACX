@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00604AB0 FILE
+// name      ?on_redraw@BasePop@@QAEXXZ
+// size      897 bytes
+// spans     0x00604AB0-0x00604E31
+// prototype void (__thiscall ?on_redraw@BasePop@@QAEXXZ)(BasePop* this)
+// callers   0   call targets   12
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5250 0x005DA9F0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DAD40 0x005DB040 0x005DEF90 0x005E4B4A 0x005ED7D0 0x00611640
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00604AB0
-// name           ?on_redraw@BasePop@@QAEXXZ
-// size           897 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

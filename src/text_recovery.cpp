@@ -58,6 +58,10 @@ Text::~Text() OPENSMACX_NOEXCEPT_FALSE {
 // spans     0x005FD400-0x005FD456
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00645398
+// notes     Staged hybrid export redirect calls the source-owned initializer
 void __cdecl text_txt() {
     new (Txt) Text(512);
     atexit(text_txt_exit);
@@ -69,6 +73,10 @@ void __cdecl text_txt() {
 // spans     0x005FD460-0x005FD4B5
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2 0x00645598
+// notes     Staged hybrid export redirect calls the source-owned exit cleanup
 void __cdecl text_txt_exit() {
     Txt->~Text();
 }
@@ -79,6 +87,10 @@ void __cdecl text_txt_exit() {
 // spans     0x005FD550-0x005FD565
 // prototype int (__cdecl ?text_open@@YAHPADPAD@Z)(int8* srcFileID, int8* sectionID)
 // callers   34   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FDA00
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
     return Txt->open(src_id, section_id);
 }

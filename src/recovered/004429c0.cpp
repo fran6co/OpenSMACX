@@ -4,6 +4,9 @@
 // spans     0x004429C0-0x004429E7
 // prototype void (__thiscall ?done_deal@DiploWin@@QAEXXZ)(DiploWin* this)
 // callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 // 0x004429C0  ?done_deal@DiploWin@@QAEXXZ  ->  ?done_deal@DiploWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

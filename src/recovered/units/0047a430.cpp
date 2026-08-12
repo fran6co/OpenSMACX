@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047A430 FILE
+// name      ??1MultiWin@@QAE@XZ
+// size      568 bytes
+// spans     0x0047A430-0x0047A58A;0x00656230-0x0065630E
+// prototype void (__thiscall ??1MultiWin@@QAE@XZ)(MultiWin* this)
+// callers   1   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4DD0 0x005D7410 0x005E3820 0x005FA870 0x00607040 0x00607DA0 0x00618EE0 0x006456E4
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047A430
-// name           ??1MultiWin@@QAE@XZ
-// size           568 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004DA990 FILE
+// name      ?read_check@DipEdit@@QAEXXZ
+// size      1035 bytes
+// spans     0x004DA990-0x004DAD9B
+// prototype void (__thiscall ?read_check@DipEdit@@QAEXXZ)(DipEdit* this)
+// callers   2   call targets   8
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004DA7E0 0x004DA870 0x004DA900 0x0055B760 0x0055B870 0x0055BB30 0x0055BBA0 0x0060EC10
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004DA990
-// name           ?read_check@DipEdit@@QAEXXZ
-// size           1035 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

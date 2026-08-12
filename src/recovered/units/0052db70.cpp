@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0052DB70 FILE
+// name      sub_52db70
+// size      44 bytes
+// spans     0x0052DB70-0x0052DB9C
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0052DB70
-// name           sub_52db70
-// size           44 bytes
 // measured tier  MISMATCH
 // divergence     14
 //

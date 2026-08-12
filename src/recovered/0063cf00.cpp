@@ -4,6 +4,9 @@
 // spans     0x0063CF00-0x0063CF25
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0063CF30
 // 0x0063CF00  deflateInit_  ->  _deflateInit_
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

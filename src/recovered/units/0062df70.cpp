@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0062DF70 BYTE_EXACT FILE
+// name      ?start_voice@Net@@QAEHJ@Z
+// size      78 bytes
+// spans     0x0062DF70-0x0062DFBE
+// prototype int (__thiscall ?start_voice@Net@@QAEHJ@Z)(Net* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0062DF70
-// name           ?start_voice@Net@@QAEHJ@Z
-// size           78 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

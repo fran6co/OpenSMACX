@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041A920 FILE
+// name      ?zoom@BaseWin@@QAEXHH@Z
+// size      1312 bytes
+// spans     0x0041A920-0x0041AE40
+// prototype void (__thiscall ?zoom@BaseWin@@QAEXHH@Z)(BaseWin* this, int baseID, int)
+// callers   23   call targets   18
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00412AA0 0x00446A00 0x00446B40 0x004BA5F0 0x004BA650 0x004BA870 0x004BC5F0 0x004BDDE0 0x004BDFE0 0x004E39D0 0x004EC3B0 0x0050BA00 0x0051F2C0 0x00530D50 0x00530E50 0x005D5A70 0x005F7E90 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041A920
-// name           ?zoom@BaseWin@@QAEXHH@Z
-// size           1312 bytes
 // measured tier  MISMATCH
 // divergence     51
 //

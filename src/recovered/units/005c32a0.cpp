@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C32A0 FILE
+// name      ?world_rocky@@YAXXZ
+// size      415 bytes
+// spans     0x005C32A0-0x005C343F
+// prototype 
+// callers   2   call targets   5
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00591BC0 0x00591D60 0x00591F00 0x005FCB20 0x0064601D
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C32A0
-// name           ?world_rocky@@YAXXZ
-// size           415 bytes
 // measured tier  MISMATCH
 // divergence     66
 //

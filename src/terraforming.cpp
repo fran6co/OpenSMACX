@@ -36,6 +36,9 @@ ORIGINAL: 0x004C9420
 // spans     0x004C9420-0x004C96D6
 // prototype int (__cdecl ?terraform_cost@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   3   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3C60 0x004E3D50 0x00644F3A
 Return Value: Credit cost
 Status: Complete
 */
@@ -84,6 +87,9 @@ ORIGINAL: 0x004C9A50
 // spans     0x004C9A50-0x004C9AFB
 // prototype int (__cdecl ?contribution@@YAHHH@Z)(int vehID, int terraformID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF1F0
 Return Value: Terraforming speed
 Status: Complete
 */
@@ -107,6 +113,9 @@ ORIGINAL: 0x005BAB40
 // spans     0x005BAB40-0x005BAC13
 // prototype int (__cdecl ?terrain_avail@@YAHHHH@Z)(int terraformID, BOOL isSea, int factionID)
 // callers   5   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is terrain enhancement available to faction? true/false
 Status: Complete
 */
@@ -157,6 +166,9 @@ ORIGINAL: 0x00565320
 // spans     0x00565320-0x00565F1E
 // prototype int (__cdecl ?can_terraform@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int, int baseID)
 // callers   3   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0 0x004E6E50 0x0050BA00 0x00592030 0x005B9F20 0x005BAB40
 Return Value: The ORDER_* to issue, or ORDER_NONE for none
 Status: Complete
 

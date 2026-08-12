@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006470A6 BYTE_EXACT FILE
+// name      _malloc
+// size      18 bytes
+// spans     0x006470A6-0x006470B8
+// prototype 
+// callers   16   call targets   1
+// kind      library
+// flags     lib;sp_ready;purged_ok
+// calls     0x006470B8
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006470A6
-// name           _malloc
-// size           18 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

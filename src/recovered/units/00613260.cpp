@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00613260 BYTE_EXACT FILE
+// name      ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z
+// size      63 bytes
+// spans     0x00613260-0x0061329F
+// prototype int (__thiscall ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00613260
-// name           ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z
-// size           63 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

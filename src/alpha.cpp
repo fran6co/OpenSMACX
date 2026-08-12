@@ -54,6 +54,9 @@ ORIGINAL: 0x00584D60
 // spans     0x00584D60-0x00584E3B
 // prototype int (__cdecl ?tech_name@@YAHPAD@Z)(int8* techID)
 // callers   6   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF310 0x00625EC0 0x006453E0 0x0064FD20
 Return Value: Tech id; 'None' (-1); 'Disabled' (-2); or error (-2)
 Status: Complete
 */
@@ -85,6 +88,9 @@ ORIGINAL: 0x00584E40
 // spans     0x00584E40-0x00584F33
 // prototype 
 // callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF310 0x006169A0 0x00625EC0 0x006453E0 0x0064FD20
 Return Value: Chassis id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
@@ -116,6 +122,9 @@ ORIGINAL: 0x00584F40
 // spans     0x00584F40-0x00585030
 // prototype 
 // callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF310 0x006169A0 0x00625EC0 0x006453E0 0x0064FD20
 Return Value: Weapon id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
@@ -147,6 +156,9 @@ ORIGINAL: 0x00585030
 // spans     0x00585030-0x00585120
 // prototype 
 // callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF310 0x006169A0 0x00625EC0 0x006453E0 0x0064FD20
 Return Value: Armor id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
@@ -178,6 +190,9 @@ ORIGINAL: 0x00585150 BYTE_EXACT
 // spans     0x00585150-0x00585164
 // prototype 
 // callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00584D60 0x005FD570 0x005FD670
 Return Value: Tech id
 Status: Complete
 */
@@ -194,6 +209,9 @@ ORIGINAL: 0x00585170
 // spans     0x00585170-0x00585E26
 // prototype 
 // callers   1   call targets   6
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00422F00 0x00584D60 0x005FD550 0x005FD570 0x005FD670 0x005FD740
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -329,6 +347,9 @@ ORIGINAL: 0x00585E30
 // spans     0x00585E30-0x00585FDB
 // prototype 
 // callers   1   call targets   12
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00584D60 0x005BF310 0x005FD550 0x005FD570 0x005FD670 0x005FD6D0 0x005FD740 0x005FD7A0 0x00625E30 0x00625EC0 0x00645660 0x00645E90
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -388,6 +409,9 @@ ORIGINAL: 0x00585FE0
 // spans     0x00585FE0-0x00586049
 // prototype void (__cdecl ?clear_faction@@YAXPAUPlayer@@@Z)(Player* player)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -417,6 +441,9 @@ ORIGINAL: 0x00586050
 // spans     0x00586050-0x00586081
 // prototype 
 // callers   3   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00453710 0x00586090
 Return Value: n/a
 Status: Complete
 */
@@ -436,6 +463,9 @@ ORIGINAL: 0x00586090
 // spans     0x00586090-0x00586F2B
 // prototype void (__cdecl ?read_faction@@YAXPAUPlayer@@H@Z)(Player* player, int type)
 // callers   4   call targets   15
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00584D60 0x005BF310 0x005FD550 0x005FD570 0x005FD670 0x005FD740 0x006169A0 0x00625EC0 0x006453E0 0x00645460 0x00645470 0x00645DA7 0x00645E90 0x0064FD20 0x0064FDF0
 Return Value: n/a
 Status: Complete
 */
@@ -728,6 +758,9 @@ ORIGINAL: 0x00586F30
 // spans     0x00586F30-0x005871C9
 // prototype 
 // callers   1   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00453710 0x00586090 0x0059DBD0 0x005FD550 0x005FD570 0x005FD670 0x00645460 0x00645660 0x0064601D
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -806,6 +839,9 @@ ORIGINAL: 0x005871D0 BYTE_EXACT
 // spans     0x005871D0-0x0058723E
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FD670
 Return Value: n/a
 Status: Complete
 */
@@ -817,6 +853,9 @@ ORIGINAL: 0x005871D0
 // spans     0x005871D0-0x0058723E
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FD670
 Return Value: n/a
 Status: Complete
 */
@@ -853,6 +892,9 @@ ORIGINAL: 0x00587240
 // spans     0x00587240-0x005873B1
 // prototype 
 // callers   1   call targets   11
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00584D60 0x00584E40 0x00584F40 0x00585030 0x005A5D40 0x005FD550 0x005FD570 0x005FD670 0x005FD740 0x005FD7A0 0x00645460
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -915,6 +957,9 @@ ORIGINAL: 0x005873C0
 // spans     0x005873C0-0x0058829C
 // prototype BOOL (__cdecl ?read_rules@@YAHH@Z)(BOOL tglAllRules)
 // callers   3   call targets   23
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00584D60 0x00585170 0x00585E30 0x00586F30 0x00587240 0x005FD550 0x005FD570 0x005FD670 0x005FD6D0 0x005FD740 0x005FD7A0 0x005FE1F0 0x005FE270 0x00607550 0x006168F0 0x00616970 0x006169A0 0x00616A00 0x00625880 0x00625E50 0x006453E0 0x00645460 0x0064FD20
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -1312,6 +1357,9 @@ ORIGINAL: 0x0059D980
 // spans     0x0059D980-0x0059DA19
 // prototype int8* (__cdecl ?prefs_get@@YAPADPADPADH@Z)(int8* lpKeyName, int8* lpDefault, int)
 // callers   4   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645460 0x00645DA7
 Return Value: Key's string value from the ini or default if not set
 Status: Complete
 */
@@ -1335,6 +1383,9 @@ ORIGINAL: 0x0059DA20
 // spans     0x0059DA20-0x0059DA99
 // prototype 
 // callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00645470 0x00645DA7 0x0064FC88
 Return Value: Default preferences
 Status: Complete
 */
@@ -1359,6 +1410,9 @@ ORIGINAL: 0x0059DAA0
 // spans     0x0059DAA0-0x0059DB19
 // prototype 
 // callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645470 0x00645DA7 0x0064FC88
 Return Value: Default preferences 2nd set
 Status: Complete
 */
@@ -1379,6 +1433,9 @@ ORIGINAL: 0x0059DB20
 // spans     0x0059DB20-0x0059DB26
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Default warning preferences
 Status: Complete
 */
@@ -1397,6 +1454,9 @@ ORIGINAL: 0x0059DB30
 // spans     0x0059DB30-0x0059DB36
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Default rule preferences
 Status: Complete
 */
@@ -1413,6 +1473,9 @@ ORIGINAL: 0x0059DB40
 // spans     0x0059DB40-0x0059DBC9
 // prototype int (__cdecl ?prefs_get@@YAHPADHH@Z)(LPCSTR keyName, int defaultValue, BOOL useDefault)
 // callers   17   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645460 0x00645470 0x00645DA7 0x0064FC88
 Return Value: Key's integer value from the ini or default if not set
 Status: Complete
 */
@@ -1437,6 +1500,9 @@ ORIGINAL: 0x0059DBD0
 // spans     0x0059DBD0-0x0059DCE8
 // prototype 
 // callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645460 0x00645470 0x00645DA7 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1471,6 +1537,9 @@ ORIGINAL: 0x0059DCF0
 // spans     0x0059DCF0-0x0059E502
 // prototype void (__cdecl ?prefs_load@@YAXH@Z)(BOOL useDefault)
 // callers   3   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0059DB40 0x005FD740 0x005FD7A0 0x00627100 0x00645460 0x00645470 0x00645DA7 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1521,6 +1590,9 @@ ORIGINAL: 0x0059E510
 // spans     0x0059E510-0x0059E52F
 // prototype void (__cdecl ?prefs_put@@YAXPADPAD@Z)(int8* lpKeyName, int8* lpString)
 // callers   7   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1536,6 +1608,9 @@ ORIGINAL: 0x0059E530
 // spans     0x0059E530-0x0059E5CD
 // prototype void (__cdecl ?prefs_put@@YAXPADHH@Z)(int8* lpKeyName, int, int)
 // callers   12   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645470 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1553,6 +1628,9 @@ ORIGINAL: 0x0059E5D0
 // spans     0x0059E5D0-0x0059E946
 // prototype void (__cdecl ?prefs_save@@YAXH@Z)(BOOL saveFactions)
 // callers   17   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0059E530 0x00645470 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1594,6 +1672,9 @@ ORIGINAL: 0x0059E950
 // spans     0x0059E950-0x0059E973
 // prototype 
 // callers   6   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1631,6 +1712,9 @@ ORIGINAL: 0x00616A00
 // spans     0x00616A00-0x00616A93
 // prototype 
 // callers   3   call targets   7
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005FD530 0x005FD550 0x005FD570 0x005FD5E0 0x005FD740 0x00644EF2
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -1660,6 +1744,9 @@ ORIGINAL: 0x006169D0
 // spans     0x006169D0-0x006169F7
 // prototype 
 // callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -1679,6 +1766,9 @@ ORIGINAL: 0x00627100
 // spans     0x00627100-0x0062710A
 // prototype void (__cdecl ?set_language@@YAXH@Z)(int lang)
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1694,6 +1784,9 @@ ORIGINAL: 0x005A5880
 // spans     0x005A5880-0x005A58AA
 // prototype void (__cdecl ?say_label@@YAXH@Z)(int labelID)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
 Return Value: n/a
 Status: Complete
 */

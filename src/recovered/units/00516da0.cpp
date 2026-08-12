@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00516DA0 FILE
+// name      ?governor_directives@Console@@QAEXXZ
+// size      659 bytes
+// spans     0x00516DA0-0x00517033
+// prototype void (__thiscall ?governor_directives@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00419A90 0x0047A890 0x004E39D0 0x00539820 0x005398C0 0x005BF3F0 0x006169A0 0x00625EC0 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00516DA0
-// name           ?governor_directives@Console@@QAEXXZ
-// size           659 bytes
 // measured tier  MISMATCH
 // divergence     25
 //

@@ -41,6 +41,9 @@ ORIGINAL: 0x004482A0
 // spans     0x004482A0-0x004482BB
 // prototype void (__thiscall ??0FX@@QAE@XZ)(FX* this)
 // callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006457C2
 Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete
@@ -64,6 +67,9 @@ ORIGINAL: 0x00448290
 // spans     0x00448290-0x004482A0
 // prototype void (__thiscall ??1FX@@QAE@XZ)(FX* this)
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006456E4
 Return Value: n/a
 Status: Complete
 */
@@ -82,6 +88,9 @@ ORIGINAL: 0x00446A90 BYTE_EXACT
 // spans     0x00446A90-0x00446AA9
 // prototype void (__thiscall ?stop@FX@@QAEXH@Z)(FX* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 void FX::stop(int a1) {
@@ -95,6 +104,9 @@ ORIGINAL: 0x00446AB0 BYTE_EXACT
 // spans     0x00446AB0-0x00446AC9
 // prototype void (__thiscall ?release@FX@@QAEXH@Z)(FX* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 void FX::release(int a1) {
@@ -109,6 +121,9 @@ ORIGINAL: 0x00446AD0 BYTE_EXACT
 // spans     0x00446AD0-0x00446AE9
 // prototype void (__thiscall ?fade@FX@@QAEXH@Z)(FX* this, int)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 void FX::fade(int a1) {

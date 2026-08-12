@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004BB380 FILE
+// name      ?tour5@TutWin@@QAEXXZ
+// size      1041 bytes
+// spans     0x004BB380-0x004BB791
+// prototype void (__thiscall ?tour5@TutWin@@QAEXXZ)(TutWin* this)
+// callers   1   call targets   12
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045D380 0x004B2690 0x004B26B0 0x004B26D0 0x004B2740 0x004BA970 0x004BC5A0 0x004BC640 0x004BDFE0 0x005F7E90 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004BB380
-// name           ?tour5@TutWin@@QAEXXZ
-// size           1041 bytes
 // measured tier  NO_COMPILE
 // refusal        u004bb380.cpp(157) : error C2065: 'strcat' : undeclared identifier u004bb380.cpp(161) : error C2065: '_itoa' : undeclared identifier
 //

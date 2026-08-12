@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041B4F0 FILE
+// name      ?staple_the_bastards@BaseWin@@QAEXXZ
+// size      669 bytes
+// spans     0x0041B4F0-0x0041B78D
+// prototype void (__thiscall ?staple_the_bastards@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   1   call targets   10
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00421670 0x0048C0A0 0x004CA7F0 0x004E39D0 0x004EC3B0 0x00530D50 0x00530E50 0x00531300 0x00592EE0 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041B4F0
-// name           ?staple_the_bastards@BaseWin@@QAEXXZ
-// size           669 bytes
 // measured tier  MISMATCH
 // divergence     67
 //

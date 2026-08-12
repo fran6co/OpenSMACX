@@ -55,7 +55,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
 FACT_LINE = re.compile(
-    r"^\s*(?://|\*)?\s*(name|size|spans|prototype|callers)\s+(.*?)\s*$")
+    r"^\s*(?://|\*)?\s*(name|size|spans|prototype|callers|kind|flags|calls|notes)"
+    r"\s+(.*?)\s*$")
 
 
 def catalogue(path: Path = None) -> dict:
@@ -76,7 +77,57 @@ def catalogue(path: Path = None) -> dict:
             for row in csv.DictReader(handle):
                 rows[int(row["address"], 16)] = row
         return rows
-    return emit.load_functions()
+    rows = emit.load_functions()
+    for address, targets in emit.load_callees().items():
+        if address in rows:
+            rows[address]["_calls"] = set(targets)
+    for address, row in rows.items():
+        row.setdefault("_calls", set())
+    return rows
+
+
+def from_source(src: Path = None) -> dict:
+    """The catalogue, read back out of `src/` - the same shape `emit` returns.
+
+    This is the direction that makes the export deletable. Every annotation
+    carries its own facts and `--check` holds them to the export, so reading
+    them back is not a second opinion: it is the same data with `src/` as the
+    store instead of a CSV.
+    """
+    root = src or (REPO_ROOT / "src")
+    rows = {}
+    for annotation in annotation_scan.scan_tree(root):
+        path = REPO_ROOT / annotation.path
+        try:
+            lines = path.read_text(errors="ignore").splitlines()
+        except OSError:
+            continue
+        if not annotation.line:
+            continue
+        present = stamped(lines, annotation.line - 1)
+        if not present:
+            continue
+        size = present.get("size", "").replace(" bytes", "").strip()
+        calls = present.get("calls", "")
+        rows[annotation.address] = {
+            "address": f"0x{annotation.address:08X}",
+            "name": present.get("name", ""),
+            "size": size,
+            "body_ranges": present.get("spans", ""),
+            "prototype": present.get("prototype", ""),
+            "binary_kind": present.get("kind", ""),
+            "flags": present.get("flags", ""),
+            "notes": present.get("notes", ""),
+            "caller_count": present.get("callers", "").split()[0]
+                            if present.get("callers") else "0",
+            "call_target_count": present.get("callers", "").split()[-1]
+                                 if present.get("callers") else "0",
+            "_calls": {int(part, 16) for part in calls.split()
+                       if part.startswith("0x")},
+            "end_address": (present.get("spans", "").split("-")[-1]
+                            if "-" in present.get("spans", "") else ""),
+        }
+    return rows
 
 
 def facts(address: int, row: dict) -> list:
@@ -88,12 +139,30 @@ def facts(address: int, row: dict) -> list:
     """
     spans = row.get("body_ranges") or \
         f"0x{address:08X}-0x{address + int(row.get('size') or 0):08X}"
-    return [f"// name      {row.get('name', '')}",
-            f"// size      {row.get('size', '')} bytes",
-            f"// spans     {spans}",
-            f"// prototype {row.get('prototype', '')}",
-            f"// callers   {row.get('caller_count', '')}   "
-            f"call targets   {row.get('call_target_count', '')}"]
+    lines = [f"// name      {row.get('name', '')}",
+             f"// size      {row.get('size', '')} bytes",
+             f"// spans     {spans}",
+             f"// prototype {row.get('prototype', '')}",
+             f"// callers   {row.get('caller_count', '')}   "
+             f"call targets   {row.get('call_target_count', '')}",
+             f"// kind      {row.get('binary_kind', '')}",
+             f"// flags     {row.get('flags', '')}"]
+    # THE CALL EDGES, which is the whole of what `callgraph.json` says about a
+    # function that `src/` could not. Written as addresses rather than as real
+    # calls in a body: a structural skeleton would be checked by the compiler and
+    # is the better form, but it also rewrites 1,488 placeholder bodies, and the
+    # question this answers - "can the frontier be computed without the JSON" -
+    # is answered either way. `callgraph.json` records only direct `call rel32`,
+    # so this is a FLOOR: AGENTS.md measures 43.0% of functions carrying a call
+    # site it never counted, and the count above says how many are indirect.
+    targets = row.get("_calls")
+    if targets is not None:
+        spelled = " ".join(f"0x{t:08X}" for t in sorted(targets)) or "(none)"
+        lines.append(f"// calls     {spelled}")
+    note = (row.get("notes") or "").strip()
+    if note:
+        lines.append(f"// notes     {note}")
+    return lines
 
 
 def stamped(lines: list, index: int) -> dict:
@@ -125,15 +194,19 @@ def survey(src: Path, rows: dict) -> tuple:
         if not annotation.line:
             continue
         present = stamped(lines, annotation.line - 1)
-        if not present:
-            missing.append(annotation)
-            continue
         want = {}
         for line in facts(annotation.address, row):
             match = FACT_LINE.match(line)
             want[match.group(1)] = match.group(2)
+        # INCOMPLETE COUNTS AS MISSING. Checking only for an absent block let a
+        # block that predates a new fact pass forever - which it did the first
+        # time `kind`, `flags` and `calls` were added, reporting 6,003 of 6,003
+        # while not one annotation carried any of them.
+        if any(key not in present for key in want):
+            missing.append(annotation)
+            continue
         for key, value in want.items():
-            if key in present and present[key] != value:
+            if present[key] != value:
                 disagreeing.append((annotation, key, present[key], value))
     return missing, disagreeing, uncatalogued
 
@@ -152,8 +225,23 @@ def apply(src: Path, rows: dict, missing: list) -> int:
             row = rows.get(annotation.address)
             if row is None or not annotation.line:
                 continue
+            # Re-stamping must be IDEMPOTENT. The whole contiguous comment run
+            # after the marker is rewritten: fact lines are dropped wherever
+            # they sit in it and prose is kept in order, then the fresh block
+            # goes in at the top. Stopping the strip at the first non-fact line
+            # is not enough - a placeholder carries `// placeholder - not yet
+            # decompiled` between the marker and its facts, so the old block
+            # survived below the new one and every file grew a duplicate.
+            end = annotation.line
+            while end < len(lines):
+                stripped = lines[end].strip()
+                if not (stripped.startswith("//") or stripped.startswith("*")):
+                    break
+                end += 1
+            prose = [line for line in lines[annotation.line:end]
+                     if not FACT_LINE.match(line)]
             block = [line + "\n" for line in facts(annotation.address, row)]
-            lines[annotation.line:annotation.line] = block
+            lines[annotation.line:end] = block + prose
             changed += 1
         path.write_text("".join(lines))
     return changed

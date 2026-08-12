@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C7D80 FILE
+// name      ?load@Midi@@QAEHPBD@Z
+// size      77 bytes
+// spans     0x004C7D80-0x004C7DCD
+// prototype int (__thiscall ?load@Midi@@QAEHPBD@Z)(Midi* this, int8*)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C6280
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C7D80
-// name           ?load@Midi@@QAEHPBD@Z
-// size           77 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0052E370 FILE
+// name      ?on_player_deleted@NetDaemon@@QAEXPADK@Z
+// size      1421 bytes
+// spans     0x0052E370-0x0052E8FD
+// prototype void (__thiscall ?on_player_deleted@NetDaemon@@QAEXPADK@Z)(NetDaemon* this, int8*, unsigned int)
+// callers   0   call targets   13
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00446A00 0x0047A890 0x0047B450 0x00481AD0 0x0058FF70 0x0058FFA0 0x00592EE0 0x005F7E90 0x006169A0 0x00625EC0 0x00626250 0x006262F0 0x00645460
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0052E370
-// name           ?on_player_deleted@NetDaemon@@QAEXPADK@Z
-// size           1421 bytes
 // measured tier  MISMATCH
 // divergence     12
 //

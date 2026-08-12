@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FE950 FILE
+// name      ?UNK3@Palette@@QAEXH@Z
+// size      372 bytes
+// spans     0x005FE950-0x005FEAC4
+// prototype void (__thiscall ?UNK3@Palette@@QAEXH@Z)(Palette* this, int)
+// callers   0   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DE8F0 0x00616200 0x00644EF2 0x0064557F 0x00645930
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FE950
-// name           ?UNK3@Palette@@QAEXH@Z
-// size           372 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004DC520 FILE
+// name      ?editor_scen_rules@Console@@QAEXXZ
+// size      927 bytes
+// spans     0x004DC520-0x004DC852;0x0065B55F-0x0065B5CC
+// prototype void (__thiscall ?editor_scen_rules@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   12
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004064D0 0x00406880 0x00406E60 0x005ABF20 0x005BF3F0 0x005D4DD0 0x00605370 0x00607040 0x00607DA0 0x00645550
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004DC520
-// name           ?editor_scen_rules@Console@@QAEXXZ
-// size           927 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

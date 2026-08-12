@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004BEF00 FILE
+// name      ?UNK3@UV2Player@@QAEXXZ
+// size      1237 bytes
+// spans     0x004BEF00-0x004BF380;0x00659D00-0x00659D55
+// prototype void (__thiscall ?UNK3@UV2Player@@QAEXXZ)(UV2Player* this)
+// callers   1   call targets   22
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401000 0x00401060 0x00402970 0x005D7670 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DAD40 0x005DAD70 0x005DB040 0x005FD530 0x005FD550 0x005FD570 0x005FD670 0x005FD740 0x00608980 0x00608BA0 0x00618F40 0x00645470 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004BEF00
-// name           ?UNK3@UV2Player@@QAEXXZ
-// size           1237 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005EAF3F FILE
+// name      ?create_blank@Sprite@@QAEHHHH@Z
+// size      71 bytes
+// spans     0x005EAF3F-0x005EAF86
+// prototype int (__thiscall ?create_blank@Sprite@@QAEHHHH@Z)(Sprite* this, int, int, int)
+// callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005EAF3F
-// name           ?create_blank@Sprite@@QAEHHHH@Z
-// size           71 bytes
 // measured tier  MISMATCH
 // divergence     8
 //

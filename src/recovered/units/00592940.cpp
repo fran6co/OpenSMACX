@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00592940 FILE
+// name      ?fixup_landmarks@@YAXXZ
+// size      308 bytes
+// spans     0x00592940-0x00592A74
+// prototype 
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00592940
-// name           ?fixup_landmarks@@YAXXZ
-// size           308 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

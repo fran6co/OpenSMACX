@@ -4,6 +4,9 @@
 // spans     0x0045C0B0-0x0045C0E5
 // prototype void (__thiscall ?chat@MainInterface@@QAEXPADH@Z)(MainInterface* this, int8*, int)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00471530 0x00629710
 // 0x0045C0B0  ?chat@MainInterface@@QAEXPADH@Z  ->  ?chat@MainInterface@@QAEXPADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

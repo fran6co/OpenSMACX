@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00471240 FILE
+// name      ?mapwin_terrain_fixup@@YAXXZ
+// size      83 bytes
+// spans     0x00471240-0x00471293
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004711A0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00471240
-// name           ?mapwin_terrain_fixup@@YAXXZ
-// size           83 bytes
 // measured tier  NO_COMPILE
 // refusal        u00471240.cpp(50) : error C2065: 'MapWin' : undeclared identifier u00471240.cpp(50) : error C2059: syntax error : ')' u00471240.cpp(62) : error C2065: 'p' : und
 //

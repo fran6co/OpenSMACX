@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FE8B0 FILE
+// name      ?start_cycle@Palette@@QAEHH@Z
+// size      75 bytes
+// spans     0x005FE8B0-0x005FE8FB
+// prototype int (__thiscall ?start_cycle@Palette@@QAEHH@Z)(Palette* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00616650
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FE8B0
-// name           ?start_cycle@Palette@@QAEHH@Z
-// size           75 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

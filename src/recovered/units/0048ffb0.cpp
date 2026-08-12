@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048FFB0 FILE
+// name      ?hide_option_buttons@PrefWin@@QAEXXZ
+// size      371 bytes
+// spans     0x0048FFB0-0x00490123
+// prototype void (__thiscall ?hide_option_buttons@PrefWin@@QAEXXZ)(PrefWin* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048FFB0
-// name           ?hide_option_buttons@PrefWin@@QAEXXZ
-// size           371 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D71A0 FILE
+// name      sub_5d71a0
+// size      40 bytes
+// spans     0x005D71A0-0x005D71C8
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006456E4
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D71A0
-// name           sub_5d71a0
-// size           40 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

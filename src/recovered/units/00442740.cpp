@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00442740 FILE
+// name      ?do_it@DiploWin@@QAEXXZ
+// size      605 bytes
+// spans     0x00442740-0x0044299D
+// prototype void (__thiscall ?do_it@DiploWin@@QAEXXZ)(DiploWin* this)
+// callers   3   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005391C0 0x00539460 0x005395F0 0x005397B0 0x00539820 0x005398C0 0x00592EE0 0x005B9F20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00442740
-// name           ?do_it@DiploWin@@QAEXXZ
-// size           605 bytes
 // measured tier  MISMATCH
 // divergence     13
 //

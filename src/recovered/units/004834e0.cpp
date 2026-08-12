@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004834E0 FILE
+// name      ??1NetWin@@QAE@XZ
+// size      963 bytes
+// spans     0x004834E0-0x004837B4;0x00656650-0x0065673F
+// prototype void (__thiscall ??1NetWin@@QAE@XZ)(NetWin* this)
+// callers   1   call targets   14
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00402970 0x005D4DD0 0x005FA830 0x005FA870 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x0060E740 0x0060E7C0 0x00614F30 0x00616200 0x00629210 0x00644EF2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004834E0
-// name           ??1NetWin@@QAE@XZ
-// size           963 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

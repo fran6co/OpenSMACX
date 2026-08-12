@@ -4,6 +4,9 @@
 // spans     0x004C59E0-0x004C5A07
 // prototype int (__thiscall ?delete_device@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x004C59E0  ?delete_device@Wave_In_Device@@QAEHXZ  ->  ?delete_device@Wave_In_Device@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

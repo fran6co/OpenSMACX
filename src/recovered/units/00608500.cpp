@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00608500 FILE
+// name      ?on_mouse_move@FlatButton@@QAEXHH@Z
+// size      343 bytes
+// spans     0x00608500-0x00608657
+// prototype void (__thiscall ?on_mouse_move@FlatButton@@QAEXHH@Z)(FlatButton* this, int, int)
+// callers   0   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8500 0x005FA7E0 0x00607850 0x006162D0 0x006166C0 0x00616730
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00608500
-// name           ?on_mouse_move@FlatButton@@QAEXHH@Z
-// size           343 bytes
 // measured tier  MISMATCH
 // divergence     20
 //

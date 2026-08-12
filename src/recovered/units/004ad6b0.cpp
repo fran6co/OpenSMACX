@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004AD6B0 FILE
+// name      ??0ReportWin@@QAE@XZ
+// size      689 bytes
+// spans     0x004AD6B0-0x004AD838;0x006592F0-0x00659419
+// prototype void (__thiscall ??0ReportWin@@QAE@XZ)(ReportWin* this)
+// callers   1   call targets   11
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005D7210 0x005FA860 0x006051D0 0x00607CF0 0x00609DB0 0x006161D0 0x00629D60 0x0062B7C0 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004AD6B0
-// name           ??0ReportWin@@QAE@XZ
-// size           689 bytes
 // measured tier  NO_COMPILE
 // refusal        u004ad6b0.cpp(200) : error C2079: 'buffer_' uses undefined class 'Buffer' u004ad6b0.cpp(221) : error C2079: 'time1_' uses undefined class 'Time' u004ad6b0.cpp(2
 //

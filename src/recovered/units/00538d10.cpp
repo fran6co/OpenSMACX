@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00538D10 FILE
+// name      ??1NetDaemon@@QAE@XZ
+// size      606 bytes
+// spans     0x00538D10-0x00538EBE;0x004E3710-0x004E372B;0x0065E010-0x0065E0A5
+// prototype void (__thiscall ??1NetDaemon@@QAE@XZ)(NetDaemon* this)
+// callers   0   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401BE0 0x00402970 0x00402DD0 0x004C8DB0 0x004E25B0 0x00538EC0 0x005D45B0 0x0062E010 0x006339E0
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00538D10
-// name           ??1NetDaemon@@QAE@XZ
-// size           606 bytes
 // measured tier  SHARED_TAIL
 // refusal        1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 //

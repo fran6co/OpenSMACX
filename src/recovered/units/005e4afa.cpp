@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005E4AFA BYTE_EXACT FILE
+// name      ?draw@Sprite@@QAEHPAUBuffer@@HHHHHH@Z
+// size      80 bytes
+// spans     0x005E4AFA-0x005E4B4A
+// prototype int (__thiscall ?draw@Sprite@@QAEHPAUBuffer@@HHHHHH@Z)(Sprite* this, Buffer*, int, int, int, int, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E9D44
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005E4AFA
-// name           ?draw@Sprite@@QAEHPAUBuffer@@HHHHHH@Z
-// size           80 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

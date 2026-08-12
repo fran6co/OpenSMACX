@@ -30,6 +30,9 @@ ORIGINAL: 0x0052AD30
 // spans     0x0052AD30-0x0052AE19
 // prototype int (__cdecl ?council_votes@@YAHH@Z)(int factionID)
 // callers   9   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Faction vote count
 Status: Complete
 */
@@ -69,6 +72,9 @@ ORIGINAL: 0x0052AE20
 // spans     0x0052AE20-0x0052AEA4
 // prototype 
 // callers   6   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0052AD30
 Return Value: Is the leader eligible (top two vote totals)? true/false
 Status: Complete
 */

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0055D040 FILE
+// name      ?pact_truce@@YAXHH@Z
+// size      321 bytes
+// spans     0x0055D040-0x0055D181
+// prototype 
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x0058FCE0 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0055D040
-// name           ?pact_truce@@YAXHH@Z
-// size           321 bytes
 // measured tier  MISMATCH
 // divergence     6
 //

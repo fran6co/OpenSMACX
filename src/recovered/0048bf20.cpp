@@ -4,6 +4,9 @@
 // spans     0x0048BF20-0x0048BF56
 // prototype void* (__thiscall ??_GPlanWin@@UAEPAXI@Z)(PlanWin* this, unsigned int)
 // callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0048BD80 0x005D4DD0 0x0064557F
 // 0x0048BF20  ??_GPlanWin@@UAEPAXI@Z  ->  ??_GPlanWin@@UAEPAXI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

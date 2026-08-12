@@ -27,6 +27,9 @@ ORIGINAL: 0x00404280 BYTE_EXACT
 // spans     0x00404280-0x00404281
 // prototype void (__thiscall ?UNK7@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -45,6 +48,9 @@ ORIGINAL: 0x00404220 BYTE_EXACT
 // spans     0x00404220-0x00404225
 // prototype int (__thiscall ?UNK2@AlphaMovie@@QAEHHHH@Z)(AlphaMovie* this, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -64,6 +70,9 @@ ORIGINAL: 0x00404240 BYTE_EXACT
 // spans     0x00404240-0x00404245
 // prototype int (__thiscall ?UNK4@AlphaMovie@@QAEHHHHH@Z)(AlphaMovie* this, int, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -92,6 +101,9 @@ ORIGINAL: 0x00404230 BYTE_EXACT
 // spans     0x00404230-0x0040423A
 // prototype int (__thiscall ?UNK3@AlphaMovie@@QAEHH@Z)(AlphaMovie* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the argument, unchanged
 Status: Complete
 */
@@ -111,6 +123,9 @@ ORIGINAL: 0x00404250 BYTE_EXACT
 // spans     0x00404250-0x00404255
 // prototype int (__thiscall ?UNK5@AlphaMovie@@QAEHH@Z)(AlphaMovie* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -130,6 +145,9 @@ ORIGINAL: 0x00404260 BYTE_EXACT
 // spans     0x00404260-0x00404263
 // prototype void (__thiscall ?UNK6@AlphaMovie@@QAEXHH@Z)(AlphaMovie* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -148,6 +166,9 @@ ORIGINAL: 0x00404270 BYTE_EXACT
 // spans     0x00404270-0x00404273
 // prototype void (__thiscall ?UNK6@AlphaMovie@@QAEXH@Z)(AlphaMovie* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -166,6 +187,9 @@ ORIGINAL: 0x004042A0 BYTE_EXACT
 // spans     0x004042A0-0x004042A8
 // prototype int (__thiscall ?UNK8@AlphaMovie@@QAEHHH@Z)(AlphaMovie* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1, always
 Status: Complete
 */
@@ -184,6 +208,9 @@ ORIGINAL: 0x004041E0 BYTE_EXACT
 // spans     0x004041E0-0x004041F7
 // prototype void (__thiscall ?close@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x005FFDB0
 Status: Complete
 */
 void AlphaMovie::close() {
@@ -199,6 +226,9 @@ ORIGINAL: 0x00404290 BYTE_EXACT
 // spans     0x00404290-0x00404298
 // prototype void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D56B0
 Status: Complete
 */
 void AlphaMovie::update() {

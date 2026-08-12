@@ -28,6 +28,10 @@ ORIGINAL: 0x005FE560
 // spans     0x005FE560-0x005FE5BD
 // prototype int (__thiscall ?get_rgbquad@Palette@@QAEHPAURGBQUAD@@HH@Z)(Palette* this, RGBQUAD*, int, int)
 // callers   7   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: 3 for a null output, 7 while the palette is unavailable, or 0
 Status: Complete
 */
@@ -75,6 +79,9 @@ ORIGINAL: 0x005FE4F0 BYTE_EXACT
 // spans     0x005FE4F0-0x005FE4F1
 // prototype 
 // callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 Verification note: the original body is a single ret - it accepts the window
 and does nothing with it. There is no state to observe and no statement to
@@ -98,6 +105,9 @@ ORIGINAL: 0x005FED10
 // spans     0x005FED10-0x005FED35
 // prototype int (__thiscall ?get_pos@Palette@@QAEHH@Z)(Palette* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the slot index, 0 to 5
 Status: Complete
 */

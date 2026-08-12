@@ -4,6 +4,9 @@
 // spans     0x0043C130-0x0043C163
 // prototype void (__thiscall ?construct_reactor@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C3800
 // 0x0043C130  ?construct_reactor@DesignWin@@QAEXXZ  ->  ?construct_reactor@DesignWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

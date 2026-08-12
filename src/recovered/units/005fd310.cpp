@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FD310 FILE
+// name      sub_5fd310
+// size      77 bytes
+// spans     0x005FD310-0x005FD35D
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062D5D0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FD310
-// name           sub_5fd310
-// size           77 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

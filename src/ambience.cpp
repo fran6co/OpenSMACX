@@ -28,6 +28,9 @@ ORIGINAL: 0x00447220 BYTE_EXACT
 // spans     0x00447220-0x00447221
 // prototype void (__thiscall ?begin@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -42,6 +45,9 @@ ORIGINAL: 0x00447230 BYTE_EXACT
 // spans     0x00447230-0x00447231
 // prototype void (__thiscall ?tech@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -56,6 +62,9 @@ ORIGINAL: 0x00447240 BYTE_EXACT
 // spans     0x00447240-0x00447241
 // prototype void (__thiscall ?terraform@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -70,6 +79,9 @@ ORIGINAL: 0x00447250 BYTE_EXACT
 // spans     0x00447250-0x00447251
 // prototype void (__thiscall ?production@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -84,6 +96,9 @@ ORIGINAL: 0x00447260 BYTE_EXACT
 // spans     0x00447260-0x00447261
 // prototype void (__thiscall ?general@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -98,6 +113,9 @@ ORIGINAL: 0x004472B0 BYTE_EXACT
 // spans     0x004472B0-0x004472B1
 // prototype void (__thiscall ?new_base@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -112,6 +130,9 @@ ORIGINAL: 0x004472C0 BYTE_EXACT
 // spans     0x004472C0-0x004472C1
 // prototype void (__thiscall ?popup1@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -126,6 +147,9 @@ ORIGINAL: 0x004472D0 BYTE_EXACT
 // spans     0x004472D0-0x004472D1
 // prototype void (__thiscall ?eot@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +164,9 @@ ORIGINAL: 0x004472E0 BYTE_EXACT
 // spans     0x004472E0-0x004472E1
 // prototype void (__thiscall ?hostility@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -154,6 +181,9 @@ ORIGINAL: 0x004472F0 BYTE_EXACT
 // spans     0x004472F0-0x004472F1
 // prototype void (__thiscall ?energy_resources@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -168,6 +198,9 @@ ORIGINAL: 0x00447300 BYTE_EXACT
 // spans     0x00447300-0x00447301
 // prototype void (__thiscall ?base_liberated@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -182,6 +215,9 @@ ORIGINAL: 0x00447690 BYTE_EXACT
 // spans     0x00447690-0x00447691
 // prototype void (__thiscall ?tech@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -196,6 +232,9 @@ ORIGINAL: 0x004476A0 BYTE_EXACT
 // spans     0x004476A0-0x004476A1
 // prototype void (__thiscall ?popup1@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -210,6 +249,9 @@ ORIGINAL: 0x004476B0 BYTE_EXACT
 // spans     0x004476B0-0x004476B1
 // prototype void (__thiscall ?eot@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -224,6 +266,9 @@ ORIGINAL: 0x00447C60 BYTE_EXACT
 // spans     0x00447C60-0x00447C61
 // prototype void (__thiscall ?tech@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -238,6 +283,9 @@ ORIGINAL: 0x00447CA0 BYTE_EXACT
 // spans     0x00447CA0-0x00447CA1
 // prototype void (__thiscall ?production@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -252,6 +300,9 @@ ORIGINAL: 0x00447CB0 BYTE_EXACT
 // spans     0x00447CB0-0x00447CB1
 // prototype void (__thiscall ?popup1@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -266,6 +317,9 @@ ORIGINAL: 0x00447CC0 BYTE_EXACT
 // spans     0x00447CC0-0x00447CC1
 // prototype void (__thiscall ?eot@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -376,6 +430,9 @@ ORIGINAL: 0x004C7670
 // spans     0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
 // prototype void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064557F
 Return Value: n/a
 Status: Complete
 */
@@ -460,6 +517,9 @@ ORIGINAL: 0x004C8460
 // spans     0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E
 // prototype void (__thiscall ??0Ambience@@QAE@XZ)(Ambience* this)
 // callers   7   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C61E0 0x006465F0
 Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete
@@ -539,6 +599,9 @@ ORIGINAL: 0x00447270
 // spans     0x00447270-0x00447275
 // prototype void (__thiscall ?basewin_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -559,6 +622,9 @@ ORIGINAL: 0x00447280
 // spans     0x00447280-0x00447285
 // prototype void (__thiscall ?basewin_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -579,6 +645,9 @@ ORIGINAL: 0x00447290
 // spans     0x00447290-0x00447295
 // prototype void (__thiscall ?design_window_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -599,6 +668,9 @@ ORIGINAL: 0x004472A0
 // spans     0x004472A0-0x004472A5
 // prototype void (__thiscall ?design_window_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -626,6 +698,9 @@ ORIGINAL: 0x00447BE0 BYTE_EXACT
 // spans     0x00447BE0-0x00447BEC
 // prototype void (__thiscall ?basewin_show@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -648,6 +723,9 @@ ORIGINAL: 0x00447BF0 BYTE_EXACT
 // spans     0x00447BF0-0x00447BF5
 // prototype void (__thiscall ?basewin_hide@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -694,6 +772,9 @@ ORIGINAL: 0x004471F0
 // spans     0x004471F0-0x00447219
 // prototype void (__thiscall ??0FactionAmbience@@QAE@XZ)(FactionAmbience* this)
 // callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004C8460
 Return Value: `this`
 Status: Complete
 */
@@ -723,6 +804,9 @@ ORIGINAL: 0x00447310
 // spans     0x00447310-0x0044733C
 // prototype void (__thiscall ??0MAmbience@@QAE@XZ)(MAmbience* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C8460
 Return Value: `this`
 Status: Complete
 */
@@ -752,6 +836,9 @@ ORIGINAL: 0x00447850
 // spans     0x00447850-0x0044787F
 // prototype void (__thiscall ??0SAmbience@@QAE@XZ)(SAmbience* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C8460
 Return Value: `this`
 Status: Complete
 */
@@ -782,6 +869,9 @@ ORIGINAL: 0x00447B90
 // spans     0x00447B90-0x00447BBC
 // prototype void (__thiscall ??0GAmbience@@QAE@XZ)(GAmbience* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C8460
 Return Value: `this`
 Status: Complete
 */

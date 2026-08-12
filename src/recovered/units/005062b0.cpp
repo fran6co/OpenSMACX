@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005062B0 FILE
+// name      ?promote@@YAXH@Z
+// size      475 bytes
+// spans     0x005062B0-0x0050648B
+// prototype void (__cdecl ?promote@@YAXH@Z)(int vehID)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x005C0E40 0x00625E50 0x00625EC0 0x0064601D
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005062B0
-// name           ?promote@@YAXH@Z
-// size           475 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

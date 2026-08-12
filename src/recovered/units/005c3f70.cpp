@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C3F70 FILE
+// name      ?world_shorelines@@YAXXZ
+// size      371 bytes
+// spans     0x005C3F70-0x005C40E3
+// prototype 
+// callers   3   call targets   7
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046AF40 0x0046B190 0x0046FD90 0x00591290 0x00591AD0 0x005C2020 0x005FCB20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C3F70
-// name           ?world_shorelines@@YAXXZ
-// size           371 bytes
 // measured tier  MISMATCH
 // divergence     17
 //

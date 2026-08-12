@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00435400 FILE
+// name      ?draw_armor@DesignWin@@QAEXH@Z
+// size      1024 bytes
+// spans     0x00435400-0x00435800
+// prototype void (__thiscall ?draw_armor@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   4   call targets   17
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C3090 0x005D8000 0x005D95E0 0x005DAC70 0x005DACB0 0x005DB720 0x005DD130 0x005DDAB0 0x006169A0 0x006171A0 0x00617230 0x00618370 0x006183B0 0x00619280 0x006453E0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00435400
-// name           ?draw_armor@DesignWin@@QAEXH@Z
-// size           1024 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

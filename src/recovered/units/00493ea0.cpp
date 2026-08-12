@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00493EA0 FILE
+// name      ?on_right_click@ProdPicker@@QAEXHH@Z
+// size      788 bytes
+// spans     0x00493EA0-0x0049419F;0x00658C09-0x00658C1E
+// prototype void (__thiscall ?on_right_click@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
+// callers   0   call targets   11
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00492FA0 0x005933F0 0x005ED240 0x005F8800 0x005F88A0 0x005F8920 0x005F89D0 0x005F9170 0x005F9F40 0x006169A0 0x00644F3A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00493EA0
-// name           ?on_right_click@ProdPicker@@QAEXHH@Z
-// size           788 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

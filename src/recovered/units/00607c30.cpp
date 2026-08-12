@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00607C30 BYTE_EXACT FILE
+// name      ?UNK2@BaseButton@@QAEXXZ
+// size      68 bytes
+// spans     0x00607C30-0x00607C74
+// prototype void (__thiscall ?UNK2@BaseButton@@QAEXXZ)(BaseButton* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00607C30
-// name           ?UNK2@BaseButton@@QAEXXZ
-// size           68 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

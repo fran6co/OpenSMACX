@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00481C50 BYTE_EXACT FILE
+// name      ??0NetWin@@QAE@XZ
+// size      272 bytes
+// spans     0x00481C50-0x00481D08;0x00657491-0x006574E9
+// prototype void (__thiscall ??0NetWin@@QAE@XZ)(NetWin* this)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005FA860 0x00607CF0 0x0060E670 0x00614E50 0x00629110
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00481C50
-// name           ??0NetWin@@QAE@XZ
-// size           272 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

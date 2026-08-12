@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0050F460 FILE
+// name      ??0Console@@QAE@H@Z
+// size      616 bytes
+// spans     0x0050F460-0x0050F629;0x0065D250-0x0065D2EF
+// prototype void (__thiscall ??0Console@@QAE@H@Z)(Console* this, int)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004626E0 0x005D4CF0 0x005D7210 0x005E37E0 0x005FAC60 0x006161D0 0x006457C2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0050F460
-// name           ??0Console@@QAE@H@Z
-// size           616 bytes
 // measured tier  MISMATCH
 // divergence     6
 //

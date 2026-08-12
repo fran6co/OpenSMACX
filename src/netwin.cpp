@@ -26,6 +26,9 @@ ORIGINAL: 0x0047F920 BYTE_EXACT
 // spans     0x0047F920-0x0047F921
 // prototype void (__thiscall ?UNK1@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -40,6 +43,9 @@ ORIGINAL: 0x0047F930 BYTE_EXACT
 // spans     0x0047F930-0x0047F931
 // prototype void (__thiscall ?UNK2@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -54,6 +60,9 @@ ORIGINAL: 0x004834D0 BYTE_EXACT
 // spans     0x004834D0-0x004834D1
 // prototype void (__thiscall ?alloc_slots@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -80,6 +89,9 @@ ORIGINAL: 0x0047B750 BYTE_EXACT
 // spans     0x0047B750-0x0047B758
 // prototype int (__thiscall ?on_key_click@NetWin@@QAEHHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1, always
 Status: Complete
 */
@@ -99,6 +111,9 @@ ORIGINAL: 0x0047F940 BYTE_EXACT
 // spans     0x0047F940-0x0047F943
 // prototype void (__thiscall ?on_mouse_move@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -117,6 +132,9 @@ ORIGINAL: 0x0047F950 BYTE_EXACT
 // spans     0x0047F950-0x0047F953
 // prototype void (__thiscall ?on_mouse_leave@NetWin@@QAEXHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -155,6 +173,9 @@ ORIGINAL: 0x00483820
 // spans     0x00483820-0x0048383C
 // prototype void (__thiscall ?UNK5@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

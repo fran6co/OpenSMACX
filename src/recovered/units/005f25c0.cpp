@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F25C0 FILE
+// name      ?OnRButtonDown@Win@@QAAXPAXJHHI@Z
+// size      95 bytes
+// spans     0x005F25C0-0x005F261F
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F6F10
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F25C0
-// name           ?OnRButtonDown@Win@@QAAXPAXJHHI@Z
-// size           95 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

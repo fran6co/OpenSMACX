@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00415F70 FILE
+// name      ?gov_on@BaseWin@@QAEXH@Z
+// size      369 bytes
+// spans     0x00415F70-0x004160E1
+// prototype void (__thiscall ?gov_on@BaseWin@@QAEXH@Z)(BaseWin* this, int)
+// callers   4   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046AEF0 0x004E5FE0 0x004EC3B0 0x004F5F30 0x00530D50 0x00530E50 0x005D5A70
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00415F70
-// name           ?gov_on@BaseWin@@QAEXH@Z
-// size           369 bytes
 // measured tier  MISMATCH
 // divergence     45
 //

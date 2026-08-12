@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0053E800 FILE
+// name      ?tech_analysis@@YAXHH@Z
+// size      834 bytes
+// spans     0x0053E800-0x0053EB42
+// prototype 
+// callers   7   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20 0x005BCBE0 0x00645660
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0053E800
-// name           ?tech_analysis@@YAXHH@Z
-// size           834 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

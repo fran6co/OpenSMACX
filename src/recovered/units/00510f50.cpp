@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00510F50 FILE
+// name      ?ready@Console@@QAEXXZ
+// size      1313 bytes
+// spans     0x00510F50-0x00511471
+// prototype void (__thiscall ?ready@Console@@QAEXXZ)(Console* this)
+// callers   3   call targets   15
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00446960 0x00446D10 0x00458900 0x00460DD0 0x0046A550 0x0046AD60 0x0046AE00 0x0046B1F0 0x0046FB10 0x004B9EA0 0x004E3A50 0x005108A0 0x005109B0 0x00510CE0 0x005FD120
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00510F50
-// name           ?ready@Console@@QAEXXZ
-// size           1313 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

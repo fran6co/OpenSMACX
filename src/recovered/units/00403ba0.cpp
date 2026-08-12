@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00403BA0 FILE
+// name      ?amovie_project@@YAXH@Z
+// size      63 bytes
+// spans     0x00403BA0-0x00403BDF
+// prototype 
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00403BE0 0x005FD550 0x005FD570 0x005FD670
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00403BA0
-// name           ?amovie_project@@YAXH@Z
-// size           63 bytes
 // measured tier  NO_COMPILE
 // refusal        u00403ba0.cpp(44) : error C2065: 'int8' : undeclared identifier u00403ba0.cpp(44) : error C2065: 'srcFileID' : undeclared identifier u00403ba0.cpp(44) : error C
 //

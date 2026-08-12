@@ -4,6 +4,9 @@
 // spans     0x004C8F00-0x004C8F3C
 // prototype int (__thiscall ?stop@VoiceTx@@QAEHXZ)(VoiceTx* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C51C0 0x004C5B70
 // 0x004C8F00  ?stop@VoiceTx@@QAEHXZ  ->  ?stop@VoiceTx@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

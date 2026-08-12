@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004AE790 FILE
+// name      ??1SetupWin@@QAE@XZ
+// size      611 bytes
+// spans     0x004AE790-0x004AE99E;0x006596A0-0x006596F5
+// prototype void (__thiscall ??1SetupWin@@QAE@XZ)(SetupWin* this)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00402970 0x005D4DD0 0x005D7410 0x005D7470 0x005FA830 0x005FA870
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004AE790
-// name           ??1SetupWin@@QAE@XZ
-// size           611 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

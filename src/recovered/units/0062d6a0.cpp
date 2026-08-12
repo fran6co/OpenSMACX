@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0062D6A0 FILE
+// name      ??0Net@@QAE@XZ
+// size      635 bytes
+// spans     0x0062D6A0-0x0062D8DC;0x006634A0-0x006634DF
+// prototype void (__thiscall ??0Net@@QAE@XZ)(Net* this)
+// callers   1   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004C8CC0 0x006339C0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0062D6A0
-// name           ??0Net@@QAE@XZ
-// size           635 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

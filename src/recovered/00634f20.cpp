@@ -4,6 +4,9 @@
 // spans     0x00634F20-0x00634F6E
 // prototype int (__thiscall ?UNK1@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006453E0 0x00645470
 // 0x00634F20  ?UNK1@FileBox@@QAEHPAD@Z  ->  ?UNK1@FileBox@@QAEHPAD@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

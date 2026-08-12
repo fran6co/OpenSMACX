@@ -27,6 +27,9 @@ ORIGINAL: 0x004C58B0 BYTE_EXACT
 // spans     0x004C58B0-0x004C58B1
 // prototype void (__thiscall ?update_sound@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -41,6 +44,9 @@ ORIGINAL: 0x004C58E0 BYTE_EXACT
 // spans     0x004C58E0-0x004C58E1
 // prototype void (__thiscall ?suspend@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -55,6 +61,9 @@ ORIGINAL: 0x004C58F0 BYTE_EXACT
 // spans     0x004C58F0-0x004C58F1
 // prototype void (__thiscall ?restart@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -69,6 +78,9 @@ ORIGINAL: 0x004C5B10 BYTE_EXACT
 // spans     0x004C5B10-0x004C5B11
 // prototype void (__thiscall ?update_sound@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -83,6 +95,9 @@ ORIGINAL: 0x004C5B40 BYTE_EXACT
 // spans     0x004C5B40-0x004C5B41
 // prototype void (__thiscall ?suspend@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -97,6 +112,9 @@ ORIGINAL: 0x004C5B50 BYTE_EXACT
 // spans     0x004C5B50-0x004C5B51
 // prototype void (__thiscall ?restart@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -135,6 +153,9 @@ ORIGINAL: 0x004C5840 BYTE_EXACT
 // spans     0x004C5840-0x004C5845
 // prototype int (__thiscall ?select@Midi_Device@@QAEHI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -154,6 +175,9 @@ ORIGINAL: 0x004C5860 BYTE_EXACT
 // spans     0x004C5860-0x004C5863
 // prototype void (__thiscall ?set_volume@Midi_Device@@QAEXI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -172,6 +196,9 @@ ORIGINAL: 0x004C5880 BYTE_EXACT
 // spans     0x004C5880-0x004C5883
 // prototype void (__thiscall ?set_pan@Midi_Device@@QAEXH@Z)(Midi_Device* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -190,6 +217,9 @@ ORIGINAL: 0x004C5890 BYTE_EXACT
 // spans     0x004C5890-0x004C5895
 // prototype int (__thiscall ?fade@Midi_Device@@QAEHI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -209,6 +239,9 @@ ORIGINAL: 0x004C58C0 BYTE_EXACT
 // spans     0x004C58C0-0x004C58C3
 // prototype void (__thiscall ?set_rate@Midi_Device@@QAEXI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -227,6 +260,9 @@ ORIGINAL: 0x004C5AD0 BYTE_EXACT
 // spans     0x004C5AD0-0x004C5AD5
 // prototype int (__thiscall ?select@Wave_In_Device@@QAEHI@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -246,6 +282,9 @@ ORIGINAL: 0x004C5AF0 BYTE_EXACT
 // spans     0x004C5AF0-0x004C5AF5
 // prototype int (__thiscall ?get_caps@Wave_In_Device@@QAEHI@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -265,6 +304,9 @@ ORIGINAL: 0x004C5B20 BYTE_EXACT
 // spans     0x004C5B20-0x004C5B23
 // prototype void (__thiscall ?set_rate@Wave_In_Device@@QAEXI@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -283,6 +325,9 @@ ORIGINAL: 0x004C5850 BYTE_EXACT
 // spans     0x004C5850-0x004C5855
 // prototype int (__thiscall ?get_description@Midi_Device@@QAEHIPADI@Z)(Midi_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -302,6 +347,9 @@ ORIGINAL: 0x004C5AE0 BYTE_EXACT
 // spans     0x004C5AE0-0x004C5AE5
 // prototype int (__thiscall ?get_description@Wave_In_Device@@QAEHIPADI@Z)(Wave_In_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -321,6 +369,9 @@ ORIGINAL: 0x004C5830 BYTE_EXACT
 // spans     0x004C5830-0x004C5833
 // prototype int (__thiscall ?get_ndevices@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -336,6 +387,9 @@ ORIGINAL: 0x004C5870 BYTE_EXACT
 // spans     0x004C5870-0x004C5873
 // prototype int (__thiscall ?get_volume@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -351,6 +405,9 @@ ORIGINAL: 0x004C58A0 BYTE_EXACT
 // spans     0x004C58A0-0x004C58A3
 // prototype int (__thiscall ?stop@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -366,6 +423,9 @@ ORIGINAL: 0x004C58D0 BYTE_EXACT
 // spans     0x004C58D0-0x004C58D3
 // prototype int (__thiscall ?get_rate@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -381,6 +441,9 @@ ORIGINAL: 0x004C5AC0 BYTE_EXACT
 // spans     0x004C5AC0-0x004C5AC3
 // prototype int (__thiscall ?get_ndevices@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -396,6 +459,9 @@ ORIGINAL: 0x004C5B00 BYTE_EXACT
 // spans     0x004C5B00-0x004C5B03
 // prototype int (__thiscall ?stop@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -411,6 +477,9 @@ ORIGINAL: 0x004C5B30 BYTE_EXACT
 // spans     0x004C5B30-0x004C5B33
 // prototype int (__thiscall ?get_rate@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -469,6 +538,9 @@ ORIGINAL: 0x004C5900
 // spans     0x004C5900-0x004C590F
 // prototype void (__thiscall ?enable@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -484,6 +556,9 @@ ORIGINAL: 0x004C5910
 // spans     0x004C5910-0x004C591F
 // prototype void (__thiscall ?disable@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -525,6 +600,9 @@ ORIGINAL: 0x004C5920
 // spans     0x004C5920-0x004C5932
 // prototype int (__thiscall ?is_disabled@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 1 when none is wrapped
 Status: Complete
 */
@@ -541,6 +619,9 @@ ORIGINAL: 0x004C5B60
 // spans     0x004C5B60-0x004C5B6F
 // prototype int (__thiscall ?start_record@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -558,6 +639,9 @@ ORIGINAL: 0x004C5B70
 // spans     0x004C5B70-0x004C5B7F
 // prototype int (__thiscall ?end_record@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */

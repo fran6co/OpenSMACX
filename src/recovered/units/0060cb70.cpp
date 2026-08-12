@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060CB70 FILE
+// name      ?on_mousewheel@ListBox@@QAEXH@Z
+// size      74 bytes
+// spans     0x0060CB70-0x0060CBBA
+// prototype void (__thiscall ?on_mousewheel@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F85B0 0x005F85E0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060CB70
-// name           ?on_mousewheel@ListBox@@QAEXH@Z
-// size           74 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

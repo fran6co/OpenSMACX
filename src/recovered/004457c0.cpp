@@ -4,6 +4,9 @@
 // spans     0x004457C0-0x004457D3
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x004457C0  ?input_callback@@YAXXZ  ->  ?input_callback@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

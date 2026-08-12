@@ -26,6 +26,9 @@ ORIGINAL: 0x004BF380 BYTE_EXACT
 // spans     0x004BF380-0x004BF383
 // prototype int (__thiscall ?UNK4@UV2Player@@QAEHXZ)(UV2Player* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0
 Status: Complete
 */

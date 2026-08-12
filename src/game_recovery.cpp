@@ -45,6 +45,9 @@ ORIGINAL: 0x00445440 BYTE_EXACT
 // spans     0x00445440-0x00445446
 // prototype int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 10
 Status: Complete
 */

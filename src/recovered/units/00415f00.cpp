@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00415F00 BYTE_EXACT FILE
+// name      ?gov_activate@BaseWin@@QAEXXZ
+// size      112 bytes
+// spans     0x00415F00-0x00415F70
+// prototype void (__thiscall ?gov_activate@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004E5FE0 0x004EC3B0 0x004F5F30
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00415F00
-// name           ?gov_activate@BaseWin@@QAEXXZ
-// size           112 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

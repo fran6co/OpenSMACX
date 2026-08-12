@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004F5CE0 FILE
+// name      ?base_drones@@YAXXZ
+// size      581 bytes
+// spans     0x004F5CE0-0x004F5F25
+// prototype 
+// callers   1   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0046AF40 0x0048C650 0x004E5FE0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004F5CE0
-// name           ?base_drones@@YAXXZ
-// size           581 bytes
 // measured tier  MISMATCH
 // divergence     18
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FAEE0 BYTE_EXACT FILE
+// name      ?set_def_font@Menu@@QAAXPAUFont@@@Z
+// size      35 bytes
+// spans     0x005FAEE0-0x005FAEEE;0x005F0520-0x005F0535
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FAEE0
-// name           ?set_def_font@Menu@@QAAXPAUFont@@@Z
-// size           35 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

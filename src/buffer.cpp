@@ -35,6 +35,10 @@ ORIGINAL: 0x005D7210
 // spans     0x005D7210-0x005D740A;0x00662B50-0x00662B68
 // prototype void (__thiscall ??0Buffer@@QAE@XZ)(Buffer* this)
 // callers   80   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FA860 0x005FE560
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 Verification note: five mutation-harness survivors here are equivalent by
 construction. Widening the 0x4BC loop bound writes an extra zero at 0x50C,
@@ -149,6 +153,10 @@ ORIGINAL: 0x005DAC70
 // spans     0x005DAC70-0x005DACB0
 // prototype int (__thiscall ?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z)(Buffer* this, Font*, Font*, Font*, Font*)
 // callers   189   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -173,6 +181,10 @@ ORIGINAL: 0x005DACB0 BYTE_EXACT
 // spans     0x005DACB0-0x005DACDB
 // prototype void (__thiscall ?set_text_color@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // callers   188   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -191,6 +203,10 @@ ORIGINAL: 0x005DACE0 BYTE_EXACT
 // spans     0x005DACE0-0x005DAD0B
 // prototype void (__thiscall ?set_text_color2@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // callers   46   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -209,6 +225,10 @@ ORIGINAL: 0x005DAD10 BYTE_EXACT
 // spans     0x005DAD10-0x005DAD3B
 // prototype void (__thiscall ?set_text_color3@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // callers   30   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -227,6 +247,10 @@ ORIGINAL: 0x005DAD40 BYTE_EXACT
 // spans     0x005DAD40-0x005DAD6B
 // prototype void (__thiscall ?set_text_color_hyper@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
 // callers   20   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -245,6 +269,10 @@ ORIGINAL: 0x005DF570 BYTE_EXACT
 // spans     0x005DF570-0x005DF573
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: No errors (0)
 Status: Complete
 */
@@ -260,6 +288,10 @@ ORIGINAL: 0x005DF580 BYTE_EXACT
 // spans     0x005DF580-0x005DF581
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -319,6 +351,10 @@ ORIGINAL: 0x005E3373
 // spans     0x005E3373-0x005E33EA
 // prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
 // callers   48   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int Buffer::get_data() {
@@ -369,6 +405,10 @@ ORIGINAL: 0x005E34A3
 // spans     0x005E34A3-0x005E34FB
 // prototype void (__thiscall ?free_data@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   43   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Buffer::free_data(int count) {
@@ -412,6 +452,10 @@ ORIGINAL: 0x005DCAB0
 // spans     0x005DCAB0-0x005DCADB
 // prototype int (__thiscall ?text_line_height@Buffer@@QAEHXZ)(Buffer* this)
 // callers   21   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int Buffer::text_line_height() {
@@ -474,6 +518,9 @@ ORIGINAL: 0x005D95B0
 // spans     0x005D95B0-0x005D95D3
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)
 // callers   8   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DFF00
 Return Value: whatever the full copy returns
 Status: Complete with temporary full-copy dependency
 
@@ -502,6 +549,9 @@ ORIGINAL: 0x005D95E0
 // spans     0x005D95E0-0x005D960A
 // prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z)(Buffer* this, Buffer*, RECT*)
 // callers   8   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DFF00
 Return Value: whatever the full copy returns
 Status: Complete with temporary full-copy dependency
 
@@ -530,6 +580,10 @@ ORIGINAL: 0x005D7470
 // spans     0x005D7470-0x005D7665
 // prototype void (__thiscall ?close@Buffer@@QAEXXZ)(Buffer* this)
 // callers   44   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Buffer::close() {
@@ -677,6 +731,10 @@ ORIGINAL: 0x005D7410
 // spans     0x005D7410-0x005D7463;0x00662B68-0x00662B80
 // prototype void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
 // callers   87   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7470 0x005FA870
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Buffer::destroy() {
@@ -701,6 +759,9 @@ ORIGINAL: 0x005E3503
 // spans     0x005E3503-0x005E355C
 // prototype int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
 // callers   9   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: The device context, or zero when the surface refuses one
 Status: Complete
 */
@@ -738,6 +799,9 @@ ORIGINAL: 0x005E3563
 // spans     0x005E3563-0x005E35C3
 // prototype void (__thiscall ?release_hdc@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 void Buffer::release_hdc(int count) {
@@ -782,6 +846,9 @@ ORIGINAL: 0x005DE8F0
 // spans     0x005DE8F0-0x005DEA12
 // prototype int (__thiscall ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z)(Buffer* this, Palette*)
 // callers   24   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FE560
 Return Value: No errors (0); no pixel storage (7); null palette (3)
 Status: Complete
 Verification note: the publish branch is reachable - the fixture's surface
@@ -830,6 +897,9 @@ ORIGINAL: 0x005DCA80
 // spans     0x005DCA80-0x005DCAA5
 // prototype int (__thiscall ?text_height@Buffer@@QAEHXZ)(Buffer* this)
 // callers   5   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: The font's height
 Status: Complete
 */
@@ -857,6 +927,9 @@ ORIGINAL: 0x005D8000
 // spans     0x005D8000-0x005D81F3
 // prototype int (__thiscall ?set_clip@Buffer@@QAEHPAURECT@@@Z)(Buffer* this, RECT* rect)
 // callers   114   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: No errors (0); empty intersection or region failure (1);
               null rectangle (3); no pixel storage and no surface (7)
 Status: Complete
@@ -952,6 +1025,9 @@ ORIGINAL: 0x005DC790
 // spans     0x005DC790-0x005DC7BA
 // prototype int (__thiscall ?text_width@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
 // callers   17   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC7C0 0x006453E0
 Return Value: The measured width, or zero for a null string
 Status: Complete with a temporary dependency on the measured overload
 */
@@ -1005,6 +1081,9 @@ ORIGINAL: 0x005E3203
 // spans     0x005E3203-0x005E3280
 // prototype int (__thiscall ?box@Buffer@@QAEHPAURECT@@HH@Z)(Buffer* this, RECT*, int, int)
 // callers   25   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E1A80 0x005E1BF0
 Return Value: No errors (0); null rectangle (3)
 Status: Complete with temporary hline/vline dependencies
 
@@ -1047,6 +1126,9 @@ ORIGINAL: 0x005DEF90
 // spans     0x005DEF90-0x005DEFD4
 // prototype void (__thiscall ?clear_links@Buffer@@QAEXXZ)(Buffer* this)
 // callers   5   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FA8A0 0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -1078,6 +1160,9 @@ ORIGINAL: 0x005DCEA0
 // spans     0x005DCEA0-0x005DCF34
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   29   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DCAE0 0x006453E0
 Return Value: The raster writer's result; the incoming x for a null string or
               an empty draw; unusable font (3, `mov eax, 3` at 0x005DCF2B)
 Status: Complete with a temporary raster-writer dependency
@@ -1127,6 +1212,9 @@ ORIGINAL: 0x005DCF40
 // spans     0x005DCF40-0x005DD016
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
 // callers   35   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DCAE0 0x006453E0
 Return Value: The raster writer's result; zero for every rejected input
 Status: Complete with a temporary raster-writer dependency
 
@@ -1192,6 +1280,9 @@ ORIGINAL: 0x005DD020
 // spans     0x005DD020-0x005DD0D2
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8*, int, int, int, int)
 // callers   30   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC7C0 0x005DCAE0 0x006453E0
 Return Value: The raster writer's result; the incoming x for a null string or
               an empty draw; unusable font (3)
 Status: Complete with temporary raster-writer and text-width dependencies
@@ -1247,6 +1338,9 @@ ORIGINAL: 0x005DD130
 // spans     0x005DD130-0x005DD24A
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
 // callers   108   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC7C0 0x005DCAE0 0x006453E0
 Return Value: The raster writer's result; unusable font (3); zero for a null
               string, a null rectangle or an empty draw
 Status: Complete with temporary raster-writer and text-width dependencies
@@ -1319,6 +1413,9 @@ ORIGINAL: 0x005DA680 BYTE_EXACT
 // spans     0x005DA680-0x005DA69B
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00626620
 Status: Complete
 */
 int Buffer::poly(Vert *a1, int a2, int a3) {

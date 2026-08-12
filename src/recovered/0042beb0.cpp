@@ -4,6 +4,9 @@
 // spans     0x0042BEB0-0x0042BEFA
 // prototype void (__thiscall ?UNK7@Datalink@@QAEXPADPAD@Z)(Datalink* this, int8*, int8*)
 // callers   0   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00608980 0x00629490 0x00629780
 // 0x0042BEB0  ?UNK7@Datalink@@QAEXPADPAD@Z  ->  ?UNK7@Datalink@@QAEXPAD0@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0051DFD0 FILE
+// name      sub_51dfd0
+// size      41 bytes
+// spans     0x0051DFD0-0x0051DFF9
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0051DFD0
-// name           sub_51dfd0
-// size           41 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

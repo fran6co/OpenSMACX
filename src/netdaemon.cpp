@@ -41,6 +41,9 @@ ORIGINAL: 0x00530320
 // spans     0x00530320-0x0053035E
 // prototype int (__thiscall ?receive@NetDaemon@@QAEHXZ)(NetDaemon* this)
 // callers   9   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00534400 0x00630A00
 Return Value: 1 when a message was received and dispatched, 0 when none was
 Status: Complete
 Verification note: the original leaves both out-params as uninitialized stack
@@ -73,6 +76,9 @@ ORIGINAL: 0x00593220
 // spans     0x00593220-0x00593242
 // prototype void (__cdecl ?synch_veh@@YAXH@Z)(int vehID)
 // callers   32   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -88,6 +94,9 @@ ORIGINAL: 0x00593250
 // spans     0x00593250-0x00593272
 // prototype 
 // callers   6   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -103,6 +112,9 @@ ORIGINAL: 0x00593280
 // spans     0x00593280-0x005932A2
 // prototype 
 // callers   3   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -118,6 +130,9 @@ ORIGINAL: 0x005932B0
 // spans     0x005932B0-0x005932D2
 // prototype void (__cdecl ?synch_researching@@YAXH@Z)(int factionID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -133,6 +148,9 @@ ORIGINAL: 0x005932E0
 // spans     0x005932E0-0x00593302
 // prototype 
 // callers   3   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -148,6 +166,9 @@ ORIGINAL: 0x00593310
 // spans     0x00593310-0x00593332
 // prototype 
 // callers   3   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -163,6 +184,9 @@ ORIGINAL: 0x00593340
 // spans     0x00593340-0x00593362
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -179,6 +203,9 @@ ORIGINAL: 0x00593390
 // spans     0x00593390-0x005933B2
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -194,6 +221,9 @@ ORIGINAL: 0x005933C0
 // spans     0x005933C0-0x005933E2
 // prototype 
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -209,6 +239,9 @@ ORIGINAL: 0x005933F0
 // spans     0x005933F0-0x00593412
 // prototype 
 // callers   4   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -224,6 +257,9 @@ ORIGINAL: 0x00593420
 // spans     0x00593420-0x00593442
 // prototype 
 // callers   3   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -241,6 +277,9 @@ ORIGINAL: 0x00593450
 // spans     0x00593450-0x00593474
 // prototype void (__cdecl ?synch_diplo@@YAXHH@Z)(int factionID, int)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -256,6 +295,9 @@ ORIGINAL: 0x005934B0
 // spans     0x005934B0-0x005934D2
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -271,6 +313,9 @@ ORIGINAL: 0x005934E0
 // spans     0x005934E0-0x00593502
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532E00
 Return Value: none
 Status: Complete
 */
@@ -291,6 +336,9 @@ ORIGINAL: 0x005310F0
 // spans     0x005310F0-0x0053114A
 // prototype void (__thiscall ?unlock_veh@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   33   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00592EE0 0x006262F0
 Return Value: EAX residue. The original is ?unlock_veh@NetDaemon@@QAEXXZ, but
               EAX is live at its ret: on the non-net path it is the loaded
               transport flag, which is zero exactly because that path was

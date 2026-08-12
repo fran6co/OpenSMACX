@@ -4,6 +4,9 @@
 // spans     0x00627860-0x00627884
 // prototype int (__cdecl ?pop_ask@@YAHPADHP6AHXZH@Z)(int8* sectionID, int, int (__cdecl *)(), int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00627910
 // 0x00627860  ?pop_ask@@YAHPADHP6AHXZH@Z  ->  ?pop_ask@@YAHPADHP6AHXZH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

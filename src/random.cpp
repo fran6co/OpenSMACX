@@ -28,6 +28,9 @@ ORIGINAL: 0x00625750
 // spans     0x00625750-0x00625763
 // prototype void (__thiscall ?reseed@Random@@QAEXK@Z)(Random* this, unsigned int)
 // callers   5   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -41,6 +44,9 @@ ORIGINAL: 0x00625770
 // spans     0x00625770-0x006257A7
 // prototype unsigned int (__thiscall ?get@Random@@QAEIHH@Z)(Random* this, int, int)
 // callers   5   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Random unsigned integer within bounds
 Status: Complete
 */
@@ -62,6 +68,9 @@ ORIGINAL: 0x006257B0 BYTE_EXACT
 // spans     0x006257B0-0x006257DA
 // prototype unknown float (__thiscall ?get@Random@@QAENXZ)(Random* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Random double value
 Status: Complete
 */
@@ -82,6 +91,10 @@ Random *Rand = (Random *)0x009BB568;
 // spans     0x00625700-0x00625716
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645398
+// notes     Staged hybrid export redirect calls the source-owned initializer
 void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); }
 
 // ORIGINAL: 0x00625720
@@ -90,6 +103,10 @@ void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); }
 // spans     0x00625720-0x0062572B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned exit cleanup
 void __cdecl random_rand_exit() { Rand->~Random(); }
 
 // ORIGINAL: 0x006257E0
@@ -98,6 +115,10 @@ void __cdecl random_rand_exit() { Rand->~Random(); }
 // spans     0x006257E0-0x006257F9
 // prototype 
 // callers   6   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned reseed wrapper
 void __cdecl random_reseed(uint32_t new_seed) { Rand->reseed(new_seed); }
 
 // ORIGINAL: 0x00625800
@@ -106,6 +127,10 @@ void __cdecl random_reseed(uint32_t new_seed) { Rand->reseed(new_seed); }
 // spans     0x00625800-0x00625806
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned seed getter
 uint32_t __cdecl random_get() { return Rand->get_seed(); }
 
 // ORIGINAL: 0x00625810
@@ -114,6 +139,10 @@ uint32_t __cdecl random_get() { return Rand->get_seed(); }
 // spans     0x00625810-0x0062584F
 // prototype 
 // callers   38   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned integer generator
 uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand->get(min, max); }
 
 // ORIGINAL: 0x00625850
@@ -122,4 +151,8 @@ uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand->get(min, max)
 // spans     0x00625850-0x00625880
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned floating generator
 double __cdecl random() { return Rand->get(); }

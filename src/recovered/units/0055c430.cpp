@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0055C430 FILE
+// name      ?comm_check@@YAXHH@Z
+// size      758 bytes
+// spans     0x0055C430-0x0055C726
+// prototype 
+// callers   1   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A890 0x005391C0 0x0054FFD0 0x0055B870 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0055C430
-// name           ?comm_check@@YAXHH@Z
-// size           758 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

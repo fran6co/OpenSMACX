@@ -26,6 +26,9 @@ ORIGINAL: 0x004713A0 BYTE_EXACT
 // spans     0x004713A0-0x004713A3
 // prototype void (__thiscall ?UNK1@MessageWin@@QAEXHHHHH@Z)(MessageWin* this, int, int, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -44,6 +47,9 @@ ORIGINAL: 0x00471D40 BYTE_EXACT
 // spans     0x00471D40-0x00471D43
 // prototype void (__thiscall ?UNK4@MessageWin@@QAEXH@Z)(MessageWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

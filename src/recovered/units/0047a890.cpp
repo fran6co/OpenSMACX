@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047A890 FILE
+// name      ?pop@NetMsg@@QAEXPBDHHPBD@Z
+// size      1359 bytes
+// spans     0x0047A890-0x0047ACE3;0x00656550-0x0065664C
+// prototype void (__thiscall ?pop@NetMsg@@QAEXPBDHHPBD@Z)(NetMsg* this, int8*, int, int, int8*)
+// callers   108   call targets   29
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00404A80 0x00406380 0x004064D0 0x004066C0 0x00406880 0x00406910 0x005D45B0 0x005D4DD0 0x005E2480 0x005E3820 0x005E3890 0x005F7E90 0x005FA870 0x00600F00 0x006015B0 0x006019F0 0x00601B80 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00616350 0x00616780 0x006169A0 0x00645470 0x00645550
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047A890
-// name           ?pop@NetMsg@@QAEXPBDHHPBD@Z
-// size           1359 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

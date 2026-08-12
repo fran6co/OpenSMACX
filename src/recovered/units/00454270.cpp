@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00454270 FILE
+// name      ?load_vehicles@@YAXXZ
+// size      1427 bytes
+// spans     0x00454270-0x004547DB;0x0065515A-0x00655182
+// prototype 
+// callers   1   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00453F70 0x005D7470 0x005D7DE0 0x005DE580 0x005E2210 0x005E37E0 0x005E3820 0x005E39A0 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00454270
-// name           ?load_vehicles@@YAXXZ
-// size           1427 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

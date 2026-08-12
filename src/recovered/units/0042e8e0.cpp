@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0042E8E0 FILE
+// name      ?draw_defense@Datalink@@QAEXXZ
+// size      1402 bytes
+// spans     0x0042E8E0-0x0042EE26;0x006537E2-0x00653816
+// prototype void (__thiscall ?draw_defense@Datalink@@QAEXXZ)(Datalink* this)
+// callers   1   call targets   24
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401000 0x00402970 0x004C3090 0x005B9EF0 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD40 0x005DB040 0x005DD130 0x00608980 0x006169A0 0x006171A0 0x00617230 0x006183B0 0x00625E30 0x00625EC0 0x00629490 0x00629780 0x006453E0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0042E8E0
-// name           ?draw_defense@Datalink@@QAEXXZ
-// size           1402 bytes
 // measured tier  NO_COMPILE
 // refusal        u0042e8e0.cpp(215) : error C2079: 'buffer_' uses undefined class 'Buffer' u0042e8e0.cpp(346) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

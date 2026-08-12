@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F2570 FILE
+// name      ?OnLButtonUp@Win@@QAAXPAXHHI@Z
+// size      65 bytes
+// spans     0x005F2570-0x005F25B1
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F6F10
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F2570
-// name           ?OnLButtonUp@Win@@QAAXPAXHHI@Z
-// size           65 bytes
 // measured tier  NO_COMPILE
 // refusal        u005f2570.cpp(44) : error C2143: syntax error : missing ';' before 'this' u005f2570.cpp(44) : error C2143: syntax error : missing ';' before 'this' u005f2570.cp
 //

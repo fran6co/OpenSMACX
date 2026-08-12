@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041E560 FILE
+// name      ?update_gov_buttons@BaseWin@@QAEXXZ
+// size      552 bytes
+// spans     0x0041E560-0x0041E788
+// prototype void (__thiscall ?update_gov_buttons@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00607C80
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041E560
-// name           ?update_gov_buttons@BaseWin@@QAEXXZ
-// size           552 bytes
 // measured tier  MISMATCH
 // divergence     6
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00428C00 FILE
+// name      ?draw_credits@Credits@@QAEXXZ
+// size      348 bytes
+// spans     0x00428C00-0x00428D5C
+// prototype void (__thiscall ?draw_credits@Credits@@QAEXXZ)(Credits* this)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D5250 0x005DACB0 0x005DD020 0x005E2070 0x006453E0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00428C00
-// name           ?draw_credits@Credits@@QAEXXZ
-// size           348 bytes
 // measured tier  MISMATCH
 // divergence     48
 //

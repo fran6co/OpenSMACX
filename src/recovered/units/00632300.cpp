@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00632300 FILE
+// name      ?set_polling@Net@@QAEXH@Z
+// size      65 bytes
+// spans     0x00632300-0x00632341
+// prototype void (__thiscall ?set_polling@Net@@QAEXH@Z)(Net* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00632300
-// name           ?set_polling@Net@@QAEXH@Z
-// size           65 bytes
 // measured tier  NO_COMPILE
 // refusal        u00632300.cpp(1) : error C2653: 'Net' : is not a class or namespace name u00632300.cpp(2) : error C2673: 'set_polling' : global functions do not have 'this' poi
 //

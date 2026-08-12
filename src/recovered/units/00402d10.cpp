@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00402D10 FILE
+// name      sub_402d10
+// size      108 bytes
+// spans     0x00402D10-0x00402D7C
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00402D10
-// name           sub_402d10
-// size           108 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

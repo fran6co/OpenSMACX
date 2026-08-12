@@ -4,6 +4,9 @@
 // spans     0x00433F30-0x00433F4F
 // prototype void (__thiscall ?on_scrolled@SelectPartWin@@QAEXHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x00433F30  ?on_scrolled@SelectPartWin@@QAEXHH@Z  ->  ?on_scrolled@SelectPartWin@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004B3C80 FILE
+// name      ??1SocialWin@@QAE@XZ
+// size      943 bytes
+// spans     0x004B3C80-0x004B3EB7;0x00659700-0x00659878
+// prototype void (__thiscall ??1SocialWin@@QAE@XZ)(SocialWin* this)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x005FA870 0x00618EE0 0x0062B7F0 0x006456E4
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004B3C80
-// name           ??1SocialWin@@QAE@XZ
-// size           943 bytes
 // measured tier  NO_COMPILE
 // refusal        expected one external .text symbol, found 3: ['??1SocialWin@@QAE@XZ', '??1Buffer@@QAE@XZ', '??1FlatButton@@QAE@XZ']. A translation unit must define the SUBJECT 
 //

@@ -38,6 +38,9 @@ ORIGINAL: 0x00590140
 // spans     0x00590140-0x0059016B
 // prototype void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -62,6 +65,9 @@ ORIGINAL: 0x005900D0
 // spans     0x005900D0-0x0059013D
 // prototype void (__thiscall ?clear@Lock@@QAEXXZ)(Lock* this)
 // callers   12   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -96,6 +102,9 @@ ORIGINAL: 0x005904A0
 // spans     0x005904A0-0x005904FE
 // prototype int (__thiscall ?any_locks@Lock@@QAEHXZ)(Lock* this)
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1 when a lock is engaged, 0 otherwise
 Status: Complete
 */
@@ -134,6 +143,9 @@ ORIGINAL: 0x00590170
 // spans     0x00590170-0x005901C3
 // prototype void (__thiscall ?unlock@Lock@@QAEXH@Z)(Lock* this, int)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0058FD90
 Return Value: n/a
 Status: Complete
 */
@@ -163,6 +175,9 @@ ORIGINAL: 0x005902C0
 // spans     0x005902C0-0x005902F3
 // prototype int (__thiscall ?global_lock@Lock@@QAEHH@Z)(Lock* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0 on success, 1 when another owner holds the lock
 Status: Complete
 */
@@ -190,6 +205,9 @@ ORIGINAL: 0x00590240
 // spans     0x00590240-0x005902BE
 // prototype int (__thiscall ?check_global_2@Lock@@QAEHH@Z)(Lock* this, int)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0052DBA0
 Return Value: 1 when the lock may be released, 0 otherwise
 Status: Complete
 */
@@ -228,6 +246,9 @@ ORIGINAL: 0x005901D0
 // spans     0x005901D0-0x00590239
 // prototype void (__thiscall ?check_global@Lock@@QAEXXZ)(Lock* this)
 // callers   15   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0052DBA0 0x00592EE0
 Return Value: n/a
 Status: Complete
 */
@@ -263,6 +284,9 @@ ORIGINAL: 0x00590470
 // spans     0x00590470-0x0059049B
 // prototype int (__thiscall ?add_lock@Lock@@QAEHHHHH@Z)(Lock* this, int, int, int, int)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0058FE80
 Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
@@ -291,6 +315,9 @@ ORIGINAL: 0x00590300
 // spans     0x00590300-0x00590469
 // prototype int (__thiscall ?lock@Lock@@QAEHHHHHHHH@Z)(Lock* this, int, int, int, int, int, int, int)
 // callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0052DBA0 0x0058FD90 0x0058FE80 0x00592EE0
 Return Value: 1 on refusal or lock failure, 0 on success
 Status: Complete
 */

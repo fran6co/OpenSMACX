@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041A160 FILE
+// name      ?next@BaseWin@@QAEXXZ
+// size      333 bytes
+// spans     0x0041A160-0x0041A2AD
+// prototype void (__thiscall ?next@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0041A920 0x004E39D0 0x005BF310 0x0064FD20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041A160
-// name           ?next@BaseWin@@QAEXXZ
-// size           333 bytes
 // measured tier  MISMATCH
 // divergence     30
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004D92D0 FILE
+// name      ?group@Console@@QAEXH@Z
+// size      791 bytes
+// spans     0x004D92D0-0x004D95E7
+// prototype void (__thiscall ?group@Console@@QAEXH@Z)(Console* this, int)
+// callers   3   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00467430 0x0046B190 0x004E3A50 0x0050E160
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004D92D0
-// name           ?group@Console@@QAEXH@Z
-// size           791 bytes
 // measured tier  NO_COMPILE
 // refusal        u004d92d0.cpp(1) : error C2653: 'Console' : is not a class or namespace name
 //

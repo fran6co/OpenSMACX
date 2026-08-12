@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005BF730 FILE
+// name      ?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z
+// size      64 bytes
+// spans     0x005BF730-0x005BF770
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930 0x006453E0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005BF730
-// name           ?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z
-// size           64 bytes
 // measured tier  NO_COMPILE
 // refusal        u005bf730.cpp(44) : error C2059: syntax error : ';' u005bf730.cpp(51) : error C2146: syntax error : missing ')' before identifier 'a8' u005bf730.cpp(51) : error
 //

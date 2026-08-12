@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0062B190 FILE
+// name      ?decode_delta_flc_trans@Flic@@QAEXXZ
+// size      1117 bytes
+// spans     0x0062B190-0x0062B5ED
+// prototype void (__thiscall ?decode_delta_flc_trans@Flic@@QAEXXZ)(Flic* this)
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3373 0x005E33F3 0x00644F3A 0x00646178
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0062B190
-// name           ?decode_delta_flc_trans@Flic@@QAEXXZ
-// size           1117 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

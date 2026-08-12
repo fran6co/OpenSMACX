@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C95E0 FILE
+// name      ?adjust_pal@Gamma@@QAEXN@Z
+// size      465 bytes
+// spans     0x005C95E0-0x005C97B1
+// prototype void (__thiscall ?adjust_pal@Gamma@@QAEXN@Z)(Gamma* this, unknown float)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FE460 0x005FE6D0 0x006458C8 0x00646A99
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C95E0
-// name           ?adjust_pal@Gamma@@QAEXN@Z
-// size           465 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

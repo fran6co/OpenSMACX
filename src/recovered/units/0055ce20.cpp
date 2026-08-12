@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0055CE20 FILE
+// name      ?enemies_unpact@@YAXHH@Z
+// size      529 bytes
+// spans     0x0055CE20-0x0055D031
+// prototype 
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x0055CCA0 0x0058FB00 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0055CE20
-// name           ?enemies_unpact@@YAXHH@Z
-// size           529 bytes
 // measured tier  MISMATCH
 // divergence     24
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047FED0 FILE
+// name      ?draw_factions@NetWin@@QAEXXZ
+// size      675 bytes
+// spans     0x0047FED0-0x00480173
+// prototype void (__thiscall ?draw_factions@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0 0x00645470 0x00645660
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047FED0
-// name           ?draw_factions@NetWin@@QAEXXZ
-// size           675 bytes
 // measured tier  MISMATCH
 // divergence     8
 //

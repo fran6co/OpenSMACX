@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006253D0 FILE
+// name      ?on_redraw@ImageButton@@QAEXXZ
+// size      764 bytes
+// spans     0x006253D0-0x006256CC
+// prototype void (__thiscall ?on_redraw@ImageButton@@QAEXXZ)(ImageButton* this)
+// callers   0   call targets   7
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5250 0x005DD130 0x005DE8F0 0x005E3203 0x005E4B4A 0x005F2CA0 0x006453E0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006253D0
-// name           ?on_redraw@ImageButton@@QAEXXZ
-// size           764 bytes
 // measured tier  NO_COMPILE
 // refusal        u006253d0.cpp(1) : error C2653: 'ImageButton' : is not a class or namespace name
 //

@@ -55,6 +55,10 @@ ORIGINAL: 0x005D4CF0
 // spans     0x005D4CF0-0x005D4DC4;0x00662B10-0x00662B22
 // prototype void (__thiscall ??0GraphicWin@@QAE@XZ)(GraphicWin* this)
 // callers   52   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7210 0x005EB3D0
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 Verification note: the 0x134 and 0x138 stores are redundant - Win::construct
 runs first and already zeroes both - so dropping either is unobservable. They
@@ -124,6 +128,10 @@ ORIGINAL: 0x005D4E40
 // spans     0x005D4E40-0x005D4EE6
 // prototype void (__thiscall ?close@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   66   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7470 0x005EB640
+// notes     Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original Win close dependency
 Return Value: field_A0C_ default when no interface is present; otherwise the
               scalar-deleting virtual call's return residue
 Status: Complete with temporary Win close dependency
@@ -184,6 +192,10 @@ ORIGINAL: 0x005D4DD0
 // spans     0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34
 // prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
 // callers   185   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7410 0x005EBC90
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete with temporary Buffer and Win subobject dependencies
 */
 GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *) {
@@ -225,6 +237,9 @@ ORIGINAL: 0x005D5440
 // spans     0x005D5440-0x005D5467
 // prototype int (__thiscall ?fill@GraphicWin@@QAEHHHHHH@Z)(GraphicWin* this, int xLeft, int yTop, int length, int width, int)
 // callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8240
 Return Value: whatever Buffer::fill returns
 Status: Complete
 */
@@ -277,6 +292,9 @@ ORIGINAL: 0x005D5250
 // spans     0x005D5250-0x005D5346
 // prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
 // callers   58   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DA330 0x005DFB50 0x005DFF00
 Return Value: n/a
 Status: Complete
 Verification note: three loads the original performs are deliberately absent.
@@ -348,6 +366,9 @@ ORIGINAL: 0x005D5A70
 // spans     0x005D5A70-0x005D5B64
 // prototype void (__thiscall ?redraw@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   42   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D6AC0 0x005ED240 0x005F7E90
 Return Value: n/a
 Status: Complete
 Verification note: the calling convention of the 0xA10 paint hook is inferred,
@@ -440,6 +461,9 @@ ORIGINAL: 0x005D4EF0
 // spans     0x005D4EF0-0x005D5096;0x00662B34-0x00662B49
 // prototype int (__thiscall ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)
 // callers   47   call targets   9
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x005D7030 0x005D7210 0x005D7670 0x005DE8F0 0x005EBD80 0x005EEF60 0x0064557F 0x0064558A
 Return Value: 0 on success; otherwise the nonzero failure code passed straight
               through from Win::init or from Buffer::init
 Status: Complete with temporary Win init/nonclient_to_client, GraphicWin
@@ -590,6 +614,9 @@ ORIGINAL: 0x005D6310 BYTE_EXACT
 // spans     0x005D6310-0x005D632C
 // prototype void (__thiscall ?on_mouse_move@GraphicWin@@QAEXHHIH@Z)(GraphicWin* this, int, int, unsigned int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F6320
 Status: Complete
 */
 void GraphicWin::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {

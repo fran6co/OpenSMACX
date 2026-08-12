@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00421830 BYTE_EXACT FILE
+// name      ??_GMapWin@@UAEPAXI@Z
+// size      54 bytes
+// spans     0x00421830-0x00421866
+// prototype void* (__thiscall ??_GMapWin@@UAEPAXI@Z)(MapWin* this, unsigned int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00420F90 0x005D4DD0 0x0064557F
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00421830
-// name           ??_GMapWin@@UAEPAXI@Z
-// size           54 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

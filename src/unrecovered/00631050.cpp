@@ -1,10 +1,13 @@
 // ORIGINAL: 0x00631050 FILE
-// placeholder - not yet decompiled
 // name      sub_631050
 // size      3001 bytes
 // spans     0x00631050-0x00631A06;0x00663528-0x0066372B
 // prototype 
 // callers   0   call targets   30
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401C80 0x00401CE0 0x00402500 0x00402530 0x00402970 0x004080B0 0x004E3350 0x004E34B0 0x005D45B0 0x005D4DD0 0x006015B0 0x00601980 0x006019F0 0x00601B20 0x00602600 0x00611F80 0x00612A70 0x00616200 0x0062C010 0x0062E420 0x0062E540 0x0062EAA0 0x0063BB20 0x0063BD10 0x00644DFF 0x00644F3A 0x00645470 0x00645550 0x00645DA7 0x0064FC88
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00631050
 
 // BODY GOES HERE.

@@ -1,10 +1,13 @@
 // ORIGINAL: 0x00409200 FILE
-// placeholder - not yet decompiled
 // name      ?queue_click@BaseWin@@QAEXHHHH@Z
 // size      4888 bytes
 // spans     0x00409200-0x0040A1B9;0x0065158B-0x006518EA
 // prototype void (__thiscall ?queue_click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int, int, int, int)
 // callers   1   call targets   41
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004064D0 0x004066C0 0x00406820 0x00406880 0x00406910 0x00406AF0 0x00406E60 0x00415080 0x00417040 0x004E39D0 0x004EC3B0 0x00530D50 0x00530E50 0x005934B0 0x0059D250 0x0059D3A0 0x0059D690 0x005BF310 0x005BFAB0 0x005D45B0 0x005D4DD0 0x005E3820 0x005ED240 0x005F7E90 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x00625E50 0x00625EC0 0x00645460 0x00645470 0x00645550 0x0064FC88
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00409200
 
 // BODY GOES HERE.

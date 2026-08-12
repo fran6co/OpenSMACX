@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00406C00 FILE
+// name      ??1Popup@@QAE@XZ
+// size      836 bytes
+// spans     0x00406C00-0x00406E52;0x00650AB0-0x00650BA2
+// prototype void (__thiscall ??1Popup@@QAE@XZ)(Popup* this)
+// callers   6   call targets   12
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x00406910 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00406C00
-// name           ??1Popup@@QAE@XZ
-// size           836 bytes
 // measured tier  NO_COMPILE
 // refusal        u00406c00.cpp(154) : error C2079: 'spot_' uses undefined class 'Spot' u00406c00.cpp(263) : error C2079: 'heap_' uses undefined class 'Heap'
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005389F0 FILE
+// name      ??0NetDaemon@@QAE@XZ
+// size      378 bytes
+// spans     0x005389F0-0x00538B58;0x0065DF50-0x0065DF62
+// prototype void (__thiscall ??0NetDaemon@@QAE@XZ)(NetDaemon* this)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E2490 0x004E25B0 0x0058FF70 0x005900D0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005389F0
-// name           ??0NetDaemon@@QAE@XZ
-// size           378 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

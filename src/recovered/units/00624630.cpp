@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00624630 FILE
+// name      sub_624630
+// size      60 bytes
+// spans     0x00624630-0x0062466C
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0061DF60
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00624630
-// name           sub_624630
-// size           60 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

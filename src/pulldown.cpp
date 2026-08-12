@@ -45,6 +45,10 @@ ORIGINAL: 0x005F8CB0
 // spans     0x005F8CB0-0x005F8D1F
 // prototype int (__thiscall ?hide_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int PullDown::hide_item(int id) {
@@ -69,6 +73,10 @@ ORIGINAL: 0x005F8D20
 // spans     0x005F8D20-0x005F8D8F
 // prototype int (__thiscall ?show_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int PullDown::show_item(int id) {
@@ -93,6 +101,10 @@ ORIGINAL: 0x005F8D90
 // spans     0x005F8D90-0x005F8DEF
 // prototype int (__thiscall ?disable_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int PullDown::disable_item(int id) {
@@ -113,6 +125,10 @@ ORIGINAL: 0x005F8DF0
 // spans     0x005F8DF0-0x005F8E4F
 // prototype int (__thiscall ?enable_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int PullDown::enable_item(int id) {
@@ -133,6 +149,10 @@ ORIGINAL: 0x005F9040
 // spans     0x005F9040-0x005F909F
 // prototype int (__thiscall ?check_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int PullDown::check_item(int id) {
@@ -153,6 +173,10 @@ ORIGINAL: 0x005F90A0
 // spans     0x005F90A0-0x005F90FF
 // prototype int (__thiscall ?uncheck_item@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int PullDown::uncheck_item(int id) {
@@ -173,6 +197,10 @@ ORIGINAL: 0x005F9F40
 // spans     0x005F9F40-0x005F9F5C
 // prototype int (__thiscall ?get_selected@PullDown@@QAEHXZ)(PullDown* this)
 // callers   13   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int PullDown::get_selected() {
@@ -238,6 +266,9 @@ ORIGINAL: 0x005F88A0
 // spans     0x005F88A0-0x005F891B
 // prototype void (__thiscall ??1PullDown@@QAE@XZ)(PullDown* this)
 // callers   27   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00644EF2
 Status: Complete
 Verification note: the two virtual-table stores are dead - the GraphicWin
 delegation unconditionally overwrites both slots with its own tables - so
@@ -282,6 +313,9 @@ ORIGINAL: 0x005F8C90 BYTE_EXACT
 // spans     0x005F8C90-0x005F8C98
 // prototype int (__thiscall ?UNK2@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int PullDown::UNK2(int) {
@@ -302,6 +336,9 @@ ORIGINAL: 0x005F8CA0 BYTE_EXACT
 // spans     0x005F8CA0-0x005F8CA8
 // prototype int (__thiscall ?UNK3@PullDown@@QAEHHHH@Z)(PullDown* this, int, int, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int PullDown::UNK3(int, int, int) {
@@ -322,6 +359,9 @@ ORIGINAL: 0x005FA750 BYTE_EXACT
 // spans     0x005FA750-0x005FA756
 // prototype int (__thiscall ?UNK5@PullDown@@QAEHXZ)(PullDown* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int PullDown::UNK5() {
@@ -342,6 +382,9 @@ ORIGINAL: 0x005FA760 BYTE_EXACT
 // spans     0x005FA760-0x005FA766
 // prototype int (__thiscall ?UNK6@PullDown@@QAEHXZ)(PullDown* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int PullDown::UNK6() {
@@ -361,6 +404,9 @@ ORIGINAL: 0x005FA740 BYTE_EXACT
 // spans     0x005FA740-0x005FA743
 // prototype void (__thiscall ?on_mouse_leave@PullDown@@QAEXHH@Z)(PullDown* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -381,6 +427,9 @@ ORIGINAL: 0x005F9D00 BYTE_EXACT
 // spans     0x005F9D00-0x005F9D28
 // prototype int (__thiscall ?id_to_index@PullDown@@QAEHH@Z)(PullDown* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the item's index, or -1 when absent
 Status: Complete
 */
@@ -408,6 +457,9 @@ ORIGINAL: 0x005F93A0 BYTE_EXACT
 // spans     0x005F93A0-0x005F93B9
 // prototype void (__thiscall ?hide@PullDown@@QAEXXZ)(PullDown* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EDCD0 0x005FCBB0
 Status: Complete
 */
 void PullDown::hide() {

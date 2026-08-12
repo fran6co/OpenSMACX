@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004DD6F0 FILE
+// name      ?editor_diff@Console@@QAEXXZ
+// size      1130 bytes
+// spans     0x004DD6F0-0x004DDA4E;0x0065B872-0x0065B97E
+// prototype void (__thiscall ?editor_diff@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   21
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406820 0x00406880 0x00406AF0 0x005ABF20 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00612A70 0x006169A0 0x00645470 0x00645550
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004DD6F0
-// name           ?editor_diff@Console@@QAEXXZ
-// size           1130 bytes
 // measured tier  NO_COMPILE
 // refusal        u004dd6f0.cpp(152) : error C2079: 'spot_' uses undefined class 'Spot' u004dd6f0.cpp(241) : error C2079: 'heap_' uses undefined class 'Heap' Generating Code... C
 //

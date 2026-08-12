@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043BE30 FILE
+// name      ?select_name@DesignWin@@QAEXXZ
+// size      284 bytes
+// spans     0x0043BE30-0x0043BF4C
+// prototype void (__thiscall ?select_name@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00436090 0x0057E040 0x005BFAB0 0x006453E0 0x00645460 0x00645660 0x00645E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043BE30
-// name           ?select_name@DesignWin@@QAEXXZ
-// size           284 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00510C90 BYTE_EXACT FILE
+// name      sub_510c90
+// size      80 bytes
+// spans     0x00510C90-0x00510CE0
+// prototype 
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x0046AD60 0x005109B0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00510C90
-// name           sub_510c90
-// size           80 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

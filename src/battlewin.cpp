@@ -29,6 +29,9 @@ ORIGINAL: 0x00422E10 BYTE_EXACT
 // spans     0x00422E10-0x00422E13
 // prototype void (__thiscall ?on_iface_left_click@BattleWin@@QAEXHH@Z)(BattleWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -45,6 +48,9 @@ ORIGINAL: 0x00422ED0
 // spans     0x00422ED0-0x00422ED8
 // prototype void (__thiscall ??1BattleWin@@QAE@XZ)(BattleWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -68,6 +74,9 @@ ORIGINAL: 0x00422E20 BYTE_EXACT
 // spans     0x00422E20-0x00422E23
 // prototype void (__thiscall ?on_iface_right_click@BattleWin@@QAEXHH@Z)(BattleWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -86,6 +95,9 @@ ORIGINAL: 0x00422E70 BYTE_EXACT
 // spans     0x00422E70-0x00422E73
 // prototype void (__thiscall ?on_iface_right_down@BattleWin@@QAEXHH@Z)(BattleWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -104,6 +116,9 @@ ORIGINAL: 0x00422E80 BYTE_EXACT
 // spans     0x00422E80-0x00422E83
 // prototype void (__thiscall ?on_iface_mouse_move@BattleWin@@QAEXHH@Z)(BattleWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -122,6 +137,9 @@ ORIGINAL: 0x00422E90 BYTE_EXACT
 // spans     0x00422E90-0x00422E93
 // prototype void (__thiscall ?on_iface_mouse_leave@BattleWin@@QAEXHH@Z)(BattleWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +158,9 @@ ORIGINAL: 0x00422EA0 BYTE_EXACT
 // spans     0x00422EA0-0x00422EA3
 // prototype void (__thiscall ?on_iface_selected@BattleWin@@QAEXHH@Z)(BattleWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -157,6 +178,9 @@ ORIGINAL: 0x00422DC0 BYTE_EXACT
 // spans     0x00422DC0-0x00422DDA
 // prototype void (__thiscall ?on_iface_button_clicked@BattleWin@@QAEXH@Z)(BattleWin* this, int)
 // callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045D170 0x0045D380
 Status: Complete
 */
 void BattleWin::on_iface_button_clicked(int a1) {

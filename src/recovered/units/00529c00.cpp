@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00529C00 FILE
+// name      ?mash_planes@@YAXXZ
+// size      615 bytes
+// spans     0x00529C00-0x00529E67
+// prototype 
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046AF40 0x00504AA0 0x005108A0 0x005B9580 0x005C0B00 0x005C1540
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00529C00
-// name           ?mash_planes@@YAXXZ
-// size           615 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

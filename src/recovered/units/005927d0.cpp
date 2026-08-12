@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005927D0 FILE
+// name      ?delete_landmark@@YAXHH@Z
+// size      360 bytes
+// spans     0x005927D0-0x00592938
+// prototype void (__cdecl ?delete_landmark@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046FB90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005927D0
-// name           ?delete_landmark@@YAXHH@Z
-// size           360 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

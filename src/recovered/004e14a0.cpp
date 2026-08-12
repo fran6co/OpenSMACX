@@ -4,6 +4,9 @@
 // spans     0x004E14A0-0x004E14C8
 // prototype void (__thiscall ?editor_rockiness@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x005ABF20 0x005BF3F0 0x005C32A0
 // 0x004E14A0  ?editor_rockiness@Console@@QAEXXZ  ->  ?editor_rockiness@Console@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

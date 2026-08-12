@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006378B0 BYTE_EXACT FILE
+// name      ?read_frame_process@Video@@QAEXXZ
+// size      86 bytes
+// spans     0x006378B0-0x00637906
+// prototype void (__thiscall ?read_frame_process@Video@@QAEXXZ)(Video* this)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00626250 0x00637910 0x00637C30 0x00637D70
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006378B0
-// name           ?read_frame_process@Video@@QAEXXZ
-// size           86 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

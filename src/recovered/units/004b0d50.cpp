@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004B0D50 FILE
+// name      ?draw_psych_alloc@SocialWin@@QAEXXZ
+// size      578 bytes
+// spans     0x004B0D50-0x004B0F92
+// prototype void (__thiscall ?draw_psych_alloc@SocialWin@@QAEXXZ)(SocialWin* this)
+// callers   1   call targets   13
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D5930 0x005D8000 0x005DA860 0x005DAC70 0x005DACB0 0x005DD130 0x005E2DD3 0x005E3203 0x005FD2B0 0x006169A0 0x006453E0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004B0D50
-// name           ?draw_psych_alloc@SocialWin@@QAEXXZ
-// size           578 bytes
 // measured tier  NO_COMPILE
 // refusal        u004b0d50.cpp(212) : error C2079: 'buffer_' uses undefined class 'Buffer' u004b0d50.cpp(343) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

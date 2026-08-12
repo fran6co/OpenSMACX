@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00618430 BYTE_EXACT FILE
+// name      ?set_shadow_table@Caviar@@QAEHPAE@Z
+// size      56 bytes
+// spans     0x00618430-0x00618468
+// prototype int (__thiscall ?set_shadow_table@Caviar@@QAEHPAE@Z)(Caviar* this, LPBYTE)
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645930
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00618430
-// name           ?set_shadow_table@Caviar@@QAEHPAE@Z
-// size           56 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

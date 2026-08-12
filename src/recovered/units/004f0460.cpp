@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004F0460 FILE
+// name      ?upgrade_prototypes@@YAXHH@Z
+// size      485 bytes
+// spans     0x004F0460-0x004F0645
+// prototype void (__cdecl ?upgrade_prototypes@@YAXHH@Z)(int factionID, int protoID)
+// callers   4   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004EFE80 0x005BF1F0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004F0460
-// name           ?upgrade_prototypes@@YAXHH@Z
-// size           485 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

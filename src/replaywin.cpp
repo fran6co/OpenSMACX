@@ -26,6 +26,9 @@ ORIGINAL: 0x005AD3D0 BYTE_EXACT
 // spans     0x005AD3D0-0x005AD3D3
 // prototype void (__thiscall ?on_left_double_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -40,6 +43,9 @@ ORIGINAL: 0x005AD3E0 BYTE_EXACT
 // spans     0x005AD3E0-0x005AD3E3
 // prototype void (__thiscall ?on_right_double_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -54,6 +60,9 @@ ORIGINAL: 0x005AD3F0 BYTE_EXACT
 // spans     0x005AD3F0-0x005AD3F3
 // prototype void (__thiscall ?on_mouse_move@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -68,6 +77,9 @@ ORIGINAL: 0x005AD400 BYTE_EXACT
 // spans     0x005AD400-0x005AD403
 // prototype void (__thiscall ?on_right_down@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -82,6 +94,9 @@ ORIGINAL: 0x005AD410 BYTE_EXACT
 // spans     0x005AD410-0x005AD413
 // prototype void (__thiscall ?on_left_down@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -96,6 +111,9 @@ ORIGINAL: 0x005AD420 BYTE_EXACT
 // spans     0x005AD420-0x005AD423
 // prototype void (__thiscall ?on_left_up@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -133,6 +151,9 @@ ORIGINAL: 0x005ADBD0 BYTE_EXACT
 // spans     0x005ADBD0-0x005ADBE1
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005AD9E0
 Status: Complete
 */
 void __cdecl fn_005adbd0(ReplayWin* a1) {

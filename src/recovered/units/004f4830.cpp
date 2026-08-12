@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004F4830 FILE
+// name      ?base_check_support@@YAXXZ
+// size      1419 bytes
+// spans     0x004F4830-0x004F4DBB
+// prototype 
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048C650 0x0050BA00 0x005BF1F0 0x005C0B00 0x00625EC0 0x00644F3A 0x0064601D
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004F4830
-// name           ?base_check_support@@YAXXZ
-// size           1419 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

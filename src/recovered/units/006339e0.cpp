@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006339E0 FILE
+// name      ??1NetFifo@@QAE@XZ
+// size      98 bytes
+// spans     0x006339E0-0x00633A42
+// prototype void (__thiscall ??1NetFifo@@QAE@XZ)(NetFifo* this)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006339E0
-// name           ??1NetFifo@@QAE@XZ
-// size           98 bytes
 // measured tier  MISMATCH
 // divergence     15
 //

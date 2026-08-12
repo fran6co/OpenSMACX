@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043E490 FILE
+// name      ?setup_veh@DesignWin@@QAEXHH@Z
+// size      1218 bytes
+// spans     0x0043E490-0x0043E952
+// prototype void (__thiscall ?setup_veh@DesignWin@@QAEXHH@Z)(DesignWin* this, int protoID, int)
+// callers   3   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057E040 0x0057EFA0 0x00581260 0x005A63D0 0x005B9F20 0x00645460 0x00645660
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043E490
-// name           ?setup_veh@DesignWin@@QAEXHH@Z
-// size           1218 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

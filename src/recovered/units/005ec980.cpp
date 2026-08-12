@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005EC980 BYTE_EXACT FILE
+// name      ?get_rbutton_state@Win@@QAEHXZ
+// size      27 bytes
+// spans     0x005EC980-0x005EC99B
+// prototype int (__thiscall ?get_rbutton_state@Win@@QAEHXZ)(Win* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005EC980
-// name           ?get_rbutton_state@Win@@QAEHXZ
-// size           27 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00529F30 FILE
+// name      ?net_end_of_turn@@YAXXZ
+// size      931 bytes
+// spans     0x00529F30-0x0052A2D3
+// prototype 
+// callers   1   call targets   21
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0041A4C0 0x00446A00 0x00479330 0x0047A7D0 0x0047A890 0x0050EF50 0x00511480 0x0051E760 0x00529C00 0x00530320 0x00530360 0x0058FFA0 0x005904A0 0x00592EE0 0x005A94F0 0x005F7E90 0x005FC700 0x00626250 0x006262F0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00529F30
-// name           ?net_end_of_turn@@YAXXZ
-// size           931 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

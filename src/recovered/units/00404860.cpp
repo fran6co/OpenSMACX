@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00404860 BYTE_EXACT FILE
+// name      ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z
+// size      54 bytes
+// spans     0x00404860-0x00404896
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005E4B4A
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00404860
-// name           ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z
-// size           54 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

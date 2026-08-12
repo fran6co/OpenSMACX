@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00467190 FILE
+// name      ?draw_bases@MapWin@@QAEXHHHHH@Z
+// size      296 bytes
+// spans     0x00467190-0x004672B8
+// prototype void (__thiscall ?draw_bases@MapWin@@QAEXHHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int, int)
+// callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3A50 0x0055AF20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00467190
-// name           ?draw_bases@MapWin@@QAEXHHHHH@Z
-// size           296 bytes
 // measured tier  MISMATCH
 // divergence     43
 //

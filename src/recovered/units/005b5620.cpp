@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005B5620 BYTE_EXACT FILE
+// name      ?social_select@@YAXH@Z
+// size      104 bytes
+// spans     0x005B5620-0x005B5688
+// prototype void (__cdecl ?social_select@@YAXH@Z)(int factionID)
+// callers   4   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B26D0 0x004B2740 0x004D9AD0 0x005933C0 0x005B4600
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005B5620
-// name           ?social_select@@YAXH@Z
-// size           104 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

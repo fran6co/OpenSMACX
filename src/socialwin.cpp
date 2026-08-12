@@ -28,6 +28,9 @@ ORIGINAL: 0x004AEF00 BYTE_EXACT
 // spans     0x004AEF00-0x004AEF01
 // prototype void (__thiscall ?UNK2@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -42,6 +45,9 @@ ORIGINAL: 0x004B1790 BYTE_EXACT
 // spans     0x004B1790-0x004B1791
 // prototype void (__thiscall ?UNK3@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -64,6 +70,9 @@ ORIGINAL: 0x004B2400 BYTE_EXACT
 // spans     0x004B2400-0x004B2403
 // prototype void (__thiscall ?on_iface_left_down@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -82,6 +91,9 @@ ORIGINAL: 0x004B2410 BYTE_EXACT
 // spans     0x004B2410-0x004B2413
 // prototype void (__thiscall ?on_iface_right_down@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -100,6 +112,9 @@ ORIGINAL: 0x004B2440 BYTE_EXACT
 // spans     0x004B2440-0x004B2443
 // prototype void (__thiscall ?on_iface_selected@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -118,6 +133,9 @@ ORIGINAL: 0x004B2450 BYTE_EXACT
 // spans     0x004B2450-0x004B2453
 // prototype void (__thiscall ?on_iface_left_double_click@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -136,6 +154,9 @@ ORIGINAL: 0x004B2460 BYTE_EXACT
 // spans     0x004B2460-0x004B2463
 // prototype void (__thiscall ?on_iface_right_double_click@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -154,6 +175,9 @@ ORIGINAL: 0x004B2670 BYTE_EXACT
 // spans     0x004B2670-0x004B2673
 // prototype void (__thiscall ?on_iface_button_toggled@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -172,6 +196,9 @@ ORIGINAL: 0x004B2680 BYTE_EXACT
 // spans     0x004B2680-0x004B2683
 // prototype void (__thiscall ?on_iface_group_clicked@SocialWin@@QAEXHHH@Z)(SocialWin* this, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -197,6 +224,9 @@ ORIGINAL: 0x004B2420
 // spans     0x004B2420-0x004B242D
 // prototype void (__thiscall ?on_iface_mouse_move@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8500
 Return Value: n/a
 Status: Complete
 */
@@ -224,6 +254,9 @@ ORIGINAL: 0x004B2430
 // spans     0x004B2430-0x004B243D
 // prototype void (__thiscall ?on_iface_mouse_leave@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8500
 Return Value: n/a
 Status: Complete
 */
@@ -243,6 +276,9 @@ ORIGINAL: 0x004B2690 BYTE_EXACT
 // spans     0x004B2690-0x004B26AB
 // prototype void (__thiscall ?show@SocialWin@@QAEXH@Z)(SocialWin* this, int)
 // callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D310 0x005F7E90
 Status: Complete
 */
 void SocialWin::show(int a1) {
@@ -258,6 +294,9 @@ ORIGINAL: 0x004B26B0 BYTE_EXACT
 // spans     0x004B26B0-0x004B26C9
 // prototype void (__thiscall ?hide@SocialWin@@QAEXXZ)(SocialWin* this)
 // callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D380 0x005F7E90
 Status: Complete
 */
 void SocialWin::hide() {

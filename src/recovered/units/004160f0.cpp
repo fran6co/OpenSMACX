@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004160F0 FILE
+// name      ?iface_click@BaseWin@@QAEXHHHH@Z
+// size      1058 bytes
+// spans     0x004160F0-0x00416512
+// prototype void (__thiscall ?iface_click@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int xCoord, int yCoord, int, int)
+// callers   4   call targets   16
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00409200 0x0040A880 0x0040B140 0x00417040 0x004BDDE0 0x004E39D0 0x004EC3B0 0x00530D50 0x00530E50 0x005EC7C0 0x005ED240 0x005F7E90 0x005F83D0 0x005FA7E0 0x005FAB00 0x006169A0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004160F0
-// name           ?iface_click@BaseWin@@QAEXHHHH@Z
-// size           1058 bytes
 // measured tier  MISMATCH
 // divergence     77
 //

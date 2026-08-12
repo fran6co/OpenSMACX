@@ -4,6 +4,9 @@
 // spans     0x00617670-0x006176BA
 // prototype int (__thiscall ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z)(Caviar* this, Buffer*, int, int, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00617230
 // 0x00617670  ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z  ->  ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

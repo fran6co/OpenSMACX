@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048B8E0 FILE
+// name      ?monocenter@PlanWin@@QAEXHHH@Z
+// size      449 bytes
+// spans     0x0048B8E0-0x0048BAA1
+// prototype void (__thiscall ?monocenter@PlanWin@@QAEXHHH@Z)(PlanWin* this, int, int, int)
+// callers   3   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462980 0x0046A550 0x005D5250 0x005D95B0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048B8E0
-// name           ?monocenter@PlanWin@@QAEXHHH@Z
-// size           449 bytes
 // measured tier  MISMATCH
 // divergence     15
 //

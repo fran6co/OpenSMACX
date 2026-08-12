@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004043D0 FILE
+// name      ??1UV2Player@@QAE@XZ
+// size      100 bytes
+// spans     0x004043D0-0x0040441C;0x00650740-0x00650758
+// prototype void (__thiscall ??1UV2Player@@QAE@XZ)(UV2Player* this)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BF400 0x005D7410
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004043D0
-// name           ??1UV2Player@@QAE@XZ
-// size           100 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

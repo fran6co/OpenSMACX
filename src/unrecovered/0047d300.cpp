@@ -1,10 +1,13 @@
 // ORIGINAL: 0x0047D300 FILE
-// placeholder - not yet decompiled
 // name      ?pick_map@NetWin@@QAEXXZ
 // size      3803 bytes
 // spans     0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
 // prototype void (__thiscall ?pick_map@NetWin@@QAEXXZ)(NetWin* this)
 // callers   1   call targets   40
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00402970 0x004048A0 0x00404900 0x004064D0 0x00406880 0x00406910 0x0047B020 0x004E25E0 0x0050BA30 0x0059D250 0x0059D3A0 0x005AAAB0 0x005AB600 0x005BF310 0x005D45B0 0x005D4DD0 0x005D7210 0x005D7410 0x005D7DE0 0x005E2210 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00625E30 0x00630080 0x00645460 0x00645470 0x00645550 0x006458A0 0x00645930
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x0047D300
 
 // BODY GOES HERE.

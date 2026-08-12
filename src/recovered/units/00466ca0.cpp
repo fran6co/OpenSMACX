@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00466CA0 FILE
+// name      ?draw_vehicles@MapWin@@QAEXHHHHH@Z
+// size      1263 bytes
+// spans     0x00466CA0-0x0046718F
+// prototype void (__thiscall ?draw_vehicles@MapWin@@QAEXHHHHH@Z)(MapWin* this, int, int, int, int, int)
+// callers   3   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00463040 0x00467190 0x005594F0 0x005BFE90 0x005C1A20 0x005C1B70 0x005EC8A0 0x00644F3A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00466CA0
-// name           ?draw_vehicles@MapWin@@QAEXHHHHH@Z
-// size           1263 bytes
 // measured tier  MISMATCH
 // divergence     25
 //

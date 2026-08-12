@@ -31,6 +31,9 @@ ORIGINAL: 0x005BF7D0
 // spans     0x005BF7D0-0x005BF7FA
 // prototype 
 // callers   27   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -49,6 +52,9 @@ ORIGINAL: 0x005BF5D0
 // spans     0x005BF5D0-0x005BF5F8
 // prototype 
 // callers   6   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -68,6 +74,9 @@ ORIGINAL: 0x005BF330
 // spans     0x005BF330-0x005BF34F
 // prototype 
 // callers   17   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF480
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -86,6 +95,9 @@ ORIGINAL: 0x005BF390
 // spans     0x005BF390-0x005BF3B4
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF480
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -104,6 +116,9 @@ ORIGINAL: 0x005BF3C0
 // spans     0x005BF3C0-0x005BF3E3
 // prototype 
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF480
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -122,6 +137,9 @@ ORIGINAL: 0x005BF3F0
 // spans     0x005BF3F0-0x005BF412
 // prototype 
 // callers   17   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF480
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -140,6 +158,9 @@ ORIGINAL: 0x005BF420
 // spans     0x005BF420-0x005BF441
 // prototype 
 // callers   4   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF480
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -158,6 +179,9 @@ ORIGINAL: 0x005BF450
 // spans     0x005BF450-0x005BF476
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF480
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -178,6 +202,9 @@ ORIGINAL: 0x005BF600
 // spans     0x005BF600-0x005BF62C
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -197,6 +224,9 @@ ORIGINAL: 0x005BF630
 // spans     0x005BF630-0x005BF657
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -217,6 +247,9 @@ ORIGINAL: 0x005BF660
 // spans     0x005BF660-0x005BF68B
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -237,6 +270,9 @@ ORIGINAL: 0x005BF690
 // spans     0x005BF690-0x005BF6BC
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -255,6 +291,9 @@ ORIGINAL: 0x005BF6C0
 // spans     0x005BF6C0-0x005BF6F0
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -274,6 +313,9 @@ ORIGINAL: 0x005BF770
 // spans     0x005BF770-0x005BF79B
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -293,6 +335,9 @@ ORIGINAL: 0x005BF7A0
 // spans     0x005BF7A0-0x005BF7CF
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -313,6 +358,9 @@ ORIGINAL: 0x005BF800
 // spans     0x005BF800-0x005BF82E
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -333,6 +381,9 @@ ORIGINAL: 0x005BF830
 // spans     0x005BF830-0x005BF859
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -352,6 +403,9 @@ ORIGINAL: 0x005BF860
 // spans     0x005BF860-0x005BF88D
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -372,6 +426,9 @@ ORIGINAL: 0x005BF890
 // spans     0x005BF890-0x005BF8BE
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -392,6 +449,9 @@ ORIGINAL: 0x005BF8C0
 // spans     0x005BF8C0-0x005BF8F2
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -411,6 +471,9 @@ ORIGINAL: 0x005BF900
 // spans     0x005BF900-0x005BF92D
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF930
 Return Value: whatever the full form returns
 Status: Complete
 */

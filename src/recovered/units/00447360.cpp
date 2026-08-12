@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00447360 FILE
+// name      ?general@MAmbience@@QAEXXZ
+// size      266 bytes
+// spans     0x00447360-0x0044746A
+// prototype void (__thiscall ?general@MAmbience@@QAEXXZ)(MAmbience* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00447360
-// name           ?general@MAmbience@@QAEXXZ
-// size           266 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

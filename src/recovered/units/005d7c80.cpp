@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D7C80 BYTE_EXACT FILE
+// name      ?load_bmp@Buffer@@QAGHPBD@Z
+// size      22 bytes
+// spans     0x005D7C80-0x005D7C96
+// prototype int (__stdcall ?load_bmp@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7CA0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D7C80
-// name           ?load_bmp@Buffer@@QAGHPBD@Z
-// size           22 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

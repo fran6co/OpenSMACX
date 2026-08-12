@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00516970 FILE
+// name      ?menu_simple@Console@@QAEXXZ
+// size      49 bytes
+// spans     0x00516970-0x005169A1
+// prototype void (__thiscall ?menu_simple@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00460DD0 0x005BF310
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00516970
-// name           ?menu_simple@Console@@QAEXXZ
-// size           49 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

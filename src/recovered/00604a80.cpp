@@ -4,6 +4,9 @@
 // spans     0x00604A80-0x00604A8E
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x00604A80  ?on_modal@BasePop@@QAAHXZ  ->  ?on_modal@BasePop@@QAAHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

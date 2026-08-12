@@ -29,6 +29,9 @@ ORIGINAL: 0x005FDF80
 // spans     0x005FDF80-0x005FE11B;0x00662D40-0x00662D52
 // prototype void (__thiscall ?make_index@TextIndex@@QAEXPAD@Z)(TextIndex* this, int8*)
 // callers   1   call targets   17
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4580 0x005D45E0 0x005D4620 0x005D4680 0x006007B0 0x00600820 0x00628380 0x006283E0 0x00628430 0x006287C0 0x006453E0 0x00645460 0x00645470 0x00645930 0x00645DD0 0x0064697A 0x006473F0
 Return Value: n/a
 Status: Complete
 */
@@ -74,6 +77,9 @@ ORIGINAL: 0x005FE120
 // spans     0x005FE120-0x005FE1E1
 // prototype int (__thiscall ?search_index@TextIndex@@QAEHPAD0@Z)(TextIndex* this, int8*, int8*)
 // callers   2   call targets   4
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00645460 0x00645470 0x00645DD0 0x0064FD20
 Return Value: File offset if found, otherwise -1
 Status: Complete
 */
@@ -108,6 +114,10 @@ TextIndex *TxtIndex = (TextIndex *)0x009B7D08;
 // spans     0x005FE270-0x005FE299
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4580
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_clear_index() {
     text_clear_index_source(TxtIndex);
 }

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0049B220 FILE
+// name      ?on_button_passover@ReportWin@@QAEXHH@Z
+// size      550 bytes
+// spans     0x0049B220-0x0049B446
+// prototype void (__thiscall ?on_button_passover@ReportWin@@QAEXHH@Z)(ReportWin* this, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0049B450 0x005D5890 0x005E2DD3
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0049B220
-// name           ?on_button_passover@ReportWin@@QAEXHH@Z
-// size           550 bytes
 // measured tier  MISMATCH
 // divergence     15
 //

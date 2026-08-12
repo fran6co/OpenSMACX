@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00408410 FILE
+// name      ?load_inverts@@YAXXZ
+// size      91 bytes
+// spans     0x00408410-0x0040846B
+// prototype 
+// callers   0   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FD530 0x005FD550 0x005FD570 0x005FD740 0x00645460
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00408410
-// name           ?load_inverts@@YAXXZ
-// size           91 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

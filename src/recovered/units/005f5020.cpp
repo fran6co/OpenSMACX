@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F5020 FILE
+// name      ?update_zorder@Win@@QAAXXZ
+// size      96 bytes
+// spans     0x005F5020-0x005F5080
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F4EC0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F5020
-// name           ?update_zorder@Win@@QAAXXZ
-// size           96 bytes
 // measured tier  NO_COMPILE
 // refusal        u005f5020.cpp(29) : error C2653: 'Win' : is not a class or namespace name u005f5020.cpp(31) : error C2065: 'g_009b7b34' : undeclared identifier u005f5020.cpp(31
 //

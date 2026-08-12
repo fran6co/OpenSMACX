@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00450ED0 FILE
+// name      sub_450ed0
+// size      81 bytes
+// spans     0x00450ED0-0x00450F21
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005DE580 0x005E39A0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00450ED0
-// name           sub_450ed0
-// size           81 bytes
 // measured tier  NO_COMPILE
 // refusal        u00450ed0.cpp(59) : error C2014: preprocessor command must start as first nonwhite space u00450ed0.cpp(60) : error C2143: syntax error : missing ')' before '}' 
 //

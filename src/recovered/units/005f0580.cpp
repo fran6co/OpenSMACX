@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F0580 BYTE_EXACT FILE
+// name      ?set_caption_height@Win@@QAEXH@Z
+// size      61 bytes
+// spans     0x005F0580-0x005F05BD
+// prototype void (__thiscall ?set_caption_height@Win@@QAEXH@Z)(Win* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F0580
-// name           ?set_caption_height@Win@@QAEXH@Z
-// size           61 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

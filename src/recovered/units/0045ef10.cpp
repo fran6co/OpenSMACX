@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045EF10 FILE
+// name      ??0MainInterface@@QAE@XZ
+// size      1185 bytes
+// spans     0x0045EF10-0x0045F1BE;0x00655530-0x00655723
+// prototype void (__thiscall ??0MainInterface@@QAE@XZ)(MainInterface* this)
+// callers   1   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005E37E0 0x005FA860 0x006161D0 0x00618EA0 0x00629110 0x00629D60 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045EF10
-// name           ??0MainInterface@@QAE@XZ
-// size           1185 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0050FE70 FILE
+// name      ?on_nc_left_up@Console@@QAEXHH@Z
+// size      666 bytes
+// spans     0x0050FE70-0x0051010A
+// prototype void (__thiscall ?on_nc_left_up@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D55D0 0x00628A50
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0050FE70
-// name           ?on_nc_left_up@Console@@QAEXHH@Z
-// size           666 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

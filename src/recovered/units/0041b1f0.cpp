@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041B1F0 FILE
+// name      ?on_mouse_move@BaseWin@@QAEXHH@Z
+// size      673 bytes
+// spans     0x0041B1F0-0x0041B491
+// prototype void (__thiscall ?on_mouse_move@BaseWin@@QAEXHH@Z)(Win* this, int xCoord, int yCoord)
+// callers   0   call targets   11
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00409100 0x0040E360 0x004E39D0 0x004E4020 0x004EC3B0 0x00530D50 0x00530E50 0x005EC740 0x005F7E90 0x005F8500 0x005FAB00
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041B1F0
-// name           ?on_mouse_move@BaseWin@@QAEXHH@Z
-// size           673 bytes
 // measured tier  MISMATCH
 // divergence     16
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045C780 BYTE_EXACT FILE
+// name      ?on_left_down@MainInterface@@QAEXHH@Z
+// size      52 bytes
+// spans     0x0045C780-0x0045C7B4
+// prototype void (__thiscall ?on_left_down@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045C780
-// name           ?on_left_down@MainInterface@@QAEXHH@Z
-// size           52 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

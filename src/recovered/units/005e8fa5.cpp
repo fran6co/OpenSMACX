@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005E8FA5 FILE
+// name      ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z
+// size      80 bytes
+// spans     0x005E8FA5-0x005E8FF5
+// prototype int (__thiscall ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E8FF5
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005E8FA5
-// name           ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z
-// size           80 bytes
 // measured tier  NO_COMPILE
 // refusal        u005e8fa5.cpp(60) : error C2143: syntax error : missing ',' before '*' u005e8fa5.cpp(60) : error C2059: syntax error : '*' u005e8fa5.cpp(63) : error C2143: synt
 //

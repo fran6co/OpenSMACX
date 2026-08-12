@@ -1,10 +1,13 @@
 // ORIGINAL: 0x00561080 FILE
-// placeholder - not yet decompiled
 // name      ?enemy_strategy@@YAXH@Z
 // size      14344 bytes
 // spans     0x00561080-0x00564888
 // prototype void (__cdecl ?enemy_strategy@@YAXH@Z)(int factionID)
 // callers   2   call targets   42
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C9420 0x004D06C0 0x004E3A50 0x004E3B80 0x004E3C60 0x004E3D50 0x004E3EF0 0x004E3FA0 0x004E49D0 0x004E5FE0 0x004E6300 0x00500520 0x0050BA00 0x0050BA30 0x00539C00 0x0053A780 0x0055BC80 0x00560B30 0x00560DD0 0x00579A30 0x00579D80 0x00579E70 0x00579F80 0x0057D270 0x0057D2E0 0x0057D360 0x0057D3F0 0x00591210 0x00591B50 0x005AC060 0x005B8E10 0x005B9580 0x005BF1F0 0x005BFE90 0x005C01A0 0x005C08C0 0x005C0B00 0x005C0E40 0x005C1760 0x005C4FD0 0x005C8BA0 0x00644F3A
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00561080
 
 // BODY GOES HERE.

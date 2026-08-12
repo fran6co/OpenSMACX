@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047B760 FILE
+// name      ?on_left_click@NetWin@@QAEXHH@Z
+// size      918 bytes
+// spans     0x0047B760-0x0047BAF6
+// prototype void (__thiscall ?on_left_click@NetWin@@QAEXHH@Z)(NetWin* this, int xCoord, int yCoord)
+// callers   0   call targets   16
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047BBF0 0x0047C530 0x0047C970 0x0047CF40 0x0047D300 0x0047E010 0x0047E340 0x0047E640 0x0047E930 0x0047EC60 0x0047EF90 0x0047F2C0 0x0047F5F0 0x004E25E0 0x005FAB00 0x00630080
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047B760
-// name           ?on_left_click@NetWin@@QAEXHH@Z
-// size           918 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

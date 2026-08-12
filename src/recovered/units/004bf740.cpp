@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004BF740 FILE
+// name      ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z
+// size      385 bytes
+// spans     0x004BF740-0x004BF8C1
+// prototype 
+// callers   4   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00627D00 0x00627E20 0x006280E0 0x006281E0 0x00646664
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004BF740
-// name           ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z
-// size           385 bytes
 // measured tier  MISMATCH
 // divergence     18
 //

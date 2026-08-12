@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004023A0 FILE
+// name      sub_4023a0
+// size      365 bytes
+// spans     0x004023A0-0x004024F8;0x00650580-0x00650595
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004023A0
-// name           sub_4023a0
-// size           365 bytes
 // measured tier  MISMATCH
 // divergence     126
 //

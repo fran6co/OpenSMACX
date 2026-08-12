@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004ABE70 FILE
+// name      ?draw_score@ReportIf@@QAEXXZ
+// size      695 bytes
+// spans     0x004ABE70-0x004AC127
+// prototype void (__thiscall ?draw_score@ReportIf@@QAEXXZ)(ReportIf* this)
+// callers   4   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C89B0 0x005D8000 0x005DAC70 0x005DACB0 0x005DD020 0x005E2DD3 0x006169A0 0x006453E0 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004ABE70
-// name           ?draw_score@ReportIf@@QAEXXZ
-// size           695 bytes
 // measured tier  MISMATCH
 // divergence     8
 //

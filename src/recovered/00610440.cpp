@@ -4,6 +4,9 @@
 // spans     0x00610440-0x00610471
 // prototype int (__thiscall ?init@SpriteBox@@QAEHHHHHH@Z)(SpriteBox* this, int, int, int, int, int)
 // callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609300 0x00610280
 // 0x00610440  ?init@SpriteBox@@QAEHHHHHH@Z  ->  ?init@SpriteBox@@QAEHHHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

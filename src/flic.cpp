@@ -26,6 +26,9 @@ ORIGINAL: 0x0062A710 BYTE_EXACT
 // spans     0x0062A710-0x0062A711
 // prototype void (__thiscall ?UNK4@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -40,6 +43,9 @@ ORIGINAL: 0x0062AAF0 BYTE_EXACT
 // spans     0x0062AAF0-0x0062AAF1
 // prototype void (__thiscall ?UNK5@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -54,6 +60,9 @@ ORIGINAL: 0x0062AB00 BYTE_EXACT
 // spans     0x0062AB00-0x0062AB01
 // prototype void (__thiscall ?UNK6@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -68,6 +77,9 @@ ORIGINAL: 0x0062ACC0 BYTE_EXACT
 // spans     0x0062ACC0-0x0062ACC1
 // prototype void (__thiscall ?UNK7@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -82,6 +94,9 @@ ORIGINAL: 0x0062B5F0 BYTE_EXACT
 // spans     0x0062B5F0-0x0062B5F1
 // prototype void (__thiscall ?UNK8@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

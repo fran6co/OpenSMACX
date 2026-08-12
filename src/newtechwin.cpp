@@ -26,6 +26,9 @@ ORIGINAL: 0x00483E90 BYTE_EXACT
 // spans     0x00483E90-0x00483E93
 // prototype void (__thiscall ?on_left_click@NewTechWin@@QAEXHH@Z)(NewTechWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -44,6 +47,9 @@ ORIGINAL: 0x00483EA0 BYTE_EXACT
 // spans     0x00483EA0-0x00483EA8
 // prototype int (__thiscall ?on_key_click@NewTechWin@@QAEHHH@Z)(NewTechWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1, always
 Status: Complete
 */

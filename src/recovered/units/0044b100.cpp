@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0044B100 FILE
+// name      ??1FameWin@@QAE@XZ
+// size      405 bytes
+// spans     0x0044B100-0x0044B1FF;0x00654D60-0x00654DF6
+// prototype void (__thiscall ??1FameWin@@QAE@XZ)(FameWin* this)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4DD0 0x005D7410 0x005FA870 0x00607040 0x00607DA0 0x0062B7F0 0x006456E4
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0044B100
-// name           ??1FameWin@@QAE@XZ
-// size           405 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

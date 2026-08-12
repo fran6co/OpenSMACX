@@ -4,6 +4,9 @@
 // spans     0x004BDF70-0x004BDFA0
 // prototype void (__cdecl ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z)(Sprite*, GraphicWin*, int vehID, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005594F0
 // 0x004BDF70  ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z  ->  ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

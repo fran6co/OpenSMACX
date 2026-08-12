@@ -26,6 +26,9 @@ ORIGINAL: 0x00428D80 BYTE_EXACT
 // spans     0x00428D80-0x00428D83
 // prototype void (__thiscall ?on_left_down@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -44,6 +47,9 @@ ORIGINAL: 0x00428D90 BYTE_EXACT
 // spans     0x00428D90-0x00428D93
 // prototype void (__thiscall ?on_right_down@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -62,6 +68,9 @@ ORIGINAL: 0x00428DA0 BYTE_EXACT
 // spans     0x00428DA0-0x00428DA3
 // prototype void (__thiscall ?on_mouse_move@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -80,6 +89,9 @@ ORIGINAL: 0x00428DB0 BYTE_EXACT
 // spans     0x00428DB0-0x00428DB3
 // prototype void (__thiscall ?on_button_clicked@Credits@@QAEXH@Z)(Credits* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

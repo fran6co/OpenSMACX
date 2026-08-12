@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00445BB0 FILE
+// name      ?init@Effect@@QAEXPADJ@Z
+// size      278 bytes
+// spans     0x00445BB0-0x00445CC6
+// prototype void (__thiscall ?init@Effect@@QAEXPADJ@Z)(Effect* this, int8*, unsigned int32)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C69B0 0x00645470 0x00645598 0x00645646 0x00645DD0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00445BB0
-// name           ?init@Effect@@QAEXPADJ@Z
-// size           278 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00439670 FILE
+// name      ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z
+// size      64 bytes
+// spans     0x00439670-0x004396B0
+// prototype void (__thiscall ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z)(DesignWin* this, LPCSTR, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005ED240 0x005F83D0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00439670
-// name           ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z
-// size           64 bytes
 // measured tier  MISMATCH
 // divergence     12
 //

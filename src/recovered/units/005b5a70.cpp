@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005B5A70 FILE
+// name      ?unspot_stack@@YAXH@Z
+// size      85 bytes
+// spans     0x005B5A70-0x005B5AC5
+// prototype void (__cdecl ?unspot_stack@@YAXH@Z)(int vehID)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005B5A70
-// name           ?unspot_stack@@YAXH@Z
-// size           85 bytes
 // measured tier  NO_COMPILE
 // refusal        u005b5a70.cpp(56) : error C2146: syntax error : missing ',' before identifier 'a1' u005b5a70.cpp(56) : error C2061: syntax error : identifier 'a1'
 //

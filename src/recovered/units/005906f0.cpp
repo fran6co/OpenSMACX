@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005906F0 FILE
+// name      ?say_armor@@YAXPAXHH@Z
+// size      261 bytes
+// spans     0x005906F0-0x005907F5
+// prototype 
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005906F0
-// name           ?say_armor@@YAXPAXHH@Z
-// size           261 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

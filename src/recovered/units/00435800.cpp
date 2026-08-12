@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00435800 FILE
+// name      ?draw_reactor@DesignWin@@QAEXH@Z
+// size      809 bytes
+// spans     0x00435800-0x00435B29
+// prototype void (__thiscall ?draw_reactor@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   4   call targets   16
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C3800 0x005D8000 0x005D95E0 0x005DAC70 0x005DACB0 0x005DB720 0x005DC360 0x005DD130 0x005DDAB0 0x006169A0 0x00617230 0x00618370 0x006183B0 0x006453E0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00435800
-// name           ?draw_reactor@DesignWin@@QAEXH@Z
-// size           809 bytes
 // measured tier  NO_COMPILE
 // refusal        u00435800.cpp(1) : error C2653: 'DesignWin' : is not a class or namespace name
 //

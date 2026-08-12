@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047EF90 FILE
+// name      ?pick_erosion@NetWin@@QAEXXZ
+// size      1028 bytes
+// spans     0x0047EF90-0x0047F2BC;0x006571D5-0x006572AD
+// prototype void (__thiscall ?pick_erosion@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047EF90
-// name           ?pick_erosion@NetWin@@QAEXXZ
-// size           1028 bytes
 // measured tier  NO_COMPILE
 // refusal        u0047ef90.cpp(43) : error C2059: syntax error : ';'
 //

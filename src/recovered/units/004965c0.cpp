@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004965C0 FILE
+// name      ?on_key_click@QuayleWin@@QAEHHH@Z
+// size      76 bytes
+// spans     0x004965C0-0x0049660C
+// prototype int (__thiscall ?on_key_click@QuayleWin@@QAEHHH@Z)(QuayleWin* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00609F20
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004965C0
-// name           ?on_key_click@QuayleWin@@QAEHHH@Z
-// size           76 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

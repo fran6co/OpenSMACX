@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0053CE10 FILE
+// name      ?make_treaty@@YAXHH@Z
+// size      840 bytes
+// spans     0x0053CE10-0x0053D158
+// prototype 
+// callers   2   call targets   16
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x004BA650 0x005315C0 0x005399A0 0x0053A980 0x0055B870 0x0055EB80 0x0058F8B0 0x00592EE0 0x005BF330 0x005BF7D0 0x00625810 0x00625EC0 0x006262F0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0053CE10
-// name           ?make_treaty@@YAXHH@Z
-// size           840 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

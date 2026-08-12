@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00635370 FILE
+// name      ?get_tex_mem@TexHeap@@QAEHH@Z
+// size      77 bytes
+// spans     0x00635370-0x006353BD
+// prototype int (__thiscall ?get_tex_mem@TexHeap@@QAEHH@Z)(TexHeap* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4680
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00635370
-// name           ?get_tex_mem@TexHeap@@QAEHH@Z
-// size           77 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

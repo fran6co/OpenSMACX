@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047CF40 FILE
+// name      ?pick_diff@NetWin@@QAEXH@Z
+// size      1164 bytes
+// spans     0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5
+// prototype void (__thiscall ?pick_diff@NetWin@@QAEXH@Z)(NetWin* this, int)
+// callers   1   call targets   25
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406880 0x00406910 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550 0x00645930
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047CF40
-// name           ?pick_diff@NetWin@@QAEXH@Z
-// size           1164 bytes
 // measured tier  NO_COMPILE
 // refusal        u0047cf40.cpp(157) : error C2079: 'spot_' uses undefined class 'Spot' u0047cf40.cpp(877) : warning C4291: 'void *__cdecl operator new(unsigned int,void *)' : no
 //

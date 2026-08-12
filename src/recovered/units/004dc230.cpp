@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004DC230 FILE
+// name      ?editor_rules@Console@@QAEXXZ
+// size      741 bytes
+// spans     0x004DC230-0x004DC515
+// prototype void (__thiscall ?editor_rules@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   4
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0059DB30 0x0059E5D0 0x005ABF20 0x005BF3F0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004DC230
-// name           ?editor_rules@Console@@QAEXXZ
-// size           741 bytes
 // measured tier  NO_COMPILE
 // refusal        u004dc230.cpp(420) : error C2027: use of undefined type 'Console' u004dc230.cpp(38) : see declaration of 'Console'
 //

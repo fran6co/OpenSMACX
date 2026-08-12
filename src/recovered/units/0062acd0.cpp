@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0062ACD0 FILE
+// name      ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z
+// size      541 bytes
+// spans     0x0062ACD0-0x0062AEED
+// prototype int (__thiscall ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z)(Flic* this, DataChunk*)
+// callers   4   call targets   13
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8240 0x005DFF00 0x0062A500 0x0062A720 0x0062AB80 0x0062ACD0 0x0062AF40 0x0062B190 0x0062B670 0x00644F3A 0x00646178 0x00647330 0x00647920
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0062ACD0
-// name           ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z
-// size           541 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

@@ -1,7 +1,10 @@
 // ORIGINAL: 0x0064D336 EXCLUDED S1
-// excluded - availability - MSVC 6 CRT and Windows library code; linked, not rewritten (docs/EXCLUSIONS.md section 1)
 // name      __hw_cw
 // size      137 bytes
 // spans     0x0064D336-0x0064D3BF
 // prototype 
 // callers   1   call targets   0
+// kind      library
+// flags     lib;staticdef;hidden;sp_ready;purged_ok
+// calls     (none)
+// excluded - availability - MSVC 6 CRT and Windows library code; linked, not rewritten (docs/EXCLUSIONS.md section 1)

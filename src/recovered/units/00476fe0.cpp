@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00476FE0 FILE
+// name      ?mon_facility_built@@YAXHPAD@Z
+// size      274 bytes
+// spans     0x00476FE0-0x004770F2
+// prototype 
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00476A50 0x005C89A0 0x00645E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00476FE0
-// name           ?mon_facility_built@@YAXHPAD@Z
-// size           274 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

@@ -18,6 +18,10 @@ ORIGINAL: 0x00612960 BYTE_EXACT
 // spans     0x00612960-0x00612961
 // prototype void (__thiscall ?close@Dialogs@@QAEXXZ)(Dialogs* this)
 // callers   20   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */

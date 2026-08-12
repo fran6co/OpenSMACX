@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004E2000 FILE
+// name      ?corner_the_market@Console@@QAEXXZ
+// size      565 bytes
+// spans     0x004E2000-0x004E2235
+// prototype void (__thiscall ?corner_the_market@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   12
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x0048C0A0 0x0050BA00 0x00514880 0x00539820 0x005398C0 0x00592EE0 0x005932E0 0x0059EE50 0x005B9F20 0x005C89A0 0x00625E30
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004E2000
-// name           ?corner_the_market@Console@@QAEXXZ
-// size           565 bytes
 // measured tier  MISMATCH
 // divergence     36
 //

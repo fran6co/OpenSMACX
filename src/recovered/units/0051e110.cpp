@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0051E110 FILE
+// name      ?check_tamper@@YAXXZ
+// size      635 bytes
+// spans     0x0051E110-0x0051E38B
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BF310
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0051E110
-// name           ?check_tamper@@YAXXZ
-// size           635 bytes
 // measured tier  MISMATCH
 // divergence     26
 //

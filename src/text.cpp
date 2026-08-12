@@ -31,6 +31,9 @@ ORIGINAL: 0x005FD8D0
 // spans     0x005FD8D0-0x005FD969
 // prototype int (__thiscall ?init@Text@@QAEHH@Z)(_Text* this, int)
 // callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x00645598
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -55,6 +58,9 @@ ORIGINAL: 0x005FD970
 // spans     0x005FD970-0x005FD9CC
 // prototype void (__thiscall ?shutdown@Text@@QAEXXZ)(_Text* this)
 // callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2 0x00645598
 Return Value: n/a
 Status: Complete
 */
@@ -78,6 +84,9 @@ ORIGINAL: 0x005FD9D0
 // spans     0x005FD9D0-0x005FD9F2
 // prototype void (__thiscall ?close@Text@@QAEXXZ)(_Text* this)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645598
 Return Value: n/a
 Status: Complete
 */
@@ -96,6 +105,9 @@ ORIGINAL: 0x005FDA00
 // spans     0x005FDA00-0x005FDC04
 // prototype int (__thiscall ?open@Text@@QAEHPADPAD@Z)(_Text* this, int8* srcFileID, int8* sectionID)
 // callers   2   call targets   13
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FE120 0x006007B0 0x00600820 0x00626250 0x00634BB0 0x00645460 0x00645470 0x00645598 0x00645DD0 0x0064726A 0x006472CC 0x00647330 0x0064FD20
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -161,6 +173,9 @@ ORIGINAL: 0x005FDC10
 // spans     0x005FDC10-0x005FDC7E
 // prototype int (__thiscall ?get@Text@@QAEHXZ)(_Text* this)
 // callers   1   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006007B0 0x00600820 0x0064726A
 Return Value: Pointer to string
 Status: Complete
 */
@@ -187,6 +202,9 @@ ORIGINAL: 0x005FDC80
 // spans     0x005FDC80-0x005FDD0F
 // prototype void (__thiscall ?string@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   4
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006007B0 0x00600820 0x00616970 0x0064726A
 Return Value: Pointer to string table
 Status: Complete
 */
@@ -202,6 +220,9 @@ ORIGINAL: 0x005FDD10
 // spans     0x005FDD10-0x005FDD72
 // prototype void (__thiscall ?item@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0
 Return Value: Pointer to string buffer
 Status: Complete
 */
@@ -226,6 +247,9 @@ ORIGINAL: 0x005FDD80
 // spans     0x005FDD80-0x005FDDED
 // prototype void (__thiscall ?item_string@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x00616970
 Return Value: Pointer to string table
 Status: Complete
 */
@@ -241,6 +265,9 @@ ORIGINAL: 0x005FDDF0
 // spans     0x005FDDF0-0x005FDE58
 // prototype void (__thiscall ?item_number@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x00628950
 Return Value: Integer value of the number item
 Status: Complete
 */
@@ -256,6 +283,9 @@ ORIGINAL: 0x005FDE60
 // spans     0x005FDE60-0x005FDEC8
 // prototype void (__thiscall ?item_binary@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x006288D0
 Return Value: Integer value of the binary item
 Status: Complete
 */
@@ -271,6 +301,9 @@ ORIGINAL: 0x005FDED0
 // spans     0x005FDED0-0x005FDF38
 // prototype void (__thiscall ?item_hex@Text@@QAEXXZ)(_Text* this)
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006007B0 0x006288F0
 Return Value: Integer value of the hex item
 Status: Complete
 */
@@ -289,6 +322,10 @@ LPSTR *TextBufferItemPtr = (LPSTR *)0x009B7D04;
 // spans     0x005FD4C0-0x005FD4CB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_set_get_ptr() {
     text_set_get_ptr_source(Txt, TextBufferGetPtr);
 }
@@ -299,6 +336,10 @@ void __cdecl text_set_get_ptr() {
 // spans     0x005FD4D0-0x005FD4DB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_set_item_ptr() {
     text_set_item_ptr_source(Txt, TextBufferItemPtr);
 }
@@ -309,6 +350,10 @@ void __cdecl text_set_item_ptr() {
 // spans     0x005FD530-0x005FD54D
 // prototype 
 // callers   22   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00645598
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_close() { text_close_source(Txt); }
 
 // ORIGINAL: 0x005FD570
@@ -317,6 +362,10 @@ void __cdecl text_close() { text_close_source(Txt); }
 // spans     0x005FD570-0x005FD5D2
 // prototype 
 // callers   54   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x00600820 0x0064726A
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_get() { return text_get_source(Txt); }
 
 // ORIGINAL: 0x005FD5E0
@@ -325,6 +374,10 @@ LPSTR __cdecl text_get() { return text_get_source(Txt); }
 // spans     0x005FD5E0-0x005FD663
 // prototype 
 // callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x00600820 0x00616970 0x0064726A
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_string() { return text_string_source(Txt, StringTable); }
 
 // ORIGINAL: 0x005FD670
@@ -333,6 +386,10 @@ LPSTR __cdecl text_string() { return text_string_source(Txt, StringTable); }
 // spans     0x005FD670-0x005FD6C7
 // prototype 
 // callers   20   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006007B0
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_item() { return text_item_source(Txt); }
 
 // ORIGINAL: 0x005FD6D0
@@ -341,6 +398,10 @@ LPSTR __cdecl text_item() { return text_item_source(Txt); }
 // spans     0x005FD6D0-0x005FD732
 // prototype 
 // callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x00616970
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_item_string() {
     return text_item_string_source(Txt, StringTable);
 }
@@ -351,6 +412,10 @@ LPSTR __cdecl text_item_string() {
 // spans     0x005FD740-0x005FD79D
 // prototype 
 // callers   18   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x00628950
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_item_number() { return text_item_number_source(Txt); }
 
 // ORIGINAL: 0x005FD7A0
@@ -359,6 +424,10 @@ int __cdecl text_item_number() { return text_item_number_source(Txt); }
 // spans     0x005FD7A0-0x005FD7FD
 // prototype 
 // callers   4   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x006288D0
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_item_binary() { return text_item_binary_source(Txt); }
 
 // ORIGINAL: 0x005FD800
@@ -367,6 +436,10 @@ int __cdecl text_item_binary() { return text_item_binary_source(Txt); }
 // spans     0x005FD800-0x005FD85D
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x006288F0
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_item_hex() { return text_item_hex_source(Txt); }
 
 // ORIGINAL: 0x00585120
@@ -375,6 +448,10 @@ int __cdecl text_item_hex() { return text_item_hex_source(Txt); }
 // spans     0x00585120-0x00585150
 // prototype int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)
 // callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FD570 0x005FD740
+// notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_get_number(int min, int max) {
     return text_get_number_source(Txt, min, max);
 }

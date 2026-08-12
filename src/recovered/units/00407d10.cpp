@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00407D10 FILE
+// name      ?on_key_click@AlphaSave@@QAEXHH@Z
+// size      82 bytes
+// spans     0x00407D10-0x00407D62
+// prototype void (__thiscall ?on_key_click@AlphaSave@@QAEXHH@Z)(AlphaSave* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005EEA90 0x005EEB90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00407D10
-// name           ?on_key_click@AlphaSave@@QAEXHH@Z
-// size           82 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

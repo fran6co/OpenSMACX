@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00439EB0 FILE
+// name      ?delete_abil@DesignWin@@QAEXH@Z
+// size      104 bytes
+// spans     0x00439EB0-0x00439F18
+// prototype void (__thiscall ?delete_abil@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00439EB0
-// name           ?delete_abil@DesignWin@@QAEXH@Z
-// size           104 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

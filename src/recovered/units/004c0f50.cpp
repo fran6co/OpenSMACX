@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C0F50 FILE
+// name      ?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z
+// size      838 bytes
+// spans     0x004C0F50-0x004C1296
+// prototype 
+// callers   1   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BF740 0x004C1D20 0x004C3090 0x006171A0 0x00617230 0x006182A0 0x00618370 0x006183B0 0x00618430 0x00618470 0x00627F50 0x006280E0 0x00628150 0x006281B0 0x00628220
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C0F50
-// name           ?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z
-// size           838 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

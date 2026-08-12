@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00492420 FILE
+// name      ??0ProdPicker@@QAE@XZ
+// size      806 bytes
+// spans     0x00492420-0x004926AD;0x00658B70-0x00658C09
+// prototype void (__thiscall ??0ProdPicker@@QAE@XZ)(ProdPicker* this)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x006051D0 0x006161D0 0x00616DA0 0x00618EA0 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00492420
-// name           ??0ProdPicker@@QAE@XZ
-// size           806 bytes
 // measured tier  NO_COMPILE
 // refusal        u00492420.cpp(297) : error C2079: 'time1_' uses undefined class 'Time' u00492420.cpp(300) : error C2079: 'time2_' uses undefined class 'Time' u00492420.cpp(428)
 //

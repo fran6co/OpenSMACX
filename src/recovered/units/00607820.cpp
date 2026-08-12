@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00607820 BYTE_EXACT FILE
+// name      ?on_mouse_leave@BaseButton@@QAEXHH@Z
+// size      45 bytes
+// spans     0x00607820-0x0060784D
+// prototype void (__thiscall ?on_mouse_leave@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00607820
-// name           ?on_mouse_leave@BaseButton@@QAEXHH@Z
-// size           45 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

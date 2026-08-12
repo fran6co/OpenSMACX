@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043F190 FILE
+// name      ?portrait_anim@DiploPop@@QAEXXZ
+// size      47 bytes
+// spans     0x0043F190-0x0043F1BF
+// prototype void (__thiscall ?portrait_anim@DiploPop@@QAEXXZ)(DiploPop* this)
+// callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D5930 0x0062A070
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043F190
-// name           ?portrait_anim@DiploPop@@QAEXXZ
-// size           47 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

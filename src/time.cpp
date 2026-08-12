@@ -30,6 +30,9 @@ ORIGINAL: 0x00616260
 // spans     0x00616260-0x006162CE
 // prototype void (__thiscall ?init@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int)
 // callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FD370
 Return Value: n/a
 Status: Complete
 */
@@ -54,6 +57,9 @@ ORIGINAL: 0x006162D0
 // spans     0x006162D0-0x00616342
 // prototype void (__thiscall ?init@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
 // callers   5   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FD370
 Return Value: n/a
 Status: Complete
 */
@@ -79,6 +85,9 @@ ORIGINAL: 0x00616350
 // spans     0x00616350-0x00616405
 // prototype int (__thiscall ?start@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
 // callers   11   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FD370
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -105,6 +114,9 @@ ORIGINAL: 0x00616410
 // spans     0x00616410-0x006164CA
 // prototype void (__thiscall ?start@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
 // callers   2   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FD370
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -132,6 +144,9 @@ ORIGINAL: 0x006164D0
 // spans     0x006164D0-0x00616585
 // prototype int (__thiscall ?pulse@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
 // callers   2   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FD370
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -161,6 +176,9 @@ ORIGINAL: 0x00616590
 // spans     0x00616590-0x0061664D
 // prototype void (__thiscall ?pulse@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
 // callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FD370
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -188,6 +206,9 @@ ORIGINAL: 0x00616650
 // spans     0x00616650-0x006166BA
 // prototype int (__thiscall ?start@Time@@QAEXXZ)(Time* this)
 // callers   11   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -213,6 +234,9 @@ ORIGINAL: 0x006166C0
 // spans     0x006166C0-0x0061672C
 // prototype int (__thiscall ?pulse@Time@@QAEXXZ)(Time* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -238,6 +262,9 @@ ORIGINAL: 0x00616730
 // spans     0x00616730-0x00616772
 // prototype void (__thiscall ?stop@Time@@QAEXXZ)(Time* this)
 // callers   30   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -263,6 +290,9 @@ ORIGINAL: 0x00616780
 // spans     0x00616780-0x006167E0
 // prototype void (__thiscall ?close@Time@@QAEXXZ)(Time* this)
 // callers   16   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FD370
 Return Value: n/a
 Status: Complete
 */
@@ -287,6 +317,9 @@ ORIGINAL: 0x006167E0
 // spans     0x006167E0-0x0061681C
 // prototype void (__thiscall ?TimerProc@Time@@QAEXPAXIIK@Z)(Time* this, HWND hwnd, uint32_t msg, uint32_t* idEvent, uint32_t dwTime)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -307,6 +340,9 @@ ORIGINAL: 0x00616820
 // spans     0x00616820-0x0061685C
 // prototype void (__thiscall ?MultimediaProc@Time@@QAEXIIKKK@Z)(Time* this, UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -335,6 +371,9 @@ ORIGINAL: 0x0050F3D0
 // spans     0x0050F3D0-0x0050F431
 // prototype 
 // callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00616350
 Return Value: n/a
 Status: Complete
 */
@@ -353,6 +392,9 @@ ORIGINAL: 0x0050F440
 // spans     0x0050F440-0x0050F45E
 // prototype 
 // callers   6   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00616780
 Return Value: n/a
 Status: Complete
 */
@@ -371,6 +413,9 @@ ORIGINAL: 0x005FD370
 // spans     0x005FD370-0x005FD3F2
 // prototype 
 // callers   8   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

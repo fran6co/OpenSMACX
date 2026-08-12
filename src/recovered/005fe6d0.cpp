@@ -4,6 +4,9 @@
 // spans     0x005FE6D0-0x005FE6F8
 // prototype void (__thiscall ?reseed@Palette@@QAEXXZ)(Palette* this)
 // callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00625810
 // 0x005FE6D0  ?reseed@Palette@@QAEXXZ  ->  ?reseed@Palette@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

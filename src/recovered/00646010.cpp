@@ -4,6 +4,9 @@
 // spans     0x00646010-0x0064601D
 // prototype 
 // callers   1   call targets   1
+// kind      library
+// flags     lib;hidden;sp_ready;purged_ok
+// calls     0x006491C3
 // 0x00646010  _srand  ->  _srand
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

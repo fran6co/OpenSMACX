@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004AE9E0 FILE
+// name      ??0SocialWin@@QAE@XZ
+// size      881 bytes
+// spans     0x004AE9E0-0x004AEBE7;0x006598A0-0x00659A0A
+// prototype void (__thiscall ??0SocialWin@@QAE@XZ)(SocialWin* this)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005FA860 0x00618EA0 0x0062B7C0 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004AE9E0
-// name           ??0SocialWin@@QAE@XZ
-// size           881 bytes
 // measured tier  NO_COMPILE
 // refusal        u004ae9e0.cpp(157) : error C2079: 'spot_' uses undefined class 'Spot'
 //

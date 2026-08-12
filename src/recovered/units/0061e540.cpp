@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0061E540 FILE
+// name      ?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z
+// size      1422 bytes
+// spans     0x0061E540-0x0061EACE
+// prototype void (__thiscall ?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z)(Texture* this, Buffer*, Vert*, unsigned int8*, unsigned int8*, int, Vert*)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005E3373 0x005E34A3 0x0061FC90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0061E540
-// name           ?draw_mask_dest@Texture@@QAEXPAUBuffer@@PAUVert@@PAEPAEHPAUVert@@@Z
-// size           1422 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

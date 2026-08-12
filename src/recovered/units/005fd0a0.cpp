@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FD0A0 BYTE_EXACT FILE
+// name      ?do_all_mouse@@YAXXZ
+// size      117 bytes
+// spans     0x005FD0A0-0x005FD115
+// prototype 
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062D5B0 0x0062D5D0 0x00636300
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FD0A0
-// name           ?do_all_mouse@@YAXXZ
-// size           117 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

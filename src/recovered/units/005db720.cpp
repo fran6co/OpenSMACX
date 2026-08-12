@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005DB720 FILE
+// name      ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z
+// size      84 bytes
+// spans     0x005DB720-0x005DB774
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, int8*, RECT*, int)
+// callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD130
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005DB720
-// name           ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z
-// size           84 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

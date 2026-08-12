@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00530D00 BYTE_EXACT FILE
+// name      ?unlock@NetDaemon@@QAEXXZ
+// size      78 bytes
+// spans     0x00530D00-0x00530D4E
+// prototype void (__thiscall ?unlock@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   10   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00592EE0 0x006262F0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00530D00
-// name           ?unlock@NetDaemon@@QAEXXZ
-// size           78 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

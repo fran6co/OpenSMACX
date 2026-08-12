@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F7EC0 FILE
+// name      ?update_back_to_window@Win@@QAEXPAUBuffer@@@Z
+// size      639 bytes
+// spans     0x005F7EC0-0x005F813F
+// prototype void (__thiscall ?update_back_to_window@Win@@QAEXPAUBuffer@@@Z)(Win* this, Buffer*)
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7670 0x005ED240 0x005F4EC0 0x005F7320
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F7EC0
-// name           ?update_back_to_window@Win@@QAEXPAUBuffer@@@Z
-// size           639 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

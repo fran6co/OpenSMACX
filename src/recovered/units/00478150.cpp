@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00478150 FILE
+// name      ?on_right_click@MultiWin@@QAEXHH@Z
+// size      1215 bytes
+// spans     0x00478150-0x004785FA;0x006563E0-0x006563F5
+// prototype void (__thiscall ?on_right_click@MultiWin@@QAEXHH@Z)(MultiWin* this, int xCoord, int yCoord)
+// callers   0   call targets   20
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00479330 0x0047A890 0x004ACBD0 0x00515770 0x0052C880 0x0053E4C0 0x0053E5C0 0x00558C60 0x005ED240 0x005F8800 0x005F88A0 0x005F8920 0x005F89D0 0x005F8BE0 0x005F9170 0x005F9F40 0x005FAB00 0x006169A0 0x00625EC0 0x00645470
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00478150
-// name           ?on_right_click@MultiWin@@QAEXHH@Z
-// size           1215 bytes
 // measured tier  NO_COMPILE
 // refusal        u00478150.cpp(147) : error C2079: 'spot_' uses undefined class 'Spot'
 //

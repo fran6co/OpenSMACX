@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0052DBA0 FILE
+// name      ?current_server@@YAHXZ
+// size      70 bytes
+// spans     0x0052DBA0-0x0052DBE6
+// prototype 
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0052DBA0
-// name           ?current_server@@YAHXZ
-// size           70 bytes
 // measured tier  MISMATCH
 // divergence     6
 //

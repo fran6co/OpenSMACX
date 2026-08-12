@@ -4,6 +4,9 @@
 // spans     0x004BDF20-0x004BDF66
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004632D0
 // 0x004BDF20  ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z  ->  ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

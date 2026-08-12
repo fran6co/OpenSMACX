@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00612830 FILE
+// name      ??0Dialogs@@QAE@H@Z
+// size      418 bytes
+// spans     0x00612830-0x0061295F;0x00663060-0x006630D3
+// prototype void (__thiscall ??0Dialogs@@QAE@H@Z)(Dialogs* this, int)
+// callers   1   call targets   7
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x00608C10 0x00609DB0 0x0060D0E0 0x0060E670 0x0060FF00 0x00611940
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00612830
-// name           ??0Dialogs@@QAE@H@Z
-// size           418 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0062A280 FILE
+// name      ?rewind@Flic@@QAEHXZ
+// size      57 bytes
+// spans     0x0062A280-0x0062A2B9
+// prototype int (__thiscall ?rewind@Flic@@QAEHXZ)(Flic* this)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00647330
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0062A280
-// name           ?rewind@Flic@@QAEHXZ
-// size           57 bytes
 // measured tier  NO_COMPILE
 // refusal        u0062a280.cpp(56) : error C2065: 'fseek' : undeclared identifier
 //

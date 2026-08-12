@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00430770 FILE
+// name      ?draw_effect@Datalink@@QAEXXZ
+// size      1170 bytes
+// spans     0x00430770-0x00430B30;0x00653AD6-0x00653BA8
+// prototype void (__thiscall ?draw_effect@Datalink@@QAEXXZ)(Datalink* this)
+// callers   1   call targets   24
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00406380 0x004066C0 0x00406910 0x005D45B0 0x005D4DD0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD40 0x005DB040 0x005DD130 0x005E3820 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x006453E0 0x00645470 0x00645550 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00430770
-// name           ?draw_effect@Datalink@@QAEXXZ
-// size           1170 bytes
 // measured tier  NO_COMPILE
 // refusal        u00430770.cpp(206) : error C2079: 'heap_' uses undefined class 'Heap'
 //

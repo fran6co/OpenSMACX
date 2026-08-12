@@ -9,6 +9,10 @@ ORIGINAL: 0x006046F0
 // spans     0x006046F0-0x00604730
 // prototype int (__thiscall ?set_string_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z)(BasePop* this, Font*, Font*, Font*, Font*)
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -52,6 +56,9 @@ ORIGINAL: 0x006047F0
 // spans     0x006047F0-0x00604826
 // prototype int (__thiscall ?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z)(BasePop* this, Font*, Font*, Font*)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 3 when the primary font is null, otherwise 0
 Status: Complete
 */

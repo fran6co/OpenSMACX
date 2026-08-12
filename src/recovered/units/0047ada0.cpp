@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047ADA0 FILE
+// name      ??1NetMsg@@QAE@XZ
+// size      801 bytes
+// spans     0x0047ADA0-0x0047AFD2;0x00656460-0x0065654F
+// prototype void (__thiscall ??1NetMsg@@QAE@XZ)(NetMsg* this)
+// callers   1   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x00404900 0x004066C0 0x00406910 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00616200
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047ADA0
-// name           ??1NetMsg@@QAE@XZ
-// size           801 bytes
 // measured tier  NO_COMPILE
 // refusal        u0047ada0.cpp(1) : error C2653: 'NetMsg' : is not a class or namespace name u0047ada0.cpp(2) : warning C4508: 'NetMsg' : function should return a value; 'void' 
 //

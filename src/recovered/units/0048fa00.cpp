@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048FA00 FILE
+// name      ?display@PrefWin@@QAEXH@Z
+// size      709 bytes
+// spans     0x0048FA00-0x0048FCC5
+// prototype void (__thiscall ?display@PrefWin@@QAEXH@Z)(PrefWin* this, int)
+// callers   6   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00403830 0x0045D440 0x00490B00 0x004918C0 0x005E2DD3 0x005F2CE0 0x0062B8A0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048FA00
-// name           ?display@PrefWin@@QAEXH@Z
-// size           709 bytes
 // measured tier  NO_COMPILE
 // refusal        u0048fa00.cpp(210) : error C2079: 'buffer_' uses undefined class 'Buffer' u0048fa00.cpp(345) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

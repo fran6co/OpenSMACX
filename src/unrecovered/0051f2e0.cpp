@@ -1,10 +1,13 @@
 // ORIGINAL: 0x0051F2E0 FILE
-// placeholder - not yet decompiled
 // name      ?random_events@@YAXH@Z
 // size      11837 bytes
 // spans     0x0051F2E0-0x0052211D
 // prototype 
 // callers   1   call targets   36
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00405140 0x0046AEF0 0x0046AF40 0x0046B190 0x0046B1F0 0x0048C0A0 0x004E39D0 0x004E3A50 0x004E3EF0 0x004E5250 0x004EC3B0 0x0050BA00 0x0050DD90 0x005108A0 0x00514880 0x0055BB30 0x00591BC0 0x00591D60 0x00591E50 0x00592030 0x005AC060 0x005B9F20 0x005BE6B0 0x005C08C0 0x005C5A30 0x005C5BD0 0x005C5C70 0x005C89A0 0x006257E0 0x00625810 0x00625E30 0x00625E50 0x00625EC0 0x00644F3A 0x006453E0 0x00645470
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x0051F2E0
 
 // BODY GOES HERE.
