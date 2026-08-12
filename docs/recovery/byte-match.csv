@@ -656,9 +656,9 @@ u0041e4f0.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00420A70,??1BaseWin@@QAE@XZ,,0,2201,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 0x00420F90,??1MapWin@@QAE@XZ,src/recovered/units/00420f90.cpp:1,0,507,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,315,162,73,44,1,#1: original 'mov' vs rebuilt 'push',
 0x00421100,??1ProdPicker@@QAE@XZ,src/recovered/units/00421100.cpp:1,0,952,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,658,762,150,164,17,#17: original 'lea' vs rebuilt 'mov',
-0x004213A0,??_GProdPicker@@UAEPAXI@Z,src/deleting_thunks.cpp:370,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004213a0.cpp(763) : error C2065: 'ProdPickerDtorTarget' : undeclared identifier
-u004213a0.cpp(763) : error C2297: '->*' : illegal, right operand has type 'int'
-u004213a0.cpp(765) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x004213A0,??_GProdPicker@@UAEPAXI@Z,src/deleting_thunks.cpp:370,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004213a0.cpp(69) : error C2065: 'ProdPickerDtorTarget' : undeclared identifier
+u004213a0.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
+u004213a0.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004213D0,??_GBaseWin@@UAEPAXI@Z,src/deleting_thunks.cpp:388,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004213d0.cpp(72) : error C2065: 'BaseWinDtorTarget' : undeclared identifier
 u004213d0.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'
 u004213d0.cpp(74) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
@@ -845,10 +845,10 @@ u00428e60.cpp(71) : error C2297: '->*' : illegal, right operand has type 'int'
 u00428e60.cpp(73) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x00428E90,??1Credits@@QAE@XZ,src/recovered/units/00428e90.cpp:1,0,322,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,226,142,57,35,1,#1: original 'mov' vs rebuilt 'push',
 0x00428F80,??3Credits@@SAXPAXI@Z,src/deleting_thunks.cpp:533,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00428f80.cpp(44) : error C2065: 'scalar_delete_credits' : undeclared identifier
-0x00428F90,??__Eg_DATALINK@@YAXXZ,src/init_thunks.cpp:538,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00428f90.cpp(767) : error C2065: 'DatalinkCtorTarget' : undeclared identifier
-u00428f90.cpp(767) : error C2297: '->*' : illegal, right operand has type 'int'
-u00428f90.cpp(768) : error C2065: 'GameAtexit' : undeclared identifier
-u00428f90.cpp(768) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x00428F90,??__Eg_DATALINK@@YAXXZ,src/init_thunks.cpp:538,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00428f90.cpp(967) : error C2065: 'DatalinkCtorTarget' : undeclared identifier
+u00428f90.cpp(967) : error C2297: '->*' : illegal, right operand has type 'int'
+u00428f90.cpp(968) : error C2065: 'GameAtexit' : undeclared identifier
+u00428f90.cpp(968) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x00428FB0,??__Fg_DATALINK@@YAXXZ,src/atexit_thunks.cpp:706,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00428fb0.cpp(63) : error C2065: 'DatalinkDtorTarget' : undeclared identifier
 u00428fb0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00428FC0,??0Datalink@@QAE@XZ,,0,737,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,440,18,96,7,2,#2: original 'push' vs rebuilt 'lea',
@@ -971,9 +971,9 @@ u00432290.cpp(366) : error C2079: 'buffer_' uses undefined class 'Buffer'"
 0x00432770,??_GStringBox@@UAEPAXI@Z,src/deleting_thunks.cpp:547,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00432770.cpp(72) : error C2065: 'StringBoxDtorTarget' : undeclared identifier
 u00432770.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'
 u00432770.cpp(74) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
-0x00432800,??_GDatalink@@UAEPAXI@Z,src/deleting_thunks.cpp:565,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00432800.cpp(765) : error C2065: 'DatalinkDtorTarget' : undeclared identifier
-u00432800.cpp(765) : error C2297: '->*' : illegal, right operand has type 'int'
-u00432800.cpp(767) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x00432800,??_GDatalink@@UAEPAXI@Z,src/deleting_thunks.cpp:565,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00432800.cpp(965) : error C2065: 'DatalinkDtorTarget' : undeclared identifier
+u00432800.cpp(965) : error C2297: '->*' : illegal, right operand has type 'int'
+u00432800.cpp(967) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x00432830,??3StringBox@@SAXPAXI@Z,src/deleting_thunks.cpp:581,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00432830.cpp(45) : error C2065: 'scalar_delete_string_box' : undeclared identifier
 0x00432840,??3Datalink@@SAXPAXI@Z,src/deleting_thunks.cpp:594,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00432840.cpp(44) : error C2065: 'scalar_delete_datalink' : undeclared identifier
 0x00432850,??__Eg_DESIGNWIN@@YAXXZ,src/init_thunks.cpp:549,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00432850.cpp(72) : error C2065: 'DesignWinCtorTarget' : undeclared identifier
@@ -1509,9 +1509,9 @@ u0044b300.cpp(74) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x0044C870,sub_44c870,src/global_arith.cpp:77,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c870.cpp(45) : error C2065: 'GlobalSlot007591C4' : undeclared identifier
 u0044c870.cpp(45) : error C2100: illegal indirection
 u0044c870.cpp(45) : error C2100: illegal indirection"
-0x0044C880,?help_tech@@YAXH@Z,src/datalink.cpp:269,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c880.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044c880.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044c880.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044C880,?help_tech@@YAXH@Z,src/datalink.cpp:269,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c880.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044c880.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044c880.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C8A0,nullsub_226,src/nullsub_thunks.cpp:82,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C8B0,nullsub_227,src/nullsub_thunks.cpp:92,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C8C0,sub_44c8c0,src/nullsub_thunks.cpp:102,1,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -1519,52 +1519,52 @@ u0044c880.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C8E0,nullsub_230,src/nullsub_thunks.cpp:123,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C8F0,nullsub_231,src/nullsub_thunks.cpp:133,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C900,nullsub_232,src/nullsub_thunks.cpp:143,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044C910,?help_weapon@@YAXH@Z,src/datalink.cpp:279,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c910.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044c910.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044c910.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044C910,?help_weapon@@YAXH@Z,src/datalink.cpp:279,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c910.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044c910.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044c910.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'
+Generating Code...
+Compiling..."
 0x0044C930,nullsub_233,src/nullsub_thunks.cpp:153,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044C940,?help_armor@@YAXH@Z,src/datalink.cpp:289,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c940.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044c940.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044c940.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044C940,?help_armor@@YAXH@Z,src/datalink.cpp:289,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c940.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044c940.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044c940.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C960,nullsub_234,src/nullsub_thunks.cpp:163,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C970,sub_44c970,src/nullsub_thunks.cpp:173,1,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x0044C980,?help_chassis@@YAXH@Z,src/datalink.cpp:299,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c980.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044c980.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044c980.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044C980,?help_chassis@@YAXH@Z,src/datalink.cpp:299,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c980.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044c980.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044c980.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C9A0,nullsub_235,src/nullsub_thunks.cpp:184,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044C9B0,?help_facility@@YAXH@Z,src/datalink.cpp:309,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c9b0.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044c9b0.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044c9b0.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044C9B0,?help_facility@@YAXH@Z,src/datalink.cpp:309,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044c9b0.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044c9b0.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044c9b0.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044C9D0,nullsub_236,src/nullsub_thunks.cpp:194,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044C9E0,?help_project@@YAXH@Z,src/recovered/0044c9e0.cpp:1,0,24,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,24,24,,,,,
 0x0044CA00,nullsub_237,src/nullsub_thunks.cpp:204,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044CA10,?help_abil@@YAXH@Z,src/datalink.cpp:319,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044ca10.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044ca10.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044ca10.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044CA10,?help_abil@@YAXH@Z,src/datalink.cpp:319,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044ca10.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044ca10.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044ca10.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CA30,nullsub_238,src/nullsub_thunks.cpp:214,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044CA40,?help_social@@YAXH@Z,src/datalink.cpp:329,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044ca40.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044ca40.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044ca40.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044CA40,?help_social@@YAXH@Z,src/datalink.cpp:329,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044ca40.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044ca40.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044ca40.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CA60,nullsub_239,src/nullsub_thunks.cpp:224,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044CA70,?help_faction@@YAXH@Z,src/datalink.cpp:339,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044ca70.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044ca70.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044ca70.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044CA70,?help_faction@@YAXH@Z,src/datalink.cpp:339,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044ca70.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044ca70.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044ca70.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CA90,sub_44ca90,src/recovered/0044ca90.cpp:1,0,42,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,42,42,,,,,
 0x0044CAC0,nullsub_240,src/nullsub_thunks.cpp:234,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
-0x0044CAD0,?help_veh@@YAXH@Z,src/datalink.cpp:349,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044cad0.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044cad0.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044cad0.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'
-Generating Code...
-Compiling..."
+0x0044CAD0,?help_veh@@YAXH@Z,src/datalink.cpp:349,0,21,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044cad0.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044cad0.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044cad0.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CAF0,nullsub_241,src/nullsub_thunks.cpp:244,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044CB00,nullsub_242,src/nullsub_thunks.cpp:254,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044CB10,nullsub_243,src/nullsub_thunks.cpp:264,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044CB20,nullsub_244,src/nullsub_thunks.cpp:274,1,1,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,1,1,,,,,
 0x0044CB30,?help_any@@YAXXZ,src/recovered/0044cb30.cpp:1,0,15,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,15,15,,,,,
 0x0044CB40,sub_44cb40,src/recovered/0044cb40.cpp:1,0,22,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,22,22,,,,,
-0x0044CB60,?help_topic@@YAXIH@Z,src/datalink.cpp:361,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044cb60.cpp(766) : error C2065: 'DatalinkMain' : undeclared identifier
-u0044cb60.cpp(766) : error C2065: 'DatalinkExec' : undeclared identifier
-u0044cb60.cpp(766) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x0044CB60,?help_topic@@YAXIH@Z,src/datalink.cpp:361,0,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044cb60.cpp(966) : error C2065: 'DatalinkMain' : undeclared identifier
+u0044cb60.cpp(966) : error C2065: 'DatalinkExec' : undeclared identifier
+u0044cb60.cpp(966) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x0044CB80,?help_create_link@@YAXPAD00@Z,src/recovered/units/0044cb80.cpp:1,0,66,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0044cb80.cpp(83) : error C2664: 'my_strcat' : cannot convert parameter 1 from 'struct int8 *' to 'char *'
 Types pointed to are unrelated; conversion requires reinterpret_cast, C-style cast or function-style cast
 u0044cb80.cpp(84) : error C2664: 'my_strcat' : cannot convert parameter 1 from 'struct int8 *' to 'char *'
@@ -3978,10 +3978,10 @@ u004712a0.cpp(47) : error C2100: illegal indirection
 u004712a0.cpp(47) : error C2065: 'MapLongitudeBounds' : undeclared identifier
 u004712a0.cpp(47) : error C2100: illegal indirection"
 0x004712D0,mapwin_unk1,src/recovered/units/004712d0.cpp:1,0,70,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,70,70,,,,,
-0x00471320,??__Eg_MESSAGEWIN@@YAXXZ,src/init_thunks.cpp:3916,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00471320.cpp(110) : error C2065: 'MessageWinCtorTarget' : undeclared identifier
-u00471320.cpp(110) : error C2297: '->*' : illegal, right operand has type 'int'
-u00471320.cpp(111) : error C2065: 'GameAtexit' : undeclared identifier
-u00471320.cpp(111) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x00471320,??__Eg_MESSAGEWIN@@YAXXZ,src/init_thunks.cpp:3916,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00471320.cpp(72) : error C2065: 'MessageWinCtorTarget' : undeclared identifier
+u00471320.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'
+u00471320.cpp(73) : error C2065: 'GameAtexit' : undeclared identifier
+u00471320.cpp(73) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x00471340,??__Fg_MESSAGEWIN@@YAXXZ,src/atexit_thunks.cpp:3766,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00471340.cpp(63) : error C2065: 'MessageWinDtorTarget' : undeclared identifier
 u00471340.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00471350,??__Eg_IFACE_GREEN_RIGHT_ARROW_SPRITE@@YAXXZ,src/init_thunks.cpp:3927,1,36,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00471350.cpp(69) : error C2065: 'g_IFACE_GREEN_RIGHT_ARROW_SPRITE' : undeclared identifier
@@ -4196,10 +4196,10 @@ u004837c0.cpp(70) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004837F0,?UNK4@NetWin@@QAEXXZ,src/recovered/004837f0.cpp:1,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
 0x00483820,?UNK5@NetWin@@QAEXXZ,src/netwin.cpp:122,0,28,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,28,26,9,8,0,#0: original 'mov' vs rebuilt 'xor',
 0x00483840,??3NetWin@@SAXPAXI@Z,src/deleting_thunks.cpp:989,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00483840.cpp(44) : error C2065: 'scalar_delete_net_win' : undeclared identifier
-0x00483850,??__Eg_NEWTECHWIN@@YAXXZ,src/init_thunks.cpp:4004,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00483850.cpp(815) : error C2065: 'NewTechWinCtorTarget' : undeclared identifier
-u00483850.cpp(815) : error C2297: '->*' : illegal, right operand has type 'int'
-u00483850.cpp(816) : error C2065: 'GameAtexit' : undeclared identifier
-u00483850.cpp(816) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x00483850,??__Eg_NEWTECHWIN@@YAXXZ,src/init_thunks.cpp:4004,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00483850.cpp(72) : error C2065: 'NewTechWinCtorTarget' : undeclared identifier
+u00483850.cpp(72) : error C2297: '->*' : illegal, right operand has type 'int'
+u00483850.cpp(73) : error C2065: 'GameAtexit' : undeclared identifier
+u00483850.cpp(73) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x00483870,??__Fg_NEWTECHWIN@@YAXXZ,src/atexit_thunks.cpp:3846,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00483870.cpp(63) : error C2065: 'NewTechWinDtorTarget' : undeclared identifier
 u00483870.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x00483880,??__Eg_NEWTECHWIN_SPRITES@@YAXXZ,src/init_thunks.cpp:4015,1,36,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00483880.cpp(69) : error C2065: 'g_NEWTECHWIN_SPRITES' : undeclared identifier
@@ -4212,15 +4212,15 @@ u00483880.cpp(70) : error C2061: syntax error : identifier 'func_atexit_callback
 0x00483920,?info@NewTechWin@@QAAXPAD@Z,src/recovered/00483920.cpp:1,0,48,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,48,48,,,,,
 0x00483950,?on_redraw@NewTechWin@@QAEXXZ,src/recovered/units/00483950.cpp:1,0,1327,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00483950.cpp(228) : error C2079: 'buffer_' uses undefined class 'Buffer'
 u00483950.cpp(359) : error C2079: 'buffer_' uses undefined class 'Buffer'"
-0x00483E80,?on_button_clicked@NewTechWin@@QAEXH@Z,src/delegation_thunks.cpp:155,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00483e80.cpp(877) : error C2065: 'func_delegation_0' : undeclared identifier
-u00483e80.cpp(877) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
+0x00483E80,?on_button_clicked@NewTechWin@@QAEXH@Z,src/delegation_thunks.cpp:155,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00483e80.cpp(133) : error C2065: 'func_delegation_0' : undeclared identifier
+u00483e80.cpp(133) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
 0x00483E90,?on_left_click@NewTechWin@@QAEXHH@Z,src/newtechwin.cpp:23,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00483EA0,?on_key_click@NewTechWin@@QAEHHH@Z,src/newtechwin.cpp:36,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
 0x00483F90,?exec@NewTechWin@@QAEXHH@Z,,0,2175,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00483f90.cpp(219) : error C2079: 'buffer_' uses undefined class 'Buffer'
 0x00484810,??1NewTechWin@@QAE@XZ,src/recovered/units/00484810.cpp:1,0,630,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,445,331,103,73,4,#4: original 'mov' vs rebuilt 'lea',
-0x00484A80,??_GNewTechWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1003,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00484a80.cpp(813) : error C2065: 'NewTechWinDtorTarget' : undeclared identifier
-u00484a80.cpp(813) : error C2297: '->*' : illegal, right operand has type 'int'
-u00484a80.cpp(815) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x00484A80,??_GNewTechWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1003,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00484a80.cpp(69) : error C2065: 'NewTechWinDtorTarget' : undeclared identifier
+u00484a80.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
+u00484a80.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x00484AB0,??3NewTechWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1019,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00484ab0.cpp(45) : error C2065: 'scalar_delete_new_tech_win' : undeclared identifier
 0x00484B60,?close@PickTech@@QAEXXZ,src/leaf_recoveries.cpp:1311,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00484b60.cpp(49) : error C2065: 'store32' : undeclared identifier
 u00484b60.cpp(53) : error C2065: 'graphic_win_close_redirect' : undeclared identifier
@@ -4541,7 +4541,8 @@ u00492420.cpp(905) : warning C4291: 'void *__cdecl operator new(unsigned int,voi
 u00492420.cpp(890) : see declaration of 'new'
 u00492420.cpp(906) : warning C4291: 'void *__cdecl operator new(unsigned int,void *)' : no matching operator delete found; memory will not be freed if initialization throws an exception
 u00492420.cpp(890) : see declaration of 'new'"
-0x004926B0,?close@ProdPicker@@QAEXXZ,src/prodpicker.cpp:65,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004926b0.cpp(741) : error C2653: 'GraphicWin' : is not a class or namespace name
+0x004926B0,?close@ProdPicker@@QAEXXZ,src/prodpicker.cpp:65,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004926b0.cpp(46) : error C2065: 'field_A14_' : undeclared identifier
+u004926b0.cpp(47) : error C2653: 'GraphicWin' : is not a class or namespace name"
 0x004926C0,?show@ProdPicker@@QAEXH@Z,src/recovered/units/004926c0.cpp:1,0,117,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,117,117,34,34,,,
 0x00492740,?hide@ProdPicker@@QAEXXZ,src/recovered/units/00492740.cpp:1,0,113,primary=1;eh=0;shared=0;selfmod=0,MNEMONIC_ONLY,113,113,33,33,,,
 0x004927C0,?draw_item@ProdPicker@@QAEXHH@Z,,0,2015,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004927c0.cpp(214) : error C2079: 'buffer_' uses undefined class 'Buffer'
@@ -4553,8 +4554,8 @@ u004927c0.cpp(345) : error C2079: 'buffer_' uses undefined class 'Buffer'"
 0x00493C20,?on_mousewheel@ProdPicker@@QAEXH@Z,src/recovered/units/00493c20.cpp:1,0,72,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,72,72,,,,,
 0x00493C70,?on_redraw@ProdPicker@@QAEXXZ,src/recovered/00493c70.cpp:1,0,54,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,54,54,,,,,
 0x00493CB0,?on_scrolled@ProdPicker@@QAEXHH@Z,src/recovered/units/00493cb0.cpp:1,0,447,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,447,374,156,131,1,#1: original 'mov' vs rebuilt 'push',
-0x00493E70,?on_scrolling@ProdPicker@@QAEXHH@Z,src/delegation_thunks.cpp:167,1,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00493e70.cpp(817) : error C2065: 'func_delegation_2' : undeclared identifier
-u00493e70.cpp(817) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
+0x00493E70,?on_scrolling@ProdPicker@@QAEXHH@Z,src/delegation_thunks.cpp:167,1,23,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00493e70.cpp(123) : error C2065: 'func_delegation_2' : undeclared identifier
+u00493e70.cpp(123) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
 0x00493E90,?on_mouse_move@ProdPicker@@QAEXHH@Z,src/prodpicker.cpp:38,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00493EA0,?on_right_click@ProdPicker@@QAEXHH@Z,src/recovered/units/00493ea0.cpp:1,0,788,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,767,3,227,1,0,#0: original 'push' vs rebuilt 'ret 8',
 0x004941C0,?on_left_click@ProdPicker@@QAEXHH@Z,src/recovered/units/004941c0.cpp:1,0,111,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,111,111,36,36,14,#14: original 'add' vs rebuilt 'mov',
@@ -4567,8 +4568,8 @@ u00494230.cpp(70) : error C2227: left of '->slot044' must point to class/struct/
 u00494230.cpp(72) : error C2673: 'on_left_double_click' : global functions do not have 'this' pointers
 u00494230.cpp(72) : error C2227: left of '->slot044' must point to class/struct/union"
 0x00494280,?on_key_click@ProdPicker@@QAEHHH@Z,,0,709,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,709,5,196,2,0,#0: original 'push' vs rebuilt 'xor',
-0x004945C0,?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z,src/prodpicker.cpp:80,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004945c0.cpp(739) : error C2511: 'on_redraw_nc' : overloaded member function 'void (int,int)' not found in 'ProdPicker'
-u004945c0.cpp(609) : see declaration of 'ProdPicker'"
+0x004945C0,?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z,src/prodpicker.cpp:80,0,3,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004945c0.cpp(53) : error C2511: 'on_redraw_nc' : overloaded member function 'void (int,int)' not found in 'ProdPicker'
+u004945c0.cpp(44) : see declaration of 'ProdPicker'"
 0x004946D0,?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z,src/recovered/004946d0.cpp:1,0,39,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,39,39,,,,,
 0x00494700,?exec@ProdPicker@@QAEHPAUBase@@HPAUGraphicWin@@H@Z,,0,2687,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00494700.cpp(297) : error C2079: 'buffer_' uses undefined class 'Buffer'
 0x00495160,?UNK3@ProdPicker@@QAEXH@Z,src/prodpicker.cpp:51,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -4760,10 +4761,10 @@ u004ae760.cpp(69) : error C2297: '->*' : illegal, right operand has type 'int'
 u004ae760.cpp(71) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004AE790,??1SetupWin@@QAE@XZ,src/recovered/units/004ae790.cpp:1,0,611,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,526,437,164,141,2,#2: original 'push' vs rebuilt 'sub',
 0x004AE9A0,??3SetupWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1216,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004ae9a0.cpp(44) : error C2065: 'scalar_delete_setup_win' : undeclared identifier
-0x004AE9B0,??__ESocialWinParent@@YAXXZ,src/init_thunks.cpp:4103,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004ae9b0.cpp(997) : error C2065: 'SocialWinCtorTarget' : undeclared identifier
-u004ae9b0.cpp(997) : error C2297: '->*' : illegal, right operand has type 'int'
-u004ae9b0.cpp(998) : error C2065: 'GameAtexit' : undeclared identifier
-u004ae9b0.cpp(998) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x004AE9B0,??__ESocialWinParent@@YAXXZ,src/init_thunks.cpp:4103,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004ae9b0.cpp(1103) : error C2065: 'SocialWinCtorTarget' : undeclared identifier
+u004ae9b0.cpp(1103) : error C2297: '->*' : illegal, right operand has type 'int'
+u004ae9b0.cpp(1104) : error C2065: 'GameAtexit' : undeclared identifier
+u004ae9b0.cpp(1104) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x004AE9D0,??__FSocialWinParent@@YAXXZ,src/atexit_thunks.cpp:3916,1,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004ae9d0.cpp(63) : error C2065: 'SocialWinDtorTarget' : undeclared identifier
 u004ae9d0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004AE9E0,??0SocialWin@@QAE@XZ,src/recovered/units/004ae9e0.cpp:1,0,881,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004ae9e0.cpp(175) : error C2079: 'spot_' uses undefined class 'Spot'
@@ -4796,7 +4797,7 @@ u004b17a0.cpp(513) : error C2079: 'buffer_' uses undefined class 'Buffer'"
 0x004B19A0,?on_redraw@SocialWin@@QAEXXZ,src/recovered/units/004b19a0.cpp:1,0,377,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004b19a0.cpp(229) : error C2079: 'buffer_' uses undefined class 'Buffer'
 u004b19a0.cpp(360) : error C2079: 'buffer_' uses undefined class 'Buffer'"
 0x004B1B20,?on_left_click@SocialWin@@QAEHHH@Z,src/recovered/004b1b20.cpp:1,0,13,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
-0x004B1B30,?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z,src/recovered/004b1b30.cpp,0,64,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,64,64,,,,,
+0x004B1B30,?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z,src/recovered/004b1b30.cpp:1,0,64,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,64,64,,,,,
 0x004B1B70,?bubble_me_elmo2@SocialWin@@QAGXPADHH@Z,src/recovered/004b1b70.cpp:1,0,66,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,66,66,,,,,
 0x004B1BC0,?on_right_click@SocialWin@@QAEXHH@Z,src/recovered/units/004b1bc0.cpp:1,0,273,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,273,271,100,100,45,#45: original 'lea' vs rebuilt 'mov',
 0x004B1E00,?on_button_clicked@SocialWin@@QAEXH@Z,src/recovered/units/004b1e00.cpp:1,0,73,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,73,76,25,26,25,#25: original '<end>' vs rebuilt 'lea',
@@ -4807,14 +4808,14 @@ u004b19a0.cpp(360) : error C2079: 'buffer_' uses undefined class 'Buffer'"
 0x004B2220,?on_iface_right_click@SocialWin@@QAEXHH@Z,src/recovered/units/004b2220.cpp:1,0,474,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,474,433,167,150,6,#6: original 'push' vs rebuilt 'mov',
 0x004B2400,?on_iface_left_down@SocialWin@@QAEXHH@Z,src/socialwin.cpp:51,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2410,?on_iface_right_down@SocialWin@@QAEXHH@Z,src/socialwin.cpp:64,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x004B2420,?on_iface_mouse_move@SocialWin@@QAEXHH@Z,src/socialwin.cpp:149,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004b2420.cpp(975) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-u004b2420.cpp(614) : see declaration of 'clear_bubble_text'
-u004b2420.cpp(976) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-u004b2420.cpp(614) : see declaration of 'clear_bubble_text'"
-0x004B2430,?on_iface_mouse_leave@SocialWin@@QAEXHH@Z,src/socialwin.cpp:171,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004b2430.cpp(975) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-u004b2430.cpp(614) : see declaration of 'clear_bubble_text'
-u004b2430.cpp(976) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
-u004b2430.cpp(614) : see declaration of 'clear_bubble_text'"
+0x004B2420,?on_iface_mouse_move@SocialWin@@QAEXHH@Z,src/socialwin.cpp:149,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004b2420.cpp(1081) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+u004b2420.cpp(720) : see declaration of 'clear_bubble_text'
+u004b2420.cpp(1082) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+u004b2420.cpp(720) : see declaration of 'clear_bubble_text'"
+0x004B2430,?on_iface_mouse_leave@SocialWin@@QAEXHH@Z,src/socialwin.cpp:171,0,13,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004b2430.cpp(1081) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+u004b2430.cpp(720) : see declaration of 'clear_bubble_text'
+u004b2430.cpp(1082) : error C2352: 'Win::clear_bubble_text' : illegal call of non-static member function
+u004b2430.cpp(720) : see declaration of 'clear_bubble_text'"
 0x004B2440,?on_iface_selected@SocialWin@@QAEXHH@Z,src/socialwin.cpp:77,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2450,?on_iface_left_double_click@SocialWin@@QAEXHH@Z,src/socialwin.cpp:90,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x004B2460,?on_iface_right_double_click@SocialWin@@QAEXHH@Z,src/socialwin.cpp:103,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -4836,9 +4837,9 @@ u004b2740.cpp(97) : fatal error C1903: unable to recover from previous error(s);
 0x004B3F20,??_GCheckButton@@UAEPAXI@Z,src/deleting_thunks.cpp:1230,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004b3f20.cpp(437) : error C2065: 'CheckButtonDtorTarget' : undeclared identifier
 u004b3f20.cpp(437) : error C2297: '->*' : illegal, right operand has type 'int'
 u004b3f20.cpp(439) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
-0x004B3F50,??_GSocialWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1248,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004b3f50.cpp(995) : error C2065: 'SocialWinDtorTarget' : undeclared identifier
-u004b3f50.cpp(995) : error C2297: '->*' : illegal, right operand has type 'int'
-u004b3f50.cpp(997) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
+0x004B3F50,??_GSocialWin@@UAEPAXI@Z,src/deleting_thunks.cpp:1248,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004b3f50.cpp(1101) : error C2065: 'SocialWinDtorTarget' : undeclared identifier
+u004b3f50.cpp(1101) : error C2297: '->*' : illegal, right operand has type 'int'
+u004b3f50.cpp(1103) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
 0x004B3F80,??3CheckButton@@SAXPAXI@Z,src/deleting_thunks.cpp:1264,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004b3f80.cpp(45) : error C2065: 'scalar_delete_check_button' : undeclared identifier
 0x004B3F90,??3SocialWin@@SAXPAXI@Z,src/deleting_thunks.cpp:1277,1,11,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004b3f90.cpp(45) : error C2065: 'scalar_delete_social_win' : undeclared identifier
 0x004B3FA0,??__Eg_STATUSWIN@@YAXXZ,src/init_thunks.cpp:4114,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004b3fa0.cpp(72) : error C2065: 'StatusWinCtorTarget' : undeclared identifier
@@ -5268,97 +5269,65 @@ u004c5cd0.cpp(63) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004C6030,sub_4c6030,src/recovered/004c6030.cpp:1,0,34,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,34,34,,,,,
 0x004C6060,sub_4c6060,src/recovered/004c6060.cpp:1,0,17,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,17,17,,,,,
 0x004C6120,??1Sound@@QAE@XZ,src/sound.cpp:579,0,205,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
-0x004C61E0,?set_type@Sound@@QAEXI@Z,src/sound.cpp:319,0,128,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c61e0.cpp(72) : error C2065: 'type_' : undeclared identifier
-u004c61e0.cpp(76) : error C2065: 'flags_40_' : undeclared identifier"
-0x004C6280,?load@Sound@@QAEHPBD@Z,src/sound.cpp:369,0,225,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6280.cpp(120) : error C2664: 'filefind_get' : cannot convert parameter 1 from 'const char *' to 'char *'
+0x004C61E0,?set_type@Sound@@QAEXI@Z,src/sound.cpp:319,0,128,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,128,180,46,66,9,#9: original 'or' vs rebuilt 'mov',
+0x004C6280,?load@Sound@@QAEHPBD@Z,src/sound.cpp:369,0,225,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6280.cpp(142) : error C2664: 'filefind_get' : cannot convert parameter 1 from 'const char *' to 'char *'
 Conversion loses qualifiers
-u004c6280.cpp(124) : error C2065: 'WaveDeviceReleaseGuard' : undeclared identifier
-u004c6280.cpp(124) : error C2100: illegal indirection
-u004c6280.cpp(127) : error C2065: 'device_' : undeclared identifier
-u004c6280.cpp(128) : error C2065: 'WaveDeviceCreateSlot' : undeclared identifier
-u004c6280.cpp(128) : error C2100: illegal indirection
-u004c6280.cpp(134) : error C2065: 'original_slot' : undeclared identifier
-u004c6280.cpp(134) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6280.cpp(141) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6280.cpp(145) : error C2065: 'flags_40_' : undeclared identifier
-u004c6280.cpp(148) : error C2065: 'loop_flag_30_' : undeclared identifier
-u004c6280.cpp(150) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6280.cpp(158) : error C2065: 'WaveOperatorNew' : undeclared identifier
-u004c6280.cpp(158) : error C2440: 'static_cast' : cannot convert from 'int' to 'char *'
+u004c6280.cpp(146) : error C2065: 'WaveDeviceReleaseGuard' : undeclared identifier
+u004c6280.cpp(146) : error C2100: illegal indirection
+u004c6280.cpp(150) : error C2065: 'WaveDeviceCreateSlot' : undeclared identifier
+u004c6280.cpp(150) : error C2100: illegal indirection
+u004c6280.cpp(156) : error C2065: 'original_slot' : undeclared identifier
+u004c6280.cpp(156) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6280.cpp(163) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6280.cpp(172) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6280.cpp(180) : error C2065: 'WaveOperatorNew' : undeclared identifier
+u004c6280.cpp(180) : error C2440: 'static_cast' : cannot convert from 'int' to 'char *'
 Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-u004c6280.cpp(160) : error C2065: 'fname_' : undeclared identifier
-u004c6280.cpp(161) : error C2065: 'WaveOperatorDelete' : undeclared identifier
-u004c6280.cpp(163) : error C2440: '=' : cannot convert from 'char *const ' to 'int'
-This conversion requires a reinterpret_cast, a C-style cast or function-style cast"
-0x004C6370,?attach@Sound@@QAEHXZ,src/sound.cpp:651,0,81,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6370.cpp(52) : error C2065: 'chain_next_' : undeclared identifier
-u004c6370.cpp(52) : error C2065: 'chain_prev_' : undeclared identifier
-u004c6370.cpp(57) : error C2065: 'WaveChainTail' : undeclared identifier
-u004c6370.cpp(57) : error C2100: illegal indirection
-u004c6370.cpp(58) : error C2065: 'WaveChainHead' : undeclared identifier
-u004c6370.cpp(58) : error C2100: illegal indirection
-u004c6370.cpp(58) : error C2061: syntax error : identifier 'Wave'
-u004c6370.cpp(59) : error C2100: illegal indirection
-u004c6370.cpp(59) : error C2061: syntax error : identifier 'Wave'
-u004c6370.cpp(60) : error C2065: 'flags_40_' : undeclared identifier
-u004c6370.cpp(63) : error C2100: illegal indirection
-u004c6370.cpp(63) : error C2440: '=' : cannot convert from 'class Sound *' to 'int'
-This conversion requires a reinterpret_cast, a C-style cast or function-style cast
-u004c6370.cpp(64) : error C2100: illegal indirection
-u004c6370.cpp(64) : error C2061: syntax error : identifier 'Wave'
-u004c6370.cpp(65) : error C2227: left of '->chain_next_' must point to class/struct/union"
-0x004C63D0,?detach@Sound@@QAEHXZ,src/sound.cpp:683,0,92,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c63d0.cpp(55) : error C2065: 'flags_40_' : undeclared identifier
-u004c63d0.cpp(58) : error C2065: 'chain_prev_' : undeclared identifier
-u004c63d0.cpp(58) : error C2440: 'initializing' : cannot convert from 'int' to 'class Sound *const '
-Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-u004c63d0.cpp(60) : error C2039: 'chain_next_' : is not a member of 'Sound'
-u004c63d0.cpp(42) : see declaration of 'Sound'
-u004c63d0.cpp(62) : error C2065: 'WaveChainHead' : undeclared identifier
-u004c63d0.cpp(62) : error C2100: illegal indirection
-u004c63d0.cpp(62) : error C2061: syntax error : identifier 'Wave'
-u004c63d0.cpp(64) : error C2440: 'initializing' : cannot convert from 'int' to 'class Sound *const '
-Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
-u004c63d0.cpp(66) : error C2039: 'chain_prev_' : is not a member of 'Sound'
-u004c63d0.cpp(42) : see declaration of 'Sound'
-u004c63d0.cpp(68) : error C2065: 'WaveChainTail' : undeclared identifier
-u004c63d0.cpp(68) : error C2100: illegal indirection
-u004c63d0.cpp(68) : error C2061: syntax error : identifier 'Wave'"
+u004c6280.cpp(183) : error C2065: 'WaveOperatorDelete' : undeclared identifier"
+0x004C6370,?attach@Sound@@QAEHXZ,src/sound.cpp:651,0,81,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6370.cpp(79) : error C2065: 'WaveChainTail' : undeclared identifier
+u004c6370.cpp(79) : error C2100: illegal indirection
+u004c6370.cpp(80) : error C2065: 'WaveChainHead' : undeclared identifier
+u004c6370.cpp(80) : error C2100: illegal indirection
+u004c6370.cpp(80) : error C2061: syntax error : identifier 'Wave'
+u004c6370.cpp(81) : error C2100: illegal indirection
+u004c6370.cpp(81) : error C2061: syntax error : identifier 'Wave'
+u004c6370.cpp(85) : error C2100: illegal indirection
+u004c6370.cpp(86) : error C2100: illegal indirection
+u004c6370.cpp(86) : error C2061: syntax error : identifier 'Wave'"
+0x004C63D0,?detach@Sound@@QAEHXZ,src/sound.cpp:683,0,92,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c63d0.cpp(84) : error C2065: 'WaveChainHead' : undeclared identifier
+u004c63d0.cpp(84) : error C2100: illegal indirection
+u004c63d0.cpp(84) : error C2061: syntax error : identifier 'Wave'
+u004c63d0.cpp(90) : error C2065: 'WaveChainTail' : undeclared identifier
+u004c63d0.cpp(90) : error C2100: illegal indirection
+u004c63d0.cpp(90) : error C2061: syntax error : identifier 'Wave'"
 0x004C6430,?UNK1@Sound@@QAEHH@Z,src/sound.cpp:27,0,8,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,8,8,,,,,
-0x004C6440,?unload@Sound@@QAEHXZ,src/sound.cpp:551,0,50,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6440.cpp(110) : error C2065: 'device_' : undeclared identifier
-u004c6440.cpp(112) : error C2065: 'original_slot' : undeclared identifier
-u004c6440.cpp(112) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6440.cpp(115) : error C2065: 'flags_40_' : undeclared identifier"
-0x004C6480,?play@Sound@@QAEHXZ,src/sound.cpp:150,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c6480.cpp(46) : error C2065: 'query_sound_device_default' : undeclared identifier
-0x004C64A0,?play@Sound@@QAEHI@Z,src/sound.cpp:161,0,28,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c64a0.cpp(62) : error C2065: 'forward_sound_device' : undeclared identifier
-0x004C64C0,?is_playing@Sound@@QAEHXZ,src/sound.cpp:82,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c64c0.cpp(46) : error C2065: 'query_sound_device' : undeclared identifier
-0x004C64D0,?stop@Sound@@QAEHXZ,src/sound.cpp:171,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c64d0.cpp(46) : error C2065: 'query_sound_device_default' : undeclared identifier
-0x004C64F0,?release@Sound@@QAEHXZ,src/sound.cpp:181,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c64f0.cpp(46) : error C2065: 'query_sound_device_default' : undeclared identifier
-0x004C6510,?set_volume@Sound@@QAEXH@Z,src/sound.cpp:431,0,34,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6510.cpp(91) : error C2065: 'volume_' : undeclared identifier
-u004c6510.cpp(92) : error C2065: 'device_' : undeclared identifier
-u004c6510.cpp(94) : error C2065: 'original_slot' : undeclared identifier
-u004c6510.cpp(94) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004C6540,?set_loop_state@Sound@@QAEXJ@Z,src/sound.cpp:193,0,26,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
-0x004C6560,?set_delay@Sound@@QAEXI@Z,src/sound.cpp:207,0,26,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
-0x004C6580,?set_fade@Sound@@QAEHK@Z,src/sound.cpp:453,0,40,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6580.cpp(77) : error C2065: 'fade_38_' : undeclared identifier
-u004c6580.cpp(78) : error C2065: 'device_' : undeclared identifier
-u004c6580.cpp(80) : error C2065: 'original_slot' : undeclared identifier
-u004c6580.cpp(80) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004C65B0,?set_fade_in@Sound@@QAEHI@Z,src/sound.cpp:478,0,41,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c65b0.cpp(98) : error C2065: 'fade_38_' : undeclared identifier
-u004c65b0.cpp(99) : error C2065: 'device_' : undeclared identifier
-u004c65b0.cpp(101) : error C2065: 'original_slot' : undeclared identifier
-u004c65b0.cpp(101) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004C65E0,?fade@Sound@@QAEHXZ,src/sound.cpp:263,0,25,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c65e0.cpp(46) : error C2065: 'guarded_query_sound_device' : undeclared identifier
-0x004C6600,?fade@Sound@@QAEXK@Z,src/sound.cpp:39,0,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6600.cpp(89) : error C2065: 'original_slot' : undeclared identifier
-u004c6600.cpp(89) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6600.cpp(91) : error C2297: '->*' : illegal, right operand has type 'int'
-Generating Code...
-Compiling..."
-0x004C6620,?fade_in@Sound@@QAEHXZ,src/sound.cpp:274,0,25,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c6620.cpp(46) : error C2065: 'guarded_query_sound_device' : undeclared identifier
-0x004C6640,?ramp@Sound@@QAEXHHI@Z,src/sound.cpp:285,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6640.cpp(94) : error C2065: 'original_slot' : undeclared identifier
-u004c6640.cpp(94) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004C6660,?fade_in@Sound@@QAEXI@Z,src/sound.cpp:503,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6660.cpp(96) : error C2065: 'original_slot' : undeclared identifier
-u004c6660.cpp(96) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004C6690,?is_looping@Sound@@QAEHXZ,src/sound.cpp:92,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c6690.cpp(46) : error C2065: 'query_sound_device' : undeclared identifier
-0x004C66A0,?get_time@Sound@@QAEHXZ,src/sound.cpp:102,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c66a0.cpp(46) : error C2065: 'query_sound_device' : undeclared identifier
+0x004C6440,?unload@Sound@@QAEHXZ,src/sound.cpp:551,0,50,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6440.cpp(134) : error C2065: 'original_slot' : undeclared identifier
+u004c6440.cpp(134) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004C6480,?play@Sound@@QAEHXZ,src/sound.cpp:150,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c6480.cpp(68) : error C2065: 'query_sound_device_default' : undeclared identifier
+0x004C64A0,?play@Sound@@QAEHI@Z,src/sound.cpp:161,0,28,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c64a0.cpp(84) : error C2065: 'forward_sound_device' : undeclared identifier
+0x004C64C0,?is_playing@Sound@@QAEHXZ,src/sound.cpp:82,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c64c0.cpp(68) : error C2065: 'query_sound_device' : undeclared identifier
+0x004C64D0,?stop@Sound@@QAEHXZ,src/sound.cpp:171,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c64d0.cpp(68) : error C2065: 'query_sound_device_default' : undeclared identifier
+0x004C64F0,?release@Sound@@QAEHXZ,src/sound.cpp:181,0,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c64f0.cpp(68) : error C2065: 'query_sound_device_default' : undeclared identifier
+0x004C6510,?set_volume@Sound@@QAEXH@Z,src/sound.cpp:431,0,34,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6510.cpp(116) : error C2065: 'original_slot' : undeclared identifier
+u004c6510.cpp(116) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004C6540,?set_loop_state@Sound@@QAEXJ@Z,src/sound.cpp:193,0,26,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c6540.cpp(98) : error C2065: 'forward_sound_device' : undeclared identifier
+0x004C6560,?set_delay@Sound@@QAEXI@Z,src/sound.cpp:207,0,26,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6560.cpp(99) : error C2065: 'forward_sound_device' : undeclared identifier
+Generating Code..."
+0x004C6580,?set_fade@Sound@@QAEHK@Z,src/sound.cpp:453,0,40,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6580.cpp(102) : error C2065: 'original_slot' : undeclared identifier
+u004c6580.cpp(102) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004C65B0,?set_fade_in@Sound@@QAEHI@Z,src/sound.cpp:478,0,41,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c65b0.cpp(123) : error C2065: 'original_slot' : undeclared identifier
+u004c65b0.cpp(123) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004C65E0,?fade@Sound@@QAEHXZ,src/sound.cpp:263,0,25,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c65e0.cpp(68) : error C2065: 'guarded_query_sound_device' : undeclared identifier
+0x004C6600,?fade@Sound@@QAEXK@Z,src/sound.cpp:39,0,32,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6600.cpp(111) : error C2065: 'original_slot' : undeclared identifier
+u004c6600.cpp(111) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6600.cpp(113) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004C6620,?fade_in@Sound@@QAEHXZ,src/sound.cpp:274,0,25,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c6620.cpp(68) : error C2065: 'guarded_query_sound_device' : undeclared identifier
+0x004C6640,?ramp@Sound@@QAEXHHI@Z,src/sound.cpp:285,0,31,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6640.cpp(116) : error C2065: 'original_slot' : undeclared identifier
+u004c6640.cpp(116) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004C6660,?fade_in@Sound@@QAEXI@Z,src/sound.cpp:503,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6660.cpp(118) : error C2065: 'original_slot' : undeclared identifier
+u004c6660.cpp(118) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004C6690,?is_looping@Sound@@QAEHXZ,src/sound.cpp:92,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c6690.cpp(68) : error C2065: 'query_sound_device' : undeclared identifier
+0x004C66A0,?get_time@Sound@@QAEHXZ,src/sound.cpp:102,0,15,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c66a0.cpp(68) : error C2065: 'query_sound_device' : undeclared identifier
 0x004C66B0,?set_pan@Sound@@QAEXH@Z,src/sound.cpp:524,0,48,,REFUSED,,,,,,,C++ standard library: VC6's headers differ enough to be noise
 0x004C66E0,??0Wave@@QAE@XZ,src/wave.cpp:1025,0,239,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 0x004C67C0,??1Wave@@QAE@XZ,src/wave.cpp:1199,0,333,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
@@ -5395,29 +5364,29 @@ u004c6bb0.cpp(139) : error C2100: illegal indirection
 u004c6bb0.cpp(147) : error C2065: 'original_slot' : undeclared identifier
 u004c6bb0.cpp(147) : error C2297: '->*' : illegal, right operand has type 'int'
 u004c6bb0.cpp(150) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004C6C20,?load@Wave@@QAEHPBD@Z,src/wave.cpp:947,0,184,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6c20.cpp(159) : error C2065: 'WaveDeviceReleaseGuard' : undeclared identifier
-u004c6c20.cpp(159) : error C2100: illegal indirection
-u004c6c20.cpp(162) : error C2065: 'WaveDeviceCreateSlot' : undeclared identifier
-u004c6c20.cpp(162) : error C2100: illegal indirection
-u004c6c20.cpp(173) : error C2065: 'original_slot' : undeclared identifier
-u004c6c20.cpp(173) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6c20.cpp(186) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6c20.cpp(189) : error C2065: 'SoundOriginalLoad' : undeclared identifier
-u004c6c20.cpp(189) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6c20.cpp(195) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6c20.cpp(199) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6c20.cpp(204) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6c20.cpp(208) : error C2297: '->*' : illegal, right operand has type 'int'"
-0x004C6CE0,?load@Wave@@QAEHXZ,src/wave.cpp:771,0,204,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6ce0.cpp(163) : error C2065: 'WaveDeviceReleaseGuard' : undeclared identifier
-u004c6ce0.cpp(163) : error C2100: illegal indirection
-u004c6ce0.cpp(166) : error C2065: 'WaveDeviceCreateSlot' : undeclared identifier
-u004c6ce0.cpp(166) : error C2100: illegal indirection
-u004c6ce0.cpp(177) : error C2065: 'original_slot' : undeclared identifier
-u004c6ce0.cpp(177) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6ce0.cpp(199) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6ce0.cpp(202) : error C2065: 'SoundOriginalLoad' : undeclared identifier
-u004c6ce0.cpp(202) : error C2297: '->*' : illegal, right operand has type 'int'
-u004c6ce0.cpp(207) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004C6C20,?load@Wave@@QAEHPBD@Z,src/wave.cpp:947,0,184,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6c20.cpp(180) : error C2065: 'WaveDeviceReleaseGuard' : undeclared identifier
+u004c6c20.cpp(180) : error C2100: illegal indirection
+u004c6c20.cpp(183) : error C2065: 'WaveDeviceCreateSlot' : undeclared identifier
+u004c6c20.cpp(183) : error C2100: illegal indirection
+u004c6c20.cpp(194) : error C2065: 'original_slot' : undeclared identifier
+u004c6c20.cpp(194) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6c20.cpp(207) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6c20.cpp(210) : error C2065: 'SoundOriginalLoad' : undeclared identifier
+u004c6c20.cpp(210) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6c20.cpp(216) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6c20.cpp(220) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6c20.cpp(225) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6c20.cpp(229) : error C2297: '->*' : illegal, right operand has type 'int'"
+0x004C6CE0,?load@Wave@@QAEHXZ,src/wave.cpp:771,0,204,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6ce0.cpp(184) : error C2065: 'WaveDeviceReleaseGuard' : undeclared identifier
+u004c6ce0.cpp(184) : error C2100: illegal indirection
+u004c6ce0.cpp(187) : error C2065: 'WaveDeviceCreateSlot' : undeclared identifier
+u004c6ce0.cpp(187) : error C2100: illegal indirection
+u004c6ce0.cpp(198) : error C2065: 'original_slot' : undeclared identifier
+u004c6ce0.cpp(198) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6ce0.cpp(220) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6ce0.cpp(223) : error C2065: 'SoundOriginalLoad' : undeclared identifier
+u004c6ce0.cpp(223) : error C2297: '->*' : illegal, right operand has type 'int'
+u004c6ce0.cpp(228) : error C2297: '->*' : illegal, right operand has type 'int'"
 0x004C6DB0,?load@Wave@@QAEHPADK@Z,src/wave.cpp:169,0,54,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6db0.cpp(129) : error C2511: 'load' : overloaded member function 'int (int,unsigned int)' not found in 'Wave'
 u004c6db0.cpp(81) : see declaration of 'Wave'"
 0x004C6DF0,?reload@Wave@@QAEHXZ,src/wave.cpp:842,0,165,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c6df0.cpp(140) : error C2065: 'WaveDeviceReleaseGuard' : undeclared identifier
@@ -5485,7 +5454,7 @@ Generating Code..."
 0x004C72A0,sub_4c72a0,src/recovered/units/004c72a0.cpp:1,0,85,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,85,85,,,,,
 0x004C7300,sub_4c7300,,0,115,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,115,3,47,2,0,#0: original 'push' vs rebuilt 'xor',
 0x004C7380,sub_4c7380,src/recovered/004c7380.cpp:1,0,51,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,51,51,,,,,
-0x004C74B0,sub_4c74b0,src/recovered/004c74b0.cpp,0,64,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,64,64,,,,,
+0x004C74B0,sub_4c74b0,src/recovered/004c74b0.cpp:1,0,64,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,64,64,,,,,
 0x004C75A0,sub_4c75a0,src/field_accessors.cpp:177,1,7,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,7,7,,,,,
 0x004C7670,??1Ambience@@QAE@XZ,src/ambience.cpp:283,0,273,primary=1;eh=1;shared=1;selfmod=0,SHARED_TAIL,,,,,,,1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 0x004C7760,?play@Midi@@QAEHXZ,src/delegation_thunks.cpp:213,1,18,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c7760.cpp(76) : error C2065: 'func_delegation_0' : undeclared identifier
@@ -5625,7 +5594,7 @@ u004c9030.cpp(76) : error C2783: 'Method __cdecl original_method(unsigned long)'
 u004c9050.cpp(122) : error C2783: 'Method __cdecl original_method(unsigned long)' : could not deduce template argument for 'Method'"
 0x004C9080,sub_4c9080,,0,749,primary=1;eh=1;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c9080.cpp(153) : error C2079: 'spot_' uses undefined class 'Spot'
 u004c9080.cpp(262) : error C2079: 'heap_' uses undefined class 'Heap'"
-0x004C92D0,??_GSound@@UAEPAXI@Z,src/sound.cpp:632,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c92d0.cpp(53) : error C2065: 'WaveOperatorDelete' : undeclared identifier
+0x004C92D0,??_GSound@@UAEPAXI@Z,src/sound.cpp:632,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c92d0.cpp(75) : error C2065: 'WaveOperatorDelete' : undeclared identifier
 0x004C9300,??_GWave@@UAEPAXI@Z,src/wave.cpp:1157,0,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u004c9300.cpp(74) : error C2065: 'WaveOperatorDelete' : undeclared identifier
 0x004C9330,??_GAmbience@@UAEPAXI@Z,src/deleting_thunks.cpp:1351,1,33,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004c9330.cpp(54) : error C2065: 'ambience_dtor_redirect' : undeclared identifier
 u004c9330.cpp(57) : error C2065: 'ScrollOperatorDelete' : undeclared identifier"
@@ -7983,7 +7952,7 @@ u00523dd0.cpp(226) : error C2100: illegal indirection
 u00523dd0.cpp(235) : error C2227: left of '->territory_max_dist_base' must point to class/struct/union
 u00523dd0.cpp(236) : error C2100: illegal indirection
 u00523dd0.cpp(236) : fatal error C1003: error count exceeds 100; stopping compilation"
-0x005242C0,sub_5242c0,src/recovered/005242c0.cpp,0,87,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,87,87,,,,,
+0x005242C0,sub_5242c0,src/recovered/005242c0.cpp:1,0,87,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,87,87,,,,,
 0x00524320,sub_524320,src/recovered/00524320.cpp:1,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x00524340,Demo::timer_callback,src/recovered/00524340.cpp:1,0,35,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,35,35,,,,,
 0x00524370,sub_524370,src/recovered/00524370.cpp:1,0,38,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,38,38,,,,,
@@ -8876,7 +8845,7 @@ u005593e0.cpp(57) : error C2061: syntax error : identifier 'a1'"
 0x0055A150,?veh_scoot@@YAXHHHHH@Z,,0,3608,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,3521,1,1053,1,0,#0: original 'push' vs rebuilt 'ret',
 0x0055AF20,?base_draw@@YAXPAUBuffer@@HHHHH@Z,,0,2073,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,2073,1,683,1,0,#0: original 'push' vs rebuilt 'ret',
 0x0055B740,??1FontQueue@@QAE@XZ,src/font_recovery.cpp:34,0,16,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u0055b740.cpp(72) : error C2065: 'FontQueueElementTeardown' : undeclared identifier
-0x0055B820,?agenda_off@@YAXHHH@Z,src/recovered/0055b820.cpp,0,80,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,80,80,,,,,
+0x0055B820,?agenda_off@@YAXHHH@Z,src/recovered/0055b820.cpp:1,0,80,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,80,80,,,,,
 0x0055B870,?treaty_on@@YAXHHH@Z,src/recovered/units/0055b870.cpp:1,0,518,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,518,529,152,156,48,#48: original 'test' vs rebuilt 'mov',
 0x0055BB30,?set_treaty@@YAXHHHH@Z,src/faction.cpp:554,0,104,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u0055bb30.cpp(47) : error C2065: 'PlayersData' : undeclared identifier
 u0055bb30.cpp(47) : error C2109: subscript requires array or pointer type
@@ -12505,7 +12474,7 @@ u005b58e0.cpp(87) : error C2109: subscript requires array or pointer type
 u005b58e0.cpp(87) : error C2228: left of '.flags' must have class/struct/union type
 u005b58e0.cpp(87) : error C2065: 'VFLAG_LURKER' : undeclared identifier
 u005b58e0.cpp(87) : error C2065: 'VFLAG_INVISIBLE' : undeclared identifier"
-0x005B5A70,?unspot_stack@@YAXH@Z,src/recovered/005b5a70.cpp,0,85,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,85,85,,,,,
+0x005B5A70,?unspot_stack@@YAXH@Z,src/recovered/005b5a70.cpp:1,0,85,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,85,85,,,,,
 0x005B5AD0,?spot_loc@@YAXHHH@Z,src/veh.cpp:2303,0,821,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u005b5ad0.cpp(79) : error C2065: 'spot_tile' : undeclared identifier
 u005b5ad0.cpp(82) : error C2065: 'spot_base' : undeclared identifier
 u005b5ad0.cpp(85) : error C2065: 'spot_stack' : undeclared identifier"
@@ -13488,8 +13457,8 @@ Generating Code..."
 u005bf690.cpp(71) : error C2065: 'XPopsCaptionBuffer' : undeclared identifier"
 0x005BF6C0,?X_pops@@YAHPBDHHPAUSprite@@HHP6AHXZ@Z,src/xpops.cpp:192,0,48,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u005bf6c0.cpp(72) : error C2065: 'XPopsOriginalFull' : undeclared identifier
 u005bf6c0.cpp(72) : error C2065: 'XPopsCaptionBuffer' : undeclared identifier"
-0x005BF6F0,?X_pops@@YAHPADPBDPADHPAUSprite@@P6AHXZ@Z,src/recovered/005bf6f0.cpp,0,60,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,60,60,,,,,
-0x005BF730,?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z,src/recovered/005bf730.cpp,0,64,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,64,64,,,,,
+0x005BF6F0,?X_pops@@YAHPADPBDPADHPAUSprite@@P6AHXZ@Z,src/recovered/005bf6f0.cpp:1,0,60,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,60,60,,,,,
+0x005BF730,?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z,src/recovered/005bf730.cpp:1,0,64,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,64,64,,,,,
 0x005BF770,?X_pops@@YAHPADPBDHHPAUSprite@@P6AHXZ@Z,src/xpops.cpp:206,0,43,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u005bf770.cpp(67) : error C2065: 'XPopsOriginalFull' : undeclared identifier
 0x005BF7A0,?X_pops@@YAHPADPBDHHPAUSprite@@HHP6AHXZ@Z,src/xpops.cpp:220,0,47,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u005bf7a0.cpp(67) : error C2065: 'XPopsOriginalFull' : undeclared identifier
 0x005BF7D0,?X_pops@@YAHPBDHPAUSprite@@P6AHXZ@Z,src/xpops.cpp:28,0,42,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u005bf7d0.cpp(71) : error C2065: 'XPopsOriginalFull' : undeclared identifier
@@ -15421,9 +15390,9 @@ u005e73cc.cpp(58) : error C2143: syntax error : missing ',' before '*'
 u005e73cc.cpp(58) : error C2059: syntax error : '*'"
 0x005E741C,?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHPAE@Z,,0,3328,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,3328,5,1189,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005E811C,?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z,src/recovered/units/005e811c.cpp:1,0,80,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,80,80,,,,,
-0x005E816C,?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z,src/recovered/005e816c.cpp,0,80,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,80,80,,,,,
+0x005E816C,?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z,src/recovered/005e816c.cpp:1,0,80,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,80,80,,,,,
 0x005E81BC,?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z,,0,3561,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,3561,5,1272,2,0,#0: original 'push' vs rebuilt 'xor',
-0x005E8FA5,?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z,src/recovered/005e8fa5.cpp,0,80,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,80,80,,,,,
+0x005E8FA5,?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z,src/recovered/005e8fa5.cpp:1,0,80,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,80,80,,,,,
 0x005E8FF5,?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z,,0,3407,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,3407,5,1216,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005E9D44,?draw@Sprite@@QAEHPAUBuffer@@HHHPAE@Z,,0,3515,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,3515,5,1258,2,0,#0: original 'push' vs rebuilt 'xor',
 0x005EAAFF,?UNK3@Sprite@@QAEXHH@Z,src/sprite.cpp:155,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
@@ -15581,7 +15550,7 @@ u005ee160.cpp(311) : error C2227: left of '->field_2148_' must point to class/st
 0x005EFD00,sub_5efd00,src/recovered/005efd00.cpp:1,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x005EFD20,?flip@Win@@QAAXPAURECT@@@Z,src/recovered/units/005efd20.cpp:1,0,1223,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,1223,950,407,307,9,#9: original 'push' vs rebuilt 'mov',
 0x005F01F0,?init_class@Win@@QAAHPAD@Z,,0,761,primary=1;eh=1;shared=0;selfmod=0,MISMATCH,740,3,203,2,0,#0: original 'push' vs rebuilt 'xor',
-0x005F04E0,?close_class@Win@@QAAXXZ,src/recovered/005f04e0.cpp,0,64,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,64,64,,,,,
+0x005F04E0,?close_class@Win@@QAAXXZ,src/recovered/005f04e0.cpp:1,0,64,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,64,64,,,,,
 0x005F0540,?adjust_menus@Win@@QAGHPAX@Z,src/recovered/005f0540.cpp:1,0,57,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,57,57,,,,,
 0x005F0580,?set_caption_height@Win@@QAEXH@Z,src/recovered/units/005f0580.cpp:1,0,61,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,61,61,,,,,
 0x005F05C0,sub_5f05c0,src/field_accessors.cpp:885,1,13,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,13,13,,,,,
@@ -17245,7 +17214,7 @@ u00611600.cpp(39) : see declaration of 'id_to_pos'
 u00611600.cpp(47) : error C2371: 'id_to_pos' : redefinition; different basic types
 u00611600.cpp(39) : see declaration of 'id_to_pos'"
 0x00611640,?pos_to_id@SpriteBox@@QAEXH@Z,src/recovered/units/00611640.cpp:1,0,118,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,118,118,51,51,5,#5: original 'mov' vs rebuilt 'dec',
-0x006116E0,sub_6116e0,src/recovered/006116e0.cpp,0,72,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,72,72,,,,,
+0x006116E0,sub_6116e0,src/recovered/006116e0.cpp:1,0,72,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,72,72,,,,,
 0x006117D0,sub_6117d0,,0,70,primary=1;eh=0;shared=1;selfmod=0,SHARED_TAIL,,,,,,,1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 0x00611820,?on_redraw@thunk1_SpriteBox@@QAEXXZ,src/adjustor_thunks.cpp:1859,1,8,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u00611820.cpp(67) : error C2065: 'SpriteBoxOnRedrawTarget' : undeclared identifier
 u00611820.cpp(67) : error C2297: '->*' : illegal, right operand has type 'int'"

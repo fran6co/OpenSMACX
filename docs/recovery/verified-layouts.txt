@@ -30,15 +30,13 @@ Log
 MAmbience
 MapWin
 MenuEntry
-MessageWin
 Midi_Device
-NewTechWin
-ProdPicker
 PullDownItem
 Random
 RulesFacility
 SAmbience
 SocialWin
+Sound
 Spot
 Sprite
 SquareLock
