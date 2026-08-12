@@ -8,7 +8,6 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
-#include "runtime_oracle.h"
 #include "scenario.h"
 
 #include "alpha.h"
@@ -396,9 +395,10 @@ void execute_commands(Console *self) {
 } // namespace
 
 void __cdecl scenario_opening_movie(char *movie_name) {
-    // First startup call site reached after the executable's CRT is running,
-    // which is what the deferred oracle phase needs for real allocations.
-    run_deferred_oracles();
+    // The deferred-oracle phase used to be triggered here - this is the first
+    // startup call site reached after the executable's CRT is running, which is
+    // what it needed for real allocations. The runtime oracle route is retired
+    // (docs/RETIRED_ROUTES.md); the hook point is recorded in case it returns.
     if (GetEnvironmentVariableA("OPENSMACX_SCENARIO_SAVE", nullptr, 0) == 0
         || GetEnvironmentVariableA("OPENSMACX_SCENARIO_RESULT", nullptr, 0) == 0) {
         OriginalOpeningMovie(movie_name);

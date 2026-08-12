@@ -14,7 +14,7 @@ describe are assumed everywhere below and are not repeated here:
   every `recovery_state` / `binding_category` value means.
 - `docs/RUNTIME_ORACLE.md` — the in-process differential oracle: when a
   function needs one instead of a copied-byte oracle, and how to author a suite.
-- `docs/HYBRID.md` — the staged-hybrid workflow, `tools/run_game.py`, and the
+- `docs/HYBRID.md` — the staged-hybrid workflow, the retired `run_game`, and the
   smoke gate that every recovery must pass.
 - `docs/LEGACY_ISLANDS.md` — island generation, eligibility, and the
   zero-island release rule.
@@ -42,7 +42,7 @@ describe are assumed everywhere below and are not repeated here:
 The environment lives outside git: the hash-pinned executables, the IDB, the
 Ghidra project, and the Python venv are all under the gitignored `.opensmacx/`
 and `build/`. Use `.opensmacx/venv/bin/python` for every tool invocation
-(`tools/disasm.py`, `tools/add_redirect.py`, `tools/mutate_and_verify.py`, the
+(`tools/disasm.py`, the retired `add_redirect`, the retired `mutate_and_verify`, the
 metadata tools). `tools/disasm.py <addr-or-mangled-name>` over the pinned
 executable is the ground truth for arity, offsets, and store order; the cached
 Ghidra decompilations under `build/ghidra-decompile/` are hypotheses to confirm
@@ -89,7 +89,7 @@ against it, never to trust directly.
    for every original-dependency call, EH frame omitted. Parameters are `int`,
    never `uint32_t`: MSVC decorates them `H` and `I`, so the wrong one makes
    `@@YAHHH@Z` into `@@YAHII@Z` and the export stops matching.
-4. `tools/add_redirect.py <addr> <symbol>` wires the CSV, signature header,
+4. `add_redirect (retired) <addr> <symbol>` wires the CSV, signature header,
    dllmain table, and count in one checked step. New original-dependency
    bindings must be classified in `docs/recovery-binding-classifications.csv`
    or metadata regeneration fails with `unclassified original function
@@ -109,7 +109,7 @@ against it, never to trust directly.
    makes it stale and fails `signature-oracle-generator-tests` in *both* lanes.
 6. `tools/run_gate.py` - `verify-recovery-batch` in **both** presets, run
    concurrently, one log per lane; then
-   `tools/mutate_and_verify.py <source> --address <addr>`
+   `mutate_and_verify (retired) <source> --address <addr>`
    and require every valid mutant killed. That command has **no default
    target** — pass `--target recovery-gameplay-tests --test
    recovery-gameplay-tests`, or every mutant returns `STALE ... UNMEASURED` and
@@ -248,7 +248,7 @@ gameplay tests keep a central `main()` list:
 - Local legacy-island count: `candidate_count` in the manifest that
   `extract-legacy-leaves` writes. It moves with the size cap and with every
   recovery batch, so it is not restated here.
-- `DllMain` install-time redirects: 2,048 (the `RedirectCount` a `static_assert` checks against the table in `src/dllmain.cpp`), overwhelmingly source recoveries plus two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured. `docs/recovery-redirects.csv` is the authoritative address/kind catalog; `tools/add_redirect.py` keeps the CSV, `src/redirect_signatures.h`, the dllmain table, and the count in sync.
+- `DllMain` install-time redirects: 2,048 (the `RedirectCount` a `static_assert` checks against the table in `src/dllmain.cpp`), overwhelmingly source recoveries plus two inactive-pass-through gameplay hooks. The gameplay gate also installs two call-site hooks; scenario behavior activates only when its environment is configured. `docs/recovery-redirects.csv` is the authoritative address/kind catalog; the retired `add_redirect` keeps the CSV, `src/redirect_signatures.h`, the dllmain table, and the count in sync.
 - Runtime redirects are signature-checked, transactional, and rolled back in reverse order.
 
 ### Analysis Inputs
@@ -508,15 +508,15 @@ Other completed corrections and checks:
 - Hybrid staging defaults to the hash-pinned PRACX executable at `.opensmacx/game/terranx.exe` and publishes all 460 expected import redirects.
 - The packer labels PRACX `hash_pinned_runtime_build`; all recovery body mappings are `not_analyzed` and unmapped rather than projected from canonical addresses.
 - Legacy-island extraction separately remains bound to the independently analyzed pre-PRACX executable; the manifest's `candidate_count` carries the current island count.
-- Always launch through `tools/run_game.py`. On macOS it uses the Wine application bundle, explicitly passes `WINEPREFIX`, and temporarily skips PRACX intro movies unless `--play-intro-movie` is requested.
+- Always launch through the retired `run_game`. On macOS it uses the Wine application bundle, explicitly passes `WINEPREFIX`, and temporarily skips PRACX intro movies unless `--play-intro-movie` is requested.
 - The PRACX hybrid loader trace reached DirectDraw rendering and loaded `OpenSMACX.dll`, `prax.dll`, and Wine's built-in `DDRAW.dll` without a main-process unhandled exception.
-- `tools/smoke_hybrid_game.py` automates that gate, requires the executable, `OpenSMACX.dll`, `prax.dll`, and builtin `DDRAW.dll` in one Wine loader context, validates process survival and rendering when Wine emits a flip trace, rejects required-module failures and unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
+- the retired `smoke_hybrid_game` automates that gate, requires the executable, `OpenSMACX.dll`, `prax.dll`, and builtin `DDRAW.dll` in one Wine loader context, validates process survival and rendering when Wine emits a flip trace, rejects required-module failures and unhandled exceptions, and stops the dedicated owned test prefix while removing its per-run executable alias.
 - The opt-in Scroll recovery oracle runs sixteen untouched original methods inside the verified PRACX process before redirects are installed, including `Scroll::close` and invalid non-delegating fixtures for all five init wrappers. The close fixture seeds both process default tables, verifies the left/right slot-`0x168` calls before the GraphicWin close chain, compares complete object/canary state and return residue, and restores every seeded global. The suite must write `passed` to an ignored nonsymlinked result path before smoke can pass. All direct redirect signatures and the temporary primary-init dependency are validated before the oracle executes; sprite redirects additionally validate their distinguishing field displacement.
 - The Win runtime-oracle suite compares recursive visibility and client-to-screen translation against untouched original bodies before redirects install, including nested parent chains, controlling flags, wrapping arithmetic, aliased outputs, and complete object/canary preservation.
 - The GraphicWin runtime-oracle suite calls untouched `GraphicWin::close` at `0x005D4E40` before redirects install and compares both release branches, complete object/canary state, dependency callback traces, and return residue. Its resource-free Win/Buffer fixture validates each dependency's self-publication relative to its own object before normalizing that one pointer for byte comparison; the source-level suite separately observes the two resets that `Win::close` performs first.
 - The BaseButton runtime-oracle suite calls all four untouched button teardown bodies before redirects install, seeds and restores all three process-default tables, and compares complete object/canary state, callback traces, and return residues. Its deferred `basebutton-release` phase lifts only the BaseButton close redirect and exercises separate real executable-CRT allocations for the original and source sides.
 - ImportAdder runs only in the marker-protected build Wine prefix, receives an explicit `WINEPREFIX`, and stops only that prefix after every invocation.
-- `tools/run_gameplay_scenario.py` temporarily bypasses intro movies, records Wine SEH/thread diagnostics, loads a local ignored save, deterministically invokes the verified active-turn handler after refresh, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
+- the retired `run_gameplay_scenario` temporarily bypasses intro movies, records Wine SEH/thread diagnostics, loads a local ignored save, deterministically invokes the verified active-turn handler after refresh, inspects legal movement candidates, asserts source `go_to` movement-order state, or resolves the order through legacy `action_go_to` before requesting end turn.
 - The gameplay runner waits for a terminal JSON result, rejects fatal Wine diagnostics, and stops its dedicated owned prefix while verifying removal of its per-run executable alias. A passing local fixture used turn 12, vehicle 0, `(22,26)` to `(23,27)`; resolution spent 3 movement points, moved the map stack, and cleared the order.
 - Repeated advancement runs can still stall inside legacy `action_go_to` or while awaiting upkeep; the same movement-resolution stall reproduces with the `StringStruct::seek_id` redirect disabled. Hybrid smoke remains the mandatory per-recovery runtime gate until that legacy scenario path is made deterministic.
 - The gameplay trampoline at the verified `Console::human_turn` seam preserves registers and flags, executes the overwritten store, and selects either the ordinary or early-exit continuation.
@@ -581,14 +581,14 @@ write at offset `0x14` - `current_position_`'s slot - which
 the displacement was computed correctly. The same fixture separately seeded
 `current_position_` to zero before the call, so the explicit reset that clears
 it was equally unobservable - a zeroed field can't show that it was zeroed.
-Both were caught by `tools/mutate_and_verify.py` (against `recovery-leaf-tests`,
+Both were caught by the retired `mutate_and_verify` (against `recovery-leaf-tests`,
 which has no coverage of `close` at all) and confirmed at the oracle level by
 poisoning the real constants and watching `stringstruct` flip to `failed`
 under the hybrid smoke target. Fixed by retargeting the write at an offset
 `close_with_tables` never touches (`0x18`, `allocator_`) and seeding
 `current_position_` with a nonzero sentinel (`0x77777777`) instead of zero.
 
-Run `tools/mutate_and_verify.py <source>` to perform that check mechanically
+Run `mutate_and_verify (retired) <source>` to perform that check mechanically
 instead of by hand. It derives source-level mutants of each `Original Offset:`
 function - dropped stores, perturbed constants, inverted comparisons, swapped
 dependent statements - rebuilds, and runs the owning test for each, requiring
@@ -674,7 +674,7 @@ parallel-agent targets (see "Parallel recovery" above):
 
 - `src/alphanet.h`: verified `0x14A0` `AlphaNet` layout and lookup adapter declarations.
 - `src/alphanet.cpp`: recovered four process-ID and identity lookup implementations.
-- `src/dllmain.cpp`: transactional signature-checked redirects (the `RedirectCount` table, pinned by its `static_assert`) plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute. Never hand-edit the table; use `tools/add_redirect.py`.
+- `src/dllmain.cpp`: transactional signature-checked redirects (the `RedirectCount` table, pinned by its `static_assert`) plus the gameplay gate's active-turn, post-increment upkeep, and call-site hooks; direct and temporary-dependency signatures are preflighted before original-address runtime oracles execute. Never hand-edit the table; use the retired `add_redirect`.
 - `src/scenario.h`, `src/scenario.cpp`: opt-in gameplay fixture loading, inspection, command assertions, result writing, and verified active-turn trampoline.
 - `src/caviar.h`: recovered `CaviarData`, `Caviar`, `VOX_Vect`, and `VOX_Matrix` layouts.
 - `src/caviar.cpp`: recovered Caviar constructors, camera, and scaling behavior.
@@ -706,7 +706,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `src/autosound.h`, `src/autosound.cpp`: recovered `do_sound` hook.
 - `src/maininterface.h`, `src/maininterface.cpp`: recovered null interface hooks.
 - `docs/recovery-overrides.csv`: runtime-integrated `source_complete` overrides.
-- `docs/recovery-redirects.csv`: committed address/kind catalog of every DllMain redirect and preflight dependency; `tools/generate_redirect_signatures.py` regenerates `src/redirect_signatures.h` from it against the canonical executable with a PRACX byte cross-check, and `verify-redirect-signatures` fails on any drift.
+- `docs/recovery-redirects.csv`: committed address/kind catalog of every DllMain redirect and preflight dependency; the retired `generate_redirect_signatures` regenerates `src/redirect_signatures.h` from it against the canonical executable with a PRACX byte cross-check, and `verify-redirect-signatures` fails on any drift.
 - `docs/recovery/functions.csv`: canonical 6,000-function inventory.
 - `docs/recovery/priorities.csv`: the regenerated ranked-candidate catalog; its row count drifts with every batch, so read the file rather than this line.
 - `docs/recovery/analysis-correlation.csv`: canonical, IDA, and Ghidra correlation.
@@ -725,24 +725,24 @@ parallel-agent targets (see "Parallel recovery" above):
 - `tools/correlate_external_analysis.py`: address-only correlation for local Yitzi and Dio inputs.
 - `tools/build_export_recovery_queue.py`: exported-first queue generator combining recovery and external-lead evidence.
 - `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
-- `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
-- `tools/test_extract_legacy_leaves.py`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
+- the retired `extract_legacy_leaves`: conservative local-only island extractor.
+- `test_extract_legacy_leaves (retired)`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
 - the retired `static_recompile_pilot`, `tools/static_recompile_runtime.h`: local-only static basic-block lowering and minimal explicit x86 state semantics.
 - `test_static_recompile_pilot (retired)`, the retired `verify_static_recompile_pilot`: synthetic lowering, containment, deterministic provenance, original-body, fixed-address, relocation, and ABI checks.
 - `tools/local_artifact.py`: shared nonsymlinked `.opensmacx/`/`build/` output ownership enforcement.
-- `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, rendering smoke gate, and required local runtime-oracle result validation.
-- `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.
-- `tools/test_smoke_hybrid_game.py`: source-owned loader-context, diagnostics, prefix-ownership, and movie-skip tests.
+- the retired `smoke_hybrid_game`: non-destructive Wine launch, diagnostics, rendering smoke gate, and required local runtime-oracle result validation.
+- the retired `movie_skip`: transactional PRACX movie-command override for owned launch tools.
+- `test_smoke_hybrid_game (retired)`: source-owned loader-context, diagnostics, prefix-ownership, and movie-skip tests.
 - `tools/owned_wine_prefix.py`: marker-protected initialization and shutdown for the dedicated runtime-test prefix.
 - `tools/runtime_process.py`: random executable aliases and exact owned-wrapper discovery/termination.
-- `tools/run_gameplay_scenario.py`: deterministic scenario launcher, result validator, and owned-process cleanup.
-- `tools/test_run_gameplay_scenario.py`: source-owned fixture, result, diagnostics, and process-alias tests.
+- the retired `run_gameplay_scenario`: deterministic scenario launcher, result validator, and owned-process cleanup.
+- `test_run_gameplay_scenario (retired)`: source-owned fixture, result, diagnostics, and process-alias tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - `tools/batch_decompile.py`, `tools/ghidra/DecompileBatch.java`: one-invocation batch decompiler over an address list or priorities-catalog filters into the ignored `build/ghidra-decompile/` cache with a merged manifest; cached results are skipped on rerun and outputs are never committed.
-- `tools/add_redirect.py`: wires one redirect across the CSV, the regenerated signature header, the dllmain spec table and its count in a single checked step, computing the sorted insertion position rather than appending and restoring every file if any check fails.
-- `tools/generate_mingw_exports.py`: the generator that emits `src/OpenSMACX.def`'s MinGW export aliases; nothing else references it, so its provenance is recorded here.
+- the retired `add_redirect`: wires one redirect across the CSV, the regenerated signature header, the dllmain spec table and its count in a single checked step, computing the sorted insertion position rather than appending and restoring every file if any check fails.
+- the retired `generate_mingw_exports`: the generator that emits `src/OpenSMACX.def`'s MinGW export aliases; nothing else references it, so its provenance is recorded here.
 - `tools/classify_recovery_shapes.py`: sorts cached decompilations into recoverable shapes to find mechanical candidates; it errs toward reporting `complex`, and a shape match only means a generated implementation is worth attempting.
-- `tools/mutate_and_verify.py`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants and ABI-only empty compiler barriers, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing. Every CTest invocation stops the owned Wine prefix; the retired reuse option cost 1.05 s per invocation to save 0.053 s of teardown, because the retained Wine session holds CTest's output pipe open.
+- the retired `mutate_and_verify`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants and ABI-only empty compiler barriers, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing. Every CTest invocation stops the owned Wine prefix; the retired reuse option cost 1.05 s per invocation to save 0.053 s of teardown, because the retained Wine session holds CTest's output pipe open.
 - `tools/run_gate.py`: runs `verify-recovery-batch` in both presets concurrently, one log per lane, naming any lane that fails rather than counting them; `--preset` for one alone and `--serial` for one after the other. It never runs `promote-recovery-metadata`, the one gate-adjacent target that writes the source tree.
 - `tools/verify_wine_test_locks.py`: checks the generated `CTestTestfile.cmake` so that every test invoking `run_windows_test.py` holds `RESOURCE_LOCK wineprefix`; a Wine test missing from that list does not fail under `ctest -j`, it flakes.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.

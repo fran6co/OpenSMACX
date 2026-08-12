@@ -10,7 +10,7 @@ that can be replaced by recovered source without introducing copied assembly int
 Install `tools/requirements.txt`, prepare the supported local executable, and run:
 
 ```sh
-.opensmacx/venv/bin/python tools/extract_legacy_leaves.py
+.opensmacx/venv/bin/python extract_legacy_leaves (retired)
 ```
 
 The generated `.opensmacx/legacy-leaves/` directory contains:

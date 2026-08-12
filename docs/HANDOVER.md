@@ -490,7 +490,7 @@ redirects are shorter than five bytes**; the shortest are a single `ret`. They
 are safe only because MSVC pads every function into a sixteen-byte slot, so
 the overrun lands in padding - a property of this image, not of the mechanism.
 
-`tools/verify_redirect_patch_fit.py` now checks it (ctest: `redirect-patch-fit`),
+the retired `verify_redirect_patch_fit` now checks it (ctest: `redirect-patch-fit`),
 reading `PatchSize` from dllmain.cpp so widening the patch re-checks every
 entry instead of silently invalidating the check. Current measurement: 1,994
 redirects, 0 overruns, minimum room 11 bytes.
@@ -817,7 +817,7 @@ RECOVERED set instead (patch `select_rows`, pass no addresses so the
 code itself, so that is where any growth would come from.
 
 **Generated hybrid-runtime oracles: 36 functions, 1,476 B.** The mechanism is in
-`tools/generate_signature_oracles.py` and it works; the ceiling is what the
+the retired `generate_signature_oracles` and it works; the ceiling is what the
 selection can reach. Three things had to be right, and each was wrong first:
 
 1. **The redirect table, not `redirect_exports`.** The proof calls one address
@@ -1218,7 +1218,7 @@ rate.** Run the sweep.
 
 ### A FULL-FILE mutation sweep reports survivors that are not real
 
-Running `tools/mutate_and_verify.py` over the whole of
+Running the retired `mutate_and_verify` over the whole of
 `src/leaf_recoveries.cpp` gives DIFFERENT answers on identical input. Two
 consecutive runs, same tree, nothing else changed:
 
@@ -1307,7 +1307,7 @@ rate; a targeted `--address` run and a hand poison remain the strongest forms.
 
 ### The mutation harness is blind to two shapes, and that is not a pass
 
-`tools/mutate_and_verify.py` reports `0 mutants` - or refuses the function
+the retired `mutate_and_verify` reports `0 mutants` - or refuses the function
 entirely with "no recovered functions matched" - for a body it cannot perturb:
 
 * a bare `return a1;` or `return 0;`, which carries no literal, no comparison

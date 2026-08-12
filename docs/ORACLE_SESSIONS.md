@@ -633,7 +633,7 @@ the name and flushes before each call. Run 1's log contained exactly one
 
 ### Shape-addressable set: 5 -> 108 (generated route)
 
-`tools/generate_signature_oracles.py --list`
+`generate_signature_oracles (retired) --list`
 
 | gate | candidates |
 | --- | --- |
@@ -672,7 +672,7 @@ The two stale figures live in gitignored trees and are refreshed by the next
 bare number. `AGENTS.md` used to restate one and now points at the manifest.
 
 A tempting widening was measured and rejected: the extractor gates on
-`ghidra_relation != "exact"` (`tools/extract_legacy_leaves.py:430`), excluding
+`ghidra_relation != "exact"` (`extract_legacy_leaves (retired):430`), excluding
 747 functions on metadata rather than code, and 546 of those DO have a second
 independent analysis agreeing exactly — IDA9 rather than Ghidra. Allowing it
 buys **6 functions / 729 B**, not hundreds; 273 of the 546 have discontiguous

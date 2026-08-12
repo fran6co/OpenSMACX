@@ -83,24 +83,6 @@ def copy_tree(source, destination, patterns):
 
 # ---------------------------------------------------------------- damage cases
 
-def damage_load_time_address(workspace):
-    """A file-scope load through a fixed game address, indented inside a
-    namespace and written without the 0x00 padding - the two spellings the
-    check used to miss, in a copy of the real src/."""
-    source = copy_tree(REPO_ROOT / "src", workspace / "src", ("*.cpp", "*.h"))
-    victim = source / "console.cpp"
-    if not victim.is_file():
-        raise Skip("src/console.cpp is absent")
-    victim.write_text(
-        victim.read_text(encoding="utf-8", errors="replace")
-        + "\nnamespace {\n"
-          "  int *DamageProbe = *reinterpret_cast<int **>(0x669304);\n"
-          "}\n",
-        encoding="utf-8")
-    return [PYTHON, str(TOOLS / "verify_no_load_time_addresses.py"),
-            "--src", str(source)]
-
-
 def damage_unregistered_tool_test(workspace):
     """A tools/test_*.py that CMakeLists.txt never executes."""
     tools = copy_tree(TOOLS, workspace / "tools", ("test_*.py",))
@@ -535,8 +517,6 @@ def damage_emptied_def(workspace):
 # CMakeLists.txt passes, so an argparse usage error - exit 2, no work done -
 # used to score identically to the check doing its job.
 CASES = (
-    ("load-time-addresses", "unpadded address at namespace scope",
-     damage_load_time_address, "dereferenced at load time"),
     ("tool-test-registration", "a test file CMake never executes",
      damage_unregistered_tool_test, "never executed by CMake"),
     ("test-registration", "a gameplay case defined and not registered",
@@ -577,7 +557,6 @@ CASES = (
 # adding a case fails the run, which is the point: a check ships with a proof
 # that it can fail, or it does not ship.
 COVERED_CHECKS = {
-    "load-time-addresses",
     "tool-test-registration",
     "test-registration",
     "documented-counts",
