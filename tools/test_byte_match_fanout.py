@@ -58,74 +58,12 @@ class SummariseTest(unittest.TestCase):
         self.assertEqual(found, (1, 0))
 
 
-class RatchetTest(unittest.TestCase):
-    """Both figures may rise and neither may fall."""
-
-    def setUp(self):
-        self.read = fanout.read_ledger
-        self.functions = fanout.BASELINE_MATCHED_FUNCTIONS
-        self.bytes = fanout.BASELINE_MATCHED_BYTES
-        fanout.BASELINE_MATCHED_FUNCTIONS = 10
-        fanout.BASELINE_MATCHED_BYTES = 1000
-
-    def tearDown(self):
-        fanout.read_ledger = self.read
-        fanout.BASELINE_MATCHED_FUNCTIONS = self.functions
-        fanout.BASELINE_MATCHED_BYTES = self.bytes
-
-    def at(self, functions, size):
-        """A ledger summarising to exactly (functions, size)."""
-        rows = [row(f"0x{i}", "BYTE_EXACT", 0) for i in range(functions - 1)]
-        rows.append(row(f"0x{functions}", "BYTE_EXACT", size))
-        fanout.read_ledger = lambda: ledger(*rows)
-        out = io.StringIO()
-        with redirect_stdout(out):
-            status = fanout.check()
-        return status, out.getvalue()
-
-    def test_sitting_exactly_on_the_floor_passes(self):
-        status, output = self.at(10, 1000)
-        self.assertEqual(status, 0)
-        self.assertNotIn("FAIL", output)
-
-    def test_losing_bytes_fails_even_with_more_functions(self):
-        """The byte figure is the one that means anything: the exact-match
-        population is ordered smallest-first, so the function count is
-        dominated by trivial stubs and can rise while real bytes are lost.
-        That is exactly what a deleted method looked like."""
-        status, output = self.at(20, 900)
-        self.assertEqual(status, 1)
-        self.assertIn("matched bytes fell", output)
-
-    def test_losing_functions_fails(self):
-        status, output = self.at(9, 1000)
-        self.assertEqual(status, 1)
-        self.assertIn("matched functions fell", output)
-
-    def test_rising_passes_and_says_the_floor_is_stale(self):
-        status, output = self.at(11, 1100)
-        self.assertEqual(status, 0)
-        self.assertIn("11 / 1100", output)
-
-    def test_an_absent_ledger_is_not_a_failure(self):
-        fanout.read_ledger = lambda: {}
-        out = io.StringIO()
-        with redirect_stdout(out):
-            status = fanout.check()
-        self.assertEqual(status, 0)
-        self.assertIn("absent", out.getvalue())
-
-
-class BaselineTest(unittest.TestCase):
-    def test_the_committed_floor_is_not_above_the_committed_ledger(self):
-        """The floor and the ledger are committed together, so a floor raised
-        without its ledger - or a ledger regenerated without raising the floor
-        - is a broken commit rather than a broken tree."""
-        found = fanout.summarise(fanout.read_ledger())
-        if found == (0, 0):
-            self.skipTest("no committed ledger")
-        self.assertGreaterEqual(found[0], fanout.BASELINE_MATCHED_FUNCTIONS)
-        self.assertGreaterEqual(found[1], fanout.BASELINE_MATCHED_BYTES)
+# RatchetTest and BaselineTest are gone with the thing they tested. The floor
+# was two constants in this file compared against docs/recovery/byte-match.csv;
+# it is now the `BYTE_EXACT` claims in `src/`, checked by
+# `tools/decomp_status.py --check` and covered by `tools/test_decomp_status.py`
+# plus a damage case in `verify_checks_can_fail.py` that the constant form
+# never had.
 
 
 if __name__ == "__main__":
