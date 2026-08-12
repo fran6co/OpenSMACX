@@ -144,8 +144,7 @@ do not run them.
 `tools/generate_guarded_teardowns.py`, `tools/generate_init_thunks.py`,
 `tools/generate_nullsub_thunks.py`, `tools/generate_global_arith.py`,
 `tools/generate_field_accessors.py`, `tools/bulk_recover_stubs.py`.
-`tools/find_constant_returns.py` and `tools/find_leaf_testable.py` are how the
-families were found.
+`tools/find_constant_returns.py` is how the families were found.
 
 ## Wiring a recovery into the DLL
 
@@ -174,7 +173,7 @@ Wine plumbing: `tools/vc6_cl.py` (VC6 as a CMake compiler from Linux),
 `tools/run_windows_test.py`, `tools/runtime_process.py`,
 `tools/local_artifact.py`.
 Oracles: `tools/generate_signature_oracles.py`,
-`tools/generate_leaf_manifest.py`, `tools/extract_legacy_leaves.py`,
+`tools/extract_legacy_leaves.py`,
 `tools/export_recovery_inventory.py`, `tools/measure_observability.py`,
 `tools/mutate_and_verify.py`.
 

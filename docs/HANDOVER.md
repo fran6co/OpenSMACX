@@ -408,7 +408,8 @@ needs its opt-in `recovery-oracle-tests` target built first.
 
 ### The leaf-testable closure, and how its tail should be cleared
 
-`tools/find_leaf_testable.py` reports the queue: unrecovered functions that
+`find_leaf_testable` (retired 2026-08-12 with the leaf suite; see
+docs/RETIRED_ROUTES.md) reported the queue: unrecovered functions that
 touch no absolute global, whose callees are all `source_complete` AND compiled
 into `recovery-leaf-tests`, whose declared arity matches their stack cleanup,
 and which are not EH unwind funclets. `--show-rejected` gives the reason for
@@ -420,7 +421,7 @@ removes candidates that were never recoverable.
 
 That is not the same as "there is nothing left to recover" - it is the
 scanner's closure, and it grows again every time a recovery unblocks a caller
-or a condition is loosened. Re-run `tools/find_leaf_testable.py` after any
+or a condition is loosened. It was re-run after any
 batch; it went 69 -> 0 over one session but rose twice along the way when a
 recovered callee made its callers eligible.
 
