@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00462980 FILE
+// name      ?calculate_dimensions@MapWin@@QAEXXZ
+// size      1402 bytes
+// spans     0x00462980-0x00462EFA
+// prototype void (__thiscall ?calculate_dimensions@MapWin@@QAEXXZ)(MapWin* this)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00618F40
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00462980
-// name           ?calculate_dimensions@MapWin@@QAEXXZ
-// size           1402 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

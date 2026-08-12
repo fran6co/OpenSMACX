@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00403830 FILE
+// name      ?hide@AlphaMenu@@QAEXXZ
+// size      693 bytes
+// spans     0x00403830-0x00403AE5
+// prototype void (__thiscall ?hide@AlphaMenu@@QAEXXZ)(AlphaMenu* this)
+// callers   8   call targets   12
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C6920 0x005D7470 0x005D7670 0x005D8000 0x005D84C0 0x005DFF00 0x005ECF20 0x005ECFE0 0x005EDCD0 0x005EFD20 0x005F7E90 0x005FD2B0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00403830
-// name           ?hide@AlphaMenu@@QAEXXZ
-// size           693 bytes
 // measured tier  MISMATCH
 // divergence     13
 //

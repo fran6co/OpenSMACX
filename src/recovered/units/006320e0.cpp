@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006320E0 FILE
+// name      ?check_polling@Net@@QAEXXZ
+// size      432 bytes
+// spans     0x006320E0-0x00632290
+// prototype void (__thiscall ?check_polling@Net@@QAEXXZ)(Net* this)
+// callers   4   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0062F8A0 0x00632350
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006320E0
-// name           ?check_polling@Net@@QAEXXZ
-// size           432 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

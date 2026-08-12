@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00403BE0 FILE
+// name      ?amovie_project@@YAXPAD@Z
+// size      1321 bytes
+// spans     0x00403BE0-0x0040400D;0x006505E0-0x006506DC
+// prototype 
+// callers   5   call targets   16
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00404070 0x004042C0 0x004BEA30 0x004BEA50 0x004BF400 0x0059DB40 0x005D4CF0 0x005D4DD0 0x005D4E40 0x005D7410 0x005FE2E0 0x005FFD80 0x005FFDB0 0x006005D0 0x00645470 0x00645550
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00403BE0
-// name           ?amovie_project@@YAXPAD@Z
-// size           1321 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

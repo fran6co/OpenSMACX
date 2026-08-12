@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FC620 FILE
+// name      ?hide_menus@Menu@@QAEXXZ
+// size      92 bytes
+// spans     0x005FC620-0x005FC67C
+// prototype void (__thiscall ?hide_menus@Menu@@QAEXXZ)(Menu* this)
+// callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FC9F0 0x005FD120
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FC620
-// name           ?hide_menus@Menu@@QAEXXZ
-// size           92 bytes
 // measured tier  NO_COMPILE
 // refusal        u005fc620.cpp(50) : error C2065: 'Win' : undeclared identifier u005fc620.cpp(50) : error C2059: syntax error : ')' u005fc620.cpp(144) : error C2065: 'do_all_tas
 //

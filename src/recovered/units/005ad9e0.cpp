@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005AD9E0 FILE
+// name      ?timer_callback@ReplayWin@@QAEXXZ
+// size      492 bytes
+// spans     0x005AD9E0-0x005ADBCC
+// prototype void (__thiscall ?timer_callback@ReplayWin@@QAEXXZ)(ReplayWin* this)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005AD560 0x005C89A0 0x00645470 0x00645930 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005AD9E0
-// name           ?timer_callback@ReplayWin@@QAEXXZ
-// size           492 bytes
 // measured tier  MISMATCH
 // divergence     8
 //

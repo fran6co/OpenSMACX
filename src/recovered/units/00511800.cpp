@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00511800 FILE
+// name      ?turn_hints@Console@@QAEXXZ
+// size      936 bytes
+// spans     0x00511800-0x00511BA8
+// prototype void (__thiscall ?turn_hints@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BA5F0 0x004BE650 0x004E3C60 0x005108A0 0x005BF330 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00511800
-// name           ?turn_hints@Console@@QAEXXZ
-// size           936 bytes
 // measured tier  MISMATCH
 // divergence     12
 //

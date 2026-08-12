@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00590BA0 FILE
+// name      ?say_vehicles@@YAXPAXHH@Z
+// size      116 bytes
+// spans     0x00590BA0-0x00590C14
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00590BA0
-// name           ?say_vehicles@@YAXPAXHH@Z
-// size           116 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

@@ -4,6 +4,9 @@
 // spans     0x004B2210-0x004B221D
 // prototype int (__thiscall ?on_iface_left_click@SocialWin@@QAEHHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004BDDE0
 // 0x004B2210  ?on_iface_left_click@SocialWin@@QAEHHH@Z  ->  ?on_iface_left_click@SocialWin@@QAEHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

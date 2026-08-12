@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00559290 FILE
+// name      ??0FontQueue@@QAE@XZ
+// size      61 bytes
+// spans     0x00559290-0x005592CD
+// prototype void (__thiscall ??0FontQueue@@QAE@XZ)(FontQueue* this)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006457C2
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00559290
-// name           ??0FontQueue@@QAE@XZ
-// size           61 bytes
 // measured tier  NO_COMPILE
 // refusal        u00559290.cpp(44) : error C4234: nonstandard extension used : '__thiscall' keyword reserved for future use u00559290.cpp(44) : error C4234: nonstandard extensio
 //

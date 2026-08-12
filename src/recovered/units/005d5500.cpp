@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D5500 FILE
+// name      ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z
+// size      54 bytes
+// spans     0x005D5500-0x005D5536
+// prototype int (__thiscall ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z)(GraphicWin* this, int8* lpszFileName, Palette*, int, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7DE0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D5500
-// name           ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z
-// size           54 bytes
 // measured tier  NO_COMPILE
 // refusal        u005d5500.cpp(63) : error C2511: 'load_pcx' : overloaded member function 'int (char *,struct Palette *,int,int)' not found in 'GraphicWin' u005d5500.cpp(59) : s
 //

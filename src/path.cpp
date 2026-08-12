@@ -32,6 +32,9 @@ ORIGINAL: 0x0059A220
 // spans     0x0059A220-0x0059A2C3
 // prototype void (__thiscall ?init@Path@@QAEXXZ)(Path* this)
 // callers   6   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006465F0
 Return Value: n/a
 Status: Complete
 */
@@ -53,6 +56,9 @@ void Path::init() {
 // spans     0x0059A2D0-0x0059A318
 // prototype void (__thiscall ?shutdown@Path@@QAEXXZ)(Path* this)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
  Return Value: n/a
  Status: Complete
 */
@@ -100,6 +106,9 @@ void Path::set(uint32_t x, uint32_t y, int val) {
 // spans     0x0059A370-0x0059A527
 // prototype int (__thiscall ?zoc_path@Path@@QAEHHHH@Z)(Path* this, int xCoord, int yCoord, int factionID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BFE90
  Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
  Status: Complete
 */
@@ -141,6 +150,9 @@ int Path::zoc_path(int x, int y, int faction_id) {
 // spans     0x0059A530-0x0059BC05
 // prototype int (__thiscall ?find@Path@@QAEHHHHHHHHH@Z)(Path* this, int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int protoID, int factionID, int, int)
 // callers   7   call targets   11
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046A550 0x00592140 0x00593510 0x0059A370 0x005BF1F0 0x005BFE90 0x005C0DB0 0x005C13B0 0x005FCB20 0x00644F3A 0x006465F0
  Return Value: TBD
  Status: WIP
 */
@@ -157,6 +169,9 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
 // spans     0x0059BC10-0x0059C1F3
 // prototype int (__thiscall ?move@Path@@QAEHHH@Z)(Path* this, int vehID, int factionID)
 // callers   4   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00593510 0x0059A530 0x005C1540 0x005C1D20 0x005C8D40 0x00644F3A
  Return Value: TBD
  Status: WIP
 */
@@ -203,6 +218,9 @@ int Path::move(int veh_id, int faction_id) {
 // spans     0x0059C200-0x0059C33F
 // prototype void (__thiscall ?make_abstract@Path@@QAEXXZ)(Path* this)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591230
  Return Value: n/a
  Status: Complete
 */
@@ -231,6 +249,9 @@ void Path::make_abstract() {
 // spans     0x0059C340-0x0059C3B7
 // prototype void (__thiscall ?merge@Path@@QAEXHH@Z)(Path* this, int regionOld, int regionNew)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
  Return Value: n/a
  Status: Complete
 */
@@ -253,6 +274,9 @@ void Path::merge(int region_old, int region_new) {
 // spans     0x0059C3C0-0x0059C51B
 // prototype void (__thiscall ?territory@Path@@QAEXHHHH@Z)(Path* this, int xCoord, int yCoord, int region, int factionID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FCB20
  Return Value: n/a
  Status: Complete
 */
@@ -291,6 +315,9 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 // spans     0x0059C520-0x0059C781
 // prototype void (__thiscall ?continent@Path@@QAEXHHH@Z)(Path* this, int xCoord, int yCoord, int region)
 // callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591B90 0x00591DB0 0x005FCB20
  Return Value: n/a
  Status: Complete
 */
@@ -345,6 +372,9 @@ void Path::continent(int x, int y, int region) {
 // spans     0x0059C790-0x0059CC9D
 // prototype void (__thiscall ?continents@Path@@QAEXXZ)(Path* this)
 // callers   3   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x00591B90 0x0059C200 0x0059C520 0x005FCB20
  Return Value: n/a
  Status: Complete
 */
@@ -449,6 +479,9 @@ void Path::continents() {
 // spans     0x0059CCA0-0x0059D22A
 // prototype int (__thiscall ?sensors@Path@@QAEHHPAHPAH@Z)(Path* this, int factionID, int* xCoordPtr, int* yCoordPtr)
 // callers   2   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0 0x00592030 0x005B9F20 0x005BF010 0x005C8AC0 0x005FCB20 0x00644F3A 0x006465F0
  Return Value: true/false
  Status: Complete - testing
 */

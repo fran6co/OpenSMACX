@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C3990 BYTE_EXACT FILE
+// name      ?set_world_map@WorldWin@@QAEXXZ
+// size      59 bytes
+// spans     0x004C3990-0x004C39CB
+// prototype void (__thiscall ?set_world_map@WorldWin@@QAEXXZ)(WorldWin* this)
+// callers   4   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED9D0 0x0062B870
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C3990
-// name           ?set_world_map@WorldWin@@QAEXXZ
-// size           59 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

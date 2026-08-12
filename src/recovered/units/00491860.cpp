@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00491860 FILE
+// name      ?redraw_volume@PrefWin@@QAEXXZ
+// size      90 bytes
+// spans     0x00491860-0x004918BA
+// prototype void (__thiscall ?redraw_volume@PrefWin@@QAEXXZ)(PrefWin* this)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005E2DD3
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00491860
-// name           ?redraw_volume@PrefWin@@QAEXXZ
-// size           90 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

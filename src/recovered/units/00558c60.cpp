@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00558C60 FILE
+// name      ?commlink_attempt@@YAXH@Z
+// size      852 bytes
+// spans     0x00558C60-0x00558FB4
+// prototype 
+// callers   3   call targets   13
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00444D90 0x0047A890 0x005304A0 0x005315C0 0x0054FFD0 0x005589E0 0x0055B870 0x00592EE0 0x005B9F20 0x005BF7D0 0x00625E30 0x00625EC0 0x006262F0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00558C60
-// name           ?commlink_attempt@@YAXH@Z
-// size           852 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

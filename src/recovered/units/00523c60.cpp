@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00523C60 FILE
+// name      ?set_time_controls@@YAXXZ
+// size      361 bytes
+// spans     0x00523C60-0x00523DC9
+// prototype 
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00523C60
-// name           ?set_time_controls@@YAXXZ
-// size           361 bytes
 // measured tier  MISMATCH
 // divergence     8
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004918C0 FILE
+// name      ?change_volume_button_text@PrefWin@@QAEXH@Z
+// size      285 bytes
+// spans     0x004918C0-0x004919DD
+// prototype void (__thiscall ?change_volume_button_text@PrefWin@@QAEXH@Z)(PrefWin* this, int)
+// callers   4   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006074E0 0x006169A0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004918C0
-// name           ?change_volume_button_text@PrefWin@@QAEXH@Z
-// size           285 bytes
 // measured tier  MISMATCH
 // divergence     81
 //

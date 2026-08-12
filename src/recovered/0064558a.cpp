@@ -4,6 +4,9 @@
 // spans     0x0064558A-0x00645598
 // prototype 
 // callers   27   call targets   1
+// kind      library
+// flags     lib;hidden;sp_ready;purged_ok
+// calls     0x006470B8
 // 0x0064558A  ??2@YAPAXI@Z  ->  ??2@YAPAXI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

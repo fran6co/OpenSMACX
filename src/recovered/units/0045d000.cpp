@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045D000 FILE
+// name      ?on_iface_mouse_move@MainInterface@@QAEXHH@Z
+// size      261 bytes
+// spans     0x0045D000-0x0045D105
+// prototype void (__thiscall ?on_iface_mouse_move@MainInterface@@QAEXHH@Z)(MainInterface* this, int xCoord, int yCoord)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045C3A0 0x004B4CF0 0x004B6530 0x005FAB00
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045D000
-// name           ?on_iface_mouse_move@MainInterface@@QAEXHH@Z
-// size           261 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

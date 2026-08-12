@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00462F00 FILE
+// name      ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z
+// size      316 bytes
+// spans     0x00462F00-0x0046303C
+// prototype void (__thiscall ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z)(MapWin* this, int xCoord, int yCoord, int*, int*)
+// callers   18   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046FE70
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00462F00
-// name           ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z
-// size           316 bytes
 // measured tier  MISMATCH
 // divergence     103
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0053D160 FILE
+// name      ?pledge_truce@@YAXHHH@Z
+// size      497 bytes
+// spans     0x0053D160-0x0053D351
+// prototype 
+// callers   1   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005399A0 0x0053A980 0x0055B870 0x00592EE0 0x005BF7D0 0x00625EC0 0x006262F0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0053D160
-// name           ?pledge_truce@@YAXHHH@Z
-// size           497 bytes
 // measured tier  MISMATCH
 // divergence     85
 //

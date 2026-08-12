@@ -4,6 +4,9 @@
 // spans     0x00609990-0x006099C4
 // prototype int (__thiscall ?item@Dialog@@QAEHPADH@Z)(Dialog* this, int8*, int)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401100
 // 0x00609990  ?item@Dialog@@QAEHPADH@Z  ->  ?item@Dialog@@QAEHPADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

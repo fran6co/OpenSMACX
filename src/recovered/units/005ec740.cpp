@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005EC740 BYTE_EXACT FILE
+// name      ?set_cursor@Win@@QAEHPAVSprite@@HH@Z
+// size      51 bytes
+// spans     0x005EC740-0x005EC773
+// prototype int (__thiscall ?set_cursor@Win@@QAEHPAVSprite@@HH@Z)(Win* this, Sprite*, int, int)
+// callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F1820
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005EC740
-// name           ?set_cursor@Win@@QAEHPAVSprite@@HH@Z
-// size           51 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

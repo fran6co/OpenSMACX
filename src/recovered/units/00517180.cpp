@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00517180 FILE
+// name      ?show_version@Console@@QAEXXZ
+// size      65 bytes
+// spans     0x00517180-0x005171C1
+// prototype void (__thiscall ?show_version@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048C0A0 0x00625EC0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00517180
-// name           ?show_version@Console@@QAEXXZ
-// size           65 bytes
 // measured tier  NO_COMPILE
 // refusal        u00517180.cpp(44) : error C2061: syntax error : identifier 'int8' u00517180.cpp(45) : error C2065: 'int8' : undeclared identifier u00517180.cpp(45) : error C205
 //

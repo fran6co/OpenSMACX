@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00494230 FILE
+// name      ?on_left_double_click@ProdPicker@@QAEXHH@Z
+// size      65 bytes
+// spans     0x00494230-0x00494271
+// prototype void (__thiscall ?on_left_double_click@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00494230
-// name           ?on_left_double_click@ProdPicker@@QAEXHH@Z
-// size           65 bytes
 // measured tier  NO_COMPILE
 // refusal        u00494230.cpp(49) : error C2653: 'ProdPicker' : is not a class or namespace name u00494230.cpp(50) : error C2673: 'on_left_double_click' : global functions do n
 //

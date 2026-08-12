@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005A63D0 FILE
+// name      ?proto_sort_2@@YAXH@Z
+// size      315 bytes
+// spans     0x005A63D0-0x005A650B
+// prototype void (__cdecl ?proto_sort_2@@YAXH@Z)(int factionID)
+// callers   5   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B5690 0x005B9F20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005A63D0
-// name           ?proto_sort_2@@YAXH@Z
-// size           315 bytes
 // measured tier  MISMATCH
 // divergence     46
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F1420 BYTE_EXACT FILE
+// name      ?OnNCHitTest@Win@@QAAJPAXHH@Z
+// size      81 bytes
+// spans     0x005F1420-0x005F1471
+// prototype LRESULT (__cdecl ?OnNCHitTest@Win@@QAAJPAXHH@Z)(HWND hWnd, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F1420
-// name           ?OnNCHitTest@Win@@QAAJPAXHH@Z
-// size           81 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

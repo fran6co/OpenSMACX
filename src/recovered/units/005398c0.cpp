@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005398C0 BYTE_EXACT FILE
+// name      ?diplo_unlock@@YAXXZ
+// size      29 bytes
+// spans     0x005398C0-0x005398DD
+// prototype 
+// callers   10   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006262F0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005398C0
-// name           ?diplo_unlock@@YAXXZ
-// size           29 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

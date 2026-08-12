@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0050F170 FILE
+// name      ?go_timer@@YAXH@Z
+// size      596 bytes
+// spans     0x0050F170-0x0050F3C4
+// prototype 
+// callers   1   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050EF50 0x005C0CB0 0x005C1A20 0x005D5250 0x005EC740 0x005EC8A0 0x005ED9D0 0x00616780
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0050F170
-// name           ?go_timer@@YAXH@Z
-// size           596 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

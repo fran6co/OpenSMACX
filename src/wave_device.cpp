@@ -29,6 +29,9 @@ ORIGINAL: 0x004C5180 BYTE_EXACT
 // spans     0x004C5180-0x004C5183
 // prototype void (__thiscall ?set_pan@Wave_Device@@QAEXH@Z)(Wave_Device* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -43,6 +46,9 @@ ORIGINAL: 0x004C51A0 BYTE_EXACT
 // spans     0x004C51A0-0x004C51A5
 // prototype int (__thiscall ?fade@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -110,6 +116,9 @@ ORIGINAL: 0x004C51C0
 // spans     0x004C51C0-0x004C51CF
 // prototype void (__thiscall ?enable@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   4   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -125,6 +134,9 @@ ORIGINAL: 0x004C51D0
 // spans     0x004C51D0-0x004C51DF
 // prototype void (__thiscall ?disable@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   4   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -156,6 +168,9 @@ ORIGINAL: 0x004C5170 BYTE_EXACT
 // spans     0x004C5170-0x004C5173
 // prototype int (__thiscall ?get_volume@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -171,6 +186,9 @@ ORIGINAL: 0x004C51B0 BYTE_EXACT
 // spans     0x004C51B0-0x004C51B3
 // prototype int (__thiscall ?stop@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -194,6 +212,9 @@ ORIGINAL: 0x004C4FC0
 // spans     0x004C4FC0-0x004C4FCD
 // prototype void (__thiscall ?suspend@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -209,6 +230,9 @@ ORIGINAL: 0x004C4FD0
 // spans     0x004C4FD0-0x004C4FDD
 // prototype void (__thiscall ?restart@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -224,6 +248,9 @@ ORIGINAL: 0x004C4FE0
 // spans     0x004C4FE0-0x004C4FED
 // prototype void (__thiscall ?update_sound@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -240,6 +267,9 @@ ORIGINAL: 0x004C4FF0
 // spans     0x004C4FF0-0x004C4FFF
 // prototype int (__thiscall ?get_ndevices@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -256,6 +286,9 @@ ORIGINAL: 0x004C5020
 // spans     0x004C5020-0x004C502F
 // prototype int (__thiscall ?get_hw_mem_size@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -272,6 +305,9 @@ ORIGINAL: 0x004C5140
 // spans     0x004C5140-0x004C514F
 // prototype int (__thiscall ?get_rate@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -288,6 +324,9 @@ ORIGINAL: 0x004C5190
 // spans     0x004C5190-0x004C519F
 // prototype int (__thiscall ?get_ds@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -305,6 +344,9 @@ ORIGINAL: 0x004C54B0
 // spans     0x004C54B0-0x004C54BF
 // prototype int (__thiscall ?is_eax@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -353,6 +395,9 @@ ORIGINAL: 0x004C51E0
 // spans     0x004C51E0-0x004C51F2
 // prototype int (__thiscall ?is_disabled@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 1 when none is wrapped
 Status: Complete
 */
@@ -369,6 +414,9 @@ ORIGINAL: 0x004C5220
 // spans     0x004C5220-0x004C5232
 // prototype int (__thiscall ?stop_raw_dump@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 3 when none is wrapped
 Status: Complete
 */
@@ -386,6 +434,9 @@ ORIGINAL: 0x004C5530
 // spans     0x004C5530-0x004C5542
 // prototype int (__thiscall ?is_3d@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -401,6 +452,9 @@ ORIGINAL: 0x004C5120
 // spans     0x004C5120-0x004C5137
 // prototype void (__thiscall ?set_rate@Wave_Device@@QAEXK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -416,6 +470,9 @@ ORIGINAL: 0x004C5150
 // spans     0x004C5150-0x004C5167
 // prototype void (__thiscall ?set_volume@Wave_Device@@QAEXK@Z)(Wave_Device* this, unsigned int)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -431,6 +488,9 @@ ORIGINAL: 0x004C5000
 // spans     0x004C5000-0x004C5020
 // prototype int (__thiscall ?set_hwnd@Wave_Device@@QAEHPAX@Z)(Wave_Device* this, void*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x13 when none is wrapped
 Status: Complete
 */
@@ -451,6 +511,9 @@ ORIGINAL: 0x004C5380 BYTE_EXACT
 // spans     0x004C5380-0x004C539C
 // prototype int (__thiscall ?get_group_volume@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the group's volume, or 0 when the index is out of range
 Status: Complete
 */
@@ -510,6 +573,9 @@ ORIGINAL: 0x004C5240
 // spans     0x004C5240-0x004C5277
 // prototype int (__thiscall ?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z)(Wave_Device* this, unsigned int, Wave*)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C5BF0
 Return Value: 0, or 0xA for a bad group or a null wave
 Status: Complete
 */
@@ -544,6 +610,9 @@ ORIGINAL: 0x004C5280
 // spans     0x004C5280-0x004C531C
 // prototype int (__thiscall ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z)(Wave_Device* this, Wave*)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064557F
 Return Value: 0, or 0xA for a null wave or an out-of-range slot
 Status: Complete
 */
@@ -603,6 +672,9 @@ ORIGINAL: 0x004C5460
 // spans     0x004C5460-0x004C5481
 // prototype int (__thiscall ?is_group_disabled@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1 when disabled, 0 when enabled
 Status: Complete
 */
@@ -634,6 +706,9 @@ ORIGINAL: 0x004C5BF0
 // spans     0x004C5BF0-0x004C5C4A
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064558A
 Return Value: n/a
 Status: Complete
 */
@@ -678,6 +753,9 @@ ORIGINAL: 0x004C50F0
 // spans     0x004C50F0-0x004C5111
 // prototype void (__thiscall ?get_description@Wave_Device@@QAEXKPADK@Z)(Wave_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -702,6 +780,9 @@ ORIGINAL: 0x004C5200
 // spans     0x004C5200-0x004C5220
 // prototype int (__thiscall ?start_raw_dump@Wave_Device@@QAEHPAD@Z)(Wave_Device* this, int8*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 3 when no device is wrapped
 Status: Complete
 */
@@ -727,6 +808,9 @@ ORIGINAL: 0x004C54C0
 // spans     0x004C54C0-0x004C54E0
 // prototype int (__thiscall ?set_eax@Wave_Device@@QAEHPAUEAX_REVERB_PROPERTIES@@@Z)(Wave_Device* this, EAX_REVERB_PROPERTIES*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -752,6 +836,9 @@ ORIGINAL: 0x004C54E0
 // spans     0x004C54E0-0x004C5500
 // prototype int (__thiscall ?set_eax@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -777,6 +864,9 @@ ORIGINAL: 0x004C5500
 // spans     0x004C5500-0x004C5523
 // prototype int (__thiscall ?set_eax_mix@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -802,6 +892,9 @@ ORIGINAL: 0x004C5550
 // spans     0x004C5550-0x004C557B
 // prototype int (__thiscall ?set_listener_position@Wave_Device@@QAEHMMM@Z)(Wave_Device* this, float, float, float)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -827,6 +920,9 @@ ORIGINAL: 0x004C5580
 // spans     0x004C5580-0x004C55AB
 // prototype int (__thiscall ?get_listener_position@Wave_Device@@QAEHPAM00@Z)(Wave_Device* this, float*, float*, float*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -852,6 +948,9 @@ ORIGINAL: 0x004C55B0
 // spans     0x004C55B0-0x004C55D3
 // prototype int (__thiscall ?set_listener_xpos@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -877,6 +976,9 @@ ORIGINAL: 0x004C55E0
 // spans     0x004C55E0-0x004C5603
 // prototype int (__thiscall ?get_listener_xpos@Wave_Device@@QAEHPAM@Z)(Wave_Device* this, float*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -902,6 +1004,9 @@ ORIGINAL: 0x004C5610
 // spans     0x004C5610-0x004C5633
 // prototype int (__thiscall ?set_listener_ypos@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -927,6 +1032,9 @@ ORIGINAL: 0x004C5640
 // spans     0x004C5640-0x004C5663
 // prototype int (__thiscall ?get_listener_ypos@Wave_Device@@QAEHPAM@Z)(Wave_Device* this, float*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -952,6 +1060,9 @@ ORIGINAL: 0x004C5670
 // spans     0x004C5670-0x004C5693
 // prototype int (__thiscall ?set_listener_zpos@Wave_Device@@QAEHM@Z)(Wave_Device* this, float)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -977,6 +1088,9 @@ ORIGINAL: 0x004C56A0
 // spans     0x004C56A0-0x004C56C3
 // prototype int (__thiscall ?get_listener_zpos@Wave_Device@@QAEHPAM@Z)(Wave_Device* this, float*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -1094,6 +1208,9 @@ ORIGINAL: 0x004C5320
 // spans     0x004C5320-0x004C537F
 // prototype int (__thiscall ?set_group_volume@Wave_Device@@QAEHII@Z)(Wave_Device* this, unsigned int, unsigned int)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, or 0xA for a bad slot or volume
 Status: Complete
 */
@@ -1124,6 +1241,9 @@ ORIGINAL: 0x004C53A0
 // spans     0x004C53A0-0x004C5400
 // prototype int (__thiscall ?enable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, or 0xA for a bad slot
 Status: Complete
 */
@@ -1154,6 +1274,9 @@ ORIGINAL: 0x004C5400
 // spans     0x004C5400-0x004C545D
 // prototype int (__thiscall ?disable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, or 0xA for a bad slot
 Status: Complete
 */
@@ -1191,6 +1314,9 @@ ORIGINAL: 0x004C5030
 // spans     0x004C5030-0x004C50EF
 // prototype int (__thiscall ?select@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, or 2 when no device is wrapped
 Status: Complete
 */
@@ -1250,6 +1376,9 @@ ORIGINAL: 0x004C4ED0
 // spans     0x004C4ED0-0x004C4F07
 // prototype int (__thiscall ?create_device@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the factory's answer, 0xC with a device already wrapped, or
               0x14 with no factory installed
 Status: Complete
@@ -1278,6 +1407,9 @@ ORIGINAL: 0x004C4F10
 // spans     0x004C4F10-0x004C4F37
 // prototype int (__thiscall ?delete_device@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, or 0x14 with no device or no hook
 Status: Complete
 */
@@ -1310,6 +1442,9 @@ ORIGINAL: 0x004C4F40
 // spans     0x004C4F40-0x004C4F7D
 // prototype int (__thiscall ?init@Wave_Device@@QAEHPAXK@Z)(Wave_Device* this, void*, unsigned int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, or whichever stage's error came first
 Status: Complete
 */
@@ -1346,6 +1481,9 @@ ORIGINAL: 0x004C4F80
 // spans     0x004C4F80-0x004C4FB3
 // prototype void (__thiscall ?release@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1381,6 +1519,9 @@ ORIGINAL: 0x004C5490
 // spans     0x004C5490-0x004C54AB
 // prototype void (__thiscall ??0WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a (the redirect leaves the object pointer where the original
               does)
 Status: Complete
@@ -1406,6 +1547,9 @@ ORIGINAL: 0x004C5B80
 // spans     0x004C5B80-0x004C5BEF
 // prototype void (__thiscall ??1WaveControlGroup@@QAE@XZ)(WaveControlGroup* this)
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0064557F
 Return Value: n/a
 Status: Complete
 */
@@ -1446,6 +1590,9 @@ ORIGINAL: 0x004C4DD0
 // spans     0x004C4DD0-0x004C4E5E;0x004C4DB0-0x004C4DC3;0x00659EA0-0x00659EB2
 // prototype void (__thiscall ??0Wave_Device@@QAE@XZ)(Wave_Device* this)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x006457C2 0x006465F0
 Return Value: n/a (the redirect answers the object pointer)
 Status: Complete
 */
@@ -1480,6 +1627,9 @@ ORIGINAL: 0x004C4E60
 // spans     0x004C4E60-0x004C4EC6;0x004C4DB0-0x004C4DC3;0x00659EB2-0x00659EC4
 // prototype void (__thiscall ??1Wave_Device@@QAE@XZ)(Wave_Device* this)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006456E4
 Return Value: n/a
 Status: Complete
 */

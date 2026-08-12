@@ -1,10 +1,13 @@
 // ORIGINAL: 0x004CF7C0 FILE
-// placeholder - not yet decompiled
 // name      ?new_base@Console@@QAEXH@Z
 // size      3202 bytes
 // spans     0x004CF7C0-0x004D0442
 // prototype void (__thiscall ?new_base@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   38
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0041A7A0 0x0041A920 0x00446B40 0x0046B190 0x0047A890 0x0048C0A0 0x004C96E0 0x004E3A50 0x004E3EF0 0x004E4090 0x004EA4A0 0x00510CE0 0x00514880 0x0052DC70 0x00531020 0x005310F0 0x00531300 0x0053DCE0 0x0053E470 0x0058F810 0x0058F8B0 0x0058FB00 0x00592E10 0x00592E70 0x00593250 0x005BF310 0x005BF5D0 0x005BFAB0 0x005C0B00 0x005C1B70 0x00625810 0x00625E30 0x00625EC0 0x00626250 0x006262F0 0x00645460 0x00645470 0x0064FC88
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x004CF7C0
 
 // BODY GOES HERE.

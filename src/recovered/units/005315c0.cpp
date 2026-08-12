@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005315C0 FILE
+// name      ?await_diplo@NetDaemon@@QAEXH@Z
+// size      313 bytes
+// spans     0x005315C0-0x005316F9
+// prototype void (__thiscall ?await_diplo@NetDaemon@@QAEXH@Z)(NetDaemon* this, int)
+// callers   35   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x005FC700 0x006262F0 0x00630A00
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005315C0
-// name           ?await_diplo@NetDaemon@@QAEXH@Z
-// size           313 bytes
 // measured tier  MISMATCH
 // divergence     20
 //

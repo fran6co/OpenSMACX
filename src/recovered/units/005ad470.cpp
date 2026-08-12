@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005AD470 BYTE_EXACT FILE
+// name      sub_5ad470
+// size      80 bytes
+// spans     0x005AD470-0x005AD4C0
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005AD470
-// name           sub_5ad470
-// size           80 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0052F520 FILE
+// name      ?send_rules@NetDaemon@@QAEXXZ
+// size      950 bytes
+// spans     0x0052F520-0x0052F8D6
+// prototype void (__thiscall ?send_rules@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00532E00 0x00534400 0x00630A00
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0052F520
-// name           ?send_rules@NetDaemon@@QAEXXZ
-// size           950 bytes
 // measured tier  MISMATCH
 // divergence     28
 //

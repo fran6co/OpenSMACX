@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FB160 FILE
+// name      ?add_separator@Menu@@QAEHHH@Z
+// size      86 bytes
+// spans     0x005FB160-0x005FB1B6
+// prototype int (__thiscall ?add_separator@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8BE0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FB160
-// name           ?add_separator@Menu@@QAEHHH@Z
-// size           86 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

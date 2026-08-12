@@ -27,6 +27,9 @@ ORIGINAL: 0x005D45B0
 // spans     0x005D45B0-0x005D45DA
 // prototype void (__thiscall ?shutdown@Heap@@QAEXXZ)(Heap* this)
 // callers   93   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -49,6 +52,9 @@ ORIGINAL: 0x005D45E0
 // spans     0x005D45E0-0x005D4615
 // prototype void (__thiscall ?squeeze@Heap@@QAEXH@Z)(Heap* this, int toggle)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00647132
 Return Value: n/a
 Status: Complete
 */
@@ -70,6 +76,9 @@ ORIGINAL: 0x005D4620
 // spans     0x005D4620-0x005D4675
 // prototype bool (__thiscall ?init@Heap@@QAE_NH@Z)(Heap* this, int)
 // callers   7   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -96,6 +105,9 @@ ORIGINAL: 0x005D4680
 // spans     0x005D4680-0x005D47CB
 // prototype void* (__thiscall ?get@Heap@@QAEPAXH@Z)(Heap* this, int reqSize)
 // callers   17   call targets   5
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00600840 0x00644DFF 0x00645470 0x00647132 0x0064FC88
 Return Value: Memory pointer with address to requested size
 Status: Complete
 */

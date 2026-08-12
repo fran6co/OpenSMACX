@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004BDFA0 FILE
+// name      ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
+// size      61 bytes
+// spans     0x004BDFA0-0x004BDFDD
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0055AF20
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004BDFA0
-// name           ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
-// size           61 bytes
 // measured tier  NO_COMPILE
 // refusal        u004bdfa0.cpp(46) : error C2143: syntax error : missing ';' before 'this' u004bdfa0.cpp(46) : error C2143: syntax error : missing ';' before 'this' u004bdfa0.cp
 //

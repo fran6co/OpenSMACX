@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F6880 FILE
+// name      ?on_r_button_up@Win@@QAEXHHIH@Z
+// size      417 bytes
+// spans     0x005F6880-0x005F6A21
+// prototype void (__thiscall ?on_r_button_up@Win@@QAEXHHIH@Z)(Win* this, int, int, unsigned int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FA7E0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F6880
-// name           ?on_r_button_up@Win@@QAEXHHIH@Z
-// size           417 bytes
 // measured tier  NO_COMPILE
 // refusal        u005f6880.cpp(465) : error C2143: syntax error : missing ';' before '}' u005f6880.cpp(465) : error C2143: syntax error : missing ';' before '}' u005f6880.cpp(46
 //

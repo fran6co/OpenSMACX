@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0052DD50 FILE
+// name      ?ack@DeletionList@@QAEXHH@Z
+// size      101 bytes
+// spans     0x0052DD50-0x0052DDB5
+// prototype void (__thiscall ?ack@DeletionList@@QAEXHH@Z)(DeletionList* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0052DD50
-// name           ?ack@DeletionList@@QAEXHH@Z
-// size           101 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

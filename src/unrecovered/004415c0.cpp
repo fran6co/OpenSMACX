@@ -1,10 +1,13 @@
 // ORIGINAL: 0x004415C0 FILE
-// placeholder - not yet decompiled
 // name      ?on_button_clicked@DiploWin@@QAEXH@Z
 // size      4512 bytes
 // spans     0x004415C0-0x004424C6;0x00654A50-0x00654CEA
 // prototype void (__thiscall ?on_button_clicked@DiploWin@@QAEXH@Z)(DiploWin* this, int)
 // callers   0   call targets   41
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00402970 0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406880 0x00441490 0x00442740 0x0047A890 0x0048C060 0x00515770 0x00539660 0x00539820 0x005398C0 0x00592EE0 0x005B9C40 0x005B9F20 0x005BF310 0x005BFD10 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x0060D1B0 0x0060E740 0x00610120 0x00611A20 0x00612960 0x00612A70 0x006169A0 0x00625EC0 0x00645470 0x00645550 0x0064601D
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x004415C0
 
 // BODY GOES HERE.

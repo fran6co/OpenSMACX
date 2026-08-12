@@ -4,6 +4,9 @@
 // spans     0x004C5A50-0x004C5A71
 // prototype void (__thiscall ?release@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x004C5A50  ?release@Wave_In_Device@@QAEHXZ  ->  ?release@Wave_In_Device@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

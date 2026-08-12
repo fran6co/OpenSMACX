@@ -1,10 +1,13 @@
 // ORIGINAL: 0x00429300 FILE
-// placeholder - not yet decompiled
 // name      ?init@Datalink@@QAEXXZ
 // size      3367 bytes
 // spans     0x00429300-0x0042A012;0x00653579-0x0065358E
 // prototype void (__thiscall ?init@Datalink@@QAEXXZ)(Datalink* this)
 // callers   2   call targets   24
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4EF0 0x005D5250 0x005D7210 0x005D7410 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD40 0x005E2DD3 0x00607210 0x006097F0 0x00609C60 0x00609F20 0x006169A0 0x00616DE0 0x006182A0 0x00618370 0x00618F40 0x00627D00 0x006280E0 0x006292D0 0x0062B810 0x0062B850 0x00645470
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00429300
 
 // BODY GOES HERE.

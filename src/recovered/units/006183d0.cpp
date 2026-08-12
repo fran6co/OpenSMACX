@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006183D0 FILE
+// name      ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z
+// size      86 bytes
+// spans     0x006183D0-0x00618426
+// prototype int (__thiscall ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z)(Caviar* this, Buffer*)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006183D0
-// name           ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z
-// size           86 bytes
 // measured tier  MISMATCH
 // divergence     17
 //

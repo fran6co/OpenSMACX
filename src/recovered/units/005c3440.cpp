@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C3440 FILE
+// name      ?world_fungus@@YAXXZ
+// size      568 bytes
+// spans     0x005C3440-0x005C3678
+// prototype 
+// callers   2   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C03D0 0x005C1E20 0x005C1F20 0x005FCB20 0x0064601D
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C3440
-// name           ?world_fungus@@YAXXZ
-// size           568 bytes
 // measured tier  MISMATCH
 // divergence     9
 //

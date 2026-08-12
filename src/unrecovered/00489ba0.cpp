@@ -1,10 +1,13 @@
 // ORIGINAL: 0x00489BA0 FILE
-// placeholder - not yet decompiled
 // name      ?on_button_clicked@PickWin@@QAEXH@Z
 // size      3644 bytes
 // spans     0x00489BA0-0x0048A798;0x00657F85-0x006581C9
 // prototype void (__thiscall ?on_button_clicked@PickWin@@QAEXH@Z)(PickWin* this, int)
 // callers   1   call targets   42
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00402970 0x004048A0 0x00404900 0x004064D0 0x00406A90 0x00406E60 0x00586050 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x005FD550 0x005FD570 0x005FD670 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00609470 0x00609A50 0x00609EC0 0x00609F20 0x00609FA0 0x0060A670 0x0060C920 0x0060E740 0x00610120 0x00611A20 0x00612960 0x00612A70 0x006169A0 0x00645460 0x00645470 0x00645550 0x00645660
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00489BA0
 
 // BODY GOES HERE.

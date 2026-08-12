@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004A3950 FILE
+// name      ?report@ReportIf@@QAEXHHH@Z
+// size      899 bytes
+// spans     0x004A3950-0x004A3CD3
+// prototype void (__thiscall ?report@ReportIf@@QAEXHHH@Z)(ReportIf* this, int, int factionID, int)
+// callers   12   call targets   18
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045DEA0 0x0045E540 0x004A3D20 0x004A7000 0x004A84A0 0x004A9050 0x004A9F90 0x004AA0B0 0x004AA970 0x004AB550 0x004AB600 0x004ABE70 0x004AC140 0x004C3A40 0x005B9F20 0x005D5890 0x005D5A70 0x00609F20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004A3950
-// name           ?report@ReportIf@@QAEXHHH@Z
-// size           899 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

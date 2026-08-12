@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00604680 FILE
+// name      ?close_class@BasePop@@QAAXXZ
+// size      109 bytes
+// spans     0x00604680-0x006046ED
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00604680
-// name           ?close_class@BasePop@@QAAXXZ
-// size           109 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

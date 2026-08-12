@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005ADF10 FILE
+// name      ??1ReplayWin@@QAE@XZ
+// size      667 bytes
+// spans     0x005ADF10-0x005AE0A8;0x004210D0-0x004210E7;0x00662360-0x0066244C
+// prototype void (__thiscall ??1ReplayWin@@QAE@XZ)(ReplayWin* this)
+// callers   1   call targets   10
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00420F90 0x00462870 0x005D4DD0 0x005D7410 0x00607040 0x00607DA0 0x00616200 0x00618EE0 0x006252B0 0x006456E4
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005ADF10
-// name           ??1ReplayWin@@QAE@XZ
-// size           667 bytes
 // measured tier  SHARED_TAIL
 // refusal        1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 //

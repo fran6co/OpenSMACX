@@ -4,6 +4,9 @@
 // spans     0x0046A530-0x0046A54A
 // prototype void (__thiscall ?draw_radius@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A2A0
 // 0x0046A530  ?draw_radius@MapWin@@QAEXHHH@Z  ->  ?draw_radius@MapWin@@QAEXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

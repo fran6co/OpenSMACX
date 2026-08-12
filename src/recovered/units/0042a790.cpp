@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0042A790 FILE
+// name      ?set_cat_chassis@Datalink@@QAEXXZ
+// size      356 bytes
+// spans     0x0042A790-0x0042A8F4
+// prototype void (__thiscall ?set_cat_chassis@Datalink@@QAEXXZ)(Datalink* this)
+// callers   2   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D5930 0x005DAC70 0x005DACB0 0x005DD130 0x005E2DD3 0x0060C920 0x006169A0 0x006453E0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0042A790
-// name           ?set_cat_chassis@Datalink@@QAEXXZ
-// size           356 bytes
 // measured tier  MISMATCH
 // divergence     97
 //

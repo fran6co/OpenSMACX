@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F83D0 FILE
+// name      ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z
+// size      299 bytes
+// spans     0x005F83D0-0x005F84FB
+// prototype void (__thiscall ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z)(Win* this, int8*, RECT*)
+// callers   14   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EFD20 0x005F7320 0x00619280 0x00645DD0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F83D0
-// name           ?set_bubble_text@Win@@QAEXPADPAURECT@@@Z
-// size           299 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

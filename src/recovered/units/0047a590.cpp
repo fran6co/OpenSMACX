@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047A590 FILE
+// name      ??0MultiWin@@QAE@XZ
+// size      503 bytes
+// spans     0x0047A590-0x0047A6B9;0x00656310-0x006563DE
+// prototype void (__thiscall ??0MultiWin@@QAE@XZ)(MultiWin* this)
+// callers   1   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005D7210 0x005E37E0 0x005FA860 0x00607CF0 0x00618EA0 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047A590
-// name           ??0MultiWin@@QAE@XZ
-// size           503 bytes
 // measured tier  NO_COMPILE
 // refusal        u0047a590.cpp(209) : error C2079: 'buffer_' uses undefined class 'Buffer' u0047a590.cpp(731) : warning C4291: 'void *__cdecl operator new(unsigned int,void *)' 
 //

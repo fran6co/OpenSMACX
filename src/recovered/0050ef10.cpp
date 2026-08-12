@@ -4,6 +4,9 @@
 // spans     0x0050EF10-0x0050EF42
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00479330 0x005D5A70
 // 0x0050EF10  ?turn_timer@@YAXH@Z  ->  ?turn_timer@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

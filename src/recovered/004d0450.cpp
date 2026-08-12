@@ -4,6 +4,9 @@
 // spans     0x004D0450-0x004D0494
 // prototype void (__thiscall ?skip@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   2   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0052DC70 0x00531780 0x005C1B70
 // 0x004D0450  ?skip@Console@@QAEXH@Z  ->  ?skip@Console@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

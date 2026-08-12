@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00526E70 FILE
+// name      ?production_phase@@YAXH@Z
+// size      1045 bytes
+// spans     0x00526E70-0x00527285
+// prototype void (__cdecl ?production_phase@@YAXH@Z)(int factionID)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048C0A0 0x004F79C0 0x005BAE60 0x005BE530 0x005FCB20 0x00626250
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00526E70
-// name           ?production_phase@@YAXH@Z
-// size           1045 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

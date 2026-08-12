@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00618D20 FILE
+// name      ?close_class@Caviar@@QAAXXZ
+// size      117 bytes
+// spans     0x00618D20-0x00618D95
+// prototype 
+// callers   1   call targets   4
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D7470 0x00639380 0x00639630 0x00644EF2
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00618D20
-// name           ?close_class@Caviar@@QAAXXZ
-// size           117 bytes
 // measured tier  NO_COMPILE
 // refusal        u00618d20.cpp(22) : error C2653: 'Caviar' : is not a class or namespace name u00618d20.cpp(23) : error C2065: 'g_009bb478' : undeclared identifier u00618d20.cpp
 //

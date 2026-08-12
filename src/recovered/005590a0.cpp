@@ -4,6 +4,9 @@
 // spans     0x005590A0-0x005590D2
 // prototype int8* (__cdecl ?get_title@@YAPADH@Z)(int factionID)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x005590A0  ?get_title@@YAPADH@Z  ->  ?get_title@@YAPADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

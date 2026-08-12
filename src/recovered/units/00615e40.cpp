@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00615E40 FILE
+// name      ?caret_callback@EditBox@@QAEXH@Z
+// size      31 bytes
+// spans     0x00615E40-0x00615E5F
+// prototype void (__thiscall ?caret_callback@EditBox@@QAEXH@Z)(EditBox* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00615E40
-// name           ?caret_callback@EditBox@@QAEXH@Z
-// size           31 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

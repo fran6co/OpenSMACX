@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00532940 FILE
+// name      ?send_message@NetDaemon@@QAEXPADKH@Z
+// size      260 bytes
+// spans     0x00532940-0x00532A44
+// prototype void (__thiscall ?send_message@NetDaemon@@QAEXPADKH@Z)(NetDaemon* this, int8*, unsigned int, int)
+// callers   12   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E2660 0x00630080
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00532940
-// name           ?send_message@NetDaemon@@QAEXPADKH@Z
-// size           260 bytes
 // measured tier  NO_COMPILE
 // refusal        u00532940.cpp(46) : error C2653: 'NetDaemon' : is not a class or namespace name u00532940.cpp(47) : error C2065: 'g_0093f660' : undeclared identifier u00532940.
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004CD4E0 FILE
+// name      ?action_oblit@@YAXHH@Z
+// size      445 bytes
+// spans     0x004CD4E0-0x004CD69D
+// prototype void (__cdecl ?action_oblit@@YAXHH@Z)(int vehID, int baseID)
+// callers   3   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046B190 0x0048C0A0 0x004E5250 0x0055EEE0 0x00625E30 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004CD4E0
-// name           ?action_oblit@@YAXHH@Z
-// size           445 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

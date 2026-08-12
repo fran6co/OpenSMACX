@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00610C50 FILE
+// name      ?draw_item@SpriteBox@@QAEXH@Z
+// size      1003 bytes
+// spans     0x00610C50-0x0061103B
+// prototype void (__thiscall ?draw_item@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
+// callers   3   call targets   10
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DCF40 0x005DFF00 0x005E3193 0x005E4B4A 0x00644F3A 0x006453E0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00610C50
-// name           ?draw_item@SpriteBox@@QAEXH@Z
-// size           1003 bytes
 // measured tier  MISMATCH
 // divergence     10
 //

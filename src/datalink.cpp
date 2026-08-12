@@ -35,6 +35,9 @@ ORIGINAL: 0x0042BEA0 BYTE_EXACT
 // spans     0x0042BEA0-0x0042BEA1
 // prototype void (__thiscall ?UNK6@Datalink@@QAEXXZ)(Datalink* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -49,6 +52,9 @@ ORIGINAL: 0x0042BF00 BYTE_EXACT
 // spans     0x0042BF00-0x0042BF01
 // prototype void (__thiscall ?UNK8@Datalink@@QAEXXZ)(Datalink* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -63,6 +69,9 @@ ORIGINAL: 0x00431DB0 BYTE_EXACT
 // spans     0x00431DB0-0x00431DB1
 // prototype void (__thiscall ?UNK9@Datalink@@QAEXXZ)(Datalink* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -89,6 +98,9 @@ ORIGINAL: 0x00431EB0 BYTE_EXACT
 // spans     0x00431EB0-0x00431EB3
 // prototype void (__thiscall ?on_left_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -107,6 +119,9 @@ ORIGINAL: 0x00431FB0 BYTE_EXACT
 // spans     0x00431FB0-0x00431FB3
 // prototype void (__thiscall ?on_group_clicked@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -125,6 +140,9 @@ ORIGINAL: 0x00432000 BYTE_EXACT
 // spans     0x00432000-0x00432003
 // prototype void (__thiscall ?on_mouse_move@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -143,6 +161,9 @@ ORIGINAL: 0x00432160 BYTE_EXACT
 // spans     0x00432160-0x00432163
 // prototype void (__thiscall ?on_iface_left_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -161,6 +182,9 @@ ORIGINAL: 0x00432170 BYTE_EXACT
 // spans     0x00432170-0x00432173
 // prototype void (__thiscall ?on_iface_right_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -179,6 +203,9 @@ ORIGINAL: 0x00432180 BYTE_EXACT
 // spans     0x00432180-0x00432183
 // prototype void (__thiscall ?on_iface_left_down@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -197,6 +224,9 @@ ORIGINAL: 0x00432190 BYTE_EXACT
 // spans     0x00432190-0x00432193
 // prototype void (__thiscall ?on_iface_right_down@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -215,6 +245,9 @@ ORIGINAL: 0x004321A0 BYTE_EXACT
 // spans     0x004321A0-0x004321A3
 // prototype void (__thiscall ?on_iface_mouse_move@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -233,6 +266,9 @@ ORIGINAL: 0x004321B0 BYTE_EXACT
 // spans     0x004321B0-0x004321B3
 // prototype void (__thiscall ?on_iface_mouse_leave@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -251,6 +287,9 @@ ORIGINAL: 0x004321C0 BYTE_EXACT
 // spans     0x004321C0-0x004321C3
 // prototype void (__thiscall ?on_iface_selected@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -269,6 +308,9 @@ ORIGINAL: 0x004321D0 BYTE_EXACT
 // spans     0x004321D0-0x004321D3
 // prototype void (__thiscall ?on_iface_left_double_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -287,6 +329,9 @@ ORIGINAL: 0x004321E0 BYTE_EXACT
 // spans     0x004321E0-0x004321E3
 // prototype void (__thiscall ?on_iface_right_double_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -305,6 +350,9 @@ ORIGINAL: 0x004321F0 BYTE_EXACT
 // spans     0x004321F0-0x004321F3
 // prototype void (__thiscall ?on_iface_button_clicked@Datalink@@QAEXH@Z)(Datalink* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -323,6 +371,9 @@ ORIGINAL: 0x00432200 BYTE_EXACT
 // spans     0x00432200-0x00432203
 // prototype void (__thiscall ?on_iface_button_toggled@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -341,6 +392,9 @@ ORIGINAL: 0x0042BD20 BYTE_EXACT
 // spans     0x0042BD20-0x0042BD35
 // prototype void (__thiscall ?close@Datalink@@QAEXXZ)(Datalink* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -362,6 +416,9 @@ ORIGINAL: 0x0044C880
 // spans     0x0044C880-0x0044C895
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -377,6 +434,9 @@ ORIGINAL: 0x0044C910
 // spans     0x0044C910-0x0044C925
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -392,6 +452,9 @@ ORIGINAL: 0x0044C940
 // spans     0x0044C940-0x0044C955
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -407,6 +470,9 @@ ORIGINAL: 0x0044C980
 // spans     0x0044C980-0x0044C995
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -422,6 +488,9 @@ ORIGINAL: 0x0044C9B0
 // spans     0x0044C9B0-0x0044C9C5
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -437,6 +506,9 @@ ORIGINAL: 0x0044CA10
 // spans     0x0044CA10-0x0044CA25
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -452,6 +524,9 @@ ORIGINAL: 0x0044CA40
 // spans     0x0044CA40-0x0044CA55
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -467,6 +542,9 @@ ORIGINAL: 0x0044CA70
 // spans     0x0044CA70-0x0044CA85
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -482,6 +560,9 @@ ORIGINAL: 0x0044CAD0
 // spans     0x0044CAD0-0x0044CAE5
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -499,6 +580,9 @@ ORIGINAL: 0x0044CB60
 // spans     0x0044CB60-0x0044CB77
 // prototype void (__cdecl ?help_topic@@YAXIH@Z)(DatalinkID id, int entryID)
 // callers   9   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00429180
 Return Value: n/a
 Status: Complete
 */
@@ -525,6 +609,9 @@ ORIGINAL: 0x0042A020 BYTE_EXACT
 // spans     0x0042A020-0x0042A03E
 // prototype int (__thiscall ?UNK1@Datalink@@QAEHHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: a1 * 10000 + a2, wrapping at 32 bits
 Status: Complete
 */
@@ -564,6 +651,9 @@ ORIGINAL: 0x0042A040 BYTE_EXACT
 // spans     0x0042A040-0x0042A076
 // prototype int (__thiscall ?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z)(Datalink* this, int, DatalinkID*, int*)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -589,6 +679,9 @@ ORIGINAL: 0x00432040 BYTE_EXACT
 // spans     0x00432040-0x00432052
 // prototype void (__thiscall ?on_selected@Datalink@@QAEXH@Z)(Datalink* this, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0042BF10
 Status: Complete
 */
 void Datalink::on_selected(int a1) {
@@ -606,6 +699,9 @@ ORIGINAL: 0x0042BD40 BYTE_EXACT
 // spans     0x0042BD40-0x0042BD5B
 // prototype void (__thiscall ?show@Datalink@@QAEXH@Z)(Datalink* this, int)
 // callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D310 0x005F7E90
 Status: Complete
 */
 void Datalink::show(int a1) {
@@ -621,6 +717,9 @@ ORIGINAL: 0x0042BD60 BYTE_EXACT
 // spans     0x0042BD60-0x0042BD79
 // prototype void (__thiscall ?hide@Datalink@@QAEXXZ)(Datalink* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D380 0x005F7E90
 Status: Complete
 */
 void Datalink::hide() {

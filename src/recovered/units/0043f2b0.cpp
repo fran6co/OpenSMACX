@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043F2B0 FILE
+// name      ?start@DiploPop@@QAEXH@Z
+// size      773 bytes
+// spans     0x0043F2B0-0x0043F5B5
+// prototype void (__thiscall ?start@DiploPop@@QAEXH@Z)(DiploPop* this, int)
+// callers   1   call targets   10
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0045D310 0x0053A980 0x005D5930 0x006050F0 0x006162D0 0x00616650 0x00629E50 0x0062A070 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043F2B0
-// name           ?start@DiploPop@@QAEXH@Z
-// size           773 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

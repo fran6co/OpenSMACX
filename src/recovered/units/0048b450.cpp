@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048B450 FILE
+// name      ?find_view@PlanWin@@QAEXHHHHHHHH@Z
+// size      473 bytes
+// spans     0x0048B450-0x0048B629
+// prototype void (__thiscall ?find_view@PlanWin@@QAEXHHHHHHHH@Z)(PlanWin* this, int, int, int, int, int, int, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048B450
-// name           ?find_view@PlanWin@@QAEXHHHHHHHH@Z
-// size           473 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005898A0 FILE
+// name      ?thumb_routine@@YAXH@Z
+// size      388 bytes
+// spans     0x005898A0-0x00589A24
+// prototype 
+// callers   1   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00404900 0x00406380 0x005D5A70 0x005EDF50 0x00601B80 0x00602600 0x006046F0 0x006108E0 0x00645470 0x00645660
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005898A0
-// name           ?thumb_routine@@YAXH@Z
-// size           388 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

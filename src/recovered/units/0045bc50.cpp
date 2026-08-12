@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045BC50 FILE
+// name      ?on_redraw@MainInterface@@QAEXXZ
+// size      557 bytes
+// spans     0x0045BC50-0x0045BE7D
+// prototype void (__thiscall ?on_redraw@MainInterface@@QAEXXZ)(MainInterface* this)
+// callers   0   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00459280 0x0045B550 0x0045C290 0x0045C3A0 0x00514880 0x005E2DD3 0x005ED9D0 0x005EDCD0 0x00616650 0x00616730
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045BC50
-// name           ?on_redraw@MainInterface@@QAEXXZ
-// size           557 bytes
 // measured tier  NO_COMPILE
 // refusal        u0045bc50.cpp(209) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004339C0 BYTE_EXACT FILE
+// name      ?on_redraw@SelectPartWin@@QAEXXZ
+// size      66 bytes
+// spans     0x004339C0-0x00433A02
+// prototype void (__thiscall ?on_redraw@SelectPartWin@@QAEXXZ)(SelectPartWin* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00433D60
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004339C0
-// name           ?on_redraw@SelectPartWin@@QAEXXZ
-// size           66 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

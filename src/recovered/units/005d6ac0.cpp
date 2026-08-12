@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D6AC0 FILE
+// name      ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z
+// size      1015 bytes
+// spans     0x005D6AC0-0x005D6EB7
+// prototype void (__thiscall ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z)(GraphicWin* this, RECT*)
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005DA9F0 0x005E2B00 0x005E4B4A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D6AC0
-// name           ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z
-// size           1015 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

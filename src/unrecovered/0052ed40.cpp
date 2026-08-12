@@ -1,10 +1,13 @@
 // ORIGINAL: 0x0052ED40 FILE
-// placeholder - not yet decompiled
 // name      ?send_files@NetDaemon@@QAEHXZ
 // size      2025 bytes
 // spans     0x0052ED40-0x0052F517;0x0065E0B0-0x0065E0C2
 // prototype int (__thiscall ?send_files@NetDaemon@@QAEHXZ)(NetDaemon* this)
 // callers   1   call targets   30
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E25E0 0x00532940 0x00534400 0x00538FE0 0x005BF420 0x005D4510 0x005FCB60 0x005FCBB0 0x006003B0 0x00625E30 0x00625EC0 0x006272F0 0x00628380 0x006283E0 0x00628430 0x006287C0 0x0062ED40 0x0062EDB0 0x0062EDD0 0x0062EEA0 0x00630080 0x00630A00 0x00634280 0x00644EF2 0x006453E0 0x00645470 0x006458A0 0x006458C8 0x00645930 0x00646829
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x0052ED40
 
 // BODY GOES HERE.

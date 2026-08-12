@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00624C70 FILE
+// name      sub_624c70
+// size      45 bytes
+// spans     0x00624C70-0x00624C9D
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006212B0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00624C70
-// name           sub_624c70
-// size           45 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

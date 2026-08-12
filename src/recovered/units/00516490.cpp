@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00516490 BYTE_EXACT FILE
+// name      ?erase_landmark@Console@@QAEXHH@Z
+// size      278 bytes
+// spans     0x00516490-0x005165A6
+// prototype void (__thiscall ?erase_landmark@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)
+// callers   3   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0047A890 0x00592550 0x00592650 0x005926F0 0x00592EE0 0x005BF310 0x00625EC0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00516490
-// name           ?erase_landmark@Console@@QAEXHH@Z
-// size           278 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

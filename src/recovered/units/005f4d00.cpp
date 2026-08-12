@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F4D00 FILE
+// name      ?update@Win@@QAAXXZ
+// size      77 bytes
+// spans     0x005F4D00-0x005F4D4D
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FD2B0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F4D00
-// name           ?update@Win@@QAAXXZ
-// size           77 bytes
 // measured tier  NO_COMPILE
 // refusal        u005f4d00.cpp(44) : error C2143: syntax error : missing ';' before 'this' u005f4d00.cpp(44) : error C2143: syntax error : missing ';' before 'this' u005f4d00.cp
 //

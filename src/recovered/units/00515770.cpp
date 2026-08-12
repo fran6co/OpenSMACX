@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00515770 FILE
+// name      ?chat@Console@@QAEXH@Z
+// size      388 bytes
+// spans     0x00515770-0x005158F4
+// prototype void (__thiscall ?chat@Console@@QAEXH@Z)(Console* this, int)
+// callers   5   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A890 0x00593190 0x005BFAB0 0x00626250
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00515770
-// name           ?chat@Console@@QAEXH@Z
-// size           388 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

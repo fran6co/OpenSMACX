@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00588F90 FILE
+// name      ?alien_start@@YAXXZ
+// size      492 bytes
+// spans     0x00588F90-0x0058917C
+// prototype 
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E5250 0x005C08C0 0x00645470 0x00645660
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00588F90
-// name           ?alien_start@@YAXXZ
-// size           492 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

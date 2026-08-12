@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F6710 FILE
+// name      ?on_r_button_down@Win@@QAEXJHHIH@Z
+// size      367 bytes
+// spans     0x005F6710-0x005F687F
+// prototype void (__thiscall ?on_r_button_down@Win@@QAEXJHHIH@Z)(Win* this, int, int, int, unsigned int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F5140 0x005F52E0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F6710
-// name           ?on_r_button_down@Win@@QAEXJHHIH@Z
-// size           367 bytes
 // measured tier  MISMATCH
 // divergence     12
 //

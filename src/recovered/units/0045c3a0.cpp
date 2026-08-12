@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0045C3A0 FILE
+// name      ?redraw_complete@MainInterface@@QAEXXZ
+// size      527 bytes
+// spans     0x0045C3A0-0x0045C5AF
+// prototype void (__thiscall ?redraw_complete@MainInterface@@QAEXXZ)(MainInterface* this)
+// callers   5   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D5930 0x005DAC70 0x005DACB0 0x005DD130 0x005FAC00 0x006169A0 0x0062A070 0x0062A280 0x006453E0 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0045C3A0
-// name           ?redraw_complete@MainInterface@@QAEXXZ
-// size           527 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

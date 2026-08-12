@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00439700 FILE
+// name      ?on_right_click@DesignWin@@QAEXHH@Z
+// size      584 bytes
+// spans     0x00439700-0x00439948
+// prototype void (__thiscall ?on_right_click@DesignWin@@QAEXHH@Z)(Win* this, int xCoord, int yCoord)
+// callers   0   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BDDE0 0x005ED240 0x005F83D0 0x005FAB00 0x006169A0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00439700
-// name           ?on_right_click@DesignWin@@QAEXHH@Z
-// size           584 bytes
 // measured tier  NO_COMPILE
 // refusal        u00439700.cpp(144) : error C2079: 'spot_' uses undefined class 'Spot'
 //

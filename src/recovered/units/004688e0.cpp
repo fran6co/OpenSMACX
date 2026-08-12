@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004688E0 FILE
+// name      ?gen_overlays@MapWin@@QAEXHH@Z
+// size      741 bytes
+// spans     0x004688E0-0x00468BC5
+// prototype void (__thiscall ?gen_overlays@MapWin@@QAEXHH@Z)(MapWin* this, int xCoord, int yCoord)
+// callers   3   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00462F00 0x005DAC70 0x005DACB0 0x005DD130 0x006453E0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004688E0
-// name           ?gen_overlays@MapWin@@QAEXHH@Z
-// size           741 bytes
 // measured tier  NO_COMPILE
 // refusal        u004688e0.cpp(204) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

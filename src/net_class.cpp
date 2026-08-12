@@ -27,6 +27,9 @@ ORIGINAL: 0x0062ED30
 // spans     0x0062ED30-0x0062ED38
 // prototype int (__thiscall ?poll_players@Net@@QAEHPAUSessionStruct@@@Z)(Net* this, SessionStruct*)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1, always
 Status: Complete
 */
@@ -67,6 +70,9 @@ ORIGINAL: 0x00631A20
 // spans     0x00631A20-0x00631A55
 // prototype int8* (__thiscall ?get_player_name@Net@@QAEPADK@Z)(Net* this, unsigned int)
 // callers   6   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: a pointer to the name, or nullptr
 Status: Complete
 */

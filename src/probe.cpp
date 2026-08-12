@@ -34,6 +34,9 @@ ORIGINAL: 0x0050C4B0
 // spans     0x0050C4B0-0x0050C504
 // prototype int (__cdecl ?steal_energy@@YAHH@Z)(int baseID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Energy
 Status: Complete
 */
@@ -53,6 +56,9 @@ ORIGINAL: 0x0059EA80
 // spans     0x0059EA80-0x0059EE42
 // prototype int (__cdecl ?mind_control@@YAHHHH@Z)(int baseID, int factionID, BOOL isCornerMarket)
 // callers   2   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00421670 0x004F8090 0x0050BA00 0x005B8E10 0x005B9580 0x005BFE90 0x00644F3A
 Return Value: Mind control cost
 Status: Complete
 */
@@ -136,6 +142,9 @@ ORIGINAL: 0x0059EEE0
 // spans     0x0059EEE0-0x0059F11E
 // prototype int (__cdecl ?success_rates@@YAHHHHH@Z)(uint32_t id, uint32_t morale, uint32_t diffModifier, int baseID)
 // callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x00625EC0 0x00645470 0x0064FC88
 Return Value: Success rate of probe
 Status: Complete
 */

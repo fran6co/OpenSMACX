@@ -49,6 +49,9 @@ ORIGINAL: 0x00404210 BYTE_EXACT
 // spans     0x00404210-0x00404220
 // prototype int (__thiscall ?on_key_click@AlphaMovie@@QAEHHH@Z)(AlphaMovie* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -67,6 +70,9 @@ ORIGINAL: 0x0041B4C0 BYTE_EXACT
 // spans     0x0041B4C0-0x0041B4D7
 // prototype void (__thiscall ?on_scrolling@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -84,6 +90,9 @@ ORIGINAL: 0x0041DCB0 BYTE_EXACT
 // spans     0x0041DCB0-0x0041DCC4
 // prototype void (__thiscall ?on_iface_scrolling@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -103,6 +112,9 @@ ORIGINAL: 0x00428D60 BYTE_EXACT
 // spans     0x00428D60-0x00428D70
 // prototype void (__thiscall ?on_key_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -123,6 +135,9 @@ ORIGINAL: 0x00428D70 BYTE_EXACT
 // spans     0x00428D70-0x00428D7B
 // prototype void (__thiscall ?on_left_click@Credits@@QAEXHH@Z)(Credits* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +155,9 @@ ORIGINAL: 0x00433F50 BYTE_EXACT
 // spans     0x00433F50-0x00433F67
 // prototype void (__thiscall ?on_scrolling@SelectPartWin@@QAEXHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -159,6 +177,9 @@ ORIGINAL: 0x0045F6F0 BYTE_EXACT
 // spans     0x0045F6F0-0x0045F700
 // prototype void (__thiscall ?on_key_down@Interlude@@QAEXH@Z)(Interlude* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -179,6 +200,9 @@ ORIGINAL: 0x0045F700 BYTE_EXACT
 // spans     0x0045F700-0x0045F70B
 // prototype void (__thiscall ?on_left_down@Interlude@@QAEXHH@Z)(Interlude* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -198,6 +222,9 @@ ORIGINAL: 0x00483E80 BYTE_EXACT
 // spans     0x00483E80-0x00483E8B
 // prototype void (__thiscall ?on_button_clicked@NewTechWin@@QAEXH@Z)(NewTechWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -215,6 +242,9 @@ ORIGINAL: 0x00493E70 BYTE_EXACT
 // spans     0x00493E70-0x00493E87
 // prototype void (__thiscall ?on_scrolling@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -232,6 +262,9 @@ ORIGINAL: 0x004C5A80
 // spans     0x004C5A80-0x004C5AA0
 // prototype int (__thiscall ?set_codec@Wave_In_Device@@QAEHK@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -254,6 +287,9 @@ ORIGINAL: 0x004C5AA0
 // spans     0x004C5AA0-0x004C5AC0
 // prototype int (__thiscall ?set_vxw_key@Wave_In_Device@@QAEHPAC@Z)(Wave_In_Device* this, int8*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -276,6 +312,9 @@ ORIGINAL: 0x004C7760
 // spans     0x004C7760-0x004C7772
 // prototype int (__thiscall ?play@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -298,6 +337,9 @@ ORIGINAL: 0x004C77D0
 // spans     0x004C77D0-0x004C77F3
 // prototype int (__thiscall ?set_switch_type@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -320,6 +362,9 @@ ORIGINAL: 0x004C7800
 // spans     0x004C7800-0x004C7827
 // prototype int (__thiscall ?add_switch_range@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -342,6 +387,9 @@ ORIGINAL: 0x004C7830
 // spans     0x004C7830-0x004C7853
 // prototype int (__thiscall ?set_nswitch_threads@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -364,6 +412,9 @@ ORIGINAL: 0x004C7860
 // spans     0x004C7860-0x004C788B
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADKK@Z)(Midi* this, int8*, unsigned int, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -386,6 +437,9 @@ ORIGINAL: 0x004C7890
 // spans     0x004C7890-0x004C78B7
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -408,6 +462,9 @@ ORIGINAL: 0x004C78E0
 // spans     0x004C78E0-0x004C7903
 // prototype int (__thiscall ?clear_patch@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -430,6 +487,9 @@ ORIGINAL: 0x004C7910
 // spans     0x004C7910-0x004C7925
 // prototype int (__thiscall ?reset@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -452,6 +512,9 @@ ORIGINAL: 0x004C7930
 // spans     0x004C7930-0x004C7957
 // prototype int (__thiscall ?set_track@Midi@@QAEHPAEK@Z)(Midi* this, unsigned int8*, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -474,6 +537,9 @@ ORIGINAL: 0x004C7960
 // spans     0x004C7960-0x004C7983
 // prototype int (__thiscall ?mute_track@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -496,6 +562,9 @@ ORIGINAL: 0x004C7990
 // spans     0x004C7990-0x004C79B3
 // prototype int (__thiscall ?unmute_track@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -518,6 +587,9 @@ ORIGINAL: 0x004C79C0
 // spans     0x004C79C0-0x004C79E7
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -540,6 +612,9 @@ ORIGINAL: 0x004C79F0
 // spans     0x004C79F0-0x004C7A13
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -562,6 +637,9 @@ ORIGINAL: 0x004C7A20
 // spans     0x004C7A20-0x004C7A43
 // prototype int (__thiscall ?play_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -584,6 +662,9 @@ ORIGINAL: 0x004C7A50
 // spans     0x004C7A50-0x004C7A77
 // prototype int (__thiscall ?xpose_trackset@Midi@@QAEHIH@Z)(Midi* this, unsigned int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -606,6 +687,9 @@ ORIGINAL: 0x004C7A80
 // spans     0x004C7A80-0x004C7AA3
 // prototype int (__thiscall ?stop_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -628,6 +712,9 @@ ORIGINAL: 0x004C7AD0
 // spans     0x004C7AD0-0x004C7AF3
 // prototype int (__thiscall ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z)(Midi* this, TrackSet*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -650,6 +737,9 @@ ORIGINAL: 0x004C7B00
 // spans     0x004C7B00-0x004C7B27
 // prototype int (__thiscall ?set_active_range_lo@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -672,6 +762,9 @@ ORIGINAL: 0x004C7B30
 // spans     0x004C7B30-0x004C7B57
 // prototype int (__thiscall ?set_active_range_hi@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -694,6 +787,9 @@ ORIGINAL: 0x004C7B60
 // spans     0x004C7B60-0x004C7B83
 // prototype int (__thiscall ?remove_active_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -716,6 +812,9 @@ ORIGINAL: 0x004C7B90
 // spans     0x004C7B90-0x004C7BB0
 // prototype int (__thiscall ?get_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -738,6 +837,9 @@ ORIGINAL: 0x004C7BB0
 // spans     0x004C7BB0-0x004C7BC2
 // prototype int (__thiscall ?get_ntracks@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -760,6 +862,9 @@ ORIGINAL: 0x004C7BD0
 // spans     0x004C7BD0-0x004C7BF3
 // prototype int (__thiscall ?load_patch@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -782,6 +887,9 @@ ORIGINAL: 0x004C7C00
 // spans     0x004C7C00-0x004C7C23
 // prototype int (__thiscall ?unload_patch@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -804,6 +912,9 @@ ORIGINAL: 0x004C7C30
 // spans     0x004C7C30-0x004C7C57
 // prototype int (__thiscall ?set_patch@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -826,6 +937,9 @@ ORIGINAL: 0x004C7D50
 // spans     0x004C7D50-0x004C7D73
 // prototype int (__thiscall ?set_tempo@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -848,6 +962,9 @@ ORIGINAL: 0x004C7E80
 // spans     0x004C7E80-0x004C7EA0
 // prototype int (__thiscall ?get_time@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -870,6 +987,9 @@ ORIGINAL: 0x004C7EA0
 // spans     0x004C7EA0-0x004C7EB2
 // prototype int (__thiscall ?get_control_track@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -892,6 +1012,9 @@ ORIGINAL: 0x004C7EC0
 // spans     0x004C7EC0-0x004C7EE0
 // prototype int (__thiscall ?get_total_track_ticks@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -914,6 +1037,9 @@ ORIGINAL: 0x004C7EE0
 // spans     0x004C7EE0-0x004C7F03
 // prototype int (__thiscall ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z)(Midi* this, ChannelCtrl*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -936,6 +1062,9 @@ ORIGINAL: 0x004C7F10
 // spans     0x004C7F10-0x004C7F33
 // prototype int (__thiscall ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z)(Midi* this, ProgramCtrl*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -958,6 +1087,9 @@ ORIGINAL: 0x004C7F40
 // spans     0x004C7F40-0x004C7F63
 // prototype int (__thiscall ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z)(Midi* this, TrackCtrl*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -982,6 +1114,9 @@ ORIGINAL: 0x004C8C20 BYTE_EXACT
 // spans     0x004C8C20-0x004C8C32
 // prototype int (__thiscall ?start@VoiceRx@@QAEHXZ)(VoiceRx* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -1007,6 +1142,9 @@ ORIGINAL: 0x004C8C40 BYTE_EXACT
 // spans     0x004C8C40-0x004C8C4F
 // prototype int (__thiscall ?stop@VoiceRx@@QAEHXZ)(VoiceRx* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -1030,6 +1168,9 @@ ORIGINAL: 0x004C8C50
 // spans     0x004C8C50-0x004C8C62
 // prototype int (__thiscall ?unload@VoiceRx@@QAEHXZ)(VoiceRx* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -1052,6 +1193,9 @@ ORIGINAL: 0x004C8C70
 // spans     0x004C8C70-0x004C8C93
 // prototype int (__thiscall ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z)(VoiceRx* this, _MMIOINFO*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -1074,6 +1218,9 @@ ORIGINAL: 0x004C8CA0
 // spans     0x004C8CA0-0x004C8CB2
 // prototype int (__thiscall ?get_buffer_size@VoiceRx@@QAEHXZ)(VoiceRx* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -1098,6 +1245,9 @@ ORIGINAL: 0x004C8EA0 BYTE_EXACT
 // spans     0x004C8EA0-0x004C8EAF
 // prototype void (__thiscall ?release@VoiceTx@@QAEXXZ)(VoiceTx* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -1121,6 +1271,9 @@ ORIGINAL: 0x004C9010
 // spans     0x004C9010-0x004C9022
 // prototype int (__thiscall ?get_nbuffers@VoiceTx@@QAEHXZ)(VoiceTx* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -1143,6 +1296,9 @@ ORIGINAL: 0x004C9030
 // spans     0x004C9030-0x004C9042
 // prototype int (__thiscall ?get_next_buffer@VoiceTx@@QAEHXZ)(VoiceTx* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -1165,6 +1321,9 @@ ORIGINAL: 0x004C9050
 // spans     0x004C9050-0x004C9073
 // prototype int (__thiscall ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z)(VoiceTx* this, _MMIOINFO*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -1189,6 +1348,9 @@ ORIGINAL: 0x005AD3B0 BYTE_EXACT
 // spans     0x005AD3B0-0x005AD3BB
 // prototype void (__thiscall ?on_left_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1208,6 +1370,9 @@ ORIGINAL: 0x005AD3C0 BYTE_EXACT
 // spans     0x005AD3C0-0x005AD3CB
 // prototype void (__thiscall ?on_right_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1227,6 +1392,9 @@ ORIGINAL: 0x005AD430 BYTE_EXACT
 // spans     0x005AD430-0x005AD43B
 // prototype void (__thiscall ?on_button_clicked@ReplayWin@@QAEXH@Z)(ReplayWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1246,6 +1414,9 @@ ORIGINAL: 0x005AD440 BYTE_EXACT
 // spans     0x005AD440-0x005AD450
 // prototype int (__thiscall ?on_key_click@ReplayWin@@QAEHHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -1264,6 +1435,9 @@ ORIGINAL: 0x005C93A0 BYTE_EXACT
 // spans     0x005C93A0-0x005C93B7
 // prototype void (__thiscall ?on_scrolling@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1283,6 +1457,9 @@ ORIGINAL: 0x00607B00 BYTE_EXACT
 // spans     0x00607B00-0x00607B0B
 // prototype void (__thiscall ?on_dialog_focus@BaseButton@@QAEXH@Z)(BaseButton* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

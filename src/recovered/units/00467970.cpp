@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00467970 FILE
+// name      ?draw_base_dest@MapWin@@QAEXH@Z
+// size      1129 bytes
+// spans     0x00467970-0x00467DD9
+// prototype void (__thiscall ?draw_base_dest@MapWin@@QAEXH@Z)(MapWin* this, int)
+// callers   7   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00467430
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00467970
-// name           ?draw_base_dest@MapWin@@QAEXH@Z
-// size           1129 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

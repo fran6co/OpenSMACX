@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0062E250 BYTE_EXACT FILE
+// name      ?poll_services@Net@@QAEHPAUServiceList@@@Z
+// size      73 bytes
+// spans     0x0062E250-0x0062E299
+// prototype int (__thiscall ?poll_services@Net@@QAEHPAUServiceList@@@Z)(Net* this, ServiceList*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0065020E
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0062E250
-// name           ?poll_services@Net@@QAEHPAUServiceList@@@Z
-// size           73 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

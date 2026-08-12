@@ -37,6 +37,9 @@ ORIGINAL: 0x0055B740
 // spans     0x0055B740-0x0055B750
 // prototype void (__thiscall ??1FontQueue@@QAE@XZ)(FontQueue* this)
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006456E4
 Return Value: n/a
 Status: Complete
 */
@@ -61,6 +64,10 @@ ORIGINAL: 0x005882F0
 // spans     0x005882F0-0x0058833B
 // prototype 
 // callers   31   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 Font *__cdecl find_font(int size, int style) {
@@ -93,6 +100,9 @@ ORIGINAL: 0x00618F30 BYTE_EXACT
 // spans     0x00618F30-0x00618F38
 // prototype int (__thiscall ?UNK1@Font@@QAEHHHHH@Z)(Font* this, int, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int Font::UNK1(int, int, int, int) {

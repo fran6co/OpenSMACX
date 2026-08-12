@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D7030 FILE
+// name      ?compute_min_size@GraphicWin@@QAEXXZ
+// size      272 bytes
+// spans     0x005D7030-0x005D7140
+// prototype void (__thiscall ?compute_min_size@GraphicWin@@QAEXXZ)(GraphicWin* this)
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D7030
-// name           ?compute_min_size@GraphicWin@@QAEXXZ
-// size           272 bytes
 // measured tier  MISMATCH
 // divergence     24
 //

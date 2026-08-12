@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004672C0 FILE
+// name      ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z
+// size      364 bytes
+// spans     0x004672C0-0x0046742C
+// prototype void (__thiscall ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z)(MapWin* this, int xCoord, int yCoord, int, int, int, int, int, int)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00462F00 0x005E09D0 0x005E15F0 0x005ED2D0 0x005F1820
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004672C0
-// name           ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z
-// size           364 bytes
 // measured tier  NO_COMPILE
 // refusal        u004672c0.cpp(204) : error C2079: 'buffer_' uses undefined class 'Buffer' Generating Code... Compiling...
 //

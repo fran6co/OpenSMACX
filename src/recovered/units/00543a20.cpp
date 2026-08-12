@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00543A20 FILE
+// name      ?trade_maps@@YAXHH@Z
+// size      416 bytes
+// spans     0x00543A20-0x00543BC0
+// prototype 
+// callers   6   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x005B57D0 0x005D5A70
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00543A20
-// name           ?trade_maps@@YAXHH@Z
-// size           416 bytes
 // measured tier  MISMATCH
 // divergence     12
 //

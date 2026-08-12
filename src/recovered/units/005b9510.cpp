@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005B9510 BYTE_EXACT FILE
+// name      ?stack_kill@@YAXH@Z
+// size      103 bytes
+// spans     0x005B9510-0x005B9577
+// prototype void (__cdecl ?stack_kill@@YAXH@Z)(int vehID)
+// callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C08C0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005B9510
-// name           ?stack_kill@@YAXH@Z
-// size           103 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

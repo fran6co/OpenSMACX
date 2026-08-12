@@ -4,6 +4,9 @@
 // spans     0x00442560-0x0044258A
 // prototype int (__thiscall ?on_key_down@DiploWin@@QAEHH@Z)(DiploWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x00442560  ?on_key_down@DiploWin@@QAEHH@Z  ->  ?on_key_down@DiploWin@@QAEHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

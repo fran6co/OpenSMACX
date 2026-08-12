@@ -4,6 +4,9 @@
 // spans     0x005D8200-0x005D823D
 // prototype int (__thiscall ?set_clip@Buffer@@QAEHHHHH@Z)(Buffer* this, int xLeft, int yTop, int length, int width)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000
 // 0x005D8200  ?set_clip@Buffer@@QAEHHHHH@Z  ->  ?set_clip@Buffer@@QAEHHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

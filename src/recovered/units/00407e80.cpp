@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00407E80 FILE
+// name      ?on_listbox_scroll_create@AlphaSave@@QAEHXZ
+// size      74 bytes
+// spans     0x00407E80-0x00407ECA
+// prototype int (__thiscall ?on_listbox_scroll_create@AlphaSave@@QAEHXZ)(AlphaSave* this)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045DEA0 0x00588340 0x005F7E90 0x006054D0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00407E80
-// name           ?on_listbox_scroll_create@AlphaSave@@QAEHXZ
-// size           74 bytes
 // measured tier  NO_COMPILE
 // refusal        u00407e80.cpp(45) : error C2061: syntax error : identifier 'Win' u00407e80.cpp(51) : error C2065: 'GraphicWin' : undeclared identifier u00407e80.cpp(51) : error
 //

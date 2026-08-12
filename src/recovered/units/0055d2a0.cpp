@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0055D2A0 FILE
+// name      ?enemies_team_up@@YAXHHH@Z
+// size      389 bytes
+// spans     0x0055D2A0-0x0055D425
+// prototype void (__cdecl ?enemies_team_up@@YAXHHH@Z)(int factionID, int factionIDTeam, int factionIDAgainst)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x00539C00 0x0055B870 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0055D2A0
-// name           ?enemies_team_up@@YAXHHH@Z
-// size           389 bytes
 // measured tier  MISMATCH
 // divergence     61
 //

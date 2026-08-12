@@ -1,11 +1,14 @@
 // ORIGINAL: 0x006280E0 FILE
-// RULED-OUT: term order (all 6 permutations); operand order (mat*vec vs vec*mat, per-term and uniform); association ((A+B)+C, A+(B+C), fully parenthesised); product temps declared in every order; partial-sum temp; += accumulation; vec components bound to locals (adds a frame); const-qualified params; *p vs p[0]. All twenty-four spellings compile to BYTE-IDENTICAL code - VC6 canonicalises the commutative tree - and the flags do not move it either (/O1 /O2 /Ox /Od /Og /Oi /Op /Oa /Ow /Os /Ot /Ob0 x /G3 /G4 /G5 /G6 /GB all identical here). The rebuilt body has every load, multiply, add and store right and is short by exactly the twelve `fxch` (24 bytes, 83 vs 107) of an interleaved schedule VC6 12.00.8168 only emits for a value that is genuinely live across another computation; this function has no such value. Same wall, same idiom, same module as 0x00628290.
-// working copy - scaffold materialised by --work
 // name      sub_6280e0
 // size      107 bytes
 // spans     0x006280E0-0x0062814B
 // prototype 
 // callers   14   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// RULED-OUT: term order (all 6 permutations); operand order (mat*vec vs vec*mat, per-term and uniform); association ((A+B)+C, A+(B+C), fully parenthesised); product temps declared in every order; partial-sum temp; += accumulation; vec components bound to locals (adds a frame); const-qualified params; *p vs p[0]. All twenty-four spellings compile to BYTE-IDENTICAL code - VC6 canonicalises the commutative tree - and the flags do not move it either (/O1 /O2 /Ox /Od /Og /Oi /Op /Oa /Ow /Os /Ot /Ob0 x /G3 /G4 /G5 /G6 /GB all identical here). The rebuilt body has every load, multiply, add and store right and is short by exactly the twelve `fxch` (24 bytes, 83 vs 107) of an interleaved schedule VC6 12.00.8168 only emits for a value that is genuinely live across another computation; this function has no such value. Same wall, same idiom, same module as 0x00628290.
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_6280e0  at 0x006280E0  (107 bytes)

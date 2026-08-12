@@ -26,6 +26,9 @@ ORIGINAL: 0x005C9410 BYTE_EXACT
 // spans     0x005C9410-0x005C9418
 // prototype int (__thiscall ?on_key_click@Gamma@@QAEHHH@Z)(Gamma* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1, always
 Status: Complete
 */
@@ -47,6 +50,9 @@ ORIGINAL: 0x005C9390
 // spans     0x005C9390-0x005C9398
 // prototype void (__thiscall ?on_scrolled@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005C9520
 Status: Complete
 */
 void Gamma::on_scrolled(int a1, int a2) {

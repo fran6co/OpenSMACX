@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006196D0 BYTE_EXACT FILE
+// name      ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z
+// size      54 bytes
+// spans     0x006196D0-0x00619706
+// prototype int (__thiscall ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z)(Texture* this, Buffer*, RECT*)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00619710
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006196D0
-// name           ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z
-// size           54 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F16D0 BYTE_EXACT FILE
+// name      ?OnSysKey@Win@@QAAXPAXIJHI@Z
+// size      117 bytes
+// spans     0x005F16D0-0x005F1745
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F16D0
-// name           ?OnSysKey@Win@@QAAXPAXIJHI@Z
-// size           117 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

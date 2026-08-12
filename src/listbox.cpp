@@ -28,6 +28,9 @@ ORIGINAL: 0x0060C7C0 BYTE_EXACT
 // spans     0x0060C7C0-0x0060C7C3
 // prototype void (__thiscall ?on_dialog_focus@ListBox@@QAEXH@Z)(ListBox* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -62,6 +65,9 @@ ORIGINAL: 0x00609F20
 // spans     0x00609F20-0x00609F9D
 // prototype void (__thiscall ?close@ListBox@@QAEXXZ)(ListBox* this)
 // callers   35   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00608F50
 Return Value: EAX residue (constant 0). Declared void (?close@ListBox@@QAEXXZ);
               modelled as uint32_t to preserve the residue like GraphicWin::close.
 Status: Complete with temporary Dialog::close original dependency
@@ -117,6 +123,9 @@ ORIGINAL: 0x00609EC0
 // spans     0x00609EC0-0x00609F13
 // prototype void (__thiscall ??1ListBox@@QAE@XZ)(ListBox* this)
 // callers   35   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609F20
 Return Value: EAX residue (close()'s residue, constant 0). The void destructor is
               entered adjusted to L + 0x48; see the redirect.
 Status: Complete with temporary Dialog::close original dependency (through close)
@@ -173,6 +182,9 @@ ORIGINAL: 0x0060CE10 BYTE_EXACT
 // spans     0x0060CE10-0x0060CE38
 // prototype void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

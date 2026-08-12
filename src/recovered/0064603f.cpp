@@ -4,6 +4,9 @@
 // spans     0x0064603F-0x0064606E
 // prototype int (__cdecl __fwrite)(void* Str, size_t Size, size_t Count, FILE* File)
 // callers   11   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064606E 0x00647C37 0x00647C89
 // 0x0064603F  __fwrite  ->  __fwrite
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

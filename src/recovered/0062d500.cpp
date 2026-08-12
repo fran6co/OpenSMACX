@@ -4,6 +4,9 @@
 // spans     0x0062D500-0x0062D562
 // prototype 
 // callers   1   call targets   15
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DF580 0x005F04E0 0x005FECF0 0x00604680 0x0060E5D0 0x0060FD60 0x00614E30 0x00616890 0x00616950 0x00619610 0x0062D100 0x006339B0 0x00635750 0x0063B930 0x0063CEF0
 // 0x0062D500  ?jackal_close@@YAXXZ  ->  ?jackal_close@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

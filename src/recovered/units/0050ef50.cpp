@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0050EF50 FILE
+// name      ?go_reset@@YAXXZ
+// size      534 bytes
+// spans     0x0050EF50-0x0050F166
+// prototype 
+// callers   7   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B4A20 0x005EC7C0 0x005EDCD0 0x00616780
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0050EF50
-// name           ?go_reset@@YAXXZ
-// size           534 bytes
 // measured tier  MISMATCH
 // divergence     39
 //

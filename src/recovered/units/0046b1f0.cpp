@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0046B1F0 FILE
+// name      ?set_center@MapWin@@QAEXHHH@Z
+// size      275 bytes
+// spans     0x0046B1F0-0x0046B303
+// prototype void (__thiscall ?set_center@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)
+// callers   22   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x004B4BF0 0x004BDDE0 0x004C3EA0 0x005D5250
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0046B1F0
-// name           ?set_center@MapWin@@QAEXHHH@Z
-// size           275 bytes
 // measured tier  MISMATCH
 // divergence     71
 //

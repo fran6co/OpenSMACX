@@ -28,6 +28,9 @@ ORIGINAL: 0x0052DCD0 BYTE_EXACT
 // spans     0x0052DCD0-0x0052DCEC
 // prototype void (__thiscall ?clear@DeletionList@@QAEXH@Z)(DeletionList* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

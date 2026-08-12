@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00589330 FILE
+// name      ?time_controls_dialog@@YAXPAUPopup@@@Z
+// size      538 bytes
+// spans     0x00589330-0x0058954A
+// prototype 
+// callers   3   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00406380 0x00612A70 0x006169A0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00589330
-// name           ?time_controls_dialog@@YAXPAUPopup@@@Z
-// size           538 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

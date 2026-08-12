@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00481E90 FILE
+// name      ?config_players@NetWin@@QAEXXZ
+// size      313 bytes
+// spans     0x00481E90-0x00481FC9
+// prototype void (__thiscall ?config_players@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645460
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00481E90
-// name           ?config_players@NetWin@@QAEXXZ
-// size           313 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004B0410 FILE
+// name      ?draw_overview@SocialWin@@QAEXXZ
+// size      1162 bytes
+// spans     0x004B0410-0x004B089A
+// prototype void (__thiscall ?draw_overview@SocialWin@@QAEXXZ)(SocialWin* this)
+// callers   2   call targets   20
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DC360 0x005DD130 0x005DD3B0 0x005DD530 0x005E2DD3 0x005FD2B0 0x005FD530 0x005FD550 0x005FD570 0x005FD670 0x005FD740 0x006169A0 0x006453E0 0x00645460 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004B0410
-// name           ?draw_overview@SocialWin@@QAEXXZ
-// size           1162 bytes
 // measured tier  NO_COMPILE
 // refusal        u004b0410.cpp(212) : error C2079: 'buffer_' uses undefined class 'Buffer' u004b0410.cpp(343) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

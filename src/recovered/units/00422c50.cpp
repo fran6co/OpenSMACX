@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00422C50 BYTE_EXACT FILE
+// name      ?clear@BattleWin@@QAEXXZ
+// size      101 bytes
+// spans     0x00422C50-0x00422CB5
+// prototype void (__thiscall ?clear@BattleWin@@QAEXXZ)(BattleWin* this)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045C3A0 0x005D5890 0x005E2DD3
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00422C50
-// name           ?clear@BattleWin@@QAEXXZ
-// size           101 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043E960 FILE
+// name      ?shut_that_badboy_down@DesignWin@@QAEXXZ
+// size      61 bytes
+// spans     0x0043E960-0x0043E99D
+// prototype void (__thiscall ?shut_that_badboy_down@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FCBB0 0x00616730 0x00616870
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043E960
-// name           ?shut_that_badboy_down@DesignWin@@QAEXXZ
-// size           61 bytes
 // measured tier  MISMATCH
 // divergence     8
 //

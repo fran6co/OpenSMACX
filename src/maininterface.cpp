@@ -36,6 +36,10 @@ ORIGINAL: 0x0045C170 BYTE_EXACT
 // spans     0x0045C170-0x0045C171
 // prototype void (__thiscall ?clear_message@MainInterface@@QAEXXZ)(MainInterface* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -50,6 +54,10 @@ ORIGINAL: 0x0058EE50 BYTE_EXACT
 // spans     0x0058EE50-0x0058EE51
 // prototype 
 // callers   6   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -64,6 +72,9 @@ ORIGINAL: 0x0045C5B0 BYTE_EXACT
 // spans     0x0045C5B0-0x0045C5B1
 // prototype void (__thiscall ?UNK2@MainInterface@@QAEXXZ)(MainInterface* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -78,6 +89,9 @@ ORIGINAL: 0x0045EB60 BYTE_EXACT
 // spans     0x0045EB60-0x0045EB61
 // prototype void (__thiscall ?UNK3@MainInterface@@QAEXXZ)(MainInterface* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -92,6 +106,9 @@ ORIGINAL: 0x0045EB70 BYTE_EXACT
 // spans     0x0045EB70-0x0045EB71
 // prototype void (__thiscall ?UNK4@MainInterface@@QAEXXZ)(MainInterface* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -122,6 +139,9 @@ ORIGINAL: 0x0045C280 BYTE_EXACT
 // spans     0x0045C280-0x0045C283
 // prototype void (__thiscall ?UNK1@MainInterface@@QAEXH@Z)(MainInterface* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +160,9 @@ ORIGINAL: 0x0045CC80 BYTE_EXACT
 // spans     0x0045CC80-0x0045CC83
 // prototype void (__thiscall ?on_iface_scrolled@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -158,6 +181,9 @@ ORIGINAL: 0x0045CC90 BYTE_EXACT
 // spans     0x0045CC90-0x0045CC93
 // prototype void (__thiscall ?on_iface_scrolling@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -176,6 +202,9 @@ ORIGINAL: 0x0045CCA0 BYTE_EXACT
 // spans     0x0045CCA0-0x0045CCA3
 // prototype void (__thiscall ?on_iface_button_toggled@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -194,6 +223,9 @@ ORIGINAL: 0x0045CDB0 BYTE_EXACT
 // spans     0x0045CDB0-0x0045CDB3
 // prototype void (__thiscall ?on_iface_right_double_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -212,6 +244,9 @@ ORIGINAL: 0x0045D160 BYTE_EXACT
 // spans     0x0045D160-0x0045D165
 // prototype int (__thiscall ?on_iface_button_pressed@MainInterface@@QAEHH@Z)(MainInterface* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */

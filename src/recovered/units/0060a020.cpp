@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060A020 FILE
+// name      ?set_selected_pos@ListBox@@QAEXHH@Z
+// size      445 bytes
+// spans     0x0060A020-0x0060A1DD
+// prototype void (__thiscall ?set_selected_pos@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   21   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EE030 0x005EE070 0x00609A50 0x00609B50
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060A020
-// name           ?set_selected_pos@ListBox@@QAEXHH@Z
-// size           445 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

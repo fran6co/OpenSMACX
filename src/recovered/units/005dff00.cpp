@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005DFF00 FILE
+// name      ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z
+// size      2203 bytes
+// spans     0x005DFF00-0x005E079B
+// prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer* buffer, int xCoord, int yCoord, int, int, int width, int height)
+// callers   51   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005E3373 0x005E34A3
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005DFF00
-// name           ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z
-// size           2203 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

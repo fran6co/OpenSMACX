@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C4410 FILE
+// name      ?world_UNK1@@YAXHH@Z
+// size      87 bytes
+// spans     0x005C4410-0x005C4467
+// prototype void (__cdecl ?world_UNK1@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591A80
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C4410
-// name           ?world_UNK1@@YAXHH@Z
-// size           87 bytes
 // measured tier  MISMATCH
 // divergence     18
 //

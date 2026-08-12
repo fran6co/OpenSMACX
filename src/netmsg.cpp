@@ -30,6 +30,9 @@ ORIGINAL: 0x0047A7D0
 // spans     0x0047A7D0-0x0047A7FB
 // prototype void (__thiscall ?close@NetMsg@@QAEXXZ)(NetMsg* this)
 // callers   20   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00404A80 0x00616780
 Return Value: n/a
 Status: Complete
 */

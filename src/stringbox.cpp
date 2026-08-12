@@ -34,6 +34,9 @@ ORIGINAL: 0x00629710
 // spans     0x00629710-0x00629749
 // prototype void (__thiscall ?add@StringBox@@QAEXPADHH@Z)(StringBox* this, int8*, int, int)
 // callers   6   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401100 0x00629490
 Return Value: n/a
 Status: Complete
 */
@@ -59,6 +62,9 @@ ORIGINAL: 0x00629D20 BYTE_EXACT
 // spans     0x00629D20-0x00629D35
 // prototype void (__thiscall ?on_scrolled@StringBox@@QAEXHH@Z)(StringBox* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

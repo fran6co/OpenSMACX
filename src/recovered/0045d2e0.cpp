@@ -4,6 +4,9 @@
 // spans     0x0045D2E0-0x0045D303
 // prototype void (__thiscall ?delete_iface_mode@SubInterface@@QAEXXZ)(SubInterface* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x0045D2E0  ?delete_iface_mode@SubInterface@@QAEXXZ  ->  ?delete_iface_mode@SubInterface@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

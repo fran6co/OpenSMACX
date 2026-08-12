@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00477320 FILE
+// name      ?mon_conquer_base@@YAXHPAD@Z
+// size      276 bytes
+// spans     0x00477320-0x00477434
+// prototype void (__cdecl ?mon_conquer_base@@YAXHPAD@Z)(int factionID, int8* lpszBaseName)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00476A50 0x005C89A0 0x00645E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00477320
-// name           ?mon_conquer_base@@YAXHPAD@Z
-// size           276 bytes
 // measured tier  MISMATCH
 // divergence     16
 //

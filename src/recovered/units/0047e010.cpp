@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0047E010 FILE
+// name      ?pick_num_players@NetWin@@QAEXXZ
+// size      1027 bytes
+// spans     0x0047E010-0x0047E33B;0x00656D9D-0x00656E75
+// prototype void (__thiscall ?pick_num_players@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x00630080 0x00645470 0x00645550 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0047E010
-// name           ?pick_num_players@NetWin@@QAEXXZ
-// size           1027 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

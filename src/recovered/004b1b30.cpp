@@ -4,6 +4,9 @@
 // spans     0x004B1B30-0x004B1B70
 // prototype void (__thiscall ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z)(SocialWin* this, LPCSTR, int, int)
 // callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005ED240 0x005F83D0
 // 0x004B1B30  ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z  ->  ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

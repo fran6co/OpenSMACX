@@ -30,6 +30,9 @@ ORIGINAL: 0x004C6430 BYTE_EXACT
 // spans     0x004C6430-0x004C6438
 // prototype int (__thiscall ?UNK1@Sound@@QAEHH@Z)(Sound* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 11, always
 Status: Complete
 */
@@ -47,6 +50,9 @@ ORIGINAL: 0x004C6600
 // spans     0x004C6600-0x004C6620
 // prototype void (__thiscall ?fade@Sound@@QAEXK@Z)(Sound* this, unsigned int)
 // callers   11   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -95,6 +101,9 @@ ORIGINAL: 0x004C64C0
 // spans     0x004C64C0-0x004C64CF
 // prototype int (__thiscall ?is_playing@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -110,6 +119,9 @@ ORIGINAL: 0x004C6690
 // spans     0x004C6690-0x004C669F
 // prototype int (__thiscall ?is_looping@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -125,6 +137,9 @@ ORIGINAL: 0x004C66A0
 // spans     0x004C66A0-0x004C66AF
 // prototype int (__thiscall ?get_time@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -178,6 +193,9 @@ ORIGINAL: 0x004C6480
 // spans     0x004C6480-0x004C6492
 // prototype int (__thiscall ?play@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
@@ -194,6 +212,9 @@ ORIGINAL: 0x004C64A0
 // spans     0x004C64A0-0x004C64BC
 // prototype int (__thiscall ?play@Sound@@QAEHI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
@@ -209,6 +230,9 @@ ORIGINAL: 0x004C64D0
 // spans     0x004C64D0-0x004C64E2
 // prototype int (__thiscall ?stop@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
@@ -224,6 +248,9 @@ ORIGINAL: 0x004C64F0
 // spans     0x004C64F0-0x004C6502
 // prototype int (__thiscall ?release@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
@@ -241,6 +268,9 @@ ORIGINAL: 0x004C6540
 // spans     0x004C6540-0x004C655A
 // prototype void (__thiscall ?set_loop_state@Sound@@QAEXJ@Z)(Sound* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -260,6 +290,9 @@ ORIGINAL: 0x004C6560
 // spans     0x004C6560-0x004C657A
 // prototype void (__thiscall ?set_delay@Sound@@QAEXI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -321,6 +354,9 @@ ORIGINAL: 0x004C65E0
 // spans     0x004C65E0-0x004C65F9
 // prototype int (__thiscall ?fade@Sound@@QAEHXZ)(Sound* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x13 when either guard fails
 Status: Complete
 */
@@ -337,6 +373,9 @@ ORIGINAL: 0x004C6620
 // spans     0x004C6620-0x004C6639
 // prototype int (__thiscall ?fade_in@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the device's answer, or 0x13 when either guard fails
 Status: Complete
 */
@@ -353,6 +392,9 @@ ORIGINAL: 0x004C6640
 // spans     0x004C6640-0x004C665F
 // prototype void (__thiscall ?ramp@Sound@@QAEXHHI@Z)(Sound* this, int, int, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -392,6 +434,9 @@ ORIGINAL: 0x004C61E0
 // spans     0x004C61E0-0x004C6260
 // prototype void (__thiscall ?set_type@Sound@@QAEXI@Z)(Sound* this, SOUNDTYPE)
 // callers   5   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -447,6 +492,9 @@ ORIGINAL: 0x004C6280
 // spans     0x004C6280-0x004C6361
 // prototype int (__thiscall ?load@Sound@@QAEHPBD@Z)(Sound* this, int8*)
 // callers   5   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006005D0 0x006453E0 0x00645460 0x0064557F 0x0064558A
 Return Value: the device's load answer, 0xA for an unresolvable name, 1 for
               a dead creation hook, 0xF for a busy device, or the creation
               error
@@ -514,6 +562,9 @@ ORIGINAL: 0x004C6510
 // spans     0x004C6510-0x004C6532
 // prototype void (__thiscall ?set_volume@Sound@@QAEXH@Z)(Sound* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -541,6 +592,9 @@ ORIGINAL: 0x004C6580
 // spans     0x004C6580-0x004C65A8
 // prototype int (__thiscall ?set_fade@Sound@@QAEHK@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, or 0xA for a zero time
 Status: Complete
 */
@@ -571,6 +625,9 @@ ORIGINAL: 0x004C65B0
 // spans     0x004C65B0-0x004C65D9
 // prototype int (__thiscall ?set_fade_in@Sound@@QAEHI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, or 0xA for a zero time
 Status: Complete
 */
@@ -601,6 +658,9 @@ ORIGINAL: 0x004C6660
 // spans     0x004C6660-0x004C6681
 // prototype void (__thiscall ?fade_in@Sound@@QAEXI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -627,6 +687,9 @@ ORIGINAL: 0x004C66B0
 // spans     0x004C66B0-0x004C66E0
 // prototype void (__thiscall ?set_pan@Sound@@QAEXH@Z)(Sound* this, int)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -659,6 +722,9 @@ ORIGINAL: 0x004C6440
 // spans     0x004C6440-0x004C6472
 // prototype int (__thiscall ?unload@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: whatever the device's unload returned, or 0 with none wrapped
 Status: Complete
 */
@@ -692,6 +758,9 @@ ORIGINAL: 0x004C6120
 // spans     0x004C6120-0x004C61D4;0x004C8450-0x004C8457;0x00659EE2-0x00659EF4
 // prototype void (__thiscall ??1Sound@@QAE@XZ)(Sound* this)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064557F
 Return Value: n/a
 Status: Complete
 */
@@ -750,6 +819,9 @@ ORIGINAL: 0x004C92D0
 // spans     0x004C92D0-0x004C92F1
 // prototype void* (__thiscall ??_GSound@@UAEPAXI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C6120 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -774,6 +846,9 @@ ORIGINAL: 0x004C6370
 // spans     0x004C6370-0x004C63C1
 // prototype int (__thiscall ?attach@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -811,6 +886,9 @@ ORIGINAL: 0x004C63D0
 // spans     0x004C63D0-0x004C642C
 // prototype int (__thiscall ?detach@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */

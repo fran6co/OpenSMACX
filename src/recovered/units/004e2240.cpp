@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004E2240 FILE
+// name      ??1DipEdit@@QAE@XZ
+// size      534 bytes
+// spans     0x004E2240-0x004E23BA;0x0065C570-0x0065C60C
+// prototype void (__thiscall ??1DipEdit@@QAE@XZ)(DipEdit* this)
+// callers   2   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x0060E740 0x00618EE0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004E2240
-// name           ??1DipEdit@@QAE@XZ
-// size           534 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

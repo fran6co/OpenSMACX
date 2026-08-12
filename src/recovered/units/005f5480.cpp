@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F5480 BYTE_EXACT FILE
+// name      ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z
+// size      33 bytes
+// spans     0x005F5480-0x005F54A1
+// prototype LRESULT (__thiscall ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z)(Win* this, WINDOWPOS*)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F5480
-// name           ?on_window_pos_changed@Win@@QAEJPAUWINDOWPOS@@@Z
-// size           33 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

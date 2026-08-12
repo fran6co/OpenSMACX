@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0062B670 FILE
+// name      ?decode_fli_copy_trans@Flic@@QAEXXZ
+// size      262 bytes
+// spans     0x0062B670-0x0062B776
+// prototype void (__thiscall ?decode_fli_copy_trans@Flic@@QAEXXZ)(Flic* this)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3373 0x005E33F3 0x00646178
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0062B670
-// name           ?decode_fli_copy_trans@Flic@@QAEXXZ
-// size           262 bytes
 // measured tier  MISMATCH
 // divergence     12
 //

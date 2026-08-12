@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C8A50 FILE
+// name      ??1VoiceRx@@QAE@XZ
+// size      262 bytes
+// spans     0x004C8A50-0x004C8B35;0x004C8450-0x004C8457;0x00659FA4-0x00659FBE
+// prototype void (__thiscall ??1VoiceRx@@QAE@XZ)(VoiceRx* this)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064557F
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C8A50
-// name           ??1VoiceRx@@QAE@XZ
-// size           262 bytes
 // measured tier  SHARED_TAIL
 // refusal        1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005165B0 FILE
+// name      ?zoom_to_upkeep_base@Console@@QAEXXZ
+// size      275 bytes
+// spans     0x005165B0-0x005166C3
+// prototype void (__thiscall ?zoom_to_upkeep_base@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0041A920 0x00644F3A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005165B0
-// name           ?zoom_to_upkeep_base@Console@@QAEXXZ
-// size           275 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

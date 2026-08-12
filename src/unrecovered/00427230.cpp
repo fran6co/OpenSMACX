@@ -1,10 +1,13 @@
 // ORIGINAL: 0x00427230 FILE
-// placeholder - not yet decompiled
 // name      ?init@CouncWin@@QAEXHH@Z
 // size      4396 bytes
 // spans     0x00427230-0x00428347;0x006530F4-0x00653109
 // prototype void (__thiscall ?init@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   1   call targets   33
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00403680 0x00403830 0x00424720 0x0045D380 0x00479970 0x00479C00 0x0050BA30 0x0050DD90 0x00514880 0x0052AD30 0x0052AE20 0x0052BE60 0x005399A0 0x0053A980 0x0053E800 0x00592EE0 0x005B9C40 0x005BB000 0x005BF7D0 0x005D4EF0 0x005D5250 0x005D7210 0x005D7410 0x005DAC70 0x005F7E90 0x005FA8A0 0x00607210 0x006169A0 0x00618F40 0x00619230 0x00625E30 0x00625EC0 0x00645470
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00427230
 
 // BODY GOES HERE.

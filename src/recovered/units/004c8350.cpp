@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C8350 FILE
+// name      sub_4c8350
+// size      70 bytes
+// spans     0x004C8350-0x004C8396
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C8350
-// name           sub_4c8350
-// size           70 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

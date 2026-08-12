@@ -4,6 +4,9 @@
 // spans     0x0047A6F0-0x0047A71E
 // prototype int (__thiscall ?UNK3@MultiWin@@QAEHHHPAURECT@@@Z)(MultiWin* this, int, int, RECT*)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005FA960
 // 0x0047A6F0  ?UNK3@MultiWin@@QAEHHHPAURECT@@@Z  ->  ?UNK3@MultiWin@@QAEHHHPAURECT@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

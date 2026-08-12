@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004455F0 FILE
+// name      ?wave_it@@YAXH@Z
+// size      93 bytes
+// spans     0x004455F0-0x0044564D
+// prototype 
+// callers   7   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C6920 0x004C6B10 0x004C6CE0
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004455F0
-// name           ?wave_it@@YAXH@Z
-// size           93 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

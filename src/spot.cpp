@@ -27,6 +27,9 @@ ORIGINAL: 0x005FA830
 // spans     0x005FA830-0x005FA85E
 // prototype void (__thiscall ?shutdown@Spot@@QAEXXZ)(Spot* this)
 // callers   9   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -45,6 +48,9 @@ ORIGINAL: 0x005FA8A0
 // spans     0x005FA8A0-0x005FA8F5
 // prototype void (__thiscall ?init@Spot@@QAEXH@Z)(Spot* this, int count)
 // callers   20   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -65,6 +71,9 @@ ORIGINAL: 0x005FA900
 // spans     0x005FA900-0x005FA956
 // prototype void (__thiscall ?replace@Spot@@QAEXHHHHHH@Z)(Spot* this, int position, int type, int left, int top, int length, int width)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -87,6 +96,9 @@ ORIGINAL: 0x005FA960
 // spans     0x005FA960-0x005FA9C0
 // prototype int (__thiscall ?add@Spot@@QAEHHHHHHH@Z)(Spot* this, int position, int type, int left, int top, int length, int width)
 // callers   37   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
@@ -122,6 +134,9 @@ ORIGINAL: 0x005FA9C0
 // spans     0x005FA9C0-0x005FAA04
 // prototype void (__thiscall ?kill_pos@Spot@@QAEXH@Z)(Spot* this, int position)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -144,6 +159,9 @@ ORIGINAL: 0x005FAA10
 // spans     0x005FAA10-0x005FAA89
 // prototype void (__thiscall ?kill_specific@Spot@@QAEXHH@Z)(Spot* this, int position, int type)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -163,6 +181,9 @@ ORIGINAL: 0x005FAA90
 // spans     0x005FAA90-0x005FAAFD
 // prototype void (__thiscall ?kill_type@Spot@@QAEXH@Z)(Spot* this, int type)
 // callers   25   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -182,6 +203,9 @@ ORIGINAL: 0x005FAB00
 // spans     0x005FAB00-0x005FAB69
 // prototype int (__thiscall ?check@Spot@@QAEHHHPAH0@Z)(Spot* this, int xCoord, int yCoord, int* spotPos, int* spotType)
 // callers   49   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
@@ -213,6 +237,9 @@ ORIGINAL: 0x005FAB70
 // spans     0x005FAB70-0x005FABFF
 // prototype int (__thiscall ?check@Spot@@QAEHHHPAH0PAURECT@@@Z)(Spot* this, int xCoord, int yCoord, int* spotPos, int* spotType, RECT* spotRect)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
@@ -247,6 +274,9 @@ ORIGINAL: 0x005FAC00
 // spans     0x005FAC00-0x005FAC5B
 // prototype int (__thiscall ?get_rect@Spot@@QAEHHHPAURECT@@@Z)(Spot* this, int position, int type, RECT* spotRect)
 // callers   2   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */

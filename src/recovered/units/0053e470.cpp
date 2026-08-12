@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0053E470 BYTE_EXACT FILE
+// name      ?diplomacy_ends@@YAXHH@Z
+// size      76 bytes
+// spans     0x0053E470-0x0053E4BC
+// prototype void (__cdecl ?diplomacy_ends@@YAXHH@Z)(int factionID, int)
+// callers   3   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0043F5C0 0x00530600 0x00593450
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0053E470
-// name           ?diplomacy_ends@@YAXHH@Z
-// size           76 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

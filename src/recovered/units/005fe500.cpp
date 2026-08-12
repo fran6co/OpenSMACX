@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FE500 FILE
+// name      ?close@Palette@@QAEXXZ
+// size      84 bytes
+// spans     0x005FE500-0x005FE554
+// prototype void (__thiscall ?close@Palette@@QAEXXZ)(Palette* this)
+// callers   5   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00616200 0x00644EF2 0x0064557F
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FE500
-// name           ?close@Palette@@QAEXXZ
-// size           84 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

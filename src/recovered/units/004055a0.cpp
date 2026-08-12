@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004055A0 FILE
+// name      ?POP3@@YAXPBDPBDHHH@Z
+// size      1028 bytes
+// spans     0x004055A0-0x00405910;0x00650839-0x006508CD
+// prototype 
+// callers   2   call targets   14
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401100 0x00402500 0x00406380 0x004064D0 0x00406880 0x0045C0F0 0x005D4DD0 0x00600860 0x00600F00 0x006051D0 0x00605370 0x00644F3A 0x00645470 0x00645550
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004055A0
-// name           ?POP3@@YAXPBDPBDHHH@Z
-// size           1028 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

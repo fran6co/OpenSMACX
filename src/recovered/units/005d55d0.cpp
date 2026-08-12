@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D55D0 FILE
+// name      ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z
+// size      95 bytes
+// spans     0x005D55D0-0x005D562F
+// prototype void (__thiscall ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z)(GraphicWin* this, int, int, int, int, GraphicWin*)
+// callers   2   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECFE0 0x005EFD20 0x005F74A0 0x005F7E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D55D0
-// name           ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z
-// size           95 bytes
 // measured tier  MISMATCH
 // divergence     25
 //

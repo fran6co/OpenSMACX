@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004396B0 BYTE_EXACT FILE
+// name      ?bubble_me_elmo2@DesignWin@@QAGXPADHH@Z
+// size      66 bytes
+// spans     0x004396B0-0x004396F2
+// prototype void (__stdcall ?bubble_me_elmo2@DesignWin@@QAGXPADHH@Z)(DesignWin* this, LPCSTR, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005ED240 0x005F83D0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004396B0
-// name           ?bubble_me_elmo2@DesignWin@@QAGXPADHH@Z
-// size           66 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

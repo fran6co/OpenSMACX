@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FF220 FILE
+// name      ?UNK6@Palette@@QAEHHHH@Z
+// size      87 bytes
+// spans     0x005FF220-0x005FF277
+// prototype int (__thiscall ?UNK6@Palette@@QAEHHHH@Z)(Palette* this, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FF280
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FF220
-// name           ?UNK6@Palette@@QAEHHHH@Z
-// size           87 bytes
 // measured tier  MISMATCH
 // divergence     9
 //

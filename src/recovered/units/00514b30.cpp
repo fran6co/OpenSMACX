@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00514B30 FILE
+// name      ?retire_game@Console@@QAEXXZ
+// size      507 bytes
+// spans     0x00514B30-0x00514D2B
+// prototype void (__thiscall ?retire_game@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   13
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0044AE50 0x00496670 0x004ACB80 0x004E25B0 0x0050BA30 0x0052E050 0x005900D0 0x005A9EB0 0x005ABD10 0x005ABD20 0x005ADBF0 0x005BF310 0x006262F0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00514B30
-// name           ?retire_game@Console@@QAEXXZ
-// size           507 bytes
 // measured tier  MISMATCH
 // divergence     25
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C8E60 FILE
+// name      ?exec@Gamma@@QAEXPAUPalette@@MH@Z
+// size      1221 bytes
+// spans     0x005C8E60-0x005C9325
+// prototype void (__thiscall ?exec@Gamma@@QAEXPAUPalette@@MH@Z)(Gamma* this, Palette*, float, int)
+// callers   2   call targets   24
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C9520 0x005C95E0 0x005D4E40 0x005D4EF0 0x005D5250 0x005DAC70 0x005FCBB0 0x005FE500 0x00605370 0x00605840 0x006059B0 0x00605A10 0x00605A50 0x00605A90 0x00605AD0 0x00605B10 0x00605BE0 0x00605C30 0x00605D20 0x00607210 0x00607360 0x00614F30 0x00618F40 0x006458C8
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C8E60
-// name           ?exec@Gamma@@QAEXPAUPalette@@MH@Z
-// size           1221 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

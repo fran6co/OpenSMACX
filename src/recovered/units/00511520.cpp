@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00511520 FILE
+// name      ?set_move@Console@@QAEXH@Z
+// size      733 bytes
+// spans     0x00511520-0x005117FD
+// prototype void (__thiscall ?set_move@Console@@QAEXH@Z)(Console* this, int)
+// callers   15   call targets   16
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x00446D10 0x00458900 0x00460DD0 0x0046A550 0x0046AD60 0x0046AE00 0x0046FB10 0x004B9EA0 0x004B9F90 0x005108A0 0x005109B0 0x00510F50 0x0052DC70 0x005B6260 0x005C1A20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00511520
-// name           ?set_move@Console@@QAEXH@Z
-// size           733 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

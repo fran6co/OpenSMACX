@@ -31,6 +31,10 @@ ORIGINAL: 0x0062BA80
 // spans     0x0062BA80-0x0062BBE8
 // prototype void (__thiscall ??0AutoSound@@QAE@XZ)(AutoSound* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void AutoSound::construct() {
@@ -62,6 +66,9 @@ ORIGINAL: 0x0062BBF0
 // spans     0x0062BBF0-0x0062BD3D
 // prototype void (__thiscall ?close@AutoSound@@QAEXXZ)(AutoSound* this)
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -92,6 +99,9 @@ ORIGINAL: 0x0062BDD0
 // spans     0x0062BDD0-0x0062BF1D
 // prototype void (__thiscall ?close2@AutoSound@@QAEXXZ)(AutoSound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -121,6 +131,9 @@ ORIGINAL: 0x0062BD40 BYTE_EXACT
 // spans     0x0062BD40-0x0062BDC4
 // prototype void (__thiscall ?init@AutoSound@@QAEXXZ)(AutoSound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -133,6 +146,9 @@ ORIGINAL: 0x0062BD40
 // spans     0x0062BD40-0x0062BDC4
 // prototype void (__thiscall ?init@AutoSound@@QAEXXZ)(AutoSound* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -195,6 +211,9 @@ ORIGINAL: 0x005F8640
 // spans     0x005F8640-0x005F8664
 // prototype void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062BBF0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -216,6 +235,10 @@ ORIGINAL: 0x005FD2B0 BYTE_EXACT
 // spans     0x005FD2B0-0x005FD2B3
 // prototype 
 // callers   21   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: zero
 Status: Complete
 */

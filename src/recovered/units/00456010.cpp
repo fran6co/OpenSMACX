@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00456010 FILE
+// name      ??1FactionArt@@QAE@XZ
+// size      397 bytes
+// spans     0x00456010-0x004560FC;0x00654F80-0x00655021
+// prototype void (__thiscall ??1FactionArt@@QAE@XZ)(faction_art* this)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005E3820 0x006456E4
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00456010
-// name           ??1FactionArt@@QAE@XZ
-// size           397 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

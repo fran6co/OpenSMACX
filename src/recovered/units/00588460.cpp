@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00588460 FILE
+// name      ?popups_normal@@YAXXZ
+// size      914 bytes
+// spans     0x00588460-0x005887F2
+// prototype 
+// callers   4   call targets   13
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006048C0 0x00604900 0x00604930 0x00604960 0x00604990 0x006049C0 0x006049F0 0x00604A20 0x00604A50 0x00607420 0x006074B0 0x00609D20 0x00609D50
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00588460
-// name           ?popups_normal@@YAXXZ
-// size           914 bytes
 // measured tier  MISMATCH
 // divergence     6
 //

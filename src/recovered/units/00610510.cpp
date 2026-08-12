@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00610510 BYTE_EXACT FILE
+// name      ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z
+// size      34 bytes
+// spans     0x00610510-0x00610532
+// prototype int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z)(SpriteBox* this, RECT*, Heap*)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006097F0 0x00610280
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00610510
-// name           ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z
-// size           34 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -27,6 +27,9 @@ ORIGINAL: 0x004562F0 BYTE_EXACT
 // spans     0x004562F0-0x004562F1
 // prototype void (__thiscall ?UNK1@InfoWin@@QAEXXZ)(InfoWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -41,6 +44,9 @@ ORIGINAL: 0x00458910 BYTE_EXACT
 // spans     0x00458910-0x00458911
 // prototype void (__thiscall ?on_redraw@InfoWin@@QAEXXZ)(InfoWin* this)
 // callers   6   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -63,6 +69,9 @@ ORIGINAL: 0x00458900 BYTE_EXACT
 // spans     0x00458900-0x00458903
 // prototype void (__thiscall ?change@InfoWin@@QAEXH@Z)(InfoWin* this, int)
 // callers   10   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -81,6 +90,9 @@ ORIGINAL: 0x00458920 BYTE_EXACT
 // spans     0x00458920-0x00458923
 // prototype void (__thiscall ?UNK3@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -102,6 +114,9 @@ ORIGINAL: 0x00459280
 // spans     0x00459280-0x0045929C
 // prototype void (__thiscall ?reset@InfoWin@@QAEXXZ)(InfoWin* this)
 // callers   7   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00459150
 Return Value: n/a
 Status: Complete
 */
@@ -123,6 +138,9 @@ ORIGINAL: 0x00458D40 BYTE_EXACT
 // spans     0x00458D40-0x00458D54
 // prototype void (__thiscall ?on_right_click@InfoWin@@QAEXHH@Z)(InfoWin* this, int, int)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004589C0
 Status: Complete
 */
 void InfoWin::on_right_click(int a1, int a2) {

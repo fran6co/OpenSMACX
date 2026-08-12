@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00481FD0 FILE
+// name      ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z
+// size      1229 bytes
+// spans     0x00481FD0-0x00482488;0x006574E9-0x006574FE
+// prototype void (__thiscall ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z)(NetWin* this, MessageFactionData*)
+// callers   3   call targets   15
+// kind      game
+// flags     frame;purged_ok
+// calls     0x00586090 0x005D4510 0x005D7210 0x005D7410 0x005D7DE0 0x005E2210 0x005FD530 0x005FD550 0x005FD570 0x005FD670 0x00644EF2 0x00645460 0x00645470 0x00645930 0x00645E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00481FD0
-// name           ?setup_faction_data@NetWin@@QAEXPAUMessageFactionData@@@Z
-// size           1229 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

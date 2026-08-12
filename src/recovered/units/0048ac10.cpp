@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048AC10 FILE
+// name      ??0PickWin@@QAE@XZ
+// size      731 bytes
+// spans     0x0048AC10-0x0048ADB6;0x00657E30-0x00657F65
+// prototype void (__thiscall ??0PickWin@@QAE@XZ)(PickWin* this)
+// callers   1   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004048A0 0x005D4CF0 0x005E37E0 0x00607CF0 0x00609DB0 0x0062B7C0 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048AC10
-// name           ??0PickWin@@QAE@XZ
-// size           731 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

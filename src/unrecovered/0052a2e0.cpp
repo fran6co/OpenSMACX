@@ -1,10 +1,13 @@
 // ORIGINAL: 0x0052A2E0 FILE
-// placeholder - not yet decompiled
 // name      ?net_control_turn@@YAXXZ
 // size      1681 bytes
 // spans     0x0052A2E0-0x0052A971
 // prototype 
 // callers   1   call targets   31
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0046B1F0 0x004717A0 0x00479330 0x004E25B0 0x00511480 0x00514050 0x005147E0 0x0051E760 0x00523C60 0x00524870 0x005258C0 0x005290A0 0x00529F30 0x0052DBF0 0x0052E050 0x00530360 0x00538FB0 0x005900D0 0x005904A0 0x00592EE0 0x0059DB40 0x005BF310 0x00626040 0x006260D0 0x006262F0 0x00626450 0x00645470 0x00645598 0x00645646 0x0064FC88
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x0052A2E0
 
 // BODY GOES HERE.

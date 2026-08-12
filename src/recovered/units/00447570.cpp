@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00447570 FILE
+// name      ?general@UAmbience@@QAEXXZ
+// size      276 bytes
+// spans     0x00447570-0x00447684
+// prototype void (__thiscall ?general@UAmbience@@QAEXXZ)(UAmbience* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00447570
-// name           ?general@UAmbience@@QAEXXZ
-// size           276 bytes
 // measured tier  MISMATCH
 // divergence     15
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00476C90 FILE
+// name      ?mon_tech_discovered@@YAXHH@Z
+// size      259 bytes
+// spans     0x00476C90-0x00476D93
+// prototype 
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00476A50 0x005C89A0
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00476C90
-// name           ?mon_tech_discovered@@YAXHH@Z
-// size           259 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

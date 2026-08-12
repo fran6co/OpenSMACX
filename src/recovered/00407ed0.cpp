@@ -4,6 +4,9 @@
 // spans     0x00407ED0-0x00407EF3
 // prototype int (__thiscall ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z)(AlphaSave* this, Scroll*)
 // callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045E540 0x005F7E90
 // 0x00407ED0  ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z  ->  ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

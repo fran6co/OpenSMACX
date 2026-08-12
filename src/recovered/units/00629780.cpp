@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00629780 BYTE_EXACT FILE
+// name      ?clear@StringBox@@QAEXXZ
+// size      292 bytes
+// spans     0x00629780-0x006298A4
+// prototype void (__thiscall ?clear@StringBox@@QAEXXZ)(StringBox* this)
+// callers   20   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005F7E90
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00629780
-// name           ?clear@StringBox@@QAEXXZ
-// size           292 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

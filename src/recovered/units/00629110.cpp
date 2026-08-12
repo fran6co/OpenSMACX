@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00629110 FILE
+// name      ??0StringBox@@QAE@XZ
+// size      266 bytes
+// spans     0x00629110-0x00629208;0x00663300-0x00663312
+// prototype void (__thiscall ??0StringBox@@QAE@XZ)(StringBox* this)
+// callers   6   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4CF0 0x006051D0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00629110
-// name           ??0StringBox@@QAE@XZ
-// size           266 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

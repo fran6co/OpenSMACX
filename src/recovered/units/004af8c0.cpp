@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004AF8C0 FILE
+// name      ?draw_faction_basal@SocialWin@@QAEXXZ
+// size      669 bytes
+// spans     0x004AF8C0-0x004AFB5D
+// prototype void (__thiscall ?draw_faction_basal@SocialWin@@QAEXXZ)(SocialWin* this)
+// callers   1   call targets   10
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DD130 0x005E2DD3 0x005E4B4A 0x005FD2B0 0x006453E0 0x00645470
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004AF8C0
-// name           ?draw_faction_basal@SocialWin@@QAEXXZ
-// size           669 bytes
 // measured tier  NO_COMPILE
 // refusal        u004af8c0.cpp(211) : error C2079: 'buffer_' uses undefined class 'Buffer' u004af8c0.cpp(342) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

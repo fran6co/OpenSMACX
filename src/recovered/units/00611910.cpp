@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00611910 FILE
+// name      sub_611910
+// size      76 bytes
+// spans     0x00611910-0x0061191E;0x006117E0-0x0061181E
+// prototype 
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00608E10 0x00610120 0x0064557F
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00611910
-// name           sub_611910
-// size           76 bytes
 // measured tier  SHARED_TAIL
 // refusal        1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 //

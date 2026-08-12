@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00644100 FILE
+// name      sub_644100
+// size      63 bytes
+// spans     0x00644100-0x0064413F
+// prototype 
+// callers   5   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00644100
-// name           sub_644100
-// size           63 bytes
 // measured tier  MISMATCH
 // divergence     16
 //

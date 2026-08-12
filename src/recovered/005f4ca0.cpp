@@ -4,6 +4,9 @@
 // spans     0x005F4CA0-0x005F4CB2
 // prototype void (__thiscall ?update_nc_buffer@Win@@QAEXH@Z)(Win* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x005F4CA0  ?update_nc_buffer@Win@@QAEXH@Z  ->  ?update_nc_buffer@Win@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -4,6 +4,9 @@
 // spans     0x00446B10-0x00446B37
 // prototype void (__thiscall ?engine_pitch@FX@@QAEXH@Z)(FX* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x00446B10  ?engine_pitch@FX@@QAEXH@Z  ->  ?engine_pitch@FX@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004BE7D0 FILE
+// name      ??1TutWin@@QAE@XZ
+// size      773 bytes
+// spans     0x004BE7D0-0x004BE9EE;0x00659BF0-0x00659CD7
+// prototype void (__thiscall ??1TutWin@@QAE@XZ)(TutWin* this)
+// callers   1   call targets   14
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x00404900 0x004066C0 0x00406910 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004BE7D0
-// name           ??1TutWin@@QAE@XZ
-// size           773 bytes
 // measured tier  NO_COMPILE
 // refusal        u004be7d0.cpp(1) : error C2653: 'TutWin' : is not a class or namespace name u004be7d0.cpp(2) : warning C4508: 'TutWin' : function should return a value; 'void' 
 //

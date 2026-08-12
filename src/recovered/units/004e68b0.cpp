@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004E68B0 FILE
+// name      ?farm_compute@@YAXXZ
+// size      1438 bytes
+// spans     0x004E68B0-0x004E6E4E
+// prototype 
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0 0x00579A30 0x00592140 0x005B8E10 0x005B9580 0x005BFE90 0x00644F3A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004E68B0
-// name           ?farm_compute@@YAXXZ
-// size           1438 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

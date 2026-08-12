@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005DC2D0 FILE
+// name      ?get_special@@YAHPADPAH@Z
+// size      60 bytes
+// spans     0x005DC2D0-0x005DC30C
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005DC2D0
-// name           ?get_special@@YAHPADPAH@Z
-// size           60 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

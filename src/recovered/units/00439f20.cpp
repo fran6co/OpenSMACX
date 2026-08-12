@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00439F20 FILE
+// name      ?select_chassis@DesignWin@@QAEXXZ
+// size      1125 bytes
+// spans     0x00439F20-0x0043A300;0x006541FC-0x00654281
+// prototype void (__thiscall ?select_chassis@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   1   call targets   23
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004328B0 0x00433F70 0x004346A0 0x00434BC0 0x00434F40 0x00435400 0x00435800 0x00435B30 0x00435DE0 0x00436090 0x00439C00 0x00439D30 0x0043DD50 0x005D4DD0 0x005D4E40 0x005D7410 0x005D7470 0x00605370 0x00607040 0x00607DA0 0x00617020 0x00618EE0 0x00645550
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00439F20
-// name           ?select_chassis@DesignWin@@QAEXXZ
-// size           1125 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

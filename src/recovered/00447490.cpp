@@ -4,6 +4,9 @@
 // spans     0x00447490-0x004474AF
 // prototype void (__thiscall ?energy_resources@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x00447490  ?energy_resources@MAmbience@@QAEXXZ  ->  ?energy_resources@MAmbience@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

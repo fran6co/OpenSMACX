@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00439D30 FILE
+// name      ?suggest_abil@DesignWin@@QAEXH@Z
+// size      371 bytes
+// spans     0x00439D30-0x00439EA3
+// prototype void (__thiscall ?suggest_abil@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   3   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00439C00 0x0050BA30 0x00581170 0x00584B50 0x005B9F20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00439D30
-// name           ?suggest_abil@DesignWin@@QAEXH@Z
-// size           371 bytes
 // measured tier  MISMATCH
 // divergence     69
 //

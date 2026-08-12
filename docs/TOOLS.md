@@ -27,7 +27,10 @@ tools/decomp_status.py --work 0x00405C20  # scaffold one function to work on
 tools/decomp_status.py --check            # THE RATCHET
 ```
 
-`tools/annotation_scan.py` is the reader underneath it.
+`tools/annotation_scan.py` is the reader underneath it, and
+`tools/project_catalogue.py` is what makes `src/` the store rather than a view:
+every annotation carries its own name, size, spans, prototype, kind, flags and
+call edges, and `--check` holds them to the export row by row.
 
 ### 2. What shape is this function? — read the image
 

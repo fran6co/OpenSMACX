@@ -1,10 +1,13 @@
 // ORIGINAL: 0x005B0E00 FILE
-// placeholder - not yet decompiled
 // name      ?setup_player@@YAHHHH@Z
 // size      9596 bytes
 // spans     0x005B0E00-0x005B337C
 // prototype int (__cdecl ?setup_player@@YAHHHH@Z)(int8*, int protoID, int)
 // callers   4   call targets   37
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048C0A0 0x004E25B0 0x004E3B80 0x004E3D50 0x004E49D0 0x004E4B80 0x004E5250 0x0050BA30 0x0052E050 0x0055B760 0x00579E00 0x0057D360 0x0057D480 0x0057DF00 0x0057E040 0x00581260 0x005900D0 0x00591B50 0x00591E50 0x005A5D40 0x005BA910 0x005BB000 0x005BDC10 0x005BF310 0x005C01D0 0x005C0260 0x005C03D0 0x005C0B00 0x005C4FD0 0x006169A0 0x00625EC0 0x00644F3A 0x00645460 0x00645470 0x00645660 0x0064601D 0x0064FC88
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x005B0E00
 
 // BODY GOES HERE.

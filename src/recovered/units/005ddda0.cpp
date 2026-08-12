@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005DDDA0 FILE
+// name      ?wrap_height_flying@Buffer@@QAEHPADH@Z
+// size      50 bytes
+// spans     0x005DDDA0-0x005DDDD2
+// prototype int (__thiscall ?wrap_height_flying@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DDDE0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005DDDA0
-// name           ?wrap_height_flying@Buffer@@QAEHPADH@Z
-// size           50 bytes
 // measured tier  MISMATCH
 // divergence     9
 //

@@ -4,6 +4,9 @@
 // spans     0x00646178-0x006461A7
 // prototype int (__cdecl __fread)(void* DstBuf, size_t ElementSize, size_t Count, FILE* File)
 // callers   21   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006461A7 0x00647C37 0x00647C89
 // 0x00646178  __fread  ->  __fread
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

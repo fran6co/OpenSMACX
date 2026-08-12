@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00447AC0 BYTE_EXACT FILE
+// name      ?design_window_hide@BAmbience@@QAEXXZ
+// size      43 bytes
+// spans     0x00447AC0-0x00447AEB
+// prototype void (__thiscall ?design_window_hide@BAmbience@@QAEXXZ)(BAmbience* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00447AC0
-// name           ?design_window_hide@BAmbience@@QAEXXZ
-// size           43 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

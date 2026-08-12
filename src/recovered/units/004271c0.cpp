@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004271C0 FILE
+// name      ?arrived@CouncWin@@QAEXH@Z
+// size      109 bytes
+// spans     0x004271C0-0x0042722D
+// prototype void (__thiscall ?arrived@CouncWin@@QAEXH@Z)(CouncWin* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004271C0
-// name           ?arrived@CouncWin@@QAEXH@Z
-// size           109 bytes
 // measured tier  MISMATCH
 // divergence     17
 //

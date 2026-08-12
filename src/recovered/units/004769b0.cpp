@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004769B0 FILE
+// name      ?on_button_clicked@MonuWin@@QAEXH@Z
+// size      71 bytes
+// spans     0x004769B0-0x004769F7
+// prototype void (__thiscall ?on_button_clicked@MonuWin@@QAEXH@Z)(MonuWin* this, int)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4E40
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004769B0
-// name           ?on_button_clicked@MonuWin@@QAEXH@Z
-// size           71 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00513B90 FILE
+// name      ?veh_turn@Console@@QAEHXZ
+// size      1065 bytes
+// spans     0x00513B90-0x00513FB9
+// prototype int (__thiscall ?veh_turn@Console@@QAEHXZ)(Console* this)
+// callers   1   call targets   21
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x00458900 0x00460DD0 0x0046A550 0x0046AE00 0x0046FB10 0x004B9EA0 0x004BC6E0 0x00511BB0 0x0051F200 0x00524870 0x005310F0 0x00531150 0x00531480 0x00532570 0x00579240 0x00593220 0x005C1A20 0x005C1B70 0x005C1D20 0x005F7E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00513B90
-// name           ?veh_turn@Console@@QAEHXZ
-// size           1065 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

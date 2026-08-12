@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0044AC10 FILE
+// name      ?demote@FameWin@@QAEXH@Z
+// size      583 bytes
+// spans     0x0044AC10-0x0044AE42;0x00654EBA-0x00654ECF
+// prototype void (__thiscall ?demote@FameWin@@QAEXH@Z)(FameWin* this, int)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7DE0 0x005DF590 0x00645470 0x00645E90 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0044AC10
-// name           ?demote@FameWin@@QAEXH@Z
-// size           583 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

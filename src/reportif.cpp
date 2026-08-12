@@ -28,6 +28,9 @@ ORIGINAL: 0x004A5FE0 BYTE_EXACT
 // spans     0x004A5FE0-0x004A5FE3
 // prototype void (__thiscall ?on_iface_right_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -42,6 +45,9 @@ ORIGINAL: 0x004A5FF0 BYTE_EXACT
 // spans     0x004A5FF0-0x004A5FF3
 // prototype void (__thiscall ?on_iface_left_double_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -56,6 +62,9 @@ ORIGINAL: 0x004A6000 BYTE_EXACT
 // spans     0x004A6000-0x004A6003
 // prototype void (__thiscall ?on_iface_right_double_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -70,6 +79,9 @@ ORIGINAL: 0x004A6010 BYTE_EXACT
 // spans     0x004A6010-0x004A6013
 // prototype void (__thiscall ?on_iface_left_down@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -84,6 +96,9 @@ ORIGINAL: 0x004A6020 BYTE_EXACT
 // spans     0x004A6020-0x004A6023
 // prototype void (__thiscall ?on_iface_right_down@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -98,6 +113,9 @@ ORIGINAL: 0x004A6030 BYTE_EXACT
 // spans     0x004A6030-0x004A6033
 // prototype void (__thiscall ?on_iface_mouse_move@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -112,6 +130,9 @@ ORIGINAL: 0x004A6040 BYTE_EXACT
 // spans     0x004A6040-0x004A6043
 // prototype void (__thiscall ?on_iface_mouse_leave@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -126,6 +147,9 @@ ORIGINAL: 0x004A6D60 BYTE_EXACT
 // spans     0x004A6D60-0x004A6D63
 // prototype void (__thiscall ?on_iface_button_toggled@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +164,9 @@ ORIGINAL: 0x004AC130 BYTE_EXACT
 // spans     0x004AC130-0x004AC131
 // prototype void (__thiscall ?close_score@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -190,6 +217,9 @@ ORIGINAL: 0x004A6320 BYTE_EXACT
 // spans     0x004A6320-0x004A6328
 // prototype int (__thiscall ?on_iface_dialog_item_back_draw@ReportIf@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(ReportIf* this, GraphicWin*, int, int, RECT*)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1
 Status: Complete
 */
@@ -221,6 +251,9 @@ ORIGINAL: 0x004AC980 BYTE_EXACT
 // spans     0x004AC980-0x004AC99B
 // prototype void (__thiscall ?close_intel@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609F20
 Return Value: n/a
 Status: Complete
 */
@@ -256,6 +289,9 @@ ORIGINAL: 0x004A9020
 // spans     0x004A9020-0x004A9045
 // prototype void (__thiscall ?close_energy@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609F20
 Return Value: n/a
 Status: Complete
 */
@@ -277,6 +313,9 @@ ORIGINAL: 0x004A3930 BYTE_EXACT
 // spans     0x004A3930-0x004A3946
 // prototype void (__thiscall ?done@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D380 0x005EE280
 Status: Complete
 */
 void ReportIf::done() {

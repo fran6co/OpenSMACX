@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004A8440 BYTE_EXACT FILE
+// name      ?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z
+// size      46 bytes
+// spans     0x004A8440-0x004A846E
+// prototype 
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050E820 0x005B9FE0 0x005DAD10
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004A8440
-// name           ?labs_write@@YAXPAUGraphicWin@@HHPAURECT@@PAD@Z
-// size           46 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

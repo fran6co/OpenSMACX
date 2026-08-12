@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004E0290 FILE
+// name      ?editor_reload@Console@@QAEXXZ
+// size      1068 bytes
+// spans     0x004E0290-0x004E05D9;0x0065C0C8-0x0065C1AB
+// prototype void (__thiscall ?editor_reload@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   16
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406880 0x00586050 0x005B0D70 0x005BFAB0 0x005D4DD0 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00612A70 0x00645460 0x00645550
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004E0290
-// name           ?editor_reload@Console@@QAEXXZ
-// size           1068 bytes
 // measured tier  NO_COMPILE
 // refusal        u004e0290.cpp(43) : error C2059: syntax error : ';'
 //

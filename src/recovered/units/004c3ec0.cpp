@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C3EC0 FILE
+// name      ?on_redraw@WorldWin@@QAEXXZ
+// size      871 bytes
+// spans     0x004C3EC0-0x004C4227
+// prototype void (__thiscall ?on_redraw@WorldWin@@QAEXXZ)(WorldWin* this)
+// callers   0   call targets   12
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00469B40 0x0046A550 0x004C4630 0x00592A80 0x00592AF0 0x005D5250 0x005D7670 0x005D9610 0x005DE8F0 0x005DFF00 0x005E3503 0x005E3563
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C3EC0
-// name           ?on_redraw@WorldWin@@QAEXXZ
-// size           871 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

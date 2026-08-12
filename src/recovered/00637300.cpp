@@ -4,6 +4,9 @@
 // spans     0x00637300-0x00637308
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006371D0
 // 0x00637300  Video_unk11  ->  _Video_unk11
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

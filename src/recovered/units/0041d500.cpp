@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041D500 FILE
+// name      ?on_button_clicked@BaseWin@@QAEXH@Z
+// size      1388 bytes
+// spans     0x0041D500-0x0041DA6C
+// prototype void (__thiscall ?on_button_clicked@BaseWin@@QAEXH@Z)(BaseWin* this, int)
+// callers   0   call targets   31
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00412AA0 0x00415080 0x00415F70 0x00417040 0x00418DF0 0x00419A90 0x0041A010 0x0041A160 0x0041A2B0 0x0041B4F0 0x0041C7A0 0x004216F0 0x00445650 0x0045D380 0x004BDDE0 0x004E39D0 0x004EC3B0 0x00515400 0x00530D50 0x00530E50 0x005BFE90 0x005C01D0 0x005C0260 0x005D5A70 0x005F7E90 0x005FCBB0 0x006074E0 0x00607C80 0x00616730 0x006169A0 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041D500
-// name           ?on_button_clicked@BaseWin@@QAEXH@Z
-// size           1388 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

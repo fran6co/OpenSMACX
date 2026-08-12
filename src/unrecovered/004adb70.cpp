@@ -1,10 +1,13 @@
 // ORIGINAL: 0x004ADB70 FILE
-// placeholder - not yet decompiled
 // name      ?do_menu_rightside@SetupWin@@QAEHPADH@Z
 // size      2129 bytes
 // spans     0x004ADB70-0x004AE336;0x0065960C-0x00659697
 // prototype int (__thiscall ?do_menu_rightside@SetupWin@@QAEHPADH@Z)(SetupWin* this, int8*, int)
 // callers   2   call targets   40
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401100 0x00402970 0x004AE4D0 0x004C66E0 0x004C67C0 0x004C6920 0x004C6C20 0x005BECA0 0x005D4EF0 0x005D5440 0x005D5890 0x005D7210 0x005D7410 0x005D7470 0x005D7670 0x005D8000 0x005DAC70 0x005DACB0 0x005DD130 0x005DFF00 0x005FA830 0x005FA8A0 0x005FA960 0x005FD530 0x005FD570 0x005FE2E0 0x00600760 0x006007B0 0x00609B50 0x00618EA0 0x00618EE0 0x00618F40 0x00629D60 0x00629DF0 0x00629E50 0x0062A070 0x006453E0 0x00645470 0x00645550 0x0064FDF0
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x004ADB70
 
 // BODY GOES HERE.

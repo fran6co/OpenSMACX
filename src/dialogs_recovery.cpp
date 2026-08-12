@@ -51,6 +51,9 @@ ORIGINAL: 0x00612A70
 // spans     0x00612A70-0x00612ABF
 // prototype int (__thiscall ?item@Dialogs@@QAEHPADH@Z)(Dialogs* this, int8* lpString, int position)
 // callers   72   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609990 0x0060C920
 Return Value: the widget's result, zero for kinds that hold no items
 Status: Complete
 */
@@ -79,6 +82,9 @@ ORIGINAL: 0x00613740
 // spans     0x00613740-0x00613772
 // prototype int (__thiscall ?get_num_items@Dialogs@@QAEHXZ)(Dialogs* this)
 // callers   4   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the count, zero for kinds that hold no items
 Status: Complete
 */
@@ -131,6 +137,9 @@ ORIGINAL: 0x00612ED0
 // spans     0x00612ED0-0x00612EEE
 // prototype void (__thiscall ?on_right_down@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00611240
 Return Value: n/a
 Status: Complete
 */
@@ -154,6 +163,9 @@ ORIGINAL: 0x00612EF0
 // spans     0x00612EF0-0x00612F0E
 // prototype void (__thiscall ?on_right_double_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00611330
 Return Value: n/a
 Status: Complete
 */
@@ -177,6 +189,9 @@ ORIGINAL: 0x00612F10
 // spans     0x00612F10-0x00612F35
 // prototype void (__thiscall ?on_left_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006111A0
 Return Value: n/a
 Status: Complete
 */
@@ -200,6 +215,9 @@ ORIGINAL: 0x00612F40
 // spans     0x00612F40-0x00612F5E
 // prototype void (__thiscall ?on_right_up@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00611290
 Return Value: n/a
 Status: Complete
 */
@@ -223,6 +241,9 @@ ORIGINAL: 0x00612F60
 // spans     0x00612F60-0x00612F7E
 // prototype void (__thiscall ?on_right_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006111F0
 Return Value: n/a
 Status: Complete
 */
@@ -246,6 +267,9 @@ ORIGINAL: 0x00612F80
 // spans     0x00612F80-0x00612FA0
 // prototype void (__thiscall ?on_scrolled@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0060C5D0
 Return Value: n/a
 Status: Complete
 */
@@ -269,6 +293,9 @@ ORIGINAL: 0x00612FA0
 // spans     0x00612FA0-0x00612FC0
 // prototype void (__thiscall ?on_scrolling@Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0060C5D0
 Return Value: n/a
 Status: Complete
 */
@@ -292,6 +319,9 @@ ORIGINAL: 0x00612FC0
 // spans     0x00612FC0-0x00612FDB
 // prototype void (__thiscall ?on_mousewheel@Dialogs@@QAEXH@Z)(Dialogs* this, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0060CB70
 Return Value: n/a
 Status: Complete
 */
@@ -404,6 +434,9 @@ ORIGINAL: 0x00406910
 // spans     0x00406910-0x00406A74;0x006509C0-0x00650AAA
 // prototype void (__thiscall ??1Dialogs@@QAE@XZ)(Dialogs* this)
 // callers   72   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00609EC0 0x0060D1B0 0x0060E740 0x00610120 0x00611A20 0x00612960
 Return Value: EAX residue (ListBox::destroy's constant 0); declared void in
               the mangled name, modelled as uint32_t like ListBox::destroy.
 Status: Complete with temporary EditGroup, SpriteBox and CheckBox destructor
@@ -470,6 +503,9 @@ ORIGINAL: 0x00407100
 // spans     0x00407100-0x00407141
 // prototype void* (__thiscall ??_GDialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
 // callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00406910 0x005D4DD0 0x00608E10 0x0064557F
 Return Value: the allocation base
 Status: Complete
 */

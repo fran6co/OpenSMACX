@@ -4,6 +4,9 @@
 // spans     0x005AD9A0-0x005AD9E0
 // prototype void (__thiscall ?close@ReplayWin@@QAEXXZ)(ReplayWin* this)
 // callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00470F70 0x005D4E40 0x00644EF2
 // 0x005AD9A0  ?close@ReplayWin@@QAEXXZ  ->  ?close@ReplayWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

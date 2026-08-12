@@ -4,6 +4,9 @@
 // spans     0x0062DF20-0x0062DF6E
 // prototype int (__thiscall ?start_voice@Net@@QAEHK@Z)(Net* this, unsigned int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x0062DF20  ?start_voice@Net@@QAEHK@Z  ->  ?start_voice@Net@@QAEHK@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

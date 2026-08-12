@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00491400 FILE
+// name      ?on_button_clicked@PrefWin@@QAEXH@Z
+// size      1088 bytes
+// spans     0x00491400-0x00491794;0x00658AC0-0x00658B6C
+// prototype void (__thiscall ?on_button_clicked@PrefWin@@QAEXH@Z)(PrefWin* this, int)
+// callers   0   call targets   26
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048FDD0 0x00490B00 0x004918C0 0x004919F0 0x004C5150 0x004C5320 0x0059DA20 0x0059DAA0 0x0059DB20 0x0059E530 0x005C8DA0 0x005C8E60 0x005C9330 0x005D4DD0 0x005FE2E0 0x005FE2F0 0x00605370 0x00605D20 0x00607040 0x00607DA0 0x00614F30 0x00616200 0x00618EE0 0x0062C010 0x00645550 0x006458C8
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00491400
-// name           ?on_button_clicked@PrefWin@@QAEXH@Z
-// size           1088 bytes
 // measured tier  NO_COMPILE
 // refusal        u00491400.cpp(61) : error C2061: syntax error : identifier 'Palette' u00491400.cpp(89) : error C2065: 'int8' : undeclared identifier u00491400.cpp(89) : error C
 //

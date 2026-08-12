@@ -26,6 +26,9 @@ ORIGINAL: 0x004ADAD0 BYTE_EXACT
 // spans     0x004ADAD0-0x004ADAD5
 // prototype int (__thiscall ?UNK3@SetupWin@@QAEHH@Z)(SetupWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -45,6 +48,9 @@ ORIGINAL: 0x004ADAE0 BYTE_EXACT
 // spans     0x004ADAE0-0x004ADAE5
 // prototype int (__thiscall ?UNK4@SetupWin@@QAEHH@Z)(SetupWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -80,6 +86,9 @@ ORIGINAL: 0x004ADA80 BYTE_EXACT
 // spans     0x004ADA80-0x004ADA9D
 // prototype int (__thiscall ?UNK1@SetupWin@@QAEHH@Z)(SetupWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: (field_A14 * a1) / 1024, truncated toward zero
 Status: Complete
 */
@@ -115,6 +124,9 @@ ORIGINAL: 0x004ADAA0 BYTE_EXACT
 // spans     0x004ADAA0-0x004ADAC4
 // prototype int (__thiscall ?UNK2@SetupWin@@QAEHH@Z)(SetupWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: (field_A18 * a1) / 768, truncated toward zero
 Status: Complete
 */
@@ -136,6 +148,9 @@ ORIGINAL: 0x004ADAF0 BYTE_EXACT
 // spans     0x004ADAF0-0x004ADB11
 // prototype int (__thiscall ?do_menu@SetupWin@@QAEHPADHH@Z)(SetupWin* this, int8*, int, int)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004ADB70
 Status: Complete
 */
 int SetupWin::do_menu(char* a1, int a2, int a3) {

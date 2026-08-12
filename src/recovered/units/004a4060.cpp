@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004A4060 FILE
+// name      ?bl_anim@ReportIf@@QAEXXZ
+// size      305 bytes
+// spans     0x004A4060-0x004A4191
+// prototype void (__thiscall ?bl_anim@ReportIf@@QAEXXZ)(ReportIf* this)
+// callers   2   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D5A70 0x005E4B9A 0x00616730
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004A4060
-// name           ?bl_anim@ReportIf@@QAEXXZ
-// size           305 bytes
 // measured tier  MISMATCH
 // divergence     13
 //

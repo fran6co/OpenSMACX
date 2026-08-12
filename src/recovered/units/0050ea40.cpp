@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0050EA40 FILE
+// name      ?blink_timer@@YAXH@Z
+// size      997 bytes
+// spans     0x0050EA40-0x0050EE25
+// prototype 
+// callers   0   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046AE00 0x0046B1F0 0x0048BC20 0x004BDEA0 0x005EC8A0 0x005ED240 0x005F7E90 0x00629A70
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0050EA40
-// name           ?blink_timer@@YAXH@Z
-// size           997 bytes
 // measured tier  MISMATCH
 // divergence     40
 //

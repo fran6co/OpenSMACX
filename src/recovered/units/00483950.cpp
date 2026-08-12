@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00483950 FILE
+// name      ?on_redraw@NewTechWin@@QAEXXZ
+// size      1327 bytes
+// spans     0x00483950-0x00483E7F
+// prototype void (__thiscall ?on_redraw@NewTechWin@@QAEXXZ)(NewTechWin* this)
+// callers   0   call targets   15
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050E820 0x005882F0 0x005B9C40 0x005B9FE0 0x005DAC70 0x005DACB0 0x005DCAB0 0x005DD130 0x005DEF90 0x005E2DD3 0x005E3E00 0x006169A0 0x006453E0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00483950
-// name           ?on_redraw@NewTechWin@@QAEXXZ
-// size           1327 bytes
 // measured tier  NO_COMPILE
 // refusal        u00483950.cpp(210) : error C2079: 'buffer_' uses undefined class 'Buffer' u00483950.cpp(341) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048AE40 BYTE_EXACT FILE
+// name      ?add_line@PlanWin@@QAEXHHHHH@Z
+// size      80 bytes
+// spans     0x0048AE40-0x0048AE90
+// prototype void (__thiscall ?add_line@PlanWin@@QAEXHHHHH@Z)(PlanWin* this, int, int, int, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048AE40
-// name           ?add_line@PlanWin@@QAEXHHHHH@Z
-// size           80 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

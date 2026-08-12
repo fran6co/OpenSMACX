@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F05D0 FILE
+// name      ?set_border_thickness@Win@@QAEXH@Z
+// size      61 bytes
+// spans     0x005F05D0-0x005F060D
+// prototype void (__thiscall ?set_border_thickness@Win@@QAEXH@Z)(Win* this, int thickness)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F05D0
-// name           ?set_border_thickness@Win@@QAEXH@Z
-// size           61 bytes
 // measured tier  NO_COMPILE
 // refusal        u005f05d0.cpp(8) : error C2653: 'Win' : is not a class or namespace name u005f05d0.cpp(9) : error C2673: 'set_border_thickness' : global functions do not have '
 //

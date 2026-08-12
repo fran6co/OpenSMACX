@@ -1,10 +1,13 @@
 // ORIGINAL: 0x00602600 FILE
-// placeholder - not yet decompiled
 // name      ?exec@BasePop@@QAEHHP6AHXZ@Z
 // size      4618 bytes
 // spans     0x00602600-0x006037F5;0x00662E02-0x00662E17
 // prototype int (__thiscall ?exec@BasePop@@QAEHHP6AHXZ@Z)(BasePop* this, int, int (__cdecl *)())
 // callers   87   call targets   24
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005D4EF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DAD40 0x005EDF50 0x005F7E90 0x00605180 0x006051A0 0x00607210 0x00607360 0x006073A0 0x006073E0 0x00607CF0 0x00612060 0x00612970 0x00625EC0 0x00644F3A 0x006453E0 0x00645470 0x0064557F 0x0064558A
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00602600
 
 // BODY GOES HERE.

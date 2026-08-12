@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060EA10 FILE
+// name      ?flip_state_id@CheckBox@@QAEXH@Z
+// size      312 bytes
+// spans     0x0060EA10-0x0060EB48
+// prototype void (__thiscall ?flip_state_id@CheckBox@@QAEXH@Z)(CheckBox* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060EA10
-// name           ?flip_state_id@CheckBox@@QAEXH@Z
-// size           312 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

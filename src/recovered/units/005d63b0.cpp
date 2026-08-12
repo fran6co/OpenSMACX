@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005D63B0 BYTE_EXACT FILE
+// name      sub_5d63b0
+// size      46 bytes
+// spans     0x005D63B0-0x005D63DE
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005D63B0
-// name           sub_5d63b0
-// size           46 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

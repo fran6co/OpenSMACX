@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0055B820 FILE
+// name      ?agenda_off@@YAXHHH@Z
+// size      80 bytes
+// spans     0x0055B820-0x0055B870
+// prototype 
+// callers   5   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0055B820
-// name           ?agenda_off@@YAXHHH@Z
-// size           80 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

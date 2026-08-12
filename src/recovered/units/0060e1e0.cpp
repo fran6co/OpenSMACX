@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060E1E0 BYTE_EXACT FILE
+// name      ?on_left_double_click@RadioButton@@QAEXHH@Z
+// size      55 bytes
+// spans     0x0060E1E0-0x0060E217
+// prototype void (__thiscall ?on_left_double_click@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609A50
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060E1E0
-// name           ?on_left_double_click@RadioButton@@QAEXHH@Z
-// size           55 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

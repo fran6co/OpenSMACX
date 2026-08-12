@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C39D0 FILE
+// name      ?show_all@WorldWin@@QAEXXZ
+// size      105 bytes
+// spans     0x004C39D0-0x004C3A39
+// prototype void (__thiscall ?show_all@WorldWin@@QAEXXZ)(WorldWin* this)
+// callers   5   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED9D0 0x0062B870
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C39D0
-// name           ?show_all@WorldWin@@QAEXXZ
-// size           105 bytes
 // measured tier  MISMATCH
 // divergence     11
 //

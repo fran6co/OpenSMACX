@@ -4,6 +4,9 @@
 // spans     0x004B6530-0x004B6569
 // prototype void (__thiscall ?reset_active@StatusWin@@QAEXXZ)(StatusWin* this)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004B4CF0
 // 0x004B6530  ?reset_active@StatusWin@@QAEXXZ  ->  ?reset_active@StatusWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

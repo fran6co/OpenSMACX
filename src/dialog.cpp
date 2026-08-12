@@ -28,6 +28,10 @@ ORIGINAL: 0x00609C60
 // spans     0x00609C60-0x00609C8D
 // prototype int (__thiscall ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z)(Dialog* this, Font*, Font*, Font*)
 // callers   11   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -51,6 +55,10 @@ ORIGINAL: 0x00609C90 BYTE_EXACT
 // spans     0x00609C90-0x00609CB8
 // prototype void (__thiscall ?set_dialog_text_color@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
 // callers   9   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -69,6 +77,10 @@ ORIGINAL: 0x00609CC0 BYTE_EXACT
 // spans     0x00609CC0-0x00609CEB
 // prototype void (__thiscall ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
 // callers   7   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -87,6 +99,10 @@ ORIGINAL: 0x00609CF0 BYTE_EXACT
 // spans     0x00609CF0-0x00609D1B
 // prototype void (__thiscall ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
 // callers   6   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -105,6 +121,10 @@ ORIGINAL: 0x00609AF0 BYTE_EXACT
 // spans     0x00609AF0-0x00609B4B
 // prototype int (__thiscall ?id_to_pos@Dialog@@QAEHH@Z)(Dialog* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
@@ -116,6 +136,10 @@ ORIGINAL: 0x00609AF0
 // spans     0x00609AF0-0x00609B4B
 // prototype int (__thiscall ?id_to_pos@Dialog@@QAEHH@Z)(Dialog* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
@@ -144,6 +168,10 @@ ORIGINAL: 0x006099D0
 // spans     0x006099D0-0x00609A43
 // prototype void (__thiscall ?set_selected_id@Dialog@@QAEXH@Z)(Dialog* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -159,6 +187,10 @@ ORIGINAL: 0x00609A50
 // spans     0x00609A50-0x00609AE6
 // prototype int (__thiscall ?get_selected_id@Dialog@@QAEHXZ)(Dialog* this)
 // callers   15   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644F3A
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Selected item ID, or zero when the list head is null
 Status: Complete
 */
@@ -199,6 +231,10 @@ ORIGINAL: 0x00609B50
 // spans     0x00609B50-0x00609BEA
 // prototype int (__thiscall ?pos_to_id@Dialog@@QAEHH@Z)(Dialog* this, int)
 // callers   7   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644F3A
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Item ID at the requested position, or zero when the list head is null
 Status: Complete
 */
@@ -277,6 +313,9 @@ ORIGINAL: 0x00609D20
 // spans     0x00609D20-0x00609D50
 // prototype 
 // callers   5   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -331,6 +370,9 @@ ORIGINAL: 0x00608E10
 // spans     0x00608E10-0x00608F41;0x00662EC0-0x00662EEE
 // prototype void (__thiscall ??1Dialog@@QAE@XZ)(Dialog* this)
 // callers   116   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00402970 0x005D45B0 0x00608F50
 Return Value: n/a (the original leaves Heap::shutdown's EAX residue; the
               scalar deleting destructor overwrites it and the 116 direct
               callers ignore it, so void is faithful)
@@ -385,6 +427,9 @@ ORIGINAL: 0x00609D90
 // spans     0x00609D90-0x00609DAE
 // prototype void* (__thiscall ??_GDialog@@UAEPAXI@Z)(Dialog* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00608E10 0x0064557F
 Return Value: the object
 Status: Complete
 */

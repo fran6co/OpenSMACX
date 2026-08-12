@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00429180 FILE
+// name      ?exec@Datalink@@QAEXIH@Z
+// size      380 bytes
+// spans     0x00429180-0x004292FC
+// prototype void (__thiscall ?exec@Datalink@@QAEXIH@Z)(Datalink* this, DatalinkID datalinkID, int)
+// callers   18   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0042A2C0 0x0045D380 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD40 0x00609FA0 0x006292D0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00429180
-// name           ?exec@Datalink@@QAEXIH@Z
-// size           380 bytes
 // measured tier  NO_COMPILE
 // refusal        u00429180.cpp(216) : error C2079: 'buffer_' uses undefined class 'Buffer' u00429180.cpp(417) : error C2079: 'buffer_' uses undefined class 'Buffer' u00429180.cp
 //

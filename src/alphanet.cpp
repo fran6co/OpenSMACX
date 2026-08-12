@@ -19,6 +19,10 @@ ORIGINAL: 0x004E25E0
 // spans     0x004E25E0-0x004E2607
 // prototype int (__thiscall ?pid_2_idx@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)
 // callers   20   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Player index (1-7); process ID not found (0)
 Status: Complete
 */
@@ -42,6 +46,10 @@ ORIGINAL: 0x004E2610
 // spans     0x004E2610-0x004E2653
 // prototype int (__thiscall ?pid_2_who@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Player identity; process ID not found (0)
 Status: Complete
 */
@@ -67,6 +75,10 @@ ORIGINAL: 0x004E2660
 // spans     0x004E2660-0x004E26A8
 // prototype int (__thiscall ?who_2_pid@AlphaNet@@QAEHH@Z)(AlphaNet* this, int)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Process ID; player identity not found (0)
 Status: Complete
 */
@@ -92,6 +104,10 @@ ORIGINAL: 0x004E26B0
 // spans     0x004E26B0-0x004E26DC
 // prototype void (__thiscall ?who_2_idx@AlphaNet@@QAEXH@Z)(AlphaNet* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Player index (1-7); player identity not found (0)
 Status: Complete
 */
@@ -137,6 +153,9 @@ ORIGINAL: 0x004E25B0
 // spans     0x004E25B0-0x004E25D8
 // prototype void (__thiscall ?close@AlphaNet@@QAEXXZ)(AlphaNet* this)
 // callers   14   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete with a temporary dependency on the network close
 */
 void AlphaNet::close() {
@@ -164,6 +183,9 @@ ORIGINAL: 0x00401CE0
 // spans     0x00401CE0-0x00401D79
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 extern "C" __declspec(naked) int __cdecl fn_00401ce0() {

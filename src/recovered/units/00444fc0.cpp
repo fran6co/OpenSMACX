@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00444FC0 FILE
+// name      ??0DiploWin@@QAE@XZ
+// size      274 bytes
+// spans     0x00444FC0-0x0044507B;0x006549F0-0x00654A47
+// prototype void (__thiscall ??0DiploWin@@QAE@XZ)(DiploWin* this)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005FA860 0x00609DB0 0x00614E50 0x00629110 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00444FC0
-// name           ??0DiploWin@@QAE@XZ
-// size           274 bytes
 // measured tier  NO_COMPILE
 // refusal        u00444fc0.cpp(148) : error C2079: 'spot_' uses undefined class 'Spot' u00444fc0.cpp(538) : warning C4291: 'void *__cdecl operator new(unsigned int,void *)' : no
 //

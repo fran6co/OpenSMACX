@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005BFB10 BYTE_EXACT FILE
+// name      ?X_pop_ask@@YAHPBDHP6AHXZH@Z
+// size      36 bytes
+// spans     0x005BFB10-0x005BFB34
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005BFBC0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005BFB10
-// name           ?X_pop_ask@@YAHPBDHP6AHXZH@Z
-// size           36 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

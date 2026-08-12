@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005EC780 FILE
+// name      ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z
+// size      60 bytes
+// spans     0x005EC780-0x005EC7BC
+// prototype int (__thiscall ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z)(Win* this, HCURSOR* phCursor)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F1820
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005EC780
-// name           ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z
-// size           60 bytes
 // measured tier  NO_COMPILE
 // refusal        u005ec780.cpp(7) : error C2065: 'Win' : undeclared identifier u005ec780.cpp(7) : error C2059: syntax error : ',' u005ec780.cpp(9) : error C2653: 'Win' : is not 
 //

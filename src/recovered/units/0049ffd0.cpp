@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0049FFD0 FILE
+// name      ?start_attack@ReportWin@@QAEXHHHH@Z
+// size      289 bytes
+// spans     0x0049FFD0-0x004A00F1
+// prototype void (__thiscall ?start_attack@ReportWin@@QAEXHHHH@Z)(ReportWin* this, int, int, int, int)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0049FE40 0x005D7670 0x005DFF00 0x00616260 0x00616650 0x006458C8
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0049FFD0
-// name           ?start_attack@ReportWin@@QAEXHHHH@Z
-// size           289 bytes
 // measured tier  NO_COMPILE
 // refusal        u0049ffd0.cpp(215) : error C2664: 'init' : cannot convert parameter 1 from 'void (__cdecl *)(int)' to 'int' This conversion requires a reinterpret_cast, a C-sty
 //

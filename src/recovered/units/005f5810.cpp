@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F5810 FILE
+// name      ?on_nc_paint@Win@@QAEXPAURECT@@H@Z
+// size      698 bytes
+// spans     0x005F5810-0x005F5ACA
+// prototype void (__thiscall ?on_nc_paint@Win@@QAEXPAURECT@@H@Z)(Win* this, RECT* rect, int)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005D84C0 0x005ED240 0x005F7E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F5810
-// name           ?on_nc_paint@Win@@QAEXPAURECT@@H@Z
-// size           698 bytes
 // measured tier  MISMATCH
 // divergence     28
 //

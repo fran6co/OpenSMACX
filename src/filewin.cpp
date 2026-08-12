@@ -26,6 +26,9 @@ ORIGINAL: 0x00614B80 BYTE_EXACT
 // spans     0x00614B80-0x00614B81
 // prototype void (__thiscall ?UNK6@FileWin@@QAEXXZ)(FileWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -44,6 +47,9 @@ ORIGINAL: 0x00614350 BYTE_EXACT
 // spans     0x00614350-0x00614353
 // prototype void (__thiscall ?UNK2@FileWin@@QAEXH@Z)(FileWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -63,6 +69,9 @@ ORIGINAL: 0x00614320 BYTE_EXACT
 // spans     0x00614320-0x00614341
 // prototype void (__thiscall ?UNK1@FileWin@@QAEXXZ)(FileWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -85,6 +94,9 @@ ORIGINAL: 0x00614C40 BYTE_EXACT
 // spans     0x00614C40-0x00614C48
 // prototype void (__thiscall ?on_double_clicked@FileWin@@QAEXH@Z)(FileWin* this, int)
 // callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006146A0
 Status: Complete
 */
 void FileWin::on_double_clicked(int a1) {

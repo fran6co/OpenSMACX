@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0044B200 FILE
+// name      ??0FameWin@@QAE@XZ
+// size      385 bytes
+// spans     0x0044B200-0x0044B2F3;0x00654E00-0x00654E8E
+// prototype void (__thiscall ??0FameWin@@QAE@XZ)(FameWin* this)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005D7210 0x005FA860 0x00607CF0 0x0062B7C0 0x006456E4 0x006457C2
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0044B200
-// name           ??0FameWin@@QAE@XZ
-// size           385 bytes
 // measured tier  NO_COMPILE
 // refusal        u0044b200.cpp(209) : error C2079: 'buffer_' uses undefined class 'Buffer' u0044b200.cpp(750) : warning C4291: 'void *__cdecl operator new(unsigned int,void *)' 
 //

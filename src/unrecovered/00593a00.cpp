@@ -1,10 +1,13 @@
 // ORIGINAL: 0x00593A00 FILE
-// placeholder - not yet decompiled
 // name      ?supply_options@@YAHHH@Z
 // size      4374 bytes
 // spans     0x00593A00-0x005947BF;0x00660BF0-0x00660F47
 // prototype int (__cdecl ?supply_options@@YAHHH@Z)(int vehID, int baseID)
 // callers   2   call targets   37
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x004066C0 0x00406820 0x00406880 0x00406910 0x0047A890 0x004E4430 0x0050E5C0 0x00531300 0x00592E10 0x00593250 0x005BECA0 0x005C0B00 0x005C1850 0x005D45B0 0x005D4DD0 0x005E2480 0x005E3820 0x005E3890 0x005FA870 0x005FD570 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x00625880 0x00625E30 0x00625E50 0x00625EC0 0x00644F3A 0x00645550
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00593A00
 
 // BODY GOES HERE.

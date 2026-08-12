@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005ADBF0 FILE
+// name      ?show_replay@@YAXXZ
+// size      951 bytes
+// spans     0x005ADBF0-0x005ADE7B;0x004210D0-0x004210E7;0x00662240-0x00662355
+// prototype 
+// callers   4   call targets   23
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00420F90 0x004626E0 0x00462870 0x00470F70 0x005A94F0 0x005A9760 0x005AD720 0x005D4CF0 0x005D4DD0 0x005D4E40 0x005D7410 0x005FCBB0 0x005FD120 0x00607040 0x00607CF0 0x00607DA0 0x006161D0 0x00616200 0x00618EE0 0x006252B0 0x00644EF2 0x00645550 0x006456E4
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005ADBF0
-// name           ?show_replay@@YAXXZ
-// size           951 bytes
 // measured tier  SHARED_TAIL
 // refusal        1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 //

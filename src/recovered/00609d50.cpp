@@ -4,6 +4,9 @@
 // spans     0x00609D50-0x00609D8C
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x00609D50  ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z  ->  ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

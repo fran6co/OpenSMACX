@@ -4,6 +4,9 @@
 // spans     0x00421B20-0x00421B37
 // prototype void (__thiscall ?pulse_timer@BattleWin@@QAEXXZ)(BattleWin* this)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006164D0
 // 0x00421B20  ?pulse_timer@BattleWin@@QAEXXZ  ->  ?pulse_timer@BattleWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

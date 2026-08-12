@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0042C2E0 FILE
+// name      ?draw_concept@Datalink@@QAEXXZ
+// size      1071 bytes
+// spans     0x0042C2E0-0x0042C64D;0x0065358E-0x00653650
+// prototype void (__thiscall ?draw_concept@Datalink@@QAEXXZ)(Datalink* this)
+// callers   1   call targets   25
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406880 0x00406910 0x005D45B0 0x005D4DD0 0x005D5930 0x005DAC70 0x005DACB0 0x005DD130 0x005E3820 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608980 0x00608E10 0x00629490 0x00629780 0x006453E0 0x00645470 0x00645550 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0042C2E0
-// name           ?draw_concept@Datalink@@QAEXXZ
-// size           1071 bytes
 // measured tier  NO_COMPILE
 // refusal        u0042c2e0.cpp(206) : error C2065: 'strcat' : undeclared identifier u0042c2e0.cpp(212) : error C2065: 'strlen' : undeclared identifier
 //

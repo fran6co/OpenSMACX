@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F63C0 FILE
+// name      ?on_l_button_down@Win@@QAEXJHHIH@Z
+// size      398 bytes
+// spans     0x005F63C0-0x005F654E
+// prototype void (__thiscall ?on_l_button_down@Win@@QAEXJHHIH@Z)(Win* this, int, int xCoord, int yCoord, unsigned int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EE750 0x005F5020 0x005F52E0 0x005FAB00
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F63C0
-// name           ?on_l_button_down@Win@@QAEXJHHIH@Z
-// size           398 bytes
 // measured tier  NO_COMPILE
 // refusal        u005f63c0.cpp(141) : error C2079: 'spot_' uses undefined class 'Spot'
 //

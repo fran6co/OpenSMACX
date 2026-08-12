@@ -4,6 +4,9 @@
 // spans     0x0051DDF0-0x0051DE26
 // prototype void* (__thiscall ??_GConsole@@UAEPAXI@Z)(Console* this, unsigned int)
 // callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0051D9F0 0x005D4DD0 0x0064557F
 // 0x0051DDF0  ??_GConsole@@UAEPAXI@Z  ->  ??_GConsole@@UAEPAXI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0042C650 FILE
+// name      ?draw_adv_concept@Datalink@@QAEXXZ
+// size      1074 bytes
+// spans     0x0042C650-0x0042C9C0;0x00653650-0x00653712
+// prototype void (__thiscall ?draw_adv_concept@Datalink@@QAEXXZ)(Datalink* this)
+// callers   1   call targets   25
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406880 0x00406910 0x005D45B0 0x005D4DD0 0x005D5930 0x005DAC70 0x005DACB0 0x005DD130 0x005E3820 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608980 0x00608E10 0x00629490 0x00629780 0x006453E0 0x00645470 0x00645550 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0042C650
-// name           ?draw_adv_concept@Datalink@@QAEXXZ
-// size           1074 bytes
 // measured tier  NO_COMPILE
 // refusal        u0042c650.cpp(45) : error C2059: syntax error : ';' u0042c650.cpp(47) : error C2143: syntax error : missing ';' before 'this' u0042c650.cpp(47) : error C2143: s
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041B790 FILE
+// name      ?base_editor_fac@BaseWin@@QAEXXZ
+// size      1262 bytes
+// spans     0x0041B790-0x0041BBBC;0x0065249C-0x0065255E
+// prototype void (__thiscall ?base_editor_fac@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00406380 0x00406820 0x00406880 0x00406AF0 0x00421670 0x004E48B0 0x0050BA00 0x005BA0E0 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x006017A0 0x00601820 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00612A70 0x006169A0 0x00625EC0 0x00645470 0x00645550
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041B790
-// name           ?base_editor_fac@BaseWin@@QAEXXZ
-// size           1262 bytes
 // measured tier  NO_COMPILE
 // refusal        u0041b790.cpp(152) : error C2079: 'spot_' uses undefined class 'Spot' u0041b790.cpp(241) : error C2079: 'heap_' uses undefined class 'Heap' u0041b790.cpp(891) :
 //

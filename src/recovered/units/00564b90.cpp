@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00564B90 FILE
+// name      ?assemble_passengers@@YAXHHH@Z
+// size      512 bytes
+// spans     0x00564B90-0x00564D90
+// prototype void (__cdecl ?assemble_passengers@@YAXHHH@Z)(int baseID, int, int)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0053A780 0x00579A30 0x005B9580 0x005BFE90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00564B90
-// name           ?assemble_passengers@@YAXHHH@Z
-// size           512 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

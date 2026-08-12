@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00470420 FILE
+// name      ?compute_lighting_table@MapWin@@QAEXXZ
+// size      278 bytes
+// spans     0x00470420-0x00470536
+// prototype void (__thiscall ?compute_lighting_table@MapWin@@QAEXXZ)(MapWin* this)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006290E0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00470420
-// name           ?compute_lighting_table@MapWin@@QAEXXZ
-// size           278 bytes
 // measured tier  MISMATCH
 // divergence     18
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0042A2C0 FILE
+// name      ?set_cat@Datalink@@QAEXIH@Z
+// size      492 bytes
+// spans     0x0042A2C0-0x0042A4AC
+// prototype void (__thiscall ?set_cat@Datalink@@QAEXIH@Z)(Datalink* this, DatalinkID, int)
+// callers   6   call targets   20
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0042A4F0 0x0042A630 0x0042A790 0x0042A900 0x0042AA60 0x0042ABC0 0x0042AD20 0x0042AE80 0x0042AFE0 0x0042B190 0x0042B300 0x0042B490 0x0042B630 0x0042B7E0 0x0042B940 0x0042BAB0 0x00496BB0 0x006087A0 0x0060C9B0 0x0062B870
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0042A2C0
-// name           ?set_cat@Datalink@@QAEXIH@Z
-// size           492 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

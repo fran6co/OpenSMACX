@@ -1,10 +1,13 @@
 // ORIGINAL: 0x0048C650 FILE
-// placeholder - not yet decompiled
 // name      ?popb@@YAHPBDHHPBDPAUSprite@@@Z
 // size      2572 bytes
 // spans     0x0048C650-0x0048CEA2;0x00658411-0x006585CB
 // prototype 
 // callers   7   call targets   32
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406820 0x00406880 0x00406910 0x00446A00 0x00446AD0 0x004CA7F0 0x0050BA00 0x005108A0 0x0059E5D0 0x005D45B0 0x005D4DD0 0x005E2480 0x005E3820 0x005E3890 0x005FA870 0x00600F00 0x006019F0 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x006108E0 0x00612A70 0x006169A0 0x00625EC0 0x00645460 0x00645550
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x0048C650
 
 // BODY GOES HERE.

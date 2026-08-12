@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004042C0 BYTE_EXACT FILE
+// name      ??1MCIVideo@@QAE@XZ
+// size      94 bytes
+// spans     0x004042C0-0x00404309;0x006506F0-0x00650705
+// prototype void (__thiscall ??1MCIVideo@@QAE@XZ)(MCIVideo* this)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FE2E0 0x005FFDB0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004042C0
-// name           ??1MCIVideo@@QAE@XZ
-// size           94 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

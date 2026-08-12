@@ -42,6 +42,9 @@ ORIGINAL: 0x005591A0
 // spans     0x005591A0-0x005591BA
 // prototype 
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9C40
 Return Value: n/a
 Status: Complete
 */
@@ -57,6 +60,9 @@ ORIGINAL: 0x0057CE50
 // spans     0x0057CE50-0x0057CF9E
 // prototype int (__cdecl ?valid_tech_leap@@YAHHH@Z)(int techID, int factionID)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057F0B0 0x005B9F20
 Return Value: Is a tech leap possible? true/false
 Status: Complete
 */
@@ -99,6 +105,9 @@ ORIGINAL: 0x005B9C40
 // spans     0x005B9C40-0x005B9EF0
 // prototype void (__cdecl ?say_tech@@YAXPADHH@Z)(int8* output, int techID, int categoryLvl)
 // callers   30   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F90 0x006169A0 0x00645470 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -138,6 +147,9 @@ ORIGINAL: 0x005B9EF0 BYTE_EXACT
 // spans     0x005B9EF0-0x005B9F16
 // prototype int8* (__cdecl ?tech_name@@YAPADHH@Z)(int techID, BOOL categoryLvl)
 // callers   9   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9C40
 Return Value: Pointer to TechName
 Status: Complete
 */
@@ -155,6 +167,9 @@ ORIGINAL: 0x005B9F20
 // spans     0x005B9F20-0x005B9F89
 // prototype bool (__cdecl ?has_tech@@YA_NHH@Z)(int techID, int factionID)
 // callers   109   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Faction has tech? true/false
 Status: Complete
 */
@@ -183,6 +198,9 @@ ORIGINAL: 0x005B9F90
 // spans     0x005B9F90-0x005B9FE0
 // prototype int (__cdecl ?tech_recurse@@YAHHH@Z)(int techID, int ret)
 // callers   7   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9F90
 Return Value: Level
 Status: Complete
 */
@@ -204,6 +222,9 @@ ORIGINAL: 0x005B9FE0
 // spans     0x005B9FE0-0x005BA02C
 // prototype int (__cdecl ?tech_category@@YAHH@Z)(int techID)
 // callers   6   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Tech category id: growth (0), tech (1), wealth (2) or power (3).
 Status: Complete
 */
@@ -230,6 +251,9 @@ ORIGINAL: 0x005BAC20
 // spans     0x005BAC20-0x005BADBF
 // prototype int (__cdecl ?tech_avail@@YAHHH@Z)(int techID, int factionID)
 // callers   6   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is tech available to faction? true/false
 Status: Complete
 */
@@ -256,6 +280,9 @@ ORIGINAL: 0x005BAE60
 // spans     0x005BAE60-0x005BAFFB
 // prototype void (__cdecl ?tech_effects@@YAXH@Z)(int factionID)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -320,6 +347,9 @@ ORIGINAL: 0x005BCB60
 // spans     0x005BCB60-0x005BCBDB
 // prototype int (__cdecl ?tech_is_preq@@YAHHHH@Z)(int preqTechID, int parentTechID, unsigned int range)
 // callers   3   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BCB60
 Return Value: Is preqTechID prerequisite of parentTechID? true/false
 Status: Complete
 */
@@ -347,6 +377,9 @@ ORIGINAL: 0x005BCBE0
 // spans     0x005BCBE0-0x005BDC05
 // prototype int (__cdecl ?tech_val@@YAHHHH@Z)(int techID, int factionID, BOOL simpleCalc)
 // callers   14   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA30 0x00539E40 0x0055BC80 0x005B9F90 0x005BCB60
 Return Value: Value of techID to the specified faction
 Status: Complete
 */
@@ -588,6 +621,9 @@ ORIGINAL: 0x005BDC10
 // spans     0x005BDC10-0x005BDD64
 // prototype int (__cdecl ?tech_ai@@YAHH@Z)(int factionID)
 // callers   3   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F90 0x005BAC20 0x005BCBE0 0x00625810 0x0064601D
 Return Value: techID or -1
 Status: Complete
 */
@@ -627,6 +663,9 @@ ORIGINAL: 0x005BDD70
 // spans     0x005BDD70-0x005BDD8E
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: power_value or 0 if tech_id is greater than max
 Status: Complete
 */
@@ -643,6 +682,9 @@ ORIGINAL: 0x005BDD90
 // spans     0x005BDD90-0x005BDDB1
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: tech_value or 1 if tech_id is greater than max
 Status: Complete
 */
@@ -658,6 +700,9 @@ ORIGINAL: 0x005BDDC0
 // spans     0x005BDDC0-0x005BDDE1
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: wealth_value or 1 if tech_id is greater than max
 Status: Complete
 */
@@ -673,6 +718,9 @@ ORIGINAL: 0x005BDDF0
 // spans     0x005BDDF0-0x005BDE11
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: growth_value or 1 if tech_id is greater than max
 Status: Complete
 */
@@ -688,6 +736,9 @@ ORIGINAL: 0x005BE6B0
 // spans     0x005BE6B0-0x005BE931
 // prototype int (__cdecl ?tech_rate@@YAHH@Z)(int factionID)
 // callers   6   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: tech rate/cost
 Status: Complete
 */

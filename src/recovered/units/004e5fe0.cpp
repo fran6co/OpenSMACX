@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004E5FE0 FILE
+// name      ?base_reset@@YAXHH@Z
+// size      795 bytes
+// spans     0x004E5FE0-0x004E62FB
+// prototype void (__cdecl ?base_reset@@YAXHH@Z)(int baseID, int)
+// callers   12   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0044CB60 0x0048C0A0 0x004E5A60 0x004F81A0 0x00625E50 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004E5FE0
-// name           ?base_reset@@YAXHH@Z
-// size           795 bytes
 // measured tier  MISMATCH
 // divergence     8
 //

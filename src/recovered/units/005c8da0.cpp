@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C8DA0 FILE
+// name      ??0Gamma@@QAE@XZ
+// size      280 bytes
+// spans     0x005C8DA0-0x005C8E60;0x00662A70-0x00662AC8
+// prototype void (__thiscall ??0Gamma@@QAE@XZ)(Gamma* this)
+// callers   2   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005FE2A0 0x006051D0 0x00614E50 0x00618EA0 0x0062BF20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C8DA0
-// name           ??0Gamma@@QAE@XZ
-// size           280 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

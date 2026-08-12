@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048BC60 FILE
+// name      ?init@PlanWin@@QAEXPAD@Z
+// size      101 bytes
+// spans     0x0048BC60-0x0048BCC5
+// prototype void (__thiscall ?init@PlanWin@@QAEXPAD@Z)(PlanWin* this, int8*)
+// callers   3   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00462870 0x00470A90 0x005D7670
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048BC60
-// name           ?init@PlanWin@@QAEXPAD@Z
-// size           101 bytes
 // measured tier  MISMATCH
 // divergence     18
 //

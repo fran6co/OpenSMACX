@@ -26,6 +26,9 @@ ORIGINAL: 0x0063B930 BYTE_EXACT
 // spans     0x0063B930-0x0063B931
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -57,6 +60,9 @@ ORIGINAL: 0x0063B2D0
 // spans     0x0063B2D0-0x0063B2E0
 // prototype Cursor* (__thiscall ??0Cursor@@QAE@XZ)(Cursor* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: this
 Status: Complete
 */

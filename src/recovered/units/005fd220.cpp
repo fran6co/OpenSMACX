@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FD220 BYTE_EXACT FILE
+// name      ?flush_mouse@@YAXXZ
+// size      90 bytes
+// spans     0x005FD220-0x005FD27A
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062D5D0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FD220
-// name           ?flush_mouse@@YAXXZ
-// size           90 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

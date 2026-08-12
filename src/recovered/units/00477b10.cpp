@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00477B10 FILE
+// name      ??1MonuWin@@QAE@XZ
+// size      599 bytes
+// spans     0x00477B10-0x00477C79;0x00655F90-0x0065607E
+// prototype void (__thiscall ??1MonuWin@@QAE@XZ)(MonuWin* this)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4DD0 0x005D7410 0x005E3820 0x005FA870 0x00607040 0x00607DA0 0x006456E4
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00477B10
-// name           ??1MonuWin@@QAE@XZ
-// size           599 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

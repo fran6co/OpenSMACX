@@ -30,6 +30,9 @@ ORIGINAL: 0x00442A00 BYTE_EXACT
 // spans     0x00442A00-0x00442A01
 // prototype void (__thiscall ?UNK5@DiploWin@@QAEXXZ)(DiploWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -48,6 +51,9 @@ ORIGINAL: 0x004429F0 BYTE_EXACT
 // spans     0x004429F0-0x004429F3
 // prototype void (__thiscall ?UNK4@DiploWin@@QAEXH@Z)(DiploWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -66,6 +72,9 @@ ORIGINAL: 0x00443D80 BYTE_EXACT
 // spans     0x00443D80-0x00443D83
 // prototype void (__thiscall ?on_iface_left_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -84,6 +93,9 @@ ORIGINAL: 0x00443D90 BYTE_EXACT
 // spans     0x00443D90-0x00443D93
 // prototype void (__thiscall ?on_iface_left_up@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -102,6 +114,9 @@ ORIGINAL: 0x00443DA0 BYTE_EXACT
 // spans     0x00443DA0-0x00443DA3
 // prototype void (__thiscall ?on_iface_right_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -120,6 +135,9 @@ ORIGINAL: 0x00443DB0 BYTE_EXACT
 // spans     0x00443DB0-0x00443DB3
 // prototype void (__thiscall ?on_iface_left_down@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -138,6 +156,9 @@ ORIGINAL: 0x00443DC0 BYTE_EXACT
 // spans     0x00443DC0-0x00443DC3
 // prototype void (__thiscall ?on_iface_right_down@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -156,6 +177,9 @@ ORIGINAL: 0x00443DD0 BYTE_EXACT
 // spans     0x00443DD0-0x00443DD3
 // prototype void (__thiscall ?on_iface_mouse_move@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -174,6 +198,9 @@ ORIGINAL: 0x00443DE0 BYTE_EXACT
 // spans     0x00443DE0-0x00443DE3
 // prototype void (__thiscall ?on_iface_mouse_leave@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -192,6 +219,9 @@ ORIGINAL: 0x00443DF0 BYTE_EXACT
 // spans     0x00443DF0-0x00443DF3
 // prototype void (__thiscall ?on_iface_selected@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -210,6 +240,9 @@ ORIGINAL: 0x00443E00 BYTE_EXACT
 // spans     0x00443E00-0x00443E03
 // prototype void (__thiscall ?on_iface_left_double_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -228,6 +261,9 @@ ORIGINAL: 0x00443E10 BYTE_EXACT
 // spans     0x00443E10-0x00443E13
 // prototype void (__thiscall ?on_iface_right_double_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -246,6 +282,9 @@ ORIGINAL: 0x00443E20 BYTE_EXACT
 // spans     0x00443E20-0x00443E23
 // prototype void (__thiscall ?on_iface_button_clicked@DiploWin@@QAEXH@Z)(DiploWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -264,6 +303,9 @@ ORIGINAL: 0x00443E30 BYTE_EXACT
 // spans     0x00443E30-0x00443E33
 // prototype void (__thiscall ?on_iface_button_toggled@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -282,6 +324,9 @@ ORIGINAL: 0x00443E40 BYTE_EXACT
 // spans     0x00443E40-0x00443E45
 // prototype int (__thiscall ?on_iface_dialog_back_draw@DiploWin@@QAEHH@Z)(DiploWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -301,6 +346,9 @@ ORIGINAL: 0x004413B0
 // spans     0x004413B0-0x004413BE
 // prototype void (__thiscall ?UNK2@DiploWin@@QAEXXZ)(DiploWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -335,6 +383,9 @@ ORIGINAL: 0x004413C0
 // spans     0x004413C0-0x004413E2
 // prototype void (__thiscall ?UNK3@DiploWin@@QAEXH@Z)(DiploWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -357,6 +408,9 @@ ORIGINAL: 0x00443C30 BYTE_EXACT
 // spans     0x00443C30-0x00443C4B
 // prototype void (__thiscall ?show@DiploWin@@QAEXH@Z)(DiploWin* this, int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D310 0x005F7E90
 Status: Complete
 */
 void DiploWin::show(int a1) {
@@ -372,6 +426,9 @@ ORIGINAL: 0x00443C50 BYTE_EXACT
 // spans     0x00443C50-0x00443C68
 // prototype void (__thiscall ?hide@DiploWin@@QAEXXZ)(DiploWin* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
 Status: Complete
 */
 void DiploWin::hide() {

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00420F90 FILE
+// name      ??1MapWin@@QAE@XZ
+// size      507 bytes
+// spans     0x00420F90-0x004210CB;0x00651190-0x00651250
+// prototype void (__thiscall ??1MapWin@@QAE@XZ)(MapWin* this)
+// callers   6   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462870 0x005D7410 0x00618EE0 0x006252B0 0x006456E4
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00420F90
-// name           ??1MapWin@@QAE@XZ
-// size           507 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

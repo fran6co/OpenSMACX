@@ -29,6 +29,10 @@ ORIGINAL: 0x0062B7C0
 // spans     0x0062B7C0-0x0062B7E4
 // prototype void (__thiscall ??0ButtonGroup@@QAE@XZ)(ButtonGroup* this)
 // callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: this
 Status: Complete
 */
@@ -51,6 +55,10 @@ ORIGINAL: 0x0062B7F0
 // spans     0x0062B7F0-0x0062B810
 // prototype void (__thiscall ?close@ButtonGroup@@QAEXXZ)(ButtonGroup* this)
 // callers   9   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -70,6 +78,10 @@ ORIGINAL: 0x0062B810
 // spans     0x0062B810-0x0062B84C
 // prototype void (__thiscall ?init@ButtonGroup@@QAEXHH@Z)(ButtonGroup* this, int, int)
 // callers   9   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -90,6 +102,10 @@ ORIGINAL: 0x0062B850 BYTE_EXACT
 // spans     0x0062B850-0x0062B86C
 // prototype void (__thiscall ?add@ButtonGroup@@QAEXPAUBaseButton@@@Z)(ButtonGroup* this, BaseButton* button)
 // callers   9   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -130,6 +146,9 @@ ORIGINAL: 0x0062B870
 // spans     0x0062B870-0x0062B89F
 // prototype int (__thiscall ?set@ButtonGroup@@QAEHHH@Z)(ButtonGroup* this, int, int)
 // callers   35   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062B8A0
 Return Value: whatever button_click returns
 Status: Complete
 */

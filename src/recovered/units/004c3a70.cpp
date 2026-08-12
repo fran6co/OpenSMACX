@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C3A70 FILE
+// name      ?UNK1@WorldWin@@QAEXXZ
+// size      57 bytes
+// spans     0x004C3A70-0x004C3AA9
+// prototype void (__thiscall ?UNK1@WorldWin@@QAEXXZ)(WorldWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C3A70
-// name           ?UNK1@WorldWin@@QAEXXZ
-// size           57 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006146A0 FILE
+// name      ?UNK4@FileWin@@QAEXXZ
+// size      1209 bytes
+// spans     0x006146A0-0x00614B59
+// prototype void (__thiscall ?UNK4@FileWin@@QAEXXZ)(FileWin* this)
+// callers   2   call targets   10
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006007B0 0x00614360 0x00625EC0 0x00627260 0x00628AF0 0x006453E0 0x00645470 0x00645660 0x00645DD0 0x006474A0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006146A0
-// name           ?UNK4@FileWin@@QAEXXZ
-// size           1209 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

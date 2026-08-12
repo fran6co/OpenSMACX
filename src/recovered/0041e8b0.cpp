@@ -4,6 +4,9 @@
 // spans     0x0041E8B0-0x0041E8C9
 // prototype void (__thiscall ?hide@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D380 0x005F7E90
 // 0x0041E8B0  ?hide@BaseWin@@QAEXXZ  ->  ?hide@BaseWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

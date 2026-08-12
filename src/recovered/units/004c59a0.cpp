@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C59A0 BYTE_EXACT FILE
+// name      ?create_device@Wave_In_Device@@QAEHK@Z
+// size      55 bytes
+// spans     0x004C59A0-0x004C59D7
+// prototype int (__thiscall ?create_device@Wave_In_Device@@QAEHK@Z)(Wave_In_Device* this, unsigned int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C59A0
-// name           ?create_device@Wave_In_Device@@QAEHK@Z
-// size           55 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

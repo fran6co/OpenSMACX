@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004CE210 FILE
+// name      ?action_tectonic@@YAXHHH@Z
+// size      1169 bytes
+// spans     0x004CE210-0x004CE6A1
+// prototype void (__cdecl ?action_tectonic@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
+// callers   3   call targets   13
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00446960 0x0046B190 0x0048C0A0 0x004CDAF0 0x004E3B80 0x004E3EF0 0x005108A0 0x005B8E10 0x005BFE90 0x005C0B00 0x005C2380 0x005C5A30 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004CE210
-// name           ?action_tectonic@@YAXHHH@Z
-// size           1169 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

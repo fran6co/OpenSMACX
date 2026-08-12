@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005FBDB0 FILE
+// name      ?mouse_move@Menu@@QAEXHH@Z
+// size      333 bytes
+// spans     0x005FBDB0-0x005FBEFD
+// prototype void (__thiscall ?mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)
+// callers   3   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC790 0x005F9170 0x005FAB00
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005FBDB0
-// name           ?mouse_move@Menu@@QAEXHH@Z
-// size           333 bytes
 // measured tier  MISMATCH
 // divergence     56
 //

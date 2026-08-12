@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004457E0 FILE
+// name      ?load_music@@YAXH@Z
+// size      1062 bytes
+// spans     0x004457E0-0x00445BA4;0x00654CF0-0x00654D52
+// prototype 
+// callers   2   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004471F0 0x004C8460 0x00645470 0x0064557F 0x0064558A 0x0064FD20
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004457E0
-// name           ?load_music@@YAXH@Z
-// size           1062 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

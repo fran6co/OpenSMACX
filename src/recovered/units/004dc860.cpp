@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004DC860 FILE
+// name      ?editor_scen_victory@Console@@QAEXXZ
+// size      1324 bytes
+// spans     0x004DC860-0x004DCCB4;0x0065B5CC-0x0065B6A4
+// prototype void (__thiscall ?editor_scen_victory@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   22
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406820 0x00406880 0x00406AF0 0x00406E60 0x005ABF20 0x005BF3F0 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00612A70 0x006169A0 0x00645550
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004DC860
-// name           ?editor_scen_victory@Console@@QAEXXZ
-// size           1324 bytes
 // measured tier  NO_COMPILE
 // refusal        u004dc860.cpp(152) : error C2079: 'spot_' uses undefined class 'Spot' u004dc860.cpp(241) : error C2079: 'heap_' uses undefined class 'Heap' u004dc860.cpp(794) :
 //

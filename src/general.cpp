@@ -36,6 +36,9 @@ ORIGINAL: 0x00600780
 // spans     0x00600780-0x006007AD
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006453E0
 Return Value: n/a
 Status: Complete
 */
@@ -55,6 +58,9 @@ ORIGINAL: 0x00600760
 // spans     0x00600760-0x00600773
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -74,6 +80,9 @@ ORIGINAL: 0x006007B0
 // spans     0x006007B0-0x00600817
 // prototype void (__cdecl ?purge_spaces@@YAXPAD@Z)(int8* input)
 // callers   20   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006453E0 0x00645460
 Return Value: n/a
 Status: Complete
 */
@@ -90,6 +99,9 @@ ORIGINAL: 0x00600820
 // spans     0x00600820-0x00600837
 // prototype void (__cdecl ?kill_lf@@YAXPAD@Z)(int8* input)
 // callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006458A0
 Return Value: n/a
 Status: Complete
 */
@@ -123,6 +135,9 @@ ORIGINAL: 0x00600840
 // spans     0x00600840-0x00600859
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006453E0
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +155,9 @@ ORIGINAL: 0x00422F00 BYTE_EXACT
 // spans     0x00422F00-0x00422F1E
 // prototype int (__cdecl ?range@@YAHHHH@Z)(int input, int min, int max)
 // callers   10   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Bounded input
 Status: Complete
 */
@@ -161,6 +179,9 @@ ORIGINAL: 0x005D4510
 // spans     0x005D4510-0x005D453C
 // prototype void* (__cdecl ?mem_get@@YAPAXH@Z)(size_t size)
 // callers   88   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644DFF 0x006470A6
 Return Value: Pointer to allocated memory
 Status: Complete with two versions of malloc to prevent crash. Incompatibility with newer SDK 
         version of malloc CRT. Revisit once more code is redirected to dll.
@@ -198,6 +219,9 @@ ORIGINAL: 0x00634BB0
 // spans     0x00634BB0-0x00634BD4
 // prototype 
 // callers   18   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006005D0 0x00645646
 Return Value: FILE pointer
 Status: Complete with two versions of fopen to prevent a crash. Incompatibility with newer SDK 
         version of fopen/fopen_s. Revisit once more code is redirected to dll.
@@ -228,6 +252,9 @@ ORIGINAL: 0x005A58E0
 // spans     0x005A58E0-0x005A58F6
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -244,6 +271,9 @@ ORIGINAL: 0x00625E30
 // spans     0x00625E30-0x00625E4D
 // prototype 
 // callers   87   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
@@ -263,6 +293,9 @@ ORIGINAL: 0x00625E50
 // spans     0x00625E50-0x00625EB3
 // prototype int (__cdecl ?parse_say@@YAHHHHH@Z)(int id, int input, int gender, int pluralality)
 // callers   40   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
@@ -290,6 +323,9 @@ ORIGINAL: 0x00625EC0
 // spans     0x00625EC0-0x00625F1A
 // prototype int (__cdecl ?parse_says@@YAHHPADHH@Z)(int nID, int8* input, int gender, int pluralality)
 // callers   199   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00645470
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
@@ -317,6 +353,9 @@ ORIGINAL: 0x006288D0 BYTE_EXACT
 // spans     0x006288D0-0x006288ED
 // prototype int (__cdecl ?btoi@@YAHPAD@Z)(int8* input)
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -336,6 +375,9 @@ ORIGINAL: 0x006288F0
 // spans     0x006288F0-0x0062894B
 // prototype int (__cdecl ?htoi@@YAHPAD@Z)(int8* input)
 // callers   2   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0064628F 0x006469A2 0x006469CA
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -361,6 +403,9 @@ ORIGINAL: 0x00628950
 // spans     0x00628950-0x006289FE
 // prototype int (__cdecl ?stoi@@YAHPAD@Z)(int8* input)
 // callers   2   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645DA7 0x0064628F 0x006469A2 0x006469CA
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -395,6 +440,9 @@ ORIGINAL: 0x00628B30
 // spans     0x00628B30-0x00628B69
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Pointer to the first number, otherwise zero
 Status: Complete
 */
@@ -423,6 +471,9 @@ ORIGINAL: 0x0062D570
 // spans     0x0062D570-0x0062D5A3
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645660
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -446,6 +497,9 @@ ORIGINAL: 0x00625880
 // spans     0x00625880-0x00625DDD
 // prototype int (__cdecl ?parse_string@@YAHPADPAD@Z)(int8* input, int8* output)
 // callers   23   call targets   7
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00628B30 0x006453E0 0x00645470 0x006458F0 0x00645930 0x006468D0 0x0064FC88
 Return Value: No errors (0); Error (3)
 Status: WIP
 */
@@ -711,6 +765,9 @@ ORIGINAL: 0x006003A0
 // spans     0x006003A0-0x006003A8
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: CD drive letter
 Status: Complete
 */
@@ -724,6 +781,9 @@ ORIGINAL: 0x006003B0
 // spans     0x006003B0-0x006003F6
 // prototype 
 // callers   3   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00645470 0x00645DD0
 Return Value: n/a
 Status: Complete
 */
@@ -746,6 +806,9 @@ ORIGINAL: 0x00600400
 // spans     0x00600400-0x006005C5
 // prototype 
 // callers   1   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00601BF0 0x00602600 0x00645470
 Return Value: No errors (0) otherwise error
 Status: WIP
 */
@@ -810,6 +873,9 @@ ORIGINAL: 0x006005D0
 // spans     0x006005D0-0x00600753
 // prototype 
 // callers   7   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645470
 Return Value: File path string or NULL if not found
 Status: Complete
 */
@@ -864,6 +930,9 @@ ORIGINAL: 0x0050BA30
 // spans     0x0050BA30-0x0050BA4E
 // prototype 
 // callers   34   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the number of set bits
 Status: Complete
 */
@@ -891,6 +960,9 @@ ORIGINAL: 0x00628AB0 BYTE_EXACT
 // spans     0x00628AB0-0x00628AC2
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Bit count
 Status: Complete
 */
@@ -901,6 +973,9 @@ ORIGINAL: 0x00628AB0
 // spans     0x00628AB0-0x00628AC2
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Bit count
 Status: Complete
 */
@@ -923,6 +998,9 @@ ORIGINAL: 0x00538FB0
 // spans     0x00538FB0-0x00538FD2
 // prototype int (__cdecl ?my_srand@@YAHH@Z)(int reseed)
 // callers   6   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006262F0 0x00646010
 Return Value: n/a
 Status: Complete with built in version of srand(). Revisit once more code is redirected to dll.
 */
@@ -941,6 +1019,9 @@ ORIGINAL: 0x00628A50 BYTE_EXACT
 // spans     0x00628A50-0x00628A73
 // prototype 
 // callers   14   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -951,6 +1032,9 @@ ORIGINAL: 0x00628A50
 // spans     0x00628A50-0x00628A73
 // prototype 
 // callers   14   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -969,6 +1053,9 @@ ORIGINAL: 0x00628A80 BYTE_EXACT
 // spans     0x00628A80-0x00628AA3
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -979,6 +1066,9 @@ ORIGINAL: 0x00628A80
 // spans     0x00628A80-0x00628AA3
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -997,6 +1087,9 @@ ORIGINAL: 0x00628AD0
 // spans     0x00628AD0-0x00628AEC
 // prototype 
 // callers   7   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Quotient
 Status: Complete
 */
@@ -1017,6 +1110,9 @@ ORIGINAL: 0x00628AF0
 // spans     0x00628AF0-0x00628B23
 // prototype 
 // callers   6   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Position of character or NULL if not found.
 Status: Complete
 */
@@ -1035,6 +1131,9 @@ ORIGINAL: 0x006290E0 BYTE_EXACT
 // spans     0x006290E0-0x00629109
 // prototype 
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Square root
 Status: Complete
 */
@@ -1059,6 +1158,9 @@ ORIGINAL: 0x0050BA00 BYTE_EXACT
 // spans     0x0050BA00-0x0050BA27
 // prototype void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)
 // callers   103   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1075,6 +1177,9 @@ ORIGINAL: 0x00539090
 // spans     0x00539090-0x005390B4
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: the XOR checksum of the buffer, seeded
 Status: Complete
 */
@@ -1099,6 +1204,9 @@ ORIGINAL: 0x005390C0
 // spans     0x005390C0-0x00539157
 // prototype 
 // callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006453E0 0x00645460
 Return Value: Checksum
 Status: Complete
 */
@@ -1126,6 +1234,9 @@ ORIGINAL: 0x00579770
 // spans     0x00579770-0x00579790
 // prototype int (__cdecl ?rnd@@YAHHPAD@Z)(int seed, int8*)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0064601D
 Return Value: Bounded random value
 Status: Complete
 */
@@ -1141,6 +1252,9 @@ ORIGINAL: 0x00538F30
 // spans     0x00538F30-0x00538FAA
 // prototype 
 // callers   3   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048C0A0 0x00625E30 0x00625EC0 0x00626250
 Return Value: n/a
 Status: Complete
 */
@@ -1162,6 +1276,9 @@ ORIGINAL: 0x005ABD10
 // spans     0x005ABD10-0x005ABD1C
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00646950
 Return Value: n/a
 Status: Complete
 */
@@ -1177,6 +1294,9 @@ ORIGINAL: 0x005ABD20
 // spans     0x005ABD20-0x005ABE39
 // prototype 
 // callers   9   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005A94F0 0x00646950 0x006469F7
 Return Value: n/a
 Status: Complete
 */
@@ -1257,6 +1377,9 @@ ORIGINAL: 0x005ABE40
 // spans     0x005ABE40-0x005ABEBF
 // prototype void (__cdecl ?load_undo@@YAXH@Z)(int type)
 // callers   2   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005A9760 0x00645470 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1284,6 +1407,9 @@ ORIGINAL: 0x005ABEC0
 // spans     0x005ABEC0-0x005ABF14
 // prototype 
 // callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00645470 0x00646950 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1303,6 +1429,9 @@ ORIGINAL: 0x005ABF20
 // spans     0x005ABF20-0x005ABFEF
 // prototype 
 // callers   32   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005A94F0 0x006453E0 0x00645460 0x00645470 0x00646950 0x006469F7 0x0064FC88
 Return Value: n/a
 Status: Complete
 */
@@ -1330,6 +1459,9 @@ ORIGINAL: 0x0057D1F0
 // spans     0x0057D1F0-0x0057D235
 // prototype void (__cdecl ?header_check@@YAXPADPAUFILE@@@Z)(int8* header, FILE* file)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00646855
 Return Value: n/a
 Status: Complete
 */
@@ -1357,6 +1489,9 @@ ORIGINAL: 0x0057D240
 // spans     0x0057D240-0x0057D270
 // prototype 
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00646886
 Return Value: n/a
 Status: Complete
 */
@@ -1377,6 +1512,9 @@ ORIGINAL: 0x005B5690
 // spans     0x005B5690-0x005B56F5
 // prototype void (__cdecl ?sort@@YAXHPAHPAH@Z)(int count, int* id, int* value)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00628A50
 Return Value: n/a
 Status: Complete
 */

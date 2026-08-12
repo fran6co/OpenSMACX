@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004C85F0 BYTE_EXACT FILE
+// name      ?unload@Ambience@@QAEXXZ
+// size      44 bytes
+// spans     0x004C85F0-0x004C861C
+// prototype void (__thiscall ?unload@Ambience@@QAEXXZ)(Ambience* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004C85F0
-// name           ?unload@Ambience@@QAEXXZ
-// size           44 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

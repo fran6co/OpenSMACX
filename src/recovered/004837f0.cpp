@@ -4,6 +4,9 @@
 // spans     0x004837F0-0x00483813
 // prototype void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this)
 // callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00608E10 0x0060E740
 // 0x004837F0  ?UNK4@NetWin@@QAEXXZ  ->  ?UNK4@NetWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

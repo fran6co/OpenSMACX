@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005156F0 FILE
+// name      ?toggle_base_grid@Console@@QAEXXZ
+// size      79 bytes
+// spans     0x005156F0-0x0051573F
+// prototype void (__thiscall ?toggle_base_grid@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0059E5D0 0x005FB760 0x005FB7C0
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005156F0
-// name           ?toggle_base_grid@Console@@QAEXXZ
-// size           79 bytes
 // measured tier  NO_COMPILE
 // refusal        u005156f0.cpp(49) : error C2065: 'BOOL' : undeclared identifier u005156f0.cpp(49) : error C2146: syntax error : missing ')' before identifier 'saveFactions' u00
 //

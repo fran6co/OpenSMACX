@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004AD3B0 FILE
+// name      ??1ReportWin@@QAE@XZ
+// size      1191 bytes
+// spans     0x004AD3B0-0x004AD6A9;0x00659140-0x006592EE
+// prototype void (__thiscall ??1ReportWin@@QAE@XZ)(ReportWin* this)
+// callers   1   call targets   14
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00406880 0x005D4DD0 0x005D7410 0x005FA870 0x005FE2E0 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x00616200 0x00629DF0 0x0062B7F0 0x006456E4
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004AD3B0
-// name           ??1ReportWin@@QAE@XZ
-// size           1191 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

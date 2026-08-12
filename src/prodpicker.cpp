@@ -27,6 +27,9 @@ ORIGINAL: 0x00493C10 BYTE_EXACT
 // spans     0x00493C10-0x00493C18
 // prototype int (__thiscall ?UNK1@ProdPicker@@QAEHH@Z)(ProdPicker* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1, always
 Status: Complete
 */
@@ -46,6 +49,9 @@ ORIGINAL: 0x00493E90 BYTE_EXACT
 // spans     0x00493E90-0x00493E93
 // prototype void (__thiscall ?on_mouse_move@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -64,6 +70,9 @@ ORIGINAL: 0x00495160 BYTE_EXACT
 // spans     0x00495160-0x00495163
 // prototype void (__thiscall ?UNK3@ProdPicker@@QAEXH@Z)(ProdPicker* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -83,6 +92,9 @@ ORIGINAL: 0x004926B0
 // spans     0x004926B0-0x004926BF
 // prototype void (__thiscall ?close@ProdPicker@@QAEXXZ)(ProdPicker* this)
 // callers   2   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -103,6 +115,9 @@ ORIGINAL: 0x004945C0 BYTE_EXACT
 // spans     0x004945C0-0x004945C3
 // prototype void (__thiscall ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z)(ProdPicker* this, RECT*, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

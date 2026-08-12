@@ -317,10 +317,32 @@ def load_functions() -> dict:
     keeps the declaration, the decoded signature and the emitted symbol
     agreeing with one another; `functions.csv` is promoted from the canonical
     export and is not a file to hand-edit.
+
+
+    SRC/ IS THE STORE NOW, WITH THE EXPORT AS THE FALLBACK. Every annotation
+    carries its own name, size, spans, prototype, kind, flags and call edges,
+    stamped and gated by `project_catalogue.py --check`, which compares the two
+    row by row: 5,972 rows, ZERO field disagreements. So reading them back is
+    not a second opinion, it is the same data with a different store.
+
+    The export stays as the fallback for one measured reason: 28 catalogue rows
+    are `source_complete` with no annotation anywhere in `src/`, so `src/` alone
+    is 5,972 of 6,000. `--generate-placeholders` refuses to invent a home for
+    them - the catalogue says they are implemented, and a placeholder would be a
+    false claim about state - so those 28 need a human, and until they have one
+    the CSV cannot be deleted without losing them.
     """
-    with FUNCTIONS_CSV.open() as handle:
-        rows = {int(r["address"], 16): r for r in csv.DictReader(handle)}
-    return catalogue_corrections.apply(rows)
+    import project_catalogue
+
+    rows = project_catalogue.from_source()
+    if FUNCTIONS_CSV.is_file():
+        with FUNCTIONS_CSV.open() as handle:
+            for row in csv.DictReader(handle):
+                address = int(row["address"], 16)
+                if address not in rows:
+                    rows[address] = row
+        return catalogue_corrections.apply(rows)
+    return rows
 
 
 def load_derived() -> dict:

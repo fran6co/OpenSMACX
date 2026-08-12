@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004ACBD0 FILE
+// name      ?report_intel@@YAXH@Z
+// size      89 bytes
+// spans     0x004ACBD0-0x004ACC29
+// prototype 
+// callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004A3950
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004ACBD0
-// name           ?report_intel@@YAXH@Z
-// size           89 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

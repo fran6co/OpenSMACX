@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004698D0 FILE
+// name      ?draw_wars@MapWin@@QAEXXZ
+// size      610 bytes
+// spans     0x004698D0-0x00469B32
+// prototype void (__thiscall ?draw_wars@MapWin@@QAEXXZ)(MapWin* this)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005DAC70 0x005DACB0 0x005DCEA0 0x00619280 0x006453E0 0x00645470
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004698D0
-// name           ?draw_wars@MapWin@@QAEXXZ
-// size           610 bytes
 // measured tier  NO_COMPILE
 // refusal        u004698d0.cpp(191) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

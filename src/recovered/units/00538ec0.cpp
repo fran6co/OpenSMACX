@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00538EC0 FILE
+// name      ??1JackalVoiceRx@@QAE@XZ
+// size      110 bytes
+// spans     0x00538EC0-0x00538F2E
+// prototype void (__thiscall ??1JackalVoiceRx@@QAE@XZ)(JackalVoiceRx* this)
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00538EC0
-// name           ??1JackalVoiceRx@@QAE@XZ
-// size           110 bytes
 // measured tier  MISMATCH
 // divergence     9
 //

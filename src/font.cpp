@@ -31,6 +31,9 @@ ORIGINAL: 0x00618F40
 // spans     0x00618F40-0x006190C6
 // prototype int (__thiscall ?init@Font@@QAEHPADHH@Z)(Font* this, int8* fontName, int height, int style)
 // callers   49   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644EF2 0x00645470
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -89,6 +92,9 @@ ORIGINAL: 0x006190D0
 // spans     0x006190D0-0x0061922C
 // prototype int (__thiscall ?init@Font@@QAEHPADPADHH@Z)(Font* this, int8* lpszFile, int8* fontName, int height, int style)
 // callers   1   call targets   5
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4510 0x00618F40 0x00644EF2 0x006453E0 0x00645470
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -125,6 +131,9 @@ ORIGINAL: 0x00619230
 // spans     0x00619230-0x0061927D
 // prototype void (__thiscall ?close@Font@@QAEXXZ)(Font* this)
 // callers   5   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -153,6 +162,9 @@ ORIGINAL: 0x00619280
 // spans     0x00619280-0x006192E3
 // prototype int (__thiscall ?width@Font@@QAEHPAD@Z)(Font* this, int8*)
 // callers   15   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006453E0
 Return Value: Width otherwise zero on error
 Status: Complete
 */
@@ -175,6 +187,9 @@ ORIGINAL: 0x006192F0
 // spans     0x006192F0-0x0061936B
 // prototype int (__thiscall ?width@Font@@QAEHPADH@Z)(Font* this, int8* lpString, int max)
 // callers   3   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006453E0
 Return Value: Width otherwise zero on error
 Status: Complete
 */
@@ -201,6 +216,9 @@ ORIGINAL: 0x00619370
 // spans     0x00619370-0x006195A7
 // prototype int (__thiscall ?find_line_break_l@Font@@QAEHPADPAHH@Z)(Font* this, int8* input, int* breakLen, int len)
 // callers   1   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006453E0 0x006473F0
 Return Value: Pointer to string section after the line break or NULL if not found
 Status: Complete
 */
@@ -247,6 +265,9 @@ ORIGINAL: 0x006195B0
 // spans     0x006195B0-0x0061960D
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00618F40
 Return Value: Zero on success (or already initialized), non-zero on error
 Status: Complete
 */
@@ -276,6 +297,9 @@ ORIGINAL: 0x00619610
 // spans     0x00619610-0x00619644
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

@@ -99,6 +99,9 @@ ORIGINAL: 0x004EA4A0
 // spans     0x004EA4A0-0x004EA533
 // prototype void (__cdecl ?psych_check@@YAXHPAHPAH@Z)(int factionID, int* drones, int* talents)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -117,6 +120,9 @@ ORIGINAL: 0x005002F0
 // spans     0x005002F0-0x00500319
 // prototype int (__cdecl ?has_treaty@@YAHHHH@Z)(int factionID, int factionIDWith, int treaty)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Treaty status between the two factions, generally treated as a boolean
 Status: Complete
 */
@@ -132,6 +138,9 @@ ORIGINAL: 0x0050B910
 // spans     0x0050B910-0x0050B92A
 // prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
 // callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Faction name adjective
 Status: Complete
 */
@@ -147,6 +156,9 @@ ORIGINAL: 0x0050B930
 // spans     0x0050B930-0x0050B964
 // prototype int (__cdecl ?get_noun@@YAHH@Z)(int factionID)
 // callers   5   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Faction noun
 Status: Complete
 */
@@ -163,6 +175,9 @@ ORIGINAL: 0x00539160
 // spans     0x00539160-0x00539193
 // prototype 
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is always contact enabled? true/false
 Status: Complete
 */
@@ -179,6 +194,9 @@ ORIGINAL: 0x00539B70
 // spans     0x00539B70-0x00539BF2
 // prototype BOOL (__cdecl ?great_beelzebub@@YAHHH@Z)(int factionID, int tgl)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is faction minor threat? true/false
 Status: Complete
 */
@@ -206,6 +224,9 @@ ORIGINAL: 0x00539C00
 // spans     0x00539C00-0x00539D3B
 // prototype 
 // callers   20   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00539D40 0x00539E40
 Return Value: Is the specified faction a threat? true/false
 Status: Complete
 */
@@ -248,6 +269,9 @@ ORIGINAL: 0x00539D40
 // spans     0x00539D40-0x00539E3E
 // prototype 
 // callers   7   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0052AD30 0x005B9F20
 Return Value: Faction id if nearing diplomatic victory or zero
 Status: Complete
 */
@@ -285,6 +309,9 @@ ORIGINAL: 0x00539E40
 // spans     0x00539E40-0x00539EE4
 // prototype 
 // callers   7   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00539D40 0x005B9F20
 Return Value: Is human player nearing endgame? true/false
 Status: Complete
 */
@@ -317,6 +344,9 @@ ORIGINAL: 0x00539EF0
 // spans     0x00539EF0-0x0053A022
 // prototype 
 // callers   6   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00539D40 0x00539E40 0x005AC680
 Return Value: Is AI faction at climax? true/false
 Status: Complete
 */
@@ -367,6 +397,9 @@ ORIGINAL: 0x0053A030
 // spans     0x0053A030-0x0053A08D
 // prototype void (__cdecl ?cause_friction@@YAXHHH@Z)(int factionID, int factionIDWith, int friction)
 // callers   8   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -386,6 +419,9 @@ ORIGINAL: 0x0053A090
 // spans     0x0053A090-0x0053A0F5
 // prototype int (__cdecl ?get_mood@@YAHH@Z)(int friction)
 // callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Mood (0-8)
 Status: Complete
 */
@@ -422,6 +458,9 @@ ORIGINAL: 0x0053A100
 // spans     0x0053A100-0x0053A14D
 // prototype 
 // callers   4   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Bad reputation
 Status: Complete
 */
@@ -438,6 +477,9 @@ ORIGINAL: 0x0053A150
 // spans     0x0053A150-0x0053A1B8
 // prototype int (__cdecl ?get_patience@@YAHHH@Z)(int factionIDWith, int factionID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Patience
 Status: Complete
 */
@@ -460,6 +502,9 @@ ORIGINAL: 0x0053A1C0 BYTE_EXACT
 // spans     0x0053A1C0-0x0053A228
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Goodwill (friction reduction amount)
 Status: Complete
 */
@@ -470,6 +515,9 @@ ORIGINAL: 0x0053A1C0
 // spans     0x0053A1C0-0x0053A228
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Goodwill (friction reduction amount)
 Status: Complete
 */
@@ -493,6 +541,9 @@ ORIGINAL: 0x0053A4A0
 // spans     0x0053A4A0-0x0053A774
 // prototype 
 // callers   3   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0057D270 0x0057D2E0
 Return Value: n/a
 Status: Complete
 
@@ -642,6 +693,9 @@ ORIGINAL: 0x0055BB30
 // spans     0x0055BB30-0x0055BB98
 // prototype 
 // callers   24   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -664,6 +718,9 @@ ORIGINAL: 0x0055BBA0
 // spans     0x0055BBA0-0x0055BBF1
 // prototype void (__cdecl ?set_agenda@@YAXHHHH@Z)(int factionID, int factionIDWith, int agenda, int set)
 // callers   10   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -684,6 +741,9 @@ ORIGINAL: 0x005591E0
 // spans     0x005591E0-0x00559209
 // prototype int (__cdecl ?has_agenda@@YAHHHH@Z)(int factionID, int factionIDWith, int agenda)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Agenda status between the two factions, generally treated as a boolean
 Status: Complete
 */
@@ -699,6 +759,9 @@ ORIGINAL: 0x0055BC80
 // spans     0x0055BC80-0x0055C42B
 // prototype int (__cdecl ?wants_to_attack@@YAHHHH@Z)(uint32_t factionID, uint32_t factionIDTarget, int factionIDUnk)
 // callers   9   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00 0x00539B70 0x00539C00
 Return Value: Does the faction want to attack target? true/false
 Status: Complete - testing
 */
@@ -894,6 +957,9 @@ ORIGINAL: 0x0055EB80
 // spans     0x0055EB80-0x0055EEDE
 // prototype 
 // callers   4   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0 0x00644F3A
 Return Value: Trespass weight; zero when there is nothing to complain about
 Status: Complete
 
@@ -1070,6 +1136,9 @@ ORIGINAL: 0x00560D50
 // spans     0x00560D50-0x00560DC3
 // prototype int (__cdecl ?guard_check@@YAHHH@Z)(int factionID, int region)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Amount of non-offensive units needed to guard region
 Status: Complete
 */
@@ -1098,6 +1167,9 @@ ORIGINAL: 0x00579A30
 // spans     0x00579A30-0x00579B64
 // prototype void (__cdecl ?add_goal@@YAXHHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord, int baseID)
 // callers   12   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status:  Complete
 */
@@ -1149,6 +1221,9 @@ ORIGINAL: 0x00579B70
 // spans     0x00579B70-0x00579CB5
 // prototype void (__cdecl ?add_site@@YAXHHHHH@Z)(int factionID, int type, int priority, int xCoord, int yCoord)
 // callers   4   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00538F30 0x00579A30
 Return Value: n/a
 Status: Complete
 */
@@ -1200,6 +1275,9 @@ ORIGINAL: 0x00579CC0
 // spans     0x00579CC0-0x00579D16
 // prototype int (__cdecl ?at_goal@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   5   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Does the specific goal exist for the faction at tile? true/false
 Status: Complete
 */
@@ -1221,6 +1299,9 @@ ORIGINAL: 0x00579D20
 // spans     0x00579D20-0x00579D76
 // prototype int (__cdecl ?at_site@@YAHHHHH@Z)(int factionID, int type, int xCoord, int yCoord)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Does specific site exist for faction at tile? true/false
 Status: Complete
 */
@@ -1242,6 +1323,9 @@ ORIGINAL: 0x00579D80
 // spans     0x00579D80-0x00579DFC
 // prototype void (__cdecl ?wipe_goals@@YAXH@Z)(int factionID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00579A30
 Return Value: n/a
 Status: Complete
 */
@@ -1272,6 +1356,9 @@ ORIGINAL: 0x00579E00
 // spans     0x00579E00-0x00579E66
 // prototype void (__cdecl ?init_goals@@YAXH@Z)(int factionID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1302,6 +1389,9 @@ ORIGINAL: 0x00579E70
 // spans     0x00579E70-0x00579F73
 // prototype void (__cdecl ?del_site@@YAXHHHHH@Z)(int factionID, int type, int xCoord, int yCoord, int proximity)
 // callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
 Return Value: n/a
 Status: Complete
 */
@@ -1333,6 +1423,9 @@ ORIGINAL: 0x0059EE50
 // spans     0x0059EE50-0x0059EEDD
 // prototype int (__cdecl ?corner_market@@YAHH@Z)(int factionID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0059EA80
 Return Value: Cost to corner the Global Energy Market
 Status: Complete
 */
@@ -1359,6 +1452,9 @@ ORIGINAL: 0x005A96D0
 // spans     0x005A96D0-0x005A9753
 // prototype 
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: n/a
 Status: Complete
 */
@@ -1392,6 +1488,9 @@ ORIGINAL: 0x005AC690
 // spans     0x005AC690-0x005ACBD6
 // prototype 
 // callers   3   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00539C00 0x00539E40 0x0053A100 0x0055BB30 0x005AC110 0x005B9F20 0x0064601D
 Return Value: n/a
 Status: Complete
 
@@ -1639,6 +1738,9 @@ ORIGINAL: 0x005B0D70
 // spans     0x005B0D70-0x005B0DF3
 // prototype void (__cdecl ?compute_faction_modifiers@@YAXH@Z)(int factionID)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1662,6 +1764,9 @@ ORIGINAL: 0x005B4210
 // spans     0x005B4210-0x005B44C9
 // prototype void (__cdecl ?social_calc@@YAXPAHPAHHHH@Z)(social_category* category, social_effect* effect, uint32_t factionID, BOOL toggle, BOOL isQuickCalc)
 // callers   7   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BF130
 Return Value: n/a
 Status: Complete
 */
@@ -1745,6 +1850,9 @@ ORIGINAL: 0x005B44D0
 // spans     0x005B44D0-0x005B4550
 // prototype void (__cdecl ?social_upkeep@@YAXH@Z)(int factionID)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B4210
 Return Value: n/a
 Status: Complete
 */
@@ -1768,6 +1876,9 @@ ORIGINAL: 0x005B4550
 // spans     0x005B4550-0x005B45F8
 // prototype int (__cdecl ?social_upheaval@@YAHHPAH@Z)(int factionID, social_category* category)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Social upheaval cost
 Status: Complete
 */
@@ -1799,6 +1910,9 @@ ORIGINAL: 0x005B4730
 // spans     0x005B4730-0x005B4786
 // prototype int (__cdecl ?society_avail@@YAHHHH@Z)(int socCategory, int socModel, int factionID)
 // callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9F20
 Return Value: Is social category/model available to faction? true/false
 Status: Complete
 */
@@ -1818,6 +1932,9 @@ ORIGINAL: 0x005B4790
 // spans     0x005B4790-0x005B5612
 // prototype void (__cdecl ?social_ai@@YAXHHHHHPAH@Z)(int factionID, int growthVal, int techVal, int wealthVal, int powerVal, social_category* output)
 // callers   2   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004EF090 0x00539D40 0x00581260 0x005B4210 0x005B4600 0x005B9F20 0x005FCB20
 Return Value: n/a
 Status: Complete - testing (likely has multiple issues due to length + complexity)
 */
@@ -2349,6 +2466,9 @@ ORIGINAL: 0x00560DD0
 // spans     0x00560DD0-0x00561076
 // prototype void (__cdecl ?enemy_capabilities@@YAXH@Z)(int factionID)
 // callers   3   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0057D270 0x0057D2E0 0x005B9F20 0x005BA910
 Return Value: n/a
 Status: Complete - testing / WIP
 */

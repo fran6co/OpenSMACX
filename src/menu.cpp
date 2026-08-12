@@ -28,6 +28,10 @@ ORIGINAL: 0x005FB820 BYTE_EXACT
 // spans     0x005FB820-0x005FB82D
 // prototype void (__thiscall ?set_menu_proc@Menu@@QAEXP6AXH@Z@Z)(Menu* this, void (__cdecl *)(int this))
 // callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void Menu::set_menu_proc(MenuProc proc) {
@@ -42,6 +46,10 @@ ORIGINAL: 0x005FB990 BYTE_EXACT
 // spans     0x005FB990-0x005FB9B8
 // prototype int (__thiscall ?id_to_index@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 int Menu::id_to_index(int id) {
@@ -75,6 +83,9 @@ ORIGINAL: 0x005FB1C0 BYTE_EXACT
 // spans     0x005FB1C0-0x005FB1C5
 // prototype int (__thiscall ?UNK2@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int Menu::UNK2(int) {
@@ -95,6 +106,9 @@ ORIGINAL: 0x005FB230 BYTE_EXACT
 // spans     0x005FB230-0x005FB235
 // prototype int (__thiscall ?UNK4@Menu@@QAEHHHH@Z)(Menu* this, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 int Menu::UNK4(int, int, int) {
@@ -116,6 +130,9 @@ ORIGINAL: 0x005FC6A0
 // spans     0x005FC6A0-0x005FC6B4
 // prototype int (__thiscall ?requested_height@Menu@@QAEHXZ)(Menu* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Twice the resolved font's height
 Status: Complete
 */
@@ -158,6 +175,9 @@ ORIGINAL: 0x005FB1D0
 // spans     0x005FB1D0-0x005FB224
 // prototype int (__thiscall ?UNK3@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8C90
 Return Value: PullDown::UNK2's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -200,6 +220,9 @@ ORIGINAL: 0x005FB300
 // spans     0x005FB300-0x005FB354
 // prototype int (__thiscall ?hide_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   2   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005F8CB0
 Return Value: PullDown::hide_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -242,6 +265,9 @@ ORIGINAL: 0x005FB3C0
 // spans     0x005FB3C0-0x005FB414
 // prototype int (__thiscall ?show_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8D20
 Return Value: PullDown::show_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -284,6 +310,9 @@ ORIGINAL: 0x005FB480
 // spans     0x005FB480-0x005FB4D4
 // prototype int (__thiscall ?disable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8D90
 Return Value: PullDown::disable_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -326,6 +355,9 @@ ORIGINAL: 0x005FB540
 // spans     0x005FB540-0x005FB594
 // prototype int (__thiscall ?enable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8DF0
 Return Value: PullDown::enable_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -368,6 +400,9 @@ ORIGINAL: 0x005FB760
 // spans     0x005FB760-0x005FB7B4
 // prototype int (__thiscall ?check_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   5   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005F9040
 Return Value: PullDown::check_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -410,6 +445,9 @@ ORIGINAL: 0x005FB7C0
 // spans     0x005FB7C0-0x005FB814
 // prototype int (__thiscall ?uncheck_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   5   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F90A0
 Return Value: PullDown::uncheck_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -459,6 +497,9 @@ ORIGINAL: 0x005FB2A0
 // spans     0x005FB2A0-0x005FB300
 // prototype int (__thiscall ?UNK6@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -503,6 +544,9 @@ ORIGINAL: 0x005FB360
 // spans     0x005FB360-0x005FB3C0
 // prototype int (__thiscall ?UNK7@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -547,6 +591,9 @@ ORIGINAL: 0x005FB420
 // spans     0x005FB420-0x005FB480
 // prototype int (__thiscall ?UNK8@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -591,6 +638,9 @@ ORIGINAL: 0x005FB4E0
 // spans     0x005FB4E0-0x005FB540
 // prototype int (__thiscall ?UNK9@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -644,6 +694,9 @@ ORIGINAL: 0x005FC6C0 BYTE_EXACT
 // spans     0x005FC6C0-0x005FC6C3
 // prototype void (__thiscall ?on_adjust_pulldown_pos@Menu@@QAEXPAH0@Z)(Menu* this, int*, int*)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -661,6 +714,9 @@ ORIGINAL: 0x005FC680 BYTE_EXACT
 // spans     0x005FC680-0x005FC692
 // prototype void (__thiscall ?on_mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FBDB0
 Status: Complete
 */
 void Menu::on_mouse_move(int a1, int a2) {

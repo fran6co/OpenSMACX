@@ -34,6 +34,9 @@ ORIGINAL: 0x0060D1B0
 // spans     0x0060D1B0-0x0060D1E6
 // prototype void (__thiscall ?close@RadioButton@@QAEXXZ)(RadioButton* this)
 // callers   21   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00608F50
 Return Value: n/a
 Status: Complete
 */
@@ -66,6 +69,9 @@ ORIGINAL: 0x0060E300 BYTE_EXACT
 // spans     0x0060E300-0x0060E317
 // prototype void (__thiscall ?on_dialog_focus@RadioButton@@QAEXH@Z)(RadioButton* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Status: Complete
 */
 void RadioButton::on_dialog_focus(int a1) {
@@ -84,6 +90,9 @@ ORIGINAL: 0x0060E4A0 BYTE_EXACT
 // spans     0x0060E4A0-0x0060E4C8
 // prototype void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

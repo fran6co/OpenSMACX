@@ -29,6 +29,9 @@ ORIGINAL: 0x0048AF20
 // spans     0x0048AF20-0x0048AF2B
 // prototype void (__thiscall ?clear_lines@PlanWin@@QAEXXZ)(PlanWin* this)
 // callers   5   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -49,6 +52,9 @@ ORIGINAL: 0x0048BC50
 // spans     0x0048BC50-0x0048BC5F
 // prototype void (__thiscall ?close@PlanWin@@QAEXXZ)(PlanWin* this)
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 
@@ -96,6 +102,9 @@ ORIGINAL: 0x0048BC20
 // spans     0x0048BC20-0x0048BC4B
 // prototype void (__thiscall ?blink@PlanWin@@QAEXXZ)(PlanWin* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -121,6 +130,9 @@ ORIGINAL: 0x0048B3C0
 // spans     0x0048B3C0-0x0048B3EF
 // prototype void (__thiscall ?UNK1@PlanWin@@QAEXXZ)(PlanWin* this)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D95B0
 Return Value: n/a
 Status: Complete
 

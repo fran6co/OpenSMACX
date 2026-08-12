@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0052E160 FILE
+// name      ?on_player_added@NetDaemon@@QAEXPADK@Z
+// size      516 bytes
+// spans     0x0052E160-0x0052E364
+// prototype void (__thiscall ?on_player_added@NetDaemon@@QAEXPADK@Z)(NetDaemon* this, int8* lpszInput, unsigned int)
+// callers   0   call targets   11
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A890 0x0047B020 0x0047B0F0 0x0047B260 0x0047B2E0 0x00481AD0 0x005F7E90 0x00625EC0 0x00630080 0x00631A20 0x00645460
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0052E160
-// name           ?on_player_added@NetDaemon@@QAEXPADK@Z
-// size           516 bytes
 // measured tier  MISMATCH
 // divergence     93
 //

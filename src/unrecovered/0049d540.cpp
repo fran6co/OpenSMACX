@@ -1,10 +1,13 @@
 // ORIGINAL: 0x0049D540 FILE
-// placeholder - not yet decompiled
 // name      ?draw_ops@ReportWin@@QAEXXZ
 // size      5565 bytes
 // spans     0x0049D540-0x0049EAEB;0x00659435-0x00659447
 // prototype void (__thiscall ?draw_ops@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   2   call targets   36
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0045E540 0x00493AF0 0x00493B70 0x004E39D0 0x004E3A00 0x004E4020 0x004E4430 0x004EC3B0 0x0050E820 0x005594F0 0x0055AF20 0x005AC060 0x005B9580 0x005BFE90 0x005C1850 0x005C1D50 0x005DAC70 0x005DACB0 0x005DCEA0 0x005DD130 0x005DD3B0 0x005E2DD3 0x005E3E00 0x005E4B9A 0x005FA960 0x005FAA90 0x006059B0 0x00605D20 0x006169A0 0x00625730 0x00625740 0x00625750 0x00625770 0x006453E0 0x00645470 0x0064FC88
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x0049D540
 
 // BODY GOES HERE.

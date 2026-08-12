@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0052DD10 FILE
+// name      ?UNK2@DeletionList@@QAEHH@Z
+// size      59 bytes
+// spans     0x0052DD10-0x0052DD4B
+// prototype int (__thiscall ?UNK2@DeletionList@@QAEHH@Z)(DeletionList* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0052DD10
-// name           ?UNK2@DeletionList@@QAEHH@Z
-// size           59 bytes
 // measured tier  NO_COMPILE
 // refusal        u0052dd10.cpp(1) : error C2653: 'DeletionList' : is not a class or namespace name u0052dd10.cpp(2) : error C2065: 'g_009a64e8' : undeclared identifier u0052dd10
 //

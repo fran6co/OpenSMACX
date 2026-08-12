@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00609BF0 FILE
+// name      ?UNK2@Dialog@@QAEXHHHH@Z
+// size      112 bytes
+// spans     0x00609BF0-0x00609C60
+// prototype void (__thiscall ?UNK2@Dialog@@QAEXHHHH@Z)(Dialog* this, HWND hWndParent, UINT Msg, HWND hWnd, LPARAM lParam)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00609BF0
-// name           ?UNK2@Dialog@@QAEXHHHH@Z
-// size           112 bytes
 // measured tier  NO_COMPILE
 // refusal        u00609bf0.cpp(39) : error C2653: 'Dialog' : is not a class or namespace name u00609bf0.cpp(42) : error C2065: 'g_006692dc' : undeclared identifier u00609bf0.cpp
 //

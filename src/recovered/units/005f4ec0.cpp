@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005F4EC0 FILE
+// name      ?recurse_zorder@@YAXPAUWin@@@Z
+// size      339 bytes
+// spans     0x005F4EC0-0x005F5013
+// prototype 
+// callers   12   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F4EC0 0x005F7E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005F4EC0
-// name           ?recurse_zorder@@YAXPAUWin@@@Z
-// size           339 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

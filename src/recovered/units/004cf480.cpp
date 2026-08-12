@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004CF480 FILE
+// name      ?action_sat_attack@@YAXHHHH@Z
+// size      702 bytes
+// spans     0x004CF480-0x004CF73E
+// prototype void (__cdecl ?action_sat_attack@@YAXHHHH@Z)(int factionIDAtk, int factionIDDef, int type, int baseID)
+// callers   3   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0048C0A0 0x004A3FC0 0x004E48B0 0x0050BCC0 0x00625E50 0x00625EC0 0x0064601D
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004CF480
-// name           ?action_sat_attack@@YAXHHHH@Z
-// size           702 bytes
 // measured tier  MISMATCH
 // divergence     25
 //

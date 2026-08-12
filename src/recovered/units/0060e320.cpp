@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060E320 FILE
+// name      ?on_mouse_move@RadioButton@@QAEXHH@Z
+// size      372 bytes
+// spans     0x0060E320-0x0060E494
+// prototype void (__thiscall ?on_mouse_move@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DCAB0 0x00644F3A
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060E320
-// name           ?on_mouse_move@RadioButton@@QAEXHH@Z
-// size           372 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

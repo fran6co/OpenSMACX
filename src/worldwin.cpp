@@ -28,6 +28,9 @@ ORIGINAL: 0x004C45E0 BYTE_EXACT
 // spans     0x004C45E0-0x004C45E1
 // prototype void (__thiscall ?clear_terrain@WorldWin@@QAEXXZ)(WorldWin* this)
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -46,6 +49,9 @@ ORIGINAL: 0x004C3E90 BYTE_EXACT
 // spans     0x004C3E90-0x004C3E93
 // prototype void (__thiscall ?on_left_double_click@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -66,6 +72,9 @@ ORIGINAL: 0x004C3E50
 // spans     0x004C3E50-0x004C3E68
 // prototype void (__thiscall ?on_left_click@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C3D40
 Return Value: n/a
 Status: Complete
 */
@@ -81,6 +90,9 @@ ORIGINAL: 0x004C3E70
 // spans     0x004C3E70-0x004C3E88
 // prototype void (__thiscall ?on_right_click@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C3D40
 Return Value: n/a
 Status: Complete
 */
@@ -103,6 +115,9 @@ ORIGINAL: 0x004C45F0 BYTE_EXACT
 // spans     0x004C45F0-0x004C4603
 // prototype void (__thiscall ?set_center@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5890
 Status: Complete
 */
 void WorldWin::set_center(int a1, int a2) {
@@ -117,6 +132,9 @@ ORIGINAL: 0x004C4610 BYTE_EXACT
 // spans     0x004C4610-0x004C4623
 // prototype void (__thiscall ?focus@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5890
 Status: Complete
 */
 void WorldWin::focus(int a1, int a2) {
@@ -131,6 +149,9 @@ ORIGINAL: 0x004C3EA0 BYTE_EXACT
 // spans     0x004C3EA0-0x004C3EB3
 // prototype void (__thiscall ?follow_center@WorldWin@@QAEXHH@Z)(WorldWin* this, int xCoord, int yCoord)
 // callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D5890
 Status: Complete
 */
 void WorldWin::follow_center(int xCoord, int yCoord) {

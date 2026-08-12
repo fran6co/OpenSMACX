@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0041E530 BYTE_EXACT FILE
+// name      ?on_iface_button_toggled@BaseWin@@QAEXHH@Z
+// size      33 bytes
+// spans     0x0041E530-0x0041E551
+// prototype void (__thiscall ?on_iface_button_toggled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0041E530
-// name           ?on_iface_button_toggled@BaseWin@@QAEXHH@Z
-// size           33 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

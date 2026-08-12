@@ -31,6 +31,10 @@ ORIGINAL: 0x00616BC0 BYTE_EXACT
 // spans     0x00616BC0-0x00616BCD
 // prototype void (__thiscall ??0CaviarData@@QAE@XZ)(CaviarData* this)
 // callers   82   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -51,6 +55,9 @@ ORIGINAL: 0x00616C60
 // spans     0x00616C60-0x00616C7C
 // prototype void (__thiscall ?close@CaviarData@@QAEXXZ)(CaviarData* this)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00638430
 Return Value: n/a
 Status: Complete
 */
@@ -69,6 +76,10 @@ ORIGINAL: 0x00616DA0
 // spans     0x00616DA0-0x00616DD6
 // prototype void (__thiscall ??0Caviar@@QAE@XZ)(Caviar* this)
 // callers   7   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -91,6 +102,10 @@ ORIGINAL: 0x006182A0
 // spans     0x006182A0-0x0061831F
 // prototype void (__thiscall ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z)(Caviar* this, VOX_Vect*, VOX_Matrix*)
 // callers   10   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -110,6 +125,10 @@ ORIGINAL: 0x006183B0
 // spans     0x006183B0-0x006183BD
 // prototype void (__thiscall ?set_scaling@Caviar@@QAEXM@Z)(Caviar* this, float)
 // callers   24   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: n/a
 Status: Complete
 */
@@ -130,6 +149,10 @@ ORIGINAL: 0x006183C0
 // spans     0x006183C0-0x006183C7
 // prototype float (__thiscall ?get_scaling@Caviar@@QAEMXZ)(Caviar* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Current scaling factor
 Status: Complete
 */
@@ -174,6 +197,9 @@ ORIGINAL: 0x006176C0 BYTE_EXACT
 // spans     0x006176C0-0x006176C5
 // prototype int (__thiscall ?UNK3@Caviar@@QAEHHHH@Z)(Caviar* this, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -193,6 +219,9 @@ ORIGINAL: 0x006176D0 BYTE_EXACT
 // spans     0x006176D0-0x006176D5
 // prototype int (__thiscall ?UNK4@Caviar@@QAEHHHHH@Z)(Caviar* this, int, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -212,6 +241,9 @@ ORIGINAL: 0x00618250 BYTE_EXACT
 // spans     0x00618250-0x00618253
 // prototype void (__thiscall ?UNK5@Caviar@@QAEXHH@Z)(Caviar* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -230,6 +262,9 @@ ORIGINAL: 0x00618260 BYTE_EXACT
 // spans     0x00618260-0x00618263
 // prototype void (__thiscall ?UNK6@Caviar@@QAEXHH@Z)(Caviar* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -248,6 +283,9 @@ ORIGINAL: 0x00618270 BYTE_EXACT
 // spans     0x00618270-0x00618273
 // prototype void (__thiscall ?UNK7@Caviar@@QAEXHH@Z)(Caviar* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -266,6 +304,9 @@ ORIGINAL: 0x00618290 BYTE_EXACT
 // spans     0x00618290-0x00618293
 // prototype void (__thiscall ?UNK9@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -284,6 +325,9 @@ ORIGINAL: 0x006183A0 BYTE_EXACT
 // spans     0x006183A0-0x006183A3
 // prototype void (__thiscall ?UNK12@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -302,6 +346,9 @@ ORIGINAL: 0x00618280 BYTE_EXACT
 // spans     0x00618280-0x0061828D
 // prototype void (__thiscall ?UNK8@Caviar@@QAEXH@Z)(Caviar* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -317,6 +364,9 @@ ORIGINAL: 0x00618320 BYTE_EXACT
 // spans     0x00618320-0x00618338
 // prototype void (__thiscall ?UNK10@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -346,6 +396,9 @@ ORIGINAL: 0x00618370
 // spans     0x00618370-0x0061839F
 // prototype void (__thiscall ?set_scene_rotation@Caviar@@QAEXMMM@Z)(Caviar* this, float, float, float)
 // callers   13   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00627D00
 Return Value: n/a
 Status: Complete
 */
@@ -380,6 +433,9 @@ ORIGINAL: 0x00618340
 // spans     0x00618340-0x0061836A
 // prototype void (__thiscall ?UNK11@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

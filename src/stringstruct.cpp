@@ -22,6 +22,10 @@ ORIGINAL: 0x00401640 BYTE_EXACT
 // spans     0x00401640-0x00401651
 // prototype int (__thiscall ?current_id@StringStruct@@QAEHXZ)(StringStruct* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Current ID, or zero when the list is empty
 Status: Complete
 */
@@ -40,6 +44,10 @@ ORIGINAL: 0x00402530 BYTE_EXACT
 // spans     0x00402530-0x00402541
 // prototype int (__thiscall ?current_entry@StringStruct@@QAEHXZ)(StringStruct* this)
 // callers   9   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Current payload, or zero when the list is empty
 Status: Complete
 */
@@ -58,6 +66,10 @@ ORIGINAL: 0x00402500 BYTE_EXACT
 // spans     0x00402500-0x0040252F
 // prototype int (__thiscall ?next_entry@StringStruct@@QAEHXZ)(StringStruct* this)
 // callers   9   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: New current payload, or zero when the list is empty
 Status: Complete
 */
@@ -86,6 +98,10 @@ ORIGINAL: 0x00401560 BYTE_EXACT
 // spans     0x00401560-0x004015AE
 // prototype int (__thiscall ?seek_id@StringStruct@@QAEHH@Z)(StringStruct* this, int)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: One when found, otherwise zero
 Status: Complete
 */
@@ -166,6 +182,10 @@ ORIGINAL: 0x00402970
 // spans     0x00402970-0x004029E3
 // prototype 
 // callers   79   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void StringStruct::remove_all() {
@@ -214,6 +234,10 @@ ORIGINAL: 0x00401060
 // spans     0x00401060-0x004010F9
 // prototype void (__thiscall ?close@StringStruct@@QAEXXZ)(StringStruct* this)
 // callers   25   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
 void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_base) {
@@ -258,6 +282,10 @@ ORIGINAL: 0x004066C0
 // spans     0x004066C0-0x00406818;0x00650980-0x00650995
 // prototype 
 // callers   61   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 Verification note: the base stage overwrites the derived tables, so with the
 non-walking fixtures the oracle can safely drive, the derived stage leaves no
@@ -287,6 +315,9 @@ ORIGINAL: 0x00406820
 // spans     0x00406820-0x0040683B
 // prototype 
 // callers   26   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004066C0
 Return Value: EAX residue - the saved owner value, republished into
               *StringVirtualBaseOwner. The original is a void destructor;
               modelled as uint32_t to preserve the residue, as
@@ -337,6 +368,9 @@ ORIGINAL: 0x004015B0 BYTE_EXACT
 // spans     0x004015B0-0x00401636
 // prototype int (__thiscall ?seek_pos@StringStruct@@QAEHH@Z)(StringStruct* this, int)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
 Status: Complete
 */
 typedef int (__cdecl *AbsFnT)(int);

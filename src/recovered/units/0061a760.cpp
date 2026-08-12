@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0061A760 FILE
+// name      ?draw_upper_threshold_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z
+// size      1267 bytes
+// spans     0x0061A760-0x0061AC53
+// prototype 
+// callers   2   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005E3373 0x005E34A3 0x00624D80
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0061A760
-// name           ?draw_upper_threshold_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z
-// size           1267 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

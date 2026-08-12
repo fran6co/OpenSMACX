@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00588AA0 FILE
+// name      ?config_popups@@YAXXZ
+// size      1262 bytes
+// spans     0x00588AA0-0x00588F8E
+// prototype 
+// callers   1   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005882F0 0x00588460 0x0059DB40 0x0059E530 0x005FAEE0 0x006043D0 0x00618F40 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00588AA0
-// name           ?config_popups@@YAXXZ
-// size           1262 bytes
 // measured tier  MISMATCH
 // divergence     2
 //

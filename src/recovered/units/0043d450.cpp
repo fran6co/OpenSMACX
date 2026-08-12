@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043D450 BYTE_EXACT FILE
+// name      ?on_iface_button_pressed@DesignWin@@QAEXH@Z
+// size      31 bytes
+// spans     0x0043D450-0x0043D46F
+// prototype void (__thiscall ?on_iface_button_pressed@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043D450
-// name           ?on_iface_button_pressed@DesignWin@@QAEXH@Z
-// size           31 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

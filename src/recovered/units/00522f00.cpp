@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00522F00 FILE
+// name      ?do_fungal_towers@@YAXXZ
+// size      477 bytes
+// spans     0x00522F00-0x005230DD
+// prototype 
+// callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046AF40 0x00501350 0x00591D60 0x00591E50 0x005B6260 0x0064601D
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00522F00
-// name           ?do_fungal_towers@@YAXXZ
-// size           477 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

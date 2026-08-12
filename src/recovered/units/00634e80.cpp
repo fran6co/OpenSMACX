@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00634E80 FILE
+// name      ?set_def_ext@FileBox@@QAEHPAD@Z
+// size      76 bytes
+// spans     0x00634E80-0x00634ECC
+// prototype int (__thiscall ?set_def_ext@FileBox@@QAEHPAD@Z)(FileBox* this, int8*)
+// callers   3   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006453E0 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00634E80
-// name           ?set_def_ext@FileBox@@QAEHPAD@Z
-// size           76 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

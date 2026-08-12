@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043BF50 FILE
+// name      ?construct_vehicle@DesignWin@@QAEXXZ
+// size      274 bytes
+// spans     0x0043BF50-0x0043C062
+// prototype void (__thiscall ?construct_vehicle@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   1   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C2030 0x004C2470 0x004C2CF0 0x004C3090 0x004C3800
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043BF50
-// name           ?construct_vehicle@DesignWin@@QAEXXZ
-// size           274 bytes
 // measured tier  MISMATCH
 // divergence     7
 //

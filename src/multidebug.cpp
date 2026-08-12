@@ -27,6 +27,9 @@ ORIGINAL: 0x005C98E0
 // spans     0x005C98E0-0x005C98EB
 // prototype void (__thiscall ?close@MultiDebug@@QAEXXZ)(MultiDebug* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -46,6 +49,9 @@ ORIGINAL: 0x005C9900 BYTE_EXACT
 // spans     0x005C9900-0x005C9914
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

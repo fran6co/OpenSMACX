@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0042BF10 FILE
+// name      ?draw_entry@Datalink@@QAEXXZ
+// size      906 bytes
+// spans     0x0042BF10-0x0042C29A
+// prototype void (__thiscall ?draw_entry@Datalink@@QAEXXZ)(Datalink* this)
+// callers   6   call targets   31
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0042C2E0 0x0042C650 0x0042C9C0 0x0042D610 0x0042DEF0 0x0042E2E0 0x0042E8E0 0x0042EE30 0x0042F490 0x0042FAD0 0x00430090 0x00430770 0x00430C80 0x00431180 0x00496BB0 0x00498B30 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DD130 0x005DEF90 0x005E2DD3 0x00608980 0x00609A50 0x006169A0 0x00629490 0x00629780 0x006453E0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0042BF10
-// name           ?draw_entry@Datalink@@QAEXXZ
-// size           906 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

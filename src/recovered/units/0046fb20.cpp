@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0046FB20 BYTE_EXACT FILE
+// name      ?standard_caption@MapWin@@QAEXXZ
+// size      91 bytes
+// spans     0x0046FB20-0x0046FB7B
+// prototype void (__thiscall ?standard_caption@MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005EDF50 0x006169A0 0x00645470
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0046FB20
-// name           ?standard_caption@MapWin@@QAEXXZ
-// size           91 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

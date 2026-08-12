@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0053E5C0 FILE
+// name      ?renounce_pact@@YAXHH@Z
+// size      568 bytes
+// spans     0x0053E5C0-0x0053E7F8
+// prototype 
+// callers   1   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0051F1B0 0x00530AA0 0x00530D00 0x005315C0 0x005399A0 0x0053A980 0x0053C650 0x005589E0 0x0055B760 0x0058F9D0 0x00592EE0 0x005BF310 0x005BF7D0 0x00625EC0 0x006262F0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0053E5C0
-// name           ?renounce_pact@@YAXHH@Z
-// size           568 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

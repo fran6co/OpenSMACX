@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C9330 BYTE_EXACT FILE
+// name      ?close@Gamma@@QAEXXZ
+// size      91 bytes
+// spans     0x005C9330-0x005C938B
+// prototype void (__thiscall ?close@Gamma@@QAEXXZ)(Gamma* this)
+// callers   3   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x005FE500 0x00605370 0x00614F30
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C9330
-// name           ?close@Gamma@@QAEXXZ
-// size           91 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

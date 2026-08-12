@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0058FB70 BYTE_EXACT FILE
+// name      sub_58fb70
+// size      66 bytes
+// spans     0x0058FB70-0x0058FBB2
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0058FB70
-// name           sub_58fb70
-// size           66 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

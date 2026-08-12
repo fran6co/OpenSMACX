@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043A760 FILE
+// name      ?select_armor@DesignWin@@QAEXXZ
+// size      797 bytes
+// spans     0x0043A760-0x0043A9F8;0x00654306-0x0065438B
+// prototype void (__thiscall ?select_armor@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   1   call targets   20
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004328B0 0x00433F70 0x004346A0 0x00435400 0x00435B30 0x00435DE0 0x00436090 0x00439C00 0x00439D30 0x0043DD50 0x005D4DD0 0x005D4E40 0x005D7410 0x005D7470 0x00605370 0x00607040 0x00607DA0 0x00617020 0x00618EE0 0x00645550
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043A760
-// name           ?select_armor@DesignWin@@QAEXXZ
-// size           797 bytes
 // measured tier  MISMATCH
 // divergence     18
 //

@@ -4,6 +4,9 @@
 // spans     0x00634FC0-0x00634FD3
 // prototype int (__thiscall ?UNK1@TexHeap@@QAEHH@Z)(TexHeap* this, int)
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00635050
 // 0x00634FC0  ?UNK1@TexHeap@@QAEHH@Z  ->  ?UNK1@TexHeap@@QAEHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -4,6 +4,9 @@
 // spans     0x00617020-0x0061707F
 // prototype void (__thiscall ?close@Caviar@@QAEXXZ)(Caviar* this)
 // callers   11   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 // 0x00617020  ?close@Caviar@@QAEXXZ  ->  ?close@Caviar@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -4,6 +4,9 @@
 // spans     0x004C5FE0-0x004C5FF2
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x004C5FE0  ?get_sound_version@@YAHXZ  ->  ?get_sound_version@@YAHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

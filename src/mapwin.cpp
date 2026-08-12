@@ -29,6 +29,9 @@ ORIGINAL: 0x00467960 BYTE_EXACT
 // spans     0x00467960-0x00467961
 // prototype void (__thiscall ?UNK3@MapWin@@QAEXXZ)(MapWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -44,6 +47,9 @@ ORIGINAL: 0x0046FB80 BYTE_EXACT
 // spans     0x0046FB80-0x0046FB81
 // prototype void (__thiscall ?do_image_buttons@MapWin@@QAEXXZ)(MapWin* this)
 // callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -72,6 +78,9 @@ ORIGINAL: 0x0046FB10
 // spans     0x0046FB10-0x0046FB20
 // prototype void (__thiscall ?main_caption@MapWin@@QAEXXZ)(MapWin* this)
 // callers   11   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045BE80
 Return Value: n/a
 Status: Complete
 */
@@ -95,6 +104,9 @@ ORIGINAL: 0x00470F70
 // spans     0x00470F70-0x00470F98
 // prototype void (__thiscall ?close@MapWin@@QAEXXZ)(MapWin* this)
 // callers   4   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -126,6 +138,9 @@ ORIGINAL: 0x0046EBA0
 // spans     0x0046EBA0-0x0046EBC5
 // prototype void (__thiscall ?on_left_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046D5D0
 Return Value: n/a
 Status: Complete
 */
@@ -147,6 +162,9 @@ ORIGINAL: 0x0046EBE0
 // spans     0x0046EBE0-0x0046EC05
 // prototype void (__thiscall ?on_right_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046D5D0
 Return Value: n/a
 Status: Complete
 */
@@ -175,6 +193,9 @@ ORIGINAL: 0x0046EBD0 BYTE_EXACT
 // spans     0x0046EBD0-0x0046EBD3
 // prototype void (__thiscall ?on_left_double_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -189,6 +210,9 @@ ORIGINAL: 0x0046EFF0 BYTE_EXACT
 // spans     0x0046EFF0-0x0046EFF3
 // prototype void (__thiscall ?on_left_up@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -211,6 +235,9 @@ ORIGINAL: 0x00462970 BYTE_EXACT
 // spans     0x00462970-0x00462973
 // prototype int (__thiscall ?UNK2@MapWin@@QAEHXZ)(MapWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0, always
 Status: Complete
 */
@@ -251,6 +278,9 @@ ORIGINAL: 0x0046AF40
 // spans     0x0046AF40-0x0046AF86
 // prototype void (__cdecl ?draw_tile@@YAXHHH@Z)(int xCoord, int yCoord, int drawType)
 // callers   34   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A2A0
 Return Value: n/a. EAX on return is path-dependent leftover (draw_radius's own
               residue, the zero flag read at 0x0046AF5F, or a stale value when
               the last slot is empty), not a computed result, so unlike
@@ -303,6 +333,9 @@ ORIGINAL: 0x0046B140
 // spans     0x0046B140-0x0046B186
 // prototype 
 // callers   10   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A2A0
 Return Value: n/a; same path-dependent EAX leftover as draw_tile.
 Status: Complete with temporary MapWin::draw_radius original dependency
 */
@@ -353,6 +386,9 @@ ORIGINAL: 0x00462960
 // spans     0x00462960-0x0046296C
 // prototype int (__thiscall ?UNK1@MapWin@@QAEHXZ)(MapWin* this)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: 1 when this is ConsoleGlobal, 0 otherwise
 Status: Complete
 */
@@ -371,6 +407,9 @@ ORIGINAL: 0x0046B1D0 BYTE_EXACT
 // spans     0x0046B1D0-0x0046B1E8
 // prototype void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this)
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0046A550
 Status: Complete
 */
 void MapWin::on_redraw() {
@@ -386,6 +425,9 @@ ORIGINAL: 0x0046FA00 BYTE_EXACT
 // spans     0x0046FA00-0x0046FA1A
 // prototype void (__thiscall ?on_resize@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0046FB80
 Status: Complete
 */
 void MapWin::on_resize(int a1, int a2) {

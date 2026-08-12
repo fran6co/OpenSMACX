@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005DB400 FILE
+// name      sub_5db400
+// size      79 bytes
+// spans     0x005DB400-0x005DB44F
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DB450
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005DB400
-// name           sub_5db400
-// size           79 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

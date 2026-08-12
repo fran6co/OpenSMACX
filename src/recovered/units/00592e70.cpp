@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00592E70 FILE
+// name      ?message_base@@YAXHHPADH@Z
+// size      106 bytes
+// spans     0x00592E70-0x00592EDA
+// prototype 
+// callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532940 0x00645460
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00592E70
-// name           ?message_base@@YAXHHPADH@Z
-// size           106 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

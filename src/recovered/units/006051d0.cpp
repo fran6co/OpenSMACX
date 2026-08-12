@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006051D0 FILE
+// name      ??0Scroll@@QAE@XZ
+// size      439 bytes
+// spans     0x006051D0-0x00605367;0x00662E30-0x00662E50
+// prototype Scroll* (__thiscall ??0Scroll@@QAE@XZ)(Scroll* this)
+// callers   13   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4CF0 0x00607CF0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006051D0
-// name           ??0Scroll@@QAE@XZ
-// size           439 bytes
 // measured tier  MISMATCH
 // divergence     3
 //

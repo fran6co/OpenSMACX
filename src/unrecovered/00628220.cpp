@@ -1,11 +1,14 @@
 // ORIGINAL: 0x00628220 FILE
-// RULED-OUT: no-locals src[i]*src[i] (every order/assoc/operand-order/1-vs-2-statement reciprocal spelling, 5760 units, flat 69 B); locals x,y,z with the tail reading src[] (69-76 B, no spill); tail reading the locals (85-95 B, sub esp,8 - one slot too many); const src, /Oa, __inline helper, aliasing store before the sum, dead stores to locals, sum-in-a-variable - none spill y,z; /Op and /O1 both lose the fsqrt intrinsic to a call
-// working copy - scaffold materialised by --work
 // name      sub_628220
 // size      107 bytes
 // spans     0x00628220-0x0062828B
 // prototype 
 // callers   10   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// RULED-OUT: no-locals src[i]*src[i] (every order/assoc/operand-order/1-vs-2-statement reciprocal spelling, 5760 units, flat 69 B); locals x,y,z with the tail reading src[] (69-76 B, no spill); tail reading the locals (85-95 B, sub esp,8 - one slot too many); const src, /Oa, __inline helper, aliasing store before the sum, dead stores to locals, sum-in-a-variable - none spill y,z; /Op and /O1 both lose the fsqrt intrinsic to a call
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_628220  at 0x00628220  (107 bytes)

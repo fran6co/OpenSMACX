@@ -4,6 +4,9 @@
 // spans     0x00633980-0x00633997
 // prototype void (__thiscall ?on_left_double_click@CheckButton@@QAEXHH@Z)(CheckButton* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x00633980  ?on_left_double_click@CheckButton@@QAEXHH@Z  ->  ?on_left_double_click@CheckButton@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

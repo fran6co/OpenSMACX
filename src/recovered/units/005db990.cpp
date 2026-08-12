@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005DB990 FILE
+// name      ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z
+// size      79 bytes
+// spans     0x005DB990-0x005DB9DF
+// prototype int (__thiscall ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z)(Buffer* this, Font*, int8*, RECT*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD530
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005DB990
-// name           ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z
-// size           79 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

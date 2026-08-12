@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00404010 FILE
+// name      ??0AlphaMovie@@QAE@XZ
+// size      105 bytes
+// spans     0x00404010-0x00404067;0x006506DC-0x006506EE
+// prototype void (__thiscall ??0AlphaMovie@@QAE@XZ)(AlphaMovie* this)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005FFD80
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00404010
-// name           ??0AlphaMovie@@QAE@XZ
-// size           105 bytes
 // measured tier  MISMATCH
 // divergence     9
 //

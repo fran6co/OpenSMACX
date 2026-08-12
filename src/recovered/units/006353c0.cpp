@@ -1,12 +1,18 @@
 // ORIGINAL: 0x006353C0 FILE
+// name      ?get_mem@TexHeap@@QAEHH@Z
+// size      66 bytes
+// spans     0x006353C0-0x00635402
+// prototype int (__thiscall ?get_mem@TexHeap@@QAEHH@Z)(#120* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4680
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x006353C0
-// name           ?get_mem@TexHeap@@QAEHH@Z
-// size           66 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

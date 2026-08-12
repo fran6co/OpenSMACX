@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0043EE10 FILE
+// name      ??1SelectPartWin@@QAE@XZ
+// size      486 bytes
+// spans     0x0043EE10-0x0043EF6A;0x00654720-0x006547AC
+// prototype void (__thiscall ??1SelectPartWin@@QAE@XZ)(SelectPartWin* this)
+// callers   1   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x005D4E40 0x005D7410 0x005D7470 0x00605370 0x00607040 0x00607DA0 0x00617020 0x00618EE0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0043EE10
-// name           ??1SelectPartWin@@QAE@XZ
-// size           486 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

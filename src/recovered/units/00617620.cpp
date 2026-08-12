@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00617620 FILE
+// name      ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z
+// size      79 bytes
+// spans     0x00617620-0x0061766F
+// prototype void (__thiscall ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z)(Caviar* this, Buffer*, int, int, int, int)
+// callers   4   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00617230 0x006465F0
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00617620
-// name           ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z
-// size           79 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

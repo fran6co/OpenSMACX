@@ -71,6 +71,9 @@ ORIGINAL: 0x004712A0
 // spans     0x004712A0-0x004712CC
 // prototype BOOL (__cdecl ?on_map@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   7   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Are the coordinates on the map? true/false
 Status: Complete
 */
@@ -86,6 +89,9 @@ ORIGINAL: 0x0048BEE0
 // spans     0x0048BEE0-0x0048BF05
 // prototype 
 // callers   4   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: X coordinate
 Status: Complete
 */
@@ -110,6 +116,9 @@ ORIGINAL: 0x004E3EF0
 // spans     0x004E3EF0-0x004E3F9D
 // prototype int (__cdecl ?whose_territory@@YAHHHHPAHH@Z)(int factionID, int xCoord, int yCoord, int* baseID, int ignoreComm)
 // callers   40   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3D50
 Return Value: Faction id of the territory's owner or -1 if no owner or unknown faction
 Status: Complete
 */
@@ -140,6 +149,9 @@ ORIGINAL: 0x004E3FA0
 // spans     0x004E3FA0-0x004E4017
 // prototype int (__cdecl ?base_territory@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3EF0
 Return Value: Base id or -1
 Status: Complete
 */
@@ -161,6 +173,9 @@ ORIGINAL: 0x004ECB90
 // spans     0x004ECB90-0x004ECBE1
 // prototype int (__cdecl ?crappy@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Quality of terrain, lower is better (0-2)
 Status: Complete
 */
@@ -189,6 +204,9 @@ ORIGINAL: 0x004F8090
 // spans     0x004F8090-0x004F80CB
 // prototype int (__cdecl ?vector_dist@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
 Return Value: Distance radius
 Status: Complete
 */
@@ -215,6 +233,9 @@ ORIGINAL: 0x005A5910
 // spans     0x005A5910-0x005A5987
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00644F3A
 Return Value: Distance radius
 Status: Complete
 */
@@ -231,6 +252,9 @@ ORIGINAL: 0x0050DDC0
 // spans     0x0050DDC0-0x0050DE00
 // prototype int (__cdecl ?sea_coast@@YAHHH@Z)(int regionDst, int regionSrc)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready
+// calls     0x0050BA00
 Return Value: Is there a path? true/false
 Status: Complete
 */
@@ -250,6 +274,9 @@ ORIGINAL: 0x0050DE00
 // spans     0x0050DE00-0x0050DE49
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Sea coasts valid path count
 Status: Complete
 */
@@ -273,6 +300,9 @@ ORIGINAL: 0x0050DE50
 // spans     0x0050DE50-0x0050DF28
 // prototype int (__cdecl ?base_on_sea@@YAHHH@Z)(int baseID, int region)
 // callers   10   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is base connected to specified sea region? true/false
 Status: Complete
 */
@@ -309,6 +339,9 @@ ORIGINAL: 0x0050DF30
 // spans     0x0050DF30-0x0050E021
 // prototype int (__cdecl ?base_coast@@YAHH@Z)(int baseID)
 // callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Ocean region or -1 if landlocked
 Status: Complete
 */
@@ -340,6 +373,9 @@ ORIGINAL: 0x0050E030
 // spans     0x0050E030-0x0050E15A
 // prototype int (__cdecl ?port_to_coast@@YAHHH@Z)(int baseID, int region)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00
 Return Value: Is port and coastal region accessible by water to each other? true/false
 Status: Complete
 */
@@ -370,6 +406,9 @@ ORIGINAL: 0x0050E160
 // spans     0x0050E160-0x0050E306
 // prototype int (__cdecl ?port_to_port@@YAHHH@Z)(int baseIDSrc, int baseIDDst)
 // callers   7   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Are both ports accessible by water to each other? true/false
 Status: Complete
 */
@@ -402,6 +441,9 @@ ORIGINAL: 0x0050E310
 // spans     0x0050E310-0x0050E3BD
 // prototype int (__cdecl ?transport_base@@YAHH@Z)(int baseID)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA00 0x0050DF30
 Return Value: Should base build naval transports? true/false
 Status: Complete
 */
@@ -424,6 +466,9 @@ ORIGINAL: 0x0050E3C0
 // spans     0x0050E3C0-0x0050E5BE
 // prototype int (__cdecl ?naval_base@@YAHH@Z)(int baseID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0050DF30
 Return Value: Does base have a strategic naval importance? true/false
 Status: Complete
 */
@@ -450,6 +495,9 @@ ORIGINAL: 0x0050E5C0
 // spans     0x0050E5C0-0x0050E81C
 // prototype int (__cdecl ?convoy@@YAHHH@Z)(int vehID, int baseID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is a convoy route possible? true/false
 Status: Complete
 */
@@ -481,6 +529,9 @@ ORIGINAL: 0x005591C0
 // spans     0x005591C0-0x005591DD
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is region bad? true/false
 Status: Complete
 */
@@ -496,6 +547,9 @@ ORIGINAL: 0x0056B320
 // spans     0x0056B320-0x0056B47D
 // prototype int (__cdecl ?get_there@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3A50 0x0050DDC0 0x0050DE50 0x0050E030 0x0050E160
 Return Value: Can unit reach tile? true/false
 Status: Complete
 */
@@ -536,6 +590,9 @@ ORIGINAL: 0x0056B480
 // spans     0x0056B480-0x0056B5A9
 // prototype int (__cdecl ?coast_or_border@@YAHHHHHH@Z)(int xCoordPtA, int yCoordPtA, int xCoordPtB, int yCoordPtB, int factionID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0
 Return Value: Is point A considered a border or coast? true/false
 Status: Complete
 */
@@ -586,6 +643,9 @@ ORIGINAL: 0x00591AD0
 // spans     0x00591AD0-0x00591B05
 // prototype 
 // callers   4   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -613,6 +673,9 @@ ORIGINAL: 0x00591A80
 // spans     0x00591A80-0x00591ACE
 // prototype void (__cdecl ?climate_set@@YAXHHH@Z)(int xCoord, int yCoord, int climate)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -632,6 +695,9 @@ ORIGINAL: 0x005919C0
 // spans     0x005919C0-0x00591A77
 // prototype int (__cdecl ?elev_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Elevation (bounded to: -3000 to 3500)
 Status: Complete
 */
@@ -651,6 +717,9 @@ ORIGINAL: 0x005918A0
 // spans     0x005918A0-0x005918EF
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain tops)
 Status: Complete
 */
@@ -672,6 +741,9 @@ ORIGINAL: 0x005918F0
 // spans     0x005918F0-0x005919C0
 // prototype void (__cdecl ?alt_set_both@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
 // callers   2   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591290 0x0064601D
 Return Value: n/a
 Status: Complete
 */
@@ -691,6 +763,9 @@ ORIGINAL: 0x00500150
 // spans     0x00500150-0x0050017B
 // prototype int (__cdecl ?alt_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Altitude
 Status: Complete
 */
@@ -716,6 +791,9 @@ ORIGINAL: 0x00500180
 // spans     0x00500180-0x005001A9
 // prototype int (__cdecl ?alt_detail_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Altitude detail
 Status: Complete
 */
@@ -731,6 +809,9 @@ ORIGINAL: 0x00591260
 // spans     0x00591260-0x00591288
 // prototype void (__cdecl ?alt_put_detail@@YAXHHH@Z)(int xCoord, int yCoord, int detail)
 // callers   5   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -756,6 +837,9 @@ ORIGINAL: 0x00591B10
 // spans     0x00591B10-0x00591B48
 // prototype void (__cdecl ?owner_set@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   13   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -773,6 +857,9 @@ ORIGINAL: 0x00591B50
 // spans     0x00591B50-0x00591B86
 // prototype void (__cdecl ?site_set@@YAXHHH@Z)(int xCoord, int yCoord, int site)
 // callers   9   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -790,6 +877,9 @@ ORIGINAL: 0x00500220
 // spans     0x00500220-0x00500249
 // prototype int (__cdecl ?region_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Region
 Status: Complete
 */
@@ -805,6 +895,9 @@ ORIGINAL: 0x00591B90
 // spans     0x00591B90-0x00591BB8
 // prototype void (__cdecl ?region_set@@YAXHHH@Z)(int xCoord, int yCoord, int region)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -830,6 +923,9 @@ ORIGINAL: 0x00591C10
 // spans     0x00591C10-0x00591C48
 // prototype void (__cdecl ?using_set@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -857,6 +953,9 @@ ORIGINAL: 0x00591C50
 // spans     0x00591C50-0x00591C88
 // prototype int (__cdecl ?lock_set@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -874,6 +973,9 @@ ORIGINAL: 0x00591C90
 // spans     0x00591C90-0x00591CE2
 // prototype int (__cdecl ?lock_map@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: True if already locked by another faction, otherwise false
 Status: Complete
 */
@@ -896,6 +998,9 @@ ORIGINAL: 0x00591CF0
 // spans     0x00591CF0-0x00591D29
 // prototype void (__cdecl ?unlock_map@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -923,6 +1028,9 @@ ORIGINAL: 0x00591BC0
 // spans     0x00591BC0-0x00591C0E
 // prototype void (__cdecl ?rocky_set@@YAXHHH@Z)(int xCoord, int yCoord, int rocky)
 // callers   11   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -942,6 +1050,9 @@ ORIGINAL: 0x005001B0
 // spans     0x005001B0-0x005001D5
 // prototype int (__cdecl ?bit_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Bitfield
 Status: Complete
 */
@@ -957,6 +1068,9 @@ ORIGINAL: 0x00591D30
 // spans     0x00591D30-0x00591D58
 // prototype void (__cdecl ?bit_put@@YAXHHH@Z)(int xCoord, int yCoord, int bit)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -972,6 +1086,9 @@ ORIGINAL: 0x00591D60
 // spans     0x00591D60-0x00591DA2
 // prototype void (__cdecl ?bit_set@@YAXHHHH@Z)(int xCoord, int yCoord, int bit, int)
 // callers   32   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1001,6 +1118,9 @@ ORIGINAL: 0x00591DB0
 // spans     0x00591DB0-0x00591DF2
 // prototype void (__cdecl ?bit2_set@@YAXHHHH@Z)(int xCoord, int yCoord, int bit2, int)
 // callers   19   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1030,6 +1150,9 @@ ORIGINAL: 0x00591E00
 // spans     0x00591E00-0x00591E45
 // prototype void (__cdecl ?code_set@@YAXHHH@Z)(int xCoord, int yCoord, int)
 // callers   16   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1048,6 +1171,9 @@ ORIGINAL: 0x00591E50
 // spans     0x00591E50-0x00591E82
 // prototype void (__cdecl ?synch_bit@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   24   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1065,6 +1191,9 @@ ORIGINAL: 0x00591F00
 // spans     0x00591F00-0x00592007
 // prototype int (__cdecl ?minerals_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0 (Flat), 1 (Rolling), 2 (Rocky)
 Status: Complete
 */
@@ -1115,6 +1244,9 @@ ORIGINAL: 0x00592030
 // spans     0x00592030-0x00592135
 // prototype int (__cdecl ?bonus_at@@YAHHHH@Z)(int xCoord, int yCoord, int unkVal)
 // callers   17   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0 (no bonus), 1 (nutrient), 2 (mineral), 3 (energy)
 Status: Complete
 */
@@ -1153,6 +1285,9 @@ ORIGINAL: 0x00592140
 // spans     0x00592140-0x00592248
 // prototype int (__cdecl ?goody_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   14   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: 0 (no supply pod), 1 (standard supply pod), 2 (unity pod?)
 Status: Complete
 */
@@ -1188,6 +1323,9 @@ ORIGINAL: 0x00592400
 // spans     0x00592400-0x00592480
 // prototype void (__cdecl ?site_radius@@YAXHHH@Z)(int xCoord, int yCoord, int)
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1210,6 +1348,9 @@ ORIGINAL: 0x00592550
 // spans     0x00592550-0x005925F8
 // prototype 
 // callers   5   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Landmark offset or -1 if none found
 Status: Complete
 */
@@ -1237,6 +1378,9 @@ ORIGINAL: 0x00592600
 // spans     0x00592600-0x0059264B
 // prototype int (__cdecl ?new_landmark@@YAHHHPAD@Z)(int xCoord, int yCoord, int8* name)
 // callers   18   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00645460
 Return Value: Landmark offset or -1 if max landmark count is reached
 Status: Complete
 */
@@ -1261,6 +1405,9 @@ ORIGINAL: 0x00592650
 // spans     0x00592650-0x005926EF
 // prototype int (__cdecl ?valid_landmark@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3B80 0x004E3EF0
 Return Value: Does the faction have control of the tile to set a landmark? true/false
 Status: Complete
 */
@@ -1285,6 +1432,9 @@ ORIGINAL: 0x005926F0
 // spans     0x005926F0-0x005927D0
 // prototype void (__cdecl ?kill_landmark@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1309,6 +1459,9 @@ ORIGINAL: 0x004E49D0
 // spans     0x004E49D0-0x004E4A91
 // prototype int (__cdecl ?is_coast@@YAHHHH@Z)(int xCoord, int yCoord, int isBaseRadius)
 // callers   10   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is tile coast? true/false
 Status: Complete
 */
@@ -1332,6 +1485,9 @@ ORIGINAL: 0x005001E0
 // spans     0x005001E0-0x00500211
 // prototype int (__cdecl ?is_ocean@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is tile ocean? true/false
 Status: Complete
 */
@@ -1347,6 +1503,9 @@ ORIGINAL: 0x00500250
 // spans     0x00500250-0x00500288
 // prototype int (__cdecl ?veh_who@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
@@ -1369,6 +1528,9 @@ ORIGINAL: 0x00532A90
 // spans     0x00532A90-0x00532B63
 // prototype 
 // callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1397,6 +1559,9 @@ ORIGINAL: 0x00532B70
 // spans     0x00532B70-0x00532C2B
 // prototype 
 // callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1423,6 +1588,9 @@ ORIGINAL: 0x00579790
 // spans     0x00579790-0x005797C7
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00644F3A
 Return Value: Distance
 Status: Complete
 */
@@ -1442,6 +1610,9 @@ ORIGINAL: 0x00579840
 // spans     0x00579840-0x00579896
 // prototype int (__cdecl ?is_known@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is tile visible/known to faction? true/false
 Status: Complete
 */
@@ -1458,6 +1629,9 @@ ORIGINAL: 0x005798A0
 // spans     0x005798A0-0x005798D8
 // prototype 
 // callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
@@ -1480,6 +1654,9 @@ ORIGINAL: 0x005798E0
 // spans     0x005798E0-0x00579918
 // prototype int (__cdecl ?anything_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
@@ -1502,6 +1679,9 @@ ORIGINAL: 0x00590E90
 // spans     0x00590E90-0x00590EC5
 // prototype 
 // callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
 Return Value: n/a
 Status: Complete
 */
@@ -1524,6 +1704,9 @@ ORIGINAL: 0x00590ED0
 // spans     0x00590ED0-0x00591036
 // prototype 
 // callers   6   call targets   7
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00471240 0x005D4510 0x006169A0 0x006290E0 0x00644EF2 0x00645460 0x00645470
 Return Value: n/a
 Status: Complete
 */
@@ -1556,6 +1739,9 @@ ORIGINAL: 0x00591040
 // spans     0x00591040-0x005910B0
 // prototype 
 // callers   3   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00625810
 Return Value: n/a
 Status: Complete
 */
@@ -1585,6 +1771,9 @@ ORIGINAL: 0x005910B0
 // spans     0x005910B0-0x00591125
 // prototype int (__cdecl ?map_write@@YAHPAUFILE@@@Z)(FILE* file)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064603F
 Return Value: Did an error occur? true/false
 Status: Complete
 */
@@ -1605,6 +1794,9 @@ ORIGINAL: 0x00591130
 // spans     0x00591130-0x00591208
 // prototype int (__cdecl ?map_read@@YAHPAUFILE@@@Z)(FILE* file)
 // callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00590ED0 0x00592940 0x00644EF2 0x00646178
 Return Value: Did an error occur? true/false
 Status: Complete
 */
@@ -1634,6 +1826,9 @@ ORIGINAL: 0x00591210
 // spans     0x00591210-0x00591230
 // prototype int (__cdecl ?abstract_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Abstract value (region)
 Status: Complete
 */
@@ -1649,6 +1844,9 @@ ORIGINAL: 0x00591230
 // spans     0x00591230-0x00591253
 // prototype void (__cdecl ?abstract_set@@YAXHHE@Z)(int xCoord, int yCoord, unsigned int8 val)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -1665,6 +1863,9 @@ ORIGINAL: 0x00593830
 // spans     0x00593830-0x005939FC
 // prototype void (__cdecl ?quick_zoc@@YAXHHHHHPAH0@Z)(int xCoordSrc, int yCoordSrc, int factionID, int xCoordDst, int yCoordDst, int* xCoordZoc, int* yCoordZoc)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00644F3A
 Return Value: n/a
 Status: Complete
 */
@@ -1699,6 +1900,9 @@ ORIGINAL: 0x005A65A0
 // spans     0x005A65A0-0x005A65D0
 // prototype int (__cdecl ?radius_move@@YAHHHH@Z)(int xCoord, int yCoord, int range)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
@@ -1719,6 +1923,9 @@ ORIGINAL: 0x005A65D0
 // spans     0x005A65D0-0x005A662C
 // prototype int (__cdecl ?radius_move@@YAHHHHHH@Z)(int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int range)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
@@ -1741,6 +1948,9 @@ ORIGINAL: 0x005A6630
 // spans     0x005A6630-0x005A66E0
 // prototype int (__cdecl ?compass_move@@YAHHHHH@Z)(int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
@@ -1798,6 +2008,9 @@ ORIGINAL: 0x005BF010
 // spans     0x005BF010-0x005BF12D
 // prototype int (__cdecl ?is_sensor@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   8   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3B80 0x0050BA00 0x00644F3A
 Return Value: 0 (no sensor), 1 (sensor array via terraforming), 2 (Geosynchronous Survey Pod)
 Status: Complete
 */
@@ -1828,6 +2041,9 @@ ORIGINAL: 0x00564EB0
 // spans     0x00564EB0-0x00565157
 // prototype int (__cdecl ?good_sensor@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
 // callers   2   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3A50 0x004E3EF0 0x00592030 0x005B9F20 0x005BF010
 Return Value: Is the tile a good sensor site? true/false
 Status: Complete
 
@@ -1966,6 +2182,9 @@ ORIGINAL: 0x005BF130
 // spans     0x005BF130-0x005BF1EE
 // prototype int (__cdecl ?has_temple@@YAHH@Z)(int factionID)
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3EF0
 Return Value: Does faction control Nexus? true/false
 Status: Complete
 */
@@ -1991,6 +2210,9 @@ ORIGINAL: 0x005C2020
 // spans     0x005C2020-0x005C2374
 // prototype void (__cdecl ?world_alt_set@@YAXHHHH@Z)(int xCoord, int yCoord, int altitude, int isSetBoth)
 // callers   23   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591290 0x005918F0 0x00591B10 0x00592030
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2054,6 +2276,9 @@ ORIGINAL: 0x005C2380
 // spans     0x005C2380-0x005C23DE
 // prototype void (__cdecl ?world_raise_alt@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   4   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C2020
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2074,6 +2299,9 @@ ORIGINAL: 0x005C23E0
 // spans     0x005C23E0-0x005C243B
 // prototype 
 // callers   3   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C2020
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2094,6 +2322,9 @@ ORIGINAL: 0x005C2440
 // spans     0x005C2440-0x005C27E1
 // prototype void (__cdecl ?brush@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
 // callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046AEF0 0x00591AD0 0x005C2020
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2161,6 +2392,9 @@ ORIGINAL: 0x005C27F0
 // spans     0x005C27F0-0x005C28E6
 // prototype void (__cdecl ?paint_land@@YAXHHHH@Z)(int xCoord, int yCoord, int altitude, int radius)
 // callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C2440 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2197,6 +2431,9 @@ ORIGINAL: 0x005C28F0
 // spans     0x005C28F0-0x005C2B3C
 // prototype 
 // callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C27F0 0x005FCB20 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2260,6 +2497,9 @@ ORIGINAL: 0x005C2B40
 // spans     0x005C2B40-0x005C2CA8
 // prototype 
 // callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C27F0 0x005FCB20 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2310,6 +2550,9 @@ ORIGINAL: 0x005C3680
 // spans     0x005C3680-0x005C38AF
 // prototype 
 // callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591D60 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2366,6 +2609,9 @@ ORIGINAL: 0x005C40F0
 // spans     0x005C40F0-0x005C416B
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0059C790
 Return Value: Are there any issues with the world continents? true/false
 Status: Complete - testing
 */
@@ -2397,6 +2643,9 @@ ORIGINAL: 0x005C4170
 // spans     0x005C4170-0x005C4401
 // prototype 
 // callers   2   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591AD0 0x005FCB20 0x006257E0 0x00625810
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2469,6 +2718,9 @@ ORIGINAL: 0x005C4FD0
 // spans     0x005C4FD0-0x005C55B5
 // prototype 
 // callers   8   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00592030 0x00592140
 Return Value: Site value 0 (unusable) or 1-15
 Status: Complete
 
@@ -2666,6 +2918,9 @@ ORIGINAL: 0x005C55C0
 // spans     0x005C55C0-0x005C58B8
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005FCB20
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2736,6 +2991,9 @@ ORIGINAL: 0x005C58C0
 // spans     0x005C58C0-0x005C58DB
 // prototype void (__cdecl ?world_alt_put_detail@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591260
 Return Value: n/a
 Status: Complete
 */
@@ -2751,6 +3009,9 @@ ORIGINAL: 0x005C58E0
 // spans     0x005C58E0-0x005C5A2F
 // prototype 
 // callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00591260 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2776,6 +3037,9 @@ ORIGINAL: 0x005C5AE0
 // spans     0x005C5AE0-0x005C5BC3
 // prototype 
 // callers   2   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591260 0x005918A0 0x005FCB20
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2801,6 +3065,9 @@ ORIGINAL: 0x005C5BD0
 // spans     0x005C5BD0-0x005C5C61
 // prototype BOOL (__cdecl ?near_landmark@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Is the tile near a landmark? true/false
 Status: Complete
 */
@@ -2823,6 +3090,9 @@ ORIGINAL: 0x005C5C70
 // spans     0x005C5C70-0x005C5EEF
 // prototype void (__cdecl ?world_crater@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   4   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591AD0 0x00591BC0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2873,6 +3143,9 @@ ORIGINAL: 0x005C5EF0
 // spans     0x005C5EF0-0x005C6200
 // prototype void (__cdecl ?world_monsoon@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E49D0 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x005C4470 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2926,6 +3199,9 @@ ORIGINAL: 0x005C6200
 // spans     0x005C6200-0x005C6498
 // prototype void (__cdecl ?world_sargasso@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2976,6 +3252,9 @@ ORIGINAL: 0x005C64A0
 // spans     0x005C64A0-0x005C6734
 // prototype void (__cdecl ?world_ruin@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3030,6 +3309,9 @@ ORIGINAL: 0x005C6740
 // spans     0x005C6740-0x005C69DB
 // prototype void (__cdecl ?world_dune@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591BC0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x005C4470 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3078,6 +3360,9 @@ ORIGINAL: 0x005C69E0
 // spans     0x005C69E0-0x005C6C31
 // prototype void (__cdecl ?world_diamond@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591BC0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3122,6 +3407,9 @@ ORIGINAL: 0x005C6C40
 // spans     0x005C6C40-0x005C6DA4
 // prototype void (__cdecl ?world_fresh@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591DB0 0x00592600 0x006169A0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3174,6 +3462,9 @@ ORIGINAL: 0x005C6DB0
 // spans     0x005C6DB0-0x005C7016
 // prototype void (__cdecl ?world_volcano@@YAXHHH@Z)(int xCoord, int yCoord, int)
 // callers   4   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591BC0 0x00591D30 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3228,6 +3519,9 @@ ORIGINAL: 0x005C7020
 // spans     0x005C7020-0x005C753B
 // prototype void (__cdecl ?world_borehole@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004712A0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3321,6 +3615,9 @@ ORIGINAL: 0x005C7540
 // spans     0x005C7540-0x005C7749
 // prototype void (__cdecl ?world_temple@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3362,6 +3659,9 @@ ORIGINAL: 0x005C7750
 // spans     0x005C7750-0x005C7A75
 // prototype void (__cdecl ?world_unity@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591BC0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3431,6 +3731,9 @@ ORIGINAL: 0x005C7A80
 // spans     0x005C7A80-0x005C7CA1
 // prototype void (__cdecl ?world_fossil@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3473,6 +3776,9 @@ ORIGINAL: 0x005C7CB0
 // spans     0x005C7CB0-0x005C7F38
 // prototype void (__cdecl ?world_canyon@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3515,6 +3821,9 @@ ORIGINAL: 0x005C7F40
 // spans     0x005C7F40-0x005C8148
 // prototype void (__cdecl ?world_mesa@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3555,6 +3864,9 @@ ORIGINAL: 0x005C8150
 // spans     0x005C8150-0x005C83AB
 // prototype void (__cdecl ?world_ridge@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3596,6 +3908,9 @@ ORIGINAL: 0x005C83B0
 // spans     0x005C83B0-0x005C8627
 // prototype void (__cdecl ?world_geothermal@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3644,6 +3959,9 @@ ORIGINAL: 0x005C8630
 // spans     0x005C8630-0x005C86DC
 // prototype 
 // callers   0   call targets   15
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005C5C70 0x005C5EF0 0x005C6200 0x005C64A0 0x005C6740 0x005C69E0 0x005C6C40 0x005C6DB0 0x005C7020 0x005C7540 0x005C7750 0x005C7A80 0x005C7F40 0x005C8150 0x005C83B0
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3675,6 +3993,9 @@ ORIGINAL: 0x005C89F0
 // spans     0x005C89F0-0x005C8AC0
 // prototype int (__cdecl ?zoc_any@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   5   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3701,6 +4022,9 @@ ORIGINAL: 0x005C8AC0
 // spans     0x005C8AC0-0x005C8B97
 // prototype int (__cdecl ?zoc_veh@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   4   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3731,6 +4055,9 @@ ORIGINAL: 0x005C8BA0
 // spans     0x005C8BA0-0x005C8D36
 // prototype int (__cdecl ?zoc_sea@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   5   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BFE90
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3766,6 +4093,9 @@ ORIGINAL: 0x005C8D40
 // spans     0x005C8D40-0x005C8D96
 // prototype int (__cdecl ?zoc_move@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   6   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C8BA0
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3829,6 +4159,9 @@ ORIGINAL: 0x00462190
 // spans     0x00462190-0x00462699
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: Altitude detail, 0 to 79; 0 for a tile off the map
 Status: Complete
 

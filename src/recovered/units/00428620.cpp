@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00428620 FILE
+// name      ??0CouncWin@@QAE@XZ
+// size      346 bytes
+// spans     0x00428620-0x00428706;0x00652CC0-0x00652D34
+// prototype void (__thiscall ??0CouncWin@@QAE@XZ)(CouncWin* this)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005FA860 0x00618EA0 0x006457C2
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00428620
-// name           ??0CouncWin@@QAE@XZ
-// size           346 bytes
 // measured tier  NO_COMPILE
 // refusal        u00428620.cpp(143) : error C2079: 'spot_' uses undefined class 'Spot' u00428620.cpp(428) : warning C4291: 'void *__cdecl operator new(unsigned int,void *)' : no
 //

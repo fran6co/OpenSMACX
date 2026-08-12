@@ -4,6 +4,9 @@
 // spans     0x004C78C0-0x004C78DA
 // prototype int (__thiscall ?set_base_path@Midi@@QAEHPBD@Z)(Midi* this, int8*)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // 0x004C78C0  ?set_base_path@Midi@@QAEHPBD@Z  ->  ?set_base_path@Midi@@QAEHPBD@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

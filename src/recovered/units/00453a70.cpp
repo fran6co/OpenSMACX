@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00453A70 FILE
+// name      ?load_box_sprites@@YAXXZ
+// size      1279 bytes
+// spans     0x00453A70-0x00453F6F
+// prototype 
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D7470 0x005D7670 0x005D7DE0 0x005DFF00 0x005E2210 0x005E39A0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00453A70
-// name           ?load_box_sprites@@YAXXZ
-// size           1279 bytes
 // measured tier  MISMATCH
 // divergence     14
 //

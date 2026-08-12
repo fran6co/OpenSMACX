@@ -4,6 +4,9 @@
 // spans     0x00629DF0-0x00629E44
 // prototype void (__thiscall ?close@Flic@@QAEXXZ)(Flic* this)
 // callers   11   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645598
 // 0x00629DF0  ?close@Flic@@QAEXXZ  ->  ?close@Flic@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

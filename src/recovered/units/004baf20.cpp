@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004BAF20 FILE
+// name      ?tour7@TutWin@@QAEXXZ
+// size      1107 bytes
+// spans     0x004BAF20-0x004BB373
+// prototype void (__thiscall ?tour7@TutWin@@QAEXXZ)(TutWin* this)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0043E960 0x0043E9A0 0x004BA9F0 0x004BC5A0 0x004BC690 0x004BDFE0 0x005F7E90
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004BAF20
-// name           ?tour7@TutWin@@QAEXXZ
-// size           1107 bytes
 // measured tier  MISMATCH
 // divergence     24
 //

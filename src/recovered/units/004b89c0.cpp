@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004B89C0 FILE
+// name      ?arrow_left@StatusWin@@QAEXXZ
+// size      517 bytes
+// spans     0x004B89C0-0x004B8BC5
+// prototype void (__thiscall ?arrow_left@StatusWin@@QAEXXZ)(StatusWin* this)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004B6570 0x004E3A50 0x005D5930 0x00618F40
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004B89C0
-// name           ?arrow_left@StatusWin@@QAEXXZ
-// size           517 bytes
 // measured tier  MISMATCH
 // divergence     11
 //

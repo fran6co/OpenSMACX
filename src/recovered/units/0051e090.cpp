@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0051E090 BYTE_EXACT FILE
+// name      ?set_tamper@@YAXXZ
+// size      114 bytes
+// spans     0x0051E090-0x0051E102
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0051E090
-// name           ?set_tamper@@YAXXZ
-// size           114 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

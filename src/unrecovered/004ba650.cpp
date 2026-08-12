@@ -1,15 +1,18 @@
 // ORIGINAL: 0x004BA650 BYTE_EXACT FILE
+// name      ?tut_check2@@YAHH@Z
+// size      94 bytes
+// spans     0x004BA650-0x004BA6AE
+// prototype 
+// callers   9   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // LEVER: test/push  0x9A64B0 as a named `extern int`, not a const-address pointer:
 //   the pointer spelling let VC6 cache the flag word in eax across the table
 //   read and push/pop esi for the parameter; a real global may be aliased by the
 //   table pointer, so it reloads, keeps `a1` in scratch edx, and `|=` lowers to
 //   load/or/store instead of `or [mem], reg`.
 // working copy - scaffold materialised by --work
-// name      ?tut_check2@@YAHH@Z
-// size      94 bytes
-// spans     0x004BA650-0x004BA6AE
-// prototype 
-// callers   9   call targets   0
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?tut_check2@@YAHH@Z  at 0x004BA650  (94 bytes)

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0048AF30 FILE
+// name      ?on_redraw@PlanWin@@QAEXXZ
+// size      1159 bytes
+// spans     0x0048AF30-0x0048B3B7
+// prototype void (__thiscall ?on_redraw@PlanWin@@QAEXXZ)(PlanWin* this)
+// callers   6   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462F00 0x005594F0 0x0055AF20 0x005C1D50 0x005D95B0 0x005E09D0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0048AF30
-// name           ?on_redraw@PlanWin@@QAEXXZ
-// size           1159 bytes
 // measured tier  MISMATCH
 // divergence     0
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004D5D30 FILE
+// name      ?oblit@Console@@QAEXH@Z
+// size      564 bytes
+// spans     0x004D5D30-0x004D5F64
+// prototype void (__thiscall ?oblit@Console@@QAEXH@Z)(Console* this, int vehID)
+// callers   2   call targets   13
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x0048C0A0 0x004CD4E0 0x004E3A50 0x0052DC70 0x00530AA0 0x00531020 0x005310F0 0x00531300 0x00592E10 0x005AC060 0x005C1B70 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004D5D30
-// name           ?oblit@Console@@QAEXH@Z
-// size           564 bytes
 // measured tier  MISMATCH
 // divergence     131
 //

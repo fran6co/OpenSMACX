@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00428550 BYTE_EXACT FILE
+// name      ??1CouncWin@@QAE@XZ
+// size      312 bytes
+// spans     0x00428550-0x00428614;0x00652C40-0x00652CB4
+// prototype void (__thiscall ??1CouncWin@@QAE@XZ)(CouncWin* this)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x005FA870 0x00618EE0 0x006456E4
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00428550
-// name           ??1CouncWin@@QAE@XZ
-// size           312 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

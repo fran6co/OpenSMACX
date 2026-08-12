@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005E1350 FILE
+// name      ?vline@Buffer@@QAEXHHHHHHHH@Z
+// size      663 bytes
+// spans     0x005E1350-0x005E15E7
+// prototype void (__thiscall ?vline@Buffer@@QAEXHHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005E1350
-// name           ?vline@Buffer@@QAEXHHHHHHHH@Z
-// size           663 bytes
 // measured tier  MISMATCH
 // divergence     8
 //

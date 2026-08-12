@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004588B0 BYTE_EXACT FILE
+// name      ?UNK2@InfoWin@@QAEXXZ
+// size      78 bytes
+// spans     0x004588B0-0x004588FE
+// prototype void (__thiscall ?UNK2@InfoWin@@QAEXXZ)(InfoWin* this)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00456300 0x00458420 0x005E2DD3
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004588B0
-// name           ?UNK2@InfoWin@@QAEXXZ
-// size           78 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

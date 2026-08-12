@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0062AB10 FILE
+// name      ?fill@Flic@@QAEXXZ
+// size      98 bytes
+// spans     0x0062AB10-0x0062AB72
+// prototype void (__thiscall ?fill@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8240
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0062AB10
-// name           ?fill@Flic@@QAEXXZ
-// size           98 bytes
 // measured tier  MISMATCH
 // divergence     1
 //

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00421100 FILE
+// name      ??1ProdPicker@@QAE@XZ
+// size      952 bytes
+// spans     0x00421100-0x00421392;0x00651250-0x00651376
+// prototype void (__thiscall ??1ProdPicker@@QAE@XZ)(ProdPicker* this)
+// callers   1   call targets   11
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x004926B0 0x005D4DD0 0x00605370 0x00607040 0x00607DA0 0x00616200 0x00617020 0x00618EE0 0x006456E4
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00421100
-// name           ??1ProdPicker@@QAE@XZ
-// size           952 bytes
 // measured tier  MISMATCH
 // divergence     17
 //

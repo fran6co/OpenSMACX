@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004DBD20 FILE
+// name      ?editor_personality@Console@@QAEXXZ
+// size      648 bytes
+// spans     0x004DBD20-0x004DBFA8
+// prototype void (__thiscall ?editor_personality@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   4
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004D9AD0 0x005ABF20 0x005BF3F0 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004DBD20
-// name           ?editor_personality@Console@@QAEXXZ
-// size           648 bytes
 // measured tier  MISMATCH
 // divergence     12
 //

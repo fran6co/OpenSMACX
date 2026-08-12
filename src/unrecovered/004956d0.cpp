@@ -1,10 +1,13 @@
 // ORIGINAL: 0x004956D0 FILE
-// placeholder - not yet decompiled
 // name      ?on_redraw@QuayleWin@@QAEXXZ
 // size      3596 bytes
 // spans     0x004956D0-0x0049649D;0x00658D10-0x00658D4F
 // prototype void (__thiscall ?on_redraw@QuayleWin@@QAEXXZ)(QuayleWin* this)
 // callers   0   call targets   34
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00401000 0x0048C060 0x005ABFF0 0x005D7210 0x005D7410 0x005D7DE0 0x005D8000 0x005D8370 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DC360 0x005DCF40 0x005DD130 0x005DD530 0x005DD920 0x005DDAB0 0x005DFF00 0x005FA960 0x005FAA90 0x00609470 0x00609C60 0x00609C90 0x00609F20 0x0060A020 0x0060A670 0x0060C920 0x006169A0 0x00625EC0 0x006453E0 0x00645460 0x00645470 0x0064FC88
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x004956D0
 
 // BODY GOES HERE.

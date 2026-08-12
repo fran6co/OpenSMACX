@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005AD720 FILE
+// name      ?init@ReplayWin@@QAEXXZ
+// size      634 bytes
+// spans     0x005AD720-0x005AD99A
+// prototype void (__thiscall ?init@ReplayWin@@QAEXXZ)(ReplayWin* this)
+// callers   1   call targets   11
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00470920 0x005D50A0 0x005DAC70 0x005ED5C0 0x00607210 0x00607360 0x00616350 0x00616860 0x00616870 0x006169A0 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005AD720
-// name           ?init@ReplayWin@@QAEXXZ
-// size           634 bytes
 // measured tier  MISMATCH
 // divergence     4
 //

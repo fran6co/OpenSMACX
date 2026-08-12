@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00430B30 FILE
+// name      ?draw_tech@Datalink@@QAEXXZ
+// size      326 bytes
+// spans     0x00430B30-0x00430C76
+// prototype void (__thiscall ?draw_tech@Datalink@@QAEXXZ)(Datalink* this)
+// callers   0   call targets   12
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00496BB0 0x00498B30 0x005DAC70 0x005DACB0 0x005DD130 0x00608980 0x006169A0 0x00629490 0x00629780 0x006453E0 0x00645470 0x0064FC88
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00430B30
-// name           ?draw_tech@Datalink@@QAEXXZ
-// size           326 bytes
 // measured tier  NO_COMPILE
 // refusal        u00430b30.cpp(213) : error C2079: 'buffer_' uses undefined class 'Buffer' u00430b30.cpp(344) : error C2079: 'buffer_' uses undefined class 'Buffer'
 //

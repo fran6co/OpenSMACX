@@ -4,6 +4,9 @@
 // spans     0x005E8FA5-0x005E8FF5
 // prototype int (__thiscall ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E8FF5
 // 0x005E8FA5  ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z  ->  ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

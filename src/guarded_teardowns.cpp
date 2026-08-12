@@ -76,6 +76,9 @@ ORIGINAL: 0x00422EB0
 // spans     0x00422EB0-0x00422EBA
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -93,6 +96,9 @@ ORIGINAL: 0x00422EC0
 // spans     0x00422EC0-0x00422ECA
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -110,6 +116,9 @@ ORIGINAL: 0x004456A0
 // spans     0x004456A0-0x004456AA
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -127,6 +136,9 @@ ORIGINAL: 0x004620A0
 // spans     0x004620A0-0x004620B4
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00420F90
 Return Value: n/a
 Status: Complete
 */
@@ -145,6 +157,9 @@ ORIGINAL: 0x0048AE20
 // spans     0x0048AE20-0x0048AE34
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048BD80
 Return Value: n/a
 Status: Complete
 */
@@ -163,6 +178,9 @@ ORIGINAL: 0x00505D20
 // spans     0x00505D20-0x00505D2A
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -180,6 +198,9 @@ ORIGINAL: 0x00505D30
 // spans     0x00505D30-0x00505D3A
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -197,6 +218,9 @@ ORIGINAL: 0x0050E870
 // spans     0x0050E870-0x0050E884
 // prototype 
 // callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0051D9F0
 Return Value: n/a
 Status: Complete
 */
@@ -215,6 +239,9 @@ ORIGINAL: 0x00589890
 // spans     0x00589890-0x0058989A
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -232,6 +259,9 @@ ORIGINAL: 0x005D71F0
 // spans     0x005D71F0-0x005D720F
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -256,6 +286,9 @@ ORIGINAL: 0x005EB370
 // spans     0x005EB370-0x005EB38F
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -280,6 +313,9 @@ ORIGINAL: 0x005EB3B0
 // spans     0x005EB3B0-0x005EB3CF
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -304,6 +340,9 @@ ORIGINAL: 0x0060D080
 // spans     0x0060D080-0x0060D09F
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -328,6 +367,9 @@ ORIGINAL: 0x0060D0C0
 // spans     0x0060D0C0-0x0060D0DF
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -352,6 +394,9 @@ ORIGINAL: 0x0060E5D0
 // spans     0x0060E5D0-0x0060E5E4
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3820
 Return Value: n/a
 Status: Complete
 */
@@ -370,6 +415,9 @@ ORIGINAL: 0x0060E610
 // spans     0x0060E610-0x0060E62F
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -394,6 +442,9 @@ ORIGINAL: 0x0060E650
 // spans     0x0060E650-0x0060E66F
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -418,6 +469,9 @@ ORIGINAL: 0x0060FD60
 // spans     0x0060FD60-0x0060FD74
 // prototype 
 // callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3820
 Return Value: n/a
 Status: Complete
 */
@@ -436,6 +490,9 @@ ORIGINAL: 0x006137B0
 // spans     0x006137B0-0x006137CF
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -460,6 +517,9 @@ ORIGINAL: 0x006137F0
 // spans     0x006137F0-0x0061380F
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -484,6 +544,9 @@ ORIGINAL: 0x00613830
 // spans     0x00613830-0x0061384F
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -508,6 +571,9 @@ ORIGINAL: 0x00616AC0
 // spans     0x00616AC0-0x00616ADF
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -532,6 +598,9 @@ ORIGINAL: 0x00616B00
 // spans     0x00616B00-0x00616B1F
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -556,6 +625,9 @@ ORIGINAL: 0x0063BB00
 // spans     0x0063BB00-0x0063BB1F
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -580,6 +652,9 @@ ORIGINAL: 0x0063CEF0
 // spans     0x0063CEF0-0x0063CEFA
 // prototype 
 // callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

@@ -28,6 +28,9 @@ ORIGINAL: 0x006283A0
 // spans     0x006283A0-0x006283BA
 // prototype int (__thiscall ?init@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00628540
 Return Value: Pointer to the initialized class
 Status: Complete
 */
@@ -44,6 +47,9 @@ ORIGINAL: 0x006283C0
 // spans     0x006283C0-0x006283D5
 // prototype int (__thiscall ?init@Filemap@@QAEHPAD@Z)(Filemap* this, int8*)
 // callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00628540
 Return Value: Pointer to initialized class
 Status: Complete
 */
@@ -61,6 +67,9 @@ ORIGINAL: 0x00628430
 // spans     0x00628430-0x00628539
 // prototype int (__thiscall ?open_read@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)
 // callers   8   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006005D0
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -97,6 +106,9 @@ ORIGINAL: 0x00628540
 // spans     0x00628540-0x0062864C
 // prototype int (__thiscall ?open@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)
 // callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006005D0
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -133,6 +145,9 @@ ORIGINAL: 0x00628650
 // spans     0x00628650-0x006287B3
 // prototype int (__thiscall ?create@Filemap@@QAEHPADKH@Z)(Filemap* this, int8* lpFileName, ULONG lDistanceToMove, int)
 // callers   6   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006465F0
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -171,6 +186,9 @@ ORIGINAL: 0x006287C0
 // spans     0x006287C0-0x00628803
 // prototype void (__thiscall ?close@Filemap@@QAEXXZ)(Filemap* this)
 // callers   10   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -199,6 +217,9 @@ ORIGINAL: 0x00628810
 // spans     0x00628810-0x006288C4
 // prototype void (__thiscall ?close@Filemap@@QAEXPAE@Z)(Filemap* this, unsigned int8*)
 // callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

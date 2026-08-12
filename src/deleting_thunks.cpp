@@ -165,6 +165,9 @@ ORIGINAL: 0x004043A0
 // spans     0x004043A0-0x004043C1
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00404310 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -186,6 +189,9 @@ ORIGINAL: 0x00404420
 // spans     0x00404420-0x0040442B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -203,6 +209,9 @@ ORIGINAL: 0x00404430
 // spans     0x00404430-0x0040443B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -223,6 +232,9 @@ ORIGINAL: 0x004068E0
 // spans     0x004068E0-0x00406901
 // prototype void* (__thiscall ??_GFlatButton@@UAEPAXI@Z)(FlatButton* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00406880 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -247,6 +259,9 @@ ORIGINAL: 0x00406B40
 // spans     0x00406B40-0x00406B61
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004064D0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -270,6 +285,9 @@ ORIGINAL: 0x00406BD0
 // spans     0x00406BD0-0x00406BF1
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00406C00 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -290,6 +308,9 @@ ORIGINAL: 0x004070B0
 // spans     0x004070B0-0x004070BB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -307,6 +328,9 @@ ORIGINAL: 0x004070C0
 // spans     0x004070C0-0x004070CB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -325,6 +349,9 @@ ORIGINAL: 0x004070D0
 // spans     0x004070D0-0x004070DB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -342,6 +369,9 @@ ORIGINAL: 0x004070E0
 // spans     0x004070E0-0x004070EB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -362,6 +392,9 @@ ORIGINAL: 0x00408080
 // spans     0x00408080-0x004080A1
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00408010 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -385,6 +418,9 @@ ORIGINAL: 0x00408140
 // spans     0x00408140-0x00408161
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00408170 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -406,6 +442,9 @@ ORIGINAL: 0x00408390
 // spans     0x00408390-0x0040839B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -424,6 +463,9 @@ ORIGINAL: 0x004083A0
 // spans     0x004083A0-0x004083AB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -443,6 +485,9 @@ ORIGINAL: 0x004213A0
 // spans     0x004213A0-0x004213C1
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00421100 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -466,6 +511,9 @@ ORIGINAL: 0x004213D0
 // spans     0x004213D0-0x004213F1
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00420A70 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -489,6 +537,9 @@ ORIGINAL: 0x00421640
 // spans     0x00421640-0x00421661
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00421400 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -510,6 +561,9 @@ ORIGINAL: 0x00421810
 // spans     0x00421810-0x0042181B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -527,6 +581,9 @@ ORIGINAL: 0x00421970
 // spans     0x00421970-0x0042197B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -545,6 +602,9 @@ ORIGINAL: 0x00421980
 // spans     0x00421980-0x0042198B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -563,6 +623,9 @@ ORIGINAL: 0x00421990
 // spans     0x00421990-0x0042199B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -581,6 +644,9 @@ ORIGINAL: 0x004219A0
 // spans     0x004219A0-0x004219AB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -601,6 +667,9 @@ ORIGINAL: 0x00428710
 // spans     0x00428710-0x00428731
 // prototype void* (__thiscall ??_GCouncWin@@UAEPAXI@Z)(CouncWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00428550 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -622,6 +691,9 @@ ORIGINAL: 0x00428740
 // spans     0x00428740-0x0042874B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -641,6 +713,9 @@ ORIGINAL: 0x00428E60
 // spans     0x00428E60-0x00428E81
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00428E90 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -661,6 +736,9 @@ ORIGINAL: 0x00428F80
 // spans     0x00428F80-0x00428F8B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -680,6 +758,9 @@ ORIGINAL: 0x00432770
 // spans     0x00432770-0x00432791
 // prototype void* (__thiscall ??_GStringBox@@UAEPAXI@Z)(StringBox* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004325C0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -703,6 +784,9 @@ ORIGINAL: 0x00432800
 // spans     0x00432800-0x00432821
 // prototype void* (__thiscall ??_GDatalink@@UAEPAXI@Z)(Datalink* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00432290 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -724,6 +808,9 @@ ORIGINAL: 0x00432830
 // spans     0x00432830-0x0043283B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -742,6 +829,9 @@ ORIGINAL: 0x00432840
 // spans     0x00432840-0x0043284B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -761,6 +851,9 @@ ORIGINAL: 0x0043EDB0
 // spans     0x0043EDB0-0x0043EDD1
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0043ECB0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -784,6 +877,9 @@ ORIGINAL: 0x0043EDE0
 // spans     0x0043EDE0-0x0043EE01
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0043EE10 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -805,6 +901,9 @@ ORIGINAL: 0x0043EFA0
 // spans     0x0043EFA0-0x0043EFAB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -823,6 +922,9 @@ ORIGINAL: 0x0043EFB0
 // spans     0x0043EFB0-0x0043EFBB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -843,6 +945,9 @@ ORIGINAL: 0x00440EC0
 // spans     0x00440EC0-0x00440EE1
 // prototype void* (__thiscall ??_GDiploPop@@UAEPAXI@Z)(DiploPop* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00440D50 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -864,6 +969,9 @@ ORIGINAL: 0x00440EF0
 // spans     0x00440EF0-0x00440EFB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -883,6 +991,9 @@ ORIGINAL: 0x00445080
 // spans     0x00445080-0x004450A1
 // prototype void* (__thiscall ??_GDiploWin@@UAEPAXI@Z)(DiploWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00444DB0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -904,6 +1015,9 @@ ORIGINAL: 0x00445120
 // spans     0x00445120-0x0044512B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -923,6 +1037,9 @@ ORIGINAL: 0x00448350
 // spans     0x00448350-0x00448371
 // prototype void* (__thiscall ??_GEffect@@UAEPAXI@Z)(Effect* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004482C0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -944,6 +1061,9 @@ ORIGINAL: 0x00448390
 // spans     0x00448390-0x004483B1
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004483C0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -968,6 +1088,9 @@ ORIGINAL: 0x0044B300
 // spans     0x0044B300-0x0044B321
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0044B100 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -989,6 +1112,9 @@ ORIGINAL: 0x0044B330
 // spans     0x0044B330-0x0044B33B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1008,6 +1134,9 @@ ORIGINAL: 0x00456280
 // spans     0x00456280-0x004562A1
 // prototype void* (__thiscall ??_GGamma@@UAEPAXI@Z)(Gamma* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00456110 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1028,6 +1157,9 @@ ORIGINAL: 0x004562B0
 // spans     0x004562B0-0x004562BB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1047,6 +1179,9 @@ ORIGINAL: 0x0045F1C0
 // spans     0x0045F1C0-0x0045F1E1
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045EB80 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1068,6 +1203,9 @@ ORIGINAL: 0x0045F1F0
 // spans     0x0045F1F0-0x0045F1FB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1088,6 +1226,9 @@ ORIGINAL: 0x0045F710
 // spans     0x0045F710-0x0045F731
 // prototype void* (__thiscall ??_GInterlude@@UAEPAXI@Z)(Interlude* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0045F740 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1109,6 +1250,9 @@ ORIGINAL: 0x0045F910
 // spans     0x0045F910-0x0045F91B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1128,6 +1272,9 @@ ORIGINAL: 0x00477DD0
 // spans     0x00477DD0-0x00477DF1
 // prototype void* (__thiscall ??_GMonuWin@@UAEPAXI@Z)(MonuWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00477B10 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1149,6 +1296,9 @@ ORIGINAL: 0x00477E00
 // spans     0x00477E00-0x00477E0B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1168,6 +1318,9 @@ ORIGINAL: 0x0047A6C0
 // spans     0x0047A6C0-0x0047A6E1
 // prototype void* (__thiscall ??_GMultiWin@@UAEPAXI@Z)(MultiWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0047A430 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1189,6 +1342,9 @@ ORIGINAL: 0x0047A760
 // spans     0x0047A760-0x0047A76B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1208,6 +1364,9 @@ ORIGINAL: 0x0047AD70
 // spans     0x0047AD70-0x0047AD91
 // prototype void* (__thiscall ??_GNetMsg@@UAEPAXI@Z)(NetMsg* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0047ADA0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1228,6 +1387,9 @@ ORIGINAL: 0x0047AFE0
 // spans     0x0047AFE0-0x0047AFEB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1247,6 +1409,9 @@ ORIGINAL: 0x004837C0
 // spans     0x004837C0-0x004837E1
 // prototype void* (__thiscall ??_GNetWin@@UAEPAXI@Z)(NetWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004834E0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1267,6 +1432,9 @@ ORIGINAL: 0x00483840
 // spans     0x00483840-0x0048384B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1286,6 +1454,9 @@ ORIGINAL: 0x00484A80
 // spans     0x00484A80-0x00484AA1
 // prototype void* (__thiscall ??_GNewTechWin@@UAEPAXI@Z)(NewTechWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00484810 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1307,6 +1478,9 @@ ORIGINAL: 0x00484AB0
 // spans     0x00484AB0-0x00484ABB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1327,6 +1501,9 @@ ORIGINAL: 0x00488660
 // spans     0x00488660-0x00488681
 // prototype void* (__thiscall ??_GPickTech@@UAEPAXI@Z)(PickTech* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00488690 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1348,6 +1525,9 @@ ORIGINAL: 0x00488740
 // spans     0x00488740-0x0048874B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1367,6 +1547,9 @@ ORIGINAL: 0x0048ADC0
 // spans     0x0048ADC0-0x0048ADE1
 // prototype void* (__thiscall ??_GPickWin@@UAEPAXI@Z)(PickWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048A8E0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1388,6 +1571,9 @@ ORIGINAL: 0x0048ADF0
 // spans     0x0048ADF0-0x0048ADFB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1405,6 +1591,9 @@ ORIGINAL: 0x0048BF10
 // spans     0x0048BF10-0x0048BF18
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1426,6 +1615,9 @@ ORIGINAL: 0x004923E0
 // spans     0x004923E0-0x00492401
 // prototype void* (__thiscall ??_GPrefWin@@UAEPAXI@Z)(PrefWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00491DF0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1447,6 +1639,9 @@ ORIGINAL: 0x00492410
 // spans     0x00492410-0x0049241B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1466,6 +1661,9 @@ ORIGINAL: 0x004968C0
 // spans     0x004968C0-0x004968E1
 // prototype void* (__thiscall ??_GQuayleWin@@UAEPAXI@Z)(QuayleWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00496710 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1487,6 +1685,9 @@ ORIGINAL: 0x004968F0
 // spans     0x004968F0-0x004968FB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1507,6 +1708,9 @@ ORIGINAL: 0x004AD840
 // spans     0x004AD840-0x004AD861
 // prototype void* (__thiscall ??_GReportWin@@UAEPAXI@Z)(ReportWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004AD3B0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1528,6 +1732,9 @@ ORIGINAL: 0x004AD870
 // spans     0x004AD870-0x004AD87B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1548,6 +1755,9 @@ ORIGINAL: 0x004AE760
 // spans     0x004AE760-0x004AE781
 // prototype void* (__thiscall ??_GSetupWin@@UAEPAXI@Z)(SetupWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004AE790 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1569,6 +1779,9 @@ ORIGINAL: 0x004AE9A0
 // spans     0x004AE9A0-0x004AE9AB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1588,6 +1801,9 @@ ORIGINAL: 0x004B3F20
 // spans     0x004B3F20-0x004B3F41
 // prototype void* (__thiscall ??_GCheckButton@@UAEPAXI@Z)(CheckButton* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004B3EC0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1611,6 +1827,9 @@ ORIGINAL: 0x004B3F50
 // spans     0x004B3F50-0x004B3F71
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004B3C80 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1632,6 +1851,9 @@ ORIGINAL: 0x004B3F80
 // spans     0x004B3F80-0x004B3F8B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1650,6 +1872,9 @@ ORIGINAL: 0x004B3F90
 // spans     0x004B3F90-0x004B3F9B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1670,6 +1895,9 @@ ORIGINAL: 0x004BE9F0
 // spans     0x004BE9F0-0x004BEA11
 // prototype void* (__thiscall ??_GTutWin@@UAEPAXI@Z)(TutWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004BE7D0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1690,6 +1918,9 @@ ORIGINAL: 0x004BEA20
 // spans     0x004BEA20-0x004BEA2B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1709,6 +1940,9 @@ ORIGINAL: 0x004C4C70
 // spans     0x004C4C70-0x004C4C91
 // prototype void* (__thiscall ??_GWorldWin@@UAEPAXI@Z)(WorldWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C4A70 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1730,6 +1964,9 @@ ORIGINAL: 0x004C4CA0
 // spans     0x004C4CA0-0x004C4CAB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1749,6 +1986,9 @@ ORIGINAL: 0x004C9330
 // spans     0x004C9330-0x004C9351
 // prototype void* (__thiscall ??_GAmbience@@UAEPAXI@Z)(Ambience* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C7670 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1773,6 +2013,9 @@ ORIGINAL: 0x004C9360
 // spans     0x004C9360-0x004C9381
 // prototype void* (__thiscall ??_GVideo@@UAEPAXI@Z)(Video* this, int8)
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004C86D0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1795,6 +2038,9 @@ ORIGINAL: 0x004C93B0
 // spans     0x004C93B0-0x004C93D1
 // prototype void* (__thiscall ??_GVoiceRx@@UAEPAXI@Z)(VoiceRx* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C8A50 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1818,6 +2064,9 @@ ORIGINAL: 0x004C93F0
 // spans     0x004C93F0-0x004C9411
 // prototype void* (__thiscall ??_GVoiceTx@@UAEPAXI@Z)(VoiceTx* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C8DB0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1841,6 +2090,9 @@ ORIGINAL: 0x004E23C0
 // spans     0x004E23C0-0x004E23E1
 // prototype void* (__thiscall ??_GDipEdit@@UAEPAXI@Z)(DipEdit* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004E2240 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1862,6 +2114,9 @@ ORIGINAL: 0x004E23F0
 // spans     0x004E23F0-0x004E23FB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1881,6 +2136,9 @@ ORIGINAL: 0x0051DC90
 // spans     0x0051DC90-0x0051DCB1
 // prototype void* (__thiscall ??_GAlphaMenu@@UAEPAXI@Z)(AlphaMenu* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0051DC10 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1902,6 +2160,9 @@ ORIGINAL: 0x0051DF70
 // spans     0x0051DF70-0x0051DF7B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1922,6 +2183,9 @@ ORIGINAL: 0x005AE0B0
 // spans     0x005AE0B0-0x005AE0D1
 // prototype void* (__thiscall ??_GReplayWin@@UAEPAXI@Z)(ReplayWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ADF10 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1943,6 +2207,9 @@ ORIGINAL: 0x005AE0E0
 // spans     0x005AE0E0-0x005AE0EB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1963,6 +2230,9 @@ ORIGINAL: 0x005C9E80
 // spans     0x005C9E80-0x005C9EA1
 // prototype void* (__thiscall ??_GMultiDebug@@UAEPAXI@Z)(MultiDebug* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005C9E00 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -1984,6 +2254,9 @@ ORIGINAL: 0x005C9EB0
 // spans     0x005C9EB0-0x005C9EBB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2004,6 +2277,9 @@ ORIGINAL: 0x005D7140
 // spans     0x005D7140-0x005D715E
 // prototype void* (__thiscall ??_GGraphicWin@@UAEPAXI@Z)(GraphicWin* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4DD0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -2026,6 +2302,9 @@ ORIGINAL: 0x005D7160
 // spans     0x005D7160-0x005D716B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2046,6 +2325,9 @@ ORIGINAL: 0x005E3610
 // spans     0x005E3610-0x005E362E
 // prototype void* (__thiscall ??_GBuffer@@UAEPAXI@Z)(Buffer* this, int8)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7410 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -2069,6 +2351,9 @@ ORIGINAL: 0x005F8610
 // spans     0x005F8610-0x005F862E
 // prototype void* (__thiscall ??_GWin@@UAEPAXI@Z)(Win* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EBC90 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -2091,6 +2376,9 @@ ORIGINAL: 0x005FA770
 // spans     0x005FA770-0x005FA78E
 // prototype void* (__thiscall ??_GPullDown@@UAEPAXI@Z)(PullDown* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F88A0 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -2113,6 +2401,9 @@ ORIGINAL: 0x005FA790
 // spans     0x005FA790-0x005FA79B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2132,6 +2423,9 @@ ORIGINAL: 0x005FC6D0
 // spans     0x005FC6D0-0x005FC6EE
 // prototype void* (__thiscall ??_GMenu@@UAEPAXI@Z)(Menu* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAD00 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -2152,6 +2446,9 @@ ORIGINAL: 0x005FC6F0
 // spans     0x005FC6F0-0x005FC6FB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2171,6 +2468,9 @@ ORIGINAL: 0x00607CC0
 // spans     0x00607CC0-0x00607CDE
 // prototype void* (__thiscall ??_GBaseButton@@UAEPAXI@Z)(BaseButton* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00607040 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -2193,6 +2493,9 @@ ORIGINAL: 0x00607CE0
 // spans     0x00607CE0-0x00607CEB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2211,6 +2514,9 @@ ORIGINAL: 0x00612700
 // spans     0x00612700-0x00612708
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2233,6 +2539,9 @@ ORIGINAL: 0x006256D0
 // spans     0x006256D0-0x006256EE
 // prototype void* (__thiscall ??_GImageButton@@UAEPAXI@Z)(ImageButton* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00625310 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -2254,6 +2563,9 @@ ORIGINAL: 0x006256F0
 // spans     0x006256F0-0x006256FB
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2274,6 +2586,9 @@ ORIGINAL: 0x0062C830
 // spans     0x0062C830-0x0062C84E
 // prototype void* (__thiscall ??_GPushButton@@UAEPAXI@Z)(PushButton* this, unsigned int)
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062C010 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -2295,6 +2610,9 @@ ORIGINAL: 0x0062C850
 // spans     0x0062C850-0x0062C85B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2314,6 +2632,9 @@ ORIGINAL: 0x00633160
 // spans     0x00633160-0x0063317E
 // prototype 
 // callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00633010 0x0064557F
 Return Value: the object pointer
 Status: Complete
 */
@@ -2335,6 +2656,9 @@ ORIGINAL: 0x00633730
 // spans     0x00633730-0x00633738
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2353,6 +2677,9 @@ ORIGINAL: 0x00633740
 // spans     0x00633740-0x0063374B
 // prototype 
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: the forwarded call's
 Status: Complete
 */

@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0053A230 FILE
+// name      ?mention_prototypes@@YAXHH@Z
+// size      614 bytes
+// spans     0x0053A230-0x0053A496
+// prototype 
+// callers   2   call targets   10
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005315C0 0x0053DCE0 0x0057D8E0 0x00592EE0 0x005BB000 0x005BE100 0x005BF7D0 0x00625EC0 0x006262F0 0x00645470
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0053A230
-// name           ?mention_prototypes@@YAXHH@Z
-// size           614 bytes
 // measured tier  MISMATCH
 // divergence     6
 //

@@ -4,6 +4,9 @@
 // spans     0x00455E80-0x00455EA8
 // prototype 
 // callers   1   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00423570 0x00451030 0x00451A10 0x00454D10 0x00455610 0x00455E50
 // 0x00455E80  ?load_fixed_sprites@@YAXXZ  ->  ?load_fixed_sprites@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

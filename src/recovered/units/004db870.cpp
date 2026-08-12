@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004DB870 FILE
+// name      ?editor_diplomacy@Console@@QAEXXZ
+// size      966 bytes
+// spans     0x004DB870-0x004DBB40;0x0065B469-0x0065B55F
+// prototype void (__thiscall ?editor_diplomacy@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   22
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004064D0 0x00406880 0x00406E60 0x004080B0 0x0043EF70 0x004837F0 0x004DB080 0x004E2240 0x005D4CF0 0x005D4DD0 0x00602600 0x00607040 0x00607CF0 0x00607DA0 0x00609DB0 0x0060E670 0x00612A70 0x00618EA0 0x00618EE0 0x00645550
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004DB870
-// name           ?editor_diplomacy@Console@@QAEXXZ
-// size           966 bytes
 // measured tier  MISMATCH
 // divergence     9
 //

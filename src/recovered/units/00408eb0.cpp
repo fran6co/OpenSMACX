@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00408EB0 FILE
+// name      ?draw_support@BaseWin@@QAEXXZ
+// size      527 bytes
+// spans     0x00408EB0-0x004090BF
+// prototype void (__thiscall ?draw_support@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00470A90 0x005D5350 0x005D5930 0x005D8000 0x005DFF00
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00408EB0
-// name           ?draw_support@BaseWin@@QAEXXZ
-// size           527 bytes
 // measured tier  MISMATCH
 // divergence     26
 //

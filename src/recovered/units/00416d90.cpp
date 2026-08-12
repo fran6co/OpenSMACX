@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00416D90 BYTE_EXACT FILE
+// name      ?recompute@BaseWin@@QAEXH@Z
+// size      58 bytes
+// spans     0x00416D90-0x00416DCA
+// prototype void (__thiscall ?recompute@BaseWin@@QAEXH@Z)(BaseWin* this, int)
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004E39D0 0x004EC3B0 0x005D5A70 0x005F7E90
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00416D90
-// name           ?recompute@BaseWin@@QAEXH@Z
-// size           58 bytes
 // measured tier  BYTE_EXACT
 //
 // The WHOLE unit as measured, scaffolding included: for the units

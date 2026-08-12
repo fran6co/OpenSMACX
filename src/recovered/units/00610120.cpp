@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00610120 FILE
+// name      ??1SpriteBox@@QAE@XZ
+// size      399 bytes
+// spans     0x00610120-0x00610274;0x006116C0-0x006116DB;0x00662FFA-0x0066301A
+// prototype void (__thiscall ??1SpriteBox@@QAE@XZ)(SpriteBox* this)
+// callers   23   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FA870 0x00610280 0x00611730
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00610120
-// name           ??1SpriteBox@@QAE@XZ
-// size           399 bytes
 // measured tier  SHARED_TAIL
 // refusal        1 span(s) are COMDAT-folded and claimed by another function; no per-function verdict is well defined
 //

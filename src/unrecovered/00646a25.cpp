@@ -1,7 +1,10 @@
 // ORIGINAL: 0x00646A25 EXCLUDED S1
-// excluded - availability - MSVC 6 CRT and Windows library code; linked, not rewritten (docs/EXCLUSIONS.md section 1)
 // name      _sprintf
 // size      82 bytes
 // spans     0x00646A25-0x00646A77
 // prototype 
 // callers   1   call targets   2
+// kind      library
+// flags     lib;frame;hidden;sp_ready;purged_ok
+// calls     0x00649D94 0x0064AA48
+// excluded - availability - MSVC 6 CRT and Windows library code; linked, not rewritten (docs/EXCLUSIONS.md section 1)

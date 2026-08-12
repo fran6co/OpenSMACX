@@ -1,12 +1,18 @@
 // ORIGINAL: 0x005C93C0 FILE
+// name      ?on_button_clicked@Gamma@@QAEXH@Z
+// size      70 bytes
+// spans     0x005C93C0-0x005C9406
+// prototype void (__thiscall ?on_button_clicked@Gamma@@QAEXH@Z)(Gamma* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x005C93C0
-// name           ?on_button_clicked@Gamma@@QAEXH@Z
-// size           70 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

@@ -1,10 +1,13 @@
 // ORIGINAL: 0x004A9050 FILE
-// placeholder - not yet decompiled
 // name      ?draw_ops@ReportIf@@QAEXXZ
 // size      3893 bytes
 // spans     0x004A9050-0x004A9F85
 // prototype void (__thiscall ?draw_ops@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   5   call targets   27
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045BE80 0x004C39D0 0x004E39D0 0x004E3A00 0x004EC3B0 0x00588340 0x005883D0 0x005BFE90 0x005C89B0 0x005D8000 0x005DAC70 0x005DACB0 0x005DD020 0x005E2DD3 0x00609470 0x00609C60 0x00609C90 0x00609CC0 0x00609CF0 0x00609F20 0x00609FA0 0x0060A670 0x0060C920 0x006169A0 0x006453E0 0x00645470 0x0064FC88
+// placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x004A9050
 
 // BODY GOES HERE.

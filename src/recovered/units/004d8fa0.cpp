@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004D8FA0 FILE
+// name      ?convoy@Console@@QAEXH@Z
+// size      461 bytes
+// spans     0x004D8FA0-0x004D916D
+// prototype void (__thiscall ?convoy@Console@@QAEXH@Z)(Console* this, int vehID)
+// callers   2   call targets   13
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047A890 0x004E3A50 0x004E7DC0 0x00531020 0x005310F0 0x00531480 0x00564D90 0x00593220 0x00593A00 0x005BF3F0 0x00625E30 0x00625E50 0x00625EC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004D8FA0
-// name           ?convoy@Console@@QAEXH@Z
-// size           461 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

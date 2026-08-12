@@ -1,12 +1,18 @@
 // ORIGINAL: 0x004926C0 FILE
+// name      ?show@ProdPicker@@QAEXH@Z
+// size      117 bytes
+// spans     0x004926C0-0x00492735
+// prototype void (__thiscall ?show@ProdPicker@@QAEXH@Z)(ProdPicker* this, int)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D440 0x0045DEA0 0x005ED9D0 0x005F7E90
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x004926C0
-// name           ?show@ProdPicker@@QAEXH@Z
-// size           117 bytes
 // measured tier  MNEMONIC_ONLY
 //
 // The WHOLE unit as measured, scaffolding included: for the units

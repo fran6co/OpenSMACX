@@ -1,12 +1,18 @@
 // ORIGINAL: 0x00455EB0 FILE
+// name      ?load_sprites@@YAXXZ
+// size      94 bytes
+// spans     0x00455EB0-0x00455F0E
+// prototype 
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00451C50 0x00454270 0x004547E0 0x00454FC0
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x00455EB0
-// name           ?load_sprites@@YAXXZ
-// size           94 bytes
 // measured tier  MISMATCH
 // divergence     5
 //

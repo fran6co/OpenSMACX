@@ -35,6 +35,9 @@ ORIGINAL: 0x004BA720
 // spans     0x004BA720-0x004BA761
 // prototype void (__thiscall ?UNK1@TutWin@@QAEXXZ)(TutWin* this)
 // callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -59,6 +62,9 @@ ORIGINAL: 0x004BDDD0 BYTE_EXACT
 // spans     0x004BDDD0-0x004BDDE0
 // prototype void (__thiscall ?UNK3@TutWin@@QAEXH@Z)(TutWin* this, int)
 // callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */
@@ -98,6 +104,9 @@ ORIGINAL: 0x004BC5A0
 // spans     0x004BC5A0-0x004BC5E3
 // prototype void (__thiscall ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   3   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005ED240
 Return Value: n/a
 Status: Complete
 Verification note: client_to_screen is entered on the FIXED window at 0x007AE820,
@@ -134,6 +143,9 @@ ORIGINAL: 0x004BC5F0
 // spans     0x004BC5F0-0x004BC633
 // prototype void (__thiscall ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005ED240
 Return Value: n/a
 Status: Complete
 Verification note: client_to_screen is entered on the FIXED window at 0x006A7628,
@@ -170,6 +182,9 @@ ORIGINAL: 0x004BC640
 // spans     0x004BC640-0x004BC683
 // prototype void (__thiscall ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005ED240
 Return Value: n/a
 Status: Complete
 Verification note: client_to_screen is entered on the FIXED window at 0x008A6270,
@@ -206,6 +221,9 @@ ORIGINAL: 0x004BC690
 // spans     0x004BC690-0x004BC6D3
 // prototype void (__thiscall ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
 // callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005ED240
 Return Value: n/a
 Status: Complete
 Verification note: client_to_screen is entered on the FIXED window at 0x0071F2B0,
@@ -250,6 +268,9 @@ ORIGINAL: 0x004BA870
 // spans     0x004BA870-0x004BA8EB
 // prototype void (__thiscall ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BDFE0 0x005ED240
 Return Value: n/a - the show's result is discarded
 Status: Complete with a temporary TutWin::tut_win dependency
 Verification note: the GraphicWin handed to the show is MapWinTable[0]
@@ -299,6 +320,9 @@ ORIGINAL: 0x004BA8F0
 // spans     0x004BA8F0-0x004BA96B
 // prototype void (__thiscall ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BDFE0 0x005ED240
 Return Value: n/a - the show's result is discarded
 Status: Complete with a temporary TutWin::tut_win dependency
 Verification note: the GraphicWin handed to the show is MapWinTable[0]
@@ -348,6 +372,9 @@ ORIGINAL: 0x004BA970
 // spans     0x004BA970-0x004BA9EB
 // prototype void (__thiscall ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BDFE0 0x005ED240
 Return Value: n/a - the show's result is discarded
 Status: Complete with a temporary TutWin::tut_win dependency
 Verification note: the GraphicWin handed to the show is MapWinTable[0]
@@ -397,6 +424,9 @@ ORIGINAL: 0x004BA9F0
 // spans     0x004BA9F0-0x004BAA6B
 // prototype void (__thiscall ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
 // callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BDFE0 0x005ED240
 Return Value: n/a - the show's result is discarded
 Status: Complete with a temporary TutWin::tut_win dependency
 Verification note: the GraphicWin handed to the show is MapWinTable[0]
@@ -445,6 +475,9 @@ ORIGINAL: 0x004BDDB0 BYTE_EXACT
 // spans     0x004BDDB0-0x004BDDC5
 // prototype void (__thiscall ?on_move@TutWin@@QAEXHH@Z)(TutWin* this, int, int)
 // callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 Return Value: n/a
 Status: Complete
 */

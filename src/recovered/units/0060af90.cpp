@@ -1,12 +1,18 @@
 // ORIGINAL: 0x0060AF90 FILE
+// name      ?on_key_down@ListBox@@QAEXH@Z
+// size      1349 bytes
+// spans     0x0060AF90-0x0060B4D5
+// prototype void (__thiscall ?on_key_down@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   1   call targets   8
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5890 0x005EE030 0x005EE070 0x00609A50 0x0060A020 0x0060B530 0x00644F3A 0x006466EF
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:
 // it is on no ratchet, in no build, and scored by no collect.
 //
 // address        0x0060AF90
-// name           ?on_key_down@ListBox@@QAEXH@Z
-// size           1349 bytes
 // measured tier  MISMATCH
 // divergence     0
 //
