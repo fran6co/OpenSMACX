@@ -62,7 +62,10 @@ class DLLEXPORT Wave {
   int play();
   int load();
   int reload();
-  void init(char *a1, uint32_t a2);
+  // `K`, not `I`. MSVC decorates `unsigned long` K and `unsigned int` I,
+  // and this tree spells uint32_t as unsigned int - same width, different
+  // decorated name, and the name is what the linker pairs on.
+  void init(char *a1, unsigned long a2);
   int dyna_load(char *a1);
   int load(const char *a1);
 
@@ -92,7 +95,7 @@ class DLLEXPORT Wave {
   int set_xpos(float a1);
   int set_ypos(float a1);
   int set_zpos(float a1);
-  void set_attrib(uint32_t a1);
+  void set_attrib(unsigned long a1);
   int get_attrib();
  private:
   uint32_t vtable_storage_;      // 0x00
@@ -153,7 +156,7 @@ int __fastcall wave_set_position3d_redirect(Wave *self, void *, float a1, float 
 int __fastcall wave_set_xpos_redirect(Wave *self, void *, float a1);
 int __fastcall wave_set_ypos_redirect(Wave *self, void *, float a1);
 int __fastcall wave_set_zpos_redirect(Wave *self, void *, float a1);
-void __fastcall wave_set_attrib_redirect(Wave *self, void *, uint32_t a1);
+void __fastcall wave_set_attrib_redirect(Wave *self, void *, unsigned long a1);
 int __fastcall wave_get_attrib_redirect(Wave *self, void *);
 void __fastcall wave_set_volume_redirect(Wave *self, void *, int a1);
 int __fastcall wave_set_fname_redirect(Wave *self, void *, const char *a1);

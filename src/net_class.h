@@ -30,7 +30,10 @@ class DLLEXPORT Net {
   Net() { ; }
   ~Net() { ; }
   int poll_players(int);
-  char *get_player_name(uint32_t key);
+  // `K`, not `I`. MSVC decorates `unsigned long` K and `unsigned int` I,
+  // and this tree spells uint32_t as unsigned int - same width, different
+  // decorated name, and the name is what the linker pairs on.
+  char *get_player_name(unsigned long key);
 
  private:
   uint8_t unmapped_[0x780];
@@ -38,4 +41,4 @@ class DLLEXPORT Net {
 
 int __fastcall net_poll_players_redirect(Net *self, void *, int a1);
 char *__fastcall net_get_player_name_redirect(
-    Net *self, void *, uint32_t key);
+    Net *self, void *, unsigned long key);
