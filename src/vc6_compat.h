@@ -94,6 +94,9 @@ using ::free;
 using ::malloc;
 using ::realloc;
 
+using ::rand;
+using ::srand;
+
 using ::abs;
 using ::sqrt;
 }  // namespace std

@@ -56,8 +56,14 @@ inline int &failure_count() {
  * thrown away, so no commit contains it and `git log -S` finds nothing. A
  * proof nobody can re-run is a claim.
  */
-inline long long &expect_evaluations() {
-    static long long evaluated = 0;
+// `int64_t`, not `long long`: cl 12.00.8168 rejects the latter outright with
+// `C2632: 'long' followed by 'long' is illegal` (src/vc6_compat.h:69-70 records
+// the same measurement), and these two lines were the only `long long` in the
+// tree - proof this header had never been through that compiler. `int64_t` is
+// 64-bit everywhere, and vc6_compat.h typedefs it to `__int64` for VC6, so the
+// counter keeps its width on every toolchain and needs no `#if`.
+inline int64_t &expect_evaluations() {
+    static int64_t evaluated = 0;
     return evaluated;
 }
 
