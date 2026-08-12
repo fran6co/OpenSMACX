@@ -35,7 +35,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class DLLEXPORT DiploPop : GraphicWin {
+class DLLEXPORT DiploPop : GraphicWin, SubInterface {
  public:
   void hide();
   DiploPop() { ; }
@@ -56,11 +56,9 @@ class DLLEXPORT DiploPop : GraphicWin {
   // 49 member(s) from the IDA database, 10 named; it starts a member at 0xA14, which is where src/ ends.
 
   // PROVED, and now a real type rather than eight opaque bytes:
-  // src/subinterface.h measures SubInterface at 0x8 from its own
-  // methods (both reach +0x4 with a 4-byte access) and asserts it, so
-  // this substitution is exactly size-neutral. The byte comparison is
-  // the arbiter and it does not move.
-  SubInterface subIFace_;  // 0xA14
+  // The SubInterface that used to sit here as a member is now the SECOND
+  // BASE, above. MSVC lays non-virtual bases in declaration order, so it is
+  // at sizeof(GraphicWin) == 0xA14 either way and no offset moves.
   Font font1_;  // 0xA1C
   Font font2_;  // 0xA44
   Font font3_;  // 0xA6C

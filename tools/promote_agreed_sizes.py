@@ -40,8 +40,10 @@ proof.
 from __future__ import annotations
 
 import argparse
+import atexit
 import csv
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -89,6 +91,11 @@ def confirmed(candidates: dict, home: dict) -> tuple:
     so one refusal does not hide the rest.
     """
     work = Path(tempfile.mkdtemp())
+    # Removed when the process exits rather than left behind: these
+    # probes ran often enough to leave 664 abandoned directories in
+    # build/ before anyone counted them. `atexit` rather than a
+    # `finally` so an unhandled exception cleans up too.
+    atexit.register(shutil.rmtree, work, True)
     environment = bm.wine_environment()
     environment["INCLUDE"] += ";Z:" + str(SRC.resolve()).replace("/", "\\")
     units = {}

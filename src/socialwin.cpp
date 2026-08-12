@@ -187,7 +187,7 @@ Status: Complete
 */
 void SocialWin::show(int a1) {
     if (!reinterpret_cast<Win *>(this)->is_visible()) {
-        subIFace_.set_iface_mode();
+        SubInterface::set_iface_mode();
     }
 }
 
@@ -197,6 +197,6 @@ Status: Complete
 */
 void SocialWin::hide() {
     if (reinterpret_cast<Win *>(this)->is_visible()) {
-        subIFace_.release_iface_mode();
+        SubInterface::release_iface_mode();
     }
 }

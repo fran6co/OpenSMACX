@@ -24,6 +24,8 @@ something the emitter does per unit.
 from __future__ import annotations
 
 import argparse
+import atexit
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -113,6 +115,11 @@ def verify(candidates: dict, src: Path = SRC) -> tuple:
     """
     home = declaring_header(src)
     work = Path(tempfile.mkdtemp())
+    # Removed when the process exits rather than left behind: these
+    # probes ran often enough to leave 664 abandoned directories in
+    # build/ before anyone counted them. `atexit` rather than a
+    # `finally` so an unhandled exception cleans up too.
+    atexit.register(shutil.rmtree, work, True)
 
     units, bodies = {}, {}
     for index, name in enumerate(sorted(candidates)):

@@ -208,9 +208,19 @@ class ReportTest(unittest.TestCase):
         derived from the IDB rather than from this file's arithmetic, so any
         disagreement is a defect in one of them. Both alignment bugs this
         classifier had were found here.
+
+        EACH MEMBER IS CHECKED IN THE CLASS THAT DECLARES IT, not in every
+        class that inherits it. The name encodes an offset within the
+        declaring class - `SubInterface::field_4_` is at 4 in a SubInterface -
+        and a SECOND base does not sit at 0, so the same member is at 0xA18 in
+        `class SocialWin : GraphicWin, SubInterface`. Comparing the inherited
+        copy reported three "disagreements" that were the control's own
+        assumption rather than a layout defect. Coverage is unchanged: every
+        class is visited, so every member is still checked exactly once - and
+        checked where its name means something.
         """
         import class_layouts
-        disagreed, seen = [], set()
+        disagreed, seen, checked = [], set(), 0
         for header in sorted(tool.SRC.glob("*.h")):
             if header.name == "hypothesis_layouts.h":
                 continue
@@ -219,14 +229,28 @@ class ReportTest(unittest.TestCase):
                 if name in seen:
                     continue
                 seen.add(name)
-                layout = tool.layout_offsets(name)
-                for at, member, _, _ in layout or ():
+                layout = tool.layout_offsets(name) or ()
+                own = class_layouts.members_of(class_layouts._body_of(name))
+                # The flattened list is bases first, then the class's own
+                # members, so its tail of that length is what this class
+                # declares.
+                declared_here = layout[len(layout) - len(own):] if own else ()
+                for at, member, _, _ in declared_here:
                     encoded = tool.FIELD_NAME_OFFSET.match(member)
-                    if encoded and int(encoded.group(1), 16) != at:
+                    if not encoded:
+                        continue
+                    checked += 1
+                    if int(encoded.group(1), 16) != at:
                         disagreed.append(
                             f"{name}::{member} name says "
                             f"{int(encoded.group(1), 16):#x}, computed {at:#x}")
         self.assertEqual([], disagreed)
+        # A FLOOR, because narrowing what a control looks at is exactly how it
+        # stops being one. 1,753 members carry a name-encoded offset today; a
+        # parse change that quietly halved that would still report no
+        # disagreement, which reads as a pass.
+        self.assertGreaterEqual(checked, 1700,
+                                "the name-encoded control has lost coverage")
 
 
 if __name__ == "__main__":

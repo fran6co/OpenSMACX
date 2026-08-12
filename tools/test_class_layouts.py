@@ -44,6 +44,24 @@ class MembersTest(unittest.TestCase):
         self.assertEqual([("char", "saved_queue_name", "[8][24]")],
                          tool.members_of("  char saved_queue_name[8][24];\n"))
 
+    def test_multiple_bases_are_modelled_in_declaration_order(self):
+        # MSVC lays non-virtual bases out in declaration order at increasing
+        # offsets, which is ordinary concatenation. ??0BaseWin@@QAE@XZ builds
+        # its GraphicWin on an unadjusted `this` and reaches its SubInterface
+        # at 0xA14 == sizeof(GraphicWin), exactly where a second base goes.
+        self.assertEqual(["GraphicWin", "SubInterface"],
+                         tool.bases_of(": GraphicWin, SubInterface"))
+        self.assertEqual(["BaseButton"], tool.bases_of(": public BaseButton"))
+        self.assertEqual([], tool.bases_of(""))
+        self.assertEqual([], tool.bases_of(None))
+
+    def test_a_virtual_base_is_still_refused(self):
+        # Not a modelling gap: MSVC places a virtual base where the object's
+        # own vbtable says at run time, which is not a position this file can
+        # compute, and AGENTS.md requires those held as members instead.
+        self.assertIsNone(tool.bases_of(": virtual Win"))
+        self.assertIsNone(tool.bases_of(": GraphicWin, virtual Win"))
+
     def test_a_virtual_refuses_the_whole_class(self):
         # A vtable pointer this cannot see sits at offset 0 and moves every
         # member after it.

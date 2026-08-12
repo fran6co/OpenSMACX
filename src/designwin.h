@@ -39,7 +39,7 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class DLLEXPORT DesignWin : GraphicWin {
+class DLLEXPORT DesignWin : GraphicWin, SubInterface {
  public:
   // The shared body both select_special_N thunks tail into:
   // ?select_special@DesignWin@@QAEXH@Z at 0x0043AC70, still an original body,
@@ -64,11 +64,9 @@ class DLLEXPORT DesignWin : GraphicWin {
   // 259 member(s) from the IDA database, 14 named; it starts a member at 0xA14, which is where src/ ends.
 
   // PROVED, and now a real type rather than eight opaque bytes:
-  // src/subinterface.h measures SubInterface at 0x8 from its own
-  // methods (both reach +0x4 with a 4-byte access) and asserts it, so
-  // this substitution is exactly size-neutral. The byte comparison is
-  // the arbiter and it does not move.
-  SubInterface subIFace_;  // 0xA14
+  // The SubInterface that used to sit here as a member is now the SECOND
+  // BASE, above. MSVC lays non-virtual bases in declaration order, so it is
+  // at sizeof(GraphicWin) == 0xA14 either way and no offset moves.
   uint32_t field_A1C_;  // 0xA1C
   uint32_t field_A20_;  // 0xA20
   uint32_t field_A24_;  // 0xA24
