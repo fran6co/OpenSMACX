@@ -56,6 +56,7 @@ import csv
 import hashlib
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -490,6 +491,55 @@ def generate_placeholders(functions: dict, annotated: set, force: bool) -> int:
     return created
 
 
+MALFORMED_LEVER = re.compile(r"^\s*(?://|\*)?\s*LEVER:\s*(?:\S+\s*)?$")
+
+
+def lesson_report(annotations: list) -> list:
+    """[(location, why)] for every lesson marker that contradicts its state.
+
+    THE TOKENS ARE SELF-REFUTING, WHICH IS WHAT EARNS THEM A PLACE under the
+    rule that state is measured and not claimed (docs/DECOMP_MAP.md). A `LEVER`
+    sits on a body that matched, so the existing ratchet already fails if it
+    stops. A `RULED-OUT` sits on a body that has NOT matched - so if one ever
+    does match, the list is refuted and this fails until somebody promotes it to
+    a LEVER or deletes it. No wall can quietly outlive its reason.
+
+    Three checks, all offline - no VC6, no image:
+
+      state      RULED-OUT on a BYTE_EXACT piece, or LEVER on one without.
+      placement  RULED-OUT on a PLACEHOLDER. You cannot rule a spelling out of
+                 a body that does not exist; the agent has to land its best
+                 attempt first, which is the point - a MISMATCH run currently
+                 leaves nothing behind at all.
+      syntax     `LEVER:` with no fingerprint after it. The fingerprint is the
+                 key the aggregation groups on, so a LEVER without one is a
+                 lesson that can never be filed and reads exactly like one that
+                 can.
+    """
+    faults = []
+    for annotation in annotations:
+        if annotation.ruled_out and annotation.matched:
+            faults.append((annotation.location,
+                           f"{len(annotation.ruled_out)} RULED-OUT line(s) on a "
+                           f"BYTE_EXACT body - promote one to `LEVER: "
+                           f"<fingerprint> ...` or delete them"))
+        if annotation.levers and not annotation.matched:
+            faults.append((annotation.location,
+                           "LEVER on a body carrying no BYTE_EXACT claim - a "
+                           "lever names what MADE it match"))
+        if annotation.ruled_out and annotation.state == annotation_scan.STATE_PLACEHOLDER:
+            faults.append((annotation.location,
+                           "RULED-OUT on a placeholder - land the attempt that "
+                           "ruled them out, then record it"))
+        for line in (annotation.region or "").splitlines():
+            if MALFORMED_LEVER.match(line):
+                faults.append((annotation.location,
+                               "LEVER with no fingerprint: write "
+                               "`LEVER: <original>/<rebuilt> <what worked>`"))
+                break
+    return faults
+
+
 def work_address(address: int, annotations: list, functions: dict,
                  derived: dict, callees: dict, pe_fast) -> int:
     """Replace a placeholder in place with its emitted scaffold.
@@ -887,6 +937,20 @@ def main(argv=None) -> int:
     cross = annotation_scan.cross_reference(annotations, functions)
     drift = drift_report(annotations, cross.matched, functions)
     drift["duplicates"].update(conflicts)
+
+    # OFFLINE, AND BEFORE EVERY EARLY RETURN. These three need no compiler and
+    # no image, so a checkout without VC6 - which takes the SKIP path below and
+    # exits 0 - must still enforce them. Put after the skip, the grammar would
+    # be checked only on machines that could already measure everything.
+    lesson_faults = lesson_report(annotations)
+    if lesson_faults:
+        print(f"\nLESSON GRAMMAR: {len(lesson_faults)} annotation(s) carry a "
+              f"LEVER or RULED-OUT that contradicts their state.",
+              file=sys.stderr)
+        for location, why in lesson_faults:
+            print(f"  {location}: {why}", file=sys.stderr)
+        if arguments.check:
+            return 1
 
     if arguments.state_only:
         if arguments.json:

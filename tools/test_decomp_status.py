@@ -532,5 +532,67 @@ class Ratchet(unittest.TestCase):
             self.assertEqual(0, written)
             self.assertEqual(1, target.read_text().count("BYTE_EXACT"))
 
+
+
+class LessonReportTest(unittest.TestCase):
+    """The three offline checks that keep a lesson marker honest.
+
+    They are what earns these tokens a place under the rule that state is
+    measured and not claimed: a LEVER sits on a body that matched, a RULED-OUT
+    on one that has not, and each fails the moment its body moves the other way.
+    """
+
+    def annotation(self, **kw):
+        return decomp_status.annotation_scan.Annotation(
+            address=0x00401000, mode=decomp_status.annotation_scan.MODE_BODY,
+            state=kw.pop("state", decomp_status.annotation_scan.STATE_IMPLEMENTED),
+            path="src/x.cpp", line=1, **kw)
+
+    def test_ruled_out_on_a_proved_body_fails(self):
+        # The refutation case: the spellings were ruled out, and then one
+        # worked. The list must be promoted or deleted, not left standing.
+        faults = decomp_status.lesson_report(
+            [self.annotation(matched=True, ruled_out=("ternary",))])
+        self.assertEqual(len(faults), 1)
+        self.assertIn("promote", faults[0][1])
+
+    def test_a_lever_without_a_proof_fails(self):
+        faults = decomp_status.lesson_report(
+            [self.annotation(matched=False, levers=(("jl/jge", "flipped"),))])
+        self.assertEqual(len(faults), 1)
+        self.assertIn("no BYTE_EXACT", faults[0][1])
+
+    def test_ruled_out_on_a_placeholder_fails(self):
+        # You cannot rule a spelling out of a body that does not exist. This is
+        # what makes an agent land its best attempt instead of leaving nothing.
+        faults = decomp_status.lesson_report(
+            [self.annotation(state=decomp_status.annotation_scan.STATE_PLACEHOLDER,
+                             ruled_out=("ternary",))])
+        self.assertEqual(len(faults), 1)
+        self.assertIn("land the attempt", faults[0][1])
+
+    def test_a_lever_with_no_fingerprint_fails(self):
+        # The fingerprint is the key the aggregation groups on, so a LEVER
+        # without one is a lesson that can never be filed against anything.
+        faults = decomp_status.lesson_report(
+            [self.annotation(matched=True, region="// LEVER: jl/jge\n")])
+        self.assertEqual(len(faults), 1)
+        self.assertIn("no fingerprint", faults[0][1])
+
+    def test_the_well_formed_pair_is_silent(self):
+        self.assertEqual(decomp_status.lesson_report([
+            self.annotation(matched=True, levers=(("jl/jge", "flipped"),)),
+            self.annotation(matched=False, ruled_out=("ternary",)),
+        ]), [])
+
+    def test_the_committed_tree_is_clean(self):
+        from pathlib import Path as _Path
+        src = _Path(__file__).resolve().parent.parent / "src"
+        if not src.is_dir():
+            self.skipTest("no src/ tree")
+        self.assertEqual(
+            decomp_status.lesson_report(decomp_status.annotation_scan.scan_tree(src)), [])
+
+
 if __name__ == "__main__":
     unittest.main()

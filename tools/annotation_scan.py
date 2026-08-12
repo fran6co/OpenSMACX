@@ -125,6 +125,8 @@ class Annotation:
                                # "census" (extract + scaffolding), "writeback"
                                # (proved bodies, declfix recipe) or "verbatim"
                                # (FILE mode: compile the file as-is)
+    levers: tuple = ()         # (fingerprint, prose) that MADE this match
+    ruled_out: tuple = ()      # spellings tried on this body that did not
 
     @property
     def location(self) -> str:
@@ -133,6 +135,56 @@ class Annotation:
     @property
     def address_hex(self) -> str:
         return f"0x{self.address:08X}"
+
+
+LESSON_LEVER = re.compile(r"^\s*(?://|\*)?\s*LEVER:\s*(?P<key>\S+)\s+(?P<prose>.+?)\s*$")
+LESSON_RULED_OUT = re.compile(r"^\s*(?://|\*)?\s*RULED-OUT:\s*(?P<prose>.+?)\s*$")
+LESSON_CONTINUED = re.compile(r"^\s*(?://|\*)\s{2,}(?P<prose>\S.*?)\s*$")
+
+
+def lessons(lines: list, index: int) -> tuple:
+    """(levers, ruled_out) recorded in the comment run after a marker at `index`.
+
+    THE TWO TOKENS CARRY DIFFERENT DURABILITY, and that is the whole design.
+
+      LEVER: <fingerprint> <what worked>   on a body that MATCHED. The
+          divergence is gone, so the fingerprint is historical and has to be
+          written down or the lesson cannot be filed against anything.
+      RULED-OUT: <what did not work>       on a body that has NOT matched. The
+          divergence is still live, so the key is MEASURED rather than written -
+          and a key that is never written can never be stale.
+
+    Both are read only from the comment run immediately after the marker, so a
+    mention of either word in ordinary prose further down a file is not a claim.
+    A continuation line is an indented comment line carrying no token of its own,
+    which is how a long RULED-OUT list stays readable.
+    """
+    levers, ruled, current = [], [], None
+    for line in lines[index + 1:]:
+        stripped = line.strip()
+        if not (stripped.startswith("//") or stripped.startswith("*")):
+            break
+        lever = LESSON_LEVER.match(line)
+        out = LESSON_RULED_OUT.match(line)
+        if lever:
+            levers.append((lever.group("key"), lever.group("prose")))
+            current = ("lever", len(levers) - 1)
+            continue
+        if out:
+            ruled.append(out.group("prose"))
+            current = ("ruled", len(ruled) - 1)
+            continue
+        joined = LESSON_CONTINUED.match(line)
+        if joined and current:
+            kind, position = current
+            if kind == "lever":
+                key, prose = levers[position]
+                levers[position] = (key, prose + " " + joined.group("prose"))
+            else:
+                ruled[position] = ruled[position] + " " + joined.group("prose")
+            continue
+        current = None
+    return tuple(levers), tuple(ruled)
 
 
 @dataclass
@@ -299,18 +351,20 @@ def scan_text(text: str, path) -> list:
         if parsed is None:
             continue
         address, keyword, rest, matched = parsed
+        found_levers, found_ruled = lessons(lines, index)
         if keyword == "FILE":
             region = text
             found.append(Annotation(
                 address=address, mode=MODE_FILE,
                 state=_state_of(region, ""), path=_rel(path),
                 line=index + 1, region=region, recipe="verbatim",
-                matched=matched))
+                matched=matched, levers=found_levers, ruled_out=found_ruled))
         elif keyword == "EXCLUDED":
             found.append(Annotation(
                 address=address, mode=MODE_BODY, state=STATE_EXCLUDED,
                 path=_rel(path), line=index + 1,
-                exclusion=_exclusion_citation(rest), matched=matched))
+                exclusion=_exclusion_citation(rest), matched=matched,
+                levers=found_levers, ruled_out=found_ruled))
         else:
             if kind == "proved":
                 # Proved bodies keep the writeback semantics even once an
@@ -329,7 +383,8 @@ def scan_text(text: str, path) -> list:
                 address=address, mode=MODE_BODY,
                 state=_state_of(region, ""), path=_rel(path),
                 line=index + 1, region=region, extract_error=error,
-                recipe=recipe, matched=matched))
+                recipe=recipe, matched=matched,
+                levers=found_levers, ruled_out=found_ruled))
 
     if not found:
         found.extend(_legacy_file_annotations(path, text, lines, kind))

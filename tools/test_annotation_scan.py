@@ -355,5 +355,58 @@ class TreeScanning(unittest.TestCase):
                 str(Path("src/deep/nested.cpp"))))
 
 
+
+
+class LessonGrammarTest(unittest.TestCase):
+    """`LEVER:` and `RULED-OUT:`, and where they are NOT read from."""
+
+    def scan(self, text):
+        return scan.scan_text(text, "src/x.cpp")[0]
+
+    def test_a_lever_carries_its_fingerprint_and_prose(self):
+        a = self.scan("// ORIGINAL: 0x00401000 BYTE_EXACT\n"
+                      "// LEVER: jl/jge  flipped the condition and swapped arms\n"
+                      "void f() {}\n")
+        self.assertEqual(a.levers,
+                         (("jl/jge", "flipped the condition and swapped arms"),))
+
+    def test_ruled_out_is_unkeyed(self):
+        # Deliberately: it sits on a body that has NOT matched, so the
+        # divergence is live and the key is measured. A key never written can
+        # never be stale.
+        a = self.scan("// ORIGINAL: 0x00401000\n"
+                      "// RULED-OUT: ternary; do/while; counting down\n"
+                      "void f() {}\n")
+        self.assertEqual(a.ruled_out, ("ternary; do/while; counting down",))
+
+    def test_an_indented_continuation_joins_the_line_above(self):
+        a = self.scan("// ORIGINAL: 0x00401000\n"
+                      "// RULED-OUT: plain immediate; named local;\n"
+                      "//            register storage; a 1-bit bitfield\n"
+                      "void f() {}\n")
+        self.assertEqual(len(a.ruled_out), 1)
+        self.assertIn("bitfield", a.ruled_out[0])
+
+    def test_the_run_ends_at_the_first_non_comment(self):
+        # Otherwise a `RULED-OUT:` mentioned in prose halfway down a 1,000-line
+        # file would attach itself to the marker at the top.
+        a = self.scan("// ORIGINAL: 0x00401000\n"
+                      "void f() {}\n"
+                      "// RULED-OUT: this is prose, not a claim\n")
+        self.assertEqual(a.ruled_out, ())
+
+    def test_the_existing_extern_symbol_lever_convention_is_not_read(self):
+        # `// EXTERN-SYMBOL LEVER:` predates this grammar and appears 17 times
+        # in src/recovered/units/. It is a different token and must stay one.
+        a = self.scan("// ORIGINAL: 0x00401000 BYTE_EXACT\n"
+                      "// EXTERN-SYMBOL LEVER: the table is walked by pointer\n"
+                      "void f() {}\n")
+        self.assertEqual(a.levers, ())
+
+    def test_a_body_with_no_lessons_carries_empty_tuples(self):
+        a = self.scan("// ORIGINAL: 0x00401000\nvoid f() {}\n")
+        self.assertEqual((a.levers, a.ruled_out), ((), ()))
+
+
 if __name__ == "__main__":
     unittest.main()
