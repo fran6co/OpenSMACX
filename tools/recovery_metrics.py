@@ -157,9 +157,21 @@ def parse_catalogue(handle) -> list[dict]:
     return list(csv.DictReader(handle))
 
 
-def load_catalogue(path: Path | str = FUNCTIONS_CSV) -> list[dict]:
-    with Path(path).open(newline="", encoding="utf-8-sig") as handle:
-        return parse_catalogue(handle)
+def load_catalogue(path: Path | str = None) -> list[dict]:
+    """Every catalogued row, from `src/` - the store since functions.csv went.
+
+    This module holds the project's ONE byte-weighted denominator, so it was
+    the worst possible thing to leave reading a deleted file: it did not report
+    a wrong number, it raised FileNotFoundError, which at least fails loudly.
+    A path still wins so a regenerated export can be measured against.
+    """
+    if path is not None:
+        with Path(path).open(newline="", encoding="utf-8-sig") as handle:
+            return parse_catalogue(handle)
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
 
 
 class CatalogueRefError(RuntimeError):
@@ -522,7 +534,8 @@ def main(argv=None) -> int:
                              "the worktree is never touched")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
 
-    rows = load_catalogue(args.catalogue)
+    # `None` means the store; a path or a git ref still overrides it.
+    rows = load_catalogue(args.catalogue if args.catalogue != FUNCTIONS_CSV else None)
     scope = lift_scope(rows)
     print(f"catalogued      {catalogued(rows).byte_count:9d} B  "
           f"{catalogued(rows).functions:5d} fn")
