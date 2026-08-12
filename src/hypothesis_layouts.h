@@ -148,7 +148,7 @@ struct BASE {
   uint32_t field_130_;  // 0x130
 };
 
-/* 0x7E bytes, 12 member(s), 1 named. From the IDB. 8 function(s) in the image. */
+/* 0x80 bytes, 13 member(s), 1 named. From the IDB, extended to the access bound. 8 function(s) in the image. */
 class BAmbience {
  public:
   uint8_t ambience_[0x58];  // 0x0
@@ -163,6 +163,7 @@ class BAmbience {
   uint32_t field_72_;  // 0x72
   uint32_t field_76_;  // 0x76
   uint32_t field_7A_;  // 0x7A
+  uint16_t field_7E_;  // 0x7E
 };
 
 /* 0x18 bytes, 6 member(s), 6 named. From Thinker. */
@@ -1406,7 +1407,7 @@ class Midi {
   uint8_t field_40_[0x10];  // 0x40
 };
 
-/* 0x366C bytes, 122 member(s), 13 named. From the IDB. 11 function(s) in the image. */
+/* 0x36DC bytes, 123 member(s), 13 named. From the IDB, extended to the access bound. 11 function(s) in the image. */
 class MonuWin {
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
@@ -1531,6 +1532,7 @@ class MonuWin {
   uint8_t sprites5_[0x134];  // 0x34E0
   uint8_t sprite8_[0x2C];  // 0x3614
   uint8_t sprite9_[0x2C];  // 0x3640
+  uint8_t field_366C_[0x70];  // 0x366C
 };
 
 /* 0x334 bytes, 1 member(s), 1 named. From Thinker. */

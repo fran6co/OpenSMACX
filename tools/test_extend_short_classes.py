@@ -129,3 +129,48 @@ class TailTextTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StaleNoteTest(unittest.TestCase):
+    """A class extended twice must not keep both notes.
+
+    `designwin.h` carried "its own methods reach 0x14210" thirty lines above
+    "reach 0x145A4"; twelve headers had such a pair, and the older number in
+    each was simply false. Appending was the whole cause.
+    """
+
+    CLASS = ("class DLLEXPORT C : Base {\n public:\n  uint32_t a_;  // 0x0\n"
+             "};\n")
+
+    def test_extending_twice_leaves_one_note(self):
+        once = extender.extend(self.CLASS, "C", 0x10, 0x10)
+        twice = extender.extend(once, "C", 0x20, 0x10)
+        self.assertEqual(
+            twice.count("// Storage the image proves is here"), 1)
+        self.assertIn("reach 0x30", twice)
+        self.assertNotIn("reach 0x20.", twice)
+
+    def test_the_declarations_under_a_retired_note_survive(self):
+        # They are real members later work has named; deleting them would be a
+        # layout change wearing a comment fix's clothes.
+        once = extender.extend(self.CLASS, "C", 0x10, 0x10)
+        named = once.replace("uint8_t field_10_[0x10];",
+                             "uint32_t proved_10_;  // 0x10\n"
+                             "  uint8_t field_14_[0xC];")
+        twice = extender.extend(named, "C", 0x20, 0x10)
+        self.assertIn("uint32_t proved_10_;", twice)
+        self.assertIn("uint8_t field_14_[0xC];", twice)
+
+    def test_the_first_extension_is_unchanged_by_the_retirement_logic(self):
+        once = extender.extend(self.CLASS, "C", 0x10, 0x10)
+        self.assertIn("uint32_t a_;", once)
+        self.assertIn("uint8_t field_10_[0x10];", once)
+        self.assertTrue(once.rstrip().endswith("};"))
+
+    def test_a_note_belonging_to_another_class_is_left_alone(self):
+        two = ("class A {\n public:\n"
+               "  // Storage the image proves is here: its own methods reach 0x8.\n"
+               "  uint8_t field_0_[0x8];\n};\n") + self.CLASS
+        out = extender.extend(two, "C", 0x10, 0x10)
+        self.assertIn("reach 0x8.", out)
+        self.assertEqual(out.count("// Storage the image proves is here"), 2)
