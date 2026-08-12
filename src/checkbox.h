@@ -37,13 +37,22 @@
   * above, and "nothing touches it" would not notice a trailing field that is
   * never used.
   *
-  * MEASURED, and it does not reproduce: VC6 12.00.8168 - the only compiler
-  * here since a673bf79 - packs `: virtual GraphicWin, virtual Dialog` eight
-  * bytes tighter than this. The dwords four bytes below each virtual base are
-  * vtordisp fields, and VC6 emits those only for a class with virtual
-  * functions, which this one declares none of. src/listbox.h carries the same
-  * finding at length; MapWin and Console have a SINGLE virtual base with no
-  * such gap and do declare theirs.
+  *   * MEASURED under VC6 12.00.8168, and the conclusion is OPEN, not closed.
+  * `: virtual GraphicWin, virtual Dialog` gives 0xB4C against the 0xB54 this
+  * class needs, and adding a virtual function to the DERIVED class gives
+  * 0xB50 - that +4 is its own vfptr. An earlier note here blamed vtordisp
+  * fields; that was WRONG and is withdrawn. A probe settles it: two bases
+  * with a virtual destructor grow 0x10 -> 0x14 EACH, and the derived total
+  * moves 0x34 -> 0x3C, so the missing 8 bytes are the two BASES' own vtable
+  * pointers, not a displacement.
+  *
+  * Which means the conversion is probably reachable and is blocked on
+  * something specific: GraphicWin and Dialog model their vtable as an opaque
+  * dword the original installs by hand, so neither declares a virtual. Giving
+  * them real virtual destructors is a coupled edit - the compiler then emits
+  * the vfptr, so the modelled dword has to come out in the same change - and
+  * `sizeof(GraphicWin) == 0xA14` is the check that would catch it going wrong.
+  * Do NOT read this paragraph as "cannot be done".
   */
 class DLLEXPORT CheckBox {
  public:
