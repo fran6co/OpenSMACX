@@ -66,7 +66,7 @@ void __fastcall fx_dtor_redirect(FX *self, void *) {
 }
 
 /*
-ORIGINAL: 0x00446A90
+ORIGINAL: 0x00446A90 BYTE_EXACT
 Status: Complete
 */
 void FX::stop(int a1) {
@@ -74,7 +74,7 @@ void FX::stop(int a1) {
 }
 
 /*
-ORIGINAL: 0x00446AB0
+ORIGINAL: 0x00446AB0 BYTE_EXACT
 Status: Complete
 */
 void FX::release(int a1) {
@@ -83,7 +83,7 @@ void FX::release(int a1) {
 }
 
 /*
-ORIGINAL: 0x00446AD0
+ORIGINAL: 0x00446AD0 BYTE_EXACT
 Status: Complete
 */
 void FX::fade(int a1) {

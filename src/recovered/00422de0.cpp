@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00422DE0
+// ORIGINAL: 0x00422DE0 BYTE_EXACT
 // 0x00422DE0  ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z  ->  ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

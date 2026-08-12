@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00493C70
+// ORIGINAL: 0x00493C70 BYTE_EXACT
 // 0x00493C70  ?on_redraw@ProdPicker@@QAEXXZ  ->  ?on_redraw@ProdPicker@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

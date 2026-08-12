@@ -465,5 +465,72 @@ class SkipAndStateOnly(unittest.TestCase):
         self.assertEqual(payload["states"]["implemented"]["bytes"], 16)
 
 
+
+class Ratchet(unittest.TestCase):
+    """The BYTE_EXACT claim in `src/` is the floor, so it must be able to fail.
+
+    Proved end to end once by hand as well: changing `Sound::UNK1` from
+    `return 11` to `return 12` made `--check` exit 1 and name
+    0x004C6430 src/sound.cpp:27.
+    """
+
+    def annotation(self, address, matched, path="src/x.cpp", line=3):
+        return annotation_scan.Annotation(
+            address=address, mode=annotation_scan.MODE_BODY,
+            state=annotation_scan.STATE_IMPLEMENTED, path=path, line=line,
+            matched=matched)
+
+    def test_a_reproduced_claim_is_not_a_regression(self):
+        entries = [self.annotation(0x401000, True)]
+        self.assertEqual([], decomp_status.claim_regressions(
+            entries, {0x401000: {"tier": "BYTE_EXACT"}}))
+
+    def test_a_lost_claim_is_a_regression(self):
+        entries = [self.annotation(0x401000, True)]
+        lost = decomp_status.claim_regressions(
+            entries, {0x401000: {"tier": "MISMATCH"}})
+        self.assertEqual(1, len(lost))
+        self.assertEqual("MISMATCH", lost[0][1])
+
+    def test_an_unmeasured_claim_is_a_regression(self):
+        # Silence is not success: a claim whose piece this run never measured
+        # is exactly as unproved as one that measured worse.
+        entries = [self.annotation(0x401000, True)]
+        lost = decomp_status.claim_regressions(entries, {})
+        self.assertEqual(1, len(lost))
+        self.assertEqual("not measured", lost[0][1])
+
+    def test_an_unclaimed_piece_is_never_a_regression(self):
+        entries = [self.annotation(0x401000, False)]
+        self.assertEqual([], decomp_status.claim_regressions(
+            entries, {0x401000: {"tier": "NO_COMPILE"}}))
+
+    def test_recording_adds_the_token_to_the_marker_line(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "src").mkdir()
+            target = root / "src" / "x.cpp"
+            target.write_text("/*\nPurpose: t\nORIGINAL: 0x00401000\n*/\n"
+                              "int f() { return 0; }\n")
+            with mock.patch.object(decomp_status, "REPO_ROOT", root):
+                written = decomp_status.record_claims(
+                    [self.annotation(0x401000, False, line=3)],
+                    {0x401000: {"tier": "BYTE_EXACT"}})
+            self.assertEqual(1, written)
+            self.assertIn("ORIGINAL: 0x00401000 BYTE_EXACT", target.read_text())
+
+    def test_recording_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "src").mkdir()
+            target = root / "src" / "x.cpp"
+            target.write_text("// ORIGINAL: 0x00401000 BYTE_EXACT\n")
+            with mock.patch.object(decomp_status, "REPO_ROOT", root):
+                written = decomp_status.record_claims(
+                    [self.annotation(0x401000, True, line=1)],
+                    {0x401000: {"tier": "BYTE_EXACT"}})
+            self.assertEqual(0, written)
+            self.assertEqual(1, target.read_text().count("BYTE_EXACT"))
+
 if __name__ == "__main__":
     unittest.main()

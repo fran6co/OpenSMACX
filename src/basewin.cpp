@@ -25,7 +25,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x00408710
+ORIGINAL: 0x00408710 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -34,7 +34,7 @@ void BaseWin::close() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x00416DD0
+ORIGINAL: 0x00416DD0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -43,7 +43,7 @@ void BaseWin::UNK4() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0041AF20
+ORIGINAL: 0x0041AF20 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -52,7 +52,7 @@ void BaseWin::UNK6() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0041AF30
+ORIGINAL: 0x0041AF30 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -77,7 +77,7 @@ void __fastcall base_win_unk7_redirect(BaseWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0041A610
+ORIGINAL: 0x0041A610 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -90,7 +90,7 @@ void __fastcall base_win_unk5_redirect(BaseWin *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0041B4E0
+ORIGINAL: 0x0041B4E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -103,7 +103,7 @@ void __fastcall base_win_on_button_toggled_redirect(BaseWin *self, void *, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0041DF40
+ORIGINAL: 0x0041DF40 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -116,7 +116,7 @@ void __fastcall base_win_on_iface_right_down_redirect(BaseWin *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0041E4C0
+ORIGINAL: 0x0041E4C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -274,7 +274,7 @@ void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, in
 /*
 Purpose: Interface timer tick; the legacy implementation ignores it and
          returns.
-ORIGINAL: 0x0041AF40
+ORIGINAL: 0x0041AF40 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -308,7 +308,7 @@ void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, 
 }
 
 /*
-ORIGINAL: 0x0041E890
+ORIGINAL: 0x0041E890 BYTE_EXACT
 Status: Complete
 */
 void BaseWin::show(int a1) {
@@ -319,7 +319,7 @@ void BaseWin::show(int a1) {
 }
 
 /*
-ORIGINAL: 0x0040B120
+ORIGINAL: 0x0040B120 BYTE_EXACT
 Status: Complete
 */
 void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
@@ -327,7 +327,7 @@ void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
 }
 
 /*
-ORIGINAL: 0x0041B4A0
+ORIGINAL: 0x0041B4A0 BYTE_EXACT
 Status: Complete
 */
 void BaseWin::on_scrolled(int a1, int a2) {

@@ -23,7 +23,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004C5180
+ORIGINAL: 0x004C5180 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -32,7 +32,7 @@ void Wave_Device::set_pan(int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C51A0
+ORIGINAL: 0x004C51A0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -130,7 +130,7 @@ void __fastcall wave_device_disable_redirect(Wave_Device *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5170
+ORIGINAL: 0x004C5170 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -140,7 +140,7 @@ int Wave_Device::get_volume() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C51B0
+ORIGINAL: 0x004C51B0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -345,7 +345,7 @@ int Wave_Device::set_hwnd(void *a1) {
 Purpose: Read one group's volume from the sixteen-entry table of 24-byte
          records the object keeps at 0x28. Nothing is dispatched; an index past
          the table answers zero.
-ORIGINAL: 0x004C5380
+ORIGINAL: 0x004C5380 BYTE_EXACT
 Return Value: the group's volume, or 0 when the index is out of range
 Status: Complete
 */

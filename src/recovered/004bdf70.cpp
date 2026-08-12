@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004BDF70
+// ORIGINAL: 0x004BDF70 BYTE_EXACT
 // 0x004BDF70  ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z  ->  ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -69,7 +69,7 @@ void ButtonGroup::init(int group_id, int flags) {
 
 /*
 Purpose: Add a button to the group and link the button back to it.
-ORIGINAL: 0x0062B850
+ORIGINAL: 0x0062B850 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

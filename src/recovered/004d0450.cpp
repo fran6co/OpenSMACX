@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004D0450
+// ORIGINAL: 0x004D0450 BYTE_EXACT
 // 0x004D0450  ?skip@Console@@QAEXH@Z  ->  ?skip@Console@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

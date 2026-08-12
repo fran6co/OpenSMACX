@@ -23,7 +23,7 @@ func_texture_free *TextureFree = (func_texture_free *)0x00644EF2;
 
 /*
 Purpose: Start an empty texture - no pixels, no descriptors, not borrowed.
-ORIGINAL: 0x00619650
+ORIGINAL: 0x00619650 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -79,7 +79,7 @@ void Texture::close() {
 /*
 Purpose: Tear down the store, leaving a count of 3 at offset 0 and clearing
          the field at 4. Calls nothing.
-ORIGINAL: 0x006252B0
+ORIGINAL: 0x006252B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

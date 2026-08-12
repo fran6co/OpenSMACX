@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005E816C
+// ORIGINAL: 0x005E816C BYTE_EXACT
 // 0x005E816C  ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z  ->  ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

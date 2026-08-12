@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00559120
+// ORIGINAL: 0x00559120 BYTE_EXACT
 // 0x00559120  ?get_adjective_faction@@YAPADH@Z  ->  ?get_adjective_faction@@YAPADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004D9DC0
+ORIGINAL: 0x004D9DC0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -29,7 +29,7 @@ void DipEdit::on_left_click(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004D9DD0
+ORIGINAL: 0x004D9DD0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -45,7 +45,7 @@ void __fastcall dip_edit_on_redraw_redirect(DipEdit *self, void *) {
 }
 
 /*
-ORIGINAL: 0x004DA740
+ORIGINAL: 0x004DA740 BYTE_EXACT
 Status: Complete
 */
 void DipEdit::on_selected(int a1) {

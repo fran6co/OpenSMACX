@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0051DDF0
+// ORIGINAL: 0x0051DDF0 BYTE_EXACT
 // 0x0051DDF0  ??_GConsole@@UAEPAXI@Z  ->  ??_GConsole@@UAEPAXI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

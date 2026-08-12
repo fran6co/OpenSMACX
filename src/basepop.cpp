@@ -23,7 +23,7 @@
 
 /*
 Purpose: Update either base-popup coordinate unless its keep-current sentinel is supplied.
-ORIGINAL: 0x00601B80
+ORIGINAL: 0x00601B80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -213,7 +213,7 @@ void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int
 
 /*
 Purpose: Set this popup's string color slots.
-ORIGINAL: 0x00604730
+ORIGINAL: 0x00604730 BYTE_EXACT
 Status: Complete
 */
 void BasePop::set_string_color(int c1, int c2, int c3, int c4) {
@@ -230,7 +230,7 @@ void __fastcall base_pop_set_string_color_redirect(
 
 /*
 Purpose: Set this popup's string color2 slots.
-ORIGINAL: 0x00604760
+ORIGINAL: 0x00604760 BYTE_EXACT
 Status: Complete
 */
 void BasePop::set_string_color2(int c1, int c2, int c3, int c4) {
@@ -247,7 +247,7 @@ void __fastcall base_pop_set_string_color2_redirect(
 
 /*
 Purpose: Set this popup's string color3 slots.
-ORIGINAL: 0x00604790
+ORIGINAL: 0x00604790 BYTE_EXACT
 Status: Complete
 */
 void BasePop::set_string_color3(int c1, int c2, int c3, int c4) {
@@ -264,7 +264,7 @@ void __fastcall base_pop_set_string_color3_redirect(
 
 /*
 Purpose: Set this popup's string color hyper slots.
-ORIGINAL: 0x006047C0
+ORIGINAL: 0x006047C0 BYTE_EXACT
 Status: Complete
 */
 void BasePop::set_string_color_hyper(int c1, int c2, int c3, int c4) {
@@ -444,7 +444,7 @@ Purpose: Report whether the popup will accept a key click. Both this and
          so the answer is bit 14 of field_30A8_ INVERTED - one when the bit is
          clear. The arguments are ignored; the two differ only in how many they
          clean off the stack.
-ORIGINAL: 0x00604490
+ORIGINAL: 0x00604490 BYTE_EXACT
 Return Value: 1 when bit 14 of field_30A8_ is clear, 0 when it is set
 Status: Complete
 */
@@ -461,7 +461,7 @@ Purpose: As on_key_click above, over the same field and the same bit. Kept as
          its own body rather than delegating, because the original is a
          separate function with a different stack cleanup and a delegation
          would change the instruction the caller returns to.
-ORIGINAL: 0x006044B0
+ORIGINAL: 0x006044B0 BYTE_EXACT
 Return Value: 1 when bit 14 of field_30A8_ is clear, 0 when it is set
 Status: Complete
 */
@@ -491,7 +491,7 @@ Purpose: Set or clear bit 0 of the flags word at offset 0x20 - set when the
          header says its layout is not established. Reaching through it by name
          would state a relationship this function does not need and cannot
          confirm; the offset is the thing the original encodes.
-ORIGINAL: 0x00605180
+ORIGINAL: 0x00605180 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -512,7 +512,7 @@ void __fastcall base_pop_unk3_redirect(BasePop *self, void *, int a1) {
 /*
 Purpose: As UNK3 above, over the same flags word but bit 1 (`or al, 2` /
          `and al, 0xFD`).
-ORIGINAL: 0x006051A0
+ORIGINAL: 0x006051A0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -544,7 +544,7 @@ Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
          Dialogs::item takes the Dialog's address from the EMBEDDING object's
          own vbtable rather than from where a Dialogs sits when it is
          most-derived, which is why this can hand it a subobject at all.
-ORIGINAL: 0x00558FE0
+ORIGINAL: 0x00558FE0 BYTE_EXACT
 Return Value: whatever Dialogs::item returns
 Status: Complete
 */

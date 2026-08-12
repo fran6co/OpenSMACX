@@ -157,7 +157,7 @@ int Buffer::set_font(Font *font1, Font *font2, Font *font3, Font *font4) {
 
 /*
 Purpose: Set the primary text colors for the four color slots.
-ORIGINAL: 0x005DACB0
+ORIGINAL: 0x005DACB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -170,7 +170,7 @@ void Buffer::set_text_color(int color1, int color2, int color3, int color4) {
 
 /*
 Purpose: Set the secondary text colors for the four color slots.
-ORIGINAL: 0x005DACE0
+ORIGINAL: 0x005DACE0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -183,7 +183,7 @@ void Buffer::set_text_color2(int color1, int color2, int color3, int color4) {
 
 /*
 Purpose: Set the tertiary text colors for the four color slots.
-ORIGINAL: 0x005DAD10
+ORIGINAL: 0x005DAD10 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -196,7 +196,7 @@ void Buffer::set_text_color3(int color1, int color2, int color3, int color4) {
 
 /*
 Purpose: Set the hyperlink text colors for the four color slots.
-ORIGINAL: 0x005DAD40
+ORIGINAL: 0x005DAD40 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -209,7 +209,7 @@ void Buffer::set_text_color_hyper(int color1, int color2, int color3, int color4
 
 /*
 Purpose: Initialize shared Buffer state; the legacy implementation has no state to initialize.
-ORIGINAL: 0x005DF570
+ORIGINAL: 0x005DF570 BYTE_EXACT
 Return Value: No errors (0)
 Status: Complete
 */
@@ -219,7 +219,7 @@ int Buffer::init_class() {
 
 /*
 Purpose: Close shared Buffer state; the legacy implementation is intentionally empty.
-ORIGINAL: 0x005DF580
+ORIGINAL: 0x005DF580 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -1178,7 +1178,7 @@ int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
 }
 
 /*
-ORIGINAL: 0x005DA680
+ORIGINAL: 0x005DA680 BYTE_EXACT
 Status: Complete
 */
 int Buffer::poly(Vert *a1, int a2, int a3) {

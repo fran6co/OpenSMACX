@@ -22,7 +22,7 @@
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447220
+ORIGINAL: 0x00447220 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -31,7 +31,7 @@ void FactionAmbience::begin() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447230
+ORIGINAL: 0x00447230 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -40,7 +40,7 @@ void FactionAmbience::tech() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447240
+ORIGINAL: 0x00447240 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -49,7 +49,7 @@ void FactionAmbience::terraform() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447250
+ORIGINAL: 0x00447250 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -58,7 +58,7 @@ void FactionAmbience::production() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447260
+ORIGINAL: 0x00447260 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -67,7 +67,7 @@ void FactionAmbience::general() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472B0
+ORIGINAL: 0x004472B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -76,7 +76,7 @@ void FactionAmbience::new_base() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472C0
+ORIGINAL: 0x004472C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -85,7 +85,7 @@ void FactionAmbience::popup1() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472D0
+ORIGINAL: 0x004472D0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -94,7 +94,7 @@ void FactionAmbience::eot() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472E0
+ORIGINAL: 0x004472E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -103,7 +103,7 @@ void FactionAmbience::hostility() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004472F0
+ORIGINAL: 0x004472F0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -112,7 +112,7 @@ void FactionAmbience::energy_resources() {
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447300
+ORIGINAL: 0x00447300 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -121,7 +121,7 @@ void FactionAmbience::base_liberated() {
 
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447690
+ORIGINAL: 0x00447690 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -130,7 +130,7 @@ void UAmbience::tech() {
 
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004476A0
+ORIGINAL: 0x004476A0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -139,7 +139,7 @@ void UAmbience::popup1() {
 
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x004476B0
+ORIGINAL: 0x004476B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -148,7 +148,7 @@ void UAmbience::eot() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447C60
+ORIGINAL: 0x00447C60 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -157,7 +157,7 @@ void GAmbience::tech() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447CA0
+ORIGINAL: 0x00447CA0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -166,7 +166,7 @@ void GAmbience::production() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447CB0
+ORIGINAL: 0x00447CB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -175,7 +175,7 @@ void GAmbience::popup1() {
 
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
-ORIGINAL: 0x00447CC0
+ORIGINAL: 0x00447CC0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -500,7 +500,7 @@ Purpose: GAmbience raises the flag byte only when it is CLEAR.
          unconditionally, and an unconditional store here would agree for the
          values 0 and 1 and differ for every other: a byte holding 5 keeps 5,
          where `field_6C_ = 1` would overwrite it.
-ORIGINAL: 0x00447BE0
+ORIGINAL: 0x00447BE0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -517,7 +517,7 @@ void __fastcall g_ambience_basewin_show_redirect(GAmbience *self, void *) {
 /*
 Purpose: GAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x00447BF0
+ORIGINAL: 0x00447BF0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

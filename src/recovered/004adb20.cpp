@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004ADB20
+// ORIGINAL: 0x004ADB20 BYTE_EXACT
 // 0x004ADB20  ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z  ->  ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

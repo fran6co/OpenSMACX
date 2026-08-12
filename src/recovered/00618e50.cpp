@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00618E50
+// ORIGINAL: 0x00618E50 BYTE_EXACT
 // 0x00618E50  ?vx_write@Caviar@@SAXHPAXJ@Z  ->  ?vx_write@Caviar@@SAXHPAXJ@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -48,7 +48,7 @@ void TutWin::UNK1() {
 
 /*
 Purpose: Store a single value at 0x53D4.
-ORIGINAL: 0x004BDDD0
+ORIGINAL: 0x004BDDD0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -389,7 +389,7 @@ void __fastcall tut_win_do_des_redirect(
 
 /*
 Purpose: Tell the attached object the tutorial window moved.
-ORIGINAL: 0x004BDDB0
+ORIGINAL: 0x004BDDB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

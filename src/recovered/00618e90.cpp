@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00618E90
+// ORIGINAL: 0x00618E90 BYTE_EXACT
 // 0x00618E90  ?vx_tell@Caviar@@QAAXH@Z  ->  ?vx_tell@Caviar@@QAAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

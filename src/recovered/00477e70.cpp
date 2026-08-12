@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00477E70
+// ORIGINAL: 0x00477E70 BYTE_EXACT
 // 0x00477E70  ?on_mouse_move@MultiWin@@QAEXHH@Z  ->  ?on_mouse_move@MultiWin@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

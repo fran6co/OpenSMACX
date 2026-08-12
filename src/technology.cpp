@@ -117,7 +117,7 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
 
 /*
 Purpose: Get tech string for tech_id and store it into TechName buffer.
-ORIGINAL: 0x005B9EF0
+ORIGINAL: 0x005B9EF0 BYTE_EXACT
 Return Value: Pointer to TechName
 Status: Complete
 */

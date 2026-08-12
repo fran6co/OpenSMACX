@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x005AD3D0
+ORIGINAL: 0x005AD3D0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -29,7 +29,7 @@ void ReplayWin::on_left_double_click(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x005AD3E0
+ORIGINAL: 0x005AD3E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -38,7 +38,7 @@ void ReplayWin::on_right_double_click(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x005AD3F0
+ORIGINAL: 0x005AD3F0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -47,7 +47,7 @@ void ReplayWin::on_mouse_move(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x005AD400
+ORIGINAL: 0x005AD400 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -56,7 +56,7 @@ void ReplayWin::on_right_down(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x005AD410
+ORIGINAL: 0x005AD410 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -65,7 +65,7 @@ void ReplayWin::on_left_down(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x005AD420
+ORIGINAL: 0x005AD420 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -97,7 +97,7 @@ void __fastcall replay_win_on_left_up_redirect(ReplayWin *self, void *, int a1, 
 }
 
 /*
-ORIGINAL: 0x005ADBD0
+ORIGINAL: 0x005ADBD0 BYTE_EXACT
 Status: Complete
 */
 void __cdecl fn_005adbd0(ReplayWin* a1) {

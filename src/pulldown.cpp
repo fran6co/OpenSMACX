@@ -236,7 +236,7 @@ PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
 /*
 Purpose: Legacy stub; the original body returns 8 without reading its
          arguments.
-ORIGINAL: 0x005F8C90
+ORIGINAL: 0x005F8C90 BYTE_EXACT
 Status: Complete
 */
 int PullDown::UNK2(int) {
@@ -251,7 +251,7 @@ int __fastcall pull_down_unk2_redirect(
 /*
 Purpose: Legacy stub; the original body returns 8 without reading its
          arguments.
-ORIGINAL: 0x005F8CA0
+ORIGINAL: 0x005F8CA0 BYTE_EXACT
 Status: Complete
 */
 int PullDown::UNK3(int, int, int) {
@@ -266,7 +266,7 @@ int __fastcall pull_down_unk3_redirect(
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-ORIGINAL: 0x005FA750
+ORIGINAL: 0x005FA750 BYTE_EXACT
 Status: Complete
 */
 int PullDown::UNK5() {
@@ -281,7 +281,7 @@ int __fastcall pull_down_unk5_redirect(
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-ORIGINAL: 0x005FA760
+ORIGINAL: 0x005FA760 BYTE_EXACT
 Status: Complete
 */
 int PullDown::UNK6() {
@@ -295,7 +295,7 @@ int __fastcall pull_down_unk6_redirect(
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x005FA740
+ORIGINAL: 0x005FA740 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -310,7 +310,7 @@ void __fastcall pull_down_on_mouse_leave_redirect(PullDown *self, void *, int a1
 Purpose: Find a menu item by its id and return its index, scanning up to the
          64 item slots. Stops at the first slot whose id is the -1 sentinel,
          and returns -1 when the id is not found or that sentinel is reached.
-ORIGINAL: 0x005F9D00
+ORIGINAL: 0x005F9D00 BYTE_EXACT
 Return Value: the item's index, or -1 when absent
 Status: Complete
 */
@@ -332,7 +332,7 @@ int __fastcall pull_down_id_to_index_redirect(PullDown *self, void *, int id) {
 }
 
 /*
-ORIGINAL: 0x005F93A0
+ORIGINAL: 0x005F93A0 BYTE_EXACT
 Status: Complete
 */
 void PullDown::hide() {

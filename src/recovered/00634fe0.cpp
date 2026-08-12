@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00634FE0
+// ORIGINAL: 0x00634FE0 BYTE_EXACT
 // 0x00634FE0  ?shutdown@TexHeap@@QAEXXZ  ->  ?shutdown@TexHeap@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

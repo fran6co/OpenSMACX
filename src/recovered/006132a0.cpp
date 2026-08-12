@@ -1,4 +1,4 @@
-// ORIGINAL: 0x006132A0
+// ORIGINAL: 0x006132A0 BYTE_EXACT
 // 0x006132A0  ?calculate_dimensions@Dialogs@@QAEHXZ  ->  ?calculate_dimensions@Dialogs@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -384,7 +384,7 @@ int __cdecl get_patience(int faction_id_with, int faction_id) {
 
 /*
 Purpose: Calculate the amount of goodwill a loan will generate. This is used to reduce friction.
-ORIGINAL: 0x0053A1C0
+ORIGINAL: 0x0053A1C0 BYTE_EXACT
 Return Value: Goodwill (friction reduction amount)
 Status: Complete
 */

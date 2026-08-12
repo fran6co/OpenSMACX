@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004BDF20
+// ORIGINAL: 0x004BDF20 BYTE_EXACT
 // 0x004BDF20  ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z  ->  ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00618E70
+// ORIGINAL: 0x00618E70 BYTE_EXACT
 // 0x00618E70  ?vx_seek@Caviar@@QAAXHJH@Z  ->  ?vx_seek@Caviar@@QAAXHJH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

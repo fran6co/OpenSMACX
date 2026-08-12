@@ -15,7 +15,7 @@
 
 /*
 Purpose: Initialize a zero vector.
-ORIGINAL: 0x006343C0
+ORIGINAL: 0x006343C0 BYTE_EXACT
 Status: Complete
 */
 Vector::Vector() {
@@ -27,7 +27,7 @@ Vector::Vector() {
 
 /*
 Purpose: Clear all vector components.
-ORIGINAL: 0x006343D0
+ORIGINAL: 0x006343D0 BYTE_EXACT
 Status: Complete
 */
 void Vector::close() {

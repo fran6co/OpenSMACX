@@ -29,7 +29,7 @@ void *DatalinkMain = reinterpret_cast<void *>(0x00703EA0);
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0042BEA0
+ORIGINAL: 0x0042BEA0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -38,7 +38,7 @@ void Datalink::UNK6() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0042BF00
+ORIGINAL: 0x0042BF00 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -47,7 +47,7 @@ void Datalink::UNK8() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x00431DB0
+ORIGINAL: 0x00431DB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -68,7 +68,7 @@ void __fastcall datalink_unk9_redirect(Datalink *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00431EB0
+ORIGINAL: 0x00431EB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -81,7 +81,7 @@ void __fastcall datalink_on_left_click_redirect(Datalink *self, void *, int a1, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00431FB0
+ORIGINAL: 0x00431FB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -94,7 +94,7 @@ void __fastcall datalink_on_group_clicked_redirect(Datalink *self, void *, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00432000
+ORIGINAL: 0x00432000 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -107,7 +107,7 @@ void __fastcall datalink_on_mouse_move_redirect(Datalink *self, void *, int a1, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00432160
+ORIGINAL: 0x00432160 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -120,7 +120,7 @@ void __fastcall datalink_on_iface_left_click_redirect(Datalink *self, void *, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00432170
+ORIGINAL: 0x00432170 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -133,7 +133,7 @@ void __fastcall datalink_on_iface_right_click_redirect(Datalink *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00432180
+ORIGINAL: 0x00432180 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -146,7 +146,7 @@ void __fastcall datalink_on_iface_left_down_redirect(Datalink *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00432190
+ORIGINAL: 0x00432190 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -159,7 +159,7 @@ void __fastcall datalink_on_iface_right_down_redirect(Datalink *self, void *, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004321A0
+ORIGINAL: 0x004321A0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -172,7 +172,7 @@ void __fastcall datalink_on_iface_mouse_move_redirect(Datalink *self, void *, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004321B0
+ORIGINAL: 0x004321B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -185,7 +185,7 @@ void __fastcall datalink_on_iface_mouse_leave_redirect(Datalink *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004321C0
+ORIGINAL: 0x004321C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -198,7 +198,7 @@ void __fastcall datalink_on_iface_selected_redirect(Datalink *self, void *, int 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004321D0
+ORIGINAL: 0x004321D0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -211,7 +211,7 @@ void __fastcall datalink_on_iface_left_double_click_redirect(Datalink *self, voi
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004321E0
+ORIGINAL: 0x004321E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -224,7 +224,7 @@ void __fastcall datalink_on_iface_right_double_click_redirect(Datalink *self, vo
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004321F0
+ORIGINAL: 0x004321F0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -237,7 +237,7 @@ void __fastcall datalink_on_iface_button_clicked_redirect(Datalink *self, void *
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00432200
+ORIGINAL: 0x00432200 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -250,7 +250,7 @@ void __fastcall datalink_on_iface_button_toggled_redirect(Datalink *self, void *
 
 /*
 Purpose: Close the datalink display, clearing the three values it caches.
-ORIGINAL: 0x0042BD20
+ORIGINAL: 0x0042BD20 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -379,7 +379,7 @@ Purpose: Combine two values as `a1 * 10000 + a2`.
          behaviour of its own - it wraps identically at 32 bits either way.
 
          Touches no field; both operands are arguments.
-ORIGINAL: 0x0042A020
+ORIGINAL: 0x0042A020 BYTE_EXACT
 Return Value: a1 * 10000 + a2, wrapping at 32 bits
 Status: Complete
 */
@@ -413,7 +413,7 @@ Purpose: Split a combined id into its two halves - `id / 10000` into the first
          agree on the constant.
 
          Neither output is null-checked, because the original checks neither.
-ORIGINAL: 0x0042A040
+ORIGINAL: 0x0042A040 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -433,7 +433,7 @@ void __fastcall datalink_parse_id_redirect(Datalink *self, void *, int id,
 }
 
 /*
-ORIGINAL: 0x00432040
+ORIGINAL: 0x00432040 BYTE_EXACT
 Status: Complete
 */
 void Datalink::on_selected(int a1) {
@@ -445,7 +445,7 @@ void Datalink::on_selected(int a1) {
 }
 
 /*
-ORIGINAL: 0x0042BD40
+ORIGINAL: 0x0042BD40 BYTE_EXACT
 Status: Complete
 */
 void Datalink::show(int a1) {
@@ -455,7 +455,7 @@ void Datalink::show(int a1) {
 }
 
 /*
-ORIGINAL: 0x0042BD60
+ORIGINAL: 0x0042BD60 BYTE_EXACT
 Status: Complete
 */
 void Datalink::hide() {

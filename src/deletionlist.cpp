@@ -22,7 +22,7 @@
 /*
 Purpose: Reset one deletion-list entry to its empty state - an 0xFF marker byte
          and a zeroed word - at the record stride of 0x3C.
-ORIGINAL: 0x0052DCD0
+ORIGINAL: 0x0052DCD0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

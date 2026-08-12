@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0043C130
+// ORIGINAL: 0x0043C130 BYTE_EXACT
 // 0x0043C130  ?construct_reactor@DesignWin@@QAEXXZ  ->  ?construct_reactor@DesignWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

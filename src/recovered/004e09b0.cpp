@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004E09B0
+// ORIGINAL: 0x004E09B0 BYTE_EXACT
 // 0x004E09B0  ?editor_kill_vehicles@Console@@QAEXXZ  ->  ?editor_kill_vehicles@Console@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

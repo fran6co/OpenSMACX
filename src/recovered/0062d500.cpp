@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0062D500
+// ORIGINAL: 0x0062D500 BYTE_EXACT
 // 0x0062D500  ?jackal_close@@YAXXZ  ->  ?jackal_close@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

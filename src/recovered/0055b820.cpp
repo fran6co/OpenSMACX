@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0055B820
+// ORIGINAL: 0x0055B820 BYTE_EXACT
 // 0x0055B820  ?agenda_off@@YAXHHH@Z  ->  ?agenda_off@@YAXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

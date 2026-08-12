@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00604A80
+// ORIGINAL: 0x00604A80 BYTE_EXACT
 // 0x00604A80  ?on_modal@BasePop@@QAAHXZ  ->  ?on_modal@BasePop@@QAAHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00426EB0
+ORIGINAL: 0x00426EB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -34,7 +34,7 @@ void __fastcall counc_win_on_group_clicked_redirect(CouncWin *self, void *, int 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00426F80
+ORIGINAL: 0x00426F80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -47,7 +47,7 @@ void __fastcall counc_win_on_button_passover_redirect(CouncWin *self, void *, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00427060
+ORIGINAL: 0x00427060 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -60,7 +60,7 @@ void __fastcall counc_win_on_iface_left_click_redirect(CouncWin *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00427070
+ORIGINAL: 0x00427070 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -73,7 +73,7 @@ void __fastcall counc_win_on_iface_right_click_redirect(CouncWin *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00427080
+ORIGINAL: 0x00427080 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -86,7 +86,7 @@ void __fastcall counc_win_on_iface_left_down_redirect(CouncWin *self, void *, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00427090
+ORIGINAL: 0x00427090 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -99,7 +99,7 @@ void __fastcall counc_win_on_iface_right_down_redirect(CouncWin *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004270A0
+ORIGINAL: 0x004270A0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -112,7 +112,7 @@ void __fastcall counc_win_on_iface_mouse_move_redirect(CouncWin *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004270B0
+ORIGINAL: 0x004270B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -125,7 +125,7 @@ void __fastcall counc_win_on_iface_mouse_leave_redirect(CouncWin *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004270C0
+ORIGINAL: 0x004270C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -138,7 +138,7 @@ void __fastcall counc_win_on_iface_selected_redirect(CouncWin *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004270D0
+ORIGINAL: 0x004270D0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -151,7 +151,7 @@ void __fastcall counc_win_on_iface_left_double_click_redirect(CouncWin *self, vo
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004270E0
+ORIGINAL: 0x004270E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -164,7 +164,7 @@ void __fastcall counc_win_on_iface_right_double_click_redirect(CouncWin *self, v
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00427110
+ORIGINAL: 0x00427110 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -177,7 +177,7 @@ void __fastcall counc_win_on_iface_button_toggled_redirect(CouncWin *self, void 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00427120
+ORIGINAL: 0x00427120 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -204,7 +204,7 @@ int __fastcall counc_win_on_button_text_draw_redirect(
 }
 
 /*
-ORIGINAL: 0x00426EC0
+ORIGINAL: 0x00426EC0 BYTE_EXACT
 Status: Complete
 */
 void CouncWin::on_mouse_leave(int a1, int a2) {
@@ -217,7 +217,7 @@ void CouncWin::on_mouse_leave(int a1, int a2) {
 }
 
 /*
-ORIGINAL: 0x00425D90
+ORIGINAL: 0x00425D90 BYTE_EXACT
 Status: Complete
 */
 void CouncWin::draw_all_leaders() {

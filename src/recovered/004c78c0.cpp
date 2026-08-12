@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004C78C0
+// ORIGINAL: 0x004C78C0 BYTE_EXACT
 // 0x004C78C0  ?set_base_path@Midi@@QAEHPBD@Z  ->  ?set_base_path@Midi@@QAEHPBD@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -30,7 +30,7 @@ int MainInterface::set_bubble_text(uint32_t button_id, LPCSTR text) {
 
 /*
 Purpose: Clear the interface message; the legacy implementation is intentionally empty.
-ORIGINAL: 0x0045C170
+ORIGINAL: 0x0045C170 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -39,7 +39,7 @@ void MainInterface::clear_message() {
 
 /*
 Purpose: Update the desktop; the legacy implementation is intentionally empty.
-ORIGINAL: 0x0058EE50
+ORIGINAL: 0x0058EE50 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -48,7 +48,7 @@ void __cdecl desktop_update() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0045C5B0
+ORIGINAL: 0x0045C5B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -57,7 +57,7 @@ void MainInterface::UNK2() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0045EB60
+ORIGINAL: 0x0045EB60 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -66,7 +66,7 @@ void MainInterface::UNK3() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0045EB70
+ORIGINAL: 0x0045EB70 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -91,7 +91,7 @@ void __fastcall main_interface_unk4_redirect(MainInterface *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0045C280
+ORIGINAL: 0x0045C280 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -104,7 +104,7 @@ void __fastcall main_interface_unk1_redirect(MainInterface *self, void *, int a1
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0045CC80
+ORIGINAL: 0x0045CC80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -117,7 +117,7 @@ void __fastcall main_interface_on_iface_scrolled_redirect(MainInterface *self, v
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0045CC90
+ORIGINAL: 0x0045CC90 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -130,7 +130,7 @@ void __fastcall main_interface_on_iface_scrolling_redirect(MainInterface *self, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0045CCA0
+ORIGINAL: 0x0045CCA0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -143,7 +143,7 @@ void __fastcall main_interface_on_iface_button_toggled_redirect(MainInterface *s
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0045CDB0
+ORIGINAL: 0x0045CDB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -156,7 +156,7 @@ void __fastcall main_interface_on_iface_right_double_click_redirect(MainInterfac
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x0045D160
+ORIGINAL: 0x0045D160 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */

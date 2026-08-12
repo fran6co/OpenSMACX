@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00623F50
+// ORIGINAL: 0x00623F50 BYTE_EXACT
 // 0x00623F50  sub_623f50  ->  _sub_623f50
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

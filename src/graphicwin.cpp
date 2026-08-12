@@ -549,7 +549,7 @@ int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
 }
 
 /*
-ORIGINAL: 0x005D6310
+ORIGINAL: 0x005D6310 BYTE_EXACT
 Status: Complete
 */
 void GraphicWin::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {

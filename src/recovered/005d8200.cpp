@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005D8200
+// ORIGINAL: 0x005D8200 BYTE_EXACT
 // 0x005D8200  ?set_clip@Buffer@@QAEHHHHH@Z  ->  ?set_clip@Buffer@@QAEHHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

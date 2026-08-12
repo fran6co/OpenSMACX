@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0044C7D0
+// ORIGINAL: 0x0044C7D0 BYTE_EXACT
 // 0x0044C7D0  ?help_info_pop@@YAXPAD@Z  ->  ?help_info_pop@@YAXPAD@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

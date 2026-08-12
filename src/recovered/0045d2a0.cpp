@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0045D2A0
+// ORIGINAL: 0x0045D2A0 BYTE_EXACT
 // 0x0045D2A0  ?set_alert@MainInterface@@QAEXH@Z  ->  ?set_alert@MainInterface@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

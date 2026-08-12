@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004A8470
+// ORIGINAL: 0x004A8470 BYTE_EXACT
 // 0x004A8470  ?close_labs@ReportIf@@QAEXXZ  ->  ?close_labs@ReportIf@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

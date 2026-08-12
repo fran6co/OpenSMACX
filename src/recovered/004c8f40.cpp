@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004C8F40
+// ORIGINAL: 0x004C8F40 BYTE_EXACT
 // 0x004C8F40  ?unload@VoiceTx@@QAEHXZ  ->  ?unload@VoiceTx@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

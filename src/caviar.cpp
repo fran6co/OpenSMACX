@@ -25,7 +25,7 @@ uint32_t load_scaling_bits(const void *source) {
 
 /*
 Purpose: Initialize an empty Caviar object-data record.
-ORIGINAL: 0x00616BC0
+ORIGINAL: 0x00616BC0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -138,7 +138,7 @@ float __fastcall caviar_get_scaling_redirect(Caviar *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x006176C0
+ORIGINAL: 0x006176C0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -152,7 +152,7 @@ int __fastcall caviar_unk3_redirect(Caviar *self, void *, int a1, int a2, int a3
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x006176D0
+ORIGINAL: 0x006176D0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -166,7 +166,7 @@ int __fastcall caviar_unk4_redirect(Caviar *self, void *, int a1, int a2, int a3
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00618250
+ORIGINAL: 0x00618250 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -179,7 +179,7 @@ void __fastcall caviar_unk5_redirect(Caviar *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00618260
+ORIGINAL: 0x00618260 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -192,7 +192,7 @@ void __fastcall caviar_unk6_redirect(Caviar *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00618270
+ORIGINAL: 0x00618270 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -205,7 +205,7 @@ void __fastcall caviar_unk7_redirect(Caviar *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00618290
+ORIGINAL: 0x00618290 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -218,7 +218,7 @@ void __fastcall caviar_unk9_redirect(Caviar *self, void *, int a1, int a2, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x006183A0
+ORIGINAL: 0x006183A0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -231,7 +231,7 @@ void __fastcall caviar_unk12_redirect(Caviar *self, void *, int a1, int a2, int 
 
 /*
 Purpose: Store a single value at 0x108.
-ORIGINAL: 0x00618280
+ORIGINAL: 0x00618280 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -241,7 +241,7 @@ void Caviar::UNK8(int a1) {
 
 /*
 Purpose: Store three values into the triplet at 0x2C.
-ORIGINAL: 0x00618320
+ORIGINAL: 0x00618320 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

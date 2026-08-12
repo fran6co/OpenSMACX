@@ -21,7 +21,7 @@
 
 /*
 Purpose: Reset the square lock to its unset sentinels.
-ORIGINAL: 0x0058FD70
+ORIGINAL: 0x0058FD70 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00421B20
+// ORIGINAL: 0x00421B20 BYTE_EXACT
 // 0x00421B20  ?pulse_timer@BattleWin@@QAEXXZ  ->  ?pulse_timer@BattleWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

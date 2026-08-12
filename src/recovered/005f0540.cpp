@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005F0540
+// ORIGINAL: 0x005F0540 BYTE_EXACT
 // 0x005F0540  ?adjust_menus@Win@@QAGHPAX@Z  ->  ?adjust_menus@Win@@QAGHPAX@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

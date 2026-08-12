@@ -40,7 +40,7 @@ int Dialog::set_dialog_font(Font *font1, Font *font2, Font *font3) {
 
 /*
 Purpose: Set the primary text colors for the four dialog color slots.
-ORIGINAL: 0x00609C90
+ORIGINAL: 0x00609C90 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -53,7 +53,7 @@ void Dialog::set_dialog_text_color(int color1, int color2, int color3, int color
 
 /*
 Purpose: Set the secondary text colors for the four dialog color slots.
-ORIGINAL: 0x00609CC0
+ORIGINAL: 0x00609CC0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -66,7 +66,7 @@ void Dialog::set_dialog_text_color2(int color1, int color2, int color3, int colo
 
 /*
 Purpose: Set the tertiary text colors for the four dialog color slots.
-ORIGINAL: 0x00609CF0
+ORIGINAL: 0x00609CF0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -79,7 +79,7 @@ void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int colo
 
 /*
 Purpose: Find an item ID's bounded position in the dialog string list.
-ORIGINAL: 0x00609AF0
+ORIGINAL: 0x00609AF0 BYTE_EXACT
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */

@@ -26,7 +26,18 @@ ORIGINAL: 0x00403B70 FILE         the WHOLE file is the translation unit
                                   for this address; compiled verbatim
 ORIGINAL: 0x0064A123 EXCLUDED S1  deliberately not decompiled; the token
                                   cites the ground in docs/EXCLUSIONS.md
+ORIGINAL: 0x0046FB10 BYTE_EXACT   RATCHET CLAIM: this was proved to
+                                  recompile to the shipped bytes, and
+                                  `--check` fails if it stops
 ```
+
+`BYTE_EXACT` composes with `FILE` in either order, and it is the ONLY verdict
+ever written into the tree. It is a claim, not a status field: every other
+tier — MISMATCH, NO_COMPILE, MNEMONIC_ONLY — is measured on demand and
+recorded nowhere, because a status field in a comment goes stale the moment
+someone edits the body and is believed anyway. `--record-matches` adds the
+token for everything a run proves and never removes one, so losing a claim is
+a deliberate source edit visible in the diff.
 
 The lookbehind matters: `PROVEN-AGAINST-ORIGINAL: 0x...` provenance
 comments end in this spelling and are not map entries.
@@ -99,8 +110,15 @@ Verdicts merge into `docs/recovery/byte-match.csv` keyed by address: rows
 this run did not measure are preserved verbatim, and **a BYTE_EXACT row is
 never downgraded** — a failure to reproduce it is kept and printed as
 UNREPRODUCED, because that is either a tooling change or a lost scaffolding
-and both need a human. The ratchet (`tools/byte_match_fanout.py --check`)
-stays the gate; this tool adds no floor of its own.
+and both need a human.
+
+**THE RATCHET IS `tools/decomp_status.py --check`**, and it reads the claims
+in `src/`, not the CSV. The floor is the number of claims, so there is no
+constant to bump: every piece a run proves gets `BYTE_EXACT` written onto its
+own annotation by `--record-matches`, and a claim that stops reproducing
+fails the check by address and file. The previous form compared two hardcoded
+totals against the ledger, and counted `0x0064F09C` - whose body had been
+reset to `// BODY GOES HERE.` after the proof - for months.
 
 ## Drift, gaps, and the two populations
 

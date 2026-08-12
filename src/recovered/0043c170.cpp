@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0043C170
+// ORIGINAL: 0x0043C170 BYTE_EXACT
 // 0x0043C170  ?timer_function@DesignWin@@QAAXH@Z  ->  ?timer_function@DesignWin@@QAAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

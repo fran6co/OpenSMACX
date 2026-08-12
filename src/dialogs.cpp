@@ -12,7 +12,7 @@
 
 /*
 Purpose: Close the dialog manager; the legacy implementation is intentionally empty.
-ORIGINAL: 0x00612960
+ORIGINAL: 0x00612960 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

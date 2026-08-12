@@ -169,7 +169,7 @@ void Console::set_adv_preferences() {
 /*
 Purpose: Undo the last scenario-editor change, by asking load_undo for the
          editor's undo slot.
-ORIGINAL: 0x004E1F20
+ORIGINAL: 0x004E1F20 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -415,7 +415,7 @@ void Console::on_sys_close() {
 }
 
 /*
-ORIGINAL: 0x004E0FA0
+ORIGINAL: 0x004E0FA0 BYTE_EXACT
 Status: Complete
 */
 void Console::editor_climate() {
@@ -427,7 +427,7 @@ void Console::editor_climate() {
 }
 
 /*
-ORIGINAL: 0x004E1F30
+ORIGINAL: 0x004E1F30 BYTE_EXACT
 Status: Complete
 */
 void Console::editor_redo() {
@@ -445,7 +445,7 @@ void Console::menu_update() {
 }
 
 /*
-ORIGINAL: 0x004E0F80
+ORIGINAL: 0x004E0F80 BYTE_EXACT
 Status: Complete
 */
 void Console::editor_polar() {

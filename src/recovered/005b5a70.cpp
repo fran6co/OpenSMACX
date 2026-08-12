@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005B5A70
+// ORIGINAL: 0x005B5A70 BYTE_EXACT
 // 0x005B5A70  ?unspot_stack@@YAXH@Z  ->  ?unspot_stack@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

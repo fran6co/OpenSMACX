@@ -808,6 +808,17 @@ def main(argv=None) -> int:
                              "grammar (dry run unless --apply)")
     parser.add_argument("--apply", action="store_true",
                         help="with --migrate: actually write the rewrites")
+    parser.add_argument("--src", type=Path, default=None,
+                        help="the source tree to scan (default: src/). Named "
+                             "so verify_checks_can_fail.py can point --check "
+                             "at a deliberately damaged copy: a ratchet whose "
+                             "failure nobody has seen is not a ratchet.")
+    parser.add_argument("--check", action="store_true",
+                        help="fail when a BYTE_EXACT claim in src/ no longer "
+                             "reproduces; this is the ratchet")
+    parser.add_argument("--record-matches", action="store_true",
+                        help="write BYTE_EXACT onto every annotation this run "
+                             "proved (adds only, never removes)")
     parser.add_argument("--rewrite-locations", action="store_true",
                         help="with --migrate --apply: rewrite functions.csv "
                              "source_locations from the scan")
@@ -817,6 +828,8 @@ def main(argv=None) -> int:
         annotations = []
         for path in arguments.paths:
             annotations.extend(annotation_scan.scan_file(path))
+    elif arguments.src is not None:
+        annotations = annotation_scan.scan_tree(arguments.src)
     else:
         annotations = annotation_scan.scan_tree()
 
@@ -944,7 +957,81 @@ def main(argv=None) -> int:
     if ledger_total is not None:
         print(f"\nwrote {LEDGER} ({ledger_total} rows, "
               f"{len(rows_to_write)} measured by this run)")
+
+    claimed = [a for a in measurable if a.matched]
+    lost = claim_regressions(measurable, outcomes)
+    if arguments.record_matches:
+        added = record_claims(measurable, outcomes)
+        print(f"\nrecorded {added} new BYTE_EXACT claim(s) in src/; "
+              f"{len(claimed) + added} carried in total")
+    else:
+        print(f"\nBYTE_EXACT claims in src/: {len(claimed)} "
+              f"({len(lost)} not reproduced)")
+    if lost:
+        print("\nRATCHET: a BYTE_EXACT claim in src/ no longer reproduces.",
+              file=sys.stderr)
+        for annotation, tier in sorted(lost, key=lambda e: e[0].address):
+            print(f"  {annotation.address_hex} {annotation.location} "
+                  f"claims BYTE_EXACT, measured {tier}", file=sys.stderr)
+        if arguments.check:
+            return 1
     return 0
+
+
+# ------------------------------------------------------------------ ratchet
+
+
+def claim_regressions(measurable: list, outcomes: dict) -> list:
+    """[(annotation, tier)] for BYTE_EXACT claims this run did not reproduce.
+
+    THE CLAIM IS THE RATCHET, and it lives beside the body rather than in a
+    committed CSV and a pair of constants. `// ORIGINAL: 0x... BYTE_EXACT`
+    says "this was proved to recompile to the shipped bytes"; if it stops, the
+    check fails and names the address. Deleting the body deletes the claim,
+    which is the property a separate ledger could never have - one row claimed
+    BYTE_EXACT for a body that had been reset to `// BODY GOES HERE.` and the
+    floor counted it for months.
+    """
+    out = []
+    for annotation in measurable:
+        if not annotation.matched:
+            continue
+        tier = (outcomes.get(annotation.address) or {}).get("tier")
+        if tier != "BYTE_EXACT":
+            out.append((annotation, tier or "not measured"))
+    return out
+
+
+def record_claims(measurable: list, outcomes: dict) -> int:
+    """Write `BYTE_EXACT` onto every annotation this run proved. Returns the count.
+
+    Only ADDS. A claim is never removed here: losing one is a regression and
+    has to be a deliberate source edit, visible in the diff.
+    """
+    by_path: dict = {}
+    for annotation in measurable:
+        if annotation.matched or not annotation.line:
+            continue
+        if (outcomes.get(annotation.address) or {}).get("tier") != "BYTE_EXACT":
+            continue
+        by_path.setdefault(annotation.path, []).append(annotation)
+    written = 0
+    for path, entries in by_path.items():
+        target = REPO_ROOT / path
+        lines = target.read_text().splitlines(keepends=True)
+        for annotation in entries:
+            index = annotation.line - 1
+            if index >= len(lines):
+                continue
+            hit = annotation_scan.MARKER.search(lines[index])
+            if not hit or annotation_scan.MARKER_MATCHED.search(lines[index]):
+                continue
+            cut = hit.end("addr")
+            lines[index] = (lines[index][:cut] + " BYTE_EXACT"
+                            + lines[index][cut:])
+            written += 1
+        target.write_text("".join(lines))
+    return written
 
 
 def _state_counts(annotations: list, functions: dict) -> dict:

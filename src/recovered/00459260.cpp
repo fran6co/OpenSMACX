@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00459260
+// ORIGINAL: 0x00459260 BYTE_EXACT
 // 0x00459260  ?timer_daemon@InfoWin@@QAAXH@Z  ->  ?timer_daemon@InfoWin@@QAAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

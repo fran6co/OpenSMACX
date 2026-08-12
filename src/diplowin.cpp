@@ -24,7 +24,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x00442A00
+ORIGINAL: 0x00442A00 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -37,7 +37,7 @@ void __fastcall diplo_win_unk5_redirect(DiploWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004429F0
+ORIGINAL: 0x004429F0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -50,7 +50,7 @@ void __fastcall diplo_win_unk4_redirect(DiploWin *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443D80
+ORIGINAL: 0x00443D80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -63,7 +63,7 @@ void __fastcall diplo_win_on_iface_left_click_redirect(DiploWin *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443D90
+ORIGINAL: 0x00443D90 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -76,7 +76,7 @@ void __fastcall diplo_win_on_iface_left_up_redirect(DiploWin *self, void *, int 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443DA0
+ORIGINAL: 0x00443DA0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -89,7 +89,7 @@ void __fastcall diplo_win_on_iface_right_click_redirect(DiploWin *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443DB0
+ORIGINAL: 0x00443DB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -102,7 +102,7 @@ void __fastcall diplo_win_on_iface_left_down_redirect(DiploWin *self, void *, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443DC0
+ORIGINAL: 0x00443DC0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -115,7 +115,7 @@ void __fastcall diplo_win_on_iface_right_down_redirect(DiploWin *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443DD0
+ORIGINAL: 0x00443DD0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -128,7 +128,7 @@ void __fastcall diplo_win_on_iface_mouse_move_redirect(DiploWin *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443DE0
+ORIGINAL: 0x00443DE0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -141,7 +141,7 @@ void __fastcall diplo_win_on_iface_mouse_leave_redirect(DiploWin *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443DF0
+ORIGINAL: 0x00443DF0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -154,7 +154,7 @@ void __fastcall diplo_win_on_iface_selected_redirect(DiploWin *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443E00
+ORIGINAL: 0x00443E00 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -167,7 +167,7 @@ void __fastcall diplo_win_on_iface_left_double_click_redirect(DiploWin *self, vo
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443E10
+ORIGINAL: 0x00443E10 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -180,7 +180,7 @@ void __fastcall diplo_win_on_iface_right_double_click_redirect(DiploWin *self, v
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443E20
+ORIGINAL: 0x00443E20 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -193,7 +193,7 @@ void __fastcall diplo_win_on_iface_button_clicked_redirect(DiploWin *self, void 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00443E30
+ORIGINAL: 0x00443E30 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -206,7 +206,7 @@ void __fastcall diplo_win_on_iface_button_toggled_redirect(DiploWin *self, void 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x00443E40
+ORIGINAL: 0x00443E40 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -266,7 +266,7 @@ void __fastcall diplo_win_unk3_redirect(DiploWin *self, void *, int a1) {
 }
 
 /*
-ORIGINAL: 0x00443C30
+ORIGINAL: 0x00443C30 BYTE_EXACT
 Status: Complete
 */
 void DiploWin::show(int a1) {
@@ -276,7 +276,7 @@ void DiploWin::show(int a1) {
 }
 
 /*
-ORIGINAL: 0x00443C50
+ORIGINAL: 0x00443C50 BYTE_EXACT
 Status: Complete
 */
 void DiploWin::hide() {

@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005391C0
+// ORIGINAL: 0x005391C0 BYTE_EXACT
 // 0x005391C0  ?net_treaty_on@@YAXHHHH@Z  ->  ?net_treaty_on@@YAXHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

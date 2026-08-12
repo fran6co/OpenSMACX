@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005FD1C0
+// ORIGINAL: 0x005FD1C0 BYTE_EXACT
 // 0x005FD1C0  ?flush_keyboard@@YAXXZ  ->  ?flush_keyboard@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

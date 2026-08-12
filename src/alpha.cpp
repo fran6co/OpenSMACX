@@ -152,7 +152,7 @@ int __cdecl arm_name(LPSTR name) {
 
 /*
 Purpose: Parse the current tech name inside the Txt item buffer into a tech id.
-ORIGINAL: 0x00585150
+ORIGINAL: 0x00585150 BYTE_EXACT
 Return Value: Tech id
 Status: Complete
 */
@@ -745,7 +745,7 @@ BOOL __cdecl read_factions() {
 
 /*
 Purpose: Parse and set the noun item's gender and plurality from the Txt buffer.
-ORIGINAL: 0x005871D0
+ORIGINAL: 0x005871D0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

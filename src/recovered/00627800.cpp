@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00627800
+// ORIGINAL: 0x00627800 BYTE_EXACT
 // 0x00627800  ?pop_ask@@YAHPADHPADP6AHXZH@Z  ->  ?pop_ask@@YAHPADH0P6AHXZH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

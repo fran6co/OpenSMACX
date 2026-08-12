@@ -22,7 +22,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x004C45E0
+ORIGINAL: 0x004C45E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -35,7 +35,7 @@ void __fastcall world_win_clear_terrain_redirect(WorldWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C3E90
+ORIGINAL: 0x004C3E90 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -77,7 +77,7 @@ void __fastcall world_win_on_right_click_redirect(WorldWin *self, void *, int a1
 }
 
 /*
-ORIGINAL: 0x004C45F0
+ORIGINAL: 0x004C45F0 BYTE_EXACT
 Status: Complete
 */
 void WorldWin::set_center(int a1, int a2) {
@@ -86,7 +86,7 @@ void WorldWin::set_center(int a1, int a2) {
 }
 
 /*
-ORIGINAL: 0x004C4610
+ORIGINAL: 0x004C4610 BYTE_EXACT
 Status: Complete
 */
 void WorldWin::focus(int a1, int a2) {
@@ -95,7 +95,7 @@ void WorldWin::focus(int a1, int a2) {
 }
 
 /*
-ORIGINAL: 0x004C3EA0
+ORIGINAL: 0x004C3EA0 BYTE_EXACT
 Status: Complete
 */
 void WorldWin::follow_center(int xCoord, int yCoord) {

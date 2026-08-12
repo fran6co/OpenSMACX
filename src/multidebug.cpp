@@ -35,7 +35,7 @@ void __fastcall multi_debug_close_redirect(MultiDebug *self, void *) {
 
 /*
 Purpose: Forward the timer tick to the object's own virtual slot 62.
-ORIGINAL: 0x005C9900
+ORIGINAL: 0x005C9900 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
