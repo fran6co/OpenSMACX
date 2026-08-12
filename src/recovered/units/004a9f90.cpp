@@ -10,8 +10,12 @@
 // indirect  0x004A9FAA 0x004A9FB9 0x004A9FC8 0x004A9FD7 0x004A9FE6 0x004A9FF5 0x004AA004 0x004AA013 0x004AA022 0x004AA09C
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
-// Kept for COVERAGE, not as a claim. Nothing reads this directory:
-// it is on no ratchet, in no build, and scored by no collect.
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
 //
 // address        0x004A9F90
 // measured tier  BYTE_EXACT

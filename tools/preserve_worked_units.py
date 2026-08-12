@@ -28,12 +28,19 @@ with its measured tier stamped at the top. Whole rather than split, because
 for the 120 the tuned scaffolding IS the recovery, and because a whole unit
 stays reproducible - copy it back and score it.
 
-NOTHING HERE MAY EVER RAISE THE RATCHET. A file in this directory is not a
-claim, it is a record of one. `CMakeLists.txt` names every compiled file by
-hand, and the two globs that scan the proved store - `byte_match_fanout.collect`
-and `tools/test_collect_ownership.py` - are non-recursive, so a subdirectory
-is invisible to both. The tier written into the header comment is the tier the
-harness measured, never the tier an agent reported.
+THAT INVARIANT IS RETIRED, AND SAYING SO IS THE POINT. It read "NOTHING HERE
+MAY EVER RAISE THE RATCHET... a file in this directory is not a claim, it is a
+record of one", and it was true while the ratchet was a ledger keyed on
+`source_locations` that a subdirectory could not reach. The ratchet moved into
+`src/`: `decomp_status.py` scans every `ORIGINAL:` marker under it, compiles
+what it finds and measures it. Measured 2026-08-12, `src/recovered/units/` holds
+1,108 annotations of which **336 carry a BYTE_EXACT claim** - better than a
+quarter of the project's 1,269 - and 1,097 of its addresses exist in no other
+tree. Deleting it would drop the ratchet by 336.
+
+What remains true is the useful half: these files are in NO BUILD, and the tier
+written into a header comment is the tier the harness measured, never the tier
+an agent reported.
 
     tools/preserve_near_misses.py            # report
     tools/preserve_near_misses.py --apply    # keep them
@@ -126,7 +133,7 @@ def preamble(address: int, row: dict, function: dict) -> str:
         f"// ORIGINAL: 0x{address:08X} FILE",
         f"// PRESERVED UNIT - measured {tier}.",
         "//",
-        "// Kept for COVERAGE, not as a claim: it is on no ratchet and in no",
+        "// Kept for COVERAGE. On the ratchet (decomp_status scans this tree)",
         "// build. The ORIGINAL marker makes it part of the source map",
         "// (docs/DECOMP_MAP.md), where a proved body beats it if both exist.",
         "//",
