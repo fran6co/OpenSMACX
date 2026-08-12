@@ -110,11 +110,42 @@ class BoundOnlyTest(unittest.TestCase):
         members, _ = emitter.layout_for("Fractal", {}, {}, {})
         self.assertEqual(members, [])
 
-    def test_the_idb_wins_over_a_bare_bound(self):
+    def test_the_idb_names_the_members_and_the_bound_sets_the_extent(self):
+        """WITHDRAWN: "the IDB wins over a bare bound".
+
+        It won on both questions, and it is only entitled to one. The IDB is a
+        member table somebody typed into IDA and it UNDER-reports where a
+        member was never entered - `PullDown` records one member of 0xA14
+        against a true 0xF40. The access bound is read off the instruction
+        stream and, measured against the 40 classes whose size is pinned,
+        exceeds the true size ZERO times. So where they disagree about how far
+        the object goes, the bound is right by construction.
+
+        The cost of the old reading was visible in the image the whole time:
+        `MonuWin` was emitted at 0x366C while its own `init` writes 28 dwords
+        above that, the last at `[esi + 0x36d8]`. The IDB still decides the
+        NAMES - that is what it is good at, and this asserts both halves.
+        """
         idb = {"S": [(0x0, "a", 4)]}
         members, provenance = emitter.layout_for("S", idb, {}, {"S": 0x100})
-        self.assertEqual(members, [(0x0, "a", 4)])
+        self.assertEqual(members, [(0x0, "a", 4), (0x4, "", 0xFC)])
         self.assertIn("IDB", provenance)
+        self.assertIn("access bound", provenance)
+
+    def test_a_bound_inside_the_idb_table_adds_nothing(self):
+        # The bound is a FLOOR. A class the IDB describes further than the
+        # image happens to reach is not evidence of anything, and padding it
+        # backwards would be a fabrication.
+        idb = {"S": [(0x0, "a", 4), (0x4, "b", 0xFC)]}
+        members, provenance = emitter.layout_for("S", idb, {}, {"S": 0x10})
+        self.assertEqual(members, [(0x0, "a", 4), (0x4, "b", 0xFC)])
+        self.assertNotIn("access bound", provenance)
+
+    def test_a_thinker_layout_is_extended_by_the_bound_too(self):
+        thinker = {"S": {0x0: ("a", 4)}}
+        members, provenance = emitter.layout_for("S", {}, thinker, {"S": 0x20})
+        self.assertEqual(members, [(0x0, "a", 4), (0x4, "", 0x1C)])
+        self.assertIn("access bound", provenance)
 
 
 class RenderTest(unittest.TestCase):

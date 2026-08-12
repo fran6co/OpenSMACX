@@ -369,6 +369,27 @@ def layout_for(name: str, idb: dict, thinker: dict, bounds=None,
     placeholder there; where the IDB has nothing at all, Thinker's own prefix
     is used and the gaps between its offsets become padding.
     """
+    bound = (bounds or {}).get(name, 0)
+
+    def extended(members: list, source: str) -> tuple:
+        """The tail the image proves is there, whatever named it up to now.
+
+        THE ACCESS BOUND OUTRANKS A MEMBER TABLE, in the one direction it
+        speaks: a class whose own method writes its 0x36D8th byte has that
+        byte, however few members somebody entered into the database. Applying
+        it only where nothing was named - which is how this started - left the
+        IDB's truncations standing, and `verify_member_offsets.py` reads them
+        straight off the instruction stream: `MonuWin` declared 0x366C against
+        28 accesses above it, up to `mov dword ptr [esi + 0x36d8], 0x6b`.
+        `PullDown` recording one member of 0xA14 against a true 0xF40 is the
+        same defect, and this is what closes it for both.
+        """
+        end = max((offset + size for offset, _, size in members), default=0)
+        if bound > end:
+            members = members + [(end, "", bound - end)]
+            source = f"{source}, extended to the access bound"
+        return members, source
+
     if name in idb:
         members, source = list(idb[name]), "the IDB"
         named = thinker.get(name, {})
@@ -381,7 +402,7 @@ def layout_for(name: str, idb: dict, thinker: dict, bounds=None,
                 improved += 1
         if improved:
             source = f"the IDB, {improved} name(s) from Thinker"
-        return members, source
+        return extended(members, source)
 
     # Thinker only: explicit offsets, a prefix rather than a whole struct, so
     # the space between two it names has to be declared as padding or every
@@ -398,7 +419,7 @@ def layout_for(name: str, idb: dict, thinker: dict, bounds=None,
         members.append((offset, member, size))
         cursor = offset + size
     if members:
-        return members, "Thinker"
+        return extended(members, "Thinker")
 
     # Neither the IDB nor Thinker has heard of this class, but a recovered
     # body that was PROVED byte-identical reached into it, and that says where

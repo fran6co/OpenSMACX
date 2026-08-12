@@ -1291,6 +1291,24 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(layout-verifier-tests
                                    test_verify_class_layouts.py)
 
+    # The per-MEMBER layout check, as distinct from the per-CLASS one above.
+    # `sizeof` cannot see a member split at the wrong boundary: drop a field,
+    # append a pad of the same width, and every assertion in the tree still
+    # passes while every offset after the hole is wrong. This compares what
+    # src/ compiles to against the (offset, width) accesses the image's own
+    # methods make, so it needs no recovered body to exercise a layout.
+    opensmacx_add_python_tool_test(member-offset-tests
+                                   test_verify_member_offsets.py)
+
+    # The other half of the same evidence: an access inside a slab of unknown
+    # storage proves a scalar starts there, so the slab can be split into named
+    # members. The property these tests carry is EXTENT PRESERVATION - the
+    # replacement must occupy exactly the bytes the slab did, or every member
+    # after it moves. `--apply` re-probes and reverts on a size change, and
+    # these are what make that revert rare rather than routine.
+    opensmacx_add_python_tool_test(proved-field-split-tests
+                                   test_split_proved_fields.py)
+
     opensmacx_add_python_tool_test(byte-match-ratchet-tests
                                    test_byte_match_fanout.py)
 
@@ -1632,6 +1650,27 @@ if(BUILD_TESTING)
     add_test(NAME access-lower-bounds-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_access_bounds.py"
+            --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # No declared member boundary may be contradicted by the image. The
+    # comparison is between two exact things - the offsets a VC6 probe reads
+    # out of what src/ compiles to, and the (offset, width) accesses the
+    # image's own thiscall methods make through `this` - so a straddle or an
+    # overrun is a fact about the tree rather than a heuristic complaint.
+    #
+    # A REFUSED HEADER FAILS THIS TOO. A probe unit that does not compile
+    # contributes no declared layout, every access into its classes then falls
+    # through every test, and the run would print OK having measured nothing.
+    # The damage case in test_verify_member_offsets.py caught exactly that on
+    # its first run.
+    #
+    # Same VC6 prefix as class-layouts-current above, so the same reasoning
+    # about RESOURCE_LOCK applies. Skips without the pinned image, reading the
+    # published member-accesses.csv instead.
+    add_test(NAME member-offsets-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_member_offsets.py"
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )

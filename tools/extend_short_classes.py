@@ -206,8 +206,27 @@ def tail_text(name: str, at: int, length: int, members: list) -> str:
     return "\n".join(lines) + "\n"
 
 
+# The comment lines `tail_text` writes above its declarations. They are found
+# again so a later run can retire them - see `extend`.
+STALE_NOTE = re.compile(
+    r"^[ \t]*// Storage the image proves is here:[^\n]*\n"
+    r"(?:[ \t]*// Extent only -[^\n]*\n)?"
+    r"(?:[ \t]*// \d+ member\(s\) from the IDA database[^\n]*\n)?"
+    r"(?:[ \t]*\n)?", re.M)
+
+
 def extend(text: str, name: str, at: int, length: int, members=()) -> str:
-    """Append the tail just before `name`'s closing brace."""
+    """Append the tail just before `name`'s closing brace.
+
+    THE NOTE IS REPLACED, NOT STACKED. This used to append unconditionally,
+    and a class extended twice kept both headers - so `designwin.h` carried
+    "its own methods reach 0x14210" thirty lines above "reach 0x145A4", the
+    first of them left over from a sweep whose number stopped being true when
+    the next one ran. Twelve headers had a stale pair. Only the COMMENT lines
+    are retired; the declarations under them are real members that later work
+    has named, and deleting those would be a layout change disguised as a
+    comment fix.
+    """
     for head in class_layouts.CLASS_HEAD.finditer(text):
         if head.group("name") != name:
             continue
@@ -219,6 +238,9 @@ def extend(text: str, name: str, at: int, length: int, members=()) -> str:
                 depth -= 1
             index += 1
         close = index - 1
+        body = STALE_NOTE.sub("", text[head.end():close])
+        close = head.end() + len(body)
+        text = text[:head.end()] + body + text[index - 1:]
         return (text[:close] + tail_text(name, at, length, list(members))
                 + text[close:])
     return text
