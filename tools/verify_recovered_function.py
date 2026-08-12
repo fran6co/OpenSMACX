@@ -124,6 +124,32 @@ def form_report(body: str) -> tuple:
     return refusals, notes
 
 
+def _operand_similarity(original: bytes, base: int, rebuilt: bytes) -> float:
+    """How close the two instruction streams are WITH operands, addresses aside.
+
+    `mnemonic_similarity` is blind to operands, so nine candidates that all emit
+    the same opcodes in the same order tie at 1.000 and the ranking falls back to
+    filename. Comparing `mnemonic op_str` with long hex normalised to ADDR -
+    relocated operands are masked in the verdict anyway - is what separates a
+    spelling that got the addressing mode right from one that did not.
+    """
+    import difflib
+    import re
+
+    def rendered(code, at=0):
+        out = []
+        for instruction in byte_match.decode(code, at):
+            operands = re.sub(r"0x[0-9a-f]{5,}", "ADDR", instruction.op_str)
+            out.append(f"{instruction.mnemonic} {operands}")
+        return out
+
+    try:
+        return difflib.SequenceMatcher(a=rendered(original, base),
+                                       b=rendered(rebuilt)).ratio()
+    except Exception:
+        return 0.0
+
+
 def score_all(address: int, bodies: dict) -> list:
     """[(name, verdict)] for every candidate, best first.
 
@@ -144,31 +170,77 @@ def score_all(address: int, bodies: dict) -> list:
     catalogue = byte_match.load_rows()
     shared = byte_match.shared_span_index(catalogue)
 
-    results = {}
-    with tempfile.TemporaryDirectory() as directory:
-        work = Path(directory)
-        for name, body in sorted(bodies.items()):
-            # The form check runs FIRST and refuses before compiling. A
-            # byte-exact `__asm` answer would only be harder to argue with.
-            blocked, _ = form_report(body)
-            if blocked:
-                results[name] = {"tier": "REFUSED", "refusal_reason": blocked[0]}
-                continue
-            try:
-                unit = writeback.build_unit(address, body, functions, callees,
-                                            derived, scaffolding_pe)
-            except emit.Unsettled as error:
-                results[name] = {"tier": "REFUSED",
-                                 "refusal_reason": f"no scaffolding: {error}"}
-                continue
-            results[name] = byte_match.match_function(
-                pe, catalogue, shared, address, unit, work, "", f"v_{name}")
+    # ONE `cl` PER FLAG SET, NOT ONE PER CANDIDATE. `match_function` sweeps four
+    # flag sets for a single unit, so scoring N spellings costs 4N compiles and a
+    # 24-variant sweep ran past two minutes - which is exactly when an agent
+    # stops enumerating and starts guessing, the behaviour this mode exists to
+    # prevent. `compile_batch` puts the whole directory through one response
+    # file: measured by the agent that hit the wall, 5,760 candidates in about
+    # three minutes and 32 in two seconds.
+    #
+    # The RANKING is done here; the VERDICT is not. The winner goes back through
+    # `match_function`, which is the only thing that applies the SHARED_TAIL and
+    # self-modifying refusals and the best-of rule across all four flag sets. A
+    # fast ranking that quietly disagreed with the authoritative scorer would be
+    # worse than a slow one.
+    prepared, refused = {}, {}
+    for name, body in sorted(bodies.items()):
+        blocked, _ = form_report(body)
+        if blocked:
+            refused[name] = {"tier": "REFUSED", "refusal_reason": blocked[0]}
+            continue
+        try:
+            prepared[name] = writeback.build_unit(address, body, functions,
+                                                  callees, derived, scaffolding_pe)
+        except emit.Unsettled as error:
+            refused[name] = {"tier": "REFUSED",
+                             "refusal_reason": f"no scaffolding: {error}"}
+
+    row = catalogue.get(address)
+    results = dict(refused)
+    if prepared and row is not None:
+        low, high = int(row["address"], 16), int(row["end_address"], 16)
+        original = byte_match.original_span_bytes(pe, low, high)
+        original_mask = byte_match.original_relocation_mask(pe, low, high)
+        for flags in byte_match.FLAG_SETS:
+            with tempfile.TemporaryDirectory() as directory:
+                objects, diagnostics = byte_match.compile_batch(
+                    prepared, Path(directory), flags)
+            for name, data in objects.items():
+                if data is None:
+                    verdict = {"tier": "NO_COMPILE",
+                               "refusal_reason": (diagnostics.get(name) or "")[:120]}
+                else:
+                    rebuilt, rebuilt_mask = byte_match.object_code(data)
+                    verdict = byte_match.compare(original, original_mask, low,
+                                                 rebuilt, rebuilt_mask)
+                    verdict["operand_similarity"] = _operand_similarity(
+                        original, low, rebuilt)
+                if name not in results or byte_match._better(verdict, results[name]):
+                    results[name] = verdict
 
     order = {tier: index for index, tier in enumerate(byte_match.TIER_ORDER)}
-    return sorted(results.items(),
-                  key=lambda item: (order.get(item[1].get("tier"), 99),
-                                    -(item[1].get("mnemonic_similarity") or 0),
-                                    item[0]))
+    ranked = sorted(results.items(),
+                    key=lambda item: (order.get(item[1].get("tier"), 99),
+                                      -(item[1].get("operand_similarity") or 0),
+                                      -(item[1].get("mnemonic_similarity") or 0),
+                                      item[0]))
+    # The winner's verdict is re-taken authoritatively. Ranking above skips the
+    # refusals `match_function` applies per address, which are the same for every
+    # candidate but must still be applied to the answer.
+    if ranked and ranked[0][1].get("tier") in ("BYTE_EXACT", "SHAPE_EXACT"):
+        name = ranked[0][0]
+        with tempfile.TemporaryDirectory() as directory:
+            authoritative = byte_match.match_function(
+                pe, catalogue, shared, address, prepared[name],
+                Path(directory), "", f"v_{name}")
+        results[name] = authoritative
+        ranked = sorted(results.items(),
+                        key=lambda item: (order.get(item[1].get("tier"), 99),
+                                          -(item[1].get("operand_similarity") or 0),
+                                          -(item[1].get("mnemonic_similarity") or 0),
+                                          item[0]))
+    return ranked
 
 
 def committed_body(address: int) -> tuple:
