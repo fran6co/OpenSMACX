@@ -43,7 +43,8 @@ class DLLEXPORT ReportIf : SubInterface {
   void on_iface_mouse_leave(int, int);
   void on_iface_button_toggled(int, int);
   void close_score();
-  int on_iface_dialog_item_back_draw(int, int, int, int);
+  // PAUGraphicWin@@HHPAURECT@@, per the catalogued mangled name.
+  int on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *);
   // 0x004A4060  ?bl_anim@ReportIf@@QAEXXZ - public, __thiscall, void(void),
   // unrecovered. The bl_daemon thunk in leaf_recoveries.cpp calls it.
   void bl_anim();
@@ -80,7 +81,7 @@ void __fastcall report_if_on_iface_mouse_leave_redirect(ReportIf *self, void *, 
 void __fastcall report_if_on_iface_button_toggled_redirect(ReportIf *self, void *, int a1, int a2);
 void __fastcall report_if_close_score_redirect(ReportIf *self, void *);
 int __fastcall report_if_on_iface_dialog_item_back_draw_redirect(
-    ReportIf *self, void *, int a1, int a2, int a3, int a4);
+    ReportIf *self, void *, ::GraphicWin *a1, int a2, int a3, RECT *a4);
 
 // ReportIf::bl_anim is not recovered, and the class is DLLEXPORT - which
 // demands a definition for every member - so the body at the end of

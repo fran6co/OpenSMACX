@@ -749,15 +749,23 @@ uint32_t __fastcall scroll_close_redirect(Scroll *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00606310
+ORIGINAL: 0x00606310 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
-void Scroll::on_left_click(int, int) {
+#pragma warning(push)
+#pragma warning(disable : 4716)
+// C4716 IS SUPPRESSED HERE ON PURPOSE. The mangled name says the function
+// returns `int`, and the original body is three bytes - `ret 8` at 0x00606310
+// and `ret 0xc` at 0x005F6A40 - which never sets EAX. A `return 0;` would emit
+// `xor eax, eax` and make the function five bytes, so falling off the end is
+// not a defect to fix but the behaviour to reproduce.
+int Scroll::on_left_click(int, int) {
 }
+#pragma warning(pop)
 
-void __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2) {
-    self->on_left_click(a1, a2);
+int __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2) {
+    return self->on_left_click(a1, a2);
 }
 
 const uint32_t ScrollPrimaryVtable = 0x00669D58;

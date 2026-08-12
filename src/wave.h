@@ -73,7 +73,9 @@ class DLLEXPORT Wave {
   int set_release(unsigned int a1, unsigned int a2, unsigned int a3);
   int unload();
   void set_pitch(int a1);
-  int load(int a1, uint32_t a2);
+  // PADK per ?load@Wave@@QAEHPADK@Z: a string and an unsigned long, not two
+  // integers.
+  int load(char *a1, unsigned long a2);
   int get_ms_length();
   int is_playing();
   int play(int a1);
@@ -125,7 +127,8 @@ int __fastcall wave_set_decay_redirect(Wave *self, void *, unsigned int a1, unsi
 int __fastcall wave_set_release_redirect(Wave *self, void *, unsigned int a1, unsigned int a2, unsigned int a3);
 int __fastcall wave_unload_redirect(Wave *self, void *);
 void __fastcall wave_set_pitch_redirect(Wave *self, void *, int a1);
-int __fastcall wave_load_redirect(Wave *self, void *, int a1, int a2);
+int __fastcall wave_load_redirect(Wave *self, void *, char *a1,
+                                  unsigned long a2);
 int __fastcall wave_get_ms_length_redirect(Wave *self, void *);
 
 // With no wrapped device the wave is timed against the clock, through the

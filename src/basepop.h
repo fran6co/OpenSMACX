@@ -36,9 +36,14 @@ class DLLEXPORT BasePop : GraphicWin {
   void set_string_color2(int c1, int c2, int c3, int c4);
   void set_string_color3(int c1, int c2, int c3, int c4);
   void set_string_color_hyper(int c1, int c2, int c3, int c4);
-  void set_button_color(int c1, int c2, int c3, int c4);
-  void set_button_color2(int c1, int c2, int c3, int c4);
-  void set_button_color3(int c1, int c2, int c3, int c4);
+  // The FIRST parameter is a `char` - `D` in
+  // ?set_button_color@BasePop@@QAEXDHHH@Z - and the bytes agree: 0x00604830
+  // is `mov al, byte ptr [esp+4]` into `mov byte ptr [ecx+0x3178], al`,
+  // while parameters 2-4 are dword loads into dword fields. `char`, not
+  // `signed char`: they are distinct MSVC types mangling D and C.
+  void set_button_color(char c1, int c2, int c3, int c4);
+  void set_button_color2(char c1, int c2, int c3, int c4);
+  void set_button_color3(char c1, int c2, int c3, int c4);
   static void set_def_string_color(int c1, int c2, int c3, int c4);
   static void set_def_string_color2(int c1, int c2, int c3, int c4);
   static void set_def_string_color3(int c1, int c2, int c3, int c4);
@@ -444,11 +449,11 @@ void __fastcall base_pop_set_string_color3_redirect(
 void __fastcall base_pop_set_string_color_hyper_redirect(
     BasePop *self, void *, int c1, int c2, int c3, int c4);
 void __fastcall base_pop_set_button_color_redirect(
-    BasePop *self, void *, int c1, int c2, int c3, int c4);
+    BasePop *self, void *, char c1, int c2, int c3, int c4);
 void __fastcall base_pop_set_button_color2_redirect(
-    BasePop *self, void *, int c1, int c2, int c3, int c4);
+    BasePop *self, void *, char c1, int c2, int c3, int c4);
 void __fastcall base_pop_set_button_color3_redirect(
-    BasePop *self, void *, int c1, int c2, int c3, int c4);
+    BasePop *self, void *, char c1, int c2, int c3, int c4);
 
 void __cdecl base_pop_fallout_redirect();
 

@@ -507,15 +507,15 @@ void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x00404F80
+ORIGINAL: 0x00404F80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
-void Popup::on_redraw_nc(int, int) {
+void Popup::on_redraw_nc(RECT *, int) {
 }
 
 void __fastcall popup_on_redraw_nc_redirect(
-        Popup *self, void *, int a1, int a2) {
+        Popup *self, void *, RECT *a1, int a2) {
     self->on_redraw_nc(a1, a2);
 }
 

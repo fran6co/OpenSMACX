@@ -58,7 +58,10 @@ class DLLEXPORT CouncWin : GraphicWin, SubInterface {
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_group_clicked(int a1, int a2, int a3);
-  int on_button_text_draw(int, int, int);
+  // PAUGraphicWin@@PADH, per
+  // ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z. 0x00426F90 is
+  // `xor eax, eax; ret 0xc` and touches none of the three.
+  int on_button_text_draw(::GraphicWin *, char *, int);
 
   // Storage the image proves is here: its own methods reach 0xA38.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -261,7 +264,7 @@ void __fastcall counc_win_on_iface_right_double_click_redirect(CouncWin *self, v
 void __fastcall counc_win_on_iface_button_toggled_redirect(CouncWin *self, void *, int a1, int a2);
 void __fastcall counc_win_on_iface_group_clicked_redirect(CouncWin *self, void *, int a1, int a2, int a3);
 int __fastcall counc_win_on_button_text_draw_redirect(
-    CouncWin *self, void *, int a1, int a2, int a3);
+    CouncWin *self, void *, ::GraphicWin *a1, char *a2, int a3);
 
 // ?draw_leader@CouncWin@@QAEXH@Z at 0x00425DB0 - public, __thiscall,
 // void(int) - is 1705 bytes and unrecovered. draw_all_leaders and

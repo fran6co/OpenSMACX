@@ -190,16 +190,16 @@ void __fastcall counc_win_on_iface_group_clicked_redirect(CouncWin *self, void *
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x00426F90
+ORIGINAL: 0x00426F90 BYTE_EXACT
 Return Value: 0
 Status: Complete
 */
-int CouncWin::on_button_text_draw(int, int, int) {
+int CouncWin::on_button_text_draw(::GraphicWin *, char *, int) {
     return 0;
 }
 
 int __fastcall counc_win_on_button_text_draw_redirect(
-        CouncWin *self, void *, int a1, int a2, int a3) {
+        CouncWin *self, void *, ::GraphicWin *a1, char *a2, int a3) {
     return self->on_button_text_draw(a1, a2, a3);
 }
 
