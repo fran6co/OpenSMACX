@@ -1064,11 +1064,8 @@ if(BUILD_TESTING)
 
 
 
-    opensmacx_add_python_tool_test(whole-image-lifter-tests test_lift_whole_image.py)
 
-    opensmacx_add_python_tool_test(lifted-crt-tests test_lifted_crt.py)
 
-    opensmacx_add_python_tool_test(x86-lowerer-tests test_x86_lower.py)
 
     # The mutation runner is the only evidence that an oracle PASS means
     # anything, so its own bugs turn into confident wrong numbers everywhere
@@ -1076,7 +1073,6 @@ if(BUILD_TESTING)
     # the two kinds of INCONCLUSIVE mean opposite things and were scored the
     # same, and a mutation whose regex matched nothing vanished from the run
     # instead of being reported as an untested property.
-    opensmacx_add_python_tool_test(oracle-mutation-runner-tests test_lifted_oracle_mutate.py)
 
     # The one module that decides what every published number MEANS: which
     # rows are in scope (5,673 of 6,000 - external_library is excluded by
@@ -1121,7 +1117,6 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(class-size-bounds-tests
         test_derive_class_size_bounds.py)
 
-    opensmacx_add_python_tool_test(boot-loop-tests test_lifted_boot_loop.py)
 
     # The whole-image summary: every headline number the project publishes.
     # The byte-weighted verdict table, "compared and agreed", the evidence
@@ -1132,9 +1127,7 @@ if(BUILD_TESTING)
     # field that is a SUM of body spans as if it were a contiguous address
     # extent. The fixtures are synthetic reports in a temp dir; nothing here
     # reads build/oracle.
-    opensmacx_add_python_tool_test(lifted-oracle-summary-tests test_lifted_oracle_summary.py)
 
-    opensmacx_add_python_tool_test(lifted-oracle-compare-tests test_lifted_oracle_compare.py)
 
     # Reads WHY a nearly-full-strength function fell short. Two of its guards
     # exist because the first real run tripped on them: `%#010x` of zero prints
@@ -1142,8 +1135,6 @@ if(BUILD_TESTING)
     # lines that are the whole diagnosis; and a function that is N seeds short
     # owes N reasons, which is the only check that noticed. Fixtures are
     # captured oracle text; nothing here runs the oracle.
-    opensmacx_add_python_tool_test(lifted-oracle-why-not-full-tests
-        test_lifted_oracle_why_not_full.py)
 
     # Canonical address -> the bytes our compiler produced, which is one half of
     # the SMT equivalence spike's input. Its failure mode is not finding
@@ -1155,13 +1146,13 @@ if(BUILD_TESTING)
         test_extract_compiled_recovery.py)
 
     # The Z3 x86 encoding. These tests do NOT establish that it is correct.
-    # tools/validate_x86_smt.py is what does that, by driving the encoding and
+    # validate_x86_smt (retired) is what does that, by driving the encoding and
     # lifted_x86.h with the same states and requiring bit-for-bit agreement;
     # six deliberately damaged encodings were all caught by it.
     #
     # BUT NOTHING RUNS IT, INCLUDING THIS FILE. It is not registered as a test
     # and cannot be: its reference harness includes build/lifted/
-    # lifted_runtime.h, which tools/lift_whole_image.py generates and which is
+    # lifted_runtime.h, which lift_whole_image (retired) generates and which is
     # gitignored, so a gate lane has no way to build it. On a tree without that
     # header it now says so instead of emitting a compiler error that reads
     # like an encoding fault. The agreement above is therefore a RECORDED PAST
@@ -1170,7 +1161,6 @@ if(BUILD_TESTING)
     #
     # What IS pinned here is what validation cannot reach: that the formulas
     # are symbolic, since a prover never sees a concrete state.
-    opensmacx_add_python_tool_test(x86-smt-encoding-tests test_x86_smt.py)
 
     # The only place in this repository where a function's ABI is written down
     # mechanically rather than guessed: the 4,821 MSVC-mangled names. The parse
@@ -1236,7 +1226,6 @@ if(BUILD_TESTING)
     # mask in both directions, per flag, including the redefinition rule that
     # is the whole risk and the second body span this repo has read wrong
     # before.
-    opensmacx_add_python_tool_test(lifted-oracle-plan-tests test_lifted_oracle_plan.py)
 
     # The join between the oracle's trap CLASSIFIER and the four files that
     # write the trap reasons it matches. The classifier decides whether a trap
@@ -1250,7 +1239,6 @@ if(BUILD_TESTING)
     # everything still compiles, every C++ test stays green, and the verdict
     # silently degrades - the two halves only ever meet at runtime under Wine
     # against the user's own executable. This test is where they meet instead.
-    opensmacx_add_python_tool_test(lifted-oracle-trap-reason-tests test_lifted_oracle_trap_reasons.py)
 
     # The import boundary's derivation: which import lives at which IAT slot,
     # and how many bytes of argument each one pops. Both are recovered rather
@@ -2113,165 +2101,6 @@ if(OPENSMACX_GNU_CXX)
         # coverage instead of arguing about it. ctest does not build, so
         # harness runs pair it with `--target recovery-oracle-tests`.
         add_test(NAME recovery-oracle COMMAND ${OPENSMACX_RECOVERY_ORACLE_COMMAND})
-
-        set(OPENSMACX_STATIC_RECOMPILE_DIR
-            "${CMAKE_CURRENT_BINARY_DIR}/static-recompile-pilot")
-        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR
-            "${OPENSMACX_STATIC_RECOMPILE_DIR}/original")
-        set(OPENSMACX_STATIC_RECOMPILE_GENERATED_DIR
-            "${OPENSMACX_STATIC_RECOMPILE_DIR}/generated")
-        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_ASSEMBLY
-            "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR}/legacy-leaves.S")
-        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST
-            "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR}/manifest.json")
-        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_SYMBOLS
-            "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR}/symbols.csv")
-        set(OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT
-            "${OPENSMACX_STATIC_RECOMPILE_DIR}/original.obj")
-        set(OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE
-            "${OPENSMACX_STATIC_RECOMPILE_GENERATED_DIR}/static-recompiled-004C5460.cpp")
-        set(OPENSMACX_STATIC_RECOMPILE_MANIFEST
-            "${OPENSMACX_STATIC_RECOMPILE_GENERATED_DIR}/manifest.json")
-
-        add_custom_command(
-            OUTPUT
-                "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_ASSEMBLY}"
-                "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST}"
-                "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_SYMBOLS}"
-            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
-                --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
-                --output "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_DIR}"
-                --max-size 64
-                --address 0x004C5460
-            DEPENDS
-                "${OPENSMACX_LEGACY_LEAF_EXE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/extract_legacy_leaves.py"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
-                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
-                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
-                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
-                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
-                "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
-            USES_TERMINAL
-            VERBATIM
-        )
-        add_custom_command(
-            OUTPUT "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
-            COMMAND "${CMAKE_CXX_COMPILER}"
-                -x assembler-with-cpp
-                -c "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_ASSEMBLY}"
-                -o "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
-            DEPENDS "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_ASSEMBLY}"
-            USES_TERMINAL
-            VERBATIM
-        )
-        add_custom_command(
-            OUTPUT
-                "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}"
-                "${OPENSMACX_STATIC_RECOMPILE_MANIFEST}"
-            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_static_recompile_pilot.py"
-            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/static_recompile_pilot.py"
-                --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
-                --oracle-manifest "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST}"
-                --output "${OPENSMACX_STATIC_RECOMPILE_GENERATED_DIR}"
-            DEPENDS
-                "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST}"
-                "${OPENSMACX_LEGACY_LEAF_EXE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/static_recompile_pilot.py"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/static_recompile_runtime.h"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/test_static_recompile_pilot.py"
-            USES_TERMINAL
-            VERBATIM
-        )
-        set_source_files_properties(
-            "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}"
-            PROPERTIES GENERATED TRUE)
-        add_library(static-recompile-pilot-generated OBJECT EXCLUDE_FROM_ALL
-            "${OPENSMACX_STATIC_RECOMPILE_GENERATED_SOURCE}")
-        target_include_directories(static-recompile-pilot-generated PRIVATE
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools")
-        target_compile_options(static-recompile-pilot-generated PRIVATE
-            -pedantic
-            -Wall
-            -Wextra
-            -Wshadow
-            -Wcast-align
-            -Wfloat-conversion
-            -Wuseless-cast
-            -Wno-attributes
-            $<$<CONFIG:Debug>:-Og>
-            $<$<CONFIG:Release>:-O2>
-        )
-
-        set_source_files_properties("${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
-            PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
-        add_executable(static-recompile-pilot-standalone-tests EXCLUDE_FROM_ALL
-            tests/static_recompile_pilot_tests.cpp
-            $<TARGET_OBJECTS:static-recompile-pilot-generated>)
-        target_compile_definitions(static-recompile-pilot-standalone-tests PRIVATE
-            OPENSMACX_STATIC_RECOMPILE_STANDALONE=1)
-        target_include_directories(static-recompile-pilot-standalone-tests PRIVATE
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools")
-        target_compile_options(static-recompile-pilot-standalone-tests PRIVATE
-            -pedantic -Wall -Wextra -Wshadow -Wcast-align -Wfloat-conversion
-            -Wuseless-cast -Wno-attributes
-            $<$<CONFIG:Debug>:-Og> $<$<CONFIG:Release>:-O2>)
-        target_link_options(static-recompile-pilot-standalone-tests PRIVATE -static)
-
-        add_executable(static-recompile-pilot-tests EXCLUDE_FROM_ALL
-            tests/static_recompile_pilot_tests.cpp
-            "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
-            $<TARGET_OBJECTS:static-recompile-pilot-generated>)
-        target_include_directories(static-recompile-pilot-tests PRIVATE
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools")
-        target_compile_options(static-recompile-pilot-tests PRIVATE
-            -pedantic -Wall -Wextra -Wshadow -Wcast-align -Wfloat-conversion
-            -Wuseless-cast -Wno-attributes
-            $<$<CONFIG:Debug>:-Og> $<$<CONFIG:Release>:-O2>)
-        target_link_options(static-recompile-pilot-tests PRIVATE -static)
-
-        set(OPENSMACX_STATIC_RECOMPILE_STANDALONE_COMMAND
-            "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
-            --executable "$<TARGET_FILE:static-recompile-pilot-standalone-tests>"
-            --wine-prefix "${OPENSMACX_WINE_PREFIX}")
-        set(OPENSMACX_STATIC_RECOMPILE_DIFFERENTIAL_COMMAND
-            "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
-            --executable "$<TARGET_FILE:static-recompile-pilot-tests>"
-            --wine-prefix "${OPENSMACX_WINE_PREFIX}")
-        if(OPENSMACX_WINE)
-            list(APPEND OPENSMACX_STATIC_RECOMPILE_STANDALONE_COMMAND
-                --wine "${OPENSMACX_WINE}")
-            list(APPEND OPENSMACX_STATIC_RECOMPILE_DIFFERENTIAL_COMMAND
-                --wine "${OPENSMACX_WINE}")
-        endif()
-        add_custom_target(verify-static-recompile-pilot
-            COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_static_recompile_pilot.py"
-                --nm "${CMAKE_NM}"
-                --objdump "${CMAKE_OBJDUMP}"
-                --compiler "${CMAKE_CXX_COMPILER}"
-                --object "$<TARGET_OBJECTS:static-recompile-pilot-generated>"
-                --original-object "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_OBJECT}"
-                --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
-                --oracle-manifest "${OPENSMACX_STATIC_RECOMPILE_ORIGINAL_MANIFEST}"
-                --manifest "${OPENSMACX_STATIC_RECOMPILE_MANIFEST}"
-            COMMAND ${OPENSMACX_STATIC_RECOMPILE_STANDALONE_COMMAND}
-            COMMAND ${OPENSMACX_STATIC_RECOMPILE_DIFFERENTIAL_COMMAND}
-            DEPENDS
-                static-recompile-pilot-standalone-tests
-                static-recompile-pilot-tests
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_static_recompile_pilot.py"
-            USES_TERMINAL
-            VERBATIM
-        )
-
-    endif()
 endif()
 
 if(OPENSMACX_GAME_INSTALLER)

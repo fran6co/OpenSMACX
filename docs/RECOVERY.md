@@ -35,7 +35,7 @@ Read the `functions.bytes` block before any count in that file. A count of funct
 coverage claim here, because the recovered functions are the small ones - 40% of the functions has
 been 8% of the bytes. The block states the denominator it uses (the **lift scope**: 5,673 functions
 and 2,410,317 bytes), states the exclusion that produces it from the 6,000 catalogued rows
-(`recovery_state == external_library`, the CRT and Windows library code that `tools/lift_whole_image.py`
+(`recovery_state == external_library`, the CRT and Windows library code that the retired `lift_whole_image`
 calls and never translates), and publishes `machine_carried` - the bytes whose behaviour is still
 supplied by machine-derived code rather than recovered source. That last figure is the only one that
 falls when the project succeeds; every other number in the file rises.

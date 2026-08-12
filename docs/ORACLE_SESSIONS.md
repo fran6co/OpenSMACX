@@ -423,7 +423,7 @@ REPORT=$PWD/build/oracle/report-base.tsv LOG=$PWD/build/oracle/sweep-base.log \
 
 `--refuse-blocked` because `baseline-arm64/report.tsv` was swept that way and
 anything compared against it must be too. Finished with 0 hangs and 1 host
-death; `tools/lifted_oracle_summary.py` reads 42,209 B / 1.75% / 768 fn at full
+death; the retired `lifted_oracle_summary` reads 42,209 B / 1.75% / 768 fn at full
 strength and 2,214,194 B / 91.86% machine-carried — the historical figures, on
 this host, reproduced.
 
@@ -492,7 +492,7 @@ fifth of the wall needs a different answer.
 ### The one-seed-short cohort is the exception, not the rule
 
 94 fn / 11,518 B are exactly one seed short of full strength.
-`tools/lifted_oracle_why_not_full.py` replays each under `--verbose` and records
+the retired `lifted_oracle_why_not_full` replays each under `--verbose` and records
 a reason for all 94: 92 `INCONCLUSIVE-original-fault`, 1
 `INCONCLUSIVE-lifted-out-of-span`, 1 `INCONCLUSIVE-original-timeout`. By region:
 49 near-null, 35 wild, 9 top-page, 1 stack-guard.

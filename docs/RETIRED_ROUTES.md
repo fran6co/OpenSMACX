@@ -285,6 +285,45 @@ is the part worth keeping:
 The 91+ bodies they wrote are in `src/` and are covered by the ratchet like any
 other. Nothing they produced is lost by deleting the producers.
 
+## Static recompilation and the SMT equivalence work — retired 2026-08-12
+
+Fifteen tools and ~10,900 lines: the whole-image lifter, the differential lifted
+oracle and its plan/compare/summary/mutate chain, the static-recompile pilot and
+its gate, the Z3 x86 encoding (`x86_smt`, `x86_lower`) and the three validators
+that checked it against `lifted_x86.h`, against silicon one instruction at a
+time, and a block at a time with memory included.
+
+`docs/TOOLS.md` already labelled the whole area **"research, not the route"**.
+The cluster imported only itself, so it came out whole.
+
+### What it established, which is the reason it existed
+
+- **The differential oracle has a ceiling, and it is about half the image.**
+  ~49% of bytes are testable with COM skipped; the rest is reachable only by
+  booting the lifted executable and comparing observable behaviour. That number
+  is what put 941 functions out of scope in `EXCLUSIONS.md` §4 — an exclusion
+  this project has now retired, because byte-matching needs no oracle.
+- **Read a specification, do not execute it.** SLEIGH's `fistp` emits
+  `trunc(round(ST0))` and never reads the control word — wrong on 100% of the 69
+  `fistp` sites. A pypcode/SLEIGH interpreter was rejected on that.
+- **Undefined flags must be masked.** After `IDIV`/`DIV`/`MUL`/`IMUL` and any
+  shift with count ≠ 1, the flags are undefined; dropping the `undef=<hex>` mask
+  costs 3 FAILs on native silicon even though the reason it was introduced no
+  longer applies.
+- **The harness reads its own memory, and it looks exactly like a lowering bug.**
+  Five "lowering bugs" were that. The diagnostic: rebuild with
+  `-DORACLE_LAYOUT_SHIM=0x51000` — if the detail string moves, it is the
+  harness. Rebuilding at a different `--image-base` is inert by construction.
+- **x87 is why emulation was declined.** 76.59% of image bytes carry x87, and
+  QEMU drops to host `double`, so it cannot arbitrate this image.
+
+### Why it does not come back as-is
+
+It was measuring how much of the image a *behavioural* oracle could reach. That
+question is settled and the answer is "about half". Byte-matching answers a
+stronger question over the whole image at O(1) cost per body, which is why the
+project now has one route instead of two.
+
 ## Still live, and not retired by this file
 
 `recovery-gameplay-tests` remains: it is the sole observer for 37 of those 63

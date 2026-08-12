@@ -107,7 +107,7 @@ unit each is measured in — with declarations from `tools/class_layouts.py`,
 `tools/src_declarations.py` and `tools/emit_vtable_shim_header.py`.
 `tools/msvc6_byte_match.py` is the original five-function spike the route grew
 out of, kept because `BYTE_MATCH_ROUTE.md` reports its numbers.
-`tools/x86_lower.py`, `tools/x86_smt.py` and `tools/generator_support.py` are
+the retired `x86_lower`, the retired `x86_smt` and `tools/generator_support.py` are
 shared machinery underneath.
 
 Landing a match: `tools/harvest_proven_units.py` and
@@ -183,19 +183,19 @@ Oracles: `tools/generate_signature_oracles.py`,
 
 ## Static recompilation — research, not the route
 
-`tools/lift_whole_image.py` emits every game function as C++;
-`tools/lifted_boot_loop.py` drives the boot and reports whether the stop
-address moved; `tools/lifted_oracle_plan.py`,
-`tools/lifted_oracle_compare.py`, `tools/lifted_oracle_summary.py` and
-`tools/lifted_oracle_why_not_full.py` measure what the differential oracle can
-say; `tools/lifted_oracle_mutate.py` proves it has teeth.
-`tools/static_recompile_pilot.py` and
-`tools/verify_static_recompile_pilot.py` are the pilot and its gate.
+the retired `lift_whole_image` emits every game function as C++;
+the retired `lifted_boot_loop` drives the boot and reports whether the stop
+address moved; the retired `lifted_oracle_plan`,
+the retired `lifted_oracle_compare`, the retired `lifted_oracle_summary` and
+the retired `lifted_oracle_why_not_full` measure what the differential oracle can
+say; the retired `lifted_oracle_mutate` proves it has teeth.
+the retired `static_recompile_pilot` and
+the retired `verify_static_recompile_pilot` are the pilot and its gate.
 The SMT side asks whether a recovered body is PROVABLY equivalent:
-`tools/prove_recovered_equivalence.py`, with the encoding checked against
-`lifted_x86.h` by `tools/validate_x86_smt.py`, against the processor one
-instruction at a time by `tools/validate_x86_silicon.py`, and a whole block at
-a time — memory included — by `tools/validate_x86_block.py`.
+the retired `prove_recovered_equivalence`, with the encoding checked against
+`lifted_x86.h` by the retired `validate_x86_smt`, against the processor one
+instruction at a time by the retired `validate_x86_silicon`, and a whole block at
+a time — memory included — by the retired `validate_x86_block`.
 
 ## The gates
 
