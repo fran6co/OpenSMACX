@@ -1328,10 +1328,16 @@ if(BUILD_TESTING)
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )
-    # Staleness only: the verdicts are a worklist, not a gate. `absent` and
-    # `at-zero` are both large and both are recovery work rather than defects,
-    # so failing on them would pin the tree at whatever it happened to be.
-    # Skips without the fetched, ignored note; a clean checkout has neither.
+    # Correlates an outside human's notes with the `// yitzi 0x134` markers on
+    # the `static_assert`s, three ways: the note, the marker, and the size the
+    # compiler pins. It checked a CSV against itself until 2026-08-12, which
+    # could only fail if somebody hand-edited a generated file.
+    #
+    # Degrades rather than skipping: without the fetched, ignored note it still
+    # refuses a marker that contradicts its own assertion, since that needs no
+    # external source to detect. A stated size this tree declares no class for
+    # (Faction) is reported and not failed - an open question is not a defect,
+    # and failing on it would force somebody to invent a number to go green.
     add_test(NAME yitzi-sizes-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_yitzi_notes.py"

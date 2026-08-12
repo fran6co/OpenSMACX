@@ -134,11 +134,16 @@ directory, so lanes do not contend for it.
     cp -al <main>/.opensmacx/venv .opensmacx/venv        # symlinks: symlinked
     cp -al <main>/.opensmacx/analysis .opensmacx/analysis  # artifact paths are
                                                      # rejected by the build
-    cmake --preset mingw-i686-debug \
+    cmake -S . -B build -G Ninja \
         -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python"
 
 That last flag is not optional. Without it CMake takes `/usr/bin/python3`, which
 lacks `pefile`, and the oracle extraction fails partway through a build.
+
+`-G Ninja` is not optional either, and this line said `--preset
+mingw-i686-debug` until 2026-08-12 - a preset `a673bf79` deleted when it made
+VC6 the only compiler. There has been no `CMakePresets.json` since, so the
+recipe every agent is pointed at could not have run.
 
 **What actually conflicts, measured over the last eight recovery commits.** Every
 one touches the same eight files plus one or two unique `src/*.cpp`:

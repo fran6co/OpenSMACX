@@ -8,6 +8,7 @@ tree's class names is written by hand. The compile in
 than a wrong pin, but these keep the reading itself honest.
 """
 
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -49,36 +50,80 @@ class SizeReadingTest(unittest.TestCase):
         self.assertEqual(yitzi.sizes(Path("/nonexistent/variables.txt")), {})
 
 
-class ControlTest(unittest.TestCase):
+class MarkerTest(unittest.TestCase):
+    """The marker is read off the `static_assert`, so both numbers come from
+    one line and a check can compare them without trusting either."""
+
     def setUp(self):
-        self.pinned = yitzi.thinker.pinned_sizes
+        self.work = Path(tempfile.mkdtemp())
 
     def tearDown(self):
-        yitzi.thinker.pinned_sizes = self.pinned
+        shutil.rmtree(self.work, ignore_errors=True)
 
-    def test_agreement_with_a_pinned_size_counts_as_right(self):
-        yitzi.thinker.pinned_sizes = lambda: {"Base": 0x134}
-        right, wrong = yitzi.control({"Base": 0x134})
-        self.assertEqual((right, wrong), (["Base"], []))
+    def write(self, text):
+        (self.work / "x.h").write_text(text)
+        return yitzi.markers(self.work)
 
-    def test_disagreement_is_reported(self):
-        yitzi.thinker.pinned_sizes = lambda: {"Base": 0x134}
-        right, wrong = yitzi.control({"Base": 0x140})
-        self.assertEqual(wrong, [("Base", 0x140, 0x134)])
+    def test_both_numbers_come_off_one_line(self):
+        found = self.write('static_assert(sizeof(Base) == 0x134, "m");'
+                           '  // yitzi 0x134\n')
+        self.assertEqual(found, {"Base": (0x134, 0x134)})
 
-    def test_an_unpinned_class_is_neither(self):
-        yitzi.thinker.pinned_sizes = lambda: {}
-        self.assertEqual(yitzi.control({"Veh": 0x34}), ([], []))
+    def test_a_wrapped_assertion_still_matches(self):
+        # Three of the four in the tree put the message on the next line, so
+        # the marker sits after the comma with no closing paren before it.
+        found = self.write("static_assert(sizeof(Veh) == 0x34,  // yitzi 0x34\n"
+                           '              "Veh layout");\n')
+        self.assertEqual(found, {"Veh": (0x34, 0x34)})
+
+    def test_an_assertion_with_no_marker_is_not_a_correlation(self):
+        self.assertEqual(self.write('static_assert(sizeof(Win) == 0x10, "m");'
+                                    "\n"), {})
+
+    def test_the_marker_is_not_read_from_a_neighbouring_line(self):
+        # An unanchored search would pair this assertion with the comment
+        # below it and report an agreement nobody wrote.
+        self.assertEqual(self.write('static_assert(sizeof(Win) == 0x10, "m");\n'
+                                    "// yitzi 0x10\n"), {})
 
 
-class RenderTest(unittest.TestCase):
-    def test_sorted_with_a_header_and_hex_sizes(self):
-        text = yitzi.render({"Veh": 0x34, "Base": 0x134})
-        rows = text.splitlines()
-        self.assertEqual(rows[0], "class,size,evidence")
-        self.assertEqual([row.split(",")[0] for row in rows[1:]],
-                         ["Base", "Veh"])
-        self.assertIn("0x134", rows[1])
+class CorrelateTest(unittest.TestCase):
+    """Three ways to disagree, and all three must be loud.
+
+    The two that matter are asymmetric in how they arise: a note-against-marker
+    mismatch means somebody mistyped the correlation, and a
+    marker-against-assert mismatch means the class moved underneath a marker
+    nobody revisited. The second is the one that happens on its own.
+    """
+
+    def test_all_three_agreeing_is_an_agreement(self):
+        agreed, wrong, unmarked = yitzi.correlate(
+            {"Base": 0x134}, {"Base": (0x134, 0x134)})
+        self.assertEqual((agreed, wrong, unmarked), (["Base"], [], []))
+
+    def test_a_marker_against_the_notes_is_wrong(self):
+        _, wrong, _ = yitzi.correlate({"Base": 0x134}, {"Base": (0x134, 0x140)})
+        self.assertEqual(len(wrong), 1)
+        self.assertIn("0x134", wrong[0][1])
+
+    def test_a_marker_against_its_static_assert_is_wrong(self):
+        _, wrong, _ = yitzi.correlate({"Veh": 0x34}, {"Veh": (0x38, 0x34)})
+        self.assertEqual(len(wrong), 1)
+        self.assertIn("0x38", wrong[0][1])
+
+    def test_a_marker_the_notes_never_stated_is_wrong(self):
+        # The failure mode that would otherwise be silent: a marker citing a
+        # source that says nothing, which reads as evidence and is not.
+        _, wrong, _ = yitzi.correlate({}, {"Base": (0x134, 0x134)})
+        self.assertEqual(len(wrong), 1)
+        self.assertIn("no size", wrong[0][1])
+
+    def test_a_stated_size_the_tree_cannot_pin_is_unmarked_not_wrong(self):
+        # Faction: stated by Yitzi, declared nowhere this tree compiles. An
+        # open question is not a defect, and failing on it would force
+        # somebody to invent a number to make the gate green.
+        agreed, wrong, unmarked = yitzi.correlate({"Faction": 0x20CC}, {})
+        self.assertEqual((agreed, wrong, unmarked), ([], [], ["Faction"]))
 
 
 if __name__ == "__main__":
