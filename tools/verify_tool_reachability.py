@@ -56,6 +56,12 @@ def entry_points(root: Path = REPO_ROOT) -> list:
     found += sorted(root.glob("*.mjs")) + sorted(root.glob("*.js"))
     found += sorted(root.glob("*.md")) + sorted((root / "docs").glob("*.md"))
     found += sorted((root / "docs" / "recovery").glob("*.md"))
+    # Subagent definitions and slash commands are entry points by exactly the
+    # rule above: they tell someone to run a tool, and the someone happening to
+    # be an agent changes nothing. Omitting them would report a tool named only
+    # by the recovery loop as unreachable, and delete the loop's own toolbox.
+    found += sorted((root / ".claude" / "agents").glob("*.md"))
+    found += sorted((root / ".claude" / "commands").glob("*.md"))
     return [path for path in found if path.is_file()]
 
 
