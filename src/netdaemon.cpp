@@ -36,6 +36,11 @@ Purpose: Poll the network for one message; dispatch it when one arrives and
          report whether it did. The message and its two parameters come back
          from Net::get through out-parameters.
 ORIGINAL: 0x00530320
+// name      ?receive@NetDaemon@@QAEHXZ
+// size      62 bytes
+// spans     0x00530320-0x0053035E
+// prototype int (__thiscall ?receive@NetDaemon@@QAEHXZ)(NetDaemon* this)
+// callers   9   call targets   2
 Return Value: 1 when a message was received and dispatched, 0 when none was
 Status: Complete
 Verification note: the original leaves both out-params as uninitialized stack
@@ -63,6 +68,11 @@ Purpose: Announce a vehicle's synched state to the network. All four "no
          text, one repeated flag" parameters are fixed by the caller, so only
          the opcode and the id vary across this family.
 ORIGINAL: 0x00593220
+// name      ?synch_veh@@YAXH@Z
+// size      34 bytes
+// spans     0x00593220-0x00593242
+// prototype void (__cdecl ?synch_veh@@YAXH@Z)(int vehID)
+// callers   32   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -73,6 +83,11 @@ void __cdecl synch_veh(int id) {
 /*
 Purpose: Announce a base's synched state to the network.
 ORIGINAL: 0x00593250
+// name      ?synch_base@@YAXH@Z
+// size      34 bytes
+// spans     0x00593250-0x00593272
+// prototype 
+// callers   6   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -83,6 +98,11 @@ void __cdecl synch_base(int id) {
 /*
 Purpose: Announce a faction's energy synched state to the network.
 ORIGINAL: 0x00593280
+// name      ?synch_energy@@YAXH@Z
+// size      34 bytes
+// spans     0x00593280-0x005932A2
+// prototype 
+// callers   3   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -93,6 +113,11 @@ void __cdecl synch_energy(int id) {
 /*
 Purpose: Announce a faction's current research target to the network.
 ORIGINAL: 0x005932B0
+// name      ?synch_researching@@YAXH@Z
+// size      34 bytes
+// spans     0x005932B0-0x005932D2
+// prototype void (__cdecl ?synch_researching@@YAXH@Z)(int factionID)
+// callers   1   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -103,6 +128,11 @@ void __cdecl synch_researching(int id) {
 /*
 Purpose: Announce a faction's leader to the network.
 ORIGINAL: 0x005932E0
+// name      ?synch_leader@@YAXH@Z
+// size      34 bytes
+// spans     0x005932E0-0x00593302
+// prototype 
+// callers   3   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -113,6 +143,11 @@ void __cdecl synch_leader(int id) {
 /*
 Purpose: Announce a faction's AI state to the network.
 ORIGINAL: 0x00593310
+// name      ?synch_ai@@YAXH@Z
+// size      34 bytes
+// spans     0x00593310-0x00593332
+// prototype 
+// callers   3   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -123,6 +158,11 @@ void __cdecl synch_ai(int id) {
 /*
 Purpose: Announce a faction's completed research to the network.
 ORIGINAL: 0x00593340
+// name      ?synch_research@@YAXH@Z
+// size      34 bytes
+// spans     0x00593340-0x00593362
+// prototype 
+// callers   1   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -134,6 +174,11 @@ void __cdecl synch_research(int id) {
 Purpose: Announce a faction's social/resource allocation state to the
          network.
 ORIGINAL: 0x00593390
+// name      ?synch_alloc@@YAXH@Z
+// size      34 bytes
+// spans     0x00593390-0x005933B2
+// prototype 
+// callers   1   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -144,6 +189,11 @@ void __cdecl synch_alloc(int id) {
 /*
 Purpose: Announce a faction's social engineering state to the network.
 ORIGINAL: 0x005933C0
+// name      ?synch_soc@@YAXH@Z
+// size      34 bytes
+// spans     0x005933C0-0x005933E2
+// prototype 
+// callers   2   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -154,6 +204,11 @@ void __cdecl synch_soc(int id) {
 /*
 Purpose: Announce a faction's protocol/pact state to the network.
 ORIGINAL: 0x005933F0
+// name      ?synch_proto@@YAXH@Z
+// size      34 bytes
+// spans     0x005933F0-0x00593412
+// prototype 
+// callers   4   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -164,6 +219,11 @@ void __cdecl synch_proto(int id) {
 /*
 Purpose: Announce an observer's state to the network.
 ORIGINAL: 0x00593420
+// name      ?synch_obs@@YAXH@Z
+// size      34 bytes
+// spans     0x00593420-0x00593442
+// prototype 
+// callers   3   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -176,6 +236,11 @@ Purpose: Announce a diplomatic state change between two factions to the
          network. Unlike the rest of this family, both leading arguments
          come from the caller instead of the second being a fixed zero.
 ORIGINAL: 0x00593450
+// name      ?synch_diplo@@YAXHH@Z
+// size      36 bytes
+// spans     0x00593450-0x00593474
+// prototype void (__cdecl ?synch_diplo@@YAXHH@Z)(int factionID, int)
+// callers   1   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -186,6 +251,11 @@ void __cdecl synch_diplo(int a, int b) {
 /*
 Purpose: Announce a faction's template/design state to the network.
 ORIGINAL: 0x005934B0
+// name      ?synch_template@@YAXH@Z
+// size      34 bytes
+// spans     0x005934B0-0x005934D2
+// prototype 
+// callers   1   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -196,6 +266,11 @@ void __cdecl synch_template(int id) {
 /*
 Purpose: Announce a faction's sensor/territory radius state to the network.
 ORIGINAL: 0x005934E0
+// name      ?synch_radius@@YAXH@Z
+// size      34 bytes
+// spans     0x005934E0-0x00593502
+// prototype 
+// callers   1   call targets   1
 Return Value: none
 Status: Complete
 */
@@ -211,6 +286,11 @@ Purpose: Release the vehicle lock this client is holding. In a net game, tell
          record at 0x1B78 and the flag at 0x1BC4. Only the transport flag at
          0x0093F660 gates the announce; any nonzero value is a net game.
 ORIGINAL: 0x005310F0
+// name      ?unlock_veh@NetDaemon@@QAEXXZ
+// size      90 bytes
+// spans     0x005310F0-0x0053114A
+// prototype void (__thiscall ?unlock_veh@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   33   call targets   2
 Return Value: EAX residue. The original is ?unlock_veh@NetDaemon@@QAEXXZ, but
               EAX is live at its ret: on the non-net path it is the loaded
               transport flag, which is zero exactly because that path was

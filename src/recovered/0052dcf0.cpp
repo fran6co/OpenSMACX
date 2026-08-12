@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0052DCF0 BYTE_EXACT
+// name      ?UNK1@DeletionList@@QAEHXZ
+// size      32 bytes
+// spans     0x0052DCF0-0x0052DD10
+// prototype int (__thiscall ?UNK1@DeletionList@@QAEHXZ)(DeletionList* this)
+// callers   0   call targets   0
 // 0x0052DCF0  ?UNK1@DeletionList@@QAEHXZ  ->  ?UNK1@DeletionList@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

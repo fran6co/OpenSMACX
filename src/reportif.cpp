@@ -23,6 +23,11 @@ ListBox *ReportIfEnergyListBox = reinterpret_cast<ListBox *>(0x0087BE84);
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004A5FE0 BYTE_EXACT
+// name      ?on_iface_right_click@ReportIf@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004A5FE0-0x004A5FE3
+// prototype void (__thiscall ?on_iface_right_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -32,6 +37,11 @@ void ReportIf::on_iface_right_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004A5FF0 BYTE_EXACT
+// name      ?on_iface_left_double_click@ReportIf@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004A5FF0-0x004A5FF3
+// prototype void (__thiscall ?on_iface_left_double_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -41,6 +51,11 @@ void ReportIf::on_iface_left_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004A6000 BYTE_EXACT
+// name      ?on_iface_right_double_click@ReportIf@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004A6000-0x004A6003
+// prototype void (__thiscall ?on_iface_right_double_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -50,6 +65,11 @@ void ReportIf::on_iface_right_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004A6010 BYTE_EXACT
+// name      ?on_iface_left_down@ReportIf@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004A6010-0x004A6013
+// prototype void (__thiscall ?on_iface_left_down@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -59,6 +79,11 @@ void ReportIf::on_iface_left_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004A6020 BYTE_EXACT
+// name      ?on_iface_right_down@ReportIf@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004A6020-0x004A6023
+// prototype void (__thiscall ?on_iface_right_down@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -68,6 +93,11 @@ void ReportIf::on_iface_right_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004A6030 BYTE_EXACT
+// name      ?on_iface_mouse_move@ReportIf@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004A6030-0x004A6033
+// prototype void (__thiscall ?on_iface_mouse_move@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -77,6 +107,11 @@ void ReportIf::on_iface_mouse_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004A6040 BYTE_EXACT
+// name      ?on_iface_mouse_leave@ReportIf@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004A6040-0x004A6043
+// prototype void (__thiscall ?on_iface_mouse_leave@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -86,6 +121,11 @@ void ReportIf::on_iface_mouse_leave(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004A6D60 BYTE_EXACT
+// name      ?on_iface_button_toggled@ReportIf@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004A6D60-0x004A6D63
+// prototype void (__thiscall ?on_iface_button_toggled@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -95,6 +135,11 @@ void ReportIf::on_iface_button_toggled(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004AC130 BYTE_EXACT
+// name      ?close_score@ReportIf@@QAEXXZ
+// size      1 bytes
+// spans     0x004AC130-0x004AC131
+// prototype void (__thiscall ?close_score@ReportIf@@QAEXXZ)(ReportIf* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +185,11 @@ void __fastcall report_if_close_score_redirect(ReportIf *self, void *) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
 ORIGINAL: 0x004A6320 BYTE_EXACT
+// name      ?on_iface_dialog_item_back_draw@ReportIf@@QAEHPAUGraphicWin@@HHPAURECT@@@Z
+// size      8 bytes
+// spans     0x004A6320-0x004A6328
+// prototype int (__thiscall ?on_iface_dialog_item_back_draw@ReportIf@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(ReportIf* this, GraphicWin*, int, int, RECT*)
+// callers   0   call targets   0
 Return Value: 1
 Status: Complete
 */
@@ -166,6 +216,11 @@ Purpose: Close the two intel list boxes.
          of its own; reaching them by offset is what the original does and is
          what keeps the two independent.
 ORIGINAL: 0x004AC980 BYTE_EXACT
+// name      ?close_intel@ReportIf@@QAEXXZ
+// size      27 bytes
+// spans     0x004AC980-0x004AC99B
+// prototype void (__thiscall ?close_intel@ReportIf@@QAEXXZ)(ReportIf* this)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -196,6 +251,11 @@ Purpose: Close the energy report's three list boxes.
          classifies original FUNCTION bindings, and ConsoleGlobal - the same
          shape, a named pointer to a process object - carries none either.
 ORIGINAL: 0x004A9020
+// name      ?close_energy@ReportIf@@QAEXXZ
+// size      37 bytes
+// spans     0x004A9020-0x004A9045
+// prototype void (__thiscall ?close_energy@ReportIf@@QAEXXZ)(ReportIf* this)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -212,6 +272,11 @@ void __fastcall report_if_close_energy_redirect(ReportIf *self, void *) {
 
 /*
 ORIGINAL: 0x004A3930 BYTE_EXACT
+// name      ?done@ReportIf@@QAEXXZ
+// size      22 bytes
+// spans     0x004A3930-0x004A3946
+// prototype void (__thiscall ?done@ReportIf@@QAEXXZ)(ReportIf* this)
+// callers   2   call targets   2
 Status: Complete
 */
 void ReportIf::done() {

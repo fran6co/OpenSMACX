@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00455E80 BYTE_EXACT
+// name      ?load_fixed_sprites@@YAXXZ
+// size      40 bytes
+// spans     0x00455E80-0x00455EA8
+// prototype 
+// callers   1   call targets   6
 // 0x00455E80  ?load_fixed_sprites@@YAXXZ  ->  ?load_fixed_sprites@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

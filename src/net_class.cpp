@@ -22,6 +22,11 @@
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
 ORIGINAL: 0x0062ED30
+// name      ?poll_players@Net@@QAEHPAUSessionStruct@@@Z
+// size      8 bytes
+// spans     0x0062ED30-0x0062ED38
+// prototype int (__thiscall ?poll_players@Net@@QAEHPAUSessionStruct@@@Z)(Net* this, SessionStruct*)
+// callers   0   call targets   0
 Return Value: 1, always
 Status: Complete
 */
@@ -57,6 +62,11 @@ Purpose: Find a player's name by key, or nothing.
          it - it only shows that something 0x58 bytes wide lives at 0x154.
 
 ORIGINAL: 0x00631A20
+// name      ?get_player_name@Net@@QAEPADK@Z
+// size      53 bytes
+// spans     0x00631A20-0x00631A55
+// prototype int8* (__thiscall ?get_player_name@Net@@QAEPADK@Z)(Net* this, unsigned int)
+// callers   6   call targets   0
 Return Value: a pointer to the name, or nullptr
 Status: Complete
 */

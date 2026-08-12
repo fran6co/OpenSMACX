@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00609990 BYTE_EXACT
+// name      ?item@Dialog@@QAEHPADH@Z
+// size      52 bytes
+// spans     0x00609990-0x006099C4
+// prototype int (__thiscall ?item@Dialog@@QAEHPADH@Z)(Dialog* this, int8*, int)
+// callers   1   call targets   1
 // 0x00609990  ?item@Dialog@@QAEHPADH@Z  ->  ?item@Dialog@@QAEHPADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

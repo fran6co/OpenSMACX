@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00471870 BYTE_EXACT
+// name      ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z
+// size      79 bytes
+// spans     0x00471870-0x004718BF
+// prototype 
+// callers   0   call targets   1
 // 0x00471870  ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z  ->  ?listbox_draw@MessageWin@@QAAHPAUGraphicWin@@HHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00476B30 BYTE_EXACT
+// name      ?clear_monuments@@YAXXZ
+// size      49 bytes
+// spans     0x00476B30-0x00476B61
+// prototype 
+// callers   2   call targets   0
 // 0x00476B30  ?clear_monuments@@YAXXZ  ->  ?clear_monuments@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

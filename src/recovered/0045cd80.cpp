@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0045CD80 BYTE_EXACT
+// name      ?on_iface_left_double_click@MainInterface@@QAEXHH@Z
+// size      48 bytes
+// spans     0x0045CD80-0x0045CDB0
+// prototype void (__thiscall ?on_iface_left_double_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   2
 // 0x0045CD80  ?on_iface_left_double_click@MainInterface@@QAEXHH@Z  ->  ?on_iface_left_double_click@MainInterface@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

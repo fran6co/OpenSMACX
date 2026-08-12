@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00530600 BYTE_EXACT
+// name      ?close_channel@NetDaemon@@QAEXXZ
+// size      47 bytes
+// spans     0x00530600-0x0053062F
+// prototype void (__thiscall ?close_channel@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   1   call targets   1
 // 0x00530600  ?close_channel@NetDaemon@@QAEXXZ  ->  ?close_channel@NetDaemon@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

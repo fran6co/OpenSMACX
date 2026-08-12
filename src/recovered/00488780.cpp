@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00488780 BYTE_EXACT
+// name      ?list_was_dblclicked@@YAXH@Z
+// size      29 bytes
+// spans     0x00488780-0x0048879D
+// prototype 
+// callers   0   call targets   1
 // 0x00488780  ?list_was_dblclicked@@YAXH@Z  ->  ?list_was_dblclicked@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

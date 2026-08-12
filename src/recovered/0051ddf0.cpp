@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0051DDF0 BYTE_EXACT
+// name      ??_GConsole@@UAEPAXI@Z
+// size      54 bytes
+// spans     0x0051DDF0-0x0051DE26
+// prototype void* (__thiscall ??_GConsole@@UAEPAXI@Z)(Console* this, unsigned int)
+// callers   0   call targets   3
 // 0x0051DDF0  ??_GConsole@@UAEPAXI@Z  ->  ??_GConsole@@UAEPAXI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

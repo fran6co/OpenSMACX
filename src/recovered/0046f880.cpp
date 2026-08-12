@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0046F880 BYTE_EXACT
+// name      ?on_sys_close@MapWin@@QAEXXZ
+// size      64 bytes
+// spans     0x0046F880-0x0046F8C0
+// prototype void (__thiscall ?on_sys_close@MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   2
 // 0x0046F880  ?on_sys_close@MapWin@@QAEXXZ  ->  ?on_sys_close@MapWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

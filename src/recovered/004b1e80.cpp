@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004B1E80 BYTE_EXACT
+// name      ?on_key_click@SocialWin@@QAEHHH@Z
+// size      53 bytes
+// spans     0x004B1E80-0x004B1EB5
+// prototype int (__thiscall ?on_key_click@SocialWin@@QAEHHH@Z)(SocialWin* this, int, int)
+// callers   0   call targets   3
 // 0x004B1E80  ?on_key_click@SocialWin@@QAEHHH@Z  ->  ?on_key_click@SocialWin@@QAEHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

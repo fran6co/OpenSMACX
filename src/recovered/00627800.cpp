@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00627800 BYTE_EXACT
+// name      ?pop_ask@@YAHPADHPADP6AHXZH@Z
+// size      39 bytes
+// spans     0x00627800-0x00627827
+// prototype int (__cdecl ?pop_ask@@YAHPADHPADP6AHXZH@Z)(int8* sectionID, int, int8*, int (__cdecl *)(), int)
+// callers   0   call targets   1
 // 0x00627800  ?pop_ask@@YAHPADHPADP6AHXZH@Z  ->  ?pop_ask@@YAHPADH0P6AHXZH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

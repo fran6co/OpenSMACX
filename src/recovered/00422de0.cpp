@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00422DE0 BYTE_EXACT
+// name      ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z
+// size      38 bytes
+// spans     0x00422DE0-0x00422E06
+// prototype void (__thiscall ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z)(BattleWin* this, int, int, int)
+// callers   0   call targets   2
 // 0x00422DE0  ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z  ->  ?on_iface_group_clicked@BattleWin@@QAEXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

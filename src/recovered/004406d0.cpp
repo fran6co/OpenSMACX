@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004406D0 BYTE_EXACT
+// name      ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z
+// size      28 bytes
+// spans     0x004406D0-0x004406EC
+// prototype int (__thiscall ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z)(DiploPop* this, int, int (__cdecl *)(), Win*)
+// callers   0   call targets   1
 // 0x004406D0  ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z  ->  ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

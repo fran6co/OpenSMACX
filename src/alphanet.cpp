@@ -14,6 +14,11 @@
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
 ORIGINAL: 0x004E25E0
+// name      ?pid_2_idx@AlphaNet@@QAEHK@Z
+// size      39 bytes
+// spans     0x004E25E0-0x004E2607
+// prototype int (__thiscall ?pid_2_idx@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)
+// callers   20   call targets   0
 Return Value: Player index (1-7); process ID not found (0)
 Status: Complete
 */
@@ -32,6 +37,11 @@ int AlphaNet::pid_2_idx(uint32_t process_id) {
 /*
 Purpose: Convert a multiplayer process ID to its signed player identity.
 ORIGINAL: 0x004E2610
+// name      ?pid_2_who@AlphaNet@@QAEHK@Z
+// size      67 bytes
+// spans     0x004E2610-0x004E2653
+// prototype int (__thiscall ?pid_2_who@AlphaNet@@QAEHK@Z)(AlphaNet* this, unsigned int)
+// callers   2   call targets   0
 Return Value: Player identity; process ID not found (0)
 Status: Complete
 */
@@ -52,6 +62,11 @@ int AlphaNet::pid_2_who(uint32_t process_id) {
 /*
 Purpose: Convert a signed multiplayer player identity to its process ID.
 ORIGINAL: 0x004E2660
+// name      ?who_2_pid@AlphaNet@@QAEHH@Z
+// size      72 bytes
+// spans     0x004E2660-0x004E26A8
+// prototype int (__thiscall ?who_2_pid@AlphaNet@@QAEHH@Z)(AlphaNet* this, int)
+// callers   4   call targets   0
 Return Value: Process ID; player identity not found (0)
 Status: Complete
 */
@@ -72,6 +87,11 @@ int AlphaNet::who_2_pid(int identity) {
 /*
 Purpose: Convert a signed multiplayer player identity to its one-based index.
 ORIGINAL: 0x004E26B0
+// name      ?who_2_idx@AlphaNet@@QAEXH@Z
+// size      44 bytes
+// spans     0x004E26B0-0x004E26DC
+// prototype void (__thiscall ?who_2_idx@AlphaNet@@QAEXH@Z)(AlphaNet* this, int)
+// callers   1   call targets   0
 Return Value: Player index (1-7); player identity not found (0)
 Status: Complete
 */
@@ -112,6 +132,11 @@ func_net_close NetCloseOriginal = original_method<func_net_close>(0x0062E010);
 /*
 Purpose: Clear every player's process slot and hand off to the network close.
 ORIGINAL: 0x004E25B0
+// name      ?close@AlphaNet@@QAEXXZ
+// size      40 bytes
+// spans     0x004E25B0-0x004E25D8
+// prototype void (__thiscall ?close@AlphaNet@@QAEXXZ)(AlphaNet* this)
+// callers   14   call targets   0
 Status: Complete with a temporary dependency on the network close
 */
 void AlphaNet::close() {
@@ -134,6 +159,11 @@ void __fastcall alpha_net_close_redirect(AlphaNet *self, void *) {
 
 /*
 ORIGINAL: 0x00401CE0
+// name      SessionStruct::close
+// size      153 bytes
+// spans     0x00401CE0-0x00401D79
+// prototype 
+// callers   1   call targets   0
 Status: Complete
 */
 extern "C" __declspec(naked) int __cdecl fn_00401ce0() {

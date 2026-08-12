@@ -26,6 +26,11 @@
 /*
 Purpose: Initialize the class instance.
 ORIGINAL: 0x005FD8D0
+// name      ?init@Text@@QAEHH@Z
+// size      153 bytes
+// spans     0x005FD8D0-0x005FD969
+// prototype int (__thiscall ?init@Text@@QAEHH@Z)(_Text* this, int)
+// callers   0   call targets   3
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -45,6 +50,11 @@ int Text::init(size_t size) {
 /*
 Purpose: Shutdown the class instance.
 ORIGINAL: 0x005FD970
+// name      ?shutdown@Text@@QAEXXZ
+// size      92 bytes
+// spans     0x005FD970-0x005FD9CC
+// prototype void (__thiscall ?shutdown@Text@@QAEXXZ)(_Text* this)
+// callers   1   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -63,6 +73,11 @@ void Text::shutdown() {
 /*
 Purpose: If open, close the text file.
 ORIGINAL: 0x005FD9D0
+// name      ?close@Text@@QAEXXZ
+// size      34 bytes
+// spans     0x005FD9D0-0x005FD9F2
+// prototype void (__thiscall ?close@Text@@QAEXXZ)(_Text* this)
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -76,6 +91,11 @@ void Text::close() {
 /*
 Purpose: Open the specified text file and copy the section into the buffer for parsing.
 ORIGINAL: 0x005FDA00
+// name      ?open@Text@@QAEHPADPAD@Z
+// size      516 bytes
+// spans     0x005FDA00-0x005FDC04
+// prototype int (__thiscall ?open@Text@@QAEHPADPAD@Z)(_Text* this, int8* srcFileID, int8* sectionID)
+// callers   2   call targets   13
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -136,6 +156,11 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
 /*
 Purpose: Parse text from the opened file until a newline is reached. Copy this text into the buffer.
 ORIGINAL: 0x005FDC10
+// name      ?get@Text@@QAEHXZ
+// size      110 bytes
+// spans     0x005FDC10-0x005FDC7E
+// prototype int (__thiscall ?get@Text@@QAEHXZ)(_Text* this)
+// callers   1   call targets   3
 Return Value: Pointer to string
 Status: Complete
 */
@@ -157,6 +182,11 @@ LPSTR Text::get() {
 /*
 Purpose: Get the string and put it into the string table.
 ORIGINAL: 0x005FDC80
+// name      ?string@Text@@QAEXXZ
+// size      143 bytes
+// spans     0x005FDC80-0x005FDD0F
+// prototype void (__thiscall ?string@Text@@QAEXXZ)(_Text* this)
+// callers   0   call targets   4
 Return Value: Pointer to string table
 Status: Complete
 */
@@ -167,6 +197,11 @@ LPSTR Text::string() {
 /*
 Purpose: Parse the current item into the string buffer.
 ORIGINAL: 0x005FDD10
+// name      ?item@Text@@QAEXXZ
+// size      98 bytes
+// spans     0x005FDD10-0x005FDD72
+// prototype void (__thiscall ?item@Text@@QAEXXZ)(_Text* this)
+// callers   0   call targets   1
 Return Value: Pointer to string buffer
 Status: Complete
 */
@@ -186,6 +221,11 @@ LPSTR Text::item() {
 /*
 Purpose: Parse the current string item into the buffer and add it to the string table.
 ORIGINAL: 0x005FDD80
+// name      ?item_string@Text@@QAEXXZ
+// size      109 bytes
+// spans     0x005FDD80-0x005FDDED
+// prototype void (__thiscall ?item_string@Text@@QAEXXZ)(_Text* this)
+// callers   0   call targets   2
 Return Value: Pointer to string table
 Status: Complete
 */
@@ -196,6 +236,11 @@ LPSTR Text::item_string() {
 /*
 Purpose: Parse the current number item.
 ORIGINAL: 0x005FDDF0
+// name      ?item_number@Text@@QAEXXZ
+// size      104 bytes
+// spans     0x005FDDF0-0x005FDE58
+// prototype void (__thiscall ?item_number@Text@@QAEXXZ)(_Text* this)
+// callers   0   call targets   2
 Return Value: Integer value of the number item
 Status: Complete
 */
@@ -206,6 +251,11 @@ int Text::item_number() {
 /*
 Purpose: Parse the current binary item.
 ORIGINAL: 0x005FDE60
+// name      ?item_binary@Text@@QAEXXZ
+// size      104 bytes
+// spans     0x005FDE60-0x005FDEC8
+// prototype void (__thiscall ?item_binary@Text@@QAEXXZ)(_Text* this)
+// callers   0   call targets   2
 Return Value: Integer value of the binary item
 Status: Complete
 */
@@ -216,6 +266,11 @@ int Text::item_binary() {
 /*
 Purpose: Parse the current hex item.
 ORIGINAL: 0x005FDED0
+// name      ?item_hex@Text@@QAEXXZ
+// size      104 bytes
+// spans     0x005FDED0-0x005FDF38
+// prototype void (__thiscall ?item_hex@Text@@QAEXXZ)(_Text* this)
+// callers   0   call targets   2
 Return Value: Integer value of the hex item
 Status: Complete
 */
@@ -229,42 +284,97 @@ LPSTR *TextBufferGetPtr = (LPSTR *)0x009B7D00;
 LPSTR *TextBufferItemPtr = (LPSTR *)0x009B7D04;
 
 // ORIGINAL: 0x005FD4C0
+// name      ?text_set_get_ptr@@YAXXZ
+// size      11 bytes
+// spans     0x005FD4C0-0x005FD4CB
+// prototype 
+// callers   0   call targets   0
 void __cdecl text_set_get_ptr() {
     text_set_get_ptr_source(Txt, TextBufferGetPtr);
 }
 
 // ORIGINAL: 0x005FD4D0
+// name      ?text_set_item_ptr@@YAXXZ
+// size      11 bytes
+// spans     0x005FD4D0-0x005FD4DB
+// prototype 
+// callers   0   call targets   0
 void __cdecl text_set_item_ptr() {
     text_set_item_ptr_source(Txt, TextBufferItemPtr);
 }
 
 // ORIGINAL: 0x005FD530
+// name      ?text_close@@YAXXZ
+// size      29 bytes
+// spans     0x005FD530-0x005FD54D
+// prototype 
+// callers   22   call targets   1
 void __cdecl text_close() { text_close_source(Txt); }
 
 // ORIGINAL: 0x005FD570
+// name      ?text_get@@YAPADXZ
+// size      98 bytes
+// spans     0x005FD570-0x005FD5D2
+// prototype 
+// callers   54   call targets   3
 LPSTR __cdecl text_get() { return text_get_source(Txt); }
 
 // ORIGINAL: 0x005FD5E0
+// name      ?text_string@@YAPADXZ
+// size      131 bytes
+// spans     0x005FD5E0-0x005FD663
+// prototype 
+// callers   1   call targets   4
 LPSTR __cdecl text_string() { return text_string_source(Txt, StringTable); }
 
 // ORIGINAL: 0x005FD670
+// name      ?text_item@@YAPADXZ
+// size      87 bytes
+// spans     0x005FD670-0x005FD6C7
+// prototype 
+// callers   20   call targets   1
 LPSTR __cdecl text_item() { return text_item_source(Txt); }
 
 // ORIGINAL: 0x005FD6D0
+// name      ?text_item_string@@YAPADXZ
+// size      98 bytes
+// spans     0x005FD6D0-0x005FD732
+// prototype 
+// callers   2   call targets   2
 LPSTR __cdecl text_item_string() {
     return text_item_string_source(Txt, StringTable);
 }
 
 // ORIGINAL: 0x005FD740
+// name      ?text_item_number@@YAHXZ
+// size      93 bytes
+// spans     0x005FD740-0x005FD79D
+// prototype 
+// callers   18   call targets   2
 int __cdecl text_item_number() { return text_item_number_source(Txt); }
 
 // ORIGINAL: 0x005FD7A0
+// name      ?text_item_binary@@YAHXZ
+// size      93 bytes
+// spans     0x005FD7A0-0x005FD7FD
+// prototype 
+// callers   4   call targets   2
 int __cdecl text_item_binary() { return text_item_binary_source(Txt); }
 
 // ORIGINAL: 0x005FD800
+// name      ?text_item_hex@@YAHXZ
+// size      93 bytes
+// spans     0x005FD800-0x005FD85D
+// prototype 
+// callers   0   call targets   2
 int __cdecl text_item_hex() { return text_item_hex_source(Txt); }
 
 // ORIGINAL: 0x00585120
+// name      ?text_get_number@@YAHHH@Z
+// size      48 bytes
+// spans     0x00585120-0x00585150
+// prototype int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)
+// callers   0   call targets   2
 int __cdecl text_get_number(int min, int max) {
     return text_get_number_source(Txt, min, max);
 }

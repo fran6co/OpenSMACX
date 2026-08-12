@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0043F140 BYTE_EXACT
+// name      ?show@DiploPop@@QAEXH@Z
+// size      34 bytes
+// spans     0x0043F140-0x0043F162
+// prototype void (__thiscall ?show@DiploPop@@QAEXH@Z)(DiploPop* this, int)
+// callers   0   call targets   2
 // 0x0043F140  ?show@DiploPop@@QAEXH@Z  ->  ?show@DiploPop@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

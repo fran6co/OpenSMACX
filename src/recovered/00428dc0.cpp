@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00428DC0 BYTE_EXACT
+// name      ?timer_callback_daemon@Credits@@QAEXXZ
+// size      11 bytes
+// spans     0x00428DC0-0x00428DCB
+// prototype void (__thiscall ?timer_callback_daemon@Credits@@QAEXXZ)(Credits* this)
+// callers   0   call targets   0
 // 0x00428DC0  ?timer_callback_daemon@Credits@@QAEXXZ  ->  ?timer_callback_daemon@Credits@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

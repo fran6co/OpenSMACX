@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005398E0 BYTE_EXACT
+// name      ?pop_wait@@YAHXZ
+// size      52 bytes
+// spans     0x005398E0-0x00539914
+// prototype 
+// callers   0   call targets   1
 // 0x005398E0  ?pop_wait@@YAHXZ  ->  ?pop_wait@@YAHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

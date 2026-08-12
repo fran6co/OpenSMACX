@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005F85E0 BYTE_EXACT
+// name      ?on_mousewheel_up@Win@@QAEXH@Z
+// size      45 bytes
+// spans     0x005F85E0-0x005F860D
+// prototype void (__thiscall ?on_mousewheel_up@Win@@QAEXH@Z)(Win* this, int)
+// callers   1   call targets   1
 // 0x005F85E0  ?on_mousewheel_up@Win@@QAEXH@Z  ->  ?on_mousewheel_up@Win@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0057DF00 BYTE_EXACT
+// name      ?clear_bunglist@@YAXH@Z
+// size      47 bytes
+// spans     0x0057DF00-0x0057DF2F
+// prototype 
+// callers   3   call targets   0
 // 0x0057DF00  ?clear_bunglist@@YAXH@Z  ->  ?clear_bunglist@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00446B10 BYTE_EXACT
+// name      ?engine_pitch@FX@@QAEXH@Z
+// size      39 bytes
+// spans     0x00446B10-0x00446B37
+// prototype void (__thiscall ?engine_pitch@FX@@QAEXH@Z)(FX* this, int)
+// callers   1   call targets   0
 // 0x00446B10  ?engine_pitch@FX@@QAEXH@Z  ->  ?engine_pitch@FX@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

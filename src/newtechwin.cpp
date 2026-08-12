@@ -21,6 +21,11 @@
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00483E90 BYTE_EXACT
+// name      ?on_left_click@NewTechWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00483E90-0x00483E93
+// prototype void (__thiscall ?on_left_click@NewTechWin@@QAEXHH@Z)(NewTechWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -34,6 +39,11 @@ void __fastcall new_tech_win_on_left_click_redirect(NewTechWin *self, void *, in
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
 ORIGINAL: 0x00483EA0 BYTE_EXACT
+// name      ?on_key_click@NewTechWin@@QAEHHH@Z
+// size      8 bytes
+// spans     0x00483EA0-0x00483EA8
+// prototype int (__thiscall ?on_key_click@NewTechWin@@QAEHHH@Z)(NewTechWin* this, int, int)
+// callers   0   call targets   0
 Return Value: 1, always
 Status: Complete
 */

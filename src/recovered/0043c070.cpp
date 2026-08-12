@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0043C070 BYTE_EXACT
+// name      ?construct_chassis@DesignWin@@QAEXXZ
+// size      46 bytes
+// spans     0x0043C070-0x0043C09E
+// prototype void (__thiscall ?construct_chassis@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   0   call targets   1
 // 0x0043C070  ?construct_chassis@DesignWin@@QAEXXZ  ->  ?construct_chassis@DesignWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

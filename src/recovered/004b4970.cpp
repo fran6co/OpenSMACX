@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004B4970 BYTE_EXACT
+// name      ?say_orders@@YAXH@Z
+// size      22 bytes
+// spans     0x004B4970-0x004B4986
+// prototype void (__cdecl ?say_orders@@YAXH@Z)(int vehID)
+// callers   2   call targets   1
 // 0x004B4970  ?say_orders@@YAXH@Z  ->  ?say_orders@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

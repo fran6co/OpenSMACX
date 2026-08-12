@@ -25,6 +25,11 @@ func_base_pop_close BasePopOriginalClose = original_method<func_base_pop_close>(
 /*
 Purpose: Close the popup - its scroll bar first, then the popup base.
 ORIGINAL: 0x00404900
+// name      ?close@Popup@@QAEXXZ
+// size      23 bytes
+// spans     0x00404900-0x00404917
+// prototype void (__thiscall ?close@Popup@@QAEXXZ)(Popup* this)
+// callers   104   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -44,6 +49,11 @@ func_popup_start_full PopupOriginalStartFull =
 Purpose: The five-argument start form, forwarding to the six-argument one with
          no parent graphic window.
 ORIGINAL: 0x0043EF70
+// name      ?start@Popup@@QAEXPADPBDHPADH@Z
+// size      34 bytes
+// spans     0x0043EF70-0x0043EF92
+// prototype void (__thiscall ?start@Popup@@QAEXPADPBDHPADH@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int)
+// callers   5   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -61,6 +71,11 @@ char *PopupStartCaption = reinterpret_cast<char *>(0x009B8AA8);
 /*
 Purpose: Start a popup from just a label, defaulting the rest.
 ORIGINAL: 0x005A5990
+// name      ?start@Popup@@QAEXPBD@Z
+// size      29 bytes
+// spans     0x005A5990-0x005A59AD
+// prototype void (__thiscall ?start@Popup@@QAEXPBD@Z)(Popup* this, int8*)
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -71,6 +86,11 @@ void Popup::start(const char *label) {
 /*
 Purpose: Start a popup from a label and a value, defaulting the rest.
 ORIGINAL: 0x00559040
+// name      ?start@Popup@@QAEXPBDH@Z
+// size      31 bytes
+// spans     0x00559040-0x0055905F
+// prototype void (__thiscall ?start@Popup@@QAEXPBDH@Z)(Popup* this, int8* sectionID, int)
+// callers   2   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -91,6 +111,11 @@ void __fastcall popup_start_label_value_redirect(Popup *self, void *,
 Purpose: Draw a popup's dialog background; the legacy implementation does
          nothing and returns 0.
 ORIGINAL: 0x00405B10 BYTE_EXACT
+// name      ?on_dialog_back_draw@Popup@@QAEHPAUGraphicWin@@@Z
+// size      5 bytes
+// spans     0x00405B10-0x00405B15
+// prototype int (__thiscall ?on_dialog_back_draw@Popup@@QAEHPAUGraphicWin@@@Z)(Popup* this, GraphicWin*)
+// callers   0   call targets   0
 Return Value: 0, always
 Status: Complete
 */
@@ -109,6 +134,11 @@ Purpose: The most minimal pop() form - just a label and callback; shared
          caption buffer, value -1, no override text, title 0, null sprite,
          both flags fixed at 1.
 ORIGINAL: 0x00627130
+// name      ?pop@@YAHPADP6AHXZ@Z
+// size      36 bytes
+// spans     0x00627130-0x00627154
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -122,6 +152,11 @@ Purpose: Like pop_label_cb but with a caller-supplied caption in place of the
          shared buffer; value -1, no override text, title 0, null sprite,
          both flags fixed at 1.
 ORIGINAL: 0x00627160
+// name      ?pop@@YAHPADPADP6AHXZ@Z
+// size      36 bytes
+// spans     0x00627160-0x00627184
+// prototype 
+// callers   7   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -136,6 +171,11 @@ Purpose: Raise the caption-less, sprite-less popup with the shared caption
          buffer and caller-supplied value and title; no override text, both
          flags fixed at 1.
 ORIGINAL: 0x006271D0
+// name      ?pop@@YAHPADHHP6AHXZ@Z
+// size      42 bytes
+// spans     0x006271D0-0x006271FA
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -150,6 +190,11 @@ Purpose: Like pop_value_title but with a caller-supplied caption instead of
          the shared buffer; no override text, null sprite, both flags fixed
          at 1.
 ORIGINAL: 0x00627200
+// name      ?pop@@YAHPADPADHHP6AHXZ@Z
+// size      42 bytes
+// spans     0x00627200-0x0062722A
+// prototype 
+// callers   4   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -164,6 +209,11 @@ Purpose: Raise the caption-less, sprite-less popup with the shared caption
          buffer, value defaulted to -1 and only the title exposed; no
          override text, both flags fixed at 1.
 ORIGINAL: 0x00627230
+// name      ?pop@@YAHPADHP6AHXZ@Z
+// size      39 bytes
+// spans     0x00627230-0x00627257
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -177,6 +227,11 @@ Purpose: Like pop_title but with a caller-supplied caption instead of the
          shared buffer; value -1, no override text, null sprite, both flags
          fixed at 1.
 ORIGINAL: 0x00627260
+// name      ?pop@@YAHPADPADHP6AHXZ@Z
+// size      39 bytes
+// spans     0x00627260-0x00627287
+// prototype 
+// callers   4   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -191,6 +246,11 @@ Purpose: Raise the caption-less, sprite-less popup against the shared
          caption buffer with value, override text and title all
          caller-supplied; both flags fixed at 1.
 ORIGINAL: 0x00627290
+// name      ?pop@@YAHPADHPADHP6AHXZ@Z
+// size      45 bytes
+// spans     0x00627290-0x006272BD
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -205,6 +265,11 @@ Purpose: The full caption-less, sprite-less popup form - caption, value,
          override text and title all caller-supplied; null sprite, both
          flags fixed at 1.
 ORIGINAL: 0x006272C0
+// name      ?pop@@YAHPADPADHPADHP6AHXZ@Z
+// size      45 bytes
+// spans     0x006272C0-0x006272ED
+// prototype 
+// callers   1   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -219,6 +284,11 @@ Purpose: The most minimal pops() form - label, sprite and callback; shared
          caption buffer, value -1, no override text, title 0, both flags
          fixed at 1.
 ORIGINAL: 0x00627310
+// name      ?pops@@YAHPADPAUSprite@@P6AHXZ@Z
+// size      39 bytes
+// spans     0x00627310-0x00627337
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -233,6 +303,11 @@ Purpose: Like pops_minimal but with both flags caller-supplied instead of
          fixed at 1; shared caption buffer, value -1, no override text,
          title 0.
 ORIGINAL: 0x00627340
+// name      ?pops@@YAHPADPAUSprite@@HHP6AHXZ@Z
+// size      45 bytes
+// spans     0x00627340-0x0062736D
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -247,6 +322,11 @@ Purpose: Like pops_minimal but with a caller-supplied caption instead of the
          shared buffer; value -1, no override text, title 0, both flags
          fixed at 1.
 ORIGINAL: 0x00627370
+// name      ?pops@@YAHPADPADPAUSprite@@P6AHXZ@Z
+// size      39 bytes
+// spans     0x00627370-0x00627397
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -260,6 +340,11 @@ int __cdecl pops_caption(char *caption, char *label, Sprite *sprite,
 Purpose: Like pops_flags but with a caller-supplied caption in place of the
          shared buffer; value -1, no override text, title 0.
 ORIGINAL: 0x006273A0
+// name      ?pops@@YAHPADPADPAUSprite@@HHP6AHXZ@Z
+// size      45 bytes
+// spans     0x006273A0-0x006273CD
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -275,6 +360,11 @@ Purpose: Raise the full popup against the shared caption buffer with value
          and title exposed and the sprite caller-supplied; no override
          text, both flags fixed at 1.
 ORIGINAL: 0x006273D0
+// name      ?pops@@YAHPADHHPAUSprite@@P6AHXZ@Z
+// size      45 bytes
+// spans     0x006273D0-0x006273FD
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -288,6 +378,11 @@ int __cdecl pops_value_title(char *label, int value, int title,
 Purpose: Like pops_value_title but with both flags caller-supplied instead
          of fixed at 1; shared caption buffer, no override text.
 ORIGINAL: 0x00627400
+// name      ?pops@@YAHPADHHPAUSprite@@HHP6AHXZ@Z
+// size      51 bytes
+// spans     0x00627400-0x00627433
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -302,6 +397,11 @@ int __cdecl pops_value_title_flags(char *label, int value, int title,
 Purpose: Like pops_value_title but with a caller-supplied caption instead of
          the shared buffer; no override text, both flags fixed at 1.
 ORIGINAL: 0x006274D0
+// name      ?pops@@YAHPADPADHHPAUSprite@@P6AHXZ@Z
+// size      45 bytes
+// spans     0x006274D0-0x006274FD
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -316,6 +416,11 @@ int __cdecl pops_caption_value_title(char *caption, char *label, int value,
 Purpose: Raise the full popup with everything but the override text
          caller-supplied - caption, value, title, sprite and both flags.
 ORIGINAL: 0x00627500
+// name      ?pops@@YAHPADPADHHPAUSprite@@HHP6AHXZ@Z
+// size      51 bytes
+// spans     0x00627500-0x00627533
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -331,6 +436,11 @@ Purpose: Raise the full popup against the shared caption buffer with value
          defaulted to -1 and only the title and sprite exposed; no override
          text, both flags fixed at 1.
 ORIGINAL: 0x00627540
+// name      ?pops@@YAHPADHPAUSprite@@P6AHXZ@Z
+// size      42 bytes
+// spans     0x00627540-0x0062756A
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -344,6 +454,11 @@ int __cdecl pops_title(char *label, int title, Sprite *sprite,
 Purpose: Like pops_title but with both flags caller-supplied instead of
          fixed at 1; shared caption buffer, value -1, no override text.
 ORIGINAL: 0x00627570
+// name      ?pops@@YAHPADHPAUSprite@@HHP6AHXZ@Z
+// size      48 bytes
+// spans     0x00627570-0x006275A0
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -358,6 +473,11 @@ int __cdecl pops_title_flags(char *label, int title, Sprite *sprite,
 Purpose: Like pops_title but with a caller-supplied caption instead of the
          shared buffer; value -1, no override text, both flags fixed at 1.
 ORIGINAL: 0x006275A0
+// name      ?pops@@YAHPADPADHPAUSprite@@P6AHXZ@Z
+// size      42 bytes
+// spans     0x006275A0-0x006275CA
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -371,6 +491,11 @@ int __cdecl pops_caption_title(char *caption, char *label, int title,
 Purpose: Like pops_caption_title but with both flags caller-supplied instead
          of fixed at 1; value -1, no override text.
 ORIGINAL: 0x006275D0
+// name      ?pops@@YAHPADPADHPAUSprite@@HHP6AHXZ@Z
+// size      48 bytes
+// spans     0x006275D0-0x00627600
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -386,6 +511,11 @@ Purpose: Raise the full popup against the shared caption buffer with value,
          override text, title and sprite all caller-supplied; both flags
          fixed at 1.
 ORIGINAL: 0x00627600
+// name      ?pops@@YAHPADHPADHPAUSprite@@P6AHXZ@Z
+// size      48 bytes
+// spans     0x00627600-0x00627630
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -401,6 +531,11 @@ Purpose: Like pops_value_text_title but with both flags caller-supplied
          instead of fixed at 1; only the caption defaults to the shared
          buffer.
 ORIGINAL: 0x00627630
+// name      ?pops@@YAHPADHPADHPAUSprite@@HHP6AHXZ@Z
+// size      54 bytes
+// spans     0x00627630-0x00627666
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -416,6 +551,11 @@ Purpose: Raise the full popup with everything but the flags caller-supplied
          - caption, value, override text, title and sprite; both flags
          fixed at 1.
 ORIGINAL: 0x00627670
+// name      ?pops@@YAHPADPADHPADHPAUSprite@@P6AHXZ@Z
+// size      48 bytes
+// spans     0x00627670-0x006276A0
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever the full form returns
 Status: Complete
 */
@@ -450,6 +590,11 @@ Purpose: Sound a popup's wave. Nothing sounds unless bit 0x400 of the flag
          anything sounded - wave 0x19 fires the owner's virtual at 0x138
          and wave 0x10 plays effect 0x38.
 ORIGINAL: 0x004456B0
+// name      ?popup_wave_callback@@YAXPAUPopupWave@@H@Z
+// size      270 bytes
+// spans     0x004456B0-0x004457BE
+// prototype 
+// callers   0   call targets   4
 Return Value: n/a
 Status: Complete
 */
@@ -508,6 +653,11 @@ void __cdecl popup_wave_callback_redirect(PopupWave *popup, int a2) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x00404F80 BYTE_EXACT
+// name      ?on_redraw_nc@Popup@@QAEXPAURECT@@H@Z
+// size      3 bytes
+// spans     0x00404F80-0x00404F83
+// prototype void (__thiscall ?on_redraw_nc@Popup@@QAEXPAURECT@@H@Z)(Popup* this, RECT*, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -536,6 +686,11 @@ Purpose: Reset the button width to 20 unless the field at 0x30AC scales to
          Popup models fields only as far as its Scroll member, so both offsets
          are reached through documented raw offsets, as BasePop::UNK3 does.
 ORIGINAL: 0x00405020 BYTE_EXACT
+// name      ?on_adjust_button_width@Popup@@QAEXXZ
+// size      42 bytes
+// spans     0x00405020-0x0040504A
+// prototype void (__thiscall ?on_adjust_button_width@Popup@@QAEXXZ)(Popup* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -554,6 +709,11 @@ void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *) {
 
 /*
 ORIGINAL: 0x00404F90 BYTE_EXACT
+// name      ?on_nc_hittest@Popup@@QAEHHH@Z
+// size      20 bytes
+// spans     0x00404F90-0x00404FA4
+// prototype int (__thiscall ?on_nc_hittest@Popup@@QAEHHH@Z)(Popup* this, int, int)
+// callers   0   call targets   1
 Status: Complete
 */
 int Popup::on_nc_hittest(int a1, int a2) {

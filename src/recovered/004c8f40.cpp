@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004C8F40 BYTE_EXACT
+// name      ?unload@VoiceTx@@QAEHXZ
+// size      48 bytes
+// spans     0x004C8F40-0x004C8F70
+// prototype void (__thiscall ?unload@VoiceTx@@QAEXXZ)(VoiceTx* this)
+// callers   0   call targets   0
 // 0x004C8F40  ?unload@VoiceTx@@QAEHXZ  ->  ?unload@VoiceTx@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

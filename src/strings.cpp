@@ -21,6 +21,11 @@
 /*
 Purpose: Initialize the class instance with a new string table of the specified size.
 ORIGINAL: 0x006168F0
+// name      ?init@Strings@@QAEHH@Z
+// size      96 bytes
+// spans     0x006168F0-0x00616950
+// prototype int (__thiscall ?init@Strings@@QAEHH@Z)(Strings* this, int)
+// callers   4   call targets   5
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -39,6 +44,11 @@ BOOL Strings::init(size_t mem_size) {
 /*
 Purpose: Shutdown the class instance.
 ORIGINAL: 0x00616950
+// name      ?shutdown@Strings@@QAEHXZ
+// size      19 bytes
+// spans     0x00616950-0x00616963
+// prototype int (__thiscall ?shutdown@Strings@@QAEHXZ)(Strings* this)
+// callers   4   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -50,6 +60,11 @@ void Strings::shutdown() {
 /*
 Purpose: Put the input string into the string table.
 ORIGINAL: 0x00616970
+// name      ?put@Strings@@QAEHPAD@Z
+// size      45 bytes
+// spans     0x00616970-0x0061699D
+// prototype int (__thiscall ?put@Strings@@QAEHPAD@Z)(Strings* this, int8*)
+// callers   5   call targets   3
 Return Value: Address of the stored string
 Status: Complete
 */
@@ -63,6 +78,11 @@ LPSTR Strings::put(LPCSTR input) {
 /*
 Purpose: Check if the string address is within the table.
 ORIGINAL: 0x006169A0
+// name      ?get@Strings@@QAEHH@Z
+// size      27 bytes
+// spans     0x006169A0-0x006169BB
+// prototype int (__thiscall ?get@Strings@@QAEHH@Z)(Strings* this, int)
+// callers   290   call targets   0
 Return Value: Address of the stored string
 Status: Complete
 */

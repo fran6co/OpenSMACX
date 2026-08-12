@@ -29,6 +29,11 @@ Purpose: Reset the check box to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
 ORIGINAL: 0x0060E7C0
+// name      ?close@CheckBox@@QAEXXZ
+// size      57 bytes
+// spans     0x0060E7C0-0x0060E7F9
+// prototype void (__thiscall ?close@CheckBox@@QAEXXZ)(CheckBox* this)
+// callers   13   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -77,6 +82,11 @@ Purpose: Toggle one bit of the state word - clear it when set, set it when
          five bits by the hardware; `pos & 31` states that rather than relying
          on C++ shift-overflow, which is undefined rather than truncating.
 ORIGINAL: 0x0060EB50
+// name      ?UNK1@CheckBox@@QAEXH@Z
+// size      45 bytes
+// spans     0x0060EB50-0x0060EB7D
+// prototype void (__thiscall ?UNK1@CheckBox@@QAEXH@Z)(CheckBox* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -104,6 +114,11 @@ Purpose: Report whether one bit of the state word is set. Returns the MASKED
          further narrowing, so a caller testing it against 1 would read a
          different answer than the original gives.
 ORIGINAL: 0x0060ECC0
+// name      ?UNK2@CheckBox@@QAEHH@Z
+// size      32 bytes
+// spans     0x0060ECC0-0x0060ECE0
+// prototype int (__thiscall ?UNK2@CheckBox@@QAEHH@Z)(CheckBox* this, int)
+// callers   0   call targets   0
 Return Value: the state word masked to the requested bit
 Status: Complete
 */
@@ -125,6 +140,11 @@ int __fastcall check_box_unk2_redirect(CheckBox *self, void *, int pos) {
 Purpose: Set or clear one bit of the state word, chosen by the second argument.
          Unlike UNK1 this does not depend on the bit's current value.
 ORIGINAL: 0x0060EC80
+// name      ?set_state_pos@CheckBox@@QAEXHH@Z
+// size      49 bytes
+// spans     0x0060EC80-0x0060ECB1
+// prototype void (__thiscall ?set_state_pos@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -150,6 +170,11 @@ void __fastcall check_box_set_state_pos_redirect(CheckBox *self, void *,
 /*
 Purpose: Repaint on dialog focus, dispatching through the enclosing object.
 ORIGINAL: 0x0060FB90 BYTE_EXACT
+// name      ?on_dialog_focus@CheckBox@@QAEXH@Z
+// size      23 bytes
+// spans     0x0060FB90-0x0060FBA7
+// prototype void (__thiscall ?on_dialog_focus@CheckBox@@QAEXH@Z)(CheckBox* this, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -171,6 +196,11 @@ void CheckBox::on_dialog_focus(int a1) {
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
 ORIGINAL: 0x0060FC30 BYTE_EXACT
+// name      ?on_mouse_leave@CheckBox@@QAEXHH@Z
+// size      40 bytes
+// spans     0x0060FC30-0x0060FC58
+// prototype void (__thiscall ?on_mouse_leave@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */

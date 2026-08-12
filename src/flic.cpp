@@ -21,6 +21,11 @@
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x0062A710 BYTE_EXACT
+// name      ?UNK4@Flic@@QAEXXZ
+// size      1 bytes
+// spans     0x0062A710-0x0062A711
+// prototype void (__thiscall ?UNK4@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -30,6 +35,11 @@ void Flic::UNK4() {
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x0062AAF0 BYTE_EXACT
+// name      ?UNK5@Flic@@QAEXXZ
+// size      1 bytes
+// spans     0x0062AAF0-0x0062AAF1
+// prototype void (__thiscall ?UNK5@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -39,6 +49,11 @@ void Flic::UNK5() {
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x0062AB00 BYTE_EXACT
+// name      ?UNK6@Flic@@QAEXXZ
+// size      1 bytes
+// spans     0x0062AB00-0x0062AB01
+// prototype void (__thiscall ?UNK6@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -48,6 +63,11 @@ void Flic::UNK6() {
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x0062ACC0 BYTE_EXACT
+// name      ?UNK7@Flic@@QAEXXZ
+// size      1 bytes
+// spans     0x0062ACC0-0x0062ACC1
+// prototype void (__thiscall ?UNK7@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -57,6 +77,11 @@ void Flic::UNK7() {
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x0062B5F0 BYTE_EXACT
+// name      ?UNK8@Flic@@QAEXXZ
+// size      1 bytes
+// spans     0x0062B5F0-0x0062B5F1
+// prototype void (__thiscall ?UNK8@Flic@@QAEXXZ)(Flic* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */

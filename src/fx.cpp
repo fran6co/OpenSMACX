@@ -36,6 +36,11 @@ Purpose: Build the effect bank: the mirror image of the destructor below, one
          them count-then-size, so they arrive at the callee in the opposite
          order from the way they are written here.
 ORIGINAL: 0x004482A0
+// name      ??0FX@@QAE@XZ
+// size      27 bytes
+// spans     0x004482A0-0x004482BB
+// prototype void (__thiscall ??0FX@@QAE@XZ)(FX* this)
+// callers   1   call targets   1
 Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete
@@ -54,6 +59,11 @@ Purpose: Destroy the effect bank: hand the whole 0x61-element walk to the CRT
          vector iterator with the bank itself as the array base. Everything
          else is the per-element destructor's business.
 ORIGINAL: 0x00448290
+// name      ??1FX@@QAE@XZ
+// size      16 bytes
+// spans     0x00448290-0x004482A0
+// prototype void (__thiscall ??1FX@@QAE@XZ)(FX* this)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -67,6 +77,11 @@ void __fastcall fx_dtor_redirect(FX *self, void *) {
 
 /*
 ORIGINAL: 0x00446A90 BYTE_EXACT
+// name      ?stop@FX@@QAEXH@Z
+// size      25 bytes
+// spans     0x00446A90-0x00446AA9
+// prototype void (__thiscall ?stop@FX@@QAEXH@Z)(FX* this, int)
+// callers   1   call targets   0
 Status: Complete
 */
 void FX::stop(int a1) {
@@ -75,6 +90,11 @@ void FX::stop(int a1) {
 
 /*
 ORIGINAL: 0x00446AB0 BYTE_EXACT
+// name      ?release@FX@@QAEXH@Z
+// size      25 bytes
+// spans     0x00446AB0-0x00446AC9
+// prototype void (__thiscall ?release@FX@@QAEXH@Z)(FX* this, int)
+// callers   0   call targets   0
 Status: Complete
 */
 void FX::release(int a1) {
@@ -84,6 +104,11 @@ void FX::release(int a1) {
 
 /*
 ORIGINAL: 0x00446AD0 BYTE_EXACT
+// name      ?fade@FX@@QAEXH@Z
+// size      25 bytes
+// spans     0x00446AD0-0x00446AE9
+// prototype void (__thiscall ?fade@FX@@QAEXH@Z)(FX* this, int)
+// callers   4   call targets   0
 Status: Complete
 */
 void FX::fade(int a1) {

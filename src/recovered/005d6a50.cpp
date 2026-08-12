@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005D6A50 BYTE_EXACT
+// name      ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z
+// size      106 bytes
+// spans     0x005D6A50-0x005D6ABA
+// prototype 
+// callers   1   call targets   0
 // 0x005D6A50  ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z  ->  ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

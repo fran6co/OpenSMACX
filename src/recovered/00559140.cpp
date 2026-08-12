@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00559140 BYTE_EXACT
+// name      ?get_adjective_insult_faction@@YAPADH@Z
+// size      26 bytes
+// spans     0x00559140-0x0055915A
+// prototype int8* (__cdecl ?get_adjective_insult_faction@@YAPADH@Z)(int factionID)
+// callers   1   call targets   0
 // 0x00559140  ?get_adjective_insult_faction@@YAPADH@Z  ->  ?get_adjective_insult_faction@@YAPADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

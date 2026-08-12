@@ -27,6 +27,11 @@
 /*
 Purpose: Initialize an instance of the class.
 ORIGINAL: 0x0059A220
+// name      ?init@Path@@QAEXXZ
+// size      163 bytes
+// spans     0x0059A220-0x0059A2C3
+// prototype void (__thiscall ?init@Path@@QAEXXZ)(Path* this)
+// callers   6   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -43,6 +48,11 @@ void Path::init() {
 /*
  Purpose: Shutdown an instance of the class.
  ORIGINAL: 0x0059A2D0
+// name      ?shutdown@Path@@QAEXXZ
+// size      72 bytes
+// spans     0x0059A2D0-0x0059A318
+// prototype void (__thiscall ?shutdown@Path@@QAEXXZ)(Path* this)
+// callers   1   call targets   1
  Return Value: n/a
  Status: Complete
 */
@@ -85,6 +95,11 @@ void Path::set(uint32_t x, uint32_t y, int val) {
  Purpose: Check for unit zone of control conflicts taking into account land or ocean. This is a 
           slightly modified version of zoc_move() or zoc_sea().
  ORIGINAL: 0x0059A370
+// name      ?zoc_path@Path@@QAEHHHH@Z
+// size      439 bytes
+// spans     0x0059A370-0x0059A527
+// prototype int (__thiscall ?zoc_path@Path@@QAEHHHH@Z)(Path* this, int xCoord, int yCoord, int factionID)
+// callers   1   call targets   1
  Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
  Status: Complete
 */
@@ -121,6 +136,11 @@ int Path::zoc_path(int x, int y, int faction_id) {
 /*
  Purpose: Find the path between two points that meets the conditions?
  ORIGINAL: 0x0059A530
+// name      ?find@Path@@QAEHHHHHHHHH@Z
+// size      5845 bytes
+// spans     0x0059A530-0x0059BC05
+// prototype int (__thiscall ?find@Path@@QAEHHHHHHHHH@Z)(Path* this, int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int protoID, int factionID, int, int)
+// callers   7   call targets   11
  Return Value: TBD
  Status: WIP
 */
@@ -132,6 +152,11 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
 /*
  Purpose: TBD
  ORIGINAL: 0x0059BC10
+// name      ?move@Path@@QAEHHH@Z
+// size      1507 bytes
+// spans     0x0059BC10-0x0059C1F3
+// prototype int (__thiscall ?move@Path@@QAEHHH@Z)(Path* this, int vehID, int factionID)
+// callers   4   call targets   6
  Return Value: TBD
  Status: WIP
 */
@@ -173,6 +198,11 @@ int Path::move(int veh_id, int faction_id) {
 /*
  Purpose: Populate the abstract map with the radial region value.
  ORIGINAL: 0x0059C200
+// name      ?make_abstract@Path@@QAEXXZ
+// size      319 bytes
+// spans     0x0059C200-0x0059C33F
+// prototype void (__thiscall ?make_abstract@Path@@QAEXXZ)(Path* this)
+// callers   1   call targets   1
  Return Value: n/a
  Status: Complete
 */
@@ -196,6 +226,11 @@ void Path::make_abstract() {
 /*
  Purpose: Merge the old region into the new region.
  ORIGINAL: 0x0059C340
+// name      ?merge@Path@@QAEXHH@Z
+// size      119 bytes
+// spans     0x0059C340-0x0059C3B7
+// prototype void (__thiscall ?merge@Path@@QAEXHH@Z)(Path* this, int regionOld, int regionNew)
+// callers   0   call targets   0
  Return Value: n/a
  Status: Complete
 */
@@ -213,6 +248,11 @@ void Path::merge(int region_old, int region_new) {
  Purpose: Build the pathing tables using the provided coordinates to radiate outward for connected 
           land tiles owned by the specified faction.
  ORIGINAL: 0x0059C3C0
+// name      ?territory@Path@@QAEXHHHH@Z
+// size      347 bytes
+// spans     0x0059C3C0-0x0059C51B
+// prototype void (__thiscall ?territory@Path@@QAEXHHHH@Z)(Path* this, int xCoord, int yCoord, int region, int factionID)
+// callers   1   call targets   1
  Return Value: n/a
  Status: Complete
 */
@@ -246,6 +286,11 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 /*
  Purpose: Populate the continent and path table for the specified tile and region.
  ORIGINAL: 0x0059C520
+// name      ?continent@Path@@QAEXHHH@Z
+// size      609 bytes
+// spans     0x0059C520-0x0059C781
+// prototype void (__thiscall ?continent@Path@@QAEXHHH@Z)(Path* this, int xCoord, int yCoord, int region)
+// callers   1   call targets   3
  Return Value: n/a
  Status: Complete
 */
@@ -295,6 +340,11 @@ void Path::continent(int x, int y, int region) {
 /*
  Purpose: Populate and set up all the continents and path tables.
  ORIGINAL: 0x0059C790
+// name      ?continents@Path@@QAEXXZ
+// size      1293 bytes
+// spans     0x0059C790-0x0059CC9D
+// prototype void (__thiscall ?continents@Path@@QAEXXZ)(Path* this)
+// callers   3   call targets   5
  Return Value: n/a
  Status: Complete
 */
@@ -394,6 +444,11 @@ void Path::continents() {
 /*
  Purpose: TBD
  ORIGINAL: 0x0059CCA0
+// name      ?sensors@Path@@QAEHHPAHPAH@Z
+// size      1418 bytes
+// spans     0x0059CCA0-0x0059D22A
+// prototype int (__thiscall ?sensors@Path@@QAEHHPAHPAH@Z)(Path* this, int factionID, int* xCoordPtr, int* yCoordPtr)
+// callers   2   call targets   8
  Return Value: true/false
  Status: Complete - testing
 */

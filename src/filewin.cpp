@@ -21,6 +21,11 @@
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x00614B80 BYTE_EXACT
+// name      ?UNK6@FileWin@@QAEXXZ
+// size      1 bytes
+// spans     0x00614B80-0x00614B81
+// prototype void (__thiscall ?UNK6@FileWin@@QAEXXZ)(FileWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -34,6 +39,11 @@ void __fastcall file_win_unk6_redirect(FileWin *self, void *) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00614350 BYTE_EXACT
+// name      ?UNK2@FileWin@@QAEXH@Z
+// size      3 bytes
+// spans     0x00614350-0x00614353
+// prototype void (__thiscall ?UNK2@FileWin@@QAEXH@Z)(FileWin* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -48,6 +58,11 @@ void __fastcall file_win_unk2_redirect(FileWin *self, void *, int a1) {
 Purpose: Clear the file window's three name buffers, its selection index and
          one trailing flag.
 ORIGINAL: 0x00614320 BYTE_EXACT
+// name      ?UNK1@FileWin@@QAEXXZ
+// size      33 bytes
+// spans     0x00614320-0x00614341
+// prototype void (__thiscall ?UNK1@FileWin@@QAEXXZ)(FileWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -65,6 +80,11 @@ void __fastcall file_win_unk1_redirect(FileWin *self, void *) {
 
 /*
 ORIGINAL: 0x00614C40 BYTE_EXACT
+// name      ?on_double_clicked@FileWin@@QAEXH@Z
+// size      8 bytes
+// spans     0x00614C40-0x00614C48
+// prototype void (__thiscall ?on_double_clicked@FileWin@@QAEXH@Z)(FileWin* this, int)
+// callers   1   call targets   1
 Status: Complete
 */
 void FileWin::on_double_clicked(int a1) {

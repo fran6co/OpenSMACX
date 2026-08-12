@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005D8200 BYTE_EXACT
+// name      ?set_clip@Buffer@@QAEHHHHH@Z
+// size      61 bytes
+// spans     0x005D8200-0x005D823D
+// prototype int (__thiscall ?set_clip@Buffer@@QAEHHHHH@Z)(Buffer* this, int xLeft, int yTop, int length, int width)
+// callers   2   call targets   1
 // 0x005D8200  ?set_clip@Buffer@@QAEHHHHH@Z  ->  ?set_clip@Buffer@@QAEHHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

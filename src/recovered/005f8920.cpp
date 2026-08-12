@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005F8920 BYTE_EXACT
+// name      ?init@PullDown@@QAEXPAUMenu@@@Z
+// size      71 bytes
+// spans     0x005F8920-0x005F8967
+// prototype void (__thiscall ?init@PullDown@@QAEXPAUMenu@@@Z)(PullDown* this, Menu*)
+// callers   12   call targets   1
 // 0x005F8920  ?init@PullDown@@QAEXPAUMenu@@@Z  ->  ?init@PullDown@@QAEXPAUMenu@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004E09B0 BYTE_EXACT
+// name      ?editor_kill_vehicles@Console@@QAEXXZ
+// size      41 bytes
+// spans     0x004E09B0-0x004E09D9
+// prototype void (__thiscall ?editor_kill_vehicles@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   3
 // 0x004E09B0  ?editor_kill_vehicles@Console@@QAEXXZ  ->  ?editor_kill_vehicles@Console@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

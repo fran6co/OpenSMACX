@@ -22,6 +22,11 @@
 /*
 Purpose: Shutdown the class instance.
 ORIGINAL: 0x005D45B0
+// name      ?shutdown@Heap@@QAEXXZ
+// size      42 bytes
+// spans     0x005D45B0-0x005D45DA
+// prototype void (__thiscall ?shutdown@Heap@@QAEXXZ)(Heap* this)
+// callers   93   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -39,6 +44,11 @@ void Heap::shutdown() {
 /*
 Purpose: Deflate the heap of any free memory.
 ORIGINAL: 0x005D45E0
+// name      ?squeeze@Heap@@QAEXH@Z
+// size      53 bytes
+// spans     0x005D45E0-0x005D4615
+// prototype void (__thiscall ?squeeze@Heap@@QAEXH@Z)(Heap* this, int toggle)
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -55,6 +65,11 @@ void Heap::squeeze(int UNUSED(toggle)) {
 /*
 Purpose: Initialize the class instance and allocate the requested memory size.
 ORIGINAL: 0x005D4620
+// name      ?init@Heap@@QAE_NH@Z
+// size      85 bytes
+// spans     0x005D4620-0x005D4675
+// prototype bool (__thiscall ?init@Heap@@QAE_NH@Z)(Heap* this, int)
+// callers   7   call targets   2
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -76,6 +91,11 @@ BOOL Heap::init(size_t req_size) {
 Purpose: Get the requested memory size. If there currently isn't enough memory to meet the request, 
          allocate additional memory in blocks of 1024 bytes until request is met.
 ORIGINAL: 0x005D4680
+// name      ?get@Heap@@QAEPAXH@Z
+// size      331 bytes
+// spans     0x005D4680-0x005D47CB
+// prototype void* (__thiscall ?get@Heap@@QAEPAXH@Z)(Heap* this, int reqSize)
+// callers   17   call targets   5
 Return Value: Memory pointer with address to requested size
 Status: Complete
 */

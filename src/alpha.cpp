@@ -49,6 +49,11 @@ uint32_t *Language = (uint32_t *)0x009BC054;
 /*
 Purpose: Convert the tech name string to a numeric tech id.
 ORIGINAL: 0x00584D60
+// name      ?tech_name@@YAHPAD@Z
+// size      219 bytes
+// spans     0x00584D60-0x00584E3B
+// prototype int (__cdecl ?tech_name@@YAHPAD@Z)(int8* techID)
+// callers   6   call targets   4
 Return Value: Tech id; 'None' (-1); 'Disabled' (-2); or error (-2)
 Status: Complete
 */
@@ -75,6 +80,11 @@ int __cdecl tech_name(LPSTR name) {
 /*
 Purpose: Convert the chassis name string to a numeric chassis id.
 ORIGINAL: 0x00584E40
+// name      ?chas_name@@YAHPAD@Z
+// size      243 bytes
+// spans     0x00584E40-0x00584F33
+// prototype 
+// callers   1   call targets   5
 Return Value: Chassis id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
@@ -101,6 +111,11 @@ int __cdecl chas_name(LPSTR name) {
 /*
 Purpose: Convert the weapon name string to a numeric weapon id.
 ORIGINAL: 0x00584F40
+// name      ?weap_name@@YAHPAD@Z
+// size      240 bytes
+// spans     0x00584F40-0x00585030
+// prototype 
+// callers   1   call targets   5
 Return Value: Weapon id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
@@ -127,6 +142,11 @@ int __cdecl weap_name(LPSTR name) {
 /*
 Purpose: Convert the armor name string to a numeric armor id.
 ORIGINAL: 0x00585030
+// name      ?arm_name@@YAHPAD@Z
+// size      240 bytes
+// spans     0x00585030-0x00585120
+// prototype 
+// callers   1   call targets   5
 Return Value: Armor id; 'None' (-1); 'Disabled' (-2); or error (0)
 Status: Complete
 */
@@ -153,6 +173,11 @@ int __cdecl arm_name(LPSTR name) {
 /*
 Purpose: Parse the current tech name inside the Txt item buffer into a tech id.
 ORIGINAL: 0x00585150 BYTE_EXACT
+// name      ?tech_item@@YAHXZ
+// size      20 bytes
+// spans     0x00585150-0x00585164
+// prototype 
+// callers   0   call targets   3
 Return Value: Tech id
 Status: Complete
 */
@@ -164,6 +189,11 @@ int __cdecl tech_item() {
 /*
 Purpose: Parse the #RULES & #WORLDBUILDER sections inside the alpha(x).txt.
 ORIGINAL: 0x00585170
+// name      ?read_basic_rules@@YAHXZ
+// size      3254 bytes
+// spans     0x00585170-0x00585E26
+// prototype 
+// callers   1   call targets   6
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -294,6 +324,11 @@ BOOL __cdecl read_basic_rules() {
 /*
 Purpose: Parse the #TECHNOLOGY section inside the alpha(x).txt with a duplicate entry check.
 ORIGINAL: 0x00585E30
+// name      ?read_tech@@YAHXZ
+// size      427 bytes
+// spans     0x00585E30-0x00585FDB
+// prototype 
+// callers   1   call targets   12
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -348,6 +383,11 @@ BOOL __cdecl read_tech() {
 /*
 Purpose: Clear the rule values for the specified player.
 ORIGINAL: 0x00585FE0
+// name      ?clear_faction@@YAXPAUPlayer@@@Z
+// size      105 bytes
+// spans     0x00585FE0-0x00586049
+// prototype void (__cdecl ?clear_faction@@YAXPAUPlayer@@@Z)(Player* player)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -372,6 +412,11 @@ void __cdecl clear_faction(Player *player) {
 /*
 Purpose: Parse the faction's file and art for the specified player id.
 ORIGINAL: 0x00586050
+// name      ?read_faction@@YAXH@Z
+// size      49 bytes
+// spans     0x00586050-0x00586081
+// prototype 
+// callers   3   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -386,6 +431,11 @@ void __cdecl read_faction(int player_id) {
 Purpose: Parse the 1st eight lines of the specified faction's file into a player structure. The 
          toggle parameter will end the function early if set to 2 (original code never uses this).
 ORIGINAL: 0x00586090
+// name      ?read_faction@@YAXPAUPlayer@@H@Z
+// size      3739 bytes
+// spans     0x00586090-0x00586F2B
+// prototype void (__cdecl ?read_faction@@YAXPAUPlayer@@H@Z)(Player* player, int type)
+// callers   4   call targets   15
 Return Value: n/a
 Status: Complete
 */
@@ -673,6 +723,11 @@ void __cdecl read_faction(Player *player, int toggle) {
 /*
 Purpose: Parse the #BONUSNAMES, #FACTIONS, and #NEWFACTIONS sections inside the alpha(x).txt.
 ORIGINAL: 0x00586F30
+// name      ?read_factions@@YAHXZ
+// size      665 bytes
+// spans     0x00586F30-0x005871C9
+// prototype 
+// callers   1   call targets   9
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -746,12 +801,22 @@ BOOL __cdecl read_factions() {
 /*
 Purpose: Parse and set the noun item's gender and plurality from the Txt buffer.
 ORIGINAL: 0x005871D0 BYTE_EXACT
+// name      ?noun_item@@YAXPAHPAH@Z
+// size      110 bytes
+// spans     0x005871D0-0x0058723E
+// prototype 
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
 /*
 Purpose: Set the noun's gender and plurality from the current Txt item.
 ORIGINAL: 0x005871D0
+// name      ?noun_item@@YAXPAHPAH@Z
+// size      110 bytes
+// spans     0x005871D0-0x0058723E
+// prototype 
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -783,6 +848,11 @@ void __cdecl noun_item(int *gender, int *plurality) {
 /*
 Purpose: Parse the #UNITS section inside the alpha(x).txt.
 ORIGINAL: 0x00587240
+// name      ?read_units@@YAHXZ
+// size      369 bytes
+// spans     0x00587240-0x005873B1
+// prototype 
+// callers   1   call targets   11
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -840,6 +910,11 @@ BOOL __cdecl read_units() {
 Purpose: Parse in all the game rules via alpha/x.txt. If the toggle param is set to true, parse the
          #UNITS & #FACTIONS sections. Otherwise, skip both. New game vs reload?
 ORIGINAL: 0x005873C0
+// name      ?read_rules@@YAHH@Z
+// size      3804 bytes
+// spans     0x005873C0-0x0058829C
+// prototype BOOL (__cdecl ?read_rules@@YAHH@Z)(BOOL tglAllRules)
+// callers   3   call targets   23
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -1232,6 +1307,11 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
 /*
 Purpose: Attempt to read the setting's value from the ini file.
 ORIGINAL: 0x0059D980
+// name      ?prefs_get@@YAPADPADPADH@Z
+// size      153 bytes
+// spans     0x0059D980-0x0059DA19
+// prototype int8* (__cdecl ?prefs_get@@YAPADPADPADH@Z)(int8* lpKeyName, int8* lpDefault, int)
+// callers   4   call targets   2
 Return Value: Key's string value from the ini or default if not set
 Status: Complete
 */
@@ -1250,6 +1330,11 @@ LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default)
 /*
 Purpose: Get the default value for the 1st set of preferences.
 ORIGINAL: 0x0059DA20
+// name      ?default_prefs@@YAHXZ
+// size      121 bytes
+// spans     0x0059DA20-0x0059DA99
+// prototype 
+// callers   1   call targets   3
 Return Value: Default preferences
 Status: Complete
 */
@@ -1269,6 +1354,11 @@ uint32_t __cdecl default_prefs() {
 /*
 Purpose: Get the default value for the 2nd set of preferences.
 ORIGINAL: 0x0059DAA0
+// name      ?default_prefs2@@YAHXZ
+// size      121 bytes
+// spans     0x0059DAA0-0x0059DB19
+// prototype 
+// callers   1   call targets   3
 Return Value: Default preferences 2nd set
 Status: Complete
 */
@@ -1284,6 +1374,11 @@ uint32_t __cdecl default_prefs2() {
 /*
 Purpose: Get the default value for the warning pop-up preferences.
 ORIGINAL: 0x0059DB20
+// name      ?default_warn@@YAHXZ
+// size      6 bytes
+// spans     0x0059DB20-0x0059DB26
+// prototype 
+// callers   1   call targets   0
 Return Value: Default warning preferences
 Status: Complete
 */
@@ -1297,6 +1392,11 @@ uint32_t __cdecl default_warn() {
 /*
 Purpose: Get the default value for the rule related preferences.
 ORIGINAL: 0x0059DB30
+// name      ?default_rules@@YAHXZ
+// size      6 bytes
+// spans     0x0059DB30-0x0059DB36
+// prototype 
+// callers   2   call targets   0
 Return Value: Default rule preferences
 Status: Complete
 */
@@ -1308,6 +1408,11 @@ uint32_t __cdecl default_rules() {
 /*
 Purpose: Attempt to read the setting's value from the ini file.
 ORIGINAL: 0x0059DB40
+// name      ?prefs_get@@YAHPADHH@Z
+// size      137 bytes
+// spans     0x0059DB40-0x0059DBC9
+// prototype int (__cdecl ?prefs_get@@YAHPADHH@Z)(LPCSTR keyName, int defaultValue, BOOL useDefault)
+// callers   17   call targets   4
 Return Value: Key's integer value from the ini or default if not set
 Status: Complete
 */
@@ -1327,6 +1432,11 @@ Purpose: Read the faction filenames and search for keys from the ini file (SMACX
          the added effect of forcing the player's search_key to be set to the filename value. 
          Rewrote almost the entire function because of how terrible the original code logic was.
 ORIGINAL: 0x0059DBD0
+// name      ?prefs_fac_load@@YAXXZ
+// size      280 bytes
+// spans     0x0059DBD0-0x0059DCE8
+// prototype 
+// callers   1   call targets   4
 Return Value: n/a
 Status: Complete
 */
@@ -1356,6 +1466,11 @@ void __cdecl prefs_fac_load() {
 /*
 Purpose: Load the most common preferences from the game's ini to globals.
 ORIGINAL: 0x0059DCF0
+// name      ?prefs_load@@YAXH@Z
+// size      2066 bytes
+// spans     0x0059DCF0-0x0059E502
+// prototype void (__cdecl ?prefs_load@@YAXH@Z)(BOOL useDefault)
+// callers   3   call targets   8
 Return Value: n/a
 Status: Complete
 */
@@ -1401,6 +1516,11 @@ void __cdecl prefs_load(BOOL use_default) {
 /*
 Purpose: Write the string value to the pref key of the ini.
 ORIGINAL: 0x0059E510
+// name      ?prefs_put@@YAXPADPAD@Z
+// size      31 bytes
+// spans     0x0059E510-0x0059E52F
+// prototype void (__cdecl ?prefs_put@@YAXPADPAD@Z)(int8* lpKeyName, int8* lpString)
+// callers   7   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1411,6 +1531,11 @@ void __cdecl prefs_put(LPCSTR key_name, LPCSTR value) {
 /*
 Purpose: Write the value as either an integer or a binary string to the pref key inside the ini.
 ORIGINAL: 0x0059E530
+// name      ?prefs_put@@YAXPADHH@Z
+// size      157 bytes
+// spans     0x0059E530-0x0059E5CD
+// prototype void (__cdecl ?prefs_put@@YAXPADHH@Z)(int8* lpKeyName, int, int)
+// callers   12   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -1423,6 +1548,11 @@ void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
 /*
 Purpose: Save the most common preferences from memory to the game's ini. 
 ORIGINAL: 0x0059E5D0
+// name      ?prefs_save@@YAXH@Z
+// size      886 bytes
+// spans     0x0059E5D0-0x0059E946
+// prototype void (__cdecl ?prefs_save@@YAXH@Z)(BOOL saveFactions)
+// callers   17   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -1459,6 +1589,11 @@ void __cdecl prefs_save(BOOL save_factions) {
 /*
 Purpose: Set the internal game preference globals from the ini setting globals.
 ORIGINAL: 0x0059E950
+// name      ?prefs_use@@YAXXZ
+// size      35 bytes
+// spans     0x0059E950-0x0059E973
+// prototype 
+// callers   6   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1491,6 +1626,11 @@ std::string __cdecl prefs_get_binary(int value) {
 /*
 Purpose: Parse the #LABELS section inside the labels.txt file.
 ORIGINAL: 0x00616A00
+// name      ?labels_init@@YAHXZ
+// size      147 bytes
+// spans     0x00616A00-0x00616A93
+// prototype 
+// callers   3   call targets   7
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -1515,6 +1655,11 @@ BOOL __cdecl labels_init() {
 /*
 Purpose: Shutdown or reset the labels global variable.
 ORIGINAL: 0x006169D0
+// name      ?labels_shutdown@@YAXXZ
+// size      39 bytes
+// spans     0x006169D0-0x006169F7
+// prototype 
+// callers   4   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -1529,6 +1674,11 @@ void __cdecl labels_shutdown() {
 /*
 Purpose: Set the game's language.
 ORIGINAL: 0x00627100
+// name      ?set_language@@YAXH@Z
+// size      10 bytes
+// spans     0x00627100-0x0062710A
+// prototype void (__cdecl ?set_language@@YAXH@Z)(int lang)
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1539,6 +1689,11 @@ void __cdecl set_language(int language) {
 /*
 Purpose: Get the label string and concatenate it to the stringTemp buffer.
 ORIGINAL: 0x005A5880
+// name      ?say_label@@YAXH@Z
+// size      42 bytes
+// spans     0x005A5880-0x005A58AA
+// prototype void (__cdecl ?say_label@@YAXH@Z)(int labelID)
+// callers   1   call targets   2
 Return Value: n/a
 Status: Complete
 */

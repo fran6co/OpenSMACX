@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004C5F70 BYTE_EXACT
+// name      ?unload_sound_dll@@YAXXZ
+// size      53 bytes
+// spans     0x004C5F70-0x004C5FA5
+// prototype 
+// callers   0   call targets   0
 // 0x004C5F70  ?unload_sound_dll@@YAXXZ  ->  ?unload_sound_dll@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

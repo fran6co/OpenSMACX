@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00592DE0 BYTE_EXACT
+// name      sub_592de0
+// size      46 bytes
+// spans     0x00592DE0-0x00592E0E
+// prototype 
+// callers   0   call targets   1
 // 0x00592DE0  sub_592de0  ->  _sub_592de0
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

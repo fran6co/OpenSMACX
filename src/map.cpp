@@ -66,6 +66,11 @@ LPCSTR MapExtension = "MP";
 /*
 Purpose: Check whether the coordinates are on the map.
 ORIGINAL: 0x004712A0
+// name      ?on_map@@YAHHH@Z
+// size      44 bytes
+// spans     0x004712A0-0x004712CC
+// prototype BOOL (__cdecl ?on_map@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   7   call targets   0
 Return Value: Are the coordinates on the map? true/false
 Status: Complete
 */
@@ -76,6 +81,11 @@ BOOL __cdecl on_map(int x, int y) {
 /*
 Purpose: Bounds check and handling of x coordinate for round maps.
 ORIGINAL: 0x0048BEE0
+// name      ?xrange@@YAHH@Z
+// size      37 bytes
+// spans     0x0048BEE0-0x0048BF05
+// prototype 
+// callers   4   call targets   0
 Return Value: X coordinate
 Status: Complete
 */
@@ -95,6 +105,11 @@ int __cdecl xrange(int x) {
 /*
 Purpose: Check who owns a tile. Optional parameter to get closest base.
 ORIGINAL: 0x004E3EF0
+// name      ?whose_territory@@YAHHHHPAHH@Z
+// size      173 bytes
+// spans     0x004E3EF0-0x004E3F9D
+// prototype int (__cdecl ?whose_territory@@YAHHHHPAHH@Z)(int factionID, int xCoord, int yCoord, int* baseID, int ignoreComm)
+// callers   40   call targets   1
 Return Value: Faction id of the territory's owner or -1 if no owner or unknown faction
 Status: Complete
 */
@@ -120,6 +135,11 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
 /*
 Purpose: Find closest base to territory owned by another faction not at war with specified faction.
 ORIGINAL: 0x004E3FA0
+// name      ?base_territory@@YAHHHH@Z
+// size      119 bytes
+// spans     0x004E3FA0-0x004E4017
+// prototype int (__cdecl ?base_territory@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
+// callers   2   call targets   1
 Return Value: Base id or -1
 Status: Complete
 */
@@ -136,6 +156,11 @@ int __cdecl base_territory(int faction_id, int x, int y) {
 /*
 Purpose: For the specified tile, calculate the quality of the terrain.
 ORIGINAL: 0x004ECB90
+// name      ?crappy@@YAHHH@Z
+// size      81 bytes
+// spans     0x004ECB90-0x004ECBE1
+// prototype int (__cdecl ?crappy@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   0   call targets   0
 Return Value: Quality of terrain, lower is better (0-2)
 Status: Complete
 */
@@ -159,6 +184,11 @@ Purpose: Take the absolute distance between two points as parameters to calculat
          radiate. This is mainly used to determine proximity or how far away the two points are from
          each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
 ORIGINAL: 0x004F8090
+// name      ?vector_dist@@YAHHH@Z
+// size      59 bytes
+// spans     0x004F8090-0x004F80CB
+// prototype int (__cdecl ?vector_dist@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   5   call targets   1
 Return Value: Distance radius
 Status: Complete
 */
@@ -180,6 +210,11 @@ int __cdecl vector_dist(int x_distance, int y_distance) {
 Purpose: Take two points and calculate how far out they radiate. This is mainly used to determine
          proximity or how far away the two points are from each other in a rough circle shape.
 ORIGINAL: 0x005A5910
+// name      ?vector_dist@@YAHHHHH@Z
+// size      119 bytes
+// spans     0x005A5910-0x005A5987
+// prototype 
+// callers   1   call targets   1
 Return Value: Distance radius
 Status: Complete
 */
@@ -191,6 +226,11 @@ int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point
 Purpose: Check whether there is a path between two regions. It seems to only take into account land
          destinations. TODO: Revisit in the future when Continent/Path is complete.
 ORIGINAL: 0x0050DDC0
+// name      ?sea_coast@@YAHHH@Z
+// size      64 bytes
+// spans     0x0050DDC0-0x0050DE00
+// prototype int (__cdecl ?sea_coast@@YAHHH@Z)(int regionDst, int regionSrc)
+// callers   2   call targets   1
 Return Value: Is there a path? true/false
 Status: Complete
 */
@@ -205,6 +245,11 @@ BOOL __cdecl sea_coast(int region_dst, int region_src) {
 Purpose: Count the number of paths from the source region. It seems to only take into account land 
          source and destination ranges. TODO: Revisit in the future when Continent/Path is complete.
 ORIGINAL: 0x0050DE00
+// name      ?sea_coasts@@YAHH@Z
+// size      73 bytes
+// spans     0x0050DE00-0x0050DE49
+// prototype 
+// callers   1   call targets   1
 Return Value: Sea coasts valid path count
 Status: Complete
 */
@@ -223,6 +268,11 @@ Purpose: Check to see whether base is within a one tile radius of a sea tile wit
          If you pass a land region (<63) as the 2nd parameter, it is possible to get collision
          behavior due to region bounding. TODO: Revisit in the future to see whether to remove them.
 ORIGINAL: 0x0050DE50
+// name      ?base_on_sea@@YAHHH@Z
+// size      216 bytes
+// spans     0x0050DE50-0x0050DF28
+// prototype int (__cdecl ?base_on_sea@@YAHHH@Z)(int baseID, int region)
+// callers   10   call targets   0
 Return Value: Is base connected to specified sea region? true/false
 Status: Complete
 */
@@ -254,6 +304,11 @@ Purpose: Determine the ocean region for coastal bases. There is an issue if a ba
          the Continents compare logic isn't used by anything. This might be the root cause of
          outlined bug. TODO: Revisit in the future once more is known about Continent structure.
 ORIGINAL: 0x0050DF30
+// name      ?base_coast@@YAHH@Z
+// size      241 bytes
+// spans     0x0050DF30-0x0050E021
+// prototype int (__cdecl ?base_coast@@YAHH@Z)(int baseID)
+// callers   3   call targets   0
 Return Value: Ocean region or -1 if landlocked
 Status: Complete
 */
@@ -280,6 +335,11 @@ int __cdecl base_coast(int base_id) {
 /*
 Purpose: Check to see if a port base shares a common body of water with destination coastal region.
 ORIGINAL: 0x0050E030
+// name      ?port_to_coast@@YAHHH@Z
+// size      298 bytes
+// spans     0x0050E030-0x0050E15A
+// prototype int (__cdecl ?port_to_coast@@YAHHH@Z)(int baseID, int region)
+// callers   2   call targets   1
 Return Value: Is port and coastal region accessible by water to each other? true/false
 Status: Complete
 */
@@ -305,6 +365,11 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
 /*
 Purpose: Check to see if two port bases share a common body of water determined by region.
 ORIGINAL: 0x0050E160
+// name      ?port_to_port@@YAHHH@Z
+// size      422 bytes
+// spans     0x0050E160-0x0050E306
+// prototype int (__cdecl ?port_to_port@@YAHHH@Z)(int baseIDSrc, int baseIDDst)
+// callers   7   call targets   0
 Return Value: Are both ports accessible by water to each other? true/false
 Status: Complete
 */
@@ -332,6 +397,11 @@ BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
 Purpose: Determine if a base has access to ports or more than one coastal region. This helps
          prioritize whether naval transports should be built.
 ORIGINAL: 0x0050E310
+// name      ?transport_base@@YAHH@Z
+// size      173 bytes
+// spans     0x0050E310-0x0050E3BD
+// prototype int (__cdecl ?transport_base@@YAHH@Z)(int baseID)
+// callers   1   call targets   2
 Return Value: Should base build naval transports? true/false
 Status: Complete
 */
@@ -349,6 +419,11 @@ BOOL __cdecl transport_base(int base_id) {
 /*
 Purpose: Determine if there are other faction's ports in the vicinity of the specified base.
 ORIGINAL: 0x0050E3C0
+// name      ?naval_base@@YAHH@Z
+// size      510 bytes
+// spans     0x0050E3C0-0x0050E5BE
+// prototype int (__cdecl ?naval_base@@YAHH@Z)(int baseID)
+// callers   1   call targets   1
 Return Value: Does base have a strategic naval importance? true/false
 Status: Complete
 */
@@ -370,6 +445,11 @@ BOOL __cdecl naval_base(int base_id) {
 /*
 Purpose: Determine if specified unit can set up a convoy route with specified base.
 ORIGINAL: 0x0050E5C0
+// name      ?convoy@@YAHHH@Z
+// size      604 bytes
+// spans     0x0050E5C0-0x0050E81C
+// prototype int (__cdecl ?convoy@@YAHHH@Z)(int vehID, int baseID)
+// callers   1   call targets   0
 Return Value: Is a convoy route possible? true/false
 Status: Complete
 */
@@ -396,6 +476,11 @@ BOOL __cdecl convoy(int veh_id, int base_id) {
 /*
 Purpose: Validate region bounds. Bad regions include: 0, 63, 64, 127, 128.
 ORIGINAL: 0x005591C0
+// name      ?bad_reg@@YAHH@Z
+// size      29 bytes
+// spans     0x005591C0-0x005591DD
+// prototype 
+// callers   1   call targets   0
 Return Value: Is region bad? true/false
 Status: Complete
 */
@@ -406,6 +491,11 @@ BOOL __cdecl bad_reg(int region) {
 /*
 Purpose: Determine whether specified unit can physically reach the destination coordinates.
 ORIGINAL: 0x0056B320
+// name      ?get_there@@YAHHHH@Z
+// size      349 bytes
+// spans     0x0056B320-0x0056B47D
+// prototype int (__cdecl ?get_there@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
+// callers   1   call targets   5
 Return Value: Can unit reach tile? true/false
 Status: Complete
 */
@@ -441,6 +531,11 @@ Purpose: Determine whether point A is a coast or border tile. It seems that the 
          Modified return value to boolean rather than returning i. It is always treated as boolean
          and makes a lot more sense than returning the iterator position.
 ORIGINAL: 0x0056B480
+// name      ?coast_or_border@@YAHHHHHH@Z
+// size      297 bytes
+// spans     0x0056B480-0x0056B5A9
+// prototype int (__cdecl ?coast_or_border@@YAHHHHHH@Z)(int xCoordPtA, int yCoordPtA, int xCoordPtB, int yCoordPtB, int factionID)
+// callers   1   call targets   1
 Return Value: Is point A considered a border or coast? true/false
 Status: Complete
 */
@@ -486,6 +581,11 @@ uint32_t __cdecl temp_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Set the temperature for the specified tile.
 ORIGINAL: 0x00591AD0
+// name      ?temp_set@@YAXHHH@Z
+// size      53 bytes
+// spans     0x00591AD0-0x00591B05
+// prototype 
+// callers   4   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -508,6 +608,11 @@ uint32_t __cdecl climate_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Set the rainfall (climate) for the specified tile.
 ORIGINAL: 0x00591A80
+// name      ?climate_set@@YAXHHH@Z
+// size      78 bytes
+// spans     0x00591A80-0x00591ACE
+// prototype void (__cdecl ?climate_set@@YAXHHH@Z)(int xCoord, int yCoord, int climate)
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -522,6 +627,11 @@ void __cdecl climate_set(int x, int y, int rainfall) {
 /*
 Purpose: Calculate the elevation of the specified tile.
 ORIGINAL: 0x005919C0
+// name      ?elev_at@@YAHHH@Z
+// size      183 bytes
+// spans     0x005919C0-0x00591A77
+// prototype int (__cdecl ?elev_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
 Return Value: Elevation (bounded to: -3000 to 3500)
 Status: Complete
 */
@@ -536,6 +646,11 @@ int __cdecl elev_at(int x, int y) {
 /*
 Purpose: Calculate the natural altitude of the specified tile.
 ORIGINAL: 0x005918A0
+// name      ?alt_natural@@YAHHH@Z
+// size      79 bytes
+// spans     0x005918A0-0x005918EF
+// prototype 
+// callers   1   call targets   0
 Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain tops)
 Status: Complete
 */
@@ -552,6 +667,11 @@ int __cdecl alt_natural(int x, int y) {
 Purpose: Set both the altitude and natural altitude for the specified tile. The altitude_natural
          parameter can be between 0 to 9.
 ORIGINAL: 0x005918F0
+// name      ?alt_set_both@@YAXHHH@Z
+// size      208 bytes
+// spans     0x005918F0-0x005919C0
+// prototype void (__cdecl ?alt_set_both@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
+// callers   2   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -566,6 +686,11 @@ void __cdecl alt_set_both(int x, int y, int altitude_natural) {
 /*
 Purpose: Get the bit shifted (down) altitude of the specified tile.
 ORIGINAL: 0x00500150
+// name      ?alt_at@@YAHHH@Z
+// size      43 bytes
+// spans     0x00500150-0x0050017B
+// prototype int (__cdecl ?alt_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
 Return Value: Altitude
 Status: Complete
 */
@@ -586,6 +711,11 @@ int __cdecl altitude_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Get the altitude details of the specified tile.
 ORIGINAL: 0x00500180
+// name      ?alt_detail_at@@YAHHH@Z
+// size      41 bytes
+// spans     0x00500180-0x005001A9
+// prototype int (__cdecl ?alt_detail_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
 Return Value: Altitude detail
 Status: Complete
 */
@@ -596,6 +726,11 @@ int __cdecl alt_detail_at(int x, int y) {
 /*
 Purpose: Set the altitude details for the specified tile.
 ORIGINAL: 0x00591260
+// name      ?alt_put_detail@@YAXHHH@Z
+// size      40 bytes
+// spans     0x00591260-0x00591288
+// prototype void (__cdecl ?alt_put_detail@@YAXHHH@Z)(int xCoord, int yCoord, int detail)
+// callers   5   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -616,6 +751,11 @@ uint32_t __cdecl owner_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Set the faction owner for the specified tile.
 ORIGINAL: 0x00591B10
+// name      ?owner_set@@YAXHHH@Z
+// size      56 bytes
+// spans     0x00591B10-0x00591B48
+// prototype void (__cdecl ?owner_set@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   13   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -628,6 +768,11 @@ void __cdecl owner_set(int x, int y, int faction_id) {
 /*
 Purpose: Set the site for the specified tile.
 ORIGINAL: 0x00591B50
+// name      ?site_set@@YAXHHH@Z
+// size      54 bytes
+// spans     0x00591B50-0x00591B86
+// prototype void (__cdecl ?site_set@@YAXHHH@Z)(int xCoord, int yCoord, int site)
+// callers   9   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -640,6 +785,11 @@ void __cdecl site_set(int x, int y, int site) {
 /*
 Purpose: Get the region of the specified tile.
 ORIGINAL: 0x00500220
+// name      ?region_at@@YAHHH@Z
+// size      41 bytes
+// spans     0x00500220-0x00500249
+// prototype int (__cdecl ?region_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   2   call targets   0
 Return Value: Region
 Status: Complete
 */
@@ -650,6 +800,11 @@ int __cdecl region_at(int x, int y) {
 /*
 Purpose: Set the region for the specified tile.
 ORIGINAL: 0x00591B90
+// name      ?region_set@@YAXHHH@Z
+// size      40 bytes
+// spans     0x00591B90-0x00591BB8
+// prototype void (__cdecl ?region_set@@YAXHHH@Z)(int xCoord, int yCoord, int region)
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -670,6 +825,11 @@ uint32_t __cdecl using_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Set the using faction id for the specified tile.
 ORIGINAL: 0x00591C10
+// name      ?using_set@@YAXHHH@Z
+// size      56 bytes
+// spans     0x00591C10-0x00591C48
+// prototype void (__cdecl ?using_set@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   4   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -692,6 +852,11 @@ uint32_t __cdecl lock_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Set the lock faction id for the specified tile.
 ORIGINAL: 0x00591C50
+// name      ?lock_set@@YAHHHH@Z
+// size      56 bytes
+// spans     0x00591C50-0x00591C88
+// prototype int (__cdecl ?lock_set@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -704,6 +869,11 @@ void __cdecl lock_set(int x, int y, int faction_id) {
 /*
 Purpose: Lock the specified tile for the faction id.
 ORIGINAL: 0x00591C90
+// name      ?lock_map@@YAHHHH@Z
+// size      82 bytes
+// spans     0x00591C90-0x00591CE2
+// prototype int (__cdecl ?lock_map@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   1   call targets   0
 Return Value: True if already locked by another faction, otherwise false
 Status: Complete
 */
@@ -721,6 +891,11 @@ BOOL __cdecl lock_map(int x, int y, int faction_id) {
 /*
 Purpose: Unlock the specified tile for faction id.
 ORIGINAL: 0x00591CF0
+// name      ?unlock_map@@YAXHHH@Z
+// size      57 bytes
+// spans     0x00591CF0-0x00591D29
+// prototype void (__cdecl ?unlock_map@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -743,6 +918,11 @@ uint32_t __cdecl rocky_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Set the rockiness for the specified tile.
 ORIGINAL: 0x00591BC0
+// name      ?rocky_set@@YAXHHH@Z
+// size      78 bytes
+// spans     0x00591BC0-0x00591C0E
+// prototype void (__cdecl ?rocky_set@@YAXHHH@Z)(int xCoord, int yCoord, int rocky)
+// callers   11   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -757,6 +937,11 @@ void __cdecl rocky_set(int x, int y, int rocky) {
 /*
 Purpose: Get the bit of the specified tile.
 ORIGINAL: 0x005001B0
+// name      ?bit_at@@YAHHH@Z
+// size      37 bytes
+// spans     0x005001B0-0x005001D5
+// prototype int (__cdecl ?bit_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
 Return Value: Bitfield
 Status: Complete
 */
@@ -767,6 +952,11 @@ int __cdecl bit_at(int x, int y) {
 /*
 Purpose: Set the bit for the specified tile.
 ORIGINAL: 0x00591D30
+// name      ?bit_put@@YAXHHH@Z
+// size      40 bytes
+// spans     0x00591D30-0x00591D58
+// prototype void (__cdecl ?bit_put@@YAXHHH@Z)(int xCoord, int yCoord, int bit)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -777,6 +967,11 @@ void __cdecl bit_put(int x, int y, int bit) {
 /*
 Purpose: Set or unset bit for the specified tile.
 ORIGINAL: 0x00591D60
+// name      ?bit_set@@YAXHHHH@Z
+// size      66 bytes
+// spans     0x00591D60-0x00591DA2
+// prototype void (__cdecl ?bit_set@@YAXHHHH@Z)(int xCoord, int yCoord, int bit, int)
+// callers   32   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -801,6 +996,11 @@ uint32_t __cdecl bit2_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Set or unset bit2 for the specified tile.
 ORIGINAL: 0x00591DB0
+// name      ?bit2_set@@YAXHHHH@Z
+// size      66 bytes
+// spans     0x00591DB0-0x00591DF2
+// prototype void (__cdecl ?bit2_set@@YAXHHHH@Z)(int xCoord, int yCoord, int bit2, int)
+// callers   19   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -825,6 +1025,11 @@ uint32_t __cdecl code_at(uint32_t x, uint32_t y) {
 /*
 Purpose: Set the code for the specified tile which keeps track of tile sequence order for landmarks.
 ORIGINAL: 0x00591E00
+// name      ?code_set@@YAXHHH@Z
+// size      69 bytes
+// spans     0x00591E00-0x00591E45
+// prototype void (__cdecl ?code_set@@YAXHHH@Z)(int xCoord, int yCoord, int)
+// callers   16   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -838,6 +1043,11 @@ void __cdecl code_set(int x, int y, int code) {
 /*
 Purpose: Synchronize the actual tile bit with the faction visible bit.
 ORIGINAL: 0x00591E50
+// name      ?synch_bit@@YAXHHH@Z
+// size      50 bytes
+// spans     0x00591E50-0x00591E82
+// prototype void (__cdecl ?synch_bit@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   24   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -850,6 +1060,11 @@ void __cdecl synch_bit(int x, int y, int faction_id) {
 /*
 Purpose: Determine the tile's mineral count that translates to rockiness.
 ORIGINAL: 0x00591F00
+// name      ?minerals_at@@YAHHH@Z
+// size      263 bytes
+// spans     0x00591F00-0x00592007
+// prototype int (__cdecl ?minerals_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   2   call targets   0
 Return Value: 0 (Flat), 1 (Rolling), 2 (Rocky)
 Status: Complete
 */
@@ -895,6 +1110,11 @@ int __cdecl minerals_at(int x, int y) {
 Purpose: Determine if the tile has a resource bonus. While the last parameter is unused, it's set to
          1 by two calls inside world_site(). Otherwise, all other calls have it set to 0.
 ORIGINAL: 0x00592030
+// name      ?bonus_at@@YAHHHH@Z
+// size      261 bytes
+// spans     0x00592030-0x00592135
+// prototype int (__cdecl ?bonus_at@@YAHHHH@Z)(int xCoord, int yCoord, int unkVal)
+// callers   17   call targets   0
 Return Value: 0 (no bonus), 1 (nutrient), 2 (mineral), 3 (energy)
 Status: Complete
 */
@@ -928,6 +1148,11 @@ int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
 /*
 Purpose: Determine if the tile has a supply pod and if so what type.
 ORIGINAL: 0x00592140
+// name      ?goody_at@@YAHHH@Z
+// size      264 bytes
+// spans     0x00592140-0x00592248
+// prototype int (__cdecl ?goody_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   14   call targets   0
 Return Value: 0 (no supply pod), 1 (standard supply pod), 2 (unity pod?)
 Status: Complete
 */
@@ -958,6 +1183,11 @@ int __cdecl goody_at(int x, int y) {
 /*
 Purpose: Clear the map's site values in a radius from the tile.
 ORIGINAL: 0x00592400
+// name      ?site_radius@@YAXHHH@Z
+// size      128 bytes
+// spans     0x00592400-0x00592480
+// prototype void (__cdecl ?site_radius@@YAXHHH@Z)(int xCoord, int yCoord, int)
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -975,6 +1205,11 @@ void __cdecl site_radius(int x, int y, int UNUSED(unk_val)) {
 /*
 Purpose: Search for the first landmark found within the radius range of the specified tile.
 ORIGINAL: 0x00592550
+// name      ?find_landmark@@YAHHHH@Z
+// size      168 bytes
+// spans     0x00592550-0x005925F8
+// prototype 
+// callers   5   call targets   0
 Return Value: Landmark offset or -1 if none found
 Status: Complete
 */
@@ -997,6 +1232,11 @@ int __cdecl find_landmark(int x, int y, int radius_range_offset) {
 /*
 Purpose: Set up a new landmark with the provided name at the specified tile.
 ORIGINAL: 0x00592600
+// name      ?new_landmark@@YAHHHPAD@Z
+// size      75 bytes
+// spans     0x00592600-0x0059264B
+// prototype int (__cdecl ?new_landmark@@YAHHHPAD@Z)(int xCoord, int yCoord, int8* name)
+// callers   18   call targets   1
 Return Value: Landmark offset or -1 if max landmark count is reached
 Status: Complete
 */
@@ -1016,6 +1256,11 @@ int __cdecl new_landmark(int x, int y, LPCSTR name) {
 /*
 Purpose: Check whether the specified faction has permission to name a landmark on the provided tile.
 ORIGINAL: 0x00592650
+// name      ?valid_landmark@@YAHHHH@Z
+// size      159 bytes
+// spans     0x00592650-0x005926EF
+// prototype int (__cdecl ?valid_landmark@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   2   call targets   2
 Return Value: Does the faction have control of the tile to set a landmark? true/false
 Status: Complete
 */
@@ -1035,6 +1280,11 @@ BOOL __cdecl valid_landmark(int x, int y, int faction_id) {
 /*
 Purpose: Remove the landmark at the specified tile.
 ORIGINAL: 0x005926F0
+// name      ?kill_landmark@@YAXHH@Z
+// size      224 bytes
+// spans     0x005926F0-0x005927D0
+// prototype void (__cdecl ?kill_landmark@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1054,6 +1304,11 @@ void __cdecl kill_landmark(int x, int y) {
 Purpose: Check if coordinates are considered near or on coast. Radius (excludes actual coordinates)
          can either be all the squares directly around the coordinates or same as Base '+' radius.
 ORIGINAL: 0x004E49D0
+// name      ?is_coast@@YAHHHH@Z
+// size      193 bytes
+// spans     0x004E49D0-0x004E4A91
+// prototype int (__cdecl ?is_coast@@YAHHHH@Z)(int xCoord, int yCoord, int isBaseRadius)
+// callers   10   call targets   0
 Return Value: Is tile coast? true/false
 Status: Complete
 */
@@ -1072,6 +1327,11 @@ BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius) {
 /*
 Purpose: Check whether the specified tile is part of an ocean.
 ORIGINAL: 0x005001E0
+// name      ?is_ocean@@YAHHH@Z
+// size      49 bytes
+// spans     0x005001E0-0x00500211
+// prototype int (__cdecl ?is_ocean@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   0
 Return Value: Is tile ocean? true/false
 Status: Complete
 */
@@ -1082,6 +1342,11 @@ BOOL __cdecl is_ocean(int x, int y) {
 /*
 Purpose: Get the owner of the specified tile if there is a unit in it.
 ORIGINAL: 0x00500250
+// name      ?veh_who@@YAHHH@Z
+// size      56 bytes
+// spans     0x00500250-0x00500288
+// prototype int (__cdecl ?veh_who@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   0
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
@@ -1099,6 +1364,11 @@ int __cdecl veh_who(int x, int y) {
 /*
 Purpose: Rebuild the Map's unit related values.
 ORIGINAL: 0x00532A90
+// name      ?rebuild_vehicle_bits@@YAXXZ
+// size      211 bytes
+// spans     0x00532A90-0x00532B63
+// prototype 
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1122,6 +1392,11 @@ void __cdecl rebuild_vehicle_bits() {
 /*
 Purpose: Rebuild the Map's base related values.
 ORIGINAL: 0x00532B70
+// name      ?rebuild_base_bits@@YAXXZ
+// size      187 bytes
+// spans     0x00532B70-0x00532C2B
+// prototype 
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1143,6 +1418,11 @@ void __cdecl rebuild_base_bits() {
 /*
 Purpose: Calculate the distance between two x coordinates with handling for round maps.
 ORIGINAL: 0x00579790
+// name      ?x_dist@@YAHHH@Z
+// size      55 bytes
+// spans     0x00579790-0x005797C7
+// prototype 
+// callers   1   call targets   1
 Return Value: Distance
 Status: Complete
 */
@@ -1157,6 +1437,11 @@ int __cdecl x_dist(int x_point_a, int x_point_b) {
 /*
 Purpose: Check whether a faction can see the specified tile.
 ORIGINAL: 0x00579840
+// name      ?is_known@@YAHHHH@Z
+// size      86 bytes
+// spans     0x00579840-0x00579896
+// prototype int (__cdecl ?is_known@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   1   call targets   0
 Return Value: Is tile visible/known to faction? true/false
 Status: Complete
 */
@@ -1168,6 +1453,11 @@ BOOL __cdecl is_known(int x, int y, int faction_id) {
 /*
 Purpose: If a base exists, get the owner of the specified tile.
 ORIGINAL: 0x005798A0
+// name      ?base_who@@YAHHH@Z
+// size      56 bytes
+// spans     0x005798A0-0x005798D8
+// prototype 
+// callers   2   call targets   0
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
@@ -1185,6 +1475,11 @@ int __cdecl base_who(int x, int y) {
 /*
 Purpose: If a base or unit exists, get the owner of the specified tile.
 ORIGINAL: 0x005798E0
+// name      ?anything_at@@YAHHH@Z
+// size      56 bytes
+// spans     0x005798E0-0x00579918
+// prototype int (__cdecl ?anything_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
 Return Value: Owner (faction id) or -1
 Status: Complete
 */
@@ -1202,6 +1497,11 @@ int __cdecl anything_at(int x, int y) {
 /*
 Purpose: Shutdown allocated map variables.
 ORIGINAL: 0x00590E90
+// name      ?map_shutdown@@YAXXZ
+// size      53 bytes
+// spans     0x00590E90-0x00590EC5
+// prototype 
+// callers   3   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -1219,6 +1519,11 @@ void __cdecl map_shutdown() {
 /*
 Purpose: Initialize map variables.
 ORIGINAL: 0x00590ED0
+// name      ?map_init@@YAXXZ
+// size      358 bytes
+// spans     0x00590ED0-0x00591036
+// prototype 
+// callers   6   call targets   7
 Return Value: n/a
 Status: Complete
 */
@@ -1246,6 +1551,11 @@ BOOL __cdecl map_init() {
 /*
 Purpose: Reset the map to a blank state. Doesn't wipe unk_1 and territory fields.
 ORIGINAL: 0x00591040
+// name      ?map_wipe@@YAXXZ
+// size      112 bytes
+// spans     0x00591040-0x005910B0
+// prototype 
+// callers   3   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -1270,6 +1580,11 @@ void __cdecl map_wipe() {
 /*
 Purpose: Write map data to a file.
 ORIGINAL: 0x005910B0
+// name      ?map_write@@YAHPAUFILE@@@Z
+// size      117 bytes
+// spans     0x005910B0-0x00591125
+// prototype int (__cdecl ?map_write@@YAHPAUFILE@@@Z)(FILE* file)
+// callers   2   call targets   1
 Return Value: Did an error occur? true/false
 Status: Complete
 */
@@ -1285,6 +1600,11 @@ BOOL __cdecl map_write(FILE *map_file) {
 /*
 Purpose: Read the map data from a file and write it into memory.
 ORIGINAL: 0x00591130
+// name      ?map_read@@YAHPAUFILE@@@Z
+// size      216 bytes
+// spans     0x00591130-0x00591208
+// prototype int (__cdecl ?map_read@@YAHPAUFILE@@@Z)(FILE* file)
+// callers   2   call targets   4
 Return Value: Did an error occur? true/false
 Status: Complete
 */
@@ -1309,6 +1629,11 @@ BOOL __cdecl map_read(FILE *map_file) {
 /*
 Purpose: Get the region value for the specified tile.
 ORIGINAL: 0x00591210
+// name      ?abstract_at@@YAHHH@Z
+// size      32 bytes
+// spans     0x00591210-0x00591230
+// prototype int (__cdecl ?abstract_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
 Return Value: Abstract value (region)
 Status: Complete
 */
@@ -1319,6 +1644,11 @@ uint8_t __cdecl abstract_at(int x, int y) {
 /*
 Purpose: Set the region value for the specified tile.
 ORIGINAL: 0x00591230
+// name      ?abstract_set@@YAXHHE@Z
+// size      35 bytes
+// spans     0x00591230-0x00591253
+// prototype void (__cdecl ?abstract_set@@YAXHHE@Z)(int xCoord, int yCoord, unsigned int8 val)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1330,6 +1660,11 @@ void __cdecl abstract_set(int x, int y, uint8_t region) {
 Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conflict is found, store
          the coordinates of the tile inside ZOC pointers.
 ORIGINAL: 0x00593830
+// name      ?quick_zoc@@YAXHHHHHPAH0@Z
+// size      460 bytes
+// spans     0x00593830-0x005939FC
+// prototype void (__cdecl ?quick_zoc@@YAXHHHHHPAH0@Z)(int xCoordSrc, int yCoordSrc, int factionID, int xCoordDst, int yCoordDst, int* xCoordZoc, int* yCoordZoc)
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -1359,6 +1694,11 @@ void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int 
 /*
 Purpose: Determine if the specified offsets are within the range radius.
 ORIGINAL: 0x005A65A0
+// name      ?radius_move@@YAHHHH@Z
+// size      48 bytes
+// spans     0x005A65A0-0x005A65D0
+// prototype int (__cdecl ?radius_move@@YAHHHH@Z)(int xCoord, int yCoord, int range)
+// callers   1   call targets   0
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
@@ -1374,6 +1714,11 @@ int __cdecl radius_move(int x_radius_off, int y_radius_off, int range) {
 /*
 Purpose: Determine if the specified two tiles are within the range radius of each other.
 ORIGINAL: 0x005A65D0
+// name      ?radius_move@@YAHHHHHH@Z
+// size      92 bytes
+// spans     0x005A65D0-0x005A662C
+// prototype int (__cdecl ?radius_move@@YAHHHHHH@Z)(int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int range)
+// callers   4   call targets   0
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
@@ -1391,6 +1736,11 @@ int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range) {
 /*
 Purpose: Determine if the specified two tiles are within the radius directionally of each other.
 ORIGINAL: 0x005A6630
+// name      ?compass_move@@YAHHHHH@Z
+// size      176 bytes
+// spans     0x005A6630-0x005A66E0
+// prototype int (__cdecl ?compass_move@@YAHHHHH@Z)(int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst)
+// callers   1   call targets   0
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
@@ -1443,6 +1793,11 @@ static int site_xrange(int x) {
 /*
 Purpose: Check whether there is a sensor available in the specified tile.
 ORIGINAL: 0x005BF010
+// name      ?is_sensor@@YAHHH@Z
+// size      285 bytes
+// spans     0x005BF010-0x005BF12D
+// prototype int (__cdecl ?is_sensor@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   8   call targets   3
 Return Value: 0 (no sensor), 1 (sensor array via terraforming), 2 (Geosynchronous Survey Pod)
 Status: Complete
 */
@@ -1468,6 +1823,11 @@ int __cdecl is_sensor(int x, int y) {
 /*
 Purpose: Check whether a sensor array is worth building on the specified tile.
 ORIGINAL: 0x00564EB0
+// name      ?good_sensor@@YAHHHH@Z
+// size      679 bytes
+// spans     0x00564EB0-0x00565157
+// prototype int (__cdecl ?good_sensor@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
+// callers   2   call targets   5
 Return Value: Is the tile a good sensor site? true/false
 Status: Complete
 
@@ -1601,6 +1961,11 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
 /*
 Purpose: Check if faction controls the initial tile (code offset 0) of the Manifold Nexus.
 ORIGINAL: 0x005BF130
+// name      ?has_temple@@YAHH@Z
+// size      190 bytes
+// spans     0x005BF130-0x005BF1EE
+// prototype int (__cdecl ?has_temple@@YAHH@Z)(int factionID)
+// callers   1   call targets   1
 Return Value: Does faction control Nexus? true/false
 Status: Complete
 */
@@ -1621,6 +1986,11 @@ BOOL __cdecl has_temple(int faction_id) {
 /*
 Purpose: Handle setting the world altitude.
 ORIGINAL: 0x005C2020
+// name      ?world_alt_set@@YAXHHHH@Z
+// size      852 bytes
+// spans     0x005C2020-0x005C2374
+// prototype void (__cdecl ?world_alt_set@@YAXHHHH@Z)(int xCoord, int yCoord, int altitude, int isSetBoth)
+// callers   23   call targets   4
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1679,6 +2049,11 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
 /*
 Purpose: Handle raising the altitude of the specified tile.
 ORIGINAL: 0x005C2380
+// name      ?world_raise_alt@@YAXHH@Z
+// size      94 bytes
+// spans     0x005C2380-0x005C23DE
+// prototype void (__cdecl ?world_raise_alt@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   4   call targets   1
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1694,6 +2069,11 @@ void __cdecl world_raise_alt(int x, int y) {
 /*
 Purpose: Handle lowering the altitude of the specified tile.
 ORIGINAL: 0x005C23E0
+// name      ?world_lower_alt@@YAXHH@Z
+// size      91 bytes
+// spans     0x005C23E0-0x005C243B
+// prototype 
+// callers   3   call targets   1
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1709,6 +2089,11 @@ void __cdecl world_lower_alt(int x, int y) {
 /*
 Purpose: Set up the brush for creating world terrain.
 ORIGINAL: 0x005C2440
+// name      ?brush@@YAXHHH@Z
+// size      929 bytes
+// spans     0x005C2440-0x005C27E1
+// prototype void (__cdecl ?brush@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
+// callers   1   call targets   3
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1771,6 +2156,11 @@ void __cdecl brush(int x, int y, int altitude) {
 /*
 Purpose: Paint land to assist in the creation of the world terrain.
 ORIGINAL: 0x005C27F0
+// name      ?paint_land@@YAXHHHH@Z
+// size      246 bytes
+// spans     0x005C27F0-0x005C28E6
+// prototype void (__cdecl ?paint_land@@YAXHHHH@Z)(int xCoord, int yCoord, int altitude, int radius)
+// callers   2   call targets   2
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1802,6 +2192,11 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
 /*
 Purpose: Build out the map continents.
 ORIGINAL: 0x005C28F0
+// name      ?build_continent@@YAXH@Z
+// size      588 bytes
+// spans     0x005C28F0-0x005C2B3C
+// prototype 
+// callers   1   call targets   3
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1860,6 +2255,11 @@ void __cdecl build_continent(int size) {
 /*
 Purpose: Build out the map hills.
 ORIGINAL: 0x005C2B40
+// name      ?build_hills@@YAXH@Z
+// size      360 bytes
+// spans     0x005C2B40-0x005C2CA8
+// prototype 
+// callers   1   call targets   3
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1905,6 +2305,11 @@ void __cdecl build_hills(int altitude) {
 /*
 Purpose: Build out the world river beds.
 ORIGINAL: 0x005C3680
+// name      ?world_riverbeds@@YAXXZ
+// size      559 bytes
+// spans     0x005C3680-0x005C38AF
+// prototype 
+// callers   1   call targets   2
 Return Value: n/a
 Status: Complete - testing
 */
@@ -1956,6 +2361,11 @@ void __cdecl world_riverbeds() {
 /*
 Purpose: Determine if there are any issues with how the world continents are set up.
 ORIGINAL: 0x005C40F0
+// name      ?world_validate@@YAHXZ
+// size      123 bytes
+// spans     0x005C40F0-0x005C416B
+// prototype 
+// callers   1   call targets   1
 Return Value: Are there any issues with the world continents? true/false
 Status: Complete - testing
 */
@@ -1982,6 +2392,11 @@ BOOL __cdecl world_validate() {
 /*
 Purpose: Set up the world temperature.
 ORIGINAL: 0x005C4170
+// name      ?world_temperature@@YAXXZ
+// size      657 bytes
+// spans     0x005C4170-0x005C4401
+// prototype 
+// callers   2   call targets   4
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2049,6 +2464,11 @@ static Map *site_tile(int x, int y) {
 /*
 Purpose: Score the specified tile as a site for a new base.
 ORIGINAL: 0x005C4FD0
+// name      ?world_site@@YAHHHH@Z
+// size      1509 bytes
+// spans     0x005C4FD0-0x005C55B5
+// prototype 
+// callers   8   call targets   2
 Return Value: Site value 0 (unusable) or 1-15
 Status: Complete
 
@@ -2241,6 +2661,11 @@ int __cdecl world_site(int x, int y, BOOL is_ocean_site) {
 /*
 Purpose: Analysis of the world map.
 ORIGINAL: 0x005C55C0
+// name      ?world_analysis@@YAXXZ
+// size      760 bytes
+// spans     0x005C55C0-0x005C58B8
+// prototype 
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2306,6 +2731,11 @@ void __cdecl world_analysis() {
 /*
 Purpose: Set the default altitude details for the specified tile.
 ORIGINAL: 0x005C58C0
+// name      ?world_alt_put_detail@@YAXHH@Z
+// size      27 bytes
+// spans     0x005C58C0-0x005C58DB
+// prototype void (__cdecl ?world_alt_put_detail@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -2316,6 +2746,11 @@ void __cdecl world_alt_put_detail(int x, int y) {
 /*
 Purpose: Set up the world polar caps.
 ORIGINAL: 0x005C58E0
+// name      ?world_polar_caps@@YAXXZ
+// size      335 bytes
+// spans     0x005C58E0-0x005C5A2F
+// prototype 
+// callers   2   call targets   2
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2336,6 +2771,11 @@ void __cdecl world_polar_caps() {
 /*
 Purpose: Set up the world contours.
 ORIGINAL: 0x005C5AE0
+// name      ?world_linearize_contours@@YAXXZ
+// size      227 bytes
+// spans     0x005C5AE0-0x005C5BC3
+// prototype 
+// callers   2   call targets   3
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2356,6 +2796,11 @@ void __cdecl world_linearize_contours() {
 /*
 Purpose: Determine if the specified tile is near a landmark.
 ORIGINAL: 0x005C5BD0
+// name      ?near_landmark@@YAHHH@Z
+// size      145 bytes
+// spans     0x005C5BD0-0x005C5C61
+// prototype BOOL (__cdecl ?near_landmark@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   0
 Return Value: Is the tile near a landmark? true/false
 Status: Complete
 */
@@ -2373,6 +2818,11 @@ BOOL __cdecl near_landmark(int x, int y) {
 /*
 Purpose: Setup the 'Garland Crater' landmark.
 ORIGINAL: 0x005C5C70
+// name      ?world_crater@@YAXHH@Z
+// size      639 bytes
+// spans     0x005C5C70-0x005C5EEF
+// prototype void (__cdecl ?world_crater@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   4   call targets   9
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2418,6 +2868,11 @@ void __cdecl world_crater(int x, int y) {
 /*
 Purpose: Setup the 'Monsoon Jungle' landmark.
 ORIGINAL: 0x005C5EF0
+// name      ?world_monsoon@@YAXHH@Z
+// size      784 bytes
+// spans     0x005C5EF0-0x005C6200
+// prototype void (__cdecl ?world_monsoon@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   8
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2466,6 +2921,11 @@ void __cdecl world_monsoon(int x, int y) {
 /*
 Purpose: Setup the 'New Sargasso' landmark.
 ORIGINAL: 0x005C6200
+// name      ?world_sargasso@@YAXHH@Z
+// size      664 bytes
+// spans     0x005C6200-0x005C6498
+// prototype void (__cdecl ?world_sargasso@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   7
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2511,6 +2971,11 @@ void __cdecl world_sargasso(int x, int y) {
 /*
 Purpose: Setup 'The Ruins' landmark.
 ORIGINAL: 0x005C64A0
+// name      ?world_ruin@@YAXHH@Z
+// size      660 bytes
+// spans     0x005C64A0-0x005C6734
+// prototype void (__cdecl ?world_ruin@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   7
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2560,6 +3025,11 @@ void __cdecl world_ruin(int x, int y) {
 /*
 Purpose: Setup the 'Great Dunes' landmark.
 ORIGINAL: 0x005C6740
+// name      ?world_dune@@YAXHH@Z
+// size      667 bytes
+// spans     0x005C6740-0x005C69DB
+// prototype void (__cdecl ?world_dune@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   9
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2603,6 +3073,11 @@ void __cdecl world_dune(int x, int y) {
 /*
 Purpose: Setup the 'Uranium Flats' landmark.
 ORIGINAL: 0x005C69E0
+// name      ?world_diamond@@YAXHH@Z
+// size      593 bytes
+// spans     0x005C69E0-0x005C6C31
+// prototype void (__cdecl ?world_diamond@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   8
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2642,6 +3117,11 @@ void __cdecl world_diamond(int x, int y) {
 /*
 Purpose: Setup the 'Freshwater Sea' landmark.
 ORIGINAL: 0x005C6C40
+// name      ?world_fresh@@YAXHH@Z
+// size      356 bytes
+// spans     0x005C6C40-0x005C6DA4
+// prototype void (__cdecl ?world_fresh@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   3
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2689,6 +3169,11 @@ void __cdecl world_fresh(int x, int y) {
 /*
 Purpose: Setup the 'Mount Planet' landmark.
 ORIGINAL: 0x005C6DB0
+// name      ?world_volcano@@YAXHHH@Z
+// size      614 bytes
+// spans     0x005C6DB0-0x005C7016
+// prototype void (__cdecl ?world_volcano@@YAXHHH@Z)(int xCoord, int yCoord, int)
+// callers   4   call targets   8
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2738,6 +3223,11 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
 /*
 Purpose: Setup the 'Borehole Cluster' landmark. Added to SMAC in 3.0 patch.
 ORIGINAL: 0x005C7020
+// name      ?world_borehole@@YAXHH@Z
+// size      1307 bytes
+// spans     0x005C7020-0x005C753B
+// prototype void (__cdecl ?world_borehole@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   8
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2826,6 +3316,11 @@ void __cdecl world_borehole(int x, int y) {
 /*
 Purpose: Setup 'The Manifold Nexus' landmark. Added to SMAC in 4.0 patch.
 ORIGINAL: 0x005C7540
+// name      ?world_temple@@YAXHH@Z
+// size      521 bytes
+// spans     0x005C7540-0x005C7749
+// prototype void (__cdecl ?world_temple@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   7
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2862,6 +3357,11 @@ void __cdecl world_temple(int x, int y) {
 /*
 Purpose: Setup the 'Unity Wreckage' landmark (SMACX only).
 ORIGINAL: 0x005C7750
+// name      ?world_unity@@YAXHH@Z
+// size      805 bytes
+// spans     0x005C7750-0x005C7A75
+// prototype void (__cdecl ?world_unity@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   8
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2926,6 +3426,11 @@ void __cdecl world_unity(int x, int y) {
 /*
 Purpose: Setup the 'Fossil Ridge' landmark (SMACX only).
 ORIGINAL: 0x005C7A80
+// name      ?world_fossil@@YAXHH@Z
+// size      545 bytes
+// spans     0x005C7A80-0x005C7CA1
+// prototype void (__cdecl ?world_fossil@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   6
 Return Value: n/a
 Status: Complete - testing
 */
@@ -2963,6 +3468,11 @@ void __cdecl world_fossil(int x, int y) {
 /*
 Purpose: Setup the 'Nessus Canyon' landmark.
 ORIGINAL: 0x005C7CB0
+// name      ?world_canyon@@YAXHH@Z
+// size      648 bytes
+// spans     0x005C7CB0-0x005C7F38
+// prototype void (__cdecl ?world_canyon@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   1   call targets   6
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3000,6 +3510,11 @@ void __cdecl world_canyon(int x, int y) {
 /*
 Purpose: Setup the 'Sunny Mesa' landmark.
 ORIGINAL: 0x005C7F40
+// name      ?world_mesa@@YAXHH@Z
+// size      520 bytes
+// spans     0x005C7F40-0x005C8148
+// prototype void (__cdecl ?world_mesa@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   6
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3035,6 +3550,11 @@ void __cdecl world_mesa(int x, int y) {
 /*
 Purpose: Setup the 'Pholus Ridge' landmark.
 ORIGINAL: 0x005C8150
+// name      ?world_ridge@@YAXHH@Z
+// size      603 bytes
+// spans     0x005C8150-0x005C83AB
+// prototype void (__cdecl ?world_ridge@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   6
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3071,6 +3591,11 @@ void __cdecl world_ridge(int x, int y) {
 /*
 Purpose: Setup the 'Geothermal Shallows' landmark.
 ORIGINAL: 0x005C83B0
+// name      ?world_geothermal@@YAXHH@Z
+// size      631 bytes
+// spans     0x005C83B0-0x005C8627
+// prototype void (__cdecl ?world_geothermal@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   3   call targets   6
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3114,6 +3639,11 @@ void __cdecl world_geothermal(int x, int y) {
 /*
 Purpose: Set up all the landmarks.
 ORIGINAL: 0x005C8630
+// name      ?world_landmarks@@YAXXZ
+// size      172 bytes
+// spans     0x005C8630-0x005C86DC
+// prototype 
+// callers   0   call targets   15
 Return Value: n/a
 Status: Complete - testing
 */
@@ -3140,6 +3670,11 @@ void __cdecl world_landmarks() {
 /*
 Purpose: Check for any type of zone of control conflicts (base and/or unit).
 ORIGINAL: 0x005C89F0
+// name      ?zoc_any@@YAHHHH@Z
+// size      208 bytes
+// spans     0x005C89F0-0x005C8AC0
+// prototype int (__cdecl ?zoc_any@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   5   call targets   0
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3161,6 +3696,11 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
 /*
 Purpose: Check for unit related zone of control conflicts.
 ORIGINAL: 0x005C8AC0
+// name      ?zoc_veh@@YAHHHH@Z
+// size      215 bytes
+// spans     0x005C8AC0-0x005C8B97
+// prototype int (__cdecl ?zoc_veh@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   4   call targets   0
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3186,6 +3726,11 @@ int __cdecl zoc_veh(int x, int y, int faction_id) {
 /*
 Purpose: Check for unit related zone of control conflicts taking into account land or ocean.
 ORIGINAL: 0x005C8BA0
+// name      ?zoc_sea@@YAHHHH@Z
+// size      406 bytes
+// spans     0x005C8BA0-0x005C8D36
+// prototype int (__cdecl ?zoc_sea@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   5   call targets   1
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3216,6 +3761,11 @@ int __cdecl zoc_sea(int x, int y, int faction_id) {
 /*
 Purpose: Check for unit related zone of control conflicts when moving to a non-base tile.
 ORIGINAL: 0x005C8D40
+// name      ?zoc_move@@YAHHHH@Z
+// size      86 bytes
+// spans     0x005C8D40-0x005C8D96
+// prototype int (__cdecl ?zoc_move@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   6   call targets   1
 Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be treated as boolean)
 Status: Complete
 */
@@ -3274,6 +3824,11 @@ Purpose: Interpolate the rendered altitude detail at one point of a tile's
          terrain polygon, so that the map renderer can slope the tile towards
          its neighbours and break the contour at the water's edge.
 ORIGINAL: 0x00462190
+// name      ?alt_get_ocean_detail@@YAHHHHH@Z
+// size      1289 bytes
+// spans     0x00462190-0x00462699
+// prototype 
+// callers   1   call targets   0
 Return Value: Altitude detail, 0 to 79; 0 for a tile off the map
 Status: Complete
 

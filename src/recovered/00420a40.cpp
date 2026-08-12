@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00420A40 BYTE_EXACT
+// name      ?on_nc_hittest@BaseWin@@QAEHHH@Z
+// size      47 bytes
+// spans     0x00420A40-0x00420A6F
+// prototype int (__thiscall ?on_nc_hittest@BaseWin@@QAEHHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   1
 // 0x00420A40  ?on_nc_hittest@BaseWin@@QAEHHH@Z  ->  ?on_nc_hittest@BaseWin@@QAEHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

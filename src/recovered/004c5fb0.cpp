@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004C5FB0 BYTE_EXACT
+// name      ?init_sound_timer@@YAHKK@Z
+// size      38 bytes
+// spans     0x004C5FB0-0x004C5FD6
+// prototype 
+// callers   0   call targets   0
 // 0x004C5FB0  ?init_sound_timer@@YAHKK@Z  ->  ?init_sound_timer@@YAHKK@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

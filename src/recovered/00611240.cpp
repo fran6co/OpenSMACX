@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00611240 BYTE_EXACT
+// name      ?on_right_down@SpriteBox@@QAEXHH@Z
+// size      80 bytes
+// spans     0x00611240-0x00611290
+// prototype void (__thiscall ?on_right_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
 // 0x00611240  ?on_right_down@SpriteBox@@QAEXHH@Z  ->  ?on_right_down@SpriteBox@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

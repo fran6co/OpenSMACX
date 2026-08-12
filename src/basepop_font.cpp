@@ -4,6 +4,11 @@
 /*
 Purpose: Set the four fonts used by popup strings.
 ORIGINAL: 0x006046F0
+// name      ?set_string_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z
+// size      64 bytes
+// spans     0x006046F0-0x00604730
+// prototype int (__thiscall ?set_string_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z)(BasePop* this, Font*, Font*, Font*, Font*)
+// callers   2   call targets   0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -42,6 +47,11 @@ Purpose: Install the three button fonts, refusing a null primary.
          distinguish them, which is the original's behaviour and not an
          oversight here.
 ORIGINAL: 0x006047F0
+// name      ?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z
+// size      54 bytes
+// spans     0x006047F0-0x00604826
+// prototype int (__thiscall ?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z)(BasePop* this, Font*, Font*, Font*)
+// callers   0   call targets   0
 Return Value: 3 when the primary font is null, otherwise 0
 Status: Complete
 */

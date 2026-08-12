@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004964A0 BYTE_EXACT
+// name      ?close@QuayleWin@@QAEXXZ
+// size      33 bytes
+// spans     0x004964A0-0x004964C1
+// prototype void (__thiscall ?close@QuayleWin@@QAEXXZ)(QuayleWin* this)
+// callers   0   call targets   2
 // 0x004964A0  ?close@QuayleWin@@QAEXXZ  ->  ?close@QuayleWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

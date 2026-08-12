@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00539510 BYTE_EXACT
+// name      ?net_loan@@YAXHHHH@Z
+// size      111 bytes
+// spans     0x00539510-0x0053957F
+// prototype 
+// callers   1   call targets   2
 // 0x00539510  ?net_loan@@YAXHHHH@Z  ->  ?net_loan@@YAXHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

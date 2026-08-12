@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0064CB8B BYTE_EXACT
+// name      sub_64cb8b
+// size      13 bytes
+// spans     0x0064CB8B-0x0064CB98
+// prototype 
+// callers   0   call targets   0
 // 0x0064CB8B  sub_64cb8b  ->  _sub_64cb8b
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00483920 BYTE_EXACT
+// name      ?info@NewTechWin@@QAAXPAD@Z
+// size      48 bytes
+// spans     0x00483920-0x00483950
+// prototype 
+// callers   0   call targets   1
 // 0x00483920  ?info@NewTechWin@@QAAXPAD@Z  ->  ?info@NewTechWin@@QAAXPAD@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

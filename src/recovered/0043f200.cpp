@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0043F200 BYTE_EXACT
+// name      ?timer_callback_daemon@DiploPop@@QAAXHH@Z
+// size      69 bytes
+// spans     0x0043F200-0x0043F245
+// prototype 
+// callers   0   call targets   2
 // 0x0043F200  ?timer_callback_daemon@DiploPop@@QAAXHH@Z  ->  ?timer_callback_daemon@DiploPop@@QAAXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005FFD80
+// name      ??0MCIVideo@@QAE@XZ
+// size      33 bytes
+// spans     0x005FFD80-0x005FFDA1
+// prototype void (__thiscall ??0MCIVideo@@QAE@XZ)(MCIVideo* this)
+// callers   2   call targets   1
 // 0x005FFD80  ??0MCIVideo@@QAE@XZ  ->  ??0MCIVideo@@QAE@XZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

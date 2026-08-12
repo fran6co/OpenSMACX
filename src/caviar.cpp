@@ -26,6 +26,11 @@ uint32_t load_scaling_bits(const void *source) {
 /*
 Purpose: Initialize an empty Caviar object-data record.
 ORIGINAL: 0x00616BC0 BYTE_EXACT
+// name      ??0CaviarData@@QAE@XZ
+// size      13 bytes
+// spans     0x00616BC0-0x00616BCD
+// prototype void (__thiscall ??0CaviarData@@QAE@XZ)(CaviarData* this)
+// callers   82   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -41,6 +46,11 @@ Purpose: Release the record this data slot owns. A slot with no record is left
          its members, and the slot forgets it. The two leading fields keep
          whatever they held either way.
 ORIGINAL: 0x00616C60
+// name      ?close@CaviarData@@QAEXXZ
+// size      28 bytes
+// spans     0x00616C60-0x00616C7C
+// prototype void (__thiscall ?close@CaviarData@@QAEXXZ)(CaviarData* this)
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -54,6 +64,11 @@ void CaviarData::close() {
 /*
 Purpose: Initialize the Caviar renderer's object records and default scalar fields.
 ORIGINAL: 0x00616DA0
+// name      ??0Caviar@@QAE@XZ
+// size      54 bytes
+// spans     0x00616DA0-0x00616DD6
+// prototype void (__thiscall ??0Caviar@@QAE@XZ)(Caviar* this)
+// callers   7   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -71,6 +86,11 @@ Caviar::Caviar() {
 /*
 Purpose: Copy a camera position and orientation directly into the renderer state.
 ORIGINAL: 0x006182A0
+// name      ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z
+// size      127 bytes
+// spans     0x006182A0-0x0061831F
+// prototype void (__thiscall ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z)(Caviar* this, VOX_Vect*, VOX_Matrix*)
+// callers   10   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -85,6 +105,11 @@ void Caviar::set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix)
 /*
 Purpose: Set the Caviar renderer scaling factor.
 ORIGINAL: 0x006183B0
+// name      ?set_scaling@Caviar@@QAEXM@Z
+// size      13 bytes
+// spans     0x006183B0-0x006183BD
+// prototype void (__thiscall ?set_scaling@Caviar@@QAEXM@Z)(Caviar* this, float)
+// callers   24   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -100,6 +125,11 @@ void Caviar::set_scaling_bits(uint32_t scaling_bits) {
 /*
 Purpose: Read the Caviar renderer scaling factor.
 ORIGINAL: 0x006183C0
+// name      ?get_scaling@Caviar@@QAEMXZ
+// size      7 bytes
+// spans     0x006183C0-0x006183C7
+// prototype float (__thiscall ?get_scaling@Caviar@@QAEMXZ)(Caviar* this)
+// callers   1   call targets   0
 Return Value: Current scaling factor
 Status: Complete
 */
@@ -139,6 +169,11 @@ float __fastcall caviar_get_scaling_redirect(Caviar *self, void *) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 ORIGINAL: 0x006176C0 BYTE_EXACT
+// name      ?UNK3@Caviar@@QAEHHHH@Z
+// size      5 bytes
+// spans     0x006176C0-0x006176C5
+// prototype int (__thiscall ?UNK3@Caviar@@QAEHHHH@Z)(Caviar* this, int, int, int)
+// callers   0   call targets   0
 Return Value: 0, always
 Status: Complete
 */
@@ -153,6 +188,11 @@ int __fastcall caviar_unk3_redirect(Caviar *self, void *, int a1, int a2, int a3
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 ORIGINAL: 0x006176D0 BYTE_EXACT
+// name      ?UNK4@Caviar@@QAEHHHHH@Z
+// size      5 bytes
+// spans     0x006176D0-0x006176D5
+// prototype int (__thiscall ?UNK4@Caviar@@QAEHHHHH@Z)(Caviar* this, int, int, int, int)
+// callers   0   call targets   0
 Return Value: 0, always
 Status: Complete
 */
@@ -167,6 +207,11 @@ int __fastcall caviar_unk4_redirect(Caviar *self, void *, int a1, int a2, int a3
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00618250 BYTE_EXACT
+// name      ?UNK5@Caviar@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00618250-0x00618253
+// prototype void (__thiscall ?UNK5@Caviar@@QAEXHH@Z)(Caviar* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -180,6 +225,11 @@ void __fastcall caviar_unk5_redirect(Caviar *self, void *, int a1, int a2) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00618260 BYTE_EXACT
+// name      ?UNK6@Caviar@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00618260-0x00618263
+// prototype void (__thiscall ?UNK6@Caviar@@QAEXHH@Z)(Caviar* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -193,6 +243,11 @@ void __fastcall caviar_unk6_redirect(Caviar *self, void *, int a1, int a2) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00618270 BYTE_EXACT
+// name      ?UNK7@Caviar@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00618270-0x00618273
+// prototype void (__thiscall ?UNK7@Caviar@@QAEXHH@Z)(Caviar* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -206,6 +261,11 @@ void __fastcall caviar_unk7_redirect(Caviar *self, void *, int a1, int a2) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00618290 BYTE_EXACT
+// name      ?UNK9@Caviar@@QAEXHHH@Z
+// size      3 bytes
+// spans     0x00618290-0x00618293
+// prototype void (__thiscall ?UNK9@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -219,6 +279,11 @@ void __fastcall caviar_unk9_redirect(Caviar *self, void *, int a1, int a2, int a
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x006183A0 BYTE_EXACT
+// name      ?UNK12@Caviar@@QAEXHHH@Z
+// size      3 bytes
+// spans     0x006183A0-0x006183A3
+// prototype void (__thiscall ?UNK12@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -232,6 +297,11 @@ void __fastcall caviar_unk12_redirect(Caviar *self, void *, int a1, int a2, int 
 /*
 Purpose: Store a single value at 0x108.
 ORIGINAL: 0x00618280 BYTE_EXACT
+// name      ?UNK8@Caviar@@QAEXH@Z
+// size      13 bytes
+// spans     0x00618280-0x0061828D
+// prototype void (__thiscall ?UNK8@Caviar@@QAEXH@Z)(Caviar* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -242,6 +312,11 @@ void Caviar::UNK8(int a1) {
 /*
 Purpose: Store three values into the triplet at 0x2C.
 ORIGINAL: 0x00618320 BYTE_EXACT
+// name      ?UNK10@Caviar@@QAEXHHH@Z
+// size      24 bytes
+// spans     0x00618320-0x00618338
+// prototype void (__thiscall ?UNK10@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -266,6 +341,11 @@ func_apply_rotation *CaviarOriginalApplyRotation =
 Purpose: Set the scene's rotation, handing the three angles and the matrix at
          0x38 to the helper that applies them.
 ORIGINAL: 0x00618370
+// name      ?set_scene_rotation@Caviar@@QAEXMMM@Z
+// size      47 bytes
+// spans     0x00618370-0x0061839F
+// prototype void (__thiscall ?set_scene_rotation@Caviar@@QAEXMMM@Z)(Caviar* this, float, float, float)
+// callers   13   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -295,6 +375,11 @@ Purpose: Read back the three values at 0x2C, 0x30 and 0x34, skipping any output
          the parameters are typed that way here because that is what the body
          does with them.
 ORIGINAL: 0x00618340
+// name      ?UNK11@Caviar@@QAEXHHH@Z
+// size      42 bytes
+// spans     0x00618340-0x0061836A
+// prototype void (__thiscall ?UNK11@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */

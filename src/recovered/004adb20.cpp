@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004ADB20 BYTE_EXACT
+// name      ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z
+// size      70 bytes
+// spans     0x004ADB20-0x004ADB66
+// prototype int (__thiscall ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z)(SetupWin* this, Popup*, int, int)
+// callers   5   call targets   1
 // 0x004ADB20  ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z  ->  ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

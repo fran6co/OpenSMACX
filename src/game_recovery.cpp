@@ -40,6 +40,11 @@ int *LocalFaction = (int *)0x00939284;
 Purpose: The ceiling on a single energy allocation slider. The legacy
          implementation is a constant return.
 ORIGINAL: 0x00445440 BYTE_EXACT
+// name      ?energy_limit@@YAHH@Z
+// size      6 bytes
+// spans     0x00445440-0x00445446
+// prototype int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
+// callers   3   call targets   0
 Return Value: 10
 Status: Complete
 */

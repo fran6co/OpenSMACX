@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0045C800 BYTE_EXACT
+// name      ?on_button_clicked@MainInterface@@QAEXH@Z
+// size      48 bytes
+// spans     0x0045C800-0x0045C830
+// prototype void (__thiscall ?on_button_clicked@MainInterface@@QAEXH@Z)(MainInterface* this, int)
+// callers   0   call targets   0
 // 0x0045C800  ?on_button_clicked@MainInterface@@QAEXH@Z  ->  ?on_button_clicked@MainInterface@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

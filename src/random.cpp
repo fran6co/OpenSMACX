@@ -23,6 +23,11 @@
 /*
 Purpose: Update the seed value. The original code had some convoluted XORs that served no purpose.
 ORIGINAL: 0x00625750
+// name      ?reseed@Random@@QAEXK@Z
+// size      19 bytes
+// spans     0x00625750-0x00625763
+// prototype void (__thiscall ?reseed@Random@@QAEXK@Z)(Random* this, unsigned int)
+// callers   5   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -31,6 +36,11 @@ void Random::reseed(uint32_t new_seed) { seed_ = new_seed; }
 /*
 Purpose: Get a random value between min and (max - 1).
 ORIGINAL: 0x00625770
+// name      ?get@Random@@QAEIHH@Z
+// size      55 bytes
+// spans     0x00625770-0x006257A7
+// prototype unsigned int (__thiscall ?get@Random@@QAEIHH@Z)(Random* this, int, int)
+// callers   5   call targets   0
 Return Value: Random unsigned integer within bounds
 Status: Complete
 */
@@ -47,6 +57,11 @@ uint32_t Random::get(int min, int max) {
 /*
 Purpose: Get a random double value.
 ORIGINAL: 0x006257B0 BYTE_EXACT
+// name      ?get@Random@@QAENXZ
+// size      42 bytes
+// spans     0x006257B0-0x006257DA
+// prototype unknown float (__thiscall ?get@Random@@QAENXZ)(Random* this)
+// callers   0   call targets   0
 Return Value: Random double value
 Status: Complete
 */
@@ -62,19 +77,49 @@ double Random::get() {
 Random *Rand = (Random *)0x009BB568;
 
 // ORIGINAL: 0x00625700
+// name      ??__ERand@@YAXXZ
+// size      22 bytes
+// spans     0x00625700-0x00625716
+// prototype 
+// callers   0   call targets   1
 void __cdecl random_rand() { Rand->reseed(0); atexit(random_rand_exit); }
 
 // ORIGINAL: 0x00625720
+// name      ??__FRand@@YAXXZ
+// size      11 bytes
+// spans     0x00625720-0x0062572B
+// prototype 
+// callers   0   call targets   0
 void __cdecl random_rand_exit() { Rand->~Random(); }
 
 // ORIGINAL: 0x006257E0
+// name      ?random_reseed@@YAXK@Z
+// size      25 bytes
+// spans     0x006257E0-0x006257F9
+// prototype 
+// callers   6   call targets   0
 void __cdecl random_reseed(uint32_t new_seed) { Rand->reseed(new_seed); }
 
 // ORIGINAL: 0x00625800
+// name      ?random_get@@YAIXZ
+// size      6 bytes
+// spans     0x00625800-0x00625806
+// prototype 
+// callers   0   call targets   0
 uint32_t __cdecl random_get() { return Rand->get_seed(); }
 
 // ORIGINAL: 0x00625810
+// name      ?random@@YAIHH@Z
+// size      63 bytes
+// spans     0x00625810-0x0062584F
+// prototype 
+// callers   38   call targets   0
 uint32_t __cdecl random(uint32_t min, uint32_t max) { return Rand->get(min, max); }
 
 // ORIGINAL: 0x00625850
+// name      ?random@@YANXZ
+// size      48 bytes
+// spans     0x00625850-0x00625880
+// prototype 
+// callers   0   call targets   0
 double __cdecl random() { return Rand->get(); }

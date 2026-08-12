@@ -24,6 +24,11 @@ func_texture_free *TextureFree = (func_texture_free *)0x00644EF2;
 /*
 Purpose: Start an empty texture - no pixels, no descriptors, not borrowed.
 ORIGINAL: 0x00619650 BYTE_EXACT
+// name      ??0Texture@@QAE@XZ
+// size      16 bytes
+// spans     0x00619650-0x00619660
+// prototype void (__thiscall ??0Texture@@QAE@XZ)(Texture* this)
+// callers   5   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -40,6 +45,11 @@ Purpose: Destroy the texture. Unlike close, which resets every field, the
          are pixels and they are ours, left entirely alone otherwise. The
          descriptor fields and the borrowed flag keep whatever they held.
 ORIGINAL: 0x00619660
+// name      ??1Texture@@QAE@XZ
+// size      37 bytes
+// spans     0x00619660-0x00619685
+// prototype void (__thiscall ??1Texture@@QAE@XZ)(Texture* this)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -63,6 +73,11 @@ Purpose: Release the texture. The pixels are freed only when they are ours -
          the same four fields the constructor set are reset, except that a
          borrowed texture leaves its pixel pointer alone.
 ORIGINAL: 0x00619690
+// name      ?close@Texture@@QAEXXZ
+// size      58 bytes
+// spans     0x00619690-0x006196CA
+// prototype void (__thiscall ?close@Texture@@QAEXXZ)(Texture* this)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -80,6 +95,11 @@ void Texture::close() {
 Purpose: Tear down the store, leaving a count of 3 at offset 0 and clearing
          the field at 4. Calls nothing.
 ORIGINAL: 0x006252B0 BYTE_EXACT
+// name      ??1TextureStore@@QAE@XZ
+// size      14 bytes
+// spans     0x006252B0-0x006252BE
+// prototype void (__thiscall ??1TextureStore@@QAE@XZ)(TextureStore* this)
+// callers   6   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -120,6 +140,11 @@ Purpose: Set the store's two fields to 3 and 0.
          redirect. The 3 is a constant the original writes and is reproduced as
          one; nothing here says what it means.
 ORIGINAL: 0x006252A0
+// name      ??0TextureStore@@QAE@XZ
+// size      16 bytes
+// spans     0x006252A0-0x006252B0
+// prototype void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this)
+// callers   1   call targets   0
 Return Value: this
 Status: Complete
 */

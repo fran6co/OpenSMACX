@@ -25,6 +25,11 @@ func_popup_hide PopupOriginalHide = original_method<func_popup_hide>(0x00404A80)
 Purpose: Close an outstanding network message - stop its timer and hide the
          popup - doing nothing when none is showing.
 ORIGINAL: 0x0047A7D0
+// name      ?close@NetMsg@@QAEXXZ
+// size      43 bytes
+// spans     0x0047A7D0-0x0047A7FB
+// prototype void (__thiscall ?close@NetMsg@@QAEXXZ)(NetMsg* this)
+// callers   20   call targets   2
 Return Value: n/a
 Status: Complete
 */

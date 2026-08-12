@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004E14A0 BYTE_EXACT
+// name      ?editor_rockiness@Console@@QAEXXZ
+// size      40 bytes
+// spans     0x004E14A0-0x004E14C8
+// prototype void (__thiscall ?editor_rockiness@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   4
 // 0x004E14A0  ?editor_rockiness@Console@@QAEXXZ  ->  ?editor_rockiness@Console@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

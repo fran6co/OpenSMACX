@@ -24,6 +24,11 @@
 /*
 Purpose: Clear the plan window's line count.
 ORIGINAL: 0x0048AF20
+// name      ?clear_lines@PlanWin@@QAEXXZ
+// size      11 bytes
+// spans     0x0048AF20-0x0048AF2B
+// prototype void (__thiscall ?clear_lines@PlanWin@@QAEXXZ)(PlanWin* this)
+// callers   5   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -39,6 +44,11 @@ void __fastcall plan_win_clear_lines_redirect(PlanWin *self, void *) {
 Purpose: Close the plan window by dropping its blink state and running the
          close it inherits from MapWin.
 ORIGINAL: 0x0048BC50
+// name      ?close@PlanWin@@QAEXXZ
+// size      15 bytes
+// spans     0x0048BC50-0x0048BC5F
+// prototype void (__thiscall ?close@PlanWin@@QAEXXZ)(PlanWin* this)
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 
@@ -81,6 +91,11 @@ uint8_t *virtual_base_of(void *self) {
 /*
 Purpose: Toggle the plan window's blink phase and redraw, when blinking is on.
 ORIGINAL: 0x0048BC20
+// name      ?blink@PlanWin@@QAEXXZ
+// size      43 bytes
+// spans     0x0048BC20-0x0048BC4B
+// prototype void (__thiscall ?blink@PlanWin@@QAEXXZ)(PlanWin* this)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -101,6 +116,11 @@ void __fastcall plan_win_blink_redirect(PlanWin *self, void *) {
 /*
 Purpose: Restore the window's backing image from the plan window's own buffer.
 ORIGINAL: 0x0048B3C0
+// name      ?UNK1@PlanWin@@QAEXXZ
+// size      47 bytes
+// spans     0x0048B3C0-0x0048B3EF
+// prototype void (__thiscall ?UNK1@PlanWin@@QAEXXZ)(PlanWin* this)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 

@@ -21,6 +21,11 @@
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x004713A0 BYTE_EXACT
+// name      ?UNK1@MessageWin@@QAEXHHHHH@Z
+// size      3 bytes
+// spans     0x004713A0-0x004713A3
+// prototype void (__thiscall ?UNK1@MessageWin@@QAEXHHHHH@Z)(MessageWin* this, int, int, int, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -34,6 +39,11 @@ void __fastcall message_win_unk1_redirect(MessageWin *self, void *, int a1, int 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00471D40 BYTE_EXACT
+// name      ?UNK4@MessageWin@@QAEXH@Z
+// size      3 bytes
+// spans     0x00471D40-0x00471D43
+// prototype void (__thiscall ?UNK4@MessageWin@@QAEXH@Z)(MessageWin* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */

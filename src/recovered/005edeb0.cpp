@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005EDEB0 BYTE_EXACT
+// name      ?minimize@Win@@QAEHXZ
+// size      72 bytes
+// spans     0x005EDEB0-0x005EDEF8
+// prototype int (__thiscall ?minimize@Win@@QAEHXZ)(Win* this)
+// callers   1   call targets   0
 // 0x005EDEB0  ?minimize@Win@@QAEHXZ  ->  ?minimize@Win@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0047A800 BYTE_EXACT
+// name      ?timer_daemon@NetMsg@@QAAXH@Z
+// size      95 bytes
+// spans     0x0047A800-0x0047A85F
+// prototype 
+// callers   0   call targets   2
 // 0x0047A800  ?timer_daemon@NetMsg@@QAAXH@Z  ->  ?timer_daemon@NetMsg@@QAAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

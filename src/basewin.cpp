@@ -26,6 +26,11 @@
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x00408710 BYTE_EXACT
+// name      ?close@BaseWin@@QAEXXZ
+// size      1 bytes
+// spans     0x00408710-0x00408711
+// prototype void (__thiscall ?close@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -35,6 +40,11 @@ void BaseWin::close() {
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x00416DD0 BYTE_EXACT
+// name      ?UNK4@BaseWin@@QAEXXZ
+// size      1 bytes
+// spans     0x00416DD0-0x00416DD1
+// prototype void (__thiscall ?UNK4@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -44,6 +54,11 @@ void BaseWin::UNK4() {
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x0041AF20 BYTE_EXACT
+// name      ?UNK6@BaseWin@@QAEXXZ
+// size      1 bytes
+// spans     0x0041AF20-0x0041AF21
+// prototype void (__thiscall ?UNK6@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -53,6 +68,11 @@ void BaseWin::UNK6() {
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x0041AF30 BYTE_EXACT
+// name      ?UNK7@BaseWin@@QAEXXZ
+// size      1 bytes
+// spans     0x0041AF30-0x0041AF31
+// prototype void (__thiscall ?UNK7@BaseWin@@QAEXXZ)(BaseWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -78,6 +98,11 @@ void __fastcall base_win_unk7_redirect(BaseWin *self, void *) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x0041A610 BYTE_EXACT
+// name      ?UNK5@BaseWin@@QAEXH@Z
+// size      3 bytes
+// spans     0x0041A610-0x0041A613
+// prototype void (__thiscall ?UNK5@BaseWin@@QAEXH@Z)(BaseWin* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -91,6 +116,11 @@ void __fastcall base_win_unk5_redirect(BaseWin *self, void *, int a1) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x0041B4E0 BYTE_EXACT
+// name      ?on_button_toggled@BaseWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x0041B4E0-0x0041B4E3
+// prototype void (__thiscall ?on_button_toggled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -104,6 +134,11 @@ void __fastcall base_win_on_button_toggled_redirect(BaseWin *self, void *, int a
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x0041DF40 BYTE_EXACT
+// name      ?on_iface_right_down@BaseWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x0041DF40-0x0041DF43
+// prototype void (__thiscall ?on_iface_right_down@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -117,6 +152,11 @@ void __fastcall base_win_on_iface_right_down_redirect(BaseWin *self, void *, int
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x0041E4C0 BYTE_EXACT
+// name      ?on_iface_selected@BaseWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x0041E4C0-0x0041E4C3
+// prototype void (__thiscall ?on_iface_selected@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -134,6 +174,11 @@ func_base_win_iface_click BaseWinIfaceClick =
 Purpose: Report a left click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
 ORIGINAL: 0x0041DCD0
+// name      ?on_iface_left_click@BaseWin@@QAEXHH@Z
+// size      30 bytes
+// spans     0x0041DCD0-0x0041DCEE
+// prototype void (__thiscall ?on_iface_left_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -147,6 +192,11 @@ void BaseWin::on_iface_left_click(int a1, int a2) {
 Purpose: Report a right click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
 ORIGINAL: 0x0041DCF0
+// name      ?on_iface_right_click@BaseWin@@QAEXHH@Z
+// size      30 bytes
+// spans     0x0041DCF0-0x0041DD0E
+// prototype void (__thiscall ?on_iface_right_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -160,6 +210,11 @@ void BaseWin::on_iface_right_click(int a1, int a2) {
 Purpose: Report a left double-click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
 ORIGINAL: 0x0041E4D0
+// name      ?on_iface_left_double_click@BaseWin@@QAEXHH@Z
+// size      30 bytes
+// spans     0x0041E4D0-0x0041E4EE
+// prototype void (__thiscall ?on_iface_left_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -173,6 +228,11 @@ void BaseWin::on_iface_left_double_click(int a1, int a2) {
 Purpose: Report a right double-click on the interface. Reached through the interface
          subobject at 0xA14, so `this` is adjusted back to the BaseWin.
 ORIGINAL: 0x0041E4F0
+// name      ?on_iface_right_double_click@BaseWin@@QAEXHH@Z
+// size      30 bytes
+// spans     0x0041E4F0-0x0041E50E
+// prototype void (__thiscall ?on_iface_right_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -207,6 +267,11 @@ Purpose: Handle an interface scroll, but only for scroll kind 2 - stash the
          markers. Like the click handlers, `this` arrives at the interface
          subobject and is adjusted back to the BaseWin for that redraw.
 ORIGINAL: 0x0041DC80
+// name      ?on_iface_scrolled@BaseWin@@QAEXHH@Z
+// size      37 bytes
+// spans     0x0041DC80-0x0041DCA5
+// prototype void (__thiscall ?on_iface_scrolled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -230,6 +295,11 @@ func_base_win_click BaseWinClick = original_method<func_base_win_click>(0x004165
 Purpose: Report a left click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
 ORIGINAL: 0x0041AF70
+// name      ?on_left_click@BaseWin@@QAEXHH@Z
+// size      24 bytes
+// spans     0x0041AF70-0x0041AF88
+// prototype void (__thiscall ?on_left_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -241,6 +311,11 @@ void BaseWin::on_left_click(int a1, int a2) {
 Purpose: Report a right click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
 ORIGINAL: 0x0041AF90
+// name      ?on_right_click@BaseWin@@QAEXHH@Z
+// size      24 bytes
+// spans     0x0041AF90-0x0041AFA8
+// prototype void (__thiscall ?on_right_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -252,6 +327,11 @@ void BaseWin::on_right_click(int a1, int a2) {
 Purpose: Report a left double-click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
 ORIGINAL: 0x0041AFB0
+// name      ?on_left_double_click@BaseWin@@QAEXHH@Z
+// size      24 bytes
+// spans     0x0041AFB0-0x0041AFC8
+// prototype void (__thiscall ?on_left_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -275,6 +355,11 @@ void __fastcall base_win_on_left_double_click_redirect(BaseWin *self, void *, in
 Purpose: Interface timer tick; the legacy implementation ignores it and
          returns.
 ORIGINAL: 0x0041AF40 BYTE_EXACT
+// name      ?timer_callback@BaseWin@@QAAXHH@Z
+// size      1 bytes
+// spans     0x0041AF40-0x0041AF41
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -295,6 +380,11 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
 ORIGINAL: 0x0041B1E0
+// name      ?on_mouse_leave@BaseWin@@QAEXHH@Z
+// size      13 bytes
+// spans     0x0041B1E0-0x0041B1ED
+// prototype void (__thiscall ?on_mouse_leave@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -309,6 +399,11 @@ void __fastcall base_win_on_mouse_leave_redirect(BaseWin *self, void *, int a1, 
 
 /*
 ORIGINAL: 0x0041E890 BYTE_EXACT
+// name      ?show@BaseWin@@QAEXH@Z
+// size      27 bytes
+// spans     0x0041E890-0x0041E8AB
+// prototype void (__thiscall ?show@BaseWin@@QAEXH@Z)(BaseWin* this, int)
+// callers   0   call targets   2
 Status: Complete
 */
 void BaseWin::show(int a1) {
@@ -320,6 +415,11 @@ void BaseWin::show(int a1) {
 
 /*
 ORIGINAL: 0x0040B120 BYTE_EXACT
+// name      ?UNK2@BaseWin@@QAEXHHHH@Z
+// size      28 bytes
+// spans     0x0040B120-0x0040B13C
+// prototype void (__thiscall ?UNK2@BaseWin@@QAEXHHHH@Z)(BaseWin* this, int, int, int, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
@@ -328,6 +428,11 @@ void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
 
 /*
 ORIGINAL: 0x0041B4A0 BYTE_EXACT
+// name      ?on_scrolled@BaseWin@@QAEXHH@Z
+// size      29 bytes
+// spans     0x0041B4A0-0x0041B4BD
+// prototype void (__thiscall ?on_scrolled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void BaseWin::on_scrolled(int a1, int a2) {

@@ -160,6 +160,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x004043A0
+// name      ??_GAlphaMovie@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004043A0-0x004043C1
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -176,6 +181,11 @@ void *__fastcall scalar_delete_alpha_movie(void *self, void *,
 Purpose: Step the receiver back to the subobject sub_4042b0 expects, then
          forward unchanged.
 ORIGINAL: 0x00404420
+// name      sub_404420
+// size      11 bytes
+// spans     0x00404420-0x0040442B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -188,6 +198,11 @@ void *__fastcall adjust_this_sub_404420(void *self, void *) {
 Purpose: Step the receiver back to the subobject ??_GAlphaMovie@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00404430
+// name      ??3AlphaMovie@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00404430-0x0040443B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -203,6 +218,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x004068E0
+// name      ??_GFlatButton@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004068E0-0x00406901
+// prototype void* (__thiscall ??_GFlatButton@@UAEPAXI@Z)(FlatButton* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -222,6 +242,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00406B40
+// name      ??_GBasePop@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00406B40-0x00406B61
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -240,6 +265,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00406BD0
+// name      ??_GPopup@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00406BD0-0x00406BF1
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -255,6 +285,11 @@ void *__fastcall scalar_delete_popup(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GBasePop@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004070B0
+// name      ??3BasePop@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004070B0-0x004070BB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -267,6 +302,11 @@ void *__fastcall adjust_this_base_pop(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x004070C0
+// name      ??3Scroll@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004070C0-0x004070CB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -280,6 +320,11 @@ void *__fastcall adjust_this_scroll(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GPopup@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x004070D0
+// name      ??3Popup@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004070D0-0x004070DB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -292,6 +337,11 @@ void *__fastcall adjust_this_popup(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GFlatButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004070E0
+// name      ??3FlatButton@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004070E0-0x004070EB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -307,6 +357,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00408080
+// name      ??_GEditBox@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00408080-0x004080A1
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -325,6 +380,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x00408140
+// name      ??_GAlphaSave@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00408140-0x00408161
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -341,6 +401,11 @@ void *__fastcall scalar_delete_alpha_save(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GAlphaSave@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00408390
+// name      ??3AlphaSave@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00408390-0x0040839B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -354,6 +419,11 @@ void *__fastcall adjust_this_alpha_save(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GEditBox@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004083A0
+// name      ??3EditBox@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004083A0-0x004083AB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -368,6 +438,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x004213A0
+// name      ??_GProdPicker@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004213A0-0x004213C1
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -386,6 +461,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004213D0
+// name      ??_GBaseWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004213D0-0x004213F1
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -404,6 +484,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00421640
+// name      ??_GPopMenu@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00421640-0x00421661
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -420,6 +505,11 @@ void *__fastcall scalar_delete_pop_menu(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GBaseWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00421810
+// name      ??3BaseWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00421810-0x0042181B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -432,6 +522,11 @@ void *__fastcall adjust_this_base_win(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GProdPicker@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00421970
+// name      ??3ProdPicker@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00421970-0x0042197B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -445,6 +540,11 @@ void *__fastcall adjust_this_prod_picker(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00421980
+// name      PopMenu::delete1
+// size      11 bytes
+// spans     0x00421980-0x0042198B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -458,6 +558,11 @@ void *__fastcall adjust_this_pop_menu_delete1(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00421990
+// name      PopMenu::delete2
+// size      11 bytes
+// spans     0x00421990-0x0042199B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -471,6 +576,11 @@ void *__fastcall adjust_this_pop_menu_delete2(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPopMenu@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004219A0
+// name      PopMenu::delete3
+// size      11 bytes
+// spans     0x004219A0-0x004219AB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -486,6 +596,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00428710
+// name      ??_GCouncWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00428710-0x00428731
+// prototype void* (__thiscall ??_GCouncWin@@UAEPAXI@Z)(CouncWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -502,6 +617,11 @@ void *__fastcall scalar_delete_counc_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GCouncWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00428740
+// name      ??3CouncWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00428740-0x0042874B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -516,6 +636,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00428E60
+// name      ??_GCredits@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00428E60-0x00428E81
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -531,6 +656,11 @@ void *__fastcall scalar_delete_credits(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GCredits@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00428F80
+// name      ??3Credits@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00428F80-0x00428F8B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -545,6 +675,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x00432770
+// name      ??_GStringBox@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00432770-0x00432791
+// prototype void* (__thiscall ??_GStringBox@@UAEPAXI@Z)(StringBox* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -563,6 +698,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00432800
+// name      ??_GDatalink@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00432800-0x00432821
+// prototype void* (__thiscall ??_GDatalink@@UAEPAXI@Z)(Datalink* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -579,6 +719,11 @@ void *__fastcall scalar_delete_datalink(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00432830
+// name      ??3StringBox@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00432830-0x0043283B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -592,6 +737,11 @@ void *__fastcall adjust_this_string_box(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDatalink@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00432840
+// name      ??3Datalink@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00432840-0x0043284B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -606,6 +756,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x0043EDB0
+// name      ??_GDesignWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x0043EDB0-0x0043EDD1
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -624,6 +779,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          release the storage through the executable's operator delete only when
          bit 0 of the flags asks.
 ORIGINAL: 0x0043EDE0
+// name      ??_GSelectPartWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x0043EDE0-0x0043EE01
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -640,6 +800,11 @@ void *__fastcall scalar_delete_select_part_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDesignWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0043EFA0
+// name      ??3DesignWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0043EFA0-0x0043EFAB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -653,6 +818,11 @@ void *__fastcall adjust_this_design_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GSelectPartWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0043EFB0
+// name      ??3SelectPartWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0043EFB0-0x0043EFBB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -668,6 +838,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00440EC0
+// name      ??_GDiploPop@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00440EC0-0x00440EE1
+// prototype void* (__thiscall ??_GDiploPop@@UAEPAXI@Z)(DiploPop* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -684,6 +859,11 @@ void *__fastcall scalar_delete_diplo_pop(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDiploPop@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00440EF0
+// name      ??3DiploPop@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00440EF0-0x00440EFB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -698,6 +878,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00445080
+// name      ??_GDiploWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00445080-0x004450A1
+// prototype void* (__thiscall ??_GDiploWin@@UAEPAXI@Z)(DiploWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -714,6 +899,11 @@ void *__fastcall scalar_delete_diplo_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDiploWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00445120
+// name      ??3DiploWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00445120-0x0044512B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -728,6 +918,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00448350
+// name      ??_GEffect@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00448350-0x00448371
+// prototype void* (__thiscall ??_GEffect@@UAEPAXI@Z)(Effect* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -744,6 +939,11 @@ Purpose: The compiler-generated scalar deleting destructor at sub_448390: run
          the complete destructor, then release the storage through the
          executable's operator delete only when bit 0 of the flags asks.
 ORIGINAL: 0x00448390
+// name      sub_448390
+// size      33 bytes
+// spans     0x00448390-0x004483B1
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -763,6 +963,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x0044B300
+// name      ??_GFameWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x0044B300-0x0044B321
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -779,6 +984,11 @@ void *__fastcall scalar_delete_fame_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GFameWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0044B330
+// name      ??3FameWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0044B330-0x0044B33B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -793,6 +1003,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00456280
+// name      ??_GGamma@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00456280-0x004562A1
+// prototype void* (__thiscall ??_GGamma@@UAEPAXI@Z)(Gamma* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -808,6 +1023,11 @@ void *__fastcall scalar_delete_gamma(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x004562B0
+// name      ??3Gamma@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004562B0-0x004562BB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -822,6 +1042,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          release the storage through the executable's operator delete only when
          bit 0 of the flags asks.
 ORIGINAL: 0x0045F1C0
+// name      ??_GMainInterface@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x0045F1C0-0x0045F1E1
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -838,6 +1063,11 @@ void *__fastcall scalar_delete_main_interface(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GMainInterface@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0045F1F0
+// name      ??3MainInterface@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0045F1F0-0x0045F1FB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -853,6 +1083,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x0045F710
+// name      ??_GInterlude@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x0045F710-0x0045F731
+// prototype void* (__thiscall ??_GInterlude@@UAEPAXI@Z)(Interlude* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -869,6 +1104,11 @@ void *__fastcall scalar_delete_interlude(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GInterlude@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0045F910
+// name      ??3Interlude@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0045F910-0x0045F91B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -883,6 +1123,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00477DD0
+// name      ??_GMonuWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00477DD0-0x00477DF1
+// prototype void* (__thiscall ??_GMonuWin@@UAEPAXI@Z)(MonuWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -899,6 +1144,11 @@ void *__fastcall scalar_delete_monu_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GMonuWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00477E00
+// name      ??3MonuWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00477E00-0x00477E0B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -913,6 +1163,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x0047A6C0
+// name      ??_GMultiWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x0047A6C0-0x0047A6E1
+// prototype void* (__thiscall ??_GMultiWin@@UAEPAXI@Z)(MultiWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -929,6 +1184,11 @@ void *__fastcall scalar_delete_multi_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GMultiWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0047A760
+// name      ??3MultiWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0047A760-0x0047A76B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -943,6 +1203,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x0047AD70
+// name      ??_GNetMsg@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x0047AD70-0x0047AD91
+// prototype void* (__thiscall ??_GNetMsg@@UAEPAXI@Z)(NetMsg* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -958,6 +1223,11 @@ void *__fastcall scalar_delete_net_msg(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GNetMsg@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x0047AFE0
+// name      ??3NetMsg@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0047AFE0-0x0047AFEB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -972,6 +1242,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004837C0
+// name      ??_GNetWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004837C0-0x004837E1
+// prototype void* (__thiscall ??_GNetWin@@UAEPAXI@Z)(NetWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -987,6 +1262,11 @@ void *__fastcall scalar_delete_net_win(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GNetWin@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x00483840
+// name      ??3NetWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00483840-0x0048384B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1001,6 +1281,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x00484A80
+// name      ??_GNewTechWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00484A80-0x00484AA1
+// prototype void* (__thiscall ??_GNewTechWin@@UAEPAXI@Z)(NewTechWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1017,6 +1302,11 @@ void *__fastcall scalar_delete_new_tech_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GNewTechWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00484AB0
+// name      ??3NewTechWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00484AB0-0x00484ABB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1032,6 +1322,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x00488660
+// name      ??_GPickTech@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x00488660-0x00488681
+// prototype void* (__thiscall ??_GPickTech@@UAEPAXI@Z)(PickTech* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1048,6 +1343,11 @@ void *__fastcall scalar_delete_pick_tech(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPickTech@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00488740
+// name      ??3PickTech@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00488740-0x0048874B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1062,6 +1362,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x0048ADC0
+// name      ??_GPickWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x0048ADC0-0x0048ADE1
+// prototype void* (__thiscall ??_GPickWin@@UAEPAXI@Z)(PickWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1078,6 +1383,11 @@ void *__fastcall scalar_delete_pick_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPickWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0048ADF0
+// name      ??3PickWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0048ADF0-0x0048ADFB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1090,6 +1400,11 @@ void *__fastcall adjust_this_pick_win(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
          ??_GPlanWin@@UAEPAXI@Z expects, then forward unchanged.
 ORIGINAL: 0x0048BF10
+// name      ??3PlanWin@@SAXPAXI@Z
+// size      8 bytes
+// spans     0x0048BF10-0x0048BF18
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1106,6 +1421,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004923E0
+// name      ??_GPrefWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004923E0-0x00492401
+// prototype void* (__thiscall ??_GPrefWin@@UAEPAXI@Z)(PrefWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1122,6 +1442,11 @@ void *__fastcall scalar_delete_pref_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPrefWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00492410
+// name      ??3PrefWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00492410-0x0049241B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1136,6 +1461,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x004968C0
+// name      ??_GQuayleWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004968C0-0x004968E1
+// prototype void* (__thiscall ??_GQuayleWin@@UAEPAXI@Z)(QuayleWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1152,6 +1482,11 @@ void *__fastcall scalar_delete_quayle_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GQuayleWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004968F0
+// name      ??3QuayleWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004968F0-0x004968FB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1167,6 +1502,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x004AD840
+// name      ??_GReportWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004AD840-0x004AD861
+// prototype void* (__thiscall ??_GReportWin@@UAEPAXI@Z)(ReportWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1183,6 +1523,11 @@ void *__fastcall scalar_delete_report_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004AD870
+// name      ??3ReportWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004AD870-0x004AD87B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1198,6 +1543,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004AE760
+// name      ??_GSetupWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004AE760-0x004AE781
+// prototype void* (__thiscall ??_GSetupWin@@UAEPAXI@Z)(SetupWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1214,6 +1564,11 @@ void *__fastcall scalar_delete_setup_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GSetupWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004AE9A0
+// name      ??3SetupWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004AE9A0-0x004AE9AB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1228,6 +1583,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x004B3F20
+// name      ??_GCheckButton@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004B3F20-0x004B3F41
+// prototype void* (__thiscall ??_GCheckButton@@UAEPAXI@Z)(CheckButton* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1246,6 +1606,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x004B3F50
+// name      ??_GSocialWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004B3F50-0x004B3F71
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1262,6 +1627,11 @@ void *__fastcall scalar_delete_social_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GCheckButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004B3F80
+// name      ??3CheckButton@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004B3F80-0x004B3F8B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1275,6 +1645,11 @@ void *__fastcall adjust_this_check_button(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GSocialWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004B3F90
+// name      ??3SocialWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004B3F90-0x004B3F9B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1290,6 +1665,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004BE9F0
+// name      ??_GTutWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004BE9F0-0x004BEA11
+// prototype void* (__thiscall ??_GTutWin@@UAEPAXI@Z)(TutWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1305,6 +1685,11 @@ void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GTutWin@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x004BEA20
+// name      ??3TutWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004BEA20-0x004BEA2B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1319,6 +1704,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004C4C70
+// name      ??_GWorldWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004C4C70-0x004C4C91
+// prototype void* (__thiscall ??_GWorldWin@@UAEPAXI@Z)(WorldWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1335,6 +1725,11 @@ void *__fastcall scalar_delete_world_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GWorldWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004C4CA0
+// name      ??3WorldWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004C4CA0-0x004C4CAB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1349,6 +1744,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004C9330
+// name      ??_GAmbience@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004C9330-0x004C9351
+// prototype void* (__thiscall ??_GAmbience@@UAEPAXI@Z)(Ambience* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1368,6 +1768,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004C9360
+// name      ??_GVideo@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004C9360-0x004C9381
+// prototype void* (__thiscall ??_GVideo@@UAEPAXI@Z)(Video* this, int8)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1385,6 +1790,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004C93B0
+// name      ??_GVoiceRx@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004C93B0-0x004C93D1
+// prototype void* (__thiscall ??_GVoiceRx@@UAEPAXI@Z)(VoiceRx* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1403,6 +1813,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004C93F0
+// name      ??_GVoiceTx@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004C93F0-0x004C9411
+// prototype void* (__thiscall ??_GVoiceTx@@UAEPAXI@Z)(VoiceTx* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1421,6 +1836,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x004E23C0
+// name      ??_GDipEdit@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x004E23C0-0x004E23E1
+// prototype void* (__thiscall ??_GDipEdit@@UAEPAXI@Z)(DipEdit* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1437,6 +1857,11 @@ void *__fastcall scalar_delete_dip_edit(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004E23F0
+// name      ??3DipEdit@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x004E23F0-0x004E23FB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1451,6 +1876,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x0051DC90
+// name      ??_GAlphaMenu@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x0051DC90-0x0051DCB1
+// prototype void* (__thiscall ??_GAlphaMenu@@UAEPAXI@Z)(AlphaMenu* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1467,6 +1897,11 @@ void *__fastcall scalar_delete_alpha_menu(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GAlphaMenu@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0051DF70
+// name      ??3AlphaMenu@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0051DF70-0x0051DF7B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1482,6 +1917,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x005AE0B0
+// name      ??_GReplayWin@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x005AE0B0-0x005AE0D1
+// prototype void* (__thiscall ??_GReplayWin@@UAEPAXI@Z)(ReplayWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1498,6 +1938,11 @@ void *__fastcall scalar_delete_replay_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GReplayWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x005AE0E0
+// name      ??3ReplayWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x005AE0E0-0x005AE0EB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1513,6 +1958,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x005C9E80
+// name      ??_GMultiDebug@@UAEPAXI@Z
+// size      33 bytes
+// spans     0x005C9E80-0x005C9EA1
+// prototype void* (__thiscall ??_GMultiDebug@@UAEPAXI@Z)(MultiDebug* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1529,6 +1979,11 @@ void *__fastcall scalar_delete_multi_debug(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GMultiDebug@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x005C9EB0
+// name      ??3MultiDebug@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x005C9EB0-0x005C9EBB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1544,6 +1999,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x005D7140
+// name      ??_GGraphicWin@@UAEPAXI@Z
+// size      30 bytes
+// spans     0x005D7140-0x005D715E
+// prototype void* (__thiscall ??_GGraphicWin@@UAEPAXI@Z)(GraphicWin* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1561,6 +2021,11 @@ void *__fastcall scalar_delete_graphic_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x005D7160
+// name      ??3GraphicWin@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x005D7160-0x005D716B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1576,6 +2041,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x005E3610
+// name      ??_GBuffer@@UAEPAXI@Z
+// size      30 bytes
+// spans     0x005E3610-0x005E362E
+// prototype void* (__thiscall ??_GBuffer@@UAEPAXI@Z)(Buffer* this, int8)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1594,6 +2064,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x005F8610
+// name      ??_GWin@@UAEPAXI@Z
+// size      30 bytes
+// spans     0x005F8610-0x005F862E
+// prototype void* (__thiscall ??_GWin@@UAEPAXI@Z)(Win* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1611,6 +2086,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x005FA770
+// name      ??_GPullDown@@UAEPAXI@Z
+// size      30 bytes
+// spans     0x005FA770-0x005FA78E
+// prototype void* (__thiscall ??_GPullDown@@UAEPAXI@Z)(PullDown* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1628,6 +2108,11 @@ void *__fastcall scalar_delete_pull_down(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPullDown@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x005FA790
+// name      ??3PullDown@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x005FA790-0x005FA79B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1642,6 +2127,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
 ORIGINAL: 0x005FC6D0
+// name      ??_GMenu@@UAEPAXI@Z
+// size      30 bytes
+// spans     0x005FC6D0-0x005FC6EE
+// prototype void* (__thiscall ??_GMenu@@UAEPAXI@Z)(Menu* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1657,6 +2147,11 @@ void *__fastcall scalar_delete_menu(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GMenu@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x005FC6F0
+// name      ??3Menu@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x005FC6F0-0x005FC6FB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1671,6 +2166,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x00607CC0
+// name      ??_GBaseButton@@UAEPAXI@Z
+// size      30 bytes
+// spans     0x00607CC0-0x00607CDE
+// prototype void* (__thiscall ??_GBaseButton@@UAEPAXI@Z)(BaseButton* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1688,6 +2188,11 @@ void *__fastcall scalar_delete_base_button(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00607CE0
+// name      ??3BaseButton@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x00607CE0-0x00607CEB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1701,6 +2206,11 @@ void *__fastcall adjust_this_base_button(void *self, void *,
 Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
          sub_612710 expects, then forward unchanged.
 ORIGINAL: 0x00612700
+// name      sub_612700
+// size      8 bytes
+// spans     0x00612700-0x00612708
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1718,6 +2228,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x006256D0
+// name      ??_GImageButton@@UAEPAXI@Z
+// size      30 bytes
+// spans     0x006256D0-0x006256EE
+// prototype void* (__thiscall ??_GImageButton@@UAEPAXI@Z)(ImageButton* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1734,6 +2249,11 @@ void *__fastcall scalar_delete_image_button(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GImageButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x006256F0
+// name      ??3ImageButton@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x006256F0-0x006256FB
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1749,6 +2269,11 @@ Purpose: The compiler-generated scalar deleting destructor at
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
 ORIGINAL: 0x0062C830
+// name      ??_GPushButton@@UAEPAXI@Z
+// size      30 bytes
+// spans     0x0062C830-0x0062C84E
+// prototype void* (__thiscall ??_GPushButton@@UAEPAXI@Z)(PushButton* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1765,6 +2290,11 @@ void *__fastcall scalar_delete_push_button(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPushButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0062C850
+// name      ??3PushButton@@SAXPAXI@Z
+// size      11 bytes
+// spans     0x0062C850-0x0062C85B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1779,6 +2309,11 @@ Purpose: The compiler-generated scalar deleting destructor at sub_633160: run
          the complete destructor, then release the storage through the
          executable's operator delete only when bit 0 of the flags asks.
 ORIGINAL: 0x00633160
+// name      sub_633160
+// size      30 bytes
+// spans     0x00633160-0x0063317E
+// prototype 
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -1795,6 +2330,11 @@ void *__fastcall scalar_delete_sub_633160(void *self, void *,
 Purpose: Step the receiver back to the subobject sub_6336d0 expects, then
          forward unchanged.
 ORIGINAL: 0x00633730
+// name      sub_633730
+// size      8 bytes
+// spans     0x00633730-0x00633738
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1808,6 +2348,11 @@ void *__fastcall adjust_this_sub_633730(void *self, void *,
 Purpose: Step the receiver back to the subobject sub_633160 expects, then
          forward unchanged.
 ORIGINAL: 0x00633740
+// name      sub_633740
+// size      11 bytes
+// spans     0x00633740-0x0063374B
+// prototype 
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */

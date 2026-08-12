@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00618E70 BYTE_EXACT
+// name      ?vx_seek@Caviar@@QAAXHJH@Z
+// size      24 bytes
+// spans     0x00618E70-0x00618E88
+// prototype 
+// callers   0   call targets   1
 // 0x00618E70  ?vx_seek@Caviar@@QAAXHJH@Z  ->  ?vx_seek@Caviar@@QAAXHJH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
