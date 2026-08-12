@@ -647,260 +647,17 @@ if(OPENSMACX_HAVE_BINUTILS)
 endif()
 
 if(BUILD_TESTING)
-    # The src closure the leaf suite links.  Explicit list, never a glob: a
-    # glob that misses a file drops coverage exactly the way an unregistered
-    # test does.
-    set(OPENSMACX_LEAF_SRC_CLOSURE
-        src/atexit_thunks.cpp
-        src/init_thunks.cpp
-        src/adjustor_thunks.cpp
-        src/deleting_thunks.cpp
-        src/delegation_thunks.cpp
-        src/nullsub_thunks.cpp
-        src/field_accessors.cpp
-        src/leaf_recoveries.cpp
-        src/global_arith.cpp
-        src/guarded_teardowns.cpp
-        src/fx.cpp
-        src/vector_teardown.cpp
-        src/alphanet.cpp
-        src/basepop.cpp
-        src/ambience.cpp
-        src/autosound.cpp
-        src/basebutton.cpp
-        src/basepop_font.cpp
-        src/map_color.cpp
-        src/buffer.cpp
-        src/buttongroup.cpp
-        src/dialog.cpp
-        src/dialogs.cpp
-        src/filemap_recovery.cpp
-        src/flatbutton.cpp
-        src/flic.cpp
-        src/font_recovery.cpp
-        src/graphicwin.cpp
-        src/log.cpp
-        src/maininterface.cpp
-        src/mapwin.cpp
-        src/game_recovery.cpp
-        src/basewin.cpp
-        src/datalink.cpp
-        src/netwin.cpp
-        src/socialwin.cpp
-        src/designwin.cpp
-        src/worldwin.cpp
-        src/diplowin.cpp
-        src/alphamovie.cpp
-        src/checkbutton.cpp
-        src/cursor.cpp
-        src/infowin.cpp
-        src/statuswin.cpp
-        src/filewin.cpp
-        src/wave.cpp
-        src/battlewin.cpp
-        src/councwin.cpp
-        src/credits.cpp
-        src/diplopop.cpp
-        src/gamma.cpp
-        src/messagewin.cpp
-        src/newtechwin.cpp
-        src/pickwin.cpp
-        src/prodpicker.cpp
-        src/reportwin.cpp
-        src/setupwin.cpp
-        src/menu.cpp
-        src/palette.cpp
-        src/pulldown.cpp
-        src/random.cpp
-        src/scroll.cpp
-        src/sounddevice.cpp
-        src/spot_recovery.cpp
-        src/spying_recovery.cpp
-        src/sprite.cpp
-        src/stringbox.cpp
-        src/stringstruct.cpp
-        src/text_recovery.cpp
-        src/textindex_recovery.cpp
-        src/time_recovery.cpp
-        src/vector.cpp
-        src/caviar.cpp
-        src/multidebug.cpp
-        src/tutwin.cpp
-            src/popmenu.cpp
-        src/popup.cpp
-        src/netmsg.cpp
-        src/radiobutton.cpp
-        src/checkbox.cpp
-        src/editgroup.cpp
-        src/dialogs_recovery.cpp
-        src/xpops.cpp
-        src/planwin.cpp
-        src/playerlock.cpp
-        src/netdaemon.cpp
-        src/console.cpp
-        src/replaywin.cpp
-        src/reportif.cpp
-        src/alphamenu.cpp
-        src/uv2player.cpp
-        src/dipedit.cpp
-        src/sound.cpp
-        src/wave_device.cpp
-        src/spritebox.cpp
-        src/listbox.cpp
-        src/net_class.cpp
-        src/squarelock.cpp
-        src/deletionlist.cpp
-        src/lock.cpp
-        src/texture.cpp
-        src/win.cpp
-    )
-
-    # The split suite.  Direct sources, not a static library, so no static
-    # initialiser can be discarded for want of --whole-archive; and one
-    # explicit line per family, so a missing family is visible here as well as
-    # at run time.
-    set(OPENSMACX_LEAF_FAMILY_SRCS
-        tests/leaf/core_construction_tests.cpp
-        tests/leaf/leaf_recoveries_tests.cpp
-        tests/leaf/widget_accessors_tests.cpp
-        tests/leaf/text_and_resources_tests.cpp
-        tests/leaf/dialog_and_strings_tests.cpp
-        tests/leaf/win_and_graphic_tests.cpp
-        tests/leaf/destructors_tests.cpp
-        tests/leaf/buffer_and_font_tests.cpp
-        tests/leaf/constant_stubs_tests.cpp
-        tests/leaf/wave_and_sound_tests.cpp
-        tests/leaf/delegates_tests.cpp
-        tests/leaf/forwarders_tests.cpp
-        tests/leaf/stubs_and_locks_tests.cpp
-        tests/leaf/locks_tests.cpp
-        tests/leaf/device_forwarders_tests.cpp
-        tests/leaf/buffer_writers_tests.cpp
-        tests/leaf/pops_and_console_tests.cpp
-        tests/leaf/thunks_tests.cpp
-    )
-    set(OPENSMACX_LEAF_TEST_SRCS
-        tests/leaf/leaf_harness.cpp
-        tests/leaf/leaf_stubs.cpp
-        ${OPENSMACX_LEAF_FAMILY_SRCS}
-    )
-
-    # The case manifest is derived, never edited: it is the file that two
-    # independent recoveries in different families would otherwise both have to
-    # touch.
+    # Direct-source tests for the gameplay core, and now the only behavioural
+    # suite. It exists separately because the retired leaf binary defined
+    # file-scope stand-ins for map.cpp and general.cpp symbols that its own
+    # fixtures asserted against, so the real translation units could not be
+    # linked beside them; splitting by link closure rather than by subject gave
+    # the ~1,800 gameplay free functions a home. See docs/RETIRED_ROUTES.md.
     #
-    # It must NOT be derived from OPENSMACX_LEAF_FAMILY_SRCS, which is the list
-    # it exists to police.  Deriving it from that list would mean a family
-    # dropping out of the build also drops out of the manifest: both sides of
-    # the run-time count check would shrink together, the counts would still
-    # agree, and the guard would be blind exactly when it is needed.  So the
-    # counts come from an INDEPENDENT glob of the directory, and this configure
-    # step fails if the glob and the explicit list disagree in either
-    # direction.  The build still uses the explicit list; the glob exists only
-    # to notice divergence and to keep a dropped family present in the manifest
-    # so the binary refuses to run.
-    file(GLOB OPENSMACX_LEAF_FAMILY_GLOB CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/tests/leaf/*_tests.cpp")
-    list(SORT OPENSMACX_LEAF_FAMILY_GLOB)
-    set(_leaf_listed_abs "")
-    foreach(_leaf_family_src IN LISTS OPENSMACX_LEAF_FAMILY_SRCS)
-        list(APPEND _leaf_listed_abs
-            "${CMAKE_CURRENT_SOURCE_DIR}/${_leaf_family_src}")
-    endforeach()
-    list(SORT _leaf_listed_abs)
-    if(NOT _leaf_listed_abs STREQUAL OPENSMACX_LEAF_FAMILY_GLOB)
-        set(_leaf_unlisted "")
-        foreach(_leaf_path IN LISTS OPENSMACX_LEAF_FAMILY_GLOB)
-            if(NOT _leaf_path IN_LIST _leaf_listed_abs)
-                string(APPEND _leaf_unlisted "\n    ${_leaf_path}")
-            endif()
-        endforeach()
-        set(_leaf_missing "")
-        foreach(_leaf_path IN LISTS _leaf_listed_abs)
-            if(NOT _leaf_path IN_LIST OPENSMACX_LEAF_FAMILY_GLOB)
-                string(APPEND _leaf_missing "\n    ${_leaf_path}")
-            endif()
-        endforeach()
-        message(FATAL_ERROR
-            "tests/leaf family files and OPENSMACX_LEAF_FAMILY_SRCS disagree.\n"
-            "On disk but not built (their cases would silently stop running):"
-            "${_leaf_unlisted}\n"
-            "Listed in CMake but not on disk:${_leaf_missing}\n"
-            "Every tests/leaf/*_tests.cpp must appear in "
-            "OPENSMACX_LEAF_FAMILY_SRCS and vice versa.")
-    endif()
-
-    set(OPENSMACX_LEAF_MANIFEST
-        "${CMAKE_CURRENT_BINARY_DIR}/generated/leaf/leaf_generated_manifest.h")
-    add_custom_command(
-        OUTPUT "${OPENSMACX_LEAF_MANIFEST}"
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_leaf_manifest.py"
-            --output "${OPENSMACX_LEAF_MANIFEST}"
-            ${OPENSMACX_LEAF_FAMILY_GLOB}
-        DEPENDS
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_leaf_manifest.py"
-            ${OPENSMACX_LEAF_FAMILY_GLOB}
-        COMMENT "Deriving the leaf case manifest from tests/leaf/*_tests.cpp"
-        VERBATIM
-    )
-
-    add_executable(recovery-leaf-tests
-        ${OPENSMACX_LEAF_TEST_SRCS}
-        ${OPENSMACX_LEAF_MANIFEST}
-        ${OPENSMACX_LEAF_SRC_CLOSURE}
-    )
-    target_include_directories(recovery-leaf-tests PRIVATE
-        "${CMAKE_CURRENT_BINARY_DIR}/generated/leaf")
-
-    foreach(_leaf_target recovery-leaf-tests)
-        target_compile_options(${_leaf_target} PRIVATE -fno-exceptions)
-        target_compile_definitions(${_leaf_target} PRIVATE
-            BUILD_DLL OPENSMACX_SPOT_MINIMAL_INIT)
-        set_target_properties(${_leaf_target} PROPERTIES
-            CXX_EXTENSIONS OFF
-            CXX_STANDARD 11
-            CXX_STANDARD_REQUIRED YES
-        )
-
-    endforeach()
-
-    if(CMAKE_CROSSCOMPILING)
-        set(OPENSMACX_RECOVERY_TEST_COMMAND
-            "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
-            --executable "$<TARGET_FILE:recovery-leaf-tests>"
-            --wine-prefix "${OPENSMACX_WINE_PREFIX}"
-        )
-        if(OPENSMACX_WINE)
-            list(APPEND OPENSMACX_RECOVERY_TEST_COMMAND
-                --wine "${OPENSMACX_WINE}")
-        endif()
-        add_test(NAME recovery-leaf-tests
-            COMMAND ${OPENSMACX_RECOVERY_TEST_COMMAND}
-        )
-        # The reversed run is the regression test for order dependence between
-        # leaf cases - a case that borrows a pointer another case left behind
-        # passes forward and faults reversed. It was documented as such while
-        # nothing ran it; a guarantee nobody executes is a comment.
-        add_test(NAME recovery-leaf-tests-reversed
-            COMMAND ${OPENSMACX_RECOVERY_TEST_COMMAND} -- --reverse
-        )
-    else()
-        add_test(NAME recovery-leaf-tests COMMAND recovery-leaf-tests)
-        add_test(NAME recovery-leaf-tests-reversed
-            COMMAND recovery-leaf-tests --reverse)
-    endif()
-
-    # Direct-source tests for the gameplay core.
-    #
-    # These cannot live in recovery-leaf-tests: that binary defines file-scope
-    # stand-ins for map.cpp and general.cpp symbols - a scriptable mem_get,
-    # call-recording lock_map/unlock_map, xrange, purge_spaces - which its own
-    # fixtures assert against, so linking the real translation units there
-    # collides with every one of those observers. Splitting by link closure
-    # rather than by subject gives the ~1,800 gameplay free functions a home
-    # without disturbing the existing suite.
+    # IT CARRIES THE EVIDENCE NOW. Of the 63 recovered functions of >=200 B
+    # that any behavioural test observes - and byte-matching proves nothing
+    # about a single one of them - this suite is the sole observer for 37 and a
+    # joint observer for 17 more.
     #
     # The closure below is self-satisfying: the support classes are present
     # because the gameplay tree calls into them, and the only symbols it does
@@ -1017,66 +774,6 @@ if(BUILD_TESTING)
         )
     else()
         add_test(NAME globals-diff-tests COMMAND globals-diff-tests)
-    endif()
-
-    # The guard rewrites a faulting thread's EIP and ESP from a process-global
-    # handler. What keeps that safe is a closed exception-code list and a thread
-    # gate, neither of which is visible by reading the generated oracle.
-    add_executable(oracle-fault-guard-tests
-        tests/oracle_fault_guard_tests.cpp
-        src/oracle_fault_guard.cpp
-    )
-    target_include_directories(oracle-fault-guard-tests PRIVATE src)
-    set_target_properties(oracle-fault-guard-tests PROPERTIES
-        CXX_EXTENSIONS OFF
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED YES
-    )
-    if(CMAKE_CROSSCOMPILING)
-        set(OPENSMACX_FAULT_GUARD_TEST_COMMAND
-            "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
-            --executable "$<TARGET_FILE:oracle-fault-guard-tests>"
-            --wine-prefix "${OPENSMACX_WINE_PREFIX}"
-        )
-        if(OPENSMACX_WINE)
-            list(APPEND OPENSMACX_FAULT_GUARD_TEST_COMMAND
-                --wine "${OPENSMACX_WINE}")
-        endif()
-        add_test(NAME oracle-fault-guard-tests
-            COMMAND ${OPENSMACX_FAULT_GUARD_TEST_COMMAND}
-        )
-    else()
-        add_test(NAME oracle-fault-guard-tests
-            COMMAND oracle-fault-guard-tests)
-    endif()
-
-    add_executable(lifted-oracle-fold-tests
-        tests/lifted_oracle_fold_tests.cpp
-    )
-    set_target_properties(lifted-oracle-fold-tests PROPERTIES
-        CXX_EXTENSIONS OFF
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED YES
-    )
-
-    if(CMAKE_CROSSCOMPILING)
-        set(OPENSMACX_FOLD_TEST_COMMAND
-            "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/run_windows_test.py"
-            --executable "$<TARGET_FILE:lifted-oracle-fold-tests>"
-            --wine-prefix "${OPENSMACX_WINE_PREFIX}"
-        )
-        if(OPENSMACX_WINE)
-            list(APPEND OPENSMACX_FOLD_TEST_COMMAND
-                --wine "${OPENSMACX_WINE}")
-        endif()
-        add_test(NAME lifted-oracle-fold-tests
-            COMMAND ${OPENSMACX_FOLD_TEST_COMMAND}
-        )
-    else()
-        add_test(NAME lifted-oracle-fold-tests
-            COMMAND lifted-oracle-fold-tests)
     endif()
 
     # The inspectors, not the compiler - see OPENSMACX_HAVE_BINUTILS.
@@ -1374,11 +1071,6 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(whole-image-lifter-tests test_lift_whole_image.py)
 
     opensmacx_add_python_tool_test(lifted-crt-tests test_lifted_crt.py)
-
-    opensmacx_add_python_tool_test(find-leaf-testable-tests test_find_leaf_testable.py)
-
-    opensmacx_add_python_tool_test(leaf-manifest-generator-tests
-        test_generate_leaf_manifest.py)
 
     opensmacx_add_python_tool_test(x86-lowerer-tests test_x86_lower.py)
 
@@ -2679,12 +2371,8 @@ if(BUILD_TESTING)
     # the wine-test-lock-check test below, because a wine-backed test MISSING
     # from it does not fail, it flakes.
     set(OPENSMACX_WINE_LOCKED_TESTS
-            recovery-leaf-tests
-            recovery-leaf-tests-reversed
             recovery-gameplay-tests
             globals-diff-tests
-            oracle-fault-guard-tests
-            lifted-oracle-fold-tests
             recovery-oracle)
     list(LENGTH OPENSMACX_WINE_LOCKED_TESTS OPENSMACX_WINE_LOCKED_TEST_COUNT)
     foreach(_wine_locked_test IN LISTS OPENSMACX_WINE_LOCKED_TESTS)
@@ -2763,9 +2451,7 @@ if(BUILD_TESTING)
             verify-recovery-abi
             ${OPENSMACX_GATE_ORACLE_DEPENDS}
             verify-redirect-signatures
-            recovery-leaf-tests
             recovery-gameplay-tests
-            lifted-oracle-fold-tests
             globals-diff-tests
             # The gate RAN this without building it. It is registered in
             # CTestTestfile.cmake and reachable from `all`, but it was in
@@ -2773,7 +2459,6 @@ if(BUILD_TESTING)
             # the one path advertised as safe from stale binaries was launching
             # one it never rebuilt. recovery-oracle-tests needs no line here -
             # verify-recovery-oracles already pulls it in order-only.
-            oracle-fault-guard-tests
             smoke-hybrid-game
         USES_TERMINAL
         VERBATIM

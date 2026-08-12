@@ -71,20 +71,18 @@ against it, never to trust directly.
    frame in this image does; the fifteen that do not are CRT (see the closing
    section), so a prologue naming anything else means you are reading library
    code and should stop.
-2. Write the leaf test first, in the `tests/leaf/<family>_tests.cpp` that
-   owns the subject, and touch **no other file**: append the `void test_*()`,
-   then append `LEAF_CASE(LEAF_APPEND, test_*);` at the bottom of that same
-   file. Pass `LEAF_APPEND` bare — never `LEAF_APPEND + n`. Appended cases run
-   after all 229 baseline cases and tie-break by name, so no number has to be
-   coordinated with anyone, and two recoveries in two families share zero
-   files. The per-family case counts are derived at build time by
-   `tools/generate_leaf_manifest.py` (counting `^LEAF_CASE(` lines) and still
-   asserted at run time, so a case that stops registering makes the binary
-   refuse to run. Only a brand-new family file needs a CMake edit — add it to
-   `OPENSMACX_LEAF_FAMILY_SRCS`; configure fails loudly if you forget. For a
-   composed teardown, build the reference image by running the already-recovered
-   component chain on a byte-identical twin and require an exact match, as
-   `test_scroll_destructor` does.
+2. **Prove it by byte-matching, not by writing a test.**
+   `tools/verify_recovered_function.py <addr> --dir /tmp/variants` scores every
+   candidate spelling at once and exits 0 only for `BYTE_EXACT`. Byte equality
+   subsumes behavioural equivalence, so a test over a body that byte-matches
+   adds no evidence — which is why the direct-source leaf suite was retired on
+   2026-08-12 (`docs/RETIRED_ROUTES.md`, including the nine functions that lost
+   their only observer and what would restore them).
+   Behavioural evidence is still the ONLY kind available for two populations,
+   and `recovery-gameplay-tests` is where it goes: a `SHARED_TAIL` body, where
+   `/Gy` folded the tail onto another function so no per-function verdict is
+   well defined and byte-matching is structurally incapable of speaking; and a
+   body still at `NO_COMPILE` whose scaffolding defect has not been fixed yet.
 3. Implement in the class's existing `src/*.cpp`, matching the recovered style:
    `volatile uint32_t*` field writes at documented offsets, staged vtables,
    rebindable seams (a function-pointer global defaulting to the fixed address)
@@ -112,11 +110,11 @@ against it, never to trust directly.
 6. `tools/run_gate.py` - `verify-recovery-batch` in **both** presets, run
    concurrently, one log per lane; then
    `tools/mutate_and_verify.py <source> --address <addr>`
-   and require every valid mutant killed. That command defaults to
-   `--target recovery-leaf-tests`, which does not compile `src/veh.cpp`,
-   `src/base.cpp` or `src/map.cpp`; outside the leaf closure pass
-   `--target recovery-gameplay-tests --test recovery-gameplay-tests` or every
-   mutant returns `STALE ... UNMEASURED` and the sweep proves nothing.
+   and require every valid mutant killed. That command has **no default
+   target** — pass `--target recovery-gameplay-tests --test
+   recovery-gameplay-tests`, or every mutant returns `STALE ... UNMEASURED` and
+   the sweep proves nothing. (It used to default to `recovery-leaf-tests`,
+   which is retired; a sweep that reports all-STALE has measured nothing.)
 7. Commit the batch.
 
 ### Parallel recovery across agents

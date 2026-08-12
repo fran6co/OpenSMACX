@@ -48,7 +48,7 @@ void test_identical_buffers_are_equal() {
     std::vector<unsigned char> left(4096, 0x5A);
     std::vector<unsigned char> right(left);
     size_t first = Untouched;
-    expect(globals_diff::equal(left.data(), right.data(), left.size(), &first),
+    expect(globals_diff::equal(&left[0], &right[0], left.size(), &first),
            "identical buffers compare equal");
     expect(first == Untouched, "an equal comparison does not write `first`");
 }
@@ -65,13 +65,15 @@ void test_mismatch_at_each_boundary() {
         {4095, 2731, "mismatch in an odd-sized buffer"},
         {1, 0, "mismatch in a one-byte buffer"},
     };
-    for (const Case &item : cases) {
+    // Index loop, not range-for: cl 12.00.8168 has neither.
+    for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); ++index) {
+        const Case &item = cases[index];
         std::vector<unsigned char> left(item.size, 0x11);
         std::vector<unsigned char> right(left);
         right[item.at] = 0x22;
         size_t first = Untouched;
         const bool equal = globals_diff::equal(
-            left.data(), right.data(), item.size, &first);
+            &left[0], &right[0], item.size, &first);
         expect(!equal, item.what);
         if (first != item.at) {
             std::printf("FAIL: %s -- reported %zu, expected %zu\n",
@@ -91,7 +93,7 @@ void test_the_FIRST_of_several_mismatches_is_reported() {
     right[100] = 1;
     right[7000] = 1;
     size_t first = Untouched;
-    expect(!globals_diff::equal(left.data(), right.data(), left.size(), &first),
+    expect(!globals_diff::equal(&left[0], &right[0], left.size(), &first),
            "several mismatches compare unequal");
     expect(first == 100, "the LOWEST differing byte is reported");
 }
@@ -105,7 +107,7 @@ void test_every_single_byte_position_is_located_exactly() {
         std::vector<unsigned char> right(left);
         right[at] = 0xAB;
         size_t first = Untouched;
-        globals_diff::equal(left.data(), right.data(), Size, &first);
+        globals_diff::equal(&left[0], &right[0], Size, &first);
         if (first != at) {
             std::printf("FAIL: exhaustive scan -- byte %zu reported as %zu\n",
                         at, first);
@@ -127,7 +129,7 @@ void test_a_null_first_is_accepted() {
     std::vector<unsigned char> left(64, 3);
     std::vector<unsigned char> right(left);
     right[9] = 4;
-    expect(!globals_diff::equal(left.data(), right.data(), left.size(), nullptr),
+    expect(!globals_diff::equal(&left[0], &right[0], left.size(), nullptr),
            "a caller that does not want the position still gets the answer");
 }
 

@@ -86,6 +86,7 @@ using ::memmove;
 using ::memset;
 
 using ::strcmp;
+using ::strstr;
 using ::strcpy;
 using ::strlen;
 using ::strncmp;
