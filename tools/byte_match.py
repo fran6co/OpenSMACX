@@ -181,7 +181,11 @@ FLAG_SETS = (MEASURED_FLAGS, FRAMELESS_FLAGS, SIZE_FLAGS,
 #     of finding that out was one command; the cost of not knowing it was every
 #     future agent spending attempts on "it might be the flags".
 #   * `/G3 /G4 /G5 /G6 /GB` emit identical bytes on the cases tried, so the
-#     processor target is not a lever either.
+#     processor target is not a lever either. That was measured on INTEGER
+#     bodies; re-tested 2026-08-12 on an x87 body (0x006280E0) crossed with
+#     twelve optimisation flags, it holds there too - same FP sequence, zero
+#     `fxch`, every time. The obvious "but surely /G5 changes the FPU schedule"
+#     is answered.
 #   * `register` storage is ignored at /O2, and compilation-unit context does
 #     not move the allocator: a body compiled alone and beside a sibling
 #     produces byte-identical output, because VC6's allocator is
