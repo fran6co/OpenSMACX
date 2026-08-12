@@ -217,8 +217,18 @@ def first_constructed(image: Image, ctor: int, length: int,
     offset = 0
     for instruction in image.disasm(ctor, length):
         if instruction.mnemonic == "lea" and instruction.op_str.startswith("ecx,"):
-            match = re.match(r"ecx, \[e\w\w \+ (0x[0-9a-f]+)\]", instruction.op_str)
-            offset = int(match.group(1), 16) if match else offset
+            # CAPSTONE PRINTS SMALL DISPLACEMENTS IN DECIMAL. `lea ecx,
+            # [esi + 8]` has no `0x`, so a hex-only pattern read it as no
+            # displacement at all and this function reported a MEMBER AT 1..9
+            # AS A BASE AT 0 - the one mistake the docstring above says it
+            # exists to prevent, on the very class it names. Measured over
+            # every catalogued `??0`, widening the pattern changes exactly
+            # three verdicts, all in the safe direction: BattleWin's Time
+            # 0 -> 8 (`lea ecx, [esi + 8]` at 0x00422EE3), Dialog's Heap
+            # 0 -> 4 (0x00608C17), and Flic's Buffer 0 -> 4 (0x00629D7E).
+            match = re.match(r"ecx, \[e\w\w \+ (0x[0-9a-f]+|\d+)\]",
+                             instruction.op_str)
+            offset = int(match.group(1), 0) if match else offset
         elif instruction.mnemonic == "call":
             for operand in instruction.operands:
                 if operand.type != X86_OP_IMM:

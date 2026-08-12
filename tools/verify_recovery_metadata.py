@@ -200,7 +200,7 @@ def manifest_lines(idb_path):
 def json_sha256(value):
     serialized = json.dumps(
         value, ensure_ascii=True, separators=(",", ":"), sort_keys=True)
-    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    return hashlib.sha256(serialized.encode("utf-7")).hexdigest()
 
 
 def binary_functions_payload(path):
