@@ -108,7 +108,7 @@ int __fastcall wave_set_release_redirect(Wave *self, void *, unsigned int a1, un
 Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
          to unload through its own vtable slot 0x14 and its result becomes the
          return value; the device is then forgotten. Unless bit 1 of the flag
-         byte at 0x54 suppresses it, the object's own vtable slot 0x80 is run,
+         dword at 0x54 suppresses it, the object's own vtable slot 0x80 is run,
          and the loaded bit (bit 0) of the flag dword at 0x40 is cleared.
 ORIGINAL: 0x004C6EA0
 Return Value: whatever the device's unload returned, or 0 when none was wrapped
@@ -125,7 +125,9 @@ int Wave::unload() {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         result = (ORIGINAL(device_)->*original_slot<device_unload_fn>(device_vtable + 0x14))();
     }
-    const uint8_t flags = flags_54_;
+    // `mov al, byte ptr [esi+0x54]` at 0x004C6EB4: unload is the one place
+    // that narrows the 0x54 dword, and only bit 1 is wanted.
+    const uint8_t flags = static_cast<uint8_t>(flags_54_);
     device_ = nullptr;
     if (!(flags & 2)) {
         uint8_t *const vtable = *reinterpret_cast<uint8_t **>(this);
@@ -232,8 +234,8 @@ int Wave::is_playing() {
         uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
         return (ORIGINAL(device_)->*original_slot<device_is_playing_fn>(device_vtable + 0x5C))();
     }
-    // `shr eax, 4` then `test al, 1` on the dword at 0x54: bit 4, which lives
-    // in the low byte the header names.
+    // `mov eax, dword ptr [esi+0x54]` then `shr eax, 4` / `test al, 1` at
+    // 0x004C6B1A: a dword read of the whole flag field, testing bit 4.
     if (!(flags_54_ & 0x10)) {
         // The original merges here into a `test ecx, ecx` that can only fall
         // through, because ecx is the null device it already tested. Nothing
@@ -553,7 +555,7 @@ int __fastcall wave_set_zpos_redirect(Wave *self, void *, float a1) {
 /*
 Purpose: Store the attribute mask into the wave's own fields, then tell the
          wrapped device through its vtable slot 0x6C. Bit 1 of the mask sets
-         the dword at 0x30; the other bits map onto the flag byte at 0x54
+         the dword at 0x30; the other bits map onto the flag dword at 0x54
          (bit 0 -> 1, bit 2 -> 2, bit 6 -> 8, bit 7 -> 0x10, and - only when
          bit 2 is clear - bit 4 -> 4 and bit 8 -> 0x20). Bits already set at
          0x54 are never cleared.
@@ -598,7 +600,7 @@ void __fastcall wave_set_attrib_redirect(Wave *self, void *, unsigned long a1) {
 Purpose: Compose the attribute mask back out of the wave's own fields, OR-ed
          over whatever the wrapped device answers through its vtable
          slot 0x70 (0 with no device). The mapping inverts set_attrib's:
-         the dword at 0x30 -> bit 1, and the 0x54 flag byte's bits
+         the dword at 0x30 -> bit 1, and the 0x54 flag dword's bits
          1 -> 0, 8 -> 6, 2 -> 2, 4 -> 4, 0x10 -> 7, 0x20 -> 8.
 ORIGINAL: 0x004C6F80
 Return Value: the composed attribute mask
@@ -613,7 +615,7 @@ int Wave::get_attrib() {
     if (field_30_) {
         result |= 2;
     }
-    const uint8_t flags = flags_54_;
+    const uint32_t flags = flags_54_;
     if (flags & 1) {
         result |= 1;
     }
@@ -705,7 +707,7 @@ int __fastcall wave_set_fname_redirect(Wave *self, void *, const char *a1) {
 /*
 Purpose: Start the wave. While it holds a device group slot, a disabled group
          answers 0x14 immediately (the original trusts only the answer's low
-         byte); otherwise, when bit 4 of the 0x54 flag byte marks a clocked
+         byte); otherwise, when bit 4 of the 0x54 flag dword marks a clocked
          wave, the wave's own vtable slot 0x40 replays the stored volume. A
          wrapped device then starts through its slot 0x1C and its answer is
          the result; with no device, a clocked wave runs the original
@@ -765,7 +767,7 @@ Purpose: Load the wave from its remembered filename. With no wrapped device
          yet, the creation hook - the slot beside the release hook, behind
          the same guard - builds one directly into the 0x3C field; a dead
          hook answers 1 and a failed creation its own error. The 0x54 flag
-         byte and the wave's own vtable slot 0x58 fold into an attribute mask
+         dword and the wave's own vtable slot 0x58 fold into an attribute mask
          the device hears through its slot 0x6C, the base Sound::load reads
          the file, and on success the device reports the length in
          milliseconds through its slot 0xC4 into the field at 0x60.
@@ -798,7 +800,7 @@ int Wave::load() {
             attribs |= 2;
         }
     }
-    const uint8_t flags = flags_54_;
+    const uint32_t flags = flags_54_;
     if (flags & 4) {
         attribs |= 0x11;
     }
@@ -970,7 +972,7 @@ int Wave::load(const char *a1) {
             attribs |= 2;
         }
     }
-    const uint8_t flags = flags_54_;
+    const uint32_t flags = flags_54_;
     if (flags & 8) {
         attribs |= 0x40;
     }
@@ -1048,10 +1050,10 @@ Wave::Wave() {
     field_38_ = 0x3E8;
     field_50_ = 0;
     vtable_storage_ = 0x0066E44C;
+    // The original's `memset(this + 0x54, 0, 4)` at 0x004C6764. It used to be
+    // spelled as four byte stores because the header declared a byte and three
+    // pad bytes there; 0x54 is one dword, so one store says it.
     flags_54_ = 0;
-    pad_55_[0] = 0;
-    pad_55_[1] = 0;
-    pad_55_[2] = 0;
     field_40_ |= 4;
     (ORIGINAL(this)->*SoundSetType)(1);
     pitch_ = 0;
@@ -1075,7 +1077,7 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
          one from the resolved path - capturing the device vtable before its
          own slot 0x70 composes the attribute mask, like dyna_load - then
          hands the RAW mode mask to whatever device exists through its slot
-         0x6C. The mode bits then fold onto the flag byte as in set_attrib
+         0x6C. The mode bits then fold onto the flag dword as in set_attrib
          (bit 4 suppressed for streaming waves, bit 8 unsuppressed here), and
          bit 1 of the mode runs the wave's own vtable slot 0x48 with 1.
 ORIGINAL: 0x004C69B0
@@ -1099,10 +1101,10 @@ void Wave::init(char *a1, unsigned long a2) {
     }
     fname_ = WaveOperatorNew(strlen(resolved) + 1);
     strcpy(static_cast<char *>(fname_), resolved);
-    for (uint8_t *flag_byte = &flags_54_; flag_byte != &flags_54_ + 4;
-         ++flag_byte) {
-        *flag_byte = 0;
-    }
+    // The original's `memset(this + 0x54, 0, 4)` at 0x004C6A1A. This used to be
+    // a byte loop, the only way to spell a four-byte clear while the header
+    // declared a byte and three pad bytes at 0x54.
+    flags_54_ = 0;
     if (streaming) {
         flags_54_ |= 2;
         if (!device_ && *WaveDeviceReleaseGuard) {

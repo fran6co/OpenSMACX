@@ -66,9 +66,37 @@ class DLLEXPORT Gamma : GraphicWin {
   uint32_t field_A64_;  // 0xA64
   Palette palette_;  // 0xA68, IDB `palette`, size == sizeof(Palette)
   Font font_;  // 0xEBC
-  uint32_t field_EE4_;  // 0xEE4
-  uint32_t field_EE8_;  // 0xEE8
-  uint32_t field_EEC_;  // 0xEEC
+  // 0xEE4 and 0xEE8 are floating point, and the IDB's three dwords here were
+  // two members, not three. What withdrew the `uint32_t field_EE4_ /
+  // field_EE8_ / field_EEC_` spelling:
+  //   ?exec@Gamma@@QAEXPAUPalette@@MH@Z  0x005C8E77
+  //       mov [esi+0xEE4], ecx      <- the float parameter's raw four bytes
+  //   ?on_button_clicked@Gamma@@QAEXH@Z  0x005C93EE
+  //       fld dword ptr [ecx+0xEE4] <- read back as a float, so 0xEE4 is float
+  //   ?on_button_clicked@Gamma@@QAEXH@Z  0x005C93DE / 0x005C93F4
+  //       fstp qword ptr [ecx+0xEE8] <- one EIGHT-byte store, so 0xEE8 and
+  //                                     0xEEC are one double, not two dwords
+  //   ??0Gamma@@QAE@XZ  0x005C8E24 / 0x005C8E3E
+  //       [esi+0xEE8] = 0, [esi+0xEEC] = 0x3FF00000, which is the double 1.0
+  //       split into its two halves - the constructor's initialiser
+  //   ?on_redraw@Gamma@@QAEXXZ  0x005C94C9
+  //       push [esi+0xEEC]; push [esi+0xEE8] into sprintf against "%f"
+  //       (0x00691E7C) - one double vararg, low half last
+  //
+  // What they are FOR. ?adjust_palette@Gamma@@QAEXXZ (0x005C9520) recomputes
+  // 0xEE8 as `fild [this+0x191C]; fmul 0.01`. 0x191C is scroll_ + 0xA2C,
+  // which is the dword ?set_pos@Scroll@@QAEXH@Z stores the clamped position
+  // into (0x00605D3E), and exec sets the range to 1..400 (0x005C90EC) and the
+  // position to (int)(the float argument * 100.0f) (0x005C90FA) - so 0xEE8
+  // spans 0.01..4.00. adjust_palette then fills 236 palette entries with
+  // pow(i * 1/235.0, 1.0 / [0xEE8]), the exponent of a gamma ramp, so 0xEE8
+  // is the gamma itself and not its reciprocal.
+  // 0xEE4 is only ever written from exec's float argument and only ever read
+  // to restore 0xEE8, on button -2 (pushButton2_, id pushed at 0x005C91F3);
+  // button -1 (pushButton1_, 0x005C913A) takes gamma from the scroll instead.
+  // So 0xEE4 is the value the dialog opened with, and -2 is its cancel.
+  float initialGamma_;  // 0xEE4
+  double gamma_;  // 0xEE8, spans 0xEE8..0xEEF; 0xEEC is its high half
   Scroll scroll_;  // 0xEF0, IDB `scroll`, size == sizeof(Scroll)
   EditBox editBox_;  // 0x303C, IDB `editBox`, size == sizeof(EditBox)
   PushButton pushButton1_;  // 0x3BB0, IDB `pushButton1`, 0xB00
@@ -76,7 +104,18 @@ class DLLEXPORT Gamma : GraphicWin {
   // Storage the image proves is here: its own methods reach 0x46B4.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // The IDB additionally claims pushButton2 (0xB00) at 0x46B0, beyond the
-  // proven extent; it is not declared until a body reaches it.
+  // proven extent; it is not declared until a body reaches it. (?exec@Gamma@@
+  // constructs a BaseButton there at 0x005C91E5/0x005C91F8 with id -2, so it
+  // is a button; the extent, not the identity, is what is missing.)
+  //
+  // sizeof(Gamma) is 0x46B8, not 0x46B4: `double gamma_` above makes the class
+  // 8-byte aligned, and the floor this placeholder ends at is not a multiple
+  // of 8, so VC6 adds four bytes of tail padding. That is an artefact of where
+  // the DECLARATIONS stop, not of the object - with pushButton2 declared the
+  // class would end at 0x51B0, which is already 8-aligned and needs no
+  // padding. Measured: no other member moved (all 120 shared offsets identical
+  // before and after), and the only recorded floor, access-lower-bounds.csv's
+  // Gamma >= 0x46B4, is still met.
   uint8_t field_46B0_[0x4];  // 0x46B0
 };
 

@@ -152,8 +152,31 @@ class DLLEXPORT ReportWin : GraphicWin {
   uint32_t field_E31C_;  // 0xE31C
   Buffer buffer1_;  // 0xE320
   Buffer buffer2_;  // 0xE8A8
-  Flic flic_;  // 0xEE30, declared Flic extent == 0xAE4
-  uint8_t field_F914_[0x1A8];  // 0xF914
+  // 0xEE30 is a float of ReportWin's own, NOT the head of the Flic. The Flic
+  // starts four bytes later, and the image says so four separate times:
+  //   ?sat_anim@ReportWin@@QAEXXZ multiplies by 0xEE30 as a scalar
+  //     (fmul dword ptr [esi + 0xee30] at 0x0049FEAD) and then, in the same
+  //     body, hands lea ecx, [esi + 0xee34] to ?decode_frame@Flic@@QAEHHH@Z
+  //     at 0x0049FF0E - one function, both facts.
+  //   ??0ReportWin@@QAE@XZ: lea ecx, [esi + 0xee34] -> ??0Flic@@QAE@XZ at
+  //     0x004AD812, straight after lea ecx, [esi + 0xe8a8] -> ??0Buffer.
+  //   ??1ReportWin@@QAE@XZ: lea edi, [esi + 0xee34] -> ?close@Flic@@QAEXXZ at
+  //     0x004AD3E9, then lea ecx, [edi + 4] -> ??1Buffer@@QAE@XZ and
+  //     lea ecx, [edi + 0x5bc] -> ??1Palette@@QAE@XZ, which land exactly on
+  //     Flic::buffer_ (0x4) and Flic::palette_ (0x5BC) in src/flic.h.
+  // So the fmul is not a mistyped Flic::field_0_ and not a Flic that is really
+  // a float; it is a member the old layout swallowed.
+  // docs/recovery/idb-members.csv still carries `ReportWin,0xEE30,flic,2788`.
+  // That row is four bytes early, and the receiver of ??0Flic@@QAE@XZ
+  // withdraws it - an IDB member row is a name, not a measurement.
+  float field_EE30_;  // 0xEE30, x87 dword load -> float
+  Flic flic_;  // 0xEE34, declared Flic extent == 0xAE4, so it ends at 0xF918
+  // 0xF918, not 0xF914. The first own-access past the Flic is
+  // mov eax, dword ptr [esi + 0xf918] at 0x0049FFF4 in
+  // ?start_attack@ReportWin@@QAEXHHHH@Z, which then writes 0xF91C..0xF934;
+  // nothing in the image ever touches 0xF914. The trailing extent to 0xFABC
+  // is unchanged, so sizeof(ReportWin) is what it was.
+  uint8_t field_F918_[0x1A4];  // 0xF918
 };
 
 void __fastcall report_win_on_mouse_move_redirect(ReportWin *self, void *, int a1, int a2);

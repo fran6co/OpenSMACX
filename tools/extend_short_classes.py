@@ -246,13 +246,58 @@ def extend(text: str, name: str, at: int, length: int, members=()) -> str:
     return text
 
 
+def tidy(text: str) -> tuple:
+    """Retire every extent note but the last in each class; (text, removed).
+
+    `extend` no longer stacks them, but twelve headers already carry a pair
+    from before it stopped, and in every pair the earlier number is false -
+    `councwin.h` says "its own methods reach 0xA38" twenty lines above "reach
+    0x4614". Only the LAST note in a class describes the class as it now
+    stands, so the earlier ones go and their declarations stay.
+    """
+    removed = 0
+    for head in reversed(list(class_layouts.CLASS_HEAD.finditer(text))):
+        depth, index = 1, head.end()
+        while index < len(text) and depth:
+            if text[index] == "{":
+                depth += 1
+            elif text[index] == "}":
+                depth -= 1
+            index += 1
+        body = text[head.end():index - 1]
+        notes = list(STALE_NOTE.finditer(body))
+        if len(notes) < 2:
+            continue
+        for note in reversed(notes[:-1]):
+            body = body[:note.start()] + body[note.end():]
+            removed += 1
+        text = text[:head.end()] + body + text[index - 1:]
+    return text, removed
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--apply", action="store_true",
                         help="write the headers (default: report only)")
+    parser.add_argument("--tidy", action="store_true",
+                        help="retire stale extent notes and stop")
     args = parser.parse_args(argv)
+
+    if args.tidy:
+        total = 0
+        for header in sorted(SRC.glob("*.h")):
+            text = header.read_text()
+            cleaned, removed = tidy(text)
+            if removed:
+                total += removed
+                print(f"  {header.name}: retired {removed} stale note(s)")
+                if args.apply:
+                    header.write_text(cleaned)
+        print(f"{total} stale extent note(s)"
+              f"{'' if args.apply else ' (report only; pass --apply)'}")
+        return 0
 
     reason = bm.available()
     if reason:
