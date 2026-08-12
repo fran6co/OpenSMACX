@@ -120,6 +120,24 @@ the tree would compile.
 
 ---
 
+## The recovery loop, run as subagents
+
+`/recover-batch` (`.claude/commands/recover-batch.md`) is the coordinator and
+`.claude/agents/byte-match-recovery.md` is the worker. Six steps: select with
+`tools/recovery_frontier.py --max-size`, prepare with `decomp_status.py --work`,
+brief with `tools/agent_brief.py`, fan out at most six subagents, collect with
+`decomp_status.py --addresses ... --record-matches`, gate with `--check`.
+
+Two properties do the work. **The coordinator re-measures everything** — an
+agent's report is a claim about a run nobody observed, produced by the process
+that had an incentive to stop. And **subagents run only the scorer and
+`disasm.py`**: `decomp_status.py` writes an unlocked shared ledger, so it is the
+coordinator's serial step alone. One address is one file, so no two agents can
+collide.
+
+Both files are reachability roots, on the same rule as the documentation: they
+tell someone to run a tool, and the someone being an agent changes nothing.
+
 ## The agent harness
 
 `mizuchi.yaml` drives an external agent over the same route.
