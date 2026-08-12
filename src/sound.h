@@ -87,8 +87,15 @@ class DLLEXPORT Sound {
 // Two independent sources agree on 0x54 and neither fails like the other:
 // the IDB member table ends at the `type` dword, and the access lower bound
 // is the mov [esi + 0x50] at 0x004C6107. The 0x4C tail this header used to
-// declare contradicted both and covered nothing - no body reads it, Wave is
-// flat rather than derived, and nothing embeds a Sound by value.
+// declare contradicted both and covered nothing - no body reads it and
+// nothing embeds a Sound by value.
+//
+// A THIRD witness landed later, from the other direction: 0x54 is exactly
+// where Wave's own fields start (0x004C6774) and where Ambience's do
+// (0x004C84xx), because both constructors inline this whole constructor on an
+// unadjusted `this` before writing anything of their own. Neither is spelled
+// with a Sound base - Sound::~Sound is out of line and a real base would emit
+// a call the original inlines - but both begin with one.
 static_assert(sizeof(Sound) == 0x54, "Sound layout must match the original executable");
 
 int __fastcall sound_unk1_redirect(Sound *self, void *, int a1);

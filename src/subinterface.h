@@ -23,10 +23,12 @@
   *
   * Promoted out of the generated src/hypothesis_layouts.h so that the
   * recovered bodies that already name this type have a real declaration to
-  * bind to. Five window classes - BaseWin, CouncWin, Datalink, DiploWin and
-  * SocialWin - embed one at +0xA14 and reach it with `lea ecx, [esi + 0xa14]`,
-  * and ReportIf reaches its own at `this` unadjusted, so every use in the tree
-  * is a reinterpret_cast of an address.
+  * bind to. EIGHT window classes - BaseWin, CouncWin, Datalink, DesignWin,
+  * DiploPop, DiploWin, MainInterface and SocialWin - embed one at +0xA14 and
+  * reach it with `lea ecx, [esi + 0xa14]`, and BattleWin and ReportIf hold
+  * theirs at +0. The count is not a guess: the dword 0x0066A6E4 occurs
+  * exactly ten times in .text, every one of them the immediate of a
+  * `mov dword ptr [...], 0x66a6e4` inside a constructor.
   *
   * THE LAYOUT IS MEASURED. An earlier version of this header carried no data
   * member and said one would need "its own evidence" - the evidence was
@@ -40,11 +42,43 @@
   * so the object is AT LEAST 8 bytes, which is independently what the IDB
   * records. Code that indexes a member proves the member is there.
   *
-  * +0x0 is NOT proved: no method of this class touches it. It is a dword
-  * because the size says so and because +0x4 is dword-aligned, and it is
-  * named for its offset rather than given a meaning it has not earned. It is
-  * NOT a vtable pointer - every call site reaches these methods with
-  * `lea ecx, [esi+0xa14]; call rel32`, a direct call, never through a slot.
+  * +0x0 IS THE VFTABLE POINTER, and the paragraph that used to stand here
+  * denying it was wrong. No method of this class touches it, which is what
+  * misled the earlier reading - but ten constructors WRITE it, all with the
+  * same table: `mov dword ptr [esi + 0xa14], 0x66a6e4` in BaseWin
+  * (0x004084C1), CouncWin (0x00428651), Datalink (0x00428FF0), DesignWin
+  * (0x004344C2), DiploPop (0x0043F021), DiploWin (0x00444FF1), MainInterface
+  * (0x0045EF53) and SocialWin (0x004AEA11), and `mov dword ptr [esi],
+  * 0x66a6e4` in BattleWin (0x00422EE6) and ReportIf (0x004AD1A7). The table
+  * at 0x0066A6E4 is nineteen consecutive `__purecall` slots - an abstract
+  * interface's vftable - and the same table landing at +0xA14 in eight
+  * classes and at +0 in two is what identifies it as SubInterface's rather
+  * than any one of theirs.
+  *
+  * It stays OPAQUE STORAGE rather than becoming a `virtual` declaration: the
+  * three methods are reached by direct `call rel32`, never through a slot, so
+  * a C++ vtable here would add a pointer the original installs by hand and
+  * change every call site.
+  *
+  * IS THIS A BASE RATHER THAN A MEMBER? Probably, and the offsets are what
+  * says so. In the eight window classes it sits at 0xA14, which is exactly
+  * `sizeof(GraphicWin)` - precisely where MSVC puts a SECOND base under
+  * multiple inheritance, `class BaseWin : GraphicWin, SubInterface`. In
+  * BattleWin and ReportIf it sits at 0, where a sole base goes. And a class
+  * whose vftable is nineteen consecutive `__purecall` slots is an ABSTRACT
+  * interface, which cannot be held by value as a member at all.
+  *
+  * It is not DECLARED that way here, for two reasons that are about this
+  * tree rather than about the original. `tools/class_layouts.py` refuses
+  * multiple inheritance outright rather than guessing at the interleave, so
+  * declaring it would push eight window classes out of the layout extractor
+  * and back to opaque shells - the opposite of what naming them is for. And
+  * nothing yet depends on the distinction: a member declared first after the
+  * base lands at the same offset, so no offset in this tree moves either way.
+  * The reading is recorded here so that whoever needs the distinction - a
+  * body that converts one of these to a `SubInterface *`, or a virtual
+  * dispatch through the interface - starts from the evidence rather than
+  * rediscovering it.
   *
   * NOT DLLEXPORT: all three methods are unrecovered, and dllexport on a class
   * demands a definition for every member. They are public, non-virtual
@@ -61,7 +95,9 @@ class SubInterface {
   void release_iface_mode();  // 0x0045D380  ?release_iface_mode@SubInterface@@QAEXXZ
 
  private:
-  uint32_t vtable_;  // 0x0  not touched by any method of this class
+  uint32_t vtable_;  // 0x0  the vftable at 0x0066A6E4, installed by hand by
+                     //      ten constructors; opaque so no C++ vtable is
+                     //      generated. No method of this class reads it.
   uint32_t field_4_;  // 0x4  PROVED: set_iface_mode and release_iface_mode
                       //      both access 4 bytes here
 };

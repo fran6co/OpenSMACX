@@ -607,4 +607,16 @@ class DLLEXPORT UV2Player {
   uint8_t field_E64_[0x4];  // 0xE64
 };
 
+// EXACT, not a floor, and the two ends coincide. `?amovie_project@@YAXPAD@Z`
+// (0x00403BE0) builds one UV2Player and one GraphicWin in a single frame:
+// `lea ecx, [ebp - 0x1f0c]` / `call ??0UV2Player@@QAE@XZ` at 0x00403C05, then
+// `lea ecx, [ebp - 0x10a4]` / `call ??0GraphicWin@@QAE@XZ`. Both objects are
+// live at once, so the first cannot exceed its slot: 0x1F0C - 0x10A4 == 0xE68.
+// The floor comes from the other side - `mov ecx, [ebx + 0xe64]` at
+// 0x004BEE08 - and floor meets slot, so the size is settled rather than
+// bounded. The frame corroborates itself: the GraphicWin at ebp-0x10A4 with
+// its pinned 0xA14 ends exactly where the next local begins.
+static_assert(sizeof(UV2Player) == 0xE68,
+              "UV2Player layout must match the original executable");
+
 int __fastcall uv2_player_unk4_redirect(UV2Player *self, void *);

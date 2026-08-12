@@ -49,6 +49,7 @@ TextIndex
 Texture
 Time
 TutWin
+UV2Player
 Vector
 Veh
 VehPrototype

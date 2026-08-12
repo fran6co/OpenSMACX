@@ -75,6 +75,20 @@ class DLLEXPORT AlphaMovie : GraphicWin {
   void UNK6(int a1, int a2);
   void UNK6(int a1);
   int UNK8(int a1, int a2);
+
+ private:
+  // ??0AlphaMovie@@QAE@XZ calls ??0GraphicWin@@QAE@XZ on an unadjusted `this`
+  // at 0x0040402F - so GraphicWin is the base - and then builds an MCIVideo
+  // at `lea ecx, [esi + 0xa14]` (0x00404034). ??1AlphaMovie mirrors it with
+  // `lea edi, [esi + 0xa14]` at 0x00404342. sizeof(GraphicWin) is pinned at
+  // 0xA14, so this is the first member after the base.
+  //
+  // NO SIZE ASSERTION FOLLOWS, deliberately. It would have to be
+  // 0xA14 + sizeof(MCIVideo), and MCIVideo's own end is only bracketed:
+  // ?load@MCIVideo@@QAEHPADPAUWin@@HH@Z writes [esi + 0x470] at 0x005FFFCD,
+  // a floor of 0x474, while the IDB claims 0x46C. The upper bound comes from
+  // ?amovie_project@@YAXPAD@Z's stack frame and is 0x47C.
+  MCIVideo mciVideo_;  // 0xA14
 };
 
 void __fastcall alpha_movie_unk7_redirect(AlphaMovie *self, void *);

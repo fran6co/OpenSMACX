@@ -41,7 +41,21 @@ class DLLEXPORT DipEdit {
   void on_redraw();
 
  private:
-  uint8_t unmapped_[0x4E10];
+  uint8_t unmapped_[0xA20];
+  // 0xA20, the IDB's `field_A20`. `?on_selected@DipEdit@@QAEXH@Z` at
+  // 0x004DA740 stores its incoming argument straight here:
+  // `mov dword ptr [esi + 0xa20], eax`. The IDB's next member is `font` at
+  // 0xA24, so this is a standalone dword rather than the head of a run.
+  int32_t field_A20_;
+  uint8_t unmapped_A24_[0x43EC];  // 0xA24, where the IDB's `font` begins
+
+  // 0xA20 + 4 + 0x43EC == 0x4E10: the split names storage that was already
+  // here and moves nothing after it. The body still reaches the field by
+  // offset, because DipEdit carries no size assertion and so is absent from
+  // docs/recovery/verified-layouts.txt - the scaffolding a measured body is
+  // compiled in would give this class an opaque shell, and a named member
+  // there is `C2065: undeclared identifier`. 0x004DA740 is BYTE_EXACT;
+  // naming it in the body would cost that.
 
   // Storage the image proves is here: its own methods reach 0x5240.
   // Extent only - this class carries no size assertion, and the bound is a floor.

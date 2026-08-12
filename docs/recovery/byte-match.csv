@@ -518,8 +518,8 @@ u00421670.cpp(118) : error C2065: 'has_fac_built' : undeclared identifier"
 0x00421980,PopMenu::delete1,src/deleting_thunks.cpp:447,1,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,20,2,5,0,#0: original 'sub' vs rebuilt 'push',
 0x00421990,PopMenu::delete2,src/deleting_thunks.cpp:460,1,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,20,2,5,0,#0: original 'sub' vs rebuilt 'push',
 0x004219A0,PopMenu::delete3,src/deleting_thunks.cpp:473,1,11,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,11,20,2,5,0,#0: original 'sub' vs rebuilt 'push',
-0x004219B0,??__Eg_BattleWin@@YAXXZ,src/init_thunks.cpp:505,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004219b0.cpp(86) : error C2065: 'GameAtexit' : undeclared identifier
-u004219b0.cpp(86) : error C2061: syntax error : identifier 'func_atexit_callback'"
+0x004219B0,??__Eg_BattleWin@@YAXXZ,src/init_thunks.cpp:505,1,22,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,"u004219b0.cpp(87) : error C2065: 'GameAtexit' : undeclared identifier
+u004219b0.cpp(87) : error C2061: syntax error : identifier 'func_atexit_callback'"
 0x004219D0,??__Fg_BattleWin@@YAXXZ,src/atexit_thunks.cpp:676,1,10,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,10,1,2,1,0,#0: original 'mov' vs rebuilt 'ret',
 0x004219E0,?init@BattleWin@@QAEXXZ,src/recovered/units/004219e0.cpp:1,0,319,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,319,277,93,89,17,#17: original 'mov' vs rebuilt 'lea',
 0x00421B20,?pulse_timer@BattleWin@@QAEXXZ,src/recovered/00421b20.cpp:1,0,23,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,23,23,,,,,
@@ -540,8 +540,8 @@ u00421b50.cpp(91) : error C2061: syntax error : identifier 'BOOL'"
 0x00422E80,?on_iface_mouse_move@BattleWin@@QAEXHH@Z,src/battlewin.cpp:81,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00422E90,?on_iface_mouse_leave@BattleWin@@QAEXHH@Z,src/battlewin.cpp:94,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
 0x00422EA0,?on_iface_selected@BattleWin@@QAEXHH@Z,src/battlewin.cpp:107,0,3,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,3,3,,,,,
-0x00422EB0,?timer_callback_daemon@BattleWin@@QAAXHH@Z,src/guarded_teardowns.cpp:73,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00422eb0.cpp(85) : error C2065: 'original_address' : undeclared identifier
-0x00422EC0,?timer_callback_daemon@BattleWin@@QAAXH@Z,src/guarded_teardowns.cpp:85,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00422ec0.cpp(85) : error C2065: 'original_address' : undeclared identifier
+0x00422EB0,?timer_callback_daemon@BattleWin@@QAAXHH@Z,src/guarded_teardowns.cpp:73,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00422eb0.cpp(86) : error C2065: 'original_address' : undeclared identifier
+0x00422EC0,?timer_callback_daemon@BattleWin@@QAAXH@Z,src/guarded_teardowns.cpp:85,0,10,primary=1;eh=0;shared=0;selfmod=0,NO_COMPILE,,,,,,,u00422ec0.cpp(86) : error C2065: 'original_address' : undeclared identifier
 0x00422ED0,??1BattleWin@@QAE@XZ,src/battlewin.cpp:37,0,8,primary=1;eh=0;shared=0;selfmod=0,MISMATCH,8,1,2,1,0,#0: original 'add' vs rebuilt 'ret',
 0x00422EE0,??0BattleWin@@QAE@XZ,src/recovered/units/00422ee0.cpp:1,0,27,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,27,27,,,,,
 0x00422F00,?range@@YAHHHH@Z,src/general.cpp:112,0,30,primary=1;eh=0;shared=0;selfmod=0,BYTE_EXACT,30,30,,,,,

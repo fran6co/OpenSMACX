@@ -50,7 +50,12 @@ SIZE_ASSERT = re.compile(r"static_assert\(\s*sizeof\(\s*(\w+)\s*\)\s*==\s*"
 # instead of 45.
 MEMBER = re.compile(
     r"^\s*(?P<type>(?:const\s+)?[A-Za-z_]\w*)\s*(?P<stars>\*+)?\s*"
-    r"(?P<name>[A-Za-z_]\w*)\s*(?P<array>\[[^\]]*\])?"
+    # EVERY dimension, not one. A single `\[...\]?` left `Sprite base[6][4];`
+    # unparsed, and an unparsed statement refuses the WHOLE class - four of
+    # them today (FactionArt, PlayerData, Trace, VOX_Matrix). The captured
+    # text is re-emitted verbatim and the probe includes the declaring
+    # header, so a symbolic bound resolves exactly as it does in src/.
+    r"(?P<name>[A-Za-z_]\w*)\s*(?P<array>(?:\[[^\]]*\])*)"
     # A default member initialiser - `uint8_t *base_ = nullptr;` - is C++11
     # and changes no layout. Not allowing for it refused `Heap`, and with it
     # every class that holds one.

@@ -29,6 +29,7 @@
 
 #include "original_seam.h"
 #include "graphicwin.h"
+#include "subinterface.h"
 
  /*
   * BaseWin class
@@ -79,9 +80,18 @@ class DLLEXPORT BaseWin : GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 293 member(s) from the IDA database, 30 named; it starts a member at 0xA14, which is where src/ ends.
 
-  uint32_t subIFace_;  // 0xA14
-  ProdPicker prodPicker_;  // 0xA18
-  uint32_t field_B258_;  // 0xB258
+  // The SubInterface is EIGHT bytes, not four, and the ProdPicker after it
+  // starts at 0xA1C rather than 0xA18. ??0BaseWin@@QAE@XZ settles both:
+  // 0x004084B4 `lea ecx, [esi + 0xa1c]`, 0x004084C1
+  // `mov dword ptr [esi + 0xa14], 0x66a6e4` - the SubInterface vftable seven
+  // other window constructors store at their own +0xA14 - then
+  // `call ??0ProdPicker@@QAE@XZ`. sizeof(ProdPicker) is pinned at 0xA840 and
+  // 0xA1C + 0xA840 == 0xB25C, exactly where the next `lea ecx, [esi+0xb25c]`
+  // builds graphicWin2_, so the two abut and the `field_B258_` dword this
+  // header used to put between them does not exist. The three members total
+  // 0xA848 before and after, so nothing past graphicWin2_ moves.
+  SubInterface subIFace_;  // 0xA14
+  ProdPicker prodPicker_;  // 0xA1C
   GraphicWin graphicWin2_;  // 0xB25C
   Sprite sprites1_[2];  // 0xBC70
   Sprite sprites2_[2];  // 0xBCC8
