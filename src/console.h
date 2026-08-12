@@ -18,7 +18,7 @@
 #pragma once
 
 #include "original_seam.h"
-#include "graphicwin.h"
+#include "mapwin.h"
 
  /*
   * Console class
@@ -26,29 +26,64 @@
   * The largest unrecovered class in the image - 132KB across 148 methods -
   * and the reason the layout campaign exists.
   *
-  * As with MapWin, the original derives this from GraphicWin virtually and
-  * that cannot be written as `: virtual GraphicWin` here: MSVC places a
-  * virtual base where its vbtable says, the Itanium ABI this toolchain
-  * follows places it after the derived object, so the faithful-looking
-  * declaration is the one that silently produces the wrong layout. The base
-  * is held as a member at the offset MSVC put it.
+  * The base is MapWin, not GraphicWin. ??0Console@@QAE@H@Z reaches
+  * ??0MapWin@@QAE@H@Z at 0x0050F4AE with `mov ecx, esi` and no adjustment -
+  * esi is the unmodified `this` saved at 0x0050F483 - so a MapWin subobject
+  * begins at offset 0, and GraphicWin is reached THROUGH it. The header used
+  * to say `: virtual GraphicWin`, which is a level too shallow; the edge is
+  * still virtual, just one link further down (`MapWin : virtual GraphicWin`).
   *
-  * The size is read rather than inferred: the vbtable at 0x0066EF04 reads
-  * {0, 0x23D94}, and GraphicWin is pinned at 0xA14, summing to the 0x247A8
-  * asserted below. Independently g_CONSOLE's global slot bounds the object
-  * above at 0x247D8, consistent with 0x30 to spare - two readings sharing no
-  * evidence.
+  * The two comments this replaces were both withdrawn by measurement:
   *
-  * Console reaches GraphicWin through MapWin rather than directly: its
-  * constructor calls MapWin's before anything else, so MapWin's own fields
-  * occupy the front of derived_storage_. Nothing here depends on that, but it
-  * is where mapping this storage should start.
+  *   - "that cannot be written as `: virtual GraphicWin` here ... the base is
+  *     held as a member at the offset MSVC put it" was already false when it
+  *     was read: the class it sat on top of spelled `: virtual GraphicWin`
+  *     and held no such member. VC6 puts a virtual base after the derived
+  *     members exactly where MSVC's vbtable says, so the declaration and the
+  *     image agree and the warning had nothing left to warn about.
+  *   - "MapWin's own fields occupy the front of derived_storage_" is now the
+  *     declaration rather than a note about it.
   *
-  * Fields must be carved out of derived_storage_ as methods are recovered,
-  * keeping the total fixed. Appending would move the virtual base and break
-  * every offset in the class.
+  * The size is read rather than inferred: the vbtable at 0x0066EF04 - stored
+  * into [this] at 0x0050F49A - reads {0, 0x23D94}, and GraphicWin is pinned
+  * at 0xA14, summing to the 0x247A8 asserted below. The constructor builds
+  * that GraphicWin at this+0x23D94 (0x0050F4A0) under the most-derived flag,
+  * which is what makes it the virtual base rather than a member.
+  * Independently g_CONSOLE's global slot bounds the object above at 0x247D8,
+  * consistent with 0x30 to spare - two readings sharing no evidence.
+  *
+  * WHERE THE BASE SUBOBJECT ENDS, and the one place this spelling is four
+  * bytes off. A standalone MapWin puts its virtual base at 0x21A6C (vbtable
+  * 0x0066C870, {0, 0x21A6C}), so mapwin.h declares storage right up to
+  * 0x21A6C. Inside a Console the virtual base has moved to the end, and the
+  * MapWin subobject stops at 0x21A68: the constructor builds an
+  * unconditional GraphicWin at this+0x21A68 (0x0050F4BC), 0xA14 bytes, which
+  * ends at 0x2247C - exactly where the next member starts (Buffer at
+  * this+0x2247C, 0x0050F4CB). Those four bytes are the vtordisp MSVC reserves
+  * immediately ahead of a virtual base, and it belongs to the MOST DERIVED
+  * object, so in a Console it moves to 0x23D90: 0x0050F57E reads the vbase
+  * displacement out of the vbtable and writes `[esi + 0x23D94 - 4]` at
+  * 0x0050F584. field_23D90_ below is that slot, and mapwin.h's
+  * `MapWin::field_21A68_` carries the same argument from MapWin's side.
+  *
+  * VC6 will not emit a vtordisp of its own - it only does so where a virtual
+  * base's virtual functions are overridden, and nothing in this chain
+  * declares a single `virtual`. So mapwin.h has to hold its four bytes as a
+  * declared member to keep sizeof(MapWin) == 0x22480, and that makes the base
+  * subobject here 0x21A6C wide against the image's 0x21A68. It costs no
+  * offset - everything from 0x21A6C on lands where the image puts it, and
+  * sizeof is unmoved - and it costs one declaration: the GraphicWin at
+  * 0x21A68 cannot be named as a Console member while the base owns its first
+  * dword, so it stays inside the slab below and `verify_subobjects` reports
+  * that site as `mistyped ... 0x4 bytes against 0xA14` rather than `absent`.
+  * That report is the truth about this spelling, not a defect introduced by
+  * it; no spelling that keeps both static_asserts can make it go away.
+  *
+  * Fields must be carved out of the slabs as methods are recovered, keeping
+  * the total fixed. Appending would move the virtual base and break every
+  * offset in the class.
   */
-class DLLEXPORT Console : virtual GraphicWin {
+class DLLEXPORT Console : MapWin {
  public:
   void editor_polar();
   void on_sys_close();
@@ -70,19 +105,22 @@ class DLLEXPORT Console : virtual GraphicWin {
   int focus(int x_coord, int y_coord, int faction_id);
 
  private:
-  // 4 bytes shorter than the 0x23D94 this array used to span: the vbtable
-  // pointer at offset 0 is now the compiler's, emitted because the class
-  // declares the virtual base instead of holding it. The base still lands at
-  // 0x23D94 and the static_assert below is what says so.
-  uint8_t field_4_[0x1DDA0];  // 0x4
-  uint32_t field_1DDA4_;  // 0x1DDA4
-  uint32_t field_1DDA8_;  // 0x1DDA8
-  uint8_t field_1DDAC_[0x20];  // 0x1DDAC
-  uint32_t field_1DDCC_;  // 0x1DDCC
-  uint32_t field_1DDD0_;  // 0x1DDD0
-  uint32_t field_1DDD4_;  // 0x1DDD4
-  uint32_t field_1DDD8_;  // 0x1DDD8
-  uint8_t field_1DDDC_[0x4C50];  // 0x1DDDC
+  // Storage now starts where the MapWin base ends. Everything this class used
+  // to declare below 0x21A6C - the vbtable pointer at 0, the 0x1DDA0 slab
+  // after it, the dwords at 0x1DDA4 and 0x1DDA8, the 0x20 slab at 0x1DDAC,
+  // the four dwords at 0x1DDCC..0x1DDD8, and the front 0x3C90 of the slab
+  // that used to run 0x1DDDC..0x22A2C - is the base's, and mapwin.h
+  // declares every one of those bytes itself: MapWin carries its own
+  // field_1DDA4_, field_1DDA8_, field_1DDCC_, field_1DDD0_, field_1DDD4_ and
+  // field_1DDD8_ at the same offsets, read independently from MapWin's own
+  // methods. Two scans of the same storage agreeing is why this edge is safe
+  // to declare rather than merely believable.
+  //
+  // What remains is the tail of that slab: [0x21A6C, 0x22A2C) is 0xFC0 bytes.
+  // All but the first four of the unnamed GraphicWin at 0x21A68..0x2247C sit
+  // in here - the four the base swallowed are the reason the header comment
+  // says it cannot be spelled.
+  uint8_t field_21A6C_[0xFC0];  // 0x21A6C
   uint32_t field_22A2C_;  // 0x22A2C
   uint8_t field_22A30_[0x440];  // 0x22A30
   uint32_t field_22E70_;  // 0x22E70
@@ -117,7 +155,13 @@ class DLLEXPORT Console : virtual GraphicWin {
   uint32_t field_23D84_;  // 0x23D84
   uint32_t field_23D88_;  // 0x23D88
   uint32_t field_23D8C_;  // 0x23D8C
-  uint8_t field_23D90_[0x4];  // 0x23D90
+  // NOT Console data: the vtordisp for the virtual base at 0x23D94. The
+  // constructor computes it rather than storing a constant - `mov edx, [esi]`
+  // / `mov eax, [edx+4]` / `lea ecx, [eax - 0x23d94]` / `mov [eax + esi - 4],
+  // ecx` at 0x0050F579..0x0050F584 - which is the same idiom mapwin.h records
+  // at MapWin::field_21A68_, one dword ahead of wherever the vbase landed.
+  // Four bytes wide because that is the width of the write.
+  int32_t field_23D90_;  // 0x23D90
 };
 
 static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe");

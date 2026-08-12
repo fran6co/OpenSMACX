@@ -18,20 +18,42 @@
 #pragma once
 
 #include "original_seam.h"
+#include "popup.h"
 #include "win.h"
 
  /*
   * TutWin class
   *
-  * The original derives this from Popup on an unadjusted `this`, so Popup is
-  * a genuine base - but Popup's size is not established, so the base cannot
-  * be modelled and everything ahead of these fields is held as opaque storage
-  * instead. That is enough to place them: the offsets below are absolute from
-  * the object's start either way.
+  * Derives from Popup. Both ends of the base subobject are measured:
   *
-  * Nothing pins this class's sizeof.
+  *   ??0TutWin@@QAE@XZ at 0x004BA6B0 does `mov esi, ecx` and then calls
+  *   ??0Popup@@QAE@XZ with no lea in between, so the receiver is the
+  *   unadjusted `this`; ??1TutWin@@QAE@XZ at 0x004BE7D0 tears the same chain
+  *   down on the same pointer - ?close@Popup@@QAEXXZ, then ?close@BasePop@@QAEXXZ,
+  *   then ??1GraphicWin@@QAE@XZ, all on `this+0`, matching Popup : BasePop :
+  *   GraphicWin as src/ already declares it.
+  *
+  *   The base ENDS at 0x537C. That destructor inlines Popup's own teardown:
+  *   ?close@Scroll@@QAEXXZ on this+0x3230 - exactly where popup.h puts
+  *   `Scroll scroll_` - and the two FlatButtons inside it at +0xAAC and
+  *   +0x15F8 (absolute 0x3CDC and 0x4828, the last ending at 0x5374), so the
+  *   Scroll really does span [0x3230, 0x3230 + 0x214C) = [0x3230, 0x537C).
+  *   From the other side, every field ??0TutWin writes for itself is at
+  *   0x537C or above; the only stores it makes below that are the two vptrs
+  *   at 0x0 and 0x444, which are GraphicWin's and belong to the base.
+  *   sizeof(BasePop) 0x3230 and sizeof(Scroll) 0x214C are both pinned and
+  *   both `reached` by verify_member_offsets --pins, so 0x3230 + 0x214C =
+  *   0x537C is the base's extent, not an assumption.
+  *
+  * WITHDRAWN: this comment used to say "Popup's size is not established, so
+  * the base cannot be modelled", and held [0, 0x537C) as a slab of field_
+  * members instead. The two sentences above are the measurements that
+  * withdrew it. It also said "Nothing pins this class's sizeof";
+  * `verify_member_offsets.py --class TutWin --pins` prints
+  * `reached TutWin 0x53D8 image reaches 0x53D8`, so the static_assert below
+  * is reached by the image's own widest access.
   */
-class DLLEXPORT TutWin {
+class DLLEXPORT TutWin : Popup {
  public:
   void on_move(int a1, int a2);
   TutWin() { ; }
@@ -48,49 +70,7 @@ class DLLEXPORT TutWin {
   void des_rect(RECT *rect, int *x, int *y);
 
  private:
-  uint32_t field_0_;  // 0x0
-  uint8_t field_4_[0x440];  // 0x4
-  uint32_t field_444_;  // 0x444
-  uint8_t field_448_[0x614];  // 0x448
-  uint32_t field_A5C_;  // 0xA5C
-  uint8_t field_A60_[0x440];  // 0xA60
-  uint32_t field_EA0_;  // 0xEA0
-  uint8_t field_EA4_[0x704];  // 0xEA4
-  uint32_t field_15A8_;  // 0x15A8
-  uint8_t field_15AC_[0x440];  // 0x15AC
-  uint32_t field_19EC_;  // 0x19EC
-  uint8_t field_19F0_[0x754];  // 0x19F0
-  uint32_t field_2144_;  // 0x2144
-  uint8_t field_2148_[0x30];  // 0x2148
-  uint32_t field_2178_;  // 0x2178
-  uint32_t field_217C_;  // 0x217C
-  uint32_t field_2180_;  // 0x2180
-  uint32_t field_2184_;  // 0x2184
-  uint8_t field_2188_[0xC];  // 0x2188
-  uint32_t field_2194_;  // 0x2194
-  uint8_t field_2198_[0x10];  // 0x2198
-  uint32_t field_21A8_;  // 0x21A8
-  uint32_t field_21AC_;  // 0x21AC
-  uint8_t field_21B0_[0xC4];  // 0x21B0
-  uint32_t field_2274_;  // 0x2274
-  uint8_t field_2278_[0xE44];  // 0x2278
-  uint32_t field_30BC_;  // 0x30BC
-  uint32_t field_30C0_;  // 0x30C0
-  uint8_t field_30C4_[0xA4];  // 0x30C4
-  uint32_t field_3168_;  // 0x3168
-  uint8_t field_316C_[0xC4];  // 0x316C
-  uint32_t field_3230_;  // 0x3230
-  uint8_t field_3234_[0x440];  // 0x3234
-  uint32_t field_3674_;  // 0x3674
-  uint8_t field_3678_[0x664];  // 0x3678
-  uint32_t field_3CDC_;  // 0x3CDC
-  uint8_t field_3CE0_[0x440];  // 0x3CE0
-  uint32_t field_4120_;  // 0x4120
-  uint8_t field_4124_[0x704];  // 0x4124
-  uint32_t field_4828_;  // 0x4828
-  uint8_t field_482C_[0x440];  // 0x482C
-  uint32_t field_4C6C_;  // 0x4C6C
-  uint8_t field_4C70_[0x70C];  // 0x4C70
+  // [0, 0x537C) is the Popup base subobject; see the note above.
   int32_t field_537C_;
   int32_t field_5380_;
   uint32_t field_5384_;  // 0x5384

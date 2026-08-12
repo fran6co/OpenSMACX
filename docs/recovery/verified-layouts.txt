@@ -37,6 +37,7 @@ MessageWin
 Midi_Device
 NewTechWin
 Palette
+Popup
 ProdPicker
 PullDown
 PullDownItem
