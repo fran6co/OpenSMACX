@@ -1332,11 +1332,6 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_proven_functions.py"
             --check
     )
-    add_test(NAME signature-oracles-current
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_signature_oracles.py"
-            --check
-    )
     # The VCall shim the COMPILED tree uses. It is generated from the same
     # function the verification scaffolding uses, and a drift between the two
     # would let a body verify against one slot layout and call another.
@@ -1397,24 +1392,6 @@ if(BUILD_TESTING)
     # Staleness only: the verdicts are a worklist, not a gate. `absent` and
     # `at-zero` are both large and both are recovery work rather than defects,
     # so failing on them would pin the tree at whatever it happened to be.
-    add_test(NAME subobject-sites-current
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_subobjects.py"
-            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
-    )
-    # Skips without the fetched, ignored PRACX header.
-    add_test(NAME pracx-members-current
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_pracx_layouts.py"
-            --check
-    )
-    # Skips without the pinned image; every row is read out of its constructors.
-    add_test(NAME vtables-current
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_vtables.py"
-            --check
-            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
-    )
     # Skips without the fetched, ignored note; a clean checkout has neither.
     add_test(NAME yitzi-sizes-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
@@ -1422,12 +1399,6 @@ if(BUILD_TESTING)
             --check
     )
     # Skips without the pinned image; every name here is read out of it.
-    add_test(NAME behaviour-member-names-current
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/name_members_from_behaviour.py"
-            --check
-            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
-    )
     # Skips without the pinned image, which every verdict here depends on.
     add_test(NAME base-edges-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
@@ -1617,17 +1588,20 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(observability-tests
                                    test_measure_observability.py)
 
+    # `observability-ratchet` was RETIRED as a gate on 2026-08-12 (see
+    # docs/RETIRED_ROUTES.md): it made every new recovery of >=200 B fail until
+    # someone ran measure_observability.py on it, a per-recovery tax payable only
+    # in the currency of the route being retired. The TOOL stays and is still
+    # runnable, so its unit tests still run - a surviving tool with an
+    # unregistered test file is exactly what tool-test-registration refuses.
+    opensmacx_add_python_tool_test(observability-ratchet-tests
+                                   test_verify_observability_ratchet.py)
+
     # The ratchet. 141 of 193 recovered functions of >=200 B are observed by
     # nothing; writing 131 retroactive fixtures would halt the objective, so the
     # debt is published and capped rather than paid off. A new recovery absent
     # from the census fails, and the counts may fall but never rise. Compares
     # two committed files and builds nothing.
-    add_test(NAME observability-ratchet
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_observability_ratchet.py"
-    )
-    opensmacx_add_python_tool_test(observability-ratchet-tests
-                                   test_verify_observability_ratchet.py)
 
     # recovery-abi prefetches its objdump/nm calls in parallel, which is a
     # speedup applied to a verifier. These cover the two properties that keep
@@ -1661,11 +1635,6 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_no_load_time_addresses.py"
     )
 
-    add_test(NAME recovered-shapes-current
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/classify_recovered_shapes.py"
-            --check
-    )
     add_test(NAME derived-prototypes-current
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_prototypes_from_names.py"
