@@ -360,18 +360,150 @@ def _present(name: str, text: str) -> bool:
     return re.search(rf"\b{re.escape(name)}\b", text) is not None
 
 
+@functools.lru_cache(maxsize=1)
+def _class_keys() -> dict:
+    """{class: 'struct'|'class'} - the emitter's own choice, not a second one.
+
+    `U` and `V` mangle differently, so a definition emitted here has to use
+    the same key the emitter and the target object use, or a function taking
+    the type as a parameter decorates to a symbol no target object holds.
+    """
+    try:
+        import emit_translation_unit as emit
+        return emit.class_keys(emit.load_functions())
+    except Exception:                      # no catalogue: fall back to struct
+        return {}
+
+
+@functools.lru_cache(maxsize=1)
+def _windows_typedefs() -> dict:
+    """Win32 spellings that are a primitive, not a struct."""
+    try:
+        import emit_translation_unit as emit
+        return dict(emit.NOT_A_STRUCT)
+    except Exception:
+        return {}
+
+
+BY_VALUE_MEMBER = re.compile(r"^\s*(?:const\s+)?([A-Za-z_]\w*)\s+\w+\s*(?:\[[^\]]*\])?\s*;\s*$")
+POINTER_MEMBER = re.compile(r"^\s*(?:const\s+)?([A-Za-z_]\w*)\s*\*+")
+
+
+def _member_types(lines) -> tuple:
+    """({by-value type}, {pointed-at type}) over a class's member lines.
+
+    BOTH are needed, and only counting the first is how
+    `??1TextureStore@@QAE@XZ` - byte-exact for weeks - became NO_COMPILE the
+    moment definitions started being emitted: `Buffer` holds
+    `const BITMAPINFO *bitmap_info_;`, a POINTER, so nothing asked for
+    `BITMAPINFO` and VC6 stopped at `syntax error : missing ';' before '*'`.
+    A pointer needs the name DECLARED even though it does not need the type
+    complete.
+    """
+    by_value, pointed = set(), set()
+    for line in lines:
+        stripped = line.strip()
+        if "(" in stripped:
+            continue
+        if "*" in stripped:
+            hit = POINTER_MEMBER.match(stripped)
+            if hit and hit.group(1) not in SCALARS:
+                pointed.add(hit.group(1))
+            continue
+        hit = BY_VALUE_MEMBER.match(stripped)
+        if hit and hit.group(1) not in SCALARS:
+            by_value.add(hit.group(1))
+    return by_value, pointed
+
+
+def _definition_lines(name: str, scaffolding: str, provided: set = None,
+                      depth: int = 0):
+    """`struct X { ... };` for a class `src/` has a VERIFIED layout for.
+
+    Returns the lines its dependencies need FIRST, then the definition, or
+    None when the layout is not supplyable or names a type this cannot put in
+    the same unit. A forward declaration is the fallback, and it is a correct
+    one: it costs the unit `C2036 unknown size` where it already had
+    `C2065 undeclared identifier`, which is the same NO_COMPILE.
+
+    THE GATE IS `class_layouts.supplyable`, which is `verified-layouts.txt`
+    plus the recursive by-value closure. Nothing unverified is written into a
+    unit here - a layout the tree has not proved against the real size would
+    move every offset after it and the body would still compile.
+    """
+    import class_layouts
+
+    if provided is None:
+        provided = set()
+    if depth > 4 or not class_layouts.supplyable(name):
+        return None
+    members = class_layouts.declaration_for(name)
+    if not members:
+        return None
+
+    # `provided` is what this PREAMBLE has already written, and it is not the
+    # same question as what the scaffolding wrote. Without it `RECT` was
+    # defined once as Buffer's dependency and again as Win's, and the unit
+    # died on `C2011: 'RECT' : 'struct' type redefinition` - a unit that had
+    # compiled before definitions were emitted at all.
+    before, windows = [], _windows_typedefs()
+    by_value, pointed = _member_types(members)
+    for required in sorted(by_value | pointed):
+        if _present(required, scaffolding) or required in provided:
+            continue
+        if required in windows:
+            provided.add(required)
+            before.append(f"typedef {windows[required]} {required};")
+            continue
+        if required in class_layouts.WINDOWS_STRUCT:
+            provided.add(required)
+            nested = class_layouts.declaration_for(required)
+            before.append(f"struct {required} {{")
+            before.extend(nested)
+            before.append("};")
+            continue
+        if required in pointed and required not in by_value:
+            # A pointer needs the NAME, not the layout. Forward declarations
+            # may legally repeat, but tracking them keeps the unit readable.
+            provided.add(required)
+            before.append(f"{_class_keys().get(required, 'struct')} "
+                          f"{required};")
+            continue
+        deeper = _definition_lines(required, scaffolding, provided, depth + 1)
+        if deeper is None:
+            return None
+        before.extend(deeper)
+
+    provided.add(name)
+    key = _class_keys().get(name, "struct")
+    head = f"{key} {name} {{ public:" if key == "class" else f"{key} {name} {{"
+    return before + [head] + list(members) + ["};"]
+
+
 def for_body(body: str, scaffolding: str, source_path=None,
              src: Path = SRC) -> str:
     """Declarations `body` needs that `scaffolding` does not already carry.
 
-    The ORDER is forward type declarations, then typedefs, then variables and
-    functions, so a prototype never precedes the type it names.
+    The ORDER IS TOPOLOGICAL, not by kind: a declaration is appended after
+    everything it needs, because `Buffer` holds a `Spot` by value and a class
+    definition cannot name a class declared below it. Sorting by kind put the
+    typedefs a definition uses after the definition.
+
+    A referenced CLASS is emitted as its full definition when
+    `class_layouts.supplyable` says `src/` has a verified layout for it, and
+    as a forward declaration otherwise. That is the join between header
+    recovery and measurement: `Vehs[index].field_` needs `sizeof(Veh)`, so
+    every class the tree learns to declare turns some NO_COMPILE into a
+    verdict, and every class it cannot stays exactly as unmeasurable as it was.
     """
     known = dict(index(src))
     if source_path is not None:
         known.update(file_scope(Path(source_path)))
 
     wanted, seen = [], set()
+    # Every type name this preamble has already written. One set for the whole
+    # call, so a type two different classes depend on is defined once.
+    provided = set()
 
     def take(name: str, depth: int = 0) -> bool:
         """Queue `name` and everything it needs; False when it cannot be."""
@@ -381,27 +513,58 @@ def for_body(body: str, scaffolding: str, source_path=None,
         if declaration is None or depth > 3:
             return False
         seen.add(name)
-        for required in sorted(declaration.by_value):
-            # A by-value class parameter needs the definition, which only the
-            # emitter can supply. Refuse rather than emit a unit that says
-            # `C2079: uses undefined class`.
+        if declaration.kind == "type":
+            if name in provided:
+                return True
+            definition = _definition_lines(name, scaffolding, provided)
+            if definition is not None:
+                wanted.append(Declaration(name, "\n".join(definition), "type",
+                                          set(), set(), declaration.origin))
+                return True
+
+        def supply(required: str, complete: bool) -> bool:
+            """Get `required` into the unit ahead of `name`.
+
+            `complete` is the difference between a member held BY VALUE, which
+            needs the whole type, and one reached through a pointer, which a
+            forward declaration satisfies.
+            """
             if required in SCALARS or _present(required, scaffolding):
-                continue
+                return True
+            if required in provided:
+                return True
+            windows = _windows_typedefs()
+            if required in windows:
+                provided.add(required)
+                wanted.append(Declaration(
+                    required, f"typedef {windows[required]} {required};",
+                    "typedef", set(), set(), "NOT_A_STRUCT"))
+                seen.add(required)
+                return True
+            definition = _definition_lines(required, scaffolding, provided)
+            if definition is not None:
+                seen.add(required)
+                wanted.append(Declaration(required, "\n".join(definition),
+                                          "type", set(), set(), "layout"))
+                return True
             other = known.get(required)
-            if other is None or other.kind != "typedef":
-                seen.discard(name)
+            if other is None:
                 return False
-            if not take(required, depth + 1):
+            if complete and other.kind not in ("typedef",):
+                # A forward declaration cannot satisfy a by-value member, and
+                # emitting one anyway trades C2065 for C2079 while putting a
+                # claim in the preamble that is not true.
+                return False
+            return take(required, depth + 1)
+
+        for required in sorted(declaration.by_value):
+            if not supply(required, complete=True):
                 seen.discard(name)
                 return False
         for required in sorted(declaration.types - declaration.by_value):
-            if required in SCALARS or _present(required, scaffolding):
-                continue
-            other = known.get(required)
-            if other is None:
+            if not supply(required, complete=False):
                 seen.discard(name)
                 return False
-            take(required, depth + 1)
         wanted.append(declaration)
         return True
 
@@ -412,9 +575,8 @@ def for_body(body: str, scaffolding: str, source_path=None,
             continue
         take(name)
 
-    rank = {"type": 0, "typedef": 1, "variable": 2, "function": 3}
     ordered, emitted = [], set()
-    for declaration in sorted(wanted, key=lambda d: (rank[d.kind], d.name)):
+    for declaration in wanted:
         if declaration.text in emitted:
             continue
         emitted.add(declaration.text)

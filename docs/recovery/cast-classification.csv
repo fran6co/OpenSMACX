@@ -47,7 +47,7 @@ src/basewin.cpp,315,0x0041E890,BaseWin,BYTE_EXACT,this,,char *,alias-binding,,,,
 src/basewin.cpp,316,0x0041E890,BaseWin,BYTE_EXACT,self,,Win *,unresolvable,,,,,,derived,alias used with no constant displacement
 src/basewin.cpp,317,0x0041E890,BaseWin,BYTE_EXACT,self,0xa14,SubInterface *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/basewin.cpp,336,0x0041B4A0,BaseWin,BYTE_EXACT,this,0x40b10,char *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/battlewin.cpp,42,0x00422ED0,BattleWin,NO_COMPILE,this,0x8,uint8_t *,inside-declared-member,unmapped_0_,0x0,48,,,derived,
+src/battlewin.cpp,42,0x00422ED0,BattleWin,MISMATCH,this,0x8,uint8_t *,inside-declared-member,unmapped_0_,0x0,48,,,derived,
 src/battlewin.cpp,123,0x00422DC0,BattleWin,BYTE_EXACT,this,,SubInterface*,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/buffer.cpp,45,0x005D7210,Buffer,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/buffer.cpp,98,0x005D7210,Buffer,NO_COMPILE,this,0x580,uint8_t *,exact-member-typeable,field_580_,0x580,1,0x580,,derived,

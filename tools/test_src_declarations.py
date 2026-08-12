@@ -135,6 +135,28 @@ class ParameterTypes(unittest.TestCase):
         self.assertEqual(sd._by_value_types("Heap *heap"), set())
 
 
+class MemberTypes(unittest.TestCase):
+
+    def test_pointer_member_type_is_reported_separately(self):
+        by_value, pointed = sd._member_types([
+            "    Spot spot_;",
+            "    const BITMAPINFO *bitmap_info_;",
+            "    Win *children_[150];",
+            "    void *opaque_;",
+            "    uint32_t plain_;",
+        ])
+        self.assertEqual(by_value, {"Spot"})
+        self.assertEqual(pointed, {"BITMAPINFO", "Win"})
+
+    def test_a_pointer_still_needs_the_name_declared(self):
+        # `??1TextureStore@@QAE@XZ` was byte-exact and became NO_COMPILE the
+        # first time definitions were emitted, on exactly this: `Buffer` holds
+        # `const BITMAPINFO *`, nothing asked for BITMAPINFO, and VC6 stopped
+        # at `syntax error : missing ';' before '*'`.
+        _, pointed = sd._member_types(["    const BITMAPINFO *bitmap_info_;"])
+        self.assertIn("BITMAPINFO", pointed)
+
+
 class ForBody(unittest.TestCase):
 
     def setUp(self):
@@ -190,6 +212,17 @@ class ForBody(unittest.TestCase):
         text = sd.for_body("int f() { return local_only(1); }", "",
                            source_path=cpp, src=self.src)
         self.assertIn("int local_only(int a);", text)
+
+    def test_a_shared_dependency_is_defined_once(self):
+        # `RECT` was defined once as Buffer's dependency and again as Win's,
+        # and the unit died on C2011 redefinition - a unit that compiled
+        # before definitions were emitted at all. The preamble has to track
+        # what IT has written, not only what the scaffolding wrote.
+        import class_layouts
+        text = sd.for_body("void f() { Buffer b; Win w; }", "")
+        if "struct RECT {" not in text and "class RECT {" not in text:
+            self.skipTest("this tree does not supply RECT to these classes")
+        self.assertEqual(text.count("struct RECT {") + text.count("class RECT {"), 1)
 
     def test_unknown_name_is_simply_absent(self):
         text = sd.for_body("int f() { return mystery(1); }", "", src=self.src)

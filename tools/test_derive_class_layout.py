@@ -238,6 +238,17 @@ class FirstConstructedTest(unittest.TestCase):
             self.instruction("call", "0x617f00", 0x00617F00)])
         self.assertEqual(("Caviar", 0x30, True), found)
 
+    def test_a_decimal_displacement_is_still_a_member(self):
+        # CAPSTONE PRINTS 1..9 WITHOUT `0x`. `??0BattleWin@@QAE@XZ` at
+        # 0x00422EE0 does `lea ecx, [esi + 8]` before calling ??0Time, and a
+        # hex-only pattern read that as no displacement - reporting a member
+        # at +8 as a BASE at 0, which is exactly the mistake this class's own
+        # docstring exists to prevent, on a class it names.
+        found = self.run_against([
+            self.instruction("lea", "ecx, [esi + 8]"),
+            self.instruction("call", "0x617f00", 0x00617F00)])
+        self.assertEqual(("Caviar", 8, True), found)
+
     def test_reports_nothing_when_no_constructor_runs(self):
         self.assertIsNone(self.run_against([self.instruction("ret", "")]))
 
