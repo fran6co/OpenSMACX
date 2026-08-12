@@ -316,6 +316,34 @@ def damage_writing_test(workspace):
             "--repo", str(repo)]
 
 
+def damage_retired_cmake_path(workspace):
+    """A CMakeLists naming a tool that was retired out from under it.
+
+    The shape found in the tree on 2026-08-12, reproduced exactly: a live
+    COMMAND pointing at `run_game (retired)`, the placeholder spelling left by
+    rewriting a tool's name in place rather than removing the block. Twenty-one
+    of those plus two DEPENDS on a deleted CSV survived a full configure and a
+    173-step build, because a custom target outside `all` never resolves its own
+    command line.
+
+    A second, GOOD reference is written beside it so the case cannot pass by a
+    check that simply refuses every CMakeLists it is handed - the vacuous shape
+    this file exists to catch.
+    """
+    root = workspace / "retired-cmake"
+    (root / "tools").mkdir(parents=True, exist_ok=True)
+    (root / "tools" / "real.py").write_text("")
+    (root / "CMakeLists.txt").write_text(
+        'add_custom_target(alive\n'
+        '    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tools/real.py"\n'
+        ')\n'
+        'add_custom_target(dead\n'
+        '    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/run_game (retired)"\n'
+        ')\n')
+    return [PYTHON, str(TOOLS / "verify_cmake_paths_exist.py"),
+            "--cmakelists", str(root / "CMakeLists.txt"), "--check"]
+
+
 def damage_refuted_wall(workspace):
     """A RULED-OUT list left standing on a body that has since been PROVED.
 
@@ -523,6 +551,8 @@ CASES = (
      damage_writing_test, "write into the source tree"),
     ("byte-match-ratchet", "a wall left standing on a body that was proved",
      damage_refuted_wall, "LESSON GRAMMAR"),
+    ("cmake-paths", "a CMake command naming a tool that was retired",
+     damage_retired_cmake_path, "does not exist"),
 )
 
 # The gate checks this tool is responsible for. Adding a check here without
@@ -542,6 +572,7 @@ COVERED_CHECKS = {
     "cast-classification-current",
     "byte-match-ratchet",
     "tests-do-not-write",
+    "cmake-paths",
 }
 
 

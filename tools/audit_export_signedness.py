@@ -39,9 +39,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from generator_support import parse_body_ranges, read_bytes  # noqa: E402
+import emit_translation_unit as emit  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 DEFAULT_DEF = REPO_ROOT / "src" / "OpenSMACX.def"
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 
@@ -172,13 +172,20 @@ def read_definitions(def_path):
     return pairs
 
 
-def read_catalogue(functions_path):
+def read_catalogue(_unused=None):
+    """Group the catalogue by undecorated name, read from `src/`.
+
+    This opened `docs/recovery/functions.csv` until 2026-08-12 and crashed with
+    FileNotFoundError from the day that file was deleted and the map moved into
+    the source tree. The gate is registered and had been failing ever since;
+    nothing noticed, because the runner it was checked with is a hand-written
+    list of eighteen and this was not on it.
+    """
     catalogue = defaultdict(list)
-    with functions_path.open(newline="", encoding="utf-8-sig") as handle:
-        for row in csv.DictReader(handle):
-            key = base_key(row["name"])
-            if key:
-                catalogue[key].append(row)
+    for row in emit.load_functions().values():
+        key = base_key(row["name"])
+        if key:
+            catalogue[key].append(row)
     return catalogue
 
 
@@ -267,7 +274,6 @@ def audit(functions_path, def_path, exe_path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--functions", type=Path, default=DEFAULT_FUNCTIONS)
     parser.add_argument("--def-file", type=Path, default=DEFAULT_DEF)
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
     parser.add_argument("--json", action="store_true")
@@ -275,7 +281,7 @@ def main():
                         help="fail if the candidate population has grown")
     arguments = parser.parse_args()
 
-    compared, findings = audit(arguments.functions, arguments.def_file,
+    compared, findings = audit(None, arguments.def_file,
                                arguments.exe)
     counts = defaultdict(int)
     for one in findings:
