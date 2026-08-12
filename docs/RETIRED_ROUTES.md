@@ -73,9 +73,18 @@ case:
 Every one is a scaffolding or class-layout defect, not a property of the
 function. Fix it and the body becomes byte-matchable, at which point the
 evidence is **stronger** than the leaf test ever was rather than merely
-replaced. `C2065` is the largest such family in the tree — 951 of 1,703
-`NO_COMPILE` rows — so this is work already on the route, not work invented to
-compensate.
+replaced. `C2065` is the largest such family in the tree, so this is work
+already on the route rather than work invented to compensate.
+
+*Corrected 2026-08-12:* an earlier draft of this paragraph called `C2065`
+"951 of 1,703 NO_COMPILE rows" and attributed it to missing class fields. Both
+halves were wrong. Measured across every `NO_COMPILE` note in the map, there are
+**2,865** `C2065` occurrences, of which **2,455 are game constants and globals**
+(`GameAtexit` 388, `ScrollOperatorDelete` 56, `RadiusOffsetX/Y`, `TRIAD_AIR`,
+`MaxPlayerNum`, `BIT_FUNGUS`, even `NULL`) and only **79** are `field_*`
+members. The scaffolding declares what the decoded signature reaches and no
+more, so a body written against the real headers loses everything project-wide.
+Of the six above, exactly one — `0x00590300` — is really a layout gap.
 
 The remaining three — `0x004C6120`, `0x004C66E0`, `0x004C67C0`, the `Sound` and
 `Wave` constructors and destructors — are `SHARED_TAIL`: the linker folded their
@@ -191,6 +200,49 @@ The measured block stays and still passes `measure_exclusions.py --check` (20 of
 20 figures agree with the image). Those numbers are a true measurement of what
 the import closure reaches; what retired is the claim that reaching it puts a
 function out of scope.
+
+## The Mizuchi harness — retired 2026-08-12
+
+An external Node program (`~/code/mizuchi`), driven by `mizuchi.yaml`,
+`mizuchi-integrator.mjs` and `tools/run_mizuchi.sh`, running one Claude Agent SDK
+session per function — model `claude-sonnet-5`, 10 concurrent, 25 retries, with
+an `objdiff` tool in the loop. Last real run 2026-08-06, 26,906 events. Replaced
+by `/recover-batch` and `.claude/agents/byte-match-recovery.md`, which do the same
+thing inside the session that already has the repository.
+
+Gone with it: `mizuchi-db.json`, **161 MB** carried through git-lfs, and
+the `emit_asm_dumps` tool, which nothing but `mizuchi.yaml` named.
+
+**Five of its tools were never really its own** and carry the loop today —
+`mizuchi_context.py`, `mizuchi_declfix.py`, `mizuchi_writeback.py`,
+`emit_target_object.py` and `emit_mizuchi_prompts.py`, the last of which now
+supplies `agent_brief.py` with its disassembler and definition-head builder. The
+names are historical; the code is load-bearing.
+
+### What it got right, and should be copied
+
+- **One agent per function, in its own context.** No cross-talk, no shared
+  scratch, and a failure that cannot spread. The subagent loop keeps this.
+- **A diff tool inside the loop.** The agent could compile and see its own
+  divergence rather than submitting blind. `--dir` is the successor: score nine
+  spellings against one loaded image and rank them.
+- **The gate did not trust the agent.** Only a BYTE_EXACT verdict measured by
+  the integrator was integrated; the agent's own claim was never evidence. That
+  rule is now `/recover-batch` step 5, and it is the single most important thing
+  carried over.
+
+### What it got wrong
+
+- **No channel between agents.** Its own findings file said so: "Mizuchi runs one
+  agent per function with no channel between them, so two agents hitting the same
+  idiom each pay for it separately." That file then had zero readers for its
+  entire life. The `LEVER:`/`RULED-OUT:` grammar exists because of this.
+- **The evidence left the repository.** The integrator ratcheted
+  `docs/recovery/byte-match.csv`, which had already moved to a gitignored path,
+  so a run's proof lived only in a cache. 122 proved bodies once existed solely
+  as gitignored `build/byte-match/*/unit.cpp`.
+- **A branch mode that lost work.** One 27-minute run left 42 dangling refs and
+  42 `/tmp` worktrees with nothing in `git status`.
 
 ## Still live, and not retired by this file
 
