@@ -32,8 +32,6 @@ import emit_translation_unit as emit  # noqa: E402
 import verify_recovered_function as verifier  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-LEDGER = REPO_ROOT / ".opensmacx" / "byte-match.csv"
-PROMPTS = REPO_ROOT / "mizuchi" / "prompts"
 
 # Only the rules that bear on the divergence actually seen. The full findings
 # file is a page and a half; a body whose branch polarity is wrong does not
@@ -101,38 +99,65 @@ TARGETED = (
 )
 
 
-def ledger_row(address: int) -> dict:
-    with LEDGER.open(newline="", encoding="utf-8-sig") as handle:
-        for row in csv.DictReader(handle):
-            if row["address"].upper() == f"0X{address:08X}":
-                return row
-    return {}
+def ledger_row(address: int, tier: str = "", note: str = "") -> dict:
+    """The verdict to reason about, MEASURED unless the caller supplies one.
+
+    The ledger `.opensmacx/byte-match.csv` is a gitignored cache, so reading it
+    made this brief silently useless in a worktree - the tier came back empty,
+    no fingerprint matched, and every targeted rule switched itself off while
+    the brief still printed confidently. The coordinator has usually just
+    measured the batch, so it passes the verdict in; anything else measures one
+    function rather than guessing from a file that may not exist.
+    """
+    if tier:
+        return {"tier": tier, "note": note}
+    verdict = verifier.writeback.verify(address, verifier.committed_body(address)[0] or "")
+    return {"tier": verdict.get("tier", ""),
+            "note": verdict.get("note") or verdict.get("refusal_reason") or ""}
 
 
 def disassembly(address: int) -> str:
-    """The target's own instructions, lifted from the generated prompt."""
-    path = PROMPTS / f"{address:08x}" / "prompt.md"
-    if not path.is_file():
-        return "(no generated prompt; run tools/emit_mizuchi_prompts.py)"
-    text = path.read_text()
-    start = text.find("```asm")
-    if start < 0:
-        return "(the generated prompt carries no disassembly)"
-    end = text.find("```", start + 6)
-    return text[start:end + 3]
+    """The target's own instructions, read from the IMAGE.
+
+    This used to scrape a fenced block out of `mizuchi/prompts/<hex>/prompt.md`.
+    That directory is gitignored and 426 MB of local generation, so in a fresh
+    worktree - the isolation model the fan-out depends on - the brief degraded
+    to "(no generated prompt)" and handed the agent nothing to reason from. The
+    same function that wrote those prompts is imported instead, so the brief now
+    depends on the pinned executable and nothing else.
+    """
+    import pefile
+    import emit_mizuchi_prompts as prompts
+
+    functions = emit.load_functions()
+    row = functions.get(address)
+    if row is None:
+        return f"(0x{address:08X} is not catalogued)"
+    pe = pefile.PE(str(verifier.byte_match.DEFAULT_EXE), fast_load=True)
+    body = prompts.disassemble(pe, address, row.get("body_ranges", ""), functions)
+    return "```asm\n" + body + "\n```"
 
 
 def prompt_section(address: int, heading: str) -> str:
-    """One `## heading` section of the generated prompt, or ''."""
-    path = PROMPTS / f"{address:08x}" / "prompt.md"
-    if not path.is_file():
+    """The Contract, or the Ghidra hypothesis, derived rather than scraped."""
+    if heading == "Contract":
+        import pefile
+        import emit_mizuchi_prompts as prompts
+        try:
+            head = prompts.signature_head(
+                address, emit.load_functions(), emit.load_derived(),
+                emit.load_callees(),
+                pefile.PE(str(verifier.byte_match.DEFAULT_EXE), fast_load=True))
+        except Exception as error:
+            return f"## Contract\n\n(no scaffolding: {error})"
+        return ("## Contract\n\nDefine exactly this, out of line, using the "
+                "definition head VERBATIM:\n\n```cpp\n" + head + "\n```")
+    import emit_mizuchi_prompts as prompts
+    text = prompts.ghidra_hypothesis(address)
+    if not text:
         return ""
-    text = path.read_text()
-    start = text.find(f"## {heading}")
-    if start < 0:
-        return ""
-    end = text.find("\n## ", start + 1)
-    return text[start:end if end > 0 else len(text)].strip()
+    return ("## Ghidra decompilation (hypothesis only)\n\n```c\n"
+            + text + "\n```")
 
 
 def targeted_rules(note: str) -> str:
@@ -146,7 +171,7 @@ def targeted_rules(note: str) -> str:
 def fresh_recovery_section(address: int) -> str:
     """What to send when NOTHING is recovered yet.
 
-    The ledger still carries a tier for these rows, because the census scores
+    A tier still exists for these rows, because the census scores
     every catalogued function and an unrecovered one gets an empty scaffold -
     so the note reads `#0: original 'push' vs rebuilt 'xor'`, which is not a
     divergence at all, it is the shape of a function that does not exist. Left
@@ -168,10 +193,9 @@ def fresh_recovery_section(address: int) -> str:
                 "will accept.\n")
     return f"""# Nothing is recovered yet - write it from scratch
 
-There is no committed body. The ledger still shows a tier for this row
-because the census scores every catalogued function and an unrecovered one
-gets an empty scaffold, so its "divergence" is just the shape of a function
-that does not exist. IGNORE IT and work from the disassembly.
+There is no committed body. Any tier shown above was scored against an EMPTY
+scaffold, so its "divergence" is just the shape of a function that does not
+exist. IGNORE IT and work from the disassembly.
 
 {contract}
 
@@ -230,11 +254,18 @@ name is catalogue data and gets applied there, not in the body alone.
 """
 
 
-def brief(address: int) -> str:
-    row = ledger_row(address)
+def brief(address: int, tier: str = "", note: str = "") -> str:
+    # `tier`/`note` come from the coordinator, which has just measured the
+    # batch. Left empty, `ledger_row` measures this one function rather than
+    # reading a gitignored cache that may not exist.
+    row = ledger_row(address, tier, note)
     body, location = verifier.committed_body(address)
     functions = emit.load_functions()
     name = (functions.get(address) or {}).get("name", f"sub_{address:x}")
+    # From the CATALOGUE, not from the verdict: the verdict is now measured or
+    # passed in and carries no size, and `? bytes` in a brief is the agent's
+    # first cue for how hard this is.
+    size = (functions.get(address) or {}).get("size", "?")
     note = row.get("note") or row.get("refusal_reason") or ""
 
     if body is None:
@@ -253,7 +284,7 @@ need is below - do not go looking for anything else.
 
 # Target
 
-`{name}` at 0x{address:08X}, {row.get('size', '?')} bytes.
+`{name}` at 0x{address:08X}, {size} bytes.
 Current verdict: {verdict}
 
 # What the original compiles to
@@ -287,12 +318,14 @@ return-type change turned MISMATCH into NO_COMPILE.
 Write a candidate to a file under /tmp and score it. This writes NOTHING to the
 repository:
 
-    cd /home/fran6co/code/OpenSMACX
-    /home/fran6co/.venv/bin/python3 tools/verify_recovered_function.py \\
-        0x{address:08X} --body /tmp/cand.cpp --against-committed
+    tools/verify_recovered_function.py 0x{address:08X} --dir /tmp/variants
+    tools/verify_recovered_function.py 0x{address:08X} --body /tmp/cand.cpp \\
+        --against-committed
 
-Exit 0 means BYTE_EXACT. Anything else prints the first differing mnemonic and
-its index, and refuses a candidate that is WORSE than what is committed.
+Exit 0 means BYTE_EXACT and nothing else does. `--dir` scores every *.cpp in the
+directory against one loaded image and ranks them, which is the mode to reach
+for: the question is "which of these nine", not "is this one it".
+`--against-committed` refuses a candidate that is WORSE than what is there.
 Iterate until exit 0, or until you can say what you ruled out.
 
 # The lever that keeps working
@@ -365,6 +398,13 @@ Four items, each labelled, and omit the ones that do not apply:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("address")
+    # The coordinator has just measured the batch; passing the verdict in keeps
+    # the brief from measuring the same function a second time. Omitted, it
+    # measures - it never guesses from a cache.
+    parser.add_argument("--tier", default="",
+                        help="the verdict to reason about (default: measure it)")
+    parser.add_argument("--note", default="",
+                        help="the divergence note that goes with --tier")
     arguments = parser.parse_args(argv)
     try:
         address = int(arguments.address, 16)
@@ -372,7 +412,7 @@ def main(argv=None) -> int:
         print(f"error: {arguments.address} is not a hex address",
               file=sys.stderr)
         return 2
-    print(brief(address))
+    print(brief(address, arguments.tier, arguments.note))
     return 0
 
 
