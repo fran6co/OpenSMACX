@@ -598,6 +598,15 @@ def main(argv=None) -> int:
     layouts, sizes, refused = declared(args.src)
     for line in refused:
         print(f"  refused {line}")
+    # HOW MANY CLASSES SHOULD HAVE BEEN MEASURED. Without this the check is
+    # vacuous whenever the probe side comes back empty: no layouts means every
+    # access falls through every test, and the run prints OK having measured
+    # nothing. An adversarial verifier hit it by pointing --src at a directory
+    # with no headers - `classes with declared members: 0` and exit 0. The
+    # refusal list does not cover that case, because a header that was never
+    # enumerated is never refused either.
+    wanted = set(classes(args.src))
+    missing = sorted(wanted - set(layouts))
 
     if args.pins:
         audit = audit_pins(sizes, observed, args.src)
@@ -634,16 +643,29 @@ def main(argv=None) -> int:
         if bad:
             print(f"FAIL: {bad} declared boundaries the image contradicts")
             return 1
-        # A REFUSAL IS NOT A PASS. A header whose probe unit does not compile
-        # contributes no declared layout, so every access into its classes
-        # falls through every test and the run prints OK having measured
-        # nothing. The damage case found this the first time it ran: a class
-        # split into a byte and three pad bytes reported clean because its own
-        # header had refused.
+        # A REFUSAL IS NOT A PASS, AND NEITHER IS AN EMPTY MEASUREMENT. Both
+        # are the same defect at two scales: a layout that was never read
+        # cannot contradict anything, so silence reads as agreement. The
+        # damage case caught the first scale on its first run - a class split
+        # into a byte and three pad bytes reported clean because its own
+        # header had refused. An adversarial verifier caught the second by
+        # pointing `--src` at a directory with no headers: `classes with
+        # declared members: 0` and exit 0. The refusal list does not cover
+        # that, because a header nothing enumerated is never refused either.
         if refused:
             print(f"FAIL: {len(refused)} header(s) could not be measured")
             return 1
-        print("OK: no declared boundary is contradicted by the image")
+        if missing:
+            print(f"FAIL: {len(missing)} declared class(es) were never "
+                  f"measured, so this run proves nothing about them: "
+                  f"{', '.join(missing[:8])}"
+                  f"{' ...' if len(missing) > 8 else ''}")
+            return 1
+        if not layouts:
+            print("FAIL: no class was measured at all")
+            return 1
+        print(f"OK: no declared boundary is contradicted by the image "
+              f"({len(layouts)} classes measured)")
     return 0
 
 
