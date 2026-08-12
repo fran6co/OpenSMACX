@@ -465,6 +465,39 @@ set(OPENSMACX_SOURCES
     src/win_oracle.cpp
 )
 
+# `<stdint.h>` and `<cstdint>` are C99 and C++11; cl 12.00.8168 ships neither,
+# and thirteen `C1083: Cannot open include file` came from that alone. The
+# shims are put on the include path rather than spliced into each includer so
+# the source keeps saying the standard thing and there is nothing to undo when
+# this compiler is retired. Guarded by version, so a modern build never
+# shadows its own headers with these.
+#
+# DIRECTORY SCOPE, NOT PER TARGET. This was attached to `OpenSMACX` alone, which
+# is a hand-maintained list of one: every target added afterwards that spelled
+# `<cstdint>` broke in exactly the same way with exactly the same error, and one
+# did. `recovery-gameplay-tests` compiles `tests/recovery_fixtures.h`, whose
+# line 35 is `#include <cstdint>`, and it has been failing to build under the
+# vc6 preset with `C1083: Cannot open include file: 'cstdint'`. Declared before
+# the first target so every target in this directory inherits it.
+#
+# `src` is not optional: the two shims include "vc6_compat.h" by quoted name and
+# no copy of it lives beside them.
+if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
+    include_directories("${CMAKE_CURRENT_SOURCE_DIR}/cmake/vc6-include"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    # The C++11 spellings the shim supplies - `nullptr`, `constexpr`,
+    # `static_assert`, the `namespace std` using-declarations - reach the DLL
+    # through `src/stdafx.h`, which every one of its sources includes. The test
+    # targets have no such header, so `src/globals_diff.h` and
+    # `tests/globals_diff_tests.cpp` failed on `'std' : is not a class or
+    # namespace name` and `'nullptr' : undeclared identifier`. Force-including
+    # it here delivers the same shim to every target without a per-file edit,
+    # which is the rule this directory already follows for the include path.
+    # `#pragma once` in the header makes the double delivery to `stdafx.h`
+    # sources a no-op, and `tools/vc6_cl.py` already translates `/FI`.
+    add_compile_options("/FI${CMAKE_CURRENT_SOURCE_DIR}/src/vc6_compat.h")
+endif()
+
 add_library(OpenSMACX SHARED ${OPENSMACX_SOURCES})
 
 target_compile_definitions(OpenSMACX PRIVATE
@@ -473,19 +506,6 @@ target_compile_definitions(OpenSMACX PRIVATE
 )
 target_precompile_headers(OpenSMACX PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h")
 target_link_libraries(OpenSMACX PRIVATE user32 gdi32 winmm)
-
-# `<stdint.h>` and `<cstdint>` are C99 and C++11; cl 12.00.8168 ships neither,
-# and thirteen `C1083: Cannot open include file` came from that alone. The
-# shims are put on the include path rather than spliced into each includer so
-# the source keeps saying the standard thing and there is nothing to undo when
-# this compiler is retired. Guarded by version, so a modern build never
-# shadows its own headers with these.
-if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
-    target_include_directories(OpenSMACX PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/vc6-include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src"
-    )
-endif()
 
 set_target_properties(OpenSMACX PROPERTIES
     OUTPUT_NAME OpenSMACX

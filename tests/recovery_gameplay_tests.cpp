@@ -95,16 +95,24 @@ class ScopedSeam {
  */
 namespace {
 
-using GameplayCase = void (*)();
+// SPELLED FOR cl 12.00.8168, which is the compiler this target is built with.
+// The C++11 forms cost 102 errors here, and only three of them were real: an
+// alias declaration, `>>` closing two templates, and `emplace_back`. The other
+// 99 were the parser desynchronising after `GameplayCase` failed to declare -
+// including 42 `C2078: too many initializers` pointing at plain `int ids[] =
+// {0, 1};` aggregates that are correct C++98 and were never the problem.
+// Every spelling below is valid C++98 and valid C++11, so the MinGW side is
+// unaffected.
+typedef void (*GameplayCase)();
 
-std::vector<std::pair<const char *, GameplayCase>> &gameplay_cases() {
-    static std::vector<std::pair<const char *, GameplayCase>> cases;
+std::vector<std::pair<const char *, GameplayCase> > &gameplay_cases() {
+    static std::vector<std::pair<const char *, GameplayCase> > cases;
     return cases;
 }
 
 struct GameplayRegistrar {
     GameplayRegistrar(const char *name, GameplayCase run) {
-        gameplay_cases().emplace_back(name, run);
+        gameplay_cases().push_back(std::make_pair(name, run));
     }
 };
 
@@ -16201,8 +16209,12 @@ void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
 
 
 int main() {
-    for (const auto &entry : gameplay_cases()) {
-        entry.second();
+    // An iterator loop rather than a range-for, for the same reason as the
+    // typedef above: cl 12.00.8168 has neither `auto` nor range-based `for`.
+    std::vector<std::pair<const char *, GameplayCase> > &cases = gameplay_cases();
+    for (std::vector<std::pair<const char *, GameplayCase> >::const_iterator
+             entry = cases.begin(); entry != cases.end(); ++entry) {
+        entry->second();
     }
     if (failure_count() != 0) {
         std::fprintf(stderr, "recovery-gameplay-tests: %d failure(s)\n",
