@@ -1092,6 +1092,14 @@ if(BUILD_TESTING)
     # numbers for one tree.
     opensmacx_add_python_tool_test(recovery-metrics-tests test_recovery_metrics.py)
 
+    # The frontier is what SELECTS work for a recovery batch, and it had no test
+    # while it was printing a queue that was 45% already-proved functions -
+    # `functions.csv` does not know about src/recovered/. These pin the join
+    # against the source map in both directions: a proved address leaves the
+    # queue, and it also resolves its callers so the frontier grows.
+    opensmacx_add_python_tool_test(recovery-frontier-tests
+                                   test_recovery_frontier.py)
+
     # The shape catalogue behind unproven_by_shape. A misclassified body is
     # invisible in the total, so the decisions are tested on synthetic bytes.
     opensmacx_add_python_tool_test(recovered-shape-classifier-tests test_classify_recovered_shapes.py)

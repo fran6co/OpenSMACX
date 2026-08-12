@@ -27,6 +27,15 @@ WHAT "RESOLVED" MEANS. A callee is resolved if it is `source_complete`,
 body, and the other two still lean on the original, so a caller built on them
 inherits that lean.
 
+`recovery_state` IS NOT THE WHOLE TRUTH, AND THIS JOINS AGAINST `src/`.
+`functions.csv` records what the catalogue exporter knew, and it does not know
+about `src/recovered/` - the byte-exact proof units, which carry a `BYTE_EXACT`
+annotation and no `source_locations`. Measured 2026-08-12: **252 of the 563
+leaves this used to print were already proved**, and `0x00401000` sat fifth in
+the queue while `src/recovered/00401000.cpp:1` had a BYTE_EXACT claim on it. A
+queue that hands an agent finished work is worse than a short one, so every
+population here is filtered by `annotation_scan` unless `--include-claimed`.
+
 CYCLES ARE A CEILING, NOT A DETAIL. Peeling waves only terminates if the graph
 is layered. A mutually recursive cluster has no leaf, so no amount of
 leaves-first work enters it and a seam is unavoidable there regardless of
@@ -163,15 +172,45 @@ def leaf_queue(inventory, callees):
     return rows
 
 
+def claimed_addresses(src: Path = None) -> set:
+    """Addresses `src/` already claims BYTE_EXACT, wherever they live.
+
+    Read through `annotation_scan`, which is the tree's own map reader, so this
+    sees `src/recovered/` and `src/recovered/units/` exactly as the ratchet does
+    rather than through `source_locations` - which stored bodies deliberately do
+    not set.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import annotation_scan
+    root = src or (Path(__file__).resolve().parent.parent / "src")
+    if not root.is_dir():
+        return set()
+    return {a.address for a in annotation_scan.scan_tree(root) if a.matched}
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--functions", type=Path, default=DEFAULT_FUNCTIONS)
     parser.add_argument("--callgraph", type=Path, default=DEFAULT_CALLGRAPH)
     parser.add_argument("--queue", type=int, default=20,
                         help="how many of the leaf queue to print")
+    parser.add_argument("--max-size", type=int, default=0,
+                        help="only queue leaves at or below this many bytes")
+    parser.add_argument("--include-claimed", action="store_true",
+                        help="do not filter out addresses src/ already proves "
+                             "(the pre-2026-08-12 behaviour)")
     options = parser.parse_args(argv)
 
     inventory, callees = load(options.functions, options.callgraph)
+    claimed = set() if options.include_claimed else claimed_addresses()
+    if claimed:
+        hidden = [a for a in inventory
+                  if a in claimed and inventory[a]["state"] == "unrecovered"]
+        print(f"src/ already proves {len(claimed)} addresses; "
+              f"{len(hidden)} of them are still `unrecovered` in the catalogue "
+              f"and are filtered out below")
+        for address in hidden:
+            inventory[address]["state"] = "source_complete"
     wave_list, pending = waves(inventory, callees)
 
     unrecovered = [(a, f) for a, f in inventory.items()
@@ -218,6 +257,8 @@ def main(argv=None) -> int:
               "reaches every function")
 
     queue = leaf_queue(inventory, callees)
+    if options.max_size:
+        queue = [item for item in queue if item[1]["size"] <= options.max_size]
     with_callers = [item for item in queue if item[1]["callers"] > 0]
     print(f"\nLEAF QUEUE: {len(queue)} leaves, "
           f"{sum(f['size'] for _, f in queue)} B; "
