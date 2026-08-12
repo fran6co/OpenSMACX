@@ -1821,6 +1821,25 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(tool-test-registration-tests
                                    test_verify_tool_test_registration.py)
 
+    # AGENTS.md has always said a test must never write into the source tree.
+    # Nothing enforced it, and test_integrate_recovery.py was deleting
+    # src/recovered/00401000.cpp - a BYTE_EXACT proof no other file carried -
+    # and re-pointing 37 rows of functions.csv on EVERY ctest run. It also made
+    # test_repair_source_locations pass: that test asserts the committed
+    # catalogue has not drifted, and it was green because the offender sorts
+    # first and had just silently repaired it.
+    #
+    # It runs the 111 tool tests a second time (134 s measured) because there
+    # is no cheaper honest form: the property is dynamic, and running each file
+    # in its own subprocess is what lets a failure NAME the offender instead of
+    # reporting that the suite was dirty.
+    add_test(NAME tests-do-not-write
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_tests_do_not_write.py"
+    )
+    opensmacx_add_python_tool_test(tests-do-not-write-tests
+                                   test_verify_tests_do_not_write.py)
+
     # THE META-CHECK. Damages real repository content and requires each gate
     # check to refuse it. Three of the thirteen checks added on 2026-07-31 could
     # not fail, and every one of them passed its own unit tests - the controls

@@ -212,6 +212,10 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   something observes it
 - `tools/verify_build_freshness.py` — a green ctest against a stale build
   directory means nothing
+- `tools/verify_tests_do_not_write.py` — runs every tool test in its own
+  subprocess and fails if one edits or deletes a tracked file. It caught
+  `test_integrate_recovery.py` deleting a byte-exact proof and rewriting the
+  catalogue on every run, and the second test that was passing *because* of it
 - `tools/verify_test_registration.py`,
   `tools/verify_tool_test_registration.py`,
   `tools/verify_tool_reachability.py`,
