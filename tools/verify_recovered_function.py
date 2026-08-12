@@ -28,6 +28,51 @@ IT USES THE WRITEBACK RECIPE, NOT THE CENSUS RECIPE. The census omits
 the catalogued names; without it a body calling a CRT function reads as
 NO_COMPILE. So a function can score NO_COMPILE in the census and BYTE_EXACT
 here, and here is the one that matches what the integrator gates on.
+
+THAT DIFFERENCE IS LOAD-BEARING, NOT AN ACCIDENT - measured, because it looks
+exactly like one. Two recipes for one question is the shape this tree keeps
+finding defects in, so declfix was added to the census recipe and the whole map
+re-measured against a saved baseline. It is a REGRESSION: 64 bodies moved and
+none improved - 61 MISMATCH -> NO_COMPILE and **3 BYTE_EXACT -> NO_COMPILE**.
+
+The reason is the two body STYLES, not the two paths. A census body lives in
+`src/*.cpp` and was written against the real declarations in `src/*.h`, so
+respelling its callees from the catalogue's mangled names contradicts the header
+it actually calls. A writeback body is emitter-style and was written against the
+generated scaffolding, where the catalogue mangling IS the declaration. Same
+step, opposite effect.
+
+So the recipes stay two, and the honest fix is at the other end: whatever an
+agent iterates on must be the style it will be scored in.
+`decomp_status.work_address` now applies declfix when it materialises a scaffold,
+which makes the `--work` file and this tool agree by construction.
+
+`--dir` SCORES MANY SPELLINGS AT ONCE, and that is the mode to reach for.
+Matching decompilation is a search over SOURCE FORM: the semantics get decided
+early, and the rest of the work is finding which of several equivalent spellings
+VC6 lowers the way the original was lowered - ternary against `if`, condition
+polarity, a temp that changes an operand's addressing mode, a loop counting the
+other way. There is no reasoning all the way to the answer. The compiler has to
+be asked, and the useful question is "which of these nine" rather than "is this
+one it".
+
+    tools/verify_recovered_function.py 0x006281B0 --dir /tmp/variants
+
+Every `*.cpp` in the directory is one candidate body, scored against the same
+loaded image and catalogue and ranked best-first. Measured on four candidates:
+14.5 s that way against 20.9 s one at a time, so about a third off - the saving
+is the image load, not the compiles, and it barely grows with more candidates.
+Speed is not the point though. The point is that "which of these nine" is one
+question with one answer, and an agent that can ask it stops guessing.
+
+This mode exists BECAUSE AN AGENT WROTE IT FOR ITSELF: recovering 0x006281B0
+took nine structural variants to find that binding a component to a local flips
+VC6's fmul scheduling, and the agent built its own batch harness mid-task to get
+there - spending budget on tooling instead of on the problem. It arrived as a
+separate `try_variants.py`, which was a second command asking the same question
+through the same `writeback.build_unit` and `byte_match.match_function`, with no
+test and no CMake registration. Folding it in leaves one scoring command and
+puts it under the tests the other mode already had.
 """
 
 from __future__ import annotations
@@ -79,6 +124,53 @@ def form_report(body: str) -> tuple:
     return refusals, notes
 
 
+def score_all(address: int, bodies: dict) -> list:
+    """[(name, verdict)] for every candidate, best first.
+
+    Each verdict comes from `byte_match.match_function` on a unit assembled the
+    way `mizuchi_writeback.verify` assembles it, so a tier here means exactly
+    what the integrator's gate means. The only thing shared across candidates is
+    the loaded image and catalogue, which is the expensive part.
+    """
+    import pefile
+    import tempfile
+
+    functions = emit.load_functions()
+    callees = emit.load_callees()
+    derived = emit.load_derived()
+    scaffolding_pe = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+
+    pe = pefile.PE(str(byte_match.DEFAULT_EXE))
+    catalogue = byte_match.load_rows()
+    shared = byte_match.shared_span_index(catalogue)
+
+    results = {}
+    with tempfile.TemporaryDirectory() as directory:
+        work = Path(directory)
+        for name, body in sorted(bodies.items()):
+            # The form check runs FIRST and refuses before compiling. A
+            # byte-exact `__asm` answer would only be harder to argue with.
+            blocked, _ = form_report(body)
+            if blocked:
+                results[name] = {"tier": "REFUSED", "refusal_reason": blocked[0]}
+                continue
+            try:
+                unit = writeback.build_unit(address, body, functions, callees,
+                                            derived, scaffolding_pe)
+            except emit.Unsettled as error:
+                results[name] = {"tier": "REFUSED",
+                                 "refusal_reason": f"no scaffolding: {error}"}
+                continue
+            results[name] = byte_match.match_function(
+                pe, catalogue, shared, address, unit, work, "", f"v_{name}")
+
+    order = {tier: index for index, tier in enumerate(byte_match.TIER_ORDER)}
+    return sorted(results.items(),
+                  key=lambda item: (order.get(item[1].get("tier"), 99),
+                                    -(item[1].get("mnemonic_similarity") or 0),
+                                    item[0]))
+
+
 def committed_body(address: int) -> tuple:
     """(body text, source location) for the recovery on disk, or (None, why)."""
     functions = emit.load_functions()
@@ -96,6 +188,41 @@ def committed_body(address: int) -> tuple:
         return None, f"{location}: {error}"
 
 
+def rank_directory(address: int, directory: Path, as_json: bool) -> int:
+    """Score every `*.cpp` in `directory` and print them best-first.
+
+    Exit 0 only when the WINNER is BYTE_EXACT, which keeps the same contract
+    the single-body mode has: the command is usable as a loop condition and a
+    ranking that got closer without arriving is still a failure.
+    """
+    bodies = {path.stem: path.read_text()
+              for path in sorted(directory.glob("*.cpp"))}
+    if not bodies:
+        print(f"error: no *.cpp found in {directory}", file=sys.stderr)
+        return 2
+
+    results = score_all(address, bodies)
+    if as_json:
+        import json
+        print(json.dumps(
+            {"address": f"0x{address:08X}",
+             "candidates": [{"name": name, **verdict} for name, verdict in results]},
+            indent=2, default=str))
+    else:
+        print(f"{len(bodies)} candidate(s) for 0x{address:08X}, best first:\n")
+        for name, verdict in results:
+            detail = verdict.get("note") or verdict.get("refusal_reason") or ""
+            print(f"   {verdict.get('tier', '?'):14} {name:26} {detail[:54]}")
+    if results and results[0][1].get("tier") == MATCHED:
+        if not as_json:
+            print(f"\n{results[0][0]} is BYTE_EXACT.")
+        return 0
+    if not as_json:
+        print("\nnone reached BYTE_EXACT; the ranking shows which spelling is "
+              "closest.")
+    return 1
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -104,6 +231,9 @@ def main(argv=None) -> int:
     parser.add_argument("--body", type=str,
                         help="score this candidate instead of what is "
                              "committed; '-' reads stdin")
+    parser.add_argument("--dir", type=Path,
+                        help="score every *.cpp in this directory as a "
+                             "candidate body and rank them best-first")
     parser.add_argument("--against-committed", action="store_true",
                         help="with --body: also score what is committed and "
                              "refuse a candidate that is WORSE")
@@ -116,6 +246,12 @@ def main(argv=None) -> int:
         print(f"error: {arguments.address} is not a hex address",
               file=sys.stderr)
         return 2
+
+    if arguments.dir:
+        if arguments.body:
+            print("error: --dir and --body are alternatives", file=sys.stderr)
+            return 2
+        return rank_directory(address, arguments.dir, arguments.json)
 
     if arguments.body:
         body = (sys.stdin.read() if arguments.body == "-"
