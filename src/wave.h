@@ -23,7 +23,22 @@
  /*
   * Wave class
   *
-  * Standalone. The extent is pinned at 0x6C by three independent witnesses:
+  * OFFSETS 0x00..0x53 ARE A SOUND SUB-OBJECT, inlined rather than declared.
+  * ??0Wave@@QAE@XZ (0x004C66E0) replays ??0Sound@@QAE@XZ (0x004C6080) store
+  * for store on an unadjusted `this` - the same two vftable writes, the same
+  * `memset(this + 0xC, 0, 0x24)`, the same 0x3E8 into 0x38, the same guarded
+  * call through [this + 0x3C] - and only then writes its own vftable at
+  * 0x004C676E and its own first field at 0x004C6774, which is 0x54. That is
+  * exactly where src/sound.h now pins sizeof(Sound).
+  *
+  * It stays spelled FLAT, not `class Wave : Sound`. Sound::~Sound is
+  * out-of-line, so a real base would make ~Wave emit a `call` where the
+  * original inlines the teardown, breaking a body that is already recovered.
+  * base-edges.csv records this edge as `unchecked` for the same reason its
+  * evidence line gives - the constructor "builds nothing this catalogue
+  * names" because the base constructor was inlined away.
+  *
+  * The extent is pinned at 0x6C by three independent witnesses:
   * the atexit array thunks walk Wave arrays with a 0x6C element stride, the
   * FX effect bank uses the same stride, and the destructor itself reads the
   * group slot at 0x68 as its last field.

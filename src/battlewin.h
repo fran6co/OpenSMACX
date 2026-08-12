@@ -41,11 +41,24 @@ class DLLEXPORT BattleWin {
   void on_iface_selected(int a1, int a2);
 
  private:
-  // Not a base class: the constructor builds a Time at +0x0 on an offset
-  // `this`, which puts a Time member at the start rather than a Time base.
-  // The destructor tears down a Time at +8, so the object reaches at least
-  // 0x30; nothing further about the extent is established.
-  uint8_t unmapped_0_[0x30];
+  // Not a Time-derived class, and the Time is at +8 rather than at +0.
+  // ??0BattleWin@@QAE@XZ (0x00422EE0) is 27 bytes and settles both:
+  // `lea ecx, [esi + 8]` at 0x00422EE3, then `mov dword ptr [esi], 0x66a6e4`
+  // - the SubInterface vftable eight other window constructors store at
+  // their +0xA14 - then `call ??0Time@@QAE@XZ`. ??1BattleWin (0x00422ED0),
+  // ?stop_timer (0x00421B40) and ?pulse_timer (0x00421B20) each reach the
+  // Time the same way, with `add ecx, 8`.
+  //
+  // The IDB disagrees, placing `time` at 0x4 with a 4-byte `subIFace` before
+  // it; the three `add ecx, 8` sites are the image and win. sizeof(Time) is
+  // pinned at 0x28, so 8 + 0x28 == 0x30 and the static_assert below is what
+  // checks this split.
+  //
+  // Held as STORAGE, not as `SubInterface subIFace_; Time time_;`: a real
+  // Time member would give BattleWin a constructor and destructor the
+  // original inlines, and neither class is named by this header today.
+  uint8_t unmapped_0_[0x8];
+  uint8_t time_storage_[0x28];  // 0x8
 
   // Storage the image proves is here: its own methods reach 0xA0.
   // Extent only - this class carries no size assertion, and the bound is a floor.

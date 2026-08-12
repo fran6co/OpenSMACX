@@ -35,6 +35,15 @@ class MembersTest(unittest.TestCase):
         self.assertEqual([("int", "grid_", "[4]")],
                          tool.members_of("  int grid_[4];\n"))
 
+    def test_every_array_dimension_is_kept(self):
+        # A single `\[...\]?` left `Sprite base[6][4];` unparsed, and an
+        # unparsed statement refuses the WHOLE class: FactionArt, PlayerData,
+        # Trace and VOX_Matrix were all refused on one regex.
+        self.assertEqual([("float", "values", "[3][3]")],
+                         tool.members_of("  float values[3][3];\n"))
+        self.assertEqual([("char", "saved_queue_name", "[8][24]")],
+                         tool.members_of("  char saved_queue_name[8][24];\n"))
+
     def test_a_virtual_refuses_the_whole_class(self):
         # A vtable pointer this cannot see sits at offset 0 and moves every
         # member after it.

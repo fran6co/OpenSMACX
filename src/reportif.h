@@ -49,8 +49,18 @@ class DLLEXPORT ReportIf {
   void bl_anim();
 
  private:
-  uint8_t unmapped_[0x202F0];
+  // ??0ReportIf@@QAE@XZ installs the SubInterface vftable 0x0066A6E4 into
+  // [this + 0] at 0x004AD1A7, before it constructs anything else - the same
+  // table seven window classes store at their own +0xA14. The IDB agrees
+  // (`ReportIf,0x0,subIFace,8`), which is why src/reportif.cpp already has to
+  // reach the sub-object with `reinterpret_cast<SubInterface *>(this)`.
+  SubInterface subIFace_;      // 0x0
+  uint8_t unmapped_[0x202E8];  // 0x8
 };
+
+// 0x8 + 0x202E8 == 0x202F0, the extent this header modelled as one blob, so
+// naming the head moved nothing. The size is a floor, not a pin: no
+// static_assert, because nothing establishes where ReportIf ends.
 
 // The energy report's third list box is a PROCESS-WIDE object at a fixed
 // address, not a subobject: close_energy closes it alongside the two this

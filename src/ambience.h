@@ -31,6 +31,16 @@
   * keeps at offset zero - held as opaque bytes so no vtable is generated here
   * that could disagree with it. Where the objects end is unknown, so nothing
   * pins their sizeof and no field may be appended without deriving it first.
+  *
+  * THE FIRST 0x54 OF base_storage_ IS A SOUND. ??0Ambience@@QAE@XZ
+  * (0x004C8460) replays ??0Sound@@QAE@XZ (0x004C6080) instruction for
+  * instruction on an unadjusted `this`: [esi] = 0x0066E444, [esi+4] = 0x7F,
+  * `memset(esi + 0xC, 0, 0x24)`, then Sound's own vftable 0x0066E3C0 at
+  * 0x004C84AC, [esi+0x38] = 0x3E8, and the guarded call through [esi+0x3C].
+  * src/sound.h pins sizeof(Sound) at 0x54, so the four bytes at 0x54 are
+  * Ambience's own and the extent at 0x58 follows. Wave begins with the same
+  * inlined Sound; this is the third Sound-rooted class, not an unrelated one,
+  * and it is why src/ambience.cpp reinterprets `this` as a `Wave *`.
   */
 class DLLEXPORT Ambience {
  public:
