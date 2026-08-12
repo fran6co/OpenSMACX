@@ -104,9 +104,18 @@ def main(argv=None) -> int:
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--check", action="store_true",
                         help="exit 1 if any location has drifted")
+    # THE CATALOGUE IS A PARAMETER so a caller can be sandboxed. Without it
+    # `--apply` always rewrites the committed `functions.csv`, whatever root
+    # the caller thinks it is working under - which is how
+    # `test_integrate_recovery.py`, running against a temporary directory,
+    # re-pointed 37 rows in the real file on every ctest run.
+    parser.add_argument("--functions", type=Path, default=FUNCTIONS,
+                        help="the catalogue to survey and rewrite "
+                             "(default: the committed one)")
     arguments = parser.parse_args(argv)
+    catalogue = arguments.functions
 
-    with FUNCTIONS.open(newline="", encoding="utf-8-sig") as handle:
+    with catalogue.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         fields, rows = reader.fieldnames, list(reader)
 
@@ -139,7 +148,7 @@ def main(argv=None) -> int:
     for row, first, corrected, _ in repairs:
         rest = (row["source_locations"] or "").split(";")[1:]
         row["source_locations"] = ";".join([corrected] + rest)
-    with FUNCTIONS.open("w", newline="", encoding="utf-8") as handle:
+    with catalogue.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)

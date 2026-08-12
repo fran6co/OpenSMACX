@@ -51,12 +51,46 @@ import repair_source_locations as repair  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
+# EVERY PATH THIS TOOL TOUCHES IS DERIVED FROM ITS OWN `REPO_ROOT`, AT CALL
+# TIME. Reaching into another module's import-time constant - `MATCHED_DIR` in
+# `mizuchi_writeback`, `FUNCTIONS_CSV` in `emit_translation_unit` - looks
+# equivalent and is not: those are bound from THEIR module's root when the
+# import runs, so a caller that rebinds `REPO_ROOT` here is not sandboxed by
+# doing so, and neither is a test.
+#
+# That is not hypothetical. `test_integrate_recovery.py` sets
+# `tool.REPO_ROOT` to a temporary directory and stubs five seams, which is a
+# reasonable expectation of isolation. Two reaches escaped it, and because
+# `writeback.verify` is stubbed to return BYTE_EXACT the tests need no Wine and
+# ran on every `ctest` invocation:
+#
+#   * the delete below removed `src/recovered/00401000.cpp` from the REAL tree
+#     - the test address 0x401000 formats to exactly that name, and that file
+#     was a BYTE_EXACT proof no other file in the tree carried;
+#   * `repair.main(["--apply"])` re-pointed 37 `source_locations` rows in the
+#     REAL `docs/recovery/functions.csv`.
+#
+# `AGENTS.md` already states the rule those broke - a test must never write
+# into the source tree - and states it because a test that appended one line to
+# `functions.csv` and restored it once made a concurrent lane read the file at
+# zero bytes. The rule was there; nothing enforced it, and nothing derived
+# these two paths from a root a caller could move.
+def store_path(address: int) -> Path:
+    """The proof unit for `address` under THIS module's root."""
+    return REPO_ROOT / "src" / "recovered" / f"{address:08x}.cpp"
+
+
+def catalogue_path() -> Path:
+    """`functions.csv` under THIS module's root."""
+    return REPO_ROOT / "docs" / "recovery" / "functions.csv"
+
+
 class Refused(Exception):
     """Nothing was changed."""
 
 
 def stored_body(address: int) -> str:
-    path = writeback.MATCHED_DIR / f"{address:08x}.cpp"
+    path = store_path(address)
     if not path.is_file():
         raise Refused(f"no stored body at {path.relative_to(REPO_ROOT)}")
     return writeback.read_matched_body(path)
@@ -245,7 +279,7 @@ def add_includes(target: Path, headers: list) -> str:
 def set_source_location(address: int, location: str) -> None:
     """Point this row at its new home, in `functions.csv`."""
     import csv
-    path = emit.FUNCTIONS_CSV
+    path = catalogue_path()
     with path.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         fields, rows = reader.fieldnames, list(reader)
@@ -295,7 +329,16 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
         # how `src/init_thunks.cpp` came to be off by 14 and 619 rows came to
         # be scored against text that was not theirs. Re-point them from the
         # bodies themselves, which carry their own `Original Offset` line.
-        repair.main(["--apply"])
+        #
+        # The catalogue is passed EXPLICITLY, from this module's root, so a
+        # caller working under a different one is not rewriting the committed
+        # file. The guard is not defensive coding: `emit.load_functions()`
+        # above has already read the real catalogue in any production run, so
+        # an absent one here means a caller has moved `REPO_ROOT` and there is
+        # nothing of theirs to re-point.
+        catalogue = catalogue_path()
+        if catalogue.is_file():
+            repair.main(["--apply", "--functions", str(catalogue)])
     base = target.read_text()
 
     appended = base.rstrip("\n") + "\n\n" + text.strip() + "\n"
@@ -328,7 +371,7 @@ def integrate(address: int, target: Path, body: str | None = None) -> dict:
         set_source_location(address, existing)
         raise
 
-    stored = writeback.MATCHED_DIR / f"{address:08x}.cpp"
+    stored = store_path(address)
     if body is None and stored.is_file():
         stored.unlink()                    # the store was staging; it landed
     return {"address": f"0x{address:08X}", "name": row.get("name", ""),

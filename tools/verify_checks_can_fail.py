@@ -295,6 +295,45 @@ def damage_byte_match_ratchet(workspace):
     raise Skip("no claimed body with a constant return to perturb")
 
 
+def damage_writing_test(workspace):
+    """A test file that edits and deletes tracked files in its own repository.
+
+    Built as a REAL git repository rather than by pointing the check at this
+    one, because the check's verdict is "did the tree change" - so damaging the
+    actual tree to prove it would be indistinguishable from the defect it
+    hunts, and would leave the operator's work destroyed if the case aborted.
+
+    Two test files, not one: the polite one proves the check does not simply
+    report everything it runs. That is the failure mode the first draft had,
+    where `__pycache__` made every test look like an offender.
+    """
+    repo = workspace / "writing-test-repo"
+    (repo / "tools").mkdir(parents=True, exist_ok=True)
+    (repo / "src").mkdir(parents=True, exist_ok=True)
+    (repo / "tracked.txt").write_text("original\n")
+    (repo / "src" / "proof.cpp").write_text("// ORIGINAL: 0x00401000 BYTE_EXACT\n")
+    (repo / "tools" / "test_polite.py").write_text(
+        "import unittest\n"
+        "class T(unittest.TestCase):\n"
+        "    def test_ok(self): self.assertTrue(True)\n")
+    (repo / "tools" / "test_rude.py").write_text(
+        "import pathlib, unittest\n"
+        "ROOT = pathlib.Path(__file__).resolve().parent.parent\n"
+        "class T(unittest.TestCase):\n"
+        "    def test_writes(self):\n"
+        "        (ROOT / 'tracked.txt').write_text('clobbered\\n')\n"
+        "        (ROOT / 'src' / 'proof.cpp').unlink()\n"
+        "        self.assertTrue(True)\n")
+    for command in (["git", "init", "-q", "."],
+                    ["git", "config", "user.email", "damage@example.invalid"],
+                    ["git", "config", "user.name", "damage"],
+                    ["git", "add", "-A"],
+                    ["git", "commit", "-qm", "base"]):
+        subprocess.run(command, cwd=repo, capture_output=True)
+    return [PYTHON, str(TOOLS / "verify_tests_do_not_write.py"),
+            "--repo", str(repo)]
+
+
 def damage_cast_classification(workspace):
     """A cast reclassified, so the committed measurement stops describing src/.
 
@@ -492,6 +531,8 @@ CASES = (
      damage_pinned_class_size, "answered wrongly"),
     ("byte-match-ratchet", "a claimed byte-exact body quietly changed",
      damage_byte_match_ratchet, "no longer reproduces"),
+    ("tests-do-not-write", "a test that edits and deletes tracked files",
+     damage_writing_test, "write into the source tree"),
 )
 
 # The gate checks this tool is responsible for. Adding a check here without
@@ -512,6 +553,7 @@ COVERED_CHECKS = {
     "class-layout-derivation-pinned",
     "cast-classification-current",
     "byte-match-ratchet",
+    "tests-do-not-write",
 }
 
 
