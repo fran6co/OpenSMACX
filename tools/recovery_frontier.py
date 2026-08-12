@@ -172,20 +172,46 @@ def leaf_queue(inventory, callees):
     return rows
 
 
-def claimed_addresses(src: Path = None) -> set:
-    """Addresses `src/` already claims BYTE_EXACT, wherever they live.
+def fresh_set(fresh: list) -> set:
+    return {address for address, _ in fresh}
 
-    Read through `annotation_scan`, which is the tree's own map reader, so this
-    sees `src/recovered/` and `src/recovered/units/` exactly as the ratchet does
+
+def source_states(src: Path = None) -> tuple:
+    """(claimed, excluded, implemented) as `src/` actually reports them.
+
+    Read through `annotation_scan`, the tree's own map reader, so this sees
+    `src/recovered/` and `src/recovered/units/` exactly as the ratchet does
     rather than through `source_locations` - which stored bodies deliberately do
     not set.
+
+    THREE POPULATIONS, AND THE FIRST RUN OF THE SUBAGENT LOOP FOUND WHY IT NEEDS
+    ALL THREE. Filtering only on BYTE_EXACT left a queue of 319 leaves in which
+    41 were `EXCLUDED` - CRT bodies and EH funclets the tree has explicitly
+    ruled out, offered to an agent as work - and 66 already carried a
+    non-matching body under `src/recovered/units/`, so `--work` refused them
+    with "only claims placeholders" after they had been handed out. Those 66 are
+    real work, but they are IMPROVE work and need the incumbent body in the
+    brief; the 41 are not work at all.
     """
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import annotation_scan
     root = src or (Path(__file__).resolve().parent.parent / "src")
     if not root.is_dir():
-        return set()
-    return {a.address for a in annotation_scan.scan_tree(root) if a.matched}
+        return set(), set(), set()
+    claimed, excluded, implemented = set(), set(), set()
+    for a in annotation_scan.scan_tree(root):
+        if a.matched:
+            claimed.add(a.address)
+        if a.state == annotation_scan.STATE_EXCLUDED:
+            excluded.add(a.address)
+        elif a.state == annotation_scan.STATE_IMPLEMENTED:
+            implemented.add(a.address)
+    return claimed, excluded, implemented
+
+
+def claimed_addresses(src: Path = None) -> set:
+    """Just the BYTE_EXACT set - kept because it reads clearly at call sites."""
+    return source_states(src)[0]
 
 
 def main(argv=None) -> int:
@@ -196,14 +222,18 @@ def main(argv=None) -> int:
                         help="how many of the leaf queue to print")
     parser.add_argument("--max-size", type=int, default=0,
                         help="only queue leaves at or below this many bytes")
+    parser.add_argument("--fresh-only", action="store_true",
+                        help="only leaves with NO body yet, so "
+                             "`decomp_status.py --work` can claim them")
     parser.add_argument("--include-claimed", action="store_true",
                         help="do not filter out addresses src/ already proves "
                              "(the pre-2026-08-12 behaviour)")
     options = parser.parse_args(argv)
 
     inventory, callees = load(options.functions, options.callgraph)
-    claimed = set() if options.include_claimed else claimed_addresses()
-    if claimed:
+    claimed, excluded, implemented = (
+        (set(), set(), set()) if options.include_claimed else source_states())
+    if claimed or excluded:
         hidden = [a for a in inventory
                   if a in claimed and inventory[a]["state"] == "unrecovered"]
         print(f"src/ already proves {len(claimed)} addresses; "
@@ -211,6 +241,15 @@ def main(argv=None) -> int:
               f"and are filtered out below")
         for address in hidden:
             inventory[address]["state"] = "source_complete"
+        # EXCLUDED is a DECISION (docs/DECOMP_MAP.md), and the one state this
+        # project declares rather than measures. Offering one as work asks an
+        # agent to undo it by accident.
+        dropped = [a for a in inventory if a in excluded]
+        for address in dropped:
+            inventory.pop(address)
+        if dropped:
+            print(f"dropped {len(dropped)} address(es) src/ marks EXCLUDED - "
+                  f"a decision, not a gap")
     wave_list, pending = waves(inventory, callees)
 
     unrecovered = [(a, f) for a, f in inventory.items()
@@ -259,15 +298,25 @@ def main(argv=None) -> int:
     queue = leaf_queue(inventory, callees)
     if options.max_size:
         queue = [item for item in queue if item[1]["size"] <= options.max_size]
+    fresh = [item for item in queue if item[0] not in implemented]
+    if options.fresh_only:
+        queue = fresh
     with_callers = [item for item in queue if item[1]["callers"] > 0]
     print(f"\nLEAF QUEUE: {len(queue)} leaves, "
           f"{sum(f['size'] for _, f in queue)} B; "
           f"{len(with_callers)} of them have callers")
     print("  ranked callers DESC, then size ASC. A zero-caller leaf unblocks")
     print("  nothing and does not count as progress.")
+    if not options.fresh_only and len(fresh) != len(queue):
+        print(f"  {len(queue) - len(fresh)} of them already carry a "
+              f"non-matching body - that is IMPROVE work, and "
+              f"`--work` refuses it. Use --fresh-only to exclude them.")
     for address, function in queue[:options.queue]:
-        print(f"    0x{address:08X}  {function['size']:5d} B  "
+        mark = " " if address in fresh_set(fresh) else "*"
+        print(f"  {mark} 0x{address:08X}  {function['size']:5d} B  "
               f"{function['callers']:3d} caller(s)  {function['name'][:44]}")
+    if not options.fresh_only and len(fresh) != len(queue):
+        print("  (* already has a body: improve it, do not start it)")
     return 0
 
 

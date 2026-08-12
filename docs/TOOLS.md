@@ -4,7 +4,7 @@
 which of them the project still runs. This is the answer, and it is CHECKED:
 `tools/verify_tool_reachability.py` fails when a tool named here does not
 exist, and fails when a tool exists that nothing — this file, `CMakeLists.txt`,
-`mizuchi.yaml` — tells anyone to run. Keeping a tool means placing it below.
+`.claude/agents/`, `.claude/commands/` — tells anyone to run. Keeping a tool means placing it below.
 Deleting one means striking its line. Neither can drift.
 
 ---
@@ -138,16 +138,17 @@ collide.
 Both files are reachability roots, on the same rule as the documentation: they
 tell someone to run a tool, and the someone being an agent changes nothing.
 
-## The agent harness
+## What the retired harness left behind
 
-`mizuchi.yaml` drives an external agent over the same route.
-`tools/mizuchi_context.py` emits the scaffolding-only unit it hands the agent,
-`tools/emit_asm_dumps.py` and `tools/emit_target_object.py` produce the
-assembly and COFF targets it diffs against, `tools/emit_mizuchi_prompts.py`
-builds the prompt folders, `tools/mizuchi_declfix.py` fixes callee declarations
-so VC6 re-mangles them to the catalogued names, and
-`tools/mizuchi_writeback.py` lands a byte-exact match in a tracked file or
-refuses and changes nothing.
+The external Node harness is gone (see `docs/RETIRED_ROUTES.md`); five of its
+tools were never really its own and carry the loop today.
+`tools/mizuchi_context.py` emits the scaffolding-only unit,
+`tools/emit_target_object.py` produces the COFF target,
+`tools/emit_mizuchi_prompts.py` holds the disassembler and the definition-head
+builder that `tools/agent_brief.py` now imports, `tools/mizuchi_declfix.py`
+respells callee declarations so VC6 re-mangles them to the catalogued names,
+and `tools/mizuchi_writeback.py` lands a byte-exact match in a tracked file or
+refuses and changes nothing. The names are historical; the code is not.
 
 ## The bulk generators — all exhausted
 
