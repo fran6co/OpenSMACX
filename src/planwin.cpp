@@ -44,14 +44,14 @@ Status: Complete
 
 The original clears the field and tail-jumps into MapWin::close with `this`
 untouched, which is a plain base-class call: the MapWin subobject opens a
-PlanWin at offset 0. It cannot be spelled as inheritance here because MapWin
-holds its virtual base as a member at MapWin's own 0x21A6C, while a PlanWin
-puts that base at 0x22050 - but MapWin::close never uses the member, reaching
-the base through the vbtable instead, so it reads the right one either way.
+PlanWin at offset 0 - and it is spelled as one now. The claim that stood
+here, that inheritance was impossible because MapWin held its virtual base
+as a member, went with the member: VC6 places a virtual base where the
+vbtable names it, so PlanWin reaches GraphicWin at its own 0x22050.
 */
 void PlanWin::close() {
     field_21A68_ = 0;
-    reinterpret_cast<MapWin *>(this)->close();
+    MapWin::close();
 }
 
 void __fastcall plan_win_close_redirect(PlanWin *self, void *) {

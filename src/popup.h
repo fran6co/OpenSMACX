@@ -50,6 +50,27 @@ class DLLEXPORT Popup : BasePop {
   Scroll scroll_;
 };
 
+// Where the object ends IS established, by the class that derives from it.
+// ??0TutWin@@QAE@XZ at 0x004BA6B0 builds this Popup on an unadjusted `this`
+// and then writes TutWin's own fields; the lowest of those is 0x537C
+// (`mov dword ptr [esi + 0x537c], ecx` at 0x004BA6F1), and below it the
+// constructor stores nothing but the two GraphicWin vptrs at 0x0 and 0x444.
+// So the Popup base subobject spans exactly [0, 0x537C) - which is also
+// sizeof(BasePop) 0x3230 plus sizeof(Scroll) 0x214C, both pinned and both
+// `reached` by verify_member_offsets.py --pins, with scroll_ at 0x3230
+// confirmed by ?close@Scroll@@QAEXXZ on this+0x3230 at 0x004BE82E. Nothing
+// in this chain is a virtual base (BasePop : GraphicWin : public Win are all
+// non-virtual), and MSVC never reuses tail padding, so the subobject's extent
+// is sizeof.
+//
+// Popup's OWN methods do not reach that far - verify_member_offsets.py --pins
+// prints `short Popup 0x537C image reaches 0x4C70` - so this pin rests on the
+// derived class and on the BasePop + Scroll sum, not on Popup's own accesses.
+// `short` means the image reaches less than the pin, which does not refute it;
+// it means Popup's own code never touches its last 0x70C bytes.
+static_assert(sizeof(Popup) == 0x537C,
+              "Popup layout must match the original executable");
+
 void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *);
 void __fastcall popup_on_redraw_nc_redirect(
     Popup *self, void *, RECT *a1, int a2);

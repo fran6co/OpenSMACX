@@ -18,18 +18,40 @@
 #pragma once
 
 #include "original_seam.h"
+#include "graphicwin.h"
 
  /*
   * ReplayWin class
   *
-  * No constructor survives in the catalog, so the base cannot be checked and
-  * the layout is not established; its methods reach as far as 0x252EC, so the
-  * object is at least that large. The stubs recovered here are constant
-  * returns that touch no field, which is why they can be replaced without that
-  * layout - the opaque storage below is only large enough to give the canary
-  * an object to seed.
+  * Derives from GraphicWin by ordinary single inheritance.
+  *
+  * This header used to say "no constructor survives in the catalog, so the
+  * base cannot be checked". The first clause is still true - there is no
+  * ??0ReplayWin@@QAE@XZ in the image, and tools/disasm.py rejects the name -
+  * but the conclusion was wrong, and the destructor withdraws it. A
+  * destructor's receiver is the object it destroys, and the base subobject is
+  * torn down last on an UNADJUSTED this: ??1ReplayWin@@QAE@XZ (0x005ADF10)
+  * takes `mov edi, ecx` at 0x005ADF2D, never adjusts edi again, and closes
+  * with `mov ecx, edi` at 0x005AE08A / `call ??1GraphicWin@@QAE@XZ` at
+  * 0x005AE093. ?close@ReplayWin@@QAEXXZ (0x005AD9A0) agrees independently:
+  * `mov esi, ecx` then `call ?close@GraphicWin@@QAEXXZ` at 0x005AD9A3, with
+  * ecx still holding this and no lea in between.
+  *
+  * The base is non-virtual - neither site reads a vbtable to reach it, unlike
+  * the MapWin at 0x2320, whose teardown goes through `mov eax, [esi-0x21a6c]`
+  * / `[eax+4]` - so it sits at offset 0 and covers [0, 0xA14), which is
+  * sizeof(GraphicWin) as this tree declares it. The seven opaque members that
+  * spanned exactly those bytes (field_0_ .. field_484_[0x590], ending at
+  * 0x484+0x590 == 0xA14) are gone, and sizeof(ReplayWin) is unchanged at
+  * 0x252F0.
+  *
+  * Past the base the layout is still not established; its methods reach as
+  * far as 0x252EC, so the object is at least that large. The stubs recovered
+  * here are constant returns that touch no field, which is why they can be
+  * replaced without that mapping - the opaque storage below is only large
+  * enough to give the canary an object to seed.
   */
-class DLLEXPORT ReplayWin {
+class DLLEXPORT ReplayWin : GraphicWin {
  public:
   // 0x005AD9E0  ?timer_callback@ReplayWin@@QAEXXZ - public, __thiscall,
   // void(void), unrecovered. Declared so timer_callback_daemon, the free
@@ -46,13 +68,8 @@ class DLLEXPORT ReplayWin {
   void on_left_up(int, int);
 
  private:
-  uint32_t field_0_;  // 0x0
-  uint8_t field_4_[0x470];  // 0x4
-  uint32_t field_474_;  // 0x474
-  uint32_t field_478_;  // 0x478
-  uint32_t field_47C_;  // 0x47C
-  uint32_t field_480_;  // 0x480
-  uint8_t field_484_[0x590];  // 0x484
+  // [0, 0xA14) is the GraphicWin base subobject; the class's own storage
+  // starts here, immediately after it.
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18
   uint32_t field_A1C_;  // 0xA1C

@@ -23,13 +23,22 @@
  /*
   * MapWin class
   *
-  * The original derives this from GraphicWin *virtually*, and that cannot be
-  * written as `: virtual GraphicWin` here. MSVC places a virtual base at the
-  * offset its vbtable names, while the Itanium ABI this toolchain follows
-  * places it after the derived object entirely - so the faithful-looking
-  * declaration is the one that would silently produce the wrong layout. The
-  * base is therefore held as a member at the offset MSVC put it, which
-  * reproduces the original addresses under either ABI.
+  * The original derives this from GraphicWin *virtually*, and it is written
+  * that way. (The comment that used to stand here said it "cannot be written
+  * as `: virtual GraphicWin`" because "the Itanium ABI this toolchain
+  * follows" would place the base after the derived object; the declaration
+  * below has said `: virtual GraphicWin` since d39dac11, VC6 is the only
+  * compiler this tree targets, and VC6 puts the base exactly where the
+  * vbtable names. The static_assert is what withdrew the claim.)
+  *
+  * The base is spelled `protected` for the same class of reason graphicwin.h
+  * spells its own base `public`: a virtual base is initialised by the MOST
+  * DERIVED class, so `class Console : MapWin` has to reach GraphicWin's
+  * constructor itself, and a PRIVATE base here is `C2243: conversion from
+  * 'const class Console *' to 'const class GraphicWin &' exists, but is
+  * inaccessible` on Console's own constructors - which DLLEXPORT forces VC6
+  * to emit whether or not anything calls them. Access changes no offset;
+  * sizeof(MapWin) and sizeof(Console) are both unmoved by it.
   *
   * The size is the vbtable's, not a guess: the table at 0x0066C870 reads
   * {0, 0x21A6C}, placing the virtual base at 0x21A6C, and GraphicWin is
@@ -42,7 +51,7 @@
   * rather than appended - appending would move the virtual base and break
   * every offset in the class.
   */
-class DLLEXPORT MapWin : virtual GraphicWin {
+class DLLEXPORT MapWin : protected virtual GraphicWin {
  public:
   void on_resize(int a1, int a2);
   void on_redraw();
@@ -129,7 +138,34 @@ class DLLEXPORT MapWin : virtual GraphicWin {
   uint32_t field_21A5C_;  // 0x21A5C
   uint32_t field_21A60_;  // 0x21A60
   uint32_t field_21A64_;  // 0x21A64
-  uint8_t field_21A68_[0x4];  // 0x21A68
+
+ protected:
+  // NOT MapWin data, and the only member here a derived class may name.
+  //
+  // MapWin's own data stops at 0x21A68: the highest access any MapWin method
+  // makes is ?gen_map@MapWin@@QAEXHH@Z's four-byte `[esi + 0x21a64]` at
+  // 0x00469D9A, and nothing in the class reads or writes 0x21A68 at all.
+  // ??0MapWin@@QAE@H@Z touches it only through the vtordisp idiom - `mov eax,
+  // [esi]` / `mov eax, [eax+4]` / `lea edx, [eax - 0x21a6c]` / `mov [eax + esi
+  // - 4], edx`, i.e. [vbase - 4] - so in the image these four bytes are the
+  // vtordisp MSVC reserves immediately ahead of a virtual base, and they are
+  // MapWin's only while MapWin is the most-derived object.
+  //
+  // A class that derives MapWin moves the virtual base, and the vtordisp with
+  // it, so the derived class's own first field lands here instead: PlanWin
+  // puts its vtordisp at 0x2204C (`mov [eax + esi - 4], edx` at 0x0048BD5D,
+  // eax = 0x22050) and writes 0x21A68 as data at 0x0048BD67, reads it in
+  // ?blink@PlanWin@@QAEXXZ at 0x0048BC20 and clears it in
+  // ?close@PlanWin@@QAEXXZ at 0x0048BC50.
+  //
+  // Neither MapWin nor anything derived from it declares a virtual function
+  // here, so VC6 emits no vtordisp of its own and this member is what holds
+  // the virtual base at the 0x21A6C the vbtable names. It therefore sits
+  // inside the MapWin subobject of every derived class, one dword further out
+  // than the original put the boundary, and the derived class has to reach
+  // its field through it. `int32_t`, not `uint8_t[4]`, because every access
+  // the image makes to it is a four-byte one.
+  int32_t field_21A68_;  // 0x21A68
 };
 
 static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe");

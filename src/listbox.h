@@ -27,24 +27,44 @@
   * Dialog, each held as a member at the offset the object's own vbtable names
   * (vbtable 0x00670584 = { 0, 0x48, 0xA60 }) rather than written as
   * ": virtual GraphicWin, virtual Dialog". MEASURED under VC6 12.00.8168,
-  * which is now the only compiler here: the declaration does NOT reproduce
-  * 0xB54, and the conclusion is OPEN rather than closed. Measured:
-  * `: virtual GraphicWin, virtual Dialog` gives 0xB4C, and a virtual function
-  * on the DERIVED class gives 0xB50 - that +4 is its own vfptr. An earlier
-  * version of this note blamed vtordisp fields; that was WRONG and is
-  * withdrawn. A probe settles it: two bases carrying a virtual destructor
-  * grow 0x10 -> 0x14 EACH and the derived total moves 0x34 -> 0x3C, so the
-  * missing eight bytes are the two BASES' own vtable pointers, not a
-  * displacement.
+  * which is now the only compiler here: that declaration gives 0xB4C against
+  * a real 0xB54, and a virtual function on the DERIVED class gives 0xB50 -
+  * that +4 is its own vfptr, which this class does not have (offset 0 holds
+  * the vbtable pointer, not a vftable pointer).
+  *
+  * THE MISSING EIGHT BYTES ARE TWO VTORDISP FIELDS after all. A note here
+  * withdrew that reading in favour of "the two BASES' own vtable pointers";
+  * the withdrawal was itself wrong and is now withdrawn, because the probe
+  * behind it was confounded. It gave each base a virtual destructor WHILE the
+  * base still carried its modelled vtable dword, so each base grew by four
+  * (0x10 -> 0x14) and the derived total grew by the same eight - the bases
+  * getting bigger, not a displacement appearing - and the derived class in
+  * that probe overrode nothing, which is the one condition a vtordisp needs.
+  * Re-measured on this exact shape, with the virtual function REPLACING the
+  * modelled dword so the bases stay 0xA14 and 0xF4:
+  *
+  *   bases model the vtable as a dword, derived virtually derives  0xB4C
+  *   bases declare a real virtual, derived does NOT override it    0xB4C
+  *   bases declare a real virtual, derived OVERRIDES it            0xB54
+  *
+  * and the derived-of-derived shape (Dialogs, src/dialogs.h) moves 0xC90 ->
+  * 0xC94 on the same switch. Four bytes per virtual base, present only when
+  * the derived class overrides - that is a vtordisp and nothing else. The
+  * image says so independently: ??0Dialogs (0x00612938, 0x00612947) and
+  * ~Dialogs (0x00406977, 0x00406989) write those very slots at vbase-4 with
+  * the vbase displacement, and this class's own 0x44 and 0xA5C dwords are the
+  * same slot.
   *
   * So this is blocked on something specific and fixable: GraphicWin and
   * Dialog model their vtable as an opaque dword the original installs by
-  * hand, so neither declares a virtual for the compiler to place. Giving them
-  * real virtual destructors is a COUPLED edit - the compiler then emits the
-  * vfptr, so the modelled dword must come out in the same change - and
-  * `sizeof(GraphicWin) == 0xA14` is the check that catches it going wrong.
-  * MapWin and Console have a single virtual base and no such dword, which is
-  * why they convert today. Do not read this as "cannot be done".
+  * hand, so neither declares a virtual for the compiler to place, and neither
+  * can be overridden. Giving them real virtual functions is a COUPLED edit -
+  * the compiler then emits the vfptr, so the modelled dword must come out in
+  * the same change - and `sizeof(GraphicWin) == 0xA14` is the check that
+  * catches it going wrong. MapWin and Console have a single virtual base, no
+  * such dword and no override, which is why they convert today. Do not read
+  * this as "cannot be done". Note that radiobutton.h, checkbox.h and
+  * editgroup.h still carry a copy of the withdrawn paragraph.
   * This mirrors CheckBox (src/checkbox.h), whose
   * vbtable {0,0x1C,0xA34} has the identical shape. close()/destroy() resolve
   * both base subobjects through the runtime vbtable, never through these

@@ -20,10 +20,21 @@
  /*
   * Net class
   *
-  * Layout not established; its methods reach as far as 0x770, so the
-  * object is at least that large. The stubs recovered here are constant
-  * returns touching no field, so the opaque storage below is only an object
-  * for the canary to seed, not a modelled layout.
+  * Layout not established. "Reach as far as 0x770" stood here and is
+  * withdrawn: the measurement is 0x768 - docs/recovery/access-lower-bounds.csv
+  * records `Net,0x768` from `mov dword ptr [esi + 0x764], ebx` at 0x0062D850
+  * in ??0Net, and no row of docs/recovery/member-accesses.csv attributed to
+  * Net goes higher. A reach is a LOWER bound, so the object is at least
+  * 0x768; tools/derive_class_layout.py finds no size evidence for Net at all,
+  * and the 0x18 that carries the total to 0x780 below is pad, not a
+  * measurement. The stubs recovered here are constant returns touching no
+  * field, so the opaque storage below is only an object for the canary to
+  * seed, not a modelled layout.
+  *
+  * That pad is now load-bearing: src/alphanet.h derives AlphaNet from Net, so
+  * this size is where AlphaNet's own storage begins. Correcting it will fail
+  * `static_assert(sizeof(AlphaNet) == 0x14A0)` there, which is the intended
+  * alarm - re-measure AlphaNet's `data_` rather than silence it.
   */
 class DLLEXPORT Net {
  public:
