@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004798F0 BYTE_EXACT
+// name      ?on_redraw@MultiWin@@QAEXXZ
+// size      8 bytes
+// spans     0x004798F0-0x004798F8
+// prototype void (__thiscall ?on_redraw@MultiWin@@QAEXXZ)(MultiWin* this)
+// callers   0   call targets   1
 // 0x004798F0  ?on_redraw@MultiWin@@QAEXXZ  ->  ?on_redraw@MultiWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

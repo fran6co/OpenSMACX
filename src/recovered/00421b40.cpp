@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00421B40 BYTE_EXACT
+// name      ?stop_timer@BattleWin@@QAEXXZ
+// size      8 bytes
+// spans     0x00421B40-0x00421B48
+// prototype void (__thiscall ?stop_timer@BattleWin@@QAEXXZ)(BattleWin* this)
+// callers   2   call targets   0
 // 0x00421B40  ?stop_timer@BattleWin@@QAEXXZ  ->  ?stop_timer@BattleWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

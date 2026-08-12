@@ -26,6 +26,11 @@ func_auto_sound_delete *AutoSoundOperatorDelete = (func_auto_sound_delete *)0x00
 Purpose: Construct an AutoSound by installing its virtual table and copying
          the complete process-default block in legacy store order.
 ORIGINAL: 0x0062BA80
+// name      ??0AutoSound@@QAE@XZ
+// size      360 bytes
+// spans     0x0062BA80-0x0062BBE8
+// prototype void (__thiscall ??0AutoSound@@QAE@XZ)(AutoSound* this)
+// callers   1   call targets   0
 Status: Complete
 */
 void AutoSound::construct() {
@@ -52,6 +57,11 @@ Purpose: Reset every field from the process-default block, in the same
          legacy store order as construction but without touching the
          virtual table.
 ORIGINAL: 0x0062BBF0
+// name      ?close@AutoSound@@QAEXXZ
+// size      333 bytes
+// spans     0x0062BBF0-0x0062BD3D
+// prototype void (__thiscall ?close@AutoSound@@QAEXXZ)(AutoSound* this)
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -77,6 +87,11 @@ Purpose: Reset every field from the process-default block, exactly as close
          does but storing in ascending field order - the two differ only in
          which of the shuffled leading fields lands first.
 ORIGINAL: 0x0062BDD0
+// name      ?close2@AutoSound@@QAEXXZ
+// size      333 bytes
+// spans     0x0062BDD0-0x0062BF1D
+// prototype void (__thiscall ?close2@AutoSound@@QAEXXZ)(AutoSound* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -101,6 +116,11 @@ void __fastcall auto_sound_close2_redirect(AutoSound *self, void *) {
 Purpose: Zero every field, in the same legacy store order as construction,
          leaving the virtual table alone.
 ORIGINAL: 0x0062BD40 BYTE_EXACT
+// name      ?init@AutoSound@@QAEXXZ
+// size      132 bytes
+// spans     0x0062BD40-0x0062BDC4
+// prototype void (__thiscall ?init@AutoSound@@QAEXXZ)(AutoSound* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -108,6 +128,11 @@ Status: Complete
 Purpose: Zero every field, in the legacy store order construction uses,
          leaving the virtual table alone.
 ORIGINAL: 0x0062BD40
+// name      ?init@AutoSound@@QAEXXZ
+// size      132 bytes
+// spans     0x0062BD40-0x0062BDC4
+// prototype void (__thiscall ?init@AutoSound@@QAEXXZ)(AutoSound* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -165,6 +190,11 @@ Purpose: The compiler-generated scalar deleting destructor: re-install the
          virtual table, reset the fields through close, and, when bit 0 of
          the mode asks, free the storage to the game heap.
 ORIGINAL: 0x005F8640
+// name      ??_GAutoSound@@UAEPAXI@Z
+// size      36 bytes
+// spans     0x005F8640-0x005F8664
+// prototype void* (__thiscall ??_GAutoSound@@UAEPAXI@Z)(AutoSound* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object pointer
 Status: Complete
 */
@@ -181,6 +211,11 @@ void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
 /*
 Purpose: Legacy sound processing hook retained as a no-op.
 ORIGINAL: 0x005FD2B0 BYTE_EXACT
+// name      ?do_sound@@YAHXZ
+// size      3 bytes
+// spans     0x005FD2B0-0x005FD2B3
+// prototype 
+// callers   21   call targets   0
 Return Value: zero
 Status: Complete
 */

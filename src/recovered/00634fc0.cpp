@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00634FC0 BYTE_EXACT
+// name      ?UNK1@TexHeap@@QAEHH@Z
+// size      19 bytes
+// spans     0x00634FC0-0x00634FD3
+// prototype int (__thiscall ?UNK1@TexHeap@@QAEHH@Z)(TexHeap* this, int)
+// callers   0   call targets   1
 // 0x00634FC0  ?UNK1@TexHeap@@QAEHH@Z  ->  ?UNK1@TexHeap@@QAEHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

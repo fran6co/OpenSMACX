@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005D5540 BYTE_EXACT
+// name      ?resize@GraphicWin@@QAEXHHH@Z
+// size      80 bytes
+// spans     0x005D5540-0x005D5590
+// prototype void (__thiscall ?resize@GraphicWin@@QAEXHHH@Z)(GraphicWin* this, int, int, int)
+// callers   1   call targets   3
 // 0x005D5540  ?resize@GraphicWin@@QAEXHHH@Z  ->  ?resize@GraphicWin@@QAEXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

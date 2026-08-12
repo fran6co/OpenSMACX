@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004BDF20 BYTE_EXACT
+// name      ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
+// size      70 bytes
+// spans     0x004BDF20-0x004BDF66
+// prototype 
+// callers   0   call targets   1
 // 0x004BDF20  ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z  ->  ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

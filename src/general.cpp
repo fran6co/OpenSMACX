@@ -31,6 +31,11 @@ BOOL *PluralityDefault = (BOOL *)0x009BBFF0;
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
 ORIGINAL: 0x00600780
+// name      ?purge_trailing@@YAXPAD@Z
+// size      45 bytes
+// spans     0x00600780-0x006007AD
+// prototype 
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -45,6 +50,11 @@ void __cdecl purge_trailing(LPSTR input) {
 /*
 Purpose: Trim the leading spaces in-line from the start of the string.
 ORIGINAL: 0x00600760
+// name      ?purge_leading@@YAXPAD@Z
+// size      19 bytes
+// spans     0x00600760-0x00600773
+// prototype 
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -59,6 +69,11 @@ void __cdecl purge_leading(LPSTR input) {
 /*
 Purpose: Trim the leading and trailing spaces from the string.
 ORIGINAL: 0x006007B0
+// name      ?purge_spaces@@YAXPAD@Z
+// size      103 bytes
+// spans     0x006007B0-0x00600817
+// prototype void (__cdecl ?purge_spaces@@YAXPAD@Z)(int8* input)
+// callers   20   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -70,6 +85,11 @@ void __cdecl purge_spaces(LPSTR input) {
 /*
 Purpose: Truncate the string at the line feed (LF). Doesn't take into account carriage return (CR).
 ORIGINAL: 0x00600820
+// name      ?kill_lf@@YAXPAD@Z
+// size      23 bytes
+// spans     0x00600820-0x00600837
+// prototype void (__cdecl ?kill_lf@@YAXPAD@Z)(int8* input)
+// callers   6   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -98,6 +118,11 @@ void __cdecl kill_nl(LPSTR str) {
 Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer has an extra byte and 
          doesn't take into account a carriage return (CR).
 ORIGINAL: 0x00600840
+// name      ?add_lf@@YAXPAD@Z
+// size      25 bytes
+// spans     0x00600840-0x00600859
+// prototype 
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -110,6 +135,11 @@ void __cdecl add_lf(LPSTR str) {
 /*
 Purpose: Use the min and max parameters to bound the input.
 ORIGINAL: 0x00422F00 BYTE_EXACT
+// name      ?range@@YAHHHH@Z
+// size      30 bytes
+// spans     0x00422F00-0x00422F1E
+// prototype int (__cdecl ?range@@YAHHHH@Z)(int input, int min, int max)
+// callers   10   call targets   0
 Return Value: Bounded input
 Status: Complete
 */
@@ -126,6 +156,11 @@ int __cdecl range(int input, int min, int max) {
 /*
 Purpose: Allocate memory with error checking.
 ORIGINAL: 0x005D4510
+// name      ?mem_get@@YAPAXH@Z
+// size      44 bytes
+// spans     0x005D4510-0x005D453C
+// prototype void* (__cdecl ?mem_get@@YAPAXH@Z)(size_t size)
+// callers   88   call targets   2
 Return Value: Pointer to allocated memory
 Status: Complete with two versions of malloc to prevent crash. Incompatibility with newer SDK 
         version of malloc CRT. Revisit once more code is redirected to dll.
@@ -158,6 +193,11 @@ LPVOID __cdecl mem_get(size_t size) {
 /*
 Purpose: Check the source file path and attempt to open a handle to the file.
 ORIGINAL: 0x00634BB0
+// name      ?env_open@@YAHPADPAD@Z
+// size      36 bytes
+// spans     0x00634BB0-0x00634BD4
+// prototype 
+// callers   18   call targets   2
 Return Value: FILE pointer
 Status: Complete with two versions of fopen to prevent a crash. Incompatibility with newer SDK 
         version of fopen/fopen_s. Revisit once more code is redirected to dll.
@@ -183,6 +223,11 @@ FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
 /*
 Purpose: Set the global gender and plurality variables used by various parse functions.
 ORIGINAL: 0x005A58E0
+// name      ?parse_set@@YAXHH@Z
+// size      22 bytes
+// spans     0x005A58E0-0x005A58F6
+// prototype 
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -194,6 +239,11 @@ void __cdecl parse_set(int gender, BOOL plurality) {
 /*
 Purpose: Copies the value into a number global message buffer using id.
 ORIGINAL: 0x00625E30
+// name      ?parse_num@@YAHHH@Z
+// size      29 bytes
+// spans     0x00625E30-0x00625E4D
+// prototype 
+// callers   87   call targets   0
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
@@ -208,6 +258,11 @@ int __cdecl parse_num(int id, int value) {
 /*
 Purpose: Use the string table input reference to copy a string into the global message buffer.
 ORIGINAL: 0x00625E50
+// name      ?parse_say@@YAHHHHH@Z
+// size      99 bytes
+// spans     0x00625E50-0x00625EB3
+// prototype int (__cdecl ?parse_say@@YAHHHHH@Z)(int id, int input, int gender, int pluralality)
+// callers   40   call targets   2
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
@@ -230,6 +285,11 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
 /*
 Purpose: Copies the input string into the global message buffer.
 ORIGINAL: 0x00625EC0
+// name      ?parse_says@@YAHHPADHH@Z
+// size      90 bytes
+// spans     0x00625EC0-0x00625F1A
+// prototype int (__cdecl ?parse_says@@YAHHPADHH@Z)(int nID, int8* input, int gender, int pluralality)
+// callers   199   call targets   1
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
@@ -252,6 +312,11 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
 /*
 Purpose: Convert the binary string to an integer.
 ORIGINAL: 0x006288D0 BYTE_EXACT
+// name      ?btoi@@YAHPAD@Z
+// size      29 bytes
+// spans     0x006288D0-0x006288ED
+// prototype int (__cdecl ?btoi@@YAHPAD@Z)(int8* input)
+// callers   2   call targets   0
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -266,6 +331,11 @@ int __cdecl btoi(LPCSTR str) {
 /*
 Purpose: Convert the hex string to an integer.
 ORIGINAL: 0x006288F0
+// name      ?htoi@@YAHPAD@Z
+// size      91 bytes
+// spans     0x006288F0-0x0062894B
+// prototype int (__cdecl ?htoi@@YAHPAD@Z)(int8* input)
+// callers   2   call targets   3
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -286,6 +356,11 @@ int __cdecl htoi(LPCSTR str) {
 /*
 Purpose: Converts a binary, hex or decimal string to an integer.
 ORIGINAL: 0x00628950
+// name      ?stoi@@YAHPAD@Z
+// size      174 bytes
+// spans     0x00628950-0x006289FE
+// prototype int (__cdecl ?stoi@@YAHPAD@Z)(int8* input)
+// callers   2   call targets   4
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -315,6 +390,11 @@ int __cdecl stoi(LPCSTR str) {
 /*
 Purpose: Locates the first number in a string.
 ORIGINAL: 0x00628B30
+// name      ?findnum@@YAHPAD@Z
+// size      57 bytes
+// spans     0x00628B30-0x00628B69
+// prototype 
+// callers   1   call targets   0
 Return Value: Pointer to the first number, otherwise zero
 Status: Complete
 */
@@ -338,6 +418,11 @@ char *__cdecl findnum(char *str) {
 Purpose: Checks to see if the JACKAL library version is up to date. Pretty pointless but might add 
          an OpenSMACX check in the future.
 ORIGINAL: 0x0062D570
+// name      ?jackal_version_check@@YAHPAD@Z
+// size      51 bytes
+// spans     0x0062D570-0x0062D5A3
+// prototype 
+// callers   1   call targets   1
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -356,6 +441,11 @@ BOOL __cdecl jackal_version_check(LPCSTR version) {
 /*
 Purpose: This handles parsing the input string and storing it in the output.
 ORIGINAL: 0x00625880
+// name      ?parse_string@@YAHPADPAD@Z
+// size      1373 bytes
+// spans     0x00625880-0x00625DDD
+// prototype int (__cdecl ?parse_string@@YAHPADPAD@Z)(int8* input, int8* output)
+// callers   23   call targets   7
 Return Value: No errors (0); Error (3)
 Status: WIP
 */
@@ -616,6 +706,11 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
 /*
 Purpose: Get the drive letter of the CD path.
 ORIGINAL: 0x006003A0
+// name      ?filefind_cd_drive_letter@@YAPADXZ
+// size      8 bytes
+// spans     0x006003A0-0x006003A8
+// prototype 
+// callers   0   call targets   0
 Return Value: CD drive letter
 Status: Complete
 */
@@ -624,6 +719,11 @@ char __cdecl filefind_cd_drive_letter() { return FilefindPath->cd_path[0]; }
 /*
 Purpose: Set an alternative path for the Filefind checks.
 ORIGINAL: 0x006003B0
+// name      ?filefind_set_alternate@@YAXPAD@Z
+// size      70 bytes
+// spans     0x006003B0-0x006003F6
+// prototype 
+// callers   3   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -641,6 +741,11 @@ void __cdecl filefind_set_alternative(LPCSTR path) {
 Purpose: Initialize the Filefind global along with a CD check if there isn't a complete install. 
          Optimized logic since most installs will be on a HDD making the CD check less important.
 ORIGINAL: 0x00600400
+// name      ?filefind_init@@YAHPADH@Z
+// size      453 bytes
+// spans     0x00600400-0x006005C5
+// prototype 
+// callers   1   call targets   3
 Return Value: No errors (0) otherwise error
 Status: WIP
 */
@@ -700,6 +805,11 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
 /*
 Purpose: Check to see if the specified file can be found at some other path.
 ORIGINAL: 0x006005D0
+// name      ?filefind_get@@YAHPAD@Z
+// size      387 bytes
+// spans     0x006005D0-0x00600753
+// prototype 
+// callers   7   call targets   1
 Return Value: File path string or NULL if not found
 Status: Complete
 */
@@ -749,6 +859,11 @@ LPSTR __cdecl filefind_get(LPCSTR file_name) {
 /*
 Purpose: Count the number of unsigned bits set. Replaced the original code with Brian Kernighan's 
 ORIGINAL: 0x0050BA30
+// name      ?bit_count@@YAHH@Z
+// size      30 bytes
+// spans     0x0050BA30-0x0050BA4E
+// prototype 
+// callers   34   call targets   0
 Return Value: the number of set bits
 Status: Complete
 */
@@ -771,11 +886,21 @@ int __cdecl bit_count(int bitfield) {
 /*
 Purpose: Count the number of signed bits set. Added a fix to prevent an infinite loop.
 ORIGINAL: 0x00628AB0 BYTE_EXACT
+// name      ?bit_count_signed@@YAHH@Z
+// size      18 bytes
+// spans     0x00628AB0-0x00628AC2
+// prototype 
+// callers   1   call targets   0
 Return Value: Bit count
 Status: Complete
 */
 /*
 ORIGINAL: 0x00628AB0
+// name      ?bit_count_signed@@YAHH@Z
+// size      18 bytes
+// spans     0x00628AB0-0x00628AC2
+// prototype 
+// callers   1   call targets   0
 Return Value: Bit count
 Status: Complete
 */
@@ -793,6 +918,11 @@ uint32_t __cdecl bit_count_signed(int input) {
 /*
 Purpose: Initialize the pseudo-random number generator.
 ORIGINAL: 0x00538FB0
+// name      ?my_srand@@YAHH@Z
+// size      34 bytes
+// spans     0x00538FB0-0x00538FD2
+// prototype int (__cdecl ?my_srand@@YAHH@Z)(int reseed)
+// callers   6   call targets   2
 Return Value: n/a
 Status: Complete with built in version of srand(). Revisit once more code is redirected to dll.
 */
@@ -806,11 +936,21 @@ void __cdecl my_srand(int reseed) {
 Purpose: Swap the values of two 32-bit variables. Added an additional check when swapping the same
          memory location.
 ORIGINAL: 0x00628A50 BYTE_EXACT
+// name      ?swap@@YAXPAHPAH@Z
+// size      35 bytes
+// spans     0x00628A50-0x00628A73
+// prototype 
+// callers   14   call targets   0
 Return Value: n/a
 Status: Complete
 */
 /*
 ORIGINAL: 0x00628A50
+// name      ?swap@@YAXPAHPAH@Z
+// size      35 bytes
+// spans     0x00628A50-0x00628A73
+// prototype 
+// callers   14   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -824,11 +964,21 @@ void __cdecl swap(int *var1, int *var2) {
 Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
          memory location.
 ORIGINAL: 0x00628A80 BYTE_EXACT
+// name      ?swap@@YAXPAEPAE@Z
+// size      35 bytes
+// spans     0x00628A80-0x00628AA3
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
 /*
 ORIGINAL: 0x00628A80
+// name      ?swap@@YAXPAEPAE@Z
+// size      35 bytes
+// spans     0x00628A80-0x00628AA3
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -842,6 +992,11 @@ void __cdecl swap(uint8_t *var1, uint8_t *var2) {
 Purpose: Shift the numerator to the left by 16 then divide by the denominator. Added a check to 
          prevent a divide by zero crash.
 ORIGINAL: 0x00628AD0
+// name      ?fixed_div@@YAHJJ@Z
+// size      28 bytes
+// spans     0x00628AD0-0x00628AEC
+// prototype 
+// callers   7   call targets   0
 Return Value: Quotient
 Status: Complete
 */
@@ -857,6 +1012,11 @@ Purpose: Reverse string search for the last occurrence of the specified characte
          original searching logic with strrchr() that does same thing. The end parameter can be 
          removed in the future.
 ORIGINAL: 0x00628AF0
+// name      ?memrchr@@YAHPBX0H@Z
+// size      51 bytes
+// spans     0x00628AF0-0x00628B23
+// prototype 
+// callers   6   call targets   0
 Return Value: Position of character or NULL if not found.
 Status: Complete
 */
@@ -870,6 +1030,11 @@ const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value) {
 /*
 Purpose: Calculate the square root of the input.
 ORIGINAL: 0x006290E0 BYTE_EXACT
+// name      ?quick_root@@YAHH@Z
+// size      41 bytes
+// spans     0x006290E0-0x00629109
+// prototype 
+// callers   3   call targets   0
 Return Value: Square root
 Status: Complete
 */
@@ -889,6 +1054,11 @@ int __cdecl quick_root(int input) {
 /*
 Purpose: Calculate the offset and bitmask for the specified input.
 ORIGINAL: 0x0050BA00 BYTE_EXACT
+// name      ?bitmask@@YAXHPAHPAH@Z
+// size      39 bytes
+// spans     0x0050BA00-0x0050BA27
+// prototype void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)
+// callers   103   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -900,6 +1070,11 @@ void __cdecl bitmask(int input, int *offset, int *mask) {
 /*
 Purpose: Calculate a basic XOR checksum for the data buffer.
 ORIGINAL: 0x00539090
+// name      ?checksum@@YAEPADHE@Z
+// size      36 bytes
+// spans     0x00539090-0x005390B4
+// prototype 
+// callers   2   call targets   0
 Return Value: the XOR checksum of the buffer, seeded
 Status: Complete
 */
@@ -919,6 +1094,11 @@ uint8_t __cdecl checksum(char *buffer, int size, uint8_t seed) {
 /*
 Purpose: Calculate a basic XOR checksum for a password string.
 ORIGINAL: 0x005390C0
+// name      ?checksum_password@@YAHPAD@Z
+// size      151 bytes
+// spans     0x005390C0-0x00539157
+// prototype 
+// callers   2   call targets   2
 Return Value: Checksum
 Status: Complete
 */
@@ -941,6 +1121,11 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
 Purpose: Calculate a random value within the provided bounds. The unused 2nd parameter was possibly 
          meant to have the random value append to it.
 ORIGINAL: 0x00579770
+// name      ?rnd@@YAHHPAD@Z
+// size      32 bytes
+// spans     0x00579770-0x00579790
+// prototype int (__cdecl ?rnd@@YAHHPAD@Z)(int seed, int8*)
+// callers   2   call targets   1
 Return Value: Bounded random value
 Status: Complete
 */
@@ -951,6 +1136,11 @@ uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
 /*
 Purpose: Create a debug error pop-up then write all the parameters to the log file.
 ORIGINAL: 0x00538F30
+// name      ?danger@@YAXPADPADHHH@Z
+// size      122 bytes
+// spans     0x00538F30-0x00538FAA
+// prototype 
+// callers   3   call targets   4
 Return Value: n/a
 Status: Complete
 */
@@ -967,6 +1157,11 @@ void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3) {
 /*
 Purpose: Delete the initial auto-save game file.
 ORIGINAL: 0x005ABD10
+// name      ?kill_auto_save@@YAXXZ
+// size      12 bytes
+// spans     0x005ABD10-0x005ABD1C
+// prototype 
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -977,6 +1172,11 @@ void __cdecl kill_auto_save() {
 /*
 Purpose: Handle the creation and management of the auto-save game files.
 ORIGINAL: 0x005ABD20
+// name      ?auto_save@@YAXXZ
+// size      281 bytes
+// spans     0x005ABD20-0x005ABE39
+// prototype 
+// callers   9   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -1052,6 +1252,11 @@ void __cdecl auto_save_debug() {
 Purpose: Load a Scenario Editor undo (type: 1) or redo (type: -1) auto-save. TODO: Revisit in the 
          future to fix some of the underlying issues with the undo/redo process.
 ORIGINAL: 0x005ABE40
+// name      ?load_undo@@YAXH@Z
+// size      127 bytes
+// spans     0x005ABE40-0x005ABEBF
+// prototype void (__cdecl ?load_undo@@YAXH@Z)(int type)
+// callers   2   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -1074,6 +1279,11 @@ void __cdecl load_undo(int type) {
 /*
 Purpose: Remove all the existing Scenario Editor undo auto-saves.
 ORIGINAL: 0x005ABEC0
+// name      ?wipe_undo@@YAXXZ
+// size      84 bytes
+// spans     0x005ABEC0-0x005ABF14
+// prototype 
+// callers   1   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -1088,6 +1298,11 @@ void __cdecl wipe_undo() {
 /*
 Purpose: Handle the creation of an undo auto-save when certain Scenario Editor changes are made.
 ORIGINAL: 0x005ABF20
+// name      ?auto_undo@@YAXXZ
+// size      207 bytes
+// spans     0x005ABF20-0x005ABFEF
+// prototype 
+// callers   32   call targets   7
 Return Value: n/a
 Status: Complete
 */
@@ -1110,6 +1325,11 @@ void __cdecl auto_undo() {
 Purpose: Read the specified header from a file. This assumes the header string buffer is at least 
          256 characters. TODO: Replace built-in versions of _fgetc and change return to std::string.
 ORIGINAL: 0x0057D1F0
+// name      ?header_check@@YAXPADPAUFILE@@@Z
+// size      69 bytes
+// spans     0x0057D1F0-0x0057D235
+// prototype void (__cdecl ?header_check@@YAXPADPAUFILE@@@Z)(int8* header, FILE* file)
+// callers   2   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -1132,6 +1352,11 @@ void __cdecl header_check(LPSTR header, FILE *file) {
 /*
 Purpose: Write the specified header to a file. TODO: Replace built-in versions of _fputc.
 ORIGINAL: 0x0057D240
+// name      ?header_write@@YAXPADPAUFILE@@@Z
+// size      48 bytes
+// spans     0x0057D240-0x0057D270
+// prototype 
+// callers   2   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -1147,6 +1372,11 @@ void __cdecl header_write(LPCSTR header, FILE *file) {
 /*
 Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
 ORIGINAL: 0x005B5690
+// name      ?sort@@YAXHPAHPAH@Z
+// size      101 bytes
+// spans     0x005B5690-0x005B56F5
+// prototype void (__cdecl ?sort@@YAXHPAHPAH@Z)(int count, int* id, int* value)
+// callers   2   call targets   1
 Return Value: n/a
 Status: Complete
 */

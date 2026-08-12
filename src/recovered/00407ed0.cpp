@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00407ED0 BYTE_EXACT
+// name      ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z
+// size      35 bytes
+// spans     0x00407ED0-0x00407EF3
+// prototype int (__thiscall ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z)(AlphaSave* this, Scroll*)
+// callers   0   call targets   2
 // 0x00407ED0  ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z  ->  ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

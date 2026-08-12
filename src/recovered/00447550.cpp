@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00447550 BYTE_EXACT
+// name      ?basewin_hide@UAmbience@@QAEXXZ
+// size      19 bytes
+// spans     0x00447550-0x00447563
+// prototype void (__thiscall ?basewin_hide@UAmbience@@QAEXXZ)(UAmbience* this)
+// callers   0   call targets   0
 // 0x00447550  ?basewin_hide@UAmbience@@QAEXXZ  ->  ?basewin_hide@UAmbience@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

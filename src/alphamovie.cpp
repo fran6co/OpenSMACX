@@ -22,6 +22,11 @@
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x00404280 BYTE_EXACT
+// name      ?UNK7@AlphaMovie@@QAEXXZ
+// size      1 bytes
+// spans     0x00404280-0x00404281
+// prototype void (__thiscall ?UNK7@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -35,6 +40,11 @@ void __fastcall alpha_movie_unk7_redirect(AlphaMovie *self, void *) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 ORIGINAL: 0x00404220 BYTE_EXACT
+// name      ?UNK2@AlphaMovie@@QAEHHHH@Z
+// size      5 bytes
+// spans     0x00404220-0x00404225
+// prototype int (__thiscall ?UNK2@AlphaMovie@@QAEHHHH@Z)(AlphaMovie* this, int, int, int)
+// callers   0   call targets   0
 Return Value: 0, always
 Status: Complete
 */
@@ -49,6 +59,11 @@ int __fastcall alpha_movie_unk2_redirect(AlphaMovie *self, void *, int a1, int a
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 ORIGINAL: 0x00404240 BYTE_EXACT
+// name      ?UNK4@AlphaMovie@@QAEHHHHH@Z
+// size      5 bytes
+// spans     0x00404240-0x00404245
+// prototype int (__thiscall ?UNK4@AlphaMovie@@QAEHHHHH@Z)(AlphaMovie* this, int, int, int, int)
+// callers   0   call targets   0
 Return Value: 0, always
 Status: Complete
 */
@@ -72,6 +87,11 @@ Purpose: Unknown; the legacy implementation returns its argument unchanged.
          which is why it can be replaced ahead of the class layout like its
          neighbours.
 ORIGINAL: 0x00404230 BYTE_EXACT
+// name      ?UNK3@AlphaMovie@@QAEHH@Z
+// size      10 bytes
+// spans     0x00404230-0x0040423A
+// prototype int (__thiscall ?UNK3@AlphaMovie@@QAEHH@Z)(AlphaMovie* this, int)
+// callers   0   call targets   0
 Return Value: the argument, unchanged
 Status: Complete
 */
@@ -86,6 +106,11 @@ int __fastcall alpha_movie_unk3_redirect(AlphaMovie *self, void *, int a1) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 ORIGINAL: 0x00404250 BYTE_EXACT
+// name      ?UNK5@AlphaMovie@@QAEHH@Z
+// size      5 bytes
+// spans     0x00404250-0x00404255
+// prototype int (__thiscall ?UNK5@AlphaMovie@@QAEHH@Z)(AlphaMovie* this, int)
+// callers   0   call targets   0
 Return Value: 0, always
 Status: Complete
 */
@@ -100,6 +125,11 @@ int __fastcall alpha_movie_unk5_redirect(AlphaMovie *self, void *, int a1) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00404260 BYTE_EXACT
+// name      ?UNK6@AlphaMovie@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00404260-0x00404263
+// prototype void (__thiscall ?UNK6@AlphaMovie@@QAEXHH@Z)(AlphaMovie* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -113,6 +143,11 @@ void __fastcall alpha_movie_unk6_00404260_redirect(AlphaMovie *self, void *, int
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00404270 BYTE_EXACT
+// name      ?UNK6@AlphaMovie@@QAEXH@Z
+// size      3 bytes
+// spans     0x00404270-0x00404273
+// prototype void (__thiscall ?UNK6@AlphaMovie@@QAEXH@Z)(AlphaMovie* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -126,6 +161,11 @@ void __fastcall alpha_movie_unk6_00404270_redirect(AlphaMovie *self, void *, int
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
 ORIGINAL: 0x004042A0 BYTE_EXACT
+// name      ?UNK8@AlphaMovie@@QAEHHH@Z
+// size      8 bytes
+// spans     0x004042A0-0x004042A8
+// prototype int (__thiscall ?UNK8@AlphaMovie@@QAEHHH@Z)(AlphaMovie* this, int, int)
+// callers   0   call targets   0
 Return Value: 1, always
 Status: Complete
 */
@@ -139,6 +179,11 @@ int __fastcall alpha_movie_unk8_redirect(AlphaMovie *self, void *, int a1, int a
 
 /*
 ORIGINAL: 0x004041E0 BYTE_EXACT
+// name      ?close@AlphaMovie@@QAEXXZ
+// size      23 bytes
+// spans     0x004041E0-0x004041F7
+// prototype void (__thiscall ?close@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
+// callers   0   call targets   2
 Status: Complete
 */
 void AlphaMovie::close() {
@@ -149,6 +194,11 @@ void AlphaMovie::close() {
 
 /*
 ORIGINAL: 0x00404290 BYTE_EXACT
+// name      ?update@AlphaMovie@@QAEXXZ
+// size      8 bytes
+// spans     0x00404290-0x00404298
+// prototype void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
+// callers   0   call targets   1
 Status: Complete
 */
 void AlphaMovie::update() {

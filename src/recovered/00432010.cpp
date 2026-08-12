@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00432010 BYTE_EXACT
+// name      ?on_button_passover@Datalink@@QAEXHH@Z
+// size      34 bytes
+// spans     0x00432010-0x00432032
+// prototype void (__thiscall ?on_button_passover@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
+// callers   0   call targets   1
 // 0x00432010  ?on_button_passover@Datalink@@QAEXHH@Z  ->  ?on_button_passover@Datalink@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

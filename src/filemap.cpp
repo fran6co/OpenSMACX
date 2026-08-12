@@ -23,6 +23,11 @@
 Purpose: Initialize the class by opening a file with write permission. The boolean parameter toggles 
          if the file is accessed sequentially or randomly.
 ORIGINAL: 0x006283A0
+// name      ?init@Filemap@@QAEHPADH@Z
+// size      26 bytes
+// spans     0x006283A0-0x006283BA
+// prototype int (__thiscall ?init@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)
+// callers   0   call targets   1
 Return Value: Pointer to the initialized class
 Status: Complete
 */
@@ -34,6 +39,11 @@ Filemap *Filemap::init(LPCSTR file_name, BOOL is_sequential) {
 /*
 Purpose: Initialize the class by opening a random access file with write permission.
 ORIGINAL: 0x006283C0
+// name      ?init@Filemap@@QAEHPAD@Z
+// size      21 bytes
+// spans     0x006283C0-0x006283D5
+// prototype int (__thiscall ?init@Filemap@@QAEHPAD@Z)(Filemap* this, int8*)
+// callers   0   call targets   1
 Return Value: Pointer to initialized class
 Status: Complete
 */
@@ -46,6 +56,11 @@ Filemap *Filemap::init(LPCSTR file_name) {
 Purpose: Open a file with read permission. The boolean parameter toggles if the file is accessed 
          sequentially or randomly.
 ORIGINAL: 0x00628430
+// name      ?open_read@Filemap@@QAEHPADH@Z
+// size      265 bytes
+// spans     0x00628430-0x00628539
+// prototype int (__thiscall ?open_read@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)
+// callers   8   call targets   1
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -77,6 +92,11 @@ LPVOID Filemap::open_read(LPCSTR file_name, BOOL is_sequential) {
 Purpose: Open a file with write permission. The boolean parameter toggles if the file is accessed
          sequentially or randomly.
 ORIGINAL: 0x00628540
+// name      ?open@Filemap@@QAEHPADH@Z
+// size      268 bytes
+// spans     0x00628540-0x0062864C
+// prototype int (__thiscall ?open@Filemap@@QAEHPADH@Z)(Filemap* this, int8*, int)
+// callers   6   call targets   1
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -108,6 +128,11 @@ LPVOID Filemap::open(LPCSTR file_name, BOOL is_sequential) {
 /*
 Purpose: Create a new file or overwrite an existing one with the specified size filled with zeros.
 ORIGINAL: 0x00628650
+// name      ?create@Filemap@@QAEHPADKH@Z
+// size      355 bytes
+// spans     0x00628650-0x006287B3
+// prototype int (__thiscall ?create@Filemap@@QAEHPADKH@Z)(Filemap* this, int8* lpFileName, ULONG lDistanceToMove, int)
+// callers   6   call targets   1
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -141,6 +166,11 @@ LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
 /*
 Purpose: Close the map and all handles to the file.
 ORIGINAL: 0x006287C0
+// name      ?close@Filemap@@QAEXXZ
+// size      67 bytes
+// spans     0x006287C0-0x00628803
+// prototype void (__thiscall ?close@Filemap@@QAEXXZ)(Filemap* this)
+// callers   10   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -164,6 +194,11 @@ void Filemap::close() {
 Purpose: Close and set the end of the file. This can be used to truncate existing files. It also 
          assumes the file has write permission.
 ORIGINAL: 0x00628810
+// name      ?close@Filemap@@QAEXPAE@Z
+// size      180 bytes
+// spans     0x00628810-0x006288C4
+// prototype void (__thiscall ?close@Filemap@@QAEXPAE@Z)(Filemap* this, unsigned int8*)
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 */

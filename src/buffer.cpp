@@ -30,6 +30,11 @@ Palette **BufferPalette = reinterpret_cast<Palette **>(0x009B8174);
 Purpose: Construct an empty Buffer, including its Spot subobject, text state,
          and either the process palette or the legacy grayscale fallback.
 ORIGINAL: 0x005D7210
+// name      ??0Buffer@@QAE@XZ
+// size      530 bytes
+// spans     0x005D7210-0x005D740A;0x00662B50-0x00662B68
+// prototype void (__thiscall ??0Buffer@@QAE@XZ)(Buffer* this)
+// callers   80   call targets   2
 Status: Complete
 Verification note: five mutation-harness survivors here are equivalent by
 construction. Widening the 0x4BC loop bound writes an extra zero at 0x50C,
@@ -139,6 +144,11 @@ Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *) {
 /*
 Purpose: Set the four fonts used by the buffer.
 ORIGINAL: 0x005DAC70
+// name      ?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z
+// size      64 bytes
+// spans     0x005DAC70-0x005DACB0
+// prototype int (__thiscall ?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z)(Buffer* this, Font*, Font*, Font*, Font*)
+// callers   189   call targets   0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -158,6 +168,11 @@ int Buffer::set_font(Font *font1, Font *font2, Font *font3, Font *font4) {
 /*
 Purpose: Set the primary text colors for the four color slots.
 ORIGINAL: 0x005DACB0 BYTE_EXACT
+// name      ?set_text_color@Buffer@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x005DACB0-0x005DACDB
+// prototype void (__thiscall ?set_text_color@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
+// callers   188   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -171,6 +186,11 @@ void Buffer::set_text_color(int color1, int color2, int color3, int color4) {
 /*
 Purpose: Set the secondary text colors for the four color slots.
 ORIGINAL: 0x005DACE0 BYTE_EXACT
+// name      ?set_text_color2@Buffer@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x005DACE0-0x005DAD0B
+// prototype void (__thiscall ?set_text_color2@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
+// callers   46   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -184,6 +204,11 @@ void Buffer::set_text_color2(int color1, int color2, int color3, int color4) {
 /*
 Purpose: Set the tertiary text colors for the four color slots.
 ORIGINAL: 0x005DAD10 BYTE_EXACT
+// name      ?set_text_color3@Buffer@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x005DAD10-0x005DAD3B
+// prototype void (__thiscall ?set_text_color3@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
+// callers   30   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -197,6 +222,11 @@ void Buffer::set_text_color3(int color1, int color2, int color3, int color4) {
 /*
 Purpose: Set the hyperlink text colors for the four color slots.
 ORIGINAL: 0x005DAD40 BYTE_EXACT
+// name      ?set_text_color_hyper@Buffer@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x005DAD40-0x005DAD6B
+// prototype void (__thiscall ?set_text_color_hyper@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
+// callers   20   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -210,6 +240,11 @@ void Buffer::set_text_color_hyper(int color1, int color2, int color3, int color4
 /*
 Purpose: Initialize shared Buffer state; the legacy implementation has no state to initialize.
 ORIGINAL: 0x005DF570 BYTE_EXACT
+// name      ?init_class@Buffer@@QAAHXZ
+// size      3 bytes
+// spans     0x005DF570-0x005DF573
+// prototype 
+// callers   1   call targets   0
 Return Value: No errors (0)
 Status: Complete
 */
@@ -220,6 +255,11 @@ int Buffer::init_class() {
 /*
 Purpose: Close shared Buffer state; the legacy implementation is intentionally empty.
 ORIGINAL: 0x005DF580 BYTE_EXACT
+// name      ?close_class@Buffer@@QAAXXZ
+// size      1 bytes
+// spans     0x005DF580-0x005DF581
+// prototype 
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -274,6 +314,11 @@ constexpr size_t SurfaceDescriptorData = 0x24;
 Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
          first reference and counting every acquisition.
 ORIGINAL: 0x005E3373
+// name      ?get_data@Buffer@@QAEHXZ
+// size      119 bytes
+// spans     0x005E3373-0x005E33EA
+// prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
+// callers   48   call targets   0
 Status: Complete
 */
 int Buffer::get_data() {
@@ -319,6 +364,11 @@ int Buffer::get_data() {
 Purpose: Release acquired references to the buffer's pixel data, unlocking the
          DirectDraw surface once the last reference is dropped.
 ORIGINAL: 0x005E34A3
+// name      ?free_data@Buffer@@QAEXH@Z
+// size      88 bytes
+// spans     0x005E34A3-0x005E34FB
+// prototype void (__thiscall ?free_data@Buffer@@QAEXH@Z)(Buffer* this, int)
+// callers   43   call targets   0
 Status: Complete
 */
 void Buffer::free_data(int count) {
@@ -357,6 +407,11 @@ void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count) {
 Purpose: Report the line height of the buffer's primary font, falling back to
          the global default font when none is set.
 ORIGINAL: 0x005DCAB0
+// name      ?text_line_height@Buffer@@QAEHXZ
+// size      43 bytes
+// spans     0x005DCAB0-0x005DCADB
+// prototype int (__thiscall ?text_line_height@Buffer@@QAEHXZ)(Buffer* this)
+// callers   21   call targets   0
 Status: Complete
 */
 int Buffer::text_line_height() {
@@ -414,6 +469,11 @@ func_buffer_copy_full BufferCopyFull = original_method<func_buffer_copy_full>(0x
 /*
 Purpose: Copy a region of another buffer into the same position in this one.
 ORIGINAL: 0x005D95B0
+// name      ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z
+// size      35 bytes
+// spans     0x005D95B0-0x005D95D3
+// prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)
+// callers   8   call targets   1
 Return Value: whatever the full copy returns
 Status: Complete with temporary full-copy dependency
 
@@ -437,6 +497,11 @@ int __fastcall buffer_copy_redirect(Buffer *self, void *, Buffer *buffer,
 Purpose: Copy the region a rectangle describes out of another buffer into the
          same position in this one.
 ORIGINAL: 0x005D95E0
+// name      ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z
+// size      42 bytes
+// spans     0x005D95E0-0x005D960A
+// prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z)(Buffer* this, Buffer*, RECT*)
+// callers   8   call targets   1
 Return Value: whatever the full copy returns
 Status: Complete with temporary full-copy dependency
 
@@ -460,6 +525,11 @@ int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
 Purpose: Release every resource the buffer owns and reset it to its
          constructed state.
 ORIGINAL: 0x005D7470
+// name      ?close@Buffer@@QAEXXZ
+// size      501 bytes
+// spans     0x005D7470-0x005D7665
+// prototype void (__thiscall ?close@Buffer@@QAEXXZ)(Buffer* this)
+// callers   44   call targets   1
 Status: Complete
 */
 void Buffer::close() {
@@ -602,6 +672,11 @@ const uint32_t BufferVtable = 0x0066FDBC;
 Purpose: Destroy a Buffer by installing its virtual table, releasing every
          owned resource, and destroying the trailing Spot subobject.
 ORIGINAL: 0x005D7410
+// name      ??1Buffer@@QAE@XZ
+// size      107 bytes
+// spans     0x005D7410-0x005D7463;0x00662B68-0x00662B80
+// prototype void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
+// callers   87   call targets   2
 Status: Complete
 */
 void Buffer::destroy() {
@@ -621,6 +696,11 @@ void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.
 ORIGINAL: 0x005E3503
+// name      ?get_hdc@Buffer@@QAEHXZ
+// size      89 bytes
+// spans     0x005E3503-0x005E355C
+// prototype int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
+// callers   9   call targets   0
 Return Value: The device context, or zero when the surface refuses one
 Status: Complete
 */
@@ -653,6 +733,11 @@ HDC Buffer::get_hdc() {
 Purpose: Drop the given number of device-context references, releasing the
          handle once the last one is gone.
 ORIGINAL: 0x005E3563
+// name      ?release_hdc@Buffer@@QAEXH@Z
+// size      96 bytes
+// spans     0x005E3563-0x005E35C3
+// prototype void (__thiscall ?release_hdc@Buffer@@QAEXH@Z)(Buffer* this, int)
+// callers   8   call targets   0
 Status: Complete
 */
 void Buffer::release_hdc(int count) {
@@ -692,6 +777,11 @@ void __fastcall buffer_release_hdc_redirect(Buffer *self, void *, int count) {
 Purpose: Republish a palette into the buffer's colour table and device context,
          skipping the work when the palette has not changed.
 ORIGINAL: 0x005DE8F0
+// name      ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z
+// size      290 bytes
+// spans     0x005DE8F0-0x005DEA12
+// prototype int (__thiscall ?sync_to_palette@Buffer@@QAEHPAVPalette@@@Z)(Buffer* this, Palette*)
+// callers   24   call targets   1
 Return Value: No errors (0); no pixel storage (7); null palette (3)
 Status: Complete
 Verification note: the publish branch is reachable - the fixture's surface
@@ -735,6 +825,11 @@ int __fastcall buffer_sync_to_palette_redirect(
 Purpose: Report the height of the buffer's text font, resolving the process
          default the first time it is needed.
 ORIGINAL: 0x005DCA80
+// name      ?text_height@Buffer@@QAEHXZ
+// size      37 bytes
+// spans     0x005DCA80-0x005DCAA5
+// prototype int (__thiscall ?text_height@Buffer@@QAEHXZ)(Buffer* this)
+// callers   5   call targets   0
 Return Value: The font's height
 Status: Complete
 */
@@ -757,6 +852,11 @@ int __fastcall buffer_text_height_redirect(Buffer *self, void *) {
 Purpose: Clip the buffer to a rectangle, updating the GDI clip region and the
          DirectDraw clipper to match.
 ORIGINAL: 0x005D8000
+// name      ?set_clip@Buffer@@QAEHPAURECT@@@Z
+// size      499 bytes
+// spans     0x005D8000-0x005D81F3
+// prototype int (__thiscall ?set_clip@Buffer@@QAEHPAURECT@@@Z)(Buffer* this, RECT* rect)
+// callers   114   call targets   0
 Return Value: No errors (0); empty intersection or region failure (1);
               null rectangle (3); no pixel storage and no surface (7)
 Status: Complete
@@ -847,6 +947,11 @@ func_buffer_text_width_measured BufferTextWidthMeasured =
 /*
 Purpose: Measure a null-terminated string with the buffer's text font.
 ORIGINAL: 0x005DC790
+// name      ?text_width@Buffer@@QAEHPAD@Z
+// size      42 bytes
+// spans     0x005DC790-0x005DC7BA
+// prototype int (__thiscall ?text_width@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
+// callers   17   call targets   2
 Return Value: The measured width, or zero for a null string
 Status: Complete with a temporary dependency on the measured overload
 */
@@ -895,6 +1000,11 @@ Purpose: Outline a rectangle as a two-color bevel: the top and left edges in
          from the bottom, the left column [top, bottom-2], and the right
          column [top+1, bottom-1] one column in from the right.
 ORIGINAL: 0x005E3203
+// name      ?box@Buffer@@QAEHPAURECT@@HH@Z
+// size      125 bytes
+// spans     0x005E3203-0x005E3280
+// prototype int (__thiscall ?box@Buffer@@QAEHPAURECT@@HH@Z)(Buffer* this, RECT*, int, int)
+// callers   25   call targets   2
 Return Value: No errors (0); null rectangle (3)
 Status: Complete with temporary hline/vline dependencies
 
@@ -932,6 +1042,11 @@ Purpose: Reset the buffer's link table - reinitialise the spot list to 40
          entries, clear the count, and free the twenty owned link pointers,
          each through the executable's CRT boundary.
 ORIGINAL: 0x005DEF90
+// name      ?clear_links@Buffer@@QAEXXZ
+// size      68 bytes
+// spans     0x005DEF90-0x005DEFD4
+// prototype void (__thiscall ?clear_links@Buffer@@QAEXXZ)(Buffer* this)
+// callers   5   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -958,6 +1073,11 @@ func_buffer_write_multi_font_raw_l BufferWriteMultiFontRawL =
 Purpose: Draw at most `len` characters of a string at an explicit pen
          position, clamping the count to the string's own length first.
 ORIGINAL: 0x005DCEA0
+// name      ?write_l@Buffer@@QAEHPADHHH@Z
+// size      148 bytes
+// spans     0x005DCEA0-0x005DCF34
+// prototype int (__thiscall ?write_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
+// callers   29   call targets   2
 Return Value: The raster writer's result; the incoming x for a null string or
               an empty draw; unusable font (3, `mov eax, 3` at 0x005DCF2B)
 Status: Complete with a temporary raster-writer dependency
@@ -1002,6 +1122,11 @@ int __fastcall buffer_write_l_redirect(Buffer *self, void *, LPSTR text,
 Purpose: Draw at most `len` characters of a string flush against a
          rectangle's left edge and vertically centred on the text font.
 ORIGINAL: 0x005DCF40
+// name      ?write_l@Buffer@@QAEHPADPAURECT@@H@Z
+// size      214 bytes
+// spans     0x005DCF40-0x005DD016
+// prototype int (__thiscall ?write_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
+// callers   35   call targets   2
 Return Value: The raster writer's result; zero for every rejected input
 Status: Complete with a temporary raster-writer dependency
 
@@ -1062,6 +1187,11 @@ int __fastcall buffer_write_l_rect_redirect(Buffer *self, void *, LPSTR text,
 Purpose: Draw at most `len` characters of a string horizontally centred in a
          span of `width` pixels starting at an explicit pen position.
 ORIGINAL: 0x005DD020
+// name      ?write_cent_l@Buffer@@QAEHPADHHHH@Z
+// size      178 bytes
+// spans     0x005DD020-0x005DD0D2
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8*, int, int, int, int)
+// callers   30   call targets   3
 Return Value: The raster writer's result; the incoming x for a null string or
               an empty draw; unusable font (3)
 Status: Complete with temporary raster-writer and text-width dependencies
@@ -1112,6 +1242,11 @@ int __fastcall buffer_write_cent_l_redirect(Buffer *self, void *, LPSTR text,
 Purpose: Draw at most `len` characters of a string centred both horizontally
          and vertically inside a rectangle.
 ORIGINAL: 0x005DD130
+// name      ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z
+// size      282 bytes
+// spans     0x005DD130-0x005DD24A
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
+// callers   108   call targets   3
 Return Value: The raster writer's result; unusable font (3); zero for a null
               string, a null rectangle or an empty draw
 Status: Complete with temporary raster-writer and text-width dependencies
@@ -1179,6 +1314,11 @@ int __fastcall buffer_write_cent_l_rect_redirect(Buffer *self, void *,
 
 /*
 ORIGINAL: 0x005DA680 BYTE_EXACT
+// name      ?poly@Buffer@@QAEHPAUVert@@HH@Z
+// size      27 bytes
+// spans     0x005DA680-0x005DA69B
+// prototype 
+// callers   1   call targets   1
 Status: Complete
 */
 int Buffer::poly(Vert *a1, int a2, int a3) {

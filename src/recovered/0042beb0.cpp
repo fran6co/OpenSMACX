@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0042BEB0 BYTE_EXACT
+// name      ?UNK7@Datalink@@QAEXPADPAD@Z
+// size      74 bytes
+// spans     0x0042BEB0-0x0042BEFA
+// prototype void (__thiscall ?UNK7@Datalink@@QAEXPADPAD@Z)(Datalink* this, int8*, int8*)
+// callers   0   call targets   3
 // 0x0042BEB0  ?UNK7@Datalink@@QAEXPADPAD@Z  ->  ?UNK7@Datalink@@QAEXPAD0@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

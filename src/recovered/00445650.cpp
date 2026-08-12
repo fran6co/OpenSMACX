@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00445650 BYTE_EXACT
+// name      ?ok_callback@@YAXXZ
+// size      77 bytes
+// spans     0x00445650-0x0044569D
+// prototype 
+// callers   1   call targets   2
 // 0x00445650  ?ok_callback@@YAXXZ  ->  ?ok_callback@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

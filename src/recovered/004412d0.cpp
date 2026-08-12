@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004412D0 BYTE_EXACT
+// name      ?UNK1@DiploWin@@QAEXXZ
+// size      29 bytes
+// spans     0x004412D0-0x004412ED
+// prototype void (__thiscall ?UNK1@DiploWin@@QAEXXZ)(DiploWin* this)
+// callers   0   call targets   2
 // 0x004412D0  ?UNK1@DiploWin@@QAEXXZ  ->  ?UNK1@DiploWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

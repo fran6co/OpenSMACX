@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004C5A50 BYTE_EXACT
+// name      ?release@Wave_In_Device@@QAEHXZ
+// size      33 bytes
+// spans     0x004C5A50-0x004C5A71
+// prototype void (__thiscall ?release@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
+// callers   1   call targets   0
 // 0x004C5A50  ?release@Wave_In_Device@@QAEHXZ  ->  ?release@Wave_In_Device@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

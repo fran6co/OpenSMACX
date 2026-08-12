@@ -23,6 +23,11 @@
 Purpose: Reset one deletion-list entry to its empty state - an 0xFF marker byte
          and a zeroed word - at the record stride of 0x3C.
 ORIGINAL: 0x0052DCD0 BYTE_EXACT
+// name      ?clear@DeletionList@@QAEXH@Z
+// size      28 bytes
+// spans     0x0052DCD0-0x0052DCEC
+// prototype void (__thiscall ?clear@DeletionList@@QAEXH@Z)(DeletionList* this, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */

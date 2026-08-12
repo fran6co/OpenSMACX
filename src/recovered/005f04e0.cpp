@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005F04E0 BYTE_EXACT
+// name      ?close_class@Win@@QAAXXZ
+// size      64 bytes
+// spans     0x005F04E0-0x005F0520
+// prototype 
+// callers   1   call targets   1
 // 0x005F04E0  ?close_class@Win@@QAAXXZ  ->  ?close_class@Win@@QAAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

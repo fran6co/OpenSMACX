@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0064CB7A BYTE_EXACT
+// name      sub_64cb7a
+// size      17 bytes
+// spans     0x0064CB7A-0x0064CB8B
+// prototype 
+// callers   0   call targets   0
 // 0x0064CB7A  sub_64cb7a  ->  _sub_64cb7a
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

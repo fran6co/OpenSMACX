@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0045D2A0 BYTE_EXACT
+// name      ?set_alert@MainInterface@@QAEXH@Z
+// size      49 bytes
+// spans     0x0045D2A0-0x0045D2D1
+// prototype void (__thiscall ?set_alert@MainInterface@@QAEXH@Z)(MainInterface* this, int)
+// callers   1   call targets   1
 // 0x0045D2A0  ?set_alert@MainInterface@@QAEXH@Z  ->  ?set_alert@MainInterface@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

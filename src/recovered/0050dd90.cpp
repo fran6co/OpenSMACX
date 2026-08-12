@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0050DD90 BYTE_EXACT
+// name      ?clock_wait@@YAXH@Z
+// size      42 bytes
+// spans     0x0050DD90-0x0050DDBA
+// prototype 
+// callers   7   call targets   2
 // 0x0050DD90  ?clock_wait@@YAXH@Z  ->  ?clock_wait@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

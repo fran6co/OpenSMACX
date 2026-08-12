@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005DD0E0 BYTE_EXACT
+// name      ?write_cent_l@Buffer@@QAEHPADHHHHH@Z
+// size      67 bytes
+// spans     0x005DD0E0-0x005DD123
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHHHH@Z)(Buffer* this, int8*, int, int, int, int, int)
+// callers   2   call targets   1
 // 0x005DD0E0  ?write_cent_l@Buffer@@QAEHPADHHHHH@Z  ->  ?write_cent_l@Buffer@@QAEHPADHHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

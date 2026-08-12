@@ -21,6 +21,11 @@ void text_clear_index_source(TextIndex *indexes) {
 }
 
 // ORIGINAL: 0x005FE1F0
+// name      ?text_make_index@@YAXPAD@Z
+// size      56 bytes
+// spans     0x005FE1F0-0x005FE228
+// prototype 
+// callers   1   call targets   1
 void __cdecl text_make_index(LPCSTR source_txt) {
     for (int i = 0; i < MaxTextIndexNum; ++i) {
         if (!TxtIndex[i].get_count()) {
@@ -31,6 +36,11 @@ void __cdecl text_make_index(LPCSTR source_txt) {
 }
 
 // ORIGINAL: 0x005FE230
+// name      ?text_search_index@@YAHPAD0@Z
+// size      60 bytes
+// spans     0x005FE230-0x005FE26C
+// prototype 
+// callers   0   call targets   1
 int __cdecl text_search_index(LPCSTR source_txt, LPCSTR section_txt) {
     for (int i = 0; i < MaxTextIndexNum; ++i) {
         if (TxtIndex[i].get_count()) {

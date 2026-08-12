@@ -105,6 +105,11 @@ int *UnkGlobal0093A934 = (int *)0x0093A934;
 /*
 Purpose: Check if the base already has a particular facility built or if it's in the queue.
 ORIGINAL: 0x00421670
+// name      ?has_fac@@YA_NHHH@Z
+// size      121 bytes
+// spans     0x00421670-0x004216E9
+// prototype bool (__cdecl ?has_fac@@YA_NHHH@Z)(int facilityID, int baseID, int queueCount)
+// callers   14   call targets   1
 Return Value: Does base already have or planning on building facility? true/false
 Status: Complete
 */
@@ -130,6 +135,11 @@ BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
 /*
 Purpose: Set the current base globals.
 ORIGINAL: 0x004E39D0
+// name      ?set_base@@YAXH@Z
+// size      35 bytes
+// spans     0x004E39D0-0x004E39F3
+// prototype void (__cdecl ?set_base@@YAXH@Z)(int baseID)
+// callers   40   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -141,6 +151,11 @@ void __cdecl set_base(int base_id) {
 /*
 Purpose: Get base name string from base id and store it in base_str. If base id is -1, use 'NONE'.
 ORIGINAL: 0x004E3A00
+// name      ?say_base@@YAXPADH@Z
+// size      75 bytes
+// spans     0x004E3A00-0x004E3A4B
+// prototype void (__cdecl ?say_base@@YAXPADH@Z)(int8* strBase, int baseID)
+// callers   13   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -153,6 +168,11 @@ void __cdecl say_base(LPSTR base_str, int base_id) {
 /*
 Purpose: Return the base at the specified map coordinates and repair stale base map bits.
 ORIGINAL: 0x004E3A50
+// name      ?base_at@@YAHHH@Z
+// size      303 bytes
+// spans     0x004E3A50-0x004E3B7F
+// prototype int (__cdecl ?base_at@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   62   call targets   5
 Return Value: Base id or -1 when no base is present
 Status: Complete - testing
 
@@ -176,6 +196,11 @@ int __cdecl base_at(int x, int y) {
 /*
 Purpose: Find the base id closest to the specified coordinates.
 ORIGINAL: 0x004E3B80
+// name      ?base_find@@YAHHH@Z
+// size      223 bytes
+// spans     0x004E3B80-0x004E3C5F
+// prototype int (__cdecl ?base_find@@YAHHH@Z)(int xCoord, int yCoord)
+// callers   23   call targets   1
 Return Value: Base id or -1 if not found 
 Status: Complete
 */
@@ -201,6 +226,11 @@ int __cdecl base_find(int x, int y) {
 /*
 Purpose: Find the base id closest to the specified coordinates owned by faction.
 ORIGINAL: 0x004E3C60
+// name      ?base_find@@YAHHHH@Z
+// size      235 bytes
+// spans     0x004E3C60-0x004E3D4B
+// prototype int (__cdecl ?base_find@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   27   call targets   1
 Return Value: Base id or -1 if not found
 Status: Complete
 */
@@ -228,6 +258,11 @@ int __cdecl base_find(int x, int y, int faction_id) {
 /*
 Purpose: Find the base id closest to the specified coordinates meeting various conditional checks.
 ORIGINAL: 0x004E3D50
+// name      ?base_find@@YAHHHHHHH@Z
+// size      411 bytes
+// spans     0x004E3D50-0x004E3EEB
+// prototype int (__cdecl ?base_find@@YAHHHHHHH@Z)(int xCoord, int yCoord, int factionID, int region, int factionID2, int factionID3)
+// callers   14   call targets   1
 Return Value: Base id or -1 if not found
 Status: Complete
 */
@@ -265,6 +300,11 @@ int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2
 /*
 Purpose: Find the best specialist available to the current base with more weight placed on psych.
 ORIGINAL: 0x004E4020
+// name      ?best_specialist@@YAHXZ
+// size      112 bytes
+// spans     0x004E4020-0x004E4090
+// prototype 
+// callers   9   call targets   1
 Return Value: Best citizen id (always going to be 1, 4, or 6 based on default weights)
 Status: Complete
 */
@@ -290,6 +330,11 @@ uint32_t  __cdecl best_specialist() {
 Purpose: Generate a base name. Added some minor randomization for sea bases and ensuring offset gets
          increased for default base name. TODO: Eventually improve base name shuffling.
 ORIGINAL: 0x004E4090
+// name      ?name_base@@YAXHPADHH@Z
+// size      704 bytes
+// spans     0x004E4090-0x004E4350
+// prototype void (__cdecl ?name_base@@YAXHPADHH@Z)(int factionID, LPSTR nameOut, BOOL isFinal, BOOL isSeaBase)
+// callers   3   call targets   9
 Return Value: n/a
 Status: Complete
 */
@@ -394,6 +439,11 @@ void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_se
 /*
 Purpose: TBD
 ORIGINAL: 0x004E4350
+// name      ?base_mark@@YAXH@Z
+// size      221 bytes
+// spans     0x004E4350-0x004E442D
+// prototype void (__cdecl ?base_mark@@YAXH@Z)(int baseID)
+// callers   2   call targets   4
 Return Value: n/a
 Status: Complete - testing
 */
@@ -425,6 +475,11 @@ void __cdecl base_mark(int base_id) {
 /*
 Purpose: Calculate the cost factor for the specified faction and resource type. Optional base param.
 ORIGINAL: 0x004E4430
+// name      ?cost_factor@@YAHHHH@Z
+// size      658 bytes
+// spans     0x004E4430-0x004E46C2
+// prototype int (__cdecl ?cost_factor@@YAHHHH@Z)(uint32_t factionID, uint32_t rscType, int baseID)
+// callers   24   call targets   2
 Return Value: Cost factor
 Status: Complete
 */
@@ -489,6 +544,11 @@ int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
 /*
 Purpose: Determine if the specified base has any restrictions around production item retooling.
 ORIGINAL: 0x004E4700
+// name      ?base_making@@YAHHH@Z
+// size      258 bytes
+// spans     0x004E4700-0x004E4802
+// prototype int (__cdecl ?base_making@@YAHHH@Z)(int productionID, int baseID)
+// callers   4   call targets   1
 Return Value: Fixed value (-1, 0, 1, 2, 3, -70) or productionID
 Status: Complete
 */
@@ -532,6 +592,11 @@ int __cdecl base_making(int production_id, int base_id) {
 /*
 Purpose: Calculate the mineral loss if production were to changed at the specified base.
 ORIGINAL: 0x004E4810
+// name      ?base_lose_minerals@@YAHHH@Z
+// size      160 bytes
+// spans     0x004E4810-0x004E48B0
+// prototype int (__cdecl ?base_lose_minerals@@YAHHH@Z)(int baseID, int)
+// callers   1   call targets   1
 Return Value: Minerals that would be lost or 0 if not applicable.
 Status: Complete
 */
@@ -551,6 +616,11 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
 /*
 Purpose: Set or unset the specified base's facility.
 ORIGINAL: 0x004E48B0
+// name      ?set_fac@@YAXHHH@Z
+// size      74 bytes
+// spans     0x004E48B0-0x004E48FA
+// prototype void (__cdecl ?set_fac@@YAXHHH@Z)(int facilityID, int baseID, BOOL set)
+// callers   10   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -568,6 +638,11 @@ void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
 /*
 Purpose: Check whether the facility audio blurb announcement has played for the faction.
 ORIGINAL: 0x004E4900
+// name      has_fac_announced
+// size      82 bytes
+// spans     0x004E4900-0x004E4952
+// prototype int (__cdecl has_fac_announced)(int factionID, int facilityID)
+// callers   0   call targets   1
 Return Value: Has the facility audio blurb played? true/false
 Status: Complete
 */
@@ -583,6 +658,11 @@ BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id) {
 /*
 Purpose: Set or unset whether a particular facility audio blurb has played for specified faction.
 ORIGINAL: 0x004E4960
+// name      set_fac_announced
+// size      106 bytes
+// spans     0x004E4960-0x004E49CA
+// prototype int (__cdecl set_fac_announced)(int factionID, int facilityID, int set)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -600,6 +680,11 @@ void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL s
 /*
 Purpose: Determine what unit the specified base should start building 1st then add it to the queue.
 ORIGINAL: 0x004E4AA0
+// name      ?base_first@@YAXH@Z
+// size      219 bytes
+// spans     0x004E4AA0-0x004E4B7B
+// prototype void (__cdecl ?base_first@@YAXH@Z)(int baseID)
+// callers   2   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -636,6 +721,11 @@ void __cdecl base_first(int base_id) {
 /*
 Purpose: Calculate the new unit morale bonus modifier provided by the base and faction for a triad.
 ORIGINAL: 0x004E6400
+// name      ?morale_mod@@YAHHHH@Z
+// size      433 bytes
+// spans     0x004E6400-0x004E65B1
+// prototype int (__cdecl ?morale_mod@@YAHHHH@Z)(int baseID, int factionID, int triad)
+// callers   2   call targets   1
 Return Value: Morale bonus modifier
 Status: Complete
 */
@@ -670,6 +760,11 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
 /*
 Purpose: Calculate the new native unit lifecycle bonus modifier provided by a base and faction.
 ORIGINAL: 0x004E65C0
+// name      ?breed_mod@@YAHHH@Z
+// size      381 bytes
+// spans     0x004E65C0-0x004E673D
+// prototype int (__cdecl ?breed_mod@@YAHHH@Z)(int baseID, int factionID)
+// callers   2   call targets   1
 Return Value: Lifecycle bonus
 Status: Complete
 */
@@ -700,6 +795,11 @@ int __cdecl breed_mod(int base_id, int faction_id) {
 /*
 Purpose: Calculate the count of lifecycle/psi bonuses that are provided by a base and faction.
 ORIGINAL: 0x004E6740
+// name      ?worm_mod@@YAHHH@Z
+// size      363 bytes
+// spans     0x004E6740-0x004E68AB
+// prototype int (__cdecl ?worm_mod@@YAHHH@Z)(int baseID, int factionID)
+// callers   1   call targets   1
 Return Value: Native life modifier count
 Status: Complete
 */
@@ -754,6 +854,11 @@ static int yield_tile_owner(const Map *tile) {
 /*
 Purpose: Calculate the nutrients produced by a single map square.
 ORIGINAL: 0x004E6E50
+// name      ?crop_yield@@YAHHHHHH@Z
+// size      1206 bytes
+// spans     0x004E6E50-0x004E7306
+// prototype int (__cdecl ?crop_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)
+// callers   10   call targets   3
 Return Value: Nutrients from the square
 Status: Complete
 
@@ -914,6 +1019,11 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
 /*
 Purpose: Calculate the minerals produced by a single map square.
 ORIGINAL: 0x004E7310
+// name      ?mine_yield@@YAHHHHHH@Z
+// size      1080 bytes
+// spans     0x004E7310-0x004E7748
+// prototype int (__cdecl ?mine_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)
+// callers   6   call targets   3
 Return Value: Minerals from the square
 Status: Complete
 
@@ -1049,6 +1159,11 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
 /*
 Purpose: Calculate the energy produced by a single map square.
 ORIGINAL: 0x004E7750
+// name      ?energy_yield@@YAHHHHHH@Z
+// size      1619 bytes
+// spans     0x004E7750-0x004E7DA3
+// prototype int (__cdecl ?energy_yield@@YAHHHHHH@Z)(int factionID, int, int, int, int)
+// callers   8   call targets   3
 Return Value: Energy from the square
 Status: Complete
 
@@ -1266,6 +1381,11 @@ Purpose: Tally what the current base's forces cost it: the resources its supply
          convoys move in and out, the units it supports, the minerals their
          maintenance takes, and the pacifism drones they cause.
 ORIGINAL: 0x004E9550
+// name      ?base_support@@YAXXZ
+// size      1530 bytes
+// spans     0x004E9550-0x004E9B4A
+// prototype 
+// callers   7   call targets   6
 Return Value: n/a
 Status: Complete
 
@@ -1464,6 +1584,11 @@ void __cdecl base_support() {
 /*
 Purpose: Calculate nutrients and growth for the current base.
 ORIGINAL: 0x004E9B70
+// name      ?base_nutrient@@YAXXZ
+// size      317 bytes
+// spans     0x004E9B70-0x004E9CAD
+// prototype 
+// callers   7   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -1497,6 +1622,11 @@ void __cdecl base_nutrient() {
 /*
 Purpose: Calculate minerals and ecological damage for the current base.
 ORIGINAL: 0x004E9CB0
+// name      ?base_minerals@@YAXXZ
+// size      1343 bytes
+// spans     0x004E9CB0-0x004EA1EF
+// prototype 
+// callers   7   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -1590,6 +1720,11 @@ void __cdecl base_minerals() {
 /*
 Purpose: Calculate the current base's energy loss/inefficiency for an amount of energy.
 ORIGINAL: 0x004EA1F0
+// name      ?black_market@@YAHH@Z
+// size      677 bytes
+// spans     0x004EA1F0-0x004EA495
+// prototype 
+// callers   1   call targets   2
 Return Value: Amount of energy inefficiency
 Status: Complete
 */
@@ -1646,6 +1781,11 @@ uint32_t __cdecl black_market(int energy) {
 /*
 Purpose: Calculate the current base's psych values.
 ORIGINAL: 0x004EA540
+// name      ?base_psych@@YAXXZ
+// size      3905 bytes
+// spans     0x004EA540-0x004EB481
+// prototype 
+// callers   1   call targets   5
 Return Value: n/a
 Status: WIP
 */
@@ -1742,6 +1882,11 @@ void __cdecl base_psych() {
 /*
 Purpose: Determine the faction's base with the specified position sorted by the most energy output.
 ORIGINAL: 0x004EB490
+// name      ?base_rank@@YAHHH@Z
+// size      193 bytes
+// spans     0x004EB490-0x004EB551
+// prototype int (__cdecl ?base_rank@@YAHHH@Z)(int factionID, int minBasesToRank)
+// callers   1   call targets   2
 Return Value: Base id for the specified rank position or -1 for invalid requests
 Status: Complete
 */
@@ -1769,6 +1914,11 @@ int __cdecl base_rank(int faction_id, int rank_position) {
 Purpose: Check what facility (if any) a base needs for additional population growth. Stand alone
          function unused in original game and likely optimized out.
 ORIGINAL: 0x004EEF80
+// name      ?pop_goal_fac@@YAHH@Z
+// size      263 bytes
+// spans     0x004EEF80-0x004EF087
+// prototype int (__cdecl ?pop_goal_fac@@YAHH@Z)(int baseID)
+// callers   0   call targets   1
 Return Value: Facility id needed for pop growth or zero if base already has Hab Complex and Dome.
 Status: Complete
 */
@@ -1789,6 +1939,11 @@ int __cdecl pop_goal_fac(int base_id) {
 /*
 Purpose: Calculate population goal for a base.
 ORIGINAL: 0x004EF090
+// name      ?pop_goal@@YAHH@Z
+// size      290 bytes
+// spans     0x004EF090-0x004EF1B2
+// prototype int (__cdecl ?pop_goal@@YAHH@Z)(int baseID)
+// callers   1   call targets   1
 Return Value: Goal population
 Status: Complete
 */
@@ -1819,6 +1974,11 @@ int __cdecl pop_goal(int base_id) {
 /*
 Purpose: Move the specified base's production queue forward if applicable.
 ORIGINAL: 0x004F06E0
+// name      ?base_queue@@YAHH@Z
+// size      248 bytes
+// spans     0x004F06E0-0x004F07D8
+// prototype int (__cdecl ?base_queue@@YAHH@Z)(int baseID)
+// callers   1   call targets   4
 Return Value: Is there a valid item in queue to be built? true/false
 Status: Complete
 */
@@ -1850,6 +2010,11 @@ BOOL __cdecl base_queue(int base_id) {
 Purpose: Check if current base has had an energy shortfall. If so, reset all existing energy convoy
          orders for the faction. TODO: Revisit and find a way to only reset specific base convoys.
 ORIGINAL: 0x004F4DC0
+// name      ?base_energy_costs@@YAXXZ
+// size      179 bytes
+// spans     0x004F4DC0-0x004F4E73
+// prototype 
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1871,6 +2036,11 @@ void __cdecl base_energy_costs() {
 /*
 Purpose: Calculate facility maintenance cost for specified faction.
 ORIGINAL: 0x004F6510
+// name      ?fac_maint@@YAHHH@Z
+// size      215 bytes
+// spans     0x004F6510-0x004F65E7
+// prototype int (__cdecl ?fac_maint@@YAHHH@Z)(int facilityID, int factionID)
+// callers   7   call targets   2
 Return Value: Facility maintenance cost
 Status: Complete
 */
@@ -1898,6 +2068,11 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
 /*
 Purpose: Calculate overall maintenance cost for the currently selected base.
 ORIGINAL: 0x004F65F0
+// name      ?base_maint@@YAXXZ
+// size      499 bytes
+// spans     0x004F65F0-0x004F67E3
+// prototype 
+// callers   1   call targets   5
 Return Value: Base maintenance cost
 Status: Complete
 */
@@ -1939,6 +2114,11 @@ void __cdecl base_maint() {
 Purpose: Check if the initial base name is unique. If not, append a sequential number after it.
          The function has been rewritten to work as intended.
 ORIGINAL: 0x004F7FE0
+// name      ?make_base_unique@@YAXH@Z
+// size      167 bytes
+// spans     0x004F7FE0-0x004F8087
+// prototype void (__cdecl ?make_base_unique@@YAXH@Z)(int baseID)
+// callers   3   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -1963,6 +2143,11 @@ void __cdecl make_base_unique(int base_id) {
 /*
 Purpose: Check if a faction has the specified secret project built in a base they control.
 ORIGINAL: 0x004F80D0
+// name      ?has_project@@YAHHH@Z
+// size      51 bytes
+// spans     0x004F80D0-0x004F8103
+// prototype int (__cdecl ?has_project@@YAHHH@Z)(int projectID, int factionID)
+// callers   8   call targets   0
 Return Value: Does faction have Secret Project? true/false
 Status: Complete
 */
@@ -1974,6 +2159,11 @@ BOOL __cdecl has_project(int project_id, int faction_id) {
 /*
 Purpose: Checks whether the facility (non-SP) has been build in the currently selected base.
 ORIGINAL: 0x00500290
+// name      ?has_fac_built@@YA_NH@Z
+// size      78 bytes
+// spans     0x00500290-0x005002DE
+// prototype bool (__cdecl ?has_fac_built@@YA_NH@Z)(int facilityID)
+// callers   1   call targets   1
 Return Value: Does current base have facility? true/false
 Status: Complete
 */
@@ -1998,6 +2188,11 @@ bool __cdecl has_fac_built(int facility_id, int base_id) {
 /*
 Purpose: Get the current status of the specified project.
 ORIGINAL: 0x005002E0
+// name      ?base_project@@YAHH@Z
+// size      15 bytes
+// spans     0x005002E0-0x005002EF
+// prototype int (__cdecl ?base_project@@YAHH@Z)(int projectID)
+// callers   1   call targets   0
 Return Value: Base id, if not built (-1) or destroyed (-2)
 Status: Complete
 */
@@ -2008,6 +2203,11 @@ int __cdecl base_project(int project_id) {
 /*
 Purpose: Suggest the base the specified pair of factions should agree to attack together.
 ORIGINAL: 0x0054ACC0
+// name      ?suggest_plan@@YAHHH@Z
+// size      733 bytes
+// spans     0x0054ACC0-0x0054AF9D
+// prototype 
+// callers   1   call targets   3
 Return Value: Base id of the suggested target, or -1 if the pair has no shared target
 Status: Complete
 
@@ -2100,6 +2300,11 @@ int __cdecl suggest_plan(int faction_id, int faction_id_2) {
 /*
 Purpose: Determine the faction's best base to attack the specified base from.
 ORIGINAL: 0x0054AFA0
+// name      ?attack_from@@YAHHH@Z
+// size      407 bytes
+// spans     0x0054AFA0-0x0054B137
+// prototype int (__cdecl ?attack_from@@YAHHH@Z)(int baseID, int factionID)
+// callers   2   call targets   1
 Return Value: Base id to attack from or 0 
 Status: Complete
 */
@@ -2130,6 +2335,11 @@ int __cdecl attack_from(int base_id_to_atk, int faction_id) {
 Purpose: Determine the value of the specified base between the requester and the respondent faction.
          This valuation could be triggered either from a gift, a threat or a base swap.
 ORIGINAL: 0x0054CB50
+// name      ?value_of_base@@YAHHHHHH@Z
+// size      1001 bytes
+// spans     0x0054CB50-0x0054CF39
+// prototype int (__cdecl ?value_of_base@@YAHHHHHH@Z)(int baseID, int factionIDReq, int factionIDRes, int baseIDCounter, int tgl)
+// callers   3   call targets   7
 Return Value: Value of base or -1 for invalid requests
 Status: Complete - testing
 */
@@ -2240,6 +2450,11 @@ int __cdecl value_of_base(int base_id, int faction_id_req, int faction_id_res,
 /*
 Purpose: Determine ideal non-offense (defense, combat, recon) unit count for the specified base.
 ORIGINAL: 0x00560B30
+// name      ?garrison_check@@YAHH@Z
+// size      512 bytes
+// spans     0x00560B30-0x00560D30
+// prototype int (__cdecl ?garrison_check@@YAHH@Z)(int baseID)
+// callers   4   call targets   3
 Return Value: Amount of non-offensive units needed (1-10)
 Status: Complete
 */
@@ -2284,11 +2499,21 @@ int __cdecl garrison_check(int base_id) {
 /*
 Purpose: Determine the number of defensive units needed to protect the specified base.
 ORIGINAL: 0x00560D30 BYTE_EXACT
+// name      ?defensive_check@@YAHH@Z
+// size      29 bytes
+// spans     0x00560D30-0x00560D4D
+// prototype int (__cdecl ?defensive_check@@YAHH@Z)(int baseID)
+// callers   2   call targets   1
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */
 /*
 ORIGINAL: 0x00560D30
+// name      ?defensive_check@@YAHH@Z
+// size      29 bytes
+// spans     0x00560D30-0x00560D4D
+// prototype int (__cdecl ?defensive_check@@YAHH@Z)(int baseID)
+// callers   2   call targets   1
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */
@@ -2306,6 +2531,11 @@ int __cdecl defensive_check(int base_id) {
 /*
 Purpose: Determine if base is a port.
 ORIGINAL: 0x00579A00
+// name      ?is_port@@YAHHH@Z
+// size      48 bytes
+// spans     0x00579A00-0x00579A30
+// prototype int (__cdecl ?is_port@@YAHHH@Z)(int baseID, int isBaseRadius)
+// callers   2   call targets   1
 Return Value: Is base a port? true/false
 Status: Complete
 */
@@ -2317,6 +2547,11 @@ BOOL __cdecl is_port(int base_id, BOOL is_base_radius) {
 Purpose: Calculate how vulnerable the coordinates are for the specified faction based on how far
          away this tile is from the faction's Headquarters.
 ORIGINAL: 0x0059E980
+// name      ?vulnerable@@YAHHHH@Z
+// size      243 bytes
+// spans     0x0059E980-0x0059EA73
+// prototype int (__cdecl ?vulnerable@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
+// callers   1   call targets   2
 Return Value: Radial distance between coordinates and faction's HQ or 12 if no HQ/bases
 Status: Complete
 */
@@ -2334,6 +2569,11 @@ int __cdecl vulnerable(int faction_id, int x, int y) {
 /*
 Purpose: Determine whether the specified base is considered an objective.
 ORIGINAL: 0x005AC060
+// name      ?is_objective@@YAHH@Z
+// size      171 bytes
+// spans     0x005AC060-0x005AC10B
+// prototype int (__cdecl ?is_objective@@YAHH@Z)(int baseID)
+// callers   14   call targets   1
 Return Value: Is base an objective? true/false
 Status: Complete
 */
@@ -2359,6 +2599,11 @@ BOOL __cdecl is_objective(int base_id) {
 Purpose: Count how far the specified faction has got towards the scenario's
          objectives.
 ORIGINAL: 0x005AC110
+// name      ?num_objectives@@YAHHH@Z
+// size      1161 bytes
+// spans     0x005AC110-0x005AC599
+// prototype int (__cdecl ?num_objectives@@YAHHH@Z)(int factionID, int)
+// callers   9   call targets   5
 Return Value: Objective count, or zero for an eliminated faction
 Status: Complete
 
@@ -2498,6 +2743,11 @@ int __cdecl num_objectives(int faction_id, BOOL count_pact_factions) {
 Purpose: Check if specified faction is currently building Ascent to Transcendence. This code isn't
          used by original game. There was also a bug where it compares to a non-negative queue id.
 ORIGINAL: 0x005AC630
+// name      ?transcending@@YAHH@Z
+// size      74 bytes
+// spans     0x005AC630-0x005AC67A
+// prototype int (__cdecl ?transcending@@YAHH@Z)(int factionID)
+// callers   0   call targets   0
 Return Value: Is faction transcending? true/false
 Status: Complete
 */
@@ -2517,6 +2767,11 @@ BOOL __cdecl transcending(int faction_id) {
 /*
 Purpose: Check if Voice of Planet has been built that starts the Ascent to Transcendence sequence.
 ORIGINAL: 0x005AC680
+// name      ?ascending@@YAHH@Z
+// size      15 bytes
+// spans     0x005AC680-0x005AC68F
+// prototype int (__cdecl ?ascending@@YAHH@Z)(int factionID)
+// callers   4   call targets   0
 Return Value: Has Voice of Planet been built? true/false
 Status: Complete
 */
@@ -2527,6 +2782,11 @@ BOOL __cdecl ascending(int UNUSED(faction_id)) {
 /*
 Purpose: Determine if the facility is redundant due to a Secret Project counting as that facility.
 ORIGINAL: 0x005BA030
+// name      ?redundant@@YAHHH@Z
+// size      173 bytes
+// spans     0x005BA030-0x005BA0DD
+// prototype int (__cdecl ?redundant@@YAHHH@Z)(int facilityID, int factionID)
+// callers   1   call targets   0
 Return Value: Is facility redundant? true/false
 Status: Complete
 */
@@ -2565,6 +2825,11 @@ Purpose: Determine if the provided faction can build a specific facility or Secr
          specified base. Checks are included to prevent SMACX specific facilities from being built
          in SMAC mode.
 ORIGINAL: 0x005BA0E0
+// name      ?facility_avail@@YAHHHHH@Z
+// size      2090 bytes
+// spans     0x005BA0E0-0x005BA90A
+// prototype int (__cdecl ?facility_avail@@YAHHHHH@Z)(int facilityID, int factionID, int baseID, int queueCount)
+// callers   5   call targets   6
 Return Value: Is facility or Secret Project available to faction, base and game mode? true/false
 Status: Complete
 */

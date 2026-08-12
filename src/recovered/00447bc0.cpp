@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00447BC0 BYTE_EXACT
+// name      ?begin@GAmbience@@QAEXXZ
+// size      29 bytes
+// spans     0x00447BC0-0x00447BDD
+// prototype void (__thiscall ?begin@GAmbience@@QAEXXZ)(GAmbience* this)
+// callers   0   call targets   0
 // 0x00447BC0  ?begin@GAmbience@@QAEXXZ  ->  ?begin@GAmbience@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

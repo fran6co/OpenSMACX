@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004EC3B0 BYTE_EXACT
+// name      ?base_compute@@YAHH@Z
+// size      55 bytes
+// spans     0x004EC3B0-0x004EC3E7
+// prototype 
+// callers   43   call targets   5
 // 0x004EC3B0  ?base_compute@@YAHH@Z  ->  ?base_compute@@YAHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

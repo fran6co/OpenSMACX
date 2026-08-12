@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004C57A0 BYTE_EXACT
+// name      ?init@Midi_Device@@QAEHPAXK@Z
+// size      68 bytes
+// spans     0x004C57A0-0x004C57E4
+// prototype int (__thiscall ?init@Midi_Device@@QAEHPAXK@Z)(Midi_Device* this, void*, unsigned int)
+// callers   1   call targets   0
 // 0x004C57A0  ?init@Midi_Device@@QAEHPAXK@Z  ->  ?init@Midi_Device@@QAEHPAXK@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

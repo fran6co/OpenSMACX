@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004B1B30 BYTE_EXACT
+// name      ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z
+// size      64 bytes
+// spans     0x004B1B30-0x004B1B70
+// prototype void (__thiscall ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z)(SocialWin* this, LPCSTR, int, int)
+// callers   0   call targets   2
 // 0x004B1B30  ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z  ->  ?bubble_me_elmo2@SocialWin@@QAEXPADHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

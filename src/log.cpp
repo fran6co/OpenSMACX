@@ -24,6 +24,11 @@
 /*
 Purpose: Initialize a log file.
 ORIGINAL: 0x00626040
+// name      ?init@Log@@QAEHPAD@Z
+// size      131 bytes
+// spans     0x00626040-0x006260C3
+// prototype int (__thiscall ?init@Log@@QAEHPAD@Z)(Log* this, int8*)
+// callers   2   call targets   6
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -49,6 +54,11 @@ int Log::init(LPCSTR input) {
 /*
 Purpose: Reset the log file.
 ORIGINAL: 0x006260D0
+// name      ?reset@Log@@QAEXXZ
+// size      28 bytes
+// spans     0x006260D0-0x006260EC
+// prototype void (__thiscall ?reset@Log@@QAEXXZ)(Log* this)
+// callers   2   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -62,6 +72,11 @@ void Log::reset() {
 /*
 Purpose: Write to the log file with the numbers displayed in base 10.
 ORIGINAL: 0x006260F0
+// name      ?say@Log@@QAEXPADPADHHH@Z
+// size      155 bytes
+// spans     0x006260F0-0x0062618B
+// prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
+// callers   1   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -80,6 +95,11 @@ void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 /*
 Purpose: Write to the log file with the numbers displayed in base 16.
 ORIGINAL: 0x00626190
+// name      ?say_hex@Log@@QAEXPADPADHHH@Z
+// size      155 bytes
+// spans     0x00626190-0x0062622B
+// prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
+// callers   0   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -100,36 +120,76 @@ Log *Logging = (Log *)0x009BBFF8;
 BOOL *IsLoggingDisabled = (BOOL *)0x009BC004;
 
 // ORIGINAL: 0x00625F20
+// name      ??__ELogging@@YAXXZ
+// size      107 bytes
+// spans     0x00625F20-0x00625F8B
+// prototype 
+// callers   0   call targets   6
 void __cdecl log_logging() {
     new (Logging) Log("logfile.txt");
     atexit(log_logging_exit);
 }
 
 // ORIGINAL: 0x00625F90
+// name      ??__FLogging@@YAXXZ
+// size      29 bytes
+// spans     0x00625F90-0x00625FAD
+// prototype 
+// callers   0   call targets   1
 void __cdecl log_logging_exit() { Logging->~Log(); }
 
 // ORIGINAL: 0x00626230
+// name      ?log_reset@@YAXXZ
+// size      31 bytes
+// spans     0x00626230-0x0062624F
+// prototype 
+// callers   2   call targets   2
 void __cdecl log_reset() { Logging->reset(); }
 
 // ORIGINAL: 0x00626250
+// name      ?log_say@@YAXPADPADHHH@Z
+// size      153 bytes
+// spans     0x00626250-0x006262E9
+// prototype 
+// callers   25   call targets   3
 void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     Logging->say(str1, str2, num1, num2, num3);
 }
 
 // ORIGINAL: 0x006262F0
+// name      ?log_say@@YAXPADHHH@Z
+// size      92 bytes
+// spans     0x006262F0-0x0062634C
+// prototype 
+// callers   98   call targets   3
 void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
     Logging->say(str1, NULL, num1, num2, num3);
 }
 
 // ORIGINAL: 0x00626350
+// name      ?log_say_hex@@YAXPADPADHHH@Z
+// size      153 bytes
+// spans     0x00626350-0x006263E9
+// prototype 
+// callers   1   call targets   3
 void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     Logging->say_hex(str1, str2, num1, num2, num3);
 }
 
 // ORIGINAL: 0x006263F0
+// name      ?log_say_hex@@YAXPADHHH@Z
+// size      92 bytes
+// spans     0x006263F0-0x0062644C
+// prototype 
+// callers   4   call targets   3
 void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) {
     Logging->say_hex(str1, NULL, num1, num2, num3);
 }
 
 // ORIGINAL: 0x00626450
+// name      ?log_set_state@@YAXH@Z
+// size      17 bytes
+// spans     0x00626450-0x00626461
+// prototype 
+// callers   5   call targets   0
 void __cdecl log_set_state(BOOL state) { Logging->set_state(state); }

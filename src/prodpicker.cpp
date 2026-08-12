@@ -22,6 +22,11 @@
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
 ORIGINAL: 0x00493C10 BYTE_EXACT
+// name      ?UNK1@ProdPicker@@QAEHH@Z
+// size      8 bytes
+// spans     0x00493C10-0x00493C18
+// prototype int (__thiscall ?UNK1@ProdPicker@@QAEHH@Z)(ProdPicker* this, int)
+// callers   0   call targets   0
 Return Value: 1, always
 Status: Complete
 */
@@ -36,6 +41,11 @@ int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00493E90 BYTE_EXACT
+// name      ?on_mouse_move@ProdPicker@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00493E90-0x00493E93
+// prototype void (__thiscall ?on_mouse_move@ProdPicker@@QAEXHH@Z)(ProdPicker* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -49,6 +59,11 @@ void __fastcall prod_picker_on_mouse_move_redirect(ProdPicker *self, void *, int
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00495160 BYTE_EXACT
+// name      ?UNK3@ProdPicker@@QAEXH@Z
+// size      3 bytes
+// spans     0x00495160-0x00495163
+// prototype void (__thiscall ?UNK3@ProdPicker@@QAEXH@Z)(ProdPicker* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -63,6 +78,11 @@ void __fastcall prod_picker_unk3_redirect(ProdPicker *self, void *, int a1) {
 Purpose: Close the picker - clear the field at 0xA14 that marks it live, then
          run the GraphicWin close it inherits.
 ORIGINAL: 0x004926B0
+// name      ?close@ProdPicker@@QAEXXZ
+// size      15 bytes
+// spans     0x004926B0-0x004926BF
+// prototype void (__thiscall ?close@ProdPicker@@QAEXXZ)(ProdPicker* this)
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -78,6 +98,11 @@ void __fastcall prod_picker_close_redirect(ProdPicker *self, void *) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x004945C0 BYTE_EXACT
+// name      ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z
+// size      3 bytes
+// spans     0x004945C0-0x004945C3
+// prototype void (__thiscall ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z)(ProdPicker* this, RECT*, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */

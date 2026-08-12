@@ -1,4 +1,9 @@
 // ORIGINAL: 0x006239B0 BYTE_EXACT
+// name      ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@H@Z
+// size      35 bytes
+// spans     0x006239B0-0x006239D3
+// prototype void (__thiscall ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@H@Z)(Texture* this, Buffer*, Vert*, int, Vert*, int)
+// callers   0   call targets   1
 // 0x006239B0  ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@H@Z  ->  ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@H1H@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

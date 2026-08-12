@@ -53,17 +53,32 @@ Text::~Text() OPENSMACX_NOEXCEPT_FALSE {
 }
 
 // ORIGINAL: 0x005FD400
+// name      ??__ETxt@@YAXXZ
+// size      86 bytes
+// spans     0x005FD400-0x005FD456
+// prototype 
+// callers   0   call targets   2
 void __cdecl text_txt() {
     new (Txt) Text(512);
     atexit(text_txt_exit);
 }
 
 // ORIGINAL: 0x005FD460
+// name      ??__FTxt@@YAXXZ
+// size      85 bytes
+// spans     0x005FD460-0x005FD4B5
+// prototype 
+// callers   0   call targets   2
 void __cdecl text_txt_exit() {
     Txt->~Text();
 }
 
 // ORIGINAL: 0x005FD550
+// name      ?text_open@@YAHPADPAD@Z
+// size      21 bytes
+// spans     0x005FD550-0x005FD565
+// prototype int (__cdecl ?text_open@@YAHPADPAD@Z)(int8* srcFileID, int8* sectionID)
+// callers   34   call targets   1
 BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
     return Txt->open(src_id, section_id);
 }

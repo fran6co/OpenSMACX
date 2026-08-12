@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005DDF60 BYTE_EXACT
+// name      ?wrap_flying@Buffer@@QAEHPADHHH@Z
+// size      70 bytes
+// spans     0x005DDF60-0x005DDFA6
+// prototype int (__thiscall ?wrap_flying@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
+// callers   3   call targets   1
 // 0x005DDF60  ?wrap_flying@Buffer@@QAEHPADHHH@Z  ->  ?wrap_flying@Buffer@@QAEHPADHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

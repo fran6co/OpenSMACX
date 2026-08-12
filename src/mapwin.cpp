@@ -24,6 +24,11 @@
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x00467960 BYTE_EXACT
+// name      ?UNK3@MapWin@@QAEXXZ
+// size      1 bytes
+// spans     0x00467960-0x00467961
+// prototype void (__thiscall ?UNK3@MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -34,6 +39,11 @@ void MapWin::UNK3() {
 Purpose: Refresh the map's image buttons; the legacy implementation is a bare
          return, so the buttons are never rebuilt here.
 ORIGINAL: 0x0046FB80 BYTE_EXACT
+// name      ?do_image_buttons@MapWin@@QAEXXZ
+// size      1 bytes
+// spans     0x0046FB80-0x0046FB81
+// prototype void (__thiscall ?do_image_buttons@MapWin@@QAEXXZ)(MapWin* this)
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -57,6 +67,11 @@ Purpose: Push the map's caption into the main interface's date field. The
          original acts on the interface and caption it keeps at fixed
          addresses rather than on anything reached through the map window.
 ORIGINAL: 0x0046FB10
+// name      ?main_caption@MapWin@@QAEXXZ
+// size      16 bytes
+// spans     0x0046FB10-0x0046FB20
+// prototype void (__thiscall ?main_caption@MapWin@@QAEXXZ)(MapWin* this)
+// callers   11   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -75,6 +90,11 @@ Purpose: Close the map window - free the buffer it owns at 0x4, then close its
          graphic base. The base is located through the object's own vbtable,
          not a fixed offset, so an embedded MapWin closes its own base.
 ORIGINAL: 0x00470F70
+// name      ?close@MapWin@@QAEXXZ
+// size      40 bytes
+// spans     0x00470F70-0x00470F98
+// prototype void (__thiscall ?close@MapWin@@QAEXXZ)(MapWin* this)
+// callers   4   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -101,6 +121,11 @@ Purpose: Report a left click on the map, but only when map input is enabled.
          Reached through the GraphicWin virtual base, so `this` points there
          and is adjusted back 0x21A6C to the MapWin before dispatching.
 ORIGINAL: 0x0046EBA0
+// name      ?on_left_click@MapWin@@QAEXHH@Z
+// size      37 bytes
+// spans     0x0046EBA0-0x0046EBC5
+// prototype void (__thiscall ?on_left_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -117,6 +142,11 @@ void MapWin::on_left_click(int a1, int a2) {
 Purpose: Report a right click on the map, but only when map input is enabled.
          Same virtual-base adjustment as the left click.
 ORIGINAL: 0x0046EBE0
+// name      ?on_right_click@MapWin@@QAEXHH@Z
+// size      37 bytes
+// spans     0x0046EBE0-0x0046EC05
+// prototype void (__thiscall ?on_right_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +170,11 @@ void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, in
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x0046EBD0 BYTE_EXACT
+// name      ?on_left_double_click@MapWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x0046EBD0-0x0046EBD3
+// prototype void (__thiscall ?on_left_double_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -149,6 +184,11 @@ void MapWin::on_left_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x0046EFF0 BYTE_EXACT
+// name      ?on_left_up@MapWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x0046EFF0-0x0046EFF3
+// prototype void (__thiscall ?on_left_up@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -166,6 +206,11 @@ void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
 ORIGINAL: 0x00462970 BYTE_EXACT
+// name      ?UNK2@MapWin@@QAEHXZ
+// size      3 bytes
+// spans     0x00462970-0x00462973
+// prototype int (__thiscall ?UNK2@MapWin@@QAEHXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: 0, always
 Status: Complete
 */
@@ -201,6 +246,11 @@ Purpose: Broadcast a single-tile redraw to every live map window. Walks the
          argument order from mutation testing entirely, leaving both functions
          with zero mutants. The duplication buys verification.
 ORIGINAL: 0x0046AF40
+// name      ?draw_tile@@YAXHHH@Z
+// size      70 bytes
+// spans     0x0046AF40-0x0046AF86
+// prototype void (__cdecl ?draw_tile@@YAXHHH@Z)(int xCoord, int yCoord, int drawType)
+// callers   34   call targets   1
 Return Value: n/a. EAX on return is path-dependent leftover (draw_radius's own
               residue, the zero flag read at 0x0046AF5F, or a stale value when
               the last slot is empty), not a computed result, so unlike
@@ -248,6 +298,11 @@ Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
          instruction for instruction. Transcribed in full for the mutation
          coverage reason recorded on draw_tile.
 ORIGINAL: 0x0046B140
+// name      ?draw_tiles@@YAXHHH@Z
+// size      70 bytes
+// spans     0x0046B140-0x0046B186
+// prototype 
+// callers   10   call targets   1
 Return Value: n/a; same path-dependent EAX leftover as draw_tile.
 Status: Complete with temporary MapWin::draw_radius original dependency
 */
@@ -293,6 +348,11 @@ Purpose: Report whether this object IS the process-wide Console.
          recovery already declared, and the comparison is written against the
          name rather than the literal.
 ORIGINAL: 0x00462960
+// name      ?UNK1@MapWin@@QAEHXZ
+// size      12 bytes
+// spans     0x00462960-0x0046296C
+// prototype int (__thiscall ?UNK1@MapWin@@QAEHXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: 1 when this is ConsoleGlobal, 0 otherwise
 Status: Complete
 */
@@ -306,6 +366,11 @@ int __fastcall map_win_unk1_redirect(MapWin *self, void *) {
 
 /*
 ORIGINAL: 0x0046B1D0 BYTE_EXACT
+// name      ?on_redraw@MapWin@@QAEXXZ
+// size      24 bytes
+// spans     0x0046B1D0-0x0046B1E8
+// prototype void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   1
 Status: Complete
 */
 void MapWin::on_redraw() {
@@ -316,6 +381,11 @@ void MapWin::on_redraw() {
 
 /*
 ORIGINAL: 0x0046FA00 BYTE_EXACT
+// name      ?on_resize@MapWin@@QAEXHH@Z
+// size      26 bytes
+// spans     0x0046FA00-0x0046FA1A
+// prototype void (__thiscall ?on_resize@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void MapWin::on_resize(int a1, int a2) {

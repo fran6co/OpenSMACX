@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0043D0C0 BYTE_EXACT
+// name      ?show@DesignWin@@QAEXH@Z
+// size      40 bytes
+// spans     0x0043D0C0-0x0043D0E8
+// prototype void (__thiscall ?show@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   3
 // 0x0043D0C0  ?show@DesignWin@@QAEXH@Z  ->  ?show@DesignWin@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

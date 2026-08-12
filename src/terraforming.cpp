@@ -31,6 +31,11 @@ RulesTerraforming *Terraforming = (RulesTerraforming *)0x00691878;
 /*
 Purpose: Calculate the credit cost to lower or raise the tile's terrain for the specified faction.
 ORIGINAL: 0x004C9420
+// name      ?terraform_cost@@YAHHHH@Z
+// size      694 bytes
+// spans     0x004C9420-0x004C96D6
+// prototype int (__cdecl ?terraform_cost@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   3   call targets   3
 Return Value: Credit cost
 Status: Complete
 */
@@ -74,6 +79,11 @@ int __cdecl terraform_cost(int x, int y, int faction_id) {
 /*
 Purpose: Calculate the Former rate to perform terrain enhancements.
 ORIGINAL: 0x004C9A50
+// name      ?contribution@@YAHHH@Z
+// size      171 bytes
+// spans     0x004C9A50-0x004C9AFB
+// prototype int (__cdecl ?contribution@@YAHHH@Z)(int vehID, int terraformID)
+// callers   1   call targets   1
 Return Value: Terraforming speed
 Status: Complete
 */
@@ -92,6 +102,11 @@ int __cdecl contribution(int veh_id, int terraform_id) {
 /*
 Purpose: Check to see whether the specified faction can construct a specific terrain enhancement.
 ORIGINAL: 0x005BAB40
+// name      ?terrain_avail@@YAHHHH@Z
+// size      211 bytes
+// spans     0x005BAB40-0x005BAC13
+// prototype int (__cdecl ?terrain_avail@@YAHHHH@Z)(int terraformID, BOOL isSea, int factionID)
+// callers   5   call targets   0
 Return Value: Is terrain enhancement available to faction? true/false
 Status: Complete
 */
@@ -137,6 +152,11 @@ static int terraform_xrange(int x) {
 /*
 Purpose: Decide which Former order, if any, should be issued on the specified tile.
 ORIGINAL: 0x00565320
+// name      ?can_terraform@@YAHHHHHH@Z
+// size      3070 bytes
+// spans     0x00565320-0x00565F1E
+// prototype int (__cdecl ?can_terraform@@YAHHHHHH@Z)(int factionID, int xCoord, int yCoord, int, int baseID)
+// callers   3   call targets   6
 Return Value: The ORDER_* to issue, or ORDER_NONE for none
 Status: Complete
 

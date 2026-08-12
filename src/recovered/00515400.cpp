@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00515400 BYTE_EXACT
+// name      ?center@Console@@QAEXXZ
+// size      35 bytes
+// spans     0x00515400-0x00515423
+// prototype void (__thiscall ?center@Console@@QAEXXZ)(Console* this)
+// callers   5   call targets   1
 // 0x00515400  ?center@Console@@QAEXXZ  ->  ?center@Console@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

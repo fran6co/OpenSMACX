@@ -26,6 +26,11 @@ uint32_t *FlatButtonDefaults = (uint32_t *)0x009B8E44;
 Purpose: Close the primary Time member, reset FlatButton orientation state,
          close the BaseButton base, and reload all nine three-entry tables.
 ORIGINAL: 0x00607DA0
+// name      ?close@FlatButton@@QAEXXZ
+// size      161 bytes
+// spans     0x00607DA0-0x00607E41
+// prototype void (__thiscall ?close@FlatButton@@QAEXXZ)(FlatButton* this)
+// callers   134   call targets   2
 Return Value: Legacy final-loop residue (this + 0xAEC)
 Status: Complete
 */
@@ -60,6 +65,11 @@ uint32_t __fastcall flat_button_close_redirect(FlatButton *self, void *) {
 Purpose: Destroy a FlatButton by installing its two virtual tables, closing
          the derived stage, then running the complete BaseButton destructor.
 ORIGINAL: 0x00406880
+// name      ??1FlatButton@@QAE@XZ
+// size      106 bytes
+// spans     0x00406880-0x004068D8;0x006509A0-0x006509B2
+// prototype void (__thiscall ??1FlatButton@@QAE@XZ)(FlatButton* this)
+// callers   93   call targets   2
 Return Value: Instance pointer in EAX
 Status: Complete
 */

@@ -23,6 +23,11 @@
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447220 BYTE_EXACT
+// name      ?begin@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447220-0x00447221
+// prototype void (__thiscall ?begin@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -32,6 +37,11 @@ void FactionAmbience::begin() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447230 BYTE_EXACT
+// name      ?tech@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447230-0x00447231
+// prototype void (__thiscall ?tech@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -41,6 +51,11 @@ void FactionAmbience::tech() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447240 BYTE_EXACT
+// name      ?terraform@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447240-0x00447241
+// prototype void (__thiscall ?terraform@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -50,6 +65,11 @@ void FactionAmbience::terraform() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447250 BYTE_EXACT
+// name      ?production@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447250-0x00447251
+// prototype void (__thiscall ?production@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -59,6 +79,11 @@ void FactionAmbience::production() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447260 BYTE_EXACT
+// name      ?general@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447260-0x00447261
+// prototype void (__thiscall ?general@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -68,6 +93,11 @@ void FactionAmbience::general() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x004472B0 BYTE_EXACT
+// name      ?new_base@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x004472B0-0x004472B1
+// prototype void (__thiscall ?new_base@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -77,6 +107,11 @@ void FactionAmbience::new_base() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x004472C0 BYTE_EXACT
+// name      ?popup1@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x004472C0-0x004472C1
+// prototype void (__thiscall ?popup1@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -86,6 +121,11 @@ void FactionAmbience::popup1() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x004472D0 BYTE_EXACT
+// name      ?eot@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x004472D0-0x004472D1
+// prototype void (__thiscall ?eot@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -95,6 +135,11 @@ void FactionAmbience::eot() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x004472E0 BYTE_EXACT
+// name      ?hostility@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x004472E0-0x004472E1
+// prototype void (__thiscall ?hostility@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -104,6 +149,11 @@ void FactionAmbience::hostility() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x004472F0 BYTE_EXACT
+// name      ?energy_resources@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x004472F0-0x004472F1
+// prototype void (__thiscall ?energy_resources@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -113,6 +163,11 @@ void FactionAmbience::energy_resources() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447300 BYTE_EXACT
+// name      ?base_liberated@FactionAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447300-0x00447301
+// prototype void (__thiscall ?base_liberated@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -122,6 +177,11 @@ void FactionAmbience::base_liberated() {
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447690 BYTE_EXACT
+// name      ?tech@UAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447690-0x00447691
+// prototype void (__thiscall ?tech@UAmbience@@QAEXXZ)(UAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -131,6 +191,11 @@ void UAmbience::tech() {
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x004476A0 BYTE_EXACT
+// name      ?popup1@UAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x004476A0-0x004476A1
+// prototype void (__thiscall ?popup1@UAmbience@@QAEXXZ)(UAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +205,11 @@ void UAmbience::popup1() {
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x004476B0 BYTE_EXACT
+// name      ?eot@UAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x004476B0-0x004476B1
+// prototype void (__thiscall ?eot@UAmbience@@QAEXXZ)(UAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -149,6 +219,11 @@ void UAmbience::eot() {
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447C60 BYTE_EXACT
+// name      ?tech@GAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447C60-0x00447C61
+// prototype void (__thiscall ?tech@GAmbience@@QAEXXZ)(GAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -158,6 +233,11 @@ void GAmbience::tech() {
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447CA0 BYTE_EXACT
+// name      ?production@GAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447CA0-0x00447CA1
+// prototype void (__thiscall ?production@GAmbience@@QAEXXZ)(GAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -167,6 +247,11 @@ void GAmbience::production() {
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447CB0 BYTE_EXACT
+// name      ?popup1@GAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447CB0-0x00447CB1
+// prototype void (__thiscall ?popup1@GAmbience@@QAEXXZ)(GAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -176,6 +261,11 @@ void GAmbience::popup1() {
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
 ORIGINAL: 0x00447CC0 BYTE_EXACT
+// name      ?eot@GAmbience@@QAEXXZ
+// size      1 bytes
+// spans     0x00447CC0-0x00447CC1
+// prototype void (__thiscall ?eot@GAmbience@@QAEXXZ)(GAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -281,6 +371,11 @@ Purpose: Destroy an ambience. Its own stage frees the remembered filename
          exception frame is omitted as unreachable. The vtable is staged
          through all three levels.
 ORIGINAL: 0x004C7670
+// name      ??1Ambience@@QAE@XZ
+// size      273 bytes
+// spans     0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
+// prototype void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -360,6 +455,11 @@ Purpose: Build the ambience. The original constructs in four vtable stages -
          keep whatever the storage held - and nothing at or above 0x58 is
          written at all, which is what pins the shared base's extent there.
 ORIGINAL: 0x004C8460
+// name      ??0Ambience@@QAE@XZ
+// size      230 bytes
+// spans     0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E
+// prototype void (__thiscall ??0Ambience@@QAE@XZ)(Ambience* this)
+// callers   7   call targets   2
 Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete
@@ -434,6 +534,11 @@ Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 ORIGINAL: 0x00447270
+// name      ?basewin_show@FactionAmbience@@QAEXXZ
+// size      5 bytes
+// spans     0x00447270-0x00447275
+// prototype void (__thiscall ?basewin_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -449,6 +554,11 @@ void __fastcall faction_ambience_basewin_show_redirect(FactionAmbience *self, vo
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 ORIGINAL: 0x00447280
+// name      ?basewin_hide@FactionAmbience@@QAEXXZ
+// size      5 bytes
+// spans     0x00447280-0x00447285
+// prototype void (__thiscall ?basewin_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -464,6 +574,11 @@ void __fastcall faction_ambience_basewin_hide_redirect(FactionAmbience *self, vo
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 ORIGINAL: 0x00447290
+// name      ?design_window_show@FactionAmbience@@QAEXXZ
+// size      5 bytes
+// spans     0x00447290-0x00447295
+// prototype void (__thiscall ?design_window_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -479,6 +594,11 @@ void __fastcall faction_ambience_design_window_show_redirect(FactionAmbience *se
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 ORIGINAL: 0x004472A0
+// name      ?design_window_hide@FactionAmbience@@QAEXXZ
+// size      5 bytes
+// spans     0x004472A0-0x004472A5
+// prototype void (__thiscall ?design_window_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -501,6 +621,11 @@ Purpose: GAmbience raises the flag byte only when it is CLEAR.
          values 0 and 1 and differ for every other: a byte holding 5 keeps 5,
          where `field_6C_ = 1` would overwrite it.
 ORIGINAL: 0x00447BE0 BYTE_EXACT
+// name      ?basewin_show@GAmbience@@QAEXXZ
+// size      12 bytes
+// spans     0x00447BE0-0x00447BEC
+// prototype void (__thiscall ?basewin_show@GAmbience@@QAEXXZ)(GAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -518,6 +643,11 @@ void __fastcall g_ambience_basewin_show_redirect(GAmbience *self, void *) {
 Purpose: GAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 ORIGINAL: 0x00447BF0 BYTE_EXACT
+// name      ?basewin_hide@GAmbience@@QAEXXZ
+// size      5 bytes
+// spans     0x00447BF0-0x00447BF5
+// prototype void (__thiscall ?basewin_hide@GAmbience@@QAEXXZ)(GAmbience* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -559,6 +689,11 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
          the storage held survives there.
 
 ORIGINAL: 0x004471F0
+// name      ??0FactionAmbience@@QAE@XZ
+// size      41 bytes
+// spans     0x004471F0-0x00447219
+// prototype void (__thiscall ??0FactionAmbience@@QAE@XZ)(FactionAmbience* this)
+// callers   1   call targets   1
 Return Value: `this`
 Status: Complete
 */
@@ -583,6 +718,11 @@ FactionAmbience *__fastcall faction_ambience_construct_redirect(
 /*
 Purpose: As 004471F0, with the MAmbience vtable and one more field.
 ORIGINAL: 0x00447310
+// name      ??0MAmbience@@QAE@XZ
+// size      44 bytes
+// spans     0x00447310-0x0044733C
+// prototype void (__thiscall ??0MAmbience@@QAE@XZ)(MAmbience* this)
+// callers   0   call targets   1
 Return Value: `this`
 Status: Complete
 */
@@ -607,6 +747,11 @@ MAmbience *__fastcall m_ambience_construct_redirect(MAmbience *self, void *) {
 /*
 Purpose: As 004471F0, with the SAmbience vtable and two more fields.
 ORIGINAL: 0x00447850
+// name      ??0SAmbience@@QAE@XZ
+// size      47 bytes
+// spans     0x00447850-0x0044787F
+// prototype void (__thiscall ??0SAmbience@@QAE@XZ)(SAmbience* this)
+// callers   0   call targets   1
 Return Value: `this`
 Status: Complete
 */
@@ -632,6 +777,11 @@ SAmbience *__fastcall s_ambience_construct_redirect(SAmbience *self, void *) {
 /*
 Purpose: As 004471F0, with the GAmbience vtable and one more field.
 ORIGINAL: 0x00447B90
+// name      ??0GAmbience@@QAE@XZ
+// size      44 bytes
+// spans     0x00447B90-0x00447BBC
+// prototype void (__thiscall ??0GAmbience@@QAE@XZ)(GAmbience* this)
+// callers   0   call targets   1
 Return Value: `this`
 Status: Complete
 */

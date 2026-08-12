@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00608770 BYTE_EXACT
+// name      ?kill_entry@StringList@@QAEXPAUStringStruct@@@Z
+// size      43 bytes
+// spans     0x00608770-0x0060879B
+// prototype void (__thiscall ?kill_entry@StringList@@QAEXPAUStringStruct@@@Z)(StringList* this, StringStruct*)
+// callers   0   call targets   1
 // 0x00608770  ?kill_entry@StringList@@QAEXPAUStringStruct@@@Z  ->  ?kill_entry@StringList@@QAEXPAUStringStruct@@@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

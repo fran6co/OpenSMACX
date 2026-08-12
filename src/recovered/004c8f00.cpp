@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004C8F00 BYTE_EXACT
+// name      ?stop@VoiceTx@@QAEHXZ
+// size      60 bytes
+// spans     0x004C8F00-0x004C8F3C
+// prototype int (__thiscall ?stop@VoiceTx@@QAEHXZ)(VoiceTx* this)
+// callers   0   call targets   2
 // 0x004C8F00  ?stop@VoiceTx@@QAEHXZ  ->  ?stop@VoiceTx@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

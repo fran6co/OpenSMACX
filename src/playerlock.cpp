@@ -24,6 +24,11 @@
 Purpose: Reset both lock entries to their unset sentinels and mark the lock
          inactive.
 ORIGINAL: 0x0058FF70
+// name      ?clear@PlayerLock@@QAEXXZ
+// size      38 bytes
+// spans     0x0058FF70-0x0058FF96
+// prototype void (__thiscall ?clear@PlayerLock@@QAEXXZ)(PlayerLock* this)
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -46,6 +51,11 @@ Purpose: Report whether either lock entry is engaged - the low bit of its flag
          in EAX, so the value is returned here to match its behaviour rather
          than its declared type.
 ORIGINAL: 0x0058FFA0
+// name      ?active@PlayerLock@@QAEXXZ
+// size      28 bytes
+// spans     0x0058FFA0-0x0058FFBC
+// prototype void (__thiscall ?active@PlayerLock@@QAEXXZ)(PlayerLock* this)
+// callers   4   call targets   0
 Return Value: 1 when an entry is engaged, 0 when neither is
 Status: Complete
 */
@@ -78,6 +88,11 @@ Purpose: Lock the second square entry for a faction, forcing the 0x10 flag on.
          three-int triple, and routing through the seam is what lets a fixture
          observe the call rather than the map it would otherwise walk.
 ORIGINAL: 0x005900A0
+// name      ?add_lock@PlayerLock@@QAEHHHHH@Z
+// size      33 bytes
+// spans     0x005900A0-0x005900C1
+// prototype int (__thiscall ?add_lock@PlayerLock@@QAEHHHHH@Z)(PlayerLock* this, int, int, int, int)
+// callers   0   call targets   1
 Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
@@ -99,6 +114,11 @@ Purpose: Release both square entries for a faction and clear the active byte.
          byte write is the last thing it does, which is the ordering a fixture
          has to hold it to.
 ORIGINAL: 0x0058FFC0
+// name      ?unlock@PlayerLock@@QAEXH@Z
+// size      50 bytes
+// spans     0x0058FFC0-0x0058FFF2
+// prototype void (__thiscall ?unlock@PlayerLock@@QAEXH@Z)(PlayerLock* this, int)
+// callers   0   call targets   1
 Return Value: n/a
 Status: Complete
 */

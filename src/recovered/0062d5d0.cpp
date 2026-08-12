@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0062D5D0 BYTE_EXACT
+// name      ?check_net@@YAXXZ
+// size      25 bytes
+// spans     0x0062D5D0-0x0062D5E9
+// prototype 
+// callers   21   call targets   0
 // 0x0062D5D0  ?check_net@@YAXXZ  ->  ?check_net@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

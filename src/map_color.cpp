@@ -29,6 +29,11 @@ Purpose: Return the display colour for a mandate selector. Selectors 0, 1, and 2
          fourth. The original decrements the selector twice against zero, so the
          branch structure is preserved for exactness.
 ORIGINAL: 0x0050E820
+// name      ?mandate_color@@YAHH@Z
+// size      45 bytes
+// spans     0x0050E820-0x0050E84D
+// prototype int (__cdecl ?mandate_color@@YAHH@Z)(int category)
+// callers   9   call targets   0
 Return Value: Colour dword from the mandate colour table
 Status: Complete
 */

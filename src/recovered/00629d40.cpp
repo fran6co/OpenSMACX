@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00629D40 BYTE_EXACT
+// name      ?on_scrolling@StringBox@@QAEXHH@Z
+// size      21 bytes
+// spans     0x00629D40-0x00629D55
+// prototype void (__thiscall ?on_scrolling@StringBox@@QAEXHH@Z)(StringBox* this, int, int)
+// callers   0   call targets   0
 // 0x00629D40  ?on_scrolling@StringBox@@QAEXHH@Z  ->  ?on_scrolling@StringBox@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

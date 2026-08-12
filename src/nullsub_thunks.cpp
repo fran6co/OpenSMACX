@@ -38,6 +38,11 @@
 Purpose: sub_406a80 - a do-nothing leaf. The whole body is a return
          popping 8 bytes after zeroing EAX.
 ORIGINAL: 0x00406A80 BYTE_EXACT
+// name      sub_406a80
+// size      5 bytes
+// spans     0x00406A80-0x00406A85
+// prototype 
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -49,6 +54,11 @@ int __fastcall nullsub_00406a80_redirect(void *, void *, int, int) {
 Purpose: sub_406b30 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
 ORIGINAL: 0x00406B30 BYTE_EXACT
+// name      sub_406b30
+// size      3 bytes
+// spans     0x00406B30-0x00406B33
+// prototype 
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -60,6 +70,11 @@ int __fastcall nullsub_00406b30_redirect(void *, void *) {
 Purpose: nullsub_3 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C820 BYTE_EXACT
+// name      nullsub_3
+// size      1 bytes
+// spans     0x0044C820-0x0044C821
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -70,6 +85,11 @@ void __fastcall nullsub_0044c820_redirect(void *, void *) {
 Purpose: nullsub_191 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C850 BYTE_EXACT
+// name      nullsub_191
+// size      1 bytes
+// spans     0x0044C850-0x0044C851
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -80,6 +100,11 @@ void __fastcall nullsub_0044c850_redirect(void *, void *) {
 Purpose: nullsub_226 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C8A0 BYTE_EXACT
+// name      nullsub_226
+// size      1 bytes
+// spans     0x0044C8A0-0x0044C8A1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -90,6 +115,11 @@ void __fastcall nullsub_0044c8a0_redirect(void *, void *) {
 Purpose: nullsub_227 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C8B0 BYTE_EXACT
+// name      nullsub_227
+// size      1 bytes
+// spans     0x0044C8B0-0x0044C8B1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -100,6 +130,11 @@ void __fastcall nullsub_0044c8b0_redirect(void *, void *) {
 Purpose: sub_44c8c0 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
 ORIGINAL: 0x0044C8C0 BYTE_EXACT
+// name      sub_44c8c0
+// size      3 bytes
+// spans     0x0044C8C0-0x0044C8C3
+// prototype 
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -111,6 +146,11 @@ int __fastcall nullsub_0044c8c0_redirect(void *, void *) {
 Purpose: nullsub_229 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C8D0 BYTE_EXACT
+// name      nullsub_229
+// size      1 bytes
+// spans     0x0044C8D0-0x0044C8D1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -121,6 +161,11 @@ void __fastcall nullsub_0044c8d0_redirect(void *, void *) {
 Purpose: nullsub_230 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C8E0 BYTE_EXACT
+// name      nullsub_230
+// size      1 bytes
+// spans     0x0044C8E0-0x0044C8E1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -131,6 +176,11 @@ void __fastcall nullsub_0044c8e0_redirect(void *, void *) {
 Purpose: nullsub_231 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C8F0 BYTE_EXACT
+// name      nullsub_231
+// size      1 bytes
+// spans     0x0044C8F0-0x0044C8F1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -141,6 +191,11 @@ void __fastcall nullsub_0044c8f0_redirect(void *, void *) {
 Purpose: nullsub_232 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C900 BYTE_EXACT
+// name      nullsub_232
+// size      1 bytes
+// spans     0x0044C900-0x0044C901
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -151,6 +206,11 @@ void __fastcall nullsub_0044c900_redirect(void *, void *) {
 Purpose: nullsub_233 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C930 BYTE_EXACT
+// name      nullsub_233
+// size      1 bytes
+// spans     0x0044C930-0x0044C931
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -161,6 +221,11 @@ void __fastcall nullsub_0044c930_redirect(void *, void *) {
 Purpose: nullsub_234 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C960 BYTE_EXACT
+// name      nullsub_234
+// size      1 bytes
+// spans     0x0044C960-0x0044C961
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -171,6 +236,11 @@ void __fastcall nullsub_0044c960_redirect(void *, void *) {
 Purpose: sub_44c970 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
 ORIGINAL: 0x0044C970 BYTE_EXACT
+// name      sub_44c970
+// size      3 bytes
+// spans     0x0044C970-0x0044C973
+// prototype 
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -182,6 +252,11 @@ int __fastcall nullsub_0044c970_redirect(void *, void *) {
 Purpose: nullsub_235 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C9A0 BYTE_EXACT
+// name      nullsub_235
+// size      1 bytes
+// spans     0x0044C9A0-0x0044C9A1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -192,6 +267,11 @@ void __fastcall nullsub_0044c9a0_redirect(void *, void *) {
 Purpose: nullsub_236 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044C9D0 BYTE_EXACT
+// name      nullsub_236
+// size      1 bytes
+// spans     0x0044C9D0-0x0044C9D1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -202,6 +282,11 @@ void __fastcall nullsub_0044c9d0_redirect(void *, void *) {
 Purpose: nullsub_237 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044CA00 BYTE_EXACT
+// name      nullsub_237
+// size      1 bytes
+// spans     0x0044CA00-0x0044CA01
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -212,6 +297,11 @@ void __fastcall nullsub_0044ca00_redirect(void *, void *) {
 Purpose: nullsub_238 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044CA30 BYTE_EXACT
+// name      nullsub_238
+// size      1 bytes
+// spans     0x0044CA30-0x0044CA31
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -222,6 +312,11 @@ void __fastcall nullsub_0044ca30_redirect(void *, void *) {
 Purpose: nullsub_239 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044CA60 BYTE_EXACT
+// name      nullsub_239
+// size      1 bytes
+// spans     0x0044CA60-0x0044CA61
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -232,6 +327,11 @@ void __fastcall nullsub_0044ca60_redirect(void *, void *) {
 Purpose: nullsub_240 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044CAC0 BYTE_EXACT
+// name      nullsub_240
+// size      1 bytes
+// spans     0x0044CAC0-0x0044CAC1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -242,6 +342,11 @@ void __fastcall nullsub_0044cac0_redirect(void *, void *) {
 Purpose: nullsub_241 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044CAF0 BYTE_EXACT
+// name      nullsub_241
+// size      1 bytes
+// spans     0x0044CAF0-0x0044CAF1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -252,6 +357,11 @@ void __fastcall nullsub_0044caf0_redirect(void *, void *) {
 Purpose: nullsub_242 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044CB00 BYTE_EXACT
+// name      nullsub_242
+// size      1 bytes
+// spans     0x0044CB00-0x0044CB01
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -262,6 +372,11 @@ void __fastcall nullsub_0044cb00_redirect(void *, void *) {
 Purpose: nullsub_243 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044CB10 BYTE_EXACT
+// name      nullsub_243
+// size      1 bytes
+// spans     0x0044CB10-0x0044CB11
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -272,6 +387,11 @@ void __fastcall nullsub_0044cb10_redirect(void *, void *) {
 Purpose: nullsub_244 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0044CB20 BYTE_EXACT
+// name      nullsub_244
+// size      1 bytes
+// spans     0x0044CB20-0x0044CB21
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -282,6 +402,11 @@ void __fastcall nullsub_0044cb20_redirect(void *, void *) {
 Purpose: mapwin_nullsub1 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
 ORIGINAL: 0x00471160 BYTE_EXACT
+// name      mapwin_nullsub1
+// size      3 bytes
+// spans     0x00471160-0x00471163
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -292,6 +417,11 @@ void __fastcall mapwin_nullsub1_redirect(void *, void *, int, int) {
 Purpose: mapwin_nullsub2 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
 ORIGINAL: 0x00471170 BYTE_EXACT
+// name      mapwin_nullsub2
+// size      3 bytes
+// spans     0x00471170-0x00471173
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -302,6 +432,11 @@ void __fastcall mapwin_nullsub2_redirect(void *, void *, int, int) {
 Purpose: mapwin_nullsub3 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
 ORIGINAL: 0x00471180 BYTE_EXACT
+// name      mapwin_nullsub3
+// size      3 bytes
+// spans     0x00471180-0x00471183
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -312,6 +447,11 @@ void __fastcall mapwin_nullsub3_redirect(void *, void *, int, int) {
 Purpose: mapwin_nullsub4 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
 ORIGINAL: 0x00471190 BYTE_EXACT
+// name      mapwin_nullsub4
+// size      3 bytes
+// spans     0x00471190-0x00471193
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -322,6 +462,11 @@ void __fastcall mapwin_nullsub4_redirect(void *, void *, int, int) {
 Purpose: vehdraw_nullsub1 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x004C1D00 BYTE_EXACT
+// name      vehdraw_nullsub1
+// size      1 bytes
+// spans     0x004C1D00-0x004C1D01
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -332,6 +477,11 @@ void __fastcall vehdraw_nullsub1_redirect(void *, void *) {
 Purpose: vehdraw_nullsub2 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x004C38A0 BYTE_EXACT
+// name      vehdraw_nullsub2
+// size      1 bytes
+// spans     0x004C38A0-0x004C38A1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -342,6 +492,11 @@ void __fastcall vehdraw_nullsub2_redirect(void *, void *) {
 Purpose: nullsub_223 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x004C8140 BYTE_EXACT
+// name      nullsub_223
+// size      1 bytes
+// spans     0x004C8140-0x004C8141
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -352,6 +507,11 @@ void __fastcall nullsub_004c8140_redirect(void *, void *) {
 Purpose: sub_4c8950 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
 ORIGINAL: 0x004C8950 BYTE_EXACT
+// name      sub_4c8950
+// size      3 bytes
+// spans     0x004C8950-0x004C8953
+// prototype 
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -363,6 +523,11 @@ int __fastcall nullsub_004c8950_redirect(void *, void *) {
 Purpose: nullsub_164 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
 ORIGINAL: 0x004E32C0 BYTE_EXACT
+// name      nullsub_164
+// size      3 bytes
+// spans     0x004E32C0-0x004E32C3
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -373,6 +538,11 @@ void __fastcall nullsub_004e32c0_redirect(void *, void *, int, int) {
 Purpose: nullsub_165 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x004E32D0 BYTE_EXACT
+// name      nullsub_165
+// size      1 bytes
+// spans     0x004E32D0-0x004E32D1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -383,6 +553,11 @@ void __fastcall nullsub_004e32d0_redirect(void *, void *) {
 Purpose: nullsub_166 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x004E32E0 BYTE_EXACT
+// name      nullsub_166
+// size      1 bytes
+// spans     0x004E32E0-0x004E32E1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -393,6 +568,11 @@ void __fastcall nullsub_004e32e0_redirect(void *, void *) {
 Purpose: nullsub_20 - a do-nothing leaf. The whole body is a return
          popping 8 bytes.
 ORIGINAL: 0x004E32F0 BYTE_EXACT
+// name      nullsub_20
+// size      3 bytes
+// spans     0x004E32F0-0x004E32F3
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -403,6 +583,11 @@ void __fastcall nullsub_004e32f0_redirect(void *, void *, int, int) {
 Purpose: nullsub_220 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x004E9B60 BYTE_EXACT
+// name      nullsub_220
+// size      1 bytes
+// spans     0x004E9B60-0x004E9B61
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -413,6 +598,11 @@ void __fastcall nullsub_004e9b60_redirect(void *, void *) {
 Purpose: nullsub_186 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x00515760 BYTE_EXACT
+// name      nullsub_186
+// size      1 bytes
+// spans     0x00515760-0x00515761
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -423,6 +613,11 @@ void __fastcall nullsub_00515760_redirect(void *, void *) {
 Purpose: nullsub_187 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0051D9D0 BYTE_EXACT
+// name      nullsub_187
+// size      1 bytes
+// spans     0x0051D9D0-0x0051D9D1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -433,6 +628,11 @@ void __fastcall nullsub_0051d9d0_redirect(void *, void *) {
 Purpose: nullsub_188 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0051D9E0 BYTE_EXACT
+// name      nullsub_188
+// size      1 bytes
+// spans     0x0051D9E0-0x0051D9E1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -443,6 +643,11 @@ void __fastcall nullsub_0051d9e0_redirect(void *, void *) {
 Purpose: nullsub_224 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x005D5240 BYTE_EXACT
+// name      nullsub_224
+// size      1 bytes
+// spans     0x005D5240-0x005D5241
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -453,6 +658,11 @@ void __fastcall nullsub_005d5240_redirect(void *, void *) {
 Purpose: sub_5fc9e0 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
 ORIGINAL: 0x005FC9E0 BYTE_EXACT
+// name      sub_5fc9e0
+// size      3 bytes
+// spans     0x005FC9E0-0x005FC9E3
+// prototype 
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -464,6 +674,11 @@ int __fastcall nullsub_005fc9e0_redirect(void *, void *) {
 Purpose: nullsub_192 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x005FD280 BYTE_EXACT
+// name      nullsub_192
+// size      1 bytes
+// spans     0x005FD280-0x005FD281
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -474,6 +689,11 @@ void __fastcall nullsub_005fd280_redirect(void *, void *) {
 Purpose: nullsub_193 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x005FD290 BYTE_EXACT
+// name      nullsub_193
+// size      1 bytes
+// spans     0x005FD290-0x005FD291
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -484,6 +704,11 @@ void __fastcall nullsub_005fd290_redirect(void *, void *) {
 Purpose: nullsub_194 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x005FD2A0 BYTE_EXACT
+// name      nullsub_194
+// size      1 bytes
+// spans     0x005FD2A0-0x005FD2A1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -494,6 +719,11 @@ void __fastcall nullsub_005fd2a0_redirect(void *, void *) {
 Purpose: sub_616b30 - a do-nothing leaf. The whole body is a return
          popping 8 bytes after zeroing EAX.
 ORIGINAL: 0x00616B30 BYTE_EXACT
+// name      sub_616b30
+// size      5 bytes
+// spans     0x00616B30-0x00616B35
+// prototype 
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -505,6 +735,11 @@ int __fastcall nullsub_00616b30_redirect(void *, void *, int, int) {
 Purpose: nullsub_195 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x00616D90 BYTE_EXACT
+// name      nullsub_195
+// size      1 bytes
+// spans     0x00616D90-0x00616D91
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -515,6 +750,11 @@ void __fastcall nullsub_00616d90_redirect(void *, void *) {
 Purpose: sub_62d140 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
 ORIGINAL: 0x0062D140 BYTE_EXACT
+// name      sub_62d140
+// size      3 bytes
+// spans     0x0062D140-0x0062D143
+// prototype 
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -526,6 +766,11 @@ int __fastcall nullsub_0062d140_redirect(void *, void *) {
 Purpose: nullsub_253 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0062D150 BYTE_EXACT
+// name      nullsub_253
+// size      1 bytes
+// spans     0x0062D150-0x0062D151
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -536,6 +781,11 @@ void __fastcall nullsub_0062d150_redirect(void *, void *) {
 Purpose: nullsub_261 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0062EE80 BYTE_EXACT
+// name      nullsub_261
+// size      1 bytes
+// spans     0x0062EE80-0x0062EE81
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -546,6 +796,11 @@ void __fastcall nullsub_0062ee80_redirect(void *, void *) {
 Purpose: nullsub_262 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0062EE90 BYTE_EXACT
+// name      nullsub_262
+// size      1 bytes
+// spans     0x0062EE90-0x0062EE91
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -556,6 +811,11 @@ void __fastcall nullsub_0062ee90_redirect(void *, void *) {
 Purpose: nullsub_256 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x00631A10 BYTE_EXACT
+// name      nullsub_256
+// size      1 bytes
+// spans     0x00631A10-0x00631A11
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -566,6 +826,11 @@ void __fastcall nullsub_00631a10_redirect(void *, void *) {
 Purpose: Video_unk7 - a do-nothing leaf. The whole body is a return
          popping 8 bytes after zeroing EAX.
 ORIGINAL: 0x00637190 BYTE_EXACT
+// name      Video_unk7
+// size      5 bytes
+// spans     0x00637190-0x00637195
+// prototype 
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -577,6 +842,11 @@ int __fastcall video_unk7_redirect(void *, void *, int, int) {
 Purpose: nullsub_16 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x00639380 BYTE_EXACT
+// name      nullsub_16
+// size      1 bytes
+// spans     0x00639380-0x00639381
+// prototype 
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -587,6 +857,11 @@ void __fastcall nullsub_00639380_redirect(void *, void *) {
 Purpose: nullsub_175 - a do-nothing leaf. The whole body is a return
          popping 4 bytes.
 ORIGINAL: 0x0063C500 BYTE_EXACT
+// name      nullsub_175
+// size      3 bytes
+// spans     0x0063C500-0x0063C503
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -597,6 +872,11 @@ void __fastcall nullsub_0063c500_redirect(void *, void *, int) {
 Purpose: nullsub_266 - a do-nothing leaf. The whole body is a return
          popping 0 bytes.
 ORIGINAL: 0x0063C9C0 BYTE_EXACT
+// name      nullsub_266
+// size      1 bytes
+// spans     0x0063C9C0-0x0063C9C1
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */

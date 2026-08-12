@@ -22,6 +22,11 @@
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00426EB0 BYTE_EXACT
+// name      ?on_group_clicked@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00426EB0-0x00426EB3
+// prototype void (__thiscall ?on_group_clicked@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -35,6 +40,11 @@ void __fastcall counc_win_on_group_clicked_redirect(CouncWin *self, void *, int 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00426F80 BYTE_EXACT
+// name      ?on_button_passover@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00426F80-0x00426F83
+// prototype void (__thiscall ?on_button_passover@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -48,6 +58,11 @@ void __fastcall counc_win_on_button_passover_redirect(CouncWin *self, void *, in
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00427060 BYTE_EXACT
+// name      ?on_iface_left_click@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00427060-0x00427063
+// prototype void (__thiscall ?on_iface_left_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -61,6 +76,11 @@ void __fastcall counc_win_on_iface_left_click_redirect(CouncWin *self, void *, i
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00427070 BYTE_EXACT
+// name      ?on_iface_right_click@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00427070-0x00427073
+// prototype void (__thiscall ?on_iface_right_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -74,6 +94,11 @@ void __fastcall counc_win_on_iface_right_click_redirect(CouncWin *self, void *, 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00427080 BYTE_EXACT
+// name      ?on_iface_left_down@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00427080-0x00427083
+// prototype void (__thiscall ?on_iface_left_down@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -87,6 +112,11 @@ void __fastcall counc_win_on_iface_left_down_redirect(CouncWin *self, void *, in
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00427090 BYTE_EXACT
+// name      ?on_iface_right_down@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00427090-0x00427093
+// prototype void (__thiscall ?on_iface_right_down@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -100,6 +130,11 @@ void __fastcall counc_win_on_iface_right_down_redirect(CouncWin *self, void *, i
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x004270A0 BYTE_EXACT
+// name      ?on_iface_mouse_move@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004270A0-0x004270A3
+// prototype void (__thiscall ?on_iface_mouse_move@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -113,6 +148,11 @@ void __fastcall counc_win_on_iface_mouse_move_redirect(CouncWin *self, void *, i
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x004270B0 BYTE_EXACT
+// name      ?on_iface_mouse_leave@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004270B0-0x004270B3
+// prototype void (__thiscall ?on_iface_mouse_leave@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -126,6 +166,11 @@ void __fastcall counc_win_on_iface_mouse_leave_redirect(CouncWin *self, void *, 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x004270C0 BYTE_EXACT
+// name      ?on_iface_selected@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004270C0-0x004270C3
+// prototype void (__thiscall ?on_iface_selected@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -139,6 +184,11 @@ void __fastcall counc_win_on_iface_selected_redirect(CouncWin *self, void *, int
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x004270D0 BYTE_EXACT
+// name      ?on_iface_left_double_click@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004270D0-0x004270D3
+// prototype void (__thiscall ?on_iface_left_double_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -152,6 +202,11 @@ void __fastcall counc_win_on_iface_left_double_click_redirect(CouncWin *self, vo
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x004270E0 BYTE_EXACT
+// name      ?on_iface_right_double_click@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x004270E0-0x004270E3
+// prototype void (__thiscall ?on_iface_right_double_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -165,6 +220,11 @@ void __fastcall counc_win_on_iface_right_double_click_redirect(CouncWin *self, v
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00427110 BYTE_EXACT
+// name      ?on_iface_button_toggled@CouncWin@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00427110-0x00427113
+// prototype void (__thiscall ?on_iface_button_toggled@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -178,6 +238,11 @@ void __fastcall counc_win_on_iface_button_toggled_redirect(CouncWin *self, void 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00427120 BYTE_EXACT
+// name      ?on_iface_group_clicked@CouncWin@@QAEXHHH@Z
+// size      3 bytes
+// spans     0x00427120-0x00427123
+// prototype void (__thiscall ?on_iface_group_clicked@CouncWin@@QAEXHHH@Z)(CouncWin* this, int, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -191,6 +256,11 @@ void __fastcall counc_win_on_iface_group_clicked_redirect(CouncWin *self, void *
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
 ORIGINAL: 0x00426F90 BYTE_EXACT
+// name      ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z
+// size      5 bytes
+// spans     0x00426F90-0x00426F95
+// prototype int (__thiscall ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z)(CouncWin* this, GraphicWin*, int8*, int)
+// callers   0   call targets   0
 Return Value: 0
 Status: Complete
 */
@@ -205,6 +275,11 @@ int __fastcall counc_win_on_button_text_draw_redirect(
 
 /*
 ORIGINAL: 0x00426EC0 BYTE_EXACT
+// name      ?on_mouse_leave@CouncWin@@QAEXHH@Z
+// size      30 bytes
+// spans     0x00426EC0-0x00426EDE
+// prototype void (__thiscall ?on_mouse_leave@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void CouncWin::on_mouse_leave(int a1, int a2) {
@@ -218,6 +293,11 @@ void CouncWin::on_mouse_leave(int a1, int a2) {
 
 /*
 ORIGINAL: 0x00425D90 BYTE_EXACT
+// name      ?draw_all_leaders@CouncWin@@QAEXXZ
+// size      26 bytes
+// spans     0x00425D90-0x00425DAA
+// prototype void (__thiscall ?draw_all_leaders@CouncWin@@QAEXXZ)(CouncWin* this)
+// callers   0   call targets   1
 Status: Complete
 */
 void CouncWin::draw_all_leaders() {
@@ -228,6 +308,11 @@ void CouncWin::draw_all_leaders() {
 
 /*
 ORIGINAL: 0x00427130
+// name      ?show@CouncWin@@QAEHH@Z
+// size      27 bytes
+// spans     0x00427130-0x0042714B
+// prototype int (__thiscall ?show@CouncWin@@QAEHH@Z)(CouncWin* this, int)
+// callers   0   call targets   2
 Status: Complete
 */
 int CouncWin::show(int a1) {

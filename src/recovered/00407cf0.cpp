@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00407CF0 BYTE_EXACT
+// name      ?on_double_clicked@AlphaSave@@QAEXH@Z
+// size      22 bytes
+// spans     0x00407CF0-0x00407D06
+// prototype void (__thiscall ?on_double_clicked@AlphaSave@@QAEXH@Z)(AlphaSave* this, int)
+// callers   0   call targets   1
 // 0x00407CF0  ?on_double_clicked@AlphaSave@@QAEXH@Z  ->  ?on_double_clicked@AlphaSave@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

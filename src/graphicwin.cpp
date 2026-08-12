@@ -50,6 +50,11 @@ uint32_t *GraphicWinFieldA0CDefault = (uint32_t *)0x009B33C0;
 Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
          tables and initialize its trailing window state.
 ORIGINAL: 0x005D4CF0
+// name      ??0GraphicWin@@QAE@XZ
+// size      230 bytes
+// spans     0x005D4CF0-0x005D4DC4;0x00662B10-0x00662B22
+// prototype void (__thiscall ??0GraphicWin@@QAE@XZ)(GraphicWin* this)
+// callers   52   call targets   2
 Status: Complete
 Verification note: the 0x134 and 0x138 stores are redundant - Win::construct
 runs first and already zeroes both - so dropping either is unobservable. They
@@ -114,6 +119,11 @@ Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          resetting its window-specific state, and deleting the trailing
          owned interface when present.
 ORIGINAL: 0x005D4E40
+// name      ?close@GraphicWin@@QAEXXZ
+// size      166 bytes
+// spans     0x005D4E40-0x005D4EE6
+// prototype void (__thiscall ?close@GraphicWin@@QAEXXZ)(GraphicWin* this)
+// callers   66   call targets   2
 Return Value: field_A0C_ default when no interface is present; otherwise the
               scalar-deleting virtual call's return residue
 Status: Complete with temporary Win close dependency
@@ -169,6 +179,11 @@ Purpose: Destroy a GraphicWin by installing the original virtual tables,
          clearing the trailing field, and destroying the Buffer subobject
          before the Win base.
 ORIGINAL: 0x005D4DD0
+// name      ??1GraphicWin@@QAE@XZ
+// size      121 bytes
+// spans     0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34
+// prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)
+// callers   185   call targets   2
 Status: Complete with temporary Buffer and Win subobject dependencies
 */
 GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *) {
@@ -205,6 +220,11 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
 /*
 Purpose: Fill a rectangle in the window's own buffer.
 ORIGINAL: 0x005D5440
+// name      ?fill@GraphicWin@@QAEHHHHHH@Z
+// size      39 bytes
+// spans     0x005D5440-0x005D5467
+// prototype int (__thiscall ?fill@GraphicWin@@QAEHHHHHH@Z)(GraphicWin* this, int xLeft, int yTop, int length, int width, int)
+// callers   6   call targets   1
 Return Value: whatever Buffer::fill returns
 Status: Complete
 */
@@ -252,6 +272,11 @@ Purpose: Paint the window's surface in one colour. A window that is marked
          transparent and whose parent agrees copies the parent's pixels in
          instead, then remaps them through the process colour table.
 ORIGINAL: 0x005D5250
+// name      ?fill@GraphicWin@@QAEXH@Z
+// size      246 bytes
+// spans     0x005D5250-0x005D5346
+// prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
+// callers   58   call targets   3
 Return Value: n/a
 Status: Complete
 Verification note: three loads the original performs are deliberately absent.
@@ -318,6 +343,11 @@ Purpose: Repaint the window and invalidate the screen area it occupies. A
          window already inside a redraw is skipped, so a paint hook that
          redraws again cannot recurse.
 ORIGINAL: 0x005D5A70
+// name      ?redraw@GraphicWin@@QAEXXZ
+// size      244 bytes
+// spans     0x005D5A70-0x005D5B64
+// prototype void (__thiscall ?redraw@GraphicWin@@QAEXXZ)(GraphicWin* this)
+// callers   42   call targets   3
 Return Value: n/a
 Status: Complete
 Verification note: the calling convention of the 0xA10 paint hook is inferred,
@@ -405,6 +435,11 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
          Win base, then size and initialise the window's own drawing surface
          and sync it to the active palette.
 ORIGINAL: 0x005D4EF0
+// name      ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
+// size      443 bytes
+// spans     0x005D4EF0-0x005D5096;0x00662B34-0x00662B49
+// prototype int (__thiscall ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)
+// callers   47   call targets   9
 Return Value: 0 on success; otherwise the nonzero failure code passed straight
               through from Win::init or from Buffer::init
 Status: Complete with temporary Win init/nonclient_to_client, GraphicWin
@@ -550,6 +585,11 @@ int __fastcall graphic_win_init_redirect(GraphicWin *self, void *,
 
 /*
 ORIGINAL: 0x005D6310 BYTE_EXACT
+// name      ?on_mouse_move@GraphicWin@@QAEXHHIH@Z
+// size      28 bytes
+// spans     0x005D6310-0x005D632C
+// prototype void (__thiscall ?on_mouse_move@GraphicWin@@QAEXHHIH@Z)(GraphicWin* this, int, int, unsigned int, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void GraphicWin::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {

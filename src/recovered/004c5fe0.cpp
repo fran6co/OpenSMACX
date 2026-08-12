@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004C5FE0 BYTE_EXACT
+// name      ?get_sound_version@@YAHXZ
+// size      18 bytes
+// spans     0x004C5FE0-0x004C5FF2
+// prototype 
+// callers   1   call targets   0
 // 0x004C5FE0  ?get_sound_version@@YAHXZ  ->  ?get_sound_version@@YAHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

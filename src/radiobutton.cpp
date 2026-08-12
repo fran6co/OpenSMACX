@@ -29,6 +29,11 @@ Purpose: Reset the radio button to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
 ORIGINAL: 0x0060D1B0
+// name      ?close@RadioButton@@QAEXXZ
+// size      54 bytes
+// spans     0x0060D1B0-0x0060D1E6
+// prototype void (__thiscall ?close@RadioButton@@QAEXXZ)(RadioButton* this)
+// callers   21   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -56,6 +61,11 @@ void __fastcall radio_button_close_redirect(RadioButton *self, void *) {
 
 /*
 ORIGINAL: 0x0060E300 BYTE_EXACT
+// name      ?on_dialog_focus@RadioButton@@QAEXH@Z
+// size      23 bytes
+// spans     0x0060E300-0x0060E317
+// prototype void (__thiscall ?on_dialog_focus@RadioButton@@QAEXH@Z)(RadioButton* this, int)
+// callers   1   call targets   0
 Status: Complete
 */
 void RadioButton::on_dialog_focus(int a1) {
@@ -69,6 +79,11 @@ void RadioButton::on_dialog_focus(int a1) {
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
 ORIGINAL: 0x0060E4A0 BYTE_EXACT
+// name      ?on_mouse_leave@RadioButton@@QAEXHH@Z
+// size      40 bytes
+// spans     0x0060E4A0-0x0060E4C8
+// prototype void (__thiscall ?on_mouse_leave@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */

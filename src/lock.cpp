@@ -33,6 +33,11 @@ Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
          map-tile record, at the record stride of 0x2C. Operates entirely on
          the global map table, ignoring the Lock instance.
 ORIGINAL: 0x00590140
+// name      ?reset_map@Lock@@QAEXXZ
+// size      43 bytes
+// spans     0x00590140-0x0059016B
+// prototype void (__thiscall ?reset_map@Lock@@QAEXXZ)(Lock* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -52,6 +57,11 @@ void __fastcall lock_reset_map_redirect(Lock *self, void *) {
 Purpose: Reset the lock to empty - clear its three trailing dwords, reset all
          eight records to their unset sentinels, and run the global map reset.
 ORIGINAL: 0x005900D0
+// name      ?clear@Lock@@QAEXXZ
+// size      109 bytes
+// spans     0x005900D0-0x0059013D
+// prototype void (__thiscall ?clear@Lock@@QAEXXZ)(Lock* this)
+// callers   12   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -81,6 +91,11 @@ Purpose: Report whether any lock is engaged. The trailing dword at 0xE0 forces
          enable mask, and a record counts when either of its two entries has
          its flag's low bit set. Record 0 is never scanned.
 ORIGINAL: 0x005904A0
+// name      ?any_locks@Lock@@QAEHXZ
+// size      94 bytes
+// spans     0x005904A0-0x005904FE
+// prototype int (__thiscall ?any_locks@Lock@@QAEHXZ)(Lock* this)
+// callers   3   call targets   0
 Return Value: 1 when a lock is engaged, 0 otherwise
 Status: Complete
 */
@@ -114,6 +129,11 @@ Purpose: Release the lock on one slot - forget it as the active lock if it was,
          unlock both of the slot record's square entries, and clear the
          record's flag byte.
 ORIGINAL: 0x00590170
+// name      ?unlock@Lock@@QAEXH@Z
+// size      83 bytes
+// spans     0x00590170-0x005901C3
+// prototype void (__thiscall ?unlock@Lock@@QAEXH@Z)(Lock* this, int)
+// callers   1   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -138,6 +158,11 @@ Purpose: Take the global lock for an owner. Succeeds when the lock is free or
          already held by that owner, recording the owner and marking it held;
          fails without change when another owner holds it.
 ORIGINAL: 0x005902C0
+// name      ?global_lock@Lock@@QAEHH@Z
+// size      51 bytes
+// spans     0x005902C0-0x005902F3
+// prototype int (__thiscall ?global_lock@Lock@@QAEHH@Z)(Lock* this, int)
+// callers   1   call targets   0
 Return Value: 0 on success, 1 when another owner holds the lock
 Status: Complete
 */
@@ -160,6 +185,11 @@ Purpose: Report whether the global lock this owner holds can now be released -
          and none of its slot records still has an active square. On success it
          also drops the held flag. Any other case reports no.
 ORIGINAL: 0x00590240
+// name      ?check_global_2@Lock@@QAEHH@Z
+// size      126 bytes
+// spans     0x00590240-0x005902BE
+// prototype int (__thiscall ?check_global_2@Lock@@QAEHH@Z)(Lock* this, int)
+// callers   1   call targets   1
 Return Value: 1 when the lock may be released, 0 otherwise
 Status: Complete
 */
@@ -193,6 +223,11 @@ Purpose: On the server, when a held lock has no square still active, broadcast
          its release and drop the held flag. Does nothing off the server, when
          no lock is held, or while any slot record still has an active square.
 ORIGINAL: 0x005901D0
+// name      ?check_global@Lock@@QAEXXZ
+// size      105 bytes
+// spans     0x005901D0-0x00590239
+// prototype void (__thiscall ?check_global@Lock@@QAEXXZ)(Lock* this)
+// callers   15   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -223,6 +258,11 @@ Purpose: Add a lock on one slot - forward to SquareLock::lock on the slot
          record's second square entry, with the mask bit 0x10 forced into the
          flags argument.
 ORIGINAL: 0x00590470
+// name      ?add_lock@Lock@@QAEHHHHH@Z
+// size      43 bytes
+// spans     0x00590470-0x0059049B
+// prototype int (__thiscall ?add_lock@Lock@@QAEHHHHH@Z)(Lock* this, int, int, int, int)
+// callers   1   call targets   1
 Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
@@ -246,6 +286,11 @@ Purpose: Lock both of a slot's square entries in one call. Refuses when another
          check_global runs (but skipping this slot's own record) fires the
          release broadcast if no other slot still holds an active square.
 ORIGINAL: 0x00590300
+// name      ?lock@Lock@@QAEHHHHHHHH@Z
+// size      361 bytes
+// spans     0x00590300-0x00590469
+// prototype int (__thiscall ?lock@Lock@@QAEHHHHHHHH@Z)(Lock* this, int, int, int, int, int, int, int)
+// callers   1   call targets   4
 Return Value: 1 on refusal or lock failure, 0 on success
 Status: Complete
 */

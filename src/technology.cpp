@@ -37,6 +37,11 @@ char TechName[80];
 /*
 Purpose: Get tech string for techID and store it into stringTemp buffer.
 ORIGINAL: 0x005591A0
+// name      ?say_tech@@YAXHH@Z
+// size      26 bytes
+// spans     0x005591A0-0x005591BA
+// prototype 
+// callers   2   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -47,6 +52,11 @@ void __cdecl say_tech(int tech_id, BOOL category_lvl) {
 /*
 Purpose: Determine whether a faction is able to jump up the tech tree for the specified tech.
 ORIGINAL: 0x0057CE50
+// name      ?valid_tech_leap@@YAHHH@Z
+// size      334 bytes
+// spans     0x0057CE50-0x0057CF9E
+// prototype int (__cdecl ?valid_tech_leap@@YAHHH@Z)(int techID, int factionID)
+// callers   1   call targets   2
 Return Value: Is a tech leap possible? true/false
 Status: Complete
 */
@@ -84,6 +94,11 @@ BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
 Purpose: Craft an output string related to a specific technology. For techIDs outside the standard
          range, craft a string related to world map, comm links or prototypes.
 ORIGINAL: 0x005B9C40
+// name      ?say_tech@@YAXPADHH@Z
+// size      688 bytes
+// spans     0x005B9C40-0x005B9EF0
+// prototype void (__cdecl ?say_tech@@YAXPADHH@Z)(int8* output, int techID, int categoryLvl)
+// callers   30   call targets   4
 Return Value: n/a
 Status: Complete
 */
@@ -118,6 +133,11 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
 /*
 Purpose: Get tech string for tech_id and store it into TechName buffer.
 ORIGINAL: 0x005B9EF0 BYTE_EXACT
+// name      ?tech_name@@YAPADHH@Z
+// size      38 bytes
+// spans     0x005B9EF0-0x005B9F16
+// prototype int8* (__cdecl ?tech_name@@YAPADHH@Z)(int techID, BOOL categoryLvl)
+// callers   9   call targets   1
 Return Value: Pointer to TechName
 Status: Complete
 */
@@ -130,6 +150,11 @@ LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
 /*
 Purpose: Check whether faction has a particular tech or not.
 ORIGINAL: 0x005B9F20
+// name      ?has_tech@@YA_NHH@Z
+// size      105 bytes
+// spans     0x005B9F20-0x005B9F89
+// prototype bool (__cdecl ?has_tech@@YA_NHH@Z)(int techID, int factionID)
+// callers   109   call targets   0
 Return Value: Faction has tech? true/false
 Status: Complete
 */
@@ -153,6 +178,11 @@ BOOL __cdecl has_tech(int tech_id, int faction_id) {
 /*
 Purpose: Determine technology level for tech_id.
 ORIGINAL: 0x005B9F90
+// name      ?tech_recurse@@YAHHH@Z
+// size      80 bytes
+// spans     0x005B9F90-0x005B9FE0
+// prototype int (__cdecl ?tech_recurse@@YAHHH@Z)(int techID, int ret)
+// callers   7   call targets   1
 Return Value: Level
 Status: Complete
 */
@@ -169,6 +199,11 @@ int __cdecl tech_recurse(int tech_id, int base_lvl) {
 Purpose: Determine what category is dominate for tech_id. If there is a tie, the order of precedence
          is as follows: growth > tech > wealth > power.
 ORIGINAL: 0x005B9FE0
+// name      ?tech_category@@YAHH@Z
+// size      76 bytes
+// spans     0x005B9FE0-0x005BA02C
+// prototype int (__cdecl ?tech_category@@YAHH@Z)(int techID)
+// callers   6   call targets   0
 Return Value: Tech category id: growth (0), tech (1), wealth (2) or power (3).
 Status: Complete
 */
@@ -190,6 +225,11 @@ int __cdecl tech_category(int tech_id) {
 Purpose: Check to see whether provided faction can research a specific technology. Checks are
          included to prevent SMACX specific Veh from being built in SMAC mode.
 ORIGINAL: 0x005BAC20
+// name      ?tech_avail@@YAHHH@Z
+// size      415 bytes
+// spans     0x005BAC20-0x005BADBF
+// prototype int (__cdecl ?tech_avail@@YAHHH@Z)(int techID, int factionID)
+// callers   6   call targets   0
 Return Value: Is tech available to faction? true/false
 Status: Complete
 */
@@ -211,6 +251,11 @@ BOOL __cdecl tech_avail(int tech_id, int faction_id) {
 /*
 Purpose: Calculate faction's tech related bonuses for commerce and resource production in fungus.
 ORIGINAL: 0x005BAE60
+// name      ?tech_effects@@YAXH@Z
+// size      411 bytes
+// spans     0x005BAE60-0x005BAFFB
+// prototype void (__cdecl ?tech_effects@@YAXH@Z)(int factionID)
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -270,6 +315,11 @@ void __cdecl tech_effects(int faction_id) {
 /*
 Purpose: Determine if preqTechID is a prerequisite of parentTechID within descending range.
 ORIGINAL: 0x005BCB60
+// name      ?tech_is_preq@@YAHHHH@Z
+// size      123 bytes
+// spans     0x005BCB60-0x005BCBDB
+// prototype int (__cdecl ?tech_is_preq@@YAHHHH@Z)(int preqTechID, int parentTechID, unsigned int range)
+// callers   3   call targets   1
 Return Value: Is preqTechID prerequisite of parentTechID? true/false
 Status: Complete
 */
@@ -292,6 +342,11 @@ Purpose: Determine how valuable the specified techID is to a faction. This id ei
          a technology (0-88), another faction (89-96) or a prototype (97-608). The 3rd parameter
          determines whether a simplistic or extended calculation is required for a technology id.
 ORIGINAL: 0x005BCBE0
+// name      ?tech_val@@YAHHHH@Z
+// size      4133 bytes
+// spans     0x005BCBE0-0x005BDC05
+// prototype int (__cdecl ?tech_val@@YAHHHH@Z)(int techID, int factionID, BOOL simpleCalc)
+// callers   14   call targets   5
 Return Value: Value of techID to the specified faction
 Status: Complete
 */
@@ -528,6 +583,11 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
 /*
 Purpose: Determine a tech the specified faction should research.
 ORIGINAL: 0x005BDC10
+// name      ?tech_ai@@YAHH@Z
+// size      340 bytes
+// spans     0x005BDC10-0x005BDD64
+// prototype int (__cdecl ?tech_ai@@YAHH@Z)(int factionID)
+// callers   3   call targets   5
 Return Value: techID or -1
 Status: Complete
 */
@@ -562,6 +622,11 @@ int __cdecl tech_ai(int faction_id) {
 /*
 Purpose: Get power_value from technology struct for tech id.
 ORIGINAL: 0x005BDD70
+// name      ?tech_mil@@YAHH@Z
+// size      30 bytes
+// spans     0x005BDD70-0x005BDD8E
+// prototype 
+// callers   1   call targets   0
 Return Value: power_value or 0 if tech_id is greater than max
 Status: Complete
 */
@@ -573,6 +638,11 @@ int __cdecl tech_mil(int tech_id) {
 /*
 Purpose: Get tech_value from technology struct for tech id.
 ORIGINAL: 0x005BDD90
+// name      ?tech_tech@@YAHH@Z
+// size      33 bytes
+// spans     0x005BDD90-0x005BDDB1
+// prototype 
+// callers   1   call targets   0
 Return Value: tech_value or 1 if tech_id is greater than max
 Status: Complete
 */
@@ -583,6 +653,11 @@ int __cdecl tech_tech(int tech_id) {
 /*
 Purpose: Get wealth_value from technology struct for tech id.
 ORIGINAL: 0x005BDDC0
+// name      ?tech_infra@@YAHH@Z
+// size      33 bytes
+// spans     0x005BDDC0-0x005BDDE1
+// prototype 
+// callers   1   call targets   0
 Return Value: wealth_value or 1 if tech_id is greater than max
 Status: Complete
 */
@@ -593,6 +668,11 @@ int __cdecl tech_infra(int tech_id) {
 /*
 Purpose: Get growth_value from technology struct for tech id.
 ORIGINAL: 0x005BDDF0
+// name      ?tech_colonize@@YAHH@Z
+// size      33 bytes
+// spans     0x005BDDF0-0x005BDE11
+// prototype 
+// callers   1   call targets   0
 Return Value: growth_value or 1 if tech_id is greater than max
 Status: Complete
 */
@@ -603,6 +683,11 @@ int __cdecl tech_colonize(int tech_id) {
 /*
 Purpose: Calculate how much researching a tech will cost the specified faction.
 ORIGINAL: 0x005BE6B0
+// name      ?tech_rate@@YAHH@Z
+// size      641 bytes
+// spans     0x005BE6B0-0x005BE931
+// prototype int (__cdecl ?tech_rate@@YAHH@Z)(int factionID)
+// callers   6   call targets   0
 Return Value: tech rate/cost
 Status: Complete
 */

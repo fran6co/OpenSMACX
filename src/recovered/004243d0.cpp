@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004243D0 BYTE_EXACT
+// name      ?clear_council_notify@@YAXH@Z
+// size      24 bytes
+// spans     0x004243D0-0x004243E8
+// prototype 
+// callers   1   call targets   0
 // 0x004243D0  ?clear_council_notify@@YAXH@Z  ->  ?clear_council_notify@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

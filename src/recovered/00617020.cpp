@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00617020 BYTE_EXACT
+// name      ?close@Caviar@@QAEXXZ
+// size      95 bytes
+// spans     0x00617020-0x0061707F
+// prototype void (__thiscall ?close@Caviar@@QAEXXZ)(Caviar* this)
+// callers   11   call targets   1
 // 0x00617020  ?close@Caviar@@QAEXXZ  ->  ?close@Caviar@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

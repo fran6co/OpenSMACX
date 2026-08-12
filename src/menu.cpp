@@ -23,6 +23,11 @@
 /*
 Purpose: Set the callback invoked for menu events.
 ORIGINAL: 0x005FB820 BYTE_EXACT
+// name      ?set_menu_proc@Menu@@QAEXP6AXH@Z@Z
+// size      13 bytes
+// spans     0x005FB820-0x005FB82D
+// prototype void (__thiscall ?set_menu_proc@Menu@@QAEXP6AXH@Z@Z)(Menu* this, void (__cdecl *)(int this))
+// callers   1   call targets   0
 Status: Complete
 */
 void Menu::set_menu_proc(MenuProc proc) {
@@ -32,6 +37,11 @@ void Menu::set_menu_proc(MenuProc proc) {
 /*
 Purpose: Find the first menu entry with the requested ID.
 ORIGINAL: 0x005FB990 BYTE_EXACT
+// name      ?id_to_index@Menu@@QAEHH@Z
+// size      40 bytes
+// spans     0x005FB990-0x005FB9B8
+// prototype int (__thiscall ?id_to_index@Menu@@QAEHH@Z)(Menu* this, int)
+// callers   1   call targets   0
 Status: Complete
 */
 int Menu::id_to_index(int id) {
@@ -60,6 +70,11 @@ int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id) {
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
 ORIGINAL: 0x005FB1C0 BYTE_EXACT
+// name      ?UNK2@Menu@@QAEHH@Z
+// size      5 bytes
+// spans     0x005FB1C0-0x005FB1C5
+// prototype int (__thiscall ?UNK2@Menu@@QAEHH@Z)(Menu* this, int)
+// callers   0   call targets   0
 Status: Complete
 */
 int Menu::UNK2(int) {
@@ -75,6 +90,11 @@ int __fastcall menu_unk2_redirect(
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
 ORIGINAL: 0x005FB230 BYTE_EXACT
+// name      ?UNK4@Menu@@QAEHHHH@Z
+// size      5 bytes
+// spans     0x005FB230-0x005FB235
+// prototype int (__thiscall ?UNK4@Menu@@QAEHHHH@Z)(Menu* this, int, int, int)
+// callers   0   call targets   0
 Status: Complete
 */
 int Menu::UNK4(int, int, int) {
@@ -91,6 +111,11 @@ Font **MenuFont = reinterpret_cast<Font **>(0x009B7B94);
 /*
 Purpose: Report the height a menu requests, two lines of its font.
 ORIGINAL: 0x005FC6A0
+// name      ?requested_height@Menu@@QAEHXZ
+// size      20 bytes
+// spans     0x005FC6A0-0x005FC6B4
+// prototype int (__thiscall ?requested_height@Menu@@QAEHXZ)(Menu* this)
+// callers   0   call targets   0
 Return Value: Twice the resolved font's height
 Status: Complete
 */
@@ -128,6 +153,11 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 ORIGINAL: 0x005FB1D0
+// name      ?UNK3@Menu@@QAEHHH@Z
+// size      84 bytes
+// spans     0x005FB1D0-0x005FB224
+// prototype int (__thiscall ?UNK3@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   0   call targets   1
 Return Value: PullDown::UNK2's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -165,6 +195,11 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 ORIGINAL: 0x005FB300
+// name      ?hide_menu_item@Menu@@QAEHHH@Z
+// size      84 bytes
+// spans     0x005FB300-0x005FB354
+// prototype int (__thiscall ?hide_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   2   call targets   1
 Return Value: PullDown::hide_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -202,6 +237,11 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 ORIGINAL: 0x005FB3C0
+// name      ?show_menu_item@Menu@@QAEHHH@Z
+// size      84 bytes
+// spans     0x005FB3C0-0x005FB414
+// prototype int (__thiscall ?show_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   1   call targets   1
 Return Value: PullDown::show_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -239,6 +279,11 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 ORIGINAL: 0x005FB480
+// name      ?disable_menu_item@Menu@@QAEHHH@Z
+// size      84 bytes
+// spans     0x005FB480-0x005FB4D4
+// prototype int (__thiscall ?disable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   2   call targets   1
 Return Value: PullDown::disable_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -276,6 +321,11 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 ORIGINAL: 0x005FB540
+// name      ?enable_menu_item@Menu@@QAEHHH@Z
+// size      84 bytes
+// spans     0x005FB540-0x005FB594
+// prototype int (__thiscall ?enable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   1   call targets   1
 Return Value: PullDown::enable_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -313,6 +363,11 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 ORIGINAL: 0x005FB760
+// name      ?check_menu_item@Menu@@QAEHHH@Z
+// size      84 bytes
+// spans     0x005FB760-0x005FB7B4
+// prototype int (__thiscall ?check_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   5   call targets   1
 Return Value: PullDown::check_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -350,6 +405,11 @@ Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
 ORIGINAL: 0x005FB7C0
+// name      ?uncheck_menu_item@Menu@@QAEHHH@Z
+// size      84 bytes
+// spans     0x005FB7C0-0x005FB814
+// prototype int (__thiscall ?uncheck_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   5   call targets   1
 Return Value: PullDown::uncheck_item's, or 0xB when no entry matches
 Status: Complete
 Verification note: the original checks the found index against -1 at
@@ -394,6 +454,11 @@ int __fastcall menu_uncheck_menu_item_redirect(
 Purpose: Find the menu whose id matches and clear bit 0 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
 ORIGINAL: 0x005FB2A0
+// name      ?UNK6@Menu@@QAEHH@Z
+// size      96 bytes
+// spans     0x005FB2A0-0x005FB300
+// prototype int (__thiscall ?UNK6@Menu@@QAEHH@Z)(Menu* this, int)
+// callers   0   call targets   0
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -433,6 +498,11 @@ int __fastcall menu_unk6_redirect(
 Purpose: Find the menu whose id matches and set bit 0 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
 ORIGINAL: 0x005FB360
+// name      ?UNK7@Menu@@QAEHH@Z
+// size      96 bytes
+// spans     0x005FB360-0x005FB3C0
+// prototype int (__thiscall ?UNK7@Menu@@QAEHH@Z)(Menu* this, int)
+// callers   0   call targets   0
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -472,6 +542,11 @@ int __fastcall menu_unk7_redirect(
 Purpose: Find the menu whose id matches and set bit 1 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
 ORIGINAL: 0x005FB420
+// name      ?UNK8@Menu@@QAEHH@Z
+// size      96 bytes
+// spans     0x005FB420-0x005FB480
+// prototype int (__thiscall ?UNK8@Menu@@QAEHH@Z)(Menu* this, int)
+// callers   0   call targets   0
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -511,6 +586,11 @@ int __fastcall menu_unk8_redirect(
 Purpose: Find the menu whose id matches and clear bit 1 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
 ORIGINAL: 0x005FB4E0
+// name      ?UNK9@Menu@@QAEHH@Z
+// size      96 bytes
+// spans     0x005FB4E0-0x005FB540
+// prototype int (__thiscall ?UNK9@Menu@@QAEHH@Z)(Menu* this, int)
+// callers   0   call targets   0
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -559,6 +639,11 @@ Purpose: Legacy hook for adjusting a pull-down's position. The original body is
          its arity is unresolved and it stays unrecovered until that is
          settled.
 ORIGINAL: 0x005FC6C0 BYTE_EXACT
+// name      ?on_adjust_pulldown_pos@Menu@@QAEXPAH0@Z
+// size      3 bytes
+// spans     0x005FC6C0-0x005FC6C3
+// prototype void (__thiscall ?on_adjust_pulldown_pos@Menu@@QAEXPAH0@Z)(Menu* this, int*, int*)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -571,6 +656,11 @@ void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1
 
 /*
 ORIGINAL: 0x005FC680 BYTE_EXACT
+// name      ?on_mouse_move@Menu@@QAEXHH@Z
+// size      18 bytes
+// spans     0x005FC680-0x005FC692
+// prototype void (__thiscall ?on_mouse_move@Menu@@QAEXHH@Z)(Menu* this, int, int)
+// callers   1   call targets   1
 Status: Complete
 */
 void Menu::on_mouse_move(int a1, int a2) {

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005391C0 BYTE_EXACT
+// name      ?net_treaty_on@@YAXHHHH@Z
+// size      106 bytes
+// spans     0x005391C0-0x0053922A
+// prototype 
+// callers   4   call targets   4
 // 0x005391C0  ?net_treaty_on@@YAXHHHH@Z  ->  ?net_treaty_on@@YAXHHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -86,6 +86,11 @@ Purpose: Subtract two three-component float vectors into a third.
          in float throughout could round differently.
 
 ORIGINAL: 0x00628180 BYTE_EXACT
+// name      sub_628180
+// size      37 bytes
+// spans     0x00628180-0x006281A5
+// prototype 
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -112,11 +117,21 @@ Purpose: Scale a three-component float vector by a scalar.
          came from the same float32.
 
 ORIGINAL: 0x006281B0 BYTE_EXACT
+// name      sub_6281b0
+// size      37 bytes
+// spans     0x006281B0-0x006281D5
+// prototype 
+// callers   5   call targets   0
 Return Value: n/a
 Status: Complete
 */
 /*
 ORIGINAL: 0x006281B0
+// name      sub_6281b0
+// size      37 bytes
+// spans     0x006281B0-0x006281D5
+// prototype 
+// callers   5   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -156,11 +171,21 @@ Purpose: Dot product of `this` with a three-component float vector.
          included - checked with objdump rather than assumed.
 
 ORIGINAL: 0x00634650 BYTE_EXACT
+// name      sub_634650
+// size      27 bytes
+// spans     0x00634650-0x0063466B
+// prototype 
+// callers   0   call targets   0
 Return Value: the dot product, in ST(0)
 Status: Complete
 */
 /*
 ORIGINAL: 0x00634650
+// name      sub_634650
+// size      27 bytes
+// spans     0x00634650-0x0063466B
+// prototype 
+// callers   0   call targets   0
 Return Value: the dot product, in ST(0)
 Status: Complete
 */
@@ -192,6 +217,11 @@ Purpose: Round an integer DOWN to a multiple of another, toward zero.
          as they do in the original.
 
 ORIGINAL: 0x00559210 BYTE_EXACT
+// name      sub_559210
+// size      17 bytes
+// spans     0x00559210-0x00559221
+// prototype 
+// callers   1   call targets   0
 Return Value: the largest multiple of `step` no further from zero than `value`
 Status: Complete
 */
@@ -211,11 +241,21 @@ Purpose: Follow a two-link chain, or return zero when the first link is unset.
          a body that works whenever the two happen to agree.
 
 ORIGINAL: 0x005E3630
+// name      sub_5e3630
+// size      20 bytes
+// spans     0x005E3630-0x005E3644
+// prototype 
+// callers   2   call targets   0
 Return Value: the dword two links away, or 0
 Status: Complete
 */
 /*
 ORIGINAL: 0x005E3630
+// name      sub_5e3630
+// size      20 bytes
+// spans     0x005E3630-0x005E3644
+// prototype 
+// callers   2   call targets   0
 Return Value: the dword two links away, or 0
 Status: Complete
 */
@@ -248,6 +288,11 @@ Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
          for any field with the top bit set.
 
 ORIGINAL: 0x005E3650 BYTE_EXACT
+// name      sub_5e3650
+// size      16 bytes
+// spans     0x005E3650-0x005E3660
+// prototype 
+// callers   2   call targets   0
 Return Value: field 0x10 + field 0, or field 0xc
 Status: Complete
 */
@@ -281,6 +326,11 @@ Purpose: Store an argument into three fields, clamping anything outside 0..3
          value stored is the same for all three.
 
 ORIGINAL: 0x005E3660 BYTE_EXACT
+// name      sub_5e3660
+// size      46 bytes
+// spans     0x005E3660-0x005E368E
+// prototype 
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -305,6 +355,11 @@ Purpose: Store a non-zero argument into field 0x38, or refuse with code 10.
          would be a different function.
 
 ORIGINAL: 0x004482F0 BYTE_EXACT
+// name      sub_4482f0
+// size      28 bytes
+// spans     0x004482F0-0x0044830C
+// prototype 
+// callers   0   call targets   0
 Return Value: 0 on success, 10 when the argument is zero
 Status: Complete
 */
@@ -328,6 +383,11 @@ Purpose: Clear field 4, set the low bit of field 8, put 0x24 in field 0.
          tree treats as a return value.
 
 ORIGINAL: 0x004C8070 BYTE_EXACT
+// name      sub_4c8070
+// size      25 bytes
+// spans     0x004C8070-0x004C8089
+// prototype 
+// callers   0   call targets   0
 Return Value: `this`
 Status: Complete
 */
@@ -352,11 +412,21 @@ Purpose: Add another 3x3 float matrix into this one, element by element.
          three restarted each time.
 
 ORIGINAL: 0x006347C0
+// name      sub_6347c0
+// size      48 bytes
+// spans     0x006347C0-0x006347F0
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
 /*
 ORIGINAL: 0x006347C0
+// name      sub_6347c0
+// size      48 bytes
+// spans     0x006347C0-0x006347F0
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -387,6 +457,11 @@ Purpose: Subtract another 3x3 float matrix from this one.
          result is this - other, and subtraction does not commute.
 
 ORIGINAL: 0x006348F0
+// name      sub_6348f0
+// size      48 bytes
+// spans     0x006348F0-0x00634920
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -409,11 +484,21 @@ Purpose: Scale a 3x3 float matrix by a scalar.
          same float32 every time.
 
 ORIGINAL: 0x006348C0
+// name      sub_6348c0
+// size      39 bytes
+// spans     0x006348C0-0x006348E7
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
 /*
 ORIGINAL: 0x006348C0
+// name      sub_6348c0
+// size      39 bytes
+// spans     0x006348C0-0x006348E7
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -448,11 +533,21 @@ Purpose: Are two three-component float vectors equal?
          function reads AL.
 
 ORIGINAL: 0x006344E0 BYTE_EXACT
+// name      sub_6344e0
+// size      51 bytes
+// spans     0x006344E0-0x00634513
+// prototype 
+// callers   0   call targets   0
 Return Value: true when every component matches, or is unordered
 Status: Complete
 */
 /*
 ORIGINAL: 0x006344E0
+// name      sub_6344e0
+// size      51 bytes
+// spans     0x006344E0-0x00634513
+// prototype 
+// callers   0   call targets   0
 Return Value: true when the three components compare equal or unordered
 Status: Complete
 */
@@ -488,6 +583,11 @@ Purpose: Length of a three-component float vector.
          function.
 
 ORIGINAL: 0x006281E0
+// name      sub_6281e0
+// size      55 bytes
+// spans     0x006281E0-0x00628217
+// prototype 
+// callers   1   call targets   0
 Return Value: the length, in ST(0)
 Status: Complete
 */
@@ -525,6 +625,11 @@ Purpose: Scale a field by an argument and divide by 600.
          in C++ would not be.
 
 ORIGINAL: 0x0063BEB0 BYTE_EXACT
+// name      sub_63beb0
+// size      33 bytes
+// spans     0x0063BEB0-0x0063BED1
+// prototype 
+// callers   0   call targets   0
 Return Value: (field 0x3798 * argument) / 600
 Status: Complete
 */
@@ -544,6 +649,11 @@ Purpose: Scale a field by an argument and divide by 440.
          206,006 inputs, with no disagreement.
 
 ORIGINAL: 0x0063BEE0 BYTE_EXACT
+// name      sub_63bee0
+// size      33 bytes
+// spans     0x0063BEE0-0x0063BF01
+// prototype 
+// callers   0   call targets   0
 Return Value: (field 0x379c * argument) / 440
 Status: Complete
 */
@@ -568,11 +678,21 @@ Purpose: Fill the eight bytes at a pointer with 0xff.
          time; the result is eight 0xff bytes either way.
 
 ORIGINAL: 0x0057DEE0 BYTE_EXACT
+// name      sub_57dee0
+// size      28 bytes
+// spans     0x0057DEE0-0x0057DEFC
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
 /*
 ORIGINAL: 0x0057DEE0
+// name      sub_57dee0
+// size      28 bytes
+// spans     0x0057DEE0-0x0057DEFC
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -603,11 +723,21 @@ Purpose: Hand out the next of ten 60-byte slots, wrapping back to the first.
          wrong slot on the tenth call and only then.
 
 ORIGINAL: 0x006252C0 BYTE_EXACT
+// name      sub_6252c0
+// size      30 bytes
+// spans     0x006252C0-0x006252DE
+// prototype 
+// callers   0   call targets   0
 Return Value: a pointer to the slot that was current on entry
 Status: Complete
 */
 /*
 ORIGINAL: 0x006252C0
+// name      sub_6252c0
+// size      30 bytes
+// spans     0x006252C0-0x006252DE
+// prototype 
+// callers   0   call targets   0
 Return Value: a pointer to the slot that was current on entry
 Status: Complete
 */
@@ -638,6 +768,11 @@ Purpose: Half the sum of an argument and a span read out of a structure.
          negative, which is exactly what a bare `sar` would get wrong.
 
 ORIGINAL: 0x00408470 BYTE_EXACT
+// name      sub_408470
+// size      26 bytes
+// spans     0x00408470-0x0040848A
+// prototype 
+// callers   0   call targets   0
 Return Value: (a->[0x14] - a->[0x10] + b) / 2
 Status: Complete
 */
@@ -663,11 +798,21 @@ Purpose: Fill 1,536 dwords with -1, starting at offset 0xa20.
          `lea` as the start would put the whole thing four bytes too high.
 
 ORIGINAL: 0x005AD450 BYTE_EXACT
+// name      sub_5ad450
+// size      32 bytes
+// spans     0x005AD450-0x005AD470
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
 /*
 ORIGINAL: 0x005AD450
+// name      sub_5ad450
+// size      32 bytes
+// spans     0x005AD450-0x005AD470
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -701,6 +846,11 @@ Purpose: Count the set bits in the low THIRTY-ONE bits of ECX.
          does not take the (void *, void *) shape the rest of these do.
 
 ORIGINAL: 0x005CC430 BYTE_EXACT
+// name      sub_5cc430
+// size      27 bytes
+// spans     0x005CC430-0x005CC44B
+// prototype 
+// callers   1   call targets   0
 Return Value: how many of bits 0..30 are set
 Status: Complete
 */
@@ -731,6 +881,11 @@ Purpose: Three when there is no structure, otherwise zero or seven.
          three are declared so the adapter cleans what the original cleans.
 
 ORIGINAL: 0x005D7A10 BYTE_EXACT
+// name      sub_5d7a10
+// size      31 bytes
+// spans     0x005D7A10-0x005D7A2F
+// prototype 
+// callers   1   call targets   0
 Return Value: 3 with no structure, 0 when field 0xc is set, 7 when it is not
 Status: Complete
 */
@@ -762,6 +917,11 @@ Purpose: Forward all four arguments to 005D7A10.
          else.
 
 ORIGINAL: 0x005D5470
+// name      sub_5d5470
+// size      34 bytes
+// spans     0x005D5470-0x005D5492
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever 005D7A10 returns
 Status: Complete
 */
@@ -786,11 +946,21 @@ Purpose: Reverse the low `count` bits of a value.
          the shift happens after the OR rather than before it.
 
 ORIGINAL: 0x00642940 BYTE_EXACT
+// name      sub_642940
+// size      31 bytes
+// spans     0x00642940-0x0064295F
+// prototype 
+// callers   2   call targets   0
 Return Value: the low `count` bits, reversed
 Status: Complete
 */
 /*
 ORIGINAL: 0x00642940
+// name      sub_642940
+// size      31 bytes
+// spans     0x00642940-0x0064295F
+// prototype 
+// callers   2   call targets   0
 Return Value: the low `count` bits of `value`, reversed
 Status: Complete
 */
@@ -826,6 +996,11 @@ Purpose: Report a node's neighbours through two optional out-parameters.
          just written, and a cached version would not.
 
 ORIGINAL: 0x0063E7F0
+// name      sub_63e7f0
+// size      44 bytes
+// spans     0x0063E7F0-0x0063E81C
+// prototype 
+// callers   2   call targets   0
 Return Value: node->[8]
 Status: Complete
 */
@@ -861,11 +1036,21 @@ Purpose: Divide, rounding the quotient AWAY from zero when there is a
          spellings go through one division: a zero divisor and INT_MIN / -1.
 
 ORIGINAL: 0x00532A50 BYTE_EXACT
+// name      sub_532a50
+// size      49 bytes
+// spans     0x00532A50-0x00532A81
+// prototype 
+// callers   0   call targets   0
 Return Value: the quotient that was stored
 Status: Complete
 */
 /*
 ORIGINAL: 0x00532A50
+// name      sub_532a50
+// size      49 bytes
+// spans     0x00532A50-0x00532A81
+// prototype 
+// callers   0   call targets   0
 Return Value: the quotient, rounded up when the division is not exact
 Status: Complete
 */
@@ -900,6 +1085,11 @@ Purpose: Is a point inside an inclusive rectangle?
          exactly on an edge is inside.
 
 ORIGINAL: 0x00592DB0 BYTE_EXACT
+// name      sub_592db0
+// size      44 bytes
+// spans     0x00592DB0-0x00592DDC
+// prototype 
+// callers   0   call targets   0
 Return Value: 1 when inside, 0 otherwise
 Status: Complete
 */
@@ -928,6 +1118,11 @@ Purpose: Does this window hold the dialog focus, and its partner too?
          yes.
 
 ORIGINAL: 0x006161A0
+// name      ?UNK2@EditBox@@QAEXXZ
+// size      42 bytes
+// spans     0x006161A0-0x006161CA
+// prototype void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this)
+// callers   0   call targets   1
 Return Value: 1 when both hold focus, 0 otherwise
 Status: Complete
 */
@@ -964,6 +1159,11 @@ Purpose: Find the table entry matching two keys and set its third word.
          -1.
 
 ORIGINAL: 0x005AD4C0
+// name      sub_5ad4c0
+// size      64 bytes
+// spans     0x005AD4C0-0x005AD500
+// prototype 
+// callers   0   call targets   0
 Return Value: 3 * index on a hit, 512 on a miss
 Status: Complete
 */
@@ -1002,6 +1202,11 @@ Purpose: Swap two pairs of fields in the object this one points at.
          `[ecx]` would be seen.
 
 ORIGINAL: 0x005CBBC0
+// name      sub_5cbbc0
+// size      53 bytes
+// spans     0x005CBBC0-0x005CBBF5
+// prototype 
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1040,6 +1245,11 @@ Purpose: Initialise 24 sixty-byte slots and the count that follows them.
          EAX still holds `this` at the `ret`.
 
 ORIGINAL: 0x0052DCA0
+// name      ??0DeletionList@@QAE@XZ
+// size      33 bytes
+// spans     0x0052DCA0-0x0052DCC1
+// prototype void (__thiscall ??0DeletionList@@QAE@XZ)(DeletionList* this)
+// callers   0   call targets   0
 Return Value: `this`
 Status: Complete
 */
@@ -1075,6 +1285,11 @@ Purpose: Is the movie still playing?
          recovered as field_accessor_00600320_redirect.
 
 ORIGINAL: 0x004041C0
+// name      ?on_modal@AlphaMovie@@QAE_NXZ
+// size      18 bytes
+// spans     0x004041C0-0x004041D2
+// prototype bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this)
+// callers   0   call targets   1
 Return Value: 1 when playing, 0 otherwise
 Status: Complete
 */
@@ -1095,6 +1310,11 @@ Purpose: Construct the Buffer subobject, then clear one field.
          order that would matter if the constructor ever reached that far back.
 
 ORIGINAL: 0x004BEA30
+// name      ??0UV2Player@@QAE@XZ
+// size      28 bytes
+// spans     0x004BEA30-0x004BEA4C
+// prototype void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this)
+// callers   1   call targets   1
 Return Value: `this`
 Status: Complete
 */
@@ -1123,6 +1343,11 @@ Purpose: Reset six fields, then close the window and its Buffer.
          subobject at 0x406c.
 
 ORIGINAL: 0x00432970
+// name      ?close@SelectPartWin@@QAEXXZ
+// size      63 bytes
+// spans     0x00432970-0x004329AF
+// prototype void (__thiscall ?close@SelectPartWin@@QAEXXZ)(SelectPartWin* this)
+// callers   0   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -1168,6 +1393,11 @@ Purpose: Append a 16-bit value to a byte stream, most significant byte first.
          and are left alone rather than papered over.
 
 ORIGINAL: 0x0063D420
+// name      sub_63d420
+// size      47 bytes
+// spans     0x0063D420-0x0063D44F
+// prototype 
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1211,6 +1441,11 @@ Purpose: Construct the BaseButton base, publish ImageButton's vtables, clear
          rule src/net_class.h states for Net.
 
 ORIGINAL: 0x006252E0
+// name      ??0ImageButton@@QAE@XZ
+// size      38 bytes
+// spans     0x006252E0-0x00625306
+// prototype void (__thiscall ??0ImageButton@@QAE@XZ)(ImageButton* this)
+// callers   0   call targets   1
 Return Value: `this`
 Status: Complete
 */
@@ -1234,6 +1469,11 @@ Purpose: Clear the field, then close as a BaseButton.
          quietly re-typed.
 
 ORIGINAL: 0x00625330
+// name      ?close@ImageButton@@QAEXXZ
+// size      15 bytes
+// spans     0x00625330-0x0062533F
+// prototype void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1255,6 +1495,11 @@ Purpose: Keep the first argument, hand the other eight to BaseButton::init.
          the first kept at 0xab8 and the remaining eight passed straight on.
 
 ORIGINAL: 0x00625340
+// name      ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z
+// size      58 bytes
+// spans     0x00625340-0x0062537A
+// prototype int (__thiscall ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z)(ImageButton* this, int, int8*, int, int, int, int, int, Win*, int)
+// callers   0   call targets   1
 Return Value: whatever BaseButton::init returns
 Status: Complete
 */
@@ -1287,6 +1532,11 @@ Purpose: Add one fixed item to the Dialogs at 0x21d0.
          reading quickly.
 
 ORIGINAL: 0x0059D230
+// name      sub_59d230
+// size      19 bytes
+// spans     0x0059D230-0x0059D243
+// prototype 
+// callers   0   call targets   1
 Return Value: whatever Dialogs::item returns
 Status: Complete
 */
@@ -1309,6 +1559,11 @@ Purpose: Clear four fields, then close as a GraphicWin.
          reads it.
 
 ORIGINAL: 0x00484B60
+// name      ?close@PickTech@@QAEXXZ
+// size      31 bytes
+// spans     0x00484B60-0x00484B7F
+// prototype void (__thiscall ?close@PickTech@@QAEXXZ)(PickTech* this)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1360,6 +1615,11 @@ Purpose: Destroy the ListBox at 0x48, the Dialog at 0xa60, and the GraphicWin
          rather than recomputed.
 
 ORIGINAL: 0x004080B0
+// name      sub_4080b0
+// size      35 bytes
+// spans     0x004080B0-0x004080D3
+// prototype 
+// callers   3   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -1380,6 +1640,11 @@ Purpose: Destroy the Dialogs at 0x188, the Dialog at 0xba0, and the GraphicWin
          likewise computed once and used twice.
 
 ORIGINAL: 0x00406AF0
+// name      sub_406af0
+// size      38 bytes
+// spans     0x00406AF0-0x00406B16
+// prototype 
+// callers   9   call targets   3
 Return Value: n/a
 Status: Complete
 */
@@ -1423,6 +1688,11 @@ Purpose: Construct a Buffer on the stack and immediately destroy it.
          beats an assertion that would only appear to cover them.
 
 ORIGINAL: 0x00455E50
+// name      ?load_deswin_sprites@@YAXXZ
+// size      35 bytes
+// spans     0x00455E50-0x00455E73
+// prototype 
+// callers   1   call targets   2
 Return Value: n/a
 Status: Complete
 */
@@ -1435,6 +1705,11 @@ void __cdecl leaf_00455e50_redirect() {
 
 /*
 ORIGINAL: 0x0049FFC0 BYTE_EXACT
+// name      ?sat_anim_daemon@@YAXH@Z
+// size      13 bytes
+// spans     0x0049FFC0-0x0049FFCD
+// prototype 
+// callers   0   call targets   1
 Status: Complete
 */
 void __cdecl sat_anim_daemon(int a1) {
@@ -1443,6 +1718,11 @@ void __cdecl sat_anim_daemon(int a1) {
 
 /*
 ORIGINAL: 0x004A0250 BYTE_EXACT
+// name      ?sat_expl_daemon@@YAXH@Z
+// size      13 bytes
+// spans     0x004A0250-0x004A025D
+// prototype 
+// callers   0   call targets   1
 Status: Complete
 */
 void __cdecl sat_expl_daemon(int a1) {
@@ -1451,6 +1731,11 @@ void __cdecl sat_expl_daemon(int a1) {
 
 /*
 ORIGINAL: 0x004A4050 BYTE_EXACT
+// name      ?bl_daemon@@YAXH@Z
+// size      13 bytes
+// spans     0x004A4050-0x004A405D
+// prototype 
+// callers   0   call targets   1
 Status: Complete
 */
 void __cdecl bl_daemon(int a1) {
@@ -1459,6 +1744,11 @@ void __cdecl bl_daemon(int a1) {
 
 /*
 ORIGINAL: 0x00401520
+// name      sub_401520
+// size      62 bytes
+// spans     0x00401520-0x0040155E
+// prototype 
+// callers   0   call targets   1
 Status: Complete
 */
 extern "C" int __stdcall sub_401520(int a1) {
@@ -1500,6 +1790,11 @@ extern "C" int __stdcall sub_401520(int a1) {
 
 /*
 ORIGINAL: 0x00401BE0
+// name      sub_401be0
+// size      153 bytes
+// spans     0x00401BE0-0x00401C79
+// prototype 
+// callers   3   call targets   0
 Status: Complete
 */
 extern "C" __declspec(naked) int __cdecl sub_401be0() {
@@ -1578,6 +1873,11 @@ end_lbl:
 
 /*
 ORIGINAL: 0x0044C860 BYTE_EXACT
+// name      sub_44c860
+// size      13 bytes
+// spans     0x0044C860-0x0044C86D
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1587,6 +1887,11 @@ extern "C" void __cdecl sub_44c860(int value) {
 
 /*
 ORIGINAL: 0x004E2450 BYTE_EXACT
+// name      sub_4e2450
+// size      13 bytes
+// spans     0x004E2450-0x004E245D
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1597,6 +1902,11 @@ extern "C" void __cdecl sub_4e2450() {
 
 /*
 ORIGINAL: 0x004E7DB0 BYTE_EXACT
+// name      sub_4e7db0
+// size      13 bytes
+// spans     0x004E7DB0-0x004E7DBD
+// prototype 
+// callers   0   call targets   0
 Return Value: zero
 Status: Complete
 */
@@ -1607,6 +1917,11 @@ extern "C" int __cdecl sub_4e7db0() {
 
 /*
 ORIGINAL: 0x006051C0 BYTE_EXACT
+// name      sub_6051c0
+// size      14 bytes
+// spans     0x006051C0-0x006051CE
+// prototype 
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1627,6 +1942,11 @@ int __cdecl pop_ask(char *a1, char *a2, int a3, char *a4, int (__cdecl *a5)(), i
 
 /*
 ORIGINAL: 0x00627830 BYTE_EXACT
+// name      ?pop_ask@@YAHPADPADHP6AHXZH@Z
+// size      36 bytes
+// spans     0x00627830-0x00627854
+// prototype int (__cdecl ?pop_ask@@YAHPADPADHP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int, int (__cdecl *)(), int)
+// callers   0   call targets   1
 Status: Complete
 */
 int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
@@ -1640,6 +1960,11 @@ int __cdecl sin(int a1, int a2);
 
 /*
 ORIGINAL: 0x0063BAC0 BYTE_EXACT
+// name      ?cos@@YAHHH@Z
+// size      25 bytes
+// spans     0x0063BAC0-0x0063BAD9
+// prototype 
+// callers   0   call targets   1
 Status: Complete
 */
 int __cdecl cos(int a1, int a2) {

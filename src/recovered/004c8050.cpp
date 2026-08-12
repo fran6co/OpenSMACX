@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004C8050 BYTE_EXACT
+// name      ?set_play_type@Midi@@QAEHI@Z
+// size      26 bytes
+// spans     0x004C8050-0x004C806A
+// prototype int (__thiscall ?set_play_type@Midi@@QAEHI@Z)(Midi* this, unsigned int)
+// callers   0   call targets   0
 // 0x004C8050  ?set_play_type@Midi@@QAEHI@Z  ->  ?set_play_type@Midi@@QAEHI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

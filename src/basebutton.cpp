@@ -31,6 +31,11 @@ uint32_t *BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
 Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.
 ORIGINAL: 0x00606F30
+// name      ??0BaseButton@@QAE@XZ
+// size      291 bytes
+// spans     0x00606F30-0x00607033;0x00662E50-0x00662E70
+// prototype void (__thiscall ??0BaseButton@@QAE@XZ)(BaseButton* this)
+// callers   3   call targets   2
 Status: Complete
 Verification note: the surviving swap mutants reorder construction of the
 GraphicWin base against the Time members, which occupy disjoint storage, so
@@ -77,6 +82,11 @@ BaseButton *__fastcall base_button_construct_redirect(
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
          process defaults, then release the owned name and bubble strings.
 ORIGINAL: 0x006070C0
+// name      ?close@BaseButton@@QAEXXZ
+// size      208 bytes
+// spans     0x006070C0-0x00607190
+// prototype void (__thiscall ?close@BaseButton@@QAEXXZ)(BaseButton* this)
+// callers   3   call targets   2
 Return Value: Zero when no bubble string is released; otherwise the executable
               free routine's EAX residue
 Status: Complete; string storage remains owned by the executable CRT
@@ -131,6 +141,11 @@ uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
 Purpose: Destroy a BaseButton by installing its two virtual tables, closing
          it, destroying Time2 then Time1, and finally destroying GraphicWin.
 ORIGINAL: 0x00607040
+// name      ??1BaseButton@@QAE@XZ
+// size      167 bytes
+// spans     0x00607040-0x006070B9;0x00662E70-0x00662E9E
+// prototype void (__thiscall ??1BaseButton@@QAE@XZ)(BaseButton* this)
+// callers   134   call targets   3
 Return Value: Instance pointer in EAX
 Status: Complete
 */
@@ -155,6 +170,11 @@ BaseButton *__fastcall base_button_destructor_redirect(
 /*
 Purpose: Set the button's bubble text.
 ORIGINAL: 0x00607550
+// name      ?set_bubble_text@BaseButton@@QAEHPAD@Z
+// size      103 bytes
+// spans     0x00607550-0x006075B7
+// prototype int (__thiscall ?set_bubble_text@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
+// callers   8   call targets   4
 Return Value: Zero on success, non-zero on error
 Status: Complete with redirect for free to prevent hang/freeze. Incompatibility between older
         version of free with newer SDK version of free CRT. Revisit once more of code is redirected
@@ -179,6 +199,11 @@ int BaseButton::set_bubble_text(LPCSTR input) {
 /*
 Purpose: Set the button's name string.
 ORIGINAL: 0x006074E0
+// name      ?set_name@BaseButton@@QAEHPAD@Z
+// size      109 bytes
+// spans     0x006074E0-0x0060754D
+// prototype int (__thiscall ?set_name@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
+// callers   4   call targets   4
 Return Value: Zero on success, non-zero on error
 Status: Complete with redirect for free to prevent hang/freeze. Incompatibility between older
         version of free with newer SDK version of free CRT. Revisit once more of code is redirected
@@ -224,6 +249,11 @@ void store_default_text_colors(size_t tier, int color1, int color2,
 /*
 Purpose: Set the primary default text colours shared by every button.
 ORIGINAL: 0x00607420
+// name      ?set_def_text_color@BaseButton@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x00607420-0x00607447
+// prototype 
+// callers   3   call targets   0
 Status: Complete
 */
 void BaseButton::set_def_text_color(int color1, int color2, int color3, int color4) {
@@ -233,6 +263,11 @@ void BaseButton::set_def_text_color(int color1, int color2, int color3, int colo
 /*
 Purpose: Set the secondary default text colours shared by every button.
 ORIGINAL: 0x00607450
+// name      ?set_def_text_color2@BaseButton@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x00607450-0x00607477
+// prototype 
+// callers   0   call targets   0
 Status: Complete
 */
 void BaseButton::set_def_text_color2(int color1, int color2, int color3, int color4) {
@@ -242,6 +277,11 @@ void BaseButton::set_def_text_color2(int color1, int color2, int color3, int col
 /*
 Purpose: Set the tertiary default text colours shared by every button.
 ORIGINAL: 0x00607480
+// name      ?set_def_text_color3@BaseButton@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x00607480-0x006074A7
+// prototype 
+// callers   0   call targets   0
 Status: Complete
 */
 void BaseButton::set_def_text_color3(int color1, int color2, int color3, int color4) {
@@ -251,6 +291,11 @@ void BaseButton::set_def_text_color3(int color1, int color2, int color3, int col
 /*
 Purpose: Set the default fonts shared by every button.
 ORIGINAL: 0x006074B0
+// name      ?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z
+// size      48 bytes
+// spans     0x006074B0-0x006074E0
+// prototype 
+// callers   4   call targets   0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -311,6 +356,11 @@ void recolour(Buffer &buffer, BufferColourSetter setter,
 /*
 Purpose: Set the button's primary text colours.
 ORIGINAL: 0x00607360
+// name      ?set_text_color@BaseButton@@QAEXHHHH@Z
+// size      61 bytes
+// spans     0x00607360-0x0060739D
+// prototype void (__thiscall ?set_text_color@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
+// callers   11   call targets   2
 Status: Complete
 Verification note: the parentless guard on all three setters carries no
 literal or comparison operator, so the mutation harness cannot perturb it;
@@ -331,6 +381,11 @@ void BaseButton::set_text_color(int color1, int color2, int color3, int color4) 
 /*
 Purpose: Set the button's secondary text colours.
 ORIGINAL: 0x006073A0
+// name      ?set_text_color2@BaseButton@@QAEXHHHH@Z
+// size      61 bytes
+// spans     0x006073A0-0x006073DD
+// prototype void (__thiscall ?set_text_color2@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
+// callers   1   call targets   2
 Status: Complete
 */
 void BaseButton::set_text_color2(int color1, int color2, int color3, int color4) {
@@ -343,6 +398,11 @@ void BaseButton::set_text_color2(int color1, int color2, int color3, int color4)
 /*
 Purpose: Set the button's tertiary text colours.
 ORIGINAL: 0x006073E0
+// name      ?set_text_color3@BaseButton@@QAEXHHHH@Z
+// size      61 bytes
+// spans     0x006073E0-0x0060741D
+// prototype void (__thiscall ?set_text_color3@BaseButton@@QAEXHHHH@Z)(BaseButton* this, int, int, int, int)
+// callers   1   call targets   2
 Status: Complete
 */
 void BaseButton::set_text_color3(int color1, int color2, int color3, int color4) {
@@ -384,6 +444,11 @@ constexpr size_t WinValueChangedSlot = 0xB4;
 Purpose: Give the button a new value, redrawing and notifying its parent only
          when the value actually changes.
 ORIGINAL: 0x00607C80
+// name      ?set@BaseButton@@QAEXH@Z
+// size      61 bytes
+// spans     0x00607C80-0x00607CBD
+// prototype void (__thiscall ?set@BaseButton@@QAEXH@Z)(BaseButton* this, int)
+// callers   7   call targets   0
 Return Value: n/a
 Status: Complete
 
@@ -416,6 +481,11 @@ void __fastcall base_button_set_redirect(BaseButton *self, void *, int value) {
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
 ORIGINAL: 0x006077F0 BYTE_EXACT
+// name      ?on_key_click@BaseButton@@QAEHHH@Z
+// size      5 bytes
+// spans     0x006077F0-0x006077F5
+// prototype void (__thiscall ?on_key_click@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
+// callers   0   call targets   0
 Return Value: zero - the base class handles no key click
 Status: Complete
 */
@@ -431,6 +501,11 @@ void __fastcall base_button_on_key_click_redirect(
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
 ORIGINAL: 0x00607800 BYTE_EXACT
+// name      ?on_key_down@BaseButton@@QAEHH@Z
+// size      5 bytes
+// spans     0x00607800-0x00607805
+// prototype void (__thiscall ?on_key_down@BaseButton@@QAEXH@Z)(BaseButton* this, int)
+// callers   0   call targets   0
 Return Value: zero - the base class handles no key down
 Status: Complete
 */
@@ -446,6 +521,11 @@ void __fastcall base_button_on_key_down_redirect(
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
 ORIGINAL: 0x00607810 BYTE_EXACT
+// name      ?on_key_up@BaseButton@@QAEHH@Z
+// size      5 bytes
+// spans     0x00607810-0x00607815
+// prototype void (__thiscall ?on_key_up@BaseButton@@QAEXH@Z)(BaseButton* this, int)
+// callers   0   call targets   0
 Return Value: zero - the base class handles no key up
 Status: Complete
 */
@@ -479,6 +559,11 @@ Purpose: Reinitialise a button - close whatever it currently holds, take a
          style word, publish the shared default colours and fonts into the
          window buffer, then show it.
 ORIGINAL: 0x00607210
+// name      ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z
+// size      322 bytes
+// spans     0x00607210-0x00607352
+// prototype int (__thiscall ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z)(BaseButton* this, int8*, int, int, int, int, int, Win*, int)
+// callers   30   call targets   8
 Return Value: No parent (3); name allocation failed (4); otherwise
               GraphicWin::init's own code, which is zero on success
 Status: Complete
@@ -582,6 +667,11 @@ int __fastcall base_button_init_redirect(
 
 /*
 ORIGINAL: 0x00607A00 BYTE_EXACT
+// name      ?on_right_click@BaseButton@@QAEXHH@Z
+// size      20 bytes
+// spans     0x00607A00-0x00607A14
+// prototype void (__thiscall ?on_right_click@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void BaseButton::on_right_click(int a1, int a2) {
@@ -594,6 +684,11 @@ void BaseButton::on_right_click(int a1, int a2) {
 
 /*
 ORIGINAL: 0x00607B10 BYTE_EXACT
+// name      ?timer_callback_daemon@BaseButton@@QAAXHH@Z
+// size      19 bytes
+// spans     0x00607B10-0x00607B23
+// prototype 
+// callers   0   call targets   1
 Status: Complete
 */
 void __cdecl fn_00607b10(int a1, BaseButton* a2) {

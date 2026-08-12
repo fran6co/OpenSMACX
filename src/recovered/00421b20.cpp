@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00421B20 BYTE_EXACT
+// name      ?pulse_timer@BattleWin@@QAEXXZ
+// size      23 bytes
+// spans     0x00421B20-0x00421B37
+// prototype void (__thiscall ?pulse_timer@BattleWin@@QAEXXZ)(BattleWin* this)
+// callers   1   call targets   1
 // 0x00421B20  ?pulse_timer@BattleWin@@QAEXXZ  ->  ?pulse_timer@BattleWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

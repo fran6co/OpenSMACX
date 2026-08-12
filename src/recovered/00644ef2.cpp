@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00644EF2 BYTE_EXACT
+// name      _free
+// size      72 bytes
+// spans     0x00644EF2-0x00644F3A
+// prototype 
+// callers   170   call targets   4
 // 0x00644EF2  _free  ->  _free
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

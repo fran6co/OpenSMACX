@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004AA930 BYTE_EXACT
+// name      ?close_projects@ReportIf@@QAEXXZ
+// size      52 bytes
+// spans     0x004AA930-0x004AA964
+// prototype void (__thiscall ?close_projects@ReportIf@@QAEXXZ)(ReportIf* this)
+// callers   0   call targets   1
 // 0x004AA930  ?close_projects@ReportIf@@QAEXXZ  ->  ?close_projects@ReportIf@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

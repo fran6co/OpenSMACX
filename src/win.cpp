@@ -30,6 +30,11 @@ uint32_t *WinDynamicDefaults = reinterpret_cast<uint32_t *>(0x009B7AF0);
 Purpose: Construct a Win from its AutoSound subobject and the process window
          defaults, preserving every sparse write and legacy return residue.
 ORIGINAL: 0x005EB3D0
+// name      ??0Win@@QAE@XZ
+// size      621 bytes
+// spans     0x005EB3D0-0x005EB63D
+// prototype void (__thiscall ??0Win@@QAE@XZ)(Win* this)
+// callers   1   call targets   1
 Status: Complete
 */
 void Win::construct() {
@@ -160,6 +165,11 @@ void move_rect(RECT &rect, int x, int y) {
 /*
 Purpose: Move the active window rectangle while preserving its dimensions.
 ORIGINAL: 0x005ED7D0
+// name      ?move@Win@@QAEHHH@Z
+// size      167 bytes
+// spans     0x005ED7D0-0x005ED877
+// prototype int (__thiscall ?move@Win@@QAEHHH@Z)(Win* this, int, int)
+// callers   15   call targets   0
 Status: Complete
 */
 int Win::move(int x, int y) {
@@ -170,6 +180,11 @@ int Win::move(int x, int y) {
 /*
 Purpose: Determine whether this window and every ancestor are visible.
 ORIGINAL: 0x005F7E90 BYTE_EXACT
+// name      ?is_visible@Win@@QAEHXZ
+// size      38 bytes
+// spans     0x005F7E90-0x005F7EB6
+// prototype int (__thiscall ?is_visible@Win@@QAEHXZ)(Win* this)
+// callers   120   call targets   1
 Status: Complete
 */
 int Win::is_visible() {
@@ -188,6 +203,11 @@ int Win::is_visible() {
 Purpose: Translate a client-relative point into screen coordinates by walking
          the parent chain.
 ORIGINAL: 0x005ED240
+// name      ?client_to_screen@Win@@QAEXPAH0@Z
+// size      133 bytes
+// spans     0x005ED240-0x005ED2C5
+// prototype void (__thiscall ?client_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
+// callers   71   call targets   1
 Status: Complete
 */
 void Win::client_to_screen(int *x, int *y) {
@@ -218,6 +238,11 @@ Purpose: Announce this window as the one the palette should follow, then report
          `this` is passed as the only argument and the caller cleans it, which
          is the cdecl convention the callee's mangled name declares.
 ORIGINAL: 0x005F1060
+// name      ?on_query_new_palette@Win@@QAEHXZ
+// size      15 bytes
+// spans     0x005F1060-0x005F106F
+// prototype int (__thiscall ?on_query_new_palette@Win@@QAEHXZ)(Win* this)
+// callers   0   call targets   1
 Return Value: 1, always
 Status: Complete
 Verification note: the call to Palette::set_active_window is NOT observed by
@@ -241,6 +266,11 @@ int __fastcall win_on_query_new_palette_redirect(Win *self, void *) {
 /*
 Purpose: Read the vertical scroll bar's current position.
 ORIGINAL: 0x005EE050
+// name      ?get_vert_pos@Win@@QAEHXZ
+// size      20 bytes
+// spans     0x005EE050-0x005EE064
+// prototype int (__thiscall ?get_vert_pos@Win@@QAEHXZ)(Win* this)
+// callers   0   call targets   0
 Return Value: The scroll's position, or 0 when the window has no vertical
               scroll bar. The null check is the original's, not a guard added
               here: it loads the pointer, tests it, and branches to `xor eax,
@@ -258,6 +288,11 @@ int __fastcall win_get_vert_pos_redirect(Win *self, void *) {
 /*
 Purpose: Read the horizontal scroll bar's current position.
 ORIGINAL: 0x005EE090
+// name      ?get_horz_pos@Win@@QAEHXZ
+// size      20 bytes
+// spans     0x005EE090-0x005EE0A4
+// prototype int (__thiscall ?get_horz_pos@Win@@QAEHXZ)(Win* this)
+// callers   0   call targets   0
 Return Value: The scroll's position, or 0 when the window has no horizontal
               scroll bar. Identical to get_vert_pos above but reading the
               other pointer; the two differ only in which member they load,
@@ -275,6 +310,11 @@ int __fastcall win_get_horz_pos_redirect(Win *self, void *) {
 /*
 Purpose: Set vertical scrollbar paging when a scrollbar is attached.
 ORIGINAL: 0x005EE0F0
+// name      ?set_vert_paging@Win@@QAEXH@Z
+// size      23 bytes
+// spans     0x005EE0F0-0x005EE107
+// prototype void (__thiscall ?set_vert_paging@Win@@QAEXH@Z)(Win* this, int)
+// callers   2   call targets   0
 Status: Complete
 */
 void Win::set_vert_paging(int paging) {
@@ -286,6 +326,11 @@ void Win::set_vert_paging(int paging) {
 /*
 Purpose: Set horizontal scrollbar paging when a scrollbar is attached.
 ORIGINAL: 0x005EE110
+// name      ?set_horz_paging@Win@@QAEXH@Z
+// size      23 bytes
+// spans     0x005EE110-0x005EE127
+// prototype void (__thiscall ?set_horz_paging@Win@@QAEXH@Z)(Win* this, int)
+// callers   2   call targets   0
 Status: Complete
 */
 void Win::set_horz_paging(int paging) {
@@ -318,6 +363,11 @@ void __fastcall win_set_horz_paging_redirect(Win *self, void *, int paging) {
 /*
 Purpose: Determine whether a point is inside a rectangle using Win32 edge semantics.
 ORIGINAL: 0x005FA7E0
+// name      ?in_box@@YAHHHPAURECT@@@Z
+// size      52 bytes
+// spans     0x005FA7E0-0x005FA814
+// prototype 
+// callers   24   call targets   0
 Return Value: Is the point inside the rectangle? true/false
 Status: Complete
 */
@@ -335,6 +385,11 @@ Purpose: Slide a rectangle by a delta on each axis, the wrapping counterpart of
          the load at 0x005F8670, but that is a residue and not a value: the
          one caller clobbers EAX two instructions later at 0x005EDC95.
 ORIGINAL: 0x005F8670
+// name      sub_5f8670
+// size      43 bytes
+// spans     0x005F8670-0x005F869B
+// prototype 
+// callers   1   call targets   0
 Status: Complete
 Verification note: the original writes left, right, top, bottom in that
          interleaved order, reloading the y delta between the right and top
@@ -356,6 +411,11 @@ void __cdecl offset_rect(RECT *rect, int dx, int dy) {
 /*
 Purpose: Build a rectangle from an origin and dimensions using wrapping coordinates.
 ORIGINAL: 0x005F86C0
+// name      sub_5f86c0
+// size      38 bytes
+// spans     0x005F86C0-0x005F86E6
+// prototype 
+// callers   2   call targets   0
 Status: Complete
 */
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height) {
@@ -372,6 +432,11 @@ RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height) {
 /*
 Purpose: Determine whether a point is inside an origin-and-dimensions rectangle.
 ORIGINAL: 0x005FA7A0
+// name      ?in_box@@YAHHHHHHH@Z
+// size      59 bytes
+// spans     0x005FA7A0-0x005FA7DB
+// prototype 
+// callers   1   call targets   0
 Status: Complete
 */
 int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
@@ -391,6 +456,11 @@ int __cdecl in_box(int x, int y, int left, int top, int width, int height) {
 /*
 Purpose: Compute a rectangle center with wrapping subtraction and truncation toward zero.
 ORIGINAL: 0x004BA830
+// name      ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z
+// size      51 bytes
+// spans     0x004BA830-0x004BA863
+// prototype void (__thiscall ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z)(TutWin* this, RECT*, int*, int*)
+// callers   0   call targets   0
 Status: Complete
 */
 int __cdecl rect_center(RECT *rect, int *x, int *y) {
@@ -416,6 +486,11 @@ int __fastcall tutwin_rect_center_redirect(
 Purpose: Report whether this window holds the dialog focus, either directly or
          as its parent's current focus target.
 ORIGINAL: 0x005F2CA0
+// name      ?is_dialog_focus@Win@@QAEHXZ
+// size      63 bytes
+// spans     0x005F2CA0-0x005F2CDF
+// prototype int (__thiscall ?is_dialog_focus@Win@@QAEHXZ)(Win* this)
+// callers   7   call targets   0
 Return Value: Holds focus (1); does not (0)
 Status: Complete
 */
@@ -466,6 +541,11 @@ void *win_surface_slot(void *object, size_t offset) {
 /*
 Purpose: Acquire the process-wide device context, taking one reference.
 ORIGINAL: 0x005EC690
+// name      ?get_hdc@Win@@QAGPAUHDC__@@XZ
+// size      81 bytes
+// spans     0x005EC690-0x005EC6E1
+// prototype 
+// callers   7   call targets   0
 Return Value: The shared device context, or zero when none could be obtained
 Status: Complete
 */
@@ -495,6 +575,11 @@ HDC Win::get_hdc() {
 Purpose: Drop one reference to the process-wide device context, releasing it
          once the last reference is gone.
 ORIGINAL: 0x005EC6F0
+// name      ?release_hdc@Win@@QAGXXZ
+// size      76 bytes
+// spans     0x005EC6F0-0x005EC73C
+// prototype 
+// callers   9   call targets   0
 Status: Complete
 Verification note: the two surviving mutants both concern the ReleaseDC call
 on the no-surface path. It is a real GDI import whose effect no fixture can
@@ -537,6 +622,11 @@ func_win_update_cursor *WinUpdateCursorOriginal =
 /*
 Purpose: Select a system cursor by name and refresh the displayed cursor.
 ORIGINAL: 0x005EC7C0
+// name      ?set_cursor@Win@@QAEHH@Z
+// size      62 bytes
+// spans     0x005EC7C0-0x005EC7FE
+// prototype int (__thiscall ?set_cursor@Win@@QAEHH@Z)(Win* this, int nCursorName)
+// callers   13   call targets   1
 Return Value: No errors (0); name outside the accepted range (3)
 Status: Complete with a temporary dependency on the cursor refresh
 Verification note: ordering the cursor_handle_ clear against the refresh is
@@ -571,6 +661,11 @@ func_win_flip *WinFlipOriginal = (func_win_flip *)0x005EFD20;
 /*
 Purpose: Dismiss any pending bubble text and repaint the area it covered.
 ORIGINAL: 0x005F8500
+// name      ?clear_bubble_text@Win@@QAGXXZ
+// size      47 bytes
+// spans     0x005F8500-0x005F852F
+// prototype 
+// callers   15   call targets   2
 Status: Complete with temporary dependencies on the screen refresh and flip
 */
 void Win::clear_bubble_text() {
@@ -592,6 +687,11 @@ void __cdecl win_clear_bubble_text_redirect() {
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
 ORIGINAL: 0x005EC680 BYTE_EXACT
+// name      ?UNK1@Win@@QAEHHHHHHHHHH@Z
+// size      5 bytes
+// spans     0x005EC680-0x005EC685
+// prototype int (__thiscall ?UNK1@Win@@QAEHHHHHHHHHH@Z)(Win* this, int, int, int, int, int, int, int, int, int)
+// callers   1   call targets   0
 Status: Complete
 */
 int Win::UNK1(int, int, int, int, int, int, int, int, int) {
@@ -607,6 +707,11 @@ int __fastcall win_unk1_redirect(
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
 ORIGINAL: 0x005ED7C0 BYTE_EXACT
+// name      ?UNK5@Win@@QAEHXZ
+// size      3 bytes
+// spans     0x005ED7C0-0x005ED7C3
+// prototype int (__thiscall ?UNK5@Win@@QAEHXZ)(Win* this)
+// callers   0   call targets   0
 Status: Complete
 */
 int Win::UNK5() {
@@ -622,6 +727,11 @@ int __fastcall win_unk5_redirect(
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
 ORIGINAL: 0x005EDFE0 BYTE_EXACT
+// name      ?UNK6@Win@@QAEHH@Z
+// size      5 bytes
+// spans     0x005EDFE0-0x005EDFE5
+// prototype int (__thiscall ?UNK6@Win@@QAEHH@Z)(Win* this, int)
+// callers   0   call targets   0
 Status: Complete
 */
 int Win::UNK6(int) {
@@ -637,6 +747,11 @@ int __fastcall win_unk6_redirect(
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
 ORIGINAL: 0x005F6A30 BYTE_EXACT
+// name      ?on_set_cursor@Win@@QAEHPAXII@Z
+// size      8 bytes
+// spans     0x005F6A30-0x005F6A38
+// prototype int (__thiscall ?on_set_cursor@Win@@QAEHPAXII@Z)(Win* this, void*, unsigned int, unsigned int)
+// callers   0   call targets   0
 Status: Complete
 */
 int Win::on_set_cursor(void *, unsigned int, unsigned int) {
@@ -653,6 +768,11 @@ int *WinDefaultFocus = reinterpret_cast<int *>(0x009B7AEC);
 /*
 Purpose: Record the window that receives focus by default.
 ORIGINAL: 0x005F2CE0
+// name      ?set_def_focus@Win@@QAAXPAUWin@@@Z
+// size      10 bytes
+// spans     0x005F2CE0-0x005F2CEA
+// prototype 
+// callers   3   call targets   0
 Status: Complete
 */
 void Win::set_def_focus(int focus) {
@@ -666,6 +786,11 @@ void __cdecl win_set_def_focus_redirect(int focus) {
 /*
 Purpose: Publish a value into both attached scrollbars' first shared slot.
 ORIGINAL: 0x005EE130
+// name      ?UNK8@Win@@QAEXH@Z
+// size      39 bytes
+// spans     0x005EE130-0x005EE157
+// prototype void (__thiscall ?UNK8@Win@@QAEXH@Z)(Win* this, int)
+// callers   0   call targets   0
 Status: Complete
 */
 void Win::UNK8(int value) {
@@ -682,6 +807,11 @@ void Win::UNK8(int value) {
 /*
 Purpose: Publish a value into both attached scrollbars' second shared slot.
 ORIGINAL: 0x005EE160
+// name      ?UNK9@Win@@QAEXH@Z
+// size      39 bytes
+// spans     0x005EE160-0x005EE187
+// prototype void (__thiscall ?UNK9@Win@@QAEXH@Z)(Win* this, int)
+// callers   0   call targets   0
 Status: Complete
 */
 void Win::UNK9(int value) {
@@ -704,6 +834,11 @@ void __fastcall win_unk9_redirect(Win *self, void *, int value) {
 /*
 Purpose: Reset the window clip; the legacy implementation is a bare return.
 ORIGINAL: 0x005EE020 BYTE_EXACT
+// name      ?reset_window_clip@Win@@QAEXXZ
+// size      1 bytes
+// spans     0x005EE020-0x005EE021
+// prototype void (__thiscall ?reset_window_clip@Win@@QAEXXZ)(Win* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -717,6 +852,11 @@ void __fastcall win_reset_window_clip_redirect(Win *self, void *) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x005F54B0 BYTE_EXACT
+// name      ?on_move@Win@@QAEXHH@Z
+// size      3 bytes
+// spans     0x005F54B0-0x005F54B3
+// prototype void (__thiscall ?on_move@Win@@QAEXHH@Z)(Win* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -730,6 +870,11 @@ void __fastcall win_on_move_redirect(Win *self, void *, int a1, int a2) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x005F54C0 BYTE_EXACT
+// name      ?on_size@Win@@QAEXIHH@Z
+// size      3 bytes
+// spans     0x005F54C0-0x005F54C3
+// prototype void (__thiscall ?on_size@Win@@QAEXIHH@Z)(Win* this, unsigned int, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -743,6 +888,11 @@ void __fastcall win_on_size_redirect(Win *self, void *, unsigned int a1, int a2,
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x005F54D0 BYTE_EXACT
+// name      ?on_size_nc@Win@@QAEXIHH@Z
+// size      3 bytes
+// spans     0x005F54D0-0x005F54D3
+// prototype void (__thiscall ?on_size_nc@Win@@QAEXIHH@Z)(Win* this, unsigned int, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -756,6 +906,11 @@ void __fastcall win_on_size_nc_redirect(Win *self, void *, unsigned int a1, int 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x005F6A40 BYTE_EXACT
+// name      ?on_sys_command@Win@@QAEHIHH@Z
+// size      3 bytes
+// spans     0x005F6A40-0x005F6A43
+// prototype int (__thiscall ?on_sys_command@Win@@QAEHIHH@Z)(Win* this, unsigned int, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -781,6 +936,11 @@ Purpose: Bring this window's palette into step with the active one, but only
          when it has fallen behind - set_active_window is skipped when the
          cached generation at 0x184 already matches the palette's at 0x400.
 ORIGINAL: 0x005F2C60
+// name      ?sync_palette@Win@@QAEXXZ
+// size      52 bytes
+// spans     0x005F2C60-0x005F2C94
+// prototype void (__thiscall ?sync_palette@Win@@QAEXXZ)(Win* this)
+// callers   5   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -807,6 +967,11 @@ void __fastcall win_sync_palette_redirect(Win *self, void *) {
 Purpose: Forward a scrollbar position to the vertical Scroll the window owns,
          doing nothing when that scrollbar is absent.
 ORIGINAL: 0x005EE030 BYTE_EXACT
+// name      ?set_vert_pos@Win@@QAEXH@Z
+// size      23 bytes
+// spans     0x005EE030-0x005EE047
+// prototype void (__thiscall ?set_vert_pos@Win@@QAEXH@Z)(Win* this, int)
+// callers   3   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -820,6 +985,11 @@ void Win::set_vert_pos(int position) {
 Purpose: Forward a scrollbar position to the horizontal Scroll the window owns,
          doing nothing when that scrollbar is absent.
 ORIGINAL: 0x005EE070 BYTE_EXACT
+// name      ?set_horz_pos@Win@@QAEXH@Z
+// size      23 bytes
+// spans     0x005EE070-0x005EE087
+// prototype void (__thiscall ?set_horz_pos@Win@@QAEXH@Z)(Win* this, int)
+// callers   3   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -833,6 +1003,11 @@ void Win::set_horz_pos(int position) {
 Purpose: Forward a scrollbar range to the vertical Scroll the window owns,
          doing nothing when that scrollbar is absent.
 ORIGINAL: 0x005EE0B0 BYTE_EXACT
+// name      ?set_vert_range@Win@@QAEXHH@Z
+// size      28 bytes
+// spans     0x005EE0B0-0x005EE0CC
+// prototype void (__thiscall ?set_vert_range@Win@@QAEXHH@Z)(Win* this, int, int)
+// callers   2   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -846,6 +1021,11 @@ void Win::set_vert_range(int minimum, int maximum) {
 Purpose: Forward a scrollbar range to the horizontal Scroll the window owns,
          doing nothing when that scrollbar is absent.
 ORIGINAL: 0x005EE0D0 BYTE_EXACT
+// name      ?set_horz_range@Win@@QAEXHH@Z
+// size      28 bytes
+// spans     0x005EE0D0-0x005EE0EC
+// prototype void (__thiscall ?set_horz_range@Win@@QAEXHH@Z)(Win* this, int, int)
+// callers   2   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -875,6 +1055,11 @@ void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int 
 Purpose: Window cursor-set hook; the legacy implementation returns 1 to report
          it handled the message and does nothing else.
 ORIGINAL: 0x005F2670 BYTE_EXACT
+// name      ?OnSetCursor@Win@@QAAHPAXPAXII@Z
+// size      6 bytes
+// spans     0x005F2670-0x005F2676
+// prototype 
+// callers   1   call targets   0
 Return Value: 1, always
 Status: Complete
 */
@@ -891,6 +1076,11 @@ Purpose: Report whether a value is present in the window's id table - the
          array at 0x1A4 with its count at 0x3FC. A zero value and an empty
          table both report absent.
 ORIGINAL: 0x005ECE80
+// name      ?UNK3@Win@@QAEHH@Z
+// size      54 bytes
+// spans     0x005ECE80-0x005ECEB6
+// prototype int (__thiscall ?UNK3@Win@@QAEHH@Z)(Win* this, int)
+// callers   0   call targets   0
 Return Value: 1 when the value is in the table, 0 otherwise
 Status: Complete
 */
@@ -920,6 +1110,11 @@ Purpose: Report whether a window is anywhere below this one in the child
          tree, searching depth first. A direct child counts, and so does any
          descendant of one.
 ORIGINAL: 0x005ECE20
+// name      ?is_descendant@Win@@QAEHPAVWin@@@Z
+// size      83 bytes
+// spans     0x005ECE20-0x005ECE73
+// prototype int (__thiscall ?is_descendant@Win@@QAEHPAVWin@@@Z)(Win* this, Win*)
+// callers   4   call targets   1
 Return Value: 1 when the candidate is a descendant, 0 otherwise
 Status: Complete
 Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
@@ -966,6 +1161,11 @@ int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate) {
 
 /*
 ORIGINAL: 0x005F8530 BYTE_EXACT
+// name      ?on_mousewheel_down_vert@Win@@QAEXH@Z
+// size      23 bytes
+// spans     0x005F8530-0x005F8547
+// prototype void (__thiscall ?on_mousewheel_down_vert@Win@@QAEXH@Z)(Win* this, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void Win::on_mousewheel_down_vert(int a1) {
@@ -977,6 +1177,11 @@ void Win::on_mousewheel_down_vert(int a1) {
 
 /*
 ORIGINAL: 0x005F8590 BYTE_EXACT
+// name      ?on_mousewheel_up_horz@Win@@QAEXH@Z
+// size      23 bytes
+// spans     0x005F8590-0x005F85A7
+// prototype void (__thiscall ?on_mousewheel_up_horz@Win@@QAEXH@Z)(Win* this, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void Win::on_mousewheel_up_horz(int a1) {
@@ -990,6 +1195,11 @@ void Win::on_mousewheel_up_horz(int a1) {
 Purpose: Report the left mouse button state, honouring a swapped-buttons
          system setting.
 ORIGINAL: 0x005EC960 BYTE_EXACT
+// name      ?get_lbutton_state@Win@@QAEHXZ
+// size      27 bytes
+// spans     0x005EC960-0x005EC97B
+// prototype int (__thiscall ?get_lbutton_state@Win@@QAEHXZ)(Win* this)
+// callers   2   call targets   0
 Return Value: nonzero while the logical left button is down
 Status: Complete
 */
@@ -1005,6 +1215,11 @@ int Win::get_lbutton_state() {
 
 /*
 ORIGINAL: 0x005F8550 BYTE_EXACT
+// name      ?on_mousewheel_down_horz@Win@@QAEXH@Z
+// size      23 bytes
+// spans     0x005F8550-0x005F8567
+// prototype void (__thiscall ?on_mousewheel_down_horz@Win@@QAEXH@Z)(Win* this, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void Win::on_mousewheel_down_horz(int a1) {
@@ -1016,6 +1231,11 @@ void Win::on_mousewheel_down_horz(int a1) {
 
 /*
 ORIGINAL: 0x005F8570 BYTE_EXACT
+// name      ?on_mousewheel_up_vert@Win@@QAEXH@Z
+// size      23 bytes
+// spans     0x005F8570-0x005F8587
+// prototype void (__thiscall ?on_mousewheel_up_vert@Win@@QAEXH@Z)(Win* this, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void Win::on_mousewheel_up_vert(int a1) {

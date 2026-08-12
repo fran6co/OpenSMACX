@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00627480 BYTE_EXACT
+// name      ?pops@@YAHPADPADPADHPAUSprite@@HHP6AHXZ@Z
+// size      67 bytes
+// spans     0x00627480-0x006274C3
+// prototype 
+// callers   0   call targets   2
 // 0x00627480  ?pops@@YAHPADPADPADHPAUSprite@@HHP6AHXZ@Z  ->  ?pops@@YAHPAD00HPAUSprite@@HHP6AHXZ@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

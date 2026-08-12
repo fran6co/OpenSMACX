@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0063CF00 BYTE_EXACT
+// name      deflateInit_
+// size      37 bytes
+// spans     0x0063CF00-0x0063CF25
+// prototype 
+// callers   1   call targets   1
 // 0x0063CF00  deflateInit_  ->  _deflateInit_
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

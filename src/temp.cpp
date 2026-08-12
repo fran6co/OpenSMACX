@@ -699,6 +699,11 @@ uint32_t *MsgStatus = (uint32_t *)0x009B7B9C;
 /*
 Purpose: Process non-input related message.
 ORIGINAL: 0x005FCA30
+// name      ?do_non_input@@YAXXZ
+// size      228 bytes
+// spans     0x005FCA30-0x005FCB14
+// prototype 
+// callers   12   call targets   3
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
@@ -730,6 +735,11 @@ BOOL __cdecl do_non_input() {
 /*
 Purpose: Process all non-input related messages.
 ORIGINAL: 0x005FCB20
+// name      ?do_all_non_input@@YAXXZ
+// size      58 bytes
+// spans     0x005FCB20-0x005FCB5A
+// prototype 
+// callers   27   call targets   2
 Return Value: n/a
 Status: Complete - testing
 */
@@ -745,6 +755,11 @@ void __cdecl do_all_non_input() {
 /*
 Purpose: Process draw related message.
 ORIGINAL: 0x005FCB60
+// name      ?do_draw@@YAHXZ
+// size      76 bytes
+// spans     0x005FCB60-0x005FCBAC
+// prototype 
+// callers   1   call targets   3
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
@@ -764,6 +779,11 @@ BOOL __cdecl do_draw() {
 /*
 Purpose: Process all draw related messages.
 ORIGINAL: 0x005FCBB0
+// name      ?do_all_draws@@YAXXZ
+// size      111 bytes
+// spans     0x005FCBB0-0x005FCC1F
+// prototype 
+// callers   57   call targets   3
 Return Value: n/a
 Status: Complete - testing
 */
@@ -777,6 +797,11 @@ void __cdecl do_all_draws() {
 /*
 Purpose: Process keyboard related message.
 ORIGINAL: 0x005FCC20
+// name      ?do_keyboard@@YAXXZ
+// size      77 bytes
+// spans     0x005FCC20-0x005FCC6D
+// prototype 
+// callers   0   call targets   2
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
@@ -795,6 +820,11 @@ BOOL __cdecl do_keyboard() {
 /*
 Purpose: Process all keyboard related messages.
 ORIGINAL: 0x005FCC70
+// name      ?do_all_keyboard@@YAXXZ
+// size      117 bytes
+// spans     0x005FCC70-0x005FCCE5
+// prototype 
+// callers   0   call targets   3
 Return Value: n/a
 Status: Complete - testing
 */

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0055B820 BYTE_EXACT
+// name      ?agenda_off@@YAXHHH@Z
+// size      80 bytes
+// spans     0x0055B820-0x0055B870
+// prototype 
+// callers   5   call targets   0
 // 0x0055B820  ?agenda_off@@YAXHHH@Z  ->  ?agenda_off@@YAXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

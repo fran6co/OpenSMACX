@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00646855 BYTE_EXACT
+// name      _fgetc
+// size      49 bytes
+// spans     0x00646855-0x00646886
+// prototype 
+// callers   1   call targets   3
 // 0x00646855  _fgetc  ->  _fgetc
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

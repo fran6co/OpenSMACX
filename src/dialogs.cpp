@@ -13,6 +13,11 @@
 /*
 Purpose: Close the dialog manager; the legacy implementation is intentionally empty.
 ORIGINAL: 0x00612960 BYTE_EXACT
+// name      ?close@Dialogs@@QAEXXZ
+// size      1 bytes
+// spans     0x00612960-0x00612961
+// prototype void (__thiscall ?close@Dialogs@@QAEXXZ)(Dialogs* this)
+// callers   20   call targets   0
 Return Value: n/a
 Status: Complete
 */

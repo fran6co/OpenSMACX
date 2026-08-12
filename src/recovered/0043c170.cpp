@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0043C170 BYTE_EXACT
+// name      ?timer_function@DesignWin@@QAAXH@Z
+// size      43 bytes
+// spans     0x0043C170-0x0043C19B
+// prototype 
+// callers   0   call targets   2
 // 0x0043C170  ?timer_function@DesignWin@@QAAXH@Z  ->  ?timer_function@DesignWin@@QAAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004474E0 BYTE_EXACT
+// name      ?new_base@MAmbience@@QAEXXZ
+// size      39 bytes
+// spans     0x004474E0-0x00447507
+// prototype void (__thiscall ?new_base@MAmbience@@QAEXXZ)(MAmbience* this)
+// callers   0   call targets   0
 // 0x004474E0  ?new_base@MAmbience@@QAEXXZ  ->  ?new_base@MAmbience@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

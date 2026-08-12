@@ -235,6 +235,11 @@ func_adjustor_v_ii SpriteBoxOnRightUpTarget =
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::dtor expects, then forward unchanged.
 ORIGINAL: 0x00406F50
+// name      ??1thunk1_RadioButton@@QAE@H@Z
+// size      8 bytes
+// spans     0x00406F50-0x00406F58
+// prototype void (__thiscall ??1thunk1_RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -249,6 +254,11 @@ void __fastcall adjust_radio_button1_dtor(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x00406FF0
+// name      ?on_redraw@thunk1_RadioButton@@QAEXXZ
+// size      8 bytes
+// spans     0x00406FF0-0x00406FF8
+// prototype void (__thiscall ?on_redraw@thunk1_RadioButton@@QAEXXZ)(RadioButton* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -263,6 +273,11 @@ void __fastcall adjust_radio_button1_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_mouse_move expects, then forward unchanged.
 ORIGINAL: 0x00407000
+// name      ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407000-0x00407008
+// prototype void (__thiscall ?on_mouse_move@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -278,6 +293,11 @@ void __fastcall adjust_radio_button1_on_mouse_move(void *self, void *,
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_mouse_leave expects, then forward unchanged.
 ORIGINAL: 0x00407010
+// name      ?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407010-0x00407018
+// prototype void (__thiscall ?on_mouse_leave@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -293,6 +313,11 @@ void __fastcall adjust_radio_button1_on_mouse_leave(void *self, void *,
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_left_down expects, then forward unchanged.
 ORIGINAL: 0x00407020
+// name      ?on_left_down@thunk1_RadioButton@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407020-0x00407028
+// prototype void (__thiscall ?on_left_down@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -308,6 +333,11 @@ void __fastcall adjust_radio_button1_on_left_down(void *self, void *,
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_key_down expects, then forward unchanged.
 ORIGINAL: 0x00407030
+// name      ?on_key_down@thunk1_RadioButton@@QAEHH@Z
+// size      8 bytes
+// spans     0x00407030-0x00407038
+// prototype int (__thiscall ?on_key_down@thunk1_RadioButton@@QAEHH@Z)(RadioButton* this, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -322,6 +352,11 @@ int __fastcall adjust_radio_button1_on_key_down(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_left_double_click expects, then forward unchanged.
 ORIGINAL: 0x00407040
+// name      ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407040-0x00407048
+// prototype void (__thiscall ?on_left_double_click@thunk1_RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -337,6 +372,11 @@ void __fastcall adjust_radio_button1_on_left_double_click(void *self, void *,
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::on_dialog_focus expects, then forward unchanged.
 ORIGINAL: 0x00407050
+// name      ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z
+// size      8 bytes
+// spans     0x00407050-0x00407058
+// prototype void (__thiscall ?on_dialog_focus@thunk1_RadioButton@@QAEXH@Z)(RadioButton* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -352,6 +392,11 @@ void __fastcall adjust_radio_button1_on_dialog_focus(void *self, void *,
 Purpose: Adjust the receiver from RadioButton's thunk2 subobject to the one
          RadioButton::dtor expects, then forward unchanged.
 ORIGINAL: 0x00407060
+// name      ??1thunk2_RadioButton@@QAE@H@Z
+// size      17 bytes
+// spans     0x00407060-0x00407071
+// prototype void (__thiscall ??1thunk2_RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -366,6 +411,11 @@ void __fastcall adjust_radio_button2_dtor(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
          RadioButton::dtor expects, then forward unchanged.
 ORIGINAL: 0x00407080
+// name      ??1thunk3_RadioButton@@QAE@H@Z
+// size      14 bytes
+// spans     0x00407080-0x0040708E
+// prototype void (__thiscall ??1thunk3_RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -380,6 +430,11 @@ void __fastcall adjust_radio_button3_dtor(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
          RadioButton::attach expects, then forward unchanged.
 ORIGINAL: 0x00407090
+// name      ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z
+// size      8 bytes
+// spans     0x00407090-0x00407098
+// prototype int (__thiscall ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z)(RadioButton* this, GraphicWin*, int, int, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -395,6 +450,11 @@ int __fastcall adjust_radio_button1_attach(void *self, void *, void *arg0,
 Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
          RadioButton::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x004070A0
+// name      ?on_redraw@thunk3_RadioButton@@QAEXXZ
+// size      14 bytes
+// spans     0x004070A0-0x004070AE
+// prototype void (__thiscall ?on_redraw@thunk3_RadioButton@@QAEXXZ)(RadioButton* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -409,6 +469,11 @@ void __fastcall adjust_radio_button3_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::scalar_delete expects, then forward unchanged.
 ORIGINAL: 0x004070F0
+// name      ??_Gthunk1_Dialogs@@UAEPAXI@Z
+// size      8 bytes
+// spans     0x004070F0-0x004070F8
+// prototype void* (__thiscall ??_Gthunk1_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -424,6 +489,11 @@ void * __fastcall adjust_dialogs1_scalar_delete(void *self, void *,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_scroll_create expects, then forward unchanged.
 ORIGINAL: 0x00407150
+// name      ?on_scroll_create@thunk1_Dialogs@@QAEXXZ
+// size      8 bytes
+// spans     0x00407150-0x00407158
+// prototype void (__thiscall ?on_scroll_create@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -438,6 +508,11 @@ void __fastcall adjust_dialogs1_on_scroll_create(void *self, void *) {
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_scroll_delete expects, then forward unchanged.
 ORIGINAL: 0x00407160
+// name      ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z
+// size      8 bytes
+// spans     0x00407160-0x00407168
+// prototype int (__thiscall ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -453,6 +528,11 @@ int __fastcall adjust_dialogs1_on_scroll_delete(void *self, void *,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x00407170
+// name      ?on_redraw@thunk1_Dialogs@@QAEXXZ
+// size      8 bytes
+// spans     0x00407170-0x00407178
+// prototype void (__thiscall ?on_redraw@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -467,6 +547,11 @@ void __fastcall adjust_dialogs1_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_mousewheel expects, then forward unchanged.
 ORIGINAL: 0x00407180
+// name      ?on_mousewheel@thunk1_Dialogs@@QAEXH@Z
+// size      8 bytes
+// spans     0x00407180-0x00407188
+// prototype void (__thiscall ?on_mousewheel@thunk1_Dialogs@@QAEXH@Z)(Dialogs* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -481,6 +566,11 @@ void __fastcall adjust_dialogs1_on_mousewheel(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_mouse_move expects, then forward unchanged.
 ORIGINAL: 0x00407190
+// name      ?on_mouse_move@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407190-0x00407198
+// prototype void (__thiscall ?on_mouse_move@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -496,6 +586,11 @@ void __fastcall adjust_dialogs1_on_mouse_move(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_mouse_leave expects, then forward unchanged.
 ORIGINAL: 0x004071A0
+// name      ?on_mouse_leave@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004071A0-0x004071A8
+// prototype void (__thiscall ?on_mouse_leave@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -511,6 +606,11 @@ void __fastcall adjust_dialogs1_on_mouse_leave(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_left_click expects, then forward unchanged.
 ORIGINAL: 0x004071B0
+// name      ?on_left_click@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004071B0-0x004071B8
+// prototype void (__thiscall ?on_left_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -526,6 +626,11 @@ void __fastcall adjust_dialogs1_on_left_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_left_down expects, then forward unchanged.
 ORIGINAL: 0x004071C0
+// name      ?on_left_down@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004071C0-0x004071C8
+// prototype void (__thiscall ?on_left_down@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -541,6 +646,11 @@ void __fastcall adjust_dialogs1_on_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_left_up expects, then forward unchanged.
 ORIGINAL: 0x004071D0
+// name      ?on_left_up@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004071D0-0x004071D8
+// prototype void (__thiscall ?on_left_up@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -556,6 +666,11 @@ void __fastcall adjust_dialogs1_on_left_up(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_right_click expects, then forward unchanged.
 ORIGINAL: 0x004071E0
+// name      ?on_right_click@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004071E0-0x004071E8
+// prototype void (__thiscall ?on_right_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -571,6 +686,11 @@ void __fastcall adjust_dialogs1_on_right_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_right_down expects, then forward unchanged.
 ORIGINAL: 0x004071F0
+// name      ?on_right_down@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004071F0-0x004071F8
+// prototype void (__thiscall ?on_right_down@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -586,6 +706,11 @@ void __fastcall adjust_dialogs1_on_right_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_right_up expects, then forward unchanged.
 ORIGINAL: 0x00407200
+// name      ?on_right_up@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407200-0x00407208
+// prototype void (__thiscall ?on_right_up@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -601,6 +726,11 @@ void __fastcall adjust_dialogs1_on_right_up(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_key_down expects, then forward unchanged.
 ORIGINAL: 0x00407210
+// name      ?on_key_down@thunk1_Dialogs@@QAEHH@Z
+// size      8 bytes
+// spans     0x00407210-0x00407218
+// prototype int (__thiscall ?on_key_down@thunk1_Dialogs@@QAEHH@Z)(Dialogs* this, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -615,6 +745,11 @@ int __fastcall adjust_dialogs1_on_key_down(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_left_double_click expects, then forward unchanged.
 ORIGINAL: 0x00407220
+// name      ?on_left_double_click@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407220-0x00407228
+// prototype void (__thiscall ?on_left_double_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -630,6 +765,11 @@ void __fastcall adjust_dialogs1_on_left_double_click(void *self, void *,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_right_double_click expects, then forward unchanged.
 ORIGINAL: 0x00407230
+// name      ?on_right_double_click@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407230-0x00407238
+// prototype void (__thiscall ?on_right_double_click@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -645,6 +785,11 @@ void __fastcall adjust_dialogs1_on_right_double_click(void *self, void *,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_scrolled expects, then forward unchanged.
 ORIGINAL: 0x00407240
+// name      ?on_scrolled@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407240-0x00407248
+// prototype void (__thiscall ?on_scrolled@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -660,6 +805,11 @@ void __fastcall adjust_dialogs1_on_scrolled(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_scrolling expects, then forward unchanged.
 ORIGINAL: 0x00407250
+// name      ?on_scrolling@thunk1_Dialogs@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00407250-0x00407258
+// prototype void (__thiscall ?on_scrolling@thunk1_Dialogs@@QAEXHH@Z)(Dialogs* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -675,6 +825,11 @@ void __fastcall adjust_dialogs1_on_scrolling(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::on_dialog_focus expects, then forward unchanged.
 ORIGINAL: 0x00407260
+// name      ?on_dialog_focus@thunk1_Dialogs@@QAEXH@Z
+// size      8 bytes
+// spans     0x00407260-0x00407268
+// prototype void (__thiscall ?on_dialog_focus@thunk1_Dialogs@@QAEXH@Z)(Dialogs* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -689,6 +844,11 @@ void __fastcall adjust_dialogs1_on_dialog_focus(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::pass_dialog_focus expects, then forward unchanged.
 ORIGINAL: 0x00407270
+// name      ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ
+// size      8 bytes
+// spans     0x00407270-0x00407278
+// prototype void (__thiscall ?pass_dialog_focus@thunk1_Dialogs@@QAEXXZ)(Dialogs* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -703,6 +863,11 @@ void __fastcall adjust_dialogs1_pass_dialog_focus(void *self, void *) {
 Purpose: Adjust the receiver from Dialogs's thunk2 subobject to the one
          Dialogs::scalar_delete expects, then forward unchanged.
 ORIGINAL: 0x00407280
+// name      ??_Gthunk2_Dialogs@@UAEPAXI@Z
+// size      17 bytes
+// spans     0x00407280-0x00407291
+// prototype void* (__thiscall ??_Gthunk2_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -718,6 +883,11 @@ void * __fastcall adjust_dialogs2_scalar_delete(void *self, void *,
 Purpose: Adjust the receiver from Dialogs's thunk3 subobject to the one
          Dialogs::scalar_delete expects, then forward unchanged.
 ORIGINAL: 0x004072A0
+// name      ??_Gthunk3_Dialogs@@UAEPAXI@Z
+// size      14 bytes
+// spans     0x004072A0-0x004072AE
+// prototype void* (__thiscall ??_Gthunk3_Dialogs@@UAEPAXI@Z)(Dialogs* this, unsigned int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -733,6 +903,11 @@ void * __fastcall adjust_dialogs3_scalar_delete(void *self, void *,
 Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
          Dialogs::attach expects, then forward unchanged.
 ORIGINAL: 0x004072B0
+// name      ?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z
+// size      8 bytes
+// spans     0x004072B0-0x004072B8
+// prototype int (__thiscall ?attach@thunk1_Dialogs@@QAEHPAUGraphicWin@@HHH@Z)(Dialogs* this, GraphicWin*, int, int, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -748,6 +923,11 @@ int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
 Purpose: Adjust the receiver from Dialogs's thunk3 subobject to the one
          Dialogs::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x004072C0
+// name      ?on_redraw@thunk3_Dialogs@@QAEXXZ
+// size      14 bytes
+// spans     0x004072C0-0x004072CE
+// prototype void (__thiscall ?on_redraw@thunk3_Dialogs@@QAEXXZ)(Dialogs* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -762,6 +942,11 @@ void __fastcall adjust_dialogs3_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::scalar_delete expects, then forward unchanged.
 ORIGINAL: 0x00421820
+// name      ??_Gthunk1_MapWin@@UAEPAXI@Z
+// size      8 bytes
+// spans     0x00421820-0x00421828
+// prototype void* (__thiscall ??_Gthunk1_MapWin@@UAEPAXI@Z)(MapWin* this, unsigned int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -777,6 +962,11 @@ void * __fastcall adjust_map_win1_scalar_delete(void *self, void *,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_lose_mouse_capture expects, then forward unchanged.
 ORIGINAL: 0x00421870
+// name      ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ
+// size      8 bytes
+// spans     0x00421870-0x00421878
+// prototype void (__thiscall ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -791,6 +981,11 @@ void __fastcall adjust_map_win1_on_lose_mouse_capture(void *self, void *) {
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x00421880
+// name      ?on_redraw@thunk1_MapWin@@QAEXXZ
+// size      8 bytes
+// spans     0x00421880-0x00421888
+// prototype void (__thiscall ?on_redraw@thunk1_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -805,6 +1000,11 @@ void __fastcall adjust_map_win1_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_resize expects, then forward unchanged.
 ORIGINAL: 0x00421890
+// name      ?on_resize@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00421890-0x00421898
+// prototype void (__thiscall ?on_resize@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -820,6 +1020,11 @@ void __fastcall adjust_map_win1_on_resize(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_sys_close expects, then forward unchanged.
 ORIGINAL: 0x004218A0
+// name      ?on_sys_close@thunk1_MapWin@@QAEXXZ
+// size      8 bytes
+// spans     0x004218A0-0x004218A8
+// prototype void (__thiscall ?on_sys_close@thunk1_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -834,6 +1039,11 @@ void __fastcall adjust_map_win1_on_sys_close(void *self, void *) {
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_mouse_move expects, then forward unchanged.
 ORIGINAL: 0x004218B0
+// name      ?on_mouse_move@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004218B0-0x004218B8
+// prototype void (__thiscall ?on_mouse_move@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -849,6 +1059,11 @@ void __fastcall adjust_map_win1_on_mouse_move(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_left_click expects, then forward unchanged.
 ORIGINAL: 0x004218C0
+// name      ?on_left_click@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004218C0-0x004218C8
+// prototype void (__thiscall ?on_left_click@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -864,6 +1079,11 @@ void __fastcall adjust_map_win1_on_left_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_left_down expects, then forward unchanged.
 ORIGINAL: 0x004218D0
+// name      ?on_left_down@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004218D0-0x004218D8
+// prototype void (__thiscall ?on_left_down@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -879,6 +1099,11 @@ void __fastcall adjust_map_win1_on_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_left_up expects, then forward unchanged.
 ORIGINAL: 0x004218E0
+// name      ?on_left_up@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004218E0-0x004218E8
+// prototype void (__thiscall ?on_left_up@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -894,6 +1119,11 @@ void __fastcall adjust_map_win1_on_left_up(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_right_click expects, then forward unchanged.
 ORIGINAL: 0x004218F0
+// name      ?on_right_click@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x004218F0-0x004218F8
+// prototype void (__thiscall ?on_right_click@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -909,6 +1139,11 @@ void __fastcall adjust_map_win1_on_right_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_right_down expects, then forward unchanged.
 ORIGINAL: 0x00421900
+// name      ?on_right_down@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00421900-0x00421908
+// prototype void (__thiscall ?on_right_down@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -924,6 +1159,11 @@ void __fastcall adjust_map_win1_on_right_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_left_double_click expects, then forward unchanged.
 ORIGINAL: 0x00421910
+// name      ?on_left_double_click@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00421910-0x00421918
+// prototype void (__thiscall ?on_left_double_click@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -939,6 +1179,11 @@ void __fastcall adjust_map_win1_on_left_double_click(void *self, void *,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_nc_left_down expects, then forward unchanged.
 ORIGINAL: 0x00421920
+// name      ?on_nc_left_down@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00421920-0x00421928
+// prototype void (__thiscall ?on_nc_left_down@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -954,6 +1199,11 @@ void __fastcall adjust_map_win1_on_nc_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_button_clicked expects, then forward unchanged.
 ORIGINAL: 0x00421930
+// name      ?on_button_clicked@thunk1_MapWin@@QAEXH@Z
+// size      8 bytes
+// spans     0x00421930-0x00421938
+// prototype void (__thiscall ?on_button_clicked@thunk1_MapWin@@QAEXH@Z)(MapWin* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -969,6 +1219,11 @@ void __fastcall adjust_map_win1_on_button_clicked(void *self, void *,
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
          MapWin::on_nc_hittest expects, then forward unchanged.
 ORIGINAL: 0x00421940
+// name      ?on_nc_hittest@thunk1_MapWin@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00421940-0x00421948
+// prototype void (__thiscall ?on_nc_hittest@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -984,6 +1239,11 @@ void __fastcall adjust_map_win1_on_nc_hittest(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk2 subobject to the one
          MapWin::scalar_delete expects, then forward unchanged.
 ORIGINAL: 0x00421950
+// name      ??_Gthunk2_MapWin@@UAEPAXI@Z
+// size      17 bytes
+// spans     0x00421950-0x00421961
+// prototype void* (__thiscall ??_Gthunk2_MapWin@@UAEPAXI@Z)(MapWin* this, unsigned int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -999,6 +1259,11 @@ void * __fastcall adjust_map_win2_scalar_delete(void *self, void *,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_lose_mouse_capture expects, then forward unchanged.
 ORIGINAL: 0x0048BF60
+// name      ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ
+// size      14 bytes
+// spans     0x0048BF60-0x0048BF6E
+// prototype void (__thiscall ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1013,6 +1278,11 @@ void __fastcall adjust_map_win5_on_lose_mouse_capture(void *self, void *) {
 Purpose: Adjust the receiver from PlanWin's thunk1 subobject to the one
          PlanWin::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x0048BF70
+// name      ?on_redraw@thunk1_PlanWin@@QAEXXZ
+// size      8 bytes
+// spans     0x0048BF70-0x0048BF78
+// prototype void (__thiscall ?on_redraw@thunk1_PlanWin@@QAEXXZ)(PlanWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1027,6 +1297,11 @@ void __fastcall adjust_plan_win1_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_resize expects, then forward unchanged.
 ORIGINAL: 0x0048BF80
+// name      ?on_resize@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048BF80-0x0048BF8E
+// prototype void (__thiscall ?on_resize@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1042,6 +1317,11 @@ void __fastcall adjust_map_win5_on_resize(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_sys_close expects, then forward unchanged.
 ORIGINAL: 0x0048BF90
+// name      ?on_sys_close@thunk5_MapWin@@QAEXXZ
+// size      14 bytes
+// spans     0x0048BF90-0x0048BF9E
+// prototype void (__thiscall ?on_sys_close@thunk5_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1056,6 +1336,11 @@ void __fastcall adjust_map_win5_on_sys_close(void *self, void *) {
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_mouse_move expects, then forward unchanged.
 ORIGINAL: 0x0048BFA0
+// name      ?on_mouse_move@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048BFA0-0x0048BFAE
+// prototype void (__thiscall ?on_mouse_move@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1071,6 +1356,11 @@ void __fastcall adjust_map_win5_on_mouse_move(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_left_click expects, then forward unchanged.
 ORIGINAL: 0x0048BFB0
+// name      ?on_left_click@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048BFB0-0x0048BFBE
+// prototype void (__thiscall ?on_left_click@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1086,6 +1376,11 @@ void __fastcall adjust_map_win5_on_left_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_left_down expects, then forward unchanged.
 ORIGINAL: 0x0048BFC0
+// name      ?on_left_down@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048BFC0-0x0048BFCE
+// prototype void (__thiscall ?on_left_down@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1101,6 +1396,11 @@ void __fastcall adjust_map_win5_on_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_left_up expects, then forward unchanged.
 ORIGINAL: 0x0048BFD0
+// name      ?on_left_up@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048BFD0-0x0048BFDE
+// prototype void (__thiscall ?on_left_up@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1116,6 +1416,11 @@ void __fastcall adjust_map_win5_on_left_up(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_right_click expects, then forward unchanged.
 ORIGINAL: 0x0048BFE0
+// name      ?on_right_click@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048BFE0-0x0048BFEE
+// prototype void (__thiscall ?on_right_click@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1131,6 +1436,11 @@ void __fastcall adjust_map_win5_on_right_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_right_down expects, then forward unchanged.
 ORIGINAL: 0x0048BFF0
+// name      ?on_right_down@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048BFF0-0x0048BFFE
+// prototype void (__thiscall ?on_right_down@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1146,6 +1456,11 @@ void __fastcall adjust_map_win5_on_right_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_left_double_click expects, then forward unchanged.
 ORIGINAL: 0x0048C000
+// name      ?on_left_double_click@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048C000-0x0048C00E
+// prototype void (__thiscall ?on_left_double_click@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1161,6 +1476,11 @@ void __fastcall adjust_map_win5_on_left_double_click(void *self, void *,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_nc_left_down expects, then forward unchanged.
 ORIGINAL: 0x0048C010
+// name      ?on_nc_left_down@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048C010-0x0048C01E
+// prototype void (__thiscall ?on_nc_left_down@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1176,6 +1496,11 @@ void __fastcall adjust_map_win5_on_nc_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_button_clicked expects, then forward unchanged.
 ORIGINAL: 0x0048C020
+// name      ?on_button_clicked@thunk5_MapWin@@QAEXH@Z
+// size      14 bytes
+// spans     0x0048C020-0x0048C02E
+// prototype void (__thiscall ?on_button_clicked@thunk5_MapWin@@QAEXH@Z)(MapWin* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1191,6 +1516,11 @@ void __fastcall adjust_map_win5_on_button_clicked(void *self, void *,
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
          MapWin::on_nc_hittest expects, then forward unchanged.
 ORIGINAL: 0x0048C030
+// name      ?on_nc_hittest@thunk5_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0048C030-0x0048C03E
+// prototype void (__thiscall ?on_nc_hittest@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1206,6 +1536,11 @@ void __fastcall adjust_map_win5_on_nc_hittest(void *self, void *, int arg0,
 Purpose: Adjust the receiver from PlanWin's thunk2 subobject to the one
          PlanWin::scalar_delete expects, then forward unchanged.
 ORIGINAL: 0x0048C040
+// name      ??_Gthunk2_PlanWin@@UAEPAXI@Z
+// size      17 bytes
+// spans     0x0048C040-0x0048C051
+// prototype void* (__thiscall ??_Gthunk2_PlanWin@@UAEPAXI@Z)(PlanWin* this, unsigned int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1221,6 +1556,11 @@ void * __fastcall adjust_plan_win2_scalar_delete(void *self, void *,
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::scalar_delete expects, then forward unchanged.
 ORIGINAL: 0x0051DDE0
+// name      ??_Gthunk1_Console@@UAEPAXI@Z
+// size      8 bytes
+// spans     0x0051DDE0-0x0051DDE8
+// prototype void* (__thiscall ??_Gthunk1_Console@@UAEPAXI@Z)(Console* this, unsigned int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1236,6 +1576,11 @@ void * __fastcall adjust_console1_scalar_delete(void *self, void *,
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_lose_mouse_capture expects, then forward unchanged.
 ORIGINAL: 0x0051DE30
+// name      ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ
+// size      14 bytes
+// spans     0x0051DE30-0x0051DE3E
+// prototype void (__thiscall ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1250,6 +1595,11 @@ void __fastcall adjust_map_win4_on_lose_mouse_capture(void *self, void *) {
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x0051DE40
+// name      ?on_redraw@thunk4_MapWin@@QAEXXZ
+// size      14 bytes
+// spans     0x0051DE40-0x0051DE4E
+// prototype void (__thiscall ?on_redraw@thunk4_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1264,6 +1614,11 @@ void __fastcall adjust_map_win4_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_resize expects, then forward unchanged.
 ORIGINAL: 0x0051DE50
+// name      ?on_resize@thunk4_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0051DE50-0x0051DE5E
+// prototype void (__thiscall ?on_resize@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1279,6 +1634,11 @@ void __fastcall adjust_map_win4_on_resize(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_sys_close expects, then forward unchanged.
 ORIGINAL: 0x0051DE60
+// name      ?on_sys_close@thunk1_Console@@QAEXXZ
+// size      8 bytes
+// spans     0x0051DE60-0x0051DE68
+// prototype void (__thiscall ?on_sys_close@thunk1_Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1293,6 +1653,11 @@ void __fastcall adjust_console1_on_sys_close(void *self, void *) {
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_mouse_move expects, then forward unchanged.
 ORIGINAL: 0x0051DE70
+// name      ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0051DE70-0x0051DE7E
+// prototype void (__thiscall ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1308,6 +1673,11 @@ void __fastcall adjust_map_win4_on_mouse_move(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_left_click expects, then forward unchanged.
 ORIGINAL: 0x0051DE80
+// name      ?on_left_click@thunk4_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0051DE80-0x0051DE8E
+// prototype void (__thiscall ?on_left_click@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1323,6 +1693,11 @@ void __fastcall adjust_map_win4_on_left_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_left_down expects, then forward unchanged.
 ORIGINAL: 0x0051DE90
+// name      ?on_left_down@thunk4_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0051DE90-0x0051DE9E
+// prototype void (__thiscall ?on_left_down@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1338,6 +1713,11 @@ void __fastcall adjust_map_win4_on_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_left_up expects, then forward unchanged.
 ORIGINAL: 0x0051DEA0
+// name      ?on_left_up@thunk4_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0051DEA0-0x0051DEAE
+// prototype void (__thiscall ?on_left_up@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1353,6 +1733,11 @@ void __fastcall adjust_map_win4_on_left_up(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_right_click expects, then forward unchanged.
 ORIGINAL: 0x0051DEB0
+// name      ?on_right_click@thunk4_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0051DEB0-0x0051DEBE
+// prototype void (__thiscall ?on_right_click@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1368,6 +1753,11 @@ void __fastcall adjust_map_win4_on_right_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_right_down expects, then forward unchanged.
 ORIGINAL: 0x0051DEC0
+// name      ?on_right_down@thunk4_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0051DEC0-0x0051DECE
+// prototype void (__thiscall ?on_right_down@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1383,6 +1773,11 @@ void __fastcall adjust_map_win4_on_right_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_key_click expects, then forward unchanged.
 ORIGINAL: 0x0051DED0
+// name      ?on_key_click@thunk1_Console@@QAEHHH@Z
+// size      8 bytes
+// spans     0x0051DED0-0x0051DED8
+// prototype int (__thiscall ?on_key_click@thunk1_Console@@QAEHHH@Z)(Console* this, int, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1398,6 +1793,11 @@ int __fastcall adjust_console1_on_key_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_left_double_click expects, then forward unchanged.
 ORIGINAL: 0x0051DEE0
+// name      ?on_left_double_click@thunk4_MapWin@@QAEXHH@Z
+// size      14 bytes
+// spans     0x0051DEE0-0x0051DEEE
+// prototype void (__thiscall ?on_left_double_click@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1413,6 +1813,11 @@ void __fastcall adjust_map_win4_on_left_double_click(void *self, void *,
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_nc_mouse_move expects, then forward unchanged.
 ORIGINAL: 0x0051DEF0
+// name      ?on_nc_mouse_move@thunk1_Console@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0051DEF0-0x0051DEF8
+// prototype void (__thiscall ?on_nc_mouse_move@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1428,6 +1833,11 @@ void __fastcall adjust_console1_on_nc_mouse_move(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_nc_left_down expects, then forward unchanged.
 ORIGINAL: 0x0051DF00
+// name      ?on_nc_left_down@thunk1_Console@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0051DF00-0x0051DF08
+// prototype void (__thiscall ?on_nc_left_down@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1443,6 +1853,11 @@ void __fastcall adjust_console1_on_nc_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_nc_left_up expects, then forward unchanged.
 ORIGINAL: 0x0051DF10
+// name      ?on_nc_left_up@thunk1_Console@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0051DF10-0x0051DF18
+// prototype void (__thiscall ?on_nc_left_up@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1458,6 +1873,11 @@ void __fastcall adjust_console1_on_nc_left_up(void *self, void *, int arg0,
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
          MapWin::on_button_clicked expects, then forward unchanged.
 ORIGINAL: 0x0051DF20
+// name      ?on_button_clicked@thunk4_MapWin@@QAEXH@Z
+// size      14 bytes
+// spans     0x0051DF20-0x0051DF2E
+// prototype void (__thiscall ?on_button_clicked@thunk4_MapWin@@QAEXH@Z)(MapWin* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1473,6 +1893,11 @@ void __fastcall adjust_map_win4_on_button_clicked(void *self, void *,
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_post_redraw_nc_buffer expects, then forward unchanged.
 ORIGINAL: 0x0051DF30
+// name      ?on_post_redraw_nc_buffer@thunk1_Console@@QAEXPAUBuffer@@H@Z
+// size      8 bytes
+// spans     0x0051DF30-0x0051DF38
+// prototype void (__thiscall ?on_post_redraw_nc_buffer@thunk1_Console@@QAEXPAUBuffer@@H@Z)(Console* this, Buffer*, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1489,6 +1914,11 @@ void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one
          Console::on_nc_hittest expects, then forward unchanged.
 ORIGINAL: 0x0051DF40
+// name      ?on_nc_hittest@thunk1_Console@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0051DF40-0x0051DF48
+// prototype void (__thiscall ?on_nc_hittest@thunk1_Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1504,6 +1934,11 @@ void __fastcall adjust_console1_on_nc_hittest(void *self, void *, int arg0,
 Purpose: Adjust the receiver from Console's thunk2 subobject to the one
          Console::scalar_delete expects, then forward unchanged.
 ORIGINAL: 0x0051DF50
+// name      ??_Gthunk2_Console@@UAEPAXI@Z
+// size      17 bytes
+// spans     0x0051DF50-0x0051DF61
+// prototype void* (__thiscall ??_Gthunk2_Console@@UAEPAXI@Z)(Console* this, unsigned int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1519,6 +1954,11 @@ void * __fastcall adjust_console2_scalar_delete(void *self, void *,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x0060CF50
+// name      ?on_redraw@thunk1_ListBox@@QAEXXZ
+// size      8 bytes
+// spans     0x0060CF50-0x0060CF58
+// prototype void (__thiscall ?on_redraw@thunk1_ListBox@@QAEXXZ)(ListBox* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1533,6 +1973,11 @@ void __fastcall adjust_list_box1_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_mousewheel expects, then forward unchanged.
 ORIGINAL: 0x0060CF60
+// name      ?on_mousewheel@thunk1_ListBox@@QAEXH@Z
+// size      8 bytes
+// spans     0x0060CF60-0x0060CF68
+// prototype void (__thiscall ?on_mousewheel@thunk1_ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1547,6 +1992,11 @@ void __fastcall adjust_list_box1_on_mousewheel(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_mouse_move expects, then forward unchanged.
 ORIGINAL: 0x0060CF70
+// name      ?on_mouse_move@thunk1_ListBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060CF70-0x0060CF78
+// prototype void (__thiscall ?on_mouse_move@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1562,6 +2012,11 @@ void __fastcall adjust_list_box1_on_mouse_move(void *self, void *, int arg0,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_mouse_leave expects, then forward unchanged.
 ORIGINAL: 0x0060CF80
+// name      ?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060CF80-0x0060CF88
+// prototype void (__thiscall ?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1577,6 +2032,11 @@ void __fastcall adjust_list_box1_on_mouse_leave(void *self, void *, int arg0,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_left_down expects, then forward unchanged.
 ORIGINAL: 0x0060CF90
+// name      ?on_left_down@thunk1_ListBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060CF90-0x0060CF98
+// prototype void (__thiscall ?on_left_down@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1592,6 +2052,11 @@ void __fastcall adjust_list_box1_on_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_right_down expects, then forward unchanged.
 ORIGINAL: 0x0060CFA0
+// name      ?on_right_down@thunk1_ListBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060CFA0-0x0060CFA8
+// prototype void (__thiscall ?on_right_down@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1607,6 +2072,11 @@ void __fastcall adjust_list_box1_on_right_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_key_down expects, then forward unchanged.
 ORIGINAL: 0x0060CFB0
+// name      ?on_key_down@thunk1_ListBox@@QAEXH@Z
+// size      8 bytes
+// spans     0x0060CFB0-0x0060CFB8
+// prototype void (__thiscall ?on_key_down@thunk1_ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1621,6 +2091,11 @@ void __fastcall adjust_list_box1_on_key_down(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_left_double_click expects, then forward unchanged.
 ORIGINAL: 0x0060CFC0
+// name      ?on_left_double_click@thunk1_ListBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060CFC0-0x0060CFC8
+// prototype void (__thiscall ?on_left_double_click@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1636,6 +2111,11 @@ void __fastcall adjust_list_box1_on_left_double_click(void *self, void *,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_right_double_click expects, then forward unchanged.
 ORIGINAL: 0x0060CFD0
+// name      ?on_right_double_click@thunk1_ListBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060CFD0-0x0060CFD8
+// prototype void (__thiscall ?on_right_double_click@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1651,6 +2131,11 @@ void __fastcall adjust_list_box1_on_right_double_click(void *self, void *,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_scrolled expects, then forward unchanged.
 ORIGINAL: 0x0060CFE0
+// name      ?on_scrolled@thunk1_ListBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060CFE0-0x0060CFE8
+// prototype void (__thiscall ?on_scrolled@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1666,6 +2151,11 @@ void __fastcall adjust_list_box1_on_scrolled(void *self, void *, int arg0,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_scrolling expects, then forward unchanged.
 ORIGINAL: 0x0060CFF0
+// name      ?on_scrolling@thunk1_ListBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060CFF0-0x0060CFF8
+// prototype void (__thiscall ?on_scrolling@thunk1_ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1681,6 +2171,11 @@ void __fastcall adjust_list_box1_on_scrolling(void *self, void *, int arg0,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::on_dialog_focus expects, then forward unchanged.
 ORIGINAL: 0x0060D000
+// name      ?on_dialog_focus@thunk1_ListBox@@QAEXH@Z
+// size      8 bytes
+// spans     0x0060D000-0x0060D008
+// prototype void (__thiscall ?on_dialog_focus@thunk1_ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1696,6 +2191,11 @@ void __fastcall adjust_list_box1_on_dialog_focus(void *self, void *,
 Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
          ListBox::attach expects, then forward unchanged.
 ORIGINAL: 0x0060D040
+// name      ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z
+// size      8 bytes
+// spans     0x0060D040-0x0060D048
+// prototype int (__thiscall ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z)(ListBox* this, GraphicWin*, int, int, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1711,6 +2211,11 @@ int __fastcall adjust_list_box1_attach(void *self, void *, void *arg0,
 Purpose: Adjust the receiver from ListBox's thunk3 subobject to the one
          ListBox::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x0060D050
+// name      ?on_redraw@thunk3_ListBox@@QAEXXZ
+// size      14 bytes
+// spans     0x0060D050-0x0060D05E
+// prototype void (__thiscall ?on_redraw@thunk3_ListBox@@QAEXXZ)(ListBox* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1725,6 +2230,11 @@ void __fastcall adjust_list_box3_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x0060FE40
+// name      ?on_redraw@thunk1_CheckBox@@QAEXXZ
+// size      8 bytes
+// spans     0x0060FE40-0x0060FE48
+// prototype void (__thiscall ?on_redraw@thunk1_CheckBox@@QAEXXZ)(CheckBox* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1739,6 +2249,11 @@ void __fastcall adjust_check_box1_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_mouse_move expects, then forward unchanged.
 ORIGINAL: 0x0060FE50
+// name      ?on_mouse_move@thunk1_CheckBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060FE50-0x0060FE58
+// prototype void (__thiscall ?on_mouse_move@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1754,6 +2269,11 @@ void __fastcall adjust_check_box1_on_mouse_move(void *self, void *, int arg0,
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_mouse_leave expects, then forward unchanged.
 ORIGINAL: 0x0060FE60
+// name      ?on_mouse_leave@thunk1_CheckBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060FE60-0x0060FE68
+// prototype void (__thiscall ?on_mouse_leave@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1769,6 +2289,11 @@ void __fastcall adjust_check_box1_on_mouse_leave(void *self, void *, int arg0,
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_left_down expects, then forward unchanged.
 ORIGINAL: 0x0060FE70
+// name      ?on_left_down@thunk1_CheckBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060FE70-0x0060FE78
+// prototype void (__thiscall ?on_left_down@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1784,6 +2309,11 @@ void __fastcall adjust_check_box1_on_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_key_down expects, then forward unchanged.
 ORIGINAL: 0x0060FE80
+// name      ?on_key_down@thunk1_CheckBox@@QAEHH@Z
+// size      8 bytes
+// spans     0x0060FE80-0x0060FE88
+// prototype int (__thiscall ?on_key_down@thunk1_CheckBox@@QAEHH@Z)(CheckBox* this, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1798,6 +2328,11 @@ int __fastcall adjust_check_box1_on_key_down(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_left_double_click expects, then forward unchanged.
 ORIGINAL: 0x0060FE90
+// name      ?on_left_double_click@thunk1_CheckBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x0060FE90-0x0060FE98
+// prototype void (__thiscall ?on_left_double_click@thunk1_CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1813,6 +2348,11 @@ void __fastcall adjust_check_box1_on_left_double_click(void *self, void *,
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::on_dialog_focus expects, then forward unchanged.
 ORIGINAL: 0x0060FEA0
+// name      ?on_dialog_focus@thunk1_CheckBox@@QAEXH@Z
+// size      8 bytes
+// spans     0x0060FEA0-0x0060FEA8
+// prototype void (__thiscall ?on_dialog_focus@thunk1_CheckBox@@QAEXH@Z)(CheckBox* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1828,6 +2368,11 @@ void __fastcall adjust_check_box1_on_dialog_focus(void *self, void *,
 Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
          CheckBox::attach expects, then forward unchanged.
 ORIGINAL: 0x0060FEE0
+// name      ?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z
+// size      8 bytes
+// spans     0x0060FEE0-0x0060FEE8
+// prototype int (__thiscall ?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z)(CheckBox* this, GraphicWin*, int, int, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -1843,6 +2388,11 @@ int __fastcall adjust_check_box1_attach(void *self, void *, void *arg0,
 Purpose: Adjust the receiver from CheckBox's thunk3 subobject to the one
          CheckBox::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x0060FEF0
+// name      ?on_redraw@thunk3_CheckBox@@QAEXXZ
+// size      14 bytes
+// spans     0x0060FEF0-0x0060FEFE
+// prototype void (__thiscall ?on_redraw@thunk3_CheckBox@@QAEXXZ)(CheckBox* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1857,6 +2407,11 @@ void __fastcall adjust_check_box3_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x00611820
+// name      ?on_redraw@thunk1_SpriteBox@@QAEXXZ
+// size      8 bytes
+// spans     0x00611820-0x00611828
+// prototype void (__thiscall ?on_redraw@thunk1_SpriteBox@@QAEXXZ)(SpriteBox* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1871,6 +2426,11 @@ void __fastcall adjust_sprite_box1_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_mouse_move expects, then forward unchanged.
 ORIGINAL: 0x00611830
+// name      ?on_mouse_move@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00611830-0x00611838
+// prototype void (__thiscall ?on_mouse_move@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1886,6 +2446,11 @@ void __fastcall adjust_sprite_box1_on_mouse_move(void *self, void *, int arg0,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_mouse_leave expects, then forward unchanged.
 ORIGINAL: 0x00611840
+// name      ?on_mouse_leave@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00611840-0x00611848
+// prototype void (__thiscall ?on_mouse_leave@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1901,6 +2466,11 @@ void __fastcall adjust_sprite_box1_on_mouse_leave(void *self, void *,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_click expects, then forward unchanged.
 ORIGINAL: 0x00611850
+// name      ?on_left_click@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00611850-0x00611858
+// prototype void (__thiscall ?on_left_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1916,6 +2486,11 @@ void __fastcall adjust_sprite_box1_on_left_click(void *self, void *, int arg0,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_down expects, then forward unchanged.
 ORIGINAL: 0x00611860
+// name      ?on_left_down@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00611860-0x00611868
+// prototype void (__thiscall ?on_left_down@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1931,6 +2506,11 @@ void __fastcall adjust_sprite_box1_on_left_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_up expects, then forward unchanged.
 ORIGINAL: 0x00611870
+// name      ?on_left_up@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00611870-0x00611878
+// prototype void (__thiscall ?on_left_up@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1946,6 +2526,11 @@ void __fastcall adjust_sprite_box1_on_left_up(void *self, void *, int arg0,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_click expects, then forward unchanged.
 ORIGINAL: 0x00611880
+// name      ?on_right_click@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00611880-0x00611888
+// prototype void (__thiscall ?on_right_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1961,6 +2546,11 @@ void __fastcall adjust_sprite_box1_on_right_click(void *self, void *,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_down expects, then forward unchanged.
 ORIGINAL: 0x00611890
+// name      ?on_right_down@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x00611890-0x00611898
+// prototype void (__thiscall ?on_right_down@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1976,6 +2566,11 @@ void __fastcall adjust_sprite_box1_on_right_down(void *self, void *, int arg0,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_up expects, then forward unchanged.
 ORIGINAL: 0x006118A0
+// name      ?on_right_up@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x006118A0-0x006118A8
+// prototype void (__thiscall ?on_right_up@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -1991,6 +2586,11 @@ void __fastcall adjust_sprite_box1_on_right_up(void *self, void *, int arg0,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_key_down expects, then forward unchanged.
 ORIGINAL: 0x006118B0
+// name      ?on_key_down@thunk1_SpriteBox@@QAEHH@Z
+// size      8 bytes
+// spans     0x006118B0-0x006118B8
+// prototype int (__thiscall ?on_key_down@thunk1_SpriteBox@@QAEHH@Z)(SpriteBox* this, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2005,6 +2605,11 @@ int __fastcall adjust_sprite_box1_on_key_down(void *self, void *, int arg0) {
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_left_double_click expects, then forward unchanged.
 ORIGINAL: 0x006118C0
+// name      ?on_left_double_click@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x006118C0-0x006118C8
+// prototype void (__thiscall ?on_left_double_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -2020,6 +2625,11 @@ void __fastcall adjust_sprite_box1_on_left_double_click(void *self, void *,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_right_double_click expects, then forward unchanged.
 ORIGINAL: 0x006118D0
+// name      ?on_right_double_click@thunk1_SpriteBox@@QAEXHH@Z
+// size      8 bytes
+// spans     0x006118D0-0x006118D8
+// prototype void (__thiscall ?on_right_double_click@thunk1_SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -2035,6 +2645,11 @@ void __fastcall adjust_sprite_box1_on_right_double_click(void *self, void *,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::on_dialog_focus expects, then forward unchanged.
 ORIGINAL: 0x006118E0
+// name      ?on_dialog_focus@thunk1_SpriteBox@@QAEXH@Z
+// size      8 bytes
+// spans     0x006118E0-0x006118E8
+// prototype void (__thiscall ?on_dialog_focus@thunk1_SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -2050,6 +2665,11 @@ void __fastcall adjust_sprite_box1_on_dialog_focus(void *self, void *,
 Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
          SpriteBox::attach expects, then forward unchanged.
 ORIGINAL: 0x00611920
+// name      ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z
+// size      8 bytes
+// spans     0x00611920-0x00611928
+// prototype int (__thiscall ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z)(SpriteBox* this, GraphicWin*, int, int, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2065,6 +2685,11 @@ int __fastcall adjust_sprite_box1_attach(void *self, void *, void *arg0,
 Purpose: Adjust the receiver from SpriteBox's thunk3 subobject to the one
          SpriteBox::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x00611930
+// name      ?on_redraw@thunk3_SpriteBox@@QAEXXZ
+// size      14 bytes
+// spans     0x00611930-0x0061193E
+// prototype void (__thiscall ?on_redraw@thunk3_SpriteBox@@QAEXXZ)(SpriteBox* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -2079,6 +2704,11 @@ void __fastcall adjust_sprite_box3_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x006127B0
+// name      ?on_redraw@thunk1_EditGroup@@QAEXXZ
+// size      8 bytes
+// spans     0x006127B0-0x006127B8
+// prototype void (__thiscall ?on_redraw@thunk1_EditGroup@@QAEXXZ)(EditGroup* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -2093,6 +2723,11 @@ void __fastcall adjust_edit_group1_on_redraw(void *self, void *) {
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::on_dialog_focus expects, then forward unchanged.
 ORIGINAL: 0x006127C0
+// name      ?on_dialog_focus@thunk1_EditGroup@@QAEXH@Z
+// size      8 bytes
+// spans     0x006127C0-0x006127C8
+// prototype void (__thiscall ?on_dialog_focus@thunk1_EditGroup@@QAEXH@Z)(EditGroup* this, int)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -2108,6 +2743,11 @@ void __fastcall adjust_edit_group1_on_dialog_focus(void *self, void *,
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::pass_dialog_focus expects, then forward unchanged.
 ORIGINAL: 0x006127D0
+// name      ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ
+// size      8 bytes
+// spans     0x006127D0-0x006127D8
+// prototype void (__thiscall ?pass_dialog_focus@thunk1_EditGroup@@QAEXXZ)(EditGroup* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -2122,6 +2762,11 @@ void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
 Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
          EditGroup::attach expects, then forward unchanged.
 ORIGINAL: 0x00612810
+// name      ?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z
+// size      8 bytes
+// spans     0x00612810-0x00612818
+// prototype int (__thiscall ?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z)(EditGroup* this, GraphicWin*, int, int, int)
+// callers   0   call targets   0
 Return Value: the forwarded call's
 Status: Complete
 */
@@ -2137,6 +2782,11 @@ int __fastcall adjust_edit_group1_attach(void *self, void *, void *arg0,
 Purpose: Adjust the receiver from EditGroup's thunk3 subobject to the one
          EditGroup::on_redraw expects, then forward unchanged.
 ORIGINAL: 0x00612820
+// name      ?on_redraw@thunk3_EditGroup@@QAEXXZ
+// size      14 bytes
+// spans     0x00612820-0x0061282E
+// prototype void (__thiscall ?on_redraw@thunk3_EditGroup@@QAEXXZ)(EditGroup* this)
+// callers   0   call targets   0
 Return Value: n/a
 Status: Complete
 */

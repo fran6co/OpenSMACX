@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0064603F BYTE_EXACT
+// name      __fwrite
+// size      47 bytes
+// spans     0x0064603F-0x0064606E
+// prototype int (__cdecl __fwrite)(void* Str, size_t Size, size_t Count, FILE* File)
+// callers   11   call targets   3
 // 0x0064603F  __fwrite  ->  __fwrite
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

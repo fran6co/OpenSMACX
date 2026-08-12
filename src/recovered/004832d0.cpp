@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004832D0 BYTE_EXACT
+// name      ?string_callback@NetWin@@QAAXHH@Z
+// size      50 bytes
+// spans     0x004832D0-0x00483302
+// prototype 
+// callers   0   call targets   2
 // 0x004832D0  ?string_callback@NetWin@@QAAXHH@Z  ->  ?string_callback@NetWin@@QAAXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

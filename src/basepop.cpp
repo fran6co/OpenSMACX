@@ -24,6 +24,11 @@
 /*
 Purpose: Update either base-popup coordinate unless its keep-current sentinel is supplied.
 ORIGINAL: 0x00601B80 BYTE_EXACT
+// name      ?set_loc@BasePop@@QAEXHH@Z
+// size      37 bytes
+// spans     0x00601B80-0x00601BA5
+// prototype void (__thiscall ?set_loc@BasePop@@QAEXHH@Z)(BasePop* this, int, int)
+// callers   7   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -67,6 +72,11 @@ int publish_default_fonts(Font **slots, Font *const *fonts, size_t count) {
 /*
 Purpose: Set the default string fonts shared by every popup.
 ORIGINAL: 0x006048C0
+// name      ?set_def_string_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z
+// size      58 bytes
+// spans     0x006048C0-0x006048FA
+// prototype 
+// callers   5   call targets   0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -79,6 +89,11 @@ int BasePop::set_def_string_font(Font *font1, Font *font2, Font *font3,
 /*
 Purpose: Set the default button fonts shared by every popup.
 ORIGINAL: 0x006049C0
+// name      ?set_def_button_font@BasePop@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z
+// size      48 bytes
+// spans     0x006049C0-0x006049F0
+// prototype 
+// callers   5   call targets   0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -123,6 +138,11 @@ void store_colors(uint32_t *table, size_t stride, size_t tier,
 /*
 Purpose: Set default string colour tier 0 shared by every popup.
 ORIGINAL: 0x00604900
+// name      ?set_def_string_color@BasePop@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x00604900-0x00604927
+// prototype 
+// callers   3   call targets   0
 Status: Complete
 */
 void BasePop::set_def_string_color(int c1, int c2, int c3, int c4) {
@@ -136,6 +156,11 @@ void __cdecl base_pop_set_def_string_color_redirect(int c1, int c2, int c3, int 
 /*
 Purpose: Set default string colour tier 1 shared by every popup.
 ORIGINAL: 0x00604930
+// name      ?set_def_string_color2@BasePop@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x00604930-0x00604957
+// prototype 
+// callers   3   call targets   0
 Status: Complete
 */
 void BasePop::set_def_string_color2(int c1, int c2, int c3, int c4) {
@@ -149,6 +174,11 @@ void __cdecl base_pop_set_def_string_color2_redirect(int c1, int c2, int c3, int
 /*
 Purpose: Set default string colour tier 2 shared by every popup.
 ORIGINAL: 0x00604960
+// name      ?set_def_string_color3@BasePop@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x00604960-0x00604987
+// prototype 
+// callers   3   call targets   0
 Status: Complete
 */
 void BasePop::set_def_string_color3(int c1, int c2, int c3, int c4) {
@@ -162,6 +192,11 @@ void __cdecl base_pop_set_def_string_color3_redirect(int c1, int c2, int c3, int
 /*
 Purpose: Set default string colour tier 3 shared by every popup.
 ORIGINAL: 0x00604990
+// name      ?set_def_string_color_hyper@BasePop@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x00604990-0x006049B7
+// prototype 
+// callers   1   call targets   0
 Status: Complete
 */
 void BasePop::set_def_string_color_hyper(int c1, int c2, int c3, int c4) {
@@ -175,6 +210,11 @@ void __cdecl base_pop_set_def_string_color_hyper_redirect(int c1, int c2, int c3
 /*
 Purpose: Set default button colour tier 0 shared by every popup.
 ORIGINAL: 0x006049F0
+// name      ?set_def_button_color@BasePop@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x006049F0-0x00604A17
+// prototype 
+// callers   1   call targets   0
 Status: Complete
 */
 void BasePop::set_def_button_color(int c1, int c2, int c3, int c4) {
@@ -188,6 +228,11 @@ void __cdecl base_pop_set_def_button_color_redirect(int c1, int c2, int c3, int 
 /*
 Purpose: Set default button colour tier 1 shared by every popup.
 ORIGINAL: 0x00604A20
+// name      ?set_def_button_color2@BasePop@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x00604A20-0x00604A47
+// prototype 
+// callers   1   call targets   0
 Status: Complete
 */
 void BasePop::set_def_button_color2(int c1, int c2, int c3, int c4) {
@@ -201,6 +246,11 @@ void __cdecl base_pop_set_def_button_color2_redirect(int c1, int c2, int c3, int
 /*
 Purpose: Set default button colour tier 2 shared by every popup.
 ORIGINAL: 0x00604A50
+// name      ?set_def_button_color3@BasePop@@QAAXHHHH@Z
+// size      39 bytes
+// spans     0x00604A50-0x00604A77
+// prototype 
+// callers   1   call targets   0
 Status: Complete
 */
 void BasePop::set_def_button_color3(int c1, int c2, int c3, int c4) {
@@ -214,6 +264,11 @@ void __cdecl base_pop_set_def_button_color3_redirect(int c1, int c2, int c3, int
 /*
 Purpose: Set this popup's string color slots.
 ORIGINAL: 0x00604730 BYTE_EXACT
+// name      ?set_string_color@BasePop@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x00604730-0x0060475B
+// prototype void (__thiscall ?set_string_color@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)
+// callers   0   call targets   0
 Status: Complete
 */
 void BasePop::set_string_color(int c1, int c2, int c3, int c4) {
@@ -231,6 +286,11 @@ void __fastcall base_pop_set_string_color_redirect(
 /*
 Purpose: Set this popup's string color2 slots.
 ORIGINAL: 0x00604760 BYTE_EXACT
+// name      ?set_string_color2@BasePop@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x00604760-0x0060478B
+// prototype void (__thiscall ?set_string_color2@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)
+// callers   0   call targets   0
 Status: Complete
 */
 void BasePop::set_string_color2(int c1, int c2, int c3, int c4) {
@@ -248,6 +308,11 @@ void __fastcall base_pop_set_string_color2_redirect(
 /*
 Purpose: Set this popup's string color3 slots.
 ORIGINAL: 0x00604790 BYTE_EXACT
+// name      ?set_string_color3@BasePop@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x00604790-0x006047BB
+// prototype void (__thiscall ?set_string_color3@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)
+// callers   0   call targets   0
 Status: Complete
 */
 void BasePop::set_string_color3(int c1, int c2, int c3, int c4) {
@@ -265,6 +330,11 @@ void __fastcall base_pop_set_string_color3_redirect(
 /*
 Purpose: Set this popup's string color hyper slots.
 ORIGINAL: 0x006047C0 BYTE_EXACT
+// name      ?set_string_color_hyper@BasePop@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x006047C0-0x006047EB
+// prototype void (__thiscall ?set_string_color_hyper@BasePop@@QAEXHHHH@Z)(BasePop* this, int, int, int, int)
+// callers   0   call targets   0
 Status: Complete
 */
 void BasePop::set_string_color_hyper(int c1, int c2, int c3, int c4) {
@@ -282,6 +352,11 @@ void __fastcall base_pop_set_string_color_hyper_redirect(
 /*
 Purpose: Set this popup's button color slots.
 ORIGINAL: 0x00604830 BYTE_EXACT
+// name      ?set_button_color@BasePop@@QAEXDHHH@Z
+// size      43 bytes
+// spans     0x00604830-0x0060485B
+// prototype void (__thiscall ?set_button_color@BasePop@@QAEXDHHH@Z)(BasePop* this, int8, int, int, int)
+// callers   0   call targets   0
 Status: Complete
 Verification note: the first slot is a byte while the other three are dwords,
 which the decompiler renders as four indistinguishable stores. Writing a dword
@@ -302,6 +377,11 @@ void __fastcall base_pop_set_button_color_redirect(
 /*
 Purpose: Set this popup's button color2 slots.
 ORIGINAL: 0x00604860 BYTE_EXACT
+// name      ?set_button_color2@BasePop@@QAEXDHHH@Z
+// size      43 bytes
+// spans     0x00604860-0x0060488B
+// prototype void (__thiscall ?set_button_color2@BasePop@@QAEXDHHH@Z)(BasePop* this, int8, int, int, int)
+// callers   0   call targets   0
 Status: Complete
 Verification note: the first slot is a byte while the other three are dwords,
 which the decompiler renders as four indistinguishable stores. Writing a dword
@@ -322,6 +402,11 @@ void __fastcall base_pop_set_button_color2_redirect(
 /*
 Purpose: Set this popup's button color3 slots.
 ORIGINAL: 0x00604890 BYTE_EXACT
+// name      ?set_button_color3@BasePop@@QAEXDHHH@Z
+// size      43 bytes
+// spans     0x00604890-0x006048BB
+// prototype void (__thiscall ?set_button_color3@BasePop@@QAEXDHHH@Z)(BasePop* this, int8, int, int, int)
+// callers   0   call targets   0
 Status: Complete
 Verification note: the first slot is a byte while the other three are dwords,
 which the decompiler renders as four indistinguishable stores. Writing a dword
@@ -345,6 +430,11 @@ int *BasePopFalloutFlag = reinterpret_cast<int *>(0x009B8CFC);
 /*
 Purpose: Raise the fallout flag, but only while the gate is set.
 ORIGINAL: 0x00604A90
+// name      ?fallout@BasePop@@QAAXXZ
+// size      20 bytes
+// spans     0x00604A90-0x00604AA4
+// prototype 
+// callers   1   call targets   0
 Status: Complete
 */
 void BasePop::fallout() {
@@ -363,6 +453,11 @@ func_set_state_flag CheckBoxOriginalSetStateFlag =
 /*
 Purpose: Set the popup's embedded check box, at 0x2228, to the given state.
 ORIGINAL: 0x00601BB0
+// name      ?write_check@BasePop@@QAEXJ@Z
+// size      19 bytes
+// spans     0x00601BB0-0x00601BC3
+// prototype void (__thiscall ?write_check@BasePop@@QAEXJ@Z)(BasePop* this, int)
+// callers   6   call targets   1
 Return Value: n/a
 Status: Complete
 */
@@ -385,6 +480,11 @@ Purpose: Set the dialog width, scaled to three-halves in the high-resolution
          own vbtable exactly as the original does rather than at a hardcoded
          offset.
 ORIGINAL: 0x00601B20
+// name      ?set_width@BasePop@@QAEXH@Z
+// size      87 bytes
+// spans     0x00601B20-0x00601B77
+// prototype void (__thiscall ?set_width@BasePop@@QAEXH@Z)(BasePop* this, int)
+// callers   4   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -409,6 +509,11 @@ func_base_pop_exec BasePopExec = original_method<func_base_pop_exec>(0x00602600)
 /*
 Purpose: Run the popup modally with no completion callback.
 ORIGINAL: 0x005A5900
+// name      ?exec@BasePop@@QAEHXZ
+// size      10 bytes
+// spans     0x005A5900-0x005A590A
+// prototype int (__thiscall ?exec@BasePop@@QAEHXZ)(BasePop* this)
+// callers   1   call targets   1
 Return Value: the exec result
 Status: Complete
 */
@@ -419,6 +524,11 @@ int BasePop::exec() {
 /*
 Purpose: Run the popup modally with a completion callback.
 ORIGINAL: 0x00558FC0
+// name      ?exec@BasePop@@QAEHP6AHXZ@Z
+// size      18 bytes
+// spans     0x00558FC0-0x00558FD2
+// prototype int (__thiscall ?exec@BasePop@@QAEHP6AHXZ@Z)(BasePop* this, int (__cdecl *)())
+// callers   1   call targets   1
 Return Value: the exec result
 Status: Complete
 */
@@ -445,6 +555,11 @@ Purpose: Report whether the popup will accept a key click. Both this and
          clear. The arguments are ignored; the two differ only in how many they
          clean off the stack.
 ORIGINAL: 0x00604490 BYTE_EXACT
+// name      ?on_key_click@BasePop@@QAEHHH@Z
+// size      17 bytes
+// spans     0x00604490-0x006044A1
+// prototype int (__thiscall ?on_key_click@BasePop@@QAEHHH@Z)(BasePop* this, int, int)
+// callers   0   call targets   0
 Return Value: 1 when bit 14 of field_30A8_ is clear, 0 when it is set
 Status: Complete
 */
@@ -462,6 +577,11 @@ Purpose: As on_key_click above, over the same field and the same bit. Kept as
          separate function with a different stack cleanup and a delegation
          would change the instruction the caller returns to.
 ORIGINAL: 0x006044B0 BYTE_EXACT
+// name      ?on_key_up@BasePop@@QAEHH@Z
+// size      17 bytes
+// spans     0x006044B0-0x006044C1
+// prototype int (__thiscall ?on_key_up@BasePop@@QAEHH@Z)(BasePop* this, int)
+// callers   0   call targets   0
 Return Value: 1 when bit 14 of field_30A8_ is clear, 0 when it is set
 Status: Complete
 */
@@ -492,6 +612,11 @@ Purpose: Set or clear bit 0 of the flags word at offset 0x20 - set when the
          would state a relationship this function does not need and cannot
          confirm; the offset is the thing the original encodes.
 ORIGINAL: 0x00605180 BYTE_EXACT
+// name      ?UNK3@BasePop@@QAEXH@Z
+// size      27 bytes
+// spans     0x00605180-0x0060519B
+// prototype void (__thiscall ?UNK3@BasePop@@QAEXH@Z)(BasePop* this, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -513,6 +638,11 @@ void __fastcall base_pop_unk3_redirect(BasePop *self, void *, int a1) {
 Purpose: As UNK3 above, over the same flags word but bit 1 (`or al, 2` /
          `and al, 0xFD`).
 ORIGINAL: 0x006051A0 BYTE_EXACT
+// name      ?UNK4@BasePop@@QAEXH@Z
+// size      27 bytes
+// spans     0x006051A0-0x006051BB
+// prototype void (__thiscall ?UNK4@BasePop@@QAEXH@Z)(BasePop* this, int)
+// callers   2   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -545,6 +675,11 @@ Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
          own vbtable rather than from where a Dialogs sits when it is
          most-derived, which is why this can hand it a subobject at all.
 ORIGINAL: 0x00558FE0 BYTE_EXACT
+// name      ?item@BasePop@@QAEHPADH@Z
+// size      26 bytes
+// spans     0x00558FE0-0x00558FFA
+// prototype int (__thiscall ?item@BasePop@@QAEHPADH@Z)(BasePop* this, int8* lpString, int position)
+// callers   2   call targets   1
 Return Value: whatever Dialogs::item returns
 Status: Complete
 */
@@ -579,6 +714,11 @@ Purpose: Read the state word of the CheckBox embedded at 0x2228.
          loading the word into EAX and a void body cannot promise that. The
          return type does not change the thiscall cleanup.
 ORIGINAL: 0x00601BD0
+// name      ?read_check@BasePop@@QAEXXZ
+// size      17 bytes
+// spans     0x00601BD0-0x00601BE1
+// prototype void (__thiscall ?read_check@BasePop@@QAEXXZ)(BasePop* this)
+// callers   1   call targets   0
 Return Value: the embedded CheckBox's state word
 Status: Complete
 */

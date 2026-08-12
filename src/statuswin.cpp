@@ -22,6 +22,11 @@
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 ORIGINAL: 0x004B9F80 BYTE_EXACT
+// name      ?close@StatusWin@@QAEXXZ
+// size      1 bytes
+// spans     0x004B9F80-0x004B9F81
+// prototype void (__thiscall ?close@StatusWin@@QAEXXZ)(StatusWin* this)
+// callers   3   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -36,6 +41,11 @@ void __fastcall status_win_close_redirect(StatusWin *self, void *) {
 Purpose: Place the status window, invalidating the two cached values that
          follow its position.
 ORIGINAL: 0x004B9F90
+// name      ?set_loc@StatusWin@@QAEXHH@Z
+// size      40 bytes
+// spans     0x004B9F90-0x004B9FB8
+// prototype void (__thiscall ?set_loc@StatusWin@@QAEXHH@Z)(StatusWin* this, int, int)
+// callers   8   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -58,6 +68,11 @@ void *SubInterfaceGlobal = (void *)0x006EEED8;
 Purpose: Release the status window's hold on the interface mode, if it holds
          one. The original tail-jumps into the release, so nothing follows it.
 ORIGINAL: 0x004B8970
+// name      ?reset@StatusWin@@QAEXXZ
+// size      31 bytes
+// spans     0x004B8970-0x004B898F
+// prototype void (__thiscall ?reset@StatusWin@@QAEXXZ)(StatusWin* this)
+// callers   8   call targets   0
 Return Value: n/a
 Status: Complete
 */

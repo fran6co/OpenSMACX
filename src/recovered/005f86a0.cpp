@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005F86A0 BYTE_EXACT
+// name      sub_5f86a0
+// size      31 bytes
+// spans     0x005F86A0-0x005F86BF
+// prototype 
+// callers   1   call targets   0
 // 0x005F86A0  sub_5f86a0  ->  _sub_5f86a0
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

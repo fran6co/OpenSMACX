@@ -23,6 +23,11 @@
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x0060C7C0 BYTE_EXACT
+// name      ?on_dialog_focus@ListBox@@QAEXH@Z
+// size      3 bytes
+// spans     0x0060C7C0-0x0060C7C3
+// prototype void (__thiscall ?on_dialog_focus@ListBox@@QAEXH@Z)(ListBox* this, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -52,6 +57,11 @@ Purpose: Close the ListBox: close its GraphicWin virtual base (source-owned) and
          through the runtime vbtable, then reset the ListBox-owned fields from
          the process defaults and re-arm Dialog::field_B4_.
 ORIGINAL: 0x00609F20
+// name      ?close@ListBox@@QAEXXZ
+// size      125 bytes
+// spans     0x00609F20-0x00609F9D
+// prototype void (__thiscall ?close@ListBox@@QAEXXZ)(ListBox* this)
+// callers   35   call targets   2
 Return Value: EAX residue (constant 0). Declared void (?close@ListBox@@QAEXXZ);
               modelled as uint32_t to preserve the residue like GraphicWin::close.
 Status: Complete with temporary Dialog::close original dependency
@@ -102,6 +112,11 @@ Purpose: Destroy a ListBox: re-stage the GraphicWin, Buffer, and Dialog subobjec
          runtime vbtable), then run close(). The original opens no exception
          frame; there is nothing to omit.
 ORIGINAL: 0x00609EC0
+// name      ??1ListBox@@QAE@XZ
+// size      83 bytes
+// spans     0x00609EC0-0x00609F13
+// prototype void (__thiscall ??1ListBox@@QAE@XZ)(ListBox* this)
+// callers   35   call targets   1
 Return Value: EAX residue (close()'s residue, constant 0). The void destructor is
               entered adjusted to L + 0x48; see the redirect.
 Status: Complete with temporary Dialog::close original dependency (through close)
@@ -153,6 +168,11 @@ uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
 ORIGINAL: 0x0060CE10 BYTE_EXACT
+// name      ?on_mouse_leave@ListBox@@QAEXHH@Z
+// size      40 bytes
+// spans     0x0060CE10-0x0060CE38
+// prototype void (__thiscall ?on_mouse_leave@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */

@@ -21,6 +21,11 @@
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
 ORIGINAL: 0x005C9410 BYTE_EXACT
+// name      ?on_key_click@Gamma@@QAEHHH@Z
+// size      8 bytes
+// spans     0x005C9410-0x005C9418
+// prototype int (__thiscall ?on_key_click@Gamma@@QAEHHH@Z)(Gamma* this, int, int)
+// callers   0   call targets   0
 Return Value: 1, always
 Status: Complete
 */
@@ -37,6 +42,11 @@ func_gamma_adjust_palette GammaOriginalAdjustPalette =
 
 /*
 ORIGINAL: 0x005C9390
+// name      ?on_scrolled@Gamma@@QAEXHH@Z
+// size      8 bytes
+// spans     0x005C9390-0x005C9398
+// prototype void (__thiscall ?on_scrolled@Gamma@@QAEXHH@Z)(Gamma* this, int, int)
+// callers   0   call targets   1
 Status: Complete
 */
 void Gamma::on_scrolled(int a1, int a2) {

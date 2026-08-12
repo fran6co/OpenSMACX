@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00646010 BYTE_EXACT
+// name      _srand
+// size      13 bytes
+// spans     0x00646010-0x0064601D
+// prototype 
+// callers   1   call targets   1
 // 0x00646010  _srand  ->  _srand
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

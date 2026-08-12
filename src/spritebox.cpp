@@ -23,6 +23,11 @@
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x00611040 BYTE_EXACT
+// name      ?on_mouse_move@SpriteBox@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00611040-0x00611043
+// prototype void (__thiscall ?on_mouse_move@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -32,6 +37,11 @@ void SpriteBox::on_mouse_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 ORIGINAL: 0x00611050 BYTE_EXACT
+// name      ?on_mouse_leave@SpriteBox@@QAEXHH@Z
+// size      3 bytes
+// spans     0x00611050-0x00611053
+// prototype void (__thiscall ?on_mouse_leave@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -72,6 +82,11 @@ Purpose: Walk the entry list for `id` and leave the cursor and position on the
          not change the thiscall cleanup, so this is the residue and not a
          different function.
 ORIGINAL: 0x00611600
+// name      ?id_to_pos@SpriteBox@@QAEXH@Z
+// size      64 bytes
+// spans     0x00611600-0x00611640
+// prototype void (__thiscall ?id_to_pos@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
+// callers   0   call targets   0
 Return Value: the resulting position, which is also left at 0x38
 Status: Complete
 */
@@ -112,6 +127,11 @@ uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int i
 
 /*
 ORIGINAL: 0x00610480 BYTE_EXACT
+// name      ?init@SpriteBox@@QAEHPAURECT@@H@Z
+// size      34 bytes
+// spans     0x00610480-0x006104A2
+// prototype int (__thiscall ?init@SpriteBox@@QAEHPAURECT@@H@Z)(SpriteBox* this, RECT*, int)
+// callers   1   call targets   2
 Status: Complete
 */
 int SpriteBox::init(RECT* a1, int a2) {
@@ -123,6 +143,11 @@ int SpriteBox::init(RECT* a1, int a2) {
 /*
 Purpose: Repaint on dialog focus, through the enclosing object.
 ORIGINAL: 0x006115E0 BYTE_EXACT
+// name      ?on_dialog_focus@SpriteBox@@QAEXH@Z
+// size      32 bytes
+// spans     0x006115E0-0x00611600
+// prototype void (__thiscall ?on_dialog_focus@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -140,6 +165,11 @@ void SpriteBox::on_dialog_focus(int a1) {
 
 /*
 ORIGINAL: 0x00610420 BYTE_EXACT
+// name      ?init@SpriteBox@@QAEHH@Z
+// size      29 bytes
+// spans     0x00610420-0x0061043D
+// prototype int (__thiscall ?init@SpriteBox@@QAEHH@Z)(SpriteBox* this, int)
+// callers   1   call targets   2
 Status: Complete
 */
 int SpriteBox::init(int a1) {
@@ -150,6 +180,11 @@ int SpriteBox::init(int a1) {
 
 /*
 ORIGINAL: 0x006104B0 BYTE_EXACT
+// name      ?init@SpriteBox@@QAEHPAUHeap@@@Z
+// size      29 bytes
+// spans     0x006104B0-0x006104CD
+// prototype int (__thiscall ?init@SpriteBox@@QAEHPAUHeap@@@Z)(SpriteBox* this, Heap*)
+// callers   1   call targets   2
 Status: Complete
 */
 int SpriteBox::init(Heap *a1) {
@@ -174,6 +209,11 @@ void SpriteBox::close() {
 
 /*
 ORIGINAL: 0x006104D0 BYTE_EXACT
+// name      ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z
+// size      49 bytes
+// spans     0x006104D0-0x00610501
+// prototype int (__thiscall ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z)(SpriteBox* this, int, int, int, int, Heap*)
+// callers   1   call targets   2
 Status: Complete
 */
 int SpriteBox::init(int a1, int a2, int a3, int a4, Heap * a5) {

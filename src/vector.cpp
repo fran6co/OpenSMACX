@@ -16,6 +16,11 @@
 /*
 Purpose: Initialize a zero vector.
 ORIGINAL: 0x006343C0 BYTE_EXACT
+// name      ??0Vector@@QAE@XZ
+// size      13 bytes
+// spans     0x006343C0-0x006343CD
+// prototype void (__thiscall ??0Vector@@QAE@XZ)(Vector* this)
+// callers   1   call targets   0
 Status: Complete
 */
 Vector::Vector() {
@@ -27,6 +32,11 @@ Vector::Vector() {
 /*
 Purpose: Clear all vector components.
 ORIGINAL: 0x006343D0 BYTE_EXACT
+// name      ?close@Vector@@QAEXXZ
+// size      11 bytes
+// spans     0x006343D0-0x006343DB
+// prototype void (__thiscall ?close@Vector@@QAEXXZ)(Vector* this)
+// callers   1   call targets   0
 Status: Complete
 */
 void Vector::close() {
@@ -42,6 +52,11 @@ Note:    `output` is the hidden return-object slot of `Vector operator-`, not
          difference is computed into a temporary first because the original
          does, and because the caller may pass the same object twice.
 ORIGINAL: 0x00634430
+// name      ?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z
+// size      75 bytes
+// spans     0x00634430-0x0063447B
+// prototype void (__thiscall ?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z)(Vector* this, Vector*, Vector*)
+// callers   1   call targets   0
 Status: Complete
 */
 void Vector::__mi(Vector &output, Vector &right) {
@@ -58,6 +73,11 @@ Note:    Returns `*this`, which is what leaves the receiver in EAX at `ret 4`.
          The catalogued `void` return does not reproduce these bytes; this
          does, exactly.
 ORIGINAL: 0x00634480 BYTE_EXACT
+// name      ?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z
+// size      33 bytes
+// spans     0x00634480-0x006344A1
+// prototype void (__thiscall ?__apl@Vector@@QAEXAAVVector@@@Z)(Vector* this, Vector*)
+// callers   1   call targets   0
 Return Value: this vector
 Status: Complete
 */
@@ -71,6 +91,11 @@ Vector &Vector::__apl(Vector &right) {
 /*
 Purpose: Subtract another vector from this one, component by component.
 ORIGINAL: 0x006344B0 BYTE_EXACT
+// name      ?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z
+// size      33 bytes
+// spans     0x006344B0-0x006344D1
+// prototype void (__thiscall ?__ami@Vector@@QAEXAAVVector@@@Z)(Vector* this, Vector*)
+// callers   1   call targets   0
 Return Value: this vector
 Status: Complete
 */
@@ -89,6 +114,11 @@ Note:    The original scales `this` IN PLACE and then copies it out; `output`
          load-bearing - a caller that ignores the result still sees `this`
          scaled.
 ORIGINAL: 0x00634670
+// name      ?scale@Vector@@QAEXAAVVector@@M@Z
+// size      65 bytes
+// spans     0x00634670-0x006346B1
+// prototype void (__thiscall ?scale@Vector@@QAEXAAVVector@@M@Z)(Vector* this, Vector*, float)
+// callers   1   call targets   0
 Status: Complete
 */
 void Vector::scale(Vector &output, float scalar) {
@@ -135,6 +165,11 @@ Vector *__fastcall vector_scale_redirect(
 /*
 Purpose: Add two vectors component-wise into an output vector.
 ORIGINAL: 0x00628150
+// name      sub_628150
+// size      37 bytes
+// spans     0x00628150-0x00628175
+// prototype 
+// callers   17   call targets   0
 Status: Complete
 */
 void __cdecl vector_add(Vector *left, Vector *right, Vector *output) {

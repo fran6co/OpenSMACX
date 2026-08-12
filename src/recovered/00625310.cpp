@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00625310 BYTE_EXACT
+// name      ??1ImageButton@@QAE@XZ
+// size      21 bytes
+// spans     0x00625310-0x00625325
+// prototype void (__thiscall ??1ImageButton@@QAE@XZ)(ImageButton* this)
+// callers   1   call targets   0
 // 0x00625310  ??1ImageButton@@QAE@XZ  ->  ??1ImageButton@@QAE@XZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

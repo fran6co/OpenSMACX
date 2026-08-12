@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005B5A70 BYTE_EXACT
+// name      ?unspot_stack@@YAXH@Z
+// size      85 bytes
+// spans     0x005B5A70-0x005B5AC5
+// prototype void (__cdecl ?unspot_stack@@YAXH@Z)(int vehID)
+// callers   2   call targets   0
 // 0x005B5A70  ?unspot_stack@@YAXH@Z  ->  ?unspot_stack@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

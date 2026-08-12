@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0050EF10 BYTE_EXACT
+// name      ?turn_timer@@YAXH@Z
+// size      50 bytes
+// spans     0x0050EF10-0x0050EF42
+// prototype 
+// callers   0   call targets   2
 // 0x0050EF10  ?turn_timer@@YAXH@Z  ->  ?turn_timer@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

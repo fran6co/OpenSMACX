@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0045C9C0 BYTE_EXACT
+// name      ?on_mouse_leave@MainInterface@@QAEXHH@Z
+// size      52 bytes
+// spans     0x0045C9C0-0x0045C9F4
+// prototype void (__thiscall ?on_mouse_leave@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   0
 // 0x0045C9C0  ?on_mouse_leave@MainInterface@@QAEXHH@Z  ->  ?on_mouse_leave@MainInterface@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

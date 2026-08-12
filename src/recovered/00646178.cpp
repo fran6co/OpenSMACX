@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00646178 BYTE_EXACT
+// name      __fread
+// size      47 bytes
+// spans     0x00646178-0x006461A7
+// prototype int (__cdecl __fread)(void* DstBuf, size_t ElementSize, size_t Count, FILE* File)
+// callers   21   call targets   3
 // 0x00646178  __fread  ->  __fread
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

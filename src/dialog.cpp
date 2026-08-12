@@ -23,6 +23,11 @@
 /*
 Purpose: Set the three fonts used by the dialog.
 ORIGINAL: 0x00609C60
+// name      ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z
+// size      45 bytes
+// spans     0x00609C60-0x00609C8D
+// prototype int (__thiscall ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z)(Dialog* this, Font*, Font*, Font*)
+// callers   11   call targets   0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -41,6 +46,11 @@ int Dialog::set_dialog_font(Font *font1, Font *font2, Font *font3) {
 /*
 Purpose: Set the primary text colors for the four dialog color slots.
 ORIGINAL: 0x00609C90 BYTE_EXACT
+// name      ?set_dialog_text_color@Dialog@@QAEXHHHH@Z
+// size      40 bytes
+// spans     0x00609C90-0x00609CB8
+// prototype void (__thiscall ?set_dialog_text_color@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
+// callers   9   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -54,6 +64,11 @@ void Dialog::set_dialog_text_color(int color1, int color2, int color3, int color
 /*
 Purpose: Set the secondary text colors for the four dialog color slots.
 ORIGINAL: 0x00609CC0 BYTE_EXACT
+// name      ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x00609CC0-0x00609CEB
+// prototype void (__thiscall ?set_dialog_text_color2@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
+// callers   7   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -67,6 +82,11 @@ void Dialog::set_dialog_text_color2(int color1, int color2, int color3, int colo
 /*
 Purpose: Set the tertiary text colors for the four dialog color slots.
 ORIGINAL: 0x00609CF0 BYTE_EXACT
+// name      ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z
+// size      43 bytes
+// spans     0x00609CF0-0x00609D1B
+// prototype void (__thiscall ?set_dialog_text_color3@Dialog@@QAEXHHHH@Z)(Dialog* this, int, int, int, int)
+// callers   6   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -80,12 +100,22 @@ void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int colo
 /*
 Purpose: Find an item ID's bounded position in the dialog string list.
 ORIGINAL: 0x00609AF0 BYTE_EXACT
+// name      ?id_to_pos@Dialog@@QAEHH@Z
+// size      91 bytes
+// spans     0x00609AF0-0x00609B4B
+// prototype int (__thiscall ?id_to_pos@Dialog@@QAEHH@Z)(Dialog* this, int)
+// callers   1   call targets   0
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
 /*
 Purpose: Find an item ID's bounded position in the dialog string list.
 ORIGINAL: 0x00609AF0
+// name      ?id_to_pos@Dialog@@QAEHH@Z
+// size      91 bytes
+// spans     0x00609AF0-0x00609B4B
+// prototype int (__thiscall ?id_to_pos@Dialog@@QAEHH@Z)(Dialog* this, int)
+// callers   1   call targets   0
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
@@ -109,6 +139,11 @@ int Dialog::id_to_pos(int id) {
 /*
 Purpose: Select a dialog item by its bounded list ID.
 ORIGINAL: 0x006099D0
+// name      ?set_selected_id@Dialog@@QAEXH@Z
+// size      115 bytes
+// spans     0x006099D0-0x00609A43
+// prototype void (__thiscall ?set_selected_id@Dialog@@QAEXH@Z)(Dialog* this, int)
+// callers   1   call targets   0
 Return Value: n/a
 Status: Complete
 */
@@ -119,6 +154,11 @@ void Dialog::set_selected_id(int id) {
 /*
 Purpose: Restore the selected list position and return its item ID.
 ORIGINAL: 0x00609A50
+// name      ?get_selected_id@Dialog@@QAEHXZ
+// size      150 bytes
+// spans     0x00609A50-0x00609AE6
+// prototype int (__thiscall ?get_selected_id@Dialog@@QAEHXZ)(Dialog* this)
+// callers   15   call targets   1
 Return Value: Selected item ID, or zero when the list head is null
 Status: Complete
 */
@@ -154,6 +194,11 @@ int Dialog::get_selected_id() {
 /*
 Purpose: Restore an explicit list position and return its item ID.
 ORIGINAL: 0x00609B50
+// name      ?pos_to_id@Dialog@@QAEHH@Z
+// size      154 bytes
+// spans     0x00609B50-0x00609BEA
+// prototype int (__thiscall ?pos_to_id@Dialog@@QAEHH@Z)(Dialog* this, int)
+// callers   7   call targets   1
 Return Value: Item ID at the requested position, or zero when the list head is null
 Status: Complete
 */
@@ -227,6 +272,11 @@ Font **DialogDefaultFonts = reinterpret_cast<Font **>(0x009B8EC0);
 /*
 Purpose: Set the default fonts shared by every dialog.
 ORIGINAL: 0x00609D20
+// name      ?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z
+// size      48 bytes
+// spans     0x00609D20-0x00609D50
+// prototype 
+// callers   5   call targets   0
 Return Value: No errors (0); invalid primary font (3)
 Status: Complete
 */
@@ -276,6 +326,11 @@ Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then
          frame targets __CxxFrameHandler and is omitted as unreachable per
          policy.
 ORIGINAL: 0x00608E10
+// name      ??1Dialog@@QAE@XZ
+// size      351 bytes
+// spans     0x00608E10-0x00608F41;0x00662EC0-0x00662EEE
+// prototype void (__thiscall ??1Dialog@@QAE@XZ)(Dialog* this)
+// callers   116   call targets   3
 Return Value: n/a (the original leaves Heap::shutdown's EAX residue; the
               scalar deleting destructor overwrites it and the 116 direct
               callers ignore it, so void is faithful)
@@ -325,6 +380,11 @@ Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and free the storage through the executable's operator
          delete only when bit 0 of the mode asks. Always returns the object.
 ORIGINAL: 0x00609D90
+// name      ??_GDialog@@UAEPAXI@Z
+// size      30 bytes
+// spans     0x00609D90-0x00609DAE
+// prototype void* (__thiscall ??_GDialog@@UAEPAXI@Z)(Dialog* this, unsigned int)
+// callers   0   call targets   2
 Return Value: the object
 Status: Complete
 */

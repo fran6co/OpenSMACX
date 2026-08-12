@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0062D500 BYTE_EXACT
+// name      ?jackal_close@@YAXXZ
+// size      98 bytes
+// spans     0x0062D500-0x0062D562
+// prototype 
+// callers   1   call targets   15
 // 0x0062D500  ?jackal_close@@YAXXZ  ->  ?jackal_close@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

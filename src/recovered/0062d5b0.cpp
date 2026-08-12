@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0062D5B0 BYTE_EXACT
+// name      ?do_net@@YAXXZ
+// size      25 bytes
+// spans     0x0062D5B0-0x0062D5C9
+// prototype 
+// callers   12   call targets   0
 // 0x0062D5B0  ?do_net@@YAXXZ  ->  ?do_net@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
