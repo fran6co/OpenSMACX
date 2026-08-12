@@ -45,7 +45,7 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class DLLEXPORT BaseWin : GraphicWin {
+class DLLEXPORT BaseWin : GraphicWin, SubInterface {
  public:
   void on_scrolled(int a1, int a2);
   void UNK2(int a1, int a2, int a3, int a4);
@@ -90,7 +90,9 @@ class DLLEXPORT BaseWin : GraphicWin {
   // builds graphicWin2_, so the two abut and the `field_B258_` dword this
   // header used to put between them does not exist. The three members total
   // 0xA848 before and after, so nothing past graphicWin2_ moves.
-  SubInterface subIFace_;  // 0xA14
+  // The SubInterface is the SECOND BASE, above; MSVC puts it at
+  // sizeof(GraphicWin) == 0xA14, which is where the constructor writes its
+  // vftable.
   ProdPicker prodPicker_;  // 0xA1C
   GraphicWin graphicWin2_;  // 0xB25C
   Sprite sprites1_[2];  // 0xBC70

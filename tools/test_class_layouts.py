@@ -62,6 +62,23 @@ class MembersTest(unittest.TestCase):
         self.assertIsNone(tool.bases_of(": virtual Win"))
         self.assertIsNone(tool.bases_of(": GraphicWin, virtual Win"))
 
+    def test_a_file_scope_function_pointer_typedef_is_four_bytes(self):
+        # `Menu` was refused for holding a `MenuProc proc_` - a width that was
+        # never in doubt; the extractor simply only knew the IN-CLASS spelling.
+        self.assertIn("MenuProc", tool.function_pointer_typedefs())
+        self.assertEqual([("void *", "proc_", "")],
+                         tool.members_of("  MenuProc proc_;\n"))
+
+    def test_a_pointer_to_member_typedef_is_not_four_bytes(self):
+        # An MSVC pointer-to-member is 4 bytes only under single inheritance
+        # and 8, 12 or 16 otherwise. This tree declares 114 of them for the
+        # original-image seams; sizing one as four would move every offset
+        # after it.
+        self.assertNotIn("func_thiscall_teardown",
+                         tool.function_pointer_typedefs())
+        for name in tool.function_pointer_typedefs():
+            self.assertNotIn("::", name)
+
     def test_a_virtual_refuses_the_whole_class(self):
         # A vtable pointer this cannot see sits at offset 0 and moves every
         # member after it.

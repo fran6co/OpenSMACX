@@ -27,7 +27,7 @@
   * returns touching no field, so the opaque storage below is only an object
   * for the canary to seed, not a modelled layout.
   */
-class DLLEXPORT ReportIf {
+class DLLEXPORT ReportIf : SubInterface {
  public:
   void done();
   ReportIf() { ; }
@@ -54,7 +54,7 @@ class DLLEXPORT ReportIf {
   // table seven window classes store at their own +0xA14. The IDB agrees
   // (`ReportIf,0x0,subIFace,8`), which is why src/reportif.cpp already has to
   // reach the sub-object with `reinterpret_cast<SubInterface *>(this)`.
-  SubInterface subIFace_;      // 0x0
+  // SubInterface is the BASE, above, so its 8 bytes are at 0.
   uint8_t unmapped_[0x202E8];  // 0x8
 };
 

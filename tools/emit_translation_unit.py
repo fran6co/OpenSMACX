@@ -1130,11 +1130,28 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         key = keys.get(name, "struct")
         if not opening:
             return f"{key} {name};"
-        bases = class_layouts.layout_bases(name)
+        bases = emitted_bases(name)
         clause = (" : " + ", ".join(f"public {base}" for base in bases)) \
             if bases else ""
         return f"{key} {name}{clause} {{ public:" if key == "class" else \
             f"{key} {name}{clause} {{"
+
+    def emitted_bases(name: str) -> list:
+        """The bases to spell for `name`, or [] to emit it flat.
+
+        A class that derives from the SUBJECT is emitted FLAT, because the
+        subject's own definition is written last - its methods go with it - so
+        a derived shell above it would name a base that is not defined yet:
+        `C2504: 'Win' : base class undefined`, on 41 rows the first time
+        inheritance was emitted. The layout is identical either way, and the
+        base clause only matters to a body that NAMES the base - which, when
+        the subject is the base, is the subject's own body and needs nothing
+        from the derived shell.
+        """
+        if name != signature.klass and \
+                signature.klass in class_layouts.base_chain(name):
+            return []
+        return class_layouts.layout_bases(name)
 
     def members_of_shell(name: str) -> list:
         """The member lines to put inside `name`'s shell.
@@ -1144,9 +1161,20 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         from different places is how a class ends up missing sizeof(base)
         bytes at the front while still compiling.
         """
-        if class_layouts.layout_bases(name):
+        if emitted_bases(name):
             return class_layouts.own_declaration_for(name)
-        return class_layouts.declaration_for(name)
+        flat = class_layouts.declaration_for(name)
+        # FLAT AND SHADOWED IS NOT EMITTABLE. `Buffer buffer_` inherited from
+        # GraphicWin beside Scroll's own `Buffer *buffer_` is
+        # `C2040: differs in levels of indirection`, and PullDown's `menu_`
+        # over Win's is `C2086: redefinition`. Under a base clause they are in
+        # different scopes and both compile; without one the class has to go
+        # back to an opaque shell, which is exactly where it was before
+        # inheritance could be emitted at all.
+        spelled = [line.rsplit(" ", 1)[-1] for line in flat]
+        if len(spelled) != len(set(spelled)):
+            return []
+        return flat
 
     signature = Signature(row, derived, pe, keys)
     refusal = recovery_symbols.UNDEFINABLE.get(signature.method) \

@@ -131,6 +131,33 @@ WINDOWS_STRUCT = {
 }
 
 
+# `typedef void (__cdecl *MenuProc)(int);` at FILE scope. The extractor already
+# knows the in-class form (`FUNCTION_POINTER_MEMBER`) and sizes it `void *`;
+# not knowing this one refused `Menu` for holding a `MenuProc proc_`, and
+# `AlphaMenu` behind it, for a member whose width was never in doubt - the IDB
+# has `Menu,0xA14,proc,4` right after `Menu,0x0,graphicWin,2580`.
+#
+# A `*` NOT PRECEDED BY `::` is required, which is the whole of the care this
+# needs: a POINTER-TO-MEMBER typedef - `typedef void (Foo::*F)();` - is four
+# bytes only under single inheritance and 8 or 12 or 16 otherwise, and this
+# tree declares 113 of them for the original-image seams. Sizing one of those
+# as four bytes would move every offset after it.
+FILE_SCOPE_FUNCTION_POINTER = re.compile(
+    r"^\s*typedef\s+[^;(]*\(\s*(?:__\w+\s+)?\*+\s*(?P<name>\w+)\s*\)\s*\(",
+    re.M)
+
+
+@functools.lru_cache(maxsize=1)
+def function_pointer_typedefs() -> frozenset:
+    """File-scope typedefs naming a plain function POINTER: four bytes each."""
+    found = set()
+    for header in sorted(SRC.glob("*.h")):
+        for hit in FILE_SCOPE_FUNCTION_POINTER.finditer(
+                header.read_text(errors="ignore")):
+            found.add(hit.group("name"))
+    return frozenset(found)
+
+
 def _needs_definition(name: str) -> bool:
     """Does holding this type by value require its definition in the unit?"""
     return name not in SCALAR and name not in WINDOWS_TYPEDEF
@@ -318,6 +345,14 @@ def members_of(body: str, seen=()):
         if bare in alias:
             type_ = type_.replace(bare, alias[bare])
             bare = alias[bare]
+        if not stars and bare in function_pointer_typedefs():
+            # Spelled `void *`, not the typedef name, for the same reason
+            # `FUNCTION_POINTER_MEMBER` is: the emitted unit never declares
+            # `MenuProc`, and `<type> <name>;` is the only shape
+            # `declaration_for` writes. Four bytes is four bytes.
+            found.append(("void *", member.group("name"),
+                          member.group("array") or ""))
+            continue
         if not stars and _needs_definition(bare) and not _extractable(bare, seen):
             # A member held BY VALUE needs a COMPLETE type, and the emitted
             # unit only forward-declares - `AutoSound auto_sound_;` is
@@ -421,24 +456,25 @@ def _with_bases(name: str, seen=()):
         flattened += inherited
     flattened += list(members)
 
-    # A DERIVED CLASS THAT RE-DECLARES A BASE MEMBER'S NAME REFUSES. That is
-    # legal C++ - name hiding - and the object really carries both, so the
-    # LAYOUT is not in doubt. What is in doubt is the scaffolding: the emitter
-    # writes one flat class, and `Buffer buffer_;` from GraphicWin beside
-    # `Buffer *buffer_;` from Scroll is
-    # `C2040: differs in levels of indirection`. Renaming one is worse than
-    # refusing, because a recovered body that says `buffer_` means a
-    # particular one and nothing here knows which.
+    # A DERIVED CLASS THAT RE-DECLARES A BASE MEMBER'S NAME IS FINE HERE.
+    # It is legal C++ - name hiding - and the object really carries both, so
+    # the LAYOUT this function answers for was never in doubt.
     #
-    # Measured, and it is the reason this refusal exists rather than a
-    # precaution: the moment enough of the tree became readable for these to
-    # be emitted, 70 byte-exact bodies went NO_COMPILE in a single census.
-    # Twelve classes shadow a base member today - BasePop, BaseWin, Credits,
-    # DesignWin, NetMsg, PopMenu, Popup, PullDown, ReportWin, Scroll,
-    # SetupWin, WorldWin.
-    names = [member for _, member, _ in flattened]
-    if len(names) != len(set(names)):
-        return None
+    # It used to refuse, and the reason was real at the time: the emitter
+    # wrote one FLAT class, where `Buffer buffer_;` inherited from GraphicWin
+    # beside Scroll's own `Buffer *buffer_;` is
+    # `C2040: differs in levels of indirection`, and 70 byte-exact bodies went
+    # NO_COMPILE in a single census the moment these were emitted. The emitter
+    # now writes a real base clause (`declare` + `layout_bases`), and under
+    # inheritance the two members are in different scopes and both compile -
+    # exactly as they did in the original.
+    #
+    # The flat path still exists, for a class whose bases cannot all be
+    # supplied, so the check moved rather than vanished: `supplyable` refuses a
+    # class that would be FLATTENED with a duplicate name. Twelve classes
+    # shadow a base member - BasePop, BaseWin, Credits, DesignWin, NetMsg,
+    # PopMenu, Popup, PullDown, ReportWin, Scroll, SetupWin, WorldWin - and
+    # they were all refused outright for a scaffolding limitation that is gone.
     return flattened
 
 
@@ -493,6 +529,17 @@ def supplyable(name: str, seen=()) -> bool:
         return True
     if name in seen or name not in verified_names():
         return False
+    # A class the emitter will write FLAT cannot carry two members of the same
+    # name - `Buffer buffer_` inherited from GraphicWin beside Scroll's own
+    # `Buffer *buffer_` is `C2040: differs in levels of indirection`. Under a
+    # real base clause they are in different scopes and both compile, which is
+    # what the original did, so the refusal applies only to the flat case.
+    declared = _declared_classes().get(name)
+    bases = declared[0] if declared else None
+    if not bases or not all(supplyable(base, seen + (name,)) for base in bases):
+        spelled = [member for _, member, _ in pinned_layouts().get(name, ())]
+        if len(spelled) != len(set(spelled)):
+            return False
     for type_, _, _ in pinned_layouts().get(name, ()):
         if "*" in type_:
             continue
@@ -585,6 +632,21 @@ def layout_bases(name: str) -> list:
     if not bases:
         return []
     return list(bases) if all(supplyable(base) for base in bases) else []
+
+
+def base_chain(name: str, seen=()) -> list:
+    """Every class `name` derives from, transitively, in no particular order."""
+    if name in seen:
+        return []
+    declared = _declared_classes().get(name)
+    bases = declared[0] if declared else None
+    if not bases:
+        return []
+    out = []
+    for base in bases:
+        out.append(base)
+        out.extend(base_chain(base, seen + (name,)))
+    return out
 
 
 def own_declaration_for(name: str) -> list:
