@@ -46,12 +46,39 @@ class DLLEXPORT StatusWin {
   // something else. What matters for set_loc is only that the four fields
   // below sit where the original puts them, which the unmapped span holds in
   // place and the test checks directly.
-  uint8_t unmapped_0_[0x15B4];
+  uint8_t field_0_[0x9C];  // 0x0
+  uint32_t field_9C_;  // 0x9C
+  uint32_t field_A0_;  // 0xA0
+  uint32_t field_A4_;  // 0xA4
+  uint8_t field_A8_[0x2C];  // 0xA8
+  uint8_t field_D4_;  // 0xD4
+  uint8_t field_D5_[0x142B];  // 0xD5
+  uint32_t field_1500_;  // 0x1500
+  uint32_t field_1504_;  // 0x1504
+  uint32_t field_1508_;  // 0x1508
+  uint8_t field_150C_[0x18];  // 0x150C
+  float field_1524_;  // 0x1524
+  float field_1528_;  // 0x1528
+  float field_152C_;  // 0x152C
+  uint32_t field_1530_;  // 0x1530
+  uint8_t field_1534_[0xC];  // 0x1534
+  uint32_t field_1540_;  // 0x1540
+  uint8_t field_1544_[0x14];  // 0x1544
+  uint32_t field_1558_;  // 0x1558
+  uint8_t field_155C_[0x24];  // 0x155C
+  uint32_t field_1580_;  // 0x1580
+  uint8_t field_1584_[0x24];  // 0x1584
+  uint32_t field_15A8_;  // 0x15A8
+  uint32_t field_15AC_;  // 0x15AC
+  uint8_t field_15B0_[0x4];  // 0x15B0
   int32_t iTileX_;
   int32_t iTileY_;
   int32_t iUnitIndex_;
   int32_t iCityIndex_;
-  uint8_t unmapped_15C4_[0x15D4 - 0x15C4];
+  uint32_t field_15C4_;  // 0x15C4
+  uint32_t field_15C8_;  // 0x15C8
+  uint32_t field_15CC_;  // 0x15CC
+  uint32_t field_15D0_;  // 0x15D0
   int32_t field_15D4_;
 
   // Storage the image proves is here: its own methods reach 0x15E0.

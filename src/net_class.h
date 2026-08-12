@@ -36,7 +36,80 @@ class DLLEXPORT Net {
   char *get_player_name(unsigned long key);
 
  private:
-  uint8_t unmapped_[0x780];
+  uint32_t field_0_;  // 0x0
+  uint32_t field_4_;  // 0x4
+  uint32_t field_8_;  // 0x8
+  uint32_t field_C_;  // 0xC
+  uint32_t field_10_;  // 0x10
+  uint32_t field_14_;  // 0x14
+  uint32_t field_18_;  // 0x18
+  uint32_t field_1C_;  // 0x1C
+  uint32_t field_20_;  // 0x20
+  uint32_t field_24_;  // 0x24
+  uint32_t field_28_;  // 0x28
+  uint8_t field_2C_[0x18];  // 0x2C
+  uint32_t field_44_;  // 0x44
+  uint32_t field_48_;  // 0x48
+  uint32_t field_4C_;  // 0x4C
+  uint32_t field_50_;  // 0x50
+  uint32_t field_54_;  // 0x54
+  uint32_t field_58_;  // 0x58
+  uint8_t field_5C_[0x54];  // 0x5C
+  uint32_t field_B0_;  // 0xB0
+  uint32_t field_B4_;  // 0xB4
+  uint32_t field_B8_;  // 0xB8
+  uint32_t field_BC_;  // 0xBC
+  uint32_t field_C0_;  // 0xC0
+  uint32_t field_C4_;  // 0xC4
+  uint32_t field_C8_;  // 0xC8
+  uint32_t field_CC_;  // 0xCC
+  uint32_t field_D0_;  // 0xD0
+  uint32_t field_D4_;  // 0xD4
+  uint32_t field_D8_;  // 0xD8
+  uint32_t field_DC_;  // 0xDC
+  uint32_t field_E0_;  // 0xE0
+  uint32_t field_E4_;  // 0xE4
+  uint8_t field_E8_[0x6C];  // 0xE8
+  uint32_t field_154_;  // 0x154
+  uint32_t field_158_;  // 0x158
+  uint32_t field_15C_;  // 0x15C
+  uint8_t field_160_[0x4];  // 0x160
+  uint32_t field_164_;  // 0x164
+  uint8_t field_168_;  // 0x168
+  uint8_t field_169_[0x56B];  // 0x169
+  uint32_t field_6D4_;  // 0x6D4
+  uint8_t field_6D8_[0x4];  // 0x6D8
+  uint32_t field_6DC_;  // 0x6DC
+  uint32_t field_6E0_;  // 0x6E0
+  uint32_t field_6E4_;  // 0x6E4
+  uint32_t field_6E8_;  // 0x6E8
+  uint8_t field_6EC_[0x10];  // 0x6EC
+  uint32_t field_6FC_;  // 0x6FC
+  uint32_t field_700_;  // 0x700
+  uint32_t field_704_;  // 0x704
+  uint32_t field_708_;  // 0x708
+  uint32_t field_70C_;  // 0x70C
+  uint32_t field_710_;  // 0x710
+  uint32_t field_714_;  // 0x714
+  uint32_t field_718_;  // 0x718
+  uint32_t field_71C_;  // 0x71C
+  uint32_t field_720_;  // 0x720
+  uint8_t field_724_[0x8];  // 0x724
+  uint32_t field_72C_;  // 0x72C
+  uint32_t field_730_;  // 0x730
+  uint32_t field_734_;  // 0x734
+  uint32_t field_738_;  // 0x738
+  uint32_t field_73C_;  // 0x73C
+  uint32_t field_740_;  // 0x740
+  uint32_t field_744_;  // 0x744
+  uint8_t field_748_[0x8];  // 0x748
+  uint32_t field_750_;  // 0x750
+  uint32_t field_754_;  // 0x754
+  uint32_t field_758_;  // 0x758
+  uint32_t field_75C_;  // 0x75C
+  uint32_t field_760_;  // 0x760
+  uint32_t field_764_;  // 0x764
+  uint8_t field_768_[0x18];  // 0x768
 };
 
 int __fastcall net_poll_players_redirect(Net *self, void *, int a1);

@@ -57,7 +57,12 @@ class DLLEXPORT WorldWin : GraphicWin {
   Buffer buffer1_;  // 0xA1C
   Buffer buffer2_;  // 0xFA4
   MapWin mapWin_;  // 0x152C
-  uint8_t field_239AC_[0x24];  // 0x239AC
+  uint8_t field_239AC_[0x10];  // 0x239AC
+  uint32_t field_239BC_;  // 0x239BC
+  uint32_t field_239C0_;  // 0x239C0
+  uint32_t field_239C4_;  // 0x239C4
+  uint32_t field_239C8_;  // 0x239C8
+  uint32_t field_239CC_;  // 0x239CC
 
   // Storage the image proves is here: its own methods reach 0x239D4.
   // Extent only - this class carries no size assertion, and the bound is a floor.

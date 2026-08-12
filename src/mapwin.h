@@ -71,7 +71,65 @@ class DLLEXPORT MapWin : virtual GraphicWin {
   // the derived members, which is what the vbtable at 0x0066C870 says
   // ({0, 0x21A6C}). The static_assert below is the check.
   void *owned_;
-  uint8_t derived_tail_[0x21A6C - 0x8];
+  uint8_t field_8_[0x1DD64];  // 0x8
+  uint32_t field_1DD6C_;  // 0x1DD6C
+  uint32_t field_1DD70_;  // 0x1DD70
+  uint32_t field_1DD74_;  // 0x1DD74
+  uint32_t field_1DD78_;  // 0x1DD78
+  uint8_t field_1DD7C_[0x4];  // 0x1DD7C
+  uint32_t field_1DD80_;  // 0x1DD80
+  uint32_t field_1DD84_;  // 0x1DD84
+  uint32_t field_1DD88_;  // 0x1DD88
+  uint32_t field_1DD8C_;  // 0x1DD8C
+  uint32_t field_1DD90_;  // 0x1DD90
+  uint32_t field_1DD94_;  // 0x1DD94
+  uint32_t field_1DD98_;  // 0x1DD98
+  uint32_t field_1DD9C_;  // 0x1DD9C
+  uint32_t field_1DDA0_;  // 0x1DDA0
+  uint32_t field_1DDA4_;  // 0x1DDA4
+  uint32_t field_1DDA8_;  // 0x1DDA8
+  uint32_t field_1DDAC_;  // 0x1DDAC
+  uint32_t field_1DDB0_;  // 0x1DDB0
+  uint32_t field_1DDB4_;  // 0x1DDB4
+  uint32_t field_1DDB8_;  // 0x1DDB8
+  uint32_t field_1DDBC_;  // 0x1DDBC
+  uint32_t field_1DDC0_;  // 0x1DDC0
+  uint32_t field_1DDC4_;  // 0x1DDC4
+  uint32_t field_1DDC8_;  // 0x1DDC8
+  uint32_t field_1DDCC_;  // 0x1DDCC
+  uint32_t field_1DDD0_;  // 0x1DDD0
+  uint32_t field_1DDD4_;  // 0x1DDD4
+  uint32_t field_1DDD8_;  // 0x1DDD8
+  uint32_t field_1DDDC_;  // 0x1DDDC
+  uint32_t field_1DDE0_;  // 0x1DDE0
+  uint8_t field_1DDE4_[0x40];  // 0x1DDE4
+  uint32_t field_1DE24_;  // 0x1DE24
+  uint8_t field_1DE28_[0x1098];  // 0x1DE28
+  uint32_t field_1EEC0_;  // 0x1EEC0
+  uint32_t field_1EEC4_;  // 0x1EEC4
+  uint8_t field_1EEC8_[0x28];  // 0x1EEC8
+  uint32_t field_1EEF0_;  // 0x1EEF0
+  uint32_t field_1EEF4_;  // 0x1EEF4
+  uint8_t field_1EEF8_[0x8];  // 0x1EEF8
+  uint32_t field_1EF00_;  // 0x1EF00
+  uint32_t field_1EF04_;  // 0x1EF04
+  uint8_t field_1EF08_[0x14];  // 0x1EF08
+  uint32_t field_1EF1C_;  // 0x1EF1C
+  uint8_t field_1EF20_[0x28];  // 0x1EF20
+  uint32_t field_1EF48_;  // 0x1EF48
+  uint32_t field_1EF4C_;  // 0x1EF4C
+  uint32_t field_1EF50_;  // 0x1EF50
+  uint8_t field_1EF54_[0x2AF0];  // 0x1EF54
+  uint32_t field_21A44_;  // 0x21A44
+  uint32_t field_21A48_;  // 0x21A48
+  uint32_t field_21A4C_;  // 0x21A4C
+  uint32_t field_21A50_;  // 0x21A50
+  uint32_t field_21A54_;  // 0x21A54
+  uint32_t field_21A58_;  // 0x21A58
+  uint32_t field_21A5C_;  // 0x21A5C
+  uint32_t field_21A60_;  // 0x21A60
+  uint32_t field_21A64_;  // 0x21A64
+  uint8_t field_21A68_[0x4];  // 0x21A68
 };
 
 static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe");

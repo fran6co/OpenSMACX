@@ -259,7 +259,14 @@ class DLLEXPORT NetWin : GraphicWin {
   CheckBox checkBox_;  // 0x4454, declared CheckBox extent == 0xB28
   FlatButton flatButton1_;  // 0x4F7C
   FlatButton flatButton2_;  // 0x5AC8
-  uint8_t field_6614_[0x111C];  // 0x6614
+  uint8_t field_6614_[0x1000];  // 0x6614
+  uint32_t field_7614_;  // 0x7614
+  uint32_t field_7618_;  // 0x7618
+  uint32_t field_761C_;  // 0x761C
+  uint32_t field_7620_;  // 0x7620
+  uint8_t field_7624_[0x104];  // 0x7624
+  uint32_t field_7728_;  // 0x7728
+  uint32_t field_772C_;  // 0x772C
 
   // Storage the image proves is here: its own methods reach 0x7734.
   // Extent only - this class carries no size assertion, and the bound is a floor.

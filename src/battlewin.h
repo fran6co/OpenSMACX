@@ -65,16 +65,34 @@ class DLLEXPORT BattleWin : SubInterface {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 10 member(s) from the IDA database, 0 named; it starts a member at 0x30, which is where src/ ends.
 
-  uint8_t field_30_[0x10];  // 0x30
-  uint8_t field_40_[0x10];  // 0x40
-  uint8_t field_50_[0x10];  // 0x50
-  uint8_t field_60_[0x10];  // 0x60
-  uint8_t field_70_[0x10];  // 0x70
+  uint32_t field_30_;  // 0x30
+  uint32_t field_34_;  // 0x34
+  uint32_t field_38_;  // 0x38
+  uint32_t field_3C_;  // 0x3C
+  uint32_t field_40_;  // 0x40
+  uint32_t field_44_;  // 0x44
+  uint32_t field_48_;  // 0x48
+  uint32_t field_4C_;  // 0x4C
+  uint32_t field_50_;  // 0x50
+  uint32_t field_54_;  // 0x54
+  uint32_t field_58_;  // 0x58
+  uint32_t field_5C_;  // 0x5C
+  uint32_t field_60_;  // 0x60
+  uint32_t field_64_;  // 0x64
+  uint32_t field_68_;  // 0x68
+  uint32_t field_6C_;  // 0x6C
+  uint32_t field_70_;  // 0x70
+  uint32_t field_74_;  // 0x74
+  uint32_t field_78_;  // 0x78
+  uint32_t field_7C_;  // 0x7C
   uint32_t field_80_;  // 0x80
   uint32_t field_84_;  // 0x84
   uint32_t field_88_;  // 0x88
   uint32_t field_8C_;  // 0x8C
-  uint8_t field_90_[0x10];  // 0x90
+  uint32_t field_90_;  // 0x90
+  uint32_t field_94_;  // 0x94
+  uint32_t field_98_;  // 0x98
+  uint32_t field_9C_;  // 0x9C
 };
 
 static_assert(sizeof(BattleWin) == 0xA0,

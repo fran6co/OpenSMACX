@@ -64,7 +64,10 @@ class DLLEXPORT DiploWin : GraphicWin {
  private:
   // UNK2 zeroes the two dwords at 0xA24 and 0xA28, just past the
   // GraphicWin base; everything between is unmapped.
-  uint8_t unmapped_A14_[0xA24 - 0xA14];
+  uint32_t field_A14_;  // 0xA14
+  uint32_t field_A18_;  // 0xA18
+  uint32_t field_A1C_;  // 0xA1C
+  uint32_t field_A20_;  // 0xA20
   int32_t field_A24_;
   int32_t field_A28_;
 

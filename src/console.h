@@ -74,7 +74,50 @@ class DLLEXPORT Console : virtual GraphicWin {
   // pointer at offset 0 is now the compiler's, emitted because the class
   // declares the virtual base instead of holding it. The base still lands at
   // 0x23D94 and the static_assert below is what says so.
-  uint8_t derived_storage_[0x23D94 - 4];
+  uint8_t field_4_[0x1DDA0];  // 0x4
+  uint32_t field_1DDA4_;  // 0x1DDA4
+  uint32_t field_1DDA8_;  // 0x1DDA8
+  uint8_t field_1DDAC_[0x20];  // 0x1DDAC
+  uint32_t field_1DDCC_;  // 0x1DDCC
+  uint32_t field_1DDD0_;  // 0x1DDD0
+  uint32_t field_1DDD4_;  // 0x1DDD4
+  uint32_t field_1DDD8_;  // 0x1DDD8
+  uint8_t field_1DDDC_[0x4C50];  // 0x1DDDC
+  uint32_t field_22A2C_;  // 0x22A2C
+  uint8_t field_22A30_[0x440];  // 0x22A30
+  uint32_t field_22E70_;  // 0x22E70
+  uint8_t field_22E74_[0xD54];  // 0x22E74
+  uint32_t field_23BC8_;  // 0x23BC8
+  uint32_t field_23BCC_;  // 0x23BCC
+  uint32_t field_23BD0_;  // 0x23BD0
+  uint32_t field_23BD4_;  // 0x23BD4
+  uint32_t field_23BD8_;  // 0x23BD8
+  uint32_t field_23BDC_;  // 0x23BDC
+  uint32_t field_23BE0_;  // 0x23BE0
+  uint32_t field_23BE4_;  // 0x23BE4
+  uint32_t field_23BE8_;  // 0x23BE8
+  uint32_t field_23BEC_;  // 0x23BEC
+  uint32_t field_23BF0_;  // 0x23BF0
+  uint32_t field_23BF4_;  // 0x23BF4
+  uint32_t field_23BF8_;  // 0x23BF8
+  uint32_t field_23BFC_;  // 0x23BFC
+  uint32_t field_23C00_;  // 0x23C00
+  uint32_t field_23C04_;  // 0x23C04
+  uint32_t field_23C08_;  // 0x23C08
+  uint32_t field_23C0C_;  // 0x23C0C
+  uint8_t field_23C10_[0x100];  // 0x23C10
+  uint32_t field_23D10_;  // 0x23D10
+  uint32_t field_23D14_;  // 0x23D14
+  uint32_t field_23D18_;  // 0x23D18
+  uint32_t field_23D1C_;  // 0x23D1C
+  uint8_t field_23D20_[0x4];  // 0x23D20
+  uint32_t field_23D24_;  // 0x23D24
+  uint8_t field_23D28_[0x58];  // 0x23D28
+  uint32_t field_23D80_;  // 0x23D80
+  uint32_t field_23D84_;  // 0x23D84
+  uint32_t field_23D88_;  // 0x23D88
+  uint32_t field_23D8C_;  // 0x23D8C
+  uint8_t field_23D90_[0x4];  // 0x23D90
 };
 
 static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe");

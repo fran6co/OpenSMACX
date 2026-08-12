@@ -39,7 +39,17 @@ class DLLEXPORT PopMenu : BasePop {
 
   // Storage the image proves is here: its own methods reach 0x4C70.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_3230_[0x1A40];
+  uint32_t field_3230_;  // 0x3230
+  uint8_t field_3234_[0x440];  // 0x3234
+  uint32_t field_3674_;  // 0x3674
+  uint8_t field_3678_[0x664];  // 0x3678
+  uint32_t field_3CDC_;  // 0x3CDC
+  uint8_t field_3CE0_[0x440];  // 0x3CE0
+  uint32_t field_4120_;  // 0x4120
+  uint8_t field_4124_[0x704];  // 0x4124
+  uint32_t field_4828_;  // 0x4828
+  uint8_t field_482C_[0x440];  // 0x482C
+  uint32_t field_4C6C_;  // 0x4C6C
 };
 
 // BasePop::init is not recovered yet.

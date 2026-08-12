@@ -113,7 +113,8 @@ class DLLEXPORT Buffer {
   uint32_t field_4A8_;
   uint32_t field_4AC_;
   Spot spot_;
-  uint8_t field_4BC_[80];
+  uint32_t field_4BC_;  // 0x4BC
+  uint8_t field_4C0_[0x4C];  // 0x4C0
   uint32_t field_50C_;
   uint32_t field_510_;
   uint32_t field_514_;

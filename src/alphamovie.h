@@ -44,7 +44,8 @@ class MCIVideo {
   uint8_t palette_[0x454];  // 0x10
   uint32_t field_464_;  // 0x464
   uint32_t field_468_;  // 0x468
-  uint8_t field_46C_[0x8];  // 0x46C
+  uint32_t field_46C_;  // 0x46C
+  uint32_t field_470_;  // 0x470
 };
 
  /*

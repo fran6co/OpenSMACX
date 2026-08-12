@@ -52,13 +52,53 @@ class DLLEXPORT Caviar {
   // Fields are carved out of the opaque span rather than appended, keeping
   // the total at the pinned 0x13D0 - the static_assert below is what verifies
   // the carving did not shift anything.
-  uint8_t unmapped_04_[0x2C - 0x04];
+  uint32_t field_4_;  // 0x4
+  uint8_t field_8_[0xC];  // 0x8
+  uint32_t field_14_;  // 0x14
+  uint8_t field_18_[0x4];  // 0x18
+  uint32_t field_1C_;  // 0x1C
+  uint32_t field_20_;  // 0x20
+  uint32_t field_24_;  // 0x24
+  uint32_t field_28_;  // 0x28
   int32_t field_2C_;
   int32_t field_30_;
   int32_t field_34_;
-  uint8_t unmapped_38_[0x108 - 0x38];
+  uint32_t field_38_;  // 0x38
+  uint32_t field_3C_;  // 0x3C
+  uint32_t field_40_;  // 0x40
+  uint32_t field_44_;  // 0x44
+  uint32_t field_48_;  // 0x48
+  uint32_t field_4C_;  // 0x4C
+  uint32_t field_50_;  // 0x50
+  uint32_t field_54_;  // 0x54
+  uint32_t field_58_;  // 0x58
+  uint32_t field_5C_;  // 0x5C
+  uint32_t field_60_;  // 0x60
+  uint32_t field_64_;  // 0x64
+  uint32_t field_68_;  // 0x68
+  float field_6C_;  // 0x6C
+  float field_70_;  // 0x70
+  uint32_t field_74_;  // 0x74
+  uint32_t field_78_;  // 0x78
+  uint32_t field_7C_;  // 0x7C
+  uint32_t field_80_;  // 0x80
+  uint32_t field_84_;  // 0x84
+  uint32_t field_88_;  // 0x88
+  uint32_t field_8C_;  // 0x8C
+  uint32_t field_90_;  // 0x90
+  uint32_t field_94_;  // 0x94
+  uint32_t field_98_;  // 0x98
+  uint32_t field_9C_;  // 0x9C
+  uint32_t field_A0_;  // 0xA0
+  uint8_t field_A4_;  // 0xA4
+  uint8_t field_A5_[0x63];  // 0xA5
   int32_t field_108_;
-  uint8_t unmapped_10C_[0x13D0 - 0x10C];
+  uint8_t field_10C_[0x640];  // 0x10C
+  uint32_t field_74C_;  // 0x74C
+  uint32_t field_750_;  // 0x750
+  uint32_t field_754_;  // 0x754
+  uint8_t field_758_[0xC74];  // 0x758
+  uint32_t field_13CC_;  // 0x13CC
 };
 
 static_assert(sizeof(CaviarData) == 0xC,

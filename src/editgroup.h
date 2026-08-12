@@ -71,7 +71,9 @@ class DLLEXPORT EditGroup {
   // array starts at 0x4 is evidenced.
   void *boxes_[20];
   uint32_t limits_[10];
-  uint8_t unmapped_7C_[0x8C - 0x7C];
+  uint8_t field_7C_[0x8];  // 0x7C
+  uint32_t field_84_;  // 0x84
+  uint8_t field_88_[0x4];  // 0x88
   GraphicWin virtual_base_;
   uint8_t gap_AA0_[4];
   Dialog dialog_;

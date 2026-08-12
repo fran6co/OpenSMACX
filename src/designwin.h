@@ -372,7 +372,8 @@ class DLLEXPORT DesignWin : GraphicWin, SubInterface {
   uint32_t field_14264_;  // 0x14264
   uint32_t field_14268_;  // 0x14268
   uint32_t field_1426C_;  // 0x1426C
-  uint8_t field_14270_[0x2D0];  // 0x14270
+  uint8_t field_14270_;  // 0x14270
+  uint8_t field_14271_[0x2CF];  // 0x14271
   Font font1_;  // 0x14540
   Font font2_;  // 0x14568
   Font font3_;  // 0x14590, the IDB's third font; the class grows by 0x14
