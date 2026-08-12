@@ -436,8 +436,19 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # cannot reproduce were KEPT, not re-proved - they are the UNREPRODUCED
 # list in the tool's report, and they need a human before anyone counts
 # them again.
-BASELINE_MATCHED_FUNCTIONS = 1233
-BASELINE_MATCHED_BYTES = 51540
+#
+# 1253 / 51879, when the scaffolding preamble stopped being a four-entry hand
+# list and started being DERIVED from `src/` (tools/src_declarations.py). None
+# of these twenty is a new recovery: every one is a body that has been
+# committed and annotated for some time and was scored NO_COMPILE because the
+# unit it was measured in had no declaration for a helper the tree already
+# carries - nineteen in `src/delegation_thunks.cpp` and `?tech_name@@YAPADHH@Z`
+# in `src/technology.cpp`. 547 pieces left NO_COMPILE in that one pass, and no
+# BYTE_EXACT row moved in the other direction. The precondition still holds by
+# construction: the status tool only measures IMPLEMENTED annotations, so every
+# matched row is backed by committed source.
+BASELINE_MATCHED_FUNCTIONS = 1253
+BASELINE_MATCHED_BYTES = 51879
 
 
 def summarise(ledger: dict) -> tuple:
