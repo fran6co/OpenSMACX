@@ -146,8 +146,8 @@ def _extractable(name: str, seen=()) -> bool:
     declared = _declared_classes().get(name)
     if declared is None:
         return False
-    base, _ = declared
-    if base is None:
+    bases, _ = declared
+    if bases is None:
         return False
     return _with_bases(name, seen) is not None
 
@@ -337,29 +337,39 @@ def members_of(body: str, seen=()):
 BASE_SPEC = re.compile(r"^\s*:\s*(?P<bases>.+)$", re.S)
 
 
-def base_of(bases: str):
-    """The single base class, '' for none, or None when it cannot be used.
+def bases_of(bases: str):
+    """The base classes in declaration order, [] for none, None if unusable.
 
-    MULTIPLE and VIRTUAL inheritance are refused rather than guessed. A
-    virtual base is not laid out where a reader would expect - MSVC places it
-    after the derived members and reaches it through a vbtable - and multiple
-    bases interleave in an order this does not model. Neither appears in the
-    classes this unlocks, so refusing costs nothing and guessing could put
-    every offset in the wrong place.
+    MULTIPLE INHERITANCE IS MODELLED, not refused. MSVC lays non-virtual bases
+    out in declaration order at increasing offsets and the derived members
+    after them, which is ordinary concatenation - the same rule the single
+    case already used, applied more than once. The image says so directly:
+    ??0BaseWin@@QAE@XZ builds its GraphicWin on an unadjusted `this` and then
+    reaches its SubInterface at `lea ecx, [esi + 0xa1c]`... at 0xA14, which is
+    exactly `sizeof(GraphicWin)` - where a second base goes.
+
+    Refusing it was costing real classes for no layout reason, and the
+    refusal's own justification ("neither appears in the classes this
+    unlocks") stopped being true the moment the interface hierarchy was read.
+
+    VIRTUAL bases are still refused, and that one is not a modelling gap: MSVC
+    places a virtual base where the object's own vbtable says at run time, not
+    at a position this file could compute, and AGENTS.md requires those to be
+    held as members at the MSVC offset instead.
     """
     if not bases:
-        return ""
+        return []
     found = BASE_SPEC.match(bases)
     if not found:
         return None
-    names = [part.strip() for part in found.group("bases").split(",")]
-    if len(names) != 1:
-        return None
-    words = names[0].replace("public", " ").replace("protected", " ") \
+    out = []
+    for part in found.group("bases").split(","):
+        words = part.replace("public", " ").replace("protected", " ") \
                     .replace("private", " ").split()
-    if "virtual" in words or len(words) != 1:
-        return None
-    return words[0]
+        if "virtual" in words or len(words) != 1:
+            return None
+        out.append(words[0])
+    return out
 
 
 @functools.lru_cache(maxsize=1)
@@ -373,7 +383,7 @@ def _declared_classes() -> dict:
     out = {}
     for header in sorted(SRC.glob("*.h")):
         for name, bases, body in class_bodies(header.read_text(errors="ignore")):
-            out.setdefault(name, (base_of(bases), body))
+            out.setdefault(name, (bases_of(bases), body))
     return out
 
 
@@ -385,26 +395,31 @@ def _body_of(name: str) -> str:
 def _with_bases(name: str, seen=()):
     """A class's members with its base chain prepended, or None.
 
-    The BASE COMES FIRST. Single non-virtual inheritance lays the base out at
-    offset 0 and the derived members after it, which is why every
-    GraphicWin-derived class was excluded before: without the base's 0xA14
-    bytes every offset in the derived class was wrong by that much.
+    THE BASES COME FIRST, IN DECLARATION ORDER. Non-virtual inheritance lays
+    each base out in turn from offset 0 and the derived members after them,
+    which is why every GraphicWin-derived class was excluded before: without
+    the base's 0xA14 bytes every offset in the derived class was wrong by that
+    much. More than one base is the same rule applied more than once - see
+    `bases_of`.
     """
     if name in seen:                       # a cycle: refuse rather than loop
         return None
     declared = _declared_classes().get(name)
     if declared is None:
         return None
-    base, _ = declared
+    bases, _ = declared
     members = members_of(_body_of(name), seen + (name,))
-    if base is None or members is None:
+    if bases is None or members is None:
         return None
-    if not base:
+    if not bases:
         return list(members)
-    inherited = _with_bases(base, seen + (name,))
-    if inherited is None:
-        return None
-    flattened = inherited + list(members)
+    flattened = []
+    for base in bases:
+        inherited = _with_bases(base, seen + (name,))
+        if inherited is None:
+            return None
+        flattened += inherited
+    flattened += list(members)
 
     # A DERIVED CLASS THAT RE-DECLARES A BASE MEMBER'S NAME REFUSES. That is
     # legal C++ - name hiding - and the object really carries both, so the
@@ -540,12 +555,55 @@ SCALAR = frozenset({
 
 def referenced_types(name: str) -> set:
     """Types a layout mentions, which the unit has to declare before it."""
-    out = set()
+    out = set(layout_bases(name))
     for type_, _, _ in pinned_layouts().get(name, ()):
         bare = type_.replace("*", " ").replace("const", " ").split()
         if bare and bare[-1] not in SCALAR:
             out.add(bare[-1])
     return out
+
+
+def layout_bases(name: str) -> list:
+    """The bases the emitter should DECLARE for `name`, or [].
+
+    Empty means "emit this class flat", which is the right answer both for a
+    root class and for one whose bases cannot be supplied - a flat class with
+    every inherited member spelled out has the same layout, and that is what
+    the emitter did for every class until the interface hierarchy needed
+    telling apart from a member.
+
+    Gated on `supplyable` for the WHOLE chain: a base emitted as an opaque
+    shell would contribute zero bytes and silently move every derived offset,
+    which is the one failure this file exists to prevent.
+    """
+    if not supplyable(name):
+        return []
+    declared = _declared_classes().get(name)
+    if declared is None:
+        return []
+    bases, _ = declared
+    if not bases:
+        return []
+    return list(bases) if all(supplyable(base) for base in bases) else []
+
+
+def own_declaration_for(name: str) -> list:
+    """The member lines for `name` ALONE, with no base members prepended.
+
+    The counterpart to `declaration_for` for a class the emitter declares with
+    a real base clause: the base contributes its own members, so repeating
+    them here would double every one of them. Callers must use this and
+    `layout_bases` together - own members with no base clause is a class
+    missing sizeof(base) bytes at the front, and it still compiles.
+    """
+    if name in WINDOWS_STRUCT:
+        return declaration_for(name)
+    if not supplyable(name):
+        return []
+    members = members_of(_body_of(name))
+    if not members:
+        return []
+    return [f"    {type_} {member}{array};" for type_, member, array in members]
 
 
 if __name__ == "__main__":

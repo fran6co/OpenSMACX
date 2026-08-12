@@ -1064,8 +1064,15 @@ def by_value_first(names) -> list:
 
     def dependencies(name) -> list:
         """By-value member types in the text that will actually be emitted."""
-        found = []
-        for line in class_layouts.declaration_for(name) or ():
+        # A BASE MUST BE COMPLETE at the derived definition, exactly as a
+        # by-value member must, and once the shell carries a base clause the
+        # base's members are no longer inlined into it - so the edge that used
+        # to arrive through the flattened member list has to arrive here
+        # instead, or the derived class is emitted above its own base.
+        found = list(class_layouts.layout_bases(name))
+        bases = set(found)
+        for line in (class_layouts.own_declaration_for(name) if bases
+                     else class_layouts.declaration_for(name)) or ():
             stripped = line.strip()
             # `Type name_;` and `Type name_[N];` need Type COMPLETE.
             # `Type *name_;` does not - the forward declaration above is
@@ -1111,11 +1118,35 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         # definition or VC6 warns C4099 - but it also has to agree with the
         # TARGET object, because `U` and `V` mangle differently. Both sides
         # read `class_keys`, which is what makes that true by construction.
+        #
+        # THE BASE CLAUSE IS EMITTED when `src/` declares one and every base
+        # in the chain can be supplied. Flattening is still the fallback and
+        # still produces the same layout; what it cannot produce is a body
+        # that NAMES a base - `SubInterface::set_iface_mode()` in
+        # SocialWin::show - because in a flat class there is no such base.
+        # `public` is spelled explicitly: the original's access specifier
+        # changes no offset, and the emitted unit needs the conversion to be
+        # legal so a body may pass `this` where a base pointer is expected.
         key = keys.get(name, "struct")
         if not opening:
             return f"{key} {name};"
-        return f"{key} {name} {{ public:" if key == "class" else \
-            f"{key} {name} {{"
+        bases = class_layouts.layout_bases(name)
+        clause = (" : " + ", ".join(f"public {base}" for base in bases)) \
+            if bases else ""
+        return f"{key} {name}{clause} {{ public:" if key == "class" else \
+            f"{key} {name}{clause} {{"
+
+    def members_of_shell(name: str) -> list:
+        """The member lines to put inside `name`'s shell.
+
+        OWN members when the shell carries a base clause, because the base
+        supplies its own; the flattened chain otherwise. Reading these two
+        from different places is how a class ends up missing sizeof(base)
+        bytes at the front while still compiling.
+        """
+        if class_layouts.layout_bases(name):
+            return class_layouts.own_declaration_for(name)
+        return class_layouts.declaration_for(name)
 
     signature = Signature(row, derived, pe, keys)
     refusal = recovery_symbols.UNDEFINABLE.get(signature.method) \
@@ -1245,7 +1276,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         lines.append("// ---- callees, declared and never defined "
                      "(a definition would be inlined) ----")
     for name in by_value_first(definable):
-        layout = class_layouts.declaration_for(name)
+        layout = members_of_shell(name)
         body = []
         for entry in methods_by_class.get(name, ()):
             if entry.kind == "ctor":
@@ -1310,7 +1341,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         # splices the definition alone. Measured on the first real run: 4 of
         # 10 writebacks lost that way, and the ones that landed wrote
         # `self[2]` into a file that already said `head_`.
-        layout = class_layouts.declaration_for(signature.klass)
+        layout = members_of_shell(signature.klass)
         if not layout:
             # NO PINNED LAYOUT, but a body that was proved byte-identical may
             # already have reached into this class, and where it did the
