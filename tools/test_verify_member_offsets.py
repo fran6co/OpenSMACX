@@ -324,6 +324,58 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(observed["C"][(0, 4)], "mov eax, [ecx]")
         self.assertEqual(typed, {})
 
+class VacuityTest(unittest.TestCase):
+    """A run that measures nothing must not report clean.
+
+    Found by an adversarial verifier, not by these tests: `--check` against a
+    directory with no headers printed "OK: no declared boundary is
+    contradicted by the image" and exited 0, having read zero layouts. It is
+    the same defect the refused-header guard covers, one level up - a header
+    nothing enumerated is never refused either - and it is the failure mode
+    this whole tool exists to make impossible, so it belongs here twice.
+    """
+
+    ACCESSES = ("class,offset,width,x87,evidence\n"
+                "Probe,0x0,4,0,mov eax dword ptr [ecx]\n")
+
+    def setUp(self):
+        import byte_match
+
+        reason = byte_match.available()
+        if reason:
+            raise unittest.SkipTest(
+                f"NOT RUN, not passed: needs VC6 ({reason}).")
+
+    def test_a_source_tree_with_no_headers_FAILS_the_check(self):
+        with tempfile.TemporaryDirectory() as name:
+            work = Path(name)
+            csv = work / "accesses.csv"
+            csv.write_text(self.ACCESSES)
+            buffer = io.StringIO()
+            with redirect_stdout(buffer):
+                code = verifier.main(["--check", "--src", str(work),
+                                      "--accesses", str(csv)])
+            self.assertEqual(code, 1, buffer.getvalue())
+            self.assertIn("FAIL", buffer.getvalue())
+
+    def test_the_clean_message_states_how_many_classes_were_measured(self):
+        # Without the count, a reader cannot tell a real pass from a vacuous
+        # one by looking at the output - which is how this survived.
+        with tempfile.TemporaryDirectory() as name:
+            work = Path(name)
+            (work / "stdafx.h").write_text("#pragma once\n")
+            (work / "probe.h").write_text(
+                "#pragma once\nclass Probe {\n public:\n"
+                "  unsigned long first_;\n};\n")
+            csv = work / "accesses.csv"
+            csv.write_text(self.ACCESSES)
+            buffer = io.StringIO()
+            with redirect_stdout(buffer):
+                code = verifier.main(["--check", "--src", str(work),
+                                      "--accesses", str(csv)])
+            self.assertEqual(code, 0, buffer.getvalue())
+            self.assertIn("1 classes measured", buffer.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
