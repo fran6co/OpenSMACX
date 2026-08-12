@@ -154,12 +154,25 @@ def verdicts(built: dict, layouts: dict, sizes: dict) -> list:
             kind = max(types, key=lambda name: sizes.get(name, 0))
             evidence = types[kind]
             want = sizes.get(kind)
-            if offset == 0:
-                out.append(("base" if kind in bases else "at-zero", klass,
-                            offset, kind, f"src/ bases: {sorted(bases)}",
-                            evidence))
-                continue
             got = widest.get(offset)
+            if offset == 0:
+                if kind in bases:
+                    out.append(("base", klass, offset, kind,
+                                f"src/ bases: {sorted(bases)}", evidence))
+                elif got and want and got[1] == want:
+                    # A FIRST MEMBER, not a base. MSVC lays the two out
+                    # identically, so the only thing that tells them apart
+                    # here is whether src/ already declares something of
+                    # exactly that size at zero - `Win` opens with
+                    # `AutoSound auto_sound_` and its 0x98 match, which is a
+                    # correct declaration rather than a missing edge.
+                    out.append(("agreed", klass, offset, kind,
+                                f"{got[0]} 0x{got[1]:X}, first member",
+                                evidence))
+                else:
+                    out.append(("at-zero", klass, offset, kind,
+                                f"src/ bases: {sorted(bases)}", evidence))
+                continue
             if got is None:
                 out.append(("absent", klass, offset, kind,
                             f"0x{want:X} bytes" if want else "size unknown",
