@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C59F3
 // 0x004C59E0  ?delete_device@Wave_In_Device@@QAEHXZ  ->  ?delete_device@Wave_In_Device@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

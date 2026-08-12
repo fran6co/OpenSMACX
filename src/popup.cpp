@@ -682,6 +682,7 @@ ORIGINAL: 0x004456B0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00446A00 0x004C6920 0x004C6B10 0x004C6CE0
+// indirect  0x00445715 0x004457A0
 Return Value: n/a
 Status: Complete
 */

@@ -707,6 +707,7 @@ ORIGINAL: 0x005FCA30
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x0062D5B0 0x0062D5D0 0x00636300
+// indirect  0x005FCA6E 0x005FCA85 0x005FCA9C 0x005FCAEF 0x005FCAF6 0x005FCB01
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
@@ -769,6 +770,7 @@ ORIGINAL: 0x005FCB60
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x0062D5B0 0x0062D5D0 0x00636300
+// indirect  0x005FCB7F 0x005FCB92 0x005FCB9D
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
@@ -796,6 +798,7 @@ ORIGINAL: 0x005FCBB0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x0062D5B0 0x0062D5D0 0x00636300
+// indirect  0x005FCBEE 0x005FCBF9 0x005FCC00
 Return Value: n/a
 Status: Complete - testing
 */
@@ -817,6 +820,7 @@ ORIGINAL: 0x005FCC20
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x0062D5D0 0x00636300
+// indirect  0x005FCC40 0x005FCC53 0x005FCC5E
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
@@ -843,6 +847,7 @@ ORIGINAL: 0x005FCC70
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x0062D5B0 0x0062D5D0 0x00636300
+// indirect  0x005FCCAF 0x005FCCBA 0x005FCCC1
 Return Value: n/a
 Status: Complete - testing
 */

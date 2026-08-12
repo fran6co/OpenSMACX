@@ -55,7 +55,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
 FACT_LINE = re.compile(
-    r"^\s*(?://|\*)?\s*(name|size|spans|prototype|callers|kind|flags|calls|notes)"
+    r"^\s*(?://|\*)?\s*(name|size|spans|prototype|callers|kind|flags|calls|notes"
+    r"|indirect)"
     r"\s+(.*?)\s*$")
 
 
@@ -71,7 +72,7 @@ def catalogue(path: Path = None) -> dict:
     `src/` is right about. The corrected catalogue is what every other tool
     consumes and is what a projection must be compared against.
     """
-    if path is not None and path != FUNCTIONS_CSV:
+    if path is not None:
         rows = {}
         with path.open(newline="", encoding="utf-8-sig") as handle:
             for row in csv.DictReader(handle):
@@ -83,6 +84,24 @@ def catalogue(path: Path = None) -> dict:
             rows[address]["_calls"] = set(targets)
     for address, row in rows.items():
         row.setdefault("_calls", set())
+    # Attribute each indirect call site to the function whose spans contain it.
+    import json
+    graph = REPO_ROOT / "docs" / "recovery" / "callgraph.json"
+    if graph.is_file():
+        spans = []
+        for address, row in rows.items():
+            for part in (row.get("body_ranges") or "").split(";"):
+                if "-" in part:
+                    low, high = part.split("-")
+                    spans.append((int(low, 16), int(high, 16), address))
+        spans.sort()
+        import bisect
+        starts = [s for s, _, _ in spans]
+        for site in json.loads(graph.read_text()).get("indirect_call_sites", []):
+            value = int(site, 16)
+            index = bisect.bisect_right(starts, value) - 1
+            if index >= 0 and spans[index][0] <= value < spans[index][1]:
+                rows[spans[index][2]].setdefault("_indirect", set()).add(value)
     return rows
 
 
@@ -124,7 +143,16 @@ def from_source(src: Path = None) -> dict:
                                  if present.get("callers") else "0",
             "_calls": {int(part, 16) for part in calls.split()
                        if part.startswith("0x")},
-            "end_address": (present.get("spans", "").split("-")[-1]
+            "_indirect": {int(part, 16) for part in
+                          present.get("indirect", "").split()
+                          if part.startswith("0x")},
+            # THE FIRST SPAN'S END, not the last. 402 functions carry a second
+            # span, and MSVC outlined those cold blocks to 0x0065xxxx - so
+            # taking the last one puts `end_address` in the funclet range and
+            # `byte_match` reads the wrong bytes. Measured: 416 rows differed
+            # that way and 241 BYTE_EXACT claims stopped reproducing, which is
+            # how this was found rather than reasoned.
+            "end_address": (present.get("spans", "").split(";")[0].split("-")[-1]
                             if "-" in present.get("spans", "") else ""),
         }
     return rows
@@ -159,6 +187,15 @@ def facts(address: int, row: dict) -> list:
     if targets is not None:
         spelled = " ".join(f"0x{t:08X}" for t in sorted(targets)) or "(none)"
         lines.append(f"// calls     {spelled}")
+    # THE INDIRECT CALL SITES, which is the rest of what `callgraph.json` holds:
+    # 5,159 addresses whose target no static analysis can name. They are why
+    # every seam count in this repository is a floor rather than an estimate, so
+    # a function that has them must say so beside the `calls` line that does not
+    # include them.
+    indirect = row.get("_indirect")
+    if indirect:
+        spelled = " ".join(f"0x{site:08X}" for site in sorted(indirect))
+        lines.append(f"// indirect  {spelled}")
     note = (row.get("notes") or "").strip()
     if note:
         lines.append(f"// notes     {note}")
@@ -251,12 +288,30 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--src", type=Path, default=REPO_ROOT / "src")
-    parser.add_argument("--functions", type=Path, default=FUNCTIONS_CSV)
+    parser.add_argument("--functions", type=Path, default=None,
+                        help="an export to compare against; required by --check")
     parser.add_argument("--apply", action="store_true",
                         help="stamp the facts onto annotations that lack them")
+    parser.add_argument("--place-orphans", action="store_true",
+                        help="write a placeholder for every catalogue row that "
+                             "no annotation in src/ claims")
     parser.add_argument("--check", action="store_true",
                         help="exit 1 if src/ and the export disagree")
     arguments = parser.parse_args(argv)
+
+    # A CHECK WITH NOTHING TO CHECK AGAINST MUST NOT PASS. Once the export is
+    # deleted, `catalogue()` reads `src/` - so comparing them would be comparing
+    # src/ with itself and printing OK forever, which is the vacuous-gate shape
+    # this tree has caught in itself three times. `--check` therefore REQUIRES an
+    # explicit export to compare against: regenerate one from the IDB with
+    # `export_recovery_inventory.py --output <path>` and point this at it.
+    if arguments.check and not arguments.functions:
+        print("FAIL: --check needs an export to compare against. `src/` is the "
+              "store now, so with no --functions this would compare src/ with "
+              "itself and pass on anything. Regenerate one from the IDB with "
+              "tools/export_recovery_inventory.py and pass --functions.",
+              file=sys.stderr)
+        return 1
 
     rows = catalogue(arguments.functions)
     missing, disagreeing, uncatalogued = survey(arguments.src, rows)
@@ -273,6 +328,39 @@ def main(argv=None) -> int:
     if uncatalogued:
         print(f"  {len(uncatalogued)} annotation(s) name an address the export "
               f"does not have")
+
+    if arguments.place_orphans:
+        # THE CATALOGUE'S `source_complete` IS THE STALE HALF HERE, and saying
+        # so is the whole point of `src/` being the store. These rows carry that
+        # state because a `Status: Complete` annotation once existed for them;
+        # none does now, and the bodies are not in the tree under any spelling -
+        # `??0Heap@@QAE@XZ` at 0x005D4560 has no `Heap::Heap` anywhere in src/.
+        # `--generate-placeholders` refuses them for the right reason under the
+        # old ordering (never contradict the catalogue) and the wrong one under
+        # this one: src/ measures state, the export only remembers it.
+        placed = 0
+        directory = REPO_ROOT / "src" / "unrecovered"
+        directory.mkdir(parents=True, exist_ok=True)
+        known = {a.address for a in annotation_scan.scan_tree(arguments.src)}
+        for address, row in sorted(rows.items()):
+            if address in known:
+                continue
+            path = directory / f"{address:08x}.cpp"
+            if path.exists():
+                continue
+            body = [f"// ORIGINAL: 0x{address:08X} FILE"]
+            body += facts(address, row)
+            body += ["// unlocated - the catalogue records this address as",
+                     "// source_complete, but no body for it exists in src/ under",
+                     "// any spelling. src/ measures state; the export remembers",
+                     "// it, and here they disagree. Treated as unrecovered.",
+                     "",
+                     "// BODY GOES HERE.",
+                     ""]
+            path.write_text("\n".join(body))
+            placed += 1
+        print(f"placed {placed} orphan row(s) as placeholders")
+        return 0
 
     if arguments.apply:
         changed = apply(arguments.src, rows, missing)

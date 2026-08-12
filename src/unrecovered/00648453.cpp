@@ -7,4 +7,5 @@
 // kind      library
 // flags     lib;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0064847B 0x006484AF 0x006484C9 0x006484E0
 // excluded - availability - MSVC 6 CRT and Windows library code; linked, not rewritten (docs/EXCLUSIONS.md section 1)

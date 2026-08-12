@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005F13BC 0x005F13CE 0x005F1403 0x005F140F
 // placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x005F13B0
 

@@ -3,8 +3,17 @@
 The decompilation is tracked in exactly one place: the source tree. Every
 piece of the binary the project maps carries an annotation in a `.cpp` file
 naming the bytes it claims, and one tool asks the original compiler what
-state each piece is in. The CSVs under `docs/recovery/` are derived views
-with a retirement path, not the record.
+state each piece is in.
+
+**As of 2026-08-12 that is literally true.** `functions.csv` and
+`callgraph.json` are deleted. Every annotation carries its own `name`, `size`,
+`spans`, `prototype`, `callers`, `kind`, `flags`, direct `calls` and `indirect`
+call sites, stamped by `tools/project_catalogue.py` and read back by
+`emit.load_functions()`. The IDA database remains the SEED - it is the only
+thing that can produce these facts in the first place, since the image carries
+no symbols - but it is no longer a runtime dependency, and
+`export_recovery_inventory.py` regenerates an export on demand for
+`project_catalogue.py --check` to compare against.
 
 Tool: `tools/decomp_status.py` (reader: `tools/annotation_scan.py`).
 Offline tests: `tools/test_annotation_scan.py`,

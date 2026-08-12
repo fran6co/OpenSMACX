@@ -541,6 +541,7 @@ ORIGINAL: 0x004C5900
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5909
 Return Value: n/a
 Status: Complete
 */
@@ -559,6 +560,7 @@ ORIGINAL: 0x004C5910
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5919
 Return Value: n/a
 Status: Complete
 */
@@ -622,6 +624,7 @@ ORIGINAL: 0x004C5B60
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5B69
 Return Value: 0, always
 Status: Complete
 */
@@ -642,6 +645,7 @@ ORIGINAL: 0x004C5B70
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5B79
 Return Value: 0, always
 Status: Complete
 */

@@ -182,6 +182,7 @@ ORIGINAL: 0x005D4510
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00644DFF 0x006470A6
+// indirect  0x005D452E
 Return Value: Pointer to allocated memory
 Status: Complete with two versions of malloc to prevent crash. Incompatibility with newer SDK 
         version of malloc CRT. Revisit once more code is redirected to dll.
@@ -474,6 +475,7 @@ ORIGINAL: 0x0062D570
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00645660
+// indirect  0x0062D594
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -809,6 +811,7 @@ ORIGINAL: 0x00600400
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00601BF0 0x00602600 0x00645470
+// indirect  0x0060042D 0x00600479 0x006004C7 0x00600509 0x00600560 0x0060056C 0x0060057C 0x006005A1 0x006005B6
 Return Value: No errors (0) otherwise error
 Status: WIP
 */
@@ -876,6 +879,7 @@ ORIGINAL: 0x006005D0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00645470
+// indirect  0x00600626 0x0060062F 0x0060068F 0x00600694 0x006006D9 0x006006DE 0x0060072C 0x00600734
 Return Value: File path string or NULL if not found
 Status: Complete
 */
@@ -1207,6 +1211,7 @@ ORIGINAL: 0x005390C0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006453E0 0x00645460
+// indirect  0x005390F6
 Return Value: Checksum
 Status: Complete
 */

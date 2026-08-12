@@ -163,6 +163,7 @@ ORIGINAL: 0x006115E0 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x006115F7
 Return Value: n/a
 Status: Complete
 */

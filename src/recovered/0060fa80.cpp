@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0060FAA7
 // 0x0060FA80  ?on_left_double_click@CheckBox@@QAEXHH@Z  ->  ?on_left_double_click@CheckBox@@QAEXHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

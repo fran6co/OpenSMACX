@@ -1972,6 +1972,7 @@ ORIGINAL: 0x00401BE0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00401C22 0x00401C34 0x00401C50
 Status: Complete
 */
 extern "C" __declspec(naked) int __cdecl sub_401be0() {
@@ -2111,6 +2112,7 @@ ORIGINAL: 0x006051C0 BYTE_EXACT
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x006051C2
 Return Value: n/a
 Status: Complete
 */

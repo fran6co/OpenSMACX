@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005FCA30 0x005FCBB0
+// indirect  0x0050DD9C 0x0050DDAD
 // 0x0050DD90  ?clock_wait@@YAXH@Z  ->  ?clock_wait@@YAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

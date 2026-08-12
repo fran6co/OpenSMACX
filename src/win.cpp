@@ -603,6 +603,7 @@ ORIGINAL: 0x005EC690
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005EC6B6 0x005EC6C7
 Return Value: The shared device context, or zero when none could be obtained
 Status: Complete
 */
@@ -640,6 +641,7 @@ ORIGINAL: 0x005EC6F0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005EC710 0x005EC72B
 Status: Complete
 Verification note: the two surviving mutants both concern the ReleaseDC call
 on the no-surface path. It is a real GDI import whose effect no fixture can
@@ -1335,6 +1337,7 @@ ORIGINAL: 0x005EC960 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005EC963 0x005EC971
 Return Value: nonzero while the logical left button is down
 Status: Complete
 */

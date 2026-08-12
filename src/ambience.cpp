@@ -433,6 +433,7 @@ ORIGINAL: 0x004C7670
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0064557F
+// indirect  0x004C76BE 0x004C76FA
 Return Value: n/a
 Status: Complete
 */
@@ -520,6 +521,7 @@ ORIGINAL: 0x004C8460
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004C61E0 0x006465F0
+// indirect  0x004C84E2
 Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete

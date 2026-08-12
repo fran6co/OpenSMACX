@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FA870 0x00610280 0x00611730
+// indirect  0x006101ED 0x00610202 0x0061021D
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7AC0
 // 0x004C7AB0  ?is_trackset_playing@Midi@@QAE_NI@Z  ->  ?is_trackset_playing@Midi@@QAE_NI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -52,6 +52,7 @@ ORIGINAL: 0x00404210 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00404212
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -73,6 +74,7 @@ ORIGINAL: 0x0041B4C0 BYTE_EXACT
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0041B4CD
 Return Value: n/a
 Status: Complete
 */
@@ -93,6 +95,7 @@ ORIGINAL: 0x0041DCB0 BYTE_EXACT
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0041DCBD
 Return Value: n/a
 Status: Complete
 */
@@ -115,6 +118,7 @@ ORIGINAL: 0x00428D60 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00428D62
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -138,6 +142,7 @@ ORIGINAL: 0x00428D70 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00428D72
 Return Value: n/a
 Status: Complete
 */
@@ -158,6 +163,7 @@ ORIGINAL: 0x00433F50 BYTE_EXACT
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00433F5D
 Return Value: n/a
 Status: Complete
 */
@@ -180,6 +186,7 @@ ORIGINAL: 0x0045F6F0 BYTE_EXACT
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0045F6F2
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -203,6 +210,7 @@ ORIGINAL: 0x0045F700 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0045F702
 Return Value: n/a
 Status: Complete
 */
@@ -225,6 +233,7 @@ ORIGINAL: 0x00483E80 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00483E82
 Return Value: n/a
 Status: Complete
 */
@@ -245,6 +254,7 @@ ORIGINAL: 0x00493E70 BYTE_EXACT
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00493E7D
 Return Value: n/a
 Status: Complete
 */
@@ -265,6 +275,7 @@ ORIGINAL: 0x004C5A80
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5A90
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -290,6 +301,7 @@ ORIGINAL: 0x004C5AA0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5AB0
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -340,6 +352,7 @@ ORIGINAL: 0x004C77D0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C77E0
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -365,6 +378,7 @@ ORIGINAL: 0x004C7800
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7814
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -390,6 +404,7 @@ ORIGINAL: 0x004C7830
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7840
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -415,6 +430,7 @@ ORIGINAL: 0x004C7860
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7878
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -440,6 +456,7 @@ ORIGINAL: 0x004C7890
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C78A4
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -465,6 +482,7 @@ ORIGINAL: 0x004C78E0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C78F0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -515,6 +533,7 @@ ORIGINAL: 0x004C7930
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7944
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -540,6 +559,7 @@ ORIGINAL: 0x004C7960
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7970
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -565,6 +585,7 @@ ORIGINAL: 0x004C7990
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C79A0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -590,6 +611,7 @@ ORIGINAL: 0x004C79C0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C79D4
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -615,6 +637,7 @@ ORIGINAL: 0x004C79F0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7A00
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -640,6 +663,7 @@ ORIGINAL: 0x004C7A20
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7A30
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -665,6 +689,7 @@ ORIGINAL: 0x004C7A50
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7A64
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -690,6 +715,7 @@ ORIGINAL: 0x004C7A80
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7A90
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -715,6 +741,7 @@ ORIGINAL: 0x004C7AD0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7AE0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -740,6 +767,7 @@ ORIGINAL: 0x004C7B00
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7B14
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -765,6 +793,7 @@ ORIGINAL: 0x004C7B30
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7B44
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -790,6 +819,7 @@ ORIGINAL: 0x004C7B60
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7B70
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -815,6 +845,7 @@ ORIGINAL: 0x004C7B90
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7BA0
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -865,6 +896,7 @@ ORIGINAL: 0x004C7BD0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7BE0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -890,6 +922,7 @@ ORIGINAL: 0x004C7C00
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7C10
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -915,6 +948,7 @@ ORIGINAL: 0x004C7C30
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7C44
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -940,6 +974,7 @@ ORIGINAL: 0x004C7D50
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7D60
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -965,6 +1000,7 @@ ORIGINAL: 0x004C7E80
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7E90
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -1015,6 +1051,7 @@ ORIGINAL: 0x004C7EC0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7ED0
 Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
@@ -1040,6 +1077,7 @@ ORIGINAL: 0x004C7EE0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7EF0
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -1065,6 +1103,7 @@ ORIGINAL: 0x004C7F10
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7F20
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -1090,6 +1129,7 @@ ORIGINAL: 0x004C7F40
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7F50
 Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
@@ -1117,6 +1157,7 @@ ORIGINAL: 0x004C8C20 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C8C29
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -1145,6 +1186,7 @@ ORIGINAL: 0x004C8C40 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C8C49
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -1196,6 +1238,7 @@ ORIGINAL: 0x004C8C70
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C8C80
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -1248,6 +1291,7 @@ ORIGINAL: 0x004C8EA0 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C8EA9
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -1324,6 +1368,7 @@ ORIGINAL: 0x004C9050
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C9060
 Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
@@ -1351,6 +1396,7 @@ ORIGINAL: 0x005AD3B0 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005AD3B2
 Return Value: n/a
 Status: Complete
 */
@@ -1373,6 +1419,7 @@ ORIGINAL: 0x005AD3C0 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005AD3C2
 Return Value: n/a
 Status: Complete
 */
@@ -1395,6 +1442,7 @@ ORIGINAL: 0x005AD430 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005AD432
 Return Value: n/a
 Status: Complete
 */
@@ -1417,6 +1465,7 @@ ORIGINAL: 0x005AD440 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005AD442
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -1438,6 +1487,7 @@ ORIGINAL: 0x005C93A0 BYTE_EXACT
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005C93AD
 Return Value: n/a
 Status: Complete
 */
@@ -1460,6 +1510,7 @@ ORIGINAL: 0x00607B00 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00607B02
 Return Value: n/a
 Status: Complete
 */

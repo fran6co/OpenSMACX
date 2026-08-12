@@ -373,6 +373,7 @@ ORIGINAL: 0x00608E10
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00402970 0x005D45B0 0x00608F50
+// indirect  0x00608EB5 0x00608ECA 0x00608EE9
 Return Value: n/a (the original leaves Heap::shutdown's EAX residue; the
               scalar deleting destructor overwrites it and the 116 direct
               callers ignore it, so void is faithful)

@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005FCDB6 0x005FCDC5 0x005FCDD0
 // 0x005FCDA0  sub_5fcda0  ->  _sub_5fcda0
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

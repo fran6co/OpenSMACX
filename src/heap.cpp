@@ -108,6 +108,7 @@ ORIGINAL: 0x005D4680
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00600840 0x00644DFF 0x00645470 0x00647132 0x0064FC88
+// indirect  0x005D47BE
 Return Value: Memory pointer with address to requested size
 Status: Complete
 */

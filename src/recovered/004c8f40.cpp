@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C8F45 0x004C8F4C 0x004C8F5C
 // 0x004C8F40  ?unload@VoiceTx@@QAEHXZ  ->  ?unload@VoiceTx@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

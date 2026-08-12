@@ -307,6 +307,7 @@ ORIGINAL: 0x00589180
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005BF310 0x00625E30 0x00625E50 0x00625EC0 0x00645470 0x00645660
+// indirect  0x0058923D
 Return Value: n/a
 Status: Complete
 */

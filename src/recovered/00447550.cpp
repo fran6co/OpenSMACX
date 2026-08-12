@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00447557
 // 0x00447550  ?basewin_hide@UAmbience@@QAEXXZ  ->  ?basewin_hide@UAmbience@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

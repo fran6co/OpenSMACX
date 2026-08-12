@@ -7,4 +7,5 @@
 // kind      library
 // flags     noret;lib;staticdef;frame;sp_ready
 // calls     0x00644E10 0x00646DA5 0x00647067 0x0064B5FC
+// indirect  0x00647004 0x0064701F 0x00647028
 // excluded - availability - MSVC 6 CRT and Windows library code; linked, not rewritten (docs/EXCLUSIONS.md section 1)

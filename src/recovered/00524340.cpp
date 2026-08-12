@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0052435B
 // 0x00524340  Demo::timer_callback  ->  _fn_00524340
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

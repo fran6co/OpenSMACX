@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0045C829
 // 0x0045C800  ?on_button_clicked@MainInterface@@QAEXH@Z  ->  ?on_button_clicked@MainInterface@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

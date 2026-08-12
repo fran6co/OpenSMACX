@@ -131,6 +131,7 @@ ORIGINAL: 0x005D4E40
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D7470 0x005EB640
+// indirect  0x005D4EDB
 // notes     Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original Win close dependency
 Return Value: field_A0C_ default when no interface is present; otherwise the
               scalar-deleting virtual call's return residue
@@ -295,6 +296,7 @@ ORIGINAL: 0x005D5250
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DA330 0x005DFB50 0x005DFF00
+// indirect  0x005D5277
 Return Value: n/a
 Status: Complete
 Verification note: three loads the original performs are deliberately absent.
@@ -369,6 +371,7 @@ ORIGINAL: 0x005D5A70
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D6AC0 0x005ED240 0x005F7E90
+// indirect  0x005D5AA9 0x005D5AAF 0x005D5B59
 Return Value: n/a
 Status: Complete
 Verification note: the calling convention of the 0xA10 paint hook is inferred,

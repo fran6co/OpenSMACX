@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00609F20
+// indirect  0x004A848A 0x004A8499
 // 0x004A8470  ?close_labs@ReportIf@@QAEXXZ  ->  ?close_labs@ReportIf@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -91,6 +91,7 @@ ORIGINAL: 0x00446A90 BYTE_EXACT
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00446AA2
 Status: Complete
 */
 void FX::stop(int a1) {
@@ -107,6 +108,7 @@ ORIGINAL: 0x00446AB0 BYTE_EXACT
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00446AC2
 Status: Complete
 */
 void FX::release(int a1) {
@@ -124,6 +126,7 @@ ORIGINAL: 0x00446AD0 BYTE_EXACT
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00446AE2
 Status: Complete
 */
 void FX::fade(int a1) {

@@ -194,6 +194,7 @@ ORIGINAL: 0x004E1F40
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004E1F51
 Return Value: 1 when editing is locked, 0 otherwise
 Status: Complete
 */

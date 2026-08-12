@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005F2711 0x005F272B 0x005F2745
 // 0x005F2700  ?do_caption_buttons@Win@@QAEXXZ  ->  ?do_caption_buttons@Win@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

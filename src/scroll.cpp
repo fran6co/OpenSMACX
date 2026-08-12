@@ -158,6 +158,7 @@ ORIGINAL: 0x00605370
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4E40
+// indirect  0x006054AC 0x006054BE
 // notes     Runtime redirect installed by DllMain after byte-signature validation; retains two embedded FlatButton virtual-close dependencies and delegates to source-owned GraphicWin close
 Return Value: GraphicWin::close return residue
 Status: Complete; embedded FlatButton close redirects are source-owned
@@ -344,6 +345,7 @@ ORIGINAL: 0x006059B0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00628A50
+// indirect  0x00605A03
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -375,6 +377,7 @@ ORIGINAL: 0x00605A10
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00605A31 0x00605A43
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -400,6 +403,7 @@ ORIGINAL: 0x00605A50
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00605A71 0x00605A83
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -425,6 +429,7 @@ ORIGINAL: 0x00605A90
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00605AB1 0x00605AC3
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -450,6 +455,7 @@ ORIGINAL: 0x00605AD0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00605AF1 0x00605B03
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -648,6 +654,7 @@ ORIGINAL: 0x00605D20
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00605D80
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */

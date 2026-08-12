@@ -186,6 +186,7 @@ ORIGINAL: 0x00401CE0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00401D22 0x00401D34 0x00401D50
 Status: Complete
 */
 extern "C" __declspec(naked) int __cdecl fn_00401ce0() {

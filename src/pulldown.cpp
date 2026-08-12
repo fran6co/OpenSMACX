@@ -460,6 +460,7 @@ ORIGINAL: 0x005F93A0 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005EDCD0 0x005FCBB0
+// indirect  0x005F93A5
 Status: Complete
 */
 void PullDown::hide() {

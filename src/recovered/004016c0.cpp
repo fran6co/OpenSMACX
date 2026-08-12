@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00401702 0x00401714 0x00401730
 // 0x004016C0  ?close@ServiceStruct@@QAEXXZ  ->  ?close@ServiceStruct@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

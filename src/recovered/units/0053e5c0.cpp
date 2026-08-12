@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0051F1B0 0x00530AA0 0x00530D00 0x005315C0 0x005399A0 0x0053A980 0x0053C650 0x005589E0 0x0055B760 0x0058F9D0 0x00592EE0 0x005BF310 0x005BF7D0 0x00625EC0 0x006262F0
+// indirect  0x0053E5F7 0x0053E61B 0x0053E652
 // PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

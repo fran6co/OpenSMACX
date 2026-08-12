@@ -1360,6 +1360,7 @@ ORIGINAL: 0x0059D980
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00645460 0x00645DA7
+// indirect  0x0059D9B4 0x0059DA0A
 Return Value: Key's string value from the ini or default if not set
 Status: Complete
 */
@@ -1386,6 +1387,7 @@ ORIGINAL: 0x0059DA20
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00645470 0x00645DA7 0x0064FC88
+// indirect  0x0059DA6E
 Return Value: Default preferences
 Status: Complete
 */
@@ -1413,6 +1415,7 @@ ORIGINAL: 0x0059DAA0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00645470 0x00645DA7 0x0064FC88
+// indirect  0x0059DAEE
 Return Value: Default preferences 2nd set
 Status: Complete
 */
@@ -1476,6 +1479,7 @@ ORIGINAL: 0x0059DB40
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00645460 0x00645470 0x00645DA7 0x0064FC88
+// indirect  0x0059DBAC
 Return Value: Key's integer value from the ini or default if not set
 Status: Complete
 */
@@ -1503,6 +1507,7 @@ ORIGINAL: 0x0059DBD0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00645460 0x00645470 0x00645DA7 0x0064FC88
+// indirect  0x0059DC5B 0x0059DCA1
 Return Value: n/a
 Status: Complete
 */
@@ -1540,6 +1545,7 @@ ORIGINAL: 0x0059DCF0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0059DB40 0x005FD740 0x005FD7A0 0x00627100 0x00645460 0x00645470 0x00645DA7 0x0064FC88
+// indirect  0x0059DD47 0x0059DDA7 0x0059DE0B 0x0059DE6F 0x0059DED3 0x0059DFA8 0x0059DFF7 0x0059E0BE 0x0059E10D 0x0059E160 0x0059E1AE 0x0059E20E 0x0059E2B4 0x0059E303 0x0059E3A0 0x0059E3EF 0x0059E46E 0x0059E4BC
 Return Value: n/a
 Status: Complete
 */
@@ -1593,6 +1599,7 @@ ORIGINAL: 0x0059E510
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0059E527
 Return Value: n/a
 Status: Complete
 */
@@ -1611,6 +1618,7 @@ ORIGINAL: 0x0059E530
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00645470 0x0064FC88
+// indirect  0x0059E5C3
 Return Value: n/a
 Status: Complete
 */
@@ -1631,6 +1639,7 @@ ORIGINAL: 0x0059E5D0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0059E530 0x00645470 0x0064FC88
+// indirect  0x0059E61B 0x0059E65F 0x0059E6A2 0x0059E6E4 0x0059E728 0x0059E792 0x0059E7FC 0x0059E8A8 0x0059E92E
 Return Value: n/a
 Status: Complete
 */

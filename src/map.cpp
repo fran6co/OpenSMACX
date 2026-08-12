@@ -3522,6 +3522,7 @@ ORIGINAL: 0x005C7020
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004712A0 0x00591D60 0x00591DB0 0x00591E00 0x00592600 0x005C2020 0x006169A0 0x0064601D
+// indirect  0x005C7145
 Return Value: n/a
 Status: Complete - testing
 */

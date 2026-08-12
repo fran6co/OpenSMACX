@@ -34,6 +34,7 @@ ORIGINAL: 0x00618F40
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00644EF2 0x00645470
+// indirect  0x00618F83 0x00618F94 0x00618FC3 0x00619043 0x0061906C 0x0061907A 0x006190AB 0x006190B9
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -95,6 +96,7 @@ ORIGINAL: 0x006190D0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005D4510 0x00618F40 0x00644EF2 0x006453E0 0x00645470
+// indirect  0x006190F8 0x00619109 0x006191A0 0x006191B1 0x006191BB 0x006191C5 0x006191E6
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -134,6 +136,7 @@ ORIGINAL: 0x00619230
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00644EF2
+// indirect  0x00619250 0x00619261
 Return Value: n/a
 Status: Complete
 */
@@ -165,6 +168,7 @@ ORIGINAL: 0x00619280
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006453E0
+// indirect  0x006192A7 0x006192BF 0x006192C7 0x006192D5
 Return Value: Width otherwise zero on error
 Status: Complete
 */
@@ -190,6 +194,7 @@ ORIGINAL: 0x006192F0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x006453E0
+// indirect  0x00619337 0x00619346 0x0061934E 0x0061935C
 Return Value: Width otherwise zero on error
 Status: Complete
 */
@@ -219,6 +224,7 @@ ORIGINAL: 0x00619370
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x006453E0 0x006473F0
+// indirect  0x006193EB 0x006193FA 0x00619402 0x00619410 0x006194AD 0x006194BC 0x006194C4 0x006194D2
 Return Value: Pointer to string section after the line break or NULL if not found
 Status: Complete
 */
@@ -268,6 +274,7 @@ ORIGINAL: 0x006195B0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00618F40
+// indirect  0x006195D2
 Return Value: Zero on success (or already initialized), non-zero on error
 Status: Complete
 */
@@ -300,6 +307,7 @@ ORIGINAL: 0x00619610
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00619629
 Return Value: n/a
 Status: Complete
 */

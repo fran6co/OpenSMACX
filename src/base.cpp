@@ -185,6 +185,7 @@ ORIGINAL: 0x004E3A50
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005108A0 0x00532B70 0x005BF310 0x00625E30 0x006262F0
+// indirect  0x004E3B59
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Return Value: Base id or -1 when no base is present
 Status: Complete - testing
@@ -2990,6 +2991,7 @@ ORIGINAL: 0x005BA0E0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00421670 0x004E49D0 0x004F80D0 0x0050BA00 0x00645470 0x00645660
+// indirect  0x005BA213
 Return Value: Is facility or Secret Project available to faction, base and game mode? true/false
 Status: Complete
 */
