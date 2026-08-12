@@ -10,8 +10,8 @@ are replaced. It is not itself a new executable or a distributable build product
 Install `tools/requirements.txt`, stage the supported game files under `.opensmacx/game/`, and run:
 
 ```sh
-.opensmacx/venv/bin/python tools/prepare_hybrid_image.py
-.opensmacx/venv/bin/python tools/assemble_hybrid_image.py
+.opensmacx/venv/bin/python prepare_hybrid_image (retired)
+.opensmacx/venv/bin/python assemble_hybrid_image (retired)
 ```
 
 An existing CMake configuration can invoke the same operation:
@@ -44,7 +44,7 @@ below. It temporarily skips PRACX intro movies by default; add `--play-intro-mov
 the configured movie player for a manual run:
 
 ```sh
-.opensmacx/venv/bin/python tools/run_game.py \
+.opensmacx/venv/bin/python run_game (retired) \
   --game-dir build/mingw-i686-release/staged-game \
   --executable terranx_hybrid.exe \
   --wine "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine" \
@@ -134,7 +134,7 @@ executable used for local island extraction. All default outputs remain under `.
 is ignored by Git. Proprietary output paths must be nonsymlinked descendants of `.opensmacx/` or
 `build/`; configuration and source-owned tools reject symlinked parent components.
 
-On macOS, always use `tools/run_game.py` rather than invoking the Wine CLI directly. The launcher
+On macOS, always use the retired `run_game` rather than invoking the Wine CLI directly. The launcher
 uses Launch Services for the native window driver and explicitly passes the configured Wine prefix.
 The hybrid defaults to the hash-pinned PRACX executable because it works with Wine's built-in
 DirectDraw. The pre-PRACX executable reaches an unsupported DirectDraw path on current Wine, while

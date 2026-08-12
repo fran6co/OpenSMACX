@@ -190,7 +190,7 @@ The recovery inventory can be projected onto a supported user-owned executable a
 local image pack:
 
 ```sh
-.opensmacx/venv/bin/python tools/prepare_hybrid_image.py
+.opensmacx/venv/bin/python prepare_hybrid_image (retired)
 ```
 
 The command accepts the canonical IDB input or the executable independently analyzed by Ghidra. It

@@ -91,7 +91,7 @@ The remaining three — `0x004C6120`, `0x004C66E0`, `0x004C67C0`, the `Sound` an
 tails onto another catalogued function under `/Gy`, so no per-function verdict
 is well defined and **byte-matching is structurally incapable of ever speaking
 about them**. Behavioural evidence is the only kind that exists for these, and
-`tools/generate_signature_oracles.py` with the differential
+the retired `generate_signature_oracles` with the differential
 `recovery-oracle` is where it belongs. `0x00590300` already appears in the
 oracle sources, so the route is not hypothetical.
 
@@ -323,6 +323,77 @@ It was measuring how much of the image a *behavioural* oracle could reach. That
 question is settled and the answer is "about half". Byte-matching answers a
 stronger question over the whole image at O(1) cost per body, which is why the
 project now has one route instead of two.
+
+## The DLL, the redirects and the whole runtime route — retired 2026-08-12
+
+**This is the big one, and it is explicitly reversible.** Until now the buildable
+artifact was `OpenSMACX.dll`, injected into the shipped executable: `dllmain.cpp`
+carried **2,049 fixed-address redirects** (10,671 lines, almost all of it the
+table), each validating a byte signature at process attach before writing an
+`E9 rel32` jump into the original's code, plus 488 export aliases in
+`OpenSMACX.def`. That is how recovered code ran, and `terranx_hybrid.exe` plus
+the DLL was the thing you could actually play.
+
+It is retired **while the recovery is finished by byte-matching, which runs
+nothing**. If the recovery turns out not to reach far enough for the tree to
+stand alone, the dispatching comes back — that is the explicit plan, not a
+consolation.
+
+The tension it resolves is in `AGENTS.md:5`, which has always said final builds
+must require "no original executable, copied machine code, **fixed-address
+redirects**, or proprietary assembly". Redirects were always temporary. What
+made retiring them a real decision is that `recovery_metrics` reports
+**machine_carried at 90.56% of scope bytes**: nine-tenths of the image's
+behaviour is still supplied by machine-derived code, so a standalone link is a
+long way off and the interim has no runnable artifact.
+
+### What replaced it, and why it is a better build check
+
+`add_executable(OpenSMACX)` over the same sources, with `src/main.cpp` in place
+of `DllMain`, producing `opensmacx-link-check.exe`. Every object is linked
+**directly** rather than pulled from an archive on demand, so an undefined symbol
+anywhere in the recovered tree is a link error. The DLL gave that guarantee only
+for the 488 names its `.def` exported.
+
+It earned itself immediately: the first link failed on
+`?run_deferred_oracles@@YAXXZ`, an oracle hook still called from
+`scenario.cpp` after the unit that defined it was removed. `main()` deliberately
+does nothing — running the recovered code needs the game's data, its globals
+initialised and the original process image, none of which exists without the
+injection route. A binary that links and then faults is a worse signal than one
+that links and exits.
+
+### Retired with it
+
+Twelve source files (`dllmain.cpp` and eleven `*_oracle.cpp`), 22 tools, and the
+targets behind them: hybrid image assembly and staging, the game installer and
+runner, the gameplay smoke gate, the in-process differential oracle and its
+generator, the mutation harness, the observability census, `legacy-leaves.S`
+extraction, and the redirect wiring (`add_redirect`, the signature generator,
+the patch-fit check, the import shim and both export emitters).
+
+### The ideas to bring back with it
+
+- **A redirect validates a byte signature before it patches.** A mismatch fails
+  DLL loading rather than corrupting a running game. Any future injection route
+  should keep that ordering.
+- **`verify_redirect_patch_fit`** checked that every wired redirect had room for
+  its `E9 rel32`. Nothing checked it until 2026-07-29, and it is the kind of
+  defect that only shows as a corrupted neighbour.
+- **The deferred oracle phase.** The executable's CRT heap deadlocks during
+  `DllMain` (`RtlpWaitForCriticalSection section 009C0538 ... blocked by 0000`),
+  so oracle work had to trigger off a later hook — `scenario_opening_movie`, the
+  first startup call site reached after the CRT is running. The hook point is
+  still marked in `src/scenario.cpp`.
+- **Vacuous fixtures are the failure mode.** Game tables are empty during
+  `DllMain`, so a suite that only reads them compares zero against zero. The
+  `verify_close` case seeded `0x77777777` and retargeted a displacement from
+  `0x14` to `0x18` for exactly that reason.
+- **`--reuse-owned-wine-prefix` must not come back.** Teardown is `wineserver -k`
+  at 0.053 s; a retained session cost **1.05 s per CTest invocation**, because
+  the wineserver and its six children inherit the runner's stdout and hold
+  CTest's output pipe open. A 12-mutant sweep measured 70.7 s with it against
+  45.8 s without, same 12/12 kills.
 
 ## Still live, and not retired by this file
 

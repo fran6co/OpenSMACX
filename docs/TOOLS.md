@@ -152,12 +152,12 @@ refuses and changes nothing. The names are historical; the code is not.
 
 ## Wiring a recovery into the DLL
 
-`tools/add_redirect.py` wires one in a single verified step.
-`tools/generate_redirect_signatures.py` derives the DllMain signature header,
-`tools/verify_redirect_patch_fit.py` checks the jump has room,
-`tools/generate_vc6_exports.py` and `tools/generate_mingw_exports.py` emit the
+the retired `add_redirect` wires one in a single verified step.
+the retired `generate_redirect_signatures` derives the DllMain signature header,
+the retired `verify_redirect_patch_fit` checks the jump has room,
+the retired `generate_vc6_exports` and the retired `generate_mingw_exports` emit the
 module definition, `tools/verify_def_append_only.py` refuses to drop an export
-name, and `tools/generate_imports.py` derives the import shim table.
+name, and the retired `generate_imports` derives the import shim table.
 Signedness is audited by `tools/audit_export_signedness.py` and
 `tools/audit_recovered_signatures.py` and applied by
 `tools/fix_export_signedness.py`.
@@ -168,18 +168,18 @@ Signedness is audited by `tools/audit_export_signedness.py` and
 
 `tools/run_gate.py` runs the recovery gate in both presets.
 `tools/host_doctor.py` says whether this machine can run the harness at all.
-The game side: `tools/setup_game.py`, `tools/stage_preset_game_dir.py`,
-`tools/prepare_hybrid_image.py`, `tools/assemble_hybrid_image.py`,
-`tools/opensmac_patcher.py`, `tools/movie_skip.py`, `tools/run_game.py`,
-`tools/run_gameplay_scenario.py`, `tools/smoke_hybrid_game.py`.
+The game side: the retired `setup_game`, the retired `stage_preset_game_dir`,
+the retired `prepare_hybrid_image`, the retired `assemble_hybrid_image`,
+the retired `opensmac_patcher`, the retired `movie_skip`, the retired `run_game`,
+the retired `run_gameplay_scenario`, the retired `smoke_hybrid_game`.
 Wine plumbing: `tools/vc6_cl.py` (VC6 as a CMake compiler from Linux),
 `tools/owned_wine_prefix.py`, `tools/wine_runtime.py`,
 `tools/run_windows_test.py`, `tools/runtime_process.py`,
 `tools/local_artifact.py`.
-Oracles: `tools/generate_signature_oracles.py`,
-`tools/extract_legacy_leaves.py`,
-`tools/export_recovery_inventory.py`, `tools/measure_observability.py`,
-`tools/mutate_and_verify.py`.
+Oracles: the retired `generate_signature_oracles`,
+the retired `extract_legacy_leaves`,
+`tools/export_recovery_inventory.py`, the retired `measure_observability`,
+the retired `mutate_and_verify`.
 
 ## Static recompilation — research, not the route
 
@@ -209,9 +209,9 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
 - `tools/verify_recovery_abi.py`, `tools/verify_recovery_metadata.py`,
   `tools/verify_recovery_pipeline.py` — the analysis pipeline says the same
   thing twice running
-- `tools/verify_no_load_time_addresses.py` — no fixed game address
+- the retired `verify_no_load_time_addresses` — no fixed game address
   dereferenced at load time
-- `tools/verify_observability_ratchet.py` — a new recovery must prove
+- the retired `verify_observability_ratchet` — a new recovery must prove
   something observes it
 - `tools/verify_build_freshness.py` — a green ctest against a stale build
   directory means nothing

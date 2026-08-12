@@ -240,7 +240,7 @@ functions were written to behave.
 
 Measured 2026-08-01. A random sample of **eight** recovered functions of ≥200 B
 (seed 20260801, so it re-draws identically) was re-swept with
-`tools/mutate_and_verify.py`:
+the retired `mutate_and_verify`:
 
 | function | bytes | killed | survived |
 |---|---:|---:|---:|
@@ -259,7 +259,7 @@ single mutant, including mutants that delete a whole statement. Over the sample,
 
 ### The whole population, measured 2026-08-01
 
-The sample was then replaced by a census. `tools/measure_observability.py` asks
+The sample was then replaced by a census. the retired `measure_observability` asks
 the weaker question — *does anything observe this at all* — for **one build per
 function** instead of ~152, by wrecking every perturbable line at once and
 running the suite once. That is what made asking it over the corpus feasible:

@@ -26,7 +26,7 @@ every registered suite reports success.
   `run_deferred_oracles()`. Each suite temporarily suspends only its required
   redirect after CRT startup, compares separate real allocations on the
   original and source sides, and restores the redirect before returning.
-- `tools/smoke_hybrid_game.py` exports `OPENSMACX_RUNTIME_ORACLE_RESULT` and
+- the retired `smoke_hybrid_game` exports `OPENSMACX_RUNTIME_ORACLE_RESULT` and
   refuses to pass unless the result file lists every suite as `passed` and
   ends with `all passed`.
 
@@ -81,4 +81,4 @@ all passed
 ```
 
 The terminal `all passed` line appears only when every suite succeeded;
-`tools/smoke_hybrid_game.py` treats anything else as a gate failure.
+the retired `smoke_hybrid_game` treats anything else as a gate failure.

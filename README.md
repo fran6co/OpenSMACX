@@ -57,7 +57,7 @@ cmake --build --preset mingw-i686-release --target stage-hybrid-game
 Launch it with:
 
 ```sh
-.opensmacx/venv/bin/python tools/run_game.py \
+.opensmacx/venv/bin/python run_game (retired) \
   --game-dir .opensmacx/game \
   --executable terranx_hybrid.exe \
   --wine "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine" \
