@@ -118,6 +118,7 @@ ORIGINAL: 0x004C45F0 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D5890
+// indirect  0x004C45F5
 Status: Complete
 */
 void WorldWin::set_center(int a1, int a2) {
@@ -135,6 +136,7 @@ ORIGINAL: 0x004C4610 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D5890
+// indirect  0x004C4615
 Status: Complete
 */
 void WorldWin::focus(int a1, int a2) {
@@ -152,6 +154,7 @@ ORIGINAL: 0x004C3EA0 BYTE_EXACT
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005D5890
+// indirect  0x004C3EA5
 Status: Complete
 */
 void WorldWin::follow_center(int xCoord, int yCoord) {

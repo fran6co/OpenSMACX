@@ -185,6 +185,7 @@ ORIGINAL: 0x00402970
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00402992 0x004029A4 0x004029C4
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -237,6 +238,7 @@ ORIGINAL: 0x00401060
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004010A2 0x004010B4 0x004010D0
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -285,6 +287,7 @@ ORIGINAL: 0x004066C0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00406721 0x00406735 0x00406754 0x004067B7 0x004067C9 0x004067E9
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 Verification note: the base stage overwrites the derived tables, so with the

@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00609A50
+// indirect  0x0060E20D
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

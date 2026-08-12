@@ -190,6 +190,7 @@ ORIGINAL: 0x0060FB90 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0060FB9E
 Return Value: n/a
 Status: Complete
 */
@@ -219,6 +220,7 @@ ORIGINAL: 0x0060FC30 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0060FC4F
 Return Value: n/a
 Status: Complete
 */

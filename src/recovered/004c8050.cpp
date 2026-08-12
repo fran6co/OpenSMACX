@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C8060
 // 0x004C8050  ?set_play_type@Midi@@QAEHI@Z  ->  ?set_play_type@Midi@@QAEHI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -359,9 +359,18 @@ def load_callees() -> dict:
     not an address-keyed map. Reading it as a map is how a seam filter once
     admitted every row it was meant to filter, so the shape is asserted here
     rather than assumed.
+
+    THE EDGES ARE IN `src/` NOW, one `// calls` line per annotation, and the
+    JSON is the fallback. Flipping `load_functions` without this one left the
+    emitter declaring NO callees at all, so every unit failed on the first CRT
+    name it used - `error C2065: 'abs' : undeclared identifier` - and 241
+    BYTE_EXACT claims went NO_COMPILE at once. A catalogue is two halves and
+    moving one is not moving it.
     """
     if not CALLGRAPH.is_file():
-        return {}
+        import project_catalogue
+        return {address: sorted(row.get("_calls") or ())
+                for address, row in project_catalogue.from_source().items()}
     data = json.loads(CALLGRAPH.read_text())
     edges = data.get("edges")
     if not isinstance(edges, list):

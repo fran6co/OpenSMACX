@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D5930 0x005D8000 0x005DA860 0x005DAC70 0x005DACB0 0x005DD130 0x005E2DD3 0x005E3203 0x005FD2B0 0x006169A0 0x006453E0 0x00645470 0x0064FC88
+// indirect  0x004B0E7F
 // PRESERVED UNIT - measured NO_COMPILE.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

@@ -320,11 +320,13 @@ def load_rows() -> dict:
     Found on `Caviar::vx_read`: the `QAA` -> `SAA` correction reached the
     scaffolding but not here, so every parameter read stayed off by exactly
     the width of a `this` the emitter had already taken out.
+
+    The store is `src/` now, so both loaders resolve to the same annotations
+    rather than to the same CSV, which closes that disagreement by construction
+    instead of by remembering to correct in two places.
     """
-    import catalogue_corrections
-    with FUNCTIONS_CSV.open() as handle:
-        rows = {int(row["address"], 16): row for row in csv.DictReader(handle)}
-    return catalogue_corrections.apply(rows)
+    import emit_translation_unit
+    return emit_translation_unit.load_functions()
 
 
 def shared_span_index(rows: dict) -> set:

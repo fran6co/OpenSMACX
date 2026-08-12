@@ -33,6 +33,7 @@ ORIGINAL: 0x00616260
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FD370
+// indirect  0x0061627E 0x0061628C
 Return Value: n/a
 Status: Complete
 */
@@ -60,6 +61,7 @@ ORIGINAL: 0x006162D0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005FD370
+// indirect  0x006162EE 0x006162FC
 Return Value: n/a
 Status: Complete
 */
@@ -88,6 +90,7 @@ ORIGINAL: 0x00616350
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FD370
+// indirect  0x0061636E 0x0061637C 0x006163D8 0x006163ED
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -117,6 +120,7 @@ ORIGINAL: 0x00616410
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005FD370
+// indirect  0x0061642E 0x0061643C 0x0061649C 0x006164B2
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -147,6 +151,7 @@ ORIGINAL: 0x006164D0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005FD370
+// indirect  0x006164EE 0x006164FC 0x00616558 0x0061656D
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -179,6 +184,7 @@ ORIGINAL: 0x00616590
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005FD370
+// indirect  0x006165AE 0x006165BC 0x00616619 0x00616635
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -209,6 +215,7 @@ ORIGINAL: 0x00616650
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00616684 0x006166A6
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -237,6 +244,7 @@ ORIGINAL: 0x006166C0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x006166ED 0x00616718
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -265,6 +273,7 @@ ORIGINAL: 0x00616730
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0061674B 0x00616759
 Return Value: n/a
 Status: Complete
 */
@@ -293,6 +302,7 @@ ORIGINAL: 0x00616780
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FD370
+// indirect  0x0061679E 0x006167AC
 Return Value: n/a
 Status: Complete
 */
@@ -320,6 +330,7 @@ ORIGINAL: 0x006167E0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0061680B
 Return Value: n/a
 Status: Complete
 */
@@ -343,6 +354,7 @@ ORIGINAL: 0x00616820
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0061684B
 Return Value: n/a
 Status: Complete
 */
@@ -416,6 +428,7 @@ ORIGINAL: 0x005FD370
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005FD39C 0x005FD3B5 0x005FD3BC 0x005FD3D1
 Return Value: n/a
 Status: Complete
 */

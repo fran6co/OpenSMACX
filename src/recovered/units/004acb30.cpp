@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x004A3950
+// indirect  0x004ACB60
 // PRESERVED UNIT - measured MNEMONIC_ONLY.
 //
 // Kept for COVERAGE, not as a claim. Nothing reads this directory:

@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D5930 0x00616730
+// indirect  0x0045C1CA
 // 0x0045C180  ?timer_callback_daemon@MainInterface@@QAEXH@Z  ->  ?timer_callback_daemon@MainInterface@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

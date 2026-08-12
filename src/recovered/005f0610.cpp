@@ -7,6 +7,7 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005F0646
 // 0x005F0610  ?set_bottom_border_thickness@Win@@QAEXH@Z  ->  ?set_bottom_border_thickness@Win@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

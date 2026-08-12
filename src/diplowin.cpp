@@ -429,6 +429,7 @@ ORIGINAL: 0x00443C50 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005F7E90
+// indirect  0x00443C60
 Status: Complete
 */
 void DiploWin::hide() {

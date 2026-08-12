@@ -354,6 +354,7 @@ ORIGINAL: 0x005E3373
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005E33BF
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -408,6 +409,7 @@ ORIGINAL: 0x005E34A3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005E34EA
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -583,6 +585,7 @@ ORIGINAL: 0x005D7470
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00644EF2
+// indirect  0x005D74E6 0x005D74F1 0x005D750E 0x005D751B 0x005D7535 0x005D7542 0x005D7559 0x005D7566
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
@@ -762,6 +765,7 @@ ORIGINAL: 0x005E3503
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005E3510 0x005E3542 0x005E354D
 Return Value: The device context, or zero when the surface refuses one
 Status: Complete
 */
@@ -802,6 +806,7 @@ ORIGINAL: 0x005E3563
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005E35AA 0x005E35B5
 Status: Complete
 */
 void Buffer::release_hdc(int count) {
@@ -849,6 +854,7 @@ ORIGINAL: 0x005DE8F0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FE560
+// indirect  0x005DE94E 0x005DE978 0x005DE983 0x005DE99E 0x005DE9DB 0x005DE9E6
 Return Value: No errors (0); no pixel storage (7); null palette (3)
 Status: Complete
 Verification note: the publish branch is reachable - the fixture's surface
@@ -930,6 +936,7 @@ ORIGINAL: 0x005D8000
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005D8063 0x005D8099 0x005D80BE 0x005D80C9 0x005D80E1 0x005D80EF 0x005D8100 0x005D8120 0x005D815E 0x005D8169 0x005D81D7 0x005D81E4
 Return Value: No errors (0); empty intersection or region failure (1);
               null rectangle (3); no pixel storage and no surface (7)
 Status: Complete

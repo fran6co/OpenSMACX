@@ -65,6 +65,7 @@ ORIGINAL: 0x00629D20 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00629D2C
 Return Value: n/a
 Status: Complete
 */

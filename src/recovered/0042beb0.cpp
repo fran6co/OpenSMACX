@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00608980 0x00629490 0x00629780
+// indirect  0x0042BEF1
 // 0x0042BEB0  ?UNK7@Datalink@@QAEXPADPAD@Z  ->  ?UNK7@Datalink@@QAEXPAD0@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

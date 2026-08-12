@@ -72,6 +72,7 @@ ORIGINAL: 0x0060E300 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0060E30E
 Status: Complete
 */
 void RadioButton::on_dialog_focus(int a1) {
@@ -93,6 +94,7 @@ ORIGINAL: 0x0060E4A0 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0060E4BF
 Return Value: n/a
 Status: Complete
 */

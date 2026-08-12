@@ -52,6 +52,7 @@ ORIGINAL: 0x005C9900 BYTE_EXACT
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005C990C
 Return Value: n/a
 Status: Complete
 */

@@ -489,6 +489,7 @@ ORIGINAL: 0x00607C80
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00607C98 0x00607CB2
 Return Value: n/a
 Status: Complete
 
@@ -616,6 +617,7 @@ ORIGINAL: 0x00607210
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x005D4EF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x006453E0 0x00645470
+// indirect  0x00607217 0x00607347
 Return Value: No parent (3); name allocation failed (4); otherwise
               GraphicWin::init's own code, which is zero on success
 Status: Complete

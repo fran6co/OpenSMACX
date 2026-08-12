@@ -478,6 +478,7 @@ ORIGINAL: 0x004BDDB0 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004BDDBC
 Return Value: n/a
 Status: Complete
 */

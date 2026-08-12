@@ -119,6 +119,7 @@ ORIGINAL: 0x004C51C0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C51C9
 Return Value: n/a
 Status: Complete
 */
@@ -137,6 +138,7 @@ ORIGINAL: 0x004C51D0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C51D9
 Return Value: n/a
 Status: Complete
 */
@@ -455,6 +457,7 @@ ORIGINAL: 0x004C5120
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5130
 Return Value: n/a
 Status: Complete
 */
@@ -473,6 +476,7 @@ ORIGINAL: 0x004C5150
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5160
 Return Value: n/a
 Status: Complete
 */
@@ -491,6 +495,7 @@ ORIGINAL: 0x004C5000
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5010
 Return Value: the device's answer, or 0x13 when none is wrapped
 Status: Complete
 */
@@ -756,6 +761,7 @@ ORIGINAL: 0x004C50F0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5108
 Return Value: n/a
 Status: Complete
 */
@@ -783,6 +789,7 @@ ORIGINAL: 0x004C5200
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5210
 Return Value: the device's answer, or 3 when no device is wrapped
 Status: Complete
 */
@@ -811,6 +818,7 @@ ORIGINAL: 0x004C54C0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C54D0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -839,6 +847,7 @@ ORIGINAL: 0x004C54E0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C54F0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -867,6 +876,7 @@ ORIGINAL: 0x004C5500
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5510
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -895,6 +905,7 @@ ORIGINAL: 0x004C5550
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5568
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -923,6 +934,7 @@ ORIGINAL: 0x004C5580
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5598
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -951,6 +963,7 @@ ORIGINAL: 0x004C55B0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C55C0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -979,6 +992,7 @@ ORIGINAL: 0x004C55E0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C55F0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -1007,6 +1021,7 @@ ORIGINAL: 0x004C5610
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5620
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -1035,6 +1050,7 @@ ORIGINAL: 0x004C5640
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5650
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -1063,6 +1079,7 @@ ORIGINAL: 0x004C5670
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5680
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -1091,6 +1108,7 @@ ORIGINAL: 0x004C56A0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C56B0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -1211,6 +1229,7 @@ ORIGINAL: 0x004C5320
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5354
 Return Value: 0, or 0xA for a bad slot or volume
 Status: Complete
 */
@@ -1244,6 +1263,7 @@ ORIGINAL: 0x004C53A0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C53D7
 Return Value: 0, or 0xA for a bad slot
 Status: Complete
 */
@@ -1277,6 +1297,7 @@ ORIGINAL: 0x004C5400
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5437
 Return Value: 0, or 0xA for a bad slot
 Status: Complete
 */
@@ -1317,6 +1338,7 @@ ORIGINAL: 0x004C5030
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C5060 0x004C506B 0x004C5076 0x004C507F 0x004C50A8 0x004C50BD 0x004C50CA 0x004C50DD
 Return Value: 0, or 2 when no device is wrapped
 Status: Complete
 */
@@ -1379,6 +1401,7 @@ ORIGINAL: 0x004C4ED0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C4EEC
 Return Value: the factory's answer, 0xC with a device already wrapped, or
               0x14 with no factory installed
 Status: Complete
@@ -1410,6 +1433,7 @@ ORIGINAL: 0x004C4F10
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C4F23
 Return Value: 0, or 0x14 with no device or no hook
 Status: Complete
 */
@@ -1445,6 +1469,7 @@ ORIGINAL: 0x004C4F40
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C4F4D 0x004C4F5D 0x004C4F6A
 Return Value: 0, or whichever stage's error came first
 Status: Complete
 */
@@ -1484,6 +1509,7 @@ ORIGINAL: 0x004C4F80
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C4F8C 0x004C4F9F
 Return Value: n/a
 Status: Complete
 */
@@ -1630,6 +1656,7 @@ ORIGINAL: 0x004C4E60
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006456E4
+// indirect  0x004C4EB5
 Return Value: n/a
 Status: Complete
 */

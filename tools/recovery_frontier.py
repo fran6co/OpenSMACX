@@ -59,7 +59,50 @@ DEFAULT_CALLGRAPH = REPO_ROOT / "docs" / "recovery" / "callgraph.json"
 RESOLVED_STATES = frozenset({"source_complete", "external_library", "thunk"})
 
 
-def load(functions_path: Path, callgraph_path: Path):
+def load(functions_path: Path = None, callgraph_path: Path = None):
+    """The inventory and the call edges, both read out of `src/`.
+
+    `functions.csv` and `callgraph.json` are gone: every annotation carries its
+    own facts and its own `calls` line, so the frontier is computed from the
+    same store the ratchet measures rather than from an export that could drift
+    from it. The arguments remain so a caller can point this at a regenerated
+    export, which is how the projection is re-verified.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import project_catalogue
+    rows = (project_catalogue.catalogue(functions_path) if functions_path
+            else project_catalogue.from_source())
+    # `recovery_state` was never a fact ABOUT a function - the exporter derived
+    # it from `src/` and wrote it into the CSV. With `src/` as the store it is
+    # read straight off the map instead, which also removes the round trip that
+    # let the two disagree: an address the catalogue called `unrecovered` while
+    # `src/` held a BYTE_EXACT proof for it, 651 of them at the last count.
+    import annotation_scan
+    states = {}
+    for annotation in annotation_scan.scan_tree(
+            Path(__file__).resolve().parent.parent / "src"):
+        if annotation.state == annotation_scan.STATE_EXCLUDED:
+            states[annotation.address] = "external_library"
+        elif annotation.state == annotation_scan.STATE_IMPLEMENTED:
+            states[annotation.address] = "source_complete"
+        else:
+            states.setdefault(annotation.address, "unrecovered")
+
+    inventory, callees = {}, defaultdict(set)
+    for address, row in rows.items():
+        callees[address] = set(row.get("_calls") or ())
+        inventory[address] = {
+            "size": int(row.get("size") or 0),
+            "name": row.get("name", ""),
+            "state": states.get(address, "unrecovered"),
+            "kind": row.get("binary_kind", "game"),
+            "callers": int(row.get("caller_count") or 0),
+            "targets": int(row.get("call_target_count") or 0),
+        }
+    return inventory, callees
+
+
+def _legacy_load(functions_path: Path, callgraph_path: Path):
     inventory = {}
     with functions_path.open(newline="") as handle:
         for row in csv.DictReader(handle):
@@ -216,8 +259,10 @@ def claimed_addresses(src: Path = None) -> set:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--functions", type=Path, default=DEFAULT_FUNCTIONS)
-    parser.add_argument("--callgraph", type=Path, default=DEFAULT_CALLGRAPH)
+    # DEFAULT None: `src/` is the store, and passing a path forces the export
+    # reader, which is how this kept opening a file that no longer exists.
+    parser.add_argument("--functions", type=Path, default=None)
+    parser.add_argument("--callgraph", type=Path, default=None)
     parser.add_argument("--queue", type=int, default=20,
                         help="how many of the leaf queue to print")
     parser.add_argument("--max-size", type=int, default=0,

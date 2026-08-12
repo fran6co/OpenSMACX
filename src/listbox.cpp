@@ -185,6 +185,7 @@ ORIGINAL: 0x0060CE10 BYTE_EXACT
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x0060CE2F
 Return Value: n/a
 Status: Complete
 */

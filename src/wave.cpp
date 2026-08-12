@@ -167,6 +167,7 @@ ORIGINAL: 0x004C6EA0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6EAF 0x004C6EC6
 Return Value: whatever the device's unload returned, or 0 when none was wrapped
 Status: Complete
 */
@@ -210,6 +211,7 @@ ORIGINAL: 0x004C6EE0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6F0D
 Return Value: n/a
 Status: Complete
 */
@@ -241,6 +243,7 @@ ORIGINAL: 0x004C6DB0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6DC3 0x004C6DDA
 Return Value: slot 0x8C's result, or 0 when bit 2 of a2 skipped it
 Status: Complete
 */
@@ -310,6 +313,7 @@ ORIGINAL: 0x004C6B10
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6B2B 0x004C6B4A
 Return Value: nonzero while playing, 0 once finished or when not started
 Status: Complete
 */
@@ -357,6 +361,7 @@ ORIGINAL: 0x004C68F0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6900
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -418,6 +423,7 @@ ORIGINAL: 0x004C6FD0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6FE0
 Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
@@ -559,6 +565,7 @@ ORIGINAL: 0x004C70A0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C70B3
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -619,6 +626,7 @@ ORIGINAL: 0x004C7040
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7058
 Return Value: the device's answer, or 1 when no device is wrapped
 Status: Complete
 */
@@ -651,6 +659,7 @@ ORIGINAL: 0x004C7190
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C71A8
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -680,6 +689,7 @@ ORIGINAL: 0x004C71C0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C71D0
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -708,6 +718,7 @@ ORIGINAL: 0x004C71F0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7200
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -736,6 +747,7 @@ ORIGINAL: 0x004C7220
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C7230
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
@@ -768,6 +780,7 @@ ORIGINAL: 0x004C6F20
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6F77
 Return Value: n/a
 Status: Complete
 */
@@ -819,6 +832,7 @@ ORIGINAL: 0x004C6F80
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6F8E
 Return Value: the composed attribute mask
 Status: Complete
 */
@@ -877,6 +891,7 @@ ORIGINAL: 0x004C7130
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006458C8
+// indirect  0x004C7184
 Return Value: n/a
 Status: Complete
 */
@@ -957,6 +972,7 @@ ORIGINAL: 0x004C6920
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x004C5460 0x004C6CE0
+// indirect  0x004C6953 0x004C695F 0x004C697C 0x004C698E 0x004C699B
 Return Value: the device's start answer, 0x14 when disabled or unstartable,
               0 when a clocked load wrapped no device
 Status: Complete
@@ -1020,6 +1036,7 @@ ORIGINAL: 0x004C6CE0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004C6280
+// indirect  0x004C6D1D 0x004C6D39 0x004C6D74 0x004C6D8C
 Return Value: 0 on success, 8 with no filename, 1 with a dead creation hook,
               or the creation/load error
 Status: Complete
@@ -1099,6 +1116,7 @@ ORIGINAL: 0x004C6DF0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6E23 0x004C6E3F 0x004C6E4E 0x004C6E55 0x004C6E71 0x004C6E81
 Return Value: 0 on success, 8 with no filename, 1 with a dead creation hook,
               or the creation/reload error
 Status: Complete
@@ -1172,6 +1190,7 @@ ORIGINAL: 0x004C6BB0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C6BDC 0x004C6BF5 0x004C6BFB 0x004C6C02
 Return Value: 0 on success, 0xC with a device already wrapped, 1 with a dead
               creation hook, or the creation error
 Status: Complete
@@ -1220,6 +1239,7 @@ ORIGINAL: 0x004C6C20
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004C6280
+// indirect  0x004C6C50 0x004C6C6C 0x004C6C8C 0x004C6CA2 0x004C6CB3 0x004C6CBE 0x004C6CCC
 Return Value: 0 on success, 1 with a dead creation hook, or the
               creation/load error
 Status: Complete
@@ -1306,6 +1326,7 @@ ORIGINAL: 0x004C66E0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004C61E0 0x006465F0
+// indirect  0x004C6762
 Return Value: n/a (the redirect answers the object pointer, as the original
               does in eax)
 Status: Complete
@@ -1369,6 +1390,7 @@ ORIGINAL: 0x004C69B0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006005D0 0x006453E0 0x00645460 0x0064557F 0x0064558A 0x006465F0
+// indirect  0x004C6A4F 0x004C6A64 0x004C6A70 0x004C6A77 0x004C6A88 0x004C6AAD
 Return Value: n/a
 Status: Complete
 */
@@ -1504,6 +1526,7 @@ ORIGINAL: 0x004C67C0
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004C5280 0x0064557F
+// indirect  0x004C6886
 Return Value: n/a
 Status: Complete
 */

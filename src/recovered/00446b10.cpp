@@ -7,6 +7,7 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00446B2D
 // 0x00446B10  ?engine_pitch@FX@@QAEXH@Z  ->  ?engine_pitch@FX@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

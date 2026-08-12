@@ -500,6 +500,7 @@ ORIGINAL: 0x005FB2A0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005FB2F3
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -547,6 +548,7 @@ ORIGINAL: 0x005FB360
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005FB3B3
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -594,6 +596,7 @@ ORIGINAL: 0x005FB420
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005FB473
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
@@ -641,6 +644,7 @@ ORIGINAL: 0x005FB4E0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x005FB533
 Return Value: 0 once the flag is written, 0xB when no entry matches
 Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own

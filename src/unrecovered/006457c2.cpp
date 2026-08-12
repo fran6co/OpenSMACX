@@ -7,6 +7,7 @@
 // kind      library
 // flags     lib;frame;hidden;sp_ready;purged_ok
 // calls     0x00645764 0x006457C2
+// indirect  0x006457FD
 // placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x006457C2
 

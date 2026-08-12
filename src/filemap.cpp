@@ -70,6 +70,7 @@ ORIGINAL: 0x00628430
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x006005D0
+// indirect  0x00628452 0x00628462 0x00628474 0x0062849D 0x006284AC 0x006284C1 0x006284D5 0x006284EC 0x00628500 0x00628512 0x00628528
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -109,6 +110,7 @@ ORIGINAL: 0x00628540
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006005D0
+// indirect  0x00628562 0x00628572 0x00628584 0x006285AD 0x006285BC 0x006285D1 0x006285E5 0x006285FF 0x00628613 0x00628625 0x0062863B
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -148,6 +150,7 @@ ORIGINAL: 0x00628650
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x006465F0
+// indirect  0x00628673 0x00628683 0x00628695 0x006286B5 0x006286C3 0x006286DC 0x006286EA 0x00628703 0x00628710 0x0062871E 0x00628739 0x0062874D 0x00628767 0x0062877B 0x0062878D
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
@@ -189,6 +192,7 @@ ORIGINAL: 0x006287C0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x006287CB 0x006287E5 0x006287F7
 Return Value: n/a
 Status: Complete
 */
@@ -220,6 +224,7 @@ ORIGINAL: 0x00628810
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// indirect  0x00628826 0x00628849 0x0062885F 0x0062886B 0x0062887E 0x0062888E 0x0062889C 0x006288AB 0x006288B9
 Return Value: n/a
 Status: Complete
 */
