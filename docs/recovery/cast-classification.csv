@@ -21,8 +21,8 @@ src/ambience.cpp,615,0x00447850,SAmbience,NO_COMPILE,this,,volatile uint32_t *,w
 src/ambience.cpp,639,0x00447B90,GAmbience,NO_COMPILE,this,,Ambience *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/ambience.cpp,640,0x00447B90,GAmbience,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/autosound.cpp,33,0x0062BA80,AutoSound,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/autosound.cpp,60,0x0062BBF0,AutoSound,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/autosound.cpp,85,0x0062BDD0,AutoSound,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
+src/autosound.cpp,60,0x0062BBF0,AutoSound,MISMATCH,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
+src/autosound.cpp,85,0x0062BDD0,AutoSound,MISMATCH,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/basebutton.cpp,44,0x00606F30,BaseButton,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/basebutton.cpp,88,0x006070C0,BaseButton,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/basebutton.cpp,139,0x00607040,BaseButton,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
@@ -31,7 +31,7 @@ src/basebutton.cpp,507,0x00607210,,NO_COMPILE,this,,void ***,vtable-load,,,,,,pr
 src/basebutton.cpp,572,0x00607210,,NO_COMPILE,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
 src/basebutton.cpp,588,0x00607A00,BaseButton,BYTE_EXACT,this,,char *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/basebutton.cpp,589,0x00607A00,BaseButton,BYTE_EXACT,self,0xa80,int *,exact-member-typeable,bubble_text_,0xa80,4,,,proved,
-src/basepop.cpp,370,0x00601BB0,BasePop,NO_COMPILE,this,0x2228,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
+src/basepop.cpp,370,0x00601BB0,BasePop,MNEMONIC_ONLY,this,0x2228,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/basepop.cpp,397,0x00601B20,BasePop,REFUSED,this,0x21d0,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/basepop.cpp,500,0x00605180,BasePop,BYTE_EXACT,this,0x20,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/basepop.cpp,521,0x006051A0,BasePop,BYTE_EXACT,this,0x20,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
@@ -126,7 +126,7 @@ src/fx.cpp,90,0x00446AD0,FX,BYTE_EXACT,this,,char *,alias-binding,,,,,,proved,bi
 src/graphicwin.cpp,64,0x005D4CF0,GraphicWin,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/graphicwin.cpp,126,0x005D4E40,GraphicWin,NO_COMPILE,this,0x444,uint8_t *,exact-member-typeable,buffer_,0x444,1416,,,derived,
 src/graphicwin.cpp,130,0x005D4E40,GraphicWin,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/graphicwin.cpp,214,0x005D5440,GraphicWin,NO_COMPILE,this,0x444,uint8_t *,exact-member-typeable,buffer_,0x444,1416,,,derived,
+src/graphicwin.cpp,214,0x005D5440,GraphicWin,MNEMONIC_ONLY,this,0x444,uint8_t *,exact-member-typeable,buffer_,0x444,1416,,,derived,
 src/graphicwin.cpp,267,0x005D5250,GraphicWin,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/graphicwin.cpp,331,0x005D5A70,GraphicWin,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/graphicwin.cpp,453,0x005D4EF0,GraphicWin,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
@@ -177,7 +177,7 @@ src/radiobutton.cpp,90,0x0060E4A0,RadioButton,BYTE_EXACT,this,-0x18,char *,recei
 src/radiobutton.cpp,93,0x0060E4A0,RadioButton,BYTE_EXACT,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/radiobutton.cpp,96,0x0060E4A0,RadioButton,BYTE_EXACT,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/reportif.cpp,173,0x004AC980,ReportIf,BYTE_EXACT,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/reportif.cpp,203,0x004A9020,ReportIf,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/reportif.cpp,203,0x004A9020,ReportIf,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/reportif.cpp,219,0x004A3930,ReportIf,BYTE_EXACT,this,,SubInterface *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/scroll.cpp,158,0x00605370,Scroll,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/scroll.cpp,198,0x00605370,Scroll,NO_COMPILE,this,0xaac,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
@@ -195,11 +195,11 @@ src/sound.cpp,403,0x004C6280,,NO_COMPILE,this,0x7c,uint8_t **,vtable-slot,,,,,,p
 src/sound.cpp,509,0x004C6660,,NO_COMPILE,this,0x54,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/sound.cpp,511,0x004C6660,,NO_COMPILE,this,0x28,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/sound.cpp,561,0x004C6440,,NO_COMPILE,this,0x80,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
-src/sound.cpp,662,0x004C6370,Sound,NO_COMPILE,this,,Wave *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/sound.cpp,663,0x004C6370,Sound,NO_COMPILE,this,,Wave *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/sound.cpp,668,0x004C6370,Sound,NO_COMPILE,this,,Wave *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/sprite.cpp,37,0x005E37E0,Sprite,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/sprite.cpp,50,0x005E37E0,Sprite,NO_COMPILE,this,0x8,uint8_t *,exact-member-typeable,cTransparentIndex_,0x8,1,,,derived,
+src/sound.cpp,662,0x004C6370,Sound,MISMATCH,this,,Wave *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
+src/sound.cpp,663,0x004C6370,Sound,MISMATCH,this,,Wave *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
+src/sound.cpp,668,0x004C6370,Sound,MISMATCH,this,,Wave *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
+src/sprite.cpp,37,0x005E37E0,Sprite,MISMATCH,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
+src/sprite.cpp,50,0x005E37E0,Sprite,MISMATCH,this,0x8,uint8_t *,exact-member-typeable,cTransparentIndex_,0x8,1,,,derived,
 src/sprite.cpp,66,0x005E3820,Sprite,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/spritebox.cpp,79,0x00611600,SpriteBox,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/spritebox.cpp,80,0x00611600,SpriteBox,NO_COMPILE,self,0x2c,uint32_t *,inside-declared-member,unmapped_,0x0,1120,,,derived,

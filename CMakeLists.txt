@@ -1173,6 +1173,16 @@ if(BUILD_TESTING)
                                    test_annotation_scan.py)
     opensmacx_add_python_tool_test(decomp-status-tests test_decomp_status.py)
 
+    # The preamble that measurement compiles a body in. This one is load
+    # bearing in an unusual direction: a WRONG declaration here does not fail,
+    # it silently changes what is being measured, so the tests pin the two
+    # properties that keep it honest - nothing is emitted for a name the
+    # scaffolding already declares (so a unit that compiles today is untouched,
+    # text and cached verdict included), and a declaration it cannot make
+    # standalone is refused rather than approximated.
+    opensmacx_add_python_tool_test(src-declaration-tests
+                                   test_src_declarations.py)
+
     # Exact matches are kept in a committed ledger and may rise but never fall.
     # This check is compiler-free: it reads the ledger and the checked-in floor,
     # so CI can enforce the result even though the VC6 recompile oracle itself

@@ -59,6 +59,7 @@ import pefile  # noqa: E402
 
 import byte_match  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
+import src_declarations  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 LEDGER = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
@@ -191,13 +192,28 @@ COMPAT_DECLARATIONS = {
 }
 
 
-def compat_preamble(body: str, scaffolding: str) -> str:
-    """Declarations the body needs that neither VC6 nor the scaffolding has."""
+def compat_preamble(body: str, scaffolding: str, source_path=None) -> str:
+    """Declarations the body needs that neither VC6 nor the scaffolding has.
+
+    Two sources, in this order. The hand-written table above covers spellings
+    that exist in no header of this repository - `nullptr`, the Win32 typedefs
+    - and stays small for that reason. Everything else is DERIVED from `src/`
+    itself by `src_declarations`, because a body that calls its own
+    translation unit's helper is not a recovery defect and must not be scored
+    as one; see that module's docstring for the 638-piece measurement that
+    made it necessary.
+
+    A declaration is added only for a name the scaffolding does not already
+    carry, so a unit that compiles today gains nothing, keeps its text byte
+    for byte, and keeps its cached verdict.
+    """
     wanted = []
     for name, declaration in COMPAT_DECLARATIONS.items():
         if re.search(rf"\b{re.escape(name)}\b", body) and name not in scaffolding:
             wanted.append(declaration)
-    return ("\n".join(wanted) + "\n") if wanted else ""
+    fixed = ("\n".join(wanted) + "\n") if wanted else ""
+    derived = src_declarations.for_body(body, scaffolding + fixed, source_path)
+    return fixed + derived
 
 
 def build_unit(address, row, location, functions, derived, callees, pe):
@@ -219,7 +235,11 @@ def build_unit(address, row, location, functions, derived, callees, pe):
     except emit.Unsettled as error:
         return None, f"no scaffolding: {error}"
     seam = SEAM_PREAMBLE if any(t in body for t in SEAM_TRIGGERS) else ""
-    compat = compat_preamble(body, scaffolding)
+    # The SEAM is part of what the unit already declares, so it is handed to
+    # the preamble too - otherwise `OriginalObject` and the two iterator seams
+    # would be redeclared and the unit would fail C2011 where it compiles now.
+    compat = compat_preamble(body, scaffolding + seam,
+                             location.split(":")[0] if location else None)
     return scaffolding + seam + compat + "\n" + body, ""
 
 
