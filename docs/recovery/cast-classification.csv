@@ -31,18 +31,18 @@ src/basebutton.cpp,507,0x00607210,,NO_COMPILE,this,,void ***,vtable-load,,,,,,pr
 src/basebutton.cpp,572,0x00607210,,NO_COMPILE,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
 src/basebutton.cpp,588,0x00607A00,BaseButton,BYTE_EXACT,this,,char *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/basebutton.cpp,589,0x00607A00,BaseButton,BYTE_EXACT,self,0xa80,int *,exact-member-typeable,bubble_text_,0xa80,4,,,proved,
-src/basepop.cpp,370,0x00601BB0,BasePop,MNEMONIC_ONLY,this,0x2228,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/basepop.cpp,397,0x00601B20,BasePop,REFUSED,this,0x21d0,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/basepop.cpp,500,0x00605180,BasePop,BYTE_EXACT,this,0x20,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/basepop.cpp,521,0x006051A0,BasePop,BYTE_EXACT,this,0x20,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/basepop.cpp,553,0x00558FE0,BasePop,BYTE_EXACT,this,0x21d0,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/basepop.cpp,586,0x00601BD0,BasePop,NO_COMPILE,this,0x2228,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
+src/basepop.cpp,370,0x00601BB0,BasePop,MNEMONIC_ONLY,this,0x2228,uint8_t *,inside-declared-member,dialogs_,0x21d0,3220,,,derived,
+src/basepop.cpp,397,0x00601B20,BasePop,MISMATCH,this,0x21d0,uint8_t *,exact-member-typeable,dialogs_,0x21d0,3220,,,derived,
+src/basepop.cpp,500,0x00605180,BasePop,BYTE_EXACT,this,0x20,uint8_t *,inside-declared-member,auto_sound_,0x0,152,,,derived,
+src/basepop.cpp,521,0x006051A0,BasePop,BYTE_EXACT,this,0x20,uint8_t *,inside-declared-member,auto_sound_,0x0,152,,,derived,
+src/basepop.cpp,553,0x00558FE0,BasePop,BYTE_EXACT,this,0x21d0,uint8_t *,exact-member-typeable,dialogs_,0x21d0,3220,,,proved,
+src/basepop.cpp,586,0x00601BD0,BasePop,NO_COMPILE,this,0x2228,uint8_t *,inside-declared-member,dialogs_,0x21d0,3220,,,derived,
 src/basewin.cpp,142,0x0041DCD0,BaseWin,NO_COMPILE,this,-0xa14,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/basewin.cpp,155,0x0041DCF0,BaseWin,NO_COMPILE,this,-0xa14,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/basewin.cpp,168,0x0041E4D0,BaseWin,NO_COMPILE,this,-0xa14,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/basewin.cpp,181,0x0041E4F0,BaseWin,NO_COMPILE,this,-0xa14,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/basewin.cpp,217,0x0041DC80,BaseWin,REFUSED,this,0x40100,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/basewin.cpp,219,0x0041DC80,BaseWin,REFUSED,this,-0xa14,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/basewin.cpp,217,0x0041DC80,BaseWin,NO_COMPILE,this,0x40100,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/basewin.cpp,219,0x0041DC80,BaseWin,NO_COMPILE,this,-0xa14,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/basewin.cpp,315,0x0041E890,BaseWin,BYTE_EXACT,this,,char *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/basewin.cpp,316,0x0041E890,BaseWin,BYTE_EXACT,self,,Win *,unresolvable,,,,,,derived,alias used with no constant displacement
 src/basewin.cpp,317,0x0041E890,BaseWin,BYTE_EXACT,self,0xa14,SubInterface *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
@@ -76,7 +76,7 @@ src/checkbox.cpp,189,0x0060FC30,CheckBox,BYTE_EXACT,this,0xd4,char *,receiver-is
 src/checkbox.cpp,192,0x0060FC30,CheckBox,BYTE_EXACT,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/checkbox.cpp,195,0x0060FC30,CheckBox,BYTE_EXACT,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/checkbox.cpp,198,0x0060FC30,CheckBox,BYTE_EXACT,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/console.cpp,121,0x0050F650,Console,REFUSED,this,0x23d1c,uint8_t *,inside-declared-member,derived_storage_,0x0,146836,,,derived,
+src/console.cpp,121,0x0050F650,Console,MISMATCH,this,0x23d1c,uint8_t *,inside-declared-member,derived_storage_,0x0,146836,,,derived,
 src/console.cpp,356,0x005108A0,Console,NO_COMPILE,this,0x23c00,uint8_t *,inside-declared-member,derived_storage_,0x0,146836,,,derived,
 src/console.cpp,442,0x0051D740,Console,BYTE_EXACT,this,,char *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/console.cpp,443,0x0051D740,Console,BYTE_EXACT,self,0x23bdc,int *,inside-declared-member,derived_storage_,0x0,146836,,,derived,
@@ -90,18 +90,18 @@ src/datalink.cpp,452,0x0042BD40,Datalink,BYTE_EXACT,this,,Win *,whole-object-cas
 src/datalink.cpp,453,0x0042BD40,Datalink,BYTE_EXACT,this,0xa14,char *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/datalink.cpp,462,0x0042BD60,Datalink,BYTE_EXACT,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/datalink.cpp,463,0x0042BD60,Datalink,BYTE_EXACT,this,0xa14,char *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/deletionlist.cpp,31,0x0052DCD0,DeletionList,REFUSED,this,,uint8_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
+src/deletionlist.cpp,31,0x0052DCD0,DeletionList,BYTE_EXACT,this,,uint8_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/dialog.cpp,291,0x00608E10,Dialog,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/dialog.cpp,301,0x00608E10,Dialog,NO_COMPILE,this,0xbc,uint8_t *,exact-member-typeable,field_BC_,0xbc,4,0xbc,,derived,
 src/dialog.cpp,311,0x00608E10,Dialog,NO_COMPILE,this,0xe4,uint8_t *,exact-member-typeable,field_E4_,0xe4,4,0xe4,,derived,
-src/dialogs_recovery.cpp,123,0x00612ED0,Dialogs,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,141,0x00612EF0,Dialogs,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,159,0x00612F10,Dialogs,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,177,0x00612F40,Dialogs,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,195,0x00612F60,Dialogs,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,213,0x00612F80,Dialogs,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,231,0x00612FA0,Dialogs,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/dialogs_recovery.cpp,249,0x00612FC0,Dialogs,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs_recovery.cpp,123,0x00612ED0,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs_recovery.cpp,141,0x00612EF0,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs_recovery.cpp,159,0x00612F10,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs_recovery.cpp,177,0x00612F40,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs_recovery.cpp,195,0x00612F60,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs_recovery.cpp,213,0x00612F80,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs_recovery.cpp,231,0x00612FA0,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/dialogs_recovery.cpp,249,0x00612FC0,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/dialogs_recovery.cpp,364,0x00406910,Dialogs,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/dialogs_recovery.cpp,377,0x00406910,Dialogs,NO_COMPILE,base,,uintptr_t,unresolvable,,,,,,derived,alias used with no constant displacement
 src/dialogs_recovery.cpp,394,0x00406910,Dialogs,NO_COMPILE,base,,ListBox *,unresolvable,,,,,,derived,alias used with no constant displacement
@@ -127,8 +127,8 @@ src/graphicwin.cpp,64,0x005D4CF0,GraphicWin,NO_COMPILE,this,,volatile uint32_t *
 src/graphicwin.cpp,126,0x005D4E40,GraphicWin,NO_COMPILE,this,0x444,uint8_t *,exact-member-typeable,buffer_,0x444,1416,,,derived,
 src/graphicwin.cpp,130,0x005D4E40,GraphicWin,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/graphicwin.cpp,214,0x005D5440,GraphicWin,MNEMONIC_ONLY,this,0x444,uint8_t *,exact-member-typeable,buffer_,0x444,1416,,,derived,
-src/graphicwin.cpp,267,0x005D5250,GraphicWin,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/graphicwin.cpp,331,0x005D5A70,GraphicWin,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/graphicwin.cpp,267,0x005D5250,GraphicWin,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/graphicwin.cpp,331,0x005D5A70,GraphicWin,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/graphicwin.cpp,453,0x005D4EF0,GraphicWin,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/graphicwin.cpp,511,0x005D4EF0,GraphicWin,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/graphicwin.cpp,556,0x005D6310,GraphicWin,BYTE_EXACT,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
@@ -147,21 +147,21 @@ src/mapwin.cpp,313,0x0046B1D0,MapWin,BYTE_EXACT,this,-0x21a6c,char *,receiver-is
 src/mapwin.cpp,322,0x0046FA00,MapWin,BYTE_EXACT,this,,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/mapwin.cpp,323,0x0046FA00,MapWin,BYTE_EXACT,self,-0x3cfc,unsigned int *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/mapwin.cpp,324,0x0046FA00,MapWin,BYTE_EXACT,self,-0x21a6c,MapWin *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/menu.cpp,422,0x005FB2A0,,NO_COMPILE,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
-src/menu.cpp,461,0x005FB360,,NO_COMPILE,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
-src/menu.cpp,500,0x005FB420,,NO_COMPILE,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
-src/menu.cpp,539,0x005FB4E0,,NO_COMPILE,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
+src/menu.cpp,422,0x005FB2A0,,MISMATCH,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
+src/menu.cpp,461,0x005FB360,,MISMATCH,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
+src/menu.cpp,500,0x005FB420,,MISMATCH,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
+src/menu.cpp,539,0x005FB4E0,,MISMATCH,this,,void ***,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
 src/multidebug.cpp,44,0x005C9900,MultiDebug,BYTE_EXACT,this,,VCall *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/net_class.cpp,64,0x00631A20,Net,REFUSED,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/net_class.cpp,70,0x00631A20,Net,REFUSED,bytes,0x169,char *,inside-declared-member,unmapped_,0x0,1920,,,derived,
+src/net_class.cpp,64,0x00631A20,Net,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/net_class.cpp,70,0x00631A20,Net,NO_COMPILE,bytes,0x169,char *,inside-declared-member,unmapped_,0x0,1920,,,derived,
 src/netdaemon.cpp,227,0x005310F0,NetDaemon,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/netwin.cpp,127,0x00483820,NetWin,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/netwin.cpp,128,0x00483820,NetWin,MISMATCH,self,0x178,uint32_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
 src/palette.cpp,39,0x005FE560,Palette,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/planwin.cpp,54,0x0048BC50,PlanWin,NO_COMPILE,this,,MapWin *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/popup.cpp,543,0x00405020,Popup,BYTE_EXACT,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/popup.cpp,545,0x00405020,Popup,BYTE_EXACT,self,0x30ac,const int32_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/popup.cpp,547,0x00405020,Popup,BYTE_EXACT,self,0x30d0,int32_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
+src/popup.cpp,545,0x00405020,Popup,BYTE_EXACT,self,0x30ac,const int32_t *,exact-member-typeable,field_30AC_,0x30ac,4,,,proved,
+src/popup.cpp,547,0x00405020,Popup,BYTE_EXACT,self,0x30d0,int32_t *,exact-member-typeable,field_30D0_,0x30d0,4,,,proved,
 src/popup.cpp,560,0x00404F90,Popup,BYTE_EXACT,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/pulldown.cpp,149,0x005F9F40,PullDown,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/pulldown.cpp,339,0x005F93A0,PullDown,BYTE_EXACT,this,,VCall *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
@@ -180,12 +180,12 @@ src/reportif.cpp,173,0x004AC980,ReportIf,BYTE_EXACT,this,,uint8_t *,alias-bindin
 src/reportif.cpp,203,0x004A9020,ReportIf,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/reportif.cpp,219,0x004A3930,ReportIf,BYTE_EXACT,this,,SubInterface *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/scroll.cpp,158,0x00605370,Scroll,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/scroll.cpp,198,0x00605370,Scroll,NO_COMPILE,this,0xaac,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/scroll.cpp,199,0x00605370,Scroll,NO_COMPILE,this,0x15f8,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/scroll.cpp,526,0x00606C50,Scroll,NO_COMPILE,this,0xa4c,uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
+src/scroll.cpp,198,0x00605370,Scroll,NO_COMPILE,this,0xaac,uint8_t *,exact-member-typeable,flat_button_left_,0xaac,2892,,,derived,
+src/scroll.cpp,199,0x00605370,Scroll,NO_COMPILE,this,0x15f8,uint8_t *,exact-member-typeable,flat_button_right_,0x15f8,2892,,,derived,
+src/scroll.cpp,526,0x00606C50,Scroll,NO_COMPILE,this,0xa4c,uint8_t *,exact-member-typeable,thumb_rect_,0xa4c,16,,,derived,
 src/scroll.cpp,778,0x00406E60,Scroll,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/setupwin.cpp,73,0x004ADA80,SetupWin,BYTE_EXACT,this,0xa14,const uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
-src/setupwin.cpp,103,0x004ADAA0,SetupWin,BYTE_EXACT,this,0xa18,const uint8_t *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
+src/setupwin.cpp,73,0x004ADA80,SetupWin,BYTE_EXACT,this,0xa14,const uint8_t *,exact-member-typeable,field_A14_,0xa14,4,0xa14,,proved,
+src/setupwin.cpp,103,0x004ADAA0,SetupWin,BYTE_EXACT,this,0xa18,const uint8_t *,exact-member-typeable,field_A18_,0xa18,4,0xa18,,proved,
 src/socialwin.cpp,189,0x004B2690,SocialWin,BYTE_EXACT,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/socialwin.cpp,199,0x004B26B0,SocialWin,BYTE_EXACT,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/sound.cpp,46,0x004C6600,,NO_COMPILE,this,,uint8_t **,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
@@ -217,7 +217,7 @@ src/spritebox.cpp,158,0x006104B0,,BYTE_EXACT,this,0x8,char **,vtable-slot,,,,,,p
 src/spritebox.cpp,181,0x006104D0,SpriteBox,BYTE_EXACT,this,,char *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/spritebox.cpp,182,0x006104D0,,BYTE_EXACT,this,0x8,char **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/stringbox.cpp,56,0x00629D20,StringBox,BYTE_EXACT,this,,char *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/stringbox.cpp,57,0x00629D20,StringBox,BYTE_EXACT,self,0xa1c,int *,layout-unreadable,,,,,,hypothesis,"class_layouts cannot total this class, so no offset in it can be resolved"
+src/stringbox.cpp,57,0x00629D20,StringBox,BYTE_EXACT,self,0xa1c,int *,exact-member-typeable,field_A1C_,0xa1c,4,0xa1c,,proved,
 src/stringbox.cpp,58,0x00629D20,StringBox,BYTE_EXACT,this,,VCall *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/stringstruct.cpp,156,0x00402970,,NO_COMPILE,this,,uint32_t **,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
 src/stringstruct.cpp,190,0x00401060,StringStruct,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
@@ -239,14 +239,14 @@ src/wave.cpp,968,0x004C6C20,,NO_COMPILE,this,0x58,uint8_t **,vtable-slot,,,,,,pr
 src/wave.cpp,1113,0x004C69B0,,NO_COMPILE,this,0x70,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/wave.cpp,1119,0x004C69B0,,NO_COMPILE,this,0x7c,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/wave.cpp,1135,0x004C69B0,,NO_COMPILE,this,0x48,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
-src/wave_device.cpp,358,0x004C5380,Wave_Device,REFUSED,this,0x28,uint8_t *,inside-declared-member,groups_,0x24,384,0x24,,derived,
+src/wave_device.cpp,358,0x004C5380,Wave_Device,BYTE_EXACT,this,0x28,uint8_t *,inside-declared-member,groups_,0x24,384,0x24,,derived,
 src/wave_device.cpp,1093,0x004C4F40,,NO_COMPILE,this,0x0,uint8_t **,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
 src/wave_device.cpp,1102,0x004C4F40,,NO_COMPILE,this,0x4,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/win.cpp,38,0x005EB3D0,Win,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/win.cpp,49,0x005EB3D0,Win,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/win.cpp,434,0x005F2CA0,Win,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/win.cpp,896,0x005ECE80,Win,REFUSED,this,0x3fc,uint8_t *,exact-member-typeable,child_count_,0x3fc,4,,,derived,
-src/win.cpp,897,0x005ECE80,Win,REFUSED,this,0x1a4,uint8_t *,exact-member-typeable,children_,0x1a4,600,,,derived,
+src/win.cpp,896,0x005ECE80,Win,MISMATCH,this,0x3fc,uint8_t *,exact-member-typeable,child_count_,0x3fc,4,,,derived,
+src/win.cpp,897,0x005ECE80,Win,MISMATCH,this,0x1a4,uint8_t *,exact-member-typeable,children_,0x1a4,600,,,derived,
 src/worldwin.cpp,84,0x004C45F0,WorldWin,BYTE_EXACT,this,,VCall *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/worldwin.cpp,85,0x004C45F0,WorldWin,BYTE_EXACT,this,,GraphicWin *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/worldwin.cpp,93,0x004C4610,WorldWin,BYTE_EXACT,this,,VCall *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"

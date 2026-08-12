@@ -447,8 +447,31 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
 # BYTE_EXACT row moved in the other direction. The precondition still holds by
 # construction: the status tool only measures IMPLEMENTED annotations, so every
 # matched row is backed by committed source.
-BASELINE_MATCHED_FUNCTIONS = 1253
-BASELINE_MATCHED_BYTES = 51879
+#
+# 1256 / 51977, when the census stopped refusing `std::` before compiling.
+# VC6 really does predate `<cstring>` putting `memcpy` in namespace std, so
+# the refusal was half right - but `src/vc6_compat.h` has carried the shim
+# that fixes it for the whole product build all along, and the census was
+# refusing 43 bodies the DLL compiles every day. Reading that shim out of the
+# header rather than copying it turned 46 pre-compile refusals into 3 (only
+# `__asm` remains): 9 became MISMATCH, 31 became NO_COMPILE with a real
+# diagnostic apiece, and three proved byte-exact -
+# ?get_group_volume@Wave_Device@@QAEHI@Z, ?clear@DeletionList@@QAEXH@Z and
+# ?get@Random@@QAENXZ. None is a new recovery; all three have been committed
+# and annotated for a long time behind a blanket refusal.
+#
+# 1264 / 52260, when the layout extractor stopped refusing a class for
+# re-declaring a base member's name. That refusal was about the EMITTER, which
+# wrote one flat class; it now writes a real base clause, so the two members
+# are in different scopes exactly as they were in the original. Seven classes
+# joined verified-layouts.txt - BasePop, MessageWin, NewTechWin, ProdPicker,
+# PullDown, Scroll, StringBox - and eight more bodies proved byte-exact.
+# 1266 / 52313 with `Menu` behind it: it was refused for holding a
+# `MenuProc proc_`, a FILE-scope function-pointer typedef the extractor only
+# understood in its in-class spelling, and the IDB had `Menu,0xA14,proc,4` all
+# along.
+BASELINE_MATCHED_FUNCTIONS = 1266
+BASELINE_MATCHED_BYTES = 52313
 
 
 def summarise(ledger: dict) -> tuple:

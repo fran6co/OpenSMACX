@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import functools
 import collections
 import re
 import subprocess
@@ -68,8 +69,57 @@ LEDGER = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
 # rather than debugged one at a time.
 REFUSE_SUBSTRINGS = (
     ("__asm", "inline assembly: VC6 and GCC spell it differently"),
-    ("std::", "C++ standard library: VC6's headers differ enough to be noise"),
 )
+
+# `std::` USED TO BE REFUSED HERE, on the ground that "VC6's headers differ
+# enough to be noise". Half of that is true - VC6 predates the C++98 rule that
+# `<cstring>` puts `memcpy` in namespace `std`, so `std::memcpy` really does
+# not compile against its headers - and the other half stopped being true
+# without anyone noticing: `src/vc6_compat.h` has carried the shim that fixes
+# it for the whole product build for a long time. The census was refusing 43
+# bodies that the DLL compiles every day.
+#
+# So the shim is READ OUT OF THAT HEADER rather than copied. A second copy
+# would drift, and this file has no business having its own opinion about
+# which CRT names the tree uses.
+VC6_COMPAT = REPO_ROOT / "src" / "vc6_compat.h"
+STD_BLOCK = re.compile(r"^namespace std \{\nusing ::.*?^\}", re.M | re.S)
+
+
+@functools.lru_cache(maxsize=2)
+def std_shim(needs_string: bool = False) -> str:
+    """`src/vc6_compat.h`'s `namespace std` using-declarations, verbatim.
+
+    Returns "" when the header cannot be read or no longer holds the block, in
+    which case a `std::` body simply fails to compile - the state it was in
+    before, reported as a verdict instead of as a refusal.
+
+    `<string>` IS CONDITIONAL, and it has to be. The C headers declare
+    functions and nothing else, but VC6's `<string>` instantiates
+    `std::ctype<unsigned short>` and emits `?id@?$ctype@G@std@@$E` as a second
+    external symbol - and `byte_match.object_code` refuses a unit holding two,
+    because a helper defined beside the subject would be inlined into it. So
+    the header that costs a symbol is included only for a body that names
+    something in it.
+    """
+    try:
+        text = VC6_COMPAT.read_text(errors="ignore")
+    except OSError:
+        return ""
+    found = STD_BLOCK.search(text)
+    if not found:
+        return ""
+    return ("#include <math.h>\n#include <stdarg.h>\n#include <stdio.h>\n"
+            "#include <stdlib.h>\n#include <string.h>\n"
+            + ("#include <string>\n" if needs_string else "")
+            + found.group(0) + "\n")
+
+
+# Names that only `<string>` declares. Anything else `std::` reaches in this
+# tree is a C function the using-declarations above republish.
+STRING_HEADER_NAMES = ("std::string", "std::wstring", "std::to_string",
+                       "std::basic_string", "std::stringstream",
+                       "std::ostringstream", "std::istringstream")
 
 GENERATED_FILES = (
     "init_thunks.cpp", "atexit_thunks.cpp", "adjustor_thunks.cpp",
@@ -235,12 +285,16 @@ def build_unit(address, row, location, functions, derived, callees, pe):
     except emit.Unsettled as error:
         return None, f"no scaffolding: {error}"
     seam = SEAM_PREAMBLE if any(t in body for t in SEAM_TRIGGERS) else ""
+    # The shim goes FIRST: it includes real CRT headers, and the scaffolding
+    # below typedefs names those headers also declare.
+    shim = std_shim(any(n in body for n in STRING_HEADER_NAMES)) \
+        if "std::" in body else ""
     # The SEAM is part of what the unit already declares, so it is handed to
     # the preamble too - otherwise `OriginalObject` and the two iterator seams
     # would be redeclared and the unit would fail C2011 where it compiles now.
     compat = compat_preamble(body, scaffolding + seam,
                              location.split(":")[0] if location else None)
-    return scaffolding + seam + compat + "\n" + body, ""
+    return shim + scaffolding + seam + compat + "\n" + body, ""
 
 
 def run(limit: int, jobs: int, verbose: bool) -> int:

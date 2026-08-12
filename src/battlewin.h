@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "subinterface.h"
 
  /*
   * BattleWin class
@@ -28,7 +29,7 @@
   *
   * The layout is not established and nothing pins its sizeof.
 */
-class DLLEXPORT BattleWin {
+class DLLEXPORT BattleWin : SubInterface {
  public:
   void on_iface_button_clicked(int a1);
   BattleWin() { ; }
@@ -57,7 +58,7 @@ class DLLEXPORT BattleWin {
   // Held as STORAGE, not as `SubInterface subIFace_; Time time_;`: a real
   // Time member would give BattleWin a constructor and destructor the
   // original inlines, and neither class is named by this header today.
-  uint8_t unmapped_0_[0x8];
+  // The 8 bytes at 0 are the SubInterface base, above.
   uint8_t time_storage_[0x28];  // 0x8
 
   // Storage the image proves is here: its own methods reach 0xA0.
