@@ -224,7 +224,7 @@ functions were written to behave.
 
 ## Cancelled on this evidence
 
-- **`tools/integrate_batch.py`.** One full gate cycle is 423 s = 0.118
+- **The batch integrator (removed; see git history).** One full gate cycle is 423 s = 0.118
   agent-hours, against 7.7–9.8 agent-hours for one mean remaining function, so
   the gate is **1.2–1.5% of per-function cost** and batching eight saves ~1% of
   the programme. Two premises behind it were also simply wrong:
