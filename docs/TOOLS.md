@@ -165,7 +165,7 @@ Signedness is audited by `tools/audit_export_signedness.py` and
 `tools/audit_recovered_signatures.py` and applied by
 `tools/fix_export_signedness.py`.
 `tools/build_export_recovery_queue.py` and
-`tools/export_proven_functions.py` publish what is wired and what has been run.
+the retired `export_proven_functions` publish what is wired and what has been run.
 
 ## Running it
 

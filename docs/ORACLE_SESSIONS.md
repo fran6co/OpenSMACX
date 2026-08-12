@@ -702,7 +702,7 @@ Of those 1,208 bulk-recovered functions, **1 carries a proof.** Passing all 1,20
 to the island extractor with the size cap removed refuses 1,198; only 10 are
 eligible (165 B). Thunks are forwarders and the island criteria are exactly *no
 calls, no external branches, no relocations*. A leaf-suite unit test is not a
-proof — `tools/export_proven_functions.py:29-31` disqualifies it by name.
+proof — `export_proven_functions (retired):29-31` disqualifies it by name.
 
 **2,004 of the 2,808 unrecovered functions are island-ineligible specifically
 for containing relocations (1,545), calls (433) or external branches (26).** Any

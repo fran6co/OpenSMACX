@@ -1221,7 +1221,6 @@ if(BUILD_TESTING)
     # The inventory behind `unproven_recovered`. Its dangerous failure is
     # publishing a proof that is not one, so it is gated like the metric it
     # feeds.
-    opensmacx_add_python_tool_test(proven-functions-tool-tests test_export_proven_functions.py)
 
     # The generator that emits those proofs. Same dangerous failure, one step
     # earlier: an oracle for a function the hybrid cannot execute both forms of
@@ -1272,11 +1271,6 @@ if(BUILD_TESTING)
     # two #include lines to game.cpp moved a function two lines and staled the
     # generated provenance comment. Regenerate and commit the output with the
     # change that caused it.
-    add_test(NAME proven-functions-current
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_proven_functions.py"
-            --check
-    )
     # The VCall shim the COMPILED tree uses. It is generated from the same
     # function the verification scaffolding uses, and a drift between the two
     # would let a body verify against one slot layout and call another.
