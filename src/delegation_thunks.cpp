@@ -43,7 +43,7 @@ Purpose: ?on_key_click@AlphaMovie@@QAEHHH@Z - dispatch to slot 0xe8 of this obje
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x00404210
+ORIGINAL: 0x00404210 BYTE_EXACT
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -56,7 +56,7 @@ int __fastcall alpha_movie_on_key_click_redirect(void *self, void *, int a1, int
 /*
 Purpose: ?on_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
-ORIGINAL: 0x0041B4C0
+ORIGINAL: 0x0041B4C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -68,7 +68,7 @@ void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a
 /*
 Purpose: ?on_iface_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0x4 of this object's OWN
          vtable, forwarding 2 argument(s).
-ORIGINAL: 0x0041DCB0
+ORIGINAL: 0x0041DCB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -82,7 +82,7 @@ Purpose: ?on_key_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object'
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x00428D60
+ORIGINAL: 0x00428D60 BYTE_EXACT
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -97,7 +97,7 @@ Purpose: ?on_left_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x00428D70
+ORIGINAL: 0x00428D70 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -109,7 +109,7 @@ void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a
 /*
 Purpose: ?on_scrolling@SelectPartWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
-ORIGINAL: 0x00433F50
+ORIGINAL: 0x00433F50 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -123,7 +123,7 @@ Purpose: ?on_key_down@Interlude@@QAEXH@Z - dispatch to slot 0xe8 of this object'
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x0045F6F0
+ORIGINAL: 0x0045F6F0 BYTE_EXACT
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -138,7 +138,7 @@ Purpose: ?on_left_down@Interlude@@QAEXHH@Z - dispatch to slot 0xe8 of this objec
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x0045F700
+ORIGINAL: 0x0045F700 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -152,7 +152,7 @@ Purpose: ?on_button_clicked@NewTechWin@@QAEXH@Z - dispatch to slot 0xe8 of this 
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x00483E80
+ORIGINAL: 0x00483E80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -164,7 +164,7 @@ void __fastcall new_tech_win_on_button_clicked_redirect(void *self, void *, int 
 /*
 Purpose: ?on_scrolling@ProdPicker@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
-ORIGINAL: 0x00493E70
+ORIGINAL: 0x00493E70 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -756,7 +756,7 @@ Purpose: ?start@VoiceRx@@QAEHXZ - dispatch to slot 0x88 of the object at
          0x3c when it is present, and answer 0x0 either way: both
          paths land on the same zeroing, so the delegate's own result
          never reaches the caller.
-ORIGINAL: 0x004C8C20
+ORIGINAL: 0x004C8C20 BYTE_EXACT
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -776,7 +776,7 @@ Purpose: ?stop@VoiceRx@@QAEHXZ - dispatch to slot 0x20 of the object at
          0x3c when it is present, and answer 0x0 either way: both
          paths land on the same zeroing, so the delegate's own result
          never reaches the caller.
-ORIGINAL: 0x004C8C40
+ORIGINAL: 0x004C8C40 BYTE_EXACT
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -847,7 +847,7 @@ Purpose: ?release@VoiceTx@@QAEXXZ - dispatch to slot 0x38 of the object at
          0x3c when it is present, and answer 0x0 either way: both
          paths land on the same zeroing, so the delegate's own result
          never reaches the caller.
-ORIGINAL: 0x004C8EA0
+ORIGINAL: 0x004C8EA0 BYTE_EXACT
 Return Value: 0x0, whether the delegate ran or not
 Status: Complete
 */
@@ -918,7 +918,7 @@ Purpose: ?on_left_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obje
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x005AD3B0
+ORIGINAL: 0x005AD3B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -932,7 +932,7 @@ Purpose: ?on_right_click@ReplayWin@@QAEXHH@Z - dispatch to slot 0xe8 of this obj
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x005AD3C0
+ORIGINAL: 0x005AD3C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -946,7 +946,7 @@ Purpose: ?on_button_clicked@ReplayWin@@QAEXH@Z - dispatch to slot 0xe8 of this o
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x005AD430
+ORIGINAL: 0x005AD430 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -960,7 +960,7 @@ Purpose: ?on_key_click@ReplayWin@@QAEHHH@Z - dispatch to slot 0xe8 of this objec
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x005AD440
+ORIGINAL: 0x005AD440 BYTE_EXACT
 Return Value: 0x1, a constant
 Status: Complete
 */
@@ -973,7 +973,7 @@ int __fastcall replay_win_on_key_click_redirect(void *self, void *, int a1, int 
 /*
 Purpose: ?on_scrolling@Gamma@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
          vtable, forwarding 2 argument(s).
-ORIGINAL: 0x005C93A0
+ORIGINAL: 0x005C93A0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -987,7 +987,7 @@ Purpose: ?on_dialog_focus@BaseButton@@QAEXH@Z - dispatch to slot 0xf8 of this ob
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
          discarded and only the `ret` cleans them up.
-ORIGINAL: 0x00607B00
+ORIGINAL: 0x00607B00 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

@@ -15,7 +15,7 @@ Purpose: Return the constant 0x1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00406840
+ORIGINAL: 0x00406840 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -37,7 +37,7 @@ Purpose: Increment the dword field at 0x58.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004476E0
+ORIGINAL: 0x004476E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -60,7 +60,7 @@ Purpose: Store 0x1 in the byte at 0x6d.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00447AB0
+ORIGINAL: 0x00447AB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -82,7 +82,7 @@ Purpose: Increment the dword field at 0x58.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448280
+ORIGINAL: 0x00448280 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -105,7 +105,7 @@ Purpose: Read the dword field at 0x48.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448310
+ORIGINAL: 0x00448310 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -128,7 +128,7 @@ Purpose: Read the dword field at 0x44.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448320
+ORIGINAL: 0x00448320 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -151,7 +151,7 @@ Purpose: Read the dword field at 0x50.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448330
+ORIGINAL: 0x00448330 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -174,7 +174,7 @@ Purpose: Read the dword field at 0x200.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C75A0
+ORIGINAL: 0x004C75A0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -197,7 +197,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C8090
+ORIGINAL: 0x004C8090 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -229,7 +229,7 @@ Purpose: Set 2 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C8100
+ORIGINAL: 0x004C8100 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -254,7 +254,7 @@ Purpose: Return the constant 0xb.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C93E0
+ORIGINAL: 0x004C93E0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -276,7 +276,7 @@ Purpose: Set 1 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00590D60
+ORIGINAL: 0x00590D60 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -299,7 +299,7 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005DA6A0
+ORIGINAL: 0x005DA6A0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -321,7 +321,7 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005DA6B0
+ORIGINAL: 0x005DA6B0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -343,7 +343,7 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005E2460
+ORIGINAL: 0x005E2460 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -365,7 +365,7 @@ Purpose: Return the constant 0x8.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005E2470
+ORIGINAL: 0x005E2470 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -387,7 +387,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005E35D0
+ORIGINAL: 0x005E35D0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -419,7 +419,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005E35F0
+ORIGINAL: 0x005E35F0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -450,7 +450,7 @@ Purpose: Read the dword field at 0x0, masked to 0x1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00600320
+ORIGINAL: 0x00600320 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -474,7 +474,7 @@ Purpose: Set 3 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00616B20
+ORIGINAL: 0x00616B20 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -500,7 +500,7 @@ Purpose: Return the constant 0x1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x0062D390
+ORIGINAL: 0x0062D390 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -522,7 +522,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x006346C0
+ORIGINAL: 0x006346C0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -554,7 +554,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x006346F0
+ORIGINAL: 0x006346F0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -585,7 +585,7 @@ Purpose: Set 9 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634B70
+ORIGINAL: 0x00634B70 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -617,7 +617,7 @@ Purpose: Set 4 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634FB0
+ORIGINAL: 0x00634FB0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -644,7 +644,7 @@ Purpose: Set 7 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x006354D0
+ORIGINAL: 0x006354D0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -674,7 +674,7 @@ Purpose: Read the dword field at 0x4ac, masked to 0x8000.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x006363F0
+ORIGINAL: 0x006363F0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -698,7 +698,7 @@ Purpose: Set 4 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x0063E520
+ORIGINAL: 0x0063E520 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -725,7 +725,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00406B20
+ORIGINAL: 0x00406B20 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -747,7 +747,7 @@ Purpose: Return the constant 0x0.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00616D80
+ORIGINAL: 0x00616D80 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -769,7 +769,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x0061F785
+ORIGINAL: 0x0061F785 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -791,7 +791,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634C20
+ORIGINAL: 0x00634C20 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -813,7 +813,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x0050F640
+ORIGINAL: 0x0050F640 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -835,7 +835,7 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00589750
+ORIGINAL: 0x00589750 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -858,7 +858,7 @@ Purpose: Copy 2 argument(s) into field(s) of `this`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00590CB0
+ORIGINAL: 0x00590CB0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -882,7 +882,7 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005F05C0
+ORIGINAL: 0x005F05C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -905,7 +905,7 @@ Purpose: Set 5 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x005D4540
+ORIGINAL: 0x005D4540 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -932,7 +932,7 @@ Purpose: Set 8 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634BE0
+ORIGINAL: 0x00634BE0 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */
@@ -963,7 +963,7 @@ Purpose: Set 8 field(s) to constants.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00634F70
+ORIGINAL: 0x00634F70 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -993,7 +993,7 @@ Purpose: Clamp field 0xc against an argument, then store unconditionally.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C80C0
+ORIGINAL: 0x004C80C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -1020,7 +1020,7 @@ Purpose: Clamp field 0x8 against an argument, then store unconditionally.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x004C80E0
+ORIGINAL: 0x004C80E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -1047,7 +1047,7 @@ Purpose: Sign-extend bit 0 of field 0x40: 0 or -1.
          the only statement of this function's arity that exists, since it has
          no mangled name. Declaring fewer would leave them on the caller's
          stack.
-ORIGINAL: 0x00448380
+ORIGINAL: 0x00448380 BYTE_EXACT
 Return Value: the value described above
 Status: Complete
 */

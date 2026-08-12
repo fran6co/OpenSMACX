@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0048BF20
+// ORIGINAL: 0x0048BF20 BYTE_EXACT
 // 0x0048BF20  ??_GPlanWin@@UAEPAXI@Z  ->  ??_GPlanWin@@UAEPAXI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

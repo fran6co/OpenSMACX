@@ -77,7 +77,7 @@ Font *__cdecl find_font(int size, int style) {
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-ORIGINAL: 0x00618F30
+ORIGINAL: 0x00618F30 BYTE_EXACT
 Status: Complete
 */
 int Font::UNK1(int, int, int, int) {

@@ -149,7 +149,7 @@ void __fastcall check_box_set_state_pos_redirect(CheckBox *self, void *,
 
 /*
 Purpose: Repaint on dialog focus, dispatching through the enclosing object.
-ORIGINAL: 0x0060FB90
+ORIGINAL: 0x0060FB90 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -170,7 +170,7 @@ void CheckBox::on_dialog_focus(int a1) {
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
-ORIGINAL: 0x0060FC30
+ORIGINAL: 0x0060FC30 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

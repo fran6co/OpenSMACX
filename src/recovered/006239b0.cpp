@@ -1,4 +1,4 @@
-// ORIGINAL: 0x006239B0
+// ORIGINAL: 0x006239B0 BYTE_EXACT
 // 0x006239B0  ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@HPAUVert@@H@Z  ->  ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@H1H@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

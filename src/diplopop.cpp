@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004404C0
+ORIGINAL: 0x004404C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -33,7 +33,7 @@ void __fastcall diplo_pop_on_iface_left_click_redirect(DiploPop *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004404D0
+ORIGINAL: 0x004404D0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -46,7 +46,7 @@ void __fastcall diplo_pop_on_iface_right_click_redirect(DiploPop *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004404E0
+ORIGINAL: 0x004404E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -59,7 +59,7 @@ void __fastcall diplo_pop_on_iface_left_down_redirect(DiploPop *self, void *, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004404F0
+ORIGINAL: 0x004404F0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -72,7 +72,7 @@ void __fastcall diplo_pop_on_iface_right_down_redirect(DiploPop *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440500
+ORIGINAL: 0x00440500 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -85,7 +85,7 @@ void __fastcall diplo_pop_on_iface_mouse_move_redirect(DiploPop *self, void *, i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440510
+ORIGINAL: 0x00440510 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -98,7 +98,7 @@ void __fastcall diplo_pop_on_iface_mouse_leave_redirect(DiploPop *self, void *, 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440520
+ORIGINAL: 0x00440520 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -111,7 +111,7 @@ void __fastcall diplo_pop_on_iface_selected_redirect(DiploPop *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440530
+ORIGINAL: 0x00440530 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -124,7 +124,7 @@ void __fastcall diplo_pop_on_iface_left_double_click_redirect(DiploPop *self, vo
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440540
+ORIGINAL: 0x00440540 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -137,7 +137,7 @@ void __fastcall diplo_pop_on_iface_right_double_click_redirect(DiploPop *self, v
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00440610
+ORIGINAL: 0x00440610 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -149,7 +149,7 @@ void __fastcall diplo_pop_on_iface_button_toggled_redirect(DiploPop *self, void 
 }
 
 /*
-ORIGINAL: 0x0043F170
+ORIGINAL: 0x0043F170 BYTE_EXACT
 Status: Complete
 */
 void DiploPop::hide() {

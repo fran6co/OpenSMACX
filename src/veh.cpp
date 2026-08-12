@@ -1792,7 +1792,7 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
 
 /*
 Purpose: Get the index value of a particular ability's bitfield.
-ORIGINAL: 0x00581170
+ORIGINAL: 0x00581170 BYTE_EXACT
 Return Value: Ability index
 Status: Complete
 */
@@ -3441,7 +3441,7 @@ void __cdecl veh_skip(int veh_id) {
 
 /*
 Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for various UI elements.
-ORIGINAL: 0x005C1D50
+ORIGINAL: 0x005C1D50 BYTE_EXACT
 Return Value: Fake unit id (2048)
 Status: Complete
 */

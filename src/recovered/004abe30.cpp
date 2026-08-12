@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004ABE30
+// ORIGINAL: 0x004ABE30 BYTE_EXACT
 // 0x004ABE30  ?close_security@ReportIf@@QAEXXZ  ->  ?close_security@ReportIf@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -123,7 +123,7 @@ int __fastcall sprite_draw_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-ORIGINAL: 0x005E4ADA
+ORIGINAL: 0x005E4ADA BYTE_EXACT
 Status: Complete
 */
 int Sprite::UNK1(int, int, int, int, int, int, int) {
@@ -138,7 +138,7 @@ int __fastcall sprite_unk1_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-ORIGINAL: 0x005E4AEA
+ORIGINAL: 0x005E4AEA BYTE_EXACT
 Status: Complete
 */
 int Sprite::UNK2(int, int, int, int, int) {
@@ -152,7 +152,7 @@ int __fastcall sprite_unk2_redirect(
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x005EAAFF
+ORIGINAL: 0x005EAAFF BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -165,7 +165,7 @@ void __fastcall sprite_unk3_redirect(Sprite *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x005EAD8F
+ORIGINAL: 0x005EAD8F BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

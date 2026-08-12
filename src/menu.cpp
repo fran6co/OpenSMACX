@@ -22,7 +22,7 @@
 
 /*
 Purpose: Set the callback invoked for menu events.
-ORIGINAL: 0x005FB820
+ORIGINAL: 0x005FB820 BYTE_EXACT
 Status: Complete
 */
 void Menu::set_menu_proc(MenuProc proc) {
@@ -31,7 +31,7 @@ void Menu::set_menu_proc(MenuProc proc) {
 
 /*
 Purpose: Find the first menu entry with the requested ID.
-ORIGINAL: 0x005FB990
+ORIGINAL: 0x005FB990 BYTE_EXACT
 Status: Complete
 */
 int Menu::id_to_index(int id) {
@@ -59,7 +59,7 @@ int __fastcall menu_id_to_index_redirect(Menu *self, void *, int id) {
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-ORIGINAL: 0x005FB1C0
+ORIGINAL: 0x005FB1C0 BYTE_EXACT
 Status: Complete
 */
 int Menu::UNK2(int) {
@@ -74,7 +74,7 @@ int __fastcall menu_unk2_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-ORIGINAL: 0x005FB230
+ORIGINAL: 0x005FB230 BYTE_EXACT
 Status: Complete
 */
 int Menu::UNK4(int, int, int) {
@@ -558,7 +558,7 @@ Purpose: Legacy hook for adjusting a pull-down's position. The original body is
          not: on_redraw declares no parameters and still cleans eight bytes, so
          its arity is unresolved and it stays unrecovered until that is
          settled.
-ORIGINAL: 0x005FC6C0
+ORIGINAL: 0x005FC6C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -570,7 +570,7 @@ void __fastcall menu_on_adjust_pulldown_pos_redirect(Menu *self, void *, int *a1
 }
 
 /*
-ORIGINAL: 0x005FC680
+ORIGINAL: 0x005FC680 BYTE_EXACT
 Status: Complete
 */
 void Menu::on_mouse_move(int a1, int a2) {

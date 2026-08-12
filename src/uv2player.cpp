@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004BF380
+ORIGINAL: 0x004BF380 BYTE_EXACT
 Return Value: 0
 Status: Complete
 */

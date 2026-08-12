@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004C59E0
+// ORIGINAL: 0x004C59E0 BYTE_EXACT
 // 0x004C59E0  ?delete_device@Wave_In_Device@@QAEHXZ  ->  ?delete_device@Wave_In_Device@@QAEHXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

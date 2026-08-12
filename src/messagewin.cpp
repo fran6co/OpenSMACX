@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004713A0
+ORIGINAL: 0x004713A0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -33,7 +33,7 @@ void __fastcall message_win_unk1_redirect(MessageWin *self, void *, int a1, int 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00471D40
+ORIGINAL: 0x00471D40 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

@@ -64,7 +64,7 @@ int __fastcall palette_get_rgbquad_redirect(
 
 /*
 Purpose: Record the window the palette applies to.
-ORIGINAL: 0x005FE4F0
+ORIGINAL: 0x005FE4F0 BYTE_EXACT
 Status: Complete
 Verification note: the original body is a single ret - it accepts the window
 and does nothing with it. There is no state to observe and no statement to

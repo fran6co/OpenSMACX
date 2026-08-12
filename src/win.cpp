@@ -169,7 +169,7 @@ int Win::move(int x, int y) {
 
 /*
 Purpose: Determine whether this window and every ancestor are visible.
-ORIGINAL: 0x005F7E90
+ORIGINAL: 0x005F7E90 BYTE_EXACT
 Status: Complete
 */
 int Win::is_visible() {
@@ -591,7 +591,7 @@ void __cdecl win_clear_bubble_text_redirect() {
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-ORIGINAL: 0x005EC680
+ORIGINAL: 0x005EC680 BYTE_EXACT
 Status: Complete
 */
 int Win::UNK1(int, int, int, int, int, int, int, int, int) {
@@ -606,7 +606,7 @@ int __fastcall win_unk1_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-ORIGINAL: 0x005ED7C0
+ORIGINAL: 0x005ED7C0 BYTE_EXACT
 Status: Complete
 */
 int Win::UNK5() {
@@ -621,7 +621,7 @@ int __fastcall win_unk5_redirect(
 /*
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
-ORIGINAL: 0x005EDFE0
+ORIGINAL: 0x005EDFE0 BYTE_EXACT
 Status: Complete
 */
 int Win::UNK6(int) {
@@ -636,7 +636,7 @@ int __fastcall win_unk6_redirect(
 /*
 Purpose: Legacy stub; the original body returns 1 without reading its
          arguments.
-ORIGINAL: 0x005F6A30
+ORIGINAL: 0x005F6A30 BYTE_EXACT
 Status: Complete
 */
 int Win::on_set_cursor(void *, unsigned int, unsigned int) {
@@ -703,7 +703,7 @@ void __fastcall win_unk9_redirect(Win *self, void *, int value) {
 
 /*
 Purpose: Reset the window clip; the legacy implementation is a bare return.
-ORIGINAL: 0x005EE020
+ORIGINAL: 0x005EE020 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -716,7 +716,7 @@ void __fastcall win_reset_window_clip_redirect(Win *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x005F54B0
+ORIGINAL: 0x005F54B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -729,7 +729,7 @@ void __fastcall win_on_move_redirect(Win *self, void *, int a1, int a2) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x005F54C0
+ORIGINAL: 0x005F54C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -742,7 +742,7 @@ void __fastcall win_on_size_redirect(Win *self, void *, unsigned int a1, int a2,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x005F54D0
+ORIGINAL: 0x005F54D0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -800,7 +800,7 @@ void __fastcall win_sync_palette_redirect(Win *self, void *) {
 /*
 Purpose: Forward a scrollbar position to the vertical Scroll the window owns,
          doing nothing when that scrollbar is absent.
-ORIGINAL: 0x005EE030
+ORIGINAL: 0x005EE030 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -813,7 +813,7 @@ void Win::set_vert_pos(int position) {
 /*
 Purpose: Forward a scrollbar position to the horizontal Scroll the window owns,
          doing nothing when that scrollbar is absent.
-ORIGINAL: 0x005EE070
+ORIGINAL: 0x005EE070 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -826,7 +826,7 @@ void Win::set_horz_pos(int position) {
 /*
 Purpose: Forward a scrollbar range to the vertical Scroll the window owns,
          doing nothing when that scrollbar is absent.
-ORIGINAL: 0x005EE0B0
+ORIGINAL: 0x005EE0B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -839,7 +839,7 @@ void Win::set_vert_range(int minimum, int maximum) {
 /*
 Purpose: Forward a scrollbar range to the horizontal Scroll the window owns,
          doing nothing when that scrollbar is absent.
-ORIGINAL: 0x005EE0D0
+ORIGINAL: 0x005EE0D0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -868,7 +868,7 @@ void __fastcall win_set_horz_range_redirect(Win *self, void *, int minimum, int 
 /*
 Purpose: Window cursor-set hook; the legacy implementation returns 1 to report
          it handled the message and does nothing else.
-ORIGINAL: 0x005F2670
+ORIGINAL: 0x005F2670 BYTE_EXACT
 Return Value: 1, always
 Status: Complete
 */
@@ -959,7 +959,7 @@ int __fastcall win_is_descendant_redirect(Win *self, void *, Win *candidate) {
 }
 
 /*
-ORIGINAL: 0x005F8530
+ORIGINAL: 0x005F8530 BYTE_EXACT
 Status: Complete
 */
 void Win::on_mousewheel_down_vert(int a1) {
@@ -970,7 +970,7 @@ void Win::on_mousewheel_down_vert(int a1) {
 }
 
 /*
-ORIGINAL: 0x005F8590
+ORIGINAL: 0x005F8590 BYTE_EXACT
 Status: Complete
 */
 void Win::on_mousewheel_up_horz(int a1) {
@@ -983,7 +983,7 @@ void Win::on_mousewheel_up_horz(int a1) {
 /*
 Purpose: Report the left mouse button state, honouring a swapped-buttons
          system setting.
-ORIGINAL: 0x005EC960
+ORIGINAL: 0x005EC960 BYTE_EXACT
 Return Value: nonzero while the logical left button is down
 Status: Complete
 */
@@ -998,7 +998,7 @@ int Win::get_lbutton_state() {
 }
 
 /*
-ORIGINAL: 0x005F8550
+ORIGINAL: 0x005F8550 BYTE_EXACT
 Status: Complete
 */
 void Win::on_mousewheel_down_horz(int a1) {
@@ -1009,7 +1009,7 @@ void Win::on_mousewheel_down_horz(int a1) {
 }
 
 /*
-ORIGINAL: 0x005F8570
+ORIGINAL: 0x005F8570 BYTE_EXACT
 Status: Complete
 */
 void Win::on_mousewheel_up_vert(int a1) {

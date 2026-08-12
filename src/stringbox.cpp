@@ -48,7 +48,7 @@ void __fastcall string_box_add_redirect(StringBox *self, void *, char *text,
 
 /*
 Purpose: Record the scroll position and repaint through virtual slot 62.
-ORIGINAL: 0x00629D20
+ORIGINAL: 0x00629D20 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

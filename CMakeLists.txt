@@ -1183,13 +1183,21 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(src-declaration-tests
                                    test_src_declarations.py)
 
-    # Exact matches are kept in a committed ledger and may rise but never fall.
-    # This check is compiler-free: it reads the ledger and the checked-in floor,
-    # so CI can enforce the result even though the VC6 recompile oracle itself
-    # is local-only. Similarity tiers are diagnostics and do not advance it.
+    # THE RATCHET, and it reads `src/` rather than a committed ledger. Every
+    # piece proved to recompile to the shipped bytes carries the claim on its
+    # own annotation - `// ORIGINAL: 0x... BYTE_EXACT` - so the floor is the
+    # number of claims rather than a constant somebody remembers to bump, and
+    # deleting a body deletes its claim. The previous form compared two
+    # hardcoded totals against a 1.5 MB CSV, and counted one function
+    # (0x0064F09C) whose body had been reset to `// BODY GOES HERE.`.
+    #
+    # It needs VC6 and the pinned image, which is not a new requirement: every
+    # other measurement here already does, `tools/disasm.py` included, and the
+    # image cannot be distributed. The old check's "compiler-free so CI can
+    # enforce it" was protecting a CI that does not exist.
     add_test(NAME byte-match-ratchet
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/byte_match_fanout.py" --check)
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/decomp_status.py" --check)
 
     # The COFF target emitter and the callee-declaration repair, both of which
     # objdiff pairs symbols through: a target object with the wrong symbol name

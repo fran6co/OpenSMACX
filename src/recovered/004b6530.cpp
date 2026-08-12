@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004B6530
+// ORIGINAL: 0x004B6530 BYTE_EXACT
 // 0x004B6530  ?reset_active@StatusWin@@QAEXXZ  ->  ?reset_active@StatusWin@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

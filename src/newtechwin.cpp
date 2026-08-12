@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00483E90
+ORIGINAL: 0x00483E90 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -33,7 +33,7 @@ void __fastcall new_tech_win_on_left_click_redirect(NewTechWin *self, void *, in
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-ORIGINAL: 0x00483EA0
+ORIGINAL: 0x00483EA0 BYTE_EXACT
 Return Value: 1, always
 Status: Complete
 */

@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0047A800
+// ORIGINAL: 0x0047A800 BYTE_EXACT
 // 0x0047A800  ?timer_daemon@NetMsg@@QAAXH@Z  ->  ?timer_daemon@NetMsg@@QAAXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -22,7 +22,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x00611040
+ORIGINAL: 0x00611040 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -31,7 +31,7 @@ void SpriteBox::on_mouse_move(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x00611050
+ORIGINAL: 0x00611050 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -111,7 +111,7 @@ uint32_t __fastcall sprite_box_id_to_pos_redirect(SpriteBox *self, void *, int i
 }
 
 /*
-ORIGINAL: 0x00610480
+ORIGINAL: 0x00610480 BYTE_EXACT
 Status: Complete
 */
 int SpriteBox::init(RECT* a1, int a2) {
@@ -122,7 +122,7 @@ int SpriteBox::init(RECT* a1, int a2) {
 
 /*
 Purpose: Repaint on dialog focus, through the enclosing object.
-ORIGINAL: 0x006115E0
+ORIGINAL: 0x006115E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -139,7 +139,7 @@ void SpriteBox::on_dialog_focus(int a1) {
 }
 
 /*
-ORIGINAL: 0x00610420
+ORIGINAL: 0x00610420 BYTE_EXACT
 Status: Complete
 */
 int SpriteBox::init(int a1) {
@@ -149,7 +149,7 @@ int SpriteBox::init(int a1) {
 }
 
 /*
-ORIGINAL: 0x006104B0
+ORIGINAL: 0x006104B0 BYTE_EXACT
 Status: Complete
 */
 int SpriteBox::init(Heap *a1) {
@@ -173,7 +173,7 @@ void SpriteBox::close() {
 }
 
 /*
-ORIGINAL: 0x006104D0
+ORIGINAL: 0x006104D0 BYTE_EXACT
 Status: Complete
 */
 int SpriteBox::init(int a1, int a2, int a3, int a4, Heap * a5) {

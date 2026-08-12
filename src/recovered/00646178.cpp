@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00646178
+// ORIGINAL: 0x00646178 BYTE_EXACT
 // 0x00646178  __fread  ->  __fread
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

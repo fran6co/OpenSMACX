@@ -22,7 +22,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x0060C7C0
+ORIGINAL: 0x0060C7C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -152,7 +152,7 @@ uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
-ORIGINAL: 0x0060CE10
+ORIGINAL: 0x0060CE10 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

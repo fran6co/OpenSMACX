@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0043F140
+// ORIGINAL: 0x0043F140 BYTE_EXACT
 // 0x0043F140  ?show@DiploPop@@QAEXH@Z  ->  ?show@DiploPop@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

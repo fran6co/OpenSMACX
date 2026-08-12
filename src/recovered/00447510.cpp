@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00447510
+// ORIGINAL: 0x00447510 BYTE_EXACT
 // 0x00447510  ?begin@UAmbience@@QAEXXZ  ->  ?begin@UAmbience@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005FE6D0
+// ORIGINAL: 0x005FE6D0 BYTE_EXACT
 // 0x005FE6D0  ?reseed@Palette@@QAEXXZ  ->  ?reseed@Palette@@QAEXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

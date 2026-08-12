@@ -109,7 +109,7 @@ void __cdecl add_lf(LPSTR str) {
 
 /*
 Purpose: Use the min and max parameters to bound the input.
-ORIGINAL: 0x00422F00
+ORIGINAL: 0x00422F00 BYTE_EXACT
 Return Value: Bounded input
 Status: Complete
 */
@@ -251,7 +251,7 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
 
 /*
 Purpose: Convert the binary string to an integer.
-ORIGINAL: 0x006288D0
+ORIGINAL: 0x006288D0 BYTE_EXACT
 Return Value: Integer value of the string
 Status: Complete
 */
@@ -770,7 +770,7 @@ int __cdecl bit_count(int bitfield) {
 
 /*
 Purpose: Count the number of signed bits set. Added a fix to prevent an infinite loop.
-ORIGINAL: 0x00628AB0
+ORIGINAL: 0x00628AB0 BYTE_EXACT
 Return Value: Bit count
 Status: Complete
 */
@@ -805,7 +805,7 @@ void __cdecl my_srand(int reseed) {
 /*
 Purpose: Swap the values of two 32-bit variables. Added an additional check when swapping the same
          memory location.
-ORIGINAL: 0x00628A50
+ORIGINAL: 0x00628A50 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -823,7 +823,7 @@ void __cdecl swap(int *var1, int *var2) {
 /*
 Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
          memory location.
-ORIGINAL: 0x00628A80
+ORIGINAL: 0x00628A80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -869,7 +869,7 @@ const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value) {
 
 /*
 Purpose: Calculate the square root of the input.
-ORIGINAL: 0x006290E0
+ORIGINAL: 0x006290E0 BYTE_EXACT
 Return Value: Square root
 Status: Complete
 */
@@ -888,7 +888,7 @@ int __cdecl quick_root(int input) {
 
 /*
 Purpose: Calculate the offset and bitmask for the specified input.
-ORIGINAL: 0x0050BA00
+ORIGINAL: 0x0050BA00 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

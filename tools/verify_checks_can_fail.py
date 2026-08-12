@@ -246,6 +246,55 @@ def damage_layout_probe_header(workspace):
             "--src", str(copy)]
 
 
+def damage_byte_match_ratchet(workspace):
+    """A body whose annotation claims BYTE_EXACT, edited so it no longer is.
+
+    THE CLAIM IS THE FLOOR, so this is the case that matters most here: if a
+    claimed body can be changed and the check still passes, the ratchet is
+    decorative. The damage is a CONSTANT, not a deleted statement - the body
+    still compiles and still produces a function, so a pass could not be
+    excused as "it failed to build".
+
+    THE LINE SPAN COMES FROM THE TREE'S OWN EXTRACTOR. Two earlier attempts
+    failed in ways worth recording, because both LOOKED like a working case:
+    perturbing the first `return N;` after the marker landed in a later,
+    unclaimed function, and `text.replace(annotation.region, ...)` matched
+    nothing at all - `extract_body` re-opens a mid-comment extract with a
+    synthetic `/*`, so the region is not a substring of the file. Both left
+    the file unchanged and the check passing.
+    """
+    sys.path.insert(0, str(TOOLS))
+    import annotation_scan
+    import byte_match_census as census
+
+    for source in sorted((REPO_ROOT / "src").glob("*.cpp")):
+        if "BYTE_EXACT" not in source.read_text(errors="ignore"):
+            continue
+        for annotation in annotation_scan.scan_file(source):
+            if not annotation.matched or annotation.mode != annotation_scan.MODE_BODY:
+                continue
+            try:
+                _, lines, first, last = census.body_span(annotation.location)
+            except (ValueError, OSError):
+                continue
+            for index in range(first, last + 1):
+                damaged, count = re.subn(
+                    r"\breturn (\d+);",
+                    lambda m: f"return {int(m.group(1)) + 1};",
+                    lines[index], count=1)
+                if not count:
+                    continue
+                tree = workspace / "src"
+                tree.mkdir(parents=True, exist_ok=True)
+                lines = list(lines)
+                lines[index] = damaged
+                (tree / source.name).write_text("\n".join(lines) + "\n",
+                                                encoding="utf-8")
+                return [PYTHON, str(TOOLS / "decomp_status.py"), "--check",
+                        "--no-ledger", "--src", str(tree)]
+    raise Skip("no claimed body with a constant return to perturb")
+
+
 def damage_cast_classification(workspace):
     """A cast reclassified, so the committed measurement stops describing src/.
 
@@ -441,6 +490,8 @@ CASES = (
      damage_cast_classification, "is stale"),
     ("class-layout-derivation-pinned", "pinned sizes the image contradicts",
      damage_pinned_class_size, "answered wrongly"),
+    ("byte-match-ratchet", "a claimed byte-exact body quietly changed",
+     damage_byte_match_ratchet, "no longer reproduces"),
 )
 
 # The gate checks this tool is responsible for. Adding a check here without
@@ -460,6 +511,7 @@ COVERED_CHECKS = {
     "verified-layouts-current",
     "class-layout-derivation-pinned",
     "cast-classification-current",
+    "byte-match-ratchet",
 }
 
 

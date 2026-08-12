@@ -85,7 +85,7 @@ Purpose: Subtract two three-component float vectors into a third.
          and is rounded to float only by the store, so a version that computed
          in float throughout could round differently.
 
-ORIGINAL: 0x00628180
+ORIGINAL: 0x00628180 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -111,7 +111,7 @@ Purpose: Scale a three-component float vector by a scalar.
          the value is the same extended-precision number either way, since it
          came from the same float32.
 
-ORIGINAL: 0x006281B0
+ORIGINAL: 0x006281B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -155,7 +155,7 @@ Purpose: Dot product of `this` with a three-component float vector.
          The C++ below compiles to this instruction sequence exactly, `ret 4`
          included - checked with objdump rather than assumed.
 
-ORIGINAL: 0x00634650
+ORIGINAL: 0x00634650 BYTE_EXACT
 Return Value: the dot product, in ST(0)
 Status: Complete
 */
@@ -191,7 +191,7 @@ Purpose: Round an integer DOWN to a multiple of another, toward zero.
          go through one `idiv`: y == 0 and INT_MIN / -1 raise #DE here exactly
          as they do in the original.
 
-ORIGINAL: 0x00559210
+ORIGINAL: 0x00559210 BYTE_EXACT
 Return Value: the largest multiple of `step` no further from zero than `value`
 Status: Complete
 */
@@ -247,7 +247,7 @@ Purpose: Field 0 as an offset into field 0x10, or field 0xc when it is negative.
          bit rather than on a large unsigned value - the difference shows up
          for any field with the top bit set.
 
-ORIGINAL: 0x005E3650
+ORIGINAL: 0x005E3650 BYTE_EXACT
 Return Value: field 0x10 + field 0, or field 0xc
 Status: Complete
 */
@@ -280,7 +280,7 @@ Purpose: Store an argument into three fields, clamping anything outside 0..3
          transcription that tidied it would still be correct only because the
          value stored is the same for all three.
 
-ORIGINAL: 0x005E3660
+ORIGINAL: 0x005E3660 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -304,7 +304,7 @@ Purpose: Store a non-zero argument into field 0x38, or refuse with code 10.
          whatever it held. Returning 10 without that being true of the object
          would be a different function.
 
-ORIGINAL: 0x004482F0
+ORIGINAL: 0x004482F0 BYTE_EXACT
 Return Value: 0 on success, 10 when the argument is zero
 Status: Complete
 */
@@ -327,7 +327,7 @@ Purpose: Clear field 4, set the low bit of field 8, put 0x24 in field 0.
          the result. EAX still holds `this` at the `ret` - the residue this
          tree treats as a return value.
 
-ORIGINAL: 0x004C8070
+ORIGINAL: 0x004C8070 BYTE_EXACT
 Return Value: `this`
 Status: Complete
 */
@@ -447,7 +447,7 @@ Purpose: Are two three-component float vectors equal?
          returning `bool` matches, because a caller of a byte-returning
          function reads AL.
 
-ORIGINAL: 0x006344E0
+ORIGINAL: 0x006344E0 BYTE_EXACT
 Return Value: true when every component matches, or is unordered
 Status: Complete
 */
@@ -524,7 +524,7 @@ Purpose: Scale a field by an argument and divide by 600.
          unsigned and casting back keeps that defined, which signed overflow
          in C++ would not be.
 
-ORIGINAL: 0x0063BEB0
+ORIGINAL: 0x0063BEB0 BYTE_EXACT
 Return Value: (field 0x3798 * argument) / 600
 Status: Complete
 */
@@ -543,7 +543,7 @@ Purpose: Scale a field by an argument and divide by 440.
          0x94f2095 is ceil(2^36 / 440). Confirmed the same way, over the same
          206,006 inputs, with no disagreement.
 
-ORIGINAL: 0x0063BEE0
+ORIGINAL: 0x0063BEE0 BYTE_EXACT
 Return Value: (field 0x379c * argument) / 440
 Status: Complete
 */
@@ -567,7 +567,7 @@ Purpose: Fill the eight bytes at a pointer with 0xff.
          writes the first four bytes as a dword and the next four one at a
          time; the result is eight 0xff bytes either way.
 
-ORIGINAL: 0x0057DEE0
+ORIGINAL: 0x0057DEE0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -602,7 +602,7 @@ Purpose: Hand out the next of ten 60-byte slots, wrapping back to the first.
          before the store either way; writing the wrap first would return the
          wrong slot on the tenth call and only then.
 
-ORIGINAL: 0x006252C0
+ORIGINAL: 0x006252C0 BYTE_EXACT
 Return Value: a pointer to the slot that was current on entry
 Status: Complete
 */
@@ -637,7 +637,7 @@ Purpose: Half the sum of an argument and a span read out of a structure.
          truncates toward zero: the `sub` adds one first when the value is
          negative, which is exactly what a bare `sar` would get wrong.
 
-ORIGINAL: 0x00408470
+ORIGINAL: 0x00408470 BYTE_EXACT
 Return Value: (a->[0x14] - a->[0x10] + b) / 2
 Status: Complete
 */
@@ -662,7 +662,7 @@ Purpose: Fill 1,536 dwords with -1, starting at offset 0xa20.
          region actually begins at 0xa20 and runs to 0x261f. Reading the
          `lea` as the start would put the whole thing four bytes too high.
 
-ORIGINAL: 0x005AD450
+ORIGINAL: 0x005AD450 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -700,7 +700,7 @@ Purpose: Count the set bits in the low THIRTY-ONE bits of ECX.
          ECX carries a VALUE here, not a `this` pointer, which is why this one
          does not take the (void *, void *) shape the rest of these do.
 
-ORIGINAL: 0x005CC430
+ORIGINAL: 0x005CC430 BYTE_EXACT
 Return Value: how many of bits 0..30 are set
 Status: Complete
 */
@@ -730,7 +730,7 @@ Purpose: Three when there is no structure, otherwise zero or seven.
          `ret 0x10` cleans four dwords while only the first is read; the other
          three are declared so the adapter cleans what the original cleans.
 
-ORIGINAL: 0x005D7A10
+ORIGINAL: 0x005D7A10 BYTE_EXACT
 Return Value: 3 with no structure, 0 when field 0xc is set, 7 when it is not
 Status: Complete
 */
@@ -785,7 +785,7 @@ Purpose: Reverse the low `count` bits of a value.
          The trailing `shr eax,1` undoes the last of the `shl`s, which is why
          the shift happens after the OR rather than before it.
 
-ORIGINAL: 0x00642940
+ORIGINAL: 0x00642940 BYTE_EXACT
 Return Value: the low `count` bits, reversed
 Status: Complete
 */
@@ -860,7 +860,7 @@ Purpose: Divide, rounding the quotient AWAY from zero when there is a
          becomes -2. Both traps of the original are kept, because both
          spellings go through one division: a zero divisor and INT_MIN / -1.
 
-ORIGINAL: 0x00532A50
+ORIGINAL: 0x00532A50 BYTE_EXACT
 Return Value: the quotient that was stored
 Status: Complete
 */
@@ -899,7 +899,7 @@ Purpose: Is a point inside an inclusive rectangle?
          `jl` and `jg` are SIGNED, and both bounds are INCLUSIVE: a point
          exactly on an edge is inside.
 
-ORIGINAL: 0x00592DB0
+ORIGINAL: 0x00592DB0 BYTE_EXACT
 Return Value: 1 when inside, 0 otherwise
 Status: Complete
 */
@@ -1434,7 +1434,7 @@ void __cdecl leaf_00455e50_redirect() {
 }
 
 /*
-ORIGINAL: 0x0049FFC0
+ORIGINAL: 0x0049FFC0 BYTE_EXACT
 Status: Complete
 */
 void __cdecl sat_anim_daemon(int a1) {
@@ -1442,7 +1442,7 @@ void __cdecl sat_anim_daemon(int a1) {
 }
 
 /*
-ORIGINAL: 0x004A0250
+ORIGINAL: 0x004A0250 BYTE_EXACT
 Status: Complete
 */
 void __cdecl sat_expl_daemon(int a1) {
@@ -1450,7 +1450,7 @@ void __cdecl sat_expl_daemon(int a1) {
 }
 
 /*
-ORIGINAL: 0x004A4050
+ORIGINAL: 0x004A4050 BYTE_EXACT
 Status: Complete
 */
 void __cdecl bl_daemon(int a1) {
@@ -1577,7 +1577,7 @@ end_lbl:
 }
 
 /*
-ORIGINAL: 0x0044C860
+ORIGINAL: 0x0044C860 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -1586,7 +1586,7 @@ extern "C" void __cdecl sub_44c860(int value) {
 }
 
 /*
-ORIGINAL: 0x004E2450
+ORIGINAL: 0x004E2450 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -1596,7 +1596,7 @@ extern "C" void __cdecl sub_4e2450() {
 }
 
 /*
-ORIGINAL: 0x004E7DB0
+ORIGINAL: 0x004E7DB0 BYTE_EXACT
 Return Value: zero
 Status: Complete
 */
@@ -1606,7 +1606,7 @@ extern "C" int __cdecl sub_4e7db0() {
 }
 
 /*
-ORIGINAL: 0x006051C0
+ORIGINAL: 0x006051C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -1626,7 +1626,7 @@ extern "C" void __cdecl sub_6051c0() {
 int __cdecl pop_ask(char *a1, char *a2, int a3, char *a4, int (__cdecl *a5)(), int a6);
 
 /*
-ORIGINAL: 0x00627830
+ORIGINAL: 0x00627830 BYTE_EXACT
 Status: Complete
 */
 int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
@@ -1639,7 +1639,7 @@ int __cdecl pop_ask(char *a1, char *a2, int a3, int (__cdecl *a4)(), int a5) {
 int __cdecl sin(int a1, int a2);
 
 /*
-ORIGINAL: 0x0063BAC0
+ORIGINAL: 0x0063BAC0 BYTE_EXACT
 Status: Complete
 */
 int __cdecl cos(int a1, int a2) {

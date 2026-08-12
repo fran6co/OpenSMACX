@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004C8050
+// ORIGINAL: 0x004C8050 BYTE_EXACT
 // 0x004C8050  ?set_play_type@Midi@@QAEHI@Z  ->  ?set_play_type@Midi@@QAEHI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

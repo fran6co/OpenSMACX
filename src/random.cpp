@@ -46,7 +46,7 @@ uint32_t Random::get(int min, int max) {
 
 /*
 Purpose: Get a random double value.
-ORIGINAL: 0x006257B0
+ORIGINAL: 0x006257B0 BYTE_EXACT
 Return Value: Random double value
 Status: Complete
 */

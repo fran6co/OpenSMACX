@@ -66,7 +66,18 @@ UNRECOVERED = SRC_ROOT / "unrecovered"
 # comments in the oracle files end in this spelling and are NOT map entries.
 MARKER = re.compile(
     r"(?<![A-Za-z0-9_-])ORIGINAL:\s*0x(?P<addr>[0-9A-Fa-f]{6,8})"
-    r"(?:\s+(?P<kw>FILE|EXCLUDED)(?P<rest>[^\n*]*))?")
+    r"(?P<tail>[^\n*]*)")
+# The keyword, read out of the marker's own tail rather than by a second
+# alternation, so `FILE` and `BYTE_EXACT` may appear in either order.
+MARKER_KEYWORD = re.compile(r"^\s*(?P<kw>FILE|EXCLUDED)\b(?P<rest>.*)$", re.S)
+# A RATCHET CLAIM, NOT A STATUS FIELD. `// ORIGINAL: 0x0046FB10 BYTE_EXACT`
+# means "this was proved to recompile to the shipped bytes; fail if it stops",
+# and that is the ONLY tier ever written down. Every other verdict -
+# MISMATCH, NO_COMPILE, MNEMONIC_ONLY - is measured on demand and recorded
+# nowhere, because a status field in a comment goes stale the moment anyone
+# edits the body and is believed anyway. The claim lives beside the body it
+# constrains, so deleting the body deletes the claim.
+MARKER_MATCHED = re.compile(r"(?<![A-Za-z0-9_])BYTE_EXACT(?![A-Za-z0-9_])")
 
 LEGACY_BLOCK = re.compile(r"Original Offset:\s*(?P<addr>[0-9A-Fa-f]{6,8})")
 # The inline trailing form, e.g. src/random.cpp's
@@ -106,6 +117,10 @@ class Annotation:
     exclusion: str = ""        # EXCLUSIONS.md citation for STATE_EXCLUDED
     region: str = ""           # the code this annotation claims ("" on error)
     extract_error: str = ""    # why the region could not be cut
+    matched: bool = False      # carries a BYTE_EXACT ratchet claim: this piece
+                               # was proved to recompile to the shipped bytes
+                               # and must not stop. NOT a status field - see
+                               # MARKER_MATCHED.
     recipe: str = "census"     # how the status tool must build the unit:
                                # "census" (extract + scaffolding), "writeback"
                                # (proved bodies, declfix recipe) or "verbatim"
@@ -228,7 +243,7 @@ def _state_of(region: str, excluded: str) -> str:
 
 
 def _parse_marker(line: str, in_block: bool):
-    """(address, keyword, rest) if the line carries a marker IN A COMMENT."""
+    """(address, keyword, rest, matched) for a marker IN A COMMENT."""
     match = MARKER.search(line)
     if not match:
         return None
@@ -238,8 +253,12 @@ def _parse_marker(line: str, in_block: bool):
     prefix = line[:match.start()]
     if not in_block and "//" not in prefix and "/*" not in prefix:
         return None
-    return int(match.group("addr"), 16), match.group("kw"), \
-        (match.group("rest") or "")
+    tail = match.group("tail") or ""
+    matched = bool(MARKER_MATCHED.search(tail))
+    keyword_hit = MARKER_KEYWORD.match(MARKER_MATCHED.sub("", tail))
+    keyword = keyword_hit.group("kw") if keyword_hit else None
+    rest = keyword_hit.group("rest") if keyword_hit else ""
+    return int(match.group("addr"), 16), keyword, rest, matched
 
 
 def _exclusion_citation(rest: str) -> str:
@@ -279,18 +298,19 @@ def scan_text(text: str, path) -> list:
         in_block = _block_state_after(line, in_block)
         if parsed is None:
             continue
-        address, keyword, rest = parsed
+        address, keyword, rest, matched = parsed
         if keyword == "FILE":
             region = text
             found.append(Annotation(
                 address=address, mode=MODE_FILE,
                 state=_state_of(region, ""), path=_rel(path),
-                line=index + 1, region=region, recipe="verbatim"))
+                line=index + 1, region=region, recipe="verbatim",
+                matched=matched))
         elif keyword == "EXCLUDED":
             found.append(Annotation(
                 address=address, mode=MODE_BODY, state=STATE_EXCLUDED,
                 path=_rel(path), line=index + 1,
-                exclusion=_exclusion_citation(rest)))
+                exclusion=_exclusion_citation(rest), matched=matched))
         else:
             if kind == "proved":
                 # Proved bodies keep the writeback semantics even once an
@@ -309,7 +329,7 @@ def scan_text(text: str, path) -> list:
                 address=address, mode=MODE_BODY,
                 state=_state_of(region, ""), path=_rel(path),
                 line=index + 1, region=region, extract_error=error,
-                recipe=recipe))
+                recipe=recipe, matched=matched))
 
     if not found:
         found.extend(_legacy_file_annotations(path, text, lines, kind))

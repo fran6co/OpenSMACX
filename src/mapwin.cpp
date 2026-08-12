@@ -23,7 +23,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x00467960
+ORIGINAL: 0x00467960 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -33,7 +33,7 @@ void MapWin::UNK3() {
 /*
 Purpose: Refresh the map's image buttons; the legacy implementation is a bare
          return, so the buttons are never rebuilt here.
-ORIGINAL: 0x0046FB80
+ORIGINAL: 0x0046FB80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -139,7 +139,7 @@ void __fastcall map_win_on_right_click_redirect(MapWin *self, void *, int a1, in
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x0046EBD0
+ORIGINAL: 0x0046EBD0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -148,7 +148,7 @@ void MapWin::on_left_double_click(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x0046EFF0
+ORIGINAL: 0x0046EFF0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -165,7 +165,7 @@ void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x00462970
+ORIGINAL: 0x00462970 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -305,7 +305,7 @@ int __fastcall map_win_unk1_redirect(MapWin *self, void *) {
 }
 
 /*
-ORIGINAL: 0x0046B1D0
+ORIGINAL: 0x0046B1D0 BYTE_EXACT
 Status: Complete
 */
 void MapWin::on_redraw() {
@@ -315,7 +315,7 @@ void MapWin::on_redraw() {
 }
 
 /*
-ORIGINAL: 0x0046FA00
+ORIGINAL: 0x0046FA00 BYTE_EXACT
 Status: Complete
 */
 void MapWin::on_resize(int a1, int a2) {

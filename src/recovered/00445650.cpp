@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00445650
+// ORIGINAL: 0x00445650 BYTE_EXACT
 // 0x00445650  ?ok_callback@@YAXXZ  ->  ?ok_callback@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0045C180
+// ORIGINAL: 0x0045C180 BYTE_EXACT
 // 0x0045C180  ?timer_callback_daemon@MainInterface@@QAEXH@Z  ->  ?timer_callback_daemon@MainInterface@@QAEXH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

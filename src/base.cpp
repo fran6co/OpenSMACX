@@ -2283,7 +2283,7 @@ int __cdecl garrison_check(int base_id) {
 
 /*
 Purpose: Determine the number of defensive units needed to protect the specified base.
-ORIGINAL: 0x00560D30
+ORIGINAL: 0x00560D30 BYTE_EXACT
 Return Value: Amount of defensive units needed (1-8)
 Status: Complete
 */

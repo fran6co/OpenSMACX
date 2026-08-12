@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005DDF60
+// ORIGINAL: 0x005DDF60 BYTE_EXACT
 // 0x005DDF60  ?wrap_flying@Buffer@@QAEHPADHHH@Z  ->  ?wrap_flying@Buffer@@QAEHPADHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

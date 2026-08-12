@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004C7AB0
+// ORIGINAL: 0x004C7AB0 BYTE_EXACT
 // 0x004C7AB0  ?is_trackset_playing@Midi@@QAE_NI@Z  ->  ?is_trackset_playing@Midi@@QAE_NI@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

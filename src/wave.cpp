@@ -22,7 +22,7 @@
 
 /*
 Purpose: Returns a fixed 11; the legacy implementation is a single constant load.
-ORIGINAL: 0x004C70E0
+ORIGINAL: 0x004C70E0 BYTE_EXACT
 Return Value: 11, always
 Status: Complete
 */
@@ -36,7 +36,7 @@ int __fastcall wave_set_asdr_redirect(Wave *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C70D0
+ORIGINAL: 0x004C70D0 BYTE_EXACT
 Return Value: 11, always
 Status: Complete
 */
@@ -50,7 +50,7 @@ int __fastcall wave_set_bufflimit_redirect(Wave *self, void *, unsigned int a1) 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C70F0
+ORIGINAL: 0x004C70F0 BYTE_EXACT
 Return Value: 11, always
 Status: Complete
 */
@@ -64,7 +64,7 @@ int __fastcall wave_set_attack_redirect(Wave *self, void *, unsigned int a1, uns
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C7100
+ORIGINAL: 0x004C7100 BYTE_EXACT
 Return Value: 11, always
 Status: Complete
 */
@@ -78,7 +78,7 @@ int __fastcall wave_set_sustain_redirect(Wave *self, void *, unsigned int a1, un
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C7110
+ORIGINAL: 0x004C7110 BYTE_EXACT
 Return Value: 11, always
 Status: Complete
 */
@@ -92,7 +92,7 @@ int __fastcall wave_set_decay_redirect(Wave *self, void *, unsigned int a1, unsi
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
-ORIGINAL: 0x004C7120
+ORIGINAL: 0x004C7120 BYTE_EXACT
 Return Value: 11, always
 Status: Complete
 */
@@ -194,7 +194,7 @@ int __fastcall wave_load_redirect(Wave *self, void *, int a1, int a2) {
 /*
 Purpose: Report the wave's length in milliseconds, a plain read of the field
          at 0x60.
-ORIGINAL: 0x004C6B00
+ORIGINAL: 0x004C6B00 BYTE_EXACT
 Return Value: the stored length
 Status: Complete
 */
@@ -384,7 +384,7 @@ Purpose: Unknown. The original chases the pointer chain that starts at the
          wrapped device and continues through each node's own 0x3C slot until
          it runs out, reads nothing else, and always answers 1. The argument
          is ignored.
-ORIGINAL: 0x004C7080
+ORIGINAL: 0x004C7080 BYTE_EXACT
 Return Value: 1, always
 Status: Complete
 */

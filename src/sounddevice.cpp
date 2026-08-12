@@ -21,7 +21,7 @@
 
 /*
 Purpose: Midi_Device devices decline to be polled; the legacy implementation is a bare return.
-ORIGINAL: 0x004C58B0
+ORIGINAL: 0x004C58B0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -30,7 +30,7 @@ void Midi_Device::update_sound() {
 
 /*
 Purpose: Midi_Device devices decline to be suspended; the legacy implementation is a bare return.
-ORIGINAL: 0x004C58E0
+ORIGINAL: 0x004C58E0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -39,7 +39,7 @@ void Midi_Device::suspend() {
 
 /*
 Purpose: Midi_Device devices decline to be restarted; the legacy implementation is a bare return.
-ORIGINAL: 0x004C58F0
+ORIGINAL: 0x004C58F0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -48,7 +48,7 @@ void Midi_Device::restart() {
 
 /*
 Purpose: Wave_In_Device devices decline to be polled; the legacy implementation is a bare return.
-ORIGINAL: 0x004C5B10
+ORIGINAL: 0x004C5B10 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -57,7 +57,7 @@ void Wave_In_Device::update_sound() {
 
 /*
 Purpose: Wave_In_Device devices decline to be suspended; the legacy implementation is a bare return.
-ORIGINAL: 0x004C5B40
+ORIGINAL: 0x004C5B40 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -66,7 +66,7 @@ void Wave_In_Device::suspend() {
 
 /*
 Purpose: Wave_In_Device devices decline to be restarted; the legacy implementation is a bare return.
-ORIGINAL: 0x004C5B50
+ORIGINAL: 0x004C5B50 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -99,7 +99,7 @@ void __fastcall wave_in_device_restart_redirect(Wave_In_Device *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004C5840
+ORIGINAL: 0x004C5840 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -113,7 +113,7 @@ int __fastcall midi_device_select_redirect(Midi_Device *self, void *, unsigned i
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C5860
+ORIGINAL: 0x004C5860 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -126,7 +126,7 @@ void __fastcall midi_device_set_volume_redirect(Midi_Device *self, void *, unsig
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C5880
+ORIGINAL: 0x004C5880 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -139,7 +139,7 @@ void __fastcall midi_device_set_pan_redirect(Midi_Device *self, void *, int a1) 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004C5890
+ORIGINAL: 0x004C5890 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -153,7 +153,7 @@ int __fastcall midi_device_fade_redirect(Midi_Device *self, void *, unsigned int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C58C0
+ORIGINAL: 0x004C58C0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -166,7 +166,7 @@ void __fastcall midi_device_set_rate_redirect(Midi_Device *self, void *, unsigne
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004C5AD0
+ORIGINAL: 0x004C5AD0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -180,7 +180,7 @@ int __fastcall wave_in_device_select_redirect(Wave_In_Device *self, void *, unsi
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004C5AF0
+ORIGINAL: 0x004C5AF0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -194,7 +194,7 @@ int __fastcall wave_in_device_get_caps_redirect(Wave_In_Device *self, void *, un
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x004C5B20
+ORIGINAL: 0x004C5B20 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -207,7 +207,7 @@ void __fastcall wave_in_device_set_rate_redirect(Wave_In_Device *self, void *, u
 
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
-ORIGINAL: 0x004C5850
+ORIGINAL: 0x004C5850 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -221,7 +221,7 @@ int __fastcall midi_device_get_description_redirect(Midi_Device *self, void *, u
 
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
-ORIGINAL: 0x004C5AE0
+ORIGINAL: 0x004C5AE0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -235,7 +235,7 @@ int __fastcall wave_in_device_get_description_redirect(Wave_In_Device *self, voi
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5830
+ORIGINAL: 0x004C5830 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -245,7 +245,7 @@ int Midi_Device::get_ndevices() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5870
+ORIGINAL: 0x004C5870 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -255,7 +255,7 @@ int Midi_Device::get_volume() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C58A0
+ORIGINAL: 0x004C58A0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -265,7 +265,7 @@ int Midi_Device::stop() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C58D0
+ORIGINAL: 0x004C58D0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -275,7 +275,7 @@ int Midi_Device::get_rate() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5AC0
+ORIGINAL: 0x004C5AC0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -285,7 +285,7 @@ int Wave_In_Device::get_ndevices() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5B00
+ORIGINAL: 0x004C5B00 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -295,7 +295,7 @@ int Wave_In_Device::stop() {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
-ORIGINAL: 0x004C5B30
+ORIGINAL: 0x004C5B30 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */

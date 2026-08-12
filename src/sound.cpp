@@ -24,7 +24,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 11.
-ORIGINAL: 0x004C6430
+ORIGINAL: 0x004C6430 BYTE_EXACT
 Return Value: 11, always
 Status: Complete
 */

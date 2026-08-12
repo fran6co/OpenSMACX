@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00489B10
+ORIGINAL: 0x00489B10 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

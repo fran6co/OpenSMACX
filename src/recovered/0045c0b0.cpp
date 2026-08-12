@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0045C0B0
+// ORIGINAL: 0x0045C0B0 BYTE_EXACT
 // 0x0045C0B0  ?chat@MainInterface@@QAEXPADH@Z  ->  ?chat@MainInterface@@QAEXPADH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

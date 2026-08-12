@@ -22,7 +22,7 @@ ListBox *ReportIfEnergyListBox = reinterpret_cast<ListBox *>(0x0087BE84);
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004A5FE0
+ORIGINAL: 0x004A5FE0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -31,7 +31,7 @@ void ReportIf::on_iface_right_click(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004A5FF0
+ORIGINAL: 0x004A5FF0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -40,7 +40,7 @@ void ReportIf::on_iface_left_double_click(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004A6000
+ORIGINAL: 0x004A6000 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -49,7 +49,7 @@ void ReportIf::on_iface_right_double_click(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004A6010
+ORIGINAL: 0x004A6010 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -58,7 +58,7 @@ void ReportIf::on_iface_left_down(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004A6020
+ORIGINAL: 0x004A6020 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -67,7 +67,7 @@ void ReportIf::on_iface_right_down(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004A6030
+ORIGINAL: 0x004A6030 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -76,7 +76,7 @@ void ReportIf::on_iface_mouse_move(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004A6040
+ORIGINAL: 0x004A6040 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -85,7 +85,7 @@ void ReportIf::on_iface_mouse_leave(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004A6D60
+ORIGINAL: 0x004A6D60 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -94,7 +94,7 @@ void ReportIf::on_iface_button_toggled(int, int) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
-ORIGINAL: 0x004AC130
+ORIGINAL: 0x004AC130 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -165,7 +165,7 @@ Purpose: Close the two intel list boxes.
          run time, so each of these has to be a real ListBox carrying a table
          of its own; reaching them by offset is what the original does and is
          what keeps the two independent.
-ORIGINAL: 0x004AC980
+ORIGINAL: 0x004AC980 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -211,7 +211,7 @@ void __fastcall report_if_close_energy_redirect(ReportIf *self, void *) {
 }
 
 /*
-ORIGINAL: 0x004A3930
+ORIGINAL: 0x004A3930 BYTE_EXACT
 Status: Complete
 */
 void ReportIf::done() {

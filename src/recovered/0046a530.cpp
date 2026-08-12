@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0046A530
+// ORIGINAL: 0x0046A530 BYTE_EXACT
 // 0x0046A530  ?draw_radius@MapWin@@QAEXHHH@Z  ->  ?draw_radius@MapWin@@QAEXHHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

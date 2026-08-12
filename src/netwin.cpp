@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0047F920
+ORIGINAL: 0x0047F920 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -29,7 +29,7 @@ void NetWin::UNK1() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0047F930
+ORIGINAL: 0x0047F930 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -38,7 +38,7 @@ void NetWin::UNK2() {
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x004834D0
+ORIGINAL: 0x004834D0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -59,7 +59,7 @@ void __fastcall net_win_alloc_slots_redirect(NetWin *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-ORIGINAL: 0x0047B750
+ORIGINAL: 0x0047B750 BYTE_EXACT
 Return Value: 1, always
 Status: Complete
 */
@@ -73,7 +73,7 @@ int __fastcall net_win_on_key_click_redirect(NetWin *self, void *, int a1, int a
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0047F940
+ORIGINAL: 0x0047F940 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -86,7 +86,7 @@ void __fastcall net_win_on_mouse_move_redirect(NetWin *self, void *, int a1, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x0047F950
+ORIGINAL: 0x0047F950 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

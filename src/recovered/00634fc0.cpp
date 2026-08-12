@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00634FC0
+// ORIGINAL: 0x00634FC0 BYTE_EXACT
 // 0x00634FC0  ?UNK1@TexHeap@@QAEHH@Z  ->  ?UNK1@TexHeap@@QAEHH@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

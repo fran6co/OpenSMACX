@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00476B30
+// ORIGINAL: 0x00476B30 BYTE_EXACT
 // 0x00476B30  ?clear_monuments@@YAXXZ  ->  ?clear_monuments@@YAXXZ
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

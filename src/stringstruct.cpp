@@ -16,7 +16,7 @@
 
 /*
 Purpose: Return the current string-list item ID.
-ORIGINAL: 0x00401640
+ORIGINAL: 0x00401640 BYTE_EXACT
 Return Value: Current ID, or zero when the list is empty
 Status: Complete
 */
@@ -29,7 +29,7 @@ int StringStruct::current_id() {
 
 /*
 Purpose: Return the current string-list payload.
-ORIGINAL: 0x00402530
+ORIGINAL: 0x00402530 BYTE_EXACT
 Return Value: Current payload, or zero when the list is empty
 Status: Complete
 */
@@ -42,7 +42,7 @@ int StringStruct::current_entry() {
 
 /*
 Purpose: Advance the current string-list entry and return its payload.
-ORIGINAL: 0x00402500
+ORIGINAL: 0x00402500 BYTE_EXACT
 Return Value: New current payload, or zero when the list is empty
 Status: Complete
 */
@@ -65,7 +65,7 @@ int StringStruct::next_entry() {
 
 /*
 Purpose: Position the string-list cursor at the first matching item ID.
-ORIGINAL: 0x00401560
+ORIGINAL: 0x00401560 BYTE_EXACT
 Return Value: One when found, otherwise zero
 Status: Complete
 */
@@ -291,7 +291,7 @@ uint32_t __fastcall string_list_destructor_redirect(StringList *self, void *) {
 }
 
 /*
-ORIGINAL: 0x004015B0
+ORIGINAL: 0x004015B0 BYTE_EXACT
 Status: Complete
 */
 typedef int (__cdecl *AbsFnT)(int);

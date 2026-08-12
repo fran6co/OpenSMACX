@@ -100,7 +100,7 @@ void __fastcall auto_sound_close2_redirect(AutoSound *self, void *) {
 /*
 Purpose: Zero every field, in the same legacy store order as construction,
          leaving the virtual table alone.
-ORIGINAL: 0x0062BD40
+ORIGINAL: 0x0062BD40 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -180,7 +180,7 @@ void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
 
 /*
 Purpose: Legacy sound processing hook retained as a no-op.
-ORIGINAL: 0x005FD2B0
+ORIGINAL: 0x005FD2B0 BYTE_EXACT
 Return Value: zero
 Status: Complete
 */

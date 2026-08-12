@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
-ORIGINAL: 0x00493C10
+ORIGINAL: 0x00493C10 BYTE_EXACT
 Return Value: 1, always
 Status: Complete
 */
@@ -35,7 +35,7 @@ int __fastcall prod_picker_unk1_redirect(ProdPicker *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00493E90
+ORIGINAL: 0x00493E90 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -48,7 +48,7 @@ void __fastcall prod_picker_on_mouse_move_redirect(ProdPicker *self, void *, int
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00495160
+ORIGINAL: 0x00495160 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

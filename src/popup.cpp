@@ -90,7 +90,7 @@ void __fastcall popup_start_label_value_redirect(Popup *self, void *,
 /*
 Purpose: Draw a popup's dialog background; the legacy implementation does
          nothing and returns 0.
-ORIGINAL: 0x00405B10
+ORIGINAL: 0x00405B10 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -535,7 +535,7 @@ Purpose: Reset the button width to 20 unless the field at 0x30AC scales to
 
          Popup models fields only as far as its Scroll member, so both offsets
          are reached through documented raw offsets, as BasePop::UNK3 does.
-ORIGINAL: 0x00405020
+ORIGINAL: 0x00405020 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -553,7 +553,7 @@ void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *) {
 }
 
 /*
-ORIGINAL: 0x00404F90
+ORIGINAL: 0x00404F90 BYTE_EXACT
 Status: Complete
 */
 int Popup::on_nc_hittest(int a1, int a2) {

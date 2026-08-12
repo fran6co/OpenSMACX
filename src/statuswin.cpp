@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x004B9F80
+ORIGINAL: 0x004B9F80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

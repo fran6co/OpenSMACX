@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004C5FB0
+// ORIGINAL: 0x004C5FB0 BYTE_EXACT
 // 0x004C5FB0  ?init_sound_timer@@YAHKK@Z  ->  ?init_sound_timer@@YAHKK@Z
 //
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in

@@ -55,7 +55,7 @@ void __fastcall radio_button_close_redirect(RadioButton *self, void *) {
 }
 
 /*
-ORIGINAL: 0x0060E300
+ORIGINAL: 0x0060E300 BYTE_EXACT
 Status: Complete
 */
 void RadioButton::on_dialog_focus(int a1) {
@@ -68,7 +68,7 @@ void RadioButton::on_dialog_focus(int a1) {
 
 /*
 Purpose: Clear the hover index and repaint, through the enclosing object.
-ORIGINAL: 0x0060E4A0
+ORIGINAL: 0x0060E4A0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

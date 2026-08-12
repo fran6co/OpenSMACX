@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
-ORIGINAL: 0x0063B930
+ORIGINAL: 0x0063B930 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */

@@ -23,7 +23,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00422E10
+ORIGINAL: 0x00422E10 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -52,7 +52,7 @@ void __fastcall battle_win_on_iface_left_click_redirect(BattleWin *self, void *,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00422E20
+ORIGINAL: 0x00422E20 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -65,7 +65,7 @@ void __fastcall battle_win_on_iface_right_click_redirect(BattleWin *self, void *
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00422E70
+ORIGINAL: 0x00422E70 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -78,7 +78,7 @@ void __fastcall battle_win_on_iface_right_down_redirect(BattleWin *self, void *,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00422E80
+ORIGINAL: 0x00422E80 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -91,7 +91,7 @@ void __fastcall battle_win_on_iface_mouse_move_redirect(BattleWin *self, void *,
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00422E90
+ORIGINAL: 0x00422E90 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -104,7 +104,7 @@ void __fastcall battle_win_on_iface_mouse_leave_redirect(BattleWin *self, void *
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x00422EA0
+ORIGINAL: 0x00422EA0 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
@@ -116,7 +116,7 @@ void __fastcall battle_win_on_iface_selected_redirect(BattleWin *self, void *, i
 }
 
 /*
-ORIGINAL: 0x00422DC0
+ORIGINAL: 0x00422DC0 BYTE_EXACT
 Status: Complete
 */
 void BattleWin::on_iface_button_clicked(int a1) {

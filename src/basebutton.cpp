@@ -415,7 +415,7 @@ void __fastcall base_button_set_redirect(BaseButton *self, void *, int value) {
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-ORIGINAL: 0x006077F0
+ORIGINAL: 0x006077F0 BYTE_EXACT
 Return Value: zero - the base class handles no key click
 Status: Complete
 */
@@ -430,7 +430,7 @@ void __fastcall base_button_on_key_click_redirect(
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-ORIGINAL: 0x00607800
+ORIGINAL: 0x00607800 BYTE_EXACT
 Return Value: zero - the base class handles no key down
 Status: Complete
 */
@@ -445,7 +445,7 @@ void __fastcall base_button_on_key_down_redirect(
 
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
-ORIGINAL: 0x00607810
+ORIGINAL: 0x00607810 BYTE_EXACT
 Return Value: zero - the base class handles no key up
 Status: Complete
 */
@@ -581,7 +581,7 @@ int __fastcall base_button_init_redirect(
 }
 
 /*
-ORIGINAL: 0x00607A00
+ORIGINAL: 0x00607A00 BYTE_EXACT
 Status: Complete
 */
 void BaseButton::on_right_click(int a1, int a2) {
@@ -593,7 +593,7 @@ void BaseButton::on_right_click(int a1, int a2) {
 }
 
 /*
-ORIGINAL: 0x00607B10
+ORIGINAL: 0x00607B10 BYTE_EXACT
 Status: Complete
 */
 void __cdecl fn_00607b10(int a1, BaseButton* a2) {

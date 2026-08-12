@@ -20,7 +20,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004ADAD0
+ORIGINAL: 0x004ADAD0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -34,7 +34,7 @@ int __fastcall setup_win_unk3_redirect(SetupWin *self, void *, int a1) {
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
-ORIGINAL: 0x004ADAE0
+ORIGINAL: 0x004ADAE0 BYTE_EXACT
 Return Value: 0, always
 Status: Complete
 */
@@ -64,7 +64,7 @@ Purpose: Scale the argument by the field at 0xA14 and divide by 1024.
          SetupWin models no fields - it derives from GraphicWin, which ends at
          0xA14 - so this is its first own field, reached through a documented
          raw offset as BasePop::UNK3 does.
-ORIGINAL: 0x004ADA80
+ORIGINAL: 0x004ADA80 BYTE_EXACT
 Return Value: (field_A14 * a1) / 1024, truncated toward zero
 Status: Complete
 */
@@ -94,7 +94,7 @@ Purpose: As UNK1, over the field at 0xA18 and dividing by 768.
          1024 and 768 beside each other read as a resolution, which is a
          plausible account of what these two scale and is NOT what the recovery
          rests on; the arithmetic is.
-ORIGINAL: 0x004ADAA0
+ORIGINAL: 0x004ADAA0 BYTE_EXACT
 Return Value: (field_A18 * a1) / 768, truncated toward zero
 Status: Complete
 */
@@ -110,7 +110,7 @@ int __fastcall setup_win_unk2_redirect(SetupWin *self, void *, int a1) {
 }
 
 /*
-ORIGINAL: 0x004ADAF0
+ORIGINAL: 0x004ADAF0 BYTE_EXACT
 Status: Complete
 */
 int SetupWin::do_menu(char* a1, int a2, int a3) {
