@@ -391,7 +391,7 @@ struct Base {
     int unk_12; // effectively unused, only set to 0 by base_init()
 };
 
-static_assert(sizeof(Base) == 0x134, "Base layout must match terranx.exe");
+static_assert(sizeof(Base) == 0x134, "Base layout must match terranx.exe");  // yitzi 0x134
 
 struct RulesFacility {
     LPSTR name;
@@ -408,7 +408,7 @@ struct RulesFacility {
     int sp_ai_power;
 };
 
-static_assert(sizeof(RulesFacility) == 0x30,
+static_assert(sizeof(RulesFacility) == 0x30,  // yitzi 0x30
               "RulesFacility layout must match the original executable");
 
 struct RulesCitizen {
