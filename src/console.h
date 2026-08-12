@@ -48,7 +48,7 @@
   * keeping the total fixed. Appending would move the virtual base and break
   * every offset in the class.
   */
-class DLLEXPORT Console {
+class DLLEXPORT Console : virtual GraphicWin {
  public:
   void editor_polar();
   void on_sys_close();
@@ -70,8 +70,11 @@ class DLLEXPORT Console {
   int focus(int x_coord, int y_coord, int faction_id);
 
  private:
-  uint8_t derived_storage_[0x23D94];
-  GraphicWin virtual_base_;
+  // 4 bytes shorter than the 0x23D94 this array used to span: the vbtable
+  // pointer at offset 0 is now the compiler's, emitted because the class
+  // declares the virtual base instead of holding it. The base still lands at
+  // 0x23D94 and the static_assert below is what says so.
+  uint8_t derived_storage_[0x23D94 - 4];
 };
 
 static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe");

@@ -26,9 +26,14 @@
   * MSVC virtual inheritance: ListBox virtually derives from BOTH GraphicWin and
   * Dialog, each held as a member at the offset the object's own vbtable names
   * (vbtable 0x00670584 = { 0, 0x48, 0xA60 }) rather than written as
-  * ": virtual GraphicWin, virtual Dialog" - the Itanium ABI this toolchain
-  * follows would place the bases after the derived object instead, silently
-  * producing the wrong layout. This mirrors CheckBox (src/checkbox.h), whose
+  * ": virtual GraphicWin, virtual Dialog". MEASURED under VC6 12.00.8168,
+  * which is now the only compiler here: the declaration does NOT reproduce
+  * 0xB54. The two dwords at 0x44 and 0xA5C are vtordisp fields, and VC6 emits
+  * those only for a class with virtual functions - this one declares none, so
+  * plain `: virtual GraphicWin, virtual Dialog` packs the bases eight bytes
+  * tighter. MapWin and Console DO reproduce theirs and now declare it; this
+  * one keeps the member form until the vtordisp shape can be reproduced.
+  * This mirrors CheckBox (src/checkbox.h), whose
   * vbtable {0,0x1C,0xA34} has the identical shape. close()/destroy() resolve
   * both base subobjects through the runtime vbtable, never through these
   * compile-time offsets, so an embedded ListBox with a different vbtable still

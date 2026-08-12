@@ -49,18 +49,30 @@ class MembersTest(unittest.TestCase):
         # offsets, which is ordinary concatenation. ??0BaseWin@@QAE@XZ builds
         # its GraphicWin on an unadjusted `this` and reaches its SubInterface
         # at 0xA14 == sizeof(GraphicWin), exactly where a second base goes.
-        self.assertEqual(["GraphicWin", "SubInterface"],
+        self.assertEqual([("GraphicWin", False), ("SubInterface", False)],
                          tool.bases_of(": GraphicWin, SubInterface"))
-        self.assertEqual(["BaseButton"], tool.bases_of(": public BaseButton"))
+        self.assertEqual([("BaseButton", False)],
+                         tool.bases_of(": public BaseButton"))
         self.assertEqual([], tool.bases_of(""))
         self.assertEqual([], tool.bases_of(None))
 
-    def test_a_virtual_base_is_still_refused(self):
-        # Not a modelling gap: MSVC places a virtual base where the object's
-        # own vbtable says at run time, which is not a position this file can
-        # compute, and AGENTS.md requires those held as members instead.
-        self.assertIsNone(tool.bases_of(": virtual Win"))
-        self.assertIsNone(tool.bases_of(": GraphicWin, virtual Win"))
+    def test_a_virtual_base_is_flagged_not_refused(self):
+        # MSVC places a virtual base AFTER the derived members, behind a
+        # vbtable pointer at offset 0 - a position this file can compute, so
+        # it is modelled rather than refused. Console and MapWin declare
+        # theirs and their pinned sizes hold under cl 12.00.8168.
+        self.assertEqual([("Win", True)], tool.bases_of(": virtual Win"))
+        self.assertEqual([("GraphicWin", False), ("Win", True)],
+                         tool.bases_of(": GraphicWin, virtual Win"))
+
+    def test_a_virtual_base_lands_after_the_derived_members(self):
+        # The vbtable pointer opens the object and the base closes it. Getting
+        # this order wrong would put every derived offset sizeof(base) too high
+        # and still compile.
+        layout = tool._with_bases("Console")
+        self.assertIsNotNone(layout)
+        self.assertEqual(("void *", "__vbptr", ""), layout[0])
+        self.assertIn("Console", tool.verified_names())
 
     def test_a_file_scope_function_pointer_typedef_is_four_bytes(self):
         # `Menu` was refused for holding a `MenuProc proc_` - a width that was

@@ -246,8 +246,16 @@ def statements(body: str):
                     # whole file exists to prevent. The bare declarator is
                     # yielded instead: it matches no member pattern, so the
                     # class refuses.
+                    # `struct SpotInternal { ... } *spots_;` -> `void *spots_;`
+                    # (a pointer is four bytes whatever it points at), and
+                    # `struct PaletteInternal { ... } internal_[5];` ->
+                    # `PaletteInternal internal_[5];`. The BY-VALUE form used
+                    # to be yielded as a bare declarator so the class refused;
+                    # `nested_types` below knows the width, so re-spelling it
+                    # against the type is what lets `members_of` account for
+                    # it. Palette and Lock were refused on exactly this.
                     yield (f"void {tail}" if tail.lstrip().startswith("*")
-                           else tail)
+                           else (f"{nested} {tail}" if nested else tail))
                 nested = ""
             continue
         opens, closes = stripped.count("{"), stripped.count("}")
@@ -274,13 +282,57 @@ def statements(body: str):
         yield " ".join(pending)
 
 
-def members_of(body: str, seen=()):
+# A nested type head is INDENTED, and may share its line with an access label
+# (`private: struct Entry {`). `CLASS_HEAD`'s `^(?:class|struct)` anchor is
+# right for file scope and blind here.
+NESTED_HEAD = re.compile(
+    r"^\s*(?:public|private|protected)?\s*:?\s*"
+    r"(?:class|struct)\s+(?P<name>\w+)\s*\{", re.M)
+
+
+def nested_types(body: str, seen=()) -> dict:
+    """{name: [(type, name, array)]} for types a class body defines inside it.
+
+    `Palette` defines `PaletteInternal` and holds five of them; `Lock` defines
+    `Entry` and `Record` and holds eight Records. Both were refused outright,
+    because a nested type is not in `_declared_classes` - that map is built
+    from FILE-scope definitions - so a member of one looked like a member of
+    an undeclarable type.
+
+    The definition is right there in the header text and its width is exactly
+    as computable as any other, so it is read rather than refused. Nothing is
+    sized in Python: the members are re-emitted verbatim, the compiler adds
+    them up, and the class's own `static_assert` is what checks the total.
+    """
+    out = {}
+    for head in NESTED_HEAD.finditer(body):
+        depth, index = 1, head.end()
+        while index < len(body) and depth:
+            depth += (body[index] == "{") - (body[index] == "}")
+            index += 1
+        name = head.group("name")
+        if name in seen:
+            continue
+        # IN ORDER, and each may use the ones before it: `Lock` defines
+        # `Entry` and then `Record`, which holds two Entries by value.
+        members = members_of(body[head.end():index - 1], seen + (name,), out)
+        if members is not None:
+            out[name] = members
+    return out
+
+
+def members_of(body: str, seen=(), nested=None):
     """[(type, name, array)] for a body of nothing but plain data members.
 
     None when the body holds anything this cannot account for, because a
     member missed is a member whose absence moves every offset after it.
     """
     found = []
+    # The class's OWN nested types, before any member that holds one is read.
+    # `nested` arrives non-None only from `nested_types` itself, which is
+    # walking these in order; at the top level it starts here.
+    if nested is None:
+        nested = nested_types(body, seen)
     # Nested aliases first: `typedef int32_t Dib;` has to be known before the
     # member that uses it is read, and a class body may declare it anywhere.
     alias = {}
@@ -353,6 +405,12 @@ def members_of(body: str, seen=()):
             found.append(("void *", member.group("name"),
                           member.group("array") or ""))
             continue
+        if not stars and nested is not None and bare in nested:
+            # A type this very class body defines. Its width is as computable
+            # as any other and the compiler is what adds it up.
+            found.append((type_, member.group("name"),
+                          member.group("array") or ""))
+            continue
         if not stars and _needs_definition(bare) and not _extractable(bare, seen):
             # A member held BY VALUE needs a COMPLETE type, and the emitted
             # unit only forward-declares - `AutoSound auto_sound_;` is
@@ -401,10 +459,18 @@ def bases_of(bases: str):
     for part in found.group("bases").split(","):
         words = part.replace("public", " ").replace("protected", " ") \
                     .replace("private", " ").split()
-        if "virtual" in words or len(words) != 1:
+        virtual = "virtual" in words
+        words = [word for word in words if word != "virtual"]
+        if len(words) != 1:
             return None
-        out.append(words[0])
+        out.append((words[0], virtual))
     return out
+
+
+def base_names_of(bases: str):
+    #: `bases_of` without the virtual flag, or None when it refuses.
+    found = bases_of(bases)
+    return None if found is None else [name for name, _ in found]
 
 
 @functools.lru_cache(maxsize=1)
@@ -448,13 +514,23 @@ def _with_bases(name: str, seen=()):
         return None
     if not bases:
         return list(members)
-    flattened = []
-    for base in bases:
+    # NON-VIRTUAL bases come first, at increasing offsets; VIRTUAL ones come
+    # LAST, behind a vbtable pointer the compiler puts at offset 0. That is
+    # MSVC's rule and it is exactly what the two headers declaring it measure
+    # to: Console is 4 + (0x23D94 - 4) + 0xA14 == 0x247A8, MapWin is
+    # 4 + 4 + (0x21A6C - 8) + 0xA14 == 0x22480, and both static_asserts hold
+    # against cl 12.00.8168. Refusing virtual bases instead cost those two
+    # classes their extracted layout the moment they were declared honestly.
+    flattened, trailing = [], []
+    if any(virtual for _, virtual in bases):
+        flattened.append(("void *", "__vbptr", ""))
+    for base, virtual in bases:
         inherited = _with_bases(base, seen + (name,))
         if inherited is None:
             return None
-        flattened += inherited
+        (trailing if virtual else flattened).extend(inherited)
     flattened += list(members)
+    flattened += trailing
 
     # A DERIVED CLASS THAT RE-DECLARES A BASE MEMBER'S NAME IS FINE HERE.
     # It is legal C++ - name hiding - and the object really carries both, so
@@ -535,18 +611,46 @@ def supplyable(name: str, seen=()) -> bool:
     # real base clause they are in different scopes and both compile, which is
     # what the original did, so the refusal applies only to the flat case.
     declared = _declared_classes().get(name)
-    bases = declared[0] if declared else None
+    bases = [b for b, _ in (declared[0] or ())] if declared and declared[0] is not None else None
     if not bases or not all(supplyable(base, seen + (name,)) for base in bases):
         spelled = [member for _, member, _ in pinned_layouts().get(name, ())]
         if len(spelled) != len(set(spelled)):
             return False
+    # A type the class DEFINES INSIDE ITSELF is emitted with it, by
+    # `nested_definition_lines`, so it needs no separate verdict - and asking
+    # for one refuses the class, because a nested type is never in
+    # `verified_names()`. Palette and Lock were verified and unsupplyable at
+    # once for exactly that reason.
+    own_nested = set(nested_types(_body_of(name)))
+    for base in base_chain(name):
+        own_nested |= set(nested_types(_body_of(base)))
     for type_, _, _ in pinned_layouts().get(name, ()):
         if "*" in type_:
             continue
         bare = type_.replace("const", "").strip()
+        if bare in own_nested:
+            continue
         if _needs_definition(bare) and not supplyable(bare, seen + (name,)):
             return False
     return True
+
+
+def nested_definition_lines(name: str) -> list:
+    """`struct Inner { ... };` lines for the nested types `name` holds.
+
+    Emitted INSIDE the class shell, ahead of the members that use them, which
+    is where the header puts them. Without this the shell says
+    `PaletteInternal internal_[5];` against a type nothing declares.
+    """
+    lines, table = [], nested_types(_body_of(name))
+    if not table:
+        return lines
+    for inner, members in table.items():
+        lines.append(f"    struct {inner} {{")
+        for type_, member, array in members:
+            lines.append(f"        {type_} {member}{array};")
+        lines.append("    };")
+    return lines
 
 
 def declaration_for(name: str) -> list:
@@ -559,7 +663,8 @@ def declaration_for(name: str) -> list:
     members = pinned_layouts().get(name)
     if not members:
         return []
-    return [f"    {type_} {member}{array};" for type_, member, array in members]
+    return nested_definition_lines(name) + \
+        [f"    {type_} {member}{array};" for type_, member, array in members]
 
 
 def unverified_declaration_for(name: str) -> list:
@@ -580,7 +685,13 @@ def unverified_declaration_for(name: str) -> list:
     offset and the total are exactly what the real class has.
     """
     members = pinned_layouts().get(name)
-    lines, seen = [], {}
+    # The nested definitions come first here too: the probe is a flat struct
+    # and `PaletteInternal internal_[5];` needs the type in scope. A nested
+    # type defined by a BASE arrives through the base's own lines below,
+    # because the probe flattens the chain.
+    lines, seen = list(nested_definition_lines(name)), {}
+    for base in base_chain(name):
+        lines = list(nested_definition_lines(base)) + lines
     for type_, member, array in members or []:
         seen[member] = seen.get(member, 0) + 1
         spelled = member if seen[member] == 1 else f"{member}_shadow{seen[member]}"
@@ -607,6 +718,18 @@ def referenced_types(name: str) -> set:
         bare = type_.replace("*", " ").replace("const", " ").split()
         if bare and bare[-1] not in SCALAR:
             out.add(bare[-1])
+    # A NESTED definition names types too, and they have to be declared before
+    # the class that carries it: `Spot::SpotInternal` holds a `RECT`, and
+    # emitting the nested struct without it is
+    # `C2146: missing ';' before identifier 'rect'`. Six byte-exact rows broke
+    # on exactly that the first time nested types were emitted.
+    table = nested_types(_body_of(name))
+    for inner, members in table.items():
+        out.discard(inner)                 # defined inline, not referenced
+        for type_, _, _ in members:
+            bare = type_.replace("*", " ").replace("const", " ").split()
+            if bare and bare[-1] not in SCALAR and bare[-1] not in table:
+                out.add(bare[-1])
     return out
 
 
@@ -631,7 +754,14 @@ def layout_bases(name: str) -> list:
     bases, _ = declared
     if not bases:
         return []
-    return list(bases) if all(supplyable(base) for base in bases) else []
+    # A VIRTUAL base is not spelled as a base clause by the emitter: MSVC
+    # places it after the derived members, `_with_bases` models exactly that,
+    # and the flat list it produces has the right layout. Emitting
+    # `: public X` for one would put it at the front and move everything.
+    if any(virtual for _, virtual in bases):
+        return []
+    names = [base for base, _ in bases]
+    return names if all(supplyable(base) for base in names) else []
 
 
 def base_chain(name: str, seen=()) -> list:
@@ -643,7 +773,7 @@ def base_chain(name: str, seen=()) -> list:
     if not bases:
         return []
     out = []
-    for base in bases:
+    for base, _ in bases:
         out.append(base)
         out.extend(base_chain(base, seen + (name,)))
     return out
@@ -665,7 +795,8 @@ def own_declaration_for(name: str) -> list:
     members = members_of(_body_of(name))
     if not members:
         return []
-    return [f"    {type_} {member}{array};" for type_, member, array in members]
+    return nested_definition_lines(name) + \
+        [f"    {type_} {member}{array};" for type_, member, array in members]
 
 
 if __name__ == "__main__":
