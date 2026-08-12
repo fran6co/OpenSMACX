@@ -9,8 +9,12 @@
 // calls     0x00420F90 0x004626E0 0x00462870 0x00470F70 0x005A94F0 0x005A9760 0x005AD720 0x005D4CF0 0x005D4DD0 0x005D4E40 0x005D7410 0x005FCBB0 0x005FD120 0x00607040 0x00607CF0 0x00607DA0 0x006161D0 0x00616200 0x00618EE0 0x006252B0 0x00644EF2 0x00645550 0x006456E4
 // PRESERVED UNIT - measured SHARED_TAIL.
 //
-// Kept for COVERAGE, not as a claim. Nothing reads this directory:
-// it is on no ratchet, in no build, and scored by no collect.
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
 //
 // address        0x005ADBF0
 // measured tier  SHARED_TAIL

@@ -10,8 +10,12 @@
 // indirect  0x005EFD2C 0x005EFF40 0x005EFF56 0x005EFF84 0x005EFF9B 0x005EFFAA 0x005EFFC8 0x005EFFDE 0x005F000C 0x005F003A 0x005F008D 0x005F00AB 0x005F0104 0x005F0115 0x005F0138 0x005F0145 0x005F018B 0x005F01B1 0x005F01C3
 // PRESERVED UNIT - measured MISMATCH.
 //
-// Kept for COVERAGE, not as a claim. Nothing reads this directory:
-// it is on no ratchet, in no build, and scored by no collect.
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
 //
 // address        0x005EFD20
 // measured tier  MISMATCH
