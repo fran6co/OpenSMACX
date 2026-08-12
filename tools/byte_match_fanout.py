@@ -338,185 +338,23 @@ def collect(reverify: bool = False, stored_only: bool = False) -> int:
     return 0
 
 
-# The ledger's own floor. Matched functions and matched bytes may RISE and may
-# never fall - the same ratchet shape as `verify_observability_ratchet.py` and
-# `audit_export_signedness.py`'s BASELINE. Raise these as waves land; a fall is
-# either a tooling regression or a lost unit, and both need a human.
+# THE FLOOR USED TO LIVE HERE, as `BASELINE_MATCHED_FUNCTIONS` and
+# `BASELINE_MATCHED_BYTES`, and `--check` compared them against this ledger.
+# It lives in `src/` now: every piece proved byte-exact carries `BYTE_EXACT`
+# on its own annotation and `tools/decomp_status.py --check` is the gate.
 #
-# Read these together. The exact-match population is deliberately ordered from
-# the smallest bodies upward, so its function count is dominated by trivial
-# stubs and can rise much faster than the number of machine-carried bytes it
-# retires. The byte figure is the one that means anything, which is why both
-# are ratcheted and why the function count is never quoted alone.
-# LOWERED, deliberately, from 702 / 11199 - the only downward move this file
-# has ever made, and it is a measurement correction rather than a regression.
-# A full census found three rows sitting at BYTE_EXACT for bodies that no
-# longer compile at all:
-#
-#   0x00401060  ?close@StringStruct@@QAEXXZ    153 B
-#   0x00402F10  ??__Eg_ALPHAMENU_WAVE@@YAXXZ    22 B
-#   0x00402F30  ??__Fg_ALPHAMENU_WAVE@@YAXXZ    10 B
-#
-# None is a body defect. Each calls something the scaffolding cannot declare -
-# `close_with_tables` is a hand-written helper on StringStruct that appears in
-# NO catalogued row, and `g_ALPHAMENU_WAVE` is an uncatalogued global - so the
-# verification unit cannot compile them however good the body is.
-#
-# They went green long ago and stayed green because nothing re-measured them:
-# `--collect` skips settled rows by design, since re-verifying finished work is
-# most of a run. That is the right default and it has this cost, so the number
-# above is only as true as the last full census.
-#
-# 883 / 18598, from a full census after the VC6 build was made to compile.
-#
-# It went 880 -> 866 first, and the drop is worth recording because the cause
-# was not the code. Fixing the build inserted lines near the top of
-# src/datalink.cpp and src/vector.cpp - an #include and a rewritten
-# constructor - and every recovered body BELOW an insertion moved. The census
-# extracts a body by the line in `source_locations`, so it began reading from
-# the wrong offset and 17 rows failed with "extract does not end in a closing
-# brace". Not one of them had changed.
-#
-# `tools/repair_source_locations.py --apply` re-points each row from its own
-# `Original Offset:` marker rather than by counting lines, so it cannot drift
-# in turn. It found 242 stale locations across 10 files, of which the 17
-# byte-exact ones were the only visible symptom.
-#
-# THE LESSON IS THE ORDERING, not the tool: any edit to a file holding
-# recovered bodies must be followed by the repair before the census, or the
-# census measures the wrong bytes and blames the body.
-#
-# 888 / 18738 after repairing tools/class_layouts.py's type model. The rise is
-# the point of that repair and is worth recording as evidence for it: nothing
-# in src/ changed, only what the emitter could SAY about a class. Five bodies
-# went byte-exact because their scaffolding stopped being an opaque shell.
-#
-# What had been refusing them was not unknown layout. `RECT` is a Win32struct
-# held by value and could not be spelled as a primitive, so four classes
-# refused outright and the cascade through Buffer and GraphicWin took
-# seventeen; `Dib` is `typedef int32_t Dib;` nested inside Buffer and the
-# parser never learned nested aliases; and function-pointer members were
-# refused by a branch whose comment said "no pinned class has one today",
-# which `Time` had since made false.
-#
-# 902 / 19468. Fourteen of the fourteen came from one fan-out of sonnet agents
-# over 48 unrecovered functions in the 8-55 byte band. The agents claimed 28
-# BYTE_EXACT and the harness measured 16; --collect recompiles every unit
-# itself for exactly that reason, and the twelve that did not survive cost
-# nothing but the compile.
-#
-# 908 / 19689, after tools/class_layouts.py learned to read 32 more classes.
-# The route there is worth keeping because it went backwards first: the same
-# change initially cost 72 bodies to a stale hand-synced Win32 list (HDC) and
-# 70 more to base/derived member shadowing, and both were found by reading the
-# refusal text the census now carries rather than by guessing.
-# 1209 / 43354, after four sonnet recovery waves. What took four waves rather
-# than one was not the recoveries: it was that a matched row has to be BACKED
-# before it may be ratcheted. At the start of that run 260 of the matched rows
-# existed only as `build/byte-match/<address>/unit.cpp` - gitignored, one
-# `git clean` from gone, with the ledger still recording BYTE_EXACT because the
-# ledger records that a body EXISTED, not that anyone kept it.
-#
-# So the floor moved only once every matched row had a committed body: 439
-# owned by a `src/` file, 389 in `src/recovered/`, 381 preserved whole under
-# `src/recovered/units/`, and zero backed by nothing. That audit is the
-# precondition, not a formality - it caught 7 rows reading BYTE_EXACT whose
-# unit.cpp had been reset to `// BODY GOES HERE.` after the proof, which
-# --collect could never have found because it skips rows already settled.
-# Raising to 1209 before re-proving those 7 would have baked them in forever.
-#
-# 1233 / 51540, when tools/decomp_status.py measured the whole source map.
-# The map had rows the census route could never reach - annotations in
-# forms its extractor does not read, bodies whose ledger entries predated
-# the emitter learning to emit every class in dependency order - and the
-# full-tree pass scored them: one NO_COMPILE body became BYTE_EXACT once
-# its scaffolding could compile, and others joined the ledger for the
-# first time. Every matched row is backed by a committed annotation: the
-# map itself is now the audit. Nine BYTE_EXACT rows the standard recipes
-# cannot reproduce were KEPT, not re-proved - they are the UNREPRODUCED
-# list in the tool's report, and they need a human before anyone counts
-# them again.
-#
-# 1253 / 51879, when the scaffolding preamble stopped being a four-entry hand
-# list and started being DERIVED from `src/` (tools/src_declarations.py). None
-# of these twenty is a new recovery: every one is a body that has been
-# committed and annotated for some time and was scored NO_COMPILE because the
-# unit it was measured in had no declaration for a helper the tree already
-# carries - nineteen in `src/delegation_thunks.cpp` and `?tech_name@@YAPADHH@Z`
-# in `src/technology.cpp`. 547 pieces left NO_COMPILE in that one pass, and no
-# BYTE_EXACT row moved in the other direction. The precondition still holds by
-# construction: the status tool only measures IMPLEMENTED annotations, so every
-# matched row is backed by committed source.
-#
-# 1256 / 51977, when the census stopped refusing `std::` before compiling.
-# VC6 really does predate `<cstring>` putting `memcpy` in namespace std, so
-# the refusal was half right - but `src/vc6_compat.h` has carried the shim
-# that fixes it for the whole product build all along, and the census was
-# refusing 43 bodies the DLL compiles every day. Reading that shim out of the
-# header rather than copying it turned 46 pre-compile refusals into 3 (only
-# `__asm` remains): 9 became MISMATCH, 31 became NO_COMPILE with a real
-# diagnostic apiece, and three proved byte-exact -
-# ?get_group_volume@Wave_Device@@QAEHI@Z, ?clear@DeletionList@@QAEXH@Z and
-# ?get@Random@@QAENXZ. None is a new recovery; all three have been committed
-# and annotated for a long time behind a blanket refusal.
-#
-# 1264 / 52260, when the layout extractor stopped refusing a class for
-# re-declaring a base member's name. That refusal was about the EMITTER, which
-# wrote one flat class; it now writes a real base clause, so the two members
-# are in different scopes exactly as they were in the original. Seven classes
-# joined verified-layouts.txt - BasePop, MessageWin, NewTechWin, ProdPicker,
-# PullDown, Scroll, StringBox - and eight more bodies proved byte-exact.
-# 1266 / 52313 with `Menu` behind it: it was refused for holding a
-# `MenuProc proc_`, a FILE-scope function-pointer typedef the extractor only
-# understood in its in-class spelling, and the IDB had `Menu,0xA14,proc,4` all
-# along.
-BASELINE_MATCHED_FUNCTIONS = 1266
-BASELINE_MATCHED_BYTES = 52313
+# Two reasons, both measured. The constants counted `0x0064F09C`, whose body
+# had been reset to `// BODY GOES HERE.` after the proof - a floor backed by
+# nothing, for months - and a claim beside the body cannot drift that way,
+# because deleting the body deletes it. And the justification for keeping the
+# check compiler-free ("so CI can enforce the result") was protecting a CI
+# that does not exist and could not: every measurement here needs the pinned
+# executable, which is proprietary and undistributable.
 
 
 def summarise(ledger: dict) -> tuple:
     matched = [row for row in ledger.values() if row.get("tier") in MATCHED]
     return len(matched), sum(int(row.get("size") or 0) for row in matched)
-
-
-def check() -> int:
-    """Refuse a ledger that has gone backwards."""
-    ledger = read_ledger()
-    if not ledger:
-        print(f"byte-match-ratchet: {LEDGER} is absent; nothing to check")
-        return 0
-    functions, size = summarise(ledger)
-
-    # A body may be traded down so the tree compiles - see
-    # `tools/build_regressions.py`. That is allowed and it is NOT free: the
-    # debt is recorded per address with the tier it held and why it was given
-    # up, and forgiven here against the floor. The alternative is lowering the
-    # floor, which is a number moving down with no record of which functions
-    # regressed or whether anyone meant it.
-    import build_regressions
-    forgiven, regressions = build_regressions.owed()
-    forgiven_bytes = sum(int(functions_row.get("size") or 0)
-                         for functions_row in (
-                             ledger.get(row["address"].upper(), {})
-                             for row in regressions))
-
-    print(f"byte-match-ratchet: {functions} functions / {size} bytes matched "
-          f"(floor {BASELINE_MATCHED_FUNCTIONS} / {BASELINE_MATCHED_BYTES})")
-    if forgiven:
-        print(f"  {forgiven} body(ies) traded down for the build, forgiven "
-              f"against the floor - tools/build_regressions.py --list")
-    failed = False
-    if functions + forgiven < BASELINE_MATCHED_FUNCTIONS:
-        print(f"  FAIL: matched functions fell {BASELINE_MATCHED_FUNCTIONS} "
-              f"-> {functions}")
-        failed = True
-    if size + forgiven_bytes < BASELINE_MATCHED_BYTES:
-        print(f"  FAIL: matched bytes fell {BASELINE_MATCHED_BYTES} -> {size}")
-        failed = True
-    if functions > BASELINE_MATCHED_FUNCTIONS or size > BASELINE_MATCHED_BYTES:
-        print(f"  the floor is stale and should be raised to "
-              f"{functions} / {size}")
-    return 1 if failed else 0
 
 
 def main() -> int:
@@ -541,13 +379,8 @@ def main() -> int:
                              "on disk, optionally limited to the N smallest")
     parser.add_argument("--per-agent", type=int, default=12,
                         help="addresses per batch (default 12)")
-    parser.add_argument("--check", action="store_true",
-                        help="refuse a ledger whose matched count or matched "
-                             "bytes have fallen")
     arguments = parser.parse_args()
 
-    if arguments.check:
-        return check()
     if arguments.groups is not None:
         return groups(arguments.groups, arguments.per_agent,
                       arguments.stratified)
@@ -559,7 +392,7 @@ def main() -> int:
             print(f"SKIP: {reason}")
             return 0
         return collect(arguments.reverify, arguments.stored_only)
-    parser.error("one of --prepare N, --collect or --check is required")
+    parser.error("one of --prepare N, --collect or --groups is required")
 
 
 if __name__ == "__main__":
