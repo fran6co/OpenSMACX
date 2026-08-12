@@ -60,7 +60,7 @@ ORIGINAL: 0x00631A20
 Return Value: a pointer to the name, or nullptr
 Status: Complete
 */
-char *Net::get_player_name(uint32_t key) {
+char *Net::get_player_name(unsigned long key) {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     for (uint32_t index = 0; index < 0x10; ++index) {
         uint32_t candidate;
@@ -74,6 +74,6 @@ char *Net::get_player_name(uint32_t key) {
 }
 
 char *__fastcall net_get_player_name_redirect(
-        Net *self, void *, uint32_t key) {
+        Net *self, void *, unsigned long key) {
     return self->get_player_name(key);
 }

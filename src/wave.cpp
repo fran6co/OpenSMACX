@@ -561,7 +561,7 @@ ORIGINAL: 0x004C6F20
 Return Value: n/a
 Status: Complete
 */
-void Wave::set_attrib(uint32_t a1) {
+void Wave::set_attrib(unsigned long a1) {
     typedef int (OriginalObject::*device_fn)(uint32_t a1);
     if (a1 & 2) {
         field_30_ = 1;
@@ -590,7 +590,7 @@ void Wave::set_attrib(uint32_t a1) {
     }
 }
 
-void __fastcall wave_set_attrib_redirect(Wave *self, void *, uint32_t a1) {
+void __fastcall wave_set_attrib_redirect(Wave *self, void *, unsigned long a1) {
     self->set_attrib(a1);
 }
 
@@ -1082,7 +1082,7 @@ ORIGINAL: 0x004C69B0
 Return Value: n/a
 Status: Complete
 */
-void Wave::init(char *a1, uint32_t a2) {
+void Wave::init(char *a1, unsigned long a2) {
     const uint32_t streaming = a2 & 4;
     if (streaming && (a2 & 0x10)) {
         return;
