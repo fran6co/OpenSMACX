@@ -28,11 +28,23 @@
   * (vbtable 0x00670584 = { 0, 0x48, 0xA60 }) rather than written as
   * ": virtual GraphicWin, virtual Dialog". MEASURED under VC6 12.00.8168,
   * which is now the only compiler here: the declaration does NOT reproduce
-  * 0xB54. The two dwords at 0x44 and 0xA5C are vtordisp fields, and VC6 emits
-  * those only for a class with virtual functions - this one declares none, so
-  * plain `: virtual GraphicWin, virtual Dialog` packs the bases eight bytes
-  * tighter. MapWin and Console DO reproduce theirs and now declare it; this
-  * one keeps the member form until the vtordisp shape can be reproduced.
+  * 0xB54, and the conclusion is OPEN rather than closed. Measured:
+  * `: virtual GraphicWin, virtual Dialog` gives 0xB4C, and a virtual function
+  * on the DERIVED class gives 0xB50 - that +4 is its own vfptr. An earlier
+  * version of this note blamed vtordisp fields; that was WRONG and is
+  * withdrawn. A probe settles it: two bases carrying a virtual destructor
+  * grow 0x10 -> 0x14 EACH and the derived total moves 0x34 -> 0x3C, so the
+  * missing eight bytes are the two BASES' own vtable pointers, not a
+  * displacement.
+  *
+  * So this is blocked on something specific and fixable: GraphicWin and
+  * Dialog model their vtable as an opaque dword the original installs by
+  * hand, so neither declares a virtual for the compiler to place. Giving them
+  * real virtual destructors is a COUPLED edit - the compiler then emits the
+  * vfptr, so the modelled dword must come out in the same change - and
+  * `sizeof(GraphicWin) == 0xA14` is the check that catches it going wrong.
+  * MapWin and Console have a single virtual base and no such dword, which is
+  * why they convert today. Do not read this as "cannot be done".
   * This mirrors CheckBox (src/checkbox.h), whose
   * vbtable {0,0x1C,0xA34} has the identical shape. close()/destroy() resolve
   * both base subobjects through the runtime vbtable, never through these
