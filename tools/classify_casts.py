@@ -42,6 +42,22 @@ import class_layouts  # noqa: E402
 import emit_hypothesis_layouts as hypothesis  # noqa: E402
 import repair_source_locations as repair  # noqa: E402
 
+
+def _catalogue_rows():
+    """Every catalogued row, from `src/`.
+
+    `docs/recovery/functions.csv` is deleted: every `ORIGINAL:` annotation
+    carries its own name, size, spans, prototype, kind, flags and call
+    edges, and `emit.load_functions()` reads them back. This tool opened
+    the CSV directly, so it broke the moment the store moved - which is
+    how five layout gates went red at once.
+    """
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC = REPO_ROOT / "src"
 FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
@@ -166,12 +182,12 @@ def read_operand(operand: str, trailing: str):
 def catalogued() -> dict:
     """{address: row} from functions.csv, keyed as an int."""
     rows = {}
-    with FUNCTIONS.open(newline="", encoding="utf-8-sig") as handle:
-        for row in csv.DictReader(handle):
-            try:
-                rows[int(row["address"], 16)] = row
-            except (KeyError, ValueError):
-                continue
+    # `src/` is the catalogue's store; the export is deleted.
+    for row in _catalogue_rows():
+        try:
+            rows[int(row["address"], 16)] = row
+        except (KeyError, ValueError):
+            continue
     return rows
 
 

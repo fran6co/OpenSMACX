@@ -54,6 +54,22 @@ from generator_support import read_bytes  # noqa: E402
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs
 from capstone.x86 import X86_OP_IMM, X86_OP_MEM
 
+
+def _catalogue_rows():
+    """Every catalogued row, from `src/`.
+
+    `docs/recovery/functions.csv` is deleted: every `ORIGINAL:` annotation
+    carries its own name, size, spans, prototype, kind, flags and call
+    edges, and `emit.load_functions()` reads them back. This tool opened
+    the CSV directly, so it broke the moment the store moved - which is
+    how five layout gates went red at once.
+    """
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
@@ -149,14 +165,14 @@ class Image:
 
 def load_functions() -> tuple[dict[int, dict], dict[str, int]]:
     by_address, by_name = {}, {}
-    with FUNCTIONS_CSV.open() as handle:
-        for row in csv.DictReader(handle):
-            try:
-                address = int(row["address"], 16)
-            except (KeyError, ValueError):
-                continue
-            by_address[address] = row
-            by_name[row["name"]] = address
+    # `src/` is the catalogue's store; the export is deleted.
+    for row in _catalogue_rows():
+        try:
+            address = int(row["address"], 16)
+        except (KeyError, ValueError):
+            continue
+        by_address[address] = row
+        by_name[row["name"]] = address
     return by_address, by_name
 
 

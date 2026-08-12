@@ -59,6 +59,22 @@ from capstone.x86 import (X86_INS_ADD, X86_INS_LEA, X86_INS_MOV,  # noqa: E402
 import derive_class_layout  # noqa: E402
 import recovery_symbols  # noqa: E402
 
+
+def _catalogue_rows():
+    """Every catalogued row, from `src/`.
+
+    `docs/recovery/functions.csv` is deleted: every `ORIGINAL:` annotation
+    carries its own name, size, spans, prototype, kind, flags and call
+    edges, and `emit.load_functions()` reads them back. This tool opened
+    the CSV directly, so it broke the moment the store moved - which is
+    how five layout gates went red at once.
+    """
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
@@ -119,21 +135,25 @@ def receiver_scope(mangled: str) -> str:
 def receivers() -> dict:
     """{class: [(address, size, mangled name)]} for its thiscall methods."""
     found = collections.defaultdict(list)
-    if not FUNCTIONS.is_file():
-        return found
-    with FUNCTIONS.open(newline="", encoding="utf-8-sig") as handle:
-        for row in csv.DictReader(handle):
-            name = row.get("name") or ""
-            scope = receiver_scope(name)
-            if not scope:
-                continue
-            try:
-                address = int(row["address"], 16)
-                size = int(row["size"])
-            except (ValueError, KeyError, TypeError):
-                continue
-            if size > 0:
-                found[scope].append((address, size, name))
+    # `src/` is the catalogue's store; the export is deleted. SORTED BY
+    # ADDRESS, because the witness instruction recorded beside each bound is
+    # whichever qualifying access is found first, and that made the output
+    # depend on the store's iteration order: moving from a CSV to `src/` left
+    # all 130 bounds identical and rewrote 36 of their witnesses, so the gate
+    # reported the file stale without a single bound having moved.
+    for row in sorted(_catalogue_rows(),
+                      key=lambda r: int(r.get("address") or "0", 16)):
+        name = row.get("name") or ""
+        scope = receiver_scope(name)
+        if not scope:
+            continue
+        try:
+            address = int(row["address"], 16)
+            size = int(row["size"])
+        except (ValueError, KeyError, TypeError):
+            continue
+        if size > 0:
+            found[scope].append((address, size, name))
     return found
 
 

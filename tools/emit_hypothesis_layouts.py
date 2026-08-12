@@ -58,6 +58,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import class_layouts  # noqa: E402
 import derive_base_edges  # noqa: E402
 
+
+def _catalogue_rows():
+    """Every catalogued row, from `src/`.
+
+    `docs/recovery/functions.csv` is deleted: every `ORIGINAL:` annotation
+    carries its own name, size, spans, prototype, kind, flags and call
+    edges, and `emit.load_functions()` reads them back. This tool opened
+    the CSV directly, so it broke the moment the store moved - which is
+    how five layout gates went red at once.
+    """
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC = REPO_ROOT / "src"
 IDB_MEMBERS = REPO_ROOT / "docs" / "recovery" / "idb-members.csv"
@@ -314,13 +330,11 @@ def proved_subobjects() -> dict:
 
 def owns_functions() -> collections.Counter:
     owned = collections.Counter()
-    if not FUNCTIONS.is_file():
-        return owned
-    with FUNCTIONS.open(newline="", encoding="utf-8-sig") as handle:
-        for row in csv.DictReader(handle):
-            match = SCOPE_RE.match(row.get("name") or "")
-            if match:
-                owned[match.group(1)] += 1
+    # `src/` is the catalogue's store; the export is deleted.
+    for row in _catalogue_rows():
+        match = SCOPE_RE.match(row.get("name") or "")
+        if match:
+            owned[match.group(1)] += 1
     return owned
 
 

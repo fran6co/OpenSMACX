@@ -18,6 +18,7 @@ Datalink
 DeletionList
 Dialog
 DialogEntry
+Dialogs
 FX
 FileWin
 Filemap

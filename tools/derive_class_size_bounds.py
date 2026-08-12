@@ -39,7 +39,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import derive_class_layout as layout  # noqa: E402
-import generate_signature_oracles as generator  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BOUNDS_CSV = REPO_ROOT / "docs" / "recovery" / "class-size-bounds.csv"
@@ -110,7 +109,11 @@ def write(path: Path, found: dict) -> int:
 
 
 def load(path: Path = BOUNDS_CSV) -> dict:
-    """class -> bound, for the generator. Absent file is not an error."""
+    """class -> bound. Absent file is not an error.
+
+    It fed the retired signature-oracle generator, which is why the import at
+    the top of this file outlived the tool by one commit and failed the gate
+    with ModuleNotFoundError rather than anything about a bound."""
     if not path.is_file():
         return {}
     with path.open(newline="", encoding="utf-8-sig") as handle:
