@@ -244,6 +244,47 @@ names are historical; the code is load-bearing.
 - **A branch mode that lost work.** One 27-minute run left 42 dangling refs and
   42 `/tmp` worktrees with nothing in `git status`.
 
+## The bulk generators — retired 2026-08-12, 9,262 lines
+
+Eleven tools that each found a family of functions sharing one shape and wrote
+every member of it at once: `generate_adjustor_thunks`, `generate_atexit_thunks`,
+`generate_delegation_thunks`, `generate_deleting_thunks`,
+`generate_guarded_teardowns`, `generate_init_thunks`, `generate_nullsub_thunks`,
+`generate_global_arith`, `generate_field_accessors`, `bulk_recover_stubs`, and
+`find_constant_returns` — the scan that found the families.
+
+**They were already dead, and dangerous while alive.** Measured 2026-07-30, every
+one returns zero new candidates: the families are exhausted. And they are **not
+idempotent** — `docs/TOOLS.md` carried the warning "re-running
+`generate_deleting_thunks.py` against today's `src/` would silently drop 91
+committed recoveries. Read them, do not run them." A tool nobody may run, which
+finds nothing when run, is not tooling. What it was is a record, and the record
+is the part worth keeping:
+
+- **The families themselves are the finding.** Recovery is not uniformly hard;
+  large parts of an image are one shape repeated. Adjustor thunks, atexit
+  registrations, deleting destructors, nullsubs, field accessors, guarded
+  teardowns and global arithmetic each fell to one template applied N times.
+  Looking for the next such family is cheaper than recovering N functions.
+- **Mangled names can be actively misleading, and the bytes win.** 47 Family A
+  thunks are spelled `??3X@@SAXPAXI@Z` — a caller-cleaned `operator delete` —
+  while the bytes take the receiver in `ecx` and the callee pops four. Seven more
+  carry no name at all. A name-driven scan misses exactly the rows a byte-driven
+  one finds.
+- **Decode every value twice.** The deleting-thunk generator decoded each field
+  through raw ModRM *and* through Capstone and required agreement, because an
+  off-by-one on the guarded call would have named `0x0064557E`, the tail of
+  `__alloca_probe`, instead of `operator delete`.
+- **Keep literals inline rather than hoisted into a table**, so a mutation sweep
+  has something in the body to perturb. Hoisting would have left it with nothing
+  to find.
+- **Track registers by offset from `this`, not as aliases.** `lea ecx,[eax+0x30c]`
+  makes a later `mov byte [ecx],dl` write `0x30c`; calling ECX "an alias of this"
+  would have written offset 0 — a real field, a plausible value, and wrong.
+
+The 91+ bodies they wrote are in `src/` and are covered by the ratchet like any
+other. Nothing they produced is lost by deleting the producers.
+
 ## Still live, and not retired by this file
 
 `recovery-gameplay-tests` remains: it is the sole observer for 37 of those 63

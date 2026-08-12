@@ -450,7 +450,8 @@ identical shapes - a `mov [ecx+N]` field getter accounts for 13 on its own.
 
 The convention for those already exists and it is GENERATION, not hand
 recovery. `src/global_arith.cpp` holds 26 unnamed absolute-operand leaves
-emitted by `tools/generate_global_arith.py`, named `global_arith_<address>_
+emitted by the retired `generate_global_arith` (docs/RETIRED_ROUTES.md),
+named `global_arith_<address>_
 redirect(void *, void *)` after the address rather than invented, grouped in
 one family file, with the generator emitting the header, the source, a test
 fragment and a wire list, and verifying itself by simulation. Follow that
@@ -1429,7 +1430,7 @@ Rejected while scouting, with the reasons, so they are not re-picked:
 
 * `?on_redraw@Win@@QAEHXZ` (0x005ed9c0) - `xor eax,eax; ret 8`. The mangled
   name declares no parameters and the body cleans eight bytes.
-  `tools/find_constant_returns.py` rejects it for exactly this and is right to.
+  the retired `find_constant_returns` rejected it for exactly this, and was right to.
 * `Gamma::on_scrolled`, `FileWin::on_double_clicked`,
   `DesignWin::select_special_1/2` - all thin wrappers whose callee is still
   unrecovered, so each would add an original dependency rather than remove one.
@@ -1437,7 +1438,7 @@ Rejected while scouting, with the reasons, so they are not re-picked:
   leaf, but no `MCIVideo` source exists at all, so it needs a whole verified
   class layout for a six-byte function.
 
-`tools/find_constant_returns.py` now reports **0 candidates**: that shape is
+`find_constant_returns` reported **0 candidates** before it was retired: that shape is
 exhausted. 153 unrecovered methods of 4-40 bytes remain on classes that already
 have a `src/` file, which is the queue to work from.
 

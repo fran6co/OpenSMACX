@@ -860,9 +860,7 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(add-redirect-tool-tests test_add_redirect.py)
 
-    opensmacx_add_python_tool_test(bulk-recover-stubs-tool-tests test_bulk_recover_stubs.py)
 
-    opensmacx_add_python_tool_test(constant-return-scan-tool-tests test_find_constant_returns.py)
 
     opensmacx_add_python_tool_test(class-layout-tool-tests test_derive_class_layout.py)
 
@@ -1064,9 +1062,7 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(delegate-analysis-tool-tests test_analyze_delegates.py)
 
-    opensmacx_add_python_tool_test(delegation-thunk-generator-tests test_generate_delegation_thunks.py)
 
-    opensmacx_add_python_tool_test(nullsub-thunk-generator-tests test_generate_nullsub_thunks.py)
 
     opensmacx_add_python_tool_test(whole-image-lifter-tests test_lift_whole_image.py)
 
@@ -1266,15 +1262,10 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(jump-table-tests test_jump_tables.py)
 
-    opensmacx_add_python_tool_test(deleting-thunk-generator-tests test_generate_deleting_thunks.py)
 
-    opensmacx_add_python_tool_test(adjustor-thunk-generator-tests test_generate_adjustor_thunks.py)
 
-    opensmacx_add_python_tool_test(atexit-thunk-generator-tests test_generate_atexit_thunks.py)
 
-    opensmacx_add_python_tool_test(field-accessor-generator-tests test_generate_field_accessors.py)
 
-    opensmacx_add_python_tool_test(init-thunk-generator-tests test_generate_init_thunks.py)
 
     opensmacx_add_python_tool_test(redirect-signature-generator-tests test_generate_redirect_signatures.py)
 

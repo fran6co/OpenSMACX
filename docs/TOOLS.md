@@ -150,21 +150,6 @@ respells callee declarations so VC6 re-mangles them to the catalogued names,
 and `tools/mizuchi_writeback.py` lands a byte-exact match in a tracked file or
 refuses and changes nothing. The names are historical; the code is not.
 
-## The bulk generators — all exhausted
-
-Each found a family sharing one shape and wrote every member of it at once.
-Measured 2026-07-30, all of them return zero new candidates.
-**They are not idempotent**: re-running `tools/generate_deleting_thunks.py`
-against today's `src/` would silently drop 91 committed recoveries. Read them,
-do not run them.
-
-`tools/generate_adjustor_thunks.py`, `tools/generate_atexit_thunks.py`,
-`tools/generate_delegation_thunks.py`, `tools/generate_deleting_thunks.py`,
-`tools/generate_guarded_teardowns.py`, `tools/generate_init_thunks.py`,
-`tools/generate_nullsub_thunks.py`, `tools/generate_global_arith.py`,
-`tools/generate_field_accessors.py`, `tools/bulk_recover_stubs.py`.
-`tools/find_constant_returns.py` is how the families were found.
-
 ## Wiring a recovery into the DLL
 
 `tools/add_redirect.py` wires one in a single verified step.
