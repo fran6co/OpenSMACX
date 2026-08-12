@@ -64,9 +64,17 @@ class DLLEXPORT Sound {
   uint32_t vtable_storage_;  // 0x00, opaque so no C++ vtable is generated
   uint32_t volume_;       // 0x04, low seven bits of set_volume's argument
   int32_t pan_8_;         // 0x08, set_pan's clamp to [-0x40, 0x3F]
-  uint8_t unmapped_C_[0x24];
-  uint32_t loop_flag_30_;
-  uint8_t unmapped_34_[4];
+  uint32_t field_C_;      // 0x0C, IDB field_C..field_2C for the nine dwords
+  uint32_t field_10_;     // 0x10
+  uint32_t field_14_;     // 0x14
+  uint32_t field_18_;     // 0x18
+  uint32_t field_1C_;     // 0x1C
+  uint32_t field_20_;     // 0x20
+  uint32_t field_24_;     // 0x24
+  uint32_t field_28_;     // 0x28
+  uint32_t field_2C_;     // 0x2C
+  uint32_t loop_flag_30_;  // 0x30, IDB `loop_state`
+  uint32_t delay_;        // 0x34, IDB `delay`; set_delay writes it
   uint32_t fade_38_;      // 0x38, the last nonzero fade/fade-in argument
   void *device_;
   uint32_t flags_40_;
@@ -74,8 +82,14 @@ class DLLEXPORT Sound {
   Sound *chain_next_;     // 0x48, toward the tail slot at 0x90DB1C
   void *fname_;
   uint32_t type_;
-  uint8_t unmapped_54_[0x4C];
 };
+
+// Two independent sources agree on 0x54 and neither fails like the other:
+// the IDB member table ends at the `type` dword, and the access lower bound
+// is the mov [esi + 0x50] at 0x004C6107. The 0x4C tail this header used to
+// declare contradicted both and covered nothing - no body reads it, Wave is
+// flat rather than derived, and nothing embeds a Sound by value.
+static_assert(sizeof(Sound) == 0x54, "Sound layout must match the original executable");
 
 int __fastcall sound_unk1_redirect(Sound *self, void *, int a1);
 void __fastcall sound_fade_redirect(Sound *self, void *, int a1);

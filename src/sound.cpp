@@ -196,7 +196,7 @@ Status: Complete
 */
 void Sound::set_loop_state(long a1) {
     const int value = static_cast<int>(a1);
-    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x30, &value, sizeof(value));
+    loop_flag_30_ = value;
     forward_sound_device(this, 0x48, value, 0);
 }
 
@@ -210,7 +210,7 @@ Status: Complete
 */
 void Sound::set_delay(unsigned int a1) {
     const int value = static_cast<int>(a1);
-    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x34, &value, sizeof(value));
+    delay_ = value;
     forward_sound_device(this, 0x4C, value, 0);
 }
 
