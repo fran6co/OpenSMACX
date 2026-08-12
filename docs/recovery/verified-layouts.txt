@@ -27,6 +27,7 @@ GAmbience
 GraphicWin
 Heap
 ListBox
+Lock
 Log
 MAmbience
 MapWin
@@ -35,6 +36,7 @@ MenuEntry
 MessageWin
 Midi_Device
 NewTechWin
+Palette
 ProdPicker
 PullDown
 PullDownItem

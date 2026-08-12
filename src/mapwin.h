@@ -42,7 +42,7 @@
   * rather than appended - appending would move the virtual base and break
   * every offset in the class.
   */
-class DLLEXPORT MapWin {
+class DLLEXPORT MapWin : virtual GraphicWin {
  public:
   void on_resize(int a1, int a2);
   void on_redraw();
@@ -66,10 +66,12 @@ class DLLEXPORT MapWin {
   // The vbtable pointer opens the object; a heap pointer close() frees sits at
   // 0x4. Both are carved out of the derived storage, keeping the total the
   // static_assert pins.
-  uint32_t vbtable_pointer_;
+  // EXPERIMENT: the vbtable pointer and the trailing base are now the
+  // compiler's, not ours. MSVC puts the vbptr at 0 and the virtual base after
+  // the derived members, which is what the vbtable at 0x0066C870 says
+  // ({0, 0x21A6C}). The static_assert below is the check.
   void *owned_;
   uint8_t derived_tail_[0x21A6C - 0x8];
-  GraphicWin virtual_base_;
 };
 
 static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe");
