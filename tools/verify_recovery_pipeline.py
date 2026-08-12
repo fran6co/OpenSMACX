@@ -69,12 +69,30 @@ SLATE = (
 )
 
 
-def load_rows(path):
-    with path.open(newline="", encoding="utf-8-sig") as handle:
-        return {row["address"].lower(): row for row in csv.DictReader(handle)}
+def load_rows(path=None):
+    """The catalogued rows, from `src/` unless a path is given.
+
+    This gate pins that the pipeline answers a fixed slate the same way twice
+    running, so it has to read whatever the pipeline reads - which is `src/`
+    now, not the deleted export.
+    """
+    if path is not None and path.is_file():
+        with path.open(newline="", encoding="utf-8-sig") as handle:
+            return {row["address"].lower(): row for row in csv.DictReader(handle)}
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return {f"0x{a:08x}": r for a, r in _emit.load_functions().items()}
 
 
-def load_callees(path):
+def load_callees(path=None):
+    """Call edges, from `src/`'s `calls` lines unless a graph file is given."""
+    if path is None or not path.is_file():
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import project_catalogue as _pc
+        return {f"0x{a:08x}": sorted(f"0x{t2:08x}" for t2 in (r.get("_calls") or ()))
+                for a, r in _pc.from_source().items()}
     graph = json.loads(path.read_text(encoding="utf-8"))
     if "edges" not in graph:
         raise SystemExit(f"{path} has no 'edges' key; the callgraph shape "
