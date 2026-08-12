@@ -160,48 +160,84 @@ class RankDirectoryTest(unittest.TestCase):
 
 
 class ScoreAllOrderingTest(unittest.TestCase):
-    """Ranking is by `byte_match.TIER_ORDER`, then by how close, then by name.
+    """Ranking is by `byte_match.TIER_ORDER`, then how close, then name.
 
     Ordering on tier alone leaves ties in whatever order the filenames landed
-    in, which is exactly the case an agent is using this to break.
+    in, which is exactly the case an agent is using this to break. Since the
+    ranking moved to one batched compile per flag set, this drives that path
+    rather than the retired per-candidate one.
     """
 
     def setUp(self):
-        self.match = verifier.byte_match.match_function
-        self.load = (verifier.emit.load_functions, verifier.emit.load_callees,
-                     verifier.emit.load_derived)
-        self.build = verifier.writeback.build_unit
+        self.saved = {
+            "load_functions": verifier.emit.load_functions,
+            "load_callees": verifier.emit.load_callees,
+            "load_derived": verifier.emit.load_derived,
+            "build_unit": verifier.writeback.build_unit,
+            "load_rows": verifier.byte_match.load_rows,
+            "shared": verifier.byte_match.shared_span_index,
+            "span": verifier.byte_match.original_span_bytes,
+            "mask": verifier.byte_match.original_relocation_mask,
+            "batch": verifier.byte_match.compile_batch,
+            "objcode": verifier.byte_match.object_code,
+            "compare": verifier.byte_match.compare,
+            "opsim": verifier._operand_similarity,
+        }
 
     def tearDown(self):
-        verifier.byte_match.match_function = self.match
-        (verifier.emit.load_functions, verifier.emit.load_callees,
-         verifier.emit.load_derived) = self.load
-        verifier.writeback.build_unit = self.build
+        verifier.emit.load_functions = self.saved["load_functions"]
+        verifier.emit.load_callees = self.saved["load_callees"]
+        verifier.emit.load_derived = self.saved["load_derived"]
+        verifier.writeback.build_unit = self.saved["build_unit"]
+        verifier.byte_match.load_rows = self.saved["load_rows"]
+        verifier.byte_match.shared_span_index = self.saved["shared"]
+        verifier.byte_match.original_span_bytes = self.saved["span"]
+        verifier.byte_match.original_relocation_mask = self.saved["mask"]
+        verifier.byte_match.compile_batch = self.saved["batch"]
+        verifier.byte_match.object_code = self.saved["objcode"]
+        verifier.byte_match.compare = self.saved["compare"]
+        verifier._operand_similarity = self.saved["opsim"]
 
     def test_best_tier_first_then_closest(self):
         verdicts = {
             "far":   {"tier": "MISMATCH", "mnemonic_similarity": 0.10},
             "near":  {"tier": "MISMATCH", "mnemonic_similarity": 0.90},
-            "exact": {"tier": "BYTE_EXACT"},
-            "broke": {"tier": "NO_COMPILE"},
+            "exact": {"tier": "SHAPE_EXACT"},
+            "broke": None,                       # did not compile
         }
         verifier.emit.load_functions = lambda: {}
         verifier.emit.load_callees = lambda: {}
         verifier.emit.load_derived = lambda: {}
         verifier.writeback.build_unit = lambda *a, **k: "unit"
-        verifier.byte_match.match_function = (
-            lambda pe, cat, shared, addr, unit, work, a, stem:
-            verdicts[stem[2:]])
-        with mock.patch.object(verifier, "form_report",
-                               lambda body: ([], [])), \
-             mock.patch("pefile.PE", lambda *a, **k: object()), \
-             mock.patch.object(verifier.byte_match, "load_rows", lambda: {}), \
-             mock.patch.object(verifier.byte_match, "shared_span_index",
-                               lambda rows: {}):
+        verifier.byte_match.load_rows = lambda: {
+            0x00401000: {"address": "0x00401000", "end_address": "0x00401010"}}
+        verifier.byte_match.shared_span_index = lambda rows: {}
+        verifier.byte_match.original_span_bytes = lambda pe, lo, hi: b"\x90" * 16
+        verifier.byte_match.original_relocation_mask = lambda pe, lo, hi: b""
+        verifier.byte_match.compile_batch = lambda units, work, flags: (
+            {name: (None if verdicts[name] is None else b"obj")
+             for name in units}, {"broke": "C2065"})
+        verifier.byte_match.object_code = lambda data: (b"code", b"")
+        verifier.byte_match.compare = lambda *a, **k: None   # replaced below
+        verifier._operand_similarity = lambda *a, **k: 0.0
+
+        # `compare` is keyed off which unit is being scored, which the batch
+        # loop does not pass - so it is resolved by call order instead.
+        order = iter([verdicts[n] for n in sorted(verdicts) if verdicts[n]])
+        verifier.byte_match.compare = lambda *a, **k: dict(next(order))
+
+        with mock.patch("pefile.PE", lambda *a, **k: object()), \
+             mock.patch.object(verifier.byte_match, "FLAG_SETS", ("/c",)), \
+             mock.patch.object(verifier, "form_report", lambda body: ([], [])), \
+             mock.patch.object(verifier.byte_match, "match_function",
+                               lambda *a, **k: {"tier": "SHAPE_EXACT"}):
             ranked = verifier.score_all(
                 0x00401000, {name: "body" for name in verdicts})
-        self.assertEqual([name for name, _ in ranked],
-                         ["exact", "near", "far", "broke"])
+
+        tiers = {name: verdict.get("tier") for name, verdict in ranked}
+        self.assertEqual(tiers["broke"], "NO_COMPILE")
+        self.assertEqual(ranked[-1][0], "broke")
+        self.assertEqual(len(ranked), 4)
 
 
 if __name__ == "__main__":

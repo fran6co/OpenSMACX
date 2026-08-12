@@ -180,6 +180,13 @@ FLAG_SETS = (MEASURED_FLAGS, FRAMELESS_FLAGS, SIZE_FLAGS,
 #     against `/Ow`. NOT ONE reached BYTE_EXACT, or even SHAPE_EXACT. The cost
 #     of finding that out was one command; the cost of not knowing it was every
 #     future agent spending attempts on "it might be the flags".
+#   * `/Op` and `/O1` both cancel the `sqrt` INTRINSIC, replacing an inline
+#     `fsqrt` with a `call`. So neither can ever explain a body that contains
+#     one, which removes two more flags from any search that starts there.
+#   * VC6 /O2 spills an FP temp into a DEAD PARAMETER'S HOME SLOT before it
+#     grows the frame. "Two memory temps in a `push ecx` frame" is therefore one
+#     local plus an argument home, not two locals - a reading that otherwise
+#     sends you looking for a frame size the compiler never emits.
 #   * `/G3 /G4 /G5 /G6 /GB` emit identical bytes on the cases tried, so the
 #     processor target is not a lever either. That was measured on INTEGER
 #     bodies; re-tested 2026-08-12 on an x87 body (0x006280E0) crossed with
