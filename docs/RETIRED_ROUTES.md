@@ -163,6 +163,35 @@ names a check which no longer exists fails the run, which is the gate working.
 in the DLL source list, and deleting either breaks the build. Only enforcement of
 their currency went.
 
+## Two exclusions retired, and 48.4% of the image came back — 2026-08-12
+
+`docs/EXCLUSIONS.md` §4 put 941 functions and 1,187,932 bytes — **48.4% of
+catalogued bytes**, the largest claim in the repository — out of scope, and §6
+added `NetDaemon`. Both were excluded on *verifiability*, and §4 said so in a
+sentence that decides the question once the route changes:
+
+> "These functions are **recoverable as source and unverifiable by any
+> differential oracle in this repository**."
+
+That is an exclusion from the ORACLE route. Byte-matching needs no oracle: the
+verification *is* the comparison. So the ground did not survive the route change,
+and it was never acted on anyway — only `EXCLUDED S1` and `EXCLUDED S2a` appear
+in `src/`, so those 941 functions were sitting in the placeholder population
+being counted as remaining work the whole time.
+
+**Measured before moving anything.** Twenty DirectX-reaching functions were taken
+off the recoverable frontier at ≤200 B and their emitted skeletons scored through
+`byte_match.match_function`: **20 of 20 returned a real MISMATCH**, zero REFUSED,
+zero SHARED_TAIL, zero NO_COMPILE. Every divergence was at instruction #0, which
+is the shape of an empty body and what any unrecovered function gives. There is
+no structural obstacle — the scaffolding emits, the unit compiles, the comparison
+speaks.
+
+The measured block stays and still passes `measure_exclusions.py --check` (20 of
+20 figures agree with the image). Those numbers are a true measurement of what
+the import closure reaches; what retired is the claim that reaching it puts a
+function out of scope.
+
 ## Still live, and not retired by this file
 
 `recovery-gameplay-tests` remains: it is the sole observer for 37 of those 63
