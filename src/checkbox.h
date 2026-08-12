@@ -36,6 +36,14 @@
   * MapWin and Console there is no global instance to bound the object from
   * above, and "nothing touches it" would not notice a trailing field that is
   * never used.
+  *
+  * MEASURED, and it does not reproduce: VC6 12.00.8168 - the only compiler
+  * here since a673bf79 - packs `: virtual GraphicWin, virtual Dialog` eight
+  * bytes tighter than this. The dwords four bytes below each virtual base are
+  * vtordisp fields, and VC6 emits those only for a class with virtual
+  * functions, which this one declares none of. src/listbox.h carries the same
+  * finding at length; MapWin and Console have a SINGLE virtual base with no
+  * such gap and do declare theirs.
   */
 class DLLEXPORT CheckBox {
  public:
