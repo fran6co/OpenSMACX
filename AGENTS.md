@@ -12,7 +12,7 @@ describe are assumed everywhere below and are not repeated here:
 
 - `docs/RECOVERY.md` — the canonical inventory, how to regenerate it, and what
   every `recovery_state` / `binding_category` value means.
-- `docs/RUNTIME_ORACLE.md` — the in-process differential oracle: when a
+- docs/RUNTIME_ORACLE.md (retired) — the in-process differential oracle: when a
   function needs one instead of a copied-byte oracle, and how to author a suite.
 - `docs/HYBRID.md` — the staged-hybrid workflow, the retired `run_game`, and the
   smoke gate that every recovery must pass.
@@ -36,7 +36,7 @@ describe are assumed everywhere below and are not repeated here:
   for the state of every annotated piece (parallel, cached) and merges the
   verdicts into the ledger without ever downgrading a BYTE_EXACT row. New
   recoveries and new placeholders use this grammar, not the legacy spellings.
-- `docs/STATIC_RECOMPILATION.md`, `docs/PORTING.md` — the stopped static-recompile
+- docs/STATIC_RECOMPILATION.md (retired), `docs/PORTING.md (retired) — the stopped static-recompile
   pilot and the general porting notes.
 
 The environment lives outside git: the hash-pinned executables, the IDB, the
@@ -693,7 +693,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `src/win.h`, `src/win.cpp`: verified Win layout, `move`, recursive ancestor-chain `is_visible`, recursive wrapping `client_to_screen`, both paging setters, both `in_box` overloads, wrapping RECT construction, rectangle-center behavior, and adapters.
 - `src/vector.h`, `src/vector.cpp`: verified `0xC` Vector layout, lifecycle, ordered x87 arithmetic, alias-sensitive scaling copies, and adapters.
 - `src/scroll.h`, `src/scroll.cpp`: verified Scroll layout, five init wrappers with a classified temporary primary dependency, range/position state, style and sprite-triplet setters, thumb reset/computation, named-field RECT expansion, exact alias behavior, signed arithmetic, ordered volatile accesses, and adapters.
-- `src/runtime_oracle.h`, `src/runtime_oracle.cpp`: shared descriptor-driven in-process differential oracle machinery and per-suite result reporting; see `docs/RUNTIME_ORACLE.md` for suite authoring.
+- `src/runtime_oracle.h`, `src/runtime_oracle.cpp`: shared descriptor-driven in-process differential oracle machinery and per-suite result reporting; see docs/RUNTIME_ORACLE.md (retired) for suite authoring.
 - `src/scroll_oracle.h`, `src/scroll_oracle.cpp`: Scroll suite of the runtime oracle covering sixteen original Scroll methods that are ineligible for copied-byte oracle execution.
 - `src/stringstruct_oracle.h`, `src/stringstruct_oracle.cpp`: StringStruct runtime-oracle suite driving the list walk through stand-in entry and payload objects with recording destructors; entry addresses are side-specific, so payload clearing and head position are compared rather than raw pointers.
 - `src/buffer_oracle.h`, `src/buffer_oracle.cpp`: Buffer runtime-oracle suite driving the lock/release pair through a stand-in DirectDraw surface so no real video memory is touched.
@@ -751,7 +751,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `docs/HYBRID.md`: local hybrid workflow.
 - `tests/recovery_oracle_tests.cpp`: source-versus-original AlphaNet, Random, Win/geometry, Vector, Scroll, Menu, and PullDown fixtures.
 - `tests/static_recompile_pilot_tests.cpp`: generated-only and original-byte differential fixtures for the time-boxed static recompilation leaf.
-- `docs/STATIC_RECOMPILATION.md`: local-only provenance policy, commands, value gate, and stopped pilot outcome.
+- docs/STATIC_RECOMPILATION.md (retired): local-only provenance policy, commands, value gate, and stopped pilot outcome.
 - `CMakeLists.txt`: source list, hybrid targets, legacy-island targets, and local differential-oracle target.
 - `build/ghidra-projects/live-recovery`: ignored persistent Ghidra project.
 - `build/mingw-i686-release/legacy-leaves/manifest.json`: the current ignored legacy-island manifest; its `candidate_count` is the island count.

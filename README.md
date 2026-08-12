@@ -15,7 +15,7 @@ recent version of my unofficial patch. Cursory testing shows it is compatible wi
 OpenSMACX still runs inside the original 32-bit Windows executable. The current CMake target is
 therefore a PE32 DLL, including when it is built from macOS or Linux. A native executable requires
 the remaining fixed-address code and data references to be reverse engineered first; see
-`docs/PORTING.md`. The local-only bridge toward that executable is described in `docs/HYBRID.md`.
+docs/PORTING.md (retired). The local-only bridge toward that executable is described in `docs/HYBRID.md`.
 
 The macOS and Linux build uses an i686 MinGW cross-compiler. On macOS with Homebrew:
 

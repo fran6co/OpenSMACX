@@ -157,7 +157,7 @@ include(CTest)
 #   * a GNU C++ driver assembles `legacy-leaves.S` (`-x assembler-with-cpp`)
 #     and compiles the static-recompilation pilot. Those are local
 #     verification subsystems whose output is never committed and never linked
-#     into OpenSMACX.dll, per docs/STATIC_RECOMPILATION.md. VC6 cannot build
+#     into OpenSMACX.dll, per docs/STATIC_RECOMPILATION.md (retired). VC6 cannot build
 #     them and does not need to.
 #
 # Each is found separately so a host with binutils but no cross-compiler still
