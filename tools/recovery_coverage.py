@@ -176,7 +176,7 @@ def main(argv=None) -> int:
         # function, and a single coverage percentage hides that completely.
         import csv as _csv
         import statistics
-        ledger = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
+        ledger = REPO_ROOT / ".opensmacx" / "byte-match.csv"
         bands: dict = {}
         if ledger.is_file():
             with ledger.open(newline="", encoding="utf-8-sig") as handle:

@@ -53,7 +53,7 @@ from generator_support import parse_body_ranges  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GHIDRA_DIR = REPO_ROOT / "build" / "ghidra-decompile"
-LEDGER = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
+LEDGER = REPO_ROOT / ".opensmacx" / "byte-match.csv"
 MIZUCHI_DB = REPO_ROOT / "mizuchi-db.json"
 
 FRAME_PROLOGUE = b"\x55\x8b\xec"

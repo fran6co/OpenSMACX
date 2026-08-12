@@ -63,7 +63,15 @@ import emit_translation_unit as emit  # noqa: E402
 import src_declarations  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-LEDGER = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
+# THE LEDGER IS A CACHE, NOT A RECORD, and it lives under the ignored
+# `.opensmacx/` for that reason. `tools/decomp_status.py` recomputes every row
+# from `src/` and the compiler in about two minutes, and the one thing that
+# must SURVIVE a delete - "this body was proved byte-exact" - is a `BYTE_EXACT`
+# claim on the annotation itself. Committing 1.5 MB of derived verdicts made
+# the tree carry a second answer to a question `src/` already answers, and
+# they drifted: one row claimed BYTE_EXACT for a body reset to
+# `// BODY GOES HERE.`.
+LEDGER = REPO_ROOT / ".opensmacx" / "byte-match.csv"
 
 # Bodies that cannot go through a VC6 compile and should be refused by NAME
 # rather than debugged one at a time.

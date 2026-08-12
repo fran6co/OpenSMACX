@@ -45,7 +45,7 @@ import repair_source_locations as repair  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC = REPO_ROOT / "src"
 FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
-LEDGER = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
+LEDGER = REPO_ROOT / ".opensmacx" / "byte-match.csv"
 REPORT = REPO_ROOT / "docs" / "recovery" / "cast-classification.csv"
 
 # Files whose casts are structural and answer to a generator, not to a class

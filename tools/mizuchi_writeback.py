@@ -66,7 +66,7 @@ and this tool does not run it.
 LINE NUMBERS MOVE. A replacement of a different length shifts every catalogued
 location BELOW it in the same file. Three committed catalogues carry those
 pointers and are updated here: `docs/recovery/functions.csv`,
-`docs/recovery/byte-match.csv` and `mizuchi/source-map.json`. Two more are
+`.opensmacx/byte-match.csv` and `mizuchi/source-map.json`. Two more are
 derived and are NOT patched - `docs/recovery/summary.json` and the metadata
 caches - because they are regenerated from the IDB by
 `tools/verify_recovery_metadata.py`, and hand-editing a generated catalogue is
@@ -96,7 +96,7 @@ import emit_translation_unit as emit  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
-LEDGER_CSV = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
+LEDGER_CSV = REPO_ROOT / ".opensmacx" / "byte-match.csv"
 SOURCE_MAP = REPO_ROOT / "mizuchi" / "source-map.json"
 MATCHED_DIR = REPO_ROOT / "src" / "recovered"
 

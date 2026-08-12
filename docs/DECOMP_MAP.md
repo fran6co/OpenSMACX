@@ -106,7 +106,8 @@ over the whole tree is ~2 minutes; a content-hash cache
 reruns seconds. Without VC6/Wine/the pinned executable the tool prints the
 reason, exits 0, and still reports the map and drift.
 
-Verdicts merge into `docs/recovery/byte-match.csv` keyed by address: rows
+Verdicts merge into the ignored cache `.opensmacx/byte-match.csv` keyed
+by address: rows
 this run did not measure are preserved verbatim, and **a BYTE_EXACT row is
 never downgraded** — a failure to reproduce it is kept and printed as
 UNREPRODUCED, because that is either a tooling change or a lost scaffolding
