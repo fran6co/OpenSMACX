@@ -94,7 +94,7 @@ class SelfContainmentTest(unittest.TestCase):
         agent_brief.verifier.committed_body = lambda a: (
             "int f() { return 1; }", "src/x.cpp:10")
         agent_brief.emit.load_functions = lambda: {0x401000: {"name": "f"}}
-        agent_brief.ledger_row = lambda a: {
+        agent_brief.ledger_row = lambda a, tier="", note="": {
             "size": "16", "tier": "MISMATCH",
             "note": "#2: original 'jl' vs rebuilt 'jge'"}
         agent_brief.disassembly = lambda a: "```asm\n0x00401000 ret\n```"
@@ -175,7 +175,7 @@ class FreshRecoveryTest(unittest.TestCase):
         agent_brief.verifier.committed_body = lambda a: (
             None, "0x00401000 has no source_locations")
         agent_brief.emit.load_functions = lambda: {0x401000: {"name": "f"}}
-        agent_brief.ledger_row = lambda a: {
+        agent_brief.ledger_row = lambda a, tier="", note="": {
             "size": "26", "tier": "MISMATCH",
             "note": "#0: original 'push' vs rebuilt 'xor'"}
         agent_brief.disassembly = lambda a: "```asm\n0x00401000 ret\n```"
@@ -212,10 +212,16 @@ class FreshRecoveryTest(unittest.TestCase):
         self.assertIn("int C::m(int a) {", text)
         self.assertIn("FUN_401000", text)
 
-    def test_it_says_what_to_run_when_there_is_no_prompt_either(self):
+    def test_a_missing_contract_does_not_take_the_brief_down(self):
+        # The Contract used to be scraped out of a gitignored prompt folder, so
+        # its absence was normal and the brief printed "run
+        # emit_mizuchi_prompts.py". It is derived from the image now, so an
+        # empty section means the scaffolding refused - the brief must still
+        # carry the disassembly and the loop rather than failing.
         agent_brief.prompt_section = lambda a, h: ""
         text = agent_brief.brief(0x401000)
-        self.assertIn("emit_mizuchi_prompts.py", text)
+        self.assertIn("# Your loop", text)
+        self.assertIn("verify_recovered_function.py", text)
 
 
 class RealBriefSizeTest(unittest.TestCase):
@@ -224,12 +230,14 @@ class RealBriefSizeTest(unittest.TestCase):
     measures a real one - the thing that is actually sent."""
 
     def test_a_real_brief_stays_small(self):
-        if not agent_brief.LEDGER.is_file():
-            self.skipTest(".opensmacx/byte-match.csv is absent")
-        row = agent_brief.ledger_row(0x005E3630)
-        if not row:
-            self.skipTest("0x005E3630 is not in the ledger")
-        self.assertLess(len(agent_brief.brief(0x005E3630)), 8000)
+        # The verdict is PASSED IN rather than read from a gitignored ledger,
+        # which is the whole point of the change this test now guards: the
+        # brief has to work in a worktree that has never generated one.
+        if not agent_brief.verifier.byte_match.DEFAULT_EXE.is_file():
+            self.skipTest("the pinned executable is absent")
+        text = agent_brief.brief(0x005E3630, tier="MISMATCH",
+                                 note="#3: original 'jl' vs rebuilt 'jge'")
+        self.assertLess(len(text), 8000)
 
 
 if __name__ == "__main__":
