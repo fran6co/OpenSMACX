@@ -665,7 +665,7 @@ the extractor at three caps:
 | **41 / 42 / 43** | 2,808 `unrecovered` | current, and what this section means |
 | 66 | 2,870 `unrecovered` | a stale `build/<preset>/legacy-leaves/` manifest; the population shrank as recoveries landed |
 | 124 | 5,027 `unrecovered` | a much older `.opensmacx/legacy-leaves/` manifest |
-| 131 | the unproven **recovered** set, via a patched `select_rows` | a different question, and `docs/HANDOVER.md` labels it as one |
+| 131 | the unproven **recovered** set, via a patched `select_rows` | a different question, and docs/HANDOVER.md (retired) labels it as one |
 
 The two stale figures live in gitignored trees and are refreshed by the next
 `extract-legacy-leaves`; nothing needs correcting but the habit of quoting a

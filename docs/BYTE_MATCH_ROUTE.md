@@ -1,5 +1,12 @@
 # Byte matching as a verification route
 
+**The Rich header pins the original toolchain: `cl 12.00.8168` and
+`12.00.8447`, `link 6.00`, `MASM 6.13` for 36 objects, timestamp 1999-12-20.**
+Rescued from docs/HANDOVER.md (retired) when that file was retired 2026-08-12: three of
+those four appear nowhere else in the tree and nothing re-derives them. Only
+12.00.8168 is reachable, which is why 36 hand-written assembly objects and
+anything built by the second compiler are not expected to reproduce.
+
 Measured 2026-07-31 on this host. Tool: `tools/msvc6_byte_match.py`.
 Offline tests: `tools/test_msvc6_byte_match.py`, registered as
 `msvc6-byte-match-tests`.

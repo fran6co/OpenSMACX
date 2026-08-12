@@ -2,7 +2,7 @@
 
 This is about the *development host* — where the lifter, the differential
 oracle and the test suites run. For porting the **game** to native platforms
-see `docs/PORTING.md`, which is a different problem.
+see docs/PORTING.md (retired), which is a different problem.
 
 Start with:
 

@@ -42,7 +42,7 @@ inside it are not generic enough for a modern libc to satisfy it silently:
 - **`__CIsin`, `__CIcos`, `__CIsqrt`, `__CIatan`, `__CIpow`, `__CIacos`** —
   the x87 intrinsic helpers. This project already treats x87 rounding as
   load-bearing rather than incidental: `tools/lifted_x87.h` exists precisely
-  because the control word decides the answer, and `docs/HANDOVER.md` records
+  because the control word decides the answer, and docs/HANDOVER.md (retired) records
   that a SLEIGH interpreter was rejected for emitting `trunc(round(ST0))` and
   never reading it — wrong at every `fistp` site in the image.
 - **`__output` and `_$I10_OUTPUT`** — printf formatting and long-double
@@ -57,7 +57,7 @@ inside it are not generic enough for a modern libc to satisfy it silently:
 **This is now largely solvable and should be, before anyone writes a line of
 CRT replacement.** MSVC 6.0 Professional is installed at `~/opt/vc6`;
 `~/opt/vc6/BIN/CL.EXE` reports FileVersion `12.00.8168.0`, the exact compiler
-the Rich header pins (`docs/HANDOVER.md`), and `~/opt/vc6/LIB/LIBC.LIB` is
+the Rich header pins (docs/HANDOVER.md (retired)), and `~/opt/vc6/LIB/LIBC.LIB` is
 present. Linking the ISO's own `LIBC.LIB` makes these functions **identical**
 rather than assumed-equivalent, which retires the entire behavioural argument
 above instead of arguing it.
@@ -281,7 +281,7 @@ The original text is kept below because the reasoning is sound about the route i
 was written for, and because 48.4% of the catalogued bytes moving in or out of
 scope should be traceable to the sentence that moved them.
 
-> `docs/HANDOVER.md` puts the oracle's honest ceiling at ~49% of bytes testable
+> docs/HANDOVER.md (retired) puts the oracle's honest ceiling at ~49% of bytes testable
 > with COM skipped; the other half is reachable only by booting the lifted
 > executable and comparing observable behaviour. Acceptance for anything in this
 > population is behavioural, and a recovery here that reports "no oracle
