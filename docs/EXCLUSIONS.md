@@ -441,12 +441,25 @@ against the pinned executable, `docs/recovery/functions.csv` and
 on an ignored, never-committed hypothesis CSV, so they cannot be gate-checked
 and are cited above with their derivation instead.
 
+Three figures moved on 2026-08-12 when `src/` became the catalogue's store, and
+neither the image nor the definitions changed - only what the rows say.
+
+`eh_funclets` is "unrecovered rows between 0x00650000 and 0x00670000", and it
+reads 49 / 15,999 where the export said 43 / 15,970. `src/` carries 49
+`EXCLUDED S2a` annotations in that range; six of them were classified some other
+way in the export. The annotation is the record now, so 49 is the number.
+
+`netdaemon.original_dependency_bytes` is 0 because `original_dependencies`
+recorded which functions still reached the original executable through a
+fixed-address binding, and there is no such binding: the DLL and its 2,049
+redirects are retired. The column measured a route, and the route is gone.
+
 ```measured
 external_library.functions = 327
 external_library.bytes = 45155
 external_library.underscore_names = 278
-eh_funclets.functions = 43
-eh_funclets.bytes = 15970
+eh_funclets.functions = 49
+eh_funclets.bytes = 15999
 seh.frames = 402
 seh.cxx_frame_handler = 387
 seh.except_handler3 = 14
@@ -461,5 +474,5 @@ directx.percent_of_catalogued_bytes = 48.4
 indirect_call_sites = 5159
 netdaemon.functions = 36
 netdaemon.bytes = 43599
-netdaemon.original_dependency_bytes = 24378
+netdaemon.original_dependency_bytes = 0
 ```

@@ -118,9 +118,23 @@ def body_spans(row: dict) -> list[tuple[int, int]]:
     return spans or [(int(row["address"], 16), int(row["end_address"], 16))]
 
 
-def load_rows(functions_csv: Path) -> list[dict]:
-    with functions_csv.open() as handle:
-        return list(csv.DictReader(handle))
+def load_rows(functions_csv: Path = None) -> list[dict]:
+    """Every catalogued row, from `src/` - the store since functions.csv went.
+
+    The export is deleted; each `ORIGINAL:` annotation carries its own facts and
+    `emit.load_functions()` reads them back. A `--functions` path still wins, so
+    a regenerated export can be compared against.
+    """
+    if functions_csv is not None and str(functions_csv) not in ("", "None"):
+        try:
+            with functions_csv.open(newline="", encoding="utf-8-sig") as handle:
+                return list(csv.DictReader(handle))
+        except OSError:
+            pass
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
 
 
 def seh_registrations(image: Image) -> list[tuple[int, int]]:
@@ -344,8 +358,24 @@ def measure(exe: Path, functions_csv: Path, callgraph_json: Path) -> dict:
     })
 
     seeds = slot_referrers(image, import_slots(pe, DIRECTX_DLLS), spans)
-    with callgraph_json.open() as handle:
-        callgraph = json.load(handle)
+    # The edges come from `src/` too - each annotation carries a `calls` line
+    # and an `indirect` line - so this measures without callgraph.json.
+    if callgraph_json is not None and callgraph_json.is_file():
+        with callgraph_json.open() as handle:
+            callgraph = json.load(handle)
+    else:
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import project_catalogue as _pc
+        catalogued = _pc.from_source()
+        callgraph = {
+            "edges": [{"source": f"0x{a:08X}", "target": f"0x{t2:08X}"}
+                      for a, r in catalogued.items()
+                      for t2 in (r.get("_calls") or ())],
+            "indirect_call_sites": sorted(
+                {f"0x{s:08X}" for r in catalogued.values()
+                 for s in (r.get("_indirect") or ())}),
+        }
     reached = transitive_callers(callgraph["edges"], seeds)
     by_address = {int(row["address"], 16): row for row in rows}
     reached_bytes = sum(int(by_address[address]["size"]) for address in reached)
@@ -426,8 +456,8 @@ def main(argv: list[str] | None = None) -> int:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
-    parser.add_argument("--functions", type=Path, default=FUNCTIONS_CSV)
-    parser.add_argument("--callgraph", type=Path, default=CALLGRAPH_JSON)
+    parser.add_argument("--functions", type=Path, default=None)
+    parser.add_argument("--callgraph", type=Path, default=None)
     parser.add_argument("--document", type=Path, default=EXCLUSIONS_DOC)
     parser.add_argument("--check", action="store_true",
                         help="fail when the document disagrees with the image")

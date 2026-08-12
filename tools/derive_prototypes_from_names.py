@@ -1176,9 +1176,15 @@ def load(path: Path = PROTOTYPES_CSV) -> dict:
                 if row.get("address") and row.get("prototype")}
 
 
-def load_rows(path: Path = FUNCTIONS_CSV) -> list[dict]:
-    with path.open(newline="", encoding="utf-8-sig") as handle:
-        return list(csv.DictReader(handle))
+def load_rows(path: Path = None) -> list[dict]:
+    """Every catalogued row, from `src/`. See measure_exclusions.load_rows."""
+    if path is not None:
+        with path.open(newline="", encoding="utf-8-sig") as handle:
+            return list(csv.DictReader(handle))
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
 
 
 def load_ida(path: Path = IDA_CSV) -> list[dict]:
@@ -1202,7 +1208,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--functions", type=Path, default=FUNCTIONS_CSV)
+    parser.add_argument("--functions", type=Path, default=None)
     parser.add_argument("--ida", type=Path, default=IDA_CSV)
     parser.add_argument("--out", type=Path, default=PROTOTYPES_CSV)
     parser.add_argument("--hypotheses", type=Path, default=HYPOTHESES_CSV)

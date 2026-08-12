@@ -115,6 +115,11 @@ def from_source(src: Path = None) -> dict:
     """
     root = src or (REPO_ROOT / "src")
     rows = {}
+    # `recovery_state` was never a fact ABOUT a function: the exporter derived
+    # it from `src/` and wrote it back into the CSV. Deriving it HERE, once,
+    # keeps every consumer agreeing rather than each re-deriving it - and it is
+    # what the round trip through the export used to get wrong, leaving 651
+    # addresses called `unrecovered` while `src/` held a proof for them.
     for annotation in annotation_scan.scan_tree(root):
         path = REPO_ROOT / annotation.path
         try:
@@ -154,6 +159,29 @@ def from_source(src: Path = None) -> dict:
             # how this was found rather than reasoned.
             "end_address": (present.get("spans", "").split(";")[0].split("-")[-1]
                             if "-" in present.get("spans", "") else ""),
+            # BY CITATION, not by "is it excluded". S1 is the MSVC 6 CRT, which
+            # is what `external_library` means; S2a is the C++ EH unwind
+            # funclets, which are game code the project declines to express.
+            # Collapsing them moved 15,970 bytes out of `eh_funclets` and into
+            # `external_library` and failed `exclusions-current` - the two
+            # populations are measured separately and must stay separate.
+            "recovery_state": (
+                "external_library"
+                if annotation.state == annotation_scan.STATE_EXCLUDED
+                and (annotation.exclusion or "").upper().startswith("S1") else
+                "unrecovered"
+                if annotation.state == annotation_scan.STATE_EXCLUDED else
+                "source_complete"
+                if annotation.state == annotation_scan.STATE_IMPLEMENTED else
+                "unrecovered"),
+            "source_locations": annotation.location if
+                annotation.state == annotation_scan.STATE_IMPLEMENTED else "",
+            "segment": ".text",
+            "original_dependencies": "",
+            "redirect_exports": "",
+            "source_statuses": "",
+            "priority": "",
+            "comments": "",
         }
     return rows
 
