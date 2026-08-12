@@ -125,6 +125,44 @@ not a proof, and it was competing against a route that produces exact evidence.
 
 ---
 
+## Seven gates, retired 2026-08-12 — the tools stay, the enforcement goes
+
+These were audited one at a time against a single question: does this contribute
+to the STATUS of the recoveries, to the byte-match LOOP, or to BUILDING the
+project? Twenty-eight gates answered yes. Seven did not, and their `add_test`
+registrations are gone. **The tools and the CSVs they guard are untouched** —
+they remain runnable on demand and named in `docs/TOOLS.md`. What is retired is
+the claim that ctest must keep their output current.
+
+Four further retire-verdicts were **overturned** by an adversarial pass and are
+still enforced: `wine-test-lock-check` (the assessor priced only the
+`RESOURCE_LOCK` half and missed the `--expect-at-least` floor, which refuses when
+a Wine-backed suite silently loses its lock), `class-size-bounds-current` (its
+`main()` runs a control unconditionally before the comparison, so the check does
+more than its docstring claims), `yitzi-sizes-current` (the ratchet is *not* a
+second catcher of a drifted pinned size, which the retire case assumed), and
+`def-append-only` (it guards the join key of a surviving status ratchet, not only
+the retired hybrid's import table). Recording that four of fourteen were wrong is
+the useful part: "I cannot see what this catches" was not evidence.
+
+| gate | why it went |
+|---|---|
+| `vtables-current` | keeps `vtables.csv` current; its readers are the layout hypothesis path, which reads it on demand |
+| `subobject-sites-current` | the tool has no `--check` at all, so the registration compared nothing — it was a worklist wearing a gate's clothes |
+| `pracx-members-current` | PRACX is a hypothesis source, barred from size *agreement* by the shared-lineage rule; currency of a hypothesis is not a project invariant |
+| `behaviour-member-names-current` | 18 member names inferred from their sole accessor; once written into headers the file is a no-op |
+| `recovered-shapes-current` | the shapes only annotate the *differential-oracle* debt via `recovery_metrics.unproven_by_shape`; `load_shapes()` returns `{}` when absent and the headline denominator never reads it |
+| `signature-oracles-current` | regenerates the hybrid runtime's oracle harness — and **taxed the loop**: inserting a body *above* a function it verifies, in the same file, without touching that function, staled the provenance comment and failed the gate in both lanes |
+| `observability-ratchet` | **the heaviest tax of the seven.** It made every new recovery of ≥200 B fail until someone ran `measure_observability.py` on it — one build per function — and it came back OBSERVED. Payable only in the currency of the route being retired, and satisfiable by editing a JSON string. Its own tool states the limit: "editing a verdict from UNOBSERVED to OBSERVED would satisfy this check while proving nothing." |
+
+Its damage case and `COVERED_CHECKS` entry were struck from
+`verify_checks_can_fail.py` in the same commit — a coverage requirement that
+names a check which no longer exists fails the run, which is the gate working.
+
+`src/generated_signature_oracle.cpp` and `src/globals_diff.h` **stay**: both are
+in the DLL source list, and deleting either breaks the build. Only enforcement of
+their currency went.
+
 ## Still live, and not retired by this file
 
 `recovery-gameplay-tests` remains: it is the sole observer for 37 of those 63
