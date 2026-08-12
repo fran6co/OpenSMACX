@@ -52,6 +52,22 @@ from capstone.x86 import X86_OP_MEM, X86_REG_ECX  # noqa: E402
 import derive_access_bounds  # noqa: E402
 import derive_class_layout  # noqa: E402
 
+
+def _catalogue_rows():
+    """Every catalogued row, from `src/`.
+
+    `docs/recovery/functions.csv` is deleted: every `ORIGINAL:` annotation
+    carries its own name, size, spans, prototype, kind, flags and call
+    edges, and `emit.load_functions()` reads them back. This tool opened
+    the CSV directly, so it broke the moment the store moved - which is
+    how five layout gates went red at once.
+    """
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
@@ -143,27 +159,27 @@ def infer(exe: Path) -> list:
     engine.detail = True
 
     proposals = collections.defaultdict(list)
-    with FUNCTIONS.open(newline="", encoding="utf-8-sig") as handle:
-        for row in csv.DictReader(handle):
-            mangled = row.get("name") or ""
-            klass = derive_access_bounds.receiver_scope(mangled)
-            if not klass:
-                continue
-            name = member_name(method_name(mangled))
-            if not name:
-                continue
-            try:
-                address, size = int(row["address"], 16), int(row["size"])
-            except (ValueError, KeyError, TypeError):
-                continue
-            if not 0 < size <= MAX_BODY:
-                continue
-            offsets = touched(image, engine, address, size)
-            if len(offsets) != 1:
-                # Two members is not evidence about either; zero is silence.
-                continue
-            offset, width = offsets.pop()
-            proposals[(klass, offset)].append((name, width, mangled))
+    # `src/` is the catalogue's store; the export is deleted.
+    for row in _catalogue_rows():
+        mangled = row.get("name") or ""
+        klass = derive_access_bounds.receiver_scope(mangled)
+        if not klass:
+            continue
+        name = member_name(method_name(mangled))
+        if not name:
+            continue
+        try:
+            address, size = int(row["address"], 16), int(row["size"])
+        except (ValueError, KeyError, TypeError):
+            continue
+        if not 0 < size <= MAX_BODY:
+            continue
+        offsets = touched(image, engine, address, size)
+        if len(offsets) != 1:
+            # Two members is not evidence about either; zero is silence.
+            continue
+        offset, width = offsets.pop()
+        proposals[(klass, offset)].append((name, width, mangled))
 
     rows = []
     for (klass, offset), found in sorted(proposals.items()):

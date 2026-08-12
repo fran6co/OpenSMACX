@@ -92,6 +92,22 @@ from capstone import CS_ARCH_X86, CS_MODE_32, Cs  # noqa: E402
 import disasm  # noqa: E402
 import find_constant_returns as const  # noqa: E402
 
+
+def _catalogue_rows():
+    """Every catalogued row, from `src/`.
+
+    `docs/recovery/functions.csv` is deleted: every `ORIGINAL:` annotation
+    carries its own name, size, spans, prototype, kind, flags and call
+    edges, and `emit.load_functions()` reads them back. This tool opened
+    the CSV directly, so it broke the moment the store moved - which is
+    how five layout gates went red at once.
+    """
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
@@ -549,19 +565,19 @@ def analyze(pe, row, functions=None) -> Forward:
 
 
 def load_rows(addresses: set[int] | None, state: str | None):
-    with FUNCTIONS_CSV.open() as handle:
-        for row in csv.DictReader(handle):
-            try:
-                address = int(row["address"], 16)
-            except ValueError:
-                continue
-            if addresses is not None and address not in addresses:
-                continue
-            if state and row.get("recovery_state") != state:
-                continue
-            if not row.get("size"):
-                continue
-            yield row
+    # `src/` is the catalogue's store; the export is deleted.
+    for row in _catalogue_rows():
+        try:
+            address = int(row["address"], 16)
+        except ValueError:
+            continue
+        if addresses is not None and address not in addresses:
+            continue
+        if state and row.get("recovery_state") != state:
+            continue
+        if not row.get("size"):
+            continue
+        yield row
 
 
 def main() -> int:

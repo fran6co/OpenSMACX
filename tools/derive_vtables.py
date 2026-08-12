@@ -51,6 +51,22 @@ from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_REG_ECX  # noqa: E402
 import derive_access_bounds  # noqa: E402
 import derive_class_layout  # noqa: E402
 
+
+def _catalogue_rows():
+    """Every catalogued row, from `src/`.
+
+    `docs/recovery/functions.csv` is deleted: every `ORIGINAL:` annotation
+    carries its own name, size, spans, prototype, kind, flags and call
+    edges, and `emit.load_functions()` reads them back. This tool opened
+    the CSV directly, so it broke the moment the store moved - which is
+    how five layout gates went red at once.
+    """
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
@@ -72,42 +88,42 @@ def vtables(exe: Path) -> list:
         image.pe.OPTIONAL_HEADER.SizeOfImage
 
     found = collections.defaultdict(set)
-    with FUNCTIONS.open(newline="", encoding="utf-8-sig") as handle:
-        for row in csv.DictReader(handle):
-            name = row.get("name") or ""
-            if not name.startswith(INSTALLERS):
+    # `src/` is the catalogue's store; the export is deleted.
+    for row in _catalogue_rows():
+        name = row.get("name") or ""
+        if not name.startswith(INSTALLERS):
+            continue
+        klass = derive_access_bounds.receiver_scope(name)
+        if not klass:
+            continue
+        try:
+            address, size = int(row["address"], 16), int(row["size"])
+        except (ValueError, KeyError, TypeError):
+            continue
+        if not 0 < size <= 4000:
+            continue
+        start = address - image.code_start
+        if start < 0 or start + size > len(image.code):
+            continue
+        for instruction in engine.disasm(
+                image.code[start:start + size], address):
+            if instruction.mnemonic != "mov" or len(
+                    instruction.operands) != 2:
                 continue
-            klass = derive_access_bounds.receiver_scope(name)
-            if not klass:
+            destination, source = instruction.operands
+            if (destination.type != X86_OP_MEM
+                    or destination.mem.base != X86_REG_ECX
+                    or destination.mem.index != 0
+                    or source.type != X86_OP_IMM):
                 continue
-            try:
-                address, size = int(row["address"], 16), int(row["size"])
-            except (ValueError, KeyError, TypeError):
+            table = source.imm & 0xFFFFFFFF
+            if not image.pe.OPTIONAL_HEADER.ImageBase < table < ceiling:
                 continue
-            if not 0 < size <= 4000:
-                continue
-            start = address - image.code_start
-            if start < 0 or start + size > len(image.code):
-                continue
-            for instruction in engine.disasm(
-                    image.code[start:start + size], address):
-                if instruction.mnemonic != "mov" or len(
-                        instruction.operands) != 2:
-                    continue
-                destination, source = instruction.operands
-                if (destination.type != X86_OP_MEM
-                        or destination.mem.base != X86_REG_ECX
-                        or destination.mem.index != 0
-                        or source.type != X86_OP_IMM):
-                    continue
-                table = source.imm & 0xFFFFFFFF
-                if not image.pe.OPTIONAL_HEADER.ImageBase < table < ceiling:
-                    continue
-                # The store is only a vtable install if what it points at is a
-                # function. An ordinary constant assigned to a member is not.
-                slot = image.dword(table)
-                if slot in starts:
-                    found[(klass, destination.mem.disp, table)].add(slot)
+            # The store is only a vtable install if what it points at is a
+            # function. An ordinary constant assigned to a member is not.
+            slot = image.dword(table)
+            if slot in starts:
+                found[(klass, destination.mem.disp, table)].add(slot)
 
     rows = []
     for (klass, offset, table), slots in found.items():
