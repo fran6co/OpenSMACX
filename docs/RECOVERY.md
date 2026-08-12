@@ -81,7 +81,7 @@ Ghidra 12.1 or newer can analyze the original executable and export address-keye
 
 ```sh
 python3 tools/run_ghidra_analysis.py --exe /path/to/terranx.exe
-python3 tools/export_idc_functions.py --idc /path/to/ida-export.idc
+python3 tools/export_idb_members.py
 python3 tools/correlate_recovery_analyses.py
 ```
 

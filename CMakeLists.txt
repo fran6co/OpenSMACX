@@ -1802,6 +1802,18 @@ if(BUILD_TESTING)
     # gate reports a clean sweep without it. Four sat unregistered before anyone
     # noticed. The check distinguishes execution from mere reference: a test
     # named only in a DEPENDS list is rebuilt when it changes and never run.
+    # Every tool has an entry point, and every entry point names a tool that
+    # exists. The obvious version of this audit - grep CMakeLists - is the one
+    # that gets it wrong: it called mizuchi_context.py dead, and mizuchi.yaml
+    # invokes it. docs/TOOLS.md is a root, so keeping a tool means placing it
+    # there and deleting one means striking its line; neither can drift.
+    add_test(NAME tool-reachability
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_tool_reachability.py"
+    )
+    opensmacx_add_python_tool_test(tool-reachability-tests
+                                   test_verify_tool_reachability.py)
+
     add_test(NAME tool-test-registration
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_tool_test_registration.py"
