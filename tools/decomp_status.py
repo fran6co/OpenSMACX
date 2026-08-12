@@ -498,6 +498,22 @@ def work_address(address: int, annotations: list, functions: dict,
     The scaffold keeps the FILE marker and the sentinel, so the state stays
     PLACEHOLDER (measured) until a real body exists - this tool does not
     trust the claim that work has started.
+
+    THE SCAFFOLD GOES THROUGH `mizuchi_declfix` BEFORE IT IS WRITTEN, so that
+    the unit an agent iterates on and the unit that banks the result are the
+    same bytes. They were not. A `FILE`-marked scaffold is compiled VERBATIM by
+    `build_units`, while `verify_recovered_function` scores through
+    `mizuchi_writeback.build_unit`, which respells callee declarations so VC6
+    re-mangles them to the catalogued names. Without declfix a body calling a
+    CRT function reads NO_COMPILE in one and BYTE_EXACT in the other - which
+    means an agent could prove a body and `--record-matches` would stamp
+    nothing, banking zero for the batch and looking like an agent-honesty
+    problem rather than a recipe mismatch.
+
+    The definition is split off the full unit by prefix rather than rebuilt:
+    `emit` returns the scaffolding at exactly the point the definition begins
+    (`emit_translation_unit.py:1430,1441`), so this produces byte-for-byte what
+    `build_unit` would, which is the property that matters.
     """
     annotation = next((a for a in annotations if a.address == address), None)
     if annotation is None:
@@ -508,7 +524,11 @@ def work_address(address: int, annotations: list, functions: dict,
               f"{annotation.location}; --work only claims placeholders")
         return 1
     try:
-        unit = emit.emit(address, functions, derived, callees, pe_fast)
+        whole = emit.emit(address, functions, derived, callees, pe_fast)
+        scaffolding = emit.emit(address, functions, derived, callees, pe_fast,
+                                scaffolding_only=True)
+        unit = writeback.build_unit(address, whole[len(scaffolding):].lstrip("\n"),
+                                    functions, callees, derived, pe_fast)
     except emit.Unsettled as error:
         print(f"no scaffolding for 0x{address:08X}: {error}")
         return 1

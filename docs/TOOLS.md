@@ -92,9 +92,13 @@ Semantics get decided early; the rest is finding which of several equivalent
 spellings VC6 lowers the way the original was lowered.
 
 ```sh
-tools/try_variants.py 0x00405C20          # score many spellings at once
-tools/verify_recovered_function.py        # score one, without touching the tree
+tools/verify_recovered_function.py 0x00405C20 --dir /tmp/variants   # many, ranked
+tools/verify_recovered_function.py 0x00405C20 --body candidate.cpp  # one
 ```
+
+One command, two modes; exit 0 means BYTE_EXACT and nothing else does, so it
+works directly as a loop condition. `--dir` is the one to reach for — it loads
+the image once and answers "which of these nine" instead of asking nine times.
 
 `tools/byte_match.py` is the comparison itself, `tools/byte_match_census.py`
 recompiles everything already recovered, `tools/byte_match_fanout.py` prepares
