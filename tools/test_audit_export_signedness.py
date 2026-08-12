@@ -106,10 +106,14 @@ class CommittedTreeTests(unittest.TestCase):
     """The real .def against the real catalogue."""
 
     def setUp(self):
-        if not audit.DEFAULT_FUNCTIONS.is_file():
-            self.skipTest("docs/recovery/functions.csv is absent")
+        # These three SKIPPED silently from the day docs/recovery/functions.csv
+        # was deleted until 2026-08-12, because the guard here asked whether
+        # that file existed and a missing input read as "nothing to test". The
+        # catalogue now comes from src/, which is always present, so there is
+        # no longer an absence to guard against - and a guard that turns a
+        # moved input into a quiet pass is the defect, not the protection.
         self.compared, self.findings = audit.audit(
-            audit.DEFAULT_FUNCTIONS, audit.DEFAULT_DEF, Path("absent"))
+            None, audit.DEFAULT_DEF, Path("absent"))
 
     def test_bitmask_stays_fixed(self):
         # bitmask is the one confirmed member of this class, corrected in

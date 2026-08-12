@@ -1442,6 +1442,21 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(tool-reachability-tests
                                    test_verify_tool_reachability.py)
 
+    # A retirement that deletes a tool leaves its CMake lines behind, and CMake
+    # never objects: add_custom_target resolves nothing at configure time, and a
+    # target outside `all` is never built. Twenty-three references survived that
+    # way - COMMAND lines naming `prepare_hybrid_image (retired)`, a placeholder
+    # spelling from rewriting tool names in place, and DEPENDS on
+    # docs/recovery/functions.csv, deleted when the map moved into src/. A full
+    # configure and a 173-step build passed over every one of them.
+    add_test(NAME cmake-paths
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_cmake_paths_exist.py"
+            --check
+    )
+    opensmacx_add_python_tool_test(cmake-paths-tests
+                                   test_verify_cmake_paths_exist.py)
+
     add_test(NAME tool-test-registration
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_tool_test_registration.py"
@@ -1617,261 +1632,7 @@ opensmacx_add_metadata_gate_target(verify-recovery-metadata)
 # must keep failing on drift for anyone who has not consciously promoted.
 opensmacx_add_metadata_gate_target(promote-recovery-metadata --promote)
 
-add_custom_target(prepare-hybrid-image
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/prepare_hybrid_image (retired)"
-        --exe "${OPENSMACX_LEGACY_EXE}"
-        --output "${OPENSMACX_HYBRID_DIR}"
-    DEPENDS
-        verify-recovery-metadata
-        "${CMAKE_CURRENT_SOURCE_DIR}/prepare_hybrid_image (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/priorities.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/summary.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-binding-classifications.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
-    USES_TERMINAL
-    VERBATIM
-)
-
-add_custom_target(assemble-hybrid-executable
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/assemble_hybrid_image (retired)"
-        --image "${OPENSMACX_HYBRID_DIR}"
-        --output "${OPENSMACX_HYBRID_EXE}"
-    DEPENDS
-        prepare-hybrid-image
-        "${CMAKE_CURRENT_SOURCE_DIR}/assemble_hybrid_image (retired)"
-    USES_TERMINAL
-    VERBATIM
-)
-
-add_custom_target(stage-preset-game
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/stage_preset_game_dir (retired)"
-        --source "${OPENSMACX_GAME_DIR}"
-        --destination "${OPENSMACX_STAGED_GAME_DIR}"
-    DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/stage_preset_game_dir (retired)"
-    USES_TERMINAL
-    VERBATIM
-)
-
-set(OPENSMACX_HYBRID_STAGE_COMMAND
-    "${OPENSMACX_PYTHON_EXECUTABLE}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/opensmac_patcher (retired)"
-    --exe "${OPENSMACX_HYBRID_EXE}"
-    --dll "$<TARGET_FILE:OpenSMACX>"
-    --output "${OPENSMACX_STAGED_GAME_DIR}"
-    --exe-name terranx_hybrid.exe
-    --wine-prefix "${OPENSMACX_WINE_PREFIX}"
-)
-if(OPENSMACX_WINE)
-    list(APPEND OPENSMACX_HYBRID_STAGE_COMMAND --wine "${OPENSMACX_WINE}")
-endif()
-
-add_custom_target(stage-hybrid-game
-    COMMAND ${OPENSMACX_HYBRID_STAGE_COMMAND}
-    DEPENDS
-        OpenSMACX
-        assemble-hybrid-executable
-        stage-preset-game
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/opensmac_patcher (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
-    USES_TERMINAL
-    VERBATIM
-)
-
-set(OPENSMACX_HYBRID_SMOKE_COMMAND
-    "${OPENSMACX_PYTHON_EXECUTABLE}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/smoke_hybrid_game (retired)"
-    --game-dir "${OPENSMACX_STAGED_GAME_DIR}"
-    --executable terranx_hybrid.exe
-    --wine-prefix "${OPENSMACX_WINE_PREFIX}"
-    --duration "${OPENSMACX_HYBRID_SMOKE_SECONDS}"
-    --log "${CMAKE_CURRENT_BINARY_DIR}/hybrid-smoke.log"
-    --result "${CMAKE_CURRENT_BINARY_DIR}/hybrid-smoke-result.json"
-    --oracle-result "${CMAKE_CURRENT_BINARY_DIR}/hybrid-runtime-oracle-result.txt"
-    # Every suite src/runtime_oracle.cpp registers, named so the smoke fails on
-    # one that never reports rather than accepting the terminator alone. The
-    # last green gate accepted a result file with generated-signatures missing
-    # and zero verdict lines in the log; a named set is what catches that.
-    --expect-oracle-suite=constructor
-    --expect-oracle-suite=basebutton
-    --expect-oracle-suite=scroll
-    --expect-oracle-suite=win
-    --expect-oracle-suite=sprite
-    --expect-oracle-suite=buffer
-    --expect-oracle-suite=graphicwin
-    --expect-oracle-suite=stringstruct
-    --expect-oracle-suite=spying
-    --expect-oracle-suite=basebutton-release
-    --expect-oracle-suite=sprite-release
-    --expect-oracle-suite=buffer-release
-    --expect-oracle-suite=generated-signatures
-)
-if(OPENSMACX_WINE)
-    list(APPEND OPENSMACX_HYBRID_SMOKE_COMMAND --wine "${OPENSMACX_WINE}")
-endif()
-
-add_custom_target(smoke-hybrid-game
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-    COMMAND ${OPENSMACX_HYBRID_SMOKE_COMMAND}
-    DEPENDS
-        stage-hybrid-game
-        "${CMAKE_CURRENT_SOURCE_DIR}/smoke_hybrid_game (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/run_game (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/setup_game (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
-    USES_TERMINAL
-    VERBATIM
-)
-
-set(OPENSMACX_GAMEPLAY_SCENARIO_COMMAND
-    "${OPENSMACX_PYTHON_EXECUTABLE}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/run_gameplay_scenario (retired)"
-    --game-dir "${OPENSMACX_STAGED_GAME_DIR}"
-    --executable terranx_hybrid.exe
-    --save "${OPENSMACX_GAMEPLAY_SCENARIO_SAVE}"
-    --result "${CMAKE_CURRENT_BINARY_DIR}/gameplay-scenario-result.json"
-    --log "${CMAKE_CURRENT_BINARY_DIR}/gameplay-scenario.log"
-    --wine-prefix "${OPENSMACX_WINE_PREFIX}"
-    --timeout "${OPENSMACX_GAMEPLAY_SCENARIO_TIMEOUT}"
-)
-if(OPENSMACX_WINE)
-    list(APPEND OPENSMACX_GAMEPLAY_SCENARIO_COMMAND --wine "${OPENSMACX_WINE}")
-endif()
-
-add_custom_target(inspect-gameplay-scenario
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-    COMMAND ${OPENSMACX_GAMEPLAY_SCENARIO_COMMAND} --inspect
-    DEPENDS
-        stage-hybrid-game
-        "${CMAKE_CURRENT_SOURCE_DIR}/run_gameplay_scenario (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
-    USES_TERMINAL
-    VERBATIM
-)
-
-add_custom_target(run-gameplay-scenario
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-    COMMAND ${OPENSMACX_GAMEPLAY_SCENARIO_COMMAND}
-        --vehicle "${OPENSMACX_GAMEPLAY_SCENARIO_VEHICLE}"
-        --x "${OPENSMACX_GAMEPLAY_SCENARIO_X}"
-        --y "${OPENSMACX_GAMEPLAY_SCENARIO_Y}"
-    DEPENDS
-        stage-hybrid-game
-        "${CMAKE_CURRENT_SOURCE_DIR}/run_gameplay_scenario (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
-    USES_TERMINAL
-    VERBATIM
-)
-
-add_custom_target(run-gameplay-resolution
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-    COMMAND ${OPENSMACX_GAMEPLAY_SCENARIO_COMMAND}
-        --vehicle "${OPENSMACX_GAMEPLAY_SCENARIO_VEHICLE}"
-        --x "${OPENSMACX_GAMEPLAY_SCENARIO_X}"
-        --y "${OPENSMACX_GAMEPLAY_SCENARIO_Y}"
-        --resolve
-    DEPENDS
-        stage-hybrid-game
-        "${CMAKE_CURRENT_SOURCE_DIR}/run_gameplay_scenario (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
-    USES_TERMINAL
-    VERBATIM
-)
-
-add_custom_target(run-gameplay-advancement
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-    COMMAND ${OPENSMACX_GAMEPLAY_SCENARIO_COMMAND}
-        --vehicle "${OPENSMACX_GAMEPLAY_SCENARIO_VEHICLE}"
-        --x "${OPENSMACX_GAMEPLAY_SCENARIO_X}"
-        --y "${OPENSMACX_GAMEPLAY_SCENARIO_Y}"
-        --advance
-    DEPENDS
-        stage-hybrid-game
-        "${CMAKE_CURRENT_SOURCE_DIR}/run_gameplay_scenario (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/owned_wine_prefix.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_process.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/wine_runtime.py"
-    USES_TERMINAL
-    VERBATIM
-)
-
-set(OPENSMACX_LEGACY_LEAF_ASSEMBLY
-    "${OPENSMACX_LEGACY_LEAF_DIR}/legacy-leaves.S")
-set(OPENSMACX_LEGACY_LEAF_MANIFEST
-    "${OPENSMACX_LEGACY_LEAF_DIR}/manifest.json")
-set(OPENSMACX_LEGACY_LEAF_SYMBOLS
-    "${OPENSMACX_LEGACY_LEAF_DIR}/symbols.csv")
-
-add_custom_command(
-    OUTPUT
-        "${OPENSMACX_LEGACY_LEAF_ASSEMBLY}"
-        "${OPENSMACX_LEGACY_LEAF_MANIFEST}"
-        "${OPENSMACX_LEGACY_LEAF_SYMBOLS}"
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-    COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/extract_legacy_leaves (retired)"
-        --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
-        --output "${OPENSMACX_LEGACY_LEAF_DIR}"
-    DEPENDS
-        "${OPENSMACX_LEGACY_LEAF_EXE}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/extract_legacy_leaves (retired)"
-        "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_artifact.py"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-correlation.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/analysis-summary.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/functions.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
-        "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
-    USES_TERMINAL
-    VERBATIM
-)
-add_custom_target(extract-legacy-leaves
-    DEPENDS
-        "${OPENSMACX_LEGACY_LEAF_ASSEMBLY}"
-        "${OPENSMACX_LEGACY_LEAF_MANIFEST}"
-        "${OPENSMACX_LEGACY_LEAF_SYMBOLS}"
-)
-
-
-# Pure Python plus a file comparison - nothing toolchain-specific. It was
-# gated on MINGW only because that used to mean "the build that runs the
-# gate", and under VC6-only that gating would have deleted the check.
 if(BUILD_TESTING)
-    add_custom_target(verify-redirect-signatures
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/generate_redirect_signatures (retired)"
-            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
-            --runtime-exe "${OPENSMACX_LEGACY_EXE}"
-            --output "${CMAKE_CURRENT_BINARY_DIR}/redirect_signatures.h"
-        COMMAND "${CMAKE_COMMAND}" -E compare_files
-            "${CMAKE_CURRENT_BINARY_DIR}/redirect_signatures.h"
-            "${CMAKE_CURRENT_SOURCE_DIR}/src/redirect_signatures.h"
-        DEPENDS
-            "${CMAKE_CURRENT_SOURCE_DIR}/generate_redirect_signatures (retired)"
-            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-redirects.csv"
-            "${CMAKE_CURRENT_SOURCE_DIR}/src/redirect_signatures.h"
-        USES_TERMINAL
-        VERBATIM
-    )
-
     # Every test that goes through tools/run_windows_test.py drives the ONE
     # marker-protected prefix at ${OPENSMACX_WINE_PREFIX}, and that runner
     # stops the prefix when it finishes. Two of them at once therefore means
@@ -1953,8 +1714,7 @@ if(BUILD_TESTING)
     set(OPENSMACX_GATE_ORACLE_DEPENDS)
     if(OPENSMACX_GNU_CXX)
         list(APPEND OPENSMACX_GATE_ORACLE_DEPENDS
-            verify-recovery-oracles
-            assemble-legacy-leaves)
+            verify-recovery-oracles)
     endif()
 
     add_custom_target(verify-recovery-batch
@@ -1964,16 +1724,8 @@ if(BUILD_TESTING)
             verify-recovery-metadata
             verify-recovery-abi
             ${OPENSMACX_GATE_ORACLE_DEPENDS}
-            verify-redirect-signatures
             recovery-gameplay-tests
             globals-diff-tests
-            # The gate RAN this without building it. It is registered in
-            # CTestTestfile.cmake and reachable from `all`, but it was in
-            # neither the explicit nor the order-only inputs of this edge, so
-            # the one path advertised as safe from stale binaries was launching
-            # one it never rebuilt. recovery-oracle-tests needs no line here -
-            # verify-recovery-oracles already pulls it in order-only.
-            smoke-hybrid-game
         USES_TERMINAL
         VERBATIM
     )
