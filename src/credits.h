@@ -52,7 +52,8 @@ class DLLEXPORT Credits : GraphicWin {
   // 12 member(s) from the IDA database, 4 named; it starts a member at 0xA18, which is where src/ ends.
 
   uint32_t field_A18_;  // 0xA18
-  uint8_t field_A1C_[0x800];  // 0xA1C
+  uint32_t field_A1C_;  // 0xA1C
+  uint8_t field_A20_[0x7FC];  // 0xA20
   uint32_t field_121C_;  // 0x121C
   uint32_t field_1220_;  // 0x1220
   uint32_t field_1224_;  // 0x1224

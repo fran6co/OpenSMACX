@@ -44,11 +44,56 @@ class DLLEXPORT NetDaemon : AlphaNet {
 
   // Storage the image proves is here: its own methods reach 0x1BD0.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_14A0_[0x730];
+  uint8_t field_14A0_[0x1C];  // 0x14A0
+  uint8_t field_14BC_;  // 0x14BC
+  uint8_t field_14BD_[0xC3];  // 0x14BD
+  uint32_t field_1580_;  // 0x1580
+  uint32_t field_1584_;  // 0x1584
+  uint8_t field_1588_[0x4];  // 0x1588
+  uint8_t field_158C_;  // 0x158C
+  uint8_t field_158D_[0x7];  // 0x158D
+  uint16_t field_1594_;  // 0x1594
+  uint8_t field_1596_[0x596];  // 0x1596
+  uint32_t field_1B2C_;  // 0x1B2C
+  uint32_t field_1B30_;  // 0x1B30
+  uint32_t field_1B34_;  // 0x1B34
+  uint32_t field_1B38_;  // 0x1B38
+  uint32_t field_1B3C_;  // 0x1B3C
+  uint32_t field_1B40_;  // 0x1B40
+  uint32_t field_1B44_;  // 0x1B44
+  uint32_t field_1B48_;  // 0x1B48
+  uint32_t field_1B4C_;  // 0x1B4C
+  uint32_t field_1B50_;  // 0x1B50
+  uint32_t field_1B54_;  // 0x1B54
+  uint32_t field_1B58_;  // 0x1B58
+  uint32_t field_1B5C_;  // 0x1B5C
+  uint32_t field_1B60_;  // 0x1B60
+  uint8_t field_1B64_[0x4];  // 0x1B64
+  uint32_t field_1B68_;  // 0x1B68
+  uint32_t field_1B6C_;  // 0x1B6C
+  uint8_t field_1B70_[0x8];  // 0x1B70
+  uint32_t field_1B78_;  // 0x1B78
+  uint32_t field_1B7C_;  // 0x1B7C
+  uint32_t field_1B80_;  // 0x1B80
+  uint8_t field_1B84_[0x1C];  // 0x1B84
+  uint32_t field_1BA0_;  // 0x1BA0
+  uint32_t field_1BA4_;  // 0x1BA4
+  uint32_t field_1BA8_;  // 0x1BA8
+  uint32_t field_1BAC_;  // 0x1BAC
+  uint32_t field_1BB0_;  // 0x1BB0
+  uint32_t field_1BB4_;  // 0x1BB4
+  uint32_t field_1BB8_;  // 0x1BB8
+  uint32_t field_1BBC_;  // 0x1BBC
+  uint32_t field_1BC0_;  // 0x1BC0
+  uint32_t field_1BC4_;  // 0x1BC4
+  uint32_t field_1BC8_;  // 0x1BC8
+  uint32_t field_1BCC_;  // 0x1BCC
 
   // Storage the image proves is here: its own methods reach 0x1BDC.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_1BD0_[0xC];
+  uint32_t field_1BD0_;  // 0x1BD0
+  uint32_t field_1BD4_;  // 0x1BD4
+  uint32_t field_1BD8_;  // 0x1BD8
 };
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the

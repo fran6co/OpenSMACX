@@ -85,7 +85,67 @@ class DLLEXPORT ProdPicker : GraphicWin {
 
   // Storage the image proves is here: its own methods reach 0xA840.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_A63C_[0x204];  // 0xA63C
+  uint8_t field_A63C_[0x100];  // 0xA63C
+  uint32_t field_A73C_;  // 0xA73C
+  uint32_t field_A740_;  // 0xA740
+  uint32_t field_A744_;  // 0xA744
+  uint8_t field_A748_[0x18];  // 0xA748
+  float field_A760_;  // 0xA760
+  float field_A764_;  // 0xA764
+  float field_A768_;  // 0xA768
+  uint32_t field_A76C_;  // 0xA76C
+  uint32_t field_A770_;  // 0xA770
+  uint32_t field_A774_;  // 0xA774
+  uint32_t field_A778_;  // 0xA778
+  uint32_t field_A77C_;  // 0xA77C
+  uint32_t field_A780_;  // 0xA780
+  uint32_t field_A784_;  // 0xA784
+  uint32_t field_A788_;  // 0xA788
+  uint32_t field_A78C_;  // 0xA78C
+  uint32_t field_A790_;  // 0xA790
+  uint32_t field_A794_;  // 0xA794
+  uint32_t field_A798_;  // 0xA798
+  uint32_t field_A79C_;  // 0xA79C
+  uint32_t field_A7A0_;  // 0xA7A0
+  uint32_t field_A7A4_;  // 0xA7A4
+  uint32_t field_A7A8_;  // 0xA7A8
+  uint32_t field_A7AC_;  // 0xA7AC
+  uint32_t field_A7B0_;  // 0xA7B0
+  uint32_t field_A7B4_;  // 0xA7B4
+  uint32_t field_A7B8_;  // 0xA7B8
+  uint32_t field_A7BC_;  // 0xA7BC
+  uint32_t field_A7C0_;  // 0xA7C0
+  uint32_t field_A7C4_;  // 0xA7C4
+  uint32_t field_A7C8_;  // 0xA7C8
+  uint32_t field_A7CC_;  // 0xA7CC
+  uint32_t field_A7D0_;  // 0xA7D0
+  uint32_t field_A7D4_;  // 0xA7D4
+  uint32_t field_A7D8_;  // 0xA7D8
+  uint32_t field_A7DC_;  // 0xA7DC
+  uint32_t field_A7E0_;  // 0xA7E0
+  uint32_t field_A7E4_;  // 0xA7E4
+  uint32_t field_A7E8_;  // 0xA7E8
+  uint32_t field_A7EC_;  // 0xA7EC
+  uint32_t field_A7F0_;  // 0xA7F0
+  uint32_t field_A7F4_;  // 0xA7F4
+  uint32_t field_A7F8_;  // 0xA7F8
+  uint32_t field_A7FC_;  // 0xA7FC
+  uint32_t field_A800_;  // 0xA800
+  uint32_t field_A804_;  // 0xA804
+  uint32_t field_A808_;  // 0xA808
+  uint32_t field_A80C_;  // 0xA80C
+  uint32_t field_A810_;  // 0xA810
+  uint32_t field_A814_;  // 0xA814
+  uint32_t field_A818_;  // 0xA818
+  uint32_t field_A81C_;  // 0xA81C
+  uint32_t field_A820_;  // 0xA820
+  uint32_t field_A824_;  // 0xA824
+  uint32_t field_A828_;  // 0xA828
+  uint32_t field_A82C_;  // 0xA82C
+  uint32_t field_A830_;  // 0xA830
+  uint32_t field_A834_;  // 0xA834
+  uint32_t field_A838_;  // 0xA838
+  uint32_t field_A83C_;  // 0xA83C
 };
 
 static_assert(sizeof(ProdPicker) == 0xA840,

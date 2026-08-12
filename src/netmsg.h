@@ -38,7 +38,8 @@ class DLLEXPORT NetMsg : Popup {
   void close();
 
  private:
-  uint8_t unmapped_537C_[0x5384 - 0x537C];
+  uint32_t field_537C_;  // 0x537C
+  uint32_t field_5380_;  // 0x5380
   int32_t field_5384_;
   uint8_t unmapped_5388_[0x538C - 0x5388];
   Time timer_;

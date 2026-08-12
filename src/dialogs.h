@@ -44,9 +44,17 @@ class DLLEXPORT Dialogs {
   // established, so everything but the two fields these methods read is
   // opaque, and nothing pins this sizeof.
   uint32_t vbtable_pointer_;
-  uint8_t unmapped_04_[0xA4 - 0x04];
+  uint8_t field_4_[0x40];  // 0x4
+  uint32_t field_44_;  // 0x44
+  uint8_t field_48_[0x10];  // 0x48
+  uint32_t field_58_;  // 0x58
+  uint8_t field_5C_[0x14];  // 0x5C
+  uint32_t field_70_;  // 0x70
+  uint8_t field_74_[0x30];  // 0x74
   int32_t field_A4_;
-  uint8_t unmapped_A8_[0x180 - 0xA8];
+  uint8_t field_A8_[0x50];  // 0xA8
+  uint32_t field_F8_;  // 0xF8
+  uint8_t field_FC_[0x84];  // 0xFC
   int32_t kind_;
   uint8_t unmapped_184_[0x188 - 0x184];
   GraphicWin virtual_base_;

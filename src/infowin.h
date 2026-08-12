@@ -57,9 +57,47 @@ class DLLEXPORT InfoWin {
   // Not a base class: the constructor builds a Time at +0x30 on an offset
   // `this`. The constructor reaches 0x9D0, so the object is at least that
   // large; nothing else about it is established.
-  uint8_t unmapped_0_[0xA8];
+  uint8_t field_0_[0x10];  // 0x0
+  uint32_t field_10_;  // 0x10
+  uint32_t field_14_;  // 0x14
+  uint32_t field_18_;  // 0x18
+  uint32_t field_1C_;  // 0x1C
+  uint32_t field_20_;  // 0x20
+  uint32_t field_24_;  // 0x24
+  uint32_t field_28_;  // 0x28
+  uint32_t field_2C_;  // 0x2C
+  uint8_t field_30_[0x28];  // 0x30
+  uint32_t field_58_;  // 0x58
+  uint8_t field_5C_[0x8];  // 0x5C
+  uint32_t field_64_;  // 0x64
+  uint32_t field_68_;  // 0x68
+  uint8_t field_6C_[0x14];  // 0x6C
+  uint32_t field_80_;  // 0x80
+  uint32_t field_84_;  // 0x84
+  uint32_t field_88_;  // 0x88
+  uint32_t field_8C_;  // 0x8C
+  uint32_t field_90_;  // 0x90
+  uint32_t field_94_;  // 0x94
+  uint8_t field_98_[0x10];  // 0x98
   int32_t field_A8_;
-  uint8_t unmapped_AC_[0x9D4 - 0xAC];
+  uint32_t field_AC_;  // 0xAC
+  uint32_t field_B0_;  // 0xB0
+  uint32_t field_B4_;  // 0xB4
+  uint8_t field_B8_;  // 0xB8
+  uint8_t field_B9_[0x77F];  // 0xB9
+  uint32_t field_838_;  // 0x838
+  uint8_t field_83C_[0x5C];  // 0x83C
+  uint32_t field_898_;  // 0x898
+  uint8_t field_89C_[0x5C];  // 0x89C
+  uint32_t field_8F8_;  // 0x8F8
+  uint8_t field_8FC_[0x5C];  // 0x8FC
+  uint32_t field_958_;  // 0x958
+  uint8_t field_95C_[0x64];  // 0x95C
+  uint32_t field_9C0_;  // 0x9C0
+  uint32_t field_9C4_;  // 0x9C4
+  uint32_t field_9C8_;  // 0x9C8
+  uint32_t field_9CC_;  // 0x9CC
+  uint8_t field_9D0_[0x4];  // 0x9D0
 };
 
 void __fastcall info_win_unk1_redirect(InfoWin *self, void *);

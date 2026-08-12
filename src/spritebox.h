@@ -45,7 +45,14 @@ class DLLEXPORT SpriteBox {
   void on_mouse_leave(int, int);
 
  private:
-  uint8_t unmapped_[0x2C];
+  uint32_t field_0_;  // 0x0
+  uint32_t field_4_;  // 0x4
+  uint32_t field_8_;  // 0x8
+  uint8_t field_C_[0x10];  // 0xC
+  uint32_t field_1C_;  // 0x1C
+  uint32_t field_20_;  // 0x20
+  uint32_t field_24_;  // 0x24
+  uint32_t field_28_;  // 0x28
   // The intrusive list `?id_to_pos@SpriteBox@@QAEIH@Z` walks, proved at
   // 0x00611600: `mov eax, [ecx + 0x2c]` (the head, tested for null first),
   // `mov [ecx + 0x30], eax` (the cursor), `mov esi, [ecx + 0x34]` compared
@@ -56,7 +63,24 @@ class DLLEXPORT SpriteBox {
   uint32_t field_30_;
   int32_t field_34_;
   uint32_t field_38_;
-  uint8_t unmapped_3C_[0x424];
+  uint32_t field_3C_;  // 0x3C
+  uint8_t field_40_[0xC];  // 0x40
+  uint32_t field_4C_;  // 0x4C
+  uint32_t field_50_;  // 0x50
+  uint32_t field_54_;  // 0x54
+  uint32_t field_58_;  // 0x58
+  uint32_t field_5C_;  // 0x5C
+  uint32_t field_60_;  // 0x60
+  uint32_t field_64_;  // 0x64
+  uint32_t field_68_;  // 0x68
+  uint32_t field_6C_;  // 0x6C
+  uint32_t field_70_;  // 0x70
+  uint32_t field_74_;  // 0x74
+  uint32_t field_78_;  // 0x78
+  uint32_t field_7C_;  // 0x7C
+  uint32_t field_80_;  // 0x80
+  uint32_t field_84_;  // 0x84
+  uint8_t field_88_[0x3D8];  // 0x88
 
   // 0x2C + 0x10 + 0x424 == 0x460, so nothing moves. The body keeps its
   // offset casts: SpriteBox has no size assertion, so it is absent from

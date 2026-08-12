@@ -176,7 +176,16 @@ class DLLEXPORT ReportWin : GraphicWin {
   // ?start_attack@ReportWin@@QAEXHHHH@Z, which then writes 0xF91C..0xF934;
   // nothing in the image ever touches 0xF914. The trailing extent to 0xFABC
   // is unchanged, so sizeof(ReportWin) is what it was.
-  uint8_t field_F918_[0x1A4];  // 0xF918
+  uint32_t field_F918_;  // 0xF918
+  uint32_t field_F91C_;  // 0xF91C
+  uint32_t field_F920_;  // 0xF920
+  uint32_t field_F924_;  // 0xF924
+  uint32_t field_F928_;  // 0xF928
+  uint32_t field_F92C_;  // 0xF92C
+  uint32_t field_F930_;  // 0xF930
+  uint32_t field_F934_;  // 0xF934
+  uint8_t field_F938_[0x180];  // 0xF938
+  uint32_t field_FAB8_;  // 0xFAB8
 };
 
 void __fastcall report_win_on_mouse_move_redirect(ReportWin *self, void *, int a1, int a2);

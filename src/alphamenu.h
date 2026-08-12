@@ -46,7 +46,11 @@ class DLLEXPORT AlphaMenu {
 
   // Storage the image proves is here: its own methods reach 0x1138.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_1118_[0x20];  // 0x1118
+  uint8_t field_1118_[0x8];  // 0x1118
+  uint8_t field_1120_;  // 0x1120
+  uint8_t field_1121_[0xF];  // 0x1121
+  uint32_t field_1130_;  // 0x1130
+  uint32_t field_1134_;  // 0x1134
 };
 
 int __fastcall alpha_menu_requested_height_redirect(AlphaMenu *self, void *);
