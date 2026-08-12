@@ -32,7 +32,7 @@ placeholder has nothing to compile, and exclusion is a decision, not a
 measurement.
 
 THE LEDGER IS MERGED, NEVER OVERWRITTEN. Verdicts land in
-docs/recovery/byte-match.csv keyed by address, rows this run did not measure
+.opensmacx/byte-match.csv keyed by address, rows this run did not measure
 preserved verbatim, written atomically. The ratchet
 (`tools/byte_match_fanout.py --check`) reads that file and stays where it is;
 this tool adds no floor of its own.
@@ -788,7 +788,7 @@ def main(argv=None) -> int:
     parser.add_argument("--no-cache", action="store_true",
                         help="measure from scratch, ignoring the cache")
     parser.add_argument("--no-ledger", action="store_true",
-                        help="do not write docs/recovery/byte-match.csv")
+                        help="do not write the .opensmacx/byte-match.csv cache")
     parser.add_argument("--jobs", type=int, default=120,
                         help="units per CL response-file batch")
     parser.add_argument("--json", action="store_true",

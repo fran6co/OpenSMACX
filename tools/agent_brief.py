@@ -32,7 +32,7 @@ import emit_translation_unit as emit  # noqa: E402
 import verify_recovered_function as verifier  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-LEDGER = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
+LEDGER = REPO_ROOT / ".opensmacx" / "byte-match.csv"
 PROMPTS = REPO_ROOT / "mizuchi" / "prompts"
 
 # Only the rules that bear on the divergence actually seen. The full findings

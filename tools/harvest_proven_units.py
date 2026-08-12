@@ -44,7 +44,7 @@ import mizuchi_writeback as writeback  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 WORK_ROOT = REPO_ROOT / "build" / "byte-match"
-LEDGER = REPO_ROOT / "docs" / "recovery" / "byte-match.csv"
+LEDGER = REPO_ROOT / ".opensmacx" / "byte-match.csv"
 
 TARGET_STATES = ("unrecovered", "original_dependency")
 

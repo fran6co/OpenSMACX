@@ -59,7 +59,7 @@ class SummariseTest(unittest.TestCase):
 
 
 # RatchetTest and BaselineTest are gone with the thing they tested. The floor
-# was two constants in this file compared against docs/recovery/byte-match.csv;
+# was two constants in this file compared against the byte-match ledger;
 # it is now the `BYTE_EXACT` claims in `src/`, checked by
 # `tools/decomp_status.py --check` and covered by `tools/test_decomp_status.py`
 # plus a damage case in `verify_checks_can_fail.py` that the constant form

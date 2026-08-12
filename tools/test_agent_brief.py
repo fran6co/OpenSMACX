@@ -225,7 +225,7 @@ class RealBriefSizeTest(unittest.TestCase):
 
     def test_a_real_brief_stays_small(self):
         if not agent_brief.LEDGER.is_file():
-            self.skipTest("docs/recovery/byte-match.csv is absent")
+            self.skipTest(".opensmacx/byte-match.csv is absent")
         row = agent_brief.ledger_row(0x005E3630)
         if not row:
             self.skipTest("0x005E3630 is not in the ledger")
