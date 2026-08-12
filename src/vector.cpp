@@ -19,10 +19,9 @@ ORIGINAL: 0x006343C0 BYTE_EXACT
 Status: Complete
 */
 Vector::Vector() {
-    volatile uint32_t *ordered = values_;
-    ordered[0] = 0;
-    ordered[1] = 0;
-    ordered[2] = 0;
+    x_ = 0.0f;
+    y_ = 0.0f;
+    z_ = 0.0f;
 }
 
 /*
@@ -31,83 +30,72 @@ ORIGINAL: 0x006343D0 BYTE_EXACT
 Status: Complete
 */
 void Vector::close() {
-    volatile uint32_t *ordered = values_;
-    ordered[0] = 0;
-    ordered[1] = 0;
-    ordered[2] = 0;
+    x_ = 0.0f;
+    y_ = 0.0f;
+    z_ = 0.0f;
 }
 
 /*
 Purpose: Subtract another vector into a separate output vector.
+Note:    `output` is the hidden return-object slot of `Vector operator-`, not
+         a declared parameter - see the signature note in vector.h. The
+         difference is computed into a temporary first because the original
+         does, and because the caller may pass the same object twice.
 ORIGINAL: 0x00634430
 Status: Complete
 */
 void Vector::__mi(Vector &output, Vector &right) {
-    uint32_t results[3] = {0};
-    for (size_t index = 0; index < 3; ++index) {
-        float left_value;
-        float right_value;
-        float result;
-        std::memcpy(&left_value, &values_[index], sizeof(left_value));
-        std::memcpy(&right_value, &right.values_[index], sizeof(right_value));
-        result = left_value - right_value;
-        std::memcpy(&results[index], &result, sizeof(result));
-    }
-    volatile uint32_t *ordered_output = output.values_;
-    ordered_output[0] = results[0];
-    ordered_output[1] = results[1];
-    ordered_output[2] = results[2];
+    Vector result;
+    result.x_ = x_ - right.x_;
+    result.y_ = y_ - right.y_;
+    result.z_ = z_ - right.z_;
+    output = result;
 }
 
 /*
-Purpose: Add another vector sequentially into this vector.
-ORIGINAL: 0x00634480
+Purpose: Add another vector into this one, component by component.
+Note:    Returns `*this`, which is what leaves the receiver in EAX at `ret 4`.
+         The catalogued `void` return does not reproduce these bytes; this
+         does, exactly.
+ORIGINAL: 0x00634480 BYTE_EXACT
+Return Value: this vector
 Status: Complete
 */
-void Vector::__apl(Vector &right) {
-    for (size_t index = 0; index < 3; ++index) {
-        float left_value;
-        float right_value;
-        std::memcpy(&left_value, &values_[index], sizeof(left_value));
-        std::memcpy(&right_value, &right.values_[index], sizeof(right_value));
-        left_value += right_value;
-        std::memcpy(&values_[index], &left_value, sizeof(left_value));
-    }
+Vector &Vector::__apl(Vector &right) {
+    x_ += right.x_;
+    y_ += right.y_;
+    z_ += right.z_;
+    return *this;
 }
 
 /*
-Purpose: Subtract another vector sequentially from this vector.
-ORIGINAL: 0x006344B0
+Purpose: Subtract another vector from this one, component by component.
+ORIGINAL: 0x006344B0 BYTE_EXACT
+Return Value: this vector
 Status: Complete
 */
-void Vector::__ami(Vector &right) {
-    for (size_t index = 0; index < 3; ++index) {
-        float left_value;
-        float right_value;
-        std::memcpy(&left_value, &values_[index], sizeof(left_value));
-        std::memcpy(&right_value, &right.values_[index], sizeof(right_value));
-        left_value -= right_value;
-        std::memcpy(&values_[index], &left_value, sizeof(left_value));
-    }
+Vector &Vector::__ami(Vector &right) {
+    x_ -= right.x_;
+    y_ -= right.y_;
+    z_ -= right.z_;
+    return *this;
 }
 
 /*
-Purpose: Scale this vector and copy the updated components into an output vector.
+Purpose: Scale this vector and copy the updated components into an output
+         vector.
+Note:    The original scales `this` IN PLACE and then copies it out; `output`
+         is the hidden return slot of `Vector scale(float)`. Both effects are
+         load-bearing - a caller that ignores the result still sees `this`
+         scaled.
 ORIGINAL: 0x00634670
 Status: Complete
 */
 void Vector::scale(Vector &output, float scalar) {
-    for (size_t index = 0; index < 3; ++index) {
-        float value;
-        std::memcpy(&value, &values_[index], sizeof(value));
-        value *= scalar;
-        std::memcpy(&values_[index], &value, sizeof(value));
-    }
-    volatile uint32_t *ordered_output = output.values_;
-    volatile const uint32_t *ordered_source = values_;
-    ordered_output[0] = ordered_source[0];
-    ordered_output[1] = ordered_source[1];
-    ordered_output[2] = ordered_source[2];
+    x_ *= scalar;
+    y_ *= scalar;
+    z_ *= scalar;
+    output = *this;
 }
 
 Vector *__fastcall vector_construct_redirect(Vector *self, void *) {
@@ -150,16 +138,7 @@ ORIGINAL: 0x00628150
 Status: Complete
 */
 void __cdecl vector_add(Vector *left, Vector *right, Vector *output) {
-    uint32_t *const left_values = reinterpret_cast<uint32_t *>(left);
-    uint32_t *const right_values = reinterpret_cast<uint32_t *>(right);
-    uint32_t *const output_values = reinterpret_cast<uint32_t *>(output);
-    for (size_t index = 0; index < 3; ++index) {
-        float left_value;
-        float right_value;
-        float result;
-        std::memcpy(&left_value, &left_values[index], sizeof(left_value));
-        std::memcpy(&right_value, &right_values[index], sizeof(right_value));
-        result = left_value + right_value;
-        std::memcpy(&output_values[index], &result, sizeof(result));
-    }
+    output->x_ = left->x_ + right->x_;
+    output->y_ = left->y_ + right->y_;
+    output->z_ = left->z_ + right->z_;
 }

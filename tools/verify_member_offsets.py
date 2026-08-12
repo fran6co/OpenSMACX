@@ -32,14 +32,32 @@ a `mov eax, [ecx+0x54]` says bytes 0x54..0x57 are one four-byte thing. So
   overrun    the access starts at or past `sizeof`. The class is SHORT - the
              size is too small, or a trailing member was never declared. This
              is the one that refutes a pinned size outright.
+  typing     an x87 access names the member's TYPE. Integer code cannot reach
+             a member with `fld`, so a four-byte one is a float and an
+             eight-byte one a double. This is the only member typing in the
+             tree read off the instruction rather than inferred from a name.
   unclaimed  the access lands in a gap no member covers. Not a violation:
              padding and anonymous storage are legitimate, and the member
              scanner can also just have missed a declaration.
 
+`--check` fails on the first two, and on any header whose probe unit REFUSED -
+a header that does not compile contributes no declared layout, so every access
+into its classes falls through every test and the run would otherwise print OK
+having measured nothing.
+
+`--pins` turns the same evidence on the `static_assert(sizeof(X) == N)` lines,
+which everything downstream believes and nothing checked. Where a class's own
+code writes its last byte, an independent source agrees with the pin exactly;
+where it stops short the pin is unconfirmed rather than wrong, and saying which
+is which is the point.
+
 The straddle test is deliberately silent about a uniform shift among members of
 equal width - relabelling four dwords cannot be seen by it. It catches wrong
 WIDTHS and missing members, which is where the errors in this tree actually
-are, and it catches them without needing a recovered body to exercise them.
+are, and it catches them without needing a recovered body to exercise them. A
+shift is not beyond reach by other means: `ReportWin`'s Flic was found four
+bytes early exactly this way, because the float the IDB's row swallowed showed
+up as a typing finding on the object that was standing in its place.
 """
 
 from __future__ import annotations

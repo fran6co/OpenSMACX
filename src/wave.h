@@ -49,8 +49,35 @@
   * the inlined hierarchy). The wrapped device pointer sits at 0x3C, a flag
   * dword at 0x40 (bit 0 the loaded bit, bit 1 set while the wave is linked
   * into the global wave chain), the chain neighbours at 0x44/0x48, the
-  * heap-owned filename copy at 0x4C, and a flag byte region at 0x54. The
+  * heap-owned filename copy at 0x4C, and a SECOND FLAG DWORD at 0x54. The
   * gaps between named fields stay unnamed padding.
+  *
+  * That last one used to be spelled `uint8_t flags_54_` plus three pad bytes
+  * and described here as "a flag byte region". WITHDRAWN - the image reads
+  * and writes 0x54 four bytes at a time, in four independent places:
+  *   - both initialisers clear it with a FOUR-byte memset, not a one-byte
+  *     store: `push 4 / lea eax,[esi+0x54] / push 0 / push eax / call memset`
+  *     in ??0Wave@@QAE@XZ at 0x004C6764 and the same shape in
+  *     ?init@Wave@@QAEXPADK@Z at 0x004C6A1A;
+  *   - init sets bit 1 with a dword read-modify-write - `mov ecx,[esi]` /
+  *     `or ecx,2` / `mov [esi],ecx` at 0x004C6A2E - and folds four more mode
+  *     bits on with `or dword ptr [esi], imm` (0x004C6A95, 0x004C6AA0,
+  *     0x004C6AB7, 0x004C6ABE) and a fifth at 0x004C6AC6, where
+  *     `mov eax,[esi]` / `or al,0x20` / `mov [esi],eax` modifies one byte but
+  *     STORES four - a byte field could not be written that way;
+  *   - ?set_attrib@Wave@@QAEXK@Z is six `or dword ptr [ecx+0x54], imm` in a
+  *     row, 0x004C6F36 through 0x004C6F69;
+  *   - ?is_playing@Wave@@QAEHXZ (0x004C6B1A), both loads (0x004C6C76,
+  *     0x004C6D43) and ?get_attrib@Wave@@QAEHXZ (0x004C6F9A) read it with
+  *     `mov reg, dword ptr [esi+0x54]`.
+  * The byte declaration made the four-byte memset unspellable: the recovered
+  * ?init body had to write it as a loop over `&flags_54_ .. &flags_54_ + 4`,
+  * which is the tell. Only ?unload@Wave@@QAEXXZ and ?play@Wave@@QAEHXZ narrow
+  * the field - `mov al, byte ptr [esi+0x54]` at 0x004C6EB4 and
+  * `test byte ptr [esi+0x54], 0x10` at 0x004C6945 - and a byte access OF a
+  * dword is what a uint8_t local, or a mask that fits in the low byte,
+  * compiles to. tools/verify_member_offsets.py --class Wave reported the
+  * straddle that withdrew the old declaration.
   */
 class DLLEXPORT Wave {
  public:
@@ -111,8 +138,10 @@ class DLLEXPORT Wave {
   Wave *chain_next_;             // 0x48, chain neighbour; null at the tail end
   void *fname_;                  // 0x4C, heap-owned filename copy
   uint32_t field_50_;
-  uint8_t flags_54_;             // 0x54, bit 1 suppresses the vtable callback
-  uint8_t pad_55_[3];
+  // 0x54, a whole 32-bit field - see the withdrawal above. Bit 1 suppresses
+  // the vtable callback in unload, and set_attrib/init/get_attrib map the
+  // mode mask onto bits 0..5.
+  uint32_t flags_54_;
   int32_t pitch_;                // 0x58, clamped semitone offset
   float reverb_mix_;             // 0x5C, stored by set_reverb_mix
   int32_t ms_length_;            // 0x60, playing length in milliseconds

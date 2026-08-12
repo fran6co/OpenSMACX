@@ -252,9 +252,35 @@ class DLLEXPORT BaseWin : GraphicWin, SubInterface {
   uint32_t field_1E658_;  // 0x1E658
   uint32_t field_1E65C_;  // 0x1E65C
   uint32_t field_1E660_;  // 0x1E660
-  uint32_t field_1E664_;  // 0x1E664
-  uint32_t field_1E668_;  // 0x1E668
-  uint32_t field_1E66C_;  // 0x1E66C
+  // These three are `float`, and they are the third row of a VOX_Matrix that
+  // begins at 0x1E64C. ?init@BaseWin@@QAEXXZ passes &field_1E64C_ as the
+  // VOX_Matrix* argument of
+  // ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z - 0x0041F40F
+  // `lea eax, [esi + 0x1e64c]` / `push eax`, then 0x0041F43D `call 0x6182a0` -
+  // and VOX_Matrix is `float values[3][3]`, 36 bytes, so the matrix spans
+  // 0x1E64C..0x1E66F and its +0x18/+0x1C/+0x20 are exactly these offsets.
+  // What types them is that init loads all three with a single-precision x87
+  // load, which is not something a `uint32_t` produces: 0x0041F3DC
+  // `fld dword ptr [esi + 0x1e664]` / `fchs` / `fst dword ptr [esi + 0x1e664]`,
+  // and the same negate-in-place at 0x0041F3EA for 0x1E668 and 0x0041F3FB for
+  // 0x1E66C. Each negated value is then multiplied by
+  // *(float *)0x0066AA40 == -10000.0f and stored into the three-float local at
+  // [ebp-0x38] that is set_camera_direct's VOX_Vect* argument, i.e. the camera
+  // position. src/recovered/units/004bf740.cpp
+  // (?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z) already carries the
+  // same idiom on its own VOX_Matrix out-parameter, negating out+0x18,
+  // out+0x1C and out+0x20.
+  // They keep `field_` names on purpose: they are three elements of a matrix,
+  // not an independent triple, so naming them individually would assert a
+  // meaning the arithmetic does not give. Carving 0x1E64C..0x1E66F into one
+  // `VOX_Matrix` member - and 0x1E640..0x1E648, the Euler triple {0, 0,
+  // 0.785f} that the 0x0041F3D7 `call sub_627D00` turns into that matrix, into
+  // one `VOX_Vect` - is the follow-up, not this change.
+  // `float` and `uint32_t` are both 4 bytes and 4-aligned, so no offset moves:
+  // the VC6 probe reports sizeof(BaseWin) == 0x47838 before and after.
+  float field_1E664_;  // 0x1E664
+  float field_1E668_;  // 0x1E668
+  float field_1E66C_;  // 0x1E66C
   uint32_t field_1E670_;  // 0x1E670
   MapWin mapWin_;  // 0x1E674
   uint32_t field_40AF4_;  // 0x40AF4
@@ -435,11 +461,28 @@ class DLLEXPORT BaseWin : GraphicWin, SubInterface {
   Scroll scroll1_;  // 0x41454, size == sizeof(Scroll)
   Scroll scroll2_;  // 0x435A0, size == sizeof(Scroll)
 
-  // Storage the image proves is here: its own methods reach 0x45B34.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // The IDB begins a scroll3 (sizeof(Scroll)) at 0x456EC, beyond the proven
-  // extent; it is not declared until a body reaches it.
-  uint8_t field_456EC_[0x48];  // 0x456EC
+  // The comment that stood here said the IDB's scroll3 at 0x456EC lay "beyond
+  // the proven extent" and would not be declared until a body reached it, and
+  // it covered the offset with 0x48 opaque bytes ending at 0x45734. A body
+  // does reach it, and the 0x48 was short: tools/verify_member_offsets.py
+  // reported `overrun BaseWin+0x45B30 w4: sizeof is 0x45734` against
+  // ??1BaseWin@@QAE@XZ. That destructor tears the offset down as a whole
+  // Scroll, inlined - 0x00420AB4 `lea edi, [esi + 0x456ec]`, then the two
+  // vftable stores `mov dword ptr [edi], 0x669d58` and
+  // `mov dword ptr [edi + 0x444], ebx` with ebx = 0x669d50 (the GraphicWin
+  // base slot; Scroll derives from GraphicWin, whose subobject vftable sits at
+  // +0x444), then `mov ecx, edi` / `call ?close@Scroll@@QAEXXZ`, then
+  // ??1FlatButton@@QAE@XZ on edi+0xAAC and edi+0x15F8 - which are exactly
+  // flat_button_left_ and flat_button_right_ inside Scroll - and finally
+  // ??1GraphicWin@@QAE@XZ on edi itself. The next teardown, at
+  // 0x00420B02 `lea edi, [esi + 0x435a0]`, repeats the same sequence on
+  // scroll2_, so the shape is the one already declared twice above.
+  // ??0BaseWin@@QAE@XZ constructs the matching object at the same offset
+  // (`new (self + 0x456ec) Scroll();` in src/recovered/units/00408490.cpp).
+  // 0x456EC + sizeof(Scroll) == 0x47838, which is 8 bytes under the 0x47840
+  // upper bound docs/recovery/class-size-bounds.csv derives from the next
+  // constructed global, so this is the last member and BaseWin ends here.
+  Scroll scroll3_;  // 0x456EC, size == sizeof(Scroll)
 };
 
 void __fastcall base_win_close_redirect(BaseWin *self, void *);

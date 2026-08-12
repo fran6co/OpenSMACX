@@ -1,0 +1,600 @@
+verdict,class,offset,built,detail,evidence
+at-zero,AlphaMenu,0x0,Menu,src/ bases: [],??1AlphaMenu@@QAE@XZ: call ??1Menu@@QAE@XZ on this+0x0 at 0x0051DC72
+agreed,AlphaMenu,0xB64,Buffer,buffer_ 0x588,??1AlphaMenu@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xB64 at 0x0051DC64
+agreed,AlphaMenu,0x10EC,Sprite,sprite1_ 0x2C,??1AlphaMenu@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x10EC at 0x0051DC55
+base,AlphaMovie,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??0AlphaMovie@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x0040402F
+agreed,AlphaMovie,0xA14,MCIVideo,mciVideo_ 0x474,??0AlphaMovie@@QAE@XZ: call ??0MCIVideo@@QAE@XZ on this+0xA14 at 0x00404041
+absent,AlphaMovie,0xA24,Palette,0x454 bytes,??1AlphaMovie@@QAE@XZ: call ??1Palette@@QAE@XZ on this+0xA24 at 0x00404372
+at-zero,AlphaNet,0x0,Net,src/ bases: [],??0AlphaNet@@QAE@XZ: call ??0Net@@QAE@XZ on this+0x0 at 0x004E24B7
+absent,AlphaNet,0x58,VoiceTx,0x58 bytes,??1AlphaNet@@QAE@XZ: call ??1VoiceTx@@QAE@XZ on this+0x58 at 0x00538CF8
+absent,AlphaNet,0xB0,JackalVoiceRx,0x18 bytes,??1AlphaNet@@QAE@XZ: call ??1JackalVoiceRx@@QAE@XZ on this+0xB0 at 0x00538CD0
+absent,AlphaNet,0xE8,NetFifo,0x10 bytes,??1AlphaNet@@QAE@XZ: call ??1NetFifo@@QAE@XZ on this+0xE8 at 0x00538CA5
+absent,AlphaNet,0x10C,NetFifo,0x10 bytes,??1AlphaNet@@QAE@XZ: call ??1NetFifo@@QAE@XZ on this+0x10C at 0x00538C96
+absent,AlphaNet,0x130,NetFifo,0x10 bytes,??1AlphaNet@@QAE@XZ: call ??1NetFifo@@QAE@XZ on this+0x130 at 0x00538C87
+absent,AlphaNet,0x148C,Heap,0x14 bytes,??0AlphaNet@@QAE@XZ: call ??0Heap@@QAE@XZ on this+0x148C at 0x004E256D
+at-zero,AlphaSave,0x0,GraphicWin,src/ bases: [],??0AlphaSave@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x0040736F
+agreed,AlphaSave,0xA14,FileWin,fileWin_ 0x33C4,??0AlphaSave@@QAE@XZ: call ??0FileWin@@QAE@XZ on this+0xA14 at 0x00407381
+absent,AlphaSave,0x1BC0,FlatButton,0xB4C bytes,??1AlphaSave@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x1BC0 at 0x00408325
+absent,AlphaSave,0x270C,EditBox,0xB74 bytes,??1AlphaSave@@QAE@XZ: call ?close@EditBox@@QAEXXZ on this+0x270C at 0x004082E7
+absent,AlphaSave,0x3258,Time,0x28 bytes,??1AlphaSave@@QAE@XZ: call ??1Time@@QAE@XZ on this+0x3258 at 0x004082F6
+absent,AlphaSave,0x32C8,ListBox,0xB54 bytes,??1AlphaSave@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0x32C8 at 0x004082B1
+absent,AlphaSave,0x3CE0,Dialog,0xF4 bytes,??1AlphaSave@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x3CE0 at 0x004082BC
+agreed,AlphaSave,0x3DD8,Scroll,scroll_ 0x214C,??0AlphaSave@@QAE@XZ: call ??0Scroll@@QAE@XZ on this+0x3DD8 at 0x00407390
+absent,AlphaSave,0x4884,FlatButton,0xB4C bytes,??1AlphaSave@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x4884 at 0x00408276
+absent,AlphaSave,0x53D0,FlatButton,0xB4C bytes,??1AlphaSave@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x53D0 at 0x00408247
+agreed,AlphaSave,0x5F24,Sprite,sprite1_ 0x2C,??0AlphaSave@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x5F24 at 0x0040739F
+agreed,AlphaSave,0x5FD4,Sprite,sprite3_ 0x2C,??0AlphaSave@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x5FD4 at 0x004073CC
+agreed,AlphaSave,0x6000,Sprite,sprite4_ 0x2C,??0AlphaSave@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x6000 at 0x004073DB
+agreed,AlphaSave,0x602C,Sprite,sprite5_ 0x2C,??0AlphaSave@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x602C at 0x004073EA
+at-zero,BAmbience,0x0,Ambience,src/ bases: [],??0BAmbience@@QAE@XZ: call ??0Ambience@@QAE@XZ on this+0x0 at 0x004478D3
+base,BaseButton,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??0BaseButton@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x00606F4E
+agreed,BaseButton,0xA1C,Time,time1_ 0x28,??0BaseButton@@QAE@XZ: call ??0Time@@QAE@XZ on this+0xA1C at 0x00606F5F
+agreed,BaseButton,0xA4C,Time,time2_ 0x28,??0BaseButton@@QAE@XZ: call ??0Time@@QAE@XZ on this+0xA4C at 0x00606F6F
+base,BasePop,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1BasePop@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x0040665A
+agreed,BasePop,0xA28,Heap,heap_ 0x14,??0BasePop@@QAE@XZ: call ??0Heap@@QAE@XZ on this+0xA28 at 0x00600897
+agreed,BasePop,0xA5C,FlatButton,flat_button1_ 0xB4C,??1BasePop@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xA5C at 0x00406632
+agreed,BasePop,0x15A8,FlatButton,flat_button2_ 0xB4C,??1BasePop@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x15A8 at 0x00406603
+agreed,BasePop,0x2118,Sprite,sprite_ 0x2C,??1BasePop@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x2118 at 0x004065DF
+mistyped,BasePop,0x216C,StringStruct,"declared `uint32_t field_216C_`, 0x4 bytes against 0x24",??1BasePop@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0x216C at 0x004065C1
+mistyped,BasePop,0x219C,StringStruct,"declared `uint32_t field_219C_`, 0x4 bytes against 0x24",??1BasePop@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0x219C at 0x00406577
+agreed,BasePop,0x21D0,Dialogs,dialogs_ 0xC94,??0BasePop@@QAE@XZ: call ??0Dialogs@@QAE@H@Z on this+0x21D0 at 0x006009CC
+absent,BasePop,0x2214,RadioButton,0xB24 bytes,?close@BasePop@@QAEXXZ: call ?close@RadioButton@@QAEXXZ on this+0x2214 at 0x00600FFA
+absent,BasePop,0x2228,CheckBox,0xB28 bytes,?close@BasePop@@QAEXXZ: call ?close@CheckBox@@QAEXXZ on this+0x2228 at 0x00600FEF
+absent,BasePop,0x2240,SpriteBox,0x460 bytes,?close@BasePop@@QAEXXZ: call ?close@SpriteBox@@QAEXXZ on this+0x2240 at 0x00601005
+absent,BasePop,0x22C8,EditGroup,0xB98 bytes,?close@BasePop@@QAEXXZ: call ?close@EditGroup@@QAEXXZ on this+0x22C8 at 0x00601010
+absent,BasePop,0x2358,Dialogs,0xC94 bytes,??1BasePop@@QAE@XZ: call ??1Dialogs@@QAE@XZ on this+0x2358 at 0x00406529
+absent,BasePop,0x2D70,Dialog,0xF4 bytes,??1BasePop@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x2D70 at 0x00406534
+agreed,BasePop,0x3098,Spot,spot_ 0xC,??1BasePop@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x3098 at 0x00406518
+base,BaseWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'SubInterface', 'Win']",??0BaseWin@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x004084AF
+agreed,BaseWin,0xA1C,ProdPicker,prodPicker_ 0xA840,??0BaseWin@@QAE@XZ: call ??0ProdPicker@@QAE@XZ on this+0xA1C at 0x004084CB
+absent,BaseWin,0x14B8,Font,0x28 bytes,??1BaseWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x14B8 at 0x00420F46
+absent,BaseWin,0x14E0,Font,0x28 bytes,??1BaseWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x14E0 at 0x00420F37
+absent,BaseWin,0x1508,Font,0x28 bytes,??1BaseWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x1508 at 0x00420F28
+absent,BaseWin,0x1530,Font,0x28 bytes,??1BaseWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x1530 at 0x00420F19
+absent,BaseWin,0x1558,Time,0x28 bytes,??1BaseWin@@QAE@XZ: call ??1Time@@QAE@XZ on this+0x1558 at 0x00420F0A
+absent,BaseWin,0x7B3C,Scroll,0x214C bytes,??1BaseWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x7B3C at 0x00420E97
+absent,BaseWin,0x85E8,FlatButton,0xB4C bytes,??1BaseWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x85E8 at 0x00420ED4
+absent,BaseWin,0x9134,FlatButton,0xB4C bytes,??1BaseWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x9134 at 0x00420EB9
+absent,BaseWin,0x9C88,Caviar,0x13D0 bytes,??1BaseWin@@QAE@XZ: call ?close@Caviar@@QAEXXZ on this+0x9C88 at 0x00420E73
+absent,BaseWin,0xB1E8,StringStruct,0x24 bytes,??1BaseWin@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0xB1E8 at 0x00420E2E
+absent,BaseWin,0xB218,StringStruct,0x24 bytes,??1BaseWin@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0xB218 at 0x00420DDD
+agreed,BaseWin,0xB25C,GraphicWin,graphicWin2_ 0xA14,??0BaseWin@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0xB25C at 0x004084DA
+agreed,BaseWin,0xBD78,Sprite,sprite4_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xBD78 at 0x00408543
+agreed,BaseWin,0xBDA4,Sprite,sprite5_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xBDA4 at 0x00408552
+agreed,BaseWin,0xBDD0,Sprite,sprite6_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xBDD0 at 0x00408561
+agreed,BaseWin,0xBE80,FlatButton,flatButton_ 0xB4C,??0BaseWin@@QAE@XZ: call ??0FlatButton@@QAE@XZ on this+0xBE80 at 0x0040858E
+agreed,BaseWin,0xD104,Sprite,sprite9_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xD104 at 0x004085BB
+agreed,BaseWin,0xD130,Sprite,sprite10_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xD130 at 0x004085CA
+agreed,BaseWin,0xD15C,Sprite,sprite11_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xD15C at 0x004085D9
+agreed,BaseWin,0xD188,Sprite,sprite12_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xD188 at 0x004085E8
+agreed,BaseWin,0xD1B4,Sprite,sprite13_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xD1B4 at 0x004085F7
+agreed,BaseWin,0xD1E0,Sprite,sprite14_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xD1E0 at 0x00408606
+agreed,BaseWin,0xD20C,Sprite,sprite15_ 0x2C,??0BaseWin@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0xD20C at 0x00408615
+agreed,BaseWin,0xD238,Buffer,buffer1_ 0x588,??0BaseWin@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0xD238 at 0x00408624
+agreed,BaseWin,0x1D148,Time,time_ 0x28,??0BaseWin@@QAE@XZ: call ??0Time@@QAE@XZ on this+0x1D148 at 0x00408654
+agreed,BaseWin,0x1D170,Caviar,caviar_ 0x13D0,??0BaseWin@@QAE@XZ: call ??0Caviar@@QAE@XZ on this+0x1D170 at 0x00408663
+agreed,BaseWin,0x1E674,MapWin,mapWin_ 0x22480,??0BaseWin@@QAE@XZ: call ??0MapWin@@QAE@H@Z on this+0x1E674 at 0x00408674
+absent,BaseWin,0x400E0,MapWin,0x22480 bytes,??1BaseWin@@QAE@XZ: call ??1MapWin@@QAE@XZ on this+0x400E0 at 0x00420BDC
+agreed,BaseWin,0x40E8C,Font,font1_ 0x28,??0BaseWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x40E8C at 0x00408683
+agreed,BaseWin,0x40EB4,Spot,spot1_ 0xC,??0BaseWin@@QAE@XZ: call ??0Spot@@QAE@XZ on this+0x40EB4 at 0x00408692
+agreed,BaseWin,0x40EC0,Spot,spot2_ 0xC,??0BaseWin@@QAE@XZ: call ??0Spot@@QAE@XZ on this+0x40EC0 at 0x004086A1
+agreed,BaseWin,0x40ECC,Buffer,buffer2_ 0x588,??0BaseWin@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0x40ECC at 0x004086B0
+agreed,BaseWin,0x41454,Scroll,scroll1_ 0x214C,??0BaseWin@@QAE@XZ: call ??0Scroll@@QAE@XZ on this+0x41454 at 0x004086BF
+absent,BaseWin,0x41F00,FlatButton,0xB4C bytes,??1BaseWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x41F00 at 0x00420B84
+absent,BaseWin,0x42A4C,FlatButton,0xB4C bytes,??1BaseWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x42A4C at 0x00420B75
+agreed,BaseWin,0x435A0,Scroll,scroll2_ 0x214C,??0BaseWin@@QAE@XZ: call ??0Scroll@@QAE@XZ on this+0x435A0 at 0x004086CE
+absent,BaseWin,0x4404C,FlatButton,0xB4C bytes,??1BaseWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x4404C at 0x00420B3B
+absent,BaseWin,0x44B98,FlatButton,0xB4C bytes,??1BaseWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x44B98 at 0x00420B2C
+agreed,BaseWin,0x456EC,Scroll,scroll3_ 0x214C,??0BaseWin@@QAE@XZ: call ??0Scroll@@QAE@XZ on this+0x456EC at 0x004086DD
+absent,BaseWin,0x46198,FlatButton,0xB4C bytes,??1BaseWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x46198 at 0x00420AF2
+absent,BaseWin,0x46CE4,FlatButton,0xB4C bytes,??1BaseWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x46CE4 at 0x00420AE3
+agreed,BattleWin,0x8,Time,time_storage_ 0x28,??0BattleWin@@QAE@XZ: call ??0Time@@QAE@XZ on this+0x8 at 0x00422EEC
+agreed,Buffer,0x4B0,Spot,spot_ 0xC,??0Buffer@@QAE@XZ: call ??0Spot@@QAE@XZ on this+0x4B0 at 0x005D7234
+agreed,CheckBox,0x1C,GraphicWin,virtual_base_ 0xA14,??0CheckBox@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x1C at 0x0060E6A7
+agreed,CheckBox,0xA34,Dialog,dialog_ 0xF4,??0CheckBox@@QAE@H@Z: call ??0Dialog@@QAE@XZ on this+0xA34 at 0x0060E6BE
+base,CheckButton,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1CheckButton@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x004B3F04
+at-zero,Console,0x0,MapWin,"src/ bases: ['GraphicWin', 'Win']",??0Console@@QAE@H@Z: call ??0MapWin@@QAE@H@Z on this+0x0 at 0x0050F4AE
+absent,Console,0x21A68,GraphicWin,0xA14 bytes,??0Console@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x21A68 at 0x0050F4BC
+absent,Console,0x2247C,Buffer,0x588 bytes,??0Console@@QAE@H@Z: call ??0Buffer@@QAE@XZ on this+0x2247C at 0x0050F4CB
+absent,Console,0x22A04,Time,0x28 bytes,??0Console@@QAE@H@Z: call ??0Time@@QAE@XZ on this+0x22A04 at 0x0050F4DA
+absent,Console,0x22A2C,Menu,0xB64 bytes,??0Console@@QAE@H@Z: call ??0Menu@@QAE@XZ on this+0x22A2C at 0x0050F4EE
+absent,Console,0x23590,Buffer,0x588 bytes,??0Console@@QAE@H@Z: call ??0Buffer@@QAE@XZ on this+0x23590 at 0x0050F4FD
+absent,Console,0x23B18,Sprite,0x2C bytes,??0Console@@QAE@H@Z: call ??0Sprite@@QAE@XZ on this+0x23B18 at 0x0050F50C
+absent,Console,0x23D28,Sprite,0x2C bytes,??0Console@@QAE@H@Z: call ??0Sprite@@QAE@XZ on this+0x23D28 at 0x0050F549
+absent,Console,0x23D54,Sprite,0x2C bytes,??0Console@@QAE@H@Z: call ??0Sprite@@QAE@XZ on this+0x23D54 at 0x0050F558
+absent,Console,0x23D94,GraphicWin,0xA14 bytes,??0Console@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x23D94 at 0x0050F4A0
+base,CouncWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'SubInterface', 'Win']",??1CouncWin@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x00428600
+agreed,CouncWin,0xA48,Spot,spot_ 0xC,??1CouncWin@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0xA48 at 0x004285F2
+agreed,CouncWin,0xAB4,Font,font1_ 0x28,?on_key_click@CouncWin@@QAEHHH@Z: call ?close@Font@@QAEXXZ on this+0xAB4 at 0x00425C59
+agreed,CouncWin,0xADC,Font,font2_ 0x28,?on_key_click@CouncWin@@QAEHHH@Z: call ?close@Font@@QAEXXZ on this+0xADC at 0x00425C64
+agreed,CouncWin,0xB04,Font,font3_ 0x28,?on_key_click@CouncWin@@QAEHHH@Z: call ?close@Font@@QAEXXZ on this+0xB04 at 0x00425C6F
+agreed,CouncWin,0xB2C,Font,font4_ 0x28,?on_key_click@CouncWin@@QAEHHH@Z: call ?close@Font@@QAEXXZ on this+0xB2C at 0x00425C7A
+agreed,CouncWin,0xB54,Font,font5_ 0x28,?on_key_click@CouncWin@@QAEHHH@Z: call ?close@Font@@QAEXXZ on this+0xB54 at 0x00425C85
+agreed,CouncWin,0xB7C,Font,font6_ 0x28,??1CouncWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0xB7C at 0x00428598
+base,Credits,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??0Credits@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x004287A0
+agreed,Credits,0x1234,GraphicWin,graphicWin2_ 0xA14,??0Credits@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x1234 at 0x004287B2
+agreed,Credits,0x1C48,Font,font_ 0x28,??0Credits@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1C48 at 0x004287C1
+agreed,Credits,0x1C70,Buffer,buffer_ 0x588,??0Credits@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0x1C70 at 0x004287D0
+agreed,Credits,0x21F8,FlatButton,flatButton_ 0xB4C,??0Credits@@QAE@XZ: call ??0FlatButton@@QAE@XZ on this+0x21F8 at 0x004287DF
+agreed,Credits,0x2D44,Time,time_ 0x28,??0Credits@@QAE@XZ: call ??0Time@@QAE@XZ on this+0x2D44 at 0x004287EE
+base,Datalink,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??0Datalink@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x00428FE0
+absent,Datalink,0xA28,Flic,0xAE4 bytes,??0Datalink@@QAE@XZ: call ??0Flic@@QAE@XZ on this+0xA28 at 0x00428FFA
+absent,Datalink,0xA2C,Buffer,0x588 bytes,??1Datalink@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xA2C at 0x00432586
+absent,Datalink,0xFE4,Palette,0x454 bytes,??1Datalink@@QAE@XZ: call ??1Palette@@QAE@XZ on this+0xFE4 at 0x0043257A
+absent,Datalink,0x150C,Caviar,0x13D0 bytes,??0Datalink@@QAE@XZ: call ??0Caviar@@QAE@XZ on this+0x150C at 0x00429009
+agreed,Datalink,0xF594,ButtonGroup,buttonGroup_ 0x94,??0Datalink@@QAE@XZ: call ??0ButtonGroup@@QAE@XZ on this+0xF594 at 0x00429039
+agreed,Datalink,0xF628,ListBox,listBox_ 0xB54,??0Datalink@@QAE@XZ: call ??0ListBox@@QAE@H@Z on this+0xF628 at 0x0042904A
+absent,Datalink,0xF670,ListBox,0xB54 bytes,??1Datalink@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0xF670 at 0x0043250B
+absent,Datalink,0x10088,Dialog,0xF4 bytes,??1Datalink@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x10088 at 0x00432516
+agreed,Datalink,0x1017C,Font,font1_ 0x28,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1017C at 0x00429059
+agreed,Datalink,0x101A4,Font,font2_ 0x28,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x101A4 at 0x00429068
+agreed,Datalink,0x101CC,Font,font3_ 0x28,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x101CC at 0x00429077
+mistyped,Datalink,0x101F4,Font,"declared `uint8_t field_101F4_`, 0xB1A0 bytes against 0x28",??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x101F4 at 0x00429086
+absent,Datalink,0x1021C,Font,0x28 bytes,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1021C at 0x00429095
+absent,Datalink,0x10244,Font,0x28 bytes,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x10244 at 0x004290A4
+absent,Datalink,0x1026C,Font,0x28 bytes,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1026C at 0x004290B3
+absent,Datalink,0x10294,Font,0x28 bytes,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x10294 at 0x004290C2
+absent,Datalink,0x102BC,Font,0x28 bytes,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x102BC at 0x004290D1
+absent,Datalink,0x102E4,Font,0x28 bytes,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x102E4 at 0x004290E0
+absent,Datalink,0x1030C,Font,0x28 bytes,??0Datalink@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1030C at 0x004290EF
+absent,Datalink,0x10514,StringBox,0x2BA0 bytes,??0Datalink@@QAE@XZ: call ??0StringBox@@QAE@XZ on this+0x10514 at 0x004290FE
+absent,Datalink,0x10F34,Scroll,0x214C bytes,??1Datalink@@QAE@XZ: call ??1Scroll@@QAE@XZ on this+0x10F34 at 0x0043244A
+absent,Datalink,0x130B4,StringBox,0x2BA0 bytes,??0Datalink@@QAE@XZ: call ??0StringBox@@QAE@XZ on this+0x130B4 at 0x0042910D
+absent,Datalink,0x13AD4,Scroll,0x214C bytes,??1Datalink@@QAE@XZ: call ??1Scroll@@QAE@XZ on this+0x13AD4 at 0x004323ED
+absent,Datalink,0x15C54,StringBox,0x2BA0 bytes,??0Datalink@@QAE@XZ: call ??0StringBox@@QAE@XZ on this+0x15C54 at 0x0042911C
+absent,Datalink,0x16674,Scroll,0x214C bytes,??1Datalink@@QAE@XZ: call ??1Scroll@@QAE@XZ on this+0x16674 at 0x0043238F
+absent,Datalink,0x187F4,StringBox,0x2BA0 bytes,??0Datalink@@QAE@XZ: call ??0StringBox@@QAE@XZ on this+0x187F4 at 0x0042912B
+absent,Datalink,0x19214,Scroll,0x214C bytes,??1Datalink@@QAE@XZ: call ??1Scroll@@QAE@XZ on this+0x19214 at 0x00432331
+base,DesignWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'SubInterface', 'Win']",??0DesignWin@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x004344A0
+agreed,DesignWin,0x12758,Spot,spot1_ 0xC,??0DesignWin@@QAE@XZ: call ??0Spot@@QAE@XZ on this+0x12758 at 0x004344DB
+agreed,DesignWin,0x12764,Spot,spot2_ 0xC,??0DesignWin@@QAE@XZ: call ??0Spot@@QAE@XZ on this+0x12764 at 0x004344EA
+agreed,DesignWin,0x12774,Time,time_ 0x28,??0DesignWin@@QAE@XZ: call ??0Time@@QAE@XZ on this+0x12774 at 0x004344F9
+agreed,DesignWin,0x1279C,Caviar,caviar_ 0x13D0,??0DesignWin@@QAE@XZ: call ??0Caviar@@QAE@XZ on this+0x1279C at 0x00434508
+agreed,DesignWin,0x13C6C,Buffer,buffer_ 0x588,??0DesignWin@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0x13C6C at 0x00434517
+agreed,DesignWin,0x14540,Font,font1_ 0x28,??0DesignWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x14540 at 0x00434526
+agreed,DesignWin,0x14568,Font,font2_ 0x28,??0DesignWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x14568 at 0x00434535
+agreed,DesignWin,0x14590,Font,font3_ 0x28,??0DesignWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x14590 at 0x00434544
+agreed,Dialog,0x4,Heap,heap_ 0x14,??0Dialog@@QAE@XZ: call ??0Heap@@QAE@XZ on this+0x4 at 0x00608C1E
+at-zero,Dialogs,0x0,ListBox,src/ bases: [],??0Dialogs@@QAE@H@Z: call ??0ListBox@@QAE@H@Z on this+0x0 at 0x006128BE
+absent,Dialogs,0x44,RadioButton,0xB24 bytes,??0Dialogs@@QAE@H@Z: call ??0RadioButton@@QAE@H@Z on this+0x44 at 0x006128D0
+absent,Dialogs,0x58,CheckBox,0xB28 bytes,??0Dialogs@@QAE@H@Z: call ??0CheckBox@@QAE@H@Z on this+0x58 at 0x006128DF
+absent,Dialogs,0x70,SpriteBox,0x460 bytes,??0Dialogs@@QAE@H@Z: call ??0SpriteBox@@QAE@H@Z on this+0x70 at 0x006128EE
+absent,Dialogs,0xF8,EditGroup,0xB98 bytes,??0Dialogs@@QAE@H@Z: call ??0EditGroup@@QAE@H@Z on this+0xF8 at 0x00612900
+agreed,Dialogs,0x188,GraphicWin,virtual_base_ 0xA14,??0Dialogs@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x188 at 0x0061288A
+agreed,Dialogs,0xBA0,Dialog,dialog_ 0xF4,??0Dialogs@@QAE@H@Z: call ??0Dialog@@QAE@XZ on this+0xBA0 at 0x006128A5
+at-zero,DipEdit,0x0,GraphicWin,src/ bases: [],??1DipEdit@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x004E23A4
+mistyped,DipEdit,0xA24,Font,"declared `uint8_t unmapped_A24_`, 0x43EC bytes against 0x28",??1DipEdit@@QAE@XZ: call ??1Font@@QAE@XZ on this+0xA24 at 0x004E2396
+absent,DipEdit,0xA4C,ListBox,0xB54 bytes,?init@DipEdit@@QAEXH@Z: call ?close@ListBox@@QAEXXZ on this+0xA4C at 0x004DB2BF
+absent,DipEdit,0xA94,ListBox,0xB54 bytes,??1DipEdit@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0xA94 at 0x004E2375
+absent,DipEdit,0x14AC,Dialog,0xF4 bytes,??1DipEdit@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x14AC at 0x004E2380
+absent,DipEdit,0x15A0,CheckBox,0xB28 bytes,?init@DipEdit@@QAEXH@Z: call ?close@CheckBox@@QAEXXZ on this+0x15A0 at 0x004DB440
+absent,DipEdit,0x15BC,CheckBox,0xB28 bytes,??1DipEdit@@QAE@XZ: call ??1CheckBox@@QAE@XZ on this+0x15BC at 0x004E2352
+absent,DipEdit,0x1FD4,Dialog,0xF4 bytes,??1DipEdit@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x1FD4 at 0x004E235D
+absent,DipEdit,0x20C8,FlatButton,0xB4C bytes,??1DipEdit@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x20C8 at 0x004E2336
+absent,DipEdit,0x2C14,FlatButton,0xB4C bytes,??1DipEdit@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x2C14 at 0x004E230B
+absent,DipEdit,0x3760,FlatButton,0xB4C bytes,??1DipEdit@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x3760 at 0x004E22E0
+absent,DipEdit,0x42AC,FlatButton,0xB4C bytes,??1DipEdit@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x42AC at 0x004E22B5
+absent,DipEdit,0x4DF8,FlatButton,0xB4C bytes,??1DipEdit@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x4DF8 at 0x004E228A
+base,DiploPop,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'SubInterface', 'Win']",??0DiploPop@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x0043F00F
+agreed,DiploPop,0xA1C,Font,font1_ 0x28,??0DiploPop@@QAE@XZ: call ??0Font@@QAE@XZ on this+0xA1C at 0x0043F02B
+agreed,DiploPop,0xA44,Font,font2_ 0x28,??0DiploPop@@QAE@XZ: call ??0Font@@QAE@XZ on this+0xA44 at 0x0043F03A
+agreed,DiploPop,0xA6C,Font,font3_ 0x28,??0DiploPop@@QAE@XZ: call ??0Font@@QAE@XZ on this+0xA6C at 0x0043F049
+absent,DiploPop,0xA98,Time,0x28 bytes,??0DiploPop@@QAE@XZ: call ??0Time@@QAE@XZ on this+0xA98 at 0x0043F058
+absent,DiploPop,0xAC0,Time,0x28 bytes,??0DiploPop@@QAE@XZ: call ??0Time@@QAE@XZ on this+0xAC0 at 0x0043F067
+absent,DiploPop,0xAE8,Flic,0xAE4 bytes,??0DiploPop@@QAE@XZ: call ??0Flic@@QAE@XZ on this+0xAE8 at 0x0043F076
+absent,DiploPop,0xAEC,Buffer,0x588 bytes,??1DiploPop@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xAEC at 0x00440E4D
+absent,DiploPop,0x10A4,Palette,0x454 bytes,??1DiploPop@@QAE@XZ: call ??1Palette@@QAE@XZ on this+0x10A4 at 0x00440E41
+absent,DiploPop,0x15CC,Flic,0xAE4 bytes,??0DiploPop@@QAE@XZ: call ??0Flic@@QAE@XZ on this+0x15CC at 0x0043F085
+absent,DiploPop,0x15D0,Buffer,0x588 bytes,??1DiploPop@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x15D0 at 0x00440E1E
+absent,DiploPop,0x1B88,Palette,0x454 bytes,??1DiploPop@@QAE@XZ: call ??1Palette@@QAE@XZ on this+0x1B88 at 0x00440E12
+base,DiploWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",?exec@DiploWin@@QAEXHH@Z: call ?close@GraphicWin@@QAEXXZ on this+0x0 at 0x00444D7D
+agreed,DiploWin,0xED0,Spot,spot_ 0xC,??1DiploWin@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0xED0 at 0x00444F8E
+agreed,DiploWin,0xA388,StringBox,stringBox_ 0x2BA0,??1DiploWin@@QAE@XZ: call ?close@StringBox@@QAEXXZ on this+0xA388 at 0x00444E5A
+absent,DiploWin,0xADA8,Scroll,0x214C bytes,??1DiploWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0xADA8 at 0x00444EF1
+absent,DiploWin,0xB854,FlatButton,0xB4C bytes,??1DiploWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xB854 at 0x00444F41
+absent,DiploWin,0xC3A0,FlatButton,0xB4C bytes,??1DiploWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xC3A0 at 0x00444F13
+agreed,DiploWin,0xCF28,ListBox,listBox_ 0xB54,??0DiploWin@@QAE@XZ: call ??0ListBox@@QAE@H@Z on this+0xCF28 at 0x0044503C
+absent,DiploWin,0xCF70,ListBox,0xB54 bytes,??1DiploWin@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0xCF70 at 0x00444E24
+absent,DiploWin,0xD988,Dialog,0xF4 bytes,??1DiploWin@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0xD988 at 0x00444E2F
+agreed,DiploWin,0xDA7C,EditBox,editBox_ 0xB74,??1DiploWin@@QAE@XZ: call ?close@EditBox@@QAEXXZ on this+0xDA7C at 0x00444DF9
+absent,DiploWin,0xE5C8,Time,0x28 bytes,??1DiploWin@@QAE@XZ: call ??1Time@@QAE@XZ on this+0xE5C8 at 0x00444E08
+at-zero,EditBox,0x0,GraphicWin,src/ bases: [],??1EditBox@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x00408063
+agreed,EditBox,0xB4C,Time,time_ 0x28,??1EditBox@@QAE@XZ: call ??1Time@@QAE@XZ on this+0xB4C at 0x00408055
+agreed,EditGroup,0x8C,GraphicWin,virtual_base_ 0xA14,??0EditGroup@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x8C at 0x0061197A
+agreed,EditGroup,0xAA4,Dialog,dialog_ 0xF4,??0EditGroup@@QAE@H@Z: call ??0Dialog@@QAE@XZ on this+0xAA4 at 0x00611991
+at-zero,Effect,0x0,Wave,src/ bases: [],??0Effect@@QAE@XZ: call ??0Wave@@QAE@XZ on this+0x0 at 0x004482D3
+base,FactionAmbience,0x0,Ambience,src/ bases: ['Ambience'],??0FactionAmbience@@QAE@XZ: call ??0Ambience@@QAE@XZ on this+0x0 at 0x004471F3
+agreed,FactionArt,0x478,Sprite,council_small 0x2C,??0FactionArt@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x478 at 0x00455F6E
+agreed,FactionArt,0x4A4,Sprite,council_big 0x2C,??0FactionArt@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x4A4 at 0x00455F7D
+agreed,FactionArt,0x4D0,Sprite,diplomacy 0x2C,??0FactionArt@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x4D0 at 0x00455F8C
+agreed,FactionArt,0x4FC,Sprite,diplomacy_logo 0x2C,??0FactionArt@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x4FC at 0x00455F9B
+agreed,FactionArt,0x528,Sprite,diplomacy_landscape 0x2C,??0FactionArt@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x528 at 0x00455FAA
+agreed,FactionArt,0x554,Sprite,datalink 0x2C,??0FactionArt@@QAE@XZ: call ??0Sprite@@QAE@XZ on this+0x554 at 0x00455FB9
+at-zero,FameWin,0x0,GraphicWin,src/ bases: [],?close@FameWin@@QAEXXZ: call ?close@GraphicWin@@QAEXXZ on this+0x0 at 0x00448D7A
+agreed,FameWin,0xA50,Spot,spot_ 0xC,??1FameWin@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0xA50 at 0x0044B1DC
+agreed,FameWin,0x5970,ButtonGroup,buttonGroup_ 0x94,??1FameWin@@QAE@XZ: call ?close@ButtonGroup@@QAEXXZ on this+0x5970 at 0x0044B1B1
+agreed,FameWin,0x9DCC,FlatButton,flatButton3_ 0xB4C,??1FameWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x9DCC at 0x0044B17B
+agreed,FameWin,0xA91C,Buffer,buffer1_ 0x588,?close@FameWin@@QAEXXZ: call ?close@Buffer@@QAEXXZ on this+0xA91C at 0x00448D69
+agreed,FameWin,0xAEA4,Buffer,buffer2_ 0x588,??1FameWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xAEA4 at 0x0044B148
+absent,FileWin,0x660,FlatButton,0xB4C bytes,??0FileWin@@QAE@XZ: call ??0FlatButton@@QAE@XZ on this+0x660 at 0x00613874
+absent,FileWin,0x11AC,FlatButton,0xB4C bytes,??1FileWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x11AC at 0x00407FAE
+absent,FileWin,0x1CF8,EditBox,0xB74 bytes,??1FileWin@@QAE@XZ: call ?close@EditBox@@QAEXXZ on this+0x1CF8 at 0x00407F70
+absent,FileWin,0x2844,Time,0x28 bytes,??1FileWin@@QAE@XZ: call ??1Time@@QAE@XZ on this+0x2844 at 0x00407F7F
+absent,FileWin,0x286C,ListBox,0xB54 bytes,??0FileWin@@QAE@XZ: call ??0ListBox@@QAE@H@Z on this+0x286C at 0x006138A7
+absent,FileWin,0x28B4,ListBox,0xB54 bytes,??1FileWin@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0x28B4 at 0x00407F3A
+absent,FileWin,0x32CC,Dialog,0xF4 bytes,??1FileWin@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x32CC at 0x00407F45
+base,FlatButton,0x0,BaseButton,"src/ bases: ['BaseButton', 'GraphicWin', 'Win']",??1FlatButton@@QAE@XZ: call ??1BaseButton@@QAE@XZ on this+0x0 at 0x004068C4
+agreed,FlatButton,0xA1C,Time,BaseButton::time1_ 0x28,?close@FlatButton@@QAEXXZ: call ?close@Time@@QAEXXZ on this+0xA1C at 0x00607DAA
+agreed,Flic,0x4,Buffer,buffer_ 0x588,??1Flic@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x4 at 0x004327E4
+mistyped,Flic,0x5BC,Palette,"declared `Palette * palette_`, 0x4 bytes against 0x454",??1Flic@@QAE@XZ: call ??1Palette@@QAE@XZ on this+0x5BC at 0x004327D5
+base,GAmbience,0x0,Ambience,src/ bases: ['Ambience'],??0GAmbience@@QAE@XZ: call ??0Ambience@@QAE@XZ on this+0x0 at 0x00447B93
+base,Gamma,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1Gamma@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x0045625F
+agreed,Gamma,0xA68,Palette,palette_ 0x454,??1Gamma@@QAE@XZ: call ??1Palette@@QAE@XZ on this+0xA68 at 0x00456251
+agreed,Gamma,0xEBC,Font,font_ 0x28,??1Gamma@@QAE@XZ: call ??1Font@@QAE@XZ on this+0xEBC at 0x00456242
+agreed,Gamma,0xEF0,Scroll,scroll_ 0x214C,??1Gamma@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0xEF0 at 0x004561CA
+absent,Gamma,0x199C,FlatButton,0xB4C bytes,??1Gamma@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x199C at 0x0045621D
+absent,Gamma,0x24E8,FlatButton,0xB4C bytes,??1Gamma@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x24E8 at 0x004561EE
+agreed,Gamma,0x303C,EditBox,editBox_ 0xB74,??1Gamma@@QAE@XZ: call ?close@EditBox@@QAEXXZ on this+0x303C at 0x0045618C
+absent,Gamma,0x3B88,Time,0x28 bytes,??1Gamma@@QAE@XZ: call ??1Time@@QAE@XZ on this+0x3B88 at 0x0045619B
+agreed,Gamma,0x3BB0,PushButton,pushButton1_ 0xB00,??1Gamma@@QAE@XZ: call ??1PushButton@@QAE@XZ on this+0x3BB0 at 0x00456168
+mistyped,Gamma,0x46B0,PushButton,"declared `uint8_t field_46B0_`, 0x4 bytes against 0xB00",??1Gamma@@QAE@XZ: call ??1PushButton@@QAE@XZ on this+0x46B0 at 0x00456159
+base,GraphicWin,0x0,Win,src/ bases: ['Win'],??0GraphicWin@@QAE@XZ: call ??0Win@@QAE@XZ on this+0x0 at 0x005D4D0F
+agreed,GraphicWin,0x444,Buffer,buffer_ 0x588,??0GraphicWin@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0x444 at 0x005D4D22
+at-zero,ImageButton,0x0,BaseButton,src/ bases: [],??0ImageButton@@QAE@XZ: call ??0BaseButton@@QAE@XZ on this+0x0 at 0x006252E3
+absent,InfoWin,0x30,Time,0x28 bytes,??1InfoWin@@QAE@XZ: call ??1Time@@QAE@XZ on this+0x30 at 0x004594E7
+absent,InfoWin,0x58,Font,0x28 bytes,??1InfoWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x58 at 0x004594D8
+absent,InfoWin,0x9D0,PushButton,0xB00 bytes,??1InfoWin@@QAE@XZ: call ??1PushButton@@QAE@XZ on this+0x9D0 at 0x004594CC
+at-zero,Interlude,0x0,GraphicWin,src/ bases: [],??0Interlude@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x0045F227
+agreed,Interlude,0xA54,Buffer,buffer_ 0x588,??0Interlude@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0xA54 at 0x0045F2B8
+agreed,ListBox,0x48,GraphicWin,virtual_base_ 0xA14,??0ListBox@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x48 at 0x00609DE7
+agreed,ListBox,0xA60,Dialog,dialog_ 0xF4,??0ListBox@@QAE@H@Z: call ??0Dialog@@QAE@XZ on this+0xA60 at 0x00609DFE
+base,MAmbience,0x0,Ambience,src/ bases: ['Ambience'],??0MAmbience@@QAE@XZ: call ??0Ambience@@QAE@XZ on this+0x0 at 0x00447313
+agreed,MCIVideo,0x10,Palette,palette_ 0x454,??1MCIVideo@@QAE@XZ: call ??1Palette@@QAE@XZ on this+0x10 at 0x004042F5
+base,MainInterface,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1MainInterface@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x0045EEF4
+agreed,MainInterface,0x1EACC,StringBox,string_box_ 0x2BA0,??1MainInterface@@QAE@XZ: call ?close@StringBox@@QAEXXZ on this+0x1EACC at 0x0045EDA5
+absent,MainInterface,0x1F4EC,Scroll,0x214C bytes,??1MainInterface@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x1F4EC at 0x0045EE3C
+absent,MainInterface,0x1FF98,FlatButton,0xB4C bytes,??1MainInterface@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x1FF98 at 0x0045EE8C
+absent,MainInterface,0x20AE4,FlatButton,0xB4C bytes,??1MainInterface@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x20AE4 at 0x0045EE5E
+agreed,MainInterface,0x2166C,Font,font1_ 0x28,??1MainInterface@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x2166C at 0x0045ED81
+agreed,MainInterface,0x21694,Font,font2_ 0x28,??1MainInterface@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x21694 at 0x0045ED72
+agreed,MainInterface,0x216BC,Font,font3_ 0x28,??1MainInterface@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x216BC at 0x0045ED63
+agreed,MainInterface,0x22DFC,Sprite,sprite11_ 0x2C,??1MainInterface@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x22DFC at 0x0045EC5A
+agreed,MainInterface,0x24550,Flic,flic2_ 0xAE4,??1MainInterface@@QAE@XZ: call ?close@Flic@@QAEXXZ on this+0x24550 at 0x0045EBE2
+absent,MainInterface,0x24554,Buffer,0x588 bytes,??1MainInterface@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x24554 at 0x0045EBFD
+absent,MainInterface,0x24B0C,Palette,0x454 bytes,??1MainInterface@@QAE@XZ: call ??1Palette@@QAE@XZ on this+0x24B0C at 0x0045EBF1
+agreed,MainInterface,0x25034,Spot,spot_ 0xC,??1MainInterface@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x25034 at 0x0045EBCE
+agreed,MainInterface,0x25040,Time,time1_ 0x28,??1MainInterface@@QAE@XZ: call ??1Time@@QAE@XZ on this+0x25040 at 0x0045EBBF
+agreed,MainInterface,0x25068,Time,time2_ 0x28,??1MainInterface@@QAE@XZ: call ??1Time@@QAE@XZ on this+0x25068 at 0x0045EBB0
+absent,MapWin,0x1DB0C,TextureStore,0x8 bytes,??0MapWin@@QAE@H@Z: call ??0TextureStore@@QAE@XZ on this+0x1DB0C at 0x00462774
+absent,MapWin,0x1DE28,Buffer,0x588 bytes,??0MapWin@@QAE@H@Z: call ??0Buffer@@QAE@XZ on this+0x1DE28 at 0x00462783
+absent,MapWin,0x1E3B0,Buffer,0x588 bytes,??0MapWin@@QAE@H@Z: call ??0Buffer@@QAE@XZ on this+0x1E3B0 at 0x00462792
+absent,MapWin,0x1E938,Buffer,0x588 bytes,??0MapWin@@QAE@H@Z: call ??0Buffer@@QAE@XZ on this+0x1E938 at 0x004627A1
+absent,MapWin,0x1EEC8,Font,0x28 bytes,??0MapWin@@QAE@H@Z: call ??0Font@@QAE@XZ on this+0x1EEC8 at 0x004627B0
+absent,MapWin,0x1EEF4,Font,0x28 bytes,??0MapWin@@QAE@H@Z: call ??0Font@@QAE@XZ on this+0x1EEF4 at 0x004627BF
+absent,MapWin,0x1EF20,Font,0x28 bytes,??0MapWin@@QAE@H@Z: call ??0Font@@QAE@XZ on this+0x1EF20 at 0x004627CE
+absent,MapWin,0x21A6C,GraphicWin,0xA14 bytes,??0MapWin@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x21A6C at 0x0046271A
+base,Menu,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??0Menu@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x005FAC7E
+agreed,Menu,0xA2C,Spot,spot_ 0xC,??0Menu@@QAE@XZ: call ??0Spot@@QAE@XZ on this+0xA2C at 0x005FAC8F
+base,MessageWin,0x0,Sprite,src/ bases: ['Sprite'],??1MessageWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x0 at 0x0047216E
+agreed,MessageWin,0x3C,Font,font_ 0x28,??1MessageWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x3C at 0x00472160
+agreed,MessageWin,0x64,ListBox,listBox_ 0xB54,?init@MessageWin@@QAEXXZ: call ?close@ListBox@@QAEXXZ on this+0x64 at 0x00471DE4
+absent,MessageWin,0xAC,ListBox,0xB54 bytes,??1MessageWin@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0xAC at 0x00472142
+absent,MessageWin,0xAC4,Dialog,0xF4 bytes,??1MessageWin@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0xAC4 at 0x0047214D
+agreed,MessageWin,0xBB8,StringBox,stringBox_ 0x2BA0,??1MessageWin@@QAE@XZ: call ?close@StringBox@@QAEXXZ on this+0xBB8 at 0x00472069
+absent,MessageWin,0x15D8,Scroll,0x214C bytes,??1MessageWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x15D8 at 0x004720DE
+absent,MessageWin,0x2084,FlatButton,0xB4C bytes,??1MessageWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x2084 at 0x0047211B
+absent,MessageWin,0x2BD0,FlatButton,0xB4C bytes,??1MessageWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x2BD0 at 0x00472100
+absent,MessageWin,0x3744,StringStruct,0x24 bytes,??1MessageWin@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0x3744 at 0x004720A5
+at-zero,MonuWin,0x0,GraphicWin,src/ bases: [],?close@MonuWin@@QAEXXZ: call ?close@GraphicWin@@QAEXXZ on this+0x0 at 0x0047676D
+agreed,MonuWin,0xA58,FlatButton,flatButton1_ 0xB4C,??1MonuWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xA58 at 0x00477C4B
+agreed,MonuWin,0x15A4,FlatButton,flatButton2_ 0xB4C,??1MonuWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x15A4 at 0x00477C1C
+agreed,MonuWin,0x20F0,Spot,spot_ 0xC,??1MonuWin@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x20F0 at 0x00477BF8
+agreed,MonuWin,0x20FC,Buffer,buffer1_ 0x588,??1MonuWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x20FC at 0x00477BE9
+agreed,MonuWin,0x2684,Buffer,buffer2_ 0x588,??1MonuWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x2684 at 0x00477BDA
+agreed,MonuWin,0x3614,Sprite,sprite8_ 0x2C,??1MonuWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x3614 at 0x00477B4E
+agreed,MonuWin,0x3640,Sprite,sprite9_ 0x2C,??1MonuWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x3640 at 0x00477B3F
+base,MultiDebug,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??0MultiDebug@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x005C980F
+agreed,MultiDebug,0xA14,Font,font_ 0x28,??0MultiDebug@@QAE@XZ: call ??0Font@@QAE@XZ on this+0xA14 at 0x005C9821
+absent,MultiDebug,0xA40,Time,0x28 bytes,??0MultiDebug@@QAE@XZ: call ??0Time@@QAE@XZ on this+0xA40 at 0x005C9830
+at-zero,MultiWin,0x0,GraphicWin,src/ bases: [],??1MultiWin@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x0047A575
+agreed,MultiWin,0xA54,Buffer,buffer_ 0x588,??1MultiWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xA54 at 0x0047A567
+agreed,MultiWin,0x10E4,Sprite,sprite3_ 0x2C,??1MultiWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x10E4 at 0x0047A526
+agreed,MultiWin,0x1110,Sprite,sprite4_ 0x2C,??1MultiWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x1110 at 0x0047A517
+agreed,MultiWin,0x113C,Sprite,sprite5_ 0x2C,??1MultiWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x113C at 0x0047A508
+agreed,MultiWin,0x116C,Sprite,sprite6_ 0x2C,??1MultiWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x116C at 0x0047A4F9
+agreed,MultiWin,0x1198,Sprite,sprite7_ 0x2C,??1MultiWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x1198 at 0x0047A4EA
+agreed,MultiWin,0x11C4,FlatButton,flatButton1_ 0xB4C,??1MultiWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x11C4 at 0x0047A4D0
+agreed,MultiWin,0x1D10,FlatButton,flatButton2_ 0xB4C,??1MultiWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x1D10 at 0x0047A4A1
+agreed,MultiWin,0x285C,Font,font1_ 0x28,??1MultiWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x285C at 0x0047A47D
+agreed,MultiWin,0x2884,Font,font2_ 0x28,??1MultiWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x2884 at 0x0047A46E
+agreed,MultiWin,0x28AC,Spot,spot_ 0xC,??1MultiWin@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x28AC at 0x0047A45F
+absent,Net,0x58,VoiceTx,0x58 bytes,??1Net@@QAE@XZ: call ??1VoiceTx@@QAE@XZ on this+0x58 at 0x004E3646
+absent,Net,0xE8,NetFifo,0x10 bytes,??1Net@@QAE@XZ: call ??1NetFifo@@QAE@XZ on this+0xE8 at 0x004E358B
+absent,Net,0x10C,NetFifo,0x10 bytes,??1Net@@QAE@XZ: call ??1NetFifo@@QAE@XZ on this+0x10C at 0x004E357C
+absent,Net,0x130,NetFifo,0x10 bytes,??1Net@@QAE@XZ: call ??1NetFifo@@QAE@XZ on this+0x130 at 0x004E356D
+base,NetDaemon,0x0,AlphaNet,src/ bases: ['AlphaNet'],?init@NetDaemon@@QAEHH@Z: call ?close@AlphaNet@@QAEXXZ on this+0x0 at 0x0052E00E
+absent,NetDaemon,0x58,VoiceTx,0x58 bytes,??1NetDaemon@@QAE@XZ: call ??1VoiceTx@@QAE@XZ on this+0x58 at 0x00538EA8
+absent,NetDaemon,0xB0,JackalVoiceRx,0x18 bytes,??1NetDaemon@@QAE@XZ: call ??1JackalVoiceRx@@QAE@XZ on this+0xB0 at 0x00538E80
+absent,NetDaemon,0xE8,NetFifo,0x10 bytes,??1NetDaemon@@QAE@XZ: call ??1NetFifo@@QAE@XZ on this+0xE8 at 0x00538E55
+absent,NetDaemon,0x10C,NetFifo,0x10 bytes,??1NetDaemon@@QAE@XZ: call ??1NetFifo@@QAE@XZ on this+0x10C at 0x00538E46
+absent,NetDaemon,0x130,NetFifo,0x10 bytes,??1NetDaemon@@QAE@XZ: call ??1NetFifo@@QAE@XZ on this+0x130 at 0x00538E37
+base,NetMsg,0x0,Popup,"src/ bases: ['BasePop', 'GraphicWin', 'Popup', 'Win']",??0NetMsg@@QAE@HHH@Z: call ??0Popup@@QAE@XZ on this+0x0 at 0x0047AD0F
+agreed,NetMsg,0xA5C,FlatButton,Popup::BasePop::flat_button1_ 0xB4C,??1NetMsg@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xA5C at 0x0047AF94
+agreed,NetMsg,0x15A8,FlatButton,Popup::BasePop::flat_button2_ 0xB4C,??1NetMsg@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x15A8 at 0x0047AF69
+agreed,NetMsg,0x2118,Sprite,Popup::BasePop::sprite_ 0x2C,??1NetMsg@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x2118 at 0x0047AF44
+mistyped,NetMsg,0x219C,StringStruct,"declared `uint32_t Popup::BasePop::field_219C_`, 0x4 bytes against 0x24",??1NetMsg@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0x219C at 0x0047AF07
+absent,NetMsg,0x2358,Dialogs,0xC94 bytes,??1NetMsg@@QAE@XZ: call ??1Dialogs@@QAE@XZ on this+0x2358 at 0x0047AEB9
+absent,NetMsg,0x2D70,Dialog,0xF4 bytes,??1NetMsg@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x2D70 at 0x0047AEC4
+agreed,NetMsg,0x3098,Spot,Popup::BasePop::spot_ 0xC,??1NetMsg@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x3098 at 0x0047AEA8
+agreed,NetMsg,0x3230,Scroll,Popup::scroll_ 0x214C,??1NetMsg@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x3230 at 0x0047AE12
+absent,NetMsg,0x3CDC,FlatButton,0xB4C bytes,??1NetMsg@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x3CDC at 0x0047AE65
+absent,NetMsg,0x4828,FlatButton,0xB4C bytes,??1NetMsg@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x4828 at 0x0047AE36
+agreed,NetMsg,0x538C,Time,timer_ 0x28,?close@NetMsg@@QAEXXZ: call ?close@Time@@QAEXXZ on this+0x538C at 0x0047A7ED
+base,NetWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??0NetWin@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x00481C6F
+absent,NetWin,0x1C,CheckBox,0xB28 bytes,?UNK4@NetWin@@QAEXXZ: call ??1CheckBox@@QAE@XZ on this+0x1C at 0x004837F9
+mistyped,NetWin,0xA34,Dialog,"declared `uint32_t field_A34_`, 0x4 bytes against 0xF4",?UNK4@NetWin@@QAEXXZ: call ??1Dialog@@QAE@XZ on this+0xA34 at 0x00483804
+agreed,NetWin,0xD34,Spot,spot_ 0xC,??0NetWin@@QAE@XZ: call ??0Spot@@QAE@XZ on this+0xD34 at 0x00481C81
+agreed,NetWin,0xD40,StringBox,stringBox_ 0x2BA0,??0NetWin@@QAE@XZ: call ??0StringBox@@QAE@XZ on this+0xD40 at 0x00481C90
+absent,NetWin,0x1760,Scroll,0x214C bytes,??1NetWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x1760 at 0x0048370F
+absent,NetWin,0x220C,FlatButton,0xB4C bytes,??1NetWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x220C at 0x0048375F
+absent,NetWin,0x2D58,FlatButton,0xB4C bytes,??1NetWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x2D58 at 0x00483731
+agreed,NetWin,0x38E0,EditBox,editBox_ 0xB74,??0NetWin@@QAE@XZ: call ??0EditBox@@QAE@XZ on this+0x38E0 at 0x00481C9F
+absent,NetWin,0x442C,Time,0x28 bytes,??1NetWin@@QAE@XZ: call ??1Time@@QAE@XZ on this+0x442C at 0x00483649
+agreed,NetWin,0x4454,CheckBox,checkBox_ 0xB28,??0NetWin@@QAE@XZ: call ??0CheckBox@@QAE@H@Z on this+0x4454 at 0x00481CB0
+absent,NetWin,0x4470,CheckBox,0xB28 bytes,??1NetWin@@QAE@XZ: call ??1CheckBox@@QAE@XZ on this+0x4470 at 0x00483604
+absent,NetWin,0x4E88,Dialog,0xF4 bytes,??1NetWin@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x4E88 at 0x0048360F
+agreed,NetWin,0x4F7C,FlatButton,flatButton1_ 0xB4C,??0NetWin@@QAE@XZ: call ??0FlatButton@@QAE@XZ on this+0x4F7C at 0x00481CBF
+agreed,NetWin,0x5AC8,FlatButton,flatButton2_ 0xB4C,??0NetWin@@QAE@XZ: call ??0FlatButton@@QAE@XZ on this+0x5AC8 at 0x00481CCE
+base,NewTechWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",?exec@NewTechWin@@QAEXHH@Z: call ?close@GraphicWin@@QAEXXZ on this+0x0 at 0x004847FC
+agreed,NewTechWin,0x2D10,ButtonGroup,buttonGroup_ 0x94,??1NewTechWin@@QAE@XZ: call ?close@ButtonGroup@@QAEXXZ on this+0x2D10 at 0x0048498D
+agreed,NewTechWin,0xDC24,StringBox,stringBox2_ 0x2BA0,??1NewTechWin@@QAE@XZ: call ?close@StringBox@@QAEXXZ on this+0xDC24 at 0x00484859
+absent,NewTechWin,0xE644,Scroll,0x214C bytes,??1NewTechWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0xE644 at 0x004848F0
+absent,NewTechWin,0xF0F0,FlatButton,0xB4C bytes,??1NewTechWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xF0F0 at 0x00484940
+absent,NewTechWin,0xFC3C,FlatButton,0xB4C bytes,??1NewTechWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xFC3C at 0x00484912
+at-zero,PickTech,0x0,GraphicWin,src/ bases: [],??0PickTech@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x00484AE0
+agreed,PickTech,0xBBC,Font,font1_ 0x28,??0PickTech@@QAE@XZ: call ??0Font@@QAE@XZ on this+0xBBC at 0x00484AF0
+agreed,PickTech,0xBE4,Font,font2_ 0x28,??0PickTech@@QAE@XZ: call ??0Font@@QAE@XZ on this+0xBE4 at 0x00484AFF
+agreed,PickTech,0xC0C,Font,font3_ 0x28,??0PickTech@@QAE@XZ: call ??0Font@@QAE@XZ on this+0xC0C at 0x00484B0E
+agreed,PickTech,0xC34,Font,font4_ 0x28,??0PickTech@@QAE@XZ: call ??0Font@@QAE@XZ on this+0xC34 at 0x00484B1D
+base,PickWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1PickWin@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x0048ABF3
+agreed,PickWin,0xA24,Popup,popup_ 0x537C,??1PickWin@@QAE@XZ: call ?close@Popup@@QAEXXZ on this+0xA24 at 0x0048AB6E
+absent,PickWin,0x3C54,Scroll,0x214C bytes,??1PickWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x3C54 at 0x0048AB92
+absent,PickWin,0x4700,FlatButton,0xB4C bytes,??1PickWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x4700 at 0x0048ABCF
+absent,PickWin,0x524C,FlatButton,0xB4C bytes,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x524C at 0x0048ABB4
+agreed,PickWin,0x628C,FlatButton,flatButton1_ 0xB4C,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x628C at 0x0048AB3F
+agreed,PickWin,0x6DD8,FlatButton,flatButton2_ 0xB4C,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x6DD8 at 0x0048AB14
+agreed,PickWin,0x7924,FlatButton,flatButton3_ 0xB4C,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x7924 at 0x0048AAE9
+agreed,PickWin,0x8680,Sprite,sprite5_ 0x2C,??1PickWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x8680 at 0x0048AA65
+agreed,PickWin,0x86BC,ListBox,listBox_ 0xB54,?init@PickWin@@QAEXP6AXH@ZHH@Z: call ?close@ListBox@@QAEXXZ on this+0x86BC at 0x0048920D
+absent,PickWin,0x8704,ListBox,0xB54 bytes,??1PickWin@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0x8704 at 0x0048AA44
+absent,PickWin,0x911C,Dialog,0xF4 bytes,??1PickWin@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x911C at 0x0048AA4F
+agreed,PickWin,0x9270,FlatButton,flatButton4_ 0xB4C,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x9270 at 0x0048AA28
+agreed,PickWin,0x9DBC,FlatButton,flatButton5_ 0xB4C,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x9DBC at 0x0048A9FD
+agreed,PickWin,0xA908,FlatButton,flatButton6_ 0xB4C,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xA908 at 0x0048A9D2
+agreed,PickWin,0xB454,FlatButton,flatButton7_ 0xB4C,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xB454 at 0x0048A9A7
+agreed,PickWin,0xBFA0,FlatButton,flatButton8_ 0xB4C,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xBFA0 at 0x0048A97C
+agreed,PickWin,0xCAEC,FlatButton,flatButton9_ 0xB4C,??1PickWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xCAEC at 0x0048A951
+agreed,PickWin,0x125BC,ButtonGroup,buttonGroup_ 0x94,??1PickWin@@QAE@XZ: call ?close@ButtonGroup@@QAEXXZ on this+0x125BC at 0x0048A910
+at-zero,PlanWin,0x0,MapWin,src/ bases: [],??0PlanWin@@QAE@H@Z: call ??0MapWin@@QAE@H@Z on this+0x0 at 0x0048BD1C
+agreed,PlanWin,0x21A70,Buffer,buffer_ 0x588,??0PlanWin@@QAE@H@Z: call ??0Buffer@@QAE@XZ on this+0x21A70 at 0x0048BD2E
+agreed,PlanWin,0x22050,GraphicWin,virtual_base_ 0xA14,??0PlanWin@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x22050 at 0x0048BD0A
+at-zero,PopMenu,0x0,Popup,"src/ bases: ['BasePop', 'GraphicWin', 'Win']",??1PopMenu@@QAE@XZ: call ?close@Popup@@QAEXXZ on this+0x0 at 0x00421450
+agreed,PopMenu,0xA5C,FlatButton,BasePop::flat_button1_ 0xB4C,??1PopMenu@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xA5C at 0x004215F6
+agreed,PopMenu,0x15A8,FlatButton,BasePop::flat_button2_ 0xB4C,??1PopMenu@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x15A8 at 0x004215CB
+agreed,PopMenu,0x2118,Sprite,BasePop::sprite_ 0x2C,??1PopMenu@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x2118 at 0x004215A6
+mistyped,PopMenu,0x219C,StringStruct,"declared `uint32_t BasePop::field_219C_`, 0x4 bytes against 0x24",??1PopMenu@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0x219C at 0x00421569
+absent,PopMenu,0x2358,Dialogs,0xC94 bytes,??1PopMenu@@QAE@XZ: call ??1Dialogs@@QAE@XZ on this+0x2358 at 0x0042151B
+absent,PopMenu,0x2D70,Dialog,0xF4 bytes,??1PopMenu@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x2D70 at 0x00421526
+agreed,PopMenu,0x3098,Spot,BasePop::spot_ 0xC,??1PopMenu@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x3098 at 0x0042150A
+mistyped,PopMenu,0x3230,Scroll,"declared `uint8_t field_3230_`, 0x1A40 bytes against 0x214C",??1PopMenu@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x3230 at 0x00421474
+absent,PopMenu,0x3CDC,FlatButton,0xB4C bytes,??1PopMenu@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x3CDC at 0x004214C7
+absent,PopMenu,0x4828,FlatButton,0xB4C bytes,??1PopMenu@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x4828 at 0x00421498
+absent,PopMenu,0x537C,PullDown,0xF40 bytes,??1PopMenu@@QAE@XZ: call ??1PullDown@@QAE@XZ on this+0x537C at 0x00421432
+base,Popup,0x0,BasePop,"src/ bases: ['BasePop', 'GraphicWin', 'Win']",??0Popup@@QAE@XZ: call ??0BasePop@@QAE@XZ on this+0x0 at 0x004048BF
+agreed,Popup,0xA5C,FlatButton,BasePop::flat_button1_ 0xB4C,??1Popup@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xA5C at 0x00406E14
+agreed,Popup,0x15A8,FlatButton,BasePop::flat_button2_ 0xB4C,??1Popup@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x15A8 at 0x00406DE9
+agreed,Popup,0x2118,Sprite,BasePop::sprite_ 0x2C,??1Popup@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x2118 at 0x00406DC4
+mistyped,Popup,0x216C,StringStruct,"declared `uint32_t BasePop::field_216C_`, 0x4 bytes against 0x24",??1Popup@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0x216C at 0x00406DA6
+mistyped,Popup,0x219C,StringStruct,"declared `uint32_t BasePop::field_219C_`, 0x4 bytes against 0x24",??1Popup@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0x219C at 0x00406D5C
+absent,Popup,0x2358,Dialogs,0xC94 bytes,??1Popup@@QAE@XZ: call ??1Dialogs@@QAE@XZ on this+0x2358 at 0x00406D0E
+absent,Popup,0x2D70,Dialog,0xF4 bytes,??1Popup@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x2D70 at 0x00406D19
+agreed,Popup,0x3098,Spot,BasePop::spot_ 0xC,??1Popup@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x3098 at 0x00406CFD
+agreed,Popup,0x3230,Scroll,scroll_ 0x214C,??0Popup@@QAE@XZ: call ??0Scroll@@QAE@XZ on this+0x3230 at 0x004048D1
+absent,Popup,0x3CDC,FlatButton,0xB4C bytes,??1Popup@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x3CDC at 0x00406CBA
+absent,Popup,0x4828,FlatButton,0xB4C bytes,??1Popup@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x4828 at 0x00406C8B
+at-zero,PrefWin,0x0,GraphicWin,src/ bases: [],??1PrefWin@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x004921C9
+agreed,PrefWin,0xA60,FlatButton,bscPrefButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0xA60 at 0x004921BB
+agreed,PrefWin,0x15AC,FlatButton,advPrefButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x15AC at 0x004921AC
+agreed,PrefWin,0x20F8,FlatButton,warnPrefButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x20F8 at 0x0049219D
+agreed,PrefWin,0x2C44,FlatButton,autoPrefButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x2C44 at 0x0049218E
+agreed,PrefWin,0x3790,FlatButton,audioVisPrefButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x3790 at 0x0049217F
+agreed,PrefWin,0x42DC,FlatButton,mapPrefButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x42DC at 0x00492170
+agreed,PrefWin,0x4E28,FlatButton,gammaButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x4E28 at 0x00492161
+agreed,PrefWin,0x5974,CheckBox,bscPrefCheckBox_ 0xB28,?init@PrefWin@@QAEXXZ: call ?close@CheckBox@@QAEXXZ on this+0x5974 at 0x0048DE09
+agreed,PrefWin,0x649C,CheckBox,advPrefCheckBox_ 0xB28,?init@PrefWin@@QAEXXZ: call ?close@CheckBox@@QAEXXZ on this+0x649C at 0x0048E0A6
+agreed,PrefWin,0x6FC4,CheckBox,autoPrefCheckBox_ 0xB28,?init@PrefWin@@QAEXXZ: call ?close@CheckBox@@QAEXXZ on this+0x6FC4 at 0x0048E435
+agreed,PrefWin,0x7AEC,CheckBox,audioVisPrefCheckBox_ 0xB28,?init@PrefWin@@QAEXXZ: call ?close@CheckBox@@QAEXXZ on this+0x7AEC at 0x0048E861
+agreed,PrefWin,0x8614,CheckBox,warnPrefCheckBox_ 0xB28,?init@PrefWin@@QAEXXZ: call ?close@CheckBox@@QAEXXZ on this+0x8614 at 0x0048EB14
+agreed,PrefWin,0x913C,CheckBox,warnContPrefCheckBox_ 0xB28,?init@PrefWin@@QAEXXZ: call ?close@CheckBox@@QAEXXZ on this+0x913C at 0x0048EEBD
+agreed,PrefWin,0x9C64,CheckBox,mapPrefCheckBox_ 0xB28,?init@PrefWin@@QAEXXZ: call ?close@CheckBox@@QAEXXZ on this+0x9C64 at 0x0048F08E
+absent,PrefWin,0x9C80,CheckBox,0xB28 bytes,??1PrefWin@@QAE@XZ: call ??1CheckBox@@QAE@XZ on this+0x9C80 at 0x004920E6
+absent,PrefWin,0xA698,Dialog,0xF4 bytes,??1PrefWin@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0xA698 at 0x004920F1
+agreed,PrefWin,0xA78C,Scroll,volumeMainScroll_ 0x214C,??1PrefWin@@QAE@XZ: call ??1Scroll@@QAE@XZ on this+0xA78C at 0x004920D5
+agreed,PrefWin,0xC8D8,Scroll,volumeVoiceScroll_ 0x214C,??1PrefWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0xC8D8 at 0x0049209D
+absent,PrefWin,0xD384,FlatButton,0xB4C bytes,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0xD384 at 0x004920BB
+absent,PrefWin,0xDED0,FlatButton,0xB4C bytes,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0xDED0 at 0x004920AC
+agreed,PrefWin,0xEA24,Scroll,volumeSFXScroll_ 0x214C,??1PrefWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0xEA24 at 0x00492054
+absent,PrefWin,0xF4D0,FlatButton,0xB4C bytes,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0xF4D0 at 0x00492072
+absent,PrefWin,0x1001C,FlatButton,0xB4C bytes,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x1001C at 0x00492063
+agreed,PrefWin,0x10B70,Scroll,volumeMusicScroll_ 0x214C,??1PrefWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x10B70 at 0x0049200B
+absent,PrefWin,0x1161C,FlatButton,0xB4C bytes,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x1161C at 0x00492029
+absent,PrefWin,0x12168,FlatButton,0xB4C bytes,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x12168 at 0x0049201A
+agreed,PrefWin,0x12CBC,Scroll,scroll5_ 0x214C,??1PrefWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x12CBC at 0x00491FC2
+absent,PrefWin,0x13768,FlatButton,0xB4C bytes,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x13768 at 0x00491FE0
+absent,PrefWin,0x142B4,FlatButton,0xB4C bytes,??1PrefWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0x142B4 at 0x00491FD1
+agreed,PrefWin,0x14E08,FlatButton,volumeMainToggle_ 0xB4C,??1PrefWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x14E08 at 0x00491F92
+agreed,PrefWin,0x15954,FlatButton,volumeSFXToggle_ 0xB4C,??1PrefWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x15954 at 0x00491F67
+agreed,PrefWin,0x164A0,FlatButton,volumeVoiceToggle_ 0xB4C,??1PrefWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x164A0 at 0x00491F3C
+agreed,PrefWin,0x16FEC,FlatButton,volumemusicToggle_ 0xB4C,??1PrefWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x16FEC at 0x00491F11
+agreed,PrefWin,0x17B38,FlatButton,flatButton12_ 0xB4C,??1PrefWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x17B38 at 0x00491EE6
+agreed,PrefWin,0x18684,FlatButton,restoreDefaultButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x18684 at 0x00491EBB
+agreed,PrefWin,0x191D0,FlatButton,cancelButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x191D0 at 0x00491E90
+agreed,PrefWin,0x19D1C,FlatButton,okButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x19D1C at 0x00491E65
+agreed,PrefWin,0x1A868,FlatButton,moreButton_ 0xB4C,??1PrefWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x1A868 at 0x00491E3A
+base,ProdPicker,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1ProdPicker@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x0042137C
+agreed,ProdPicker,0xA9C,Font,font1_ 0x28,??1ProdPicker@@QAE@XZ: call ??1Font@@QAE@XZ on this+0xA9C at 0x00421355
+agreed,ProdPicker,0xAC4,Font,font2_ 0x28,??1ProdPicker@@QAE@XZ: call ??1Font@@QAE@XZ on this+0xAC4 at 0x00421346
+agreed,ProdPicker,0xAEC,Font,font3_ 0x28,??1ProdPicker@@QAE@XZ: call ??1Font@@QAE@XZ on this+0xAEC at 0x00421337
+agreed,ProdPicker,0xB14,Font,font4_ 0x28,??1ProdPicker@@QAE@XZ: call ??1Font@@QAE@XZ on this+0xB14 at 0x00421328
+agreed,ProdPicker,0xB3C,Time,time_ 0x28,??1ProdPicker@@QAE@XZ: call ??1Time@@QAE@XZ on this+0xB3C at 0x00421319
+agreed,ProdPicker,0x7120,Scroll,scroll_ 0x214C,??1ProdPicker@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x7120 at 0x00421285
+absent,ProdPicker,0x7BCC,FlatButton,0xB4C bytes,??1ProdPicker@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x7BCC at 0x004212D8
+absent,ProdPicker,0x8718,FlatButton,0xB4C bytes,??1ProdPicker@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x8718 at 0x004212A9
+agreed,ProdPicker,0x926C,Caviar,caviar_ 0x13D0,??1ProdPicker@@QAE@XZ: call ?close@Caviar@@QAEXXZ on this+0x926C at 0x00421261
+absent,ProdPicker,0xA7FC,StringStruct,0x24 bytes,??1ProdPicker@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0xA7FC at 0x00421176
+base,PullDown,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??0PullDown@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x005F8803
+base,PushButton,0x0,BaseButton,"src/ bases: ['BaseButton', 'GraphicWin', 'Win']",??0PushButton@@QAE@XZ: call ??0BaseButton@@QAE@XZ on this+0x0 at 0x0062BF23
+at-zero,QuayleWin,0x0,GraphicWin,src/ bases: [],?close@QuayleWin@@QAEXXZ: call ?close@GraphicWin@@QAEXXZ on this+0x0 at 0x004964BA
+agreed,QuayleWin,0xAAC,FlatButton,flatButton1_ 0xB4C,??1QuayleWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xAAC at 0x004967D3
+agreed,QuayleWin,0x15F8,FlatButton,flatButton2_ 0xB4C,??1QuayleWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x15F8 at 0x004967A4
+agreed,QuayleWin,0x214C,Spot,spot_ 0xC,??1QuayleWin@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x214C at 0x00496780
+agreed,QuayleWin,0x2158,ListBox,listBox_ 0xB54,?on_redraw@QuayleWin@@QAEXXZ: call ?close@ListBox@@QAEXXZ on this+0x2158 at 0x00495882
+absent,QuayleWin,0x21A0,ListBox,0xB54 bytes,??1QuayleWin@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0x21A0 at 0x0049675F
+absent,QuayleWin,0x2BB8,Dialog,0xF4 bytes,??1QuayleWin@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x2BB8 at 0x0049676A
+agreed,QuayleWin,0x2CAC,Buffer,buffer1_ 0x588,??1QuayleWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x2CAC at 0x0049674E
+agreed,QuayleWin,0x3234,Buffer,buffer2_ 0x588,??1QuayleWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x3234 at 0x0049673F
+agreed,RadioButton,0x18,GraphicWin,virtual_base_ 0xA14,??0RadioButton@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x18 at 0x0060D117
+agreed,RadioButton,0xA30,Dialog,dialog_ 0xF4,??0RadioButton@@QAE@H@Z: call ??0Dialog@@QAE@XZ on this+0xA30 at 0x0060D12E
+at-zero,ReplayWin,0x0,GraphicWin,src/ bases: [],?close@ReplayWin@@QAEXXZ: call ?close@GraphicWin@@QAEXXZ on this+0x0 at 0x005AD9A3
+absent,ReplayWin,0x2320,MapWin,0x22480 bytes,?close@ReplayWin@@QAEXXZ: call ?close@MapWin@@QAEXXZ on this+0x2320 at 0x005AD9AE
+absent,ReplayWin,0x1FE2C,TextureStore,0x8 bytes,??1ReplayWin@@QAE@XZ: call ??1TextureStore@@QAE@XZ on this+0x1FE2C at 0x005AE043
+absent,ReplayWin,0x20148,Buffer,0x588 bytes,??1ReplayWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x20148 at 0x005AE034
+absent,ReplayWin,0x206D0,Buffer,0x588 bytes,??1ReplayWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x206D0 at 0x005AE025
+absent,ReplayWin,0x20C58,Buffer,0x588 bytes,??1ReplayWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x20C58 at 0x005AE016
+absent,ReplayWin,0x211E8,Font,0x28 bytes,??1ReplayWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x211E8 at 0x005AE007
+absent,ReplayWin,0x21214,Font,0x28 bytes,??1ReplayWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x21214 at 0x005ADFF8
+absent,ReplayWin,0x21240,Font,0x28 bytes,??1ReplayWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x21240 at 0x005ADFE9
+absent,ReplayWin,0x23D8C,GraphicWin,0xA14 bytes,??1ReplayWin@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x23D8C at 0x005AE085
+absent,ReplayWin,0x247A0,FlatButton,0xB4C bytes,??1ReplayWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x247A0 at 0x005ADF63
+absent,ReplayWin,0x252EC,Time,0x28 bytes,??1ReplayWin@@QAE@XZ: call ??1Time@@QAE@XZ on this+0x252EC at 0x005ADF3F
+absent,ReportIf,0xA2D0,ListBox,0xB54 bytes,?report@ReportIf@@QAEXHHH@Z: call ?close@ListBox@@QAEXXZ on this+0xA2D0 at 0x004A396F
+absent,ReportIf,0xA318,ListBox,0xB54 bytes,??1ReportIf@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0xA318 at 0x004AD0F0
+absent,ReportIf,0xAD30,Dialog,0xF4 bytes,??1ReportIf@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0xAD30 at 0x004AD0FB
+absent,ReportIf,0xAE24,ListBox,0xB54 bytes,?report@ReportIf@@QAEXHHH@Z: call ?close@ListBox@@QAEXXZ on this+0xAE24 at 0x004A39AF
+absent,ReportIf,0xAE6C,ListBox,0xB54 bytes,??1ReportIf@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0xAE6C at 0x004AD0CD
+absent,ReportIf,0xB884,Dialog,0xF4 bytes,??1ReportIf@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0xB884 at 0x004AD0D8
+absent,ReportIf,0xB978,ButtonGroup,0x94 bytes,??1ReportIf@@QAE@XZ: call ?close@ButtonGroup@@QAEXXZ on this+0xB978 at 0x004AD0BC
+absent,ReportIf,0xBA0C,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xBA0C at 0x004AD0A2
+absent,ReportIf,0xC558,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xC558 at 0x004AD077
+absent,ReportIf,0xD0A4,ButtonGroup,0x94 bytes,??1ReportIf@@QAE@XZ: call ?close@ButtonGroup@@QAEXXZ on this+0xD0A4 at 0x004AD057
+absent,ReportIf,0xD138,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xD138 at 0x004AD03D
+absent,ReportIf,0xDC84,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xDC84 at 0x004AD012
+absent,ReportIf,0xE7D0,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xE7D0 at 0x004ACFE7
+absent,ReportIf,0xF31C,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xF31C at 0x004ACFBC
+absent,ReportIf,0xFE68,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xFE68 at 0x004ACF91
+absent,ReportIf,0x109B4,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x109B4 at 0x004ACF66
+absent,ReportIf,0x11500,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x11500 at 0x004ACF3B
+absent,ReportIf,0x1204C,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x1204C at 0x004ACF10
+absent,ReportIf,0x12B98,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x12B98 at 0x004ACEE5
+absent,ReportIf,0x136E4,ButtonGroup,0x94 bytes,??1ReportIf@@QAE@XZ: call ?close@ButtonGroup@@QAEXXZ on this+0x136E4 at 0x004ACEC5
+absent,ReportIf,0x1868C,ButtonGroup,0x94 bytes,??1ReportIf@@QAE@XZ: call ?close@ButtonGroup@@QAEXXZ on this+0x1868C at 0x004ACE9A
+absent,ReportIf,0x1BF9C,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x1BF9C at 0x004ACE64
+absent,ReportIf,0x1CAE8,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x1CAE8 at 0x004ACE39
+absent,ReportIf,0x1D634,FlatButton,0xB4C bytes,??1ReportIf@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x1D634 at 0x004ACE0E
+absent,ReportIf,0x1E1BC,Spot,0xC bytes,??1ReportIf@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x1E1BC at 0x004ACDE9
+base,ReportWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1ReportWin@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x004AD693
+agreed,ReportWin,0x5994,Spot,spot_ 0xC,??1ReportWin@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x5994 at 0x004AD669
+agreed,ReportWin,0x5A0C,ListBox,listBox_ 0xB54,?draw_energy@ReportWin@@QAEXXZ: call ?close@ListBox@@QAEXXZ on this+0x5A0C at 0x0049CC46
+absent,ReportWin,0x5A54,ListBox,0xB54 bytes,??1ReportWin@@QAE@XZ: call ??1ListBox@@QAE@XZ on this+0x5A54 at 0x004AD648
+absent,ReportWin,0x646C,Dialog,0xF4 bytes,??1ReportWin@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x646C at 0x004AD653
+agreed,ReportWin,0x6560,FlatButton,flatButton2_ 0xB4C,??1ReportWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x6560 at 0x004AD62C
+agreed,ReportWin,0x70AC,FlatButton,flatButton3_ 0xB4C,??1ReportWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x70AC at 0x004AD601
+agreed,ReportWin,0x7C08,ButtonGroup,buttonGroup1_ 0x94,??1ReportWin@@QAE@XZ: call ?close@ButtonGroup@@QAEXXZ on this+0x7C08 at 0x004AD5E1
+agreed,ReportWin,0x7C9C,FlatButton,flatButton4_ 0xB4C,??1ReportWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x7C9C at 0x004AD5C7
+agreed,ReportWin,0x87E8,FlatButton,flatButton5_ 0xB4C,??1ReportWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x87E8 at 0x004AD59C
+agreed,ReportWin,0x9334,FlatButton,flatButton6_ 0xB4C,??1ReportWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x9334 at 0x004AD571
+agreed,ReportWin,0x9E80,ButtonGroup,buttonGroup2_ 0x94,??1ReportWin@@QAE@XZ: call ?close@ButtonGroup@@QAEXXZ on this+0x9E80 at 0x004AD551
+agreed,ReportWin,0x9F14,FlatButton,flatButton7_ 0xB4C,??1ReportWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x9F14 at 0x004AD537
+agreed,ReportWin,0xAA60,FlatButton,flatButton8_ 0xB4C,??1ReportWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xAA60 at 0x004AD50C
+agreed,ReportWin,0xB5AC,FlatButton,flatButton9_ 0xB4C,??1ReportWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xB5AC at 0x004AD4E1
+agreed,ReportWin,0xC10C,Scroll,scroll_ 0x214C,??1ReportWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0xC10C at 0x004AD473
+absent,ReportWin,0xCBB8,FlatButton,0xB4C bytes,??1ReportWin@@QAE@XZ: call ??1FlatButton@@QAE@XZ on this+0xCBB8 at 0x004AD4B1
+absent,ReportWin,0xD704,FlatButton,0xB4C bytes,??1ReportWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xD704 at 0x004AD497
+agreed,ReportWin,0xE274,Time,time1_ 0x28,??1ReportWin@@QAE@XZ: call ??1Time@@QAE@XZ on this+0xE274 at 0x004AD44F
+agreed,ReportWin,0xE2C0,Time,time2_ 0x28,??1ReportWin@@QAE@XZ: call ??1Time@@QAE@XZ on this+0xE2C0 at 0x004AD440
+agreed,ReportWin,0xE2E8,Time,time3_ 0x28,??1ReportWin@@QAE@XZ: call ??1Time@@QAE@XZ on this+0xE2E8 at 0x004AD431
+agreed,ReportWin,0xE320,Buffer,buffer1_ 0x588,??1ReportWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xE320 at 0x004AD422
+agreed,ReportWin,0xE8A8,Buffer,buffer2_ 0x588,??1ReportWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xE8A8 at 0x004AD413
+agreed,ReportWin,0xEE34,Flic,flic_ 0xAE4,??1ReportWin@@QAE@XZ: call ?close@Flic@@QAEXXZ on this+0xEE34 at 0x004AD3E9
+absent,ReportWin,0xEE38,Buffer,0x588 bytes,??1ReportWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xEE38 at 0x004AD404
+absent,ReportWin,0xF3F0,Palette,0x454 bytes,??1ReportWin@@QAE@XZ: call ??1Palette@@QAE@XZ on this+0xF3F0 at 0x004AD3F8
+base,SAmbience,0x0,Ambience,src/ bases: ['Ambience'],??0SAmbience@@QAE@XZ: call ??0Ambience@@QAE@XZ on this+0x0 at 0x00447853
+base,Scroll,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1Scroll@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x00406F05
+agreed,Scroll,0xAAC,FlatButton,flat_button_left_ 0xB4C,??1Scroll@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xAAC at 0x00406EEC
+agreed,Scroll,0x15F8,FlatButton,flat_button_right_ 0xB4C,??1Scroll@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x15F8 at 0x00406EBD
+at-zero,SelectPartWin,0x0,GraphicWin,src/ bases: [],??0SelectPartWin@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x004328D0
+agreed,SelectPartWin,0xA14,Scroll,scroll_ 0x214C,??0SelectPartWin@@QAE@XZ: call ??0Scroll@@QAE@XZ on this+0xA14 at 0x004328E0
+absent,SelectPartWin,0x14C0,FlatButton,0xB4C bytes,??1SelectPartWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x14C0 at 0x0043EF30
+absent,SelectPartWin,0x200C,FlatButton,0xB4C bytes,??1SelectPartWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x200C at 0x0043EF01
+agreed,SelectPartWin,0x2B9C,Caviar,caviar_ 0x13D0,??0SelectPartWin@@QAE@XZ: call ??0Caviar@@QAE@XZ on this+0x2B9C at 0x004328EF
+agreed,SelectPartWin,0x406C,Buffer,buffer_ 0x588,??0SelectPartWin@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0x406C at 0x004328FE
+agreed,SelectPartWin,0x45F4,Font,font1_ 0x28,??0SelectPartWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x45F4 at 0x0043290D
+agreed,SelectPartWin,0x461C,Font,font2_ 0x28,??0SelectPartWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x461C at 0x0043291C
+base,SetupWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??0SetupWin@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x004AD8A7
+agreed,SetupWin,0xA44,Buffer,buffer_ 0x588,??0SetupWin@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0xA44 at 0x004AD8B5
+agreed,SetupWin,0xFD4,Spot,spot_ 0xC,??0SetupWin@@QAE@XZ: call ??0Spot@@QAE@XZ on this+0xFD4 at 0x004AD8C4
+agreed,SetupWin,0x1118,Buffer,buffer2_ 0x588,??0SetupWin@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0x1118 at 0x004AD952
+base,SocialWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'SubInterface', 'Win']",??0SocialWin@@QAE@XZ: call ??0GraphicWin@@QAE@XZ on this+0x0 at 0x004AE9FF
+agreed,SocialWin,0xA20,Spot,spot_ 0xC,??0SocialWin@@QAE@XZ: call ??0Spot@@QAE@XZ on this+0xA20 at 0x004AEA1B
+agreed,SocialWin,0x1EB84,ButtonGroup,"buttonGroups_, 4 element(s)",?close@SocialWin@@QAEXXZ: call ?close@ButtonGroup@@QAEXXZ on this+0x1EB84 at 0x004B2700
+agreed,SocialWin,0x1EDD4,ButtonGroup,buttonGroup_ 0x94,??0SocialWin@@QAE@XZ: call ??0ButtonGroup@@QAE@XZ on this+0x1EDD4 at 0x004AEB26
+agreed,SocialWin,0x1EE68,Font,font1_ 0x28,??0SocialWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1EE68 at 0x004AEB35
+agreed,SocialWin,0x1EE90,Font,font2_ 0x28,??0SocialWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1EE90 at 0x004AEB44
+agreed,SocialWin,0x1EEB8,Font,font3_ 0x28,??0SocialWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1EEB8 at 0x004AEB53
+agreed,SocialWin,0x1EEE0,Font,font4_ 0x28,??0SocialWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1EEE0 at 0x004AEB62
+agreed,SocialWin,0x1EF08,Font,font5_ 0x28,??0SocialWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1EF08 at 0x004AEB71
+agreed,SocialWin,0x1EF30,Font,font6_ 0x28,??0SocialWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1EF30 at 0x004AEB80
+agreed,SocialWin,0x1EF58,Font,font7_ 0x28,??0SocialWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1EF58 at 0x004AEB8F
+agreed,SocialWin,0x1EF80,Font,font8_ 0x28,??0SocialWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1EF80 at 0x004AEB9E
+agreed,SocialWin,0x1EFA8,Font,font9_ 0x28,??0SocialWin@@QAE@XZ: call ??0Font@@QAE@XZ on this+0x1EFA8 at 0x004AEBAD
+absent,SpriteBox,0x10,Spot,0xC bytes,??0SpriteBox@@QAE@H@Z: call ??0Spot@@QAE@XZ on this+0x10 at 0x0060FF67
+absent,SpriteBox,0x8C,GraphicWin,0xA14 bytes,??0SpriteBox@@QAE@H@Z: call ??0GraphicWin@@QAE@XZ on this+0x8C at 0x0060FF40
+absent,SpriteBox,0xAA4,Dialog,0xF4 bytes,??0SpriteBox@@QAE@H@Z: call ??0Dialog@@QAE@XZ on this+0xAA4 at 0x0060FF53
+absent,StatusWin,0x30,Caviar,0x13D0 bytes,??1StatusWin@@QAE@XZ: call ?close@Caviar@@QAEXXZ on this+0x30 at 0x004BA188
+absent,StatusWin,0x1530,Font,0x28 bytes,??1StatusWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x1530 at 0x004BA179
+absent,StatusWin,0x1558,Font,0x28 bytes,??1StatusWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x1558 at 0x004BA16A
+absent,StatusWin,0x1580,Font,0x28 bytes,??1StatusWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x1580 at 0x004BA15B
+absent,StatusWin,0x15E0,Spot,0xC bytes,??1StatusWin@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x15E0 at 0x004BA14C
+base,StringBox,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1StringBox@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x004326FD
+agreed,StringBox,0xA20,Scroll,scroll_ 0x214C,??1StringBox@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0xA20 at 0x00432686
+absent,StringBox,0x14CC,FlatButton,0xB4C bytes,??1StringBox@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x14CC at 0x004326D9
+absent,StringBox,0x2018,FlatButton,0xB4C bytes,??1StringBox@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x2018 at 0x004326AA
+base,Strings,0x0,Heap,src/ bases: ['Heap'],??0Strings@@QAE@XZ: call ??0Heap@@QAE@XZ on this+0x0 at 0x006168D3
+agreed,TextIndex,0x104,Heap,heap_ 0x14,??0TextIndex@@QAE@XZ: call ??0Heap@@QAE@XZ on this+0x104 at 0x005FDF49
+at-zero,TutWin,0x0,Popup,src/ bases: [],??0TutWin@@QAE@XZ: call ??0Popup@@QAE@XZ on this+0x0 at 0x004BA6B3
+absent,TutWin,0xA5C,FlatButton,0xB4C bytes,??1TutWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0xA5C at 0x004BE9B0
+absent,TutWin,0x15A8,FlatButton,0xB4C bytes,??1TutWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x15A8 at 0x004BE985
+absent,TutWin,0x2118,Sprite,0x2C bytes,??1TutWin@@QAE@XZ: call ?close@Sprite@@QAEXXZ on this+0x2118 at 0x004BE960
+absent,TutWin,0x219C,StringStruct,0x24 bytes,??1TutWin@@QAE@XZ: call ?close@StringStruct@@QAEXXZ on this+0x219C at 0x004BE923
+absent,TutWin,0x2358,Dialogs,0xC94 bytes,??1TutWin@@QAE@XZ: call ??1Dialogs@@QAE@XZ on this+0x2358 at 0x004BE8D5
+absent,TutWin,0x2D70,Dialog,0xF4 bytes,??1TutWin@@QAE@XZ: call ??1Dialog@@QAE@XZ on this+0x2D70 at 0x004BE8E0
+absent,TutWin,0x3098,Spot,0xC bytes,??1TutWin@@QAE@XZ: call ??1Spot@@QAE@XZ on this+0x3098 at 0x004BE8C4
+absent,TutWin,0x3230,Scroll,0x214C bytes,??1TutWin@@QAE@XZ: call ?close@Scroll@@QAEXXZ on this+0x3230 at 0x004BE82E
+absent,TutWin,0x3CDC,FlatButton,0xB4C bytes,??1TutWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x3CDC at 0x004BE881
+absent,TutWin,0x4828,FlatButton,0xB4C bytes,??1TutWin@@QAE@XZ: call ?close@FlatButton@@QAEXXZ on this+0x4828 at 0x004BE852
+agreed,UV2Player,0x8DC,Buffer,buffer_ 0x588,??1UV2Player@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x8DC at 0x00404408
+agreed,Video,0x54,Palette,palette_ 0x454,??0Video@@QAE@XZ: call ??0Palette@@QAE@XZ on this+0x54 at 0x0063642C
+agreed,Video,0xA6C,Buffer,buffer_ 0x588,??0Video@@QAE@XZ: call ??0Buffer@@QAE@XZ on this+0xA6C at 0x0063644C
+at-zero,Win,0x0,AutoSound,src/ bases: [],??0Win@@QAE@XZ: call ??0AutoSound@@QAE@XZ on this+0x0 at 0x005EB3D3
+base,WorldWin,0x0,GraphicWin,"src/ bases: ['GraphicWin', 'Win']",??1WorldWin@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x0 at 0x004C4BD7
+agreed,WorldWin,0xA1C,Buffer,buffer1_ 0x588,??1WorldWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xA1C at 0x004C4BC9
+agreed,WorldWin,0xFA4,Buffer,buffer2_ 0x588,??1WorldWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0xFA4 at 0x004C4BBA
+agreed,WorldWin,0x152C,MapWin,mapWin_ 0x22480,??0WorldWin@@QAE@XZ: call ??0MapWin@@QAE@H@Z on this+0x152C at 0x004C4C41
+absent,WorldWin,0x1F038,TextureStore,0x8 bytes,??1WorldWin@@QAE@XZ: call ??1TextureStore@@QAE@XZ on this+0x1F038 at 0x004C4B69
+absent,WorldWin,0x1F354,Buffer,0x588 bytes,??1WorldWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x1F354 at 0x004C4B5A
+absent,WorldWin,0x1F8DC,Buffer,0x588 bytes,??1WorldWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x1F8DC at 0x004C4B4B
+absent,WorldWin,0x1FE64,Buffer,0x588 bytes,??1WorldWin@@QAE@XZ: call ??1Buffer@@QAE@XZ on this+0x1FE64 at 0x004C4B3C
+absent,WorldWin,0x203F4,Font,0x28 bytes,??1WorldWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x203F4 at 0x004C4B2D
+absent,WorldWin,0x20420,Font,0x28 bytes,??1WorldWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x20420 at 0x004C4B1E
+absent,WorldWin,0x2044C,Font,0x28 bytes,??1WorldWin@@QAE@XZ: call ??1Font@@QAE@XZ on this+0x2044C at 0x004C4B0F
+absent,WorldWin,0x22F98,GraphicWin,0xA14 bytes,??1WorldWin@@QAE@XZ: call ??1GraphicWin@@QAE@XZ on this+0x22F98 at 0x004C4BAB

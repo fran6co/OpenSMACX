@@ -33,11 +33,15 @@
   * virtually-derived windows this one is written as the original wrote it and
   * needs no ABI workaround.
   *
-  * The layout is not established. The constructor's own fields begin at 0xA14,
-  * immediately after the base, and where the object ends is unknown, so
-  * nothing pins its sizeof and the fields between are not modelled. The
-  * methods recovered here are bare returns that touch no field, which is why
-  * they can be replaced ahead of that mapping.
+  * The constructor's own fields begin at 0xA14, immediately after the base.
+  * "the fields between are not modelled" was true when this was written and is
+  * not now - the hole sweeps declared every dword from 0xA1C to the trailing
+  * fonts, and the VC6 probe behind tools/verify_member_offsets.py measures the
+  * class this header compiles to at sizeof == 0x145B8. What is still true is
+  * that nothing PINS that: there is no size assertion, and 0x14210 (the
+  * highest offset the image's own methods reach) is a floor, not the end. The
+  * methods recovered here touch no field, which is why they could be replaced
+  * ahead of the mapping.
   */
 class DLLEXPORT DesignWin : GraphicWin, SubInterface {
  public:
@@ -250,7 +254,21 @@ class DLLEXPORT DesignWin : GraphicWin, SubInterface {
   FlatButton flatButtons_[25];  // 0xCEC
   Spot spot1_;  // 0x12758
   Spot spot2_;  // 0x12764
-  uint32_t field_12770_;  // 0x12770
+  // The angle the rotating vehicle preview is drawn at, in radians, and NOT a
+  // scale: ?draw_vehicle@DesignWin@@QAEXH@Z hands it to caviar_ as the first
+  // (x) argument of Caviar::set_scene_rotation at 0x0043629C, then advances it
+  // in place - `fld dword ptr [esi+0x12770]; fadd dword ptr [0x0066B420];
+  // fstp dword ptr [esi+0x12770]` at 0x004362A1, and 0x0066B420 holds
+  // 0x3D4CCCCD == 0.05f - so each redraw turns the model a further 0.05 rad.
+  // The scaling in that same block is the immediate 0x3E0F5C29 == 0.14f passed
+  // to set_scaling, not this member. ?close@DesignWin@@QAEXXZ zeroes it
+  // (`mov dword ptr [esi+0x12770], ebx` at 0x0043C1D6 with ebx just xor'd),
+  // which is 0.0f, so nothing here reads it as an integer.
+  //
+  // Spelled `uint32_t` until the x87 load above was measured; those four
+  // instructions are every reference to this offset in the image. float and
+  // uint32_t are both 4/4 to VC6, so sizeof(DesignWin) stays 0x145B8.
+  float scene_rotation_;  // 0x12770
   Time time_;  // 0x12774
   Caviar caviar_;  // 0x1279C
   uint32_t field_13B6C_;  // 0x13B6C

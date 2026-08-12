@@ -1309,6 +1309,14 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(proved-field-split-tests
                                    test_split_proved_fields.py)
 
+    # The third reading of a layout, and the only one that recovers TYPES. A
+    # constructor's receiver IS the object it constructs, so `??0Palette` on
+    # `this + 0x5BC` states that a Palette begins there - which is how
+    # src/flic.h was found declaring a pointer where 0x454 bytes of object
+    # live, and how 23 undeclared inheritance edges surfaced at offset zero.
+    opensmacx_add_python_tool_test(subobject-site-tests
+                                   test_verify_subobjects.py)
+
     opensmacx_add_python_tool_test(byte-match-ratchet-tests
                                    test_byte_match_fanout.py)
 
@@ -1672,6 +1680,14 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_member_offsets.py"
             --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # Staleness only: the verdicts are a worklist, not a gate. `absent` and
+    # `at-zero` are both large and both are recovery work rather than defects,
+    # so failing on them would pin the tree at whatever it happened to be.
+    add_test(NAME subobject-sites-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_subobjects.py"
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )
     # Skips without the fetched, ignored PRACX header.

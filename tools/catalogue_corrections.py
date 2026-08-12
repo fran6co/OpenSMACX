@@ -139,6 +139,31 @@ CORRECTIONS = {
         "clear is the LAST thing before the epilogue and nothing reads it, so "
         "it is a `return 0`. With the void head the body matches 17 of 18 "
         "mnemonics and is 2 bytes short; with `int` it is byte-exact"),
+    # A RETURNED REFERENCE, which is the first correction here whose evidence
+    # is not an instruction but a register still holding something at `ret`.
+    # Both bodies open `mov eax, ecx` - spending an instruction to move the
+    # receiver out of ECX - and both end with `this` in EAX, which a void
+    # __thiscall member has no reason to arrange. These are `operator+=` and
+    # `operator-=` written the ordinary way, `return *this` included.
+    #
+    # Measured, not argued: compiled through this project's own CL at
+    # `/c /O2 /Gy /GR- /GX`, the `Vector &` head reproduces all 33 bytes of
+    # each original, and the catalogued `void` head emits a DIFFERENT
+    # sequence - it never moves ECX to EAX, keeps the receiver in ECX and
+    # loads the argument into EAX, so every operand is swapped and the body
+    # is 29 bytes. The catalogue's whole Vector family is IDA's
+    # reconstruction rather than a linker record, and it shows: it spells
+    # `AAVVector@@AAVVector@@` where VC6 back-references the repeat to `0`.
+    0x00634480: (
+        "?__apl@Vector@@QAEXAAVVector@@@Z",
+        "?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z",
+        "opens `mov eax, ecx` and leaves `this` in EAX at `ret 4`; with a "
+        "`Vector &` return and `return *this` the body is byte-exact, with "
+        "the catalogued `void` it is a different 29-byte sequence"),
+    0x006344B0: (
+        "?__ami@Vector@@QAEXAAVVector@@@Z",
+        "?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z",
+        "the same shape with fsub for fadd, and the same two verdicts"),
 }
 
 

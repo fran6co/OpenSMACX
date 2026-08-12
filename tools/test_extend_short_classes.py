@@ -174,3 +174,57 @@ class StaleNoteTest(unittest.TestCase):
         out = extender.extend(two, "C", 0x10, 0x10)
         self.assertIn("reach 0x8.", out)
         self.assertEqual(out.count("// Storage the image proves is here"), 2)
+
+
+class TidyTest(unittest.TestCase):
+    """The sweep for notes that were stacked before `extend` stopped stacking
+    them. Twelve headers carried a pair, and in every pair the earlier number
+    was false."""
+
+    TWO_NOTES = (
+        "class DLLEXPORT C : Base {\n public:\n"
+        "  // Storage the image proves is here: its own methods reach 0xA38.\n"
+        "  // Extent only - this class carries no size assertion, and the bound is a floor.\n"
+        "  // 8 member(s) from the IDA database, 1 named; it starts a member at 0xA14.\n"
+        "\n"
+        "  uint32_t field_A14_;  // 0xA14\n"
+        "\n"
+        "  // Storage the image proves is here: its own methods reach 0x4614.\n"
+        "  // Extent only - this class carries no size assertion, and the bound is a floor.\n"
+        "  uint32_t field_A38_;  // 0xA38\n"
+        "};\n")
+
+    def test_only_the_last_note_survives(self):
+        out, removed = extender.tidy(self.TWO_NOTES)
+        self.assertEqual(removed, 1)
+        self.assertEqual(out.count("// Storage the image proves is here"), 1)
+        self.assertIn("reach 0x4614", out)
+        self.assertNotIn("reach 0xA38", out)
+
+    def test_the_declarations_under_the_retired_note_stay(self):
+        out, _ = extender.tidy(self.TWO_NOTES)
+        self.assertIn("uint32_t field_A14_;", out)
+        self.assertIn("uint32_t field_A38_;", out)
+
+    def test_a_single_note_is_left_alone(self):
+        one = ("class C {\n public:\n"
+               "  // Storage the image proves is here: its own methods reach 0x8.\n"
+               "  uint8_t field_0_[0x8];\n};\n")
+        out, removed = extender.tidy(one)
+        self.assertEqual((out, removed), (one, 0))
+
+    def test_notes_in_two_different_classes_are_not_a_pair(self):
+        two = ("class A {\n public:\n"
+               "  // Storage the image proves is here: its own methods reach 0x8.\n"
+               "  uint8_t a_[0x8];\n};\n"
+               "class B {\n public:\n"
+               "  // Storage the image proves is here: its own methods reach 0x10.\n"
+               "  uint8_t b_[0x10];\n};\n")
+        out, removed = extender.tidy(two)
+        self.assertEqual(removed, 0)
+        self.assertEqual(out, two)
+
+    def test_tidying_twice_changes_nothing_the_second_time(self):
+        once, _ = extender.tidy(self.TWO_NOTES)
+        twice, removed = extender.tidy(once)
+        self.assertEqual((twice, removed), (once, 0))
