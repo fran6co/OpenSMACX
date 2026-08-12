@@ -91,6 +91,56 @@ TARGETED = (
      "branch target is the ENTRY of another catalogued symbol - that is a `/Gy`\n"
      "fold onto a different function, which no per-function compile can\n"
      "reproduce, and an MSVC vtordisp adjustor thunk looks the same way."),
+    # FROM mizuchi.yaml, which carried its own hand-transcribed subset for as
+    # long as both existed. These five were in that copy and NOT in this one -
+    # the two tables had diverged in both directions, so an agent got whichever
+    # third its route happened to carry.
+    # Keyed on `loop` alone. `lea`/`inc`/`dec` were tried and reverted: they
+    # appear all over ordinary arithmetic, so the loop advice fired on an
+    # `add` vs `lea` divergence that has nothing to do with a loop. A rule that
+    # matches too widely is worse than one that matches nothing, because the
+    # agent cannot tell it was mis-selected.
+    (("loop",),
+     "LOOP FORM IS A REAL LEVER AND NOT A GENERAL ONE - three refusals in one\n"
+     "batch. `sub_5ad450` went exact as `do { ...; p += 3; } while (--count)`,\n"
+     "and its IMMEDIATE NEIGHBOUR `sub_5ad4c0`, same table and stride, got\n"
+     "WORSE from the same edit (divergence moved #4 -> #2). Also measured: VC6\n"
+     "never unrolls a constant fill - `AutoSound::init` is 132 B of straight-\n"
+     "line stores in the original and every loop spelling collapses to a 31-byte\n"
+     "loop, so the stores must be written out; and an indexed loop needs one\n"
+     "more live value, spills a callee-saved register, and THAT spill is the\n"
+     "`push` you see at index 0."),
+    (("adc", "sbb"),
+     "CARRY-FLAG ACCUMULATION IS UNREACHABLE FROM C++ WITH THIS COMPILER, and\n"
+     "this is the one measured exhaustively: 13 spellings of a bit-count loop -\n"
+     "do-while, while, for, shift-in-condition, extract-to-temp, `%2`,\n"
+     "`if (v&1) c++` and variants - crossed with 6 optimisation levels, 4\n"
+     "processor targets, /Oi on and off and both frame-pointer settings, about\n"
+     "340 compilations. Every one emits and/add/shr or test/je/inc. NONE emits\n"
+     "`adc` or `sbb`. The original was almost certainly hand-written assembly.\n"
+     "Do NOT hunt a spelling. Get the rest of the body exact in ordinary C++;\n"
+     "this is the one case where a small `__asm` for the carry sequence is the\n"
+     "right answer rather than a shortcut, and say which instructions you wrote."),
+    (("C4234",),
+     "VC6 REJECTS `__thiscall` ON A FREE FUNCTION POINTER (C4234). For an\n"
+     "indirect virtual call use the generated VCall shim in the context file;\n"
+     "for a thiscall function POINTER, take a member-function pointer of a\n"
+     "dummy class instead of spelling the convention."),
+    (("BOOL", "LPSTR", "C2146", "C2061"),
+     "A WINDOWS TYPEDEF IN THE SIGNATURE IS A NO_COMPILE, NOT A MISMATCH. The\n"
+     "scaffolding forward-declares only what is reachable from the decoded\n"
+     "signature, so `BOOL` and `LPSTR` arrive undeclared. That is a fact about\n"
+     "the unit, not about the body - do not rewrite the body to chase it."),
+    (("C2065", "C2039"),
+     "AN UNDECLARED IDENTIFIER IS USUALLY THE SCAFFOLDING, NOT YOUR BODY.\n"
+     "Measured over every NO_COMPILE note in the map: of 2,865 C2065\n"
+     "occurrences, 2,455 are game constants and globals - GameAtexit (388),\n"
+     "ScrollOperatorDelete (56), RadiusOffsetX/Y, TRIAD_AIR, MaxPlayerNum,\n"
+     "BIT_FUNGUS, DTREATY_PACT, even NULL - and only 79 are `field_*` members.\n"
+     "The standalone unit declares what the decoded signature reaches and no\n"
+     "more, so a body written against the real headers loses everything\n"
+     "project-wide. Reach the value the way the emitter can supply it rather\n"
+     "than assuming a class layout is missing."),
     (("<end>",),
      "A LENGTH MISMATCH where the ORIGINAL ends first is usually a span that\n"
      "excludes its own `ret` because the linker folded the tail onto another\n"
@@ -160,12 +210,57 @@ def prompt_section(address: int, heading: str) -> str:
             + text + "\n```")
 
 
-def targeted_rules(note: str) -> str:
-    words = set(note.replace("'", " ").split())
+def evidence(src: Path = None) -> dict:
+    """{mnemonic: [(address, kind, prose)]} from LEVER/RULED-OUT in `src/`.
+
+    THE GLOSSES ABOVE ARE CURATED AND THE EVIDENCE IS NOT, and that division is
+    the point. "`jbe`/`jae` are unsigned, `jle`/`jge` are signed, so a diff
+    between the families is a type error" is a human sentence; no amount of
+    counting annotations produces it. What counting DOES produce is which
+    addresses actually paid for it, and that accumulates mechanically as agents
+    record what worked and what did not.
+
+    So a gloss is selected by fingerprint and shown whether or not evidence
+    exists - withholding it until someone had annotated a body would have
+    deleted nine working rules on the day this landed. `--audit` reports the
+    glosses nothing yet backs, as a worklist rather than a gate.
+    """
+    import annotation_scan
+    root = src or (REPO_ROOT / "src")
+    if not root.is_dir():
+        return {}
+    found = {}
+    for annotation in annotation_scan.scan_tree(root):
+        for key, prose in annotation.levers:
+            for part in re.split(r"[/,\s]+", key):
+                if part:
+                    found.setdefault(part, []).append(
+                        (annotation.address, "WORKED", prose))
+        for prose in annotation.ruled_out:
+            found.setdefault("*", []).append(
+                (annotation.address, "RULED OUT", prose))
+    return found
+
+
+def targeted_rules(note: str, found: dict = None) -> str:
+    """The curated glosses this divergence selects, plus what paid for them."""
+    # Punctuation is stripped, not just quotes: a compiler diagnostic arrives as
+    # `error C2065: 'x' : undeclared identifier`, so keying on bare words missed
+    # every C-number - which is the largest family of blockers in the tree.
+    words = set(re.split(r"[^\w<>]+", note.replace("'", " ")))
     wanted = [advice for triggers, advice in TARGETED
               if words & set(triggers)]
-    return "\n\n".join(wanted) if wanted else (
+    found = evidence() if found is None else found
+    cited = []
+    for word in sorted(words):
+        for address, kind, prose in found.get(word, [])[:3]:
+            cited.append(f"  {kind:<9} 0x{address:08X}  {prose}")
+    block = "\n\n".join(wanted) if wanted else (
         "No fingerprint matched this divergence. Reason from the disassembly.")
+    if cited:
+        block += ("\n\nWhat bodies in this tree recorded against these "
+                  "mnemonics:\n" + "\n".join(cited))
+    return block
 
 
 def fresh_recovery_section(address: int) -> str:
@@ -397,7 +492,10 @@ Four items, each labelled, and omit the ones that do not apply:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("address")
+    parser.add_argument("address", nargs="?")
+    parser.add_argument("--audit", action="store_true",
+                        help="report which glosses have evidence in src/ and "
+                             "which fingerprints have evidence but no gloss")
     # The coordinator has just measured the batch; passing the verdict in keeps
     # the brief from measuring the same function a second time. Omitted, it
     # measures - it never guesses from a cache.
@@ -406,6 +504,29 @@ def main(argv=None) -> int:
     parser.add_argument("--note", default="",
                         help="the divergence note that goes with --tier")
     arguments = parser.parse_args(argv)
+
+    if arguments.audit:
+        found = evidence()
+        keyed = {trigger for triggers, _ in TARGETED for trigger in triggers}
+        backed = sorted(k for k in keyed if found.get(k))
+        bare = sorted(k for k in keyed if not found.get(k))
+        loose = sorted(k for k in found if k not in keyed and k != "*")
+        walls = len(found.get("*", []))
+        print(f"lesson coverage: {len(TARGETED)} glosses over {len(keyed)} "
+              f"fingerprints; {len(backed)} backed by an annotation, "
+              f"{len(bare)} not yet; {walls} RULED-OUT list(s) recorded")
+        print("\n  backed:      " + (", ".join(backed) or "(none yet)"))
+        print("  no evidence: " + (", ".join(bare) or "(none)"))
+        if loose:
+            print("  evidence with NO gloss - candidates for a new rule:")
+            print("      " + ", ".join(loose))
+        # A report, never a gate: making it one would put every recovery that
+        # records a lesson back into a file all of them share, which is the
+        # merge point worktree-isolated batches exist to remove.
+        return 0
+
+    if not arguments.address:
+        parser.error("an address is required unless --audit")
     try:
         address = int(arguments.address, 16)
     except ValueError:

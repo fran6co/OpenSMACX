@@ -170,6 +170,26 @@ SIZE_FRAMELESS_FLAGS = "/c /O1 /Gy /GR- /GX"
 FLAG_SETS = (MEASURED_FLAGS, FRAMELESS_FLAGS, SIZE_FLAGS,
              SIZE_FRAMELESS_FLAGS)
 
+# FOUR IS THE WHOLE SEARCH, AND THAT IS MEASURED RATHER THAN ASSUMED. The
+# obvious next move when a body will not match is to suspect the flags, so it
+# was swept exhaustively once and the answer written down here, beside the
+# constant, rather than left for each agent to re-derive:
+#
+#   * 288 flag combinations over `sub_5e3630` - the /O1 and /O2 bundles taken
+#     apart into `/Og /Oi /Os` x `/Ot`, `/Oy` against `/Oy-`, `/Ob0/1/2`, `/Oa`
+#     against `/Ow`. NOT ONE reached BYTE_EXACT, or even SHAPE_EXACT. The cost
+#     of finding that out was one command; the cost of not knowing it was every
+#     future agent spending attempts on "it might be the flags".
+#   * `/G3 /G4 /G5 /G6 /GB` emit identical bytes on the cases tried, so the
+#     processor target is not a lever either.
+#   * `register` storage is ignored at /O2, and compilation-unit context does
+#     not move the allocator: a body compiled alone and beside a sibling
+#     produces byte-identical output, because VC6's allocator is
+#     intra-procedural.
+#
+# So a MISMATCH is a fact about SOURCE FORM, not about the invocation. The
+# search space that remains is the spelling, which is what `--dir` is for.
+
 # Best first; `match_function` keeps the best verdict across flag sets.
 TIER_ORDER = ("BYTE_EXACT", "SHAPE_EXACT", "MNEMONIC_ONLY", "MISMATCH",
               "NO_COMPILE", "SHARED_TAIL", "REFUSED")
