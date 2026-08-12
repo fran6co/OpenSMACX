@@ -139,16 +139,16 @@ void __fastcall report_if_close_score_redirect(ReportIf *self, void *) {
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
-ORIGINAL: 0x004A6320
+ORIGINAL: 0x004A6320 BYTE_EXACT
 Return Value: 1
 Status: Complete
 */
-int ReportIf::on_iface_dialog_item_back_draw(int, int, int, int) {
+int ReportIf::on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *) {
     return 1;
 }
 
 int __fastcall report_if_on_iface_dialog_item_back_draw_redirect(
-        ReportIf *self, void *, int a1, int a2, int a3, int a4) {
+        ReportIf *self, void *, ::GraphicWin *a1, int a2, int a3, RECT *a4) {
     return self->on_iface_dialog_item_back_draw(a1, a2, a3, a4);
 }
 

@@ -281,13 +281,13 @@ void __fastcall base_pop_set_string_color_hyper_redirect(
 
 /*
 Purpose: Set this popup's button color slots.
-ORIGINAL: 0x00604830
+ORIGINAL: 0x00604830 BYTE_EXACT
 Status: Complete
 Verification note: the first slot is a byte while the other three are dwords,
 which the decompiler renders as four indistinguishable stores. Writing a dword
 there would overwrite the neighbouring tiers' bytes at 0x3179 and 0x317A.
 */
-void BasePop::set_button_color(int c1, int c2, int c3, int c4) {
+void BasePop::set_button_color(char c1, int c2, int c3, int c4) {
     button_color_a_ = static_cast<uint8_t>(c1);
     button_color_b_ = static_cast<uint32_t>(c2);
     button_color_c_ = static_cast<uint32_t>(c3);
@@ -295,19 +295,19 @@ void BasePop::set_button_color(int c1, int c2, int c3, int c4) {
 }
 
 void __fastcall base_pop_set_button_color_redirect(
-        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+        BasePop *self, void *, char c1, int c2, int c3, int c4) {
     self->set_button_color(c1, c2, c3, c4);
 }
 
 /*
 Purpose: Set this popup's button color2 slots.
-ORIGINAL: 0x00604860
+ORIGINAL: 0x00604860 BYTE_EXACT
 Status: Complete
 Verification note: the first slot is a byte while the other three are dwords,
 which the decompiler renders as four indistinguishable stores. Writing a dword
 there would overwrite the neighbouring tiers' bytes at 0x3179 and 0x317A.
 */
-void BasePop::set_button_color2(int c1, int c2, int c3, int c4) {
+void BasePop::set_button_color2(char c1, int c2, int c3, int c4) {
     button_color_2a_ = static_cast<uint8_t>(c1);
     button_color_2b_ = static_cast<uint32_t>(c2);
     button_color_2c_ = static_cast<uint32_t>(c3);
@@ -315,19 +315,19 @@ void BasePop::set_button_color2(int c1, int c2, int c3, int c4) {
 }
 
 void __fastcall base_pop_set_button_color2_redirect(
-        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+        BasePop *self, void *, char c1, int c2, int c3, int c4) {
     self->set_button_color2(c1, c2, c3, c4);
 }
 
 /*
 Purpose: Set this popup's button color3 slots.
-ORIGINAL: 0x00604890
+ORIGINAL: 0x00604890 BYTE_EXACT
 Status: Complete
 Verification note: the first slot is a byte while the other three are dwords,
 which the decompiler renders as four indistinguishable stores. Writing a dword
 there would overwrite the neighbouring tiers' bytes at 0x3179 and 0x317A.
 */
-void BasePop::set_button_color3(int c1, int c2, int c3, int c4) {
+void BasePop::set_button_color3(char c1, int c2, int c3, int c4) {
     button_color_3a_ = static_cast<uint8_t>(c1);
     button_color_3b_ = static_cast<uint32_t>(c2);
     button_color_3c_ = static_cast<uint32_t>(c3);
@@ -335,7 +335,7 @@ void BasePop::set_button_color3(int c1, int c2, int c3, int c4) {
 }
 
 void __fastcall base_pop_set_button_color3_redirect(
-        BasePop *self, void *, int c1, int c2, int c3, int c4) {
+        BasePop *self, void *, char c1, int c2, int c3, int c4) {
     self->set_button_color3(c1, c2, c3, c4);
 }
 

@@ -41,7 +41,10 @@ class DLLEXPORT Popup : BasePop {
   void start(const char *label);
   void start(const char *label, int value);
   int on_dialog_back_draw(::GraphicWin *window);
-  void on_redraw_nc(int, int);
+  // PAURECT@@H: the first parameter is a RECT *, per
+  // ?on_redraw_nc@Popup@@QAEXPAURECT@@H@Z. The body is `ret 8` either way,
+  // so only the decorated name moves - toward the one the catalogue states.
+  void on_redraw_nc(RECT *, int);
 
  private:
   Scroll scroll_;
@@ -49,7 +52,7 @@ class DLLEXPORT Popup : BasePop {
 
 void __fastcall popup_on_adjust_button_width_redirect(Popup *self, void *);
 void __fastcall popup_on_redraw_nc_redirect(
-    Popup *self, void *, int a1, int a2);
+    Popup *self, void *, RECT *a1, int a2);
 
 // BasePop::close is not recovered yet.
 typedef void (OriginalObject::*func_base_pop_close)();

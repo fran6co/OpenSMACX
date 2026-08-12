@@ -89,7 +89,9 @@ class DLLEXPORT Win {
   void on_move(int a1, int a2);
   void on_size(unsigned int a1, int a2, int a3);
   void on_size_nc(unsigned int a1, int a2, int a3);
-  void on_sys_command(unsigned int a1, int a2, int a3);
+  // ?on_sys_command@Win@@QAEHIHH@Z returns H. The body is empty either way
+  // - VC6 emits the same `ret 0xc` - so only the decorated name moves.
+  int on_sys_command(unsigned int a1, int a2, int a3);
 
   // Three base handlers the derived windows reach with a direct `call rel32`,
   // never through a vtable slot - PullDown::hide, DiploPop::hide,
@@ -269,7 +271,7 @@ void __fastcall win_reset_window_clip_redirect(Win *self, void *);
 void __fastcall win_on_move_redirect(Win *self, void *, int a1, int a2);
 void __fastcall win_on_size_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
 void __fastcall win_on_size_nc_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
-void __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
+int __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3);
 
 // The active palette lives at a fixed address; rebindable so tests can
 // point it at a local rather than requiring the mapped global.

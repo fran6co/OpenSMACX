@@ -52,7 +52,9 @@ class DLLEXPORT Scroll : GraphicWin {
   void compute_thumb_rect(RECT *rect);
   uint32_t set_thumb_rect();
 
-  void on_left_click(int a1, int a2);
+  // ?on_left_click@Scroll@@QAEHHH@Z returns H; the body is empty and VC6
+  // emits the same `ret 8`.
+  int on_left_click(int a1, int a2);
   // 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z and
   // 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z - public, __thiscall,
   // void(int). Both are still unrecovered; the declarations exist because the
@@ -166,7 +168,7 @@ uint32_t __fastcall scroll_set_pos_redirect(
 RECT *__fastcall scroll_compute_thumb_rect_redirect(
     Scroll *self, void *, RECT *rect);
 uint32_t __fastcall scroll_set_thumb_rect_redirect(Scroll *self, void *);
-void __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2);
+int __fastcall scroll_on_left_click_redirect(Scroll *self, void *, int a1, int a2);
 
 // The two mouse-wheel handlers are still original bodies: 286 and 284 bytes of
 // paging arithmetic that reach the unrecovered thumb and repaint paths. Both

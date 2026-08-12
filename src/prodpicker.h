@@ -47,7 +47,9 @@ class DLLEXPORT ProdPicker : GraphicWin {
   void on_mouse_move(int a1, int a2);
   void UNK3(int a1);
   void close();
-  void on_redraw_nc(int, int);
+  // PAURECT@@H, per ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z; the body is
+  // `ret 8` either way and only the decorated name moves.
+  void on_redraw_nc(RECT *, int);
 
  private:
   int32_t field_A14_;   // first field past the pinned GraphicWin base
@@ -94,4 +96,4 @@ void __fastcall prod_picker_on_mouse_move_redirect(ProdPicker *self, void *, int
 void __fastcall prod_picker_unk3_redirect(ProdPicker *self, void *, int a1);
 void __fastcall prod_picker_close_redirect(ProdPicker *self, void *);
 void __fastcall prod_picker_on_redraw_nc_redirect(
-    ProdPicker *self, void *, int a1, int a2);
+    ProdPicker *self, void *, RECT *a1, int a2);

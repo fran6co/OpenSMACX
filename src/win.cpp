@@ -755,15 +755,21 @@ void __fastcall win_on_size_nc_redirect(Win *self, void *, unsigned int a1, int 
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
-ORIGINAL: 0x005F6A40
+ORIGINAL: 0x005F6A40 BYTE_EXACT
 Return Value: n/a
 Status: Complete
 */
-void Win::on_sys_command(unsigned int, int, int) {
+#pragma warning(push)
+#pragma warning(disable : 4716)
+// The mangled name says `int`; the original is `ret 0xc` at 0x005F6A40
+// and never sets EAX. `return 0;` would emit `xor eax, eax` and add two
+// bytes, so falling off the end IS the behaviour.
+int Win::on_sys_command(unsigned int, int, int) {
 }
+#pragma warning(pop)
 
-void __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3) {
-    self->on_sys_command(a1, a2, a3);
+int __fastcall win_on_sys_command_redirect(Win *self, void *, unsigned int a1, int a2, int a3) {
+    return self->on_sys_command(a1, a2, a3);
 }
 
 // The active palette lives at a fixed address; the same seam basebutton.cpp

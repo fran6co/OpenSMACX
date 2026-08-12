@@ -170,8 +170,8 @@ ORIGINAL: 0x004C6DB0
 Return Value: slot 0x8C's result, or 0 when bit 2 of a2 skipped it
 Status: Complete
 */
-int Wave::load(int a1, uint32_t a2) {
-    typedef void (OriginalObject::*load_fn)(int a1, int a2);
+int Wave::load(char *a1, unsigned long a2) {
+    typedef void (OriginalObject::*load_fn)(char *a1, unsigned long a2);
     typedef int (OriginalObject::*follow_fn)();
 
     uint8_t *const vtable = *reinterpret_cast<uint8_t **>(this);
@@ -187,7 +187,8 @@ void __fastcall wave_set_pitch_redirect(Wave *self, void *, int a1) {
     self->set_pitch(a1);
 }
 
-int __fastcall wave_load_redirect(Wave *self, void *, int a1, int a2) {
+int __fastcall wave_load_redirect(Wave *self, void *, char *a1,
+                                  unsigned long a2) {
     return self->load(a1, a2);
 }
 
