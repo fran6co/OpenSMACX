@@ -39,7 +39,7 @@ the comparison survives; every current-host report lives under gitignored
 `build/oracle/` and is therefore never in the repository. On x86-64 the same
 control arm measures `PASS 180,308 B / 1,472 fn` (180,528 / 1,476 in the
 default sweep) against the 178,248 / 1,465 printed here. Regenerate with
-`tools/lifted_oracle_sweep.sh` and diff with `tools/lifted_oracle_compare.py`
+`tools/lifted_oracle_sweep.sh` and diff with the retired `lifted_oracle_compare`
 rather than reading these figures as current.
 
 ```
@@ -69,7 +69,7 @@ one seed of sixteen identically to one that agreed on all sixteen:
 **The honest figure is 1.75% of image bytes at full strength.** 76.30% of the
 agreeing bytes rest on weakened evidence.
 
-`tools/lifted_oracle_summary.py` also publishes a NUMBERS THAT MUST GO DOWN
+the retired `lifted_oracle_summary` also publishes a NUMBERS THAT MUST GO DOWN
 block. A dashboard where everything rises cannot report a regression — this
 project's defining measurement error was exactly that, so keep it.
 
@@ -215,16 +215,16 @@ observable behaviour (task #32)**. No seed count reaches it.
 ## Layout
 
 ```
-tools/lift_whole_image.py      the generator: 64 shards + dispatch + runtime
-tools/x86_lower.py             the instruction lowerer (capstone -> C++)
+lift_whole_image (retired)      the generator: 64 shards + dispatch + runtime
+x86_lower (retired)             the instruction lowerer (capstone -> C++)
 tools/lifted_x86.h             integer and flag semantics
 tools/lifted_x87.h             x87, 80-bit, mirrors the guest control word
 tools/lifted_{muldiv,string,tls,dblshift}.h
 tools/lifted_loader.{h,cpp}    loads the user's exe at runtime
 tools/lifted_oracle*.{cpp,h}   the differential oracle
 tools/lifted_oracle_fold.h     per-function verdict fold (pure, unit-tested)
-tools/lifted_oracle_plan.py    blocking flags + the undef= mask
-tools/lifted_oracle_summary.py the published numbers
+lifted_oracle_plan (retired)    blocking flags + the undef= mask
+lifted_oracle_summary (retired) the published numbers
 tools/host_doctor.py           run this FIRST on a new machine
 docs/HOST_MIGRATION.md         moving the harness between machines
 ```
@@ -241,7 +241,7 @@ checklist that follows is kept only because it is what a *third* host would
 run. Reports live at `build/oracle/report-{ctl,noundef,masked}.tsv`;
 `baseline-arm64/report.tsv` is the old host's, unchanged.
 
-**Compare with `tools/lifted_oracle_compare.py BEFORE.tsv AFTER.tsv`.** Two
+**Compare with `lifted_oracle_compare (retired) BEFORE.tsv AFTER.tsv`.** Two
 summaries side by side cannot answer "same result?" - the totals agree while
 the set does not - so it diffs per-function verdict transitions and states
 `better`/`worse` per figure rather than printing a signed delta.

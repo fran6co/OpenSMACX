@@ -727,8 +727,8 @@ parallel-agent targets (see "Parallel recovery" above):
 - `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
 - `tools/extract_legacy_leaves.py`: conservative local-only island extractor.
 - `tools/test_extract_legacy_leaves.py`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
-- `tools/static_recompile_pilot.py`, `tools/static_recompile_runtime.h`: local-only static basic-block lowering and minimal explicit x86 state semantics.
-- `tools/test_static_recompile_pilot.py`, `tools/verify_static_recompile_pilot.py`: synthetic lowering, containment, deterministic provenance, original-body, fixed-address, relocation, and ABI checks.
+- the retired `static_recompile_pilot`, `tools/static_recompile_runtime.h`: local-only static basic-block lowering and minimal explicit x86 state semantics.
+- `test_static_recompile_pilot (retired)`, the retired `verify_static_recompile_pilot`: synthetic lowering, containment, deterministic provenance, original-body, fixed-address, relocation, and ABI checks.
 - `tools/local_artifact.py`: shared nonsymlinked `.opensmacx/`/`build/` output ownership enforcement.
 - `tools/smoke_hybrid_game.py`: non-destructive Wine launch, diagnostics, rendering smoke gate, and required local runtime-oracle result validation.
 - `tools/movie_skip.py`: transactional PRACX movie-command override for owned launch tools.

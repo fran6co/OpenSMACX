@@ -77,7 +77,7 @@ Python tooling needs `capstone` and `pefile`. Either install
 [uv](https://astral.sh/uv) and run tools through it:
 
 ```
-uv run --with-requirements tools/requirements.txt python3 tools/lifted_oracle_plan.py
+uv run --with-requirements tools/requirements.txt python3 lifted_oracle_plan (retired)
 ```
 
 or make a venv and point CMake at it with `-DOPENSMACX_PYTHON=<that python>`.
@@ -99,7 +99,7 @@ Do not trust a number from the new host until these pass. The doctor prints
 them too.
 
 1. **The old PASSes reproduce.** Sweep, then
-   `python3 tools/lifted_oracle_summary.py build/oracle/report.tsv --json new.json`
+   `python3 lifted_oracle_summary (retired) build/oracle/report.tsv --json new.json`
    and diff `new.json` against the record you brought. Compare the BYTE
    figures, not the counts, and compare `agreed_full_strength` as well as
    `agreed`: a move that trades large single-seed PASSes for small

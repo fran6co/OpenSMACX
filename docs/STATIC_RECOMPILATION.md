@@ -6,7 +6,7 @@ executable and must remain ignored under `build/` or `.opensmacx/`. Nothing it p
 committed, distributed, marked `source_complete`, linked into `OpenSMACX.dll`, or counted as
 recovery progress.
 
-The project now lifts the WHOLE IMAGE. `tools/lift_whole_image.py` mechanically translates every
+The project now lifts the WHOLE IMAGE. the retired `lift_whole_image` mechanically translates every
 catalogued function into explicit-CPU-state C++ - 99.987% of instructions - and
 `tools/lifted_oracle_*` verifies the result differentially: the original function runs for real at
 its canonical address under Wine, beside the lifted version, over sixteen seeded states per
@@ -32,7 +32,7 @@ large functions outranks a verdict on many small ones, and only the byte column 
 ```sh
 tools/lifted_oracle_build.sh          # build the harness
 tools/lifted_oracle_sweep.sh          # sweep the plan (hours; use --only while iterating)
-python3 tools/lifted_oracle_summary.py [--json build/oracle/summary.json]
+python3 lifted_oracle_summary (retired) [--json build/oracle/summary.json]
 ```
 
 The sweep's own end-of-run tally covers only the last segment: every counter resets when the sweep
@@ -110,8 +110,8 @@ pilot could not justify building for one function and which is worth building on
 per-function verdict is therefore no longer "does this duplicate an island" but "does the lifted
 body agree with the original", and the answer is measured rather than argued.
 
-The pilot's machinery is still in the tree and still builds - `tools/static_recompile_pilot.py`,
-`tools/static_recompile_runtime.h`, `tools/verify_static_recompile_pilot.py`, and the
+The pilot's machinery is still in the tree and still builds - the retired `static_recompile_pilot`,
+`tools/static_recompile_runtime.h`, the retired `verify_static_recompile_pilot`, and the
 `verify-static-recompile-pilot` target:
 
 ```sh
