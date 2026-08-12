@@ -255,12 +255,37 @@ The IAT surface is nine imports. The real surface is every
 touches it and the closure above is a floor rather than a measurement of the
 true reach.
 
-These functions are **recoverable as source and unverifiable by any
-differential oracle in this repository**. `docs/HANDOVER.md` puts the oracle's
-honest ceiling at ~49% of bytes testable with COM skipped; the other half is
-reachable only by booting the lifted executable and comparing observable
-behaviour. Acceptance for anything in this population is behavioural, and a
-recovery here that reports "no oracle available" is complete, not deficient.
+### NO LONGER AN EXCLUSION — measured 2026-08-12
+
+This section's own ground retires it. It says these functions are **recoverable
+as source and unverifiable by any differential oracle in this repository** —
+which is an exclusion from the ORACLE route, not from byte-matching, where
+verification *is* the byte comparison and no oracle is involved. The project now
+has exactly one verification route and it is the second one.
+
+Measured rather than argued: 20 DirectX-reaching functions were taken off the
+recoverable frontier at <=200 B and their emitted skeletons scored through
+`byte_match.match_function`. **All 20 returned a real MISMATCH** — zero REFUSED,
+zero SHARED_TAIL, zero NO_COMPILE. The scaffolding emits, the unit compiles, and
+the comparison produces a per-instruction verdict; every divergence was at #0,
+which is the shape of an empty body and is what any unrecovered function gives.
+There is no structural obstacle here at all.
+
+So the 941 functions and 1,187,932 bytes below are **in scope**. The figures stay
+because they are a true measurement of what the import closure reaches, and
+`measure_exclusions.py --check` still re-derives them — but they measure a
+POPULATION, not an exclusion. Nothing in `src/` ever cited this section: only
+`EXCLUDED S1` and `EXCLUDED S2a` appear in the tree, so no annotation changes.
+
+The original text is kept below because the reasoning is sound about the route it
+was written for, and because 48.4% of the catalogued bytes moving in or out of
+scope should be traceable to the sentence that moved them.
+
+> `docs/HANDOVER.md` puts the oracle's honest ceiling at ~49% of bytes testable
+> with COM skipped; the other half is reachable only by booting the lifted
+> executable and comparing observable behaviour. Acceptance for anything in this
+> population is behavioural, and a recovery here that reports "no oracle
+> available" is complete, not deficient.
 
 ## 5. Indirect call sites — every seam count here is a floor
 
@@ -277,12 +302,21 @@ the missing edges concentrate.
 are still `original_dependency`, and 23,394 of them are two functions:
 `NetDaemon::process_message` (18,489 B) and `NetDaemon::synch` (4,905 B).
 
-The smoke gate never exercises any of it. A recovery here can be covered by
-source-level tests and nothing else, and that is **weaker evidence than
-everything else in the repository** — it must be recorded as such in the commit
-rather than presented alongside gate-verified work. `AGENTS.md` already says
-smoke does not exercise multiplayer; this is the population that sentence is
-about.
+### NO LONGER AN EXCLUSION — 2026-08-12, for the same reason as §4
+
+The ground here is identical and retires identically: the smoke gate never
+exercises any of it, so the evidence available was source-level tests and
+nothing else. That was a statement about the runtime route. A `NetDaemon` body
+that reproduces the shipped bytes is proved by the bytes, and needs no gate to
+have exercised it.
+
+The population figures stay, and stay measured. What goes is the claim that they
+are out of scope.
+
+> The smoke gate never exercises any of it. A recovery here can be covered by
+> source-level tests and nothing else, and that is weaker evidence than
+> everything else in the repository — it must be recorded as such in the commit
+> rather than presented alongside gate-verified work.
 
 ## 7. The Thinker mod — measured, not licensed away
 
