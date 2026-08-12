@@ -334,6 +334,44 @@ def damage_writing_test(workspace):
             "--repo", str(repo)]
 
 
+def damage_refuted_wall(workspace):
+    """A RULED-OUT list left standing on a body that has since been PROVED.
+
+    The refutation case for the lesson grammar, and the reason the tokens are
+    allowed at all under "state is measured, not claimed": a RULED-OUT sits on a
+    body that has not matched, so if one ever does, the list is refuted and must
+    be promoted to a LEVER or deleted. A wall that can quietly outlive its
+    reason is the `static_assert` trap in another costume - one marker carrying
+    both "I stopped here" and "nobody should try".
+
+    Offline: no VC6, no image. The check runs before every early return for
+    exactly this reason.
+    """
+    sys.path.insert(0, str(TOOLS))
+    import annotation_scan
+
+    for source in sorted((REPO_ROOT / "src").glob("*.cpp")):
+        text = source.read_text(errors="ignore")
+        if "BYTE_EXACT" not in text:
+            continue
+        for annotation in annotation_scan.scan_file(source):
+            if not annotation.matched or not annotation.line:
+                continue
+            lines = text.splitlines()
+            marker = lines[annotation.line - 1]
+            damaged = list(lines)
+            damaged.insert(annotation.line,
+                           "// RULED-OUT: ternary; do/while; counting down")
+            tree = workspace / "src"
+            tree.mkdir(parents=True, exist_ok=True)
+            (tree / source.name).write_text("\n".join(damaged) + "\n",
+                                            encoding="utf-8")
+            assert "ORIGINAL" in marker
+            return [PYTHON, str(TOOLS / "decomp_status.py"), "--check",
+                    "--no-ledger", "--state-only", "--src", str(tree)]
+    raise Skip("no BYTE_EXACT annotation in src/*.cpp to contradict")
+
+
 def damage_cast_classification(workspace):
     """A cast reclassified, so the committed measurement stops describing src/.
 
@@ -531,6 +569,8 @@ CASES = (
      damage_byte_match_ratchet, "no longer reproduces"),
     ("tests-do-not-write", "a test that edits and deletes tracked files",
      damage_writing_test, "write into the source tree"),
+    ("byte-match-ratchet", "a wall left standing on a body that was proved",
+     damage_refuted_wall, "LESSON GRAMMAR"),
 )
 
 # The gate checks this tool is responsible for. Adding a check here without
