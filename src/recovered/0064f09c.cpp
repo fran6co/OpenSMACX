@@ -1,13 +1,11 @@
-// ORIGINAL: 0x0064F09C FILE
+// ORIGINAL: 0x0064F09C BYTE_EXACT FILE
+// working copy - scaffold materialised by --work
 // name      sub_64f09c
 // size      3 bytes
 // spans     0x0064F09C-0x0064F09F
 // prototype 
 // callers   2   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_64f09c  at 0x0064F09C  (3 bytes)
@@ -42,11 +40,5 @@ typedef unsigned short uint16;
 typedef char int8;
 typedef unsigned char uint8;
 extern "C" int __cdecl sub_64f09c() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
-
-    return (int)0;  // PLACEHOLDER - replace with the body
+    return 0;
 }
