@@ -147,9 +147,13 @@ def main(argv=None) -> int:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--exe", type=Path, default=layout.DEFAULT_EXE)
-    parser.add_argument("--out", type=Path, default=BOUNDS_CSV)
+    parser.add_argument("--out", type=Path, default=None,
+                        help="optional: dump the bounds to a file for reading. "
+                             "Nothing consumes such a file; the bounds are "
+                             "re-derived from the image on every run.")
     parser.add_argument("--check", action="store_true",
-                        help="fail if the committed file would change")
+                        help="run the control and refuse a bound below a "
+                             "pinned size")
     args = parser.parse_args(argv)
 
     over, under = control(args.exe)
@@ -172,15 +176,21 @@ def main(argv=None) -> int:
         print(f"{len(too_big)} refused as too large to stage: "
               + ", ".join(too_big[:8]) + (" ..." if len(too_big) > 8 else ""))
 
-    if args.check:
-        current = args.out.read_text(encoding="utf-8") if args.out.is_file() else ""
-        if render(found) != current:
-            print(f"{args.out} is out of date", file=sys.stderr)
-            return 1
-        print(f"{args.out} is current")
-        return 0
-
-    print(f"wrote {write(args.out, found)} row(s) -> {args.out}")
+    # THE COMMITTED CSV IS GONE, and with it the half of `--check` that
+    # regenerated the file and compared it to itself. Nothing ever read it: the
+    # two tools whose docstrings mention this one only NAME it in prose. The
+    # half with content is the control above, which re-derives from the image
+    # every run and refuses a bound that sits below a size the compiler pins.
+    #
+    # It could not become a `static_assert` in `src/` the way the class SIZES
+    # did. 23 of these 24 classes are declared in no header, so a bound would
+    # need a synthetic placeholder to sizeof - and asserting
+    # `sizeof(Ambience) <= 0xB8` against a struct we padded to 0xB8 ourselves
+    # checks our own declaration against itself. The evidence here is about the
+    # ORIGINAL image (`bounded above by ??__Eg_FAMEWIN@@YAXXZ at 0x0074DAF8`),
+    # so it stays measured rather than claimed.
+    if args.out:
+        print(f"wrote {write(args.out, found)} row(s) -> {args.out}")
     return 0
 
 
