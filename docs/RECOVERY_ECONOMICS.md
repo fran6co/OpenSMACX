@@ -333,7 +333,8 @@ So the current process produces observed recoveries; it is the accumulated
 corpus that is unwatched. That distinction decides the response. Blocking
 progress on ~131 retroactive fixtures would stop the objective dead, and it is
 not warranted — but the count must be published and must not be allowed to grow,
-which is the same ratchet shape as `BASELINE` in `audit_export_signedness.py`.
+which is the same ratchet shape as `BASELINE` in the retired
+`audit_export_signedness.py` (retired 2026-08-13; the shape outlived the tool).
 
 Each of the five was checked three ways before being called unobserved: named by
 no file under `tests/`, absent from `src/generated_signature_oracle.cpp`, and

@@ -14,6 +14,7 @@ hand-written set, which nobody had ever tried to empty. So what is tested below
 is the parser and the exemption contract, because those are the parts a future
 edit can quietly empty while every case still prints `ok`.
 """
+import re
 import sys
 import tempfile
 import unittest
@@ -46,23 +47,41 @@ class GateCheckDerivationTests(unittest.TestCase):
 
     def test_the_deeply_nested_blocks_are_found(self):
         # A previous attempt used `add_test\(NAME\s+(\w+)(.*?)\n\s*\)`, which
-        # looks right, parsed a plausible total, and silently lost every block
-        # whose body contains a line ending in `)`. The miss was undetectable
+        # looks right, parsed a plausible total, and silently lost every block a
+        # preceding mis-parse had already swallowed. The miss was undetectable
         # from the count: the two names it dropped were both in the hand-written
         # set it was replacing, so they could never appear as absent. Hence
         # assertions on NAMES.
+        #
+        # The casualties are DERIVED, not written down. They were named here by
+        # hand until 2026-08-13, when one of the two - `export-signedness-audit`
+        # - was retired and a different block became the one the naive regex
+        # loses; a hand-written list would have been repointed at whatever still
+        # existed, which is how a pin turns into a tautology. Running the naive
+        # regex is what says which blocks are hard, so run it.
         derived = harness.parse_gate_checks(REAL_CMAKE)
+        body = harness.without_comments(REAL_CMAKE)
+        naive = re.compile(r"add_test\(\s*NAME\s+([A-Za-z0-9_-]+)(.*?)\n\s*\)",
+                           re.DOTALL)
+        every = {match.group(1)
+                 for match in harness.ADD_TEST_HEAD.finditer(body)}
+        lost = sorted(every - {match.group(1) for match in naive.finditer(body)})
+        # Without this the test passes over an empty set, which is the vacuous
+        # shape the whole file exists to refuse.
+        self.assertTrue(lost, "no add_test block in CMakeLists.txt defeats the "
+                              "naive regex any more, so this pins nothing")
+        for name in lost:
+            self.assertIn(name, derived,
+                          f"{name} is exactly the shape the paren counter "
+                          f"exists for, and it was not parsed")
         self.assertEqual("verify_recovery_abi.py", derived.get("recovery-abi"))
-        self.assertEqual("audit_export_signedness.py",
-                         derived.get("export-signedness-audit"))
 
     def test_the_checks_the_hand_written_set_omitted_are_derived(self):
         # These sat outside the coverage requirement while this file's docstring
         # said nothing could. If the derivation regresses to a shape that misses
         # them, that is the regression to catch.
         derived = harness.parse_gate_checks(REAL_CMAKE)
-        for name, tool in (("def-append-only", "verify_def_append_only.py"),
-                           ("build-freshness", "verify_build_freshness.py"),
+        for name, tool in (("build-freshness", "verify_build_freshness.py"),
                            ("tool-reachability",
                             "verify_tool_reachability.py")):
             self.assertEqual(tool, derived.get(name),

@@ -7,7 +7,8 @@ day before found three that could not fail:
   * `verify_no_load_time_addresses` matched one of the four ways this tree
     spells the construct it forbids, and never opened a header;
   * `audit_export_signedness` printed `0 <= 44` whenever the executable was
-    absent, which is every checkout without the game;
+    absent, which is every checkout without the game (that tool was retired
+    2026-08-13 with `src/OpenSMACX.def`, the second record it compared);
   * `indirect_call_sites` read an edge list as a map, so its filter admitted
     every row it was given.
 
@@ -593,75 +594,6 @@ def damage_exception_object(workspace):
             "--object", str(alphanet), "--object-dir", str(copy)]
 
 
-def damage_absent_signedness_image(workspace):
-    """No executable, so nothing can be ranked. It used to print `0 <= 44`."""
-    return [PYTHON, str(TOOLS / "audit_export_signedness.py"), "--check",
-            "--exe", str(workspace / "absent.exe")]
-
-
-def damage_emptied_def(workspace):
-    """An empty .def compares zero exports and used to report within baseline."""
-    empty = workspace / "empty.def"
-    empty.write_text("", encoding="utf-8")
-    return [PYTHON, str(TOOLS / "audit_export_signedness.py"), "--check",
-            "--def-file", str(empty),
-            "--exe", str(REPO_ROOT / ".opensmacx" / "game"
-                         / "terranx_original.exe")]
-
-
-def damage_removed_export(workspace):
-    """An alias deleted from src/OpenSMACX.def, in a COMMITTED revision.
-
-    The staged hybrid imports by name from a frozen table, so a removed export
-    breaks the game while ctest stays green - the 2026-08-01 incident this check
-    was written for. Damaging it needs a HISTORY to compare against, so this
-    builds a throwaway repository instead of touching the real one.
-
-    The removal is committed and the tree is clean afterwards. That is the state
-    `--base HEAD` structurally cannot see - it compares the working copy to
-    HEAD, which agree - and it is the state the frozen import table actually
-    cares about, because an export that vanished last week is as broken as one
-    that vanished just now. Twelve revisions, so the `--revision-floor` of 10 is
-    cleared honestly rather than lowered for the test.
-    """
-    real = REPO_ROOT / "src" / "OpenSMACX.def"
-    if not real.is_file():
-        raise Skip("src/OpenSMACX.def is absent")
-    git = shutil.which("git")
-    if not git:
-        raise Skip("no git on PATH")
-    text = real.read_text(encoding="utf-8")
-    lines = re.findall(r'^[ \t]*"[^"]+"[ \t]*=.*\n', text, re.MULTILINE)
-    if len(lines) < 12:
-        raise Skip("too few export lines to build a history from")
-
-    repository = workspace / "repository"
-    (repository / "src").mkdir(parents=True)
-    target = repository / "src" / "OpenSMACX.def"
-
-    def run_git(*command):
-        subprocess.run([git, "-C", str(repository), *command], check=True,
-                       capture_output=True)
-
-    run_git("init", "-q")
-    run_git("config", "user.email", "damage@probe.invalid")
-    run_git("config", "user.name", "damage probe")
-
-    header = "LIBRARY OpenSMACX\nEXPORTS\n"
-    for count in range(1, 13):
-        target.write_text(header + "".join(lines[:count]), encoding="utf-8")
-        run_git("add", "src/OpenSMACX.def")
-        run_git("-c", "commit.gpgsign=false", "commit", "-qm", f"add {count}")
-    kept = [line for index, line in enumerate(lines[:12]) if index != 4]
-    target.write_text(header + "".join(kept), encoding="utf-8")
-    run_git("add", "src/OpenSMACX.def")
-    run_git("-c", "commit.gpgsign=false", "commit", "-qm", "remove one")
-
-    # No --base and no other flag the gate does not pass.
-    return [PYTHON, str(TOOLS / "verify_def_append_only.py"),
-            "--def-file", str(target), "--repo-root", str(repository)]
-
-
 def _stub_ninja(workspace, script):
     stub = workspace / "ninja"
     stub.write_text("#!/bin/sh\n" + script, encoding="utf-8")
@@ -963,10 +895,6 @@ CASES = (
      damage_exception_object, "imports exception handling support"),
     ("recovery-pipeline", "a pinned pipeline fact that no longer holds",
      damage_pipeline_golden, "answers changed"),
-    ("export-signedness-audit", "no image, so nothing can be ranked",
-     damage_absent_signedness_image, "verified NOTHING"),
-    ("export-signedness-audit", "an empty .def comparing zero exports",
-     damage_emptied_def, "below the floor"),
     ("verified-layouts-current", "a proved class layout quietly dropped",
      damage_verified_layouts, "is stale"),
     ("verified-layouts-current", "a header defect read as a wrong layout",
@@ -985,12 +913,6 @@ CASES = (
      damage_retired_cmake_path, "does not exist"),
     ("tests-all-run", "a test class stranded below unittest.main()",
      damage_stranded_test_class, "never runs"),
-    # The expected text is deliberately the part that does NOT name the base:
-    # it read "present at HEAD are gone" and broke the moment the check stopped
-    # comparing against HEAD, which is the right failure - but pinning the
-    # invocation-specific half of a message makes the case brittle for no gain.
-    ("def-append-only", "an export removed in a COMMITTED revision",
-     damage_removed_export, "export(s) present at"),
     ("build-freshness", "a staleness query not parsing the target list",
      damage_blind_freshness_query, "the staleness query is BLIND"),
     ("build-freshness", "pending work reported with exit 0",
@@ -1039,8 +961,13 @@ CMAKELISTS = REPO_ROOT / "CMakeLists.txt"
 # over an empty population - the exact shape this file exists to hunt. It sits
 # just under the real count on purpose: a floor far below it is satisfied by a
 # scan that has lost most of the gate, and a floor of ZERO satisfies the
-# assertion that a floor exists at all. Measured 2026-08-13: 29 registered.
-GATE_CHECK_FLOOR = 27
+# assertion that a floor exists at all. Measured 2026-08-13: 27 registered,
+# after `export-signedness-audit` and `def-append-only` were retired with
+# `src/OpenSMACX.def`. One check of headroom, matching the convention
+# verify_tool_test_registration's --floor uses, so the next honest retirement
+# does not take down every caller of gate_checks() before it can be reviewed;
+# test_the_floor_is_not_slack refuses more slack than two.
+GATE_CHECK_FLOOR = 26
 
 
 def without_comments(text):
@@ -1079,12 +1006,14 @@ def parse_gate_checks(text) -> dict:
     r"""{check name: the tools/ script it runs}, for one CMakeLists' text.
 
     The block extent is found by COUNTING PARENS, not by a regex. A non-greedy
-    `(.*?)\n\s*\)` looks correct and silently loses any block whose body
-    contains a line ending in `)` - it missed `recovery-abi` and
+    `(.*?)\n\s*\)` looks correct and silently loses any block a preceding
+    mis-parse has already swallowed - it missed `recovery-abi` and
     `export-signedness-audit` on the first attempt, and the miss was invisible
     because both were in the hand-written set it was replacing and so could
-    never show up as absent. This parser is pinned by a test that asserts those
-    two names are found.
+    never show up as absent. The test that pins this DERIVES the casualties by
+    running the naive regex over the real CMakeLists rather than naming them,
+    because naming them dates: `export-signedness-audit` was retired 2026-08-13
+    and the block that fell over after it went was a different one.
 
     `test_*.py` IS NOT A GATE CHECK. Its predecessor asked only whether the
     block mentioned `tools/`, which counts a directly registered unit suite as a

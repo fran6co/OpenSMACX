@@ -154,6 +154,14 @@ second catcher of a drifted pinned size, which the retire case assumed), and
 the retired hybrid's import table). Recording that four of fourteen were wrong is
 the useful part: "I cannot see what this catches" was not evidence.
 
+**Three of those four are still enforced. `def-append-only` is not**, and the
+overturn above is the reason it took a second look: the ratchet it was said to
+protect was `export-signedness-audit`, and on 2026-08-13 both were retired
+together with the file underneath them — see *The module definition and the two
+checks that policed it* below. The overturn was not wrong when it was written;
+its premise simply stopped holding the moment the surviving ratchet stopped
+surviving.
+
 | gate | why it went |
 |---|---|
 | `vtables-current` | keeps `vtables.csv` current; its readers are the layout hypothesis path, which reads it on demand |
@@ -552,3 +560,207 @@ file; deleting it only skips to the end.
 `generate_signature_oracles` never presents a bound as a pin. That generator
 retired with the runtime-oracle route, so both had been erroring on the import,
 and the property has no consumer left to guard.
+
+## The module definition and the two checks that policed it — retired 2026-08-13
+
+Deleted: `src/OpenSMACX.def` (490 lines, 488 export aliases, 27 commits of
+history), `verify_def_append_only.py`, `audit_export_signedness.py`, both test
+suites, and all four CTest registrations — the gate checks `def-append-only` and
+`export-signedness-audit` plus their two `-tests` lanes.
+
+**The ground, and it was already written down.** `CMakeLists.txt` said in so
+many words, at the top of the compile-options block, that `src/OpenSMACX.def` is
+NOT linked: every line in it was an ALIAS bridging an Itanium-mangled GCC symbol
+to the MSVC name the patched image imported, and cl 12.00.8168 emits the MSVC
+name directly, so the aliases described symbols this build does not produce.
+Nothing builds a DLL — there is no `add_library`, no `SHARED` and no `MODULE`
+anywhere in `CMakeLists.txt`, only `add_executable(OpenSMACX …)`. The generator
+that wrote the file, `add_redirect.py`, no longer exists. And *The DLL, the
+redirects and the whole runtime route* above retired the consumer on 2026-08-12.
+The file outlived its reader by a day and its writer by longer.
+
+**`def-append-only` was BROKEN, and it was repaired hours before it was
+retired.** That sequence is the lesson worth more than the deletion. The check
+guarded "no export name this file ever published may disappear", because the
+staged `terranx_hybrid.exe` imported 462 names from a frozen table and a dropped
+alias broke the game while ctest stayed green. It defaulted to `--base HEAD`,
+and CMake registered it with no arguments at all — so on a clean tree
+`HEAD:src/OpenSMACX.def` is byte-identical to the working copy and
+`base − current` was empty by construction. It was a pre-commit diff: real while you
+were editing, silent in CI, and permanently quiet about any removal already
+committed. It could not fail, and nothing said so, because it also sat in the
+EXEMPT set of `tools/verify_checks_can_fail.py` back when that set held fourteen
+names — the one place that would have asked was told not to.
+
+Commit `e8306017` fixed it: read the UNION of every set the file has held across
+the whole history via two `git cat-file` batches (28 revisions in 7 ms), and
+give it a real damage case — a throwaway 13-revision repository that adds twelve
+aliases one per commit, drops one in a thirteenth commit, and leaves the tree
+clean. It refused correctly, exit 1, on exactly the state `--base HEAD`
+structurally cannot see. Its last live run in this tree:
+
+    def-append-only: 488 exports, none removed since any of 28 revisions   (exit 0)
+
+Then the subject turned out to be dead. **Nobody asked whether the thing it
+guarded still existed until after it was repaired** — the frozen import table
+belongs to a hybrid image retired the day before the fix landed. Codify that as
+a question, not a resolution: before repairing a check, price its subject.
+
+**What `export-signedness-audit` measured, and why it cannot apply.** It was the
+one instrument here that could see a defect class no oracle can: the original
+divides signed, the recovery declared the parameter unsigned, and the two agree
+on every non-negative input. `bitmask` was found that way by byte-matching, not
+by any test. The audit worked because two *independent* records of each
+signature existed — the catalogue's MSVC decoration in
+`docs/recovery/functions.csv`, read out of the SP3 IDB, and the GCC symbol each
+`.def` alias mapped to, produced by the compiler from committed source. Neither
+was derived from the other, so a disagreement was evidence. Its last live run:
+
+    exports compared: 315
+    signedness disagreements: 198   (signed_divide 44, signed_shift 61, bounded 93)
+    audit-export-signedness: within baseline (198 <= 199, 44 <= 44)        (exit 0)
+
+**The paragraph that stood here was wrong twice, and an adversarial pass caught
+both. Both corrections are recorded rather than edited away, because the shape
+of the error is the useful part.**
+
+It argued: *"Deleting the `.def` destroys the second record, so the audit has
+one source and nothing to compare it against. This is a real loss, and it is
+not a stale sentence."*
+
+**WRONG ABOUT THE SECOND RECORD.** It is not the `.def`. It is the committed
+declarations in `src/*.h`, of which the `.def` was a *compiler-side mirror* —
+and a stale one. The comparison the audit performed is reconstructible today
+with no `.def` at all: the catalogue's decoration, still live and now read from
+`src/` through `emit_translation_unit.load_functions`, against the declared
+parameter types in `src/*.h`. The verifier rebuilt it in one script;
+`tools/declfix.py` already carries the MSVC type-char table it needs. So the
+FILE was correctly retired and the RATCHET was not — it went for a reason that
+does not hold, and nothing now stops the population growing again.
+
+**WRONG ABOUT THE FINDING BEING LIVE.** 198 was the reading of a frozen file.
+Measured against the tree on 2026-08-13, by restoring the tool and joining
+every finding to `src/*.h`: **180 of the 198 are already fixed**, zero agree
+with the `.def` alias, 10 are genuinely live and 8 are undetermined (ambiguous
+stems: `init`, `get`, `territory`, `has_fac_built`, `base_lose_minerals`).
+Commit 78038809 (2026-08-05) *"Correct 174 recovered signatures against their
+own mangled names"* changed 174 declarations in `src/` and never touched the
+`.def`, whose aliases were last written 2026-07-11 (c6f5a1f0). The audit's
+premise — "the GCC symbol each alias maps to, which the compiler produced from
+the committed source" — stopped holding on 2026-08-05, and **its `BASELINE`
+ratchet could not notice, because a frozen file cannot move.** The work the 44
+named was done eight days before this retirement priced it as a loss.
+
+THE TEN THAT ARE STILL LIVE, enumerated here because they exist nowhere else
+and are NOT recoverable from the deleted file — against the `.def` they are
+indistinguishable from the 180 stale ones:
+
+| address | name | class |
+|---|---|---|
+| `0x0057D510` | `transport_val(chassis_id, ability, reactor_id)` | **signed_divide** |
+| `0x005A5A60` | `proto_cost(chassis_id, weapon_id, armor_id, ability, reactor_id)` | **signed_divide** |
+| `0x004E4090` | `name_base` | signed_shift |
+| `0x0056B480` | `coast_or_border` | signed_shift |
+| `0x00593830` | `quick_zoc` | signed_shift |
+| `0x0055BB30` | `set_treaty` | bounded |
+| `0x0055BBA0` | `set_agenda` | bounded |
+| `0x005591E0` | `has_agenda` | bounded |
+| `0x00579A30` | `add_goal` | bounded |
+| `0x00619370` | `find_line_break_l` | bounded |
+
+Each declares a parameter `uint32_t` where the original treats it as signed.
+The two signed divides are the sharp ones: original and recovery agree on every
+non-negative input and differ on negatives, which no differential oracle and no
+mutation run can see.
+
+**A COUNT RATCHET WAS PROVED BLIND HERE, AND THE PROOF NEARLY WENT WITH THE
+TEST FILE.** `test_a_rename_that_keeps_the_count_still_fails` recorded a real
+incident (312b5cf3, 2026-08-01): one alias was removed and another added, so
+the export COUNT was unchanged at 467 and only a SET DIFFERENCE caught it. This
+repository is built out of count ratchets — `BASELINE`, `GATE_CHECK_FLOOR`,
+`PREFIX_FAMILY_FLOOR`, `--floor 50` — and this is the one concrete case where a
+count was demonstrably blind to a real breakage. It generalises far past the
+`.def`: **a ratchet on a total cannot see a substitution.**
+
+That also settles the overturn recorded above under *Seven gates*.
+`def-append-only` survived an earlier retire verdict on the grounds that it
+"guards the join key of a surviving status ratchet" — and the ratchet was
+`export-signedness-audit`, whose join key was the alias name, so a dropped
+alias shrank `compared`
+toward `COMPARISON_FLOOR` and could hide a disagreement. The argument was sound.
+It just required the audit to survive, and the audit is what goes here. Retiring
+the pair together is the only internally consistent move; retiring either alone
+would have been the mistake that overturn caught.
+
+**What else had to move in the same change, none of it in the original scope.**
+Three damage cases and their `CASES` rows in `tools/verify_checks_can_fail.py`
+(keeping them would trip the `orphans` structural test, which fires on the table
+alone — raising `Skip` is not an escape). Two registered suites that the survey
+of references did not name: `tools/test_verify_checks_can_fail.py` pinned
+`export-signedness-audit` and `def-append-only` as proof its paren-counting
+parser finds deeply nested blocks, and `tools/test_verify_check_tests_observe.py`
+asserted a prefix-family population floor of 18 that the two deleted files put at
+17. Both would have left ctest red on a change that touched only the files the
+`.def` is mentioned in.
+
+The parser pin is now DERIVED rather than repointed. It ran the naive
+`(.*?)\n\s*\)` regex's casualties by hand, and after the deletion a *different*
+block became the one that regex loses; a hand-repointed list would have been
+aimed at whatever still existed, which is how a pin becomes a tautology. It now
+runs the naive regex over the real `CMakeLists.txt`, requires the casualty set to
+be non-empty, and requires every casualty to be parsed.
+
+`docs/recovery/summary.json` keeps 320 dangling references to the deleted file —
+`inputs.definition` plus 319 `"location": "src/OpenSMACX.def:N"` rows under
+`redirects.definitions`. It is a committed artifact of the retired IDA-side
+pipeline, nothing regenerates it, `recovery_metrics` reads neither field, and
+`project_catalogue.py` writes `redirect_exports` as a constant empty string. No
+check stales; the dangling line numbers are recorded here rather than rewritten.
+
+Four claims in `AGENTS.md` went with it: the recovery recipe's step 4 told
+agents to hand-add a decorated alias to a file that will not exist; the
+merge-conflict table's "append-only, one line each" row (the table's "eight
+files" is now seven); the standing rule about the frozen 462-symbol import table
+and `stage-hybrid-game`; and the provenance line for the retired
+`generate_mingw_exports`. `docs/TOOLS.md`'s "Wiring a recovery into the DLL"
+section had two live entries left in an otherwise fully retired list — it has
+none now, and says so in its heading.
+
+### How to bring it back
+
+The export set is not pinned by anything today, and nothing needs it pinned
+because nothing imports by name. If a future route pins one again:
+
+* the file: `git show 72d7ea96:src/OpenSMACX.def` — 490 lines, 488 aliases; its
+  27-commit history is `git log --oneline -- src/OpenSMACX.def` before this
+  commit;
+* the append-only guard: added in `919a7129`, and **restore the `e8306017`
+  version, not the original** — the original could not fail;
+* the signedness audit: added in `1e50f588`, with `BASELINE`
+  `{disagreements: 199, signed_divide: 44}`, `COMPARISON_FLOOR` 300 and
+  `RANKED_FLOOR` 150; its `--exe` must be passed explicitly, because with no
+  executable every finding stays `unranked` and half the ratchet compares 0
+  against 44;
+* the registrations, the damage cases and the doc entries: the diff of this
+  commit, reversed.
+
+### The measurement that priced it
+
+Every affected check, run after the change, verdict line and exit code:
+
+| check | before | after |
+|---|---|---|
+| `tool-reachability` | 59 reached from 15 entry points, exit 0 | **57 reached from 15 entry points, exit 0** |
+| `tool-test-registration` | 53 test files, all executed by CMake, exit 0 | **51 test files, all executed by CMake, exit 0** (floor 50) |
+| `cmake-paths` | 38 literal source path(s), all resolve, exit 0 | **36 literal source path(s), all resolve, exit 0** |
+| `checks-can-fail` | 33 cases across 28 of 29 checks, 1 exempt, exit 0 | **30 cases across 26 of 27 checks, 1 exempt, exit 0** |
+| `tests-all-run` | — | **51 test file(s), none stranded, exit 0** |
+| `documented-counts` | no per-state count restated, exit 0 | **no per-state count restated, exit 0** |
+| `tools/` unittest discover | — | **1,344 tests, OK (13 skipped), exit 0** |
+
+`GATE_CHECK_FLOOR` in `tools/verify_checks_can_fail.py` went 27 → 26. It sat at
+exactly the post-removal count of 27, which passes with zero headroom and makes
+the *next* honest retirement raise `SystemExit` out of `gate_checks()` for every
+caller — including `verify_check_tests_observe.candidate_tools()`, which imports
+it. One check of headroom, matching the convention `--floor 50` against 51 test
+files already uses; `test_the_floor_is_not_slack` refuses more than two.
