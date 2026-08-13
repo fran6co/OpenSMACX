@@ -7,9 +7,11 @@ function, nearly all of it opening files. So what is tested is that the brief
 is SELF-CONTAINED and that it says only what applies.
 """
 
+import io
 import shutil
 import sys
 import tempfile
+from contextlib import redirect_stderr, redirect_stdout
 import unittest
 from pathlib import Path
 
@@ -98,6 +100,7 @@ class SelfContainmentTest(unittest.TestCase):
         agent_brief.verifier.committed_body = lambda a: (
             "int f() { return 1; }", "src/x.cpp:10")
         agent_brief.emit.load_functions = lambda: {0x401000: {"name": "f"}}
+        agent_brief.reset_cache()   # the stub must not outlive itself
         agent_brief.ledger_row = lambda a, tier="", note="": {
             "size": "16", "tier": "MISMATCH",
             "note": "#2: original 'jl' vs rebuilt 'jge'"}
@@ -108,6 +111,7 @@ class SelfContainmentTest(unittest.TestCase):
     def tearDown(self):
         agent_brief.verifier.committed_body = self.committed
         agent_brief.emit.load_functions = self.functions
+        agent_brief.reset_cache()
         agent_brief.ledger_row = self.row
         agent_brief.disassembly = self.disasm
         agent_brief.landing_path = self.landing
@@ -215,6 +219,7 @@ class FreshRecoveryTest(unittest.TestCase):
         agent_brief.verifier.committed_body = lambda a: (
             None, "0x00401000 has no source_locations")
         agent_brief.emit.load_functions = lambda: {0x401000: {"name": "f"}}
+        agent_brief.reset_cache()   # the stub must not outlive itself
         agent_brief.ledger_row = lambda a, tier="", note="": {
             "size": "26", "tier": "MISMATCH",
             "note": "#0: original 'push' vs rebuilt 'xor'"}
@@ -226,6 +231,7 @@ class FreshRecoveryTest(unittest.TestCase):
     def tearDown(self):
         agent_brief.verifier.committed_body = self.committed
         agent_brief.emit.load_functions = self.functions
+        agent_brief.reset_cache()
         agent_brief.ledger_row = self.row
         agent_brief.disassembly = self.disasm
         agent_brief.prompt_section = self.section
@@ -310,6 +316,89 @@ class RealBriefSizeTest(unittest.TestCase):
         asm = text.split("```asm\n", 1)[1].split("```", 1)[0]
         prose = len(text) - len(body.strip()) - len(asm)
         self.assertLess(prose, 7000)
+
+
+class BatchModeTest(unittest.TestCase):
+    """`--addresses` must be the same projection as the single-address path.
+
+    It exists only to pay the catalogue, annotation-index and PE loads ONCE:
+    a single brief costs ~24 s and almost all of it is those three loads, so
+    72 briefs one process at a time was half an hour of re-reading the same
+    data. The marginal cost through batch mode is about a second.
+
+    A faster second spelling of the same output is exactly how
+    `_catalog_facts` drifted from `project_catalogue.facts` and silently
+    dropped every call edge, so this asserts BYTE equality, not similarity.
+    """
+
+    def setUp(self):
+        self.work = Path(tempfile.mkdtemp())
+        self.original = dict(agent_brief._CACHE)
+        agent_brief._CACHE.clear()
+        self.stubs = {
+            "committed": agent_brief.verifier.committed_body,
+            "row": agent_brief.ledger_row,
+            "disasm": agent_brief.disassembly,
+            "landing": agent_brief.landing_path,
+        }
+        agent_brief.verifier.committed_body = lambda a: (None, "nope")
+        agent_brief.ledger_row = lambda a, tier="", note="": {"tier": tier}
+        agent_brief.disassembly = lambda a: f"```asm\n0x{a:08X} ret\n```"
+        agent_brief.landing_path = lambda a, src=None: "src/unrecovered/x.cpp"
+
+    def tearDown(self):
+        agent_brief.verifier.committed_body = self.stubs["committed"]
+        agent_brief.ledger_row = self.stubs["row"]
+        agent_brief.disassembly = self.stubs["disasm"]
+        agent_brief.landing_path = self.stubs["landing"]
+        agent_brief._CACHE.clear()
+        agent_brief._CACHE.update(self.original)
+        shutil.rmtree(self.work, ignore_errors=True)
+
+    def run_batch(self, addresses):
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            status = agent_brief.main(
+                ["--addresses", addresses, "--out-dir", str(self.work),
+                 "--tier", "PLACEHOLDER"])
+        return status, out.getvalue() + err.getvalue()
+
+    def test_it_writes_one_brief_per_address(self):
+        status, output = self.run_batch("0x401000,0x402000,0x403000")
+        self.assertEqual(status, 0)
+        self.assertEqual(len(list(self.work.glob("*.md"))), 3)
+        self.assertIn("wrote 3 brief(s)", output)
+
+    def test_each_brief_is_byte_identical_to_the_single_address_path(self):
+        self.run_batch("0x401000")
+        out = io.StringIO()
+        with redirect_stdout(out):
+            agent_brief.main(["0x401000", "--tier", "PLACEHOLDER"])
+        self.assertEqual((self.work / "0x00401000.md").read_text(),
+                         out.getvalue())
+
+    def test_one_bad_address_does_not_take_the_batch_down(self):
+        # A batch is 70+ addresses assembled by a coordinator. Losing all of
+        # them to one unscaffoldable function would be the expensive failure.
+        original = agent_brief.brief
+        def flaky(address, tier="", note=""):
+            if address == 0x402000:
+                raise RuntimeError("no scaffolding")
+            return original(address, tier, note)
+        agent_brief.brief = flaky
+        try:
+            status, output = self.run_batch("0x401000,0x402000,0x403000")
+        finally:
+            agent_brief.brief = original
+        self.assertEqual(status, 1)                    # visibly partial
+        self.assertEqual(len(list(self.work.glob("*.md"))), 2)
+        self.assertIn("0x00402000", output)
+
+    def test_the_cache_is_not_shared_across_a_changed_tree(self):
+        # `_cached` is process-local by design: the coordinator edits src/
+        # between runs, and a persisted cache would hand an agent work that is
+        # already done.
+        self.assertFalse(hasattr(agent_brief, "CACHE_FILE"))
 
 
 class LifecycleSectionTest(unittest.TestCase):
