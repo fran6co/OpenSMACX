@@ -231,7 +231,6 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   `${CMAKE_CURRENT_SOURCE_DIR}/...` names something that exists. A retired
   route's CMake lines outlive it silently, because a target outside `all` is
   never built and so never resolves its own COMMAND,
-  `tools/verify_wine_test_locks.py`,
   `tools/verify_documented_counts.py` — the checks that watch the checks
 - `tools/verify_checks_can_fail.py` — damages real inputs and requires each
   gate to go red

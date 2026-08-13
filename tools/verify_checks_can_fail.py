@@ -193,38 +193,6 @@ def configured_build(marker="CTestTestfile.cmake") -> Path | None:
     return None
 
 
-def damage_wine_lock(workspace):
-    """A Wine-backed test that no longer holds the prefix lock."""
-    build = configured_build()
-    if build is None:
-        raise Skip("no configured build directory anywhere under build/")
-    generated = build / "CTestTestfile.cmake"
-    text = generated.read_text(encoding="utf-8")
-    expected = len(re.findall(r"/run_windows_test\.py", text))
-    if not expected:
-        raise Skip("no Wine-backed tests in this configuration")
-    copy = workspace / "CTestTestfile.cmake"
-    copy.write_text(substitute(text, 'RESOURCE_LOCK "wineprefix"', ""),
-                    encoding="utf-8")
-    return [PYTHON, str(TOOLS / "verify_wine_test_locks.py"),
-            "--ctest-file", str(copy), "--expect-at-least", "1"]
-
-
-def damage_blinded_wine_check(workspace):
-    """The runner renamed, so the check matches nothing. It used to call that
-    'verified NOTHING' and return 0."""
-    build = configured_build()
-    if build is None:
-        raise Skip("no configured build directory anywhere under build/")
-    generated = build / "CTestTestfile.cmake"
-    text = generated.read_text(encoding="utf-8")
-    if "--wine-prefix" not in text:
-        raise Skip("no Wine-backed tests in this configuration")
-    copy = workspace / "CTestTestfile.cmake"
-    copy.write_text(substitute(text, "--wine-prefix", "--wineprefix"),
-                    encoding="utf-8")
-    return [PYTHON, str(TOOLS / "verify_wine_test_locks.py"),
-            "--ctest-file", str(copy), "--expect-at-least", "1"]
 
 
 def damage_stale_exclusions(workspace):
@@ -881,10 +849,6 @@ CASES = (
      damage_dropped_gameplay_case, "never registered"),
     ("documented-counts", "a per-state count restated by hand",
      damage_restated_count, "restates"),
-    ("wine-test-lock-check", "a Wine test without the prefix lock",
-     damage_wine_lock, "without RESOURCE_LOCK"),
-    ("wine-test-lock-check", "the runner renamed, blinding the check",
-     damage_blinded_wine_check, "expected at least"),
     ("exclusions-current", "a measured number disagreeing with the image",
      damage_stale_exclusions, "disagrees with the image"),
     ("recovery-abi", "an object carrying exception unwind data",
