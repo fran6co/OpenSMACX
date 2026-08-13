@@ -2,7 +2,7 @@
 // name      ?add_special@StringList@@QAEHPAD@Z
 // size      92 bytes
 // spans     0x00608BA0-0x00608BFC
-// prototype void (__thiscall ?add_special@StringList@@QAEXPAD@Z)(StringList* this, int8*)
+// prototype int (__thiscall ?add_special@StringList@@QAEHPAD@Z)(StringList* this, int8*)
 // callers   2   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok

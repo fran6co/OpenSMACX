@@ -88,7 +88,7 @@ ORIGINAL: 0x00634480 BYTE_EXACT
 // name      ?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z
 // size      33 bytes
 // spans     0x00634480-0x006344A1
-// prototype void (__thiscall ?__apl@Vector@@QAEXAAVVector@@@Z)(Vector* this, Vector*)
+// prototype Vector* (__thiscall ?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z)(Vector* this, Vector*)
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -110,7 +110,7 @@ ORIGINAL: 0x006344B0 BYTE_EXACT
 // name      ?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z
 // size      33 bytes
 // spans     0x006344B0-0x006344D1
-// prototype void (__thiscall ?__ami@Vector@@QAEXAAVVector@@@Z)(Vector* this, Vector*)
+// prototype Vector* (__thiscall ?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z)(Vector* this, Vector*)
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok

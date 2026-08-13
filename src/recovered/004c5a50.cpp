@@ -2,7 +2,7 @@
 // name      ?release@Wave_In_Device@@QAEHXZ
 // size      33 bytes
 // spans     0x004C5A50-0x004C5A71
-// prototype void (__thiscall ?release@Wave_In_Device@@QAEXXZ)(Wave_In_Device* this)
+// prototype int (__thiscall ?release@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok

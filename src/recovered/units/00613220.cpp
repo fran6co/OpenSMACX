@@ -2,7 +2,7 @@
 // name      ?on_scroll_create@Dialogs@@QAEHXZ
 // size      52 bytes
 // spans     0x00613220-0x00613254
-// prototype void (__thiscall ?on_scroll_create@Dialogs@@QAEXXZ)(Dialogs* this)
+// prototype int (__thiscall ?on_scroll_create@Dialogs@@QAEHXZ)(Dialogs* this)
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
