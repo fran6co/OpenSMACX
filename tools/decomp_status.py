@@ -1119,6 +1119,13 @@ def main(argv=None) -> int:
         added = record_claims(measurable, outcomes)
         print(f"\nrecorded {added} new BYTE_EXACT claim(s) in src/; "
               f"{len(claimed) + added} carried in total")
+        demoted = demote_levers(measurable, outcomes)
+        for location, tier in demoted:
+            print(f"  demoted LEVER -> RULED-OUT at {location} "
+                  f"(measured {tier}, not BYTE_EXACT)")
+        if demoted:
+            print(f"demoted {len(demoted)} contradicted lever(s); the prose is "
+                  f"kept, only the token moved")
     else:
         print(f"\nBYTE_EXACT claims in src/: {len(claimed)} "
               f"({len(lost)} not reproduced)")
@@ -1187,6 +1194,48 @@ def record_claims(measurable: list, outcomes: dict) -> int:
             written += 1
         target.write_text("".join(lines))
     return written
+
+
+LEVER_TOKEN = "// LEVER:"
+RULED_OUT_TOKEN = "// RULED-OUT:"
+
+
+def demote_levers(measurable: list, outcomes: dict) -> list:
+    """Rewrite `LEVER:` as `RULED-OUT:` where the measurement contradicts it.
+
+    A LEVER names what MADE a body match; the grammar reserves it for a body
+    carrying a BYTE_EXACT claim, and `lesson_report` fails the gate otherwise.
+    Agents keep writing it for "what improved this" - three batches running,
+    five annotations in the third - because from inside the loop a change that
+    moved the divergence from #5 to #20 genuinely is the lever they found.
+
+    Demoting mechanically rather than asking again is the same principle as
+    stamping BYTE_EXACT from measurement: state is measured, not claimed, and
+    that has to cut in both directions or it is just a claim with better
+    manners. The prose is kept verbatim - it is a real observation about a real
+    body, and only the token was wrong.
+
+    Runs from `--record-matches` AFTER `record_claims`, so a body this run
+    proved keeps its lever and only a contradicted one moves.
+    """
+    changed = []
+    by_path: dict = {}
+    for annotation in measurable:
+        if not annotation.levers or not annotation.line:
+            continue
+        tier = (outcomes.get(annotation.address) or {}).get("tier")
+        if tier == "BYTE_EXACT" or annotation.matched:
+            continue
+        by_path.setdefault(annotation.path, []).append((annotation, tier))
+    for path, entries in by_path.items():
+        target = REPO_ROOT / path
+        text = target.read_text()
+        if LEVER_TOKEN not in text:
+            continue
+        target.write_text(text.replace(LEVER_TOKEN, RULED_OUT_TOKEN))
+        for annotation, tier in entries:
+            changed.append((annotation.location, tier or "?"))
+    return changed
 
 
 def _state_counts(annotations: list, functions: dict) -> dict:
