@@ -7,7 +7,9 @@ that was reported as the check being unable to fail. Both directions of that
 mistake are covered here - damage that does not damage, and a check that exits 0.
 """
 import sys
+import tempfile
 import unittest
+from pathlib import Path
 
 import verify_checks_can_fail as harness
 
@@ -113,7 +115,13 @@ class MainLoopTests(unittest.TestCase):
         import contextlib
         import io
         saved_cases, saved_covered = harness.CASES, harness.COVERED_CHECKS
+        saved_gates, saved_exempt = harness.gate_checks, harness.EXEMPT
         harness.CASES, harness.COVERED_CHECKS = cases, covered
+        # The requirement is derived from CMake now, so a synthetic case set
+        # needs a synthetic registry too - otherwise every fake check reads as
+        # one CMake does not register.
+        harness.gate_checks = lambda *a, **k: set(covered)
+        harness.EXEMPT = set()
         argv = sys.argv
         sys.argv = ["verify_checks_can_fail.py"]
         try:
@@ -123,6 +131,7 @@ class MainLoopTests(unittest.TestCase):
             return status, out.getvalue() + err.getvalue()
         finally:
             harness.CASES, harness.COVERED_CHECKS = saved_cases, saved_covered
+            harness.gate_checks, harness.EXEMPT = saved_gates, saved_exempt
             sys.argv = argv
 
     @staticmethod
@@ -172,6 +181,40 @@ class MainLoopTests(unittest.TestCase):
             (("demo", "skipped", skipping, "x"),), {"demo"})
         self.assertEqual(1, status)
         self.assertIn("unproven", output)
+
+
+class DerivedRequirementTest(unittest.TestCase):
+    """The requirement is read out of CMake, and the parser is pinned by name.
+
+    A previous attempt used `add_test\(NAME\s+(\w+)(.*?)\n\s*\)`, which looks
+    right, parsed a plausible 28, and silently lost every block whose body
+    contains a line ending in `)`. The miss was undetectable from the count: the
+    two names it dropped were both in the hand-written set it was replacing, so
+    they could never appear as absent. Hence assertions on NAMES, not a total.
+    """
+
+    def test_the_deeply_nested_blocks_are_found(self):
+        gates = harness.gate_checks()
+        for name in ("recovery-abi", "export-signedness-audit"):
+            self.assertIn(name, gates)
+
+    def test_the_scan_refuses_rather_than_reporting_an_empty_sweep(self):
+        # A parser that matches nothing must not read as "every check covered".
+        empty = Path(tempfile.mkdtemp()) / "CMakeLists.txt"
+        empty.write_text("project(x)\n")
+        with self.assertRaises(SystemExit):
+            harness.gate_checks(empty)
+
+    def test_every_exempt_name_is_a_check_cmake_registers(self):
+        # An exemption for a check that no longer exists is a line excusing
+        # nothing, and it makes the backlog look larger than it is.
+        self.assertEqual(sorted(harness.EXEMPT - harness.gate_checks()), [])
+
+    def test_the_exemption_list_only_shrinks(self):
+        # THE RATCHET. A new check may not join the backlog: it ships with a
+        # proof it can fail, or it does not ship. Lower this only by deleting a
+        # name, never by adding one.
+        self.assertLessEqual(len(harness.EXEMPT), 14)
 
 
 if __name__ == "__main__":
