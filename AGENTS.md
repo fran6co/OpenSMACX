@@ -89,8 +89,9 @@ against it, never to trust directly.
    dllmain table, and count in one checked step. New original-dependency
    bindings must be classified in `docs/recovery-binding-classifications.csv`
    or metadata regeneration fails with `unclassified original function
-   bindings`. `src/OpenSMACX.def` is **not** generated — add the decorated
-   alias for a new export by hand.
+   bindings`. There is **no** module definition file to edit: `src/OpenSMACX.def`
+   was deleted 2026-08-13 with the DLL route (`docs/RETIRED_ROUTES.md`), so a new
+   export needs no decorated alias added anywhere.
 5. Build `promote-recovery-metadata` (Release preset) *before* the gate — and
    the order is **promote → classify → promote**. Promotion does not run
    the retired `classify_recovered_shapes`, and `summary.json` is computed from
@@ -142,12 +143,12 @@ VC6 the only compiler. There has been no `CMakePresets.json` since, so the
 recipe every agent is pointed at could not have run.
 
 **What actually conflicts, measured over the last eight recovery commits.** Every
-one touches the same eight files plus one or two unique `src/*.cpp`:
+one touches the same seven files plus one or two unique `src/*.cpp` (it was eight
+until `src/OpenSMACX.def` was deleted 2026-08-13):
 
 | files | kind | on merge |
 |---|---|---|
 | `docs/recovery/` × 6 | derived, 1.2 MB each | **never merge** — `merge=binary` in `.gitattributes` refuses the text merge; take either side and promote → classify → promote |
-| `src/OpenSMACX.def` | append-only | ordinary conflict, one line each |
 | `tests/recovery_gameplay_tests.cpp` | append-only monolith | ordinary conflict, **except** the `main()` call list, where a careless resolution silently drops a test |
 
 Conflicts are fine and expected — different batches work on different functions.
@@ -185,14 +186,6 @@ gameplay tests keep a central `main()` list:
 - Keep proprietary runtime and tool data ignored under `.opensmacx/` and `build/`.
 - Local artifact paths must have no symlink components; configure-time and Python checks reject writes that could escape or alias another artifact.
 - Never commit or distribute generated assembly or object files.
-- Export aliases in `src/OpenSMACX.def` are append-only. The staged
-  `terranx_hybrid.exe` carries a frozen import table naming 462 symbols, so
-  renaming an alias makes `stage-hybrid-game` fail with `OpenSMACX.dll does not
-  export N imported symbols` even when the old name matched no IDB name and
-  nothing linked against it. Correcting a decoration means aliasing the old and
-  the new spelling to the same GCC symbol. Note also that `ctest` is not the
-  gate: staging runs before the tests, so all 62 can pass while the game can no
-  longer load the DLL. Run the retired `run_gate`.
 - A test must never write into the source tree, not even to restore what it
   wrote. the retired `run_gate` runs both presets concurrently, so the other lane
   reads those files while the test is mid-write. A test that appended one line
@@ -262,7 +255,7 @@ gameplay tests keep a central `main()` list:
 - Historical external-analysis catalog: `docs/recovery/external-analysis-sources.json`; exact snapshots remain ignored and are hypothesis inputs only.
 - Local correlation currently maps 88 of 91 Yitzi function-note addresses and all 1,352 Dio disassembly-label addresses to canonical function ranges.
 - The catalog's `additional_repositories` entry pins the Thinker mod, on the **measured** position rather than the licence one: it lands 2,279 of 2,562 address hypotheses exactly on catalogued entries with 100% correct class attribution (1,216/1,216), yet names exactly one function the catalogue leaves as `sub_*` and invents its method names, so it adds nothing as a source of FUNCTION names. **Corrected 2026-08-06:** its member names and its class declarations ARE adopted — the binary carries zero data symbols, so nothing competes with them — and its 5-right/7-wrong layout score was total size measured against a mod that declares only the prefix it needs. Sizes still require `derive_class_layout.py --score-csv` at zero wrong; see `docs/EXCLUSIONS.md`. `tools/correlate_thinker_layouts.py` reduces the fetched headers to ignored struct-offset and global-address hypothesis CSVs; its text is never copied or committed either way.
-- The exported-first queue covers all 462 DEF exports: no unverified exact-name replacements or mapped unrecovered functions, 415 exact source-complete mappings, and 47 name-ambiguous rows manually resolved as 45 source-complete mappings and two source-only compatibility exports.
+- **Retired 2026-08-13, with `src/OpenSMACX.def` itself** — kept as a record of what the queue was, not as a live claim: the exported-first queue covered all 462 DEF exports, with no unverified exact-name replacements or mapped unrecovered functions, 415 exact source-complete mappings, and 47 name-ambiguous rows manually resolved as 45 source-complete mappings and two source-only compatibility exports. There is no export set to queue against now; the set that defined it is only in git. (This line was the FIFTH `.def`-keyed claim in this file and the only one the retirement's survey missed — nothing checks it, since `verify_documented_counts` looks only for restated per-state counts.)
 
 ## Out of Scope
 
@@ -735,7 +728,7 @@ parallel-agent targets (see "Parallel recovery" above):
 - `test_run_gameplay_scenario (retired)`: source-owned fixture, result, diagnostics, and process-alias tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - the retired `add_redirect`: wires one redirect across the CSV, the regenerated signature header, the dllmain spec table and its count in a single checked step, computing the sorted insertion position rather than appending and restoring every file if any check fails.
-- the retired `generate_mingw_exports`: the generator that emits `src/OpenSMACX.def`'s MinGW export aliases; nothing else references it, so its provenance is recorded here.
+- the retired `generate_mingw_exports`: the generator that emitted the MinGW export aliases in `src/OpenSMACX.def`, itself deleted 2026-08-13; nothing referenced either, so the provenance of both is recorded here.
 - the retired `mutate_and_verify`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants and ABI-only empty compiler barriers, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing. Every CTest invocation stops the owned Wine prefix; the retired reuse option cost 1.05 s per invocation to save 0.053 s of teardown, because the retained Wine session holds CTest's output pipe open.
 - `tools/verify_wine_test_locks.py`: checks the generated `CTestTestfile.cmake` so that every test invoking `run_windows_test.py` holds `RESOURCE_LOCK wineprefix`; a Wine test missing from that list does not fail under `ctest -j`, it flakes.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.

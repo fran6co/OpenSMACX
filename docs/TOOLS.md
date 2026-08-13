@@ -150,17 +150,22 @@ respells callee declarations so VC6 re-mangles them to the catalogued names,
 and `tools/writeback.py` lands a byte-exact match in a tracked file or
 refuses and changes nothing. The names are historical; the code is not.
 
-## Wiring a recovery into the DLL
+## Wiring a recovery into the DLL — every tool here is retired
 
-the retired `add_redirect` wires one in a single verified step.
-the retired `generate_redirect_signatures` derives the DllMain signature header,
-the retired `verify_redirect_patch_fit` checks the jump has room,
-the retired `generate_vc6_exports` and the retired `generate_mingw_exports` emit the
-module definition, `tools/verify_def_append_only.py` refuses to drop an export
-name, and the retired `generate_imports` derives the import shim table.
-Signedness is audited by `tools/audit_export_signedness.py` and
+Nothing in this section runs. The DLL, the redirects and the module definition
+`src/OpenSMACX.def` are all retired (`docs/RETIRED_ROUTES.md`); the section is
+kept because it says what the route was made of.
+
+the retired `add_redirect` wired one in a single verified step.
+the retired `generate_redirect_signatures` derived the DllMain signature header,
+the retired `verify_redirect_patch_fit` checked the jump had room,
+the retired `generate_vc6_exports` and the retired `generate_mingw_exports` emitted
+the module definition, the retired `verify_def_append_only` refused to drop an
+export name, and the retired `generate_imports` derived the import shim table.
+Signedness was audited by the retired `audit_export_signedness` and
 the retired `audit_recovered_signatures`; the applier that acted on their findings
-is retired, so a disagreement is now reported and fixed by hand.
+went first, so a disagreement was reported and fixed by hand before the rest
+followed the `.def` out on 2026-08-13.
 
 ## Running it
 

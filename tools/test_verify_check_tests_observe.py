@@ -38,6 +38,14 @@ from pathlib import Path
 
 import verify_check_tests_observe as observer
 
+# The fallback population candidate_tools() reaches by PREFIX alone, when the
+# CMake scan is unreadable. A ratchet, not a count: it sits one under the real
+# figure so a fallback that has quietly lost most of the directory cannot print
+# the same shape. Measured 2026-08-13: 17 `verify_*`/`audit_*`/`measure_*` files
+# in tools/, down from 19 when `audit_export_signedness.py` and
+# `verify_def_append_only.py` were retired with `src/OpenSMACX.def`.
+PREFIX_FAMILY_FLOOR = 16
+
 
 def mutants_of(lines, operator=None):
     """Run the shipped generator over a whole synthetic body."""
@@ -231,7 +239,7 @@ class CandidateTests(unittest.TestCase):
         with contextlib.redirect_stderr(noise):
             fallback = observer.candidate_tools("/nonexistent/CMakeLists.txt")
         names = [path.name for path in fallback]
-        self.assertGreaterEqual(len(names), 18)
+        self.assertGreaterEqual(len(names), PREFIX_FAMILY_FLOOR)
         self.assertIn("verify_recovery_abi.py", names)
         self.assertIn("FLOOR", noise.getvalue())
 
@@ -245,13 +253,11 @@ class CandidateTests(unittest.TestCase):
                             encoding="utf-8")
             with contextlib.redirect_stderr(io.StringIO()):
                 fallback = observer.candidate_tools(stub)
-        self.assertGreaterEqual(len(fallback), 18)
+        self.assertGreaterEqual(len(fallback), PREFIX_FAMILY_FLOOR)
 
     def test_a_registered_check_resolves_to_the_script_it_runs(self):
         scripts = observer.registered_check_scripts()
         self.assertEqual("verify_recovery_abi.py", scripts["recovery-abi"])
-        self.assertEqual("audit_export_signedness.py",
-                         scripts["export-signedness-audit"])
         self.assertEqual("measure_exclusions.py", scripts["exclusions-current"])
 
     def test_every_registered_check_resolves_to_some_script(self):

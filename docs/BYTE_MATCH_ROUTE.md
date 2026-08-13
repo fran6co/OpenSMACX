@@ -225,8 +225,9 @@ prototype `functions.csv` had carried all along.
 
 Two things fell out of the repair that the byte match itself does not see:
 
-* **The `.def` export was wrong too, and in the same direction.**
-  `src/OpenSMACX.def` aliased `"?bitmask@@YAXIPAI0@Z"` — the *unsigned*
+* **The `.def` export was wrong too, and in the same direction.** (Recorded as
+  it happened; `src/OpenSMACX.def` was deleted 2026-08-13 with the DLL route.)
+  It aliased `"?bitmask@@YAXIPAI0@Z"` — the *unsigned*
   decoration — which matched no name in the IDB, so it sat in
   `summary.json`'s `redirects.unmatched` list, one of 319, without anything
   failing. Correcting it to `"?bitmask@@YAXHPAHPAH@Z" = _Z7bitmaskiPiS_` drops
@@ -267,16 +268,36 @@ same signature already exist in the tree:
 * the GCC symbol each `src/OpenSMACX.def` alias maps to, which the compiler
   produced from the committed source — `i` is `int`, `j` is `unsigned`.
 
-Neither is derived from the other, so a disagreement is real evidence.
-`tools/audit_export_signedness.py` compares them:
+Neither is derived from the other, so a disagreement is real evidence. The
+retired `audit_export_signedness` compared them:
 
-| | count |
-|---|---:|
-| exports comparable | 305 |
-| **parameter-signedness disagreements** | **199** |
-| — original contains `idiv`/`cdq` (signed divide) | **44** |
-| — original contains `sar`, no `idiv` | 61 |
-| — neither; bounded arithmetic only | 94 |
+| | first published, 2026-08-12 | last run, 2026-08-13 |
+|---|---:|---:|
+| exports comparable | 305 | 315 |
+| **parameter-signedness disagreements** | **199** | **198** |
+| — original contains `idiv`/`cdq` (signed divide) | **44** | **44** |
+| — original contains `sar`, no `idiv` | 61 | 61 |
+| — neither; bounded arithmetic only | 94 | 93 |
+
+**THIS TABLE IS A 2026-07-11 READING, NOT A LIVE ONE. Do not act on the 198.**
+`src/OpenSMACX.def` was deleted on 2026-08-13 with the DLL route it served, and
+the audit went with it (`docs/RETIRED_ROUTES.md`). When the tool was restored
+and its findings joined against `src/*.h`, **180 of the 198 were already
+fixed** — commit 78038809 (2026-08-05) corrected 174 declarations and never
+touched the `.def`, so the numbers below froze while the tree moved on. Ten are
+genuinely live and are enumerated in `docs/RETIRED_ROUTES.md`; two of them
+(`transport_val` 0x0057D510, `proto_cost` 0x005A5A60) are signed divides.
+
+The cross-check itself is NOT lost with the file, which the retirement note
+originally got wrong: the second record is `src/*.h`, and the comparison is
+catalogue decoration against declared parameter types — reconstructible with no
+`.def` at all. The right
+half of this table is the only surviving artifact of the measurement, and the
+worklist it defines is now read from git (`git show 72d7ea96:src/OpenSMACX.def`)
+or re-derived by mangling the catalogue afresh. That is a real cost, priced
+here rather than struck: the *second, independent* record of signedness is
+gone, so a future signedness question has one source and cannot be cross-checked
+against the compiler until something rebuilds an export set.
 
 **199 is a candidate population, not 199 bugs.** A disagreement only changes
 behaviour where the original does something signedness-sensitive *with that
