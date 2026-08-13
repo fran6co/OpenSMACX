@@ -29,8 +29,41 @@ struct Filefind {
 };
 
 extern uint32_t ScenEditorUndoPosition;
-extern int *GenderDefault;
-extern BOOL *PluralityDefault;
+
+// THESE WERE `extern T *Name;` AND THAT COST AN INSTRUCTION EVERY TIME.
+//
+// The address is a compile-time constant and always was; `extern` was the only
+// thing hiding it, so `*GenderDefault = gender` had to load the pointer and
+// store through it. Making the constant visible lets the compiler fold the
+// indirection into a direct absolute store - which is what the original does.
+// Measured on ?parse_set@@YAXHH@Z (0x005A58E0), three spellings of the same
+// body scored together by `verify_recovered_function.py --dir`:
+//
+//   static int *const g = (int *)0x9BBFEC;   BYTE_EXACT, 22 of 22 bytes
+//   extern int *g;                           MISMATCH #6, `pop` vs `mov`
+//   extern int *const g;                     MISMATCH #6, `pop` vs `mov`
+//
+// and in the real translation unit, compiled with this repository's own VC6
+// flags: `mov [0x9bbfec],eax` / `mov [0x9bbff0],ecx`, four instructions and no
+// relocation, against six instructions and two relocations before.
+//
+// THE THIRD SPELLING IS WHY THE CENSUS STILL SAYS MISMATCH. It does not
+// include this header; `src_declarations.py` re-derives a declaration from it
+// and drops the initialiser (`statement.split("=", 1)[0]`), so the constant is
+// hidden again in the unit the census measures. The improvement is real in the
+// shipped object and invisible to that instrument until it stops re-externing
+// a `static T *const` definition.
+//
+// Call sites are unchanged - `*GenderDefault` still reads and writes the same
+// address. `static` is safe here only because nothing takes `&GenderDefault`
+// itself; a header-scope `static` gives each translation unit its own copy, so
+// any global whose POINTER address is taken must stay `extern`. It is also
+// only safe for a plain load or store: a read-modify-write through a
+// const-pointer spelling makes VC6 emit load/dec/store where the original has
+// an in-place `dec`, so those stay `extern T Name;` (see
+// tools/emit_translation_unit.py, decision 2).
+static int *const GenderDefault = (int *)0x009BBFEC;
+static BOOL *const PluralityDefault = (BOOL *)0x009BBFF0;
 
 DLLEXPORT void __cdecl purge_trailing(LPSTR input);
 DLLEXPORT void __cdecl purge_leading(LPSTR input);

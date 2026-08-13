@@ -1474,6 +1474,14 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(checks-can-fail-tests
                                    test_verify_checks_can_fail.py)
 
+    # `verify_check_tests_observe.py` is the other half of the same question:
+    # checks-can-fail asks whether a check CAN refuse, this asks whether its
+    # tests would NOTICE if it stopped. It is a diagnostic that is run
+    # deliberately rather than a gate, so only its unit tests are registered -
+    # but they must be, or the file is one CMake never executes.
+    opensmacx_add_python_tool_test(check-tests-observe-tests
+                                   test_verify_check_tests_observe.py)
+
     # A RECOVERY RUN, CODIFIED. Recovering a function means asking the tools a
     # fixed sequence of questions - body spans, callees, indirect sites, the
     # bytes purged on return, seam resolution - whose answers are deterministic

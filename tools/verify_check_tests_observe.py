@@ -353,14 +353,29 @@ def build_mutants(lines: list[str], function: Function) -> list[Mutant]:
         #    used to slice the *original* line.
         comparable = TEMPLATE_ANGLE.sub(lambda m: " " * len(m.group(0)),
                                         code_line)
-        for pattern, target in COMPARISONS:
-            match = pattern.search(comparable)
-            if match:
-                mutated_line = line[:match.start()] + target + line[match.end():]
-                emit(index + 1, "comparison",
-                     f"`{match.group(0)}` -> `{target}` in `{stripped}`",
-                     lines[:index] + [mutated_line] + lines[index + 1:])
-                break
+        #    EVERY comparison on the line, not the first one found. This used to
+        #    `break` after one match, so `if (x >= lo && x <= hi)` perturbed a
+        #    single bound and WHICH bound depended on the order of COMPARISONS
+        #    rather than on anything about the code. A range check has two edges
+        #    and an off-by-one lives on either. Measured over src/ on 2026-08-02:
+        #    347 lines carry more than one comparison, so 347 boundaries in
+        #    already-certified recoveries had never been touched by the harness
+        #    that certified them. Cost is +393 comparison mutants, x1.15 on this
+        #    operator and far less on a whole sweep.
+        #
+        #    The six patterns are mutually exclusive at any offset - `<` carries
+        #    `(?![<=])` and `>` carries `(?![>=])` - so no occurrence is emitted
+        #    twice. Sorted by offset purely so the mutant list reads in source
+        #    order.
+        occurrences = sorted(
+            (match.start(), match.end(), match.group(0), target)
+            for pattern, target in COMPARISONS
+            for match in pattern.finditer(comparable))
+        for start, end, found, target in occurrences:
+            mutated_line = line[:start] + target + line[end:]
+            emit(index + 1, "comparison",
+                 f"`{found}` -> `{target}` in `{stripped}`",
+                 lines[:index] + [mutated_line] + lines[index + 1:])
 
         # 4. Swap adjacent stores. Catches unverified write ordering, but only
         #    where the two statements actually interact (see statements_interact).
@@ -409,20 +424,35 @@ def prose_lines(text):
 
 
 def mutants_for(path, limit):
+    """Mutable code lines, sampled ACROSS the file - never truncated at it.
+
+    THE CAP USED TO BE A `break`, and that quietly turned every published
+    survivor rate into a measurement of the TOP of the file. Measured
+    2026-08-02: verify_recovery_abi has 1,828 eligible mutants, and the first 40
+    are lines 45-258 of 2,608 - so its published "50% survivors" described 10%
+    of the tool and none of the logic that decides anything. Six other checks
+    were sampled over less than a third of their source the same way, and the
+    only reason it was invisible is that a truncated run printed exactly what a
+    complete run printed.
+
+    A stride costs the same and samples everywhere. Returns the eligible total
+    as well, so the caller can say how much it actually looked at - without that
+    number a truncated run is indistinguishable from a census in every artifact
+    it produces.
+    """
     text = path.read_text(encoding="utf-8")
     lines = text.splitlines()
     prose = prose_lines(text)
     whole = Function(address="00000000", start=0, end=len(lines))
-    out = []
-    for mutant in build_mutants(lines, whole):
-        if len(mutant.lines) != len(lines):
-            continue                     # a drop; line-wise composition only
-        if mutant.line_number in prose:
-            continue
-        out.append(mutant)
-        if len(out) >= limit:
-            break
-    return lines, out
+    eligible = [mutant for mutant in build_mutants(lines, whole)
+                if len(mutant.lines) == len(lines)   # a drop; line-wise only
+                and mutant.line_number not in prose]
+    if limit and len(eligible) > limit:
+        stride = len(eligible) / limit
+        sampled = [eligible[int(index * stride)] for index in range(limit)]
+    else:
+        sampled = eligible
+    return lines, sampled, len(eligible)
 
 
 def run_tests(module, timeout):
@@ -456,13 +486,129 @@ def discard_bytecode(path):
         stale.unlink(missing_ok=True)
 
 
+def write_report(path, results):
+    """Merge these results into the report, now, not at the end of the sweep.
+
+    A FULL CENSUS TAKES OVER AN HOUR AND WAS ALL-OR-NOTHING. The write happened
+    once, after every tool, so stopping the run - for any reason, including the
+    operator realising the remaining tools cannot change the answer - discarded
+    everything measured so far. Demonstrated 2026-08-02: seventeen tools, thirty
+    minutes, every result present in the log and none of it in the JSON. The log
+    is not the artifact; the JSON is.
+
+    Merging rather than replacing is what makes a targeted re-measure of one
+    tool cheap, and it is also what makes writing after every tool safe.
+    """
+    if path is None:
+        return
+    merged = {}
+    if path.is_file():
+        try:
+            merged = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            # Losing a corrupt report is bad; losing the run that would have
+            # replaced it is worse.
+            merged = {}
+    merged.update(results)
+    path.write_text(json.dumps(merged, indent=1, sort_keys=True) + "\n",
+                    encoding="utf-8")
+
+
+CMAKELISTS = REPO_ROOT / "CMakeLists.txt"
+CHECK_PREFIXES = ("verify_", "audit_", "measure_")
+ADD_TEST = re.compile(r"add_test\(\s*NAME\s+([A-Za-z0-9_-]+)")
+TOOL_SCRIPT = re.compile(r"tools/([A-Za-z0-9_]+\.py)")
+
+
+def registered_check_scripts(cmakelists=None):
+    """{gate check name: the tools/*.py it runs}, for the checks CMake registers.
+
+    The POPULATION is `verify_checks_can_fail.gate_checks`, which is the one
+    authority on what a registered check is; this only resolves each of its
+    names to the script behind it, because that function returns names alone.
+    A name it reports and this cannot resolve is a warning on stderr rather
+    than a silent omission - a check that vanishes from the census is exactly
+    the failure this whole file exists to catch.
+
+    (The block walk below duplicates five lines of gate_checks. It should not
+    have to: gate_checks wants to return {name: script}, at which point this
+    function is one call. That edit belongs to verify_checks_can_fail.py.)
+    """
+    path = Path(cmakelists or CMAKELISTS)
+    import verify_checks_can_fail as coverage
+    names = coverage.gate_checks(path)
+    body = re.sub(r"(?<!\\)#.*", "", path.read_text(errors="replace"))
+    found = {}
+    for match in ADD_TEST.finditer(body):
+        if match.group(1) not in names:
+            continue
+        index, depth = match.end(), 1
+        while index < len(body) and depth:
+            depth += (body[index] == "(") - (body[index] == ")")
+            index += 1
+        # A `test_*.py` in the block is the check's own unit suite, which
+        # run_tests already covers; the check itself is the other script.
+        scripts = [script for script
+                   in TOOL_SCRIPT.findall(body[match.end():index])
+                   if not script.startswith("test_")]
+        if scripts:
+            found[match.group(1)] = scripts[0]
+    unresolved = sorted(set(names) - set(found))
+    if unresolved:
+        print(f"check-tests-observe: {len(unresolved)} registered check(s) "
+              f"name no tools/ script this could resolve, so they are outside "
+              f"the sweep: {', '.join(unresolved)}", file=sys.stderr)
+    return found
+
+
+def candidate_tools(cmakelists=None):
+    """Every check tool to sweep: what CMake registers, PLUS the prefix families.
+
+    THE PREFIX TUPLE WAS ITSELF A HAND-MAINTAINED LIST, which is this project's
+    highest-yield tooling defect shape, sitting in the one tool whose subject is
+    checks that report success while observing nothing. `verify_*`/`audit_*`
+    missed 13 of the 29 checks CMake registers - every `derive_*`, `emit_*`,
+    `export_*`, `classify_*`, `correlate_*` and `measure_*` check, plus
+    decomp_status - so the census printed a clean shape over 55% of its subject
+    and the other 45% did not appear as `not measured`, it did not appear at
+    all.
+
+    The gate already knows which scripts are checks, so it is asked. The prefix
+    families stay as a FLOOR for tools that are checks without being registered,
+    and so that a CMakeLists that cannot be read can never SHRINK the population
+    - a broken parse would otherwise quietly sweep less and print the same
+    shape, which is the defect one level up.
+
+    NOTE for whoever runs a full sweep: decomp_status.py is now correctly in
+    this set, and it writes a shared, unlocked ledger. Mutating it and running
+    its unit suite is safe; running its registered gate command against a mutant
+    would not be.
+    """
+    registered = set()
+    try:
+        # SystemExit alongside Exception, because gate_checks raises it - and it
+        # is a BaseException, so the obvious `except Exception` would let a
+        # broken CMake scan kill the sweep instead of falling back to the floor.
+        registered = set(registered_check_scripts(cmakelists).values())
+    except (Exception, SystemExit) as reason:
+        print(f"check-tests-observe: the registered checks could not be "
+              f"derived from CMake ({reason!r}); falling back to the prefix "
+              f"families, which are a FLOOR and not the population",
+              file=sys.stderr)
+    return sorted(path for path in TOOLS.glob("*.py")
+                  if path.name.startswith(CHECK_PREFIXES)
+                  or path.name in registered)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--tools", nargs="*",
-                        help="check tools to mutate; default is every "
-                             "verify_*/audit_* with a test file")
+                        help="check tools to mutate; default is every check "
+                             "CMake registers, plus every verify_*/audit_*/"
+                             "measure_* in tools/")
     parser.add_argument("--limit", type=int, default=40,
-                        help="mutants per tool")
+                        help="mutants per tool, sampled by stride across the "
+                             "whole file; 0 measures every eligible mutant")
     parser.add_argument("--timeout", type=float, default=120.0)
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--report", type=Path)
@@ -471,25 +617,43 @@ def main():
     if arguments.tools:
         candidates = [TOOLS / name for name in arguments.tools]
     else:
-        candidates = sorted(
-            path for path in TOOLS.glob("*.py")
-            if (path.name.startswith(("verify_", "audit_"))
-                and (TOOLS / f"test_{path.name}").is_file()))
+        candidates = candidate_tools()
     if not candidates:
-        print("check-tests-observe: no check tool has a test file, so this "
+        print("check-tests-observe: no check tool was found at all, so this "
               "run measured NOTHING", file=sys.stderr)
         return 1
+    return sweep(candidates, arguments)
 
+
+def sweep(candidates, arguments):
     results = {}
+    untested = []
     for path in candidates:
         module = f"test_{path.stem}"
+        if not (TOOLS / f"test_{path.name}").is_file():
+            # Counted, not skipped. Every mutant survives a suite that does not
+            # exist, so this is a measurement of 100% and belongs in the census.
+            # Skipping it was also how deriving the candidate set from the gate
+            # would otherwise ABORT the run on the first registered check whose
+            # tests nobody has written.
+            _, _, eligible = mutants_for(path, 0)
+            results[path.name] = {
+                "killed": 0, "survived": eligible, "uncompilable": 0,
+                "rate": 1.0 if eligible else None, "eligible": eligible,
+                "sampled": eligible, "line_span": None, "no_test_file": True,
+                "examples": []}
+            untested.append(path.name)
+            print(f"{path.name:44} NO TEST FILE - {eligible} mutant(s), "
+                  f"all unobserved by construction", flush=True)
+            write_report(arguments.report, results)
+            continue
         original = path.read_text(encoding="utf-8")
         if not run_tests(module, arguments.timeout):
             print(f"check-tests-observe: {module} does not pass on the "
                   f"unmutated tool, so nothing can be measured from it",
                   file=sys.stderr)
             return 1
-        _, mutants = mutants_for(path, arguments.limit)
+        _, mutants, eligible = mutants_for(path, arguments.limit)
         killed = survived = broken = 0
         examples = []
         try:
@@ -511,13 +675,23 @@ def main():
             path.write_text(original, encoding="utf-8")
             discard_bytecode(path)
         measured = killed + survived
+        numbers = [mutant.line_number for mutant in mutants]
         results[path.name] = {
             "killed": killed, "survived": survived, "uncompilable": broken,
             "rate": round(survived / measured, 3) if measured else None,
+            "eligible": eligible, "sampled": len(mutants),
+            "line_span": [min(numbers), max(numbers)] if numbers else None,
             "examples": examples}
+        coverage = ("whole" if len(mutants) == eligible
+                    else f"{len(mutants)}/{eligible} sampled")
         print(f"{path.name:44} killed {killed:3} survived {survived:3} "
-              f"({'-' if not measured else f'{100*survived/measured:.0f}%'})",
-              flush=True)
+              f"({'-' if not measured else f'{100*survived/measured:.0f}%'})"
+              f"  [{coverage}]", flush=True)
+        # Persist after EVERY tool. A tool costs minutes and the census costs
+        # over an hour, so losing all of it to one interruption is a worse
+        # failure than anything this sweep measures - and interrupting is the
+        # right thing to do once the remaining tools cannot change the answer.
+        write_report(arguments.report, results)
 
     total_killed = sum(r["killed"] for r in results.values())
     total_survived = sum(r["survived"] for r in results.values())
@@ -529,10 +703,24 @@ def main():
     print(f"\ncheck-tests-observe: {total_killed}/{measured} mutants killed, "
           f"{total_survived} survived ({100*total_survived/measured:.0f}%)")
 
-    if arguments.report:
-        arguments.report.write_text(
-            json.dumps(results, indent=1, sort_keys=True) + "\n",
-            encoding="utf-8")
+    if untested:
+        print(f"check-tests-observe: {len(untested)} check tool(s) have NO "
+              f"test file at all: {', '.join(sorted(untested))}")
+
+    # NO SILENT CAPS. A truncated run used to print exactly what a complete run
+    # printed, which is how "50% survivors" over 2.2% of verify_recovery_abi got
+    # published as a property of the tool.
+    partial = {name: result for name, result in results.items()
+               if result["sampled"] != result["eligible"]}
+    if partial:
+        print(f"check-tests-observe: {len(partial)} tool(s) were SAMPLED, not "
+              f"measured whole. Each rate above is an estimate from a stride "
+              f"across the file; re-run with --limit 0 for a census:")
+        for name, result in sorted(partial.items()):
+            print(f"    {name}: {result['sampled']} of {result['eligible']} "
+                  f"mutants")
+
+    write_report(arguments.report, results)
 
     if arguments.baseline and arguments.baseline.is_file():
         recorded = json.loads(arguments.baseline.read_text(encoding="utf-8"))
