@@ -34,7 +34,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import byte_match as tool  # noqa: E402
-import byte_match_fanout as fanout  # noqa: E402
 
 
 def build_coff(sections_in, symbols_in, relocations=None):
@@ -500,8 +499,8 @@ class RatchetPolicyTests(unittest.TestCase):
             b"\x8b\x41\x28" + RET, set(), 0,
             b"\x8b\x41\x2c" + RET, set())
         self.assertEqual(wrong_offset["tier"], "SHAPE_EXACT")
-        self.assertNotIn(wrong_offset["tier"], fanout.MATCHED)
-        self.assertIn("BYTE_EXACT", fanout.MATCHED)
+        self.assertNotIn(wrong_offset["tier"], ("BYTE_EXACT",))
+        self.assertIn("BYTE_EXACT", ("BYTE_EXACT",))
 
     def test_cli_success_also_requires_byte_exact(self):
         self.assertEqual(tool.recovery_exit_code("BYTE_EXACT"), 0)

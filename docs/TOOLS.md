@@ -47,7 +47,7 @@ the one place that decides what symbol a recovered function carries.
 the convention and the prototype the mangled name already states;
 the retired `jump_tables` recovers the targets behind a computed jump; and
 `tools/indirect_call_sites.py` reports the call sites the call graph cannot
-see. `tools/classify_recovered_shapes.py` bulk-sorts what is left by shape.
+see.
 
 ### 3. What is the class? — the layout half
 
