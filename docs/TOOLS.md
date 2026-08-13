@@ -45,11 +45,9 @@ wrongly and the instruction that says so, and `tools/recovery_symbols.py` is
 the one place that decides what symbol a recovered function carries.
 `tools/recover_conventions.py` and `tools/derive_prototypes_from_names.py` read
 the convention and the prototype the mangled name already states;
-`tools/analyze_delegates.py` proves a body is a pure forwarder;
 `tools/jump_tables.py` recovers the targets behind a computed jump; and
 `tools/indirect_call_sites.py` reports the call sites the call graph cannot
-see. `tools/classify_recovery_shapes.py` and
-`tools/classify_recovered_shapes.py` bulk-sort what is left by shape.
+see. `tools/classify_recovered_shapes.py` bulk-sorts what is left by shape.
 
 ### 3. What is the class? — the layout half
 
@@ -116,7 +114,6 @@ shared machinery underneath.
 Landing a match: `tools/harvest_proven_units.py` and
 `tools/preserve_worked_units.py` rescue proved work out of the build tree,
 `tools/integrate_recovery.py` moves it into a compiled file,
-`tools/extract_compiled_recovery.py` reads back what our compiler produced,
 `tools/repair_source_locations.py` re-points the catalogue at it, and
 `tools/build_regressions.py` records the bodies that gave up byte-exactness so
 the tree would compile.
@@ -162,10 +159,8 @@ the retired `generate_vc6_exports` and the retired `generate_mingw_exports` emit
 module definition, `tools/verify_def_append_only.py` refuses to drop an export
 name, and the retired `generate_imports` derives the import shim table.
 Signedness is audited by `tools/audit_export_signedness.py` and
-`tools/audit_recovered_signatures.py` and applied by
-`tools/fix_export_signedness.py`.
-`tools/build_export_recovery_queue.py` and
-the retired `export_proven_functions` publish what is wired and what has been run.
+`tools/audit_recovered_signatures.py`; the applier that acted on their findings
+is retired, so a disagreement is now reported and fixed by hand.
 
 ## Running it
 

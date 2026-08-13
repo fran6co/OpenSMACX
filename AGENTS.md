@@ -724,7 +724,6 @@ parallel-agent targets (see "Parallel recovery" above):
   compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
 - `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
 - `tools/correlate_external_analysis.py`: address-only correlation for local Yitzi and Dio inputs.
-- `tools/build_export_recovery_queue.py`: exported-first queue generator combining recovery and external-lead evidence.
 - `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
 - the retired `extract_legacy_leaves`: conservative local-only island extractor.
 - `test_extract_legacy_leaves (retired)`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
@@ -741,7 +740,6 @@ parallel-agent targets (see "Parallel recovery" above):
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - the retired `add_redirect`: wires one redirect across the CSV, the regenerated signature header, the dllmain spec table and its count in a single checked step, computing the sorted insertion position rather than appending and restoring every file if any check fails.
 - the retired `generate_mingw_exports`: the generator that emits `src/OpenSMACX.def`'s MinGW export aliases; nothing else references it, so its provenance is recorded here.
-- `tools/classify_recovery_shapes.py`: sorts cached decompilations into recoverable shapes to find mechanical candidates; it errs toward reporting `complex`, and a shape match only means a generated implementation is worth attempting.
 - the retired `mutate_and_verify`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants and ABI-only empty compiler barriers, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing. Every CTest invocation stops the owned Wine prefix; the retired reuse option cost 1.05 s per invocation to save 0.053 s of teardown, because the retained Wine session holds CTest's output pipe open.
 - `tools/run_gate.py`: runs `verify-recovery-batch` in both presets concurrently, one log per lane, naming any lane that fails rather than counting them; `--preset` for one alone and `--serial` for one after the other. It never runs `promote-recovery-metadata`, the one gate-adjacent target that writes the source tree.
 - `tools/verify_wine_test_locks.py`: checks the generated `CTestTestfile.cmake` so that every test invoking `run_windows_test.py` holds `RESOURCE_LOCK wineprefix`; a Wine test missing from that list does not fail under `ctest -j`, it flakes.
