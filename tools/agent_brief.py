@@ -275,6 +275,63 @@ def targeted_rules(note: str, found: dict = None) -> str:
     return block
 
 
+HYPOTHESES_CSV = REPO_ROOT / "docs" / "recovery" / "prototype-hypotheses.csv"
+
+
+def arity_hypothesis(address: int) -> str:
+    """IDA's argument count for a `sub_*` the mangled name cannot describe.
+
+    A mangled name states its own argument list, so `derive_prototypes_from_names`
+    settles every catalogued row that has one, and `emit` already scaffolds
+    those correctly. What it cannot help is a function IDA never named: the
+    scaffold falls back to a nullary `extern "C" int __cdecl sub_xxxx()`, and
+    the agent reconstructs the real arity from `[esp+N]` reads by hand.
+
+    Measured 2026-08-14: 274 placeholders are `sub_*` with no prototype, and
+    217 of them ALREADY HAVE an evidenced argument count sitting in
+    `prototype-hypotheses.csv` that reached nothing. Batch 4 turned ~24% of its
+    addresses into signature proposals, which is that gap priced.
+
+    SHOWN AS A HYPOTHESIS, NEVER AS THE CONTRACT. It is one source - I checked
+    whether Ghidra could corroborate it and it cannot: for these addresses
+    `ghidra-functions.csv` holds `undefined FUN_xxxxxxxx()` with
+    `calling_convention=unknown`, so there is nothing to cross-check against.
+    IDA's `guess_type` is a guess, it is right often enough to be worth a look,
+    and the disassembly in this brief is the thing that settles it.
+    """
+    if not HYPOTHESES_CSV.is_file():
+        return ""
+    rows = _cached("hypotheses", lambda: {
+        int(r["address"], 16): r
+        for r in csv.DictReader(HYPOTHESES_CSV.open())
+        if r.get("address")})
+    row = rows.get(address)
+    if not row:
+        return ""
+    try:
+        count = int(row.get("argument_count") or 0)
+    except ValueError:
+        return ""
+    if count <= 0:
+        return ""
+    return f"""
+# IDA guessed {count} argument(s) for this function
+
+The scaffolding could not: this address has no mangled name, so the definition
+head above is a fallback, not a decoded contract. IDA's own analysis says:
+
+    {row.get('evidence', '').strip()}
+
+**This is a hypothesis from one tool, not a second record.** Ghidra has nothing
+for this address (`undefined FUN_{address:08x}()`, convention unknown), so
+there is no cross-check. Take it as a starting point and let the DISASSEMBLY
+decide: {count} stack argument(s) means reads at `[esp+4]`, `[esp+8]`, ...
+before any push, or `[ebp+8]`, `[ebp+0xC]`, ... with a frame. A receiver in
+`ecx` with no matching stack slot is a `__thiscall` `this` and is NOT one of
+these arguments.
+"""
+
+
 def thunk_section(asm: str) -> str:
     """The two thunk shapes, told apart by their jump operand.
 
@@ -563,7 +620,7 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
     if body is None:
         verdict = "nothing recovered yet"
         middle = (fresh_recovery_section(address) + thunk
-                  + lifecycle_section(name))
+                  + arity_hypothesis(address) + lifecycle_section(name))
     else:
         verdict = f"{row.get('tier', '?')}{(' - ' + note) if note else ''}"
         middle = (f"# The body as it stands ({location})\n\n"
@@ -571,6 +628,7 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
                   f"# What the divergence usually means\n\n"
                   f"{targeted_rules(note)}\n"
                   f"{thunk}"
+                  f"{arity_hypothesis(address)}"
                   f"{lifecycle_section(name)}"
                   f"{naming_section(name, body)}")
 
