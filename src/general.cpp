@@ -25,8 +25,9 @@
 #include "text.h"
 
 uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
-int *GenderDefault = (int *)0x009BBFEC;
-BOOL *PluralityDefault = (BOOL *)0x009BBFF0;
+// GenderDefault (0x009BBFEC) and PluralityDefault (0x009BBFF0) are defined in
+// general.h as `static T *const`, so the compiler can see the address. See the
+// comment there for the measurement.
 
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
