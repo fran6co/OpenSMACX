@@ -71,7 +71,7 @@ def main():
     parser.add_argument("--ctest-file", required=True,
                         help="generated CTestTestfile.cmake to check")
     # The two cases the old code could not tell apart, separated by making the
-    # caller state which one it is in. A native MinGW-on-Windows build really
+    # caller state which one it is in. A native Windows build really
     # does have zero Wine-backed tests; a cross build has seven, and zero there
     # means this check stopped matching rather than that the locks are fine.
     #

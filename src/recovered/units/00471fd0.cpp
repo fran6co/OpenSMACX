@@ -48,8 +48,8 @@
 // Menu/Scroll/HCURSOR/BITMAPINFO stay forward-declared, exactly as the
 // emitter left them - nothing here ever needs them complete.
 //
-// VC6 DIALECT - this must compile under BOTH cl 12.00.8168 and
-// i686-w64-mingw32-g++ -std=c++11. Avoid: auto, nullptr, constexpr,
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
 // static_assert, enum class, range-for, lambdas, long long, <cstdint>,
 // and declaring `int i` twice in one function (VC6 leaks for-scope).
 // static_cast/reinterpret_cast are fine and are the right spelling.

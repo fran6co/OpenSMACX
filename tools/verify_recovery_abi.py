@@ -369,7 +369,7 @@ def main():
             r"-0x2\(%e[a-z]{2}\).*?-0x4\([^\n]+\).*?"
             r"-0x1\([^\n]+\)"
         )
-        # g++ 13 for i686-w64-mingw32 emits a THIRD shape with the same
+        # A cross g++ emitted a THIRD shape with the same
         # semantics: it advances the source by four before the SECOND read
         # rather than before the first write, and keeps a separate destination
         # register, so the destination displacements are positive and the

@@ -123,11 +123,35 @@ def damage_restated_count(workspace):
             "--doc", str(copy)]
 
 
+def configured_build() -> Path | None:
+    """Any configured build directory, found rather than named.
+
+    This was hardcoded to `build/mingw-i686-debug` at three sites - a preset
+    a673bf79 DELETED when it made VC6 the only compiler. There has been no
+    `CMakePresets.json` since, so the path could never resolve and three damage
+    cases reported "no configured debug build directory" forever. A skip that
+    can never stop skipping is not a skip, it is a silently disabled case, and
+    it read as environmental for months.
+
+    Sorted so the choice is deterministic; any configured tree can carry these
+    cases, because what they need is a generated CTestTestfile.cmake and not a
+    particular toolchain.
+    """
+    root = REPO_ROOT / "build"
+    if not root.is_dir():
+        return None
+    for candidate in sorted(root.iterdir()):
+        if (candidate / "CTestTestfile.cmake").is_file():
+            return candidate
+    return None
+
+
 def damage_wine_lock(workspace):
     """A Wine-backed test that no longer holds the prefix lock."""
-    generated = REPO_ROOT / "build" / "mingw-i686-debug" / "CTestTestfile.cmake"
-    if not generated.is_file():
-        raise Skip("no configured debug build directory")
+    build = configured_build()
+    if build is None:
+        raise Skip("no configured build directory anywhere under build/")
+    generated = build / "CTestTestfile.cmake"
     text = generated.read_text(encoding="utf-8")
     expected = len(re.findall(r"/run_windows_test\.py", text))
     if not expected:
@@ -142,9 +166,10 @@ def damage_wine_lock(workspace):
 def damage_blinded_wine_check(workspace):
     """The runner renamed, so the check matches nothing. It used to call that
     'verified NOTHING' and return 0."""
-    generated = REPO_ROOT / "build" / "mingw-i686-debug" / "CTestTestfile.cmake"
-    if not generated.is_file():
-        raise Skip("no configured debug build directory")
+    build = configured_build()
+    if build is None:
+        raise Skip("no configured build directory anywhere under build/")
+    generated = build / "CTestTestfile.cmake"
     text = generated.read_text(encoding="utf-8")
     if "--wine-prefix" not in text:
         raise Skip("no Wine-backed tests in this configuration")
@@ -469,7 +494,7 @@ def damage_exception_object(workspace):
     into the copy.
     """
     import subprocess as _sp
-    build = REPO_ROOT / "build" / "mingw-i686-debug"
+    build = configured_build()
     objects = build / "CMakeFiles" / "OpenSMACX.dir" / "src"
     alphanet = objects / "alphanet.cpp.obj"
     if not objects.is_dir() or not alphanet.is_file():
