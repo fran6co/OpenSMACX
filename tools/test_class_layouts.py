@@ -74,6 +74,28 @@ class MembersTest(unittest.TestCase):
         self.assertEqual(("void *", "__vbptr", ""), layout[0])
         self.assertIn("Console", tool.verified_names())
 
+    def test_an_inherited_virtual_base_is_hoisted_the_whole_way(self):
+        # `Console : MapWin` and `MapWin : virtual GraphicWin`. A virtual base
+        # belongs to the MOST DERIVED object, so in a Console the GraphicWin
+        # closes the Console, not the MapWin subobject inside it - the ctor
+        # builds it at this+0x23D94 (0x0050F4A0) and cl 12.00.8168 answers
+        # `&((Console *)0)->field_21A6C_` with 0x21A6C.
+        #
+        # Hoisting one level only put GraphicWin's 0xA14 bytes in the MIDDLE
+        # of a Console and every one of its 36 name-encoded members 0xA14 too
+        # high. sizeof(Console) is 0x247A8 either way, which is why the size
+        # assertion could not see it, and why this checks the ORDER: the own
+        # members are the last entries before the trailing base, and there is
+        # exactly one vbtable pointer for the two classes that share it.
+        flattened, trailing = tool._layout_parts("Console")
+        self.assertEqual(["GraphicWin"], list(trailing))
+        self.assertEqual(1, sum(1 for member in flattened
+                                if member[1] == "__vbptr"))
+        start, stop = tool.declared_span("Console")
+        self.assertEqual(len(flattened), stop)
+        self.assertEqual("field_21A6C_", flattened[start][1])
+        self.assertEqual("field_23D90_", flattened[stop - 1][1])
+
     def test_a_file_scope_function_pointer_typedef_is_four_bytes(self):
         # `Menu` was refused for holding a `MenuProc proc_` - a width that was
         # never in doubt; the extractor simply only knew the IN-CLASS spelling.

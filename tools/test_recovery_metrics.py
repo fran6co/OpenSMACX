@@ -529,20 +529,26 @@ class UnprovenByShapeTests(unittest.TestCase):
             100.0, sum(e["percent_of_unproven_bytes"] for e in block.values()),
             places=1)
 
-    def test_the_committed_catalogue_covers_every_recovered_function(self):
-        # A shape catalogue that has drifted behind the inventory would push
-        # real functions into `unclassified` and read as ignorance rather than
-        # staleness, so the coverage is checked against the real tree.
-        shapes = metrics.load_shapes()
-        if not shapes:
-            self.skipTest("recovered-shapes.csv is not present")
-        rows = metrics.load_catalogue()
-        recovered = [r for r in rows
-                     if metrics.row_state(r) == metrics.RECOVERED_RECOVERY_STATE]
-        missing = [r["address"] for r in recovered
-                   if metrics.row_address(r) not in shapes]
-        self.assertEqual([], missing[:10],
-                         f"{len(missing)} recovered functions have no shape")
+    # There is deliberately NO test that docs/recovery/recovered-shapes.csv
+    # covers the recovered catalogue. One stood here until 2026-08-13 and had
+    # become impossible to satisfy: measured that day, src/ carries 4,112
+    # source_complete functions while the file holds 2,577 rows frozen on
+    # 2026-08-01, so 1,563 recovered functions had no shape. Nothing in the tree
+    # can close that gap - classify_recovered_shapes.py, its only writer, was
+    # deleted in 1058cb94, and the `recovered-shapes-current` gate was retired
+    # before it on the verdict recorded in docs/RETIRED_ROUTES.md: the shapes
+    # annotate the differential-oracle debt only, and `load_shapes()` returning
+    # {} costs the headline denominator nothing. A currency assertion over a
+    # file with no generator has exactly two futures, permanently red or quietly
+    # weakened, and both are worse than saying so here.
+    #
+    # What is left is safe to keep reading: 0 of the 2,577 rows name an address
+    # src/ does not catalogue, and a shape is a property of the ORIGINAL body,
+    # so a row does not rot when its function's recovery_state moves (28 have).
+    # The property that still matters under a frozen catalogue - staleness must
+    # push functions into `unclassified`, never drop their bytes - is what
+    # test_a_function_with_no_recorded_shape_is_UNCLASSIFIED_not_dropped and
+    # test_the_buckets_sum_to_unproven_recovered assert above.
 
 
 class PublishedFileTests(unittest.TestCase):

@@ -326,6 +326,15 @@ def load_shapes(path=None) -> dict:
     deciding anything, so this module keeps working with no IDB, no Wine and no
     executable. An empty result means the split is not published - which reads
     as "we do not know why", not as "there is no reason".
+
+    The file is FROZEN, and callers must price the split as a snapshot rather
+    than a current figure: classify_recovered_shapes.py, its only writer, was
+    deleted in 1058cb94 and the `recovered-shapes-current` gate retired before
+    it (docs/RETIRED_ROUTES.md). Measured 2026-08-13 the file holds 2,577 rows
+    against 4,112 source_complete functions in src/, so 1,563 of them classify
+    as `unclassified` - staleness wearing the look of ignorance, which is the
+    one way this table misleads. It cannot lose bytes doing it: every row still
+    lands in exactly one bucket, which is what the tests defend.
     """
     source = SHAPES_CSV if path is None else Path(path)
     if not source.is_file():

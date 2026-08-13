@@ -225,9 +225,10 @@ class FreshRecoveryTest(unittest.TestCase):
 
 
 class RealBriefSizeTest(unittest.TestCase):
-    """The size guard above measures a one-line mock body, so it would not
-    notice the prose growing until a real brief was twice its budget. This
-    measures a real one - the thing that is actually sent."""
+    """The size guard above measures a one-line mock body, no real
+    disassembly and a name with no placeholders in it, so it never sees the
+    three sections that only exist on real data. This measures a real one -
+    the thing that is actually sent."""
 
     def test_a_real_brief_stays_small(self):
         # The verdict is PASSED IN rather than read from a gitignored ledger,
@@ -237,7 +238,38 @@ class RealBriefSizeTest(unittest.TestCase):
             self.skipTest("the pinned executable is absent")
         text = agent_brief.brief(0x005E3630, tier="MISMATCH",
                                  note="#3: original 'jl' vs rebuilt 'jge'")
-        self.assertLess(len(text), 8000)
+        body, _ = agent_brief.verifier.committed_body(0x005E3630)
+
+        # NON-VACUITY FIRST, because the absent version of this brief is the
+        # small one. The bound here was calibrated at 6,035 bytes on
+        # 2026-08-12 while `committed_body` was returning None for this
+        # address - functions.csv gave the row two source_locations joined by
+        # " | " and the reader opened the pair as a single path - so the "real
+        # brief" being measured was the fresh-recovery one, with no body, no
+        # divergence rule and no naming section. src/ became the catalogue
+        # (185dd977), the lookup works, and the same call is now 8,036 bytes
+        # with NOT ONE byte added to the prose: measured at eedcb9de and at
+        # HEAD through the mock above, both 5,863. A size guard a body-less
+        # brief can satisfy is measuring the brief that is not sent.
+        self.assertIsNotNone(body, "the fixture address is not recovered any "
+                                   "more, so this measures the wrong brief")
+        self.assertIn("# The body as it stands", text)
+        self.assertIn(body.strip(), text)
+
+        # Then bound what the TOOL owns. The other two inputs are as large as
+        # the function is, and a total is mostly them: over twenty sampled
+        # recovered functions the brief ran 6,230 to 22,267 bytes, the top one
+        # being this same prose around a 12,453-byte disassembly and a
+        # 3,946-byte body (0x004346A0). So an absolute total never bounded the
+        # prose - it bounded this one leaf staying short, and it moved when
+        # the leaf did. The prose itself barely moves: 5,840-5,880 bytes on
+        # the sixteen whose names are already good, 6,547-6,584 on the five
+        # that also earn the naming section. 7,000 leaves 6%, which is a
+        # paragraph - enough that rewording passes and adding a section does
+        # not.
+        asm = text.split("```asm\n", 1)[1].split("```", 1)[0]
+        prose = len(text) - len(body.strip()) - len(asm)
+        self.assertLess(prose, 7000)
 
 
 if __name__ == "__main__":
