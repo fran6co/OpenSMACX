@@ -401,6 +401,75 @@ class BatchModeTest(unittest.TestCase):
         self.assertFalse(hasattr(agent_brief, "CACHE_FILE"))
 
 
+class ArityHypothesisTest(unittest.TestCase):
+    """IDA's argument count, for the functions no mangled name describes.
+
+    274 placeholders are `sub_*` with no prototype, 217 of them already have an
+    evidenced `argument_count` in prototype-hypotheses.csv, and it reached
+    nothing - so the scaffold handed out a nullary contract and the agent
+    rebuilt the arity from `[esp+N]` reads. Batch 4 turned ~24% of its
+    addresses into signature proposals, which is that gap priced.
+    """
+
+    def setUp(self):
+        self.work = Path(tempfile.mkdtemp())
+        self.original = agent_brief.HYPOTHESES_CSV
+        agent_brief.reset_cache()
+
+    def tearDown(self):
+        agent_brief.HYPOTHESES_CSV = self.original
+        agent_brief.reset_cache()
+        shutil.rmtree(self.work, ignore_errors=True)
+
+    def csv_with(self, rows):
+        path = self.work / "hyp.csv"
+        path.write_text("address,name,argument_count,evidence\n" + rows)
+        agent_brief.HYPOTHESES_CSV = path
+        agent_brief.reset_cache()
+        return path
+
+    def test_a_hypothesis_is_shown_with_its_evidence(self):
+        self.csv_with('0x00401D80,sub_401d80,1,"IDA 9.4 guess_type int __stdcall(void *Block)"\n')
+        text = agent_brief.arity_hypothesis(0x00401D80)
+        self.assertIn("IDA guessed 1 argument", text)
+        self.assertIn("guess_type int __stdcall(void *Block)", text)
+
+    def test_it_is_labelled_a_hypothesis_not_a_contract(self):
+        # One source. I checked whether Ghidra could corroborate and it cannot:
+        # `undefined FUN_xxxxxxxx()` with convention unknown. Presenting a lone
+        # guess as a second record is how a plausible wrong body gets written.
+        self.csv_with('0x00401D80,sub_401d80,3,"IDA 9.4 guess_type int(int,int,int)"\n')
+        text = agent_brief.arity_hypothesis(0x00401D80)
+        self.assertIn("hypothesis from one tool", text)
+        self.assertIn("no cross-check", text)
+
+    def test_a_zero_argument_hypothesis_does_not_fire(self):
+        # It agrees with the fallback the scaffold already emitted, so it adds
+        # nothing and would only dilute the brief.
+        self.csv_with('0x00402DD0,sub_402dd0,0,"IDA 9.4 guess_type int()"\n')
+        self.assertEqual(agent_brief.arity_hypothesis(0x00402DD0), "")
+
+    def test_an_address_with_no_hypothesis_gets_nothing(self):
+        self.csv_with('0x00401D80,sub_401d80,1,"x"\n')
+        self.assertEqual(agent_brief.arity_hypothesis(0x00999999), "")
+
+    def test_a_missing_csv_does_not_take_the_brief_down(self):
+        agent_brief.HYPOTHESES_CSV = self.work / "absent.csv"
+        agent_brief.reset_cache()
+        self.assertEqual(agent_brief.arity_hypothesis(0x00401D80), "")
+
+    def test_a_malformed_count_is_skipped_rather_than_raising(self):
+        self.csv_with('0x00401D80,sub_401d80,,"no count"\n')
+        self.assertEqual(agent_brief.arity_hypothesis(0x00401D80), "")
+
+    def test_it_warns_that_a_thiscall_receiver_is_not_an_argument(self):
+        # The specific way this hypothesis misleads: IDA counts `this` for a
+        # thiscall it guessed as stdcall, and an agent adding a stack param for
+        # it writes a body with one argument too many.
+        self.csv_with('0x00401D80,sub_401d80,2,"IDA 9.4 guess_type int __thiscall(void *Block, char)"\n')
+        self.assertIn("is NOT one of", agent_brief.arity_hypothesis(0x00401D80))
+
+
 class ThunkSectionTest(unittest.TestCase):
     """A one-jump body is a thunk, and the operand says which kind.
 
