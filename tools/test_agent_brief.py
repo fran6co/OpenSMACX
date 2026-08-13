@@ -7,7 +7,11 @@ function, nearly all of it opening files. So what is tested is that the brief
 is SELF-CONTAINED and that it says only what applies.
 """
 
+import shutil
+import sys
+import tempfile
 import unittest
+from pathlib import Path
 
 import agent_brief
 
@@ -98,12 +102,15 @@ class SelfContainmentTest(unittest.TestCase):
             "size": "16", "tier": "MISMATCH",
             "note": "#2: original 'jl' vs rebuilt 'jge'"}
         agent_brief.disassembly = lambda a: "```asm\n0x00401000 ret\n```"
+        self.landing = agent_brief.landing_path
+        agent_brief.landing_path = lambda a, src=None: "src/unrecovered/x.cpp"
 
     def tearDown(self):
         agent_brief.verifier.committed_body = self.committed
         agent_brief.emit.load_functions = self.functions
         agent_brief.ledger_row = self.row
         agent_brief.disassembly = self.disasm
+        agent_brief.landing_path = self.landing
 
     def test_it_carries_everything_the_agent_needs(self):
         text = agent_brief.brief(0x401000)
@@ -116,9 +123,35 @@ class SelfContainmentTest(unittest.TestCase):
                        "__asm"):                      # what is forbidden
             self.assertIn(needed, text, needed)
 
-    def test_it_forbids_touching_the_repository(self):
+    def test_it_names_the_one_file_the_body_has_to_land_in(self):
+        # The rule used to be "Write only to /tmp", which contradicts the loop
+        # it is part of: the coordinator banks with `--record-matches`, and
+        # that measures the SOURCE TREE. Under the old wording a whole batch
+        # could prove bodies in /tmp and bank zero, and it would have read as
+        # agents failing rather than as the brief being wrong.
         text = agent_brief.brief(0x401000)
-        self.assertIn("Write only to /tmp", text)
+        self.assertIn("src/unrecovered/x.cpp", text)
+        self.assertNotIn("Write only to /tmp", text)
+
+    def test_it_says_why_landing_is_not_optional(self):
+        self.assertIn("banks nothing", agent_brief.brief(0x401000))
+
+    def test_the_scorer_is_spelled_with_a_python_that_can_run_it(self):
+        # It was printed bare. `verify_recovered_function.py` is not
+        # executable and its shebang is the system python3, so the one command
+        # the brief exists to hand over exits 126 as printed and 1 under
+        # python3 - and each agent spent turns finding the venv instead.
+        text = agent_brief.brief(0x401000)
+        self.assertNotIn("\n    tools/verify_recovered_function.py", text)
+        self.assertIn(f"{agent_brief.interpreter()} "
+                      f"tools/verify_recovered_function.py", text)
+
+    def test_the_interpreter_is_the_one_running_this(self):
+        # Derived, not written down: a spelled-out path is right on one
+        # machine, which is how the write-scope rule came to carry somebody's
+        # home directory.
+        self.assertTrue(
+            agent_brief.interpreter().endswith(Path(sys.executable).name))
 
     def test_it_asks_for_readability_not_only_byte_exactness(self):
         self.assertIn("Readability counts", agent_brief.brief(0x401000))
@@ -153,7 +186,14 @@ class SelfContainmentTest(unittest.TestCase):
     def test_it_stays_small(self):
         # The whole point. A brief that grows into a manual recreates the
         # problem it was written to solve.
-        self.assertLess(len(agent_brief.brief(0x401000)), 6000)
+        #
+        # 6,000 held from the day this landed until 2026-08-13, when the
+        # write-scope rule went from one line to three. That is not prose
+        # creep: "Write only to /tmp" contradicted the loop the brief is part
+        # of, and the replacement has to name the file and say why landing is
+        # not optional. Measured 6,038 after; 6,100 leaves the same ~1% the
+        # original bound did, which is a reword and not a section.
+        self.assertLess(len(agent_brief.brief(0x401000)), 6100)
 
 
 class FreshRecoveryTest(unittest.TestCase):
@@ -270,6 +310,90 @@ class RealBriefSizeTest(unittest.TestCase):
         asm = text.split("```asm\n", 1)[1].split("```", 1)[0]
         prose = len(text) - len(body.strip()) - len(asm)
         self.assertLess(prose, 7000)
+
+
+class LifecycleSectionTest(unittest.TestCase):
+    """The store-order rule fires on constructors and destructors only.
+
+    It is keyed on the mangled name because the divergence it produces carries
+    nothing to key on: declaration order scores MNEMONIC_ONLY, where every
+    mnemonic matches and only operands differ, so there is no note and
+    `targeted_rules` reports "no fingerprint matched this divergence".
+    """
+
+    def test_a_constructor_gets_the_rule(self):
+        self.assertIn("STORE ORDER",
+                      agent_brief.lifecycle_section("??0Font@@QAE@XZ"))
+
+    def test_a_destructor_gets_it_too(self):
+        self.assertIn("STORE ORDER",
+                      agent_brief.lifecycle_section("??1Filemap@@QAE@XZ"))
+
+    def test_an_ordinary_method_does_not(self):
+        self.assertEqual(
+            agent_brief.lifecycle_section("?get_state_id@CheckBox@@QAEHH@Z"), "")
+
+    def test_a_decompiler_stub_name_does_not(self):
+        self.assertEqual(agent_brief.lifecycle_section("sub_63d450"), "")
+
+    def test_it_says_why_an_init_list_cannot_express_it(self):
+        # The mechanism is the load-bearing half. Without it an agent tries a
+        # reordered member-init list, which C++ silently runs in declaration
+        # order anyway, and concludes the lever does not work.
+        text = agent_brief.lifecycle_section("??0Time@@QAE@XZ")
+        self.assertIn("declaration order", text)
+        self.assertIn("MNEMONIC_ONLY", text)
+
+
+class LandingPathTest(unittest.TestCase):
+    """Where a body has to land is LOOKED UP, never composed.
+
+    `src/unrecovered/<hex>.cpp` is the usual home and is not the rule. Of the
+    48 addresses prepared for the 2026-08-13 batch, one already lived under
+    `src/recovered/`, and a composed path would have sent that agent to a file
+    the coordinator does not measure - which banks zero while every command in
+    the agent's transcript exits 0.
+    """
+
+    def setUp(self):
+        self.work = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.work, ignore_errors=True)
+
+    def write(self, relative, address):
+        path = self.work / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"// ORIGINAL: 0x{address:08X} FILE\n"
+                        f"void f() {{ /* BODY GOES HERE. */ }}\n")
+        return path
+
+    def test_it_finds_the_file_that_claims_the_address(self):
+        self.write("unrecovered/00401000.cpp", 0x401000)
+        found = agent_brief.landing_path(0x401000, src=self.work)
+        self.assertTrue(found.endswith("unrecovered/00401000.cpp"), found)
+
+    def test_a_body_outside_the_usual_directory_is_still_found(self):
+        # The case that breaks composition: same address, different home.
+        self.write("recovered/00401000.cpp", 0x401000)
+        found = agent_brief.landing_path(0x401000, src=self.work)
+        self.assertTrue(found.endswith("recovered/00401000.cpp"), found)
+
+    def test_an_unclaimed_address_returns_empty_rather_than_a_guess(self):
+        self.write("unrecovered/00401000.cpp", 0x401000)
+        self.assertEqual(agent_brief.landing_path(0x402000, src=self.work), "")
+
+    def test_the_brief_says_so_rather_than_naming_a_file_that_does_not_exist(self):
+        # An invented path is worse than none: the agent creates it, every
+        # command it runs succeeds, and the coordinator measures a placeholder.
+        original = agent_brief.landing_path
+        agent_brief.landing_path = lambda a, src=None: ""
+        try:
+            text = agent_brief.brief(0x401000, tier="MISMATCH", note="probe")
+        finally:
+            agent_brief.landing_path = original
+        self.assertIn("NONE", text)
+        self.assertIn("nowhere to land it", text)
 
 
 if __name__ == "__main__":

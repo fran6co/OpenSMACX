@@ -50,28 +50,45 @@ You share one working tree with other agents.
 
 ## What to do when it does not match
 
-Land your best attempt anyway, in `src/unrecovered/<addr>.cpp`, and record what
-you ruled out on the annotation:
+Land your best attempt anyway, in the file the brief names, and record what you
+ruled out **on the line below the existing `// ORIGINAL:` marker**:
 
 ```
-// ORIGINAL: 0x0055B760 FILE
+// ORIGINAL: 0x0055B760 FILE          <- do not touch this line
 // RULED-OUT: plain immediate; named local; const; x|0xFF;
 //            register storage; a 1-bit bitfield
 ```
+
+**Never edit the `// ORIGINAL:` line, and never write a second one.** That line
+carries the mode marker: `FILE` means "this whole file is the translation
+unit", which is what a scaffold is. Strip the word and the same file is read in
+body mode, the extractor cuts a definition out of a file that is all
+scaffolding, and a correct body scores REFUSED or NO_COMPILE. Measured on
+2026-08-13: one agent rewrote the marker on all eight of its files, and
+restoring the one word turned four of them from REFUSED straight into
+BYTE_EXACT with no change to the code. Your own scorer cannot see this — it
+builds the unit itself and never reads the marker — so it will tell you
+BYTE_EXACT while the batch banks nothing.
 
 This is not bookkeeping. Today a miss leaves nothing behind and the next agent
 starts from zero on the same function. `RULED-OUT` is only legal on a body that
 exists, which is why the attempt has to land first — and it is refuted
 automatically if that body ever does match, so it cannot outlive its reason.
 
-If you **do** match, say what worked, keyed by the divergence it fixed:
+If you **do** match, say what worked, keyed by the divergence it fixed — again
+on the line *below* the marker, which you still leave alone:
 
 ```
-// ORIGINAL: 0x005E3650 BYTE_EXACT
+// ORIGINAL: 0x005E3650 FILE          <- still not yours to edit
 // LEVER: jl/jge  flipped the `if` condition and swapped the arms
 ```
 
-The fingerprint is what lets the next agent's brief find your lesson.
+The fingerprint (`jl/jge`) is what lets the next agent's brief find your lesson.
+
+**Do not write `BYTE_EXACT` yourself.** State is measured, not claimed: the
+coordinator's `--record-matches` stamps that word onto the marker when *it*
+reproduces your bytes. Writing it by hand claims a measurement you did not
+make, and it is how the marker gets clobbered.
 
 ## Rules
 
