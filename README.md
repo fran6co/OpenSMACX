@@ -12,66 +12,44 @@ recent version of my unofficial patch. Cursory testing shows it is compatible wi
 
 ## CMake build
 
-OpenSMACX still runs inside the original 32-bit Windows executable. The current CMake target is
-therefore a PE32 DLL, including when it is built from macOS or Linux. A native executable requires
-the remaining fixed-address code and data references to be reverse engineered first; see
-docs/PORTING.md (retired). The local-only bridge toward that executable is described in `docs/HYBRID.md`.
+OpenSMACX is being recovered by MATCHING DECOMPILATION: a function is done when
+MSVC 6 (`cl 12.00.8168`) lowers our C++ to the exact bytes the shipped
+`terranx.exe` contains. `src/` is the single record of that work - every mapped
+function carries an `ORIGINAL: 0x...` annotation, and `BYTE_EXACT` on one is a
+claim a gate re-proves on every run.
 
-The macOS and Linux build uses an i686 MinGW cross-compiler. On macOS with Homebrew:
+## Building
+
+VC6 under Wine is the only compiler, and the build needs no flags beyond the
+Python interpreter that carries `pefile`:
 
 ```sh
-brew install cmake ninja mingw-w64 innoextract
 python3 -m venv .opensmacx/venv
 .opensmacx/venv/bin/python -m pip install -r tools/requirements.txt
-cmake --preset mingw-i686-release
-cmake --build --preset mingw-i686-release
+cmake -S . -B build -G Ninja -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python"
+cmake --build build
 ```
 
-The output is `build/mingw-i686-release/OpenSMACX.dll`. CMake rejects native and 64-bit targets so
-that an incompatible DLL cannot be produced accidentally.
+The product is `opensmacx-link-check.exe`: it exists so the recovered bodies
+must compile and LINK, which is what catches a body that type-checks in
+isolation and cannot resolve its callees. It is not the game.
 
-## macOS setup and launch
+RUNNING THE GAME IS RETIRED FOR NOW. The DLL that injected into the original
+executable, the staged hybrid image, and the runtime oracles are all recorded in
+`docs/RETIRED_ROUTES.md` with the measurements that justified each. They come
+back if byte-exact recovery cannot reach the whole image; until then the byte
+comparison IS the verification, and a route that only existed to observe a
+running process was costing more than it proved.
 
-Install a Wine distribution with 32-bit WoW64 support. On Apple Silicon, Wine itself runs through
-Rosetta 2. Then configure the local GOG installer and Wine paths:
+## Where things are
 
-```sh
-cmake --preset mingw-i686-release \
-  -DOPENSMACX_GAME_INSTALLER="$HOME/Downloads/setup_sid_meiers_alpha_centauri_planetary_pack_1.1_pracx_ddraw_(77244).exe" \
-  -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python" \
-  -DOPENSMACX_WINE="/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine"
-cmake --build --preset mingw-i686-release --target stage-game
-```
+- `docs/DECOMP_MAP.md` - the annotation grammar and the ratchet
+- `docs/TOOLS.md` - every tool, grouped by the question it answers
+- `docs/RETIRED_ROUTES.md` - what was removed, and the numbers that priced it
+- `AGENTS.md` - the recovery loop agents run
 
-This verifies the installer, extracts the locally owned assets, applies the bundled PRACX/DDraw
-files, validates all 462 DLL imports, and writes the playable installation under
-`.opensmacx/game/`. Proprietary files remain ignored by Git.
-
-The local hybrid workflow reconstructs the supported executable from its verified image pack before
-applying OpenSMACX. See `docs/HYBRID.md`, or build it with:
-
-```sh
-cmake --build --preset mingw-i686-release --target stage-hybrid-game
-```
-
-Launch it with:
-
-```sh
-.opensmacx/venv/bin/python run_game (retired) \
-  --game-dir .opensmacx/game \
-  --executable terranx_hybrid.exe \
-  --wine "/Applications/Wine Staging.app/Contents/Resources/wine/bin/wine" \
-  --wine-prefix .opensmacx/wineprefix
-```
-
-On macOS the launcher starts the Wine application through Launch Services, which is required for
-the native window driver, and explicitly passes the configured Wine prefix to the application. On
-Linux it invokes the configured Wine executable directly. Windows can build the
-`windows-msvc-x86-release` preset and run the staged executable without Wine.
-
-The MinGW DLL exports aliases for the 462 MSVC names expected by `ImportAdder.exe`. The two
-functions returning `std::string` remain unredirected in MinGW builds because the GCC and original
-MSVC standard-library ABIs are incompatible; the original executable continues to provide them.
+Proprietary assets, the original executable, and every derived artifact stay
+local and git-ignored.
 
 You can follow development progress, discuss ideas or issues here:  
 https://alphacentauri2.info/index.php?board=23.0

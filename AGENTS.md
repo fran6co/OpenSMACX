@@ -14,10 +14,6 @@ describe are assumed everywhere below and are not repeated here:
   every `recovery_state` / `binding_category` value means.
 - docs/RUNTIME_ORACLE.md (retired) — the in-process differential oracle: when a
   function needs one instead of a copied-byte oracle, and how to author a suite.
-- `docs/HYBRID.md` — the staged-hybrid workflow, the retired `run_game`, and the
-  smoke gate that every recovery must pass.
-- `docs/LEGACY_ISLANDS.md` — island generation, eligibility, and the
-  zero-island release rule.
 - `docs/EXCLUSIONS.md` — what will **not** be recovered, on what grounds, and
   the measured size of each population. Read it before planning work, not
   after: it is the difference between hitting a wall and knowing one is there.
@@ -751,8 +747,6 @@ parallel-agent targets (see "Parallel recovery" above):
 - `tools/verify_wine_test_locks.py`: checks the generated `CTestTestfile.cmake` so that every test invoking `run_windows_test.py` holds `RESOURCE_LOCK wineprefix`; a Wine test missing from that list does not fail under `ctest -j`, it flakes.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.
-- `docs/LEGACY_ISLANDS.md`: ownership, eligibility, lifecycle, and zero-island release rules.
-- `docs/HYBRID.md`: local hybrid workflow.
 - `tests/recovery_oracle_tests.cpp`: source-versus-original AlphaNet, Random, Win/geometry, Vector, Scroll, Menu, and PullDown fixtures.
 - `tests/static_recompile_pilot_tests.cpp`: generated-only and original-byte differential fixtures for the time-boxed static recompilation leaf.
 - docs/STATIC_RECOMPILATION.md (retired): local-only provenance policy, commands, value gate, and stopped pilot outcome.
