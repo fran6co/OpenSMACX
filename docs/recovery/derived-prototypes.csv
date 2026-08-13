@@ -1369,7 +1369,7 @@ address,name,prototype,convention,stack_slots,purge
 0x005FD120,?flush_input@@YAXXZ,void (__cdecl ?flush_input@@YAXXZ)(),__cdecl,,verified
 0x005FD1C0,?flush_keyboard@@YAXXZ,void (__cdecl ?flush_keyboard@@YAXXZ)(),__cdecl,,verified
 0x005FD220,?flush_mouse@@YAXXZ,void (__cdecl ?flush_mouse@@YAXXZ)(),__cdecl,,verified
-0x005FD2B0,?do_sound@@YAXXZ,void (__cdecl ?do_sound@@YAXXZ)(),__cdecl,,verified
+0x005FD2B0,?do_sound@@YAHXZ,int (__cdecl ?do_sound@@YAHXZ)(),__cdecl,,verified
 0x005FD360,?do_all_sounds@@YAXXZ,void (__cdecl ?do_all_sounds@@YAXXZ)(),__cdecl,,verified
 0x005FD370,?flush_timer@@YAXXZ,void (__cdecl ?flush_timer@@YAXXZ)(),__cdecl,,verified
 0x005FD400,??__ETxt@@YAXXZ,void (__cdecl ??__ETxt@@YAXXZ)(),__cdecl,,verified
@@ -1460,10 +1460,10 @@ address,name,prototype,convention,stack_slots,purge
 0x006185A0,?init_class@Caviar@@QAAHXZ,int (__cdecl ?init_class@Caviar@@QAAHXZ)(Caviar* this),__cdecl,,verified
 0x00618D20,?close_class@Caviar@@QAAXXZ,void (__cdecl ?close_class@Caviar@@QAAXXZ)(Caviar* this),__cdecl,,verified
 0x00618DA0,?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z,"void (__cdecl ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z)(Caviar* this, VOX_ScnRenderHnd*, int, VOX_Vect*, VOX_Matrix*, VOX_Rect*, VOX_Vect*)",__cdecl,111111,verified
-0x00618E10,?vx_malloc@Caviar@@QAAXK@Z,"void (__cdecl ?vx_malloc@Caviar@@QAAXK@Z)(Caviar* this, unsigned int)",__cdecl,1,verified
+0x00618E10,?vx_malloc@Caviar@@SAXK@Z,void (__cdecl ?vx_malloc@Caviar@@SAXK@Z)(unsigned int),__cdecl,1,verified
 0x00618E20,?vx_free@Caviar@@QAAXPAX@Z,"void (__cdecl ?vx_free@Caviar@@QAAXPAX@Z)(Caviar* this, void*)",__cdecl,1,verified
-0x00618E30,?vx_read@Caviar@@QAAXHPADJ@Z,"void (__cdecl ?vx_read@Caviar@@QAAXHPADJ@Z)(Caviar* this, int, int8*, int)",__cdecl,111,verified
-0x00618E50,?vx_write@Caviar@@QAAXHPAXJ@Z,"void (__cdecl ?vx_write@Caviar@@QAAXHPAXJ@Z)(Caviar* this, int, void*, int)",__cdecl,111,verified
+0x00618E30,?vx_read@Caviar@@SAXHPADJ@Z,"void (__cdecl ?vx_read@Caviar@@SAXHPADJ@Z)(int, int8*, int)",__cdecl,111,verified
+0x00618E50,?vx_write@Caviar@@SAXHPAXJ@Z,"void (__cdecl ?vx_write@Caviar@@SAXHPAXJ@Z)(int, void*, int)",__cdecl,111,verified
 0x00618E70,?vx_seek@Caviar@@QAAXHJH@Z,"void (__cdecl ?vx_seek@Caviar@@QAAXHJH@Z)(Caviar* this, int, int, int)",__cdecl,111,verified
 0x00618E90,?vx_tell@Caviar@@QAAXH@Z,"void (__cdecl ?vx_tell@Caviar@@QAAXH@Z)(Caviar* this, int)",__cdecl,1,verified
 0x006195B0,?init_font_class@Font@@QAAHPAUFont@@@Z,"int (__cdecl ?init_font_class@Font@@QAAHPAUFont@@@Z)(Font* this, Font*)",__cdecl,1,verified
