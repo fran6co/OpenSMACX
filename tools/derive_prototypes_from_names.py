@@ -181,7 +181,13 @@ CONTROL_POPULATION_FLOOR = 3213
 # Likewise the published catalogue. A generator that emits fewer rows for a
 # reason nobody chose is a silent loss of coverage, and the purge gate's own
 # refusals are counted and named, so a legitimate drop is always explainable.
-PUBLISHED_ROWS_FLOOR = 1553
+#
+# RATCHETED 1553 -> 1600 on 2026-08-13, when `catalogue_corrections` renamed 47
+# rows catalogued `??3<Class>@@SAXPAXI@Z` to the this-adjusting thunk spellings
+# their bodies carry. They were the whole of the purge gate's hop refusals;
+# under the corrected names all 47 derive and publish. Left at 1553 the gate
+# would have accepted losing every one of them again in silence.
+PUBLISHED_ROWS_FLOOR = 1600
 
 # One copy, in recover_conventions, because two copies of this list drifted.
 CONVENTION_TOKEN = conventions.CONVENTION_TOKEN
@@ -381,6 +387,14 @@ def derive_one(address: str, name: str, demangled: str) -> Derived | None:
     argument_types = [ida_type(one) for one in arguments]
 
     head = demangled[:found.start()].strip()
+    # `[thunk]:` is a marker, not a return type. The demangler prefixes an
+    # adjustor or vtordisp thunk's signature with it, ahead of the access
+    # keyword - `[thunk]:public: virtual void * __thiscall Foo::...` - and the
+    # anchored strips below then match nothing, so the whole marker-plus-access
+    # run would be published as the return type. Measured on
+    # `??_GAlphaMovie@@WEEE@AEPAXI@Z`: without this the row reads
+    # `[thunk]:public: virtual void*` instead of `void*`.
+    head = re.sub(r"^\[thunk\]\s*:\s*", "", head)
     head = re.sub(r"^(public|private|protected)\s*:\s*", "", head)
     # `\b\s*`, not `\s+`. A virtual DESTRUCTOR's head is exactly
     # `public: virtual` with nothing after it, so a pattern that demands
@@ -532,12 +546,19 @@ SOURCE_NONE = "none"
 PURGE_REFUSAL = "contradicted by the callee purge"
 PURGE_REFUSAL_HOP = "contradicted by the callee purge of its tail-jump target"
 
-# Of the rows whose purge came from a hop, the share that AGREED when this was
-# measured on 2026-07-31. This is what makes one-hop resolution a method rather
-# than a way of manufacturing refusals: it CONFIRMS 277 of the 324 rows it
-# reaches. If that collapses, the hop is resolving the wrong thing and the run
+# Of the rows whose purge came from a hop, the share that AGREED. This is what
+# makes one-hop resolution a method rather than a way of manufacturing
+# refusals: if it collapses, the hop is resolving the wrong thing and the run
 # refuses to write rather than refusing hundreds of rows on bad evidence.
-HOP_AGREEMENT_FLOOR = (277, 324)
+#
+# RATCHETED (277, 324) -> (324, 324) on 2026-08-13. The 47 rows that made up
+# the entire shortfall were not the hop misfiring: every one was a
+# `??3<Class>@@SAXPAXI@Z` name IDA had wrong, and the hop was RIGHT to
+# contradict them. With `catalogue_corrections` supplying the thunk spellings
+# the bodies actually carry, the hop now confirms every row it reaches, so the
+# honest floor is total agreement - any future contradiction here is a name to
+# investigate, not a tolerance to spend.
+HOP_AGREEMENT_FLOOR = (324, 324)
 
 
 class Purge(NamedTuple):
@@ -684,6 +705,138 @@ def tail_jump_target(instructions, end: int) -> int | None:
     if last.mnemonic != "jmp" or not DIRECT_JUMP.match(last.op_str):
         return None
     return int(last.op_str, 16)
+
+
+def is_thunk_name(name: str) -> str:
+    """The kind character when `name` is a thunk spelling, else ""."""
+    infix = conventions.split_infix(name)
+    if infix is None or conventions.KIND[infix[0]][1] != "thunk":
+        return ""
+    return infix[0]
+
+
+def thunk_adjustment_disagreements(derived, rows, exe: Path) -> list:
+    """Rows whose THUNK NAME states a displacement the body does not apply.
+
+    The one claim in a thunk spelling that no other check in this tree can
+    falsify. `??_GAlphaMovie@@WEEE@AEPAXI@Z` asserts two independent things: a
+    signature - `void *(unsigned int)` on a `__thiscall` - and an ADJUSTMENT,
+    `adjustor{1092}`. The callee-purge gate settles the signature, because the
+    implied purge of 4 either matches the `ret 4` or it does not. Nothing
+    settled the adjustment: change `WEEE@` to `WEEF@` and the purge still
+    agrees, the prototype is still derived, every pinned floor still holds, and
+    the catalogue now carries a name for a thunk that adjusts by 1093.
+
+    That mattered the moment `catalogue_corrections` supplied 47 of these
+    spellings by reading the constant out of the body. The evidence was real,
+    but it lived in a comment, and a comment is not a check - so this reads it
+    back out of the image and holds the name to it.
+
+    MSVC emits exactly two shapes, and both are decoded rather than pattern
+    matched on a mnemonic string:
+
+        adjustor{N}         sub ecx, N
+        vtordisp{V, N}      sub ecx, [ecx + V]   then `sub ecx, N` when N != 0
+
+    A row whose body does not open that way is reported, never excused: this
+    returns disagreements, and a thunk-named function that adjusts nothing is
+    the most interesting thing it could find.
+    """
+    import pefile
+    from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+
+    from generator_support import read_bytes
+
+    by_address = {row.get("address", ""): row for row in rows}
+    pe = None
+    engine = Cs(CS_ARCH_X86, CS_MODE_32)
+    engine.detail = True
+    out = []
+    for one in derived:
+        kind_char = is_thunk_name(one.name)
+        if not kind_char:
+            continue
+        # The numbers the NAME states, read with the same decoder the infix
+        # scan uses so the two cannot disagree about where they end.
+        rest = one.name[one.name.find("@@") + 2:]
+        index, stated = len(kind_char), []
+        for _ in range(conventions.thunk_adjustments(kind_char)):
+            value, index = conventions.mangled_number(rest, index)
+            stated.append(value)
+        if any(value is None for value in stated):
+            out.append((one.address, one.name, "the name's adjustment does "
+                        "not decode, so nothing can be held to it"))
+            continue
+        spans = parse_ranges(by_address.get(one.address, {}).get(
+            "body_ranges", ""))
+        if not spans:
+            continue                    # no body to read; not a disagreement
+        if pe is None:
+            pe = pefile.PE(str(exe), fast_load=True)
+        start, end = spans[0]
+        head = list(engine.disasm(read_bytes(pe, start, end - start), start))[:2]
+        applied = _applied_adjustment(head)
+        if _as_displacements(applied) != _as_displacements(stated):
+            out.append((one.address, one.name,
+                        f"the name states {_as_displacements(stated)} and the "
+                        f"body applies {_as_displacements(applied)}"))
+    return out
+
+
+def _as_displacements(values) -> list:
+    """Both sides as SIGNED 32-bit displacements, which is what they are.
+
+    Not a loosening - this is the one place the two spellings of the same
+    number have to be reconciled, and getting it wrong in either direction is
+    worse than the check not existing. A mangled number carries no sign unless
+    it is written with a `?` prefix, so `PPPPPPPM@` in
+    `??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z` decodes to 0xFFFFFFFC, while capstone
+    reads the same four bytes off `sub ecx, [ecx - 4]` as -4. `llvm-undname`
+    agrees with capstone and prints `vtordisp{-4, 0}`, because a vtordisp
+    offset IS a signed displacement. Comparing the raw values reported that
+    row as a disagreement when the two sides said the identical thing.
+
+    Nothing else collapses: 1092 and 1093 are still different numbers, and a
+    body that adjusts by 0x444 still contradicts a name that says 0x448.
+    """
+    return [value - (1 << 32) if value >= (1 << 31) else value
+            for value in values]
+
+
+def _applied_adjustment(head) -> list:
+    """What the first instructions actually subtract from ECX, name-shaped.
+
+    `[N]` for an adjustor and `[V, N]` for a vtordisp, so it compares directly
+    against the numbers decoded out of the name. `[]` means the body does not
+    open by adjusting ECX at all, which no thunk spelling can be right about.
+    """
+    # Local, like every other capstone use here: this module has to import on
+    # a machine with no capstone, which is where `--check` and the tests run.
+    from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG
+
+    if not head:
+        return []
+    first = head[0]
+    if first.mnemonic != "sub" or not first.operands:
+        return []
+    destination, source = first.operands
+    if destination.type != X86_OP_REG or first.reg_name(destination.reg) != "ecx":
+        return []
+    if source.type == X86_OP_IMM:                     # adjustor: sub ecx, N
+        return [source.imm]
+    if source.type != X86_OP_MEM:
+        return []
+    # vtordisp: sub ecx, [ecx + V], optionally followed by `sub ecx, N`.
+    memory = source.mem
+    if first.reg_name(memory.base) != "ecx" or memory.index != 0:
+        return []
+    second = 0
+    if len(head) > 1 and head[1].mnemonic == "sub" and head[1].operands:
+        where, what = head[1].operands
+        if (where.type == X86_OP_REG and head[1].reg_name(where.reg) == "ecx"
+                and what.type == X86_OP_IMM):
+            second = what.imm
+    return [memory.disp, second]
 
 
 def read_purges(addresses, rows, exe: Path) -> dict:
@@ -1333,6 +1486,31 @@ def main(argv=None) -> int:
               f"{PUBLISHED_ROWS_FLOOR}. Every refusal this generator makes is "
               f"counted and named, so a legitimate drop can always be explained "
               f"- an unexplained one is coverage lost without a decision.",
+              file=sys.stderr)
+        return 1
+    # The thunk spellings assert a displacement as well as a signature, and
+    # only the signature has been checked up to here.
+    thunks = sum(1 for one in found if is_thunk_name(one.name))
+    # Only the image can answer this one. With no executable the run already
+    # falls back to the committed purge catalogue, and that file records a
+    # purge, not a displacement - so this says it is UNCHECKED rather than
+    # printing a clean count nobody measured.
+    off = []
+    if args.exe.is_file():
+        off = thunk_adjustment_disagreements(found, rows, args.exe)
+        print(f"{thunks} thunk name(s) held to the displacement their body "
+              f"applies: {len(off)} disagreement(s)")
+    else:
+        print(f"{thunks} thunk name(s) NOT checked against their displacement: "
+              f"that needs the executable, and this run had none")
+    if off:
+        for address, name, why in off:
+            print(f"  ADJUSTMENT {address} {name[:56]}\n          {why}",
+                  file=sys.stderr)
+        print("REFUSED: a thunk name states an adjustment its body does not "
+              "apply. The signature half of these names is settled by the "
+              "callee purge; this is the half nothing else can falsify, so a "
+              "disagreement here is a wrong name, not a tolerance.",
               file=sys.stderr)
         return 1
     print(f"{len(found)} prototype(s) derived from the name alone")

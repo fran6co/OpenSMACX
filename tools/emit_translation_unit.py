@@ -311,7 +311,7 @@ def load_functions() -> dict:
     """The catalogue, with the names the bytes prove wrong corrected.
 
     The image carries no symbols, so every catalogued mangled name is IDA's
-    analysis and 15 are contradicted by the bodies they name - see
+    analysis and 62 are contradicted by the bodies they name - see
     `catalogue_corrections`. Correcting HERE rather than at each use is what
     keeps the declaration, the decoded signature and the emitted symbol
     agreeing with one another: `byte_match.load_rows` and
@@ -332,12 +332,20 @@ def load_functions() -> dict:
     THE APPLY IS NOT PART OF THE FALLBACK, it was only nested inside it, and it
     was the whole tree's only call into `catalogue_corrections` - so the
     corrections went silent the day the CSV went away, while three docstrings
-    kept promising them. It is hoisted out unconditionally rather than dropped:
-    measured now, it rewrites 0 of the 6,000 names, because `src/` already
-    spells all 15 the corrected way, so this changes no caller's answer today.
-    What it restores is the tripwire - `apply` raises `Stale` rather than
+    kept promising them. It is hoisted out unconditionally rather than dropped;
+    what it restores is the tripwire - `apply` raises `Stale` rather than
     correcting when a row's name is neither the catalogued spelling nor the
     corrected one, which is the check that was dead, not the rewrite.
+
+    THE REWRITE IS NO LONGER A NO-OP, and that is worth stating because the
+    argument for hoisting it rested on the opposite. When the call was restored
+    it rewrote 0 of the 6,000 names - `src/` already spelled all 15 corrections
+    the corrected way - so no live measurement could distinguish a working call
+    from a deleted one. Since 2026-08-13 it rewrites 47: the
+    `??3<Class>@@SAXPAXI@Z` rows whose bodies are this-adjusting thunks are
+    still annotated with the wrong name in `src/deleting_thunks.cpp`, and this
+    is where they become right for every consumer. A regression in this call is
+    now visible in the catalogue itself, not only in the unit test.
     """
     import project_catalogue
 

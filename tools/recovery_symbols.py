@@ -166,6 +166,101 @@ CONVENTION_CODE = {"A": CDECL, "B": CDECL, "E": THISCALL, "F": THISCALL,
 # one character earlier than for a non-static member.
 NO_CV_CODE = set("YZCDKLST")
 
+# The THUNK kinds - the one family whose kind is NOT adjacent to the cv slot.
+# MSVC writes the displacement the thunk applies to `this` between the two: one
+# mangled number for an adjustor, two for a vtordisp. `$0`-`$5` are the vtordisp
+# forms and are the only kinds spelled with TWO characters.
+#
+# ONE LIST, DELIBERATELY. Three decoders in this tree parse this infix -
+# `_split_signature` here, `declfix.decode_signature`, and
+# `recover_conventions.split_infix` - and on 2026-08-13 all three had the same
+# hole. Two of them did not refuse, they GUESSED: reading `??_GAlphaMovie@@WEEE@
+# AEPAXI@Z` with a hardcoded three-character infix gave `unsigned char ()` here
+# and in declfix, and nothing downstream could tell that from a real answer.
+# `recover_conventions.KIND` pairs each of these with an access, which this set
+# does not carry, so it cannot be built from here - but it asserts equality with
+# this set at import time, so the two cannot drift into two answers again.
+ADJUSTOR_KIND = frozenset("GHOPWX")
+VTORDISP_MARKER = "$"
+VTORDISP_KIND = frozenset(f"{VTORDISP_MARKER}{n}" for n in range(6))
+THUNK_KIND = ADJUSTOR_KIND | VTORDISP_KIND
+
+
+def thunk_adjustments(kind_char: str) -> int:
+    """Mangled numbers between this thunk's kind and its cv slot.
+
+    An adjustor thunk carries the single displacement it subtracts from `this`;
+    a vtordisp thunk carries the vtordisp field offset and the adjustment, in
+    that order. Both sit BETWEEN the kind and the cv slot, which is the whole
+    reason the infix scan cannot read the character after the kind as the cv.
+    """
+    return 2 if kind_char.startswith(VTORDISP_MARKER) else 1
+
+
+def mangled_number(text: str, index: int) -> tuple[int | None, int]:
+    """Decode one MSVC mangled number at `index`; (value, index after it).
+
+    (None, index) when there is no number there, which is a REFUSAL and not a
+    zero - a thunk whose adjustment cannot be read is a thunk whose infix cannot
+    be located, and guessing the offset would put the cv slot and the convention
+    one character out.
+
+    Three forms, all three exercised by this catalogue's own names:
+
+        `0`-`9`      the value minus one, one character, no terminator
+        `A`-`P`      hex digits, most significant first, terminated by `@`
+        `?` prefix   negates whichever of the two follows
+
+    Measured against the bytes rather than taken from a reference: `EEE@` in
+    `??_GAlphaMovie@@WEEE@AEPAXI@Z` decodes to 4*16^2 + 4*16 + 4 = 1092 = 0x444,
+    and the body at 0x00404430 opens `sub ecx, 0x444`. `PPPPPPPM@` in the
+    vtordisp name at 0x0048BF10 decodes to 0xFFFFFFFC, which is -4 read as a
+    32-bit displacement, and that body opens `sub ecx, dword ptr [ecx-4]`.
+    """
+    negative = False
+    if index < len(text) and text[index] == "?":
+        negative = True
+        index += 1
+    if index >= len(text):
+        return None, index
+    char = text[index]
+    if "0" <= char <= "9":
+        return (-(int(char) + 1) if negative else int(char) + 1), index + 1
+    if not ("A" <= char <= "P"):
+        return None, index
+    value = 0
+    while index < len(text) and "A" <= text[index] <= "P":
+        value = value * 16 + (ord(text[index]) - ord("A"))
+        index += 1
+    if index >= len(text) or text[index] != "@":
+        return None, index
+    return (-value if negative else value), index + 1
+
+
+def infix_length(tail: str) -> int | None:
+    """Characters of `tail` before the return type, i.e. `[kind][adj][cv][conv]`.
+
+    `tail` is everything after the first `@@`. None is a REFUSAL - a thunk whose
+    adjustment will not decode - and callers must treat it as "not recognised"
+    rather than falling back to a guess, which is the whole point of returning
+    it.
+
+    For every non-thunk this is the 2-or-3 the callers used to hardcode: 2 for a
+    free function or a static member, which carry no cv slot, and 3 otherwise.
+    """
+    kind = tail[:2] if tail[:1] == VTORDISP_MARKER else tail[:1]
+    if not kind:
+        return None
+    index = len(kind)
+    if kind in THUNK_KIND:
+        for _ in range(thunk_adjustments(kind)):
+            value, index = mangled_number(tail, index)
+            if value is None:
+                return None
+    if kind not in NO_CV_CODE:
+        index += 1                           # the cv slot qualifying `this`
+    return index + 1                         # the convention
+
 
 def convention_of(mangled: str) -> str:
     """The calling convention the mangled name states, or ''.
@@ -403,9 +498,11 @@ def _split_signature(mangled: str):
     head, tail = mangled[:split + 2], mangled[split + 2:]
     # A free function and a STATIC member carry no CV code between the access
     # and the convention: `?f@C@@SAXH@Z` is `SA` + `X` + `H`, so reading three
-    # characters here swallowed the return type of every static member.
-    prefix_length = 2 if tail[:1] in NO_CV_CODE else 3
-    if len(tail) <= prefix_length + 1:
+    # characters here swallowed the return type of every static member. A THUNK
+    # is the other direction - its kind is followed by the displacement it
+    # applies to `this` - and `infix_length` is where both live, once.
+    prefix_length = infix_length(tail)
+    if prefix_length is None or len(tail) <= prefix_length + 1:
         return None
     body = tail[prefix_length:-1]            # drop the trailing `Z`
     terminator = ""

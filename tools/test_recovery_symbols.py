@@ -383,5 +383,92 @@ class CompilerOwnedNameTest(unittest.TestCase):
         self.assertIn("C2169", rs.UNDEFINABLE["_abnormal_termination"])
 
 
+
+
+class InfixLengthTests(unittest.TestCase):
+    """Where the infix ends, for the three decoders that all got it wrong.
+
+    `_split_signature` here, `declfix.decode_signature` and
+    `recover_conventions.split_infix` each carried their own copy of this
+    arithmetic. On 2026-08-13 all three were measured against the 47 rows
+    `catalogue_corrections` renamed to thunk spellings: one refused, and the
+    other two RETURNED A GUESS - `unsigned char ()` and `float ******()` - which
+    is the failure mode these tests exist to keep out, because a refusal is
+    visible and a guess is not.
+    """
+
+    def test_the_ordinary_shapes_are_the_2_or_3_they_always_were(self):
+        # Neutrality, not a new answer: every non-thunk kind must land exactly
+        # where the hardcoded constant used to put it.
+        self.assertEqual(3, rs.infix_length("QAEXXZ"))     # instance member
+        self.assertEqual(3, rs.infix_length("UAEPAXI@Z"))  # virtual member
+        self.assertEqual(2, rs.infix_length("YAXHHPAD@Z"))  # free function
+        self.assertEqual(2, rs.infix_length("SAXPAXI@Z"))  # static member
+
+    def test_an_adjustor_thunk_makes_room_for_its_displacement(self):
+        # `W` + `EEE@` + `A` + `E` = 7, so the return type starts at 7 and is
+        # `PAX`. Read as 3 the return type would start inside the number.
+        self.assertEqual(7, rs.infix_length("WEEE@AEPAXI@Z"))
+        self.assertEqual("PAXI@Z", "WEEE@AEPAXI@Z"[7:])
+
+    def test_a_vtordisp_thunk_makes_room_for_BOTH_its_numbers(self):
+        # `$4` + `PPPPPPPM@` + `A@` + `A` + `E` = 15.
+        self.assertEqual(15, rs.infix_length("$4PPPPPPPM@A@AEPAXI@Z"))
+        self.assertEqual("PAXI@Z", "$4PPPPPPPM@A@AEPAXI@Z"[15:])
+
+    def test_every_thunk_kind_is_handled_not_just_the_public_ones(self):
+        for kind in "GHOPWX":
+            self.assertEqual(7, rs.infix_length(f"{kind}EEE@AEPAXI@Z"), kind)
+        for n in range(6):
+            self.assertEqual(
+                15, rs.infix_length(f"${n}PPPPPPPM@A@AEPAXI@Z"), n)
+
+    def test_an_unreadable_adjustment_REFUSES_rather_than_guessing(self):
+        # The whole point of returning None. An unterminated hex run and a
+        # vtordisp missing its second number are both names this cannot locate
+        # an infix in, and a length would put the convention one character out.
+        self.assertIsNone(rs.infix_length("WEEEAEPAXI@Z"))
+        self.assertIsNone(rs.infix_length("$4PPPPPPPM@AEPAXI@Z"))
+        self.assertIsNone(rs.infix_length(""))
+
+    def test_the_two_thunk_kind_tables_cannot_drift(self):
+        # recover_conventions asserts this at import time; asserting it here
+        # too means the gate reports WHICH invariant broke rather than an
+        # opaque import error.
+        import recover_conventions
+        self.assertEqual(
+            {c for c, (_a, kind) in recover_conventions.KIND.items()
+             if kind == "thunk"},
+            set(rs.THUNK_KIND))
+
+
+class ThunkSignatureTests(unittest.TestCase):
+    """The three decoders must give ONE answer for the corrected 47."""
+
+    ADJUSTOR = "??_GAlphaMovie@@WEEE@AEPAXI@Z"
+    VTORDISP = "??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z"
+
+    def test_the_convention_is_thiscall_for_both_forms(self):
+        # The vtordisp used to come back "" here, and the adjustor came back
+        # `__thiscall` only by luck: the third character of `WEE` happened to
+        # be a convention code.
+        self.assertEqual(rs.THISCALL, rs.convention_of(self.ADJUSTOR))
+        self.assertEqual(rs.THISCALL, rs.convention_of(self.VTORDISP))
+
+    def test_declfix_decodes_the_real_signature_for_both(self):
+        import declfix
+        for name in (self.ADJUSTOR, self.VTORDISP):
+            self.assertEqual(("void *", ["unsigned int"]),
+                             declfix.decode_signature(name), name)
+
+    def test_that_is_the_same_signature_as_the_undisplaced_destructor(self):
+        # A thunk forwards unchanged, so it must decode to exactly what its
+        # tail-jump target decodes to. Anything else and the emitted callee
+        # declaration disagrees with the function it forwards to.
+        import declfix
+        self.assertEqual(declfix.decode_signature("??_GAlphaMovie@@UAEPAXI@Z"),
+                         declfix.decode_signature(self.ADJUSTOR))
+
+
 if __name__ == "__main__":
     unittest.main()

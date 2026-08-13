@@ -100,6 +100,94 @@ class InfixTest(unittest.TestCase):
         self.assertEqual("__cdecl", rc.CONV[conv_char])
 
 
+class ThunkInfixTest(unittest.TestCase):
+    """A thunk's kind is separated from its cv slot by the adjustment.
+
+    47 catalogued rows are thunks of this shape wearing a `??3...@@SAXPAXI@Z`
+    (`operator delete`) name that their bodies contradict. Their correct
+    spellings could not be parsed here at all until 2026-08-13, so renaming
+    them would have traded 47 loud contradictions for 47 silent refusals.
+    """
+
+    def test_an_adjustor_thunk_parses_past_its_adjustment(self):
+        # `W` public thunk, `EEE@` = 1092 = 0x444, `A` cv, `E` __thiscall.
+        # Read the character after `W` as the cv slot and this refuses.
+        self.assertEqual(("W", "E"),
+                         rc.split_infix("??_GAlphaMovie@@WEEE@AEPAXI@Z"))
+
+    def test_a_vtordisp_thunk_has_a_TWO_character_kind_and_TWO_numbers(self):
+        self.assertEqual(("$4", "E"),
+                         rc.split_infix("??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z"))
+
+    def test_every_thunk_kind_reaches_the_same_convention(self):
+        # All six adjustor kinds and all six vtordisp kinds share one grammar;
+        # only the access differs, and `undname` prints private/private,
+        # protected/protected, public/public for each pair.
+        for kind in ("G", "H", "O", "P", "W", "X"):
+            self.assertEqual(
+                (kind, "E"),
+                rc.split_infix(f"??_GFoo@@{kind}EEE@AEPAXI@Z"), kind)
+        for kind in ("$0", "$1", "$2", "$3", "$4", "$5"):
+            self.assertEqual(
+                (kind, "E"),
+                rc.split_infix(f"??_GFoo@@{kind}PPPPPPPM@A@AEPAXI@Z"), kind)
+
+    def test_a_thunk_takes_a_this(self):
+        kind_char, conv_char = rc.split_infix("??_GAlphaMovie@@WEEE@AEPAXI@Z")
+        self.assertEqual("thunk", rc.KIND[kind_char][1])
+        self.assertIn(rc.KIND[kind_char][1], rc.THIS_KINDS)
+        self.assertEqual("__thiscall", rc.CONV[conv_char])
+
+    def test_a_thunk_whose_adjustment_does_not_decode_is_REFUSED(self):
+        # `EEE` with no `@` terminator: the infix cannot be located, so the cv
+        # slot and the convention would both be read one character out. A
+        # refusal is the honest answer, not a guessed offset of zero.
+        self.assertIsNone(rc.split_infix("??_GAlphaMovie@@WEEEAEPAXI@Z"))
+
+    def test_a_vtordisp_missing_its_second_number_is_REFUSED(self):
+        self.assertIsNone(rc.split_infix("??_GPlanWin@@$4PPPPPPPM@AEPAXI@Z"))
+
+    def test_a_non_thunk_kind_still_reads_the_next_character_as_the_cv_slot(self):
+        # The adjustment is consumed for THUNK kinds only. A regression that
+        # consumed one for every kind would break every ordinary method.
+        self.assertEqual(("Q", "E"), rc.split_infix("?close@S@@QAEXXZ"))
+        self.assertEqual(("Y", "A"), rc.split_infix("?f@@YAXXZ"))
+
+
+class MangledNumberTest(unittest.TestCase):
+    """Both encodings, decoded against the bytes they describe."""
+
+    def test_hex_digits_terminated_by_at(self):
+        # 0x444 = 1092, and 0x00404430 opens `sub ecx, 0x444`.
+        self.assertEqual((1092, 4), rc.mangled_number("EEE@", 0))
+
+    def test_the_vtordisp_displacement_reads_as_the_32_bit_pattern(self):
+        # 0xFFFFFFFC, which is -4; 0x0048BF10 opens `sub ecx, [ecx-4]`.
+        self.assertEqual((0xFFFFFFFC, 9),
+                         rc.mangled_number("PPPPPPPM@", 0))
+
+    def test_a_single_digit_is_the_value_MINUS_one_and_has_no_terminator(self):
+        self.assertEqual((5, 1), rc.mangled_number("4", 0))
+
+    def test_a_question_mark_negates(self):
+        # `A` is the digit ZERO, so `E` is 4 and `?E@` is -4. Reading `A` as 1
+        # is the obvious off-by-one here and it puts every decoded adjustment
+        # one out; `EEE@` would then be 0x333, which no body subtracts.
+        self.assertEqual((-4, 3), rc.mangled_number("?E@", 0))
+
+    def test_an_unterminated_run_is_no_number_at_all(self):
+        self.assertIsNone(rc.mangled_number("EEE", 0)[0])
+
+    def test_a_non_number_is_no_number(self):
+        self.assertIsNone(rc.mangled_number("Z@", 0)[0])
+
+    def test_decoding_resumes_where_the_previous_number_ended(self):
+        value, index = rc.mangled_number("PPPPPPPM@A@AEPAXI@Z", 0)
+        self.assertEqual(0xFFFFFFFC, value)
+        self.assertEqual((0, 11), rc.mangled_number("PPPPPPPM@A@AEPAXI@Z",
+                                                    index))
+
+
 class ArgumentTest(unittest.TestCase):
     def test_void_is_no_slots(self):
         self.assertEqual([], rc.arg_slots(["void"]))
