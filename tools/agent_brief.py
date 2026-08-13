@@ -275,6 +275,67 @@ def targeted_rules(note: str, found: dict = None) -> str:
     return block
 
 
+def thunk_section(asm: str) -> str:
+    """The two thunk shapes, told apart by their jump operand.
+
+    A body that is ONE jump is a thunk, and which kind decides whether it is a
+    one-candidate match or a wall. Measured across batch 2 (2026-08-13), where
+    thunks were 12 of 38 matches and four agents each rediscovered the same
+    lever from scratch because no brief carried it.
+
+    `jmp <address>` - a tail call into another function. Expressible, and
+    reliably so. `jmp dword ptr [addr]` - a linker import stub. Not
+    expressible, and three agents proved it separately before the family was
+    counted, which is exactly the spend this section exists to prevent.
+    """
+    body = [line.strip() for line in asm.splitlines()
+            if line.strip().startswith("0x")]
+    if len(body) != 1 or " jmp " not in f" {body[0]} ":
+        return ""
+    if "ptr [" in body[0]:
+        return """
+# This is an import stub, and it is a known wall
+
+The whole body is `jmp dword ptr [slot]` - a linker-generated stub into the
+import table. **VC6 will not tail-call an indirect `__stdcall` callee**, so
+every source form lowers to `push`/`call`/`ret` and never the bare 6-byte
+jump. A function-pointer cast, an `extern` slot, a forwarding wrapper and a
+`__declspec(dllimport)` call were each tried and each failed, by three agents
+independently.
+
+The image holds 13 of these, 78 bytes, in four contiguous runs; 8 are already
+`EXCLUDED`. **Write the clearest forwarding body, land it, and move on** -
+do not search for a spelling. Note in `RULED-OUT:` what you tried.
+
+An import reached by `call` rather than `jmp` IS expressible: cast the fixed
+IAT slot to a function-pointer type and call through it. That is a different
+shape and it matches.
+"""
+    return """
+# This is a tail-call thunk - use a shim class
+
+The whole body is one `jmp` into another function, so the source is a plain
+tail call: `return target(args);` with a matching signature folds to exactly
+that jump, and the relocation the jump carries is MASKED by the comparison.
+
+The catch, and the reason this needs saying: the callee is usually a member of
+a class the scaffolding already declares as CLOSED, without that method on it.
+Do not edit the scaffold's class. Declare your OWN class with the same method
+signature and dispatch through it:
+
+    class Shim { public: void close(); };          // your own, in this file
+    reinterpret_cast<Shim *>(this)->close();
+
+The shim's class name does NOT have to match the real callee's - only the
+signature and the `__thiscall` receiver matter, because the comparison is over
+code and the call target is masked. For a virtual call, declare the slots up
+to the one you need so declaration ORDER puts it at the right vtable offset.
+
+Twelve byte-exact matches in one batch came from this shape. It is usually a
+one-candidate answer.
+"""
+
+
 def lifecycle_section(name: str) -> str:
     """The store-order rule, shown only on a constructor or destructor.
 
@@ -493,16 +554,23 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
         f"NONE - no annotation claims 0x{address:08X}, so there is nowhere to "
         f"land it; report that rather than creating a file")
     python = interpreter()
+    asm = disassembly(address)
+    # Keyed on the SHAPE of the body rather than on a name or a divergence: a
+    # thunk is a one-instruction function, and which instruction it is decides
+    # between a one-candidate match and a known wall.
+    thunk = thunk_section(asm)
 
     if body is None:
         verdict = "nothing recovered yet"
-        middle = fresh_recovery_section(address) + lifecycle_section(name)
+        middle = (fresh_recovery_section(address) + thunk
+                  + lifecycle_section(name))
     else:
         verdict = f"{row.get('tier', '?')}{(' - ' + note) if note else ''}"
         middle = (f"# The body as it stands ({location})\n\n"
                   f"```cpp\n{body.strip()}\n```\n\n"
                   f"# What the divergence usually means\n\n"
                   f"{targeted_rules(note)}\n"
+                  f"{thunk}"
                   f"{lifecycle_section(name)}"
                   f"{naming_section(name, body)}")
 
@@ -516,7 +584,7 @@ Current verdict: {verdict}
 
 # What the original compiles to
 
-{disassembly(address)}
+{asm}
 
 {middle}
 # The signature is yours to change

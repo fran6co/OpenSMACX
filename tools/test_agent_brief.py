@@ -401,6 +401,58 @@ class BatchModeTest(unittest.TestCase):
         self.assertFalse(hasattr(agent_brief, "CACHE_FILE"))
 
 
+class ThunkSectionTest(unittest.TestCase):
+    """A one-jump body is a thunk, and the operand says which kind.
+
+    Batch 2 measured thunks at 12 of 38 matches, with four agents each
+    rediscovering the shim-class lever unaided, and three agents separately
+    proving that the import-stub shape cannot be expressed at all. Both halves
+    are worth carrying: one turns a search into a single candidate, the other
+    stops a search that cannot succeed.
+    """
+
+    def tail(self):
+        return "```asm\n0x00404B00  jmp 0x00404b40\n```"
+
+    def stub(self):
+        return "```asm\n0x00644DC0  jmp dword ptr [0x00669258]\n```"
+
+    def test_a_tail_jump_gets_the_shim_lever(self):
+        text = agent_brief.thunk_section(self.tail())
+        self.assertIn("shim class", text)
+        self.assertIn("reinterpret_cast", text)
+
+    def test_an_import_stub_is_named_as_a_wall(self):
+        text = agent_brief.thunk_section(self.stub())
+        self.assertIn("known wall", text)
+        self.assertIn("will not tail-call", text)
+
+    def test_the_two_shapes_do_not_get_each_other_s_advice(self):
+        # The expensive confusion: telling an agent to keep searching on the
+        # shape three agents already proved inexpressible.
+        self.assertNotIn("known wall", agent_brief.thunk_section(self.tail()))
+        self.assertNotIn("shim class", agent_brief.thunk_section(self.stub()))
+
+    def test_the_stub_section_still_says_what_DOES_work(self):
+        # An import reached by `call` is expressible through an IAT cast. A
+        # wall notice that suppressed that too would cost the neighbouring win.
+        self.assertIn("IAT slot", agent_brief.thunk_section(self.stub()))
+
+    def test_an_ordinary_body_gets_neither(self):
+        self.assertEqual(agent_brief.thunk_section(
+            "```asm\n0x00401000  mov eax, ecx\n0x00401002  ret\n```"), "")
+
+    def test_a_multi_instruction_body_ending_in_jmp_is_not_a_thunk(self):
+        # A tail call at the END of real work is not a thunk, and the shim
+        # advice would be wrong about the whole body.
+        self.assertEqual(agent_brief.thunk_section(
+            "```asm\n0x00401000  mov eax, ecx\n0x00401002  jmp 0x00402000\n```"),
+            "")
+
+    def test_it_survives_a_body_with_no_instructions(self):
+        self.assertEqual(agent_brief.thunk_section("```asm\n\n```"), "")
+
+
 class LifecycleSectionTest(unittest.TestCase):
     """The store-order rule fires on constructors and destructors only.
 
