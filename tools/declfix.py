@@ -197,8 +197,19 @@ def decode_signature(mangled: str):
     # `??3AlphaMovie@@SAXPAXI@Z` is `SA` + `X` + `PAX` + `I`, and reading
     # three swallowed the void return and dropped the first argument, so all
     # 47 of them were emitted returning `void *` and taking one parameter.
-    skip = 2 if tail[:1] in recovery_symbols.NO_CV_CODE else 3
-    if len(tail) <= skip:
+    #
+    # THE SAME BUG BIT THE SAME 47 ROWS A SECOND TIME, from the other end. On
+    # 2026-08-13 `catalogue_corrections` renamed them to the this-adjusting
+    # thunk spellings their bodies carry, and a thunk's kind is NOT adjacent to
+    # its cv slot - the displacement it applies to `this` sits between them. A
+    # hardcoded 2-or-3 read `??_GAlphaMovie@@WEEE@AEPAXI@Z` as `unsigned char
+    # ()` and `??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z` as `float ******()`, and
+    # RETURNED THEM rather than None, so nothing downstream could tell a guess
+    # from an answer. `infix_length` owns the arithmetic for all three decoders
+    # in this tree, and refuses instead of guessing when it cannot read the
+    # adjustment.
+    skip = recovery_symbols.infix_length(tail)
+    if skip is None or len(tail) <= skip:
         return None
     body = tail[skip:]
 

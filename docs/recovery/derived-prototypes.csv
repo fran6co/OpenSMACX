@@ -6,6 +6,7 @@ address,name,prototype,convention,stack_slots,purge
 0x00403BA0,?amovie_project@@YAXH@Z,void (__cdecl ?amovie_project@@YAXH@Z)(int),__cdecl,1,verified
 0x00403BE0,?amovie_project@@YAXPAD@Z,void (__cdecl ?amovie_project@@YAXPAD@Z)(int8*),__cdecl,1,verified
 0x004043A0,??_GAlphaMovie@@UAEPAXI@Z,"void* (__thiscall ??_GAlphaMovie@@UAEPAXI@Z)(AlphaMovie* this, unsigned int)",__thiscall,1,verified
+0x00404430,??_GAlphaMovie@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GAlphaMovie@@WEEE@AEPAXI@Z)(AlphaMovie* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00404440,??__Eg_UNUSED_SPRITE_VAR02@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR02@@YAXXZ)(),__cdecl,,verified
 0x00404460,??__Fg_UNUSED_SPRITE_VAR02@@YAXXZ,void (__cdecl ??__Fg_UNUSED_SPRITE_VAR02@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00404470,??__Eg_UNUSED_SPRITE_VAR11@@YAXXZ,void (__cdecl ??__Eg_UNUSED_SPRITE_VAR11@@YAXXZ)(),__cdecl,,verified
@@ -58,9 +59,15 @@ address,name,prototype,convention,stack_slots,purge
 0x00406B40,??_GBasePop@@UAEPAXI@Z,"void* (__thiscall ??_GBasePop@@UAEPAXI@Z)(BasePop* this, unsigned int)",__thiscall,1,verified
 0x00406BD0,??_GPopup@@UAEPAXI@Z,"void* (__thiscall ??_GPopup@@UAEPAXI@Z)(Popup* this, unsigned int)",__thiscall,1,verified
 0x00406F20,??_GScroll@@UAEPAXI@Z,"void* (__thiscall ??_GScroll@@UAEPAXI@Z)(Scroll* this, unsigned int)",__thiscall,1,verified
+0x004070B0,??_GBasePop@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GBasePop@@WEEE@AEPAXI@Z)(BasePop* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x004070C0,??_GScroll@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GScroll@@WEEE@AEPAXI@Z)(Scroll* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x004070D0,??_GPopup@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GPopup@@WEEE@AEPAXI@Z)(Popup* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x004070E0,??_GFlatButton@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GFlatButton@@WEEE@AEPAXI@Z)(FlatButton* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004072D0,?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z,"void (__cdecl ?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z)(AlphaSave* this, GraphicWin*, int, int, int, int, int)",__cdecl,111111,verified
 0x00408080,??_GEditBox@@UAEPAXI@Z,"void* (__thiscall ??_GEditBox@@UAEPAXI@Z)(EditBox* this, unsigned int)",__thiscall,1,verified
 0x00408140,??_GAlphaSave@@UAEPAXI@Z,"void* (__thiscall ??_GAlphaSave@@UAEPAXI@Z)(AlphaSave* this, unsigned int)",__thiscall,1,verified
+0x00408390,??_GAlphaSave@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GAlphaSave@@WEEE@AEPAXI@Z)(AlphaSave* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x004083A0,??_GEditBox@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GEditBox@@WEEE@AEPAXI@Z)(EditBox* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004083B0,??__Eg_BASEWIN@@YAXXZ,void (__cdecl ??__Eg_BASEWIN@@YAXXZ)(),__cdecl,,verified
 0x004083D0,??__Fg_BASEWIN@@YAXXZ,void (__cdecl ??__Fg_BASEWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x004083E0,??__Eg_BASEWIN_WAVE@@YAXXZ,void (__cdecl ??__Eg_BASEWIN_WAVE@@YAXXZ)(),__cdecl,,verified
@@ -71,6 +78,8 @@ address,name,prototype,convention,stack_slots,purge
 0x004213A0,??_GProdPicker@@UAEPAXI@Z,"void* (__thiscall ??_GProdPicker@@UAEPAXI@Z)(ProdPicker* this, unsigned int)",__thiscall,1,verified
 0x004213D0,??_GBaseWin@@UAEPAXI@Z,"void* (__thiscall ??_GBaseWin@@UAEPAXI@Z)(BaseWin* this, unsigned int)",__thiscall,1,verified
 0x00421640,??_GPopMenu@@UAEPAXI@Z,"void* (__thiscall ??_GPopMenu@@UAEPAXI@Z)(PopMenu* this, unsigned int)",__thiscall,1,verified
+0x00421810,??_GBaseWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GBaseWin@@WEEE@AEPAXI@Z)(BaseWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x00421970,??_GProdPicker@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GProdPicker@@WEEE@AEPAXI@Z)(ProdPicker* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004219B0,??__Eg_BattleWin@@YAXXZ,void (__cdecl ??__Eg_BattleWin@@YAXXZ)(),__cdecl,,verified
 0x004219D0,??__Fg_BattleWin@@YAXXZ,void (__cdecl ??__Fg_BattleWin@@YAXXZ)(),__cdecl,,unknown
 0x00422EB0,?timer_callback_daemon@BattleWin@@QAAXHH@Z,"void (__cdecl ?timer_callback_daemon@BattleWin@@QAAXHH@Z)(BattleWin* this, int, int)",__cdecl,11,verified-via-tail-jump
@@ -83,13 +92,17 @@ address,name,prototype,convention,stack_slots,purge
 0x004243D0,?clear_council_notify@@YAXH@Z,void (__cdecl ?clear_council_notify@@YAXH@Z)(int),__cdecl,1,verified
 0x004243F0,?clear_council_notify@@YAXXZ,void (__cdecl ?clear_council_notify@@YAXXZ)(),__cdecl,,verified
 0x00428350,?council@@YAXHHH@Z,"void (__cdecl ?council@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
+0x00428740,??_GCouncWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GCouncWin@@WEEE@AEPAXI@Z)(CouncWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00428750,??__Eg_CREDITS_WAVE@@YAXXZ,void (__cdecl ??__Eg_CREDITS_WAVE@@YAXXZ)(),__cdecl,,verified
 0x00428770,??__Fg_CREDITS_WAVE@@YAXXZ,void (__cdecl ??__Fg_CREDITS_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00428DD0,?timer_callback_daemon@Credits@@QAAXH@Z,"void (__cdecl ?timer_callback_daemon@Credits@@QAAXH@Z)(Credits* this, int)",__cdecl,1,verified
 0x00428DF0,?show_credits@@YAXXZ,void (__cdecl ?show_credits@@YAXXZ)(),__cdecl,,verified
 0x00428E60,??_GCredits@@UAEPAXI@Z,"void* (__thiscall ??_GCredits@@UAEPAXI@Z)(Credits* this, unsigned int)",__thiscall,1,verified
+0x00428F80,??_GCredits@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GCredits@@WEEE@AEPAXI@Z)(Credits* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00428F90,??__Eg_DATALINK@@YAXXZ,void (__cdecl ??__Eg_DATALINK@@YAXXZ)(),__cdecl,,verified
 0x00428FB0,??__Fg_DATALINK@@YAXXZ,void (__cdecl ??__Fg_DATALINK@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00432830,??_GStringBox@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GStringBox@@WEEE@AEPAXI@Z)(StringBox* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x00432840,??_GDatalink@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GDatalink@@WEEE@AEPAXI@Z)(Datalink* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00432850,??__Eg_DESIGNWIN@@YAXXZ,void (__cdecl ??__Eg_DESIGNWIN@@YAXXZ)(),__cdecl,,verified
 0x00432870,??__Fg_DESIGNWIN@@YAXXZ,void (__cdecl ??__Fg_DESIGNWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00432880,??__Eg_DESIGNWIN_WAVE@@YAXXZ,void (__cdecl ??__Eg_DESIGNWIN_WAVE@@YAXXZ)(),__cdecl,,verified
@@ -100,16 +113,20 @@ address,name,prototype,convention,stack_slots,purge
 0x0043C170,?timer_function@DesignWin@@QAAXH@Z,"void (__cdecl ?timer_function@DesignWin@@QAAXH@Z)(DesignWin* this, int)",__cdecl,1,unknown
 0x0043EDB0,??_GDesignWin@@UAEPAXI@Z,"void* (__thiscall ??_GDesignWin@@UAEPAXI@Z)(DesignWin* this, unsigned int)",__thiscall,1,verified
 0x0043EDE0,??_GSelectPartWin@@UAEPAXI@Z,"void* (__thiscall ??_GSelectPartWin@@UAEPAXI@Z)(SelectPartWin* this, unsigned int)",__thiscall,1,verified
+0x0043EFA0,??_GDesignWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GDesignWin@@WEEE@AEPAXI@Z)(DesignWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x0043EFB0,??_GSelectPartWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GSelectPartWin@@WEEE@AEPAXI@Z)(SelectPartWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x0043EFC0,??__Eg_DIPLOPOP@@YAXXZ,void (__cdecl ??__Eg_DIPLOPOP@@YAXXZ)(),__cdecl,,verified
 0x0043EFE0,??__Fg_DIPLOPOP@@YAXXZ,void (__cdecl ??__Fg_DIPLOPOP@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x0043F200,?timer_callback_daemon@DiploPop@@QAAXHH@Z,"void (__cdecl ?timer_callback_daemon@DiploPop@@QAAXHH@Z)(DiploPop* this, int, int)",__cdecl,11,verified
 0x0043F250,?timer_callback_daemon2@DiploPop@@QAAXHH@Z,"void (__cdecl ?timer_callback_daemon2@DiploPop@@QAAXHH@Z)(DiploPop* this, int, int)",__cdecl,11,verified
+0x00440EF0,??_GDiploPop@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GDiploPop@@WEEE@AEPAXI@Z)(DiploPop* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00440F00,??__Eg_DIPLOWIN@@YAXXZ,void (__cdecl ??__Eg_DIPLOWIN@@YAXXZ)(),__cdecl,,verified
 0x00440F20,??__Fg_DIPLOWIN@@YAXXZ,void (__cdecl ??__Fg_DIPLOWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00440F80,?clear_hotseat_chat@@YAXXZ,void (__cdecl ?clear_hotseat_chat@@YAXXZ)(),__cdecl,,verified
 0x00441250,?clear_all_offers@@YAXXZ,void (__cdecl ?clear_all_offers@@YAXXZ)(),__cdecl,,verified
 0x004412A0,?string_callback@DiploWin@@QAAXHH@Z,"void (__cdecl ?string_callback@DiploWin@@QAAXHH@Z)(DiploWin* this, int, int)",__cdecl,11,verified
 0x00444D90,?diplo@@YAXHH@Z,"void (__cdecl ?diplo@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00445120,??_GDiploWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GDiploWin@@WEEE@AEPAXI@Z)(DiploWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00445130,?energy_compute@@YAXHH@Z,"void (__cdecl ?energy_compute@@YAXHH@Z)(int, int)",__cdecl,11,verified
 0x00445450,??__Eg_CPU_WAVES@@YAXXZ,void (__cdecl ??__Eg_CPU_WAVES@@YAXXZ)(),__cdecl,,verified
 0x00445480,??__Fg_CPU_WAVES@@YAXXZ,void (__cdecl ??__Fg_CPU_WAVES@@YAXXZ)(),__cdecl,,verified
@@ -141,6 +158,7 @@ address,name,prototype,convention,stack_slots,purge
 0x0044B000,?hof_save@@YAHXZ,int (__cdecl ?hof_save@@YAHXZ)(),__cdecl,,verified
 0x0044B070,?hof_load@@YAHXZ,int (__cdecl ?hof_load@@YAHXZ)(),__cdecl,,verified
 0x0044B300,??_GFameWin@@UAEPAXI@Z,"void* (__thiscall ??_GFameWin@@UAEPAXI@Z)(FameWin* this, unsigned int)",__thiscall,1,verified
+0x0044B330,??_GFameWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GFameWin@@WEEE@AEPAXI@Z)(FameWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x0044B380,?tech_heck@@YAXP6AXPAD@ZH@Z,"void (__cdecl ?tech_heck@@YAXP6AXPAD@ZH@Z)(void (__cdecl *)(int8*), int)",__cdecl,11,verified
 0x0044B9E0,?help_tech_info@@YAXP6AXPAD@ZHHH@Z,"void (__cdecl ?help_tech_info@@YAXP6AXPAD@ZHHH@Z)(void (__cdecl *)(int8*), int, int, int)",__cdecl,1111,verified
 0x0044C7D0,?help_info_pop@@YAXPAD@Z,void (__cdecl ?help_info_pop@@YAXPAD@Z)(int8*),__cdecl,1,verified
@@ -750,6 +768,7 @@ address,name,prototype,convention,stack_slots,purge
 0x00455E50,?load_deswin_sprites@@YAXXZ,void (__cdecl ?load_deswin_sprites@@YAXXZ)(),__cdecl,,verified
 0x00455E80,?load_fixed_sprites@@YAXXZ,void (__cdecl ?load_fixed_sprites@@YAXXZ)(),__cdecl,,unknown
 0x00455EB0,?load_sprites@@YAXXZ,void (__cdecl ?load_sprites@@YAXXZ)(),__cdecl,,verified
+0x004562B0,??_GGamma@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GGamma@@WEEE@AEPAXI@Z)(Gamma* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004562C0,??__Eg_INFOWIN@@YAXXZ,void (__cdecl ??__Eg_INFOWIN@@YAXXZ)(),__cdecl,,verified
 0x004562E0,??__Fg_INFOWIN@@YAXXZ,void (__cdecl ??__Fg_INFOWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00459260,?timer_daemon@InfoWin@@QAAXH@Z,"void (__cdecl ?timer_daemon@InfoWin@@QAAXH@Z)(InfoWin* this, int)",__cdecl,1,verified
@@ -764,6 +783,8 @@ address,name,prototype,convention,stack_slots,purge
 0x0045DEA0,?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z,"void (__cdecl ?scroll_show@@YAXPAUGraphicWin@@PAUScroll@@@Z)(GraphicWin*, Scroll*)",__cdecl,11,verified
 0x0045E540,?scroll_hide@@YAXPAUGraphicWin@@PAUScroll@@@Z,"void (__cdecl ?scroll_hide@@YAXPAUGraphicWin@@PAUScroll@@@Z)(GraphicWin*, Scroll*)",__cdecl,11,verified
 0x0045F1C0,??_GMainInterface@@UAEPAXI@Z,"void* (__thiscall ??_GMainInterface@@UAEPAXI@Z)(MainInterface* this, unsigned int)",__thiscall,1,verified
+0x0045F1F0,??_GMainInterface@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GMainInterface@@WEEE@AEPAXI@Z)(MainInterface* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x0045F910,??_GInterlude@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GInterlude@@WEEE@AEPAXI@Z)(Interlude* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x0045F920,??__Eg_JACKAL_FONT@@YAXXZ,void (__cdecl ??__Eg_JACKAL_FONT@@YAXXZ)(),__cdecl,,verified
 0x0045F940,??__Fg_JACKAL_FONT@@YAXXZ,void (__cdecl ??__Fg_JACKAL_FONT@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00462080,??__Eg_MAPWIN@@YAXXZ,void (__cdecl ??__Eg_MAPWIN@@YAXXZ)(),__cdecl,,verified
@@ -806,15 +827,18 @@ address,name,prototype,convention,stack_slots,purge
 0x00477940,?mon_winning_unify@@YAXHH@Z,"void (__cdecl ?mon_winning_unify@@YAXHH@Z)(int, int)",__cdecl,11,verified
 0x004779D0,?mon_winning_trans@@YAXHH@Z,"void (__cdecl ?mon_winning_trans@@YAXHH@Z)(int, int)",__cdecl,11,verified
 0x00477A60,?mon_killed_faction@@YAXHH@Z,"void (__cdecl ?mon_killed_faction@@YAXHH@Z)(int, int)",__cdecl,11,verified
+0x00477E00,??_GMonuWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GMonuWin@@WEEE@AEPAXI@Z)(MonuWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00477E10,??__Eg_MULTIWIN@@YAXXZ,void (__cdecl ??__Eg_MULTIWIN@@YAXXZ)(),__cdecl,,verified
 0x00477E30,??__Fg_MULTIWIN@@YAXXZ,void (__cdecl ??__Fg_MULTIWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00477E40,??__Eg_MULTIWIN_WAVE@@YAXXZ,void (__cdecl ??__Eg_MULTIWIN_WAVE@@YAXXZ)(),__cdecl,,verified
 0x00477E60,??__Fg_MULTIWIN_WAVE@@YAXXZ,void (__cdecl ??__Fg_MULTIWIN_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x0047A760,??_GMultiWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GMultiWin@@WEEE@AEPAXI@Z)(MultiWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x0047A770,??__Eg_NETMSG1@@YAXXZ,void (__cdecl ??__Eg_NETMSG1@@YAXXZ)(),__cdecl,,verified
 0x0047A790,??__Fg_NETMSG1@@YAXXZ,void (__cdecl ??__Fg_NETMSG1@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x0047A7A0,??__Eg_NETMSG2@@YAXXZ,void (__cdecl ??__Eg_NETMSG2@@YAXXZ)(),__cdecl,,verified
 0x0047A7C0,??__Fg_NETMSG2@@YAXXZ,void (__cdecl ??__Fg_NETMSG2@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x0047A800,?timer_daemon@NetMsg@@QAAXH@Z,"void (__cdecl ?timer_daemon@NetMsg@@QAAXH@Z)(NetMsg* this, int)",__cdecl,1,verified
+0x0047AFE0,??_GNetMsg@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GNetMsg@@WEEE@AEPAXI@Z)(NetMsg* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x0047AFF0,??__Eg_NETWIN@@YAXXZ,void (__cdecl ??__Eg_NETWIN@@YAXXZ)(),__cdecl,,verified
 0x0047B010,??__Fg_NETWIN@@YAXXZ,void (__cdecl ??__Fg_NETWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x0047B020,?send_faction_data@@YAXH@Z,void (__cdecl ?send_faction_data@@YAXH@Z)(int),__cdecl,1,verified
@@ -823,17 +847,22 @@ address,name,prototype,convention,stack_slots,purge
 0x0047B2E0,?send_session2_packet@@YAXHH@Z,"void (__cdecl ?send_session2_packet@@YAXHH@Z)(int, int)",__cdecl,11,verified
 0x00483240,?modal_callback_daemon@NetWin@@QAAHXZ,int (__cdecl ?modal_callback_daemon@NetWin@@QAAHXZ)(NetWin* this),__cdecl,,verified
 0x004832D0,?string_callback@NetWin@@QAAXHH@Z,"void (__cdecl ?string_callback@NetWin@@QAAXHH@Z)(NetWin* this, int, int)",__cdecl,11,verified
+0x00483840,??_GNetWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GNetWin@@WEEE@AEPAXI@Z)(NetWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00483850,??__Eg_NEWTECHWIN@@YAXXZ,void (__cdecl ??__Eg_NEWTECHWIN@@YAXXZ)(),__cdecl,,verified
 0x00483870,??__Fg_NEWTECHWIN@@YAXXZ,void (__cdecl ??__Fg_NEWTECHWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00483880,??__Eg_NEWTECHWIN_SPRITES@@YAXXZ,void (__cdecl ??__Eg_NEWTECHWIN_SPRITES@@YAXXZ)(),__cdecl,,verified
 0x004838B0,??__Fg_NEWTECHWIN_SPRITES@@YAXXZ,void (__cdecl ??__Fg_NEWTECHWIN_SPRITES@@YAXXZ)(),__cdecl,,verified
 0x00483920,?info@NewTechWin@@QAAXPAD@Z,"void (__cdecl ?info@NewTechWin@@QAAXPAD@Z)(NewTechWin* this, int8*)",__cdecl,1,verified
+0x00484AB0,??_GNewTechWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GNewTechWin@@WEEE@AEPAXI@Z)(NewTechWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x00488740,??_GPickTech@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GPickTech@@WEEE@AEPAXI@Z)(PickTech* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00488750,??__Eg_PICKWIN@@YAXXZ,void (__cdecl ??__Eg_PICKWIN@@YAXXZ)(),__cdecl,,verified
 0x00488770,??__Fg_PICKWIN@@YAXXZ,void (__cdecl ??__Fg_PICKWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00488780,?list_was_dblclicked@@YAXH@Z,void (__cdecl ?list_was_dblclicked@@YAXH@Z)(int),__cdecl,1,verified
+0x0048ADF0,??_GPickWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GPickWin@@WEEE@AEPAXI@Z)(PickWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x0048AE00,??__Eg_PLANWIN@@YAXXZ,void (__cdecl ??__Eg_PLANWIN@@YAXXZ)(),__cdecl,,verified
 0x0048AE20,??__Fg_PLANWIN@@YAXXZ,void (__cdecl ??__Fg_PLANWIN@@YAXXZ)(),__cdecl,,unknown
 0x0048BEE0,?xrange@@YAHH@Z,int (__cdecl ?xrange@@YAHH@Z)(int),__cdecl,1,verified
+0x0048BF10,??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z,"void* (__thiscall ??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z)(PlanWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x0048C0A0,?popp@@YAHPADPBDHPBDP6AHXZ@Z,"int (__cdecl ?popp@@YAHPADPBDHPBDP6AHXZ@Z)(int8*, int8*, int, int8*, int (__cdecl *)())",__cdecl,11111,verified
 0x0048C320,?popt@@YAHPADPBDHPADH@Z,"int (__cdecl ?popt@@YAHPADPBDHPADH@Z)(int8*, int8*, int, int8*, int)",__cdecl,11111,verified
 0x0048C360,?popv@@YAHPADPBDHH@Z,"int (__cdecl ?popv@@YAHPADPBDHH@Z)(int8*, int8*, int, int)",__cdecl,1111,verified
@@ -844,9 +873,11 @@ address,name,prototype,convention,stack_slots,purge
 0x0048D510,??__Fg_PREFWIN@@YAXXZ,void (__cdecl ??__Fg_PREFWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x0048D520,??__Eg_PREFWIN_BUTTONGROUP@@YAXXZ,void (__cdecl ??__Eg_PREFWIN_BUTTONGROUP@@YAXXZ)(),__cdecl,,verified
 0x0048D540,??__Fg_PREFWIN_BUTTONGROUP@@YAXXZ,void (__cdecl ??__Fg_PREFWIN_BUTTONGROUP@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x00492410,??_GPrefWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GPrefWin@@WEEE@AEPAXI@Z)(PrefWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004946D0,?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z,"void (__cdecl ?UNK2@ProdPicker@@QAAXHPAUProdPicker@@@Z)(ProdPicker* this, int, ProdPicker*)",__cdecl,11,verified
 0x00495170,??__Eg_QUAYLEWIN@@YAXXZ,void (__cdecl ??__Eg_QUAYLEWIN@@YAXXZ)(),__cdecl,,verified
 0x00495190,??__Fg_QUAYLEWIN@@YAXXZ,void (__cdecl ??__Fg_QUAYLEWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004968F0,??_GQuayleWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GQuayleWin@@WEEE@AEPAXI@Z)(QuayleWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00496900,??__Eg_REPORTIF@@YAXXZ,void (__cdecl ??__Eg_REPORTIF@@YAXXZ)(),__cdecl,,verified
 0x00496920,??__Fg_REPORTIF@@YAXXZ,void (__cdecl ??__Fg_REPORTIF@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x00496930,??__Eg_REPORTWIN@@YAXXZ,void (__cdecl ??__Eg_REPORTWIN@@YAXXZ)(),__cdecl,,verified
@@ -863,9 +894,13 @@ address,name,prototype,convention,stack_slots,purge
 0x004ACB30,?report_security@@YAXXZ,void (__cdecl ?report_security@@YAXXZ)(),__cdecl,,verified
 0x004ACB80,?report_score@@YAXH@Z,void (__cdecl ?report_score@@YAXH@Z)(int),__cdecl,1,verified
 0x004ACBD0,?report_intel@@YAXH@Z,void (__cdecl ?report_intel@@YAXH@Z)(int),__cdecl,1,verified
+0x004AD870,??_GReportWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GReportWin@@WEEE@AEPAXI@Z)(ReportWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x004AE9A0,??_GSetupWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GSetupWin@@WEEE@AEPAXI@Z)(SetupWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004AE9B0,??__ESocialWinParent@@YAXXZ,void (__cdecl ??__ESocialWinParent@@YAXXZ)(),__cdecl,,verified
 0x004AE9D0,??__FSocialWinParent@@YAXXZ,void (__cdecl ??__FSocialWinParent@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x004B3F50,??_GSocialWin@@UAEPAXI@Z,"void* (__thiscall ??_GSocialWin@@UAEPAXI@Z)(SocialWin* this, unsigned int)",__thiscall,1,verified
+0x004B3F80,??_GCheckButton@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GCheckButton@@WEEE@AEPAXI@Z)(CheckButton* this, unsigned int)",__thiscall,1,verified-via-tail-jump
+0x004B3F90,??_GSocialWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GSocialWin@@WEEE@AEPAXI@Z)(SocialWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004B3FA0,??__Eg_STATUSWIN@@YAXXZ,void (__cdecl ??__Eg_STATUSWIN@@YAXXZ)(),__cdecl,,verified
 0x004B3FC0,??__Fg_STATUSWIN@@YAXXZ,void (__cdecl ??__Fg_STATUSWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x004B4BF0,?draw_my_dest@@YAXH@Z,void (__cdecl ?draw_my_dest@@YAXH@Z)(int),__cdecl,1,verified
@@ -876,6 +911,7 @@ address,name,prototype,convention,stack_slots,purge
 0x004BA650,?tut_check2@@YAHH@Z,int (__cdecl ?tut_check2@@YAHH@Z)(int),__cdecl,1,verified
 0x004BDF20,?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,"void (__cdecl ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z)(TutWin* this, Sprite*, GraphicWin*, int, int, int)",__cdecl,11111,verified
 0x004BDFA0,?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z,"void (__cdecl ?base_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z)(TutWin* this, Sprite*, GraphicWin*, int, int, int)",__cdecl,11111,verified
+0x004BEA20,??_GTutWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GTutWin@@WEEE@AEPAXI@Z)(TutWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004BEE60,?UNK2@UV2Player@@QAAHHHHH@Z,"int (__cdecl ?UNK2@UV2Player@@QAAHHHHH@Z)(UV2Player* this, int, int, int, int)",__cdecl,1111,verified
 0x004BF390,?on_key@UV2Player@@QAAHXZ,int (__cdecl ?on_key@UV2Player@@QAAHXZ)(UV2Player* this),__cdecl,,verified
 0x004BF6E0,??__Eg_VEHDRAW_CAVIAR@@YAXXZ,void (__cdecl ??__Eg_VEHDRAW_CAVIAR@@YAXXZ)(),__cdecl,,verified
@@ -892,6 +928,7 @@ address,name,prototype,convention,stack_slots,purge
 0x004C3800,?vehdraw_construct_reactor@@YAHHHHHHPAUCaviar@@@Z,"int (__cdecl ?vehdraw_construct_reactor@@YAHHHHHHPAUCaviar@@@Z)(int, int, int, int, int, Caviar*)",__cdecl,111111,verified
 0x004C38B0,??__Eg_WORLDWIN@@YAXXZ,void (__cdecl ??__Eg_WORLDWIN@@YAXXZ)(),__cdecl,,verified
 0x004C38D0,??__Fg_WORLDWIN@@YAXXZ,void (__cdecl ??__Fg_WORLDWIN@@YAXXZ)(),__cdecl,,verified-via-tail-jump
+0x004C4CA0,??_GWorldWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GWorldWin@@WEEE@AEPAXI@Z)(WorldWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004C5C50,??__Eg_WAVE_DEVICE@@YAXXZ,void (__cdecl ??__Eg_WAVE_DEVICE@@YAXXZ)(),__cdecl,,verified
 0x004C5C70,??__Fg_WAVE_DEVICE@@YAXXZ,void (__cdecl ??__Fg_WAVE_DEVICE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x004C5C80,??__Eg_MIDI_DEVICE@@YAXXZ,void (__cdecl ??__Eg_MIDI_DEVICE@@YAXXZ)(),__cdecl,,verified
@@ -907,6 +944,7 @@ address,name,prototype,convention,stack_slots,purge
 0x004C67C0,??1Wave@@QAE@XZ,void (__thiscall ??1Wave@@QAE@XZ)(Wave* this),__thiscall,,verified
 0x004CD060,?action_feature@@YAXXZ,void (__cdecl ?action_feature@@YAXXZ)(),__cdecl,,verified
 0x004D6070,?goto_routine@Console@@QAAXH@Z,"void (__cdecl ?goto_routine@Console@@QAAXH@Z)(Console* this, int)",__cdecl,1,verified
+0x004E23F0,??_GDipEdit@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GDipEdit@@WEEE@AEPAXI@Z)(DipEdit* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x004E4020,?best_specialist@@YAHXZ,int (__cdecl ?best_specialist@@YAHXZ)(),__cdecl,,verified
 0x004E6300,?bases_reset@@YAXHHH@Z,"void (__cdecl ?bases_reset@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
 0x004E68B0,?farm_compute@@YAXXZ,void (__cdecl ?farm_compute@@YAXXZ)(),__cdecl,,verified
@@ -964,6 +1002,7 @@ address,name,prototype,convention,stack_slots,purge
 0x0050F3D0,?start_timers@@YAXXZ,void (__cdecl ?start_timers@@YAXXZ)(),__cdecl,,verified
 0x0050F440,?stop_timers@@YAXXZ,void (__cdecl ?stop_timers@@YAXXZ)(),__cdecl,,unknown
 0x0051D720,?menu_daemon@Console@@QAAXH@Z,"void (__cdecl ?menu_daemon@Console@@QAAXH@Z)(Console* this, int)",__cdecl,1,verified
+0x0051DF70,??_GAlphaMenu@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GAlphaMenu@@WEEE@AEPAXI@Z)(AlphaMenu* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x0051E000,?read_tamper@@YAXXZ,void (__cdecl ?read_tamper@@YAXXZ)(),__cdecl,,verified
 0x0051E090,?set_tamper@@YAXXZ,void (__cdecl ?set_tamper@@YAXXZ)(),__cdecl,,verified
 0x0051E110,?check_tamper@@YAXXZ,void (__cdecl ?check_tamper@@YAXXZ)(),__cdecl,,verified
@@ -1220,6 +1259,7 @@ address,name,prototype,convention,stack_slots,purge
 0x005ADBD0,?timer_callback_daemon@ReplayWin@@QAAXH@Z,"void (__cdecl ?timer_callback_daemon@ReplayWin@@QAAXH@Z)(ReplayWin* this, int)",__cdecl,1,verified
 0x005ADBF0,?show_replay@@YAXXZ,void (__cdecl ?show_replay@@YAXXZ)(),__cdecl,,verified
 0x005ADE80,?replay_base@@YAXHHHH@Z,"void (__cdecl ?replay_base@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
+0x005AE0E0,??_GReplayWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GReplayWin@@WEEE@AEPAXI@Z)(ReplayWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x005AE0F0,??__Eg_CRASH_LANDING_WAVE@@YAXXZ,void (__cdecl ??__Eg_CRASH_LANDING_WAVE@@YAXXZ)(),__cdecl,,verified
 0x005AE110,??__Fg_CRASH_LANDING_WAVE@@YAXXZ,void (__cdecl ??__Fg_CRASH_LANDING_WAVE@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x005AE120,?crash_landing@@YAXH@Z,void (__cdecl ?crash_landing@@YAXH@Z)(int),__cdecl,1,verified
@@ -1301,7 +1341,9 @@ address,name,prototype,convention,stack_slots,purge
 0x005C97C0,??__Eg_MULTIDEBUG@@YAXXZ,void (__cdecl ??__Eg_MULTIDEBUG@@YAXXZ)(),__cdecl,,verified
 0x005C97E0,??__Fg_MULTIDEBUG@@YAXXZ,void (__cdecl ??__Fg_MULTIDEBUG@@YAXXZ)(),__cdecl,,verified-via-tail-jump
 0x005C9900,?timer_callback_daemon@MultiDebug@@QAAXH@Z,"void (__cdecl ?timer_callback_daemon@MultiDebug@@QAAXH@Z)(MultiDebug* this, int)",__cdecl,1,verified
+0x005C9EB0,??_GMultiDebug@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GMultiDebug@@WEEE@AEPAXI@Z)(MultiDebug* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x005D6A50,?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z,"void (__cdecl ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z)(GraphicWin* this, NCSprites*)",__cdecl,1,verified
+0x005D7160,??_GGraphicWin@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GGraphicWin@@WEEE@AEPAXI@Z)(GraphicWin* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x005D71D0,??__Eg_BUFFER_SPRITE@@YAXXZ,void (__cdecl ??__Eg_BUFFER_SPRITE@@YAXXZ)(),__cdecl,,verified
 0x005D71F0,??__Fg_BUFFER_SPRITE@@YAXXZ,void (__cdecl ??__Fg_BUFFER_SPRITE@@YAXXZ)(),__cdecl,,verified
 0x005D7B40,?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z,"int (__stdcall ?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z)(Buffer* this, int8*, Palette*, int, int)",__stdcall,1111,verified
@@ -1349,9 +1391,11 @@ address,name,prototype,convention,stack_slots,purge
 0x005F6F10,?get_mouse_window@Win@@QAAHPAH0@Z,"int (__cdecl ?get_mouse_window@Win@@QAAHPAH0@Z)(Win* this, int*, int*)",__cdecl,11,verified
 0x005F7320,?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z,"int (__cdecl ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z)(Win* this, RECT*, Win*)",__cdecl,11,verified
 0x005F8500,?clear_bubble_text@Win@@QAGXXZ,void (__stdcall ?clear_bubble_text@Win@@QAGXXZ)(Win* this),__stdcall,,verified
+0x005FA790,??_GPullDown@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GPullDown@@WEEE@AEPAXI@Z)(PullDown* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x005FA7A0,?in_box@@YAHHHHHHH@Z,"int (__cdecl ?in_box@@YAHHHHHHH@Z)(int, int, int, int, int, int)",__cdecl,111111,verified
 0x005FA7E0,?in_box@@YAHHHPAURECT@@@Z,"int (__cdecl ?in_box@@YAHHHPAURECT@@@Z)(int, int, RECT*)",__cdecl,111,verified
 0x005FAEE0,?set_def_font@Menu@@QAAXPAUFont@@@Z,"void (__cdecl ?set_def_font@Menu@@QAAXPAUFont@@@Z)(Menu* this, Font*)",__cdecl,1,verified
+0x005FC6F0,??_GMenu@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GMenu@@WEEE@AEPAXI@Z)(Menu* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x005FC700,?wait_task@@YAXXZ,void (__cdecl ?wait_task@@YAXXZ)(),__cdecl,,verified
 0x005FC7F0,?do_task@@YAHXZ,int (__cdecl ?do_task@@YAHXZ)(),__cdecl,,verified
 0x005FC8F0,?do_all_tasks@@YAXXZ,void (__cdecl ?do_all_tasks@@YAXXZ)(),__cdecl,,verified
@@ -1422,6 +1466,7 @@ address,name,prototype,convention,stack_slots,purge
 0x00607480,?set_def_text_color3@BaseButton@@QAAXHHHH@Z,"void (__cdecl ?set_def_text_color3@BaseButton@@QAAXHHHH@Z)(BaseButton* this, int, int, int, int)",__cdecl,1111,verified
 0x006074B0,?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,"int (__cdecl ?set_def_font@BaseButton@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z)(BaseButton* this, Font*, Font*, Font*)",__cdecl,111,verified
 0x00607B10,?timer_callback_daemon@BaseButton@@QAAXHH@Z,"void (__cdecl ?timer_callback_daemon@BaseButton@@QAAXHH@Z)(BaseButton* this, int, int)",__cdecl,11,verified
+0x00607CE0,??_GBaseButton@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GBaseButton@@WEEE@AEPAXI@Z)(BaseButton* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00609D20,?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z,"int (__cdecl ?set_def_dialog_font@Dialog@@QAAHPAUFont@@PAUFont@@PAUFont@@@Z)(Dialog* this, Font*, Font*, Font*)",__cdecl,111,verified
 0x00609D50,?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z,"void (__cdecl ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z)(Dialog* this, int, int, int, int, int)",__cdecl,11111,verified
 0x0060D060,??__Eg_RADIOBUTTON_SPRITE_1@@YAXXZ,void (__cdecl ??__Eg_RADIOBUTTON_SPRITE_1@@YAXXZ)(),__cdecl,,verified
@@ -1471,6 +1516,7 @@ address,name,prototype,convention,stack_slots,purge
 0x0061FC90,?setup_edge_gouraud@Texture@@QAAHPAUEdgeScan@@H@Z,"int (__cdecl ?setup_edge_gouraud@Texture@@QAAHPAUEdgeScan@@H@Z)(Texture* this, EdgeScan*, int)",__cdecl,11,verified
 0x00623F80,?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEHPAUVert@@H@Z,"void (__thiscall ?draw_coast@Texture@@QAEXPAUBuffer@@PAUVert@@PAHPAUTexture@@PAEHPAUVert@@H@Z)(Texture* this, Buffer*, Vert*, int*, Texture*, unsigned int8*, int, Vert*, int)",__thiscall,11111111,verified
 0x00624D80,?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z,"int (__cdecl ?setup_edge@Texture@@QAAHPAUEdgeScan@@H@Z)(Texture* this, EdgeScan*, int)",__cdecl,11,verified
+0x006256F0,??_GImageButton@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GImageButton@@WEEE@AEPAXI@Z)(ImageButton* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x00625700,??__ERand@@YAXXZ,void (__cdecl ??__ERand@@YAXXZ)(),__cdecl,,verified
 0x00625720,??__FRand@@YAXXZ,void (__cdecl ??__FRand@@YAXXZ)(),__cdecl,,verified
 0x006257E0,?random_reseed@@YAXK@Z,void (__cdecl ?random_reseed@@YAXK@Z)(unsigned int),__cdecl,1,verified
@@ -1527,6 +1573,7 @@ address,name,prototype,convention,stack_slots,purge
 0x00628B70,?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z,"void (__cdecl ?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z)(HSV*, PALETTEENTRY*)",__cdecl,11,verified
 0x00628DB0,?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z,"void (__cdecl ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z)(PALETTEENTRY*, HSV*)",__cdecl,11,verified
 0x006290E0,?quick_root@@YAHH@Z,int (__cdecl ?quick_root@@YAHH@Z)(int),__cdecl,1,verified
+0x0062C850,??_GPushButton@@WEEE@AEPAXI@Z,"void* (__thiscall ??_GPushButton@@WEEE@AEPAXI@Z)(PushButton* this, unsigned int)",__thiscall,1,verified-via-tail-jump
 0x0062D500,?jackal_close@@YAXXZ,void (__cdecl ?jackal_close@@YAXXZ)(),__cdecl,,verified
 0x0062D570,?jackal_version_check@@YAHPAD@Z,int (__cdecl ?jackal_version_check@@YAHPAD@Z)(int8*),__cdecl,1,verified
 0x0062D5B0,?do_net@@YAXXZ,void (__cdecl ?do_net@@YAXXZ)(),__cdecl,,verified

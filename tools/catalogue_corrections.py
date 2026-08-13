@@ -4,8 +4,10 @@
 `functions.csv` is promoted from the canonical IDB export, and the image
 carries NO SYMBOLS AT ALL - every one of its 4,821 mangled names is IDA's
 analysis, not something the linker wrote down. So a name can simply be wrong,
-and four of them provably are: they spell a `void` return (`X`) for functions
-whose bodies end `xor eax, eax; ret N`, which is how VC6 returns zero.
+and 62 of them provably are. The first family found were four that spell a
+`void` return (`X`) for functions whose bodies end `xor eax, eax; ret N`, which
+is how VC6 returns zero; the largest is 47 rows that spell `operator delete` for
+bodies that are this-adjusting vtable thunks.
 
 There was no way to say so. `emit_translation_unit.Signature` lets
 `decode_signature(self.mangled)` overwrite the return type and the parameter
@@ -164,6 +166,391 @@ CORRECTIONS = {
         "?__ami@Vector@@QAEXAAVVector@@@Z",
         "?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z",
         "the same shape with fsub for fadd, and the same two verdicts"),
+    # THE LARGEST FAMILY HERE, and the only one that corrects what KIND of
+    # function a row is rather than a type inside it. 47 rows are catalogued
+    # `??3<Class>@@SAXPAXI@Z`, which demangles to
+    # `public: static void __cdecl <Class>::operator delete(void *, unsigned
+    # int)` - a __cdecl static taking two stack arguments, so a callee purge
+    # of 0. Every one of the 47 bodies contradicts that:
+    #
+    #     0x00404430  81 E9 44 04 00 00   sub ecx, 0x444
+    #                 E9 65 FF FF FF      jmp 0x004043A0
+    #
+    # 11 bytes, no stack access at all, the receiver arriving in ECX, and a
+    # tail jump into that class's own `??_G<Class>@@UAEPAXI@Z`, which executes
+    # `ret 4`. An `operator delete` reads its two arguments off the stack and
+    # cannot purge 4. These are MSVC this-adjusting vtable thunks.
+    #
+    # Measured over all 47, from the pinned image, not assumed from one:
+    #   * 46 are `sub ecx, 0x444; jmp rel32` at 11 bytes; 1 is
+    #     `sub ecx, dword ptr [ecx - 4]; jmp rel32` at 8 (0x0048BF10 PlanWin,
+    #     the vtordisp form);
+    #   * all 47 tail-jump into a catalogued `??_G<Class>@@UAEPAXI@Z` whose
+    #     first reachable `ret` is `ret 4`;
+    #   * the class the target is named for equals the class the thunk was
+    #     catalogued under in all 47 - the correction changes the KIND of name
+    #     and the adjustment it carries, never which class it belongs to;
+    #   * each thunk is referenced by exactly ONE .rdata dword, i.e. it sits in
+    #     a vtable slot. `operator delete` is not a virtual function and does
+    #     not appear in one, and docs/recovery/vtables.csv had already written
+    #     that down without drawing the conclusion: NINE of its rows name one of
+    #     these 47 (three distinct ones - FlatButton, ImageButton, PushButton)
+    #     as the FIRST SLOT of a secondary vtable installed at +0x444, which is
+    #     where a deleting destructor sits and where an `operator delete` never
+    #     does;
+    #   * 0x444 is not an arbitrary constant: `sizeof(Win) == 0x444`
+    #     (src/win.h:196), and src/ has long documented a second vptr stored at
+    #     +0x444 by these classes' constructors - the secondary base subobject
+    #     whose offset an adjustor thunk exists to subtract.
+    #
+    # THE CORRECTED SPELLING ROUND-TRIPS BACK TO THE CONSTANT THE BODY
+    # SUBTRACTS, which is what makes it a derivation rather than a guess. Each
+    # name below was built from the bytes - adjustment from the `sub`, class
+    # from the tail-jump target - and then fed to llvm-undname-18, which must
+    # print a scalar deleting destructor for that class with the matching
+    # adjustment or the row is not published:
+    #
+    #   ??_GAlphaMovie@@WEEE@AEPAXI@Z ->
+    #     [thunk]: public: virtual void * __thiscall
+    #     AlphaMovie::`scalar deleting dtor'`adjustor{1092}'(unsigned int)
+    #   1092 == 0x444, the immediate at 0x00404432.
+    #
+    #   ??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z ->
+    #     ... PlanWin::`scalar deleting dtor'`vtordisp{-4, 0}'(unsigned int)
+    #   and 0x0048BF10 opens `sub ecx, dword ptr [ecx - 4]`.
+    #
+    # src/deleting_thunks.cpp already implements all 47 as `__fastcall` bodies
+    # that step the receiver back by 0x444 and forward - the C++ was never
+    # fooled, only the catalogued name was.
+    0x00404430: (
+        "??3AlphaMovie@@SAXPAXI@Z",
+        "??_GAlphaMovie@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004043A0` into "
+        "??_GAlphaMovie@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x004070B0: (
+        "??3BasePop@@SAXPAXI@Z",
+        "??_GBasePop@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00406B40` into "
+        "??_GBasePop@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x004070C0: (
+        "??3Scroll@@SAXPAXI@Z",
+        "??_GScroll@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00406F20` into "
+        "??_GScroll@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x004070D0: (
+        "??3Popup@@SAXPAXI@Z",
+        "??_GPopup@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00406BD0` into "
+        "??_GPopup@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x004070E0: (
+        "??3FlatButton@@SAXPAXI@Z",
+        "??_GFlatButton@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004068E0` into "
+        "??_GFlatButton@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x00408390: (
+        "??3AlphaSave@@SAXPAXI@Z",
+        "??_GAlphaSave@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00408140` into "
+        "??_GAlphaSave@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x004083A0: (
+        "??3EditBox@@SAXPAXI@Z",
+        "??_GEditBox@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00408080` into "
+        "??_GEditBox@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x00421810: (
+        "??3BaseWin@@SAXPAXI@Z",
+        "??_GBaseWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004213D0` into "
+        "??_GBaseWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x00421970: (
+        "??3ProdPicker@@SAXPAXI@Z",
+        "??_GProdPicker@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004213A0` into "
+        "??_GProdPicker@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x00428740: (
+        "??3CouncWin@@SAXPAXI@Z",
+        "??_GCouncWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00428710` into "
+        "??_GCouncWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x00428F80: (
+        "??3Credits@@SAXPAXI@Z",
+        "??_GCredits@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00428E60` into "
+        "??_GCredits@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x00432830: (
+        "??3StringBox@@SAXPAXI@Z",
+        "??_GStringBox@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00432770` into "
+        "??_GStringBox@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x00432840: (
+        "??3Datalink@@SAXPAXI@Z",
+        "??_GDatalink@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00432800` into "
+        "??_GDatalink@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x0043EFA0: (
+        "??3DesignWin@@SAXPAXI@Z",
+        "??_GDesignWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0043EDB0` into "
+        "??_GDesignWin@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x0043EFB0: (
+        "??3SelectPartWin@@SAXPAXI@Z",
+        "??_GSelectPartWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0043EDE0` into "
+        "??_GSelectPartWin@@UAEPAXI@Z, which executes `ret 4`; no stack "
+        "access and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x00440EF0: (
+        "??3DiploPop@@SAXPAXI@Z",
+        "??_GDiploPop@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00440EC0` into "
+        "??_GDiploPop@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x00445120: (
+        "??3DiploWin@@SAXPAXI@Z",
+        "??_GDiploWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00445080` into "
+        "??_GDiploWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x0044B330: (
+        "??3FameWin@@SAXPAXI@Z",
+        "??_GFameWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0044B300` into "
+        "??_GFameWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x004562B0: (
+        "??3Gamma@@SAXPAXI@Z",
+        "??_GGamma@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00456280` into "
+        "??_GGamma@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x0045F1F0: (
+        "??3MainInterface@@SAXPAXI@Z",
+        "??_GMainInterface@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0045F1C0` into "
+        "??_GMainInterface@@UAEPAXI@Z, which executes `ret 4`; no stack "
+        "access and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x0045F910: (
+        "??3Interlude@@SAXPAXI@Z",
+        "??_GInterlude@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0045F710` into "
+        "??_GInterlude@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x00477E00: (
+        "??3MonuWin@@SAXPAXI@Z",
+        "??_GMonuWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00477DD0` into "
+        "??_GMonuWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x0047A760: (
+        "??3MultiWin@@SAXPAXI@Z",
+        "??_GMultiWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0047A6C0` into "
+        "??_GMultiWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x0047AFE0: (
+        "??3NetMsg@@SAXPAXI@Z",
+        "??_GNetMsg@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0047AD70` into "
+        "??_GNetMsg@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x00483840: (
+        "??3NetWin@@SAXPAXI@Z",
+        "??_GNetWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004837C0` into "
+        "??_GNetWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x00484AB0: (
+        "??3NewTechWin@@SAXPAXI@Z",
+        "??_GNewTechWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00484A80` into "
+        "??_GNewTechWin@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x00488740: (
+        "??3PickTech@@SAXPAXI@Z",
+        "??_GPickTech@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00488660` into "
+        "??_GPickTech@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x0048ADF0: (
+        "??3PickWin@@SAXPAXI@Z",
+        "??_GPickWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0048ADC0` into "
+        "??_GPickWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x0048BF10: (
+        "??3PlanWin@@SAXPAXI@Z",
+        "??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z",
+        "8 bytes, `sub ecx, dword ptr [ecx - 4]; jmp 0x0048BF20` into "
+        "??_GPlanWin@@UAEPAXI@Z, which executes `ret 4`. `$4PPPPPPPM@A@` re- "
+        "demangles to vtordisp{-4, 0} - the field at -4 and no further "
+        "adjustment, which is exactly the one subtraction the body performs"),
+    0x00492410: (
+        "??3PrefWin@@SAXPAXI@Z",
+        "??_GPrefWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004923E0` into "
+        "??_GPrefWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x004968F0: (
+        "??3QuayleWin@@SAXPAXI@Z",
+        "??_GQuayleWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004968C0` into "
+        "??_GQuayleWin@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x004AD870: (
+        "??3ReportWin@@SAXPAXI@Z",
+        "??_GReportWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004AD840` into "
+        "??_GReportWin@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x004AE9A0: (
+        "??3SetupWin@@SAXPAXI@Z",
+        "??_GSetupWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004AE760` into "
+        "??_GSetupWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x004B3F80: (
+        "??3CheckButton@@SAXPAXI@Z",
+        "??_GCheckButton@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004B3F20` into "
+        "??_GCheckButton@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x004B3F90: (
+        "??3SocialWin@@SAXPAXI@Z",
+        "??_GSocialWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004B3F50` into "
+        "??_GSocialWin@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x004BEA20: (
+        "??3TutWin@@SAXPAXI@Z",
+        "??_GTutWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004BE9F0` into "
+        "??_GTutWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x004C4CA0: (
+        "??3WorldWin@@SAXPAXI@Z",
+        "??_GWorldWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004C4C70` into "
+        "??_GWorldWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x004E23F0: (
+        "??3DipEdit@@SAXPAXI@Z",
+        "??_GDipEdit@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x004E23C0` into "
+        "??_GDipEdit@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x0051DF70: (
+        "??3AlphaMenu@@SAXPAXI@Z",
+        "??_GAlphaMenu@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0051DC90` into "
+        "??_GAlphaMenu@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x005AE0E0: (
+        "??3ReplayWin@@SAXPAXI@Z",
+        "??_GReplayWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x005AE0B0` into "
+        "??_GReplayWin@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x005C9EB0: (
+        "??3MultiDebug@@SAXPAXI@Z",
+        "??_GMultiDebug@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x005C9E80` into "
+        "??_GMultiDebug@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x005D7160: (
+        "??3GraphicWin@@SAXPAXI@Z",
+        "??_GGraphicWin@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x005D7140` into "
+        "??_GGraphicWin@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x005FA790: (
+        "??3PullDown@@SAXPAXI@Z",
+        "??_GPullDown@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x005FA770` into "
+        "??_GPullDown@@UAEPAXI@Z, which executes `ret 4`; no stack access and "
+        "the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092} "
+        "and 1092 == 0x444, the constant subtracted"),
+    0x005FC6F0: (
+        "??3Menu@@SAXPAXI@Z",
+        "??_GMenu@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x005FC6D0` into ??_GMenu@@UAEPAXI@Z, "
+        "which executes `ret 4`; no stack access and the receiver stays in "
+        "ECX. `WEEE@` re-demangles to adjustor{1092} and 1092 == 0x444, the "
+        "constant subtracted"),
+    0x00607CE0: (
+        "??3BaseButton@@SAXPAXI@Z",
+        "??_GBaseButton@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into "
+        "??_GBaseButton@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x006256F0: (
+        "??3ImageButton@@SAXPAXI@Z",
+        "??_GImageButton@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x006256D0` into "
+        "??_GImageButton@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+    0x0062C850: (
+        "??3PushButton@@SAXPAXI@Z",
+        "??_GPushButton@@WEEE@AEPAXI@Z",
+        "11 bytes, `sub ecx, 0x444; jmp 0x0062C830` into "
+        "??_GPushButton@@UAEPAXI@Z, which executes `ret 4`; no stack access "
+        "and the receiver stays in ECX. `WEEE@` re-demangles to "
+        "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
 }
 
 

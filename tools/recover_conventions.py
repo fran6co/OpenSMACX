@@ -37,6 +37,8 @@ After the `@@` that closes the qualified name, MSVC writes:
     free / namespace-scope   [Y|Z] [conv] ...
     static member            [C|D|K|L|S|T] [conv] ...
     instance / virtual       [A|B|I|J|Q|R|E|F|M|N|U|V] [cv] [conv] ...
+    adjustor thunk           [G|H|O|P|W|X] [number] [cv] [conv] ...
+    vtordisp thunk           [$0-$5] [number] [number] [cv] [conv] ...
 
 The cv slot on an instance member is the qualifier on `this`, and reading it as
 the convention is the classic mis-parse: it turns every `QAE` (public instance
@@ -113,6 +115,17 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# ONE definition of the thunk infix grammar, in recovery_symbols, because three
+# decoders in this tree each had their own copy of it and two of them guessed
+# silently rather than refusing. Re-exported here rather than re-implemented:
+# `split_infix` below and `recovery_symbols.infix_length` must not be able to
+# disagree about where a thunk's infix ends.
+import recovery_symbols  # noqa: E402
+from recovery_symbols import (VTORDISP_MARKER, mangled_number,  # noqa: E402
+                              thunk_adjustments)
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 # No FUNCTIONS_CSV here on purpose - docs/recovery/functions.csv is deleted and
@@ -147,6 +160,28 @@ for _pair, _access in ((("G", "H"), "private"), (("O", "P"), "protected"),
         KIND[_c] = (_access, "thunk")
 KIND["Y"] = ("none", "free")
 KIND["Z"] = ("none", "free")
+# The VTORDISP thunk kinds, which are the one form whose kind is TWO characters.
+# They live in the same table, keyed by both, so a caller that already writes
+# `KIND[kind_char][1]` needs no second lookup and no special case.
+#
+# The access column is measured, not assumed: `undname` on
+# `??_GAlphaMovie@@$<n>PPPPPPPM@A@AEPAXI@Z` for n in 0..5 prints private,
+# private, protected, protected, public, public in that order - the same pairing
+# the letter kinds above use, one pair per access.
+for _pair, _access in ((("$0", "$1"), "private"), (("$2", "$3"), "protected"),
+                       (("$4", "$5"), "public")):
+    for _c in _pair:
+        KIND[_c] = (_access, "thunk")
+
+# KIND pairs each thunk kind with an ACCESS, which `THUNK_KIND` does not carry,
+# so this table cannot simply be built from that set. What it can do is refuse
+# to disagree with it. A kind added to one and not the other is exactly how the
+# three infix decoders drifted apart in the first place, and it costs nothing to
+# make that an import-time failure instead of a wrong answer at some call site.
+assert {_c for _c, (_a, _k) in KIND.items() if _k == "thunk"} \
+    == set(recovery_symbols.THUNK_KIND), \
+    "recover_conventions.KIND and recovery_symbols.THUNK_KIND disagree about " \
+    "which kinds are thunks; the infix scan and infix_length would too"
 
 CONV = {"A": "__cdecl", "B": "__cdecl", "C": "__pascal", "D": "__pascal",
         "E": "__thiscall", "F": "__thiscall", "G": "__stdcall",
@@ -192,6 +227,21 @@ def split_infix(name: str) -> tuple[str, str] | None:
     their first `@@` happens not to be a KIND letter, which is luck, not a
     parse. Refusing on the marker says what is actually true: this function
     cannot locate the infix in a template name, so it declines to guess.
+
+    A THUNK'S KIND IS NOT ADJACENT TO ITS CV SLOT, and until 2026-08-13 this
+    function assumed it was, so every thunk spelling in the MSVC grammar refused
+    here - all six adjustor kinds and all six vtordisp kinds. The kind is
+    followed by the adjustment the thunk applies to `this`, which is one mangled
+    number for an adjustor and two for a vtordisp; read as a cv slot,
+    `??_GAlphaMovie@@WEEE@AEPAXI@Z` offers `E`, which is not in CV_SLOT, and the
+    name refused with no way to tell that from a data decoration.
+
+    That mattered because 47 catalogued rows ARE thunks carrying a different
+    (wrong) name. Their bodies are `sub ecx, <imm> ; jmp <the class's own
+    ??_G>`, the target executes `ret 4`, and the correct spelling for each is
+    the thunk spelling this now parses. Correcting a name is somebody else's
+    job; refusing to parse the corrected name would have made that job produce
+    silently underivable rows, which is worse than the loud contradiction.
     """
     if not name.startswith("?"):
         return None
@@ -203,18 +253,29 @@ def split_infix(name: str) -> tuple[str, str] | None:
     rest = name[marker + 2:]
     if len(rest) < 2:
         return None
-    kind_char = rest[0]
+    kind_char = rest[:2] if rest[0] == VTORDISP_MARKER else rest[0]
     if kind_char not in KIND:
         return None
     _access, kind = KIND[kind_char]
+    index = len(kind_char)
+    if kind == "thunk":
+        # [kind][adjustment...][cv][conv]. The adjustment is consumed, not
+        # interpreted: what it decodes to is evidence about the BODY, and this
+        # function's job is only to find where the infix resumes.
+        for _ in range(thunk_adjustments(kind_char)):
+            value, index = mangled_number(rest, index)
+            if value is None:
+                return None
     if kind in THIS_KINDS:
-        # [kind][cv][conv]: the cv slot qualifies `this`.
-        if rest[1] not in CV_SLOT or len(rest) < 3:
+        # [cv][conv]: the cv slot qualifies `this`.
+        if index + 1 >= len(rest) or rest[index] not in CV_SLOT:
             return None
-        conv_char = rest[2]
+        conv_char = rest[index + 1]
     else:
         # free and static: no `this`, so no cv slot.
-        conv_char = rest[1]
+        if index >= len(rest):
+            return None
+        conv_char = rest[index]
     if conv_char not in CONV:
         return None
     return kind_char, conv_char

@@ -523,10 +523,16 @@ class LoadFunctionsCorrectsNamesTests(unittest.TestCase):
     fallback and nothing said so - `byte_match.load_rows` and
     `project_catalogue.catalogue` both document that they get corrected names
     through here, and for that stretch neither did. It stayed invisible because
-    `src/` already spells all 15 corrections the corrected way, so `apply`
-    rewrites 0 of the 6,000 real rows: measuring the live catalogue cannot tell
-    a live call from a deleted one. These feed a row that NEEDS correcting, so
-    the assertion fails the moment the call goes missing again.
+    `src/` already spelled all 15 corrections of the day the corrected way, so
+    `apply` rewrote 0 of the 6,000 real rows: measuring the live catalogue could
+    not tell a live call from a deleted one. These feed a row that NEEDS
+    correcting, so the assertion fails the moment the call goes missing again.
+
+    Since 2026-08-13 the live catalogue can answer too - the 47 thunk rows are
+    annotated with the old name in `src/` and corrected only here - so the last
+    test below checks the real thing rather than a fixture. Both are kept: the
+    fixtures survive `src/` being migrated to the corrected spellings, which
+    would take the live signal away again.
     """
 
     def load_with(self, address, name):
@@ -553,6 +559,24 @@ class LoadFunctionsCorrectsNamesTests(unittest.TestCase):
         address = next(iter(catalogue_corrections.CORRECTIONS))
         with self.assertRaises(catalogue_corrections.Stale):
             self.load_with(address, "?moved@Elsewhere@@QAEXXZ")
+
+    def test_the_LIVE_catalogue_shows_the_corrections_being_applied(self):
+        # No fixture, no monkeypatch: the real load. Every row whose correction
+        # `src/` has not adopted must come back corrected, and none may come
+        # back under the spelling the bytes contradict. This is the assertion
+        # the 0-rewrite era could not make.
+        import catalogue_corrections
+        rows = tool.load_functions()
+        rewritten = 0
+        for address, (catalogued, corrected, _why) in \
+                catalogue_corrections.CORRECTIONS.items():
+            row = rows.get(address)
+            if row is None:
+                continue
+            self.assertNotEqual(catalogued, row["name"], hex(address))
+            self.assertEqual(corrected, row["name"], hex(address))
+            rewritten += 1
+        self.assertGreaterEqual(rewritten, 47)
 
 
 

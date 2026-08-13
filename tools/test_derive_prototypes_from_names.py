@@ -201,6 +201,99 @@ class RenderTests(unittest.TestCase):
         self.assertEqual("void", one.return_type)
 
 
+class ThunkSpellingTests(unittest.TestCase):
+    """The two thunk spellings, and the purge each one implies.
+
+    47 catalogued rows are named `??3<Class>@@SAXPAXI@Z` - a static __cdecl
+    `operator delete`, which implies a callee purge of 0 - and every one of
+    their bodies is `sub ecx, <imm> ; jmp <the class's own ??_G>` with the
+    target executing `ret 4`. 0x00404430 is 11 bytes long, touches no stack
+    slot and takes its receiver in ECX. These are adjustor thunks into the
+    scalar deleting destructor, and the correct spelling of a thunk implies
+    __thiscall with one `unsigned int` argument - a purge of 4, which is what
+    the tail jump was measured to execute.
+
+    Derivation has to come FIRST. A rename that landed while these spellings
+    were underivable would replace 47 refusals nobody can miss with 47 rows
+    that quietly fall out of the published catalogue.
+    """
+
+    ADJUSTOR = "??_GAlphaMovie@@WEEE@AEPAXI@Z"
+    ADJUSTOR_DEMANGLED = (
+        "[thunk]:public: virtual void * __thiscall "
+        "AlphaMovie::`scalar deleting destructor'`adjustor{1092}' "
+        "(unsigned int)")
+    VTORDISP = "??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z"
+    VTORDISP_DEMANGLED = (
+        "[thunk]:public: virtual void * __thiscall "
+        "PlanWin::`scalar deleting destructor'`vtordisp{4294967292,0}' "
+        "(unsigned int)")
+
+    def test_the_adjustor_thunk_at_0x00404430_implies_the_purge_it_executes(self):
+        one = prototypes.derive_one("0x00404430", self.ADJUSTOR,
+                                    self.ADJUSTOR_DEMANGLED)
+        self.assertIsNotNone(one)
+        self.assertEqual("__thiscall", one.convention)
+        self.assertEqual("AlphaMovie", one.receiver)
+        self.assertEqual(["unsigned int"], one.argument_types)
+        # 4, matching the `ret 4` the tail-jump target executes. The `??3`
+        # spelling the catalogue carries implies 0 on the same bytes.
+        self.assertEqual(4, prototypes.implied_purge(one))
+
+    def test_the_vtordisp_thunk_at_0x0048BF10_implies_the_same_4(self):
+        one = prototypes.derive_one("0x0048BF10", self.VTORDISP,
+                                    self.VTORDISP_DEMANGLED)
+        self.assertIsNotNone(one)
+        self.assertEqual("__thiscall", one.convention)
+        self.assertEqual("PlanWin", one.receiver)
+        self.assertEqual(4, prototypes.implied_purge(one))
+
+    def test_the_thunk_MARKER_is_not_published_as_a_return_type(self):
+        # The demangler writes `[thunk]:public: virtual void * ...`, so the
+        # anchored `public:` strip matches nothing and the marker, the access
+        # and the `virtual` all land in the return type unless the marker goes
+        # first. Measured before the fix: `[thunk]:public: virtual void*`.
+        one = prototypes.derive_one("0x00404430", self.ADJUSTOR,
+                                    self.ADJUSTOR_DEMANGLED)
+        self.assertEqual("void*", one.return_type)
+        self.assertEqual(
+            "void* (__thiscall ??_GAlphaMovie@@WEEE@AEPAXI@Z)"
+            "(AlphaMovie* this, unsigned int)", one.prototype)
+
+    def test_the_catalogued_operator_delete_spelling_still_implies_ZERO(self):
+        # The contrast that makes the refusal a finding rather than a quirk:
+        # same address, same bytes, two names, two different implied purges.
+        one = prototypes.derive_one(
+            "0x00404430", "??3AlphaMovie@@SAXPAXI@Z",
+            "public: static void __cdecl "
+            "AlphaMovie::operator delete(void *,unsigned int)")
+        self.assertEqual(0, prototypes.implied_purge(one))
+        self.assertEqual(
+            prototypes.CONTRADICTED,
+            prototypes.purge_verdict(one, prototypes.Purge(
+                4, prototypes.SOURCE_TAIL_JUMP, "the target executes ret 4")))
+
+    def test_the_thunk_spelling_is_VERIFIED_by_the_same_observation(self):
+        one = prototypes.derive_one("0x00404430", self.ADJUSTOR,
+                                    self.ADJUSTOR_DEMANGLED)
+        self.assertEqual(
+            prototypes.VERIFIED_VIA_TAIL_JUMP,
+            prototypes.purge_verdict(one, prototypes.Purge(
+                4, prototypes.SOURCE_TAIL_JUMP, "the target executes ret 4")))
+
+    def test_a_thunk_row_survives_the_control_that_gates_publication(self):
+        # `emitted_control` re-reads each published row from the demangler,
+        # independently of `split_infix`. A row that parses one way and reads
+        # another way must never ship.
+        demangler = {self.ADJUSTOR: self.ADJUSTOR_DEMANGLED,
+                     self.VTORDISP: self.VTORDISP_DEMANGLED}
+        found = [prototypes.derive_one("0x00404430", self.ADJUSTOR,
+                                       self.ADJUSTOR_DEMANGLED),
+                 prototypes.derive_one("0x0048BF10", self.VTORDISP,
+                                       self.VTORDISP_DEMANGLED)]
+        self.assertEqual([], prototypes.emitted_control(found, demangler.get))
+
+
 class RefusalTests(unittest.TestCase):
 
     def test_a_TEMPLATE_name_is_refused_because_the_infix_cannot_be_found(self):
@@ -934,9 +1027,29 @@ class PurgeCatalogueTests(unittest.TestCase):
     # 2026-07-31. Each is `sub ecx, <imm> ; jmp <??_G scalar deleting
     # destructor>`, the target executes `ret 4`, and each was published as a
     # `__cdecl` taking two stack arguments and purging 0 - so a caller pushed 8
-    # and got 4 popped. All 47 static-kind rows in the catalogue are this shape
-    # and all 47 are refused; these three are the anchor.
-    REFUSED_VIA_HOP = ("0x00404430", "0x004070B0", "0x0062C850")
+    # and got 4 popped.
+    #
+    # THE HOP WAS RIGHT AND THE NAME WAS WRONG, which is the resolution these
+    # tests now pin instead of the refusal. On 2026-08-13
+    # `catalogue_corrections` renamed all 47 to the this-adjusting thunk
+    # spellings their bodies carry - `??_GAlphaMovie@@WEEE@AEPAXI@Z`, whose
+    # `adjustor{1092}` is the 0x444 the body at 0x00404430 subtracts - so each
+    # is now a `__thiscall` taking one `unsigned int`, implying the purge of 4
+    # the tail-jump target executes. They are PUBLISHED, and the hop that used
+    # to refuse them now confirms them.
+    #
+    # Asserting the refusal was the right test while the names were wrong: it
+    # is what kept the contradiction visible instead of letting 47 rows ship a
+    # signature no caller could satisfy. Inverting it now is not weakening the
+    # check - the same bytes back both directions, and the row that is STILL
+    # refused (`REFUSED`, a different defect) is asserted absent right above.
+    CORRECTED_THUNKS = ("0x00404430", "0x004070B0", "0x0062C850")
+
+    # The vtordisp form, the only one of the 47 that is not an 11-byte
+    # `sub ecx, imm32` adjustor: 8 bytes, `sub ecx, dword ptr [ecx - 4]`, and
+    # `$4PPPPPPPM@A@` demangles to `vtordisp{-4, 0}`. It travels separately
+    # because it is the row a grammar that only handles adjustors would drop.
+    CORRECTED_VTORDISP = "0x0048BF10"
 
     def setUp(self):
         if not (prototypes.PROTOTYPES_CSV.is_file()
@@ -1028,20 +1141,53 @@ class PurgeCatalogueTests(unittest.TestCase):
         self.assertIn(self.REFUSED, self.purges)
         self.assertEqual(16, self.purges[self.REFUSED].observed)
 
-    def test_the_adjustor_thunks_the_HOP_caught_are_ABSENT(self):
-        for address in self.REFUSED_VIA_HOP:
-            self.assertNotIn(address, self.published)
+    def test_the_adjustor_thunks_the_HOP_caught_are_PUBLISHED(self):
+        # Under the corrected name each derives the signature the bytes show:
+        # a `__thiscall` receiving `this` in ECX and one `unsigned int` on the
+        # stack, which implies the purge of 4 the tail-jump target executes.
+        for address in self.CORRECTED_THUNKS + (self.CORRECTED_VTORDISP,):
+            row = self.published.get(address)
+            self.assertIsNotNone(row, f"{address} is not published")
+            self.assertEqual("__thiscall", row["convention"], address)
+            self.assertEqual("1", row["stack_slots"], address)
+            self.assertEqual(prototypes.VERIFIED_VIA_TAIL_JUMP,
+                             row["purge"], address)
+            self.assertTrue(row["name"].startswith("??_G"), row["name"])
 
     def test_each_of_those_is_still_in_the_catalogue_with_its_source(self):
-        for address in self.REFUSED_VIA_HOP:
+        for address in self.CORRECTED_THUNKS + (self.CORRECTED_VTORDISP,):
             purge = self.purges.get(address)
             self.assertIsNotNone(purge, address)
             self.assertEqual(4, purge.observed, address)
             self.assertEqual(prototypes.SOURCE_TAIL_JUMP, purge.source, address)
 
+    def test_the_corrected_thunk_names_carry_their_adjustment(self):
+        # The name is only right if it round-trips to the constant the body
+        # subtracts, so the published spelling is held to it rather than to a
+        # prefix. 0x444 == 1092 for every adjustor; the vtordisp spells the
+        # field offset it loads through instead.
+        for address in self.CORRECTED_THUNKS:
+            name = self.published[address]["name"]
+            self.assertIn("@@WEEE@AEPAXI@Z", name, address)
+        self.assertIn("@@$4PPPPPPPM@A@AEPAXI@Z",
+                      self.published[self.CORRECTED_VTORDISP]["name"])
+
+    def test_the_hop_now_contradicts_NOTHING_it_reaches(self):
+        # The 47 were the whole of the hop's disagreement. With their names
+        # corrected the floor is total agreement, so any hopped row whose
+        # published prototype implies a different purge is a NEW finding.
+        agreeing, sample = prototypes.HOP_AGREEMENT_FLOOR
+        self.assertEqual(agreeing, sample)
+
     def test_EVERY_static_kind_row_the_hop_reached_is_gone(self):
         # 47 of 47, none spared - the blind spot an earlier review named. Any
         # `??3<Class>@@SAXPAXI@Z` still published would be one of them.
+        #
+        # This survives the correction unchanged, and for a better reason than
+        # before: the spelling is not refused now, it no longer EXISTS. A row
+        # reappearing under `??3` would mean `catalogue_corrections` stopped
+        # being applied - the exact silent-off failure that channel already had
+        # once, when its only call sat inside a branch that could not be taken.
         still_here = [address for address, row in self.published.items()
                       if row["name"].startswith("??3")]
         self.assertEqual([], still_here)
@@ -1170,6 +1316,99 @@ class HypothesisCatalogueTests(unittest.TestCase):
                                             encoding="utf-8-sig") as handle:
             self.assertEqual(list(prototypes.HYPOTHESIS_FIELDS),
                              next(csv.reader(handle)))
+
+
+
+
+class ThunkAdjustmentGateTests(unittest.TestCase):
+    """The half of a thunk name the callee-purge gate cannot falsify.
+
+    `??_GAlphaMovie@@WEEE@AEPAXI@Z` asserts a signature AND a displacement.
+    Corrupt the signature and the purge check fires; corrupt the displacement
+    from 1092 to 1093 and every published number stays green while the
+    catalogue carries a name for a thunk that does not exist. Measured on
+    2026-08-13 by doing exactly that to the live correction: the gate went from
+    exit 0 to exit 1 with `the name states [1093] and the body applies [1092]`,
+    and no floor moved in either run. These are the offline half of that.
+    """
+
+    class Fake:
+        """The two capstone shapes MSVC emits, with the detail the gate reads."""
+
+        def __init__(self, mnemonic, operands):
+            self.mnemonic, self.operands = mnemonic, operands
+
+        @staticmethod
+        def reg_name(reg):
+            return reg
+
+    class Op:
+        def __init__(self, kind, imm=0, reg="", mem=None):
+            from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG
+            self.type = {"imm": X86_OP_IMM, "reg": X86_OP_REG,
+                         "mem": X86_OP_MEM}[kind]
+            self.imm, self.reg, self.mem = imm, reg, mem
+
+    class Mem:
+        def __init__(self, base, disp, index=0):
+            self.base, self.disp, self.index = base, disp, index
+
+    def sub_ecx_imm(self, value):
+        return self.Fake("sub", [self.Op("reg", reg="ecx"),
+                                 self.Op("imm", imm=value)])
+
+    def sub_ecx_mem(self, disp):
+        return self.Fake("sub", [self.Op("reg", reg="ecx"),
+                                 self.Op("mem", mem=self.Mem("ecx", disp))])
+
+    def test_an_adjustor_body_reports_the_constant_it_subtracts(self):
+        self.assertEqual([0x444], prototypes._applied_adjustment(
+            [self.sub_ecx_imm(0x444)]))
+
+    def test_a_vtordisp_body_reports_the_field_and_a_zero_adjustment(self):
+        # `sub ecx, [ecx - 4]` with no second `sub` is vtordisp{-4, 0}: the
+        # zero is the ABSENCE of a second instruction, not a default.
+        self.assertEqual([-4, 0], prototypes._applied_adjustment(
+            [self.sub_ecx_mem(-4)]))
+
+    def test_a_vtordisp_with_a_second_subtraction_reports_both(self):
+        self.assertEqual([-4, 8], prototypes._applied_adjustment(
+            [self.sub_ecx_mem(-4), self.sub_ecx_imm(8)]))
+
+    def test_a_body_that_does_not_touch_ecx_reports_NOTHING(self):
+        # Empty, so it can never equal a name's adjustment. A thunk-named
+        # function whose body adjusts nothing must be reported, not excused.
+        self.assertEqual([], prototypes._applied_adjustment([]))
+        self.assertEqual([], prototypes._applied_adjustment(
+            [self.Fake("push", [self.Op("reg", reg="esi")])]))
+        self.assertEqual([], prototypes._applied_adjustment(
+            [self.Fake("sub", [self.Op("reg", reg="eax"),
+                               self.Op("imm", imm=4)])]))
+
+    def test_the_two_spellings_of_a_negative_displacement_reconcile(self):
+        # The mangled number carries no sign, so `PPPPPPPM@` decodes to
+        # 0xFFFFFFFC while capstone reads -4 off the same four bytes. Both are
+        # the same displacement and the gate must not call that a disagreement.
+        self.assertEqual(prototypes._as_displacements([0xFFFFFFFC, 0]),
+                         prototypes._as_displacements([-4, 0]))
+
+    def test_but_a_real_difference_still_survives_that_reconciliation(self):
+        # The failure mode of a normalisation is that it makes everything
+        # equal. 1092 and 1093 must stay different, and so must 0x444 and a
+        # negative number that happens to share its low bits.
+        self.assertNotEqual(prototypes._as_displacements([1092]),
+                            prototypes._as_displacements([1093]))
+        self.assertNotEqual(prototypes._as_displacements([0xFFFFFFFC]),
+                            prototypes._as_displacements([0xFFFFFFFC - 1]))
+
+    def test_is_thunk_name_selects_the_thunk_spellings_and_nothing_else(self):
+        self.assertEqual("W", prototypes.is_thunk_name(
+            "??_GAlphaMovie@@WEEE@AEPAXI@Z"))
+        self.assertEqual("$4", prototypes.is_thunk_name(
+            "??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z"))
+        for name in ("??_GAlphaMovie@@UAEPAXI@Z", "??3AlphaMovie@@SAXPAXI@Z",
+                     "?f@C@@QAEXXZ", "?f@@YAXXZ", "not_mangled"):
+            self.assertEqual("", prototypes.is_thunk_name(name), name)
 
 
 if __name__ == "__main__":

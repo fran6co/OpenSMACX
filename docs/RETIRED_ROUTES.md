@@ -271,6 +271,16 @@ is the part worth keeping:
   while the bytes take the receiver in `ecx` and the callee pops four. Seven more
   carry no name at all. A name-driven scan misses exactly the rows a byte-driven
   one finds.
+
+  Those 47 names were corrected on 2026-08-13 and are no longer misleading: each
+  is now spelled as what it is, an MSVC this-adjusting thunk into the class's own
+  `??_G` scalar deleting destructor, with the displacement the body subtracts
+  written into the name (`??_GAlphaMovie@@WEEE@AEPAXI@Z`, `adjustor{1092}` ==
+  `0x444`). See `tools/catalogue_corrections.py`, which carries the byte evidence
+  per address. The lesson stands unchanged — a name that survived being wrong for
+  this long did so because nothing held it to the bytes, and what finally caught
+  it was the callee-purge gate, a byte-driven check, exactly as this bullet
+  predicts.
 - **Decode every value twice.** The deleting-thunk generator decoded each field
   through raw ModRM *and* through Capstone and required agreement, because an
   off-by-one on the guarded call would have named `0x0064557E`, the tail of
