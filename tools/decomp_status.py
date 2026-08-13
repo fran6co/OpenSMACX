@@ -537,6 +537,47 @@ def lesson_report(annotations: list) -> list:
                                "LEVER with no fingerprint: write "
                                "`LEVER: <original>/<rebuilt> <what worked>`"))
                 break
+    faults.extend(_prototype_faults())
+    return faults
+
+
+# The prototype line restates the mangled name it belongs to, so the annotation
+# carries the same fact twice and the two copies can drift apart.
+EMBEDDED_NAME = re.compile(r"\?[A-Za-z0-9_@?$]+[@X]Z")
+
+
+def _prototype_faults() -> list:
+    """A `prototype` whose embedded mangled name is not the `name` above it.
+
+    Eleven of these were found on 2026-08-13, all in the same direction: a
+    renamer corrected `name` and left `prototype` holding the OLD mangling and
+    the old return type, so one annotation asserted both `QAEHHH` (returns int)
+    and `QAEXHH` (returns void). `functions.csv` had them agreeing before the
+    map moved into `src/`; nothing forced them to stay that way afterwards,
+    because nothing compared them. `derived-prototypes` caught the drift only as
+    an aggregate rate, which names no file and cannot say what to edit.
+
+    The pattern must accept `...XZ` as well as `...@Z` - a void argument list
+    ends the name differently. My first scan required `@Z`, found eight of the
+    eleven, and looked entirely correct doing it.
+    """
+    import project_catalogue
+    faults = []
+    for address, row in sorted(project_catalogue.from_source().items()):
+        name = row.get("name", "") or ""
+        prototype = row.get("prototype", "") or ""
+        if not name.startswith("?") or not prototype:
+            continue
+        # Two functions can ship the same mangled name; the catalogue keeps
+        # them apart with a `_0`/`_1` suffix the prototype does not carry. That
+        # is the convention working, not a drift.
+        base = re.sub(r"_\d+$", "", name)
+        found = EMBEDDED_NAME.search(prototype)
+        if not found or found.group(0) in (name, base):
+            continue
+        faults.append((row.get("source_locations") or f"0x{address:08X}",
+                       f"prototype names `{found.group(0)}` but the annotation "
+                       f"is `{name}` - re-derive the prototype from the name"))
     return faults
 
 
