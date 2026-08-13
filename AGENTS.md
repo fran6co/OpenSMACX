@@ -743,7 +743,6 @@ parallel-agent targets (see "Parallel recovery" above):
 - the retired `run_gameplay_scenario`: deterministic scenario launcher, result validator, and owned-process cleanup.
 - `test_run_gameplay_scenario (retired)`: source-owned fixture, result, diagnostics, and process-alias tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
-- `tools/batch_decompile.py`, `tools/ghidra/DecompileBatch.java`: one-invocation batch decompiler over an address list or priorities-catalog filters into the ignored `build/ghidra-decompile/` cache with a merged manifest; cached results are skipped on rerun and outputs are never committed.
 - the retired `add_redirect`: wires one redirect across the CSV, the regenerated signature header, the dllmain spec table and its count in a single checked step, computing the sorted insertion position rather than appending and restoring every file if any check fails.
 - the retired `generate_mingw_exports`: the generator that emits `src/OpenSMACX.def`'s MinGW export aliases; nothing else references it, so its provenance is recorded here.
 - `tools/classify_recovery_shapes.py`: sorts cached decompilations into recoverable shapes to find mechanical candidates; it errs toward reporting `complex`, and a shape match only means a generated implementation is worth attempting.

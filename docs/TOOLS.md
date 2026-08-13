@@ -48,7 +48,7 @@ the convention and the prototype the mangled name already states;
 `tools/analyze_delegates.py` proves a body is a pure forwarder;
 `tools/jump_tables.py` recovers the targets behind a computed jump; and
 `tools/indirect_call_sites.py` reports the call sites the call graph cannot
-see. `tools/batch_decompile.py`, `tools/classify_recovery_shapes.py` and
+see. `tools/classify_recovery_shapes.py` and
 `tools/classify_recovered_shapes.py` bulk-sort what is left by shape.
 
 ### 3. What is the class? — the layout half
@@ -74,7 +74,7 @@ against another), `tools/derive_vtables.py` (where the vtable pointers live).
 Outside opinions arrive through `tools/export_idb_members.py` (the IDA
 database, read without IDA), `tools/correlate_thinker_layouts.py`,
 `tools/correlate_pracx_layouts.py`, `tools/correlate_yitzi_notes.py`,
-`tools/run_ghidra_analysis.py`, `tools/correlate_recovery_analyses.py`,
+`tools/run_ghidra_analysis.py`,
 `tools/correlate_external_analysis.py` and `tools/fetch_external_analysis.py`.
 Every one of them is a hypothesis until the image agrees.
 
@@ -209,9 +209,8 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
 - `tools/verify_subobjects.py` — the subobject worklist, staleness only
 - `tools/verify_class_layouts.py` — which extracted layouts compile to the
   real size
-- `tools/verify_recovery_abi.py`, `tools/verify_recovery_metadata.py`,
-  `tools/verify_recovery_pipeline.py` — the analysis pipeline says the same
-  thing twice running
+- `tools/verify_recovery_abi.py`, `tools/verify_recovery_pipeline.py` — the
+  analysis pipeline says the same thing twice running
 - the retired `verify_no_load_time_addresses` — no fixed game address
   dereferenced at load time
 - the retired `verify_observability_ratchet` — a new recovery must prove
