@@ -7,8 +7,8 @@ those four appear nowhere else in the tree and nothing re-derives them. Only
 12.00.8168 is reachable, which is why 36 hand-written assembly objects and
 anything built by the second compiler are not expected to reproduce.
 
-Measured 2026-07-31 on this host. Tool: `tools/msvc6_byte_match.py`.
-Offline tests: `tools/test_msvc6_byte_match.py`, registered as
+Measured 2026-07-31 on this host. Tool: the retired `msvc6_byte_match`.
+Offline tests: the retired `test_msvc6_byte_match`, registered as
 `msvc6-byte-match-tests`.
 
 Every verification route this project has is bounded by something. The
@@ -413,9 +413,9 @@ including its strength reductions and its magic-number division.
 ## Reproducing
 
 ```
-tools/msvc6_byte_match.py                  # default: the measured flags
-tools/msvc6_byte_match.py --preregistered  # the 0/5 run, verbatim
-tools/msvc6_byte_match.py --flags "/c /O1 /Gy /GR- /Oy-" --verbose
+the retired `msvc6_byte_match`                  # default: the measured flags
+the retired `msvc6_byte_match` --preregistered  # the 0/5 run, verbatim
+the retired `msvc6_byte_match` --flags "/c /O1 /Gy /GR- /Oy-" --verbose
 ```
 
 Without `~/opt/vc6` or Wine the tool prints a SKIP naming what is missing and

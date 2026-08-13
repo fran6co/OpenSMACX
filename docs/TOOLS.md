@@ -45,7 +45,7 @@ wrongly and the instruction that says so, and `tools/recovery_symbols.py` is
 the one place that decides what symbol a recovered function carries.
 `tools/recover_conventions.py` and `tools/derive_prototypes_from_names.py` read
 the convention and the prototype the mangled name already states;
-`tools/jump_tables.py` recovers the targets behind a computed jump; and
+the retired `jump_tables` recovers the targets behind a computed jump; and
 `tools/indirect_call_sites.py` reports the call sites the call graph cannot
 see. `tools/classify_recovered_shapes.py` bulk-sorts what is left by shape.
 
@@ -57,8 +57,8 @@ its field offsets are known. Three independent readings, none a model.
 ```sh
 tools/verify_member_offsets.py --check    # declared boundaries vs access widths
 tools/verify_member_offsets.py --pins     # which pinned sizes the image backs
-tools/verify_subobjects.py                # what a ctor/dtor builds, and where
-tools/split_proved_fields.py --apply      # name the fields inside a slab
+the retired `verify_subobjects`                # what a ctor/dtor builds, and where
+the retired `split_proved_fields` --apply      # name the fields inside a slab
 ```
 
 The evidence they rest on is derived from the image and published under
@@ -67,25 +67,25 @@ exactly), `tools/derive_access_bounds.py` (how far a class's own code reaches �
 a floor), `tools/derive_class_size_bounds.py` (the next global — a ceiling),
 `tools/derive_agreed_sizes.py` (where two independent sources meet),
 `tools/derive_base_edges.py` (inheritance, stated by one source and checked
-against another), `tools/derive_vtables.py` (where the vtable pointers live).
+against another), the retired `derive_vtables` (where the vtable pointers live).
 
 Outside opinions arrive through `tools/export_idb_members.py` (the IDA
 database, read without IDA), `tools/correlate_thinker_layouts.py`,
-`tools/correlate_pracx_layouts.py`, `tools/correlate_yitzi_notes.py`,
-`tools/run_ghidra_analysis.py`,
-`tools/correlate_external_analysis.py` and `tools/fetch_external_analysis.py`.
+the retired `correlate_pracx_layouts`, `tools/correlate_yitzi_notes.py`,
+the retired `run_ghidra_analysis`,
+the retired `correlate_external_analysis` and `tools/fetch_external_analysis.py`.
 Every one of them is a hypothesis until the image agrees.
 
 Layouts are then written and checked: `tools/emit_hypothesis_layouts.py`
-declares the classes `src/` does not, `tools/extend_short_classes.py` grows a
+declares the classes `src/` does not, the retired `extend_short_classes` grows a
 class the image proves is bigger, `tools/verify_class_layouts.py` records which
-extracted layouts survive a compile, `tools/promote_agreed_sizes.py` turns an
+extracted layouts survive a compile, the retired `promote_agreed_sizes` turns an
 agreed size into an assertion. Names come from
-`tools/name_members_from_behaviour.py` (the method that exists to touch the
-member) and `tools/name_members_from_sources.py` (what the outside sources call
+the retired `name_members_from_behaviour` (the method that exists to touch the
+member) and the retired `name_members_from_sources` (what the outside sources call
 it). `tools/classify_casts.py` reports every `this`-relative cast still in
 `src/`, which is the layout gap showing up in source form, and
-`tools/structure_observations.py` records what a recovery turned up on the way.
+the retired `structure_observations` records what a recovery turned up on the way.
 
 ### 4. Does it reproduce? — the search over source form
 
@@ -102,20 +102,20 @@ works directly as a loop condition. `--dir` is the one to reach for — it loads
 the image once and answers "which of these nine" instead of asking nine times.
 
 `tools/byte_match.py` is the comparison itself, `tools/byte_match_census.py`
-recompiles everything already recovered, `tools/byte_match_fanout.py` prepares
+recompiles everything already recovered, the retired `byte_match_fanout` prepares
 and scores batches, and `tools/emit_translation_unit.py` builds the standalone
 unit each is measured in — with declarations from `tools/class_layouts.py`,
 `tools/src_declarations.py` and `tools/emit_vtable_shim_header.py`.
-`tools/msvc6_byte_match.py` is the original five-function spike the route grew
+the retired `msvc6_byte_match` is the original five-function spike the route grew
 out of, kept because `BYTE_MATCH_ROUTE.md` reports its numbers.
 the retired `x86_lower`, the retired `x86_smt` and `tools/generator_support.py` are
 shared machinery underneath.
 
-Landing a match: `tools/harvest_proven_units.py` and
-`tools/preserve_worked_units.py` rescue proved work out of the build tree,
-`tools/integrate_recovery.py` moves it into a compiled file,
+Landing a match: the retired `harvest_proven_units` and
+the retired `preserve_worked_units` rescue proved work out of the build tree,
+the retired `integrate_recovery` moves it into a compiled file,
 `tools/repair_source_locations.py` re-points the catalogue at it, and
-`tools/build_regressions.py` records the bodies that gave up byte-exactness so
+the retired `build_regressions` records the bodies that gave up byte-exactness so
 the tree would compile.
 
 ---
@@ -142,7 +142,7 @@ tell someone to run a tool, and the someone being an agent changes nothing.
 
 The external Node harness is gone (see `docs/RETIRED_ROUTES.md`); five of its
 tools were never really its own and carry the loop today.
-`tools/mizuchi_context.py` emits the scaffolding-only unit,
+the retired `mizuchi_context` emits the scaffolding-only unit,
 `tools/emit_target_object.py` produces the COFF target,
 `tools/emit_mizuchi_prompts.py` holds the disassembler and the definition-head
 builder that `tools/agent_brief.py` now imports, `tools/mizuchi_declfix.py`
@@ -159,24 +159,24 @@ the retired `generate_vc6_exports` and the retired `generate_mingw_exports` emit
 module definition, `tools/verify_def_append_only.py` refuses to drop an export
 name, and the retired `generate_imports` derives the import shim table.
 Signedness is audited by `tools/audit_export_signedness.py` and
-`tools/audit_recovered_signatures.py`; the applier that acted on their findings
+the retired `audit_recovered_signatures`; the applier that acted on their findings
 is retired, so a disagreement is now reported and fixed by hand.
 
 ## Running it
 
-`tools/run_gate.py` runs the recovery gate in both presets.
-`tools/host_doctor.py` says whether this machine can run the harness at all.
+the retired `run_gate` runs the recovery gate in both presets.
+the retired `host_doctor` says whether this machine can run the harness at all.
 The game side: the retired `setup_game`, the retired `stage_preset_game_dir`,
 the retired `prepare_hybrid_image`, the retired `assemble_hybrid_image`,
 the retired `opensmac_patcher`, the retired `movie_skip`, the retired `run_game`,
 the retired `run_gameplay_scenario`, the retired `smoke_hybrid_game`.
 Wine plumbing: `tools/vc6_cl.py` (VC6 as a CMake compiler from Linux),
 `tools/owned_wine_prefix.py`, `tools/wine_runtime.py`,
-`tools/run_windows_test.py`, `tools/runtime_process.py`,
+`tools/run_windows_test.py`, the retired `runtime_process`,
 `tools/local_artifact.py`.
 Oracles: the retired `generate_signature_oracles`,
 the retired `extract_legacy_leaves`,
-`tools/export_recovery_inventory.py`, the retired `measure_observability`,
+the retired `export_recovery_inventory`, the retired `measure_observability`,
 the retired `mutate_and_verify`.
 
 ## Static recompilation — research, not the route
@@ -201,7 +201,6 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
 
 - `tools/verify_member_offsets.py` — no declared member boundary the image
   contradicts
-- `tools/verify_subobjects.py` — the subobject worklist, staleness only
 - `tools/verify_class_layouts.py` — which extracted layouts compile to the
   real size
 - `tools/verify_recovery_abi.py`, `tools/verify_recovery_pipeline.py` — the
@@ -228,6 +227,11 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
 - `tools/verify_checks_can_fail.py` — damages real inputs and requires each
   gate to go red
 - `tools/verify_check_tests_observe.py` — mutates each check and requires its
+  OWN tests to notice. The one diagnostic that found vacuous tests three audits
+  in a row, and the only instrument here that can say whether a test is worth
+  keeping. It was deleted on 2026-08-13 as an orphan and restored the same day:
+  it is reachable from nothing because it is a diagnostic you run deliberately,
+  which is a reason to keep it, not evidence that it is dead.
   OWN tests to notice. The one diagnostic that found vacuous tests three
   audits in a row.
 

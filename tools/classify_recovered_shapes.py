@@ -141,15 +141,29 @@ def classify(exe: Path, functions: Path):
     return out
 
 
+def render(rows) -> str:
+    """The artifact's text, in ONE place.
+
+    `write()` and `--check` rendered this separately until 2026-08-13, so the
+    byte comparison held only while the two copies happened to agree. Change the
+    column set in one and the check compares the new format against a file
+    written in the old one and calls it stale - forever, and with a message
+    pointing at the file rather than at the divergence.
+    """
+    import io
+    buffer = io.StringIO()
+    # LF, explicitly: csv defaults to CRLF and every other committed catalogue
+    # here is LF, so the default would make this the odd one out and make a byte
+    # comparison against it fail for no reason.
+    writer = csv.DictWriter(buffer, fieldnames=("address", "name", "shape"),
+                            lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(rows)
+    return buffer.getvalue()
+
+
 def write(rows, output: Path) -> None:
-    with output.open("w", newline="", encoding="utf-8") as handle:
-        # LF, explicitly: csv defaults to CRLF and every other committed
-        # catalogue here is LF, so the default would make this the odd one out
-        # and make a byte comparison against it fail for no reason.
-        writer = csv.DictWriter(handle, fieldnames=("address", "name", "shape"),
-                                lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(rows)
+    output.write_text(render(rows), encoding="utf-8")
 
 
 def main(argv=None) -> int:
@@ -172,15 +186,9 @@ def main(argv=None) -> int:
         if not args.output.is_file():
             print(f"error: {args.output} is missing", file=sys.stderr)
             return 1
-        import io
-        buffer = io.StringIO()
-        writer = csv.DictWriter(buffer, fieldnames=("address", "name", "shape"),
-                                lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(rows)
         with args.output.open(newline="", encoding="utf-8") as handle:
             committed = handle.read()
-        if buffer.getvalue() != committed:
+        if render(rows) != committed:
             print(f"error: {args.output} is stale; regenerate it",
                   file=sys.stderr)
             return 1

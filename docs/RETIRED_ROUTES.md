@@ -445,3 +445,63 @@ real signal for the un-proved population — `entry_range` and `start_only`
 near-misses are where a span is most likely wrong. Recovered as a QUERY against
 the IDA/Ghidra exports, run when a body will not match and the span is suspect,
 rather than as three committed files and a gate that regenerates them.
+
+## Twenty-five tools outside the three live paths — retired 2026-08-13
+
+Reachability had held at 83 tools with every one "reached from an entry point",
+but reachability only proves nothing is ORPHANED. Classifying instead by whether
+a tool is EXECUTED — by a CMake gate, by the agent loop, or by another tool's
+import — gave a different picture:
+
+    executed by CMake or the agent loop   34
+    library, imported by another tool     24
+    test-only: its test runs, it does not 18
+    reachable from nothing at all          7
+
+The 18 test-only tools are the interesting group, because they LOOK healthy: a
+CMake registration runs a test for each, and both registration gates go green.
+Neither gate checks that a test PASSES, which is how `analyze_delegates` sat
+failing on a ModuleNotFoundError since 271114cf.
+
+Retired here, with what each was for:
+
+  build_regressions, byte_match_fanout, msvc6_byte_match   superseded by
+      decomp_status, which measures the whole map in one pass
+  runtime_process, harvest_proven_units, preserve_worked_units   the runtime and
+      staging routes, retired above; harvest reported 0 remaining
+  derive_vtables, verify_subobjects, split_proved_fields, extend_short_classes,
+  promote_agreed_sizes, name_members_from_behaviour, name_members_from_sources,
+  correlate_pracx_layouts, structure_observations   the class-layout derivations,
+      whose outputs `src/` now carries directly
+  jump_tables, indirect_call_sites-adjacent helpers, integrate_recovery,
+  classify_recovered_shapes   analysis aids the byte-match loop does not invoke
+  run_gate, host_doctor   wrappers; host_doctor's checks moved to the one it
+      actually needed (VC6), see below
+  audit_recovered_signatures, correlate_external_analysis, run_ghidra_analysis,
+  export_recovery_inventory, mizuchi_context   the external-analysis and Ghidra
+      routes, retired above
+
+`parse_ranges` moved from classify_recovered_shapes into
+derive_prototypes_from_names, its only consumer: it is the helper that reads a
+body's SPANS rather than `end_address - address`, and the same arithmetic taken
+from the wrong span once cost 241 BYTE_EXACT claims.
+
+**One deletion was WRONG and is reverted in the same breath.**
+`verify_check_tests_observe.py` mutates each check and requires that check's own
+tests to notice — the only instrument here that can say whether a test is worth
+keeping, and the one that found vacuous tests three audits running. It was
+retired as an "orphan" because it is reachable from no gate, which is BY DESIGN:
+it is a diagnostic somebody runs deliberately. Restored the same day.
+
+Restoring it exposed why it had been silently useless: it imported
+`mutate_and_verify`, deleted with the mutation route on 2026-08-12, so it had
+been dead on arrival ever since and nothing noticed — an import error only
+surfaces when somebody runs the thing. Only `Function`, `build_mutants` and
+seven helpers were ever used, ~250 lines of 968, so those are inlined and the
+dependency is gone rather than resurrected. Its first run immediately reported
+that `test_verify_build_freshness` does not pass on the UNMUTATED tool, so
+nothing can be measured from it.
+
+Everything here is recoverable from git. The rule that put them on this list is
+"outside all three live paths", not "worthless": bring one back by restoring the
+file and giving it a line in docs/TOOLS.md, which is what makes it reachable.
