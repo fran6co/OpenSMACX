@@ -2,7 +2,7 @@
 // name      ?add_special@StringBox@@QAEHPAD@Z
 // size      36 bytes
 // spans     0x00629750-0x00629774
-// prototype void (__thiscall ?add_special@StringBox@@QAEXPAD@Z)(StringBox* this, int8*)
+// prototype int (__thiscall ?add_special@StringBox@@QAEHPAD@Z)(StringBox* this, int8*)
 // callers   1   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok

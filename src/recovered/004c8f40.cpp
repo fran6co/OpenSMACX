@@ -2,7 +2,7 @@
 // name      ?unload@VoiceTx@@QAEHXZ
 // size      48 bytes
 // spans     0x004C8F40-0x004C8F70
-// prototype void (__thiscall ?unload@VoiceTx@@QAEXXZ)(VoiceTx* this)
+// prototype int (__thiscall ?unload@VoiceTx@@QAEHXZ)(VoiceTx* this)
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok

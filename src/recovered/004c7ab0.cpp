@@ -2,7 +2,7 @@
 // name      ?is_trackset_playing@Midi@@QAE_NI@Z
 // size      32 bytes
 // spans     0x004C7AB0-0x004C7AD0
-// prototype int (__thiscall ?is_trackset_playing@Midi@@QAEHI@Z)(Midi* this, unsigned int)
+// prototype bool (__thiscall ?is_trackset_playing@Midi@@QAE_NI@Z)(Midi* this, unsigned int)
 // callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok

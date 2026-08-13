@@ -525,7 +525,7 @@ ORIGINAL: 0x006077F0 BYTE_EXACT
 // name      ?on_key_click@BaseButton@@QAEHHH@Z
 // size      5 bytes
 // spans     0x006077F0-0x006077F5
-// prototype void (__thiscall ?on_key_click@BaseButton@@QAEXHH@Z)(BaseButton* this, int, int)
+// prototype int (__thiscall ?on_key_click@BaseButton@@QAEHHH@Z)(BaseButton* this, int, int)
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -548,7 +548,7 @@ ORIGINAL: 0x00607800 BYTE_EXACT
 // name      ?on_key_down@BaseButton@@QAEHH@Z
 // size      5 bytes
 // spans     0x00607800-0x00607805
-// prototype void (__thiscall ?on_key_down@BaseButton@@QAEXH@Z)(BaseButton* this, int)
+// prototype int (__thiscall ?on_key_down@BaseButton@@QAEHH@Z)(BaseButton* this, int)
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -571,7 +571,7 @@ ORIGINAL: 0x00607810 BYTE_EXACT
 // name      ?on_key_up@BaseButton@@QAEHH@Z
 // size      5 bytes
 // spans     0x00607810-0x00607815
-// prototype void (__thiscall ?on_key_up@BaseButton@@QAEXH@Z)(BaseButton* this, int)
+// prototype int (__thiscall ?on_key_up@BaseButton@@QAEHH@Z)(BaseButton* this, int)
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
