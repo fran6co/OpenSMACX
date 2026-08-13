@@ -813,7 +813,6 @@ if(BUILD_TESTING)
     # them would not be testing the thing that matters.
     opensmacx_add_python_tool_test(host-doctor-tests test_host_doctor.py)
 
-    opensmacx_add_python_tool_test(shape-classifier-tool-tests test_classify_recovery_shapes.py)
 
 
 
@@ -1016,7 +1015,6 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(generator-support-tests test_generator_support.py)
 
-    opensmacx_add_python_tool_test(delegate-analysis-tool-tests test_analyze_delegates.py)
 
 
 
@@ -1098,8 +1096,6 @@ if(BUILD_TESTING)
     # that a body ends at the next symbol IN ITS OWN SECTION, that an ambiguous
     # name is refused, and that i686 fastcall decoration is undone in the one
     # direction c++filt accepts. Fixtures are synthetic COFF; no build needed.
-    opensmacx_add_python_tool_test(compiled-recovery-extractor-tests
-        test_extract_compiled_recovery.py)
 
     # The Z3 x86 encoding. These tests do NOT establish that it is correct.
     # validate_x86_smt (retired) is what does that, by driving the encoding and

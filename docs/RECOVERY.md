@@ -113,7 +113,6 @@ function notebook or Dio address labels:
   --source-path Information/Yitzi/functionlisting.txt
 .opensmacx/venv/bin/python tools/correlate_external_analysis.py \
   --source-path "Information/Dio/Label addresses in assembly code.txt"
-.opensmacx/venv/bin/python tools/build_export_recovery_queue.py
 ```
 
 The tools validate cataloged sizes and SHA-256 values. Correlation outputs contain only source line
