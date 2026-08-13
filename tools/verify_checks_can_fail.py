@@ -555,9 +555,70 @@ CASES = (
      damage_retired_cmake_path, "does not exist"),
 )
 
-# The gate checks this tool is responsible for. Adding a check here without
-# adding a case fails the run, which is the point: a check ships with a proof
-# that it can fail, or it does not ship.
+CMAKELISTS = REPO_ROOT / "CMakeLists.txt"
+
+
+def gate_checks(cmakelists=None) -> set:
+    r"""Every `add_test` block that runs a `tools/` script, DERIVED from CMake.
+
+    The requirement below used to be a hand-written set, which is
+    a hand-written list of the things you must prove - the same defect as a
+    hand-written list of the things you must check, one level up, and hiding in
+    the one file whose whole subject is a check that reports success while
+    verifying nothing. Measured 2026-08-13: CMake registered 28 such checks and
+    the set named 14.
+
+    The block extent is found by COUNTING PARENS, not by a regex. A
+    non-greedy `(.*?)\n\s*\)` looks correct and silently loses any block whose
+    body contains a line ending in `)` - it missed `recovery-abi` and
+    `export-signedness-audit` on the first attempt, and the miss was invisible
+    because both were in the hand-written set and so could never show up as
+    absent. This parser is pinned by a test that asserts those two names are
+    found.
+    """
+    text = (cmakelists or CMAKELISTS).read_text(errors="replace")
+    # Comments first: the prose here and in CMakeLists carries unbalanced parens
+    # that would run the scan past the block's real close.
+    body = re.sub(r"(?<!\\)#.*", "", text)
+    gates = set()
+    for match in re.finditer(r"add_test\(\s*NAME\s+([A-Za-z0-9_-]+)", body):
+        index, depth = match.end(), 1
+        while index < len(body) and depth:
+            depth += (body[index] == "(") - (body[index] == ")")
+            index += 1
+        if "tools/" in body[match.end():index]:
+            gates.add(match.group(1))
+    # A floor, so a parser that quietly matches nothing cannot report a clean
+    # sweep over an empty population - the exact shape this file exists to hunt.
+    if len(gates) < 20:
+        raise SystemExit(f"gate_checks found only {len(gates)} checks in "
+                         f"{(cmakelists or CMAKELISTS).name}; the scan is broken")
+    return gates
+
+
+# Registered checks with no damage case YET. SHRINK-ONLY: a test beside this
+# file fails if it grows, so a NEW check cannot join the backlog - it ships with
+# a proof it can fail, or it does not ship. Everything here was already
+# unpoliced before the requirement was derived; naming them turns an invisible
+# gap into a counted one.
+EXEMPT = {
+    "access-lower-bounds-current",
+    "agreed-class-sizes-current",
+    "base-edges-current",
+    "build-freshness",
+    "checks-can-fail",
+    "class-size-bounds-current",
+    "def-append-only",
+    "derived-prototypes-current",
+    "hypothesis-layouts-current",
+    "idb-members-current",
+    "member-offsets-current",
+    "tool-reachability",
+    "vtable-shim-header-current",
+    "yitzi-sizes-current",
+}
+
+# Kept as the set this tool used to police by hand, so the diff is legible.
 COVERED_CHECKS = {
     "tool-test-registration",
     "test-registration",
@@ -649,7 +710,15 @@ def main():
                 print(f"        {message[0][:120]}")
 
     proved = {check for check, _ in passed}
-    uncovered = sorted(COVERED_CHECKS - proved)
+    registered = gate_checks()
+    # A case naming a check CMake does not register guards nothing: the name
+    # drifted or the check was retired, and either way it stopped being evidence
+    # without anybody noticing.
+    orphans = sorted({case[0] for case in CASES} - registered)
+    for name in orphans:
+        print(f"    {name}: a case names it, but CMake registers no such check",
+              file=sys.stderr)
+    uncovered = sorted(registered - EXEMPT - proved)
     if uncovered:
         print("\nchecks-can-fail: these checks have no damage case that "
               "actually ran, so nothing here shows they can fail:",
@@ -661,7 +730,9 @@ def main():
         print("  Add a case to CASES, or explain in COVERED_CHECKS why the "
               "check cannot be damaged mechanically.", file=sys.stderr)
 
-    if failures or uncovered:
+    print(f"checks-can-fail: {len(registered - EXEMPT)} of {len(registered)} "
+          f"registered check(s) must prove they can fail, {len(EXEMPT)} exempt")
+    if failures or uncovered or orphans:
         print(f"\nchecks-can-fail: {len(failures)} check(s) did not refuse "
               f"damaged input, {len(uncovered)} unproven", file=sys.stderr)
         for check, description, why in failures:
