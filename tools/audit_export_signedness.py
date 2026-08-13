@@ -37,7 +37,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(1, str(Path(__file__).resolve().parent))
 from generator_support import parse_body_ranges, read_bytes  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
 

@@ -95,16 +95,30 @@ def control(exe: Path) -> tuple[int, int]:
     return over, under
 
 
+def render(found: dict) -> str:
+    """The artifact's text, in ONE place.
+
+    `write()` and `--check` each rendered this independently until 2026-08-13 -
+    the same six lines twice - so the comparison only held while both copies
+    happened to agree. Edit one and the check compares a format against itself
+    in the other format, forever, and reports that as a stale file. A gate whose
+    two halves can disagree about what it is checking is not checking it.
+    """
+    import io
+    buffer = io.StringIO()
+    # LF, because every other committed catalogue is LF and csv defaults to
+    # CRLF; that mismatch has already cost one --check failure here.
+    writer = csv.writer(buffer, lineterminator="\n")
+    writer.writerow(FIELDS)
+    for name in sorted(found):
+        size, evidence = found[name]
+        writer.writerow([name, f"0x{size:X}", evidence])
+    return buffer.getvalue()
+
+
 def write(path: Path, found: dict) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        # LF, because every other committed catalogue is LF and csv defaults to
-        # CRLF; that mismatch has already cost one --check failure here.
-        writer = csv.writer(handle, lineterminator="\n")
-        writer.writerow(FIELDS)
-        for name in sorted(found):
-            size, evidence = found[name]
-            writer.writerow([name, f"0x{size:X}", evidence])
+    path.write_text(render(found), encoding="utf-8")
     return len(found)
 
 
@@ -160,14 +174,7 @@ def main(argv=None) -> int:
 
     if args.check:
         current = args.out.read_text(encoding="utf-8") if args.out.is_file() else ""
-        import io
-        buffer = io.StringIO()
-        writer = csv.writer(buffer, lineterminator="\n")
-        writer.writerow(FIELDS)
-        for name in sorted(found):
-            size, evidence = found[name]
-            writer.writerow([name, f"0x{size:X}", evidence])
-        if buffer.getvalue() != current:
+        if render(found) != current:
             print(f"{args.out} is out of date", file=sys.stderr)
             return 1
         print(f"{args.out} is current")

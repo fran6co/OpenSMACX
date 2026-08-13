@@ -7,7 +7,7 @@ see docs/PORTING.md (retired), which is a different problem.
 Start with:
 
 ```
-python3 tools/host_doctor.py
+python3 the retired `host_doctor`
 ```
 
 It imports nothing outside the standard library, so it works on a box that has

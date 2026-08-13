@@ -103,7 +103,7 @@ against it, never to trust directly.
    records `// recovered in src/<file>:<line>`, so inserting a body **above**
    a function it verifies — in the same file, without touching that function —
    makes it stale and fails `signature-oracle-generator-tests` in *both* lanes.
-6. `tools/run_gate.py` - `verify-recovery-batch` in **both** presets, run
+6. the retired `run_gate` - `verify-recovery-batch` in **both** presets, run
    concurrently, one log per lane; then
    `mutate_and_verify (retired) <source> --address <addr>`
    and require every valid mutant killed. That command has **no default
@@ -192,9 +192,9 @@ gameplay tests keep a central `main()` list:
   nothing linked against it. Correcting a decoration means aliasing the old and
   the new spelling to the same GCC symbol. Note also that `ctest` is not the
   gate: staging runs before the tests, so all 62 can pass while the game can no
-  longer load the DLL. Run `tools/run_gate.py`.
+  longer load the DLL. Run the retired `run_gate`.
 - A test must never write into the source tree, not even to restore what it
-  wrote. `tools/run_gate.py` runs both presets concurrently, so the other lane
+  wrote. the retired `run_gate` runs both presets concurrently, so the other lane
   reads those files while the test is mid-write. A test that appended one line
   to `docs/recovery/functions.csv` and put it back made the debug lane read it
   at **0 bytes** - measured 36 times in 40 s - and the lane died with
@@ -344,7 +344,6 @@ artifact and has been withdrawn; see the closing section.
 - Do not pass `--force` as a matter of course. It bypasses both the stamp cache and the export checkpoint, turning a one-second verification into a multi-minute IDB parse, and it buys nothing: the ordinary path already regenerates and fails the byte comparison whenever an input or a committed output has drifted. Measured on this tree: cached 1.0s, reused-export after a line-shifting source edit 2.4s, `--force` several minutes.
 - Build `promote-recovery-metadata` **before** the gate on any batch that landed a recovery. Every recovery changes the source bindings the exporter reads, so the committed catalogs are stale by construction and an unpromoted gate is guaranteed to fail its first pass, take a manual copy, and be run again - a second full gate cycle that proves nothing the first one did not. The target regenerates, copies into `docs/recovery/`, and still performs the byte comparison, so determinism is certified in one pass rather than two. It is deliberately not a dependency of `verify-recovery-batch`: the gate must keep failing on drift for anyone who has not consciously promoted.
 - `verify-recovery-batch` builds and runs behavioral tests, ABI checks, differential oracles, ordinary island regeneration, metadata verification, staging, and runtime smoke.
-- Run both preset gates with `tools/run_gate.py`, which runs them **concurrently**. Nothing in the `verify-recovery-batch` graph writes the source tree - build tree, staged game, hybrid image, oracle manifests and Wine prefix are all under the preset's own binary dir, `.opensmacx/game` is read-only during a batch, and `tools/runtime_process.py` matches kills on a `secrets.token_hex(16)`-named hard link, so one lane cannot reap the other's game. Measured: serial 332.44 s (debug 184.47 s then release 147.97 s), concurrent 190.11 s, **1.75x**, per-lane cost 1.5% debug and 4.7% release. Verdicts identical either way in both presets - the same 13 oracle suites all passed with byte-identical result files, and the same 118 generated verdicts split `{PASS 50, INCONCLUSIVE-no-effect 45, INCONCLUSIVE-original-faulted 22, INCONCLUSIVE-original-unstable 1}`. `--preset` runs one lane alone and `--serial` runs both in sequence, for a machine that cannot afford two. Do **not** add `promote-recovery-metadata` to it: that target writes `docs/recovery/` in the source tree, which is the one thing the two lanes must not both do. Promote first, serially, then gate.
 - Its CTest phase runs `--parallel ${OPENSMACX_CTEST_JOBS}` (default 8). The seven Wine-backed tests share the one owned prefix and each stops it on the way out, so they hold a `RESOURCE_LOCK wineprefix` and never run two at a time; the other 52 are host-side and independent. Measured on this tree: debug 67.9 s serial against 45.3 s (1.50x), release 51.1 s against 27.3 s (1.87x), 59/59 in every run. Without the lock, plain `ctest -j8` failed `recovery-leaf-tests` where the serial run passed - and a different Wine test each time, which is why `wine-test-lock-check` verifies the lock list against the generated `CTestTestfile.cmake` rather than trusting it.
 - All proprietary-producing paths are restricted to nonsymlinked descendants of `.opensmacx/` or `build/`.
 
@@ -723,7 +722,6 @@ parallel-agent targets (see "Parallel recovery" above):
   priced, and which way a number moves. Both the full exporter and the reused-export refresh path
   compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
 - `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
-- `tools/correlate_external_analysis.py`: address-only correlation for local Yitzi and Dio inputs.
 - `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
 - the retired `extract_legacy_leaves`: conservative local-only island extractor.
 - `test_extract_legacy_leaves (retired)`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
@@ -734,14 +732,12 @@ parallel-agent targets (see "Parallel recovery" above):
 - the retired `movie_skip`: transactional PRACX movie-command override for owned launch tools.
 - `test_smoke_hybrid_game (retired)`: source-owned loader-context, diagnostics, prefix-ownership, and movie-skip tests.
 - `tools/owned_wine_prefix.py`: marker-protected initialization and shutdown for the dedicated runtime-test prefix.
-- `tools/runtime_process.py`: random executable aliases and exact owned-wrapper discovery/termination.
 - the retired `run_gameplay_scenario`: deterministic scenario launcher, result validator, and owned-process cleanup.
 - `test_run_gameplay_scenario (retired)`: source-owned fixture, result, diagnostics, and process-alias tests.
 - `tools/ghidra/DecompileFunction.java`: exact-entry decompiler used with the persistent project.
 - the retired `add_redirect`: wires one redirect across the CSV, the regenerated signature header, the dllmain spec table and its count in a single checked step, computing the sorted insertion position rather than appending and restoring every file if any check fails.
 - the retired `generate_mingw_exports`: the generator that emits `src/OpenSMACX.def`'s MinGW export aliases; nothing else references it, so its provenance is recorded here.
 - the retired `mutate_and_verify`: mutation harness that mechanises the poison check - derives dropped stores, per-occurrence perturbed constants, inverted comparisons and dependent-statement swaps from each `Original Offset:` function, filters equivalent or invalid divided-index mutants and ABI-only empty compiler barriers, rebuilds, and requires the named suite to kill every mutant; survivors are coverage holes and compile failures are counted as evidence of nothing. Every CTest invocation stops the owned Wine prefix; the retired reuse option cost 1.05 s per invocation to save 0.053 s of teardown, because the retained Wine session holds CTest's output pipe open.
-- `tools/run_gate.py`: runs `verify-recovery-batch` in both presets concurrently, one log per lane, naming any lane that fails rather than counting them; `--preset` for one alone and `--serial` for one after the other. It never runs `promote-recovery-metadata`, the one gate-adjacent target that writes the source tree.
 - `tools/verify_wine_test_locks.py`: checks the generated `CTestTestfile.cmake` so that every test invoking `run_windows_test.py` holds `RESOURCE_LOCK wineprefix`; a Wine test missing from that list does not fail under `ctest -j`, it flakes.
 - `tools/ghidra/ExportInteriorReferences.java`: exports external references entering function interiors.
 - `docs/recovery/ghidra-interior-references.csv`: committed 2,574-row interior-reference sidecar.

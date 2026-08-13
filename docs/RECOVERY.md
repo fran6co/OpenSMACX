@@ -11,7 +11,7 @@ Install the pinned tools and run the exporter from the repository root:
 
 ```sh
 python3 -m pip install -r tools/requirements.txt
-python3 tools/export_recovery_inventory.py
+python3 the retired `export_recovery_inventory`
 ```
 
 The hash-pinned annotated IDB is a local proprietary analysis input. Place the verified database at
@@ -80,7 +80,7 @@ cannot silently drift after database changes.
 Ghidra 12.1 or newer can analyze the original executable and export address-keyed metadata:
 
 ```sh
-python3 tools/run_ghidra_analysis.py --exe /path/to/terranx.exe
+python3 the retired `run_ghidra_analysis` --exe /path/to/terranx.exe
 python3 tools/export_idb_members.py
 ```
 
@@ -109,9 +109,9 @@ function notebook or Dio address labels:
 
 ```sh
 .opensmacx/venv/bin/python tools/fetch_external_analysis.py
-.opensmacx/venv/bin/python tools/correlate_external_analysis.py \
+.opensmacx/venv/bin/python the retired `correlate_external_analysis` \
   --source-path Information/Yitzi/functionlisting.txt
-.opensmacx/venv/bin/python tools/correlate_external_analysis.py \
+.opensmacx/venv/bin/python the retired `correlate_external_analysis` \
   --source-path "Information/Dio/Label addresses in assembly code.txt"
 ```
 
@@ -171,7 +171,7 @@ of the local IDB, original executable, and generated oracle objects. Both preset
 normal way to do that, since the two lanes share no writable state:
 
 ```sh
-.opensmacx/venv/bin/python tools/run_gate.py
+.opensmacx/venv/bin/python the retired `run_gate`
 ```
 
 Measured on this tree, 332.44 s serial against 190.11 s concurrent (1.75x) with identical verdicts.

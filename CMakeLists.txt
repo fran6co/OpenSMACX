@@ -800,7 +800,6 @@ if(BUILD_TESTING)
 
 
 
-    opensmacx_add_python_tool_test(gate-runner-tests test_run_gate.py)
 
     # The runner that every Wine-backed test goes through. Its one job beyond
     # invoking wine is to stop the owned prefix afterwards, and skipping that
@@ -811,7 +810,6 @@ if(BUILD_TESTING)
     # Runs on the stock interpreter on purpose. The doctor's job is to diagnose
     # a machine that has none of the dependencies yet, so a test that needed
     # them would not be testing the thing that matters.
-    opensmacx_add_python_tool_test(host-doctor-tests test_host_doctor.py)
 
 
 
@@ -825,7 +823,6 @@ if(BUILD_TESTING)
     # without it, so only its offline half is registered: the COFF reader, the
     # normalisation, and the comparator. Those are the parts that could turn a
     # mismatch into a match, and they run everywhere.
-    opensmacx_add_python_tool_test(msvc6-byte-match-tests test_msvc6_byte_match.py)
 
     # The general oracle the experiment was extracted into. Same reasoning, and
     # one addition: it pins that the SHAPE_EXACT tier can actually FIRE. Its
@@ -892,32 +889,20 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(thinker-layout-tests
                                    test_correlate_thinker_layouts.py)
 
-    opensmacx_add_python_tool_test(member-naming-tests
-                                   test_name_members_from_sources.py)
 
     opensmacx_add_python_tool_test(access-bound-tests
                                    test_derive_access_bounds.py)
 
-    opensmacx_add_python_tool_test(short-class-tests
-                                   test_extend_short_classes.py)
 
     opensmacx_add_python_tool_test(agent-brief-tests
                                    test_agent_brief.py)
 
-    opensmacx_add_python_tool_test(structure-observation-tests
-                                   test_structure_observations.py)
 
     opensmacx_add_python_tool_test(vc6-wrapper-tests
                                    test_vc6_cl.py)
 
-    opensmacx_add_python_tool_test(integrate-recovery-tests
-                                   test_integrate_recovery.py)
 
-    opensmacx_add_python_tool_test(harvest-proven-units-tests
-                                   test_harvest_proven_units.py)
 
-    opensmacx_add_python_tool_test(build-regression-tests
-                                   test_build_regressions.py)
 
     opensmacx_add_python_tool_test(vtable-slot-tests
                                    test_vtable_slots.py)
@@ -940,17 +925,11 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(verify-function-tests
                                    test_verify_recovered_function.py)
 
-    opensmacx_add_python_tool_test(pracx-layout-tests
-                                   test_correlate_pracx_layouts.py)
 
-    opensmacx_add_python_tool_test(vtable-tests
-                                   test_derive_vtables.py)
 
     opensmacx_add_python_tool_test(yitzi-notes-tests
                                    test_correlate_yitzi_notes.py)
 
-    opensmacx_add_python_tool_test(behaviour-naming-tests
-                                   test_name_members_from_behaviour.py)
 
     opensmacx_add_python_tool_test(base-edge-tests
                                    test_derive_base_edges.py)
@@ -976,22 +955,14 @@ if(BUILD_TESTING)
     # replacement must occupy exactly the bytes the slab did, or every member
     # after it moves. `--apply` re-probes and reverts on a size change, and
     # these are what make that revert rare rather than routine.
-    opensmacx_add_python_tool_test(proved-field-split-tests
-                                   test_split_proved_fields.py)
 
     # The third reading of a layout, and the only one that recovers TYPES. A
     # constructor's receiver IS the object it constructs, so `??0Palette` on
     # `this + 0x5BC` states that a Palette begins there - which is how
     # src/flic.h was found declaring a pointer where 0x454 bytes of object
     # live, and how 23 undeclared inheritance edges surfaced at offset zero.
-    opensmacx_add_python_tool_test(subobject-site-tests
-                                   test_verify_subobjects.py)
 
-    opensmacx_add_python_tool_test(byte-match-ratchet-tests
-                                   test_byte_match_fanout.py)
 
-    opensmacx_add_python_tool_test(size-promotion-tests
-                                   test_promote_agreed_sizes.py)
 
     opensmacx_add_python_tool_test(recovery-symbol-tests
                                    test_recovery_symbols.py)
@@ -1048,7 +1019,6 @@ if(BUILD_TESTING)
 
     # The shape catalogue behind unproven_by_shape. A misclassified body is
     # invisible in the total, so the decisions are tested on synthetic bytes.
-    opensmacx_add_python_tool_test(recovered-shape-classifier-tests test_classify_recovered_shapes.py)
 
     # Every population docs/EXCLUSIONS.md declares out of scope. An exclusion
     # is a promise about a number, and the two numbers this file re-derives
@@ -1199,7 +1169,6 @@ if(BUILD_TESTING)
     # derivation is cross-checked here against arithmetic on the PE's own
     # FirstThunk, independent of the pefile attribute the generator reads.
 
-    opensmacx_add_python_tool_test(jump-table-tests test_jump_tables.py)
 
 
 
@@ -1527,7 +1496,6 @@ if(BUILD_TESTING)
     # something outside the build, which is what the never-issue-a-global-Wine-
     # shutdown rule exists to prevent. The negative cases are the point: a
     # command holding `<staged>.log`, a different token, a non-wine launcher.
-    opensmacx_add_python_tool_test(runtime-process-tests test_runtime_process.py)
 
     # measure_observability.py answers "does anything watch this function" for
     # one build per function instead of ~152, which is what made asking it over

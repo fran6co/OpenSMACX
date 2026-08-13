@@ -315,6 +315,27 @@ def _top_level_convention(demangled: str):
     return None
 
 
+def parse_ranges(value: str):
+    """The body's spans, which is NOT `end_address - address`.
+
+    416 catalogued functions are split, and 402 carry a second cold span, so a
+    contiguous read from the entry runs past the body and into whatever follows
+    it - up to 2,102 bytes of another function in the worst measured case. The
+    same arithmetic, taken from the LAST span instead of the first, cost 241
+    BYTE_EXACT claims once.
+
+    Moved here from classify_recovered_shapes.py on 2026-08-13 when that tool
+    was retired: it was the only thing left in it that anything still used.
+    """
+    out = []
+    for item in (value or "").split(";"):
+        if not item:
+            continue
+        start, end = item.split("-", 1)
+        out.append((int(start, 0), int(end, 0)))
+    return sorted(out)
+
+
 def derive_one(address: str, name: str, demangled: str) -> Derived | None:
     """The prototype a mangled name states, or None when it states none.
 
@@ -670,7 +691,6 @@ def read_purges(addresses, rows, exe: Path) -> dict:
     import pefile
     from capstone import CS_ARCH_X86, CS_MODE_32, Cs
 
-    from classify_recovered_shapes import parse_ranges
     from generator_support import read_bytes
 
     pe = pefile.PE(str(exe), fast_load=True)
