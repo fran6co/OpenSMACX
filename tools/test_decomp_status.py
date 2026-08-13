@@ -645,6 +645,92 @@ class CatalogFactsTest(unittest.TestCase):
         self.assertIn("// indirect", text)
 
 
+class DemoteLeversTest(unittest.TestCase):
+    """A lever the measurement contradicts is demoted, not argued about.
+
+    `LEVER` names what MADE a body match. Agents keep writing it for "what
+    improved this" - three consecutive batches, five annotations in the third -
+    and each time the gate went red and a human moved the token by hand. Since
+    `--record-matches` already stamps BYTE_EXACT FROM MEASUREMENT, demoting a
+    contradicted lever is the same rule pointed the other way.
+    """
+
+    def setUp(self):
+        self.work = Path(tempfile.mkdtemp())
+        self.original_root = decomp_status.REPO_ROOT
+        decomp_status.REPO_ROOT = self.work
+
+    def tearDown(self):
+        decomp_status.REPO_ROOT = self.original_root
+        import shutil
+        shutil.rmtree(self.work, ignore_errors=True)
+
+    def write(self, name, marker, lever="// LEVER: flipped the arms\n"):
+        path = self.work / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"{marker}\n{lever}void f() {{}}\n")
+        return name
+
+    def annotation(self, name, matched, levers=(("jl/jge", "flipped"),)):
+        return decomp_status.annotation_scan.Annotation(
+            address=0x00401000, mode=decomp_status.annotation_scan.MODE_FILE,
+            state=decomp_status.annotation_scan.STATE_IMPLEMENTED,
+            path=name, line=1, matched=matched, levers=levers)
+
+    def test_a_lever_on_a_mismatch_is_demoted(self):
+        name = self.write("a.cpp", "// ORIGINAL: 0x00401000 FILE")
+        changed = decomp_status.demote_levers(
+            [self.annotation(name, matched=False)],
+            {0x00401000: {"tier": "MISMATCH"}})
+        self.assertEqual(len(changed), 1)
+        text = (self.work / name).read_text()
+        self.assertIn("// RULED-OUT: flipped the arms", text)
+        self.assertNotIn("// LEVER:", text)
+
+    def test_the_prose_survives_verbatim(self):
+        # The observation is real; only the token was wrong. Losing the prose
+        # would make the demotion cost more than the fault it fixes.
+        name = self.write("b.cpp", "// ORIGINAL: 0x00401000 FILE",
+                          "// LEVER: `x < 0x18` emits jge where `x <= 0x17` emits jg\n")
+        decomp_status.demote_levers([self.annotation(name, matched=False)],
+                                    {0x00401000: {"tier": "MISMATCH"}})
+        self.assertIn("`x < 0x18` emits jge where `x <= 0x17` emits jg",
+                      (self.work / name).read_text())
+
+    def test_a_lever_on_a_proved_body_is_left_alone(self):
+        name = self.write("c.cpp", "// ORIGINAL: 0x00401000 BYTE_EXACT FILE")
+        changed = decomp_status.demote_levers(
+            [self.annotation(name, matched=True)],
+            {0x00401000: {"tier": "BYTE_EXACT"}})
+        self.assertEqual(changed, [])
+        self.assertIn("// LEVER:", (self.work / name).read_text())
+
+    def test_a_body_this_run_proved_keeps_its_lever(self):
+        # record_claims stamps first, but `matched` is still False on the
+        # in-memory annotation, so the TIER is what has to save it.
+        name = self.write("d.cpp", "// ORIGINAL: 0x00401000 FILE")
+        changed = decomp_status.demote_levers(
+            [self.annotation(name, matched=False)],
+            {0x00401000: {"tier": "BYTE_EXACT"}})
+        self.assertEqual(changed, [])
+        self.assertIn("// LEVER:", (self.work / name).read_text())
+
+    def test_an_annotation_with_no_lever_is_untouched(self):
+        name = self.write("e.cpp", "// ORIGINAL: 0x00401000 FILE",
+                          "// RULED-OUT: ternary\n")
+        changed = decomp_status.demote_levers(
+            [self.annotation(name, matched=False, levers=())],
+            {0x00401000: {"tier": "MISMATCH"}})
+        self.assertEqual(changed, [])
+
+    def test_it_reports_the_tier_that_contradicted_the_lever(self):
+        name = self.write("f.cpp", "// ORIGINAL: 0x00401000 FILE")
+        changed = decomp_status.demote_levers(
+            [self.annotation(name, matched=False)],
+            {0x00401000: {"tier": "SHAPE_EXACT"}})
+        self.assertEqual(changed[0][1], "SHAPE_EXACT")
+
+
 class ScaffoldModeTest(unittest.TestCase):
     """A generated whole-unit scaffold must stay annotated `FILE`.
 
