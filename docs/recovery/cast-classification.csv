@@ -76,10 +76,10 @@ src/checkbox.cpp,239,0x0060EC80,CheckBox,MISMATCH,this,0xd4,char *,receiver-is-s
 src/checkbox.cpp,242,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/checkbox.cpp,245,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/checkbox.cpp,248,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/console.cpp,169,0x0050F650,Console,MISMATCH,this,0x23d1c,uint8_t *,inside-declared-member,field_22E74_,0x23888,3412,0x22e74,,derived,"the comment says 0x22e74, the accumulated layout says 0x23888 - one of them is wrong"
-src/console.cpp,445,0x005108A0,Console,NO_COMPILE,this,0x23c00,uint8_t *,inside-declared-member,field_22E74_,0x23888,3412,0x22e74,,derived,"the comment says 0x22e74, the accumulated layout says 0x23888 - one of them is wrong"
+src/console.cpp,169,0x0050F650,Console,MISMATCH,this,0x23d1c,uint8_t *,exact-member-typeable,field_23D1C_,0x23d1c,4,0x23d1c,,derived,
+src/console.cpp,445,0x005108A0,Console,NO_COMPILE,this,0x23c00,uint8_t *,exact-member-typeable,field_23C00_,0x23c00,4,0x23c00,,derived,
 src/console.cpp,563,0x0051D740,Console,BYTE_EXACT,this,,char *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/console.cpp,564,0x0051D740,Console,BYTE_EXACT,self,0x23bdc,int *,inside-declared-member,field_22E74_,0x23888,3412,0x22e74,,derived,"the comment says 0x22e74, the accumulated layout says 0x23888 - one of them is wrong"
+src/console.cpp,564,0x0051D740,Console,BYTE_EXACT,self,0x23bdc,int *,exact-member-typeable,field_23BDC_,0x23bdc,4,0x23bdc,,proved,
 src/councwin.cpp,331,,,,this,,char *,outside-any-catalogued-body,,,,,,derived,no `Original Offset:` precedes this line
 src/councwin.cpp,332,,,,self,,int *,outside-any-catalogued-body,,,,,,derived,no `Original Offset:` precedes this line
 src/councwin.cpp,334,,,,self,,int *,outside-any-catalogued-body,,,,,,derived,no `Original Offset:` precedes this line

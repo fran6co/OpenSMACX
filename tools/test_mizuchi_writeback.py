@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import sys
 import textwrap
 import unittest
@@ -59,6 +60,50 @@ SOURCE = textwrap.dedent("""\
 # `set_loc`'s doc comment opens on line 3; `later`'s on line 12.
 FIRST = 0x00601B80
 SECOND = 0x00601C00
+
+# The real tree, captured at import: the fixture patches `tool.MATCHED_DIR` at
+# a temporary directory, and the store guard below is about the repository.
+ROOT = Path(__file__).resolve().parent.parent
+CMAKE = ROOT / "CMakeLists.txt"
+# Spelled the way the build would have to spell it, derived rather than typed
+# so moving the store cannot leave a guard watching an address nothing uses.
+STORE = Path(tool.MATCHED_DIR)
+STORE_PATH = STORE.relative_to(ROOT).as_posix()
+
+
+def cmake_code(text=None):
+    """CMakeLists.txt - or `text` - with its comments removed.
+
+    The prose is not the build. The store guard used to substring-search the
+    whole file, and it went red on 2026-08-12 when two comments - one on the
+    test that was deleting `src/recovered/00401000.cpp`, one on the frontier
+    join - mentioned the directory by name while the source list was
+    untouched. A guard that fires on the documentation of the thing it
+    protects can only be made green by not writing the explanation, so it has
+    to read the code.
+
+    A `#` inside a quoted string is not a comment; nothing here spans a quote
+    across lines (the six odd-quote lines are all prose, and CMake's bracket
+    comment `#[[` appears nowhere), so tracking quotes within the line is
+    enough. `text` exists so the callers below can put damage through the
+    same strip that reads the tree, rather than a paraphrase of it.
+    """
+    stripped = []
+    for line in (CMAKE.read_text() if text is None else text).splitlines():
+        cut, quoted = len(line), False
+        for index, char in enumerate(line):
+            if char == '"':
+                quoted = not quoted
+            elif char == "#" and not quoted:
+                cut = index
+                break
+        stripped.append(line[:cut])
+    return "\n".join(stripped)
+
+
+def compiled_sources(code):
+    """Every C/C++ path the build names, from any target or list."""
+    return re.findall(r"[\w./${}-]+\.c(?:c|pp|xx)?\b", code)
 
 
 class WritebackFixture(unittest.TestCase):
@@ -338,15 +383,6 @@ class MatchedStoreTest(WritebackFixture):
         # file itself rather than inferable from the directory it sits in.
         self.assertIn("OPENSMACX_SOURCES", stored)
 
-    def test_the_store_is_not_in_the_build(self):
-        # The guard behind every claim in that header: CMakeLists names each
-        # compiled file by hand, so a new .cpp under src/ is inert. If a glob
-        # over src/ is ever added, this fails and the header starts lying.
-        cmake = (Path(__file__).resolve().parent.parent
-                 / "CMakeLists.txt").read_text()
-        self.assertNotIn("GLOB", cmake.split("OPENSMACX_SOURCES")[1][:4000])
-        self.assertNotIn("src/recovered", cmake)
-
     def test_the_header_is_stripped_when_the_body_is_read_back(self):
         # `verify` is handed what is ON DISK, so the provenance comment must
         # not reach the compiler as part of the definition.
@@ -391,6 +427,68 @@ class MatchedStoreTest(WritebackFixture):
         with self.assertRaises(tool.Refused):
             self.writeback("   \n\n")
         self.assertFalse(self.matched.exists())
+
+
+class StoreIsNotCompiledTest(unittest.TestCase):
+    """The guard behind every claim in the stored file's header.
+
+    `build_unit` writes "NOT product source ... not in OPENSMACX_SOURCES and
+    not compiled" into every stored body - 381 of them today. That is true only because
+    CMakeLists names each compiled file by hand; the day a glob over `src/`
+    is added, the store joins the build and every one of those headers starts
+    lying. It reads the real tree rather than the fixture, so it is outside
+    `WritebackFixture`, which patches `MATCHED_DIR` at a temp directory.
+    """
+
+    def test_no_target_names_a_file_in_the_store(self):
+        sources = compiled_sources(cmake_code())
+        # Non-vacuity: the extraction really found the hand-written list.
+        self.assertIn("src/alpha.cpp", sources)
+        self.assertGreater(len(sources), 100)
+        self.assertEqual([s for s in sources if "recovered/" in s], [])
+
+    def test_the_same_filter_would_catch_a_stored_body(self):
+        # The positive control the substring version never had: with 383
+        # bodies on disk and none of them compiled, "no offender found" and
+        # "the filter cannot find one" look identical from the outside.
+        stored = sorted(STORE.glob("*.cpp"))
+        self.assertTrue(stored, "an empty store makes the guard vacuous")
+        listed = "add_executable(OpenSMACX src/recovered/%s)" % stored[0].name
+        self.assertEqual(
+            [s for s in compiled_sources(listed) if "recovered/" in s],
+            ["src/recovered/" + stored[0].name])
+
+    def test_no_command_names_the_store_directory(self):
+        # A path-shaped filter only sees commands that name a `.cpp`, and two
+        # CMake commands take a whole directory without naming one:
+        # `aux_source_directory(src/recovered SRCS)` and, through a generated
+        # child list, `add_subdirectory(src/recovered)`. Fed to the test above
+        # in a temp copy of CMakeLists, both passed it - the store would have
+        # been compiled with the guard green. Once the prose is stripped the
+        # old substring is usable again and covers them, because no command,
+        # variable or generator expression can reach the store without
+        # spelling its path. Only the path: bare "recovered" is not the
+        # needle, since the registration of `test_verify_recovered_function`
+        # spells that word in code rather than in prose.
+        self.assertNotIn(STORE_PATH, cmake_code())
+        # Both controls, since the assertion is only as good as the strip: it
+        # has to survive the damage and ignore the documentation of it.
+        self.assertIn(STORE_PATH,
+                      cmake_code("aux_source_directory(%s S)" % STORE_PATH))
+        self.assertNotIn(
+            STORE_PATH,
+            cmake_code("# %s/00401000.cpp is inert" % STORE_PATH))
+
+    def test_nothing_globs_for_sources(self):
+        # `GLOBAL` properties carry the tool-test registry and are not this;
+        # match the command, which lets the check cover the whole file rather
+        # than a window of characters after the source list.
+        code = cmake_code()
+        self.assertIsNone(re.search(r"file\s*\(\s*GLOB", code, re.IGNORECASE))
+        # And the control, since the pattern is the whole assertion.
+        self.assertIsNotNone(
+            re.search(r"file\s*\(\s*GLOB", "file(GLOB_RECURSE s src/*.cpp)",
+                      re.IGNORECASE))
 
 
 class SplitDefinitionTest(unittest.TestCase):

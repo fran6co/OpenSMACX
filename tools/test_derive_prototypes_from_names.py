@@ -857,11 +857,21 @@ class CatalogueTests(unittest.TestCase):
         self.assertNotIn(b"\r\n", prototypes.PROTOTYPES_CSV.read_bytes())
 
     def test_every_committed_prototype_parses_under_the_CONSUMER_regex(self):
-        # tools/generate_signature_oracles.py is the real parser. A row it
-        # cannot read is a row that silently generates no oracle.
-        import generate_signature_oracles as oracles
-        bad = [address for address, text in prototypes.load().items()
-               if not oracles.PROTOTYPE.match(text)]
+        # The consumer moved: `generate_signature_oracles` is retired, and the
+        # live reader of this catalogue is emit_translation_unit, which feeds
+        # every row through PROTOTYPE_RE and raises Unsettled - no unit, no
+        # byte match - on one it cannot read. Asserting against the emitter's
+        # regex and not against `prototypes.RECORDED` is deliberate: the
+        # emitted control inside the tool already matches its output against
+        # RECORDED, so reading it back here would only prove the tool agrees
+        # with itself. The two spellings differ (`\S+` vs `[^)]*` for the name
+        # slot), which is what makes this a second opinion. Measured today:
+        # 1,553 published rows, 0 the emitter cannot parse.
+        import emit_translation_unit as emitter
+        loaded = prototypes.load()
+        self.assertTrue(loaded)
+        bad = [address for address, text in loaded.items()
+               if not emitter.PROTOTYPE_RE.match(text)]
         self.assertEqual([], bad[:5])
 
     def test_every_committed_prototype_names_its_own_address_row(self):
@@ -881,13 +891,19 @@ class CatalogueTests(unittest.TestCase):
 
     def test_the_catalogue_never_overlaps_a_row_that_already_has_one(self):
         # The two columns must stay disjoint; a derived prototype must never
-        # shadow IDA's, which carries parameter names and typedefs.
-        recorded = set()
-        with prototypes.FUNCTIONS_CSV.open(newline="",
-                                           encoding="utf-8-sig") as handle:
-            for row in csv.DictReader(handle):
-                if row.get("prototype"):
-                    recorded.add(row["address"])
+        # shadow IDA's, which carries parameter names and typedefs. Read the
+        # recorded side through `prototypes.load_rows()` - the same call the
+        # tool's own `derive` is fed - because functions.csv is gone and the
+        # annotations in src/ are the catalogue now. Going straight to a path
+        # is what let this test read a file the tool had already stopped
+        # reading. The population is asserted first: load_rows() falls back
+        # through project_catalogue, and an empty catalogue would make the
+        # disjointness below true by having nothing to intersect. Measured
+        # today: 3,262 rows carry a recorded prototype, 1,553 are derived, and
+        # the two sets share nothing.
+        recorded = {row["address"] for row in prototypes.load_rows()
+                    if row.get("prototype")}
+        self.assertTrue(recorded)
         self.assertEqual(set(), recorded & set(prototypes.load()))
 
     def test_no_derived_prototype_spells_the_empty_void_parameter_list(self):

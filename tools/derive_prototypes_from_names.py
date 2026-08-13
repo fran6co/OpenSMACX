@@ -144,7 +144,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import recover_conventions as conventions  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
+# No FUNCTIONS_CSV here on purpose. This module reads the catalogue through
+# `load_rows()` -> emit_translation_unit.load_functions() -> src/ annotations;
+# docs/recovery/functions.csv is deleted. The constant outlived the file and was
+# dead for every caller except a test, which happily opened the missing path and
+# errored - so keeping a name for a store this module no longer uses is an
+# invitation to read it again.
 PROTOTYPES_CSV = REPO_ROOT / "docs" / "recovery" / "derived-prototypes.csv"
 HYPOTHESES_CSV = REPO_ROOT / "docs" / "recovery" / "prototype-hypotheses.csv"
 IDA_CSV = REPO_ROOT / ".opensmacx" / "game" / "ida94-functions.csv"

@@ -20,13 +20,21 @@ THREE checks, because the obvious one alone is silently vacuous here:
   1. Self-control FIRST. `ninja -n <a target that cannot exist>` must fail. If it
      succeeds, the query is blind and every later answer is worthless.
 
-     It really is blind by default: file(GLOB ... CONFIGURE_DEPENDS) makes CMake
-     emit a phony edge whose output never exists, so build.ninja is permanently
-     dirty; a plain `ninja -n` then exits 0 after printing "Re-running CMake..."
-     WITHOUT EVER PARSING THE TARGET LIST. Naming the manifest by ABSOLUTE path
-     matches no node in it, which suppresses that regeneration phase. Measured
-     2026-08-01: `ninja -n opensmacx--no-such-target` exits 0, and the same query
-     with `-f <abs>/build.ninja` exits 1 with "unknown target".
+     It really is blind whenever the RERUN_CMAKE edge is dirty: ninja regenerates
+     build.ninja before it resolves the command line, and in `-n` mode that
+     regeneration is a printed no-op that exits 0 WITHOUT EVER PARSING THE TARGET
+     LIST. Naming the manifest by ABSOLUTE path matches no node in it, which
+     suppresses that regeneration phase.
+
+     The trigger is ANY dirty regeneration edge, not one particular CMake
+     feature - do not conclude that dropping file(GLOB ... CONFIGURE_DEPENDS)
+     retires this workaround. Measured 2026-08-12 on ninja 1.11.1: build/vc6,
+     build/vc6-audit and build/vc6-release were all blind with nothing dirty but
+     an ordinary edit to CMakeLists.txt, and vc6-release has no CONFIGURE_DEPENDS
+     glob at all. build/cut-check, whose manifest was newer than every configure
+     input, was NOT blind - which is why the self-control cannot be replaced by
+     sampling whichever build directory is at hand. `-f <abs>/build.ninja` exits
+     1 with "unknown target" in all four.
 
   2. The artifacts ctest is about to launch, plus --also, must be up to date.
      Ninja prints "no work to do" only when they are. Exit status is NOT the

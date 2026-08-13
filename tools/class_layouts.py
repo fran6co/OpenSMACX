@@ -493,15 +493,17 @@ def _body_of(name: str) -> str:
     return declared[1] if declared else ""
 
 
-def _with_bases(name: str, seen=()):
-    """A class's members with its base chain prepended, or None.
+def _layout_parts(name: str, seen=()):
+    """(members up to and including `name`'s own, {virtual base: its members}).
 
-    THE BASES COME FIRST, IN DECLARATION ORDER. Non-virtual inheritance lays
-    each base out in turn from offset 0 and the derived members after them,
-    which is why every GraphicWin-derived class was excluded before: without
-    the base's 0xA14 bytes every offset in the derived class was wrong by that
-    much. More than one base is the same rule applied more than once - see
-    `bases_of`.
+    The split exists because a virtual base does NOT belong to the class that
+    inherits it - it belongs to the most derived object, and it is laid out
+    once, at the end of that object, however deep the edge is. Keeping it in a
+    dict rather than a list is the "once": two paths to the same virtual base
+    contribute one subobject, which is the whole point of the keyword.
+
+    Returning the parts separately is also what lets a caller say WHERE a
+    class's own members sit - see `declared_span`.
     """
     if name in seen:                       # a cycle: refuse rather than loop
         return None
@@ -513,7 +515,7 @@ def _with_bases(name: str, seen=()):
     if bases is None or members is None:
         return None
     if not bases:
-        return list(members)
+        return list(members), {}
     # NON-VIRTUAL bases come first, at increasing offsets; VIRTUAL ones come
     # LAST, behind a vbtable pointer the compiler puts at offset 0. That is
     # MSVC's rule and it is exactly what the two headers declaring it measure
@@ -521,16 +523,73 @@ def _with_bases(name: str, seen=()):
     # 4 + 4 + (0x21A6C - 8) + 0xA14 == 0x22480, and both static_asserts hold
     # against cl 12.00.8168. Refusing virtual bases instead cost those two
     # classes their extracted layout the moment they were declared honestly.
-    flattened, trailing = [], []
-    if any(virtual for _, virtual in bases):
-        flattened.append(("void *", "__vbptr", ""))
+    #
+    # THE EDGE IS HOISTED THE WHOLE WAY, not one level. `Console : MapWin` and
+    # `MapWin : virtual GraphicWin` was flattened as MapWin-entire - GraphicWin
+    # included - followed by Console's own members, which put GraphicWin's
+    # 0xA14 bytes in the MIDDLE of Console and every one of Console's 36
+    # name-encoded members 0xA14 too high. sizeof was unmoved by it, so the
+    # size assertion could not see it; cl 12.00.8168 answers
+    # `&((Console *)0)->field_21A6C_` with 0x21A6C against the accumulator's
+    # 0x22480, and console.h reads the same thing off the image (the ctor
+    # builds the virtual base at this+0x23D94, 0x0050F4A0).
+    flattened, trailing = [], {}
     for base, virtual in bases:
-        inherited = _with_bases(base, seen + (name,))
-        if inherited is None:
+        part = _layout_parts(base, seen + (name,))
+        if part is None:
             return None
-        (trailing if virtual else flattened).extend(inherited)
+        inherited, inherited_virtual = part
+        trailing.update(inherited_virtual)
+        if virtual:
+            trailing.setdefault(base, inherited)
+        else:
+            flattened.extend(inherited)
+    # ONE vbtable pointer, at the offset the class that introduced the virtual
+    # base put it. A derived class inheriting that class non-virtually shares
+    # it - `flattened` already opens with it - and inserting a second would
+    # move every member of Console by four bytes.
+    if trailing and ("void *", "__vbptr", "") not in flattened:
+        flattened.insert(0, ("void *", "__vbptr", ""))
     flattened += list(members)
-    flattened += trailing
+    return flattened, trailing
+
+
+def declared_span(name: str):
+    """(start, stop) into `_with_bases(name)` for `name`'s OWN members, or None.
+
+    THE OWN MEMBERS ARE NOT THE TAIL, which is the trap this exists to close.
+    A virtual base is laid out behind them, so the tail of a MapWin layout is
+    GraphicWin's - and the name-encoded control in test_classify_casts read
+    that tail as "what MapWin declares", compared GraphicWin's own offsets
+    (`field_134_` at 0x134) against their positions inside a MapWin (0x21BA0)
+    and reported 49 disagreements that were its own assumption rather than a
+    layout defect.
+    """
+    parts = _layout_parts(name)
+    own = members_of(_body_of(name))
+    if parts is None or own is None:
+        return None
+    stop = len(parts[0])
+    return stop - len(own), stop
+
+
+def _with_bases(name: str, seen=()):
+    """A class's members with its base chain prepended, or None.
+
+    THE BASES COME FIRST, IN DECLARATION ORDER. Non-virtual inheritance lays
+    each base out in turn from offset 0 and the derived members after them,
+    which is why every GraphicWin-derived class was excluded before: without
+    the base's 0xA14 bytes every offset in the derived class was wrong by that
+    much. More than one base is the same rule applied more than once - see
+    `bases_of`. A VIRTUAL base is the exception and closes the object instead;
+    `_layout_parts` is where that is decided.
+    """
+    parts = _layout_parts(name, seen)
+    if parts is None:
+        return None
+    flattened, trailing = parts
+    for inherited in trailing.values():
+        flattened = flattened + inherited
 
     # A DERIVED CLASS THAT RE-DECLARES A BASE MEMBER'S NAME IS FINE HERE.
     # It is legal C++ - name hiding - and the object really carries both, so

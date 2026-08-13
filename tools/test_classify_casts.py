@@ -218,6 +218,16 @@ class ReportTest(unittest.TestCase):
         assumption rather than a layout defect. Coverage is unchanged: every
         class is visited, so every member is still checked exactly once - and
         checked where its name means something.
+
+        WHICH ENTRIES ARE THIS CLASS'S was read as "the tail of the flattened
+        list", and that is false for the two classes in the tree with a
+        virtual base: MSVC lays GraphicWin out AFTER MapWin's own members, so
+        the tail of a MapWin layout is GraphicWin's, and comparing
+        `GraphicWin::field_134_` against its position inside a MapWin
+        (0x21BA0) reported 49 disagreements the layout never had. The span
+        comes from `class_layouts.declared_span` now - the same function that
+        decides the order - so the control cannot drift from the model it
+        checks.
         """
         import class_layouts
         disagreed, seen, checked = [], set(), 0
@@ -230,11 +240,8 @@ class ReportTest(unittest.TestCase):
                     continue
                 seen.add(name)
                 layout = tool.layout_offsets(name) or ()
-                own = class_layouts.members_of(class_layouts._body_of(name))
-                # The flattened list is bases first, then the class's own
-                # members, so its tail of that length is what this class
-                # declares.
-                declared_here = layout[len(layout) - len(own):] if own else ()
+                span = class_layouts.declared_span(name)
+                declared_here = layout[span[0]:span[1]] if span else ()
                 for at, member, _, _ in declared_here:
                     encoded = tool.FIELD_NAME_OFFSET.match(member)
                     if not encoded:
