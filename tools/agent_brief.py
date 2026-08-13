@@ -188,11 +188,12 @@ def disassembly(address: int) -> str:
     import pefile
     import disassembly as prompts
 
-    functions = emit.load_functions()
+    functions = _cached("functions", emit.load_functions)
     row = functions.get(address)
     if row is None:
         return f"(0x{address:08X} is not catalogued)"
-    pe = pefile.PE(str(verifier.byte_match.DEFAULT_EXE), fast_load=True)
+    pe = _cached("pe", lambda: pefile.PE(str(verifier.byte_match.DEFAULT_EXE),
+                                         fast_load=True))
     body = prompts.disassemble(pe, address, row.get("body_ranges", ""), functions)
     return "```asm\n" + body + "\n```"
 
@@ -204,9 +205,11 @@ def prompt_section(address: int, heading: str) -> str:
         import disassembly as prompts
         try:
             head = prompts.signature_head(
-                address, emit.load_functions(), emit.load_derived(),
-                emit.load_callees(),
-                pefile.PE(str(verifier.byte_match.DEFAULT_EXE), fast_load=True))
+                address, _cached("functions", emit.load_functions),
+                _cached("derived", emit.load_derived),
+                _cached("callees", emit.load_callees),
+                _cached("pe", lambda: pefile.PE(
+                    str(verifier.byte_match.DEFAULT_EXE), fast_load=True)))
         except Exception as error:
             return f"## Contract\n\n(no scaffolding: {error})"
         return ("## Contract\n\nDefine exactly this, out of line, using the "
@@ -390,6 +393,44 @@ name is catalogue data and gets applied there, not in the body alone.
 """
 
 
+_CACHE = {}
+
+
+def reset_cache() -> None:
+    """Drop the per-run loads.
+
+    Anything that REPLACES one of the cached loaders - `emit.load_functions`,
+    `landing_path`, the image - has to call this on the way in and on the way
+    out, or the cache outlives the replacement. That is not hypothetical: two
+    test classes stub `load_functions` to a one-row catalogue, and the first
+    brief they built left that row cached for every later test in the process,
+    so the real-brief size guard silently measured a brief whose disassembly
+    section read "(0x005E3630 is not catalogued)".
+    """
+    _CACHE.clear()
+
+
+def _cached(key, build):
+    """Memoise a per-run load so `--addresses` pays for it once.
+
+    A single brief costs ~24 s, and almost none of it is the brief: it is
+    `emit.load_functions()` walking 3,633 files under src/, `landing_path()`
+    walking them again, and `pefile.PE()` on the shipped image - all three
+    identical for every address in a batch. Generating 72 briefs one process at
+    a time was ~30 minutes of re-reading the same data. Through `--addresses`
+    it is one load and then a few hundred milliseconds each.
+
+    Deliberately process-local and never persisted. A cache on disk would have
+    to know when src/ changed, and this tool is run BETWEEN edits to src/ by
+    the coordinator - a stale brief would send an agent to work that is already
+    done, which is the failure `recovery_frontier` was joined against
+    `annotation_scan` to stop.
+    """
+    if key not in _CACHE:
+        _CACHE[key] = build()
+    return _CACHE[key]
+
+
 def interpreter() -> str:
     """The python that can actually run the scorer, as the brief should spell it.
 
@@ -430,10 +471,9 @@ def landing_path(address: int, src: Path = None) -> str:
     root = src or (REPO_ROOT / "src")
     if not root.is_dir():
         return ""
-    for annotation in annotation_scan.scan_tree(root):
-        if annotation.address == address:
-            return str(annotation.path)
-    return ""
+    index = _cached(("landing", str(root)), lambda: {
+        a.address: str(a.path) for a in annotation_scan.scan_tree(root)})
+    return index.get(address, "")
 
 
 def brief(address: int, tier: str = "", note: str = "") -> str:
@@ -442,7 +482,7 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
     # reading a gitignored cache that may not exist.
     row = ledger_row(address, tier, note)
     body, location = verifier.committed_body(address)
-    functions = emit.load_functions()
+    functions = _cached("functions", emit.load_functions)
     name = (functions.get(address) or {}).get("name", f"sub_{address:x}")
     # From the CATALOGUE, not from the verdict: the verdict is now measured or
     # passed in and carries no size, and `? bytes` in a brief is the agent's
@@ -597,6 +637,11 @@ def main(argv=None) -> int:
                         help="the verdict to reason about (default: measure it)")
     parser.add_argument("--note", default="",
                         help="the divergence note that goes with --tier")
+    parser.add_argument("--addresses",
+                        help="comma-separated hex addresses; writes one brief "
+                             "per address and loads the catalogue ONCE")
+    parser.add_argument("--out-dir", type=Path,
+                        help="where --addresses writes (default build/briefs)")
     arguments = parser.parse_args(argv)
 
     if arguments.audit:
@@ -618,6 +663,29 @@ def main(argv=None) -> int:
         # records a lesson back into a file all of them share, which is the
         # merge point worktree-isolated batches exist to remove.
         return 0
+
+    if arguments.addresses:
+        # One process, one catalogue load. See `_cached`.
+        out = arguments.out_dir or (REPO_ROOT / "build" / "briefs")
+        out.mkdir(parents=True, exist_ok=True)
+        addresses = [int(t, 16) for t in
+                     arguments.addresses.replace(" ", "").split(",") if t]
+        written = failed = 0
+        for address in addresses:
+            try:
+                text = brief(address, arguments.tier, arguments.note)
+            except Exception as error:            # one bad address must not
+                print(f"0x{address:08X}: {error}", file=sys.stderr)
+                failed += 1                        # take the batch down
+                continue
+            # The trailing newline `print` adds on the single-address path, so
+            # the two paths are ONE projection and a test can assert equality
+            # rather than equality-modulo-whitespace.
+            (out / f"0x{address:08X}.md").write_text(text + "\n")
+            written += 1
+        print(f"wrote {written} brief(s) to {out}"
+              + (f"; {failed} failed" if failed else ""))
+        return 1 if failed else 0
 
     if not arguments.address:
         parser.error("an address is required unless --audit")
