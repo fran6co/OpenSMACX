@@ -428,15 +428,25 @@ def exclusion_for(address: int, row: dict) -> tuple:
 
 
 def _catalog_facts(address: int, row: dict) -> str:
-    """The catalogue's facts as comment lines, so the file speaks for itself."""
-    spans = row.get("body_ranges") or \
-        f"0x{address:08X}-0x{address + int(row.get('size') or 0):08X}"
-    return (f"// name      {row.get('name', '')}\n"
-            f"// size      {row.get('size', '')} bytes\n"
-            f"// spans     {spans}\n"
-            f"// prototype {row.get('prototype', '')}\n"
-            f"// callers   {row.get('caller_count', '')}   "
-            f"call targets   {row.get('call_target_count', '')}\n")
+    """The catalogue's facts as comment lines, so the file speaks for itself.
+
+    DELEGATED, not re-spelled. `project_catalogue.facts` says of itself that it
+    is "deliberately the same spelling `decomp_status._catalog_facts` already
+    uses on placeholders - one projection, not two". They were two, and they
+    diverged: `facts` grew `calls`, `indirect` and `notes` when the call graph
+    moved into `src/`, and this copy did not.
+
+    MEASURED, 2026-08-13. `--work` rewrites a placeholder through this
+    function, so materialising 48 scaffolds for one batch silently deleted
+    every `// calls` and `// indirect` line those 48 files carried - 33
+    indirect call sites gone from the record before a single agent had opened
+    a file. It surfaced only because `docs/EXCLUSIONS.md` pins the total and
+    `measure_exclusions` re-derives it: the count went 5,159 -> 5,126 and the
+    suite went red. Nothing in the recovery loop itself would ever have
+    noticed, because a lost edge does not stop a body compiling.
+    """
+    import project_catalogue
+    return "".join(line + "\n" for line in project_catalogue.facts(address, row))
 
 
 def placeholder_text(address: int, row: dict) -> str:
@@ -538,6 +548,58 @@ def lesson_report(annotations: list) -> list:
                                "`LEVER: <original>/<rebuilt> <what worked>`"))
                 break
     faults.extend(_prototype_faults())
+    faults.extend(_scaffold_mode_faults(annotations))
+    return faults
+
+
+SCAFFOLD_BANNER = "// GENERATED SKELETON - tools/emit_translation_unit.py"
+
+
+def _scaffold_mode_faults(annotations: list) -> list:
+    """[(location, why)] for a whole-unit scaffold whose annotation lost `FILE`.
+
+    A file the emitter generated IS the translation unit: it carries the
+    typedefs, the fixed-address globals, the callee declarations and the class
+    the definition needs. `FILE` on the marker is what tells the status tool to
+    compile it as it stands. Strip that word and the same file is read in body
+    mode - the extractor cuts what it thinks is one definition out of a file
+    that is all scaffolding, and the result is REFUSED ("extract does not end
+    in a closing brace") or NO_COMPILE (C2370, the scaffolding's globals
+    redefined by the scaffolding that gets re-added around the cut).
+
+    MEASURED, 2026-08-13. Of 48 addresses in the first real batch, one agent
+    rewrote its marker on all 8 of its files - `// ORIGINAL: 0x00628380
+    BYTE_EXACT` in place of `... FILE` - because the example in
+    `.claude/agents/byte-match-recovery.md` was written that way. Its bodies
+    were correct: restoring the one word turned 4 REFUSED/NO_COMPILE straight
+    into BYTE_EXACT and made 3 near-misses measurable. Nothing else changed.
+
+    The failure is silent in the direction that matters. The agent's own
+    scorer said BYTE_EXACT, because `verify_recovered_function` builds the
+    unit itself and never reads the marker. Only the coordinator's
+    `--record-matches` sees it, and it reports a REFUSAL, which reads as a bad
+    body rather than a bad marker. That is this tree's house failure mode
+    again: the two paths disagreed and the quiet one was the one banking.
+    """
+    faults, generated = [], {}
+    for annotation in annotations:
+        if annotation.mode == annotation_scan.MODE_FILE:
+            continue
+        # The banner sits at the top of the unit, ABOVE the definition, so it
+        # is outside `region` for a body-mode annotation - which is exactly the
+        # case being caught. Read the file, cached by path.
+        if annotation.path not in generated:
+            try:
+                text = (REPO_ROOT / annotation.path).read_text(errors="replace")
+            except OSError:
+                text = ""
+            generated[annotation.path] = SCAFFOLD_BANNER in text
+        if not generated[annotation.path]:
+            continue
+        faults.append((annotation.location,
+                       "a generated whole-unit scaffold annotated in BODY "
+                       "mode - restore `FILE` on the `// ORIGINAL:` line; the "
+                       "state word is stamped by measurement, not written"))
     return faults
 
 

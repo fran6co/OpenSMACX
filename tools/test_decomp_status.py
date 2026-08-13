@@ -594,5 +594,129 @@ class LessonReportTest(unittest.TestCase):
             decomp_status.lesson_report(decomp_status.annotation_scan.scan_tree(src)), [])
 
 
+class CatalogFactsTest(unittest.TestCase):
+    """`--work` must not drop what the placeholder was carrying.
+
+    `_catalog_facts` is what `--work` rewrites a placeholder through, and it
+    was a second, divergent copy of `project_catalogue.facts` - whose docstring
+    claims the two are "one projection, not two". `facts` grew `calls`,
+    `indirect` and `notes` when the call graph moved into `src/`; the copy did
+    not. Materialising 48 scaffolds for the 2026-08-13 batch therefore deleted
+    every call edge and indirect-call-site record those files held: 33 indirect
+    sites gone before an agent opened a file.
+
+    It is invisible from the recovery loop - a lost edge does not stop a body
+    compiling, or scoring, or banking. It surfaced only because
+    `docs/EXCLUSIONS.md` pins the total and `measure_exclusions` re-derives it
+    from `src/`, so the count fell 5,159 -> 5,126 and that test went red.
+    """
+
+    def row(self):
+        return {"name": "?f@@YAXXZ", "size": "16", "prototype": "void f()",
+                "caller_count": "4", "call_target_count": "0",
+                "_calls": (), "_indirect": (0x00446992, 0x004469A6)}
+
+    def test_the_indirect_sites_survive(self):
+        text = decomp_status._catalog_facts(0x00446960, self.row())
+        self.assertIn("// indirect", text)
+        self.assertIn("0x00446992", text)
+        self.assertIn("0x004469A6", text)
+
+    def test_the_call_edges_survive(self):
+        row = dict(self.row(), _calls=(0x00401000,))
+        text = decomp_status._catalog_facts(0x00446960, row)
+        self.assertIn("// calls", text)
+        self.assertIn("0x00401000", text)
+
+    def test_it_is_the_same_projection_as_the_catalogue(self):
+        # The actual invariant. Two spellings of one projection is what let
+        # them drift apart in the first place, so pin equality rather than
+        # pinning a list of fields that would drift the same way.
+        import project_catalogue
+        row = dict(self.row(), _calls=(0x00401000,))
+        self.assertEqual(
+            decomp_status._catalog_facts(0x00446960, row),
+            "".join(l + "\n" for l in project_catalogue.facts(0x00446960, row)))
+
+    def test_a_round_trip_through_the_placeholder_keeps_them(self):
+        # The path that actually did the damage: placeholder_text embeds
+        # _catalog_facts, and --work rewrites the file through it.
+        text = decomp_status.placeholder_text(0x00446960, self.row())
+        self.assertIn("// indirect", text)
+
+
+class ScaffoldModeTest(unittest.TestCase):
+    """A generated whole-unit scaffold must stay annotated `FILE`.
+
+    Strip that word and the extractor cuts a definition out of a file that is
+    all scaffolding: REFUSED ("extract does not end in a closing brace"), or
+    NO_COMPILE with the scaffolding's own globals redefined. Measured on
+    2026-08-13 across one agent's whole batch of eight - restoring the word
+    turned four REFUSED into BYTE_EXACT with no change to any body.
+
+    What makes it worth a check rather than a rule: the agent's own scorer
+    cannot see it. `verify_recovered_function` builds the unit itself and never
+    reads the marker, so it reports BYTE_EXACT while `--record-matches` reports
+    a refusal - and a refusal reads as a bad body, not a bad marker.
+    """
+
+    def setUp(self):
+        self.work = Path(tempfile.mkdtemp())
+        self.original_root = decomp_status.REPO_ROOT
+        decomp_status.REPO_ROOT = self.work
+
+    def tearDown(self):
+        decomp_status.REPO_ROOT = self.original_root
+        import shutil
+        shutil.rmtree(self.work, ignore_errors=True)
+
+    def write(self, name, banner=True):
+        path = self.work / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        head = f"{decomp_status.SCAFFOLD_BANNER}\n" if banner else "// hand written\n"
+        path.write_text(head + "int f() { return 0; }\n")
+        return name
+
+    def annotation(self, name, mode):
+        return decomp_status.annotation_scan.Annotation(
+            address=0x00401000, mode=mode,
+            state=decomp_status.annotation_scan.STATE_IMPLEMENTED,
+            path=name, line=1)
+
+    def test_a_scaffold_in_body_mode_is_a_fault(self):
+        name = self.write("src/unrecovered/00401000.cpp")
+        faults = decomp_status._scaffold_mode_faults(
+            [self.annotation(name, decomp_status.annotation_scan.MODE_BODY)])
+        self.assertEqual(len(faults), 1)
+        self.assertIn("restore `FILE`", faults[0][1])
+
+    def test_the_same_scaffold_in_file_mode_is_silent(self):
+        name = self.write("src/unrecovered/00401000.cpp")
+        self.assertEqual(decomp_status._scaffold_mode_faults(
+            [self.annotation(name, decomp_status.annotation_scan.MODE_FILE)]), [])
+
+    def test_a_hand_written_file_may_be_body_mode(self):
+        # The common, correct case - src/leaf_recoveries.cpp carries hundreds
+        # of body-mode annotations. Firing on those would make the check
+        # useless the day it landed.
+        name = self.write("src/leaf_recoveries.cpp", banner=False)
+        self.assertEqual(decomp_status._scaffold_mode_faults(
+            [self.annotation(name, decomp_status.annotation_scan.MODE_BODY)]), [])
+
+    def test_a_missing_file_does_not_take_the_check_down(self):
+        self.assertEqual(decomp_status._scaffold_mode_faults(
+            [self.annotation("src/gone.cpp",
+                             decomp_status.annotation_scan.MODE_BODY)]), [])
+
+    def test_it_reaches_lesson_report(self):
+        # The routing matters as much as the rule: `lesson_report` is what
+        # `--check` calls, and it is called before every early return so a
+        # checkout without VC6 still enforces it.
+        name = self.write("src/unrecovered/00401000.cpp")
+        faults = decomp_status.lesson_report(
+            [self.annotation(name, decomp_status.annotation_scan.MODE_BODY)])
+        self.assertTrue(any("restore `FILE`" in why for _, why in faults), faults)
+
+
 if __name__ == "__main__":
     unittest.main()

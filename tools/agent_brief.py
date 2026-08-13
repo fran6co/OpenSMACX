@@ -63,7 +63,16 @@ TARGETED = (
      "Also measured: VC6 does not reclaim a register freed earlier in the same\n"
      "body - whichever value is computed FIRST lands in EAX and the second in\n"
      "EDX, whatever order the source puts them in. Six functions have stalled\n"
-     "there. If that is your only divergence, stop."),
+     "there. If that is your only divergence, stop.\n"
+     "BEFORE you stop, DELETE YOUR CACHED LOCALS. If your rebuild has more\n"
+     "pushes or a frame the original does not, the usual cause is a temp you\n"
+     "introduced for readability: the original recomputes the expression fresh\n"
+     "at each use, and hoisting it into a local forces an EBP frame and a\n"
+     "stack spill. Paid three times on 2026-08-13 - 0x0063D4D0 (dropped cached\n"
+     "`fn`/`arg1`/`obj`, five call sites recomputed), 0x00611730 (re-read\n"
+     "`*(self+8)` at every use) and 0x005EEE70 (re-read the flags byte at each\n"
+     "test instead of caching it once). This is the opposite of what reads\n"
+     "well, so it is worth trying deliberately."),
     # WALLS. Ruled out exhaustively; each is keyed like every other entry so an
     # agent meets the one that applies rather than a catalogue of all of them.
     (("or", "test", "and"),
@@ -263,6 +272,38 @@ def targeted_rules(note: str, found: dict = None) -> str:
     return block
 
 
+def lifecycle_section(name: str) -> str:
+    """The store-order rule, shown only on a constructor or destructor.
+
+    Keyed on the MANGLED NAME rather than on a divergence, because it is a
+    prior about a whole family and not a response to one diff - and because the
+    diff it produces, MNEMONIC_ONLY, carries no note to key on: every mnemonic
+    matches and only the operands differ, so `targeted_rules` sees an empty
+    string and says "no fingerprint matched".
+
+    Paid four times in the batch of 2026-08-13, which is a third of that run's
+    hand-written matches: 0x00618EA0 `Font::Font`, 0x005D4560 `Heap::Heap`,
+    0x006161D0 `Time::Time`, 0x005FA860 `Spot::Spot`. Constructors and
+    destructors are dense in what is left of the frontier, so this fires often.
+    """
+    if not re.match(r"\?\?[01]", name or ""):
+        return ""
+    return """
+# This is a constructor or destructor - check the STORE ORDER first
+
+Write the field stores as ASSIGNMENTS IN THE BODY, in the order the
+disassembly writes them, which is often NOT declaration order. On
+0x00618EA0 the first-declared member is stored LAST.
+
+A member-init list CANNOT express this: C++ runs initialisers in declaration
+order however you write them, so an out-of-order original is unreachable that
+way. Declaration order scores MNEMONIC_ONLY - every mnemonic right, every
+operand wrong - which looks like a hard register problem and is not one.
+
+Measured BYTE_EXACT this way on Font, Heap, Time and Spot.
+"""
+
+
 def fresh_recovery_section(address: int) -> str:
     """What to send when NOTHING is recovered yet.
 
@@ -349,6 +390,52 @@ name is catalogue data and gets applied there, not in the body alone.
 """
 
 
+def interpreter() -> str:
+    """The python that can actually run the scorer, as the brief should spell it.
+
+    The brief used to print `tools/verify_recovered_function.py <addr> ...`
+    bare. That file is not executable and its shebang is `/usr/bin/env
+    python3`, which has none of the dependencies: run as printed it exits 126,
+    and run under the system python it exits 1. So the one command the brief
+    exists to hand over did not work, and every agent paid a few turns
+    rediscovering the venv.
+
+    Taken from `sys.executable` rather than written down, so it is right by
+    construction in any checkout, and shortened to a repo-relative path when it
+    lives inside the tree - which is the form the rest of the repo uses.
+    """
+    python = Path(sys.executable)
+    try:
+        return str(python.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(python)
+
+
+def landing_path(address: int, src: Path = None) -> str:
+    """The ONE repository file an agent on this address may write.
+
+    The brief used to say "write only to /tmp", which is wrong in a way that
+    costs a whole batch: the coordinator banks with
+    `decomp_status.py --record-matches`, and that measures the SOURCE TREE. A
+    body proved in /tmp and never landed is measured as the placeholder it
+    replaced, so the batch banks zero and it reads as agents failing rather
+    than as a brief contradicting the loop.
+
+    The path is looked up rather than composed. `src/unrecovered/<hex>.cpp` is
+    the usual home but not the rule - of 48 addresses prepared on 2026-08-13,
+    one already lived in `src/recovered/` - and a composed path would have sent
+    that agent to a file nothing measures.
+    """
+    import annotation_scan
+    root = src or (REPO_ROOT / "src")
+    if not root.is_dir():
+        return ""
+    for annotation in annotation_scan.scan_tree(root):
+        if annotation.address == address:
+            return str(annotation.path)
+    return ""
+
+
 def brief(address: int, tier: str = "", note: str = "") -> str:
     # `tier`/`note` come from the coordinator, which has just measured the
     # batch. Left empty, `ledger_row` measures this one function rather than
@@ -362,16 +449,21 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
     # first cue for how hard this is.
     size = (functions.get(address) or {}).get("size", "?")
     note = row.get("note") or row.get("refusal_reason") or ""
+    landing = landing_path(address) or (
+        f"NONE - no annotation claims 0x{address:08X}, so there is nowhere to "
+        f"land it; report that rather than creating a file")
+    python = interpreter()
 
     if body is None:
         verdict = "nothing recovered yet"
-        middle = fresh_recovery_section(address)
+        middle = fresh_recovery_section(address) + lifecycle_section(name)
     else:
         verdict = f"{row.get('tier', '?')}{(' - ' + note) if note else ''}"
         middle = (f"# The body as it stands ({location})\n\n"
                   f"```cpp\n{body.strip()}\n```\n\n"
                   f"# What the divergence usually means\n\n"
                   f"{targeted_rules(note)}\n"
+                  f"{lifecycle_section(name)}"
                   f"{naming_section(name, body)}")
 
     return f"""Matching decompilation, MSVC 6.0 x86. One function. Everything you
@@ -413,9 +505,9 @@ return-type change turned MISMATCH into NO_COMPILE.
 Write a candidate to a file under /tmp and score it. This writes NOTHING to the
 repository:
 
-    tools/verify_recovered_function.py 0x{address:08X} --dir /tmp/variants
-    tools/verify_recovered_function.py 0x{address:08X} --body /tmp/cand.cpp \\
-        --against-committed
+    {python} tools/verify_recovered_function.py 0x{address:08X} --dir /tmp/variants
+    {python} tools/verify_recovered_function.py 0x{address:08X} \\
+        --body /tmp/cand.cpp --against-committed
 
 Exit 0 means BYTE_EXACT and nothing else does. `--dir` scores every *.cpp in the
 directory against one loaded image and ranks them, which is the mode to reach
@@ -450,7 +542,9 @@ Parameter reads exactly 4 too high are the FRAME POINTER, not a missing `this`.
   AGENTS.md:5 bars copied machine code from distributable builds.
 - Readability counts as well as byte-exactness. Keep the existing shape and
   naming where it is already right; change only what the diff demands.
-- Do not edit anything under /home/fran6co/code/OpenSMACX. Write only to /tmp.
+- Write to /tmp, and to ONE repository file: {landing}. Land your final body
+  there, matched or not - the coordinator banks by measuring the source tree,
+  so a body left in /tmp banks nothing. Nothing else, and no `git`.
 
 # Report
 
