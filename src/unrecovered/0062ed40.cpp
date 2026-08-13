@@ -1,4 +1,5 @@
 // ORIGINAL: 0x0062ED40 FILE
+// working copy - scaffold materialised by --work
 // name      ?create_group@Net@@QAEHPAD@Z
 // size      98 bytes
 // spans     0x0062ED40-0x0062EDA2
@@ -8,7 +9,83 @@
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006465F0
 // indirect  0x0062ED8D
-// placeholder - not yet decompiled
-// To start: tools/decomp_status.py --work 0x0062ED40
 
-// BODY GOES HERE.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?create_group@Net@@QAEHPAD@Z  at 0x0062ED40  (98 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+
+class Net;
+
+// ---- callees, declared and never defined (a definition would be inlined) ----
+extern "C" void *memset(void *, int, unsigned int);
+
+// Vtable shim. VC6 rejects a free `__thiscall` function pointer
+// (C4234), so an indirect virtual call is spelled by calling the Nth
+// virtual of a class that is never defined and never instantiated.
+// Only DECLARATION ORDER matters - change a slot's signature freely
+// to match the call you need; it will not move.
+// This body dispatches through slot(s): 5
+class VCall { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();  // <-- used
+};
+
+// ---- fixed globals this body references ----
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const g_009be600 = (int *)0x009BE600;
+
+class Net { public:
+    int create_group(char *);
+};
+
+typedef int (__stdcall *NetCreateGroupFn)(Net *, int *, void *, int, int, int);
+
+int Net::create_group(char * a1) {
+    Net *net = reinterpret_cast<Net *>(*g_009be600);
+    if (net == 0) {
+        return 0;
+    }
+    struct GroupInfo { int size; int reserved1; int reserved2; int owner; };
+    GroupInfo info;
+    int outHandle;
+    memset(&info, 0, sizeof(info));
+    info.owner = reinterpret_cast<int>(a1);
+    info.size = sizeof(info);
+    NetCreateGroupFn fn = reinterpret_cast<NetCreateGroupFn>((*reinterpret_cast<void ***>(net))[5]);
+    int result = fn(net, &outHandle, &info, 0, 0, 0);
+    return (result == 0) ? outHandle : 0;
+}
