@@ -93,29 +93,12 @@ class CatalogueTests(unittest.TestCase):
         self.assertNotIn(b"\r\n", bounds.BOUNDS_CSV.read_bytes())
 
 
-class ProvenanceTests(unittest.TestCase):
-    """A bounded size must never be presentable as a pinned one."""
-
-    def test_the_generator_marks_bounded_receivers_as_bounded(self):
-        import generate_signature_oracles as generator
-        # The prototype spelling is copied from functions.csv, because the
-        # generator matches it with a regex and an invented format silently
-        # produces None - which would make this test pass for the wrong reason
-        # if it only asserted the absence of a "pinned" marker.
-        row = {"name": "?f@Widget@@QAEXXZ", "size": "8",
-               "prototype": "void (__thiscall ?f@Widget@@QAEXXZ)(Widget* this)"}
-        candidate = generator.member_candidate(row, {"Widget": 0x40},
-                                               {"Widget": "bounded"})
-        self.assertIsNotNone(candidate)
-        self.assertEqual("bounded", candidate["size_source"])
-
-    def test_a_pinned_receiver_is_not_called_bounded(self):
-        import generate_signature_oracles as generator
-        row = {"name": "?f@Widget@@QAEXXZ", "size": "8",
-               "prototype": "void (__thiscall ?f@Widget@@QAEXXZ)(Widget* this)"}
-        candidate = generator.member_candidate(row, {"Widget": 0x40}, {})
-        self.assertIsNotNone(candidate)
-        self.assertEqual("pinned", candidate["size_source"])
+# ProvenanceTests stood here: two tests asserting that
+# generate_signature_oracles labels a BOUNDED receiver as bounded and never as
+# pinned. That generator went with the runtime-oracle route, so both tests have
+# been erroring on the import ever since - and the property they guarded (a
+# bound must never be presentable as a proof) now has no consumer to guard.
+# It comes back with the generator, if the generator comes back.
 
 
 if __name__ == "__main__":

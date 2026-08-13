@@ -505,3 +505,40 @@ nothing can be measured from it.
 Everything here is recoverable from git. The rule that put them on this list is
 "outside all three live paths", not "worthless": bring one back by restoring the
 file and giving it a line in docs/TOOLS.md, which is what makes it reachable.
+
+## class-size-bounds.csv — retired 2026-08-13, tool kept as a query
+
+Retired the FILE, not the derivation. `derive_class_size_bounds.py` still runs
+and still refuses; it just no longer commits what it found.
+
+**Why it could not move into `src/` as `static_assert`s, which was the obvious
+idea and is what happened to the class SIZES.** Measured: of the 24 classes
+carrying a bound, **1 is declared in a real header** (BaseWin), 5 exist only in
+the generated `hypothesis_layouts.h`, and **18 are declared nowhere at all**. A
+`static_assert(sizeof(X) <= N)` needs an X to `sizeof`, so 23 of them would need
+a synthetic placeholder - and asserting `sizeof(Ambience) <= 0xB8` against a
+struct we padded to 0xB8 ourselves checks our own declaration against itself.
+That is the vacuous shape this tree keeps catching, dressed as consolidation.
+
+The evidence in a bound is about the ORIGINAL image - `bounded above by
+??__Eg_FAMEWIN@@YAXXZ at 0x0074DAF8` - so it belongs measured, not claimed.
+
+**What the file was doing was nothing.** No code read it: the two tools whose
+docstrings mention `derive_class_size_bounds` only NAME it in prose. Its sole
+consumer was the `--check` that regenerated it and compared it to itself.
+
+**What survives is the half with content.** The control runs before the
+comparison ever did, and unconditionally: on the classes whose true size IS
+pinned by a `static_assert`, every derived bound must sit at or above it, and a
+bound BELOW one is refused - that is the direction that would under-allocate a
+receiver and corrupt memory. Currently 23 at or above, 0 below.
+
+**And the file was self-retiring already.** `derive_class_size_bounds.py:61`
+drops a class the moment `src/` pins its size, so the list shrank from 34 to 24
+as ten classes graduated into headers. The finish line was always the empty
+file; deleting it only skips to the end.
+
+`ProvenanceTests` in its test file goes too - two tests asserting that
+`generate_signature_oracles` never presents a bound as a pin. That generator
+retired with the runtime-oracle route, so both had been erroring on the import,
+and the property has no consumer left to guard.
