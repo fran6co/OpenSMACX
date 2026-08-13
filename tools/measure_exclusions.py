@@ -43,7 +43,6 @@ import pefile  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 CALLGRAPH_JSON = REPO_ROOT / "docs" / "recovery" / "callgraph.json"
 EXCLUSIONS_DOC = REPO_ROOT / "docs" / "EXCLUSIONS.md"
 

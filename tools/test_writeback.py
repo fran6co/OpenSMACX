@@ -34,7 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import byte_match_census as census  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
-import mizuchi_writeback as tool  # noqa: E402
+import writeback as tool  # noqa: E402
 
 SOURCE = textwrap.dedent("""\
     #include "stdafx.h"
@@ -107,9 +107,15 @@ def compiled_sources(code):
 
 
 class WritebackFixture(unittest.TestCase):
-    """A tree with two catalogued bodies and the three catalogues that point
-    at them. Shared by the splice tests and the store tests; it carries no
-    test methods of its own so neither set runs twice."""
+    """A tree with two catalogued bodies and the two catalogues that point at
+    them. Shared by the splice tests and the store tests; it carries no test
+    methods of its own so neither set runs twice.
+
+    There were three. `docs/recovery/functions.csv` was deleted (185dd977) and
+    the function catalogue is now derived from the `src/` annotations, so the
+    splice has nothing to shift for it - `src/` IS the pointer. What remains
+    are the two stores that keep line numbers as text of their own.
+    """
 
     def setUp(self):
         self.root = Path(self.enterContext(
@@ -120,15 +126,15 @@ class WritebackFixture(unittest.TestCase):
 
         recovery = self.root / "docs" / "recovery"
         recovery.mkdir(parents=True)
-        self.functions_csv = recovery / "functions.csv"
-        self.write_csv(self.functions_csv, "source_locations",
+        self.ledger_csv = recovery / "byte-match.csv"
+        # `src/other.cpp` is the negative control: a row in a DIFFERENT file at
+        # the same line must not move. It used to sit in the functions CSV; it
+        # moved here when that one went away, because losing it would leave the
+        # shift able to renumber the whole catalogue with the tests green.
+        self.write_csv(self.ledger_csv, "source_location",
                        [("0x00601B80", "src/basepop.cpp:3"),
                         ("0x00601C00", "src/basepop.cpp:12"),
                         ("0x00700000", "src/other.cpp:12")])
-        self.ledger_csv = recovery / "byte-match.csv"
-        self.write_csv(self.ledger_csv, "source_location",
-                       [("0x00601B80", "src/basepop.cpp:3"),
-                        ("0x00601C00", "src/basepop.cpp:12")])
         (self.root / "mizuchi").mkdir()
         self.source_map = self.root / "mizuchi" / "source-map.json"
         # `indent=2` plus a trailing newline is what `emit_asm_dumps.py`
@@ -146,7 +152,6 @@ class WritebackFixture(unittest.TestCase):
                      "source_locations": "src/basepop.cpp:12"},
         }
         self.enterContext(mock.patch.object(census, "REPO_ROOT", self.root))
-        self.enterContext(mock.patch.object(tool, "FUNCTIONS_CSV", self.functions_csv))
         self.enterContext(mock.patch.object(tool, "LEDGER_CSV", self.ledger_csv))
         self.enterContext(mock.patch.object(tool, "SOURCE_MAP", self.source_map))
         self.enterContext(mock.patch.object(tool, "REPO_ROOT", self.root))
@@ -195,12 +200,12 @@ class WritebackTest(WritebackFixture):
     def test_a_longer_body_shifts_only_later_locations_in_the_same_file(self):
         self.writeback("void BasePop::set_loc(int x, int y) {\n"
                        "    loc_a_ = x;\n    loc_b_ = y;\n}\n")
-        functions = self.locations(self.functions_csv, "source_locations")
-        self.assertEqual(functions["0x00601B80"], "src/basepop.cpp:3")
-        self.assertEqual(functions["0x00601C00"], "src/basepop.cpp:13")
-        self.assertEqual(functions["0x00700000"], "src/other.cpp:12")
         ledger = self.locations(self.ledger_csv, "source_location")
+        # The spliced row itself does not move; the one below it does; the one
+        # in another file does not.
+        self.assertEqual(ledger["0x00601B80"], "src/basepop.cpp:3")
         self.assertEqual(ledger["0x00601C00"], "src/basepop.cpp:13")
+        self.assertEqual(ledger["0x00700000"], "src/other.cpp:12")
         entries = json.loads(self.source_map.read_text())
         self.assertEqual([e["line"] for e in entries], [3, 13])
         # The shifted line still opens the neighbour's doc comment.
@@ -209,21 +214,22 @@ class WritebackTest(WritebackFixture):
 
     def test_a_shorter_body_shifts_the_other_way(self):
         self.writeback("void BasePop::set_loc(int x, int y) { loc_a_ = x; }\n")
-        functions = self.locations(self.functions_csv, "source_locations")
-        self.assertEqual(functions["0x00601C00"], "src/basepop.cpp:10")
+        ledger = self.locations(self.ledger_csv, "source_location")
+        self.assertEqual(ledger["0x00601C00"], "src/basepop.cpp:10")
+        self.assertEqual(json.loads(self.source_map.read_text())[1]["line"], 10)
         lines = self.source.read_text().splitlines()
         self.assertEqual(lines[9].strip(), "/*")
 
     def test_a_failed_verification_restores_every_file(self):
-        before = (self.source.read_text(), self.functions_csv.read_text(),
-                  self.ledger_csv.read_text(), self.source_map.read_text())
+        before = (self.source.read_text(), self.ledger_csv.read_text(),
+                  self.source_map.read_text())
         with self.assertRaises(tool.Refused) as caught:
             self.writeback("void BasePop::set_loc(int x, int y) {\n"
                            "    loc_a_ = x;\n    loc_b_ = y;\n}\n",
                            tier="MISMATCH")
         self.assertIn("MISMATCH", str(caught.exception))
-        after = (self.source.read_text(), self.functions_csv.read_text(),
-                 self.ledger_csv.read_text(), self.source_map.read_text())
+        after = (self.source.read_text(), self.ledger_csv.read_text(),
+                 self.source_map.read_text())
         self.assertEqual(before, after)
 
     def test_an_empty_submission_is_refused(self):
@@ -418,9 +424,14 @@ class MatchedStoreTest(WritebackFixture):
         # It means "placed in the tree as product source", and both
         # `export_recovery_inventory` and `audit_recovered_signatures` read it
         # that way. Pointing it here would make them describe an artefact.
+        # The catalogue row is the `src/` annotation now, so the assertion is
+        # that landing writes no annotation claiming a `src/` home: the row
+        # stays empty and the ledger keeps pointing where it did.
         self.writeback("extern \"C\" int __cdecl sub_601b80() { return 0; }\n")
         self.assertEqual(self.functions[FIRST]["source_locations"], "")
-        locations = self.locations(self.functions_csv, "source_locations")
+        self.assertNotIn("ORIGINAL: 0x00601B80\n",
+                         self.source.read_text())
+        locations = self.locations(self.ledger_csv, "source_location")
         self.assertEqual(locations["0x00601B80"], "src/basepop.cpp:3")
 
     def test_an_empty_submission_is_still_refused(self):

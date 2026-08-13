@@ -37,6 +37,16 @@ Everything here exists so that there is exactly ONE place that decides:
     to the worktree file, because that would print a delta of 0 and read as
     "no regression".
 
+    `--delta` now REQUIRES the catalogue path to be named, and refuses the
+    `src/` store. `git show` can only produce a file, the store is 3,499
+    annotated files carrying 6,031 annotations (measured 2026-08-13), and the
+    one export it could have shown - docs/recovery/functions.csv - was deleted
+    in 185dd977. The default that
+    survived that deletion did not stop working, which was the problem: for
+    refs at or before it, `--delta` compared the CSV's taxonomy against the
+    store's and reported the difference as recovery. See
+    `load_catalogue_at_ref` for the measurement.
+
 Nothing in this module reads the oracle report or the original executable; it
 is arithmetic over the committed catalogue, so it is testable without Wine, an
 IDB, or the user's copy of the game.
@@ -51,7 +61,6 @@ import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
 # The one row class that is not the project's to recover, and so is not image.
 # It is a `recovery_state`, NOT `binary_kind == "library"`: the two differ,
@@ -184,7 +193,7 @@ class CatalogueRefError(RuntimeError):
     """
 
 
-def load_catalogue_at_ref(ref: str, path: Path | str = FUNCTIONS_CSV,
+def load_catalogue_at_ref(ref: str, path: Path | str,
                           repo: Path | str = REPO_ROOT) -> list[dict]:
     """The catalogue as it stood at `ref`, without touching the worktree.
 
@@ -192,6 +201,23 @@ def load_catalogue_at_ref(ref: str, path: Path | str = FUNCTIONS_CSV,
     That matters more than convenience - the comparison must be runnable while
     the tree is dirty, which is precisely when someone wants to know whether
     the debt moved.
+
+    `path` HAS NO DEFAULT, and the absence is load bearing. It defaulted to
+    docs/recovery/functions.csv, which 185dd977 deleted - and the default did
+    not then fail, which is why it was worth removing rather than repointing.
+    It kept resolving for every ref at or before that commit and answered with
+    a comparison between two different measurements. Measured 2026-08-13:
+    `--delta 185dd977^` printed "better: debt FELL 440339 B" over a day in
+    which 24 commits changed 28 annotation lines. 1,666 of the 6,000 rows
+    disagree on recovery_state between that export and today's `src/` store,
+    and 341 of those disagree because the export spells states the store never
+    emits at all - original_dependency, thunk, source_in_progress against the
+    store's external_library / source_complete / unrecovered. That is the
+    failure DeltaTests names IT SILENTLY REDEFINES THE METRIC, arriving through
+    the default argument instead of through a bad ref.
+
+    So the ref side and the worktree side must be two snapshots of ONE
+    catalogue file, and only the caller knows which file that is.
     """
     root = Path(repo).resolve()
     try:
@@ -535,16 +561,33 @@ def main(argv=None) -> int:
     # Positional, optional, and still the documented way to price another
     # catalogue: `recovery_metrics.py <some.csv>` worked before argparse
     # existed here and must keep working.
-    parser.add_argument("catalogue", nargs="?", default=FUNCTIONS_CSV,
-                        help="catalogue to price (default: %(default)s)")
+    parser.add_argument("catalogue", nargs="?", default=None,
+                        help="catalogue CSV to price (default: the src/ store, "
+                             "which is where the catalogue lives)")
     parser.add_argument("--delta", metavar="REF",
                         help="also print how machine_carried moved since this "
                              "git ref, read with `git show REF:<catalogue>` - "
                              "the worktree is never touched")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
 
-    # `None` means the store; a path or a git ref still overrides it.
-    rows = load_catalogue(args.catalogue if args.catalogue != FUNCTIONS_CSV else None)
+    # A ref comparison needs the SAME file on both sides, and `git show` can
+    # only produce a file. Named here rather than left to fail inside
+    # load_catalogue_at_ref: the old default made this invocation report a
+    # 440,339 B improvement that never happened (see load_catalogue_at_ref),
+    # so it fails before any number is printed, not after.
+    if args.delta and args.catalogue is None:
+        print("error: --delta REF needs a catalogue CSV named as well - the "
+              "src/ store is thousands of annotated source files, not one file "
+              "`git show` can produce, and docs/recovery/functions.csv was "
+              "deleted in 185dd977. Pass a committed catalogue: "
+              "recovery_metrics.py <some.csv> --delta REF", file=sys.stderr)
+        return 1
+
+    # `None` is the store. It is the ONLY spelling of the store now: the
+    # argument used to default to docs/recovery/functions.csv and be compared
+    # back against that constant here, so the store was reached by recognising
+    # a path that had not existed since 185dd977.
+    rows = load_catalogue(args.catalogue)
     scope = lift_scope(rows)
     print(f"catalogued      {catalogued(rows).byte_count:9d} B  "
           f"{catalogued(rows).functions:5d} fn")
@@ -557,7 +600,13 @@ def main(argv=None) -> int:
           f"{debt.percent_of(scope):.2f}% of scope bytes  (must go down)")
     if args.delta:
         try:
-            old_rows = load_catalogue_at_ref(args.delta, args.catalogue)
+            # REPO_ROOT passed, not defaulted: a default argument binds at
+            # def time, so the CLI's ref path could only ever be tested
+            # against THIS repository - and once functions.csv went, that
+            # test skipped instead of running. Read from the module global
+            # here and a throwaway repo can stand in for it.
+            old_rows = load_catalogue_at_ref(args.delta, args.catalogue,
+                                             REPO_ROOT)
         except CatalogueRefError as error:
             print(f"error: {error}", file=sys.stderr)
             return 1

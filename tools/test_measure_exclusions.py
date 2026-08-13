@@ -315,8 +315,15 @@ class LiveImageTests(unittest.TestCase):
             self.skipTest("docs/EXCLUSIONS.md is not present")
 
     def test_the_document_agrees_with_the_image(self):
+        # None, not a path: the catalogue comes from `src/` now. This argument
+        # used to be measurer.FUNCTIONS_CSV, which had been dead since the
+        # export was deleted - load_rows() opened it, took the FileNotFoundError
+        # on its OSError arm, and fell through to emit.load_functions() anyway.
+        # Measured before the constant went: passing the dead path and passing
+        # None both returned the same 6000 rows, compared equal element by
+        # element, so this test asserts on exactly what it asserted on before.
         measured = measurer.measure(measurer.DEFAULT_EXE,
-                                    measurer.FUNCTIONS_CSV,
+                                    None,
                                     measurer.CALLGRAPH_JSON)
         measured.pop("_detail")
         declared = measurer.parse_measured_block(

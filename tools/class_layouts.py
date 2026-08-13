@@ -4,7 +4,7 @@
 WHY THIS EXISTS. `emit_translation_unit` declares every class as an opaque
 shell with no members, and an agent that needs a field therefore reaches it
 by offset - or, worse, declares a shadow struct beside the function, which
-`mizuchi_writeback.splice` cannot carry into `src/` because it splices the
+`writeback.splice` cannot carry into `src/` because it splices the
 definition alone. Measured on the first real run: 4 of 10 writebacks lost
 that way, and the ones that landed put `self[2]` into `src/` where the file
 already said `head_`.

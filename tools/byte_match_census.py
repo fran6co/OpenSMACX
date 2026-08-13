@@ -146,7 +146,7 @@ def body_span(source: str):
 
     `end` is INCLUSIVE and indexes the closing brace's line; both indices are
     0-based into `lines`. Split out of `extract_body` so a writer can replace
-    exactly the span this reader compiles - `tools/mizuchi_writeback.py` puts a
+    exactly the span this reader compiles - `tools/writeback.py` puts a
     byte-exact Mizuchi match back into `src/`, and it must not carry a second
     opinion about where a body ends.
 

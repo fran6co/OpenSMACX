@@ -52,7 +52,6 @@ import annotation_scan  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
 FACT_LINE = re.compile(
     r"^\s*(?://|\*)?\s*(name|size|spans|prototype|callers|kind|flags|calls|notes"

@@ -515,6 +515,46 @@ class ClassKeyTests(unittest.TestCase):
         self.assertNotIn("ector", self.keys("?f@Vector@@QAEXPAURECT@@@Z"))
 
 
+class LoadFunctionsCorrectsNamesTests(unittest.TestCase):
+    """`load_functions` is the tree's ONLY call into `catalogue_corrections`.
+
+    It used to sit inside `if FUNCTIONS_CSV.is_file():`, so deleting
+    `docs/recovery/functions.csv` (185dd977) took the corrections down with the
+    fallback and nothing said so - `byte_match.load_rows` and
+    `project_catalogue.catalogue` both document that they get corrected names
+    through here, and for that stretch neither did. It stayed invisible because
+    `src/` already spells all 15 corrections the corrected way, so `apply`
+    rewrites 0 of the 6,000 real rows: measuring the live catalogue cannot tell
+    a live call from a deleted one. These feed a row that NEEDS correcting, so
+    the assertion fails the moment the call goes missing again.
+    """
+
+    def load_with(self, address, name):
+        import project_catalogue
+        original = project_catalogue.from_source
+        project_catalogue.from_source = lambda *a, **k: {
+            address: dict(row(address=f"0x{address:08X}", name=name))}
+        try:
+            return tool.load_functions()
+        finally:
+            project_catalogue.from_source = original
+
+    def test_a_catalogued_name_the_bytes_contradict_is_rewritten(self):
+        import catalogue_corrections
+        address, (catalogued, corrected, _why) = next(
+            iter(catalogue_corrections.CORRECTIONS.items()))
+        rows = self.load_with(address, catalogued)
+        self.assertEqual(corrected, rows[address]["name"])
+
+    def test_a_third_spelling_raises_rather_than_being_corrected(self):
+        # The half that is not the rewrite: a row that is neither spelling has
+        # MOVED, and forcing the correction onto it would be a guess.
+        import catalogue_corrections
+        address = next(iter(catalogue_corrections.CORRECTIONS))
+        with self.assertRaises(catalogue_corrections.Stale):
+            self.load_with(address, "?moved@Elsewhere@@QAEXXZ")
+
+
 if __name__ == "__main__":
     unittest.main()
 

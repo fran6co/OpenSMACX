@@ -115,7 +115,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
+# No FUNCTIONS_CSV here on purpose - docs/recovery/functions.csv is deleted and
+# the `ORIGINAL:` annotations in src/ are the catalogue. The constant was this
+# module's default for BOTH `load_rows` and `--functions`, so every CLI mode
+# died on FileNotFoundError before printing a line; measured 2026-08-12, all
+# five (--report, --cross-check, --disagreements, --call-sites, --seed-table).
+# See `load_rows` for the store that replaced it.
 
 # ---------------------------------------------------------------------------
 # The mangling infix
@@ -385,9 +390,26 @@ class Signature:
         return None
 
 
-def load_rows(functions_csv: Path = FUNCTIONS_CSV) -> list[dict[str, str]]:
-    with functions_csv.open() as handle:
-        return list(csv.DictReader(handle))
+def load_rows(functions_csv: Path = None) -> list[dict[str, str]]:
+    """Every catalogued row, from `src/`. See measure_exclusions.load_rows.
+
+    `emit.load_functions()` reads the annotations back into the same shape the
+    deleted CSV had - `address` is still the "0x004xxxxx" TEXT this module
+    lowercases and re-parses, `name` is still the mangled name, `size` is still
+    a decimal string. Measured 2026-08-12: 6,000 rows, every one with a name and
+    an integer size, which is what `main` indexes on without a fallback.
+
+    An explicit path still wins, so a regenerated export can be read back and
+    compared against src/ - that is the only reason the parameter survives, and
+    it no longer names a file that cannot exist.
+    """
+    if functions_csv is not None:
+        with functions_csv.open(newline="", encoding="utf-8-sig") as handle:
+            return list(csv.DictReader(handle))
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import emit_translation_unit as _emit
+    return list(_emit.load_functions().values())
 
 
 def recover(rows, demangle) -> tuple[list[Signature], Counter]:
@@ -440,6 +462,18 @@ def resolve_this_location(signature: Signature,
     public, INSTANCE, and not `__thiscall` - which by C++ semantics means `this`
     is pushed as a hidden first stack argument. Three independent checks say it
     is not there:
+
+    (Re-measured 2026-08-12 against src/, now that the catalogue is the
+    annotations and not the deleted functions.csv: 136, not 139. Nothing was
+    lost - the population is still 6,000 rows and no row gained the shape.
+    `Caviar::vx_malloc`, `vx_read` and `vx_write` at 0x00618E10/30/50 are
+    spelled `SAX...` in src/, `S` where the export said `Q`, which is precisely
+    the conclusion this docstring reaches. Three of the 139 have been acted on;
+    the reasoning below is unchanged and the count is a moving one. The
+    call-site check reproduces DIGIT FOR DIGIT off src/ - 71 targets, 390 sites,
+    63 countable, 287 pushing the declared count, 0 pushing declared+1 - so the
+    three that left the set carried no call site and the store swap moved
+    nothing.)
 
       * callee-pop. THIRTEEN of the 14 `QAG` (__stdcall) bodies pop exactly
         4*args, four bytes SHORT of the 4*(args+1) a pushed `this` would
@@ -676,14 +710,17 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--functions", type=Path, default=FUNCTIONS_CSV)
+    parser.add_argument("--functions", type=Path, default=None,
+                        help="a regenerated CSV export to read instead of the "
+                             "src/ annotations. Absent, src/ is the catalogue.")
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
     parser.add_argument("--report", action="store_true")
     parser.add_argument("--cross-check", action="store_true")
     parser.add_argument("--disagreements", action="store_true")
     parser.add_argument("--call-sites", action="store_true",
-                        help="scan .text for direct calls to the 139 and count "
-                             "what each site pushes")
+                        help="scan .text for direct calls to the public "
+                             "instance non-thiscall names and count what each "
+                             "site pushes")
     parser.add_argument("--seed-table", type=Path)
     args = parser.parse_args(argv)
 
@@ -749,7 +786,7 @@ def main(argv=None) -> int:
         odd = [s for s in signatures
                if s.takes_this and s.convention != "__thiscall"]
         found = call_sites(odd, args.exe, rows)
-        print(f"the 139 (public instance, not __thiscall): {len(odd)}")
+        print(f"public instance, not __thiscall: {len(odd)}")
         print(f"  reached by a direct call rel32   "
               f"{found['raw_targets']} targets, {found['raw_sites']} sites "
               f"(raw E8 scan of .text)")

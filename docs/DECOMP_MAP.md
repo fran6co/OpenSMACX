@@ -197,7 +197,8 @@ over.
 ## Migration — done 2026-08-09
 
 The whole tree was migrated in one guarded pass
-(`tools/decomp_status.py --migrate --apply --rewrite-locations`): 1,607
+(`tools/decomp_status.py --migrate --apply --rewrite-locations`, a flag
+that no longer exists — see below): 1,607
 files rewritten, every rewrite proven comment-only (code content
 identical) and address-set-preserving before anything was written; the
 full VC6 re-measurement preserved every ledger tier; the DLL rebuilt
@@ -205,13 +206,23 @@ clean. The legacy spellings (`Original Offset:` blocks, the inline
 trailing and opening-brace forms, the two `src/recovered/` header
 styles) are still RECOGNISED read-only and flagged `deprecated`, but an
 offline test now pins the convergence invariant: no deprecated spelling
-may remain in `src/`, and the writers (`mizuchi_writeback.py`,
+may remain in `src/`, and the writers (`writeback.py`,
 `preserve_worked_units.py`) emit the marker on every new file.
 
-One rule the migration surfaced: `functions.csv` `source_locations` is
-not the map — it is the SCORING ROUTE. A row with a location belongs to
-the census; a body under `src/recovered/` stays scoreable only while
-its row is unowned (`test_collect_ownership.py` pins this); a
-placeholder is a promise, not an implementation. Only an IMPLEMENTED
-annotation in product source may occupy the column;
-`--rewrite-locations` enforces exactly that.
+One rule the migration surfaced: `source_locations` is not the map — it
+is the SCORING ROUTE. A row with a location belongs to the census; a
+body under `src/recovered/` stays scoreable only while its row is
+unowned (`test_collect_ownership.py` pins this); a placeholder is a
+promise, not an implementation. Only an IMPLEMENTED annotation in
+product source may occupy the column.
+
+`--rewrite-locations` used to enforce that by writing the column back
+into `functions.csv`. That export is deleted, so the flag could only
+raise `FileNotFoundError`; it and `rewrite_source_locations` were
+removed on 2026-08-12. The column is now derived on READ, per row, by
+`project_catalogue.from_source()` — `annotation.location` when
+IMPLEMENTED, empty otherwise — so it cannot go stale between rewrites.
+What did not survive the move is the `src/recovered/` half of the rule:
+`from_source` applies no such filter, and 1,477 of the 6,000 rows carry
+a `src/recovered/` location today (measured). That is a live question
+about what the census scores, not a leftover of the deleted CSV.

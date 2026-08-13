@@ -8,7 +8,7 @@ exact, and if not where does it diverge" - which is the loop anyone improving
 an existing recovery needs, and the loop an agent proposing a replacement needs
 most of all.
 
-The machinery already existed. `mizuchi_writeback.verify(address, body)`
+The machinery already existed. `writeback.verify(address, body)`
 rebuilds the unit and re-measures it; it simply had no command line. This is
 that command line, plus the one thing it was missing: the ability to score a
 CANDIDATE body instead of the committed one, so a proposed fix can be checked
@@ -24,7 +24,7 @@ taken as evidence: the claim and the measurement are different things, and this
 is the measurement.
 
 IT USES THE WRITEBACK RECIPE, NOT THE CENSUS RECIPE. The census omits
-`mizuchi_declfix`, which respells callee declarations so VC6 re-mangles them to
+`declfix`, which respells callee declarations so VC6 re-mangles them to
 the catalogued names; without it a body calling a CRT function reads as
 NO_COMPILE. So a function can score NO_COMPILE in the census and BYTE_EXACT
 here, and here is the one that matches what the integrator gates on.
@@ -86,7 +86,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import byte_match  # noqa: E402
 import byte_match_census as census  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
-import mizuchi_writeback as writeback  # noqa: E402
+import writeback as writeback  # noqa: E402
 
 MATCHED = "BYTE_EXACT"
 
@@ -97,7 +97,7 @@ MATCHED = "BYTE_EXACT"
 # The first entry is a REFUSAL, not a warning: `__asm` pastes the original's
 # instructions instead of deriving them, so it proves nothing about the source,
 # and `AGENTS.md:5` bars copied machine code from distributable builds.
-# `mizuchi_writeback.py` deliberately carries no content policy, so without a
+# `writeback.py` deliberately carries no content policy, so without a
 # check here an `__asm` body that happens to be byte-exact lands in `src/`
 # unchallenged. That has happened once already.
 FORBIDDEN = (
@@ -154,7 +154,7 @@ def score_all(address: int, bodies: dict) -> list:
     """[(name, verdict)] for every candidate, best first.
 
     Each verdict comes from `byte_match.match_function` on a unit assembled the
-    way `mizuchi_writeback.verify` assembles it, so a tier here means exactly
+    way `writeback.verify` assembles it, so a tier here means exactly
     what the integrator's gate means. The only thing shared across candidates is
     the loaded image and catalogue, which is the expensive part.
     """

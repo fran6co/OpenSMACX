@@ -215,7 +215,7 @@ class FreshRecoveryTest(unittest.TestCase):
     def test_a_missing_contract_does_not_take_the_brief_down(self):
         # The Contract used to be scraped out of a gitignored prompt folder, so
         # its absence was normal and the brief printed "run
-        # emit_mizuchi_prompts.py". It is derived from the image now, so an
+        # disassembly.py". It is derived from the image now, so an
         # empty section means the scaffolding refused - the brief must still
         # carry the disassembly and the loop rather than failing.
         agent_brief.prompt_section = lambda a, h: ""

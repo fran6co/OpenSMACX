@@ -82,11 +82,10 @@ import class_layouts  # noqa: E402
 import recovery_symbols  # noqa: E402
 from generator_support import (absolute_operands, parse_body_ranges,  # noqa: E402
                                read_bytes)
-from mizuchi_declfix import CRT_SIGNATURES, decode_signature  # noqa: E402
+from declfix import CRT_SIGNATURES, decode_signature  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 DERIVED_CSV = REPO_ROOT / "docs" / "recovery" / "derived-prototypes.csv"
 CALLGRAPH = REPO_ROOT / "docs" / "recovery" / "callgraph.json"
 
@@ -312,37 +311,37 @@ def load_functions() -> dict:
     """The catalogue, with the names the bytes prove wrong corrected.
 
     The image carries no symbols, so every catalogued mangled name is IDA's
-    analysis and four are contradicted by the bodies they name - see
+    analysis and 15 are contradicted by the bodies they name - see
     `catalogue_corrections`. Correcting HERE rather than at each use is what
     keeps the declaration, the decoded signature and the emitted symbol
-    agreeing with one another; `functions.csv` is promoted from the canonical
-    export and is not a file to hand-edit.
+    agreeing with one another: `byte_match.load_rows` and
+    `project_catalogue.catalogue` both read through this function, and both say
+    so, because two loaders with two answers about one row is how the `QAA` ->
+    `SAA` correction on `Caviar::vx_read` once reached the emitter but not the
+    comparison.
 
+    SRC/ IS THE ONLY STORE. `docs/recovery/functions.csv` was deleted (185dd977)
+    and the export fallback that used to stand here - it took the CSV's rows for
+    addresses `src/` did not carry, on the measured grounds that 28 rows were
+    `source_complete` with no annotation anywhere - guarded a file that cannot
+    exist. Measured against the deleted file itself, restored out of git: those
+    28 have since been annotated, so replaying the fallback over today's `src/`
+    ADDS 0 ROWS, and the CSV's address set and `from_source`'s are the same
+    6,000 with no row differing in content. Deleting it loses nothing.
 
-    SRC/ IS THE STORE NOW, WITH THE EXPORT AS THE FALLBACK. Every annotation
-    carries its own name, size, spans, prototype, kind, flags and call edges,
-    stamped and gated by `project_catalogue.py --check`, which compares the two
-    row by row: 5,972 rows, ZERO field disagreements. So reading them back is
-    not a second opinion, it is the same data with a different store.
-
-    The export stays as the fallback for one measured reason: 28 catalogue rows
-    are `source_complete` with no annotation anywhere in `src/`, so `src/` alone
-    is 5,972 of 6,000. `--generate-placeholders` refuses to invent a home for
-    them - the catalogue says they are implemented, and a placeholder would be a
-    false claim about state - so those 28 need a human, and until they have one
-    the CSV cannot be deleted without losing them.
+    THE APPLY IS NOT PART OF THE FALLBACK, it was only nested inside it, and it
+    was the whole tree's only call into `catalogue_corrections` - so the
+    corrections went silent the day the CSV went away, while three docstrings
+    kept promising them. It is hoisted out unconditionally rather than dropped:
+    measured now, it rewrites 0 of the 6,000 names, because `src/` already
+    spells all 15 the corrected way, so this changes no caller's answer today.
+    What it restores is the tripwire - `apply` raises `Stale` rather than
+    correcting when a row's name is neither the catalogued spelling nor the
+    corrected one, which is the check that was dead, not the rewrite.
     """
     import project_catalogue
 
-    rows = project_catalogue.from_source()
-    if FUNCTIONS_CSV.is_file():
-        with FUNCTIONS_CSV.open() as handle:
-            for row in csv.DictReader(handle):
-                address = int(row["address"], 16)
-                if address not in rows:
-                    rows[address] = row
-        return catalogue_corrections.apply(rows)
-    return rows
+    return catalogue_corrections.apply(project_catalogue.from_source())
 
 
 def load_derived() -> dict:

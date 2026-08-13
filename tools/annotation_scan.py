@@ -514,9 +514,9 @@ def _legacy_file_annotations(path: Path, text: str, lines: list,
 def _proved_body(lines: list) -> str:
     """The definition out of a proved file, sans header - writeback semantics.
 
-    Mirrors `mizuchi_writeback.read_matched_body`: the header is the leading
+    Mirrors `writeback.read_matched_body`: the header is the leading
     run of `//` lines and blanks, and everything from the first other line is
-    the body. Kept local because importing mizuchi_writeback drags in the PE
+    the body. Kept local because importing writeback drags in the PE
     and writeback machinery a scanner must not need.
     """
     index = 0

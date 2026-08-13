@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Emit COFF target objects for Mizuchi from the pinned executable.
+"""Synthesise a COFF object for a catalogued function from the pinned image.
 
-Mizuchi's objdiff stage compares two relocatable objects, but this project
-has no original objects: only the linked image. So for each catalogued
-function this synthesises the object the original compiler would have
-produced, close enough for objdiff to pair instructions:
+Written for Mizuchi's objdiff stage, which is retired (docs/RETIRED_ROUTES.md);
+what it produces outlived the harness that asked for it. An object-vs-object
+comparison needs two relocatable objects and this project has only the LINKED
+image, so for each catalogued function this synthesises the object the original
+compiler would have produced, close enough to pair instructions:
 
   * `.text` holds the function's bytes, read from the hash-pinned
     executable over the catalogued body ranges.

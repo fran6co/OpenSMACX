@@ -630,31 +630,15 @@ class PublishedFileTests(unittest.TestCase):
         self.assertEqual(functions["total"], published["catalogued"]["functions"])
 
 
-class DeltaTests(unittest.TestCase):
-    """`--delta <ref>` must price the PAST with today's definition.
+class ThrowawayCatalogueRepo:
+    """A git repository holding one catalogue, built per test and thrown away.
 
-    Three ways this feature reads as good news while measuring nothing, each
-    with a test below:
-
-    * IT COMPARES THE WORKTREE WITH ITSELF. If a ref git cannot produce fell
-      back to the file on disk, the delta would be 0 B and print `same` - the
-      most reassuring output this tool has - for a ref that does not exist.
-      Both failure modes (unknown ref, catalogue absent at that ref) must
-      raise.
-    * IT READS THE SIGN BACKWARDS. `machine_carried` must go DOWN, so a
-      negative delta is progress. Swapping old and new produces a number of the
-      same magnitude and the opposite meaning, which no assertion on the
-      absolute value can catch; the tests pin the arrow, the sign AND the word.
-    * IT SILENTLY REDEFINES THE METRIC. The fixture gives each recovery_state a
-      distinct power of two, so a delta computed by any other membership test
-      lands on a number this suite names explicitly.
-
-    The tests build a throwaway git repository rather than naming a ref of this
-    one: `HEAD~5` means something different after the next commit, and a test
-    whose expected number moves with the branch is not a test.
+    Both the library-level delta tests and the CLI tests need this, and neither
+    may name a ref of THIS repository: `HEAD~5` means something different after
+    the next commit, and until 2026-08-13 the CLI's only ref test named the real
+    docs/recovery/functions.csv and so did nothing at all once 185dd977 deleted
+    it - `skipTest` reads as a pass forever.
     """
-
-    RECOVERED = "source_complete"
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -685,6 +669,37 @@ class DeltaTests(unittest.TestCase):
         done = subprocess.run(["git", "-C", str(self.repo), "status",
                                "--porcelain"], capture_output=True)
         return done.stdout.decode()
+
+
+class DeltaTests(ThrowawayCatalogueRepo, unittest.TestCase):
+    """`--delta <ref>` must price the PAST with today's definition.
+
+    Three ways this feature reads as good news while measuring nothing, each
+    with a test below:
+
+    * IT COMPARES THE WORKTREE WITH ITSELF. If a ref git cannot produce fell
+      back to the file on disk, the delta would be 0 B and print `same` - the
+      most reassuring output this tool has - for a ref that does not exist.
+      Both failure modes (unknown ref, catalogue absent at that ref) must
+      raise.
+    * IT READS THE SIGN BACKWARDS. `machine_carried` must go DOWN, so a
+      negative delta is progress. Swapping old and new produces a number of the
+      same magnitude and the opposite meaning, which no assertion on the
+      absolute value can catch; the tests pin the arrow, the sign AND the word.
+    * IT SILENTLY REDEFINES THE METRIC. The fixture gives each recovery_state a
+      distinct power of two, so a delta computed by any other membership test
+      lands on a number this suite names explicitly. That failure arrived for
+      real through the `path` DEFAULT rather than through the arithmetic:
+      measured 2026-08-13, `--delta 185dd977^` priced the deleted export
+      against the `src/` store and printed "debt FELL 440339 B" for a day of
+      24 commits and 28 changed annotation lines, because 1,666 of 6,000 rows
+      disagree on recovery_state across that boundary and 341 of them are
+      spelled in states the store never emits. `load_catalogue_at_ref` now has
+      no default path, and `main` refuses `--delta` without one - see
+      CommandLineTests.
+    """
+
+    RECOVERED = "source_complete"
 
     def at_ref(self, ref):
         return metrics.load_catalogue_at_ref(ref, self.catalogue, self.repo)
@@ -816,16 +831,34 @@ class DeltaTests(unittest.TestCase):
         self.assertIsNotNone(metrics.row_address(rows[0]))
 
 
-class CommandLineTests(unittest.TestCase):
-    """The CLI contract, which had no test at all before `--delta`."""
+class CommandLineTests(ThrowawayCatalogueRepo, unittest.TestCase):
+    """The CLI contract, which had no test at all before `--delta`.
 
-    FUNCTIONS = REPO_ROOT / "docs" / "recovery" / "functions.csv"
+    Every test here used to be conditional on docs/recovery/functions.csv, and
+    two of the three became permanent skips when 185dd977 deleted it: the ref
+    path of the CLI went untested from that commit until 2026-08-13 while the
+    suite reported OK. They run against the throwaway repository now, so the
+    only thing that can silence them is deleting them.
+    """
+
+    RECOVERED = "source_complete"
 
     def run_main(self, argv):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             code = metrics.main(argv)
         return code, out.getvalue(), err.getvalue()
+
+    def project_is_the_throwaway_repo(self):
+        """`main` reads REPO_ROOT at call time so this substitution works.
+
+        A `repo=REPO_ROOT` default argument binds at import and would pin the
+        CLI's ref reader to this repository - which is exactly how these tests
+        came to name a deleted file and skip.
+        """
+        original = metrics.REPO_ROOT
+        metrics.REPO_ROOT = self.repo
+        self.addCleanup(setattr, metrics, "REPO_ROOT", original)
 
     def test_a_bare_positional_catalogue_path_still_works(self):
         """The documented way to price another catalogue, from before this
@@ -838,27 +871,74 @@ class CommandLineTests(unittest.TestCase):
         self.assertIn("29 B", out)
         self.assertIn("lift scope", out)
 
-    def test_an_unknown_ref_exits_nonzero_and_prints_no_delta(self):
-        if not self.FUNCTIONS.is_file():
-            self.skipTest("committed recovery catalogue not present")
-        code, out, err = self.run_main(["--delta", "no-such-ref-ee6f1c"])
+    def test_no_positional_prices_the_src_store(self):
+        """The default, and the whole reason the CLI has one.
+
+        It used to default the argument to docs/recovery/functions.csv and then
+        recognise that constant again to mean "the store" - so the store was
+        reached by matching a path deleted in 185dd977, and any edit to either
+        spelling would have sent the gate at a file that cannot exist. The
+        expectation is computed from the store here rather than written down:
+        this number moves with every recovery, and a literal would be stale by
+        the next batch. ~6.5 s for the pair of reads, and it is the only test
+        in this file that touches `src/` at all.
+        """
+        expected = metrics.machine_carried(metrics.load_catalogue())
+        code, out, err = self.run_main([])
+        self.assertEqual(0, code, err)
+        self.assertIn(f"machine-carried {expected.byte_count:9d} B  "
+                      f"{expected.functions:5d} fn", out)
+        # Not trivially empty: an unreadable store returning no rows would
+        # print a consistent set of zeroes and satisfy the line above.
+        self.assertGreater(expected.byte_count, 1_000_000)
+
+    def test_delta_without_a_catalogue_refuses_and_prints_no_numbers(self):
+        """`git show` produces one file; the store is 3,499 annotated ones.
+
+        Before this, the missing path defaulted to the deleted export, which
+        still resolves at every ref up to 185dd977^ - so this invocation
+        printed a 440,339 B improvement that no recovery produced. Refusing has
+        to happen before the block prints, or the numbers arrive first and the
+        error reads as a footnote to them.
+        """
+        code, out, err = self.run_main(["--delta", "HEAD"])
         self.assertEqual(1, code)
-        self.assertIn("no-such-ref-ee6f1c", err)
+        self.assertIn("--delta", err)
+        self.assertIn("functions.csv", err)
+        self.assertNotIn("machine-carried", out)
         self.assertNotIn("machine_carried:", out)
 
-    def test_delta_against_HEAD_of_this_repository_prints_the_line(self):
-        if not self.FUNCTIONS.is_file():
-            self.skipTest("committed recovery catalogue not present")
-        if subprocess.run(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"],
-                          capture_output=True).returncode:
-            self.skipTest("not a git repository with a commit")
-        code, out, _ = self.run_main(["--delta", "HEAD"])
-        self.assertEqual(0, code)
+    def test_an_unknown_ref_exits_nonzero_and_prints_no_delta(self):
+        self.commit(STATES)
+        self.project_is_the_throwaway_repo()
+        code, out, err = self.run_main([str(self.catalogue), "--delta",
+                                        "no-such-ref-ee6f1c"])
+        self.assertEqual(1, code)
+        self.assertIn("no-such-ref-ee6f1c", err)
+        # The worktree block still prints; the DELTA is what must be absent.
+        self.assertIn("machine-carried", out)
+        self.assertNotIn("machine_carried:", out)
+
+    def test_delta_against_a_ref_prints_the_line_with_the_right_numbers(self):
+        """End to end through `main`, not through `delta_lines`.
+
+        The exact numbers, not a regex: the fixture's committed debt is 29 B
+        and its worktree debt 28 B, so a CLI that read one side twice - the
+        failure the whole feature is guarded against - cannot produce this
+        line.
+        """
+        self.commit(STATES)
+        write_functions(self.catalogue.parent,
+                        [("0x00401000", 1, self.RECOVERED, "game")]
+                        + STATES[1:])
+        self.project_is_the_throwaway_repo()
+        code, out, err = self.run_main([str(self.catalogue), "--delta", "HEAD"])
+        self.assertEqual(0, code, err)
         line = [l for l in out.splitlines() if l.startswith("machine_carried:")]
         self.assertEqual(1, len(line), out)
-        self.assertRegex(line[0],
-                         r"^machine_carried: \d+ -> \d+ \([-+]\d+ B\)"
-                         r"  (better|worse|same): ")
+        self.assertEqual("machine_carried: 29 -> 28 (-1 B)",
+                         line[0].split("  ")[0])
+        self.assertIn("better", line[0])
 
 
 if __name__ == "__main__":
