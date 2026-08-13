@@ -1240,8 +1240,9 @@ if(BUILD_TESTING)
     # It drives ~/opt/vc6/.wineprefix, which is byte_match.py's own prefix and
     # not the ${OPENSMACX_WINE_PREFIX} that run_windows_test.py stops when it
     # finishes - so it needs no wineprefix RESOURCE_LOCK, and
-    # verify_wine_test_locks.py correctly does not demand one. A SECOND
-    # VC6-backed test would share this prefix and should take a lock of its own.
+    # so it needed no wineprefix RESOURCE_LOCK. A SECOND VC6-backed test
+    # would share this prefix and should take a lock of its own - nothing
+    # checks that any more, see docs/RETIRED_ROUTES.md.
     # --check here also re-runs the control: a lower bound that exceeds a size
     # the tree already knows is a defect in the derivation, and gating
     # staleness without gating soundness would watch the wrong thing.
@@ -1494,8 +1495,6 @@ if(BUILD_TESTING)
     # these pin the branches those inputs do not happen to contain - the
     # unquoted RESOURCE_LOCK spelling, a call before main(), the non-vacuity
     # floor, and the absent-input refusals.
-    opensmacx_add_python_tool_test(wine-test-lock-tests
-                                   test_verify_wine_test_locks.py)
     opensmacx_add_python_tool_test(test-registration-tests
                                    test_verify_test_registration.py)
 
@@ -1565,13 +1564,17 @@ if(BUILD_TESTING)
     # CTest never schedules two holders of the same lock together.
     #
     # if(TEST) rather than a bare set_tests_properties, because these tests
-    # exist only when cross-compiling; and the list is checked mechanically by
-    # the wine-test-lock-check test below, because a wine-backed test MISSING
-    # from it does not fail, it flakes.
+    # exist only when cross-compiling.
+    #
+    # THIS LIST IS NO LONGER CHECKED. `wine-test-lock-check` read the generated
+    # CTestTestfile and refused a Wine-backed test that was missing from it -
+    # the failure mode being a FLAKE in a different test each run, not a
+    # failure. It was retired 2026-08-13 once the seven tests it policed had
+    # become one: its `--expect-at-least` floor was derived from this list's
+    # LENGTH, and the list had gone stale against its own subject. Adding a
+    # second Wine-backed test now requires adding it here BY HAND.
     set(OPENSMACX_WINE_LOCKED_TESTS
-            recovery-gameplay-tests
-            globals-diff-tests
-            recovery-oracle)
+            recovery-gameplay-tests)
     list(LENGTH OPENSMACX_WINE_LOCKED_TESTS OPENSMACX_WINE_LOCKED_TEST_COUNT)
     foreach(_wine_locked_test IN LISTS OPENSMACX_WINE_LOCKED_TESTS)
         if(TEST ${_wine_locked_test})
@@ -1582,17 +1585,6 @@ if(BUILD_TESTING)
 
     # Reads the generated CTestTestfile.cmake, so it checks what CTest will
     # actually run rather than what this file appears to say.
-    add_test(NAME wine-test-lock-check
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_wine_test_locks.py"
-            --ctest-file "${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake"
-            # Derived from the list above rather than typed, so the expectation
-            # cannot drift from it. Without this the check printed "verified
-            # NOTHING" and returned 0 whenever it matched no Wine-backed test -
-            # which is what a rename of the runner or of --wine-prefix looks
-            # like, and it is indistinguishable from a healthy native build.
-            --expect-at-least "${OPENSMACX_WINE_LOCKED_TEST_COUNT}"
-    )
 
     # CTest NEVER BUILDS. Twice this project reported "62/62 passed" against
     # binaries a failed build had not replaced - once against a DLL that had
@@ -1647,7 +1639,6 @@ if(BUILD_TESTING)
             verify-recovery-abi
             ${OPENSMACX_GATE_ORACLE_DEPENDS}
             recovery-gameplay-tests
-            globals-diff-tests
         USES_TERMINAL
         VERBATIM
     )

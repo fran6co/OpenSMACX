@@ -764,3 +764,56 @@ the *next* honest retirement raise `SystemExit` out of `gate_checks()` for every
 caller — including `verify_check_tests_observe.candidate_tools()`, which imports
 it. One check of headroom, matching the convention `--floor 50` against 51 test
 files already uses; `test_the_floor_is_not_slack` refuses more than two.
+
+## `wine-test-lock-check` — retired 2026-08-13, its subject kept
+
+`verify_wine_test_locks.py` (named bare, not as `tools/…`: this file is a
+reachability root, and a qualified path to a deleted tool is a STALE entry
+point) required every Wine-backed CTest to hold the
+`wineprefix` RESOURCE_LOCK. The hazard it guarded is real and unusually nasty:
+the tests that go through `tools/run_windows_test.py` all drive the ONE
+marker-protected prefix, and that runner stops the prefix when it finishes, so
+two at once means one killing the other's wineserver mid-test. **A wine-backed
+test missing from the lock list does not fail — it flakes, in a different test
+each run.** Measured on the debug preset when it was written: serial `ctest`
+passed 58/58 in 67.9 s; `ctest -j8` finished in 45.6 s and failed
+`recovery-leaf-tests`, an earlier lane failing three.
+
+**It was policing seven tests. It is down to one.** `globals-diff-tests` and
+`recovery-oracle` went with earlier retirements, leaving only
+`recovery-gameplay-tests`, and with one holder a RESOURCE_LOCK serialises
+nothing. What survived was the prospective half — the `--expect-at-least`
+floor, which refuses when a Wine-backed suite silently loses its lock, and
+which is why an earlier retire verdict on this check was **overturned**.
+
+It goes now because that floor had itself gone stale in the way this repository
+keeps finding: `--expect-at-least` was derived from
+`OPENSMACX_WINE_LOCKED_TESTS`'s LENGTH, the list still named all three, and the
+check refused with `expected at least 3, found 1` — red at HEAD, against its
+own subject, for an unknown period. That is the second stale-constant red in a
+list CMake derives a floor from, after `EXEMPT` in `verify_checks_can_fail`.
+Both are hand-maintained lists that outlived their members.
+
+**WHAT REPLACES IT: nothing, and the list is now maintained BY HAND.** Adding a
+second Wine-backed test requires adding it to `OPENSMACX_WINE_LOCKED_TESTS`
+yourself; if you forget, the suite flakes rather than fails, and no check will
+tell you. That is the cost, priced here rather than struck. Restoring it is one
+file plus one `add_test`, and the floor should then be derived from the
+generated `CTestTestfile.cmake` — what CTest will really run — rather than from
+a list in this file, which is what let it drift.
+
+**`recovery-gameplay-tests` IS NOT RETIRED, and was proposed for retirement
+alongside this check on a framing that turned out to be wrong.** It looked like
+the last vestige of the runtime route retired 2026-08-12. It is not: 16,228
+lines and 2,217 assertions, and by this document's own measurement at line 418
+it is the **sole behavioural observer for 37 recovered functions of >=200 bytes
+and joint observer for 17 more** — a class byte-matching proves nothing about.
+Retiring it would have deleted the only behavioural evidence for 37 functions,
+which is the same error as retiring a capability along with the file that
+happened to carry it. Its sources remain compiled by the main `OpenSMACX`
+target, so nothing about it is redundant build coverage.
+
+Two latent breakages were fixed in passing, both caused by earlier retirements
+leaving names behind: `OPENSMACX_WINE_LOCKED_TESTS` named two tests that no
+longer exist, and `add_custom_target(verify-recovery-batch)` still listed
+`globals-diff-tests` in `DEPENDS`, a target defined nowhere in the tree.
