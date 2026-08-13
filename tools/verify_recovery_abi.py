@@ -219,11 +219,17 @@ def main():
              for name, value in sorted(vars(args).items())
              if name.endswith("object") and value and name != "object_dir"]
     for described, value in named + [(str(p.name), str(p)) for p in swept]:
-        sections = run([args.objdump, "-h", value])
-        if re.search(r"\.eh_frame\b", sections):
-            fail(f"{described} carries exception unwind data")
+        # `.eh_frame`, `__gxx_personality` and `_Unwind_` were the other three
+        # detectors here, and all three are GCC's. They came from the era of a
+        # second compiler and could not fire once VC6 was the only one:
+        # measured 2026-08-13 over 126 objects this build produces, zero carry
+        # an `.eh_frame` section and none reference either symbol. A detector
+        # that cannot fire is not defence in depth, it is a line that makes the
+        # check look broader than it is - and this one had already cost a damage
+        # case, which asserted on the GCC message and so proved nothing about
+        # the compiler the tree actually uses.
         undefined = run([args.nm, "-u", value])
-        if re.search(r"__gxx_personality|_Unwind_|CxxFrameHandler", undefined):
+        if re.search(r"CxxFrameHandler", undefined):
             fail(f"{described} imports exception handling support")
     if swept:
         print(f"recovery-abi: swept {len(swept)} built objects for exception "
