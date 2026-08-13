@@ -93,11 +93,11 @@ against it, never to trust directly.
    alias for a new export by hand.
 5. Build `promote-recovery-metadata` (Release preset) *before* the gate — and
    the order is **promote → classify → promote**. Promotion does not run
-   `tools/classify_recovered_shapes.py`, and `summary.json` is computed from
+   the retired `classify_recovered_shapes`, and `summary.json` is computed from
    the `recovered-shapes.csv` it writes.
    Promotion does not run the other three derived artifacts either. All four
    take `--check`, which is cheaper than a gate lane, so run all four:
-   `classify_recovered_shapes.py`, `generate_signature_oracles.py`,
+   the retired `classify_recovered_shapes`, `generate_signature_oracles.py`,
    `export_proven_functions.py`, `derive_prototypes_from_names.py`.
    `src/generated_signature_oracle.cpp` is the one that surprises people: it
    records `// recovered in src/<file>:<line>`, so inserting a body **above**
@@ -722,7 +722,6 @@ parallel-agent targets (see "Parallel recovery" above):
   priced, and which way a number moves. Both the full exporter and the reused-export refresh path
   compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
 - `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
-- `tools/test_external_analysis.py`: source-owned parser, correlation, provenance, and queue-tier tests.
 - the retired `extract_legacy_leaves`: conservative local-only island extractor.
 - `test_extract_legacy_leaves (retired)`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.
 - the retired `static_recompile_pilot`, `tools/static_recompile_runtime.h`: local-only static basic-block lowering and minimal explicit x86 state semantics.

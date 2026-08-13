@@ -25,7 +25,6 @@ import csv
 import unittest
 from pathlib import Path
 
-import byte_match_fanout as fanout
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -51,7 +50,7 @@ class CollectOwnershipTest(unittest.TestCase):
         if not owned:
             self.skipTest("docs/recovery/functions.csv is absent")
         offenders = []
-        for unit in sorted(fanout.WORK_ROOT.glob("*/unit.cpp")):
+        for unit in sorted((REPO_ROOT / "build" / "byte-match").glob("*/unit.cpp")):
             try:
                 address = int(unit.parent.name, 16)
             except ValueError:

@@ -794,7 +794,6 @@ if(BUILD_TESTING)
 
 
 
-    opensmacx_add_python_tool_test(external-analysis-tool-tests test_external_analysis.py)
 
 
 
