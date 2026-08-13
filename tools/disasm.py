@@ -52,7 +52,6 @@ def _catalogue_rows():
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 SYMBOL_MAP = REPO_ROOT / "build" / "target-objects" / "symbol-map.json"
 OBJECT_ADDRESS = re.compile(r"([0-9a-f]{8})\.obj$")
 
@@ -88,7 +87,7 @@ def symbol_map() -> dict:
 def resolve(text: str, functions: dict[int, dict[str, str]]) -> tuple[int, int | None]:
     """Accept a hex address, a catalogued name, or a recovery symbol.
 
-    The third case is what Mizuchi hands these tools now: `{{functionName}}`
+    The third case came in with Mizuchi, retired since: `{{functionName}}`
     carries the symbol both objects are made to share, which for the 1,179
     functions a disassembler named is a decoration of the label rather than
     the label itself. `_sub_5e3650@4` has to find the same row `sub_5e3650`

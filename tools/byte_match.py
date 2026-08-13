@@ -119,7 +119,6 @@ from generator_support import parse_body_ranges, read_bytes  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 
 VC6_ROOT = Path(os.environ.get("VC6_ROOT", Path.home() / "opt" / "vc6"))
 VC6_CL = VC6_ROOT / "BIN" / "CL.EXE"

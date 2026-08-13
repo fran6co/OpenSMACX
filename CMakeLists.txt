@@ -965,7 +965,7 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(recovery-symbol-tests
                                    test_recovery_symbols.py)
-    opensmacx_add_python_tool_test(mizuchi-declfix-tests test_mizuchi_declfix.py)
+    opensmacx_add_python_tool_test(mizuchi-declfix-tests test_declfix.py)
 
     # The writeback is the only tool in this tree that edits src/ from a line
     # number, and every way its splice can go wrong leaves a file that still
@@ -974,7 +974,7 @@ if(BUILD_TESTING)
     # pin - the editing, the catalogue line shift, the restore-on-refusal - is
     # the half that mutates the tree.
     opensmacx_add_python_tool_test(mizuchi-writeback-tests
-                                   test_mizuchi_writeback.py)
+                                   test_writeback.py)
 
     # The scaffolding emitter. Its coverage went 38% -> 98% over the fan-out
     # population and every step was a defect, including a repair regex pinned

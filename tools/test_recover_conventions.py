@@ -34,7 +34,10 @@ one, because that is the only kind of bug this module can have:
   test asserts that a bare `ret` with ECX read first is accepted as thiscall
   and that the same body without the ECX read is flagged.
 """
+import csv
+import tempfile
 import unittest
+from pathlib import Path
 
 import recover_conventions as rc
 
@@ -405,6 +408,59 @@ class RecoverTest(unittest.TestCase):
         self.assertEqual("none", s.this_location)
         self.assertEqual([], s.stack_slots)
         self.assertEqual(0, s.callee_pop_bytes)
+
+
+class LoadRowsTests(unittest.TestCase):
+    """Where the catalogue comes from, and the exact shape `main` assumes.
+
+    `load_rows` used to default to docs/recovery/functions.csv, which is
+    DELETED - every CLI mode died on FileNotFoundError before printing a line.
+    The default is now `emit_translation_unit.load_functions()`, i.e. the
+    `ORIGINAL:` annotations in src/, and what these pin is not "it returned
+    something" but the three column facts the rest of the module indexes on
+    without a fallback: `main` does `int(r["size"])` bare and
+    `r["address"].lower()`, `recover` does `row["name"]`. A store that came
+    back with an int address, or one row with an empty size, would take the
+    tool down again in a way a row count cannot see.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.rows = rc.load_rows()
+
+    def test_the_default_store_is_src_and_it_is_not_empty(self):
+        # Population asserted first: every per-row check below is vacuously
+        # true over zero rows, which is how a broken loader passes a suite.
+        self.assertGreater(len(self.rows), 5000)
+
+    def test_every_row_carries_the_columns_main_indexes_bare(self):
+        for row in self.rows:
+            self.assertTrue(row["name"], row["address"])
+            self.assertTrue(row["address"].startswith("0x"), row["address"])
+            self.assertRegex(row["size"], r"^\d+$")
+
+    def test_an_explicit_path_still_wins(self):
+        # The parameter survives only so a regenerated export can be read back
+        # and compared against src/. If it silently returned the src rows the
+        # comparison would be with itself - the vacuous shape this tree has
+        # been bitten by - so the file's own contents must come out.
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "export.csv"
+            with path.open("w", newline="") as handle:
+                writer = csv.DictWriter(handle, ["address", "name", "size"])
+                writer.writeheader()
+                writer.writerow({"address": "0x00401000", "size": "88",
+                                 "name": "??0StringStruct@@QAE@H@Z"})
+            self.assertEqual([{"address": "0x00401000", "size": "88",
+                               "name": "??0StringStruct@@QAE@H@Z"}],
+                             rc.load_rows(path))
+
+    def test_a_missing_explicit_path_is_an_error_not_a_silent_fallback(self):
+        # Asking for a file that is not there and getting 6,000 src rows back
+        # would report a comparison that never happened.
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises(OSError):
+                rc.load_rows(Path(folder) / "nope.csv")
 
 
 class FakeInstruction:

@@ -72,7 +72,6 @@ def _catalogue_rows():
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 SRC_DIR = REPO_ROOT / "src"
 
 OPERATOR_NEW = 0x0064558A

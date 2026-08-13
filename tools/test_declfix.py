@@ -2,7 +2,7 @@
 
 import unittest
 
-from mizuchi_declfix import CRT_SIGNATURES, decode_signature, fix_declarations
+from declfix import CRT_SIGNATURES, decode_signature, fix_declarations
 
 
 class DecodeSignatureTest(unittest.TestCase):

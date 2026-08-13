@@ -177,7 +177,7 @@ def disassembly(address: int) -> str:
     depends on the pinned executable and nothing else.
     """
     import pefile
-    import emit_mizuchi_prompts as prompts
+    import disassembly as prompts
 
     functions = emit.load_functions()
     row = functions.get(address)
@@ -192,7 +192,7 @@ def prompt_section(address: int, heading: str) -> str:
     """The Contract, or the Ghidra hypothesis, derived rather than scraped."""
     if heading == "Contract":
         import pefile
-        import emit_mizuchi_prompts as prompts
+        import disassembly as prompts
         try:
             head = prompts.signature_head(
                 address, emit.load_functions(), emit.load_derived(),
@@ -202,7 +202,7 @@ def prompt_section(address: int, heading: str) -> str:
             return f"## Contract\n\n(no scaffolding: {error})"
         return ("## Contract\n\nDefine exactly this, out of line, using the "
                 "definition head VERBATIM:\n\n```cpp\n" + head + "\n```")
-    import emit_mizuchi_prompts as prompts
+    import disassembly as prompts
     text = prompts.ghidra_hypothesis(address)
     if not text:
         return ""
@@ -276,14 +276,14 @@ def fresh_recovery_section(address: int) -> str:
 
     What a fresh recovery needs instead is the definition head the scaffolding
     will compile against and the decompiler's guess at the body, both of which
-    `emit_mizuchi_prompts.py` already writes.
+    `disassembly.py` already writes.
     """
     contract = prompt_section(address, "Contract")
     ghidra = prompt_section(address, "Ghidra decompilation (hypothesis only)")
     if not contract and not ghidra:
         return ("# Nothing is recovered yet\n\nThere is no committed body and "
                 "no generated prompt for this address. Run\n"
-                "`tools/emit_mizuchi_prompts.py` first - without the contract "
+                "`tools/disassembly.py` first - without the contract "
                 "there is no way to\nknow what definition head the scaffolding "
                 "will accept.\n")
     return f"""# Nothing is recovered yet - write it from scratch

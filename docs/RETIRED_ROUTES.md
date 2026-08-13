@@ -214,8 +214,8 @@ Gone with it: `mizuchi-db.json`, **161 MB** carried through git-lfs, and
 the `emit_asm_dumps` tool, which nothing but `mizuchi.yaml` named.
 
 **Five of its tools were never really its own** and carry the loop today —
-`mizuchi_context.py`, `mizuchi_declfix.py`, `mizuchi_writeback.py`,
-`emit_target_object.py` and `emit_mizuchi_prompts.py`, the last of which now
+`mizuchi_context.py`, `declfix.py`, `writeback.py`,
+`emit_target_object.py` and `disassembly.py`, the last of which now
 supplies `agent_brief.py` with its disassembler and definition-head builder. The
 names are historical; the code is load-bearing.
 

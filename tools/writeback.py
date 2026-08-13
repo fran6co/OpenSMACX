@@ -37,10 +37,11 @@ rewrites it in the tree's own style. `src/recovered/README.md` says the rest.
 verification artefact would make both of them report something that is not
 true. The filename is the index instead.
 
-WHAT IT REPLACES, AND WHAT IT KEEPS. `functions.csv` points at a line inside
-the doc comment that precedes the definition, so the catalogued span covers
-BOTH the comment and the body. This tool replaces only the definition and
-keeps the comment verbatim, because the comment is not decoration: the
+WHAT IT REPLACES, AND WHAT IT KEEPS. A row's `source_locations` points at the
+`ORIGINAL:`/`Original Offset:` marker line, which sits inside the doc comment
+that precedes the definition, so the catalogued span covers BOTH the comment
+and the body. This tool replaces only the definition and keeps the comment
+verbatim, because the comment is not decoration: the
 `Status: Complete` line in it is what `export_recovery_inventory` reads to set
 `recovery_state`, and regenerating it from a mangled name would lose the
 Purpose and Return Value prose a human wrote. The span comes from
@@ -64,17 +65,23 @@ header the file does not include. The project build is the arbiter of that,
 and this tool does not run it.
 
 LINE NUMBERS MOVE. A replacement of a different length shifts every catalogued
-location BELOW it in the same file. Three committed catalogues carry those
-pointers and are updated here: `docs/recovery/functions.csv`,
-`.opensmacx/byte-match.csv` and `mizuchi/source-map.json`. Two more are
+location BELOW it in the same file. Two committed catalogues carry those
+pointers as text and are updated here: `.opensmacx/byte-match.csv` and
+`mizuchi/source-map.json`. The FUNCTION CATALOGUE is no longer among them.
+`docs/recovery/functions.csv` was deleted (185dd977) and the catalogue is now
+read out of the `src/` annotations themselves by `project_catalogue.from_source`
+- a row's `source_locations` IS the line the `ORIGINAL:` marker currently sits
+on, re-derived on every load, so an edit that moves a marker has already moved
+the catalogue with it and there is nothing to patch. Measured today: 6,000 rows
+from `src/`, 4,112 of them with a `src/` location. Two more catalogues are
 derived and are NOT patched - `docs/recovery/summary.json` and the metadata
 caches - because they are regenerated from the IDB by
 `tools/verify_recovery_metadata.py`, and hand-editing a generated catalogue is
 exactly what that tool is built to catch. After a batch of writebacks, run it.
 
 Usage:
-    tools/mizuchi_writeback.py 0x00601B80 path/to/matched.cpp
-    tools/mizuchi_writeback.py '?set_loc@BasePop@@QAEXHH@Z' matched.cpp --json
+    tools/writeback.py 0x00601B80 path/to/matched.cpp
+    tools/writeback.py '?set_loc@BasePop@@QAEXHH@Z' matched.cpp --json
 """
 
 from __future__ import annotations
@@ -95,7 +102,6 @@ import byte_match_census as census  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-FUNCTIONS_CSV = REPO_ROOT / "docs" / "recovery" / "functions.csv"
 LEDGER_CSV = REPO_ROOT / ".opensmacx" / "byte-match.csv"
 SOURCE_MAP = REPO_ROOT / "mizuchi" / "source-map.json"
 MATCHED_DIR = REPO_ROOT / "src" / "recovered"
@@ -163,10 +169,11 @@ def leading_comment(lines: list) -> int:
 def comment_start(lines: list, span_start: int) -> int:
     """Index of the `/*` opening the doc comment the span begins inside.
 
-    `functions.csv` points at a line WITHIN the comment - usually `Purpose:`
-    or `Original Offset:` - so the opening `/*` sits ABOVE the span and is not
-    part of the region the splice replaces. That was harmless while the old
-    comment was kept. It is not harmless once a submitted comment replaces it:
+    A catalogued location names a line WITHIN the comment - the `ORIGINAL:` or
+    `Original Offset:` marker the annotation scanner keys on - so the opening
+    `/*` sits ABOVE the span and is not part of the region the splice
+    replaces. That was harmless while the old comment was kept. It is not
+    harmless once a submitted comment replaces it:
     the orphaned `/*` stays behind and the file gets `/*` ... `/*` with no
     close between them, which is a comment swallowing the next function.
 
@@ -310,7 +317,7 @@ def build_unit(address: int, body: str, functions: dict, callees: dict,
     with ITS hoisted catalogue and PE reader rather than re-parsing both per
     file. Raises `emit.Unsettled` when there is no scaffolding to build on.
     """
-    from mizuchi_declfix import fix_declarations
+    from declfix import fix_declarations
 
     scaffolding = emit.emit(address, functions, derived, callees, pe_fast,
                             scaffolding_only=True)
@@ -323,7 +330,7 @@ def verify(address: int, body: str) -> dict:
     """Rebuild the unit around a body READ BACK FROM DISK and re-measure it.
 
     The unit is assembled the way `mizuchi_context.py` assembles the one the
-    integrator gated - scaffolding, then `mizuchi_declfix`, then the body -
+    integrator gated - scaffolding, then `declfix`, then the body -
     rather than the way the census assembles its own. The census omits declfix,
     which respells callee declarations so VC6 re-mangles them to the catalogued
     names; without it a body calling a CRT function reads as NO_COMPILE. Using
@@ -434,12 +441,15 @@ def splice(address: int, row: dict, location: str, code: str,
     comment, replacement = merge_doc_comment(
         lines[head:start + offset], replacement)
     if head < start and len(comment) <= start - head:
-        # This row's OWN `source_locations` names a line inside the comment,
-        # and it is not shifted by the splice. A replacement comment short
-        # enough to end above that line would leave the catalogue pointing at
-        # code instead. Keeping the existing comment is the lesser evil - a
-        # duplicate reads badly, a mislocated row reads as a different
-        # function, and that has cost a day before.
+        # This row's OWN catalogue entry IS a line inside the comment: the
+        # `ORIGINAL:`/`Original Offset:` marker `annotation_scan` keys on, now
+        # that the catalogue is read out of `src/` rather than out of a CSV.
+        # A replacement comment too short to reach that line cannot be carrying
+        # the marker, and a body with no marker is not a mislocated row any
+        # more - it is not a row at all, so the function silently leaves the
+        # 6,000. Keeping the existing comment is still the lesser evil: a
+        # duplicate reads badly, a lost annotation reads as lost work, and the
+        # mislocation this guard was first written for cost a day.
         head, comment = start, lines[start:start + offset]
         replacement = code.strip().splitlines()
     before = lines[:head] + comment
@@ -450,10 +460,14 @@ def splice(address: int, row: dict, location: str, code: str,
     # Measured over the WHOLE rewritten region, because both the comment and
     # its starting line can move now. Getting this wrong silently renumbers
     # every `source_location` below it in the file.
+    #
+    # The FUNCTION catalogue is not shifted, because it is no longer a file:
+    # `project_catalogue.from_source` re-derives every `source_locations` from
+    # the `ORIGINAL:` marker's current line each time it is loaded, so writing
+    # `src/` IS updating it. Only the two stores that keep line numbers as text
+    # of their own are patched here.
     delta = (len(comment) + len(replacement)) - (end + 1 - head)
     touched = [source_file]
-    if shift_csv(FUNCTIONS_CSV, "source_locations", source_file, end + 1, delta):
-        touched.append(str(FUNCTIONS_CSV.relative_to(REPO_ROOT)))
     if shift_csv(LEDGER_CSV, "source_location", source_file, end + 1, delta):
         touched.append(str(LEDGER_CSV.relative_to(REPO_ROOT)))
     if shift_source_map(SOURCE_MAP, source_file, end + 1, delta):
@@ -490,7 +504,6 @@ def splice(address: int, row: dict, location: str, code: str,
         # Restore everything. A half-applied writeback is worse than none: the
         # body would read as recovered while the pointers around it moved.
         write_atomically(path, original_text)
-        shift_csv(FUNCTIONS_CSV, "source_locations", source_file, end + 1, -delta)
         shift_csv(LEDGER_CSV, "source_location", source_file, end + 1, -delta)
         shift_source_map(SOURCE_MAP, source_file, end + 1, -delta)
         against = (f" and no better than the committed "

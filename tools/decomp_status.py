@@ -20,7 +20,7 @@ second comparator:
   * body mode, census recipe   `byte_match_census.build_unit` VERBATIM: the
                                brace-counted extract, the emitter scaffolding,
                                the seam and compat preambles;
-  * body mode, writeback       `mizuchi_writeback.build_unit` - the proved
+  * body mode, writeback       `writeback.build_unit` - the proved
                                store's recipe, declfix included, exactly as
                                `byte_match_fanout --collect` re-verifies it;
   * FILE mode                  the file text, compiled as-is.
@@ -66,7 +66,7 @@ import annotation_scan  # noqa: E402
 import byte_match  # noqa: E402
 import byte_match_census as census  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
-import mizuchi_writeback as writeback  # noqa: E402
+import writeback as writeback  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CACHE_PATH = REPO_ROOT / ".opensmacx" / "decomp-status-cache.json"
@@ -590,11 +590,11 @@ def work_address(address: int, annotations: list, functions: dict,
     PLACEHOLDER (measured) until a real body exists - this tool does not
     trust the claim that work has started.
 
-    THE SCAFFOLD GOES THROUGH `mizuchi_declfix` BEFORE IT IS WRITTEN, so that
+    THE SCAFFOLD GOES THROUGH `declfix` BEFORE IT IS WRITTEN, so that
     the unit an agent iterates on and the unit that banks the result are the
     same bytes. They were not. A `FILE`-marked scaffold is compiled VERBATIM by
     `build_units`, while `verify_recovered_function` scores through
-    `mizuchi_writeback.build_unit`, which respells callee declarations so VC6
+    `writeback.build_unit`, which respells callee declarations so VC6
     re-mangles them to the catalogued names. Without declfix a body calling a
     CRT function reads NO_COMPILE in one and BYTE_EXACT in the other - which
     means an agent could prove a body and `--record-matches` would stamp
@@ -794,54 +794,30 @@ def check_migration(plan: list) -> bool:
     return ok
 
 
-def rewrite_source_locations(catalog: dict) -> int:
-    """Invert the truth direction: locations derive from the scan.
-
-    But the catalogue column is not the map - it is the SCORING ROUTE. A row
-    with a location belongs to the census; a body under src/recovered/ stays
-    scoreable only while its row is unowned (collect-ownership pins exactly
-    this), and a placeholder is a promise, not an implementation, so it must
-    not make its row owned either. Product source owned by an IMPLEMENTED
-    annotation is the only thing that may occupy the column; everything else
-    is cleared, and the map (the annotations) stays complete regardless.
-    """
-    annotations, _ = annotation_scan.resolve(annotation_scan.scan_tree())
-    locations = {}
-    for annotation in annotations:
-        if annotation.state != annotation_scan.STATE_IMPLEMENTED:
-            continue
-        if "src/recovered/" in annotation.path:
-            continue
-        locations[annotation.address] = annotation.location
-    path = byte_match.FUNCTIONS_CSV
-    with path.open(newline="") as handle:
-        rows = list(csv.DictReader(handle))
-        fieldnames = list(rows[0].keys()) if rows else []
-    changed = 0
-    for row in rows:
-        address = int(row["address"], 16)
-        want = locations.get(address, "")
-        if row.get("source_locations", "") != want:
-            row["source_locations"] = want
-            changed += 1
-    tmp = path.with_suffix(".tmp")
-    with tmp.open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-    os.replace(tmp, path)
-    return changed
+# NO rewrite_source_locations HERE ANY MORE, AND NO --rewrite-locations. It
+# read `byte_match.FUNCTIONS_CSV` and wrote the `source_locations` column back
+# into it; that export was deleted, so every invocation of the flag ended in
+# `FileNotFoundError: docs/recovery/functions.csv` before a byte was written -
+# measured, not assumed. The behaviour did not die, it MOVED to the read side:
+# `project_catalogue.from_source()` now derives the column per row from the
+# annotation itself (`location` when IMPLEMENTED, empty otherwise), so there is
+# nothing left to write back and no window in which the column is stale.
+#
+# One rule did NOT move with it. This function also cleared the column for any
+# body under `src/recovered/`, to keep such a row unowned and therefore
+# scoreable by the census; `from_source` applies no such filter and 1,477 of
+# the 6,000 rows now carry a `src/recovered/` location (measured 2026-08-12).
+# Restoring that filter is a change to what the census scores, not a deletion
+# of dead code, so it is left alone and recorded here rather than smuggled in.
+# Its other half is unguarded too: `tools/test_collect_ownership.py` spells the
+# same deleted path inline and now `skipTest`s all three of its cases, so it
+# reports OK while proving nothing.
 
 
-def run_migration(apply: bool, rewrite_locations: bool) -> int:
+def run_migration(apply: bool) -> int:
     plan = plan_migration()
     print(f"migration plan: {len(plan)} file(s) carry deprecated spellings")
     if not plan:
-        if apply and rewrite_locations:
-            changed = rewrite_source_locations(emit.load_functions())
-            print(f"functions.csv source_locations rewritten from the scan: "
-                  f"{changed} row(s); run promote -> classify -> promote, "
-                  f"then tools/run_gate.py")
         return 0
     if not check_migration(plan):
         print("guards FAILED; nothing written")
@@ -871,11 +847,6 @@ def run_migration(apply: bool, rewrite_locations: bool) -> int:
         tmp.write_text(new)
         os.replace(tmp, path)
     print(f"wrote {len(plan)} migrated file(s)")
-    if rewrite_locations:
-        changed = rewrite_source_locations(emit.load_functions())
-        print(f"functions.csv source_locations rewritten from the scan: "
-              f"{changed} row(s); run promote -> classify -> promote, then "
-              f"tools/run_gate.py")
     return 0
 
 
@@ -930,9 +901,6 @@ def main(argv=None) -> int:
     parser.add_argument("--record-matches", action="store_true",
                         help="write BYTE_EXACT onto every annotation this run "
                              "proved (adds only, never removes)")
-    parser.add_argument("--rewrite-locations", action="store_true",
-                        help="with --migrate --apply: rewrite functions.csv "
-                             "source_locations from the scan")
     arguments = parser.parse_args(argv)
 
     if arguments.paths:
@@ -953,7 +921,7 @@ def main(argv=None) -> int:
     functions = emit.load_functions()
 
     if arguments.migrate:
-        return run_migration(arguments.apply, arguments.rewrite_locations)
+        return run_migration(arguments.apply)
 
     # Map-changing actions run against the FULL tree regardless of any path
     # filter: a partial scan would undercount what is already annotated and

@@ -144,10 +144,10 @@ The external Node harness is gone (see `docs/RETIRED_ROUTES.md`); five of its
 tools were never really its own and carry the loop today.
 the retired `mizuchi_context` emits the scaffolding-only unit,
 `tools/emit_target_object.py` produces the COFF target,
-`tools/emit_mizuchi_prompts.py` holds the disassembler and the definition-head
-builder that `tools/agent_brief.py` now imports, `tools/mizuchi_declfix.py`
+`tools/disassembly.py` holds the disassembler and the definition-head
+builder that `tools/agent_brief.py` now imports, `tools/declfix.py`
 respells callee declarations so VC6 re-mangles them to the catalogued names,
-and `tools/mizuchi_writeback.py` lands a byte-exact match in a tracked file or
+and `tools/writeback.py` lands a byte-exact match in a tracked file or
 refuses and changes nothing. The names are historical; the code is not.
 
 ## Wiring a recovery into the DLL

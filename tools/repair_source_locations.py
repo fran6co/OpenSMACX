@@ -23,7 +23,7 @@ that is really a broken body, and only one of them is worth an agent's time.
 
 The repair is mechanical because the body carries its own identity: every
 committed recovery has an `Original Offset: XXXXXXXX` line in its doc comment,
-written by `mizuchi_writeback` and required by `integrate_recovery`. So the
+written by `writeback` and required by `integrate_recovery`. So the
 true line is a lookup, not a guess, and a row whose offset line is absent is
 reported rather than repositioned.
 
