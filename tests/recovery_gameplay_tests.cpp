@@ -101,8 +101,7 @@ namespace {
 // 99 were the parser desynchronising after `GameplayCase` failed to declare -
 // including 42 `C2078: too many initializers` pointing at plain `int ids[] =
 // {0, 1};` aggregates that are correct C++98 and were never the problem.
-// Every spelling below is valid C++98 and valid C++11, so the MinGW side is
-// unaffected.
+// Every spelling below is valid C++98, which is what cl 12.00.8168 accepts.
 typedef void (*GameplayCase)();
 
 std::vector<std::pair<const char *, GameplayCase> > &gameplay_cases() {

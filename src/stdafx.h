@@ -28,23 +28,14 @@
 #define WIN32_LEAN_AND_MEAN       // Exclude rarely-used stuff from Windows headers
 #define DLLEXPORT __declspec(dllexport)
 
-// Lower case, and that is not a style choice. The Windows SDK ships this as
-// SDKDDKVer.h and mingw-w64 ships it as sdkddkver.h; both spellings resolve on
-// Windows and on a case-insensitive macOS filesystem, and only the lower-case
-// one resolves on Linux. With the upper-case spelling every target that pulls
-// in this header - the DLL, recovery-leaf-tests, the oracle tests - fails to
-// compile here, which is the whole recovery gate. Same class of defect as the
-// path casefolding in bb95bb5, and invisible for the same reason.
 #include "vc6_compat.h"
 
-// VC6's SDK predates both of these. `sdkddkver.h` selects a target Windows
-// version, which for a compiler that shipped in 1998 is already decided, and
-// `<random>` is C++11 and is not used anywhere in this tree - it came in with
-// the modern build and stayed.
-#if !defined(_MSC_VER) || _MSC_VER > 1200
-#include <sdkddkver.h>
-#include <random>
-#endif
+// `<sdkddkver.h>` and `<random>` stood here behind
+// `#if !defined(_MSC_VER) || _MSC_VER > 1200`, so they were reached by every
+// compiler EXCEPT the only one this project builds with. VC6's SDK predates
+// both: sdkddkver.h selects a target Windows version, already decided for a
+// compiler that shipped in 1998, and <random> is C++11 and is used nowhere in
+// this tree. Removed with the second compiler they existed for.
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>

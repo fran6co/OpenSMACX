@@ -99,7 +99,7 @@ class MainTests(unittest.TestCase):
         self.assertIn("blinded", output)
 
     def test_matching_nothing_is_allowed_when_none_are_expected(self):
-        # A native MinGW-on-Windows build legitimately has no Wine-backed test.
+        # A native Windows build legitimately has no Wine-backed test.
         self.assertEqual(0, self.run_main("")[0])
 
     def test_more_wine_tests_than_expected_is_not_a_failure(self):

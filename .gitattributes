@@ -72,29 +72,18 @@ baseline-arm64/*.tsv -text
 ###############################################################################
 # Derived recovery metadata: never line-merge it, regenerate it.
 #
-# Every recovery rewrites all six of these, so two branches always collide here.
-# They are not hand-mergeable - analysis-correlation.csv is 1.24 MB and
-# functions.csv 1.19 MB, both around 6,000 rows - and a line-level merge of two
-# regenerated CSVs can produce a file that LOOKS valid and is wrong, which is
-# published metadata under a green gate.
+# Two branches that both regenerate one of these always collide, and a
+# line-level merge of two machine-written files can produce one that LOOKS
+# valid and is wrong - published metadata under a green gate. `merge=binary`
+# makes git refuse the text merge: it reports the conflict and leaves our side
+# in place. The resolution is not to read them; take either side and regenerate.
 #
-# `merge=binary` makes git refuse the text merge: it reports the conflict and
-# leaves our side in place, instead of interleaving two machine-written files.
-# The resolution is not to read them. Take either side and regenerate:
-#
-#     cmake --build --preset mingw-i686-release --target promote-recovery-metadata
-#     .opensmacx/venv/bin/python tools/classify_recovered_shapes.py
-#     cmake --build --preset mingw-i686-release --target promote-recovery-metadata
-#
-# A wrong resolution is caught rather than trusted: verify-recovery-metadata
-# regenerates and compares, and since the promoting run no longer stamps, the
-# gate actually performs that comparison.
+# FIVE RULES WERE STRUCK on 2026-08-13, naming files this tree no longer has:
+# functions.csv, callgraph.json, priorities.csv, analysis-correlation.csv and
+# analysis-summary.json. The map lives in `src/` now, so the merge hazard those
+# guarded moved with it - two branches conflict in the annotations they each
+# edited, which is a text merge a human CAN do and should.
 ###############################################################################
-docs/recovery/functions.csv            merge=binary
-docs/recovery/callgraph.json           merge=binary
 docs/recovery/summary.json             merge=binary
-docs/recovery/priorities.csv           merge=binary
-docs/recovery/analysis-correlation.csv merge=binary
-docs/recovery/analysis-summary.json    merge=binary
 docs/recovery/recovered-shapes.csv     merge=binary
 mizuchi-db.json filter=lfs diff=lfs merge=lfs -text
