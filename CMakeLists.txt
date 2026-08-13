@@ -800,10 +800,8 @@ if(BUILD_TESTING)
 
     opensmacx_add_python_tool_test(external-analysis-tool-tests test_external_analysis.py)
 
-    opensmacx_add_python_tool_test(recovery-metadata-tool-tests test_verify_recovery_metadata.py)
 
 
-    opensmacx_add_python_tool_test(batch-decompile-tool-tests test_batch_decompile.py)
 
 
     opensmacx_add_python_tool_test(gate-runner-tests test_run_gate.py)
@@ -1595,43 +1593,6 @@ install(TARGETS OpenSMACX
     ARCHIVE DESTINATION lib
 )
 
-set(OPENSMACX_METADATA_VERIFY_DIR
-    "${CMAKE_CURRENT_BINARY_DIR}/recovery-metadata-verify")
-# The two metadata-gate targets run the same command over the same inputs;
-# promote adds --promote. One definition keeps their dependency lists from
-# drifting apart.
-function(opensmacx_add_metadata_gate_target name)
-    add_custom_target(${name}
-        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
-            --idb "${OPENSMACX_RECOVERY_IDB}"
-            --verify-dir "${OPENSMACX_METADATA_VERIFY_DIR}"
-            ${ARGN}
-        DEPENDS
-            "${OPENSMACX_RECOVERY_IDB}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_recovery_metadata.py"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/export_recovery_inventory.py"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/correlate_recovery_analyses.py"
-            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-overrides.csv"
-            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery-binding-classifications.csv"
-            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ida9-functions.csv"
-            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-functions.csv"
-            "${CMAKE_CURRENT_SOURCE_DIR}/docs/recovery/ghidra-interior-references.csv"
-        USES_TERMINAL
-        VERBATIM
-    )
-endfunction()
-
-opensmacx_add_metadata_gate_target(verify-recovery-metadata)
-
-# Every recovery invalidates the committed metadata by construction, so the
-# unpromoted gate is guaranteed to fail its first pass on any batch that landed
-# a body. Running this first regenerates, copies over docs/recovery/, and still
-# performs the byte comparison, which turns the standing two-pass cycle into
-# one. It is deliberately NOT a dependency of verify-recovery-batch: the gate
-# must keep failing on drift for anyone who has not consciously promoted.
-opensmacx_add_metadata_gate_target(promote-recovery-metadata --promote)
-
 if(BUILD_TESTING)
     # Every test that goes through tools/run_windows_test.py drives the ONE
     # marker-protected prefix at ${OPENSMACX_WINE_PREFIX}, and that runner
@@ -1721,7 +1682,6 @@ if(BUILD_TESTING)
         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
             --parallel "${OPENSMACX_CTEST_JOBS}"
         DEPENDS
-            verify-recovery-metadata
             verify-recovery-abi
             ${OPENSMACX_GATE_ORACLE_DEPENDS}
             recovery-gameplay-tests

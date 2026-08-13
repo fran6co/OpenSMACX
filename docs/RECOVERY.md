@@ -82,12 +82,12 @@ Ghidra 12.1 or newer can analyze the original executable and export address-keye
 ```sh
 python3 tools/run_ghidra_analysis.py --exe /path/to/terranx.exe
 python3 tools/export_idb_members.py
-python3 tools/correlate_recovery_analyses.py
 ```
 
-The correlation step writes `analysis-correlation.csv`, `analysis-summary.json`, and
-`priorities.csv` under `docs/recovery`. Boundary relationships are recorded rather than reconciled
-automatically: `exact` has the same complete body ranges, `entry_range` shares the entry point and
+The correlation step that consumed these - and the three files it wrote under
+`docs/recovery` - is retired; see `docs/RETIRED_ROUTES.md` for what it measured
+and why byte-matching supersedes it. Boundary relationships were recorded rather
+than reconciled automatically: `exact` has the same complete body ranges, `entry_range` shares the entry point and
 primary range but differs in tails, and `start_only` shares only the entry point. `containing` and
 `split` indicate a primary-range disagreement, while `missing` means no primary-range overlap was
 found.
@@ -159,8 +159,7 @@ reapplies them to the checkpointed 6,000-function inventory before rerunning cor
 final byte comparisons. A catalog-relevant source edit, classification failure, or promotion of
 regenerated catalogs therefore invalidates the strict verification stamp without repeating the
 multi-minute IDB parse. Binary inventory drift still invalidates the checkpoint, and
-`tools/verify_recovery_metadata.py --force` discards it and regenerates unconditionally.
-`prepare-hybrid-image` depends on this check. The local-only umbrella target
+The local-only umbrella target
 also runs behavioral tests, ABI checks, differential oracles, island regeneration, staging, and the
 runtime smoke gate:
 

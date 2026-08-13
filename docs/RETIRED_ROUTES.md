@@ -402,3 +402,46 @@ functions and joint observer for 17 more, and it builds under VC6 as of
 2026-08-12. The runtime oracle, hybrid staging, mutation harness and redirect
 machinery are all still in the tree; when they go, they get sections here, with
 their numbers, before the code is removed.
+
+## The cross-analysis correlation and the metadata gate — retired 2026-08-13
+
+Three committed outputs and the three tools that maintained them:
+`docs/recovery/analysis-correlation.csv` (6,000 rows), `priorities.csv` (3,172),
+`analysis-summary.json`, plus `correlate_recovery_analyses.py`,
+`verify_recovery_metadata.py` and `batch_decompile.py`.
+
+**What it measured, and it was real.** Two independent disassemblers against our
+catalogue's function boundaries. IDA9 agreed exactly on 5,264 of 5,347 and could
+not see 661; Ghidra agreed on 3,529 of 9,918 and could not see 2,029, with 385
+entry-range and 54 start-only near-misses. Three readings of the same image, and
+where they agreed a boundary was worth more than any one of them alone.
+
+**Why it went anyway.** Byte-matching is a STRICTLY STRONGER boundary control on
+every function it reaches. A body that recompiles to the exact bytes of
+`[start, end)` has proved the boundary; tool agreement only votes on it. The
+correlation kept its value only for functions nothing has proved — a population
+that shrinks with every batch, measured by a route with no second opinion in it.
+
+**And it had stopped being true.** `priorities.csv` carries a `recovery_state`
+column sourced from `functions.csv`, deleted when the map moved into `src/`.
+Measured before deleting: **1,297 of its 3,172 rows say `unrecovered` for a
+function that is implemented in `src/`, and 716 sit below `source_complete` on a
+body that is BYTE_EXACT.** Forty-one percent wrong as a worklist, and
+unrefreshable, because its input no longer exists. `recovery_frontier.py` reads
+`src/` and replaces it.
+
+`verify_recovery_metadata.py` was the gate over these files, and its `--promote`
+mode regenerated `functions.csv` and `callgraph.json` — the two files whose
+deletion made `src/` the record. A gate that restores what the project
+deliberately removed is not a gate, and this one had been failing since its own
+inputs went away.
+
+`batch_decompile.py` drove Ghidra headless to bulk-produce decompiled C. Under
+VC6-only that dependency retires it on its own, and the byte-match loop never
+read decompiler output: an agent writes C++ and the compiler judges it.
+
+**What is worth rebuilding, in some other shape.** Boundary disagreement is a
+real signal for the un-proved population — `entry_range` and `start_only`
+near-misses are where a span is most likely wrong. Recovered as a QUERY against
+the IDA/Ghidra exports, run when a body will not match and the span is suspect,
+rather than as three committed files and a gate that regenerates them.
