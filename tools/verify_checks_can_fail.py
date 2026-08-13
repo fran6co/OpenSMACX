@@ -42,6 +42,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TOOLS = REPO_ROOT / "tools"
+sys.path.insert(0, str(TOOLS))
+
+import byte_match  # noqa: E402  - needs TOOLS on the path first
 PYTHON = sys.executable
 
 
@@ -499,21 +502,26 @@ def damage_exception_object(workspace):
     alphanet = objects / "alphanet.cpp.obj"
     if not objects.is_dir() or not alphanet.is_file():
         raise Skip("no configured debug build directory")
-    compiler = shutil.which("i686-w64-mingw32-g++")
-    if not compiler:
-        raise Skip("no i686 mingw compiler on PATH")
+    # VC6 with /EHsc, not a cross g++. The gate reads objects THIS project
+    # produces, so the poison has to come from the compiler that produces them -
+    # a second toolchain's unwind tables are a different shape, and the case was
+    # asserting on the wrong one.
+    if not byte_match.VC6_CL.is_file():
+        raise Skip("no VC6 to build an exception-carrying object with")
     copy = workspace / "objects"
     _sp.run(["cp", "-al", str(objects), str(copy)], check=True)
-    source = workspace / "poison.cpp"
-    source.write_text("struct E{};\nint poison(int x){ if(x) throw E(); return x; }\n",
-                      encoding="utf-8")
-    done = _sp.run([compiler, "-m32", "-c", "-fexceptions", str(source),
-                    "-o", str(copy / "poison.cpp.obj")], capture_output=True)
-    if done.returncode != 0:
+    try:
+        obj = byte_match.compile_unit(
+            "struct E{};\nint poison(int x){ if(x) throw E(); return x; }\n",
+            workspace, "poison", "/c /O2 /EHsc")
+    except Exception as error:                      # noqa: BLE001 - reported
+        raise Skip(f"could not build an exception-carrying object: {error}")
+    if not obj:
         raise Skip("could not build an exception-carrying object")
+    (copy / "poison.cpp.obj").write_bytes(obj)
+    # Plain binutils: objdump reads a cl 12.00.8168 object as pe-i386.
     return [PYTHON, str(TOOLS / "verify_recovery_abi.py"),
-            "--nm", "/usr/bin/i686-w64-mingw32-nm",
-            "--objdump", "/usr/bin/i686-w64-mingw32-objdump",
+            "--nm", "/usr/bin/nm", "--objdump", "/usr/bin/objdump",
             "--object", str(alphanet), "--object-dir", str(copy)]
 
 
@@ -555,7 +563,11 @@ CASES = (
     ("exclusions-current", "a measured number disagreeing with the image",
      damage_stale_exclusions, "disagrees with the image"),
     ("recovery-abi", "an object carrying exception unwind data",
-     damage_exception_object, "carries exception unwind data"),
+     # VC6 does not emit `.eh_frame` - that is GCC's DWARF section, and the
+     # detector that fires on a cl object is the undefined `__CxxFrameHandler`
+     # instead. Same defect, the other of the tool's two detectors; the case
+     # named the one only a second compiler could trigger.
+     damage_exception_object, "imports exception handling support"),
     ("recovery-pipeline", "a pinned pipeline fact that no longer holds",
      damage_pipeline_golden, "answers changed"),
     ("export-signedness-audit", "no image, so nothing can be ranked",
