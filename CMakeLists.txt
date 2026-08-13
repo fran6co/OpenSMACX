@@ -1415,6 +1415,21 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(cmake-paths-tests
                                    test_verify_cmake_paths_exist.py)
 
+    # `unittest.main()` collects the classes defined SO FAR, so anything below
+    # that block never runs - and the file still exits 0, so the gate invoking
+    # it goes green over a suite it did not execute. test_emit_translation_unit
+    # ran 57 of its 73 tests that way, with sixteen stranded below the block.
+    # Neither test-registration nor tool-test-registration could see it: the
+    # file WAS registered and CMake DID run it. `unittest discover` imports the
+    # module and finds everything, so the defect is invisible from a discovery
+    # run and appears only under the invocation the gate uses.
+    add_test(NAME tests-all-run
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_tests_all_run.py"
+    )
+    opensmacx_add_python_tool_test(tests-all-run-tests
+                                   test_verify_tests_all_run.py)
+
     add_test(NAME tool-test-registration
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_tool_test_registration.py"

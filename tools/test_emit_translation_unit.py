@@ -555,8 +555,6 @@ class LoadFunctionsCorrectsNamesTests(unittest.TestCase):
             self.load_with(address, "?moved@Elsewhere@@QAEXXZ")
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class ProvedSubobjectTests(unittest.TestCase):
@@ -732,3 +730,7 @@ class OverloadDeclarationTests(unittest.TestCase):
                 and method.params == subject.params
                 and method.kind == subject.kind)
         self.assertFalse(same)
+
+
+if __name__ == "__main__":
+    unittest.main()
