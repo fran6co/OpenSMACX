@@ -249,23 +249,53 @@ def check_image(report: Report, path: Path) -> None:
             "error, but the numbers will not line up.")
 
 
+def check_vc6(report: Report) -> None:
+    """The compiler the whole project is defined against.
+
+    Nothing here checked for it until 2026-08-13 - the doctor asked after a
+    cross g++ instead, which is the compiler this tree stopped using. A host
+    without VC6 cannot measure a single recovery, so its absence is BAD and not
+    a warning: every tier below BYTE_EXACT is unobtainable, and the tools that
+    need it exit 0 with a reason rather than failing, so the gap is quiet.
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import byte_match
+    except Exception as error:                       # noqa: BLE001 - reported
+        report.add(BAD, "vc6 cl.exe", f"cannot load byte_match: {error}")
+        return
+    cl = byte_match.VC6_CL
+    if cl.is_file():
+        report.add(OK, "vc6 cl.exe", str(cl))
+    else:
+        report.add(BAD, "vc6 cl.exe", f"not at {cl}",
+                   "Install MSVC 6 under that path. Without it no body can be "
+                   "measured, so no recovery can be proved.")
+    prefix = byte_match.VC6_PREFIX
+    if prefix.is_dir():
+        report.add(OK, "vc6 wine prefix", str(prefix))
+    else:
+        report.add(WARN, "vc6 wine prefix", f"absent at {prefix}",
+                   "Created on first use; it is deliberately separate from the "
+                   "prefix the runtime tests own, so neither can kill the "
+                   "other's wineserver.")
+
+
 def main() -> int:
     exe = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_EXE
     report = Report()
 
     native = check_cpu(report)
-    check_tool(report, "mingw i686 g++",
-               ["i686-w64-mingw32-g++",
-                "/opt/homebrew/bin/i686-w64-mingw32-g++",
-                "/usr/bin/i686-w64-mingw32-g++"],
-               ["--version"],
-               "Debian/Ubuntu: apt install g++-mingw-w64-i686. "
-               "macOS: brew install mingw-w64. Override with $CXX.")
+    # A cross g++ was required here until 2026-08-13, when VC6 became the only
+    # compiler in fact as well as in the docs. Wine and the VC6 install are what
+    # a host needs; a second compiler is what it used to need.
     check_wine(report)
     check_tool(report, "cmake", ["cmake"], ["--version"],
                "apt install cmake / brew install cmake")
-    check_tool(report, "host c++", ["c++", "g++", "clang++"], ["--version"],
-               "apt install build-essential")
+    check_tool(report, "binutils (nm/objdump)", ["objdump"], ["--version"],
+               "apt install binutils - the recovery-abi gate reads VC6 objects "
+               "with them, and plain objdump reads one as pe-i386")
+    check_vc6(report)
     check_python_deps(report)
     check_image(report, exe)
 
@@ -278,25 +308,12 @@ def main() -> int:
     elif native:
         print("VERDICT: ready, and x86 is NATIVE here.")
         print()
-        print("Three acceptance checks decide whether the migration paid off.")
-        print("Run them before trusting any number this host produces:")
         print()
-        print("  1. The old PASSes must reproduce. Build and sweep, then")
-        print("     compare against the report you brought with you:")
-        print("       tools/lifted_oracle_build.sh && tools/lifted_oracle_sweep.sh")
-        print("       python3 tools/lifted_oracle_summary.py build/oracle/report.tsv")
-        print("     Same PASS set, or the move changed behaviour and you need")
-        print("     to know why before going further.")
-        print()
-        print("  2. The undefined-flag masks should now be DROPPABLE. Rebuild")
-        print("     the plan with the undef= token suppressed and re-sweep. On")
-        print("     native silicon this should cost ZERO new FAILs. If it does")
-        print("     not, the masks were hiding a real lowering bug, which is a")
-        print("     finding worth more than the migration.")
-        print()
-        print("  3. A guest read at 0xFFFF0000 should FAULT rather than return")
-        print("     data. If it faults, the three-fill top-page arbitration in")
-        print("     lifted_oracle.cpp is now dead weight and can be retired.")
+        print("Native x86 mattered to the lifted-oracle sweep, which compared a")
+        print("recompiled image against silicon one instruction at a time. That")
+        print("route is retired (docs/RETIRED_ROUTES.md), so this is now a note")
+        print("rather than an invitation: the acceptance checks that stood here")
+        print("named tools/lifted_oracle_*.sh, deleted with it.")
     else:
         print("VERDICT: usable, but x86 is not native here - see the warning.")
     return 1 if worst == BAD else 0
