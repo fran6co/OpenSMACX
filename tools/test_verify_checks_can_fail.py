@@ -39,12 +39,18 @@ class CoverageContractTests(unittest.TestCase):
         self.assertEqual(set(), harness.COVERED_CHECKS - declared,
                          "a check is listed as covered with no damage case")
 
-    def test_every_case_names_a_covered_check(self):
-        # The reverse keeps the two lists honest: a case for a check nobody
-        # claims coverage of would never be missed if it stopped running.
+    def test_every_case_names_a_check_cmake_registers(self):
+        # This asserted against COVERED_CHECKS, the HAND-WRITTEN set, until
+        # 2026-08-13 - so adding a case for a newly registered check failed the
+        # suite until somebody also edited a list, which is the coupling the
+        # derivation removed. The live contract is the one worth pinning: a case
+        # naming a check CMake does not register guards nothing, because the
+        # name drifted or the check was retired.
+        registered = harness.gate_checks()
         for check, description, _, _ in harness.CASES:
-            self.assertIn(check, harness.COVERED_CHECKS,
-                          f"case {description!r} names unlisted check {check}")
+            self.assertIn(check, registered,
+                          f"case {description!r} names {check}, which CMake "
+                          f"registers no test for")
 
     def test_every_case_declares_expected_refusal_text(self):
         # Without it a usage error scores as a refusal; see RefusalTests.
@@ -184,7 +190,7 @@ class MainLoopTests(unittest.TestCase):
 
 
 class DerivedRequirementTest(unittest.TestCase):
-    """The requirement is read out of CMake, and the parser is pinned by name.
+    r"""The requirement is read out of CMake, and the parser is pinned by name.
 
     A previous attempt used `add_test\(NAME\s+(\w+)(.*?)\n\s*\)`, which looks
     right, parsed a plausible 28, and silently lost every block whose body

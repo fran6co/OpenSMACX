@@ -218,6 +218,10 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
 - `tools/verify_test_registration.py`,
   `tools/verify_tool_test_registration.py`,
   `tools/verify_tool_reachability.py`,
+  `tools/verify_tests_all_run.py` — no test file defines a test class after its
+  `unittest.main()`. One did, and the gate invoking it ran 57 of 73 tests while
+  exiting 0. Neither registration gate could see it: the file WAS registered and
+  CMake DID run it,
   `tools/verify_cmake_paths_exist.py` — every literal
   `${CMAKE_CURRENT_SOURCE_DIR}/...` names something that exists. A retired
   route's CMake lines outlive it silently, because a target outside `all` is

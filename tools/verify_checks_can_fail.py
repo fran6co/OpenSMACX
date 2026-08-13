@@ -344,6 +344,31 @@ def damage_writing_test(workspace):
             "--repo", str(repo)]
 
 
+def damage_stranded_test_class(workspace):
+    """A test file with a test class defined below its `unittest.main()`.
+
+    The exact shape found on 2026-08-13 in test_emit_translation_unit.py, where
+    four classes sat below the guard and the registered gate ran 57 of 73 tests
+    while exiting 0. Twenty-five files are written because the check refuses a
+    population under twenty rather than reporting a clean sweep over almost
+    nothing - so a case with one file would prove the floor, not the rule.
+    """
+    root = workspace / "stranded-tests"
+    root.mkdir(parents=True, exist_ok=True)
+    for index in range(25):
+        body = ("import unittest\n"
+                f"class Fine{index}(unittest.TestCase):\n"
+                "    def test_ok(self): pass\n"
+                'if __name__ == "__main__":\n    unittest.main()\n')
+        if index == 0:
+            # The offender, and only one: a check that flagged all 25 would
+            # pass this case while being useless.
+            body += ("class Stranded(unittest.TestCase):\n"
+                     "    def test_never_runs(self): pass\n")
+        (root / f"test_{index}.py").write_text(body)
+    return [PYTHON, str(TOOLS / "verify_tests_all_run.py"), "--tools", str(root)]
+
+
 def damage_retired_cmake_path(workspace):
     """A CMakeLists naming a tool that was retired out from under it.
 
@@ -590,6 +615,8 @@ CASES = (
      damage_refuted_wall, "LESSON GRAMMAR"),
     ("cmake-paths", "a CMake command naming a tool that was retired",
      damage_retired_cmake_path, "does not exist"),
+    ("tests-all-run", "a test class stranded below unittest.main()",
+     damage_stranded_test_class, "never runs"),
 )
 
 CMAKELISTS = REPO_ROOT / "CMakeLists.txt"
