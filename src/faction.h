@@ -222,6 +222,17 @@ struct SocialCategory {
     uint32_t future;
 };
 
+// PINNED BY THE TOTAL, NOT BY THEMSELVES, which is the difference between
+// this and a self-confirming probe. `PlayerData` holds these by value and its
+// size is read off the image's array stride (0x20CC, see the note there) - so
+// the compiler's arithmetic over these declarations has already been checked
+// against a number the image states. Asserting them adds no claim the total
+// did not already carry; what it adds is SUPPLYABILITY, because the emitter
+// refuses to write a layout holding a by-value member whose own type is not
+// pinned, and PlayerData was verified and unusable at once for exactly that.
+static_assert(sizeof(SocialCategory) == 0x10,
+              "SocialCategory layout must match the original executable");
+
 struct SocialEffect {
     int economy;
     int efficiency;
@@ -235,6 +246,9 @@ struct SocialEffect {
     int industry;
     int research;
 };
+
+static_assert(sizeof(SocialEffect) == 0x2C,
+              "SocialEffect layout must match the original executable");
 
 struct RulesSocialEffect {
     char set1[24];
@@ -271,6 +285,9 @@ struct Goal {
     int y;
     int base_id;
 };
+
+static_assert(sizeof(Goal) == 0x10,
+              "Goal layout must match the original executable");
 
 struct Player {
     BOOL is_leader_female;
@@ -502,6 +519,31 @@ struct PlayerData {
     int unk_117;
     int unk_118;
 };
+
+// READ OFF THE ARRAY STRIDE, which is the one thing about this struct the
+// image states outright. `PlayersData` is at 0x0096C9E0 and is indexed by
+// faction, so the stride IS the size, and 0x00466E61 spells it as a lea
+// chain rather than a multiply:
+//
+//     shl  ecx, 6              ; i*64
+//     add  ecx, edi            ; i*65        (edi = i)
+//     lea  eax, [edi + ecx*2]  ; i*131
+//     lea  ecx, [edi + eax*8]  ; i*1049
+//     lea  eax, [edi + ecx*2]  ; i*2099
+//     mov  ecx, [eax*4 + 0x96c9e0]
+//
+// 2099 * 4 = 8396 = 0x20CC. Corroborated independently: an agent recovering
+// 0x0055D430 in batch 11 reported "0x20cc-stride diplomacy tables" from that
+// function's own index arithmetic, having never seen this one.
+//
+// WHY IT IS WORTH ASSERTING RATHER THAN NOTING. Until a size is pinned the
+// emitter supplies this struct as an OPAQUE SHELL, and a body holding one by
+// value fails `C2079: uses undefined class`. Measured 2026-08-14: 156
+// body-mode units fail on exactly that, more than any other single cause in
+// the tree. The assert is what turns the declaration below into something the
+// scaffolding may use.
+static_assert(sizeof(PlayerData) == 0x20CC,
+              "PlayerData layout must match the original executable");
 
 struct FactionArt {
     Sprite base[6][4];

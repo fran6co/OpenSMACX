@@ -25,6 +25,7 @@ Filemap
 FlatButton
 Font
 GAmbience
+Goal
 GraphicWin
 Heap
 ListBox
@@ -38,6 +39,7 @@ MessageWin
 Midi_Device
 NewTechWin
 Palette
+PlayerData
 Popup
 ProdPicker
 PullDown
@@ -47,6 +49,8 @@ Random
 RulesFacility
 SAmbience
 Scroll
+SocialCategory
+SocialEffect
 SocialWin
 Sound
 Spot
