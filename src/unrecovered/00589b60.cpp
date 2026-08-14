@@ -1,12 +1,13 @@
 // ORIGINAL: 0x00589B60 FILE
 // name      ?init_opening@@YAHPBD@Z
 // size      489 bytes
-// spans     0x00589B60-0x00589D29
+// spans     0x00589B60-0x00589D29;0x0066026A-0x0066028A
 // prototype int (__cdecl ?init_opening@@YAHPBD@Z)(const char *)
-// callers   ?   call targets   10
+// callers   0   call targets   11
 // kind      game
-// calls     0x005D4CF0 0x005D4EF0 0x005D5250 0x005D7210 0x005D7410 0x005D7DE0
-//           0x005D9610 0x005FCBB0 0x005FE460 0x0064558A
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005D4EF0 0x005D5250 0x005D7210 0x005D7410 0x005D7DE0 0x005D9610 0x005FCBB0 0x005FE460 0x0064557F 0x0064558A
+// indirect  0x00589C2C 0x00589CD8 0x00589D04
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?init_opening@@YAHPBD@Z  at 0x00589B60  (489 bytes)

@@ -3,9 +3,11 @@
 // size      489 bytes
 // spans     0x00638AD0-0x00638CB9
 // prototype 
-// callers   3   call targets   6
+// callers   1   call targets   6
 // kind      game
+// flags     hidden;sp_ready;purged_ok
 // calls     0x00638620 0x00638650 0x00638CC0 0x00638DE0 0x00638F30 0x00639390
+// indirect  0x00638C16
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_638ad0  at 0x00638AD0  (489 bytes)

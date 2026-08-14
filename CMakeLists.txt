@@ -1294,6 +1294,19 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_span_termination.py"
     )
+    # Two independent readings of one function - the mangled name and the IDA
+    # prototype - disagreeing about whether anything is returned. The emitter
+    # follows the name, so a name spelling `void` for a body that returns a
+    # failure code costs every caller the ability to test it, which is a
+    # control-flow divergence rather than a byte-ordering one. src/graphicwin.
+    # cpp had carried that finding in PROSE since its recovery, ending "Do not
+    # 'fix' this back to void on the strength of the name", and the emitter
+    # went on declaring void for 47 callers because a note in a .cpp file is
+    # not something a tool can read. Reads the catalogue only.
+    add_test(NAME return-agreement
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_return_agreement.py"
+    )
     # Correlates an outside human's notes with the `// yitzi 0x134` markers on
     # the `static_assert`s, three ways: the note, the marker, and the size the
     # compiler pins. It checked a CSV against itself until 2026-08-12, which
