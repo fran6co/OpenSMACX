@@ -791,10 +791,22 @@ def com_slots(pe, spans, cap: int = VTABLE_SLOT_CAP) -> list:
     hand-wrote `__stdcall` function-pointer casts instead; two others in the
     same batch hand-split the shim for unrelated reasons.
 
-    THE TELL IS THE INSTRUCTION IMMEDIATELY BEFORE THE CALL. `push <obj>`,
-    where `<obj>` is the very register the vtable was loaded FROM. Nothing
-    softer works: an ordinary thiscall dispatch also pushes arguments, and
-    only the LAST push being the object itself distinguishes the two.
+    THE TELL IS THE LAST PUSH BEFORE THE CALL being `<obj>` itself - the very
+    register the vtable was loaded FROM. Nothing softer works: an ordinary
+    thiscall dispatch also pushes arguments, and only the last push being the
+    OBJECT distinguishes the two.
+
+    "The instruction immediately before the call" was the first rule and it
+    has a false negative, reported by an agent recovering 0x0062E540 that
+    needed a slot this did not offer. The two orderings are both real:
+
+        mov  ecx, [eax]     push eax
+        push eax            mov  ecx, [eax]
+        call [ecx + 0x10]   call [ecx + 0x7c]
+
+    The vtable load may sit between the push and the call, so the search
+    skips non-pushes - and stops at the previous CALL, because a push from an
+    earlier call's argument list says nothing about this one.
 
     Measured over the whole image: 301 such sites in 125 catalogued
     functions, 30 of them still unrecovered. DirectPlay, DirectDraw and
@@ -815,8 +827,15 @@ def com_slots(pe, spans, cap: int = VTABLE_SLOT_CAP) -> list:
         # {vtable register: the object register it was read out of}. Only a
         # load at displacement ZERO counts: a vtable pointer lives at the top
         # of the object, and `mov eax, [esi+0x40]` is a field.
-        vtable_of, previous = {}, None
+        # `last_push` is the most recent `push <reg>` since the previous CALL,
+        # or None where the last push was of something that is not a register.
+        vtable_of, last_push = {}, None
         for one in engine.disasm(data, low):
+            if one.mnemonic == "push":
+                last_push = (one.operands[0].reg
+                             if one.operands
+                             and one.operands[0].type == X86_OP_REG else None)
+                continue
             if one.mnemonic == "mov" and len(one.operands) == 2:
                 destination, source = one.operands
                 if destination.type != X86_OP_REG:
@@ -827,18 +846,16 @@ def com_slots(pe, spans, cap: int = VTABLE_SLOT_CAP) -> list:
                     vtable_of[destination.reg] = source.mem.base
                 else:
                     vtable_of.pop(destination.reg, None)
-            elif (one.mnemonic == "call" and one.operands
-                    and one.operands[0].type == X86_OP_MEM):
-                operand = one.operands[0]
-                obj = vtable_of.get(operand.mem.base)
-                pushed = (previous is not None
-                          and previous.mnemonic == "push"
-                          and previous.operands
-                          and previous.operands[0].type == X86_OP_REG
-                          and previous.operands[0].reg == obj)
-                if obj is not None and pushed and operand.mem.disp >= 0:
-                    found.add(operand.mem.disp // 4)
-            previous = one
+            elif one.mnemonic == "call":
+                if one.operands and one.operands[0].type == X86_OP_MEM:
+                    operand = one.operands[0]
+                    obj = vtable_of.get(operand.mem.base)
+                    if (obj is not None and last_push == obj
+                            and operand.mem.disp >= 0):
+                        found.add(operand.mem.disp // 4)
+                # A push belonging to THIS call's argument list says nothing
+                # about the next one.
+                last_push = None
     return sorted(slot for slot in found if slot <= cap)
 
 

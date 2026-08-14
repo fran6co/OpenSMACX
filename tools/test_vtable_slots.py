@@ -83,6 +83,21 @@ class ComDispatchTest(unittest.TestCase):
         self.assertEqual(emit.com_slots(self.pe, self.spans(0x0062EAA0)),
                          [4, 14, 22, 24])
 
+    def test_the_vtable_load_may_sit_between_the_push_and_the_call(self):
+        """0x0062E540, reported by an agent whose brief was missing a slot.
+
+            mov  eax, [0x009BE600]
+            push eax               <- `This`
+            mov  ecx, [eax]        <- the vtable load, AFTER the push
+            call [ecx + 0x7c]
+
+        The first rule looked at the instruction IMMEDIATELY before the call
+        and missed every site ordered this way - 35 functions' worth. What
+        distinguishes COM from thiscall is the last PUSH being the object,
+        not its adjacency to the call.
+        """
+        self.assertIn(31, emit.com_slots(self.pe, self.spans(0x0062E540)))
+
     def test_a_thiscall_dispatch_is_not_com(self):
         """The discriminator is the LAST push being the object itself. An
         ordinary virtual call pushes arguments too, so anything softer than
