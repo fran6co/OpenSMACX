@@ -61,6 +61,7 @@ import pefile  # noqa: E402
 
 import byte_match  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
+import declfix  # noqa: E402
 import src_declarations  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -270,6 +271,35 @@ def compat_preamble(body: str, scaffolding: str, source_path=None) -> str:
     for name, declaration in COMPAT_DECLARATIONS.items():
         if re.search(rf"\b{re.escape(name)}\b", body) and name not in scaffolding:
             wanted.append(declaration)
+    # THE CRT TABLE IS DERIVED FROM, NOT COPIED. `declfix.CRT_SIGNATURES` is
+    # already this tree's record of what a CRT routine's arity is, and the
+    # emitter reaches it for a CATALOGUED CALLEE. A body that calls `memcpy`
+    # where the original INLINED it has no such callee, so nothing declared it
+    # and the unit failed `C2065` - 11 bodies on `memcpy`, 8 on `_stricmp`,
+    # and a long tail. Restating them here would be a second hand-maintained
+    # list of the same facts, which is this repository's highest-yield defect
+    # shape; reading the one table means today's additions to it reach both
+    # consumers at once.
+    #
+    # DECLARED, NOT INCLUDED. Pulling in the real `<string.h>` would also arm
+    # the intrinsics, and VC6 lowers an intrinsic `memcpy` of a constant size
+    # to `rep movsd` - which is exactly the divergence an agent had to cast a
+    # function pointer to avoid on 0x00422F20.
+    for key, signature in declfix.CRT_SIGNATURES.items():
+        # BOTH SPELLINGS. The table is keyed by the DECORATED name because
+        # that is what the image's import carries, and a body may call either
+        # - `_stricmp` decorated, `memcpy` not. `\b` finds no boundary inside
+        # `_stricmp`, so testing only the stripped spelling missed every
+        # underscored call, which is 8 bodies on `_stricmp` alone.
+        for spelled in (key, key.lstrip("_")):
+            if not re.search(rf"(?<![\w])({re.escape(spelled)})\s*\(", body):
+                continue
+            if re.search(rf"(?<![\w]){re.escape(spelled)}\b", scaffolding):
+                break
+            head, _, tail = signature.partition("(")
+            wanted.append(
+                f'extern "C" {head.rsplit(key, 1)[0]}{spelled}({tail};')
+            break
     fixed = ("\n".join(wanted) + "\n") if wanted else ""
     derived = src_declarations.for_body(body, scaffolding + fixed, source_path)
     return fixed + derived
