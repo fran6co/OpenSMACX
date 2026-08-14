@@ -2,7 +2,7 @@
 // name      ?init_opening@@YAHPBD@Z
 // size      489 bytes
 // spans     0x00589B60-0x00589D29;0x0066026A-0x0066028A
-// prototype int (__cdecl ?init_opening@@YAHPBD@Z)(const char *)
+// prototype
 // callers   0   call targets   11
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
