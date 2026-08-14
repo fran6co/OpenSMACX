@@ -133,7 +133,19 @@ def from_source(src: Path = None) -> dict:
     # keeps every consumer agreeing rather than each re-deriving it - and it is
     # what the round trip through the export used to get wrong, leaving 651
     # addresses called `unrecovered` while `src/` held a proof for them.
-    for annotation in annotation_scan.scan_tree(root):
+    # RESOLVED, NOT RAW. 31 addresses are annotated in two places - a
+    # `src/recovered/` writeback beside the `src/recovered/units/` unit that
+    # RECORDS its measurement, which `annotation_scan._precedence` settles
+    # deliberately, and a handful commented twice in one file. Walking the
+    # unresolved list let whichever came last win, so this row's
+    # `source_locations` named one file while `cross_reference` - which does
+    # resolve - named the other, and the gate reported 19 "stale
+    # source_locations" every run against a tree where nothing was stale.
+    #
+    # Two resolvers giving two answers to one question is the shape this tree
+    # keeps finding defects in; there is one resolver and it lives in
+    # `annotation_scan`.
+    for annotation in annotation_scan.resolve(annotation_scan.scan_tree(root))[0]:
         path = REPO_ROOT / annotation.path
         try:
             lines = path.read_text(errors="ignore").splitlines()
