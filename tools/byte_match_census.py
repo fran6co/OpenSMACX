@@ -526,7 +526,17 @@ def run(limit: int, jobs: int, verbose: bool) -> int:
                     try:
                         original = byte_match.original_span_bytes(pe, low, high)
                         mask = byte_match.original_relocation_mask(pe, low, high)
-                        rebuilt, rebuilt_mask = byte_match.object_code(data)
+                        # THE SUBJECT BY NAME. `choose_subject_symbol` was
+                        # written to pick the symbol the marker names out of
+                        # several, and then no caller passed the name - so it
+                        # could only ever fall back to filtering the compiler's
+                        # own `??_G`/`??_H` helpers, and a unit that DEFINES
+                        # anything beside its subject still refused. That is
+                        # what a class declared with real virtual functions
+                        # does: measured on ??0Patch@@, defining `~Patch` and
+                        # one more virtual gives `found 3`.
+                        rebuilt, rebuilt_mask = byte_match.object_code(
+                            data, subject=functions[int(stem[1:], 16)].get("name"))
                     except ValueError as error:
                         candidate = {"tier": "NO_COMPILE",
                                      "refusal_reason": str(error)}

@@ -25,6 +25,7 @@ testing its subject is worse, because it reads as evidence.
 
 from __future__ import annotations
 
+import re
 import struct
 import sys
 import tempfile
@@ -521,6 +522,35 @@ class ProvenanceTests(unittest.TestCase):
         self.assertNotIn("\\x", str(result))
         for value in result.values():
             self.assertNotIsInstance(value, (bytes, bytearray))
+
+
+class SubjectIsPassedTests(unittest.TestCase):
+    """Every caller must actually HAND `object_code` the subject's name.
+
+    `choose_subject_symbol` was written to pick the symbol the marker names
+    out of several, and then no call site passed a name - so for a whole day
+    it could only ever fall back to filtering the compiler's own `??_G`/`??_H`
+    helpers, and a unit that defined anything beside its subject still
+    refused. A mechanism nobody invokes is the shape this repository keeps
+    finding in itself; a test that reads the call sites is the only thing
+    that can see it, because the fallback path passes every unit test.
+    """
+
+    CALLERS = ("byte_match.py", "byte_match_census.py")
+
+    def call_sites(self, name):
+        text = (Path(__file__).resolve().parent / name).read_text()
+        # `object_code(` through to its closing paren, across line breaks.
+        return re.findall(r"object_code\((?:[^()]|\([^()]*\))*\)", text)
+
+    def test_every_call_passes_a_subject(self):
+        for name in self.CALLERS:
+            sites = [one for one in self.call_sites(name)
+                     if not one.startswith("object_code(data: bytes")]
+            self.assertTrue(sites, f"{name} names no call at all")
+            for site in sites:
+                self.assertIn("subject=", " ".join(site.split()),
+                              f"{name}: {site}")
 
 
 class SubjectSymbolTests(unittest.TestCase):
