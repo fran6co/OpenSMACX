@@ -116,11 +116,39 @@ QUESTIONABLE = (
 )
 
 
+def code_only(body: str) -> str:
+    """`body` with comments and string literals blanked out.
+
+    THE RULE IS ABOUT WHAT COMPILES, so it has to be read where the compiler
+    reads. Scanning the raw text refuses a candidate for the word `__asm`
+    appearing in a `// RULED-OUT:` note that EXPLAINS WHY INLINE ASM IS NOT AN
+    OPTION - the annotation grammar asks for exactly that prose, and an agent
+    hit it on 0x0063E860 and got out by rewording the comment, which is the
+    tool teaching a body to lie about itself.
+
+    Blanked rather than deleted so nothing shifts: every offset in the text
+    stays where it was, which keeps any position a caller reports honest.
+    """
+    import re
+
+    def blank(match):
+        return re.sub(r"\S", " ", match.group(0))
+
+    # Block comments, line comments, then string and character literals, in
+    # that order: a `//` inside a string is not a comment, and a quote inside
+    # a comment does not open one, so the first pass has to remove comments
+    # before quotes are looked at.
+    text = re.sub(r"/\*.*?\*/", blank, body, flags=re.S)
+    text = re.sub(r"//[^\n]*", blank, text)
+    return re.sub(r'"(?:\\.|[^"\\])*"' r"|'(?:\\.|[^'\\])*'", blank, text)
+
+
 def form_report(body: str) -> tuple:
     """(hard refusals, things worth a second look)."""
     import re
-    refusals = [why for pattern, why in FORBIDDEN if re.search(pattern, body)]
-    notes = [why for pattern, why in QUESTIONABLE if re.search(pattern, body)]
+    code = code_only(body)
+    refusals = [why for pattern, why in FORBIDDEN if re.search(pattern, code)]
+    notes = [why for pattern, why in QUESTIONABLE if re.search(pattern, code)]
     return refusals, notes
 
 

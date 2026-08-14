@@ -262,8 +262,23 @@ def absolute_operands(pe, spans, image=(IMAGE_LOW, IMAGE_HIGH)):
             continue
         for one in engine.disasm(data, start):
             for operand in one.operands:
-                if (operand.type == X86_OP_MEM and operand.mem.base == 0
+                if (operand.type == X86_OP_MEM
                         and low <= operand.mem.disp < high):
+                    # THE BASE REGISTER IS NOT REQUIRED TO BE ZERO EITHER, for
+                    # the same reason the index is not: `mov [ecx + 0x94CABC],
+                    # ebx` is a global ARRAY indexed by a register, which is
+                    # how this image spells `Table[i] = x` whenever the stride
+                    # is not a power of two. Requiring base == 0 reported
+                    # 0x00476EE0 as touching four globals when it touches
+                    # seven, and the three it dropped are the ones the body is
+                    # actually about. An agent then hand-writes the missing
+                    # const-pointer, and its spelling is byte-visible.
+                    #
+                    # A displacement this large is never a frame offset: the
+                    # image starts at 0x00400000 and no function has a four-
+                    # megabyte frame. `[ebp - 0x14]` and `[esp + 8]` are
+                    # nowhere near the window and negative displacements fail
+                    # the lower bound outright.
                     found.setdefault(operand.mem.disp, []).append(one.address)
                 elif (operand.type == X86_OP_IMM
                       and not one.group(CS_GRP_JUMP)
