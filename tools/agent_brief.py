@@ -269,7 +269,15 @@ def disassembly(address: int) -> str:
     pe = _cached("pe", lambda: pefile.PE(str(verifier.byte_match.DEFAULT_EXE),
                                          fast_load=True))
     body = prompts.disassemble(pe, address, row.get("body_ranges", ""), functions)
-    return "```asm\n" + body + "\n```"
+    text = "```asm\n" + body + "\n```"
+    # THE SWITCH TABLES, which are DATA and so are absent from everything
+    # above. Three agents in one batch guessed a case order without them and
+    # all three said so; a guessed case order compiles, reads correctly and
+    # dispatches to the wrong branch.
+    import jump_tables
+    tables = jump_tables.render(
+        pe, emit.parse_body_ranges(row.get("body_ranges") or ""), functions)
+    return text + ("\n" + tables if tables else "")
 
 
 def prompt_section(address: int, heading: str) -> str:

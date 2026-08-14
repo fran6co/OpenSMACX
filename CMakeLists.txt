@@ -875,6 +875,15 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(void-return-tests
                                    test_verify_void_returns.py)
 
+    # A SWITCH TABLE IS DATA, so it is absent from the disassembly the brief
+    # prints, and three agents in one batch guessed a case order without it.
+    # A guessed case order compiles, reads correctly and dispatches to the
+    # wrong branch - so the tests pin where the table STOPS, not that one was
+    # found: an over-long table prints addresses from the next object in
+    # .rdata and looks exactly like the real thing.
+    opensmacx_add_python_tool_test(jump-table-tests
+                                   test_jump_tables.py)
+
     # The preamble that measurement compiles a body in. This one is load
     # bearing in an unusual direction: a WRONG declaration here does not fail,
     # it silently changes what is being measured, so the tests pin the two
