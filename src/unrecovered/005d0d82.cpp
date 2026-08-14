@@ -1,8 +1,54 @@
 // ORIGINAL: 0x005D0D82 FILE
-// NOT ATTEMPTED - no C calling convention - entry has no prologue, esi/edi/ebp
-//            are live-in with nothing pushed by the caller (esi is a table
-//            pointer, edi a bit-offset cursor, ebp a bitstream base); part
-//            of the known 0x005CB000-0x005D2000 no-prologue population.
+// UNRECOVERABLE: judged on its own disassembly (a prior batch-10 note on
+//                this file was removed as recorded-on-a-placeholder; this
+//                supersedes it with fresh evidence). This is genuinely
+//                register-passing on BOTH sides - entry and its two
+//                callees - not just parameter count:
+//                  - entry: `push ecx; push edx; sub esp,0x300` then the
+//                    body reads `esi` (`mov edx,[esi]` at 0x5D0D8C, later
+//                    `unaff_ESI[idx]`), `edi` (`unaff_EDI>>5` /
+//                    `unaff_EDI&0x1f` as a bitstream bit-cursor from the
+//                    first instruction that touches it, 0x5D0DB4), `ebp`
+//                    (`[ebp+(edi>>5)*4]` at 0x5D0DBB, a bitstream data
+//                    base) and `eax` (`imul edx` at 0x5D0D91 multiplies
+//                    THE INCOMING eax, never loaded from anywhere) -
+//                    Ghidra's own decompile names all four
+//                    unaff_EBP/unaff_ESI/unaff_EDI/in_EAX, i.e. its
+//                    dataflow analysis independently found no definition
+//                    for them inside this function either. ecx/edx ARE
+//                    ordinary __fastcall params (pushed to [esp] then
+//                    reloaded near the tail at 0x5D10D8/0x5D1196), so the
+//                    two-argument part alone would be expressible - it is
+//                    the extra four registers that are not.
+//                  - callees: the eight `call 0x5d29e1` sites
+//                    (0x5D1057..0x5D10D3) and eight `call 0x5d2c0a` sites
+//                    (0x5D10E6..0x5D117E) each set up ONLY `esi`/`edi`
+//                    immediately before the call (`lea esi,[esp+N]; lea
+//                    edi,[esp+M]; call`) - no ecx/edx/stack push at all.
+//                    No MSVC convention (cdecl/stdcall/fastcall/thiscall)
+//                    passes arguments in esi/edi, so even a correct
+//                    internal transcription of sub_5d0d82 could not
+//                    legally CALL its own two helpers from standard C++.
+//                This is two independent, compounding blockers (the
+//                entry contract and the call sites inside it), and both
+//                require `__asm`/`_emit` to express, which the rules bar
+//                outright regardless of effort spent. Left the compiling
+//                placeholder in place (MISMATCH #0, same divergence point
+//                any body would hit given the prologue itself can't
+//                match) rather than writing an untestable ~150-line
+//                transcription whose only achievable tier is identical to
+//                what is already there. Tables read: g_009c9698 (a
+//                Huffman "escape length/value" table indexed by a 15-bit
+//                code >>0xd), g_009c95ac (a small index-remap table
+//                indexed by a decoded code length, feeding the weights[]
+//                array), and six more short lookup tables selected by
+//                leading-zero-count-style range checks (0x800/0x400/
+//                0x200/0x100/0x80/0x40/0x20) - the whole function is a
+//                Huffman/range-coded bitstream decoder over a 64-entry
+//                int weight table, most likely the Smacker/Bink-style
+//                audio or DCT-coefficient decoder used by the game's
+//                intro video codec, given the table shapes and the 64-int
+//                output.
 // working copy - scaffold materialised by --work
 // name      sub_5d0d82
 // size      1270 bytes
@@ -76,6 +122,120 @@ typedef void *HANDLE;
 typedef void *HWND;
 typedef void *HDC;
 typedef unsigned int UINT;
+
+// Spliced verbatim from src/original_seam.h so the unit calls into the
+// original image exactly as the build does. See seam_header().
+/*
+ * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
+ * Copyright (C) 2013-2021 Brendan Casey
+ *
+ * OpenSMACX is free software: you can redistribute it and / or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OpenSMACX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * Calling a method of the ORIGINAL image, which lives at a fixed address in
+ * terranx.exe rather than anywhere this DLL can link against.
+ *
+ * These used to be spelled as free function pointers carrying the convention
+ * by hand:
+ *
+ *     typedef void(__thiscall func_buffer_line)(Buffer *, int, int, int, int);
+ *     func_buffer_line *BufferHLine = (func_buffer_line *)0x005E1A80;
+ *     BufferHLine(this, a, b, c, d);
+ *
+ * cl 12.00.8168 - the compiler that built the original, and the only one
+ * whose output can say whether a recovered body is right - reserves the
+ * `__thiscall` keyword and refuses it (C4234). Disabling that warning is a
+ * TRAP: it compiles, and the call it emits is
+ *
+ *     push d; push c; push b; push a; call ...; add esp, 0x10
+ *
+ * which is __cdecl. The receiver goes on the stack instead of into ECX and
+ * the caller cleans a frame the callee already cleaned. Every seam into the
+ * original image would corrupt the stack, silently, at runtime.
+ *
+ * A pointer-to-member IS thiscall, in every compiler, without naming the
+ * convention at all. The same call becomes
+ *
+ *     typedef void (OriginalObject::*func_buffer_line)(int, int, int, int);
+ *     func_buffer_line BufferHLine = original_method<func_buffer_line>(0x005E1A80);
+ *     (ORIGINAL(this)->*BufferHLine)(a, b, c, d);
+ *
+ * and VC6 emits `mov ecx, this; push d..a; call` - the receiver in ECX and
+ * the callee cleaning up, which is what the original expects. Measured
+ * against the real compiler, not inferred.
+ *
+ * The object is `OriginalObject` rather than the real class because the
+ * receiver is frequently only known as `void *`, and because the pointer
+ * value is all that is ever needed - none of these methods is resolved
+ * through this type.
+ */
+
+/*
+ * `__single_inheritance` pins the pointer-to-member representation to a bare
+ * code address. Without it the class is incomplete, MSVC assumes the most
+ * general form - virtual bases and all - and every call site grows a
+ * twenty-instruction adjustment sequence around it.
+ */
+class __single_inheritance OriginalObject;
+
+/*
+ * An address is not convertible to a pointer-to-member by any cast, so it
+ * goes through a union. Implementation-defined in principle; pinned here by
+ * the representation above and verified against the compiler.
+ */
+template <class Method>
+Method original_method(unsigned long address) {
+  union {
+    unsigned long address;
+    Method method;
+  } cast;
+  cast.address = address;
+  return cast.method;
+}
+
+/*
+ * The same union read the other way. `reinterpret_cast<unsigned long>` on a
+ * pointer-to-member is `error C2440` on VC6 - it is not a pointer as far as
+ * the language is concerned, whatever the representation - so recovering the
+ * bare code address needs the same pinned punning that creating one does.
+ */
+template <class Method>
+unsigned long original_address(Method method) {
+  union {
+    unsigned long address;
+    Method method;
+  } cast;
+  cast.address = 0;
+  cast.method = method;
+  return cast.address;
+}
+
+/*
+ * A vtable slot, read as a pinned pointer-to-member. The recovered code spelt
+ * this `(*reinterpret_cast<Method *>(vtable + 0x14))(object)` in seventy-odd
+ * places - reading the slot AS a pointer-to-member and then calling it as a
+ * free function, which is `C2064: term does not evaluate to a function`. The
+ * slot holds a bare code address; this reads it as one and hands it to
+ * original_method, leaving the call site an honest `->*`.
+ */
+template <class Method>
+Method original_slot(const void *slot) {
+  return original_method<Method>(*reinterpret_cast<const unsigned long *>(slot));
+}
+
+#define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))
 
 // Integer constants restated from src/*.h, which this standalone unit cannot include.
 const int ABL_AAA = 0x100;

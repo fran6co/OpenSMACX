@@ -1,8 +1,14 @@
 // ORIGINAL: 0x005D2037 FILE
-// NOT ATTEMPTED - no C calling convention - entry has no prologue, esi/edi/ebp
-//            are live-in with nothing pushed by the caller (esi/edi index
-//            input arrays, ebp is the output cursor); part of the known
-//            0x005CB000-0x005D2000 no-prologue population.
+// RULED-OUT: nullary per the contract head - no [esp+N]/[ebp+N] read exists
+//            anywhere in the body, but esi/edi/ebp are read from the very
+//            first instruction with no prologue and no assignment into them
+//            first, so nullary leaves the data unreachable. Proposed a
+//            3-pointer signature (data/tables/out standing in for
+//            esi/edi/ebp) so the 8 unrolled DES-style S-box rounds compile
+//            and read correctly; this is a PROPOSAL, not decoded evidence -
+//            no standard calling convention passes 3 live registers with
+//            zero prologue, so BYTE_EXACT is structurally unreachable here
+//            short of __asm (refused). MISMATCH #0 is the prologue itself.
 // working copy - scaffold materialised by --work
 // name      sub_5d2037
 // size      1279 bytes
@@ -76,6 +82,120 @@ typedef void *HANDLE;
 typedef void *HWND;
 typedef void *HDC;
 typedef unsigned int UINT;
+
+// Spliced verbatim from src/original_seam.h so the unit calls into the
+// original image exactly as the build does. See seam_header().
+/*
+ * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
+ * Copyright (C) 2013-2021 Brendan Casey
+ *
+ * OpenSMACX is free software: you can redistribute it and / or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OpenSMACX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * Calling a method of the ORIGINAL image, which lives at a fixed address in
+ * terranx.exe rather than anywhere this DLL can link against.
+ *
+ * These used to be spelled as free function pointers carrying the convention
+ * by hand:
+ *
+ *     typedef void(__thiscall func_buffer_line)(Buffer *, int, int, int, int);
+ *     func_buffer_line *BufferHLine = (func_buffer_line *)0x005E1A80;
+ *     BufferHLine(this, a, b, c, d);
+ *
+ * cl 12.00.8168 - the compiler that built the original, and the only one
+ * whose output can say whether a recovered body is right - reserves the
+ * `__thiscall` keyword and refuses it (C4234). Disabling that warning is a
+ * TRAP: it compiles, and the call it emits is
+ *
+ *     push d; push c; push b; push a; call ...; add esp, 0x10
+ *
+ * which is __cdecl. The receiver goes on the stack instead of into ECX and
+ * the caller cleans a frame the callee already cleaned. Every seam into the
+ * original image would corrupt the stack, silently, at runtime.
+ *
+ * A pointer-to-member IS thiscall, in every compiler, without naming the
+ * convention at all. The same call becomes
+ *
+ *     typedef void (OriginalObject::*func_buffer_line)(int, int, int, int);
+ *     func_buffer_line BufferHLine = original_method<func_buffer_line>(0x005E1A80);
+ *     (ORIGINAL(this)->*BufferHLine)(a, b, c, d);
+ *
+ * and VC6 emits `mov ecx, this; push d..a; call` - the receiver in ECX and
+ * the callee cleaning up, which is what the original expects. Measured
+ * against the real compiler, not inferred.
+ *
+ * The object is `OriginalObject` rather than the real class because the
+ * receiver is frequently only known as `void *`, and because the pointer
+ * value is all that is ever needed - none of these methods is resolved
+ * through this type.
+ */
+
+/*
+ * `__single_inheritance` pins the pointer-to-member representation to a bare
+ * code address. Without it the class is incomplete, MSVC assumes the most
+ * general form - virtual bases and all - and every call site grows a
+ * twenty-instruction adjustment sequence around it.
+ */
+class __single_inheritance OriginalObject;
+
+/*
+ * An address is not convertible to a pointer-to-member by any cast, so it
+ * goes through a union. Implementation-defined in principle; pinned here by
+ * the representation above and verified against the compiler.
+ */
+template <class Method>
+Method original_method(unsigned long address) {
+  union {
+    unsigned long address;
+    Method method;
+  } cast;
+  cast.address = address;
+  return cast.method;
+}
+
+/*
+ * The same union read the other way. `reinterpret_cast<unsigned long>` on a
+ * pointer-to-member is `error C2440` on VC6 - it is not a pointer as far as
+ * the language is concerned, whatever the representation - so recovering the
+ * bare code address needs the same pinned punning that creating one does.
+ */
+template <class Method>
+unsigned long original_address(Method method) {
+  union {
+    unsigned long address;
+    Method method;
+  } cast;
+  cast.address = 0;
+  cast.method = method;
+  return cast.address;
+}
+
+/*
+ * A vtable slot, read as a pinned pointer-to-member. The recovered code spelt
+ * this `(*reinterpret_cast<Method *>(vtable + 0x14))(object)` in seventy-odd
+ * places - reading the slot AS a pointer-to-member and then calling it as a
+ * free function, which is `C2064: term does not evaluate to a function`. The
+ * slot holds a bare code address; this reads it as one and hands it to
+ * original_method, leaving the call site an honest `->*`.
+ */
+template <class Method>
+Method original_slot(const void *slot) {
+  return original_method<Method>(*reinterpret_cast<const unsigned long *>(slot));
+}
+
+#define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))
 
 // Integer constants restated from src/*.h, which this standalone unit cannot include.
 const int ABL_AAA = 0x100;
@@ -1182,18 +1302,34 @@ const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_009c732c = (int *)0x009C732C;
-static int *const g_009c7b2c = (int *)0x009C7B2C;
-static int *const g_009c832c = (int *)0x009C832C;
-static int *const g_009c872c = (int *)0x009C872C;
-static int *const g_009c8bf4 = (int *)0x009C8BF4;
-static int *const g_009c900c = (int *)0x009C900C;
-extern "C" int __cdecl sub_5d2037() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+extern unsigned int g_9c732c_table[];
+extern unsigned int g_9c7b2c_table[];
+extern unsigned int g_9c832c_table[];
+extern unsigned int g_9c872c_table[];
+extern unsigned int g_9c8bf4_table[];
+extern unsigned int g_9c900c_table[];
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+// No prologue/epilogue exists anywhere in this 1279-byte body: esi, edi and
+// ebp are read from the very first instruction with no stack access and no
+// register ever assigned into them first. Standard __cdecl/__stdcall/
+// __thiscall have no way to feed a callee three live registers like this -
+// only __asm could reproduce the entry state exactly, and __asm is refused.
+// Treating them as three pointer parameters is a PROPOSAL, not a decoded
+// contract: it makes the arithmetic (8 unrolled DES-style S-box lookup
+// rounds) compile and readable, but the calling convention itself cannot
+// be byte-exact under any ordinary signature.
+extern "C" void __cdecl sub_5d2037(int *data, int *tables, unsigned int *out) {
+    for (int i = 0; i < 8; i++) {
+        unsigned int left = g_9c7b2c_table[tables[i]] + g_9c732c_table[data[i * 2]] +
+                             g_9c832c_table[tables[0x40 + i]];
+        unsigned int right = g_9c732c_table[data[i * 2 + 1]] + g_9c832c_table[tables[0x40 + i]] +
+                              g_9c7b2c_table[tables[i]];
+
+        out[i] = ((g_9c872c_table[right >> 0x17] | g_9c900c_table[right & 0x1ff] |
+                   g_9c8bf4_table[(right & 0xff800) >> 0xb]) &
+                  0xffff0000) |
+                 ((g_9c8bf4_table[(left & 0xff800) >> 0xb] | g_9c872c_table[left >> 0x17] |
+                   g_9c900c_table[left & 0x1ff]) &
+                  0xffff);
+    }
 }

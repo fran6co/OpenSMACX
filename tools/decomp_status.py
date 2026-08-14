@@ -662,7 +662,31 @@ def lesson_report(annotations: list) -> list:
         if annotation.ruled_out and annotation.state == annotation_scan.STATE_PLACEHOLDER:
             faults.append((annotation.location,
                            "RULED-OUT on a placeholder - land the attempt that "
-                           "ruled them out, then record it"))
+                           "ruled them out, then record it. If NO C body can "
+                           "exist for this piece, that is `UNRECOVERABLE: "
+                           "<evidence>` instead"))
+        # THE MIRROR IMAGE, and the reason the token was added. `UNRECOVERABLE`
+        # says no C body can express this piece at all - three live-in
+        # registers and no prologue, ESP used as a counter - so a landed body
+        # would be a fabrication written to give the note somewhere to sit.
+        # It therefore belongs ONLY on a placeholder, and it is self-refuting
+        # in the same way the other two are: the day that address lands a
+        # body, this fires until somebody deletes the claim or explains it.
+        if annotation.unrecoverable and \
+                annotation.state != annotation_scan.STATE_PLACEHOLDER:
+            faults.append((annotation.location,
+                           "UNRECOVERABLE on a piece that HAS a body - if a "
+                           "body exists the claim is refuted; delete it, or "
+                           "say what the body is if it is a stub"))
+        for prose in annotation.unrecoverable:
+            # Evidence is the whole content of the claim. "cannot be done" is
+            # a wall with no reason, and this repository has had walls outlive
+            # their reasons before.
+            if len(prose.split()) < 6:
+                faults.append((annotation.location,
+                               f"UNRECOVERABLE with no evidence ({prose!r}) - "
+                               f"name the registers, the missing prologue, or "
+                               f"the instruction C cannot spell"))
         for line in (annotation.region or "").splitlines():
             if MALFORMED_LEVER.match(line):
                 faults.append((annotation.location,

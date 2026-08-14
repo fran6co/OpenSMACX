@@ -127,6 +127,7 @@ class Annotation:
                                # (FILE mode: compile the file as-is)
     levers: tuple = ()         # (fingerprint, prose) that MADE this match
     ruled_out: tuple = ()      # spellings tried on this body that did not
+    unrecoverable: tuple = ()  # prose: no C body CAN exist for this piece
 
     @property
     def location(self) -> str:
@@ -140,12 +141,15 @@ class Annotation:
 LESSON_LEVER = re.compile(r"^\s*(?://|\*)?\s*LEVER:\s*(?P<key>\S+)\s+(?P<prose>.+?)\s*$")
 LESSON_RULED_OUT = re.compile(r"^\s*(?://|\*)?\s*RULED-OUT:\s*(?P<prose>.+?)\s*$")
 LESSON_CONTINUED = re.compile(r"^\s*(?://|\*)\s{2,}(?P<prose>\S.*?)\s*$")
+# The third token, and the only one that BELONGS on a placeholder.
+LESSON_UNRECOVERABLE = re.compile(
+    r"^\s*(?://|\*)?\s*UNRECOVERABLE:\s*(?P<prose>.+?)\s*$")
 
 
 def lessons(lines: list, index: int) -> tuple:
-    """(levers, ruled_out) recorded in the comment run after a marker at `index`.
+    """(levers, ruled_out, unrecoverable) from the comment run after `index`.
 
-    THE TWO TOKENS CARRY DIFFERENT DURABILITY, and that is the whole design.
+    THE THREE TOKENS CARRY DIFFERENT DURABILITY, and that is the whole design.
 
       LEVER: <fingerprint> <what worked>   on a body that MATCHED. The
           divergence is gone, so the fingerprint is historical and has to be
@@ -153,13 +157,31 @@ def lessons(lines: list, index: int) -> tuple:
       RULED-OUT: <what did not work>       on a body that has NOT matched. The
           divergence is still live, so the key is MEASURED rather than written -
           and a key that is never written can never be stale.
+      UNRECOVERABLE: <evidence>            on a PLACEHOLDER, and only there.
+
+    THE THIRD TOKEN EXISTS BECAUSE THE FIRST TWO COULD NOT SAY IT. The grammar
+    used to hold that a RULED-OUT belongs only on a landed body - "you cannot
+    rule a spelling out of a body that does not exist" - which is right for an
+    ordinary function and wrong for one no C body can express. A function that
+    reads three registers live-in with no prologue has no best attempt to land;
+    demanding one asks for a fabrication so the note has somewhere to sit.
+
+    Batch 12 hit this and it was patched by re-wording the note to `NOT
+    ATTEMPTED`, which was false - it HAD been attempted, thoroughly. Batch 13
+    hit it three times independently (0x005CF2F0, 0x005D0D82, 0x005D2037, all
+    in the 0x005CB000-0x005D2000 neighbourhood). A vocabulary that cannot
+    record a real finding gets lied to; this is the token that stops that.
+
+    It is self-refuting like the other two: it sits on a placeholder, so if
+    that address ever lands a body the gate fails until somebody deletes the
+    claim or explains it.
 
     Both are read only from the comment run immediately after the marker, so a
     mention of either word in ordinary prose further down a file is not a claim.
     A continuation line is an indented comment line carrying no token of its own,
     which is how a long RULED-OUT list stays readable.
     """
-    levers, ruled, current = [], [], None
+    levers, ruled, unrecoverable, current = [], [], [], None
     for line in lines[index + 1:]:
         stripped = line.strip()
         if not (stripped.startswith("//") or stripped.startswith("*")):
@@ -174,17 +196,24 @@ def lessons(lines: list, index: int) -> tuple:
             ruled.append(out.group("prose"))
             current = ("ruled", len(ruled) - 1)
             continue
+        dead = LESSON_UNRECOVERABLE.match(line)
+        if dead:
+            unrecoverable.append(dead.group("prose"))
+            current = ("unrecoverable", len(unrecoverable) - 1)
+            continue
         joined = LESSON_CONTINUED.match(line)
         if joined and current:
             kind, position = current
             if kind == "lever":
                 key, prose = levers[position]
                 levers[position] = (key, prose + " " + joined.group("prose"))
+            elif kind == "unrecoverable":
+                unrecoverable[position] += " " + joined.group("prose")
             else:
                 ruled[position] = ruled[position] + " " + joined.group("prose")
             continue
         current = None
-    return tuple(levers), tuple(ruled)
+    return tuple(levers), tuple(ruled), tuple(unrecoverable)
 
 
 @dataclass
@@ -513,20 +542,22 @@ def scan_text(text: str, path) -> list:
         if parsed is None:
             continue
         address, keyword, rest, matched = parsed
-        found_levers, found_ruled = lessons(lines, index)
+        found_levers, found_ruled, found_dead = lessons(lines, index)
         if keyword == "FILE":
             region = text
             found.append(Annotation(
                 address=address, mode=MODE_FILE,
                 state=_state_of(region, ""), path=_rel(path),
                 line=index + 1, region=region, recipe="verbatim",
-                matched=matched, levers=found_levers, ruled_out=found_ruled))
+                matched=matched, levers=found_levers, ruled_out=found_ruled,
+                unrecoverable=found_dead))
         elif keyword == "EXCLUDED":
             found.append(Annotation(
                 address=address, mode=MODE_BODY, state=STATE_EXCLUDED,
                 path=_rel(path), line=index + 1,
                 exclusion=_exclusion_citation(rest), matched=matched,
-                levers=found_levers, ruled_out=found_ruled))
+                levers=found_levers, ruled_out=found_ruled,
+                unrecoverable=found_dead))
         else:
             if kind == "proved":
                 # Proved bodies keep the writeback semantics even once an
@@ -546,7 +577,8 @@ def scan_text(text: str, path) -> list:
                 state=_state_of(region, ""), path=_rel(path),
                 line=index + 1, region=region, extract_error=error,
                 recipe=recipe, matched=matched,
-                levers=found_levers, ruled_out=found_ruled))
+                levers=found_levers, ruled_out=found_ruled,
+                unrecoverable=found_dead))
 
     if not found:
         found.extend(_legacy_file_annotations(path, text, lines, kind))
