@@ -23,7 +23,7 @@
 
 /*
 Purpose: Initialize a button group while preserving the original selected ID and flags slots.
-ORIGINAL: 0x0062B7C0
+ORIGINAL: 0x0062B7C0 BYTE_EXACT
 // name      ??0ButtonGroup@@QAE@XZ
 // size      36 bytes
 // spans     0x0062B7C0-0x0062B7E4
@@ -72,7 +72,7 @@ void ButtonGroup::close() {
 
 /*
 Purpose: Initialize all button-group state.
-ORIGINAL: 0x0062B810
+ORIGINAL: 0x0062B810 BYTE_EXACT
 // name      ?init@ButtonGroup@@QAEXHH@Z
 // size      60 bytes
 // spans     0x0062B810-0x0062B84C

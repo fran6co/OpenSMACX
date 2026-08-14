@@ -1341,6 +1341,31 @@ def without_globals_the_body_declares(scaffolding: str, body: str) -> str:
                 and SCAFFOLD_GLOBAL.match(line).group(1) in declared)) + "\n"
 
 
+def static_for(entry) -> str:
+    """`static ` for a CALLEE whose mangling says it takes no receiver.
+
+    `QAA` is a public member with `__cdecl` - no `this` in ecx, every argument
+    on the stack - so the call site is indistinguishable from a static one and
+    that is how a body has to spell it: `Palette::set_active_window(...)`.
+    Declared non-static, that spelling is `C2352: illegal call of non-static
+    member function`, and there is no legal alternative because there is no
+    object to call it on.
+
+    THREE AGENTS REPORTED THIS ACROSS TWO BATCHES, each working around it by
+    redeclaring the method as a free function under a different name -
+    `Win::init_class`, `Cursor::init_cursor_class`, `Palette::set_active_window`
+    and every other `*::init_class()`. One of them said it plainly: fix it once
+    in the emitter rather than per body.
+
+    ONLY FOR A CALLEE. `static` changes the mangling from `QAA` to `SA`, and
+    for the SUBJECT that is the symbol the comparison looks up - the reason
+    `member_convention` spells `__cdecl` at all. A callee is reached by a
+    relocation the comparison masks, so its mangling reaches nothing.
+    """
+    return "static " if entry.is_method and entry.convention == "__cdecl" \
+        else ""
+
+
 def imported_methods(name: str, catalogued: set) -> list:
     """`src/`'s declarations for `name`'s methods, minus the catalogued ones.
 
@@ -1619,7 +1644,8 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
             elif entry.kind == "dtor":
                 body.append(f"    ~{name}();")
             else:
-                body.append(f"    {entry.returns} {entry.member_convention()}"
+                body.append(f"    {static_for(entry)}{entry.returns} "
+                            f"{entry.member_convention()}"
                             f"{entry.method}({', '.join(entry.params)});")
         if not layout and not body:
             # STILL OPAQUE, and it must stay that way: a class emitted with
@@ -1721,7 +1747,8 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
                     and entry.params == signature.params
                     and entry.kind == signature.kind):
                 continue
-            text = (f"    {entry.returns} {entry.member_convention()}"
+            text = (f"    {static_for(entry)}{entry.returns} "
+                    f"{entry.member_convention()}"
                     f"{entry.method}({', '.join(entry.params)});")
             if entry.kind == "ctor":
                 text = f"    {signature.klass}({', '.join(entry.params)});"
