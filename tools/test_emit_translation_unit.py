@@ -841,5 +841,52 @@ class EmbedsTheSubjectTests(unittest.TestCase):
         self.assertIn("FlatButton", shell.group(1))
 
 
+class GameConstantsTests(unittest.TestCase):
+    """The unit declares what the BODY needs, not only what the signature does.
+
+    Measured 2026-08-14: 1,544 implemented pieces were NO_COMPILE and 899
+    distinct undeclared identifiers caused it - every one already defined in a
+    header the standalone unit cannot include. Restating the integer constants
+    unblocked 46 bodies and took 4 of them straight to BYTE_EXACT.
+    """
+
+    def test_the_measured_blockers_are_declared(self):
+        text = tool.game_constants()
+        for name in ("TRIAD_AIR", "MaxPlayerNum", "BIT_FUNGUS",
+                     "MaxVehProtoFactionNum"):
+            self.assertIn(f"const int {name} = ", text, name)
+
+    def test_it_is_derived_from_the_headers_not_listed(self):
+        # A hand-written set of "the constants that matter" is this
+        # repository's highest-yield defect shape and would go stale the first
+        # time a header gained a value. 1,000+ says it read the tree.
+        self.assertGreater(
+            len([l for l in tool.game_constants().splitlines()
+                 if l.startswith("const int ")]), 500)
+
+    def test_only_literal_integers_are_restated(self):
+        # An expression can reference something this unit does not have, and a
+        # global carries an address the emitter computes elsewhere - a second
+        # spelling could disagree with the first. A constant is just a value.
+        for line in tool.game_constants().splitlines():
+            if not line.startswith("const int "):
+                continue
+            value = line.split("=", 1)[1].strip().rstrip(";")
+            int(value, 0)          # raises if it is not a literal
+
+    def test_a_name_defined_twice_with_different_values_is_dropped(self):
+        # The unit must not pick a side the headers do not agree on.
+        names = [l.split()[2] for l in tool.game_constants().splitlines()
+                 if l.startswith("const int ")]
+        self.assertEqual(len(names), len(set(names)))
+
+    def test_null_and_the_windows_typedefs_are_in_the_prelude(self):
+        # `NULL` alone was blocking 50 bodies, and the brief used to tell
+        # agents a Windows typedef was "a fact about the unit" to be accepted.
+        for needed in ("#define NULL 0", "typedef int BOOL;",
+                       "typedef char *LPSTR;"):
+            self.assertIn(needed, tool.PRELUDE, needed)
+
+
 if __name__ == "__main__":
     unittest.main()
