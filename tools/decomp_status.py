@@ -1052,7 +1052,9 @@ def main(argv=None) -> int:
                         help="overwrite existing placeholder files")
     parser.add_argument("--work", default="",
                         help="materialise the emitted scaffold over the "
-                             "placeholder at this address")
+                             "placeholder at this address; comma-separated "
+                             "for a whole batch, which loads the catalogue "
+                             "and scans the tree ONCE instead of per address")
     parser.add_argument("--gaps", action="store_true",
                         help="report image bytes in no catalogued span")
     parser.add_argument("--migrate", action="store_true",
@@ -1104,11 +1106,22 @@ def main(argv=None) -> int:
             return 0
         if arguments.work:
             import pefile
-            address = int(arguments.work, 16)
             pe_fast = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
-            return work_address(address, full_scan, functions,
-                                emit.load_derived(), emit.load_callees(),
-                                pe_fast)
+            derived, callees = emit.load_derived(), emit.load_callees()
+            worst = 0
+            # ONE SCAN FOR THE WHOLE BATCH. Materialising 96 scaffolds one
+            # invocation at a time re-read the catalogue and re-walked src/
+            # 96 times for an answer that does not change between them.
+            # `full_scan` is passed by value below and each call only writes
+            # its own file, so the batch is the same work in one process.
+            for piece in arguments.work.split(","):
+                piece = piece.strip()
+                if not piece:
+                    continue
+                worst = max(worst, work_address(int(piece, 16), full_scan,
+                                                functions, derived, callees,
+                                                pe_fast))
+            return worst
         gap_report(functions)
         return 0
 
