@@ -1088,7 +1088,9 @@ def match_functions(pe, rows: dict, shared: set, subjects: list,
                                      stem, "CL emitted no object")}
                 else:
                     try:
-                        rebuilt, rebuilt_mask = object_code(data)
+                        # By NAME - see the note at the census's own call.
+                        rebuilt, rebuilt_mask = object_code(
+                            data, subject=rows.get(address, {}).get("name"))
                         candidate = compare(
                             original_span_bytes(pe, low, high),
                             original_relocation_mask(pe, low, high),
@@ -1169,7 +1171,11 @@ def match_function(pe, rows: dict, shared: set, address: int, source: str,
         try:
             data = compile_unit(source, work,
                                 f"{stem or f'f{address:08x}'}_{index}", attempt)
-            rebuilt, rebuilt_mask = object_code(data)
+            # By NAME - see the note at the census's own call. This is the
+            # invocation an authoring agent runs, and it refused a unit the
+            # gate would have scored.
+            rebuilt, rebuilt_mask = object_code(
+                data, subject=row.get("name"))
         except ValueError as error:
             candidate = {"tier": "NO_COMPILE", "refusal_reason": str(error)}
         else:

@@ -72,9 +72,31 @@ import writeback as writeback  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CACHE_PATH = REPO_ROOT / ".opensmacx" / "decomp-status-cache.json"
 UNRECOVERED_DIR = REPO_ROOT / "src" / "unrecovered"
-# Bump when the comparison arithmetic changes under a unit text; a verdict
-# cached under another version of the comparator is not this tool's verdict.
-CACHE_VERSION = "v1"
+def _comparator_stamp() -> str:
+    """`v2-<digest>` - the cache is only valid for the comparator that filled it.
+
+    THE CACHE IS KEYED ON THE UNIT'S TEXT, so everything that BUILDS a unit -
+    the emitter, the census, the extractor, the layouts - already invalidates
+    it by changing the text. What does not is a change to the arithmetic that
+    turns a compiled object into a verdict, and that lives in `byte_match.py`.
+
+    This was a hand-bumped constant with a comment saying to bump it, and the
+    comment was nearly not obeyed: teaching `object_code` to select the
+    subject symbol BY NAME left every unit's text identical, so the whole
+    gate came back from cache and reported no movement, and the two rows the
+    change fixes only surfaced on a `--no-cache` re-measure by address. A
+    rule someone has to remember is the defect; the digest is the mechanism.
+
+    Coarse on purpose - a comment edit in `byte_match.py` invalidates too.
+    Measured 2026-08-14: a cold `--check` is 2m34s wall against 42s warm, and
+    that module changes rarely. Paying it is cheaper than one silently stale
+    green run.
+    """
+    source = (Path(__file__).resolve().parent / "byte_match.py").read_bytes()
+    return "v2-" + hashlib.sha256(source).hexdigest()[:16]
+
+
+CACHE_VERSION = _comparator_stamp()
 
 GENERATED_FILES = census.GENERATED_FILES
 FIELDS = census.FIELDS
