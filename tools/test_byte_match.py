@@ -523,5 +523,75 @@ class ProvenanceTests(unittest.TestCase):
             self.assertNotIsInstance(value, (bytes, bytearray))
 
 
+class SubjectSymbolTests(unittest.TestCase):
+    """Which external `.text` symbol is the subject.
+
+    The rule used to be "there is exactly one", which the COMPILER defeats:
+    a virtual destructor makes VC6 emit `??_G` beside the subject, an array
+    member makes it emit `??_H`, and VC6's `<string>` instantiates
+    `?id@?$ctype@G@std@@$E`. Each was worked around on its own - the last one
+    is why `byte_match_census.std_shim` includes that header conditionally -
+    and the first blocks every virtual destructor in the image, of which the
+    catalogue holds 117.
+    """
+
+    class Symbol:
+        def __init__(self, name):
+            self.name = name
+
+    def pairs(self, *names):
+        return [(self.Symbol(name), f"section for {name}") for name in names]
+
+    def test_a_lone_symbol_is_the_subject(self):
+        found = self.pairs("?run@Win@@QAEHH@Z")
+        self.assertEqual("?run@Win@@QAEHH@Z",
+                         tool.choose_subject_symbol(found)[0].name)
+
+    def test_a_deleting_destructor_beside_the_subject_is_not_it(self):
+        found = self.pairs("??0Win@@QAE@XZ", "??_GWin@@UAEPAXI@Z")
+        self.assertEqual("??0Win@@QAE@XZ",
+                         tool.choose_subject_symbol(found)[0].name)
+
+    def test_an_array_helper_beside_the_subject_is_not_it(self):
+        found = self.pairs("??_HNewTechWin@@QAEPAXPAXIIP6APAX0@Z@Z",
+                           "??0NewTechWin@@QAE@XZ")
+        self.assertEqual("??0NewTechWin@@QAE@XZ",
+                         tool.choose_subject_symbol(found)[0].name)
+
+    def test_a_deleting_destructor_alone_is_still_the_subject(self):
+        # 117 of them are recovery targets in their own right, so the filter
+        # must not empty the list it is filtering.
+        found = self.pairs("??_GWin@@UAEPAXI@Z")
+        self.assertEqual("??_GWin@@UAEPAXI@Z",
+                         tool.choose_subject_symbol(found)[0].name)
+
+    def test_two_hand_written_definitions_still_refuse(self):
+        # The rule this replaces was guarding something real: a helper defined
+        # beside the subject gets inlined into it and the original did not
+        # inline it. Nothing above may weaken that.
+        found = self.pairs("?helper@@YAHH@Z", "?subject@@YAHH@Z")
+        with self.assertRaises(ValueError) as caught:
+            tool.choose_subject_symbol(found)
+        self.assertIn("found 2", str(caught.exception))
+
+    def test_a_named_subject_is_taken_from_a_crowd(self):
+        found = self.pairs("?helper@@YAHH@Z", "?subject@@YAHH@Z")
+        self.assertEqual("?subject@@YAHH@Z",
+                         tool.choose_subject_symbol(
+                             found, "?subject@@YAHH@Z")[0].name)
+
+    def test_a_named_subject_matches_the_cdecl_decoration(self):
+        found = self.pairs("_init_opening", "?other@@YAHH@Z")
+        self.assertEqual("_init_opening",
+                         tool.choose_subject_symbol(
+                             found, "init_opening")[0].name)
+
+    def test_a_name_that_matches_nothing_says_so(self):
+        found = self.pairs("?a@@YAHH@Z", "?b@@YAHH@Z")
+        with self.assertRaises(ValueError) as caught:
+            tool.choose_subject_symbol(found, "?missing@@YAHH@Z")
+        self.assertIn("?missing@@YAHH@Z", str(caught.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
