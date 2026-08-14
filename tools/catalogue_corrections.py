@@ -235,12 +235,15 @@ CORRECTIONS = {
     #     and the adjustment it carries, never which class it belongs to;
     #   * each thunk is referenced by exactly ONE .rdata dword, i.e. it sits in
     #     a vtable slot. `operator delete` is not a virtual function and does
-    #     not appear in one, and docs/recovery/vtables.csv had already written
-    #     that down without drawing the conclusion: NINE of its rows name one of
-    #     these 47 (three distinct ones - FlatButton, ImageButton, PushButton)
-    #     as the FIRST SLOT of a secondary vtable installed at +0x444, which is
-    #     where a deleting destructor sits and where an `operator delete` never
-    #     does;
+    #     not appear in one. The retired docs/recovery/vtables.csv had written
+    #     that down without drawing the conclusion - nine of its rows named one
+    #     of these 47 (FlatButton, ImageButton, PushButton) as the FIRST SLOT
+    #     of a secondary vtable at +0x444 - and the file is now deleted for
+    #     being contradicted elsewhere. THE POINT SURVIVES ITS SOURCE: the
+    #     .rdata reference above is measured here, and
+    #     `tools/derive_class_vtables.py` finds +0x444 on 43 classes from the
+    #     constructors alone, which is `sizeof(Win)` and not an arbitrary
+    #     constant;
     #   * 0x444 is not an arbitrary constant: `sizeof(Win) == 0x444`
     #     (src/win.h:196), and src/ has long documented a second vptr stored at
     #     +0x444 by these classes' constructors - the secondary base subobject

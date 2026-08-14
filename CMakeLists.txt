@@ -848,6 +848,8 @@ if(BUILD_TESTING)
                                    test_verify_call_edges.py)
     opensmacx_add_python_tool_test(span-termination-tests
                                    test_verify_span_termination.py)
+    opensmacx_add_python_tool_test(class-vtable-tests
+                                   test_derive_class_vtables.py)
 
     # The preamble that measurement compiles a body in. This one is load
     # bearing in an unusual direction: a WRONG declaration here does not fail,
@@ -1233,6 +1235,19 @@ if(BUILD_TESTING)
     # two #include lines to game.cpp moved a function two lines and staled the
     # generated provenance comment. Regenerate and commit the output with the
     # change that caused it.
+    # Which vtable belongs to which class, read off the constructors, where it
+    # is an immediate operand and cannot be anything else. It replaces
+    # `docs/recovery/vtables.csv`, which said 0x006698C4 belonged to 15
+    # classes at once - distinct classes have distinct vtables, so the file
+    # could only mislead. Derived there are no collisions at all, and THAT is
+    # what this pins: a class count and a pair count as floors, and a
+    # collision count of zero, which is not a measurement but the property
+    # whose failure made the old file unusable. Reads the image; no compiler.
+    add_test(NAME class-vtables-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/derive_class_vtables.py"
+            "--check"
+    )
     # The VCall shim the COMPILED tree uses. It is generated from the same
     # function the verification scaffolding uses, and a drift between the two
     # would let a body verify against one slot layout and call another.

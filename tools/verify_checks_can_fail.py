@@ -895,6 +895,44 @@ def damage_contradicted_return_type(workspace):
             "--src", str(tree)]
 
 
+def damage_two_classes_one_vtable(workspace):
+    """Two class names deriving one vtable at offset 0, which cannot be.
+
+    THE REAL DEFECT, reproduced: `docs/recovery/vtables.csv` gave 0x006698C4
+    to 15 classes at offset 0 and was retired for it. The derivation avoids
+    that by disowning spans two rows claim - the COMDAT-folded tail at
+    0x004C8450 that five sound constructors share - so the damage here is a
+    second row reaching the same store through a span nobody else claims.
+
+    The fabricated row claims that folded tail ONE BYTE LONGER, so no range
+    is claimed twice, nothing is disowned, and both `Sound` and `Fabricated`
+    derive 0x0066E444 at offset 0. With the collision test removed the tree
+    has two classes and no other complaint - the floors are skipped under
+    `--src` - so this case can only pass while that test is present.
+    """
+    source = REPO_ROOT / "src" / "unrecovered" / "004c6080.cpp"
+    if not source.is_file():
+        raise Skip("0x004C6080 is not annotated in this tree")
+    text = source.read_text(encoding="utf-8")
+    if "??0Sound@@QAE@XZ" not in text:
+        raise Skip("0x004C6080 is not catalogued as Sound's constructor")
+    tree = workspace / "src"
+    tree.mkdir(parents=True, exist_ok=True)
+    (tree / "004c6080.cpp").write_text(text, encoding="utf-8")
+    (tree / "fabricated.cpp").write_text(
+        "// ORIGINAL: 0x004C8450 FILE\n"
+        "// name      ??0Fabricated@@QAE@XZ\n"
+        "// size      8 bytes\n"
+        "// spans     0x004C8450-0x004C8458\n"
+        "// prototype\n"
+        "// callers   0   call targets   0\n"
+        "// kind      game\n"
+        "// flags     sp_ready\n"
+        "// calls     (none)\n", encoding="utf-8")
+    return [PYTHON, str(TOOLS / "derive_class_vtables.py"),
+            "--check", "--src", str(tree)]
+
+
 def damage_removed_span(workspace):
     """A span half deleted, which is how a body lowers its own bar.
 
@@ -953,6 +991,8 @@ CASES = (
      damage_removed_span, "beside spans covering"),
     ("call-edges", "a header dropping a call target its own bytes make",
      damage_deleted_call_edge, "which its own bytes call directly"),
+    ("class-vtables-current", "two classes deriving one vtable at offset 0",
+     damage_two_classes_one_vtable, "distinct classes have distinct vtables"),
     ("return-agreement", "a name spelling void where the prototype returns int",
      damage_contradicted_return_type, "the emitter follows the name"),
     ("tool-test-registration", "a test file CMake never executes",

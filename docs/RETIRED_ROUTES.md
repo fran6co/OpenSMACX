@@ -164,7 +164,7 @@ surviving.
 
 | gate | why it went |
 |---|---|
-| `vtables-current` | keeps `vtables.csv` current; its readers are the layout hypothesis path, which reads it on demand |
+| `vtables-current` | kept `vtables.csv` current. The FILE is now deleted too, 2026-08-14: it said 0x006698C4 belonged to 15 classes at offset 0, which distinct classes cannot. Both readings of what it might have meant instead were refuted against the image, and `tools/derive_class_vtables.py` reads the answer off the constructors with no collisions at all — 70 classes, 70 distinct primary vtables. A contradicted file that nothing reads is still available to believe |
 | `subobject-sites-current` | the tool has no `--check` at all, so the registration compared nothing — it was a worklist wearing a gate's clothes |
 | `pracx-members-current` | PRACX is a hypothesis source, barred from size *agreement* by the shared-lineage rule; currency of a hypothesis is not a project invariant |
 | `behaviour-member-names-current` | 18 member names inferred from their sole accessor; once written into headers the file is a no-op |
