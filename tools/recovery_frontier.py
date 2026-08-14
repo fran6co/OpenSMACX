@@ -259,6 +259,14 @@ def source_states(src: Path = None) -> tuple:
     for a in annotation_scan.scan_tree(root):
         if a.matched:
             claimed.add(a.address)
+        # AN `UNRECOVERABLE` CLAIM IS A DECISION, exactly like EXCLUDED, and
+        # is filtered the same way. It says no C body can express this piece -
+        # three registers live-in with no prologue, ESP used as a counter -
+        # and it carries the evidence in the annotation. Handing one out again
+        # spends a recovery slot re-deriving a conclusion the tree already
+        # holds; batch 13 spent three that way before the token existed.
+        if a.unrecoverable:
+            excluded.add(a.address)
         if a.state == annotation_scan.STATE_EXCLUDED:
             excluded.add(a.address)
         elif a.state == annotation_scan.STATE_IMPLEMENTED:
