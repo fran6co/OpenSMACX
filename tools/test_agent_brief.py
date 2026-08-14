@@ -842,9 +842,13 @@ class ClassSectionTests(unittest.TestCase):
     """
 
     def test_a_class_src_declares_but_cannot_prove_is_named(self):
-        text = agent_brief.class_section("??0PushButton@@QAE@XZ")
-        self.assertIn("src/pushbutton.h", text)
-        self.assertIn("BaseButton", text)
+        # `PushButton` was the example until its size was pinned on
+        # 2026-08-14, at which point the section correctly fell silent for it
+        # and this test failed - the example going stale because the tree got
+        # better, which is the good direction. `CouncWin` is still unproved.
+        text = agent_brief.class_section("??0CouncWin@@QAE@XZ")
+        self.assertIn("src/councwin.h", text)
+        self.assertIn("GraphicWin", text)
         self.assertIn("HYPOTHESIS", text)
 
     def test_a_constructor_decodes_its_class(self):
@@ -857,7 +861,7 @@ class ClassSectionTests(unittest.TestCase):
         decoded `ushButton`, which is declared nowhere, so the section stayed
         silent and looked correct.
         """
-        for mangled in ("??0PushButton@@QAE@XZ", "??1CouncWin@@QAE@XZ"):
+        for mangled in ("??0CouncWin@@QAE@XZ", "??1BaseWin@@QAE@XZ"):
             self.assertNotEqual("", agent_brief.class_section(mangled), mangled)
 
     def test_a_proved_class_says_nothing(self):
@@ -877,7 +881,7 @@ class ClassSectionTests(unittest.TestCase):
         header and what it is worth; it does not paste offsets, which would
         route around that gate while looking like help.
         """
-        text = agent_brief.class_section("??0PushButton@@QAE@XZ")
+        text = agent_brief.class_section("??0CouncWin@@QAE@XZ")
         self.assertNotIn("0x", text)
 
 
