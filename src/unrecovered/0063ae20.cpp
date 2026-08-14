@@ -1,4 +1,8 @@
-// ORIGINAL: 0x0063AE20 FILE
+// ORIGINAL: 0x0063AE20 BYTE_EXACT FILE
+// LEVER: switch(type){case 1: case 2: default:} reproduces the dec/je/dec/jne
+//        idiom; if/else-if compiled to cmp/jne instead. Signature is really
+//        void __cdecl sub_63ae20(unsigned char *param_1), not int __cdecl().
+// working copy - scaffold materialised by --work
 // name      sub_63ae20
 // size      178 bytes
 // spans     0x0063AE20-0x0063AED2
@@ -7,7 +11,91 @@
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// placeholder - not yet decompiled
-// To start: tools/decomp_status.py --work 0x0063AE20
 
-// BODY GOES HERE.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_63ae20  at 0x0063AE20  (178 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+
+// ---- fixed globals this body references ----
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const g_0063aee0 = (int *)0x0063AEE0;
+static int *const g_0063af00 = (int *)0x0063AF00;
+static int *const g_0063af20 = (int *)0x0063AF20;
+static int *const g_0063af40 = (int *)0x0063AF40;
+static int *const g_00664000 = (int *)0x00664000;
+static int *const g_006647f0 = (int *)0x006647F0;
+static int *const g_00664e50 = (int *)0x00664E50;
+static int *const g_00665640 = (int *)0x00665640;
+static int *const g_00665ca0 = (int *)0x00665CA0;
+static int *const g_00666440 = (int *)0x00666440;
+static int *const g_00666a80 = (int *)0x00666A80;
+static int *const g_00666fd0 = (int *)0x00666FD0;
+static int *const g_00667380 = (int *)0x00667380;
+static int *const g_00667b20 = (int *)0x00667B20;
+extern "C" void __cdecl sub_63ae20(unsigned char *param_1) {
+    unsigned char type = *reinterpret_cast<unsigned char *>(*reinterpret_cast<int *>(param_1 + 4) + 0x20);
+    switch (type) {
+    case 1:
+        if ((*param_1 & 1) != 0) {
+            *reinterpret_cast<int **>(param_1 + 0x6c) = g_00665640;
+            *reinterpret_cast<int **>(param_1 + 0x70) = g_00664e50;
+            *reinterpret_cast<int **>(param_1 + 0x7c) = g_0063af40;
+            *reinterpret_cast<int **>(param_1 + 0x74) = g_00666fd0;
+            *reinterpret_cast<int **>(param_1 + 0x78) = g_00666a80;
+            return;
+        }
+        *reinterpret_cast<int **>(param_1 + 0x6c) = g_006647f0;
+        *reinterpret_cast<int **>(param_1 + 0x70) = g_00664000;
+        *reinterpret_cast<int **>(param_1 + 0x7c) = g_0063af00;
+        break;
+    case 2:
+        if ((*param_1 & 1) != 0) {
+            *reinterpret_cast<int **>(param_1 + 0x6c) = g_00667b20;
+            *reinterpret_cast<int **>(param_1 + 0x70) = g_00667380;
+            *reinterpret_cast<int **>(param_1 + 0x7c) = g_0063af20;
+            *reinterpret_cast<int **>(param_1 + 0x74) = g_00666fd0;
+            *reinterpret_cast<int **>(param_1 + 0x78) = g_00666a80;
+            return;
+        }
+        *reinterpret_cast<int **>(param_1 + 0x6c) = g_00666440;
+        *reinterpret_cast<int **>(param_1 + 0x70) = g_00665ca0;
+        *reinterpret_cast<int **>(param_1 + 0x7c) = g_0063aee0;
+        *reinterpret_cast<int **>(param_1 + 0x74) = g_00666fd0;
+        *reinterpret_cast<int **>(param_1 + 0x78) = g_00666a80;
+        return;
+    default:
+        break;
+    }
+    *reinterpret_cast<int **>(param_1 + 0x74) = g_00666fd0;
+    *reinterpret_cast<int **>(param_1 + 0x78) = g_00666a80;
+}
