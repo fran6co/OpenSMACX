@@ -480,5 +480,141 @@ class RegionEndTests(unittest.TestCase):
             "void h() { }"))
 
 
+class HelperFunctionTests(unittest.TestCase):
+    """A helper FUNCTION closes `}`, so the punctuation rule stopped there.
+
+    The `};` versus `}` test told a helper CLASS from the next definition, and
+    that is the half three agents reported. A free helper - `round_nearest` on
+    0x0063FFE0, an `inline operator new` for a placement-new constructor, a
+    `static inline` fragment shared by two arms - closes exactly like the next
+    definition does, so the subject the marker names was dropped just the
+    same. 21 committed regions were ending on a helper when this was written,
+    `?mem_get@@YAPAXH@Z` among them: its region held `mem_get_old` and not
+    `mem_get`, so the row was being scored against its neighbour.
+
+    The discriminator is the name, which `// name` already carries.
+    """
+
+    def end(self, *lines):
+        return scan.region_end(list(lines), 0)
+
+    def test_a_helper_function_does_not_end_the_region(self):
+        self.assertEqual(5, self.end(
+            "// ORIGINAL: 0x00401000 X",
+            "// name      ?g@@YAXXZ",
+            "static int helper(int a) { return a; }",
+            "void g() {",
+            "  helper(1);",
+            "}"))
+
+    def test_a_neighbour_below_the_subject_is_still_not_absorbed(self):
+        """The old rule's job, kept: stop at the subject, not after it."""
+        self.assertEqual(3, self.end(
+            "// ORIGINAL: 0x00401000 X",
+            "// name      ?g@@YAXXZ",
+            "void g() {",
+            "}",
+            "",
+            "void later() {",
+            "}"))
+
+    def test_a_neighbour_above_the_subject_is_absorbed(self):
+        """`mem_get_old` sits above `mem_get` in src/general.cpp with no
+        marker of its own. Swallowing it is right where the subject is below:
+        the alternative is compiling the neighbour and calling it the
+        subject, which is what happened. `byte_match.choose_subject_symbol`
+        then picks by name out of the two."""
+        self.assertEqual(5, self.end(
+            "// ORIGINAL: 0x00401000 X",
+            "// name      ?mem_get@@YAPAXH@Z",
+            "void *mem_get_old(int n) {",
+            "}",
+            "void *mem_get(int n) {",
+            "}"))
+
+    def test_a_subject_named_only_in_prose_does_not_count(self):
+        """0x0063FFE0's own PROPOSAL line spells `sub_63ffe0` three lines
+        above the helper that ended its region. A mention is not a
+        definition, so the comment stripper has to run first."""
+        self.assertEqual(5, self.end(
+            "// ORIGINAL: 0x0063FFE0 X",
+            "// name      sub_63ffe0",
+            "// PROPOSAL: extern \"C\" int __cdecl sub_63ffe0() ->",
+            "static float round_nearest(float v) { return v; }",
+            "void sub_63ffe0() {",
+            "}"))
+
+    def test_a_subject_that_never_appears_keeps_the_old_answer(self):
+        """The two errors are not symmetric. Extending too far swallows a
+        neighbour; not extending is the status quo. So an unfindable subject
+        falls back to the punctuation rule rather than running to the file's
+        end."""
+        self.assertEqual(3, self.end(
+            "// ORIGINAL: 0x00401000 X",
+            "// name      ?nowhere@@YAXXZ",
+            "void g() {",
+            "}",
+            "",
+            "void later() {",
+            "}"))
+
+    def test_a_longer_identifier_is_not_the_subject(self):
+        """`kill_entry_free_if_set` is not `kill_entry` - src/recovered/
+        00608770.cpp, where the helper is named for the subject it serves."""
+        self.assertEqual(4, self.end(
+            "// ORIGINAL: 0x00608770 X",
+            "// name      ?kill_entry@StringList@@QAEXPAUStringStruct@@@Z",
+            "static void kill_entry_free_if_set(int v) { }",
+            "void StringList::kill_entry(void *a) {",
+            "}"))
+
+
+class SubjectIdentifierTests(unittest.TestCase):
+    """Which identifier a marker's `// name` field names.
+
+    Read permissively: calling the subject defined too early only restores
+    the punctuation rule, while calling it defined too late extends a region
+    over a neighbour. So a constructor is named by its CLASS - it has no base
+    name of its own - and anything undecodable returns None, which switches
+    `region_end` back to the old behaviour wholesale.
+    """
+
+    def name(self, field):
+        return scan.subject_identifier(
+            ["// ORIGINAL: 0x00401000 X", f"// name      {field}", "void g(){}"], 0)
+
+    def test_a_member_is_named_by_its_base_name(self):
+        self.assertEqual("close", self.name("?close@StringStruct@@QAEXXZ"))
+
+    def test_a_free_function_is_named_by_its_base_name(self):
+        self.assertEqual("mem_get", self.name("?mem_get@@YAPAXH@Z"))
+
+    def test_a_constructor_is_named_by_its_class(self):
+        self.assertEqual("Interlude", self.name("??0Interlude@@QAE@XZ"))
+
+    def test_a_destructor_is_named_by_its_class(self):
+        self.assertEqual("Console", self.name("??1Console@@UAE@XZ"))
+
+    def test_a_deleting_destructor_is_named_by_its_class(self):
+        self.assertEqual("Console", self.name("??_GConsole@@UAEPAXI@Z"))
+
+    def test_a_plain_name_is_itself(self):
+        self.assertEqual("sub_63ffe0", self.name("sub_63ffe0"))
+
+    def test_an_undecodable_name_has_no_identifier(self):
+        self.assertIsNone(self.name("`string'"))
+
+    def test_a_name_below_the_first_brace_is_not_the_field(self):
+        self.assertIsNone(scan.subject_identifier(
+            ["// ORIGINAL: 0x00401000 X",
+             "void g() {",
+             "// name      ?wrong@@YAXXZ",
+             "}"], 0))
+
+    def test_a_marker_with_no_name_field_has_no_identifier(self):
+        self.assertIsNone(scan.subject_identifier(
+            ["// ORIGINAL: 0x00401000 X", "void g() {", "}"], 0))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -215,7 +215,7 @@ NEXT_MARKER = re.compile(r"^\s*(?://|\*)?\s*ORIGINAL:\s*0x[0-9A-Fa-f]{8}\b")
 
 
 def _brace_delta(line: str, in_block: bool) -> tuple:
-    """(depth change, still inside a block comment, saw an open) for a line.
+    """(depth change, still inside a block comment, saw an open, code) for a line.
 
     `saw_open` is separate from a positive delta because `void g() { }` opens
     and closes on one line: its delta is zero, and testing the delta alone
@@ -226,20 +226,29 @@ def _brace_delta(line: str, in_block: bool) -> tuple:
     `` `class Shim { ... };` `` inside a RULED-OUT note closed the region
     early and the body below it was dropped in silence. An agent reported
     exactly that after writing the idiom into a note.
+
+    `code` is what survived that same stripping - the line with comment text
+    and string/char contents removed. It exists because `region_end` has to
+    ask whether the subject is DEFINED yet, and a note naming the subject in
+    prose is not a definition: `0x0063FFE0`'s own PROPOSAL line spells
+    `sub_63ffe0` three lines above the helper that used to end its region.
+    Returned from here rather than recomputed so there stays ONE stripper.
     """
     out, index, length, saw_open = 0, 0, len(line), False
+    code = []
     while index < length:
         if in_block:
             close = line.find("*/", index)
             if close < 0:
-                return out, True, saw_open
+                return out, True, saw_open, "".join(code)
             index, in_block = close + 2, False
             continue
         char = line[index]
         if char == "/" and index + 1 < length:
             following = line[index + 1]
             if following == "/":
-                return out, False, saw_open     # rest of the line is comment
+                # rest of the line is comment
+                return out, False, saw_open, "".join(code)
             if following == "*":
                 index, in_block = index + 2, True
                 continue
@@ -259,8 +268,39 @@ def _brace_delta(line: str, in_block: bool) -> tuple:
             saw_open = True
         elif char == "}":
             out -= 1
+        code.append(char)
         index += 1
-    return out, in_block, saw_open
+    return out, in_block, saw_open, "".join(code)
+
+
+# The identifier a mangled name is built around. `?base@Class@@...` is named
+# by `base`; `??0Class@@...`, `??1`, `??_G` and friends have no base name of
+# their own and are named by the CLASS. A plain `sub_63ffe0` is itself.
+_MANGLED_BASE = re.compile(r"^\?\?(?:_[A-Za-z]|[0-9A-Za-z])([A-Za-z_]\w*)@"
+                           r"|^\?([A-Za-z_]\w*)@"
+                           r"|^([A-Za-z_]\w*)$")
+_NAME_FIELD = re.compile(r"^\s*(?://+|\*)?\s*name\s+(\S+)\s*$")
+
+
+def subject_identifier(lines: list, start: int):
+    """The identifier the marker at `start` names, or None if it has none.
+
+    Read out of the annotation's own `// name` field, which every catalogued
+    row carries, so `region_end` needs no new argument and every caller of it
+    gets the benefit. The header is scanned only up to the first brace: past
+    that the region is code, and a `name` in code is not this field.
+    """
+    for line in lines[start:]:
+        if "{" in line:
+            break
+        matched = _NAME_FIELD.match(line)
+        if matched is None:
+            continue
+        parts = _MANGLED_BASE.match(matched.group(1))
+        if parts is None:
+            return None
+        return next(group for group in parts.groups() if group)
+    return None
 
 
 def region_end(lines: list, start: int):
@@ -280,8 +320,28 @@ def region_end(lines: list, start: int):
     conflict with the emitter's own pattern: `vtable_shim` is deliberately a
     separate top-level class, which survives `--dir` and could not survive the
     committed-file path the gate reads.
+
+    THE PUNCTUATION WAS STANDING IN FOR A NAME THE MARKER ALREADY CARRIES.
+    Closing on `};` versus `}` distinguishes a helper CLASS from the next
+    definition, but a helper FUNCTION closes `}` like anything else, so the
+    subject below it was dropped just the same - reported on `0x0063FFE0`,
+    which paid for it by inlining a `round_nearest` helper three times, and
+    routed around again on the sibling `0x0063FE00`. So the region now
+    extends while the subject is not yet DEFINED and stops at the first
+    top-level close once it is. Where the name cannot be read, or is never
+    defined, the punctuation rule still decides, which is why every one of
+    the 5,066 committed regions ends exactly where it did before.
     """
     depth, opened, end, in_block = 0, False, None, False
+    # PERMISSIVE ON PURPOSE, because the two errors are not symmetric.
+    # Calling the subject defined too early only restores the old answer;
+    # calling it defined too late extends the region over a neighbour. So a
+    # bare mention in code counts, and `punctuated` keeps the old answer as
+    # the floor for a subject that never appears at all.
+    subject = subject_identifier(lines, start)
+    defined = subject is None
+    wanted = None if defined else re.compile(rf"\b{re.escape(subject)}\b")
+    punctuated = None
     for offset, line in enumerate(lines[start:]):
         # ONLY ONCE A REGION HAS OPENED. 20 annotations sit inside a doc
         # comment that is followed by another marker before any brace - the
@@ -290,7 +350,11 @@ def region_end(lines: list, start: int):
         # turning every one of them into "no closing brace within the file".
         if offset and opened and NEXT_MARKER.match(line):
             break
-        delta, in_block, saw_open = _brace_delta(line, in_block)
+        delta, in_block, saw_open, code = _brace_delta(line, in_block)
+        # BEFORE this line's braces are judged, since a single-line
+        # definition names the subject and closes the region on one line.
+        if not defined and wanted.search(code):
+            defined = True
         depth += delta
         if saw_open:
             opened = True
@@ -307,8 +371,11 @@ def region_end(lines: list, start: int):
             # function in `test_writeback`.
             stripped = line.rstrip()
             if not stripped.endswith((";", ",")):
-                break
-    return end
+                if punctuated is None:
+                    punctuated = end
+                if defined:
+                    break
+    return end if defined else punctuated
 
 
 def extract_forward_text(lines: list, marker_line: int) -> str:
