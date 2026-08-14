@@ -895,6 +895,37 @@ def damage_contradicted_return_type(workspace):
             "--src", str(tree)]
 
 
+def damage_tidied_vendor_source(workspace):
+    """One byte changed in a vendored zlib file - a "harmless" tidy.
+
+    THE REAL RISK, reproduced. `src/vendor/zlib-1.0.2/` is not a copy that can
+    go stale; thirteen BYTE_EXACT claims cite it as their AUTHORSHIP, so an
+    edit there changes what those claims claim. The damage is deliberately the
+    most innocent-looking kind - a trailing newline - because a check that
+    only catches vandalism is not the one this needs.
+
+    The tool takes no `--src`, so the case works on a copy of the whole
+    directory and points the module's VENDOR at it - the same code path the
+    gate runs, with a different root.
+    """
+    source = REPO_ROOT / "src" / "vendor" / "zlib-1.0.2"
+    if not (source / "trees.c").is_file():
+        raise Skip("the vendored zlib is not present in this tree")
+    tree = workspace / "zlib-1.0.2"
+    shutil.copytree(source, tree)
+    (tree / "trees.c").write_text((tree / "trees.c").read_text() + "\n",
+                                  encoding="utf-8")
+    runner = workspace / "run_vendor_check.py"
+    runner.write_text(
+        "import sys, pathlib\n"
+        f"sys.path.insert(0, {str(TOOLS)!r})\n"
+        "import verify_vendor_zlib as check\n"
+        f"check.VENDOR = pathlib.Path({str(tree)!r})\n"
+        f"check.PROVENANCE = check.VENDOR / 'PROVENANCE.md'\n"
+        "sys.exit(check.main([]))\n", encoding="utf-8")
+    return [PYTHON, str(runner)]
+
+
 def damage_two_classes_one_vtable(workspace):
     """Two class names deriving one vtable at offset 0, which cannot be.
 
@@ -993,6 +1024,8 @@ CASES = (
      damage_deleted_call_edge, "which its own bytes call directly"),
     ("class-vtables-current", "two classes deriving one vtable at offset 0",
      damage_two_classes_one_vtable, "distinct classes have distinct vtables"),
+    ("vendor-zlib-current", "a vendored source tidied by one byte",
+     damage_tidied_vendor_source, "differs from the recorded release"),
     ("return-agreement", "a name spelling void where the prototype returns int",
      damage_contradicted_return_type, "the emitter follows the name"),
     ("tool-test-registration", "a test file CMake never executes",
@@ -1084,8 +1117,9 @@ CMAKELISTS = REPO_ROOT / "CMakeLists.txt"
 # does not take down every caller of gate_checks() before it can be reviewed;
 # test_the_floor_is_not_slack refuses more slack than two.
 #
-# 26 -> 28 on 2026-08-14, with `return-agreement` and `call-edges` registered.
-GATE_CHECK_FLOOR = 28
+# 26 -> 28 on 2026-08-14, with `return-agreement` and `call-edges` registered,
+# then 28 -> 29 with `vendor-zlib-current`.
+GATE_CHECK_FLOOR = 29
 
 
 def without_comments(text):

@@ -1235,6 +1235,16 @@ if(BUILD_TESTING)
     # two #include lines to game.cpp moved a function two lines and staled the
     # generated provenance comment. Regenerate and commit the output with the
     # change that caused it.
+    # The vendored zlib held to the release it claims to be. Thirteen
+    # catalogued functions are recovered by COMPILING the code they were built
+    # from rather than by transcribing their disassembly, and that argument
+    # rests entirely on those files being the release - so an edit there does
+    # not stale a copy, it silently rewrites what thirteen BYTE_EXACT claims
+    # are claiming. Reads nothing but the files; no compiler, no image.
+    add_test(NAME vendor-zlib-current
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_vendor_zlib.py"
+    )
     # Which vtable belongs to which class, read off the constructors, where it
     # is an immediate operand and cannot be anything else. It replaces
     # `docs/recovery/vtables.csv`, which said 0x006698C4 belonged to 15
