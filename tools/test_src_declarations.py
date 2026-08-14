@@ -247,5 +247,50 @@ class ForBody(unittest.TestCase):
         self.assertEqual(text, "")
 
 
+class PresentIgnoresCommentsTests(unittest.TestCase):
+    """A name mentioned in a comment is not a name the unit has declared.
+
+    `_present` decides whether a dependency still needs declaring, so a false
+    yes emits a class whose member type is nowhere in the unit. It fired for
+    real the day `src/original_seam.h` began being spliced in: that header
+    documents itself with `func_buffer_line)(Buffer *, ...)` inside a block
+    comment, so every unit in the tree suddenly "had" `Buffer`, and
+    `??1TextureStore@@QAE@XZ` went from BYTE_EXACT to `C2079`.
+    """
+
+    def test_a_block_comment_does_not_declare(self):
+        self.assertFalse(sd._present("Buffer", "/* holds a Buffer * here */"))
+
+    def test_a_line_comment_does_not_declare(self):
+        self.assertFalse(sd._present("Buffer", "// Buffer is mentioned\n"))
+
+    def test_real_code_still_counts(self):
+        self.assertTrue(sd._present("Buffer", "class Buffer;"))
+        self.assertTrue(
+            sd._present("Buffer", "// see Buffer below\nclass Buffer;"))
+
+    def test_a_slash_star_inside_a_line_comment_opens_nothing(self):
+        # The naive two-pass stripper - block comments, then line comments -
+        # reads the `/*` below as a real opener and deletes every declaration
+        # up to the next `*/`. Six classes were then defined twice in one
+        # unit. Real scaffolding does hold unbalanced `/*`: 8 against 6 `*/`
+        # in the unit for 0x00483E80.
+        text = "// a /* that opens nothing\nclass Sound;\n/* real */\n"
+        self.assertTrue(sd._present("Sound", text))
+
+    def test_a_comment_marker_in_a_string_opens_nothing(self):
+        self.assertTrue(sd._present("Sound", 'char *s = "// not a comment";\n'
+                                             'class Sound;\n'))
+
+    def test_the_seam_header_declares_nothing_it_only_mentions(self):
+        # The exact text that caused it, read from the file rather than
+        # restated - if the header stops mentioning `Buffer` this test stops
+        # proving anything, and should be pointed at whatever it mentions then.
+        import emit_translation_unit as emit
+        seam = emit.seam_header()
+        self.assertIn("Buffer", seam, "the header no longer names Buffer")
+        self.assertFalse(sd._present("Buffer", seam))
+
+
 if __name__ == "__main__":
     unittest.main()

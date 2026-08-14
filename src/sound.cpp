@@ -390,7 +390,7 @@ int Sound::fade_in() {
 /*
 Purpose: Hand a three-argument ramp to the wrapped device, through vtable slot
          0x34. Does nothing when no device is wrapped.
-ORIGINAL: 0x004C6640
+ORIGINAL: 0x004C6640 BYTE_EXACT
 // name      ?ramp@Sound@@QAEXHHI@Z
 // size      31 bytes
 // spans     0x004C6640-0x004C665F
@@ -593,7 +593,7 @@ void __fastcall sound_set_volume_redirect(Sound *self, void *, int a1) {
 Purpose: Set the fade time. Zero is refused with 0xA; otherwise the value is
          remembered at 0x38 and the wrapped device hears it through its
          vtable slot 0.
-ORIGINAL: 0x004C6580
+ORIGINAL: 0x004C6580 BYTE_EXACT
 // name      ?set_fade@Sound@@QAEHK@Z
 // size      40 bytes
 // spans     0x004C6580-0x004C65A8
@@ -627,7 +627,7 @@ int __fastcall sound_set_fade_redirect(Sound *self, void *, unsigned long a1) {
 Purpose: Set the fade-in time. Zero is refused with 0xA; otherwise the value
          shares the 0x38 field with set_fade and the wrapped device hears it
          through its vtable slot 0x54.
-ORIGINAL: 0x004C65B0
+ORIGINAL: 0x004C65B0 BYTE_EXACT
 // name      ?set_fade_in@Sound@@QAEHI@Z
 // size      41 bytes
 // spans     0x004C65B0-0x004C65D9
@@ -691,7 +691,7 @@ void __fastcall sound_fade_in_arg_redirect(Sound *self, void *,
 Purpose: Set the pan, clamped to the range the engine accepts (-0x40 to
          0x3F), stored at 0x08 and handed to the wrapped device through its
          vtable slot 0x44.
-ORIGINAL: 0x004C66B0
+ORIGINAL: 0x004C66B0 BYTE_EXACT
 // name      ?set_pan@Sound@@QAEXH@Z
 // size      48 bytes
 // spans     0x004C66B0-0x004C66E0

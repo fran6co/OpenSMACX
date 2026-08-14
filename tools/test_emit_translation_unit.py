@@ -894,6 +894,56 @@ class GameConstantsTests(unittest.TestCase):
             self.assertIn(needed, tool.PRELUDE, needed)
 
 
+class SeamHeaderTests(unittest.TestCase):
+    """The unit reaches the original image through the SAME seam the build does.
+
+    50 NO_COMPILE bodies stopped on `original_slot` and 9 on
+    `original_address`, both defined in `src/original_seam.h`. Those bodies
+    compile in the build, which includes it, and failed only under
+    measurement, which did not - a harness defect reported as a body defect.
+    """
+
+    def test_the_seam_is_in_the_unit(self):
+        for needed in ("original_slot", "original_method", "original_address",
+                       "OriginalObject", "#define ORIGINAL("):
+            self.assertIn(needed, tool.seam_header(), needed)
+
+    def test_it_is_spliced_from_the_header_not_copied(self):
+        # A COPY is the failure this guards: two definitions of the seam that
+        # nothing keeps equal, so the unit measures a body against a calling
+        # convention the build does not use. Every substantive line of the
+        # header must appear verbatim in what the emitter splices.
+        spliced = tool.seam_header()
+        source = tool.SEAM_HEADER.read_text().splitlines()
+        for line in source:
+            if not line.strip() or line.strip() == "#pragma once":
+                continue
+            self.assertIn(line, spliced, line)
+
+    def test_the_seam_is_defined_exactly_once_in_a_unit(self):
+        # The prelude restating any of it would be that same second
+        # definition, arriving by the other door.
+        for name in ("original_slot", "original_method", "OriginalObject"):
+            self.assertNotIn(name, tool.PRELUDE, name)
+
+    def test_the_seam_emits_no_code(self):
+        # What makes splicing a whole header safe here, and the property that
+        # must not quietly stop holding: an incomplete class, uninstantiated
+        # templates and a macro cannot change a byte the subject compiles to.
+        # A free function or a variable definition appearing in this header
+        # would, and would do it to every measured row at once.
+        body = "\n".join(
+            line for line in tool.seam_header().splitlines()
+            if not line.lstrip().startswith("//") and not line.lstrip().startswith("*")
+            and not line.lstrip().startswith("/*"))
+        self.assertNotIn("\n{", "\n" + body.replace("template", "\x00"))
+        self.assertEqual(
+            [l for l in body.splitlines()
+             if l and not l.startswith((" ", "\t", "}", "#", "template", "class",
+                                        "Method", "unsigned long", "union"))],
+            [])
+
+
 class VtableSlotTests(unittest.TestCase):
     """Which indirect calls are read as virtual dispatch.
 

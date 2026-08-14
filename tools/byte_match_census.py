@@ -213,31 +213,35 @@ def census_rows(functions: dict) -> list:
 # Every one of them failed with C2065 and, until the census started recording
 # what CL said, failed indistinguishably from everything else.
 #
-# Mirrors src/original_seam.h and src/vector_teardown.h. Kept minimal and
-# emitted only for bodies that reference it, so a unit that compiled before
-# still compiles to the same bytes.
-SEAM_PREAMBLE = """
-class __single_inheritance OriginalObject;
-template <class Method>
-Method original_method(unsigned long address) {
-  union { unsigned long address; Method method; } cast;
-  cast.address = address;
-  return cast.method;
-}
-#define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))
-typedef void (OriginalObject::*func_thiscall_teardown)();
-typedef void(__stdcall func_vector_dtor_iterator)(
-    void *array, unsigned int element_size, int count,
-    func_thiscall_teardown teardown);
-extern func_vector_dtor_iterator *VectorDtorIterator;
-typedef void(__stdcall func_vector_ctor_iterator)(
-    void *array, unsigned int element_size, int count,
-    func_thiscall_teardown ctor, func_thiscall_teardown dtor);
-extern func_vector_ctor_iterator *VectorCtorIterator;
-"""
-
-SEAM_TRIGGERS = ("ORIGINAL(", "original_method", "VectorDtorIterator",
+# SPLICED FROM src/original_seam.h AND src/vector_teardown.h, not mirrored.
+# It was mirrored - a hand-written copy of the two headers, kept minimal -
+# and the copy went stale exactly the way a copy does: the headers grew
+# `original_slot` and `original_address`, this did not, and 59 bodies that
+# compile in the build were scored NO_COMPILE for using them. Measured
+# 2026-08-14. `emit.seam_header` reads the files, so there is no second
+# spelling left to drift; `emit.teardown_header` needs the seam ahead of it.
+SEAM_TRIGGERS = ("ORIGINAL(", "original_method", "original_slot",
+                 "original_address", "VectorDtorIterator",
                  "VectorCtorIterator", "OriginalObject")
+
+
+def seam_preamble(body: str, scaffolding: str) -> str:
+    """The seam a body needs and the scaffolding does not already carry.
+
+    Gated on the scaffolding rather than emitted flat, because the emitter
+    now splices `original_seam.h` into every unit it generates: emitting it
+    here as well is `C2995: template function has already been defined`. The
+    two halves are gated separately - a frozen FILE-mode scaffold predates
+    both splices and needs each.
+    """
+    if not any(trigger in body for trigger in SEAM_TRIGGERS):
+        return ""
+    parts = []
+    if "original_method" not in scaffolding:
+        parts.append(emit.seam_header())
+    if "func_thiscall_teardown" not in scaffolding:
+        parts.append(emit.teardown_header())
+    return "\n".join(parts)
 
 # Spellings `src/` uses that cl 12.00.8168 does not have without a header.
 # `nullptr` is C++11 and `vc6_compat.h` defines it away for the real build; the
@@ -361,7 +365,7 @@ def build_unit(address, row, location, functions, derived, callees, pe):
                                 scaffolding_only=True, body=body)
     except emit.Unsettled as error:
         return None, f"no scaffolding: {error}"
-    seam = SEAM_PREAMBLE if any(t in body for t in SEAM_TRIGGERS) else ""
+    seam = seam_preamble(body, scaffolding)
     # The shim goes FIRST: it includes real CRT headers, and the scaffolding
     # below typedefs names those headers also declare.
     shim = std_shim(any(n in body for n in STRING_HEADER_NAMES)) \
