@@ -266,6 +266,35 @@ def source_states(src: Path = None) -> tuple:
     return claimed, excluded, implemented
 
 
+LEDGER = Path(__file__).resolve().parent.parent / ".opensmacx" / "byte-match.csv"
+
+
+def unscoreable_addresses(ledger: Path = None) -> set:
+    """Addresses no agent can ever take to BYTE_EXACT, as MEASURED.
+
+    `SHARED_TAIL` is a body whose bytes are shared with a neighbour, so the
+    comparison has no unit of its own; `REFUSED` is a body the comparator will
+    not score at all. Handing either to an agent spends a full recovery slot
+    on something that cannot move, and the agent has no way to discover that
+    from the brief - it just fails and reports a mismatch.
+
+    READ FROM THE LEDGER, WHICH IS THE RIGHT SOURCE HERE and the exception to
+    "src/ is the catalogue". src/ records what the tree CLAIMS; these two
+    tiers are not claims, they are what the comparator answered, and there is
+    no annotation that carries them. A missing ledger filters nothing, which
+    is the safe direction: it offers work rather than hiding it.
+    """
+    import csv
+    import byte_match
+    path = ledger or LEDGER
+    if not path.is_file():
+        return set()
+    with path.open() as handle:
+        return {int(row["address"], 16)
+                for row in csv.DictReader(handle)
+                if row.get("tier") in byte_match.UNSCOREABLE_TIERS}
+
+
 def claimed_addresses(src: Path = None) -> set:
     """Just the BYTE_EXACT set - kept because it reads clearly at call sites."""
     return source_states(src)[0]
@@ -309,6 +338,15 @@ def main(argv=None) -> int:
         if dropped:
             print(f"dropped {len(dropped)} address(es) src/ marks EXCLUDED - "
                   f"a decision, not a gap")
+        # MEASURED UNSCOREABLE, which EXCLUDED does not cover: EXCLUDED is a
+        # decision this tree wrote down, these are verdicts the comparator
+        # returned. Both are work no agent can finish.
+        unscoreable = [a for a in inventory if a in unscoreable_addresses()]
+        for address in unscoreable:
+            inventory.pop(address)
+        if unscoreable:
+            print(f"dropped {len(unscoreable)} address(es) measured "
+                  f"SHARED_TAIL or REFUSED - no body can score them")
     wave_list, pending = waves(inventory, callees)
 
     unrecovered = [(a, f) for a, f in inventory.items()
