@@ -252,7 +252,7 @@ Purpose: Announce this window as the one the palette should follow, then report
 
          `this` is passed as the only argument and the caller cleans it, which
          is the cdecl convention the callee's mangled name declares.
-ORIGINAL: 0x005F1060
+ORIGINAL: 0x005F1060 BYTE_EXACT
 // name      ?on_query_new_palette@Win@@QAEHXZ
 // size      15 bytes
 // spans     0x005F1060-0x005F106F
