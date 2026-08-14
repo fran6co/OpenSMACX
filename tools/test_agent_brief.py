@@ -793,5 +793,44 @@ class LandingModeTests(unittest.TestCase):
             "// ORIGINAL: 0x00401000 MISMATCH FILE\nint g();\n"))
 
 
+class GuardMaskTests(unittest.TestCase):
+    """A wall must fire where it applies and nowhere else.
+
+    Keyed on `or`, `test` and `and` - three of the commonest mnemonics in the
+    image - this entry fired on 130 scored bodies and NOT ONE of them held the
+    idiom it describes. The idiom is real and lives in exactly 33 bodies. A
+    wall that fires where it does not apply is worse than no wall: the agent
+    cannot tell it was mis-selected, and the instruction is to stop.
+    """
+
+    IDIOM = ("```asm\n"
+             "0x005D71F0  mov al, 2\n"
+             "0x005D71F2  test al, cl\n"
+             "0x005D71F4  ret\n```")
+    PLAIN = ("```asm\n"
+             "0x00401000  test eax, eax\n"
+             "0x00401002  or ecx, 8\n"
+             "0x00401005  ret\n```")
+
+    def test_it_fires_on_a_register_held_mask(self):
+        self.assertIn("GUARD-MASK REGISTER",
+                      agent_brief.guard_mask_section(self.IDIOM))
+
+    def test_it_is_silent_on_a_body_that_merely_uses_those_mnemonics(self):
+        # `test` and `or` with no mask register. This is the 130.
+        self.assertEqual("", agent_brief.guard_mask_section(self.PLAIN))
+
+    def test_a_folded_immediate_is_not_the_idiom(self):
+        # `test al, 1` is the mask AS an immediate, which is what VC6 emits
+        # and what the wall says is unreachable the other way round.
+        self.assertEqual("", agent_brief.guard_mask_section(
+            "```asm\n0x00401000  mov al, 1\n0x00401002  test al, 1\n```"))
+
+    def test_it_no_longer_lives_in_the_mnemonic_keyed_table(self):
+        # Both would render, and the keyed one is the mis-firing one.
+        for _, advice in agent_brief.TARGETED:
+            self.assertNotIn("GUARD-MASK", advice)
+
+
 if __name__ == "__main__":
     unittest.main()
