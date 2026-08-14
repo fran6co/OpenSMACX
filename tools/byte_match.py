@@ -907,9 +907,57 @@ def compare(original: bytes, original_mask: set, original_base: int,
 
 # ---------------------------------------------------------------- compiling
 
-def compile_unit(text: str, work: Path, stem: str, flags: str) -> bytes:
-    source = work / f"{stem}.cpp"
+def unit_source(unit):
+    """(text, origin) for a unit given as text alone or as (text, origin).
+
+    A UNIT USED TO BE A STRING AND USUALLY STILL IS. Everything the emitter
+    scaffolds is self-contained C++ that can be compiled anywhere, so the text
+    was the whole input. A FILE-mode landing is not always: the vendored zlib
+    is upstream C that says `#include "deflate.h"`, and the compiler is run in
+    a scratch directory where that resolves to nothing.
+
+    Carrying the origin rather than widening every signature keeps the string
+    form working unchanged for the thousands of units that are one, and lets
+    the two that matter say where they came from.
+    """
+    if isinstance(unit, tuple):
+        text, origin = unit
+        return text, (Path(origin) if origin else None)
+    return unit, None
+
+
+def seed_context(work: Path, origin: Path) -> None:
+    """Put a landing's own directory beside it, so its includes resolve.
+
+    A FILE-MODE LANDING COMPILES WITH ITS OWN DIRECTORY'S FILES BESIDE IT.
+    Stated as a rule about landings rather than about zlib, because nothing
+    here is zlib-shaped: a unit that is a real translation unit from a real
+    source tree has neighbours, and copying it somewhere else without them
+    compiles a different thing.
+
+    Only headers and sources, and only that one directory - not a search
+    path. A `/I` into the tree, or an addition to `INCLUDE`, would be visible
+    to every OTHER unit in the batch too, and a vendored `zlib.h` silently
+    shadowing something for a unit that never asked for it is the kind of
+    defect that shows up as a byte mismatch nobody can trace.
+    """
+    for sibling in sorted(origin.parent.iterdir()):
+        if sibling.suffix in (".h", ".c") and sibling.is_file():
+            target = work / sibling.name
+            if not target.exists():
+                target.write_bytes(sibling.read_bytes())
+
+
+def compile_unit(unit, work: Path, stem: str, flags: str) -> bytes:
+    text, origin = unit_source(unit)
+    # THE EXTENSION IS THE LANGUAGE. CL compiles `.c` as C and `.cpp` as C++,
+    # and zlib 1.0.2 uses K&R definitions, which no C++ compiler will parse.
+    # Writing the unit under its own suffix is the whole of what that needs -
+    # no `/TC`, no fifth flag set.
+    source = work / f"{stem}{origin.suffix if origin else '.cpp'}"
     obj = work / f"{stem}.obj"
+    if origin is not None:
+        seed_context(work, origin)
     source.write_text(text)
     command = ["wine", str(VC6_CL), "/nologo", *flags.split(),
                f"/Fo{obj.name}", source.name]
@@ -929,11 +977,16 @@ def compile_batch(units: dict, work: Path, flags: str) -> dict:
     batch - CL reports it and carries on - so a missing `.obj` is the
     compile-failure signal rather than a reason to fall back to one-at-a-time.
     """
-    for stem, text in units.items():
-        (work / f"{stem}.cpp").write_text(text)
+    names = {}
+    for stem, unit in units.items():
+        text, origin = unit_source(unit)
+        if origin is not None:
+            seed_context(work, origin)
+        names[stem] = f"{stem}{origin.suffix if origin else '.cpp'}"
+        (work / names[stem]).write_text(text)
     response = work / "cl.rsp"
     response.write_text(" ".join(flags.split()) + "\n"
-                        + "\n".join(f"{stem}.cpp" for stem in units) + "\n")
+                        + "\n".join(names[stem] for stem in units) + "\n")
     done = subprocess.run(["wine", str(VC6_CL), "/nologo", "@cl.rsp"],
                           cwd=work, env=wine_environment(),
                           capture_output=True, text=True)
@@ -992,7 +1045,13 @@ def batch_diagnostics(output: str, units: dict) -> dict:
     object" for every one of them, which says only that the compile failed,
     and 923 hand-written failures have been unreadable ever since.
     """
-    stems = {f"{stem}.cpp": stem for stem in units}
+    # BOTH SUFFIXES. A unit is written under its origin's extension, so a
+    # `.c` landing announces itself as `f006414b0.c` and a lookup for
+    # `.cpp` alone would attribute its errors to whatever came before it.
+    stems = {}
+    for stem in units:
+        stems[f"{stem}.cpp"] = stem
+        stems[f"{stem}.c"] = stem
     found: dict = {}
     current = None
     for line in output.splitlines():

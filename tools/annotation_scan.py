@@ -706,6 +706,18 @@ def _proved_body(lines: list) -> str:
 _TREE_CACHE = {}
 
 
+# BOTH SUFFIXES, and the stamp and the scan must agree on which. `.cpp` is
+# what this tree is written in; `.c` arrived with `src/vendor/zlib-1.0.2/`,
+# where the recovery for thirteen functions is upstream C that no C++ compiler
+# will parse - zlib 1.0.2 uses K&R definitions. A scan that globbed only
+# `.cpp` would report those annotations as missing while the files sat in the
+# tree, and a STAMP that globbed only `.cpp` would be worse: the memo would
+# never notice a `.c` landing changing.
+def sources(root: Path) -> list:
+    return sorted(path for suffix in ("*.cpp", "*.c")
+                  for path in Path(root).rglob(suffix))
+
+
 def tree_stamp(root: Path = SRC_ROOT) -> tuple:
     """(path, mtime, size) for every file `scan_tree` would read.
 
@@ -715,7 +727,7 @@ def tree_stamp(root: Path = SRC_ROOT) -> tuple:
     decide whether a file changed.
     """
     out = []
-    for path in sorted(Path(root).rglob("*.cpp")):
+    for path in sources(root):
         try:
             info = path.stat()
         except OSError:
@@ -743,7 +755,7 @@ def scan_tree(root: Path = SRC_ROOT) -> list:
     if hit is not None and hit[0] == stamp:
         return hit[1]
     found = []
-    for path in sorted(Path(root).rglob("*.cpp")):
+    for path in sources(root):
         found.extend(scan_file(path))
     found.sort(key=lambda ann: (ann.path, ann.line, ann.address))
     _TREE_CACHE[str(root)] = (stamp, found)
