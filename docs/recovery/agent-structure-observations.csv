@@ -188,3 +188,42 @@ address,kind,subject,offset,detail,evidence,status
 0x0062D1A0,vtable-slot,-,0x68,"slot 26 is __stdcall(int,int), not __thiscall - both the object and a handler are pushed and no receiver goes in ecx",push ecx; push eax; call [edx+0x68] with no `add esp` afterwards; body byte-exact,open
 0x004C7380,member-type,-,0x0,the receiver IS the array base - an array of pointers with no header,"mov eax,[ecx+ebx*4] and lea edi,[ecx+ebx*4] index straight off ecx with no indirection through a stored pointer; ret 4 pops exactly the one explicit argument; body byte-exact",open
 0x00624D40,emitter,-,-,"the six/seven-argument push-forwarding wall now has THREE instances: VC6 cycles three registers where the original alternates two, at identical byte and instruction counts","0x00624C70, 0x00624CD0 and 0x00624D40 all diverge at instruction 4, push against mov, across all four flag sets",open
+0x005EE750,member,Win,0x98,iFlags_ dword flag word; AutoSound ends exactly here,"AutoSound is 4 + 37*4 = 0x98 bytes; test dword ptr [esi+0x98] in Win::left_down_event, BYTE_EXACT",open
+0x005EE750,member,Win,0x9c,a second flag byte immediately after iFlags_,test byte ptr [esi+0x9c] in the same BYTE_EXACT body,open
+0x005ED520,member,Win,0xc4,win_parent_ (Win *),?screen_to_client@Win recurses through it and matched BYTE_EXACT; independently read as the parent-window pointer in 0x00633850 and 0x005ED0A0,open
+0x005F2760,member,Win,0xe4,caption-button Win * (close),0x005F2760 dereferences each of 0xE4/0xE8/0xEC for a field at +0x4C4 before Win::move(); incompatible with the scaffold's Heap over the same range,open
+0x005F2760,member,Win,0xe8,caption-button Win * (zoom),target written through (*(int*)(ptr+0xab8)) selected by IsZoomed(),open
+0x005F2760,member,Win,0xec,caption-button Win * (minimize),third of the three consecutive pointers dereferenced identically,open
+0x005EEE70,member,Win,0xf0,menu_ - a vtable-dispatched delegate,"test ecx,ecx; je; mov eax,[ecx]; call [eax+0x16c] - null-checked indirect call through slot 91",open
+0x005EEF60,member,Win,0x114,caption_height_ (int),read with [ecx+0x118] and combined by subtraction in both nonclient_to_client overloads,open
+0x005EEF60,member,Win,0x118,border_thickness_ (int),negated once and reused with sub/add for near and far edges; BYTE_EXACT on 0x005EF110,open
+0x005EEF60,member,Win,0x11c,bottom_border_thickness_ (int),third of three consecutive ints read at 0x114/0x118/0x11c,open
+0x005ED700,member,Win,0x13c,outer_rect_ (RECT),[ebx+0x14C]/[esi+0x150] reads land on client_rect_ immediately after it; BYTE_EXACT,open
+0x005ED700,member,Win,0x14c,client_rect_ (RECT) immediately following outer_rect_,0x005ED0A0 reads [esi+0x14c]/[esi+0x150] as left/top; confirmed independently in 0x00633850,open
+0x005F2680,member,Win,0x404,raw 0-arg callback function pointer called via call eax,"mov eax,[esi+0x404]; test eax,eax; je; call eax - no ecx set, so not a vtable dispatch",open
+0x005F6320,member,Win,0x408,per-window mouse-move callback function pointer,"read and called with (a1,a2) before the vtable dispatch in both 0x005F6320 and 0x005EE950",open
+0x005F93C0,member,Buffer,0x30,rect2_ (RECT),"PtInRect reads exactly [esi+0x474..0x480] = 0x444 Win-end + 0x30, landing on Buffer::rect2_'s four fields",open
+0x005D8290,member,Buffer,0x80,width_ (uint32_t),[esi+0x80] negated into g_009b3a64; matches the scaffold's declared width_ offset,open
+0x005D8290,member,Buffer,0x84,height_ (uint32_t),[esi+0x84] negated into g_009b3a6c in the same body,open
+0x005DD300,member,Buffer,0x52c,font1_ (Font *),[ebx+0x52c] then [eax+8] (Font::font_obj_) before any text-width work; 0x005DB810 saves and restores 0x52C-0x534 around a delegate call,open
+0x006161D0,member,Time,0x20,resolution_ - timer period in ms,"mov dword ptr [eax+0x20],5 in Time::Time(), BYTE_EXACT; reset to 5 rather than 0 in the destructor",open
+0x005DD300,member,Font,0x8,font_obj_ (HFONT) - the is-a-real-font-loaded test,write_right_l tests [a1+8] != 0 before treating a1 as usable,open
+0x005FC5A0,member,Menu,0xc4,pointer to a layout record used by adjust(),"mov eax,[esi+0xc4] then [eax+0x13c]/[eax+0x144]; BYTE_EXACT",open
+0x00513FC0,member,Console,0x23bdc,uint32 argument passed to MainMenu::check,"mov ecx,[edi+0x23bdc]; push ecx; lea ecx,[edi+0x22a2c]; call check@MainMenu",open
+0x0051E110,member,Console,0x23be4,turn-active flag,"mov dword ptr [esi+0x23be4],1 and the loop condition in 0x00513FC0",open
+0x0051E110,member,Console,0x23be8,turn-ready flag,tested beside 0x23be4 in the same loop condition,open
+0x0048AE90,member,PlanWin,0x21ff8,"line_count_ (int32, 0..4) gating every store","cmp dword ptr [ecx+0x21ff8],4; jge guards the whole body; inc/mov is the only writer",open
+0x0048AE90,member,PlanWin,0x21ffc,color_[4] indexed by line_count_,"mov dword ptr [ecx+edx*4+0x21ffc],eax with edx from 0x21ff8",open
+0x0048AE90,member,PlanWin,0x2200c,line_[4] of four int32 with 0x10 stride,"lea edx,[edx*0x10+ecx+0x2200c] then four sequential dword stores at +0,+4,+8,+0xc",open
+0x004AE380,member,SetupWin,0xfd0,int selected-item index,"mov eax,[esi+0xfd0] is a plain load, unlike the lea at 0xfd4",open
+0x004AE380,member,SetupWin,0xfd4,"embedded Spot (address taken, not a pointer)","lea ecx,[esi+0xfd4] feeds Spot::check, so it is embedded rather than a pointer",open
+0x00404A80,member,BasePop,0x30ac,signed millisecond duration divided by 1000,imul + sar 0xc sign-corrected against 0x68DB8BAD at [esi+0x30ac] - the signed-divide-by-1000 idiom,open
+0x00404A80,member,Popup,0x3230,embedded Scroll subobject,"lea edi,[esi+0x3230] used as a Scroll * for is_visible()/scroll_hide, and matches BasePop's computed size",open
+0x0049D490,member,ReportWin,0x5a0c,embedded ListBox-like object with its own set_selected_id,"lea ecx,[esi+0x5a0c] before the call, where the other branches load ecx from two literal ListBox addresses",open
+0x00612CC0,member,Dialogs,0x180,kind_ selector read at [ecx-8] from the dispatched this,confirmed against the jump table and case-index byte table read from the image,open
+0x00609730,member,Dialog,0xc4,entry_head_ of an embedded intrusive list,"the 0xBC-0xD4 manager shape recurs in SetupWin::close, Dialog::init and MessageWin::clear",open
+0x00609730,member,Dialog,0xcc,count_ of that intrusive list,decremented alongside the head walk in all three functions,open
+0x005F9590,member,PullDown,0xa18,items_ base of 0x14-stride records,"lea esi,[ecx+0xa24]; test byte ptr [esi],1; add esi,0x14 walks items_[i].flags at base+0xC",open
+0x00432210,member,Datalink,0xec14,embedded ListBox-like polymorphic object,"lea ebx,[esi+0xec14] passed directly as this to set_selected_pos; BYTE_EXACT",open
+0x004B0FA0,member,SocialWin,0xcf4,factionID_ (int32),"mov ebx, dword ptr [edi+0xcf4] compared against a byte read from a 77-stride table",open
+0x00431EC0,member,Datalink,0xf628,embedded object reached through a virtual-base thunk,"mov eax,[ebx]; mov ecx,[eax+4]; lea ecx,[ecx+esi+0xf628]; call [edx+0xf8] - vtbl[1] holds the this-displacement",open
