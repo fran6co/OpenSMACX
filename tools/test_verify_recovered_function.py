@@ -240,5 +240,50 @@ class ScoreAllOrderingTest(unittest.TestCase):
         self.assertEqual(len(ranked), 4)
 
 
+class FileModeTest(unittest.TestCase):
+    """A FILE-mode unit is scored as it stands, not re-scaffolded.
+
+    `FILE` means the whole file IS the translation unit - it carries its own
+    typedefs, globals, callee declarations and classes. Every path in this tool
+    used to funnel into `writeback.build_unit`, which ALWAYS regenerates
+    scaffolding and appends, so a FILE-mode unit had its own boilerplate
+    declared twice and came back NO_COMPILE (C2011/C2370).
+
+    FIVE agents hit this across batches 3-5, and one reproduced it against a
+    control: bare `verify_recovered_function.py 0x00404B00` reported
+    NO_COMPILE on a COMMITTED, BYTE_EXACT file it had never touched. They
+    worked around it by scoring a minimal candidate and landing the full file -
+    which works, and means the thing scored is not the thing landed.
+    """
+
+    def test_a_committed_byte_exact_file_scores_byte_exact(self):
+        # The control that proves the defect was never about agent code.
+        if not verifier.byte_match.DEFAULT_EXE.is_file():
+            self.skipTest("the pinned executable is absent")
+        annotation = verifier.file_mode_annotation(0x00404B00)
+        if annotation is None:
+            self.skipTest("0x00404B00 is not FILE-mode any more")
+        self.assertEqual(
+            verifier.verify_verbatim(annotation).get("tier"), "BYTE_EXACT")
+
+    def test_a_non_matching_file_still_reports_its_divergence(self):
+        # NON-VACUITY. A fix that made everything pass would be worse than the
+        # bug: this check's whole job is to be able to say no.
+        if not verifier.byte_match.DEFAULT_EXE.is_file():
+            self.skipTest("the pinned executable is absent")
+        annotation = verifier.file_mode_annotation(0x005EAB0F)
+        if annotation is None:
+            self.skipTest("0x005EAB0F is not FILE-mode any more")
+        verdict = verifier.verify_verbatim(annotation)
+        self.assertNotEqual(verdict.get("tier"), "BYTE_EXACT")
+        self.assertNotEqual(verdict.get("tier"), "NO_COMPILE",
+                            "a landed body must still COMPILE verbatim")
+
+    def test_a_body_mode_address_is_not_claimed_by_this_path(self):
+        # The routing has to be narrow: a body-mode annotation still goes
+        # through the writeback recipe, which is correct for it.
+        self.assertIsNone(verifier.file_mode_annotation(0xDEADBEEF))
+
+
 if __name__ == "__main__":
     unittest.main()
