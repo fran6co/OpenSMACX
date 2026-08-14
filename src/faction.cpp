@@ -413,7 +413,7 @@ void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
 
 /*
 Purpose: Normalize the diplomatic friction value into a mood offset.
-ORIGINAL: 0x0053A090
+ORIGINAL: 0x0053A090 BYTE_EXACT
 // name      ?get_mood@@YAHH@Z
 // size      101 bytes
 // spans     0x0053A090-0x0053A0F5

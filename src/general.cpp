@@ -94,7 +94,7 @@ void __cdecl purge_spaces(LPSTR input) {
 
 /*
 Purpose: Truncate the string at the line feed (LF). Doesn't take into account carriage return (CR).
-ORIGINAL: 0x00600820
+ORIGINAL: 0x00600820 BYTE_EXACT
 // name      ?kill_lf@@YAXPAD@Z
 // size      23 bytes
 // spans     0x00600820-0x00600837

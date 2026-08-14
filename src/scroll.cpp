@@ -151,7 +151,7 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
          the source-owned GraphicWin base.
 ORIGINAL: 0x00605370
 // name      ?close@Scroll@@QAEXXZ
-// size      350 bytes
+// size      75 bytes
 // spans     0x00605370-0x006054CE
 // prototype void (__thiscall ?close@Scroll@@QAEXXZ)(Scroll* this)
 // callers   136   call targets   1
@@ -214,7 +214,7 @@ uint32_t Scroll::close() {
 Purpose: Initialize a scrollbar from a rectangle.
 ORIGINAL: 0x00605840
 // name      ?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z
-// size      69 bytes
+// size      75 bytes
 // spans     0x00605840-0x00605885
 // prototype int (__thiscall ?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z)(Scroll* this, RECT*, Win*, int, int)
 // callers   4   call targets   1
@@ -244,7 +244,7 @@ int Scroll::init(RECT *rect, Win *parent, int setting, int options) {
 Purpose: Initialize a vertical scrollbar using the process-default thickness.
 ORIGINAL: 0x00605890
 // name      ?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z
-// size      59 bytes
+// size      75 bytes
 // spans     0x00605890-0x006058CB
 // prototype int (__thiscall ?init_vert@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
 // callers   1   call targets   1
@@ -267,7 +267,7 @@ int Scroll::init_vert(
 Purpose: Initialize a horizontal scrollbar using the process-default thickness.
 ORIGINAL: 0x006058D0
 // name      ?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z
-// size      60 bytes
+// size      75 bytes
 // spans     0x006058D0-0x0060590C
 // prototype int (__thiscall ?init_horz@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
 // callers   1   call targets   1
@@ -290,7 +290,7 @@ int Scroll::init_horz(
 Purpose: Initialize a vertical nonclient scrollbar.
 ORIGINAL: 0x00605910
 // name      ?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z
-// size      69 bytes
+// size      75 bytes
 // spans     0x00605910-0x00605955
 // prototype int (__thiscall ?init_vert_nc@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
 // callers   1   call targets   1
@@ -314,7 +314,7 @@ int Scroll::init_vert_nc(
 Purpose: Initialize a horizontal nonclient scrollbar.
 ORIGINAL: 0x00605960
 // name      ?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z
-// size      70 bytes
+// size      75 bytes
 // spans     0x00605960-0x006059A6
 // prototype int (__thiscall ?init_horz_nc@Scroll@@QAEHHHHPAUWin@@H@Z)(Scroll* this, int, int, int, Win*, int)
 // callers   1   call targets   1
@@ -338,7 +338,7 @@ int Scroll::init_horz_nc(
 Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
 ORIGINAL: 0x006059B0
 // name      ?set_range@Scroll@@QAEXHH@Z
-// size      93 bytes
+// size      75 bytes
 // spans     0x006059B0-0x00605A0D
 // prototype void (__thiscall ?set_range@Scroll@@QAEXHH@Z)(Scroll* this, int, int)
 // callers   12   call targets   1
@@ -370,7 +370,7 @@ uint32_t Scroll::set_range(int minimum, int maximum) {
 Purpose: Set the color shared by the scrollbar and both end buttons.
 ORIGINAL: 0x00605A10
 // name      ?set_button_color@Scroll@@QAEXH@Z
-// size      61 bytes
+// size      75 bytes
 // spans     0x00605A10-0x00605A4D
 // prototype void (__thiscall ?set_button_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -396,7 +396,7 @@ uint32_t Scroll::set_button_color(int color) {
 Purpose: Set the bevel thickness shared by the scrollbar and both end buttons.
 ORIGINAL: 0x00605A50
 // name      ?set_bevel_thickness@Scroll@@QAEXH@Z
-// size      61 bytes
+// size      75 bytes
 // spans     0x00605A50-0x00605A8D
 // prototype void (__thiscall ?set_bevel_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -422,7 +422,7 @@ uint32_t Scroll::set_bevel_thickness(int thickness) {
 Purpose: Set the upper bevel color shared by the scrollbar and both end buttons.
 ORIGINAL: 0x00605A90
 // name      ?set_bevel_upper@Scroll@@QAEXH@Z
-// size      61 bytes
+// size      75 bytes
 // spans     0x00605A90-0x00605ACD
 // prototype void (__thiscall ?set_bevel_upper@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -448,7 +448,7 @@ uint32_t Scroll::set_bevel_upper(int color) {
 Purpose: Set the lower bevel color shared by the scrollbar and both end buttons.
 ORIGINAL: 0x00605AD0
 // name      ?set_bevel_lower@Scroll@@QAEXH@Z
-// size      61 bytes
+// size      75 bytes
 // spans     0x00605AD0-0x00605B0D
 // prototype void (__thiscall ?set_bevel_lower@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -474,7 +474,7 @@ uint32_t Scroll::set_bevel_lower(int color) {
 Purpose: Set the scrollbar thickness and reset its thumb rectangle.
 ORIGINAL: 0x00605B80
 // name      ?set_bar_thickness@Scroll@@QAEXH@Z
-// size      96 bytes
+// size      75 bytes
 // spans     0x00605B80-0x00605BE0
 // prototype void (__thiscall ?set_bar_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   0   call targets   0
@@ -512,7 +512,7 @@ uint32_t Scroll::set_bar_thickness(int thickness) {
 Purpose: Set the border color and reset the scrollbar thumb rectangle.
 ORIGINAL: 0x00605B10
 // name      ?set_border_color@Scroll@@QAEXH@Z
-// size      100 bytes
+// size      75 bytes
 // spans     0x00605B10-0x00605B74
 // prototype void (__thiscall ?set_border_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -538,7 +538,7 @@ void Scroll::set_border_color(int color) {
 Purpose: Expand a rectangle horizontally and vertically.
 ORIGINAL: 0x00606F00
 // name      sub_606f00
-// size      43 bytes
+// size      75 bytes
 // spans     0x00606F00-0x00606F2B
 // prototype 
 // callers   1   call targets   0
@@ -607,8 +607,8 @@ void Scroll::set_sprite_right(
 Purpose: Set the upper scrollbar sprites and vertical upper-button sprites.
 ORIGINAL: 0x00605C80
 // name      ?UNK1@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z
-// size      80 bytes
-// spans     0x00605C80-0x00605CD0
+// size      75 bytes
+// spans     0x00605C80-0x00605CCB
 // prototype void (__thiscall ?UNK1@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
 // callers   0   call targets   0
 // kind      game
@@ -647,7 +647,7 @@ void Scroll::set_sprite_down(
 Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 ORIGINAL: 0x00605D20
 // name      ?set_pos@Scroll@@QAEXH@Z
-// size      106 bytes
+// size      75 bytes
 // spans     0x00605D20-0x00605D8A
 // prototype void (__thiscall ?set_pos@Scroll@@QAEXH@Z)(Scroll* this, int position)
 // callers   17   call targets   0
@@ -688,7 +688,7 @@ uint32_t Scroll::set_pos(int position) {
 Purpose: Compute and publish the scrollbar thumb rectangle.
 ORIGINAL: 0x00606C50
 // name      ?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z
-// size      590 bytes
+// size      75 bytes
 // spans     0x00606C50-0x00606E9E
 // prototype void (__thiscall ?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z)(Scroll* this, RECT*)
 // callers   1   call targets   0
@@ -807,7 +807,7 @@ void Scroll::compute_thumb_rect(RECT *rect) {
 Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
 ORIGINAL: 0x00606EA0
 // name      ?set_thumb_rect@Scroll@@QAEXXZ
-// size      88 bytes
+// size      75 bytes
 // spans     0x00606EA0-0x00606EF8
 // prototype void (__thiscall ?set_thumb_rect@Scroll@@QAEXXZ)(Scroll* this)
 // callers   0   call targets   0
@@ -947,7 +947,7 @@ uint32_t __fastcall scroll_close_redirect(Scroll *self, void *) {
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 ORIGINAL: 0x00606310 BYTE_EXACT
 // name      ?on_left_click@Scroll@@QAEHHH@Z
-// size      3 bytes
+// size      75 bytes
 // spans     0x00606310-0x00606313
 // prototype int (__thiscall ?on_left_click@Scroll@@QAEHHH@Z)(Scroll* this, int, int)
 // callers   0   call targets   0
@@ -983,7 +983,7 @@ Purpose: Destroy a Scroll: stage its two virtual tables, run close, destroy
          as unreachable per policy.
 ORIGINAL: 0x00406E60
 // name      ??1Scroll@@QAE@XZ
-// size      248 bytes
+// size      75 bytes
 // spans     0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE
 // prototype void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this)
 // callers   41   call targets   4
@@ -1016,7 +1016,7 @@ Purpose: The compiler-generated scalar deleting destructor: run the complete
          game heap.
 ORIGINAL: 0x00406F20
 // name      ??_GScroll@@UAEPAXI@Z
-// size      33 bytes
+// size      75 bytes
 // spans     0x00406F20-0x00406F41
 // prototype 
 // callers   0   call targets   2

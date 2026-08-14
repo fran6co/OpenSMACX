@@ -1,8 +1,8 @@
 // ORIGINAL: 0x00513FC0 FILE
 // working copy - scaffold materialised by --work
 // name      ?end_of_turn@Console@@QAEXXZ
-// size      144 bytes
-// spans     0x00513FC0-0x00514050
+// size      142 bytes
+// spans     0x00513FC0-0x0051404E
 // prototype void (__thiscall ?end_of_turn@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   3
 // kind      game

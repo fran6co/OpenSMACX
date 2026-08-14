@@ -1261,6 +1261,10 @@ def record_claims(measurable: list, outcomes: dict) -> int:
 
 
 LEVER_TOKEN = "// LEVER:"
+# Everything up to and including the comment marker and indentation, so the
+# replacement can put it back. Mirrors `annotation_scan.LESSON_LEVER`.
+LEVER_LINE = re.compile(r"(?m)^(?P<lead>\s*(?://|\*)?\s*)LEVER:")
+RULED_OUT_WORD = "RULED-OUT"
 RULED_OUT_TOKEN = "// RULED-OUT:"
 
 
@@ -1294,9 +1298,23 @@ def demote_levers(measurable: list, outcomes: dict) -> list:
     for path, entries in by_path.items():
         target = REPO_ROOT / path
         text = target.read_text()
-        if LEVER_TOKEN not in text:
+        # MATCHED THE WAY THE SCANNER MATCHES, which is `^\s*(?://|\*)?\s*
+        # LEVER:` and not the literal `// LEVER:`. An agent writing a lever as
+        # a CONTINUATION of a note indents it - `//            LEVER: ...` -
+        # and a plain string replace walked straight past those: the scanner
+        # saw the lever, `lesson_report` failed the gate on it, and the
+        # demotion that exists to cure exactly that did nothing. Two of the
+        # three grammar faults left after a full `--record-matches` on
+        # 2026-08-14 were this, and both read as an agent ignoring the rule.
+        #
+        # The INDENTATION IS PRESERVED, so a continuation stays lined up with
+        # the note it belongs to and only the token changes - which is what
+        # this function promises about the prose.
+        rewritten = LEVER_LINE.sub(
+            lambda hit: f"{hit.group('lead')}{RULED_OUT_WORD}:", text)
+        if rewritten == text:
             continue
-        target.write_text(text.replace(LEVER_TOKEN, RULED_OUT_TOKEN))
+        target.write_text(rewritten)
         for annotation, tier in entries:
             changed.append((annotation.location, tier or "?"))
     return changed

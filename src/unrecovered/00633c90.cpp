@@ -1,8 +1,16 @@
 // ORIGINAL: 0x00633C90 FILE
+// RULED-OUT: nothing yet - MISMATCH #1 push/mov (66% mnemonic sim), extra
+//            local `int *self`/`void *cs` shift the prologue; not chased
+//            further.
+// PROPOSAL: sub_633c90(void*, int, int, int) -> a __thiscall member (this =
+//           receiver, `mov ebp, ecx` at entry, `ret 0x10` pops exactly the
+//           4 explicit stack args) taking (int a2, int a3, int a4, int *a5);
+//           evidence: [ecx+...] field reads with no matching stack slot for
+//           a first parameter.
 // name      sub_633c90
 // size      241 bytes
 // spans     0x00633C90-0x00633D81
-// prototype 
+// prototype
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -11,4 +19,51 @@
 // placeholder - not yet decompiled
 // To start: tools/decomp_status.py --work 0x00633C90
 
-// BODY GOES HERE.
+typedef void (__stdcall *CritSectionFn)(void *);
+
+class Sub633c90Host {
+ public:
+    int remove_entry(int a2, int a3, int a4, int *a5);
+};
+
+int Sub633c90Host::remove_entry(int a2, int a3, int a4, int *a5) {
+    int *self = (int *)this;
+    void *cs = (void *)((char *)self + 0xC);
+    (*(CritSectionFn *)g_0066917c)(cs);
+    int *node = (int *)self[0];
+    if (node == 0) {
+        (*(CritSectionFn *)g_00669174)(cs);
+        return 0;
+    }
+    int *prev = 0;
+    while (node[1] != a3 || node[0] != a4) {
+        prev = node;
+        node = (int *)node[5];
+        if (node == 0) {
+            (*(CritSectionFn *)g_00669174)(cs);
+            return 0;
+        }
+    }
+    if (a5 != 0) {
+        *a5 = node[4];
+    }
+    if (node[3] != 0) {
+        if (a2 != 0) {
+            memcpy((void *)a2, (void *)node[3], node[4]);
+        }
+        if (node[3] != 0) {
+            free((void *)node[3]);
+        }
+        node[3] = 0;
+    }
+    int result = node[2];
+    if (prev == 0) {
+        self[0] = *(int *)(self[0] + 0x14);
+    } else {
+        prev[5] = node[5];
+    }
+    free((void *)node);
+    self[2] = self[2] - 1;
+    (*(CritSectionFn *)g_00669174)(cs);
+    return result;
+}

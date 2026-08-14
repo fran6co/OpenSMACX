@@ -221,7 +221,6 @@ address,name,argument_count,evidence
 0x005CE620,sub_5ce620,0,IDA 9.4 guess_type int()
 0x005CE6E3,sub_5ce6e3,5,"IDA 9.4 guess_type int __cdecl(int, int, int, int, int)"
 0x005CE85C,sub_5ce85c,0,IDA 9.4 guess_type int()
-0x005CEA09,sub_5cea09,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
 0x005CEB12,sub_5ceb12,0,IDA 9.4 guess_type int()
 0x005CED1D,sub_5ced1d,0,IDA 9.4 guess_type int()
 0x005CEE80,sub_5cee80,0,IDA 9.4 guess_type int()
@@ -276,7 +275,6 @@ address,name,argument_count,evidence
 0x005D7A10,sub_5d7a10,4,"IDA 9.4 guess_type int __stdcall(int, int, int, int)"
 0x005D7A30,sub_5d7a30,4,"IDA 9.4 guess_type int __stdcall(char *Source, int, int, int)"
 0x005D7AE0,sub_5d7ae0,4,"IDA 9.4 guess_type int __stdcall(int, int, int, int)"
-0x005D7F20,sub_5d7f20,4,"IDA 9.4 guess_type int __stdcall(char *Str, int, int, int)"
 0x005D8360,sub_5d8360,0,IDA 9.4 guess_type int()
 0x005D8650,sub_5d8650,5,"IDA 9.4 guess_type int __stdcall(int, int, int, int, int)"
 0x005D8740,sub_5d8740,7,"IDA 9.4 guess_type int __stdcall(int, int, int, int, int, int, int)"
