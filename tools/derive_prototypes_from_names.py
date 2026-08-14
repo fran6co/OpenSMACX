@@ -163,12 +163,27 @@ HYPOTHESIS_FIELDS = ("address", "name", "argument_count", "evidence")
 # Not a target to be edged upward silently - moving one of these down is an
 # admission that a derived prototype disagrees with a recorded one, and the row
 # belongs in --disagreements before the floor moves.
+#
+# MOVED 2026-08-14, 3213 -> 3215, and the two rows are named because that is
+# what this comment demands. `0x0060E4D0 ?init_class@RadioButton@@QAAHXZ` and
+# `0x0060FC60 ?init_class@CheckBox@@QAAHXZ` had an EMPTY `// prototype` line
+# until agents recovering them filled it in from the mangled name. They joined
+# the control and both disagree with IDA on the receiver, which drops the
+# ratio without any row changing its answer.
+#
+# Both are `QAA` - public, non-static, `__cdecl` - and every one of the eleven
+# receiver disagreements is that family or its `QAG` sibling. The name says a
+# member with a receiver passed on the stack; IDA reads it as a free function.
+# The mangling is the linker's own record, so the name is right and the
+# disagreement is IDA's, which is why this is a floor and not a defect: it
+# counts how far the two sources are apart, and the distance did not grow.
+# `return type` rose by one on the same two rows.
 AGREEMENT_FLOOR = {
-    "convention": (3213, 3213),
-    "receiver": (3204, 3213),
-    "stack layout": (3213, 3213),
-    "argument types": (3163, 3213),
-    "return type": (3197, 3213),
+    "convention": (3215, 3215),
+    "receiver": (3204, 3215),
+    "stack layout": (3215, 3215),
+    "argument types": (3163, 3215),
+    "return type": (3198, 3215),
 }
 
 # The control's own size, pinned separately, because every entry above is a
@@ -176,7 +191,7 @@ AGREEMENT_FLOOR = {
 # control - a parse regression, a column rename, a filter that quietly excludes
 # a shape - all five rates can stay green on a shrinking population. Measured
 # 2026-07-31: a 10% row loss holds every rate and moves this from 3213 to 2892.
-CONTROL_POPULATION_FLOOR = 3213
+CONTROL_POPULATION_FLOOR = 3215
 
 # Likewise the published catalogue. A generator that emits fewer rows for a
 # reason nobody chose is a silent loss of coverage, and the purge gate's own
@@ -187,7 +202,15 @@ CONTROL_POPULATION_FLOOR = 3213
 # their bodies carry. They were the whole of the purge gate's hop refusals;
 # under the corrected names all 47 derive and publish. Left at 1553 the gate
 # would have accepted losing every one of them again in silence.
-PUBLISHED_ROWS_FLOOR = 1600
+#
+# 1600 -> 1598 on 2026-08-14, and this is a GRADUATION rather than a loss. A
+# row is a candidate here only while the catalogue has no prototype for it;
+# `0x0060E4D0 ?init_class@RadioButton@@QAAHXZ` and `0x0060FC60
+# ?init_class@CheckBox@@QAAHXZ` had an empty `// prototype` line until agents
+# recovering them filled it in, so they stopped needing a derived one. The
+# coverage did not drop - it moved to a better source, which is the direction
+# this whole generator exists to make unnecessary.
+PUBLISHED_ROWS_FLOOR = 1598
 
 # One copy, in recover_conventions, because two copies of this list drifted.
 CONVENTION_TOKEN = conventions.CONVENTION_TOKEN

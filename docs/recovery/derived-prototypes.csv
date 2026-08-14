@@ -1082,7 +1082,6 @@ address,name,prototype,convention,stack_slots,purge
 0x0053D160,?pledge_truce@@YAXHHH@Z,"void (__cdecl ?pledge_truce@@YAXHHH@Z)(int, int, int)",__cdecl,111,verified
 0x0053D360,?introduce@@YAXHH@Z,"void (__cdecl ?introduce@@YAXHH@Z)(int, int)",__cdecl,11,verified
 0x0053DCE0,?wants_to_speak@@YAHHH@Z,"int (__cdecl ?wants_to_speak@@YAHHH@Z)(int, int)",__cdecl,11,verified
-0x0053E4C0,?demands_withdrawal@@YAXHH@Z,"void (__cdecl ?demands_withdrawal@@YAXHH@Z)(int, int)",__cdecl,11,verified
 0x0053E5C0,?renounce_pact@@YAXHH@Z,"void (__cdecl ?renounce_pact@@YAXHH@Z)(int, int)",__cdecl,11,verified
 0x0053E800,?tech_analysis@@YAXHH@Z,"void (__cdecl ?tech_analysis@@YAXHH@Z)(int, int)",__cdecl,11,verified
 0x0053EB50,?buy_council_vote@@YAXHHHH@Z,"void (__cdecl ?buy_council_vote@@YAXHHHH@Z)(int, int, int, int)",__cdecl,1111,verified
@@ -1168,6 +1167,7 @@ address,name,prototype,convention,stack_slots,purge
 0x00588F90,?alien_start@@YAXXZ,void (__cdecl ?alien_start@@YAXXZ)(),__cdecl,,verified
 0x00589330,?time_controls_dialog@@YAXPAUPopup@@@Z,void (__cdecl ?time_controls_dialog@@YAXPAUPopup@@@Z)(Popup*),__cdecl,1,verified
 0x005898A0,?thumb_routine@@YAXH@Z,void (__cdecl ?thumb_routine@@YAXH@Z)(int),__cdecl,1,verified
+0x00589A30,?change_opening@@YAHPAD@Z,int (__cdecl ?change_opening@@YAHPAD@Z)(int8*),__cdecl,1,verified
 0x00589B20,?close_opening@@YAXXZ,void (__cdecl ?close_opening@@YAXXZ)(),__cdecl,,verified
 0x00589B60,?init_opening@@YAHPBD@Z,int (__cdecl ?init_opening@@YAHPBD@Z)(int8*),__cdecl,1,verified
 0x00589D30,?config_game@@YAHH@Z,int (__cdecl ?config_game@@YAHH@Z)(int),__cdecl,1,verified
@@ -1473,13 +1473,11 @@ address,name,prototype,convention,stack_slots,purge
 0x0060D080,??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ,void (__cdecl ??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ)(),__cdecl,,verified
 0x0060D0A0,??__Eg_RADIOBUTTON_SPRITE_2@@YAXXZ,void (__cdecl ??__Eg_RADIOBUTTON_SPRITE_2@@YAXXZ)(),__cdecl,,verified
 0x0060D0C0,??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ,void (__cdecl ??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ)(),__cdecl,,verified
-0x0060E4D0,?init_class@RadioButton@@QAAHXZ,int (__cdecl ?init_class@RadioButton@@QAAHXZ)(RadioButton* this),__cdecl,,verified
 0x0060E5D0,?close_class@RadioButton@@QAAXXZ,void (__cdecl ?close_class@RadioButton@@QAAXXZ)(RadioButton* this),__cdecl,,unknown
 0x0060E5F0,??__Eg_CHECKBOX_SPRITE_1@@YAXXZ,void (__cdecl ??__Eg_CHECKBOX_SPRITE_1@@YAXXZ)(),__cdecl,,verified
 0x0060E610,??__Fg_CHECKBOX_SPRITE_1@@YAXXZ,void (__cdecl ??__Fg_CHECKBOX_SPRITE_1@@YAXXZ)(),__cdecl,,verified
 0x0060E630,??__Eg_CHECKBOX_SPRITE_2@@YAXXZ,void (__cdecl ??__Eg_CHECKBOX_SPRITE_2@@YAXXZ)(),__cdecl,,verified
 0x0060E650,??__Fg_CHECKBOX_SPRITE_2@@YAXXZ,void (__cdecl ??__Fg_CHECKBOX_SPRITE_2@@YAXXZ)(),__cdecl,,verified
-0x0060FC60,?init_class@CheckBox@@QAAHXZ,int (__cdecl ?init_class@CheckBox@@QAAHXZ)(CheckBox* this),__cdecl,,verified
 0x0060FD60,?close_class@CheckBox@@QAAXXZ,void (__cdecl ?close_class@CheckBox@@QAAXXZ)(CheckBox* this),__cdecl,,unknown
 0x00613790,??__Eg_FILEWIN_SPRITE_1@@YAXXZ,void (__cdecl ??__Eg_FILEWIN_SPRITE_1@@YAXXZ)(),__cdecl,,verified
 0x006137B0,??__Fg_FILEWIN_SPRITE_1@@YAXXZ,void (__cdecl ??__Fg_FILEWIN_SPRITE_1@@YAXXZ)(),__cdecl,,verified

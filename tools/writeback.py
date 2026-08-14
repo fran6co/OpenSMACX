@@ -323,6 +323,10 @@ def build_unit(address: int, body: str, functions: dict, callees: dict,
                             scaffolding_only=True)
     callee_rows = [functions[target] for target in callees.get(address, [])
                    if target in functions]
+    # A GLOBAL THE BODY DECLARES ITSELF IS NOT THE SCAFFOLD'S TO DECLARE.
+    # See `emit.without_globals_the_body_declares`: the body's spelling is the
+    # one that was measured, and two spellings of one name is C2373.
+    scaffolding = emit.without_globals_the_body_declares(scaffolding, body)
     return fix_declarations(scaffolding, callee_rows) + "\n" + body
 
 

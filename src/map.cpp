@@ -523,7 +523,7 @@ BOOL __cdecl convoy(int veh_id, int base_id) {
 
 /*
 Purpose: Validate region bounds. Bad regions include: 0, 63, 64, 127, 128.
-ORIGINAL: 0x005591C0
+ORIGINAL: 0x005591C0 BYTE_EXACT
 // name      ?bad_reg@@YAHH@Z
 // size      29 bytes
 // spans     0x005591C0-0x005591DD
@@ -1894,7 +1894,7 @@ void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int 
 
 /*
 Purpose: Determine if the specified offsets are within the range radius.
-ORIGINAL: 0x005A65A0
+ORIGINAL: 0x005A65A0 BYTE_EXACT
 // name      ?radius_move@@YAHHHH@Z
 // size      48 bytes
 // spans     0x005A65A0-0x005A65D0

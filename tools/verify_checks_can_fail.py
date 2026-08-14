@@ -842,7 +842,34 @@ def damage_unreachable_tool(workspace):
 # not decoration: every case here passes at least one flag that no add_test in
 # CMakeLists.txt passes, so an argparse usage error - exit 2, no work done -
 # used to score identically to the check doing its job.
+def damage_truncated_span(workspace):
+    """A catalogued span two bytes short of its closing `ret`.
+
+    THE REAL DEFECT, reproduced: nine rows were in this state on 2026-08-14
+    and 0x005D91D0 went BYTE_EXACT the moment its span was corrected. The
+    damaged tree holds ONE annotation, and the tool reads it through
+    `project_catalogue.from_source` - the same reader the unflagged
+    invocation uses on `src/`, so this proves the gate's own check can fail
+    and not a neighbouring one.
+    """
+    source = REPO_ROOT / "src" / "unrecovered" / "005d91d0.cpp"
+    if not source.is_file():
+        raise Skip("0x005D91D0 is not annotated in this tree")
+    text = source.read_text(encoding="utf-8")
+    intact, cut = "0x005D91D0-0x005D92BE", "0x005D91D0-0x005D92BC"
+    if intact not in text:
+        raise Skip("the span is not the one this case damages")
+    tree = workspace / "src"
+    tree.mkdir(parents=True, exist_ok=True)
+    (tree / "005d91d0.cpp").write_text(text.replace(intact, cut),
+                                       encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_span_termination.py"),
+            "--src", str(tree)]
+
+
 CASES = (
+    ("span-termination", "a span two bytes short of its closing ret",
+     damage_truncated_span, "truncated span"),
     ("tool-test-registration", "a test file CMake never executes",
      damage_unregistered_tool_test, "never executed by CMake"),
     ("test-registration", "a gameplay case defined and not registered",

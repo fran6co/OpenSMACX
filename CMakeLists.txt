@@ -1281,6 +1281,19 @@ if(BUILD_TESTING)
             --check
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )
+    # A SPAN THAT STOPS MID-INSTRUCTION CANNOT BE MATCHED BY ANY BODY, and
+    # nothing in the loop points back at it: the comparison reads the span off
+    # the catalogue, the rebuild is right, and the agent is told its last
+    # instruction diverges. Nine rows were truncated this way on 2026-08-14,
+    # six by exactly two bytes - a `ret imm16` minus its opcode - and six of
+    # the nine were in the batch being worked at the time. One of them went
+    # BYTE_EXACT the moment its span was corrected, with no change to the body.
+    #
+    # Reads the image only, so it needs no compiler and no Wine prefix.
+    add_test(NAME span-termination
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_span_termination.py"
+    )
     # Correlates an outside human's notes with the `// yitzi 0x134` markers on
     # the `static_assert`s, three ways: the note, the marker, and the size the
     # compiler pins. It checked a CSV against itself until 2026-08-12, which

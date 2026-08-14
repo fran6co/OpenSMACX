@@ -86,7 +86,7 @@ void __fastcall prod_picker_unk3_redirect(ProdPicker *self, void *, int a1) {
 /*
 Purpose: Close the picker - clear the field at 0xA14 that marks it live, then
          run the GraphicWin close it inherits.
-ORIGINAL: 0x004926B0
+ORIGINAL: 0x004926B0 BYTE_EXACT
 // name      ?close@ProdPicker@@QAEXXZ
 // size      15 bytes
 // spans     0x004926B0-0x004926BF

@@ -1430,7 +1430,7 @@ uint32_t __cdecl default_prefs2() {
 
 /*
 Purpose: Get the default value for the warning pop-up preferences.
-ORIGINAL: 0x0059DB20
+ORIGINAL: 0x0059DB20 BYTE_EXACT
 // name      ?default_warn@@YAHXZ
 // size      6 bytes
 // spans     0x0059DB20-0x0059DB26
@@ -1451,7 +1451,7 @@ uint32_t __cdecl default_warn() {
 
 /*
 Purpose: Get the default value for the rule related preferences.
-ORIGINAL: 0x0059DB30
+ORIGINAL: 0x0059DB30 BYTE_EXACT
 // name      ?default_rules@@YAHXZ
 // size      6 bytes
 // spans     0x0059DB30-0x0059DB36

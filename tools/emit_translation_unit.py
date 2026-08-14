@@ -1302,6 +1302,45 @@ def by_value_first(names) -> list:
     return ordered
 
 
+# `static int *const g_0096cac4 = (int *)0x0096CAC4;` - the scaffold's line
+# for one fixed global.
+SCAFFOLD_GLOBAL = re.compile(r"^static \w+ \*const (g_[0-9a-f]{8}) = .*;$",
+                             re.M)
+
+
+def without_globals_the_body_declares(scaffolding: str, body: str) -> str:
+    """Drop scaffold globals the BODY already declares for itself.
+
+    THE BODY'S SPELLING WINS, because the body's spelling is what was
+    measured. `src/recovered/00539510.cpp` says `extern int g_0096cac4[];` on
+    purpose - the address does index work, and an array declaration is how
+    this tree writes that - and it scored BYTE_EXACT with that line. The
+    scaffold's own form is a const pointer, so emitting both is
+    `C2373: redefinition; different type modifiers` and the unit dies.
+
+    This became reachable on 2026-08-14 when `absolute_operands` learned to
+    read `[ecx + 0x94CABC]`, which is the register-indexed global the array
+    spelling exists for: three claimed-BYTE_EXACT bodies stopped compiling in
+    the same commit that fixed the emitter's blindness to them. Dropping the
+    scaffold's line rather than the body's keeps the measurement honest -
+    nothing the body says is rewritten, and a body that does NOT declare the
+    global still gets the scaffold's.
+
+    A USE IS NOT A DECLARATION. The pattern requires `extern` or `static` on
+    the same statement, so a body that merely reads `g_0096cac4` keeps the
+    declaration it depends on.
+    """
+    declared = {name for name in SCAFFOLD_GLOBAL.findall(scaffolding)
+                if re.search(rf"^[^/\n]*\b(?:extern|static)\b[^;\n]*"
+                             rf"\b{name}\b", body, re.M)}
+    if not declared:
+        return scaffolding
+    return "\n".join(
+        line for line in scaffolding.splitlines()
+        if not (SCAFFOLD_GLOBAL.match(line)
+                and SCAFFOLD_GLOBAL.match(line).group(1) in declared)) + "\n"
+
+
 def imported_methods(name: str, catalogued: set) -> list:
     """`src/`'s declarations for `name`'s methods, minus the catalogued ones.
 
