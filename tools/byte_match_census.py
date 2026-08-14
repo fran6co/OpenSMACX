@@ -354,7 +354,7 @@ def build_unit(address, row, location, functions, derived, callees, pe):
             return None, why
     try:
         scaffolding = emit.emit(address, functions, derived, callees, pe,
-                                scaffolding_only=True)
+                                scaffolding_only=True, body=body)
     except emit.Unsettled as error:
         return None, f"no scaffolding: {error}"
     seam = SEAM_PREAMBLE if any(t in body for t in SEAM_TRIGGERS) else ""
@@ -367,7 +367,26 @@ def build_unit(address, row, location, functions, derived, callees, pe):
     # would be redeclared and the unit would fail C2011 where it compiles now.
     compat = compat_preamble(body, scaffolding + seam,
                              location.split(":")[0] if location else None)
-    return shim + scaffolding + seam + compat + "\n" + body, ""
+    # WHAT THE BODY DECLARES FOR ITSELF, THE PREAMBLE MUST NOT. `writeback`
+    # has run these two filters since it was written; this path never did, so
+    # the gate compiled a different unit from the one the agent measured. A
+    # body carrying its own `VCall` shim with typed slots - which agents write
+    # constantly, the generated one declaring every slot nullary - compiled
+    # under `--body`/`--dir` and died here on `C2011: type redefinition`.
+    # Measured 2026-08-14: 28 committed bodies moved out of NO_COMPILE, none
+    # the other way, one of them a 0.92-similarity MISMATCH banked as a
+    # refusal.
+    #
+    # ONCE, OVER THE WHOLE PREAMBLE, AND LAST. Filtering the scaffolding alone
+    # is what a first attempt did, and it moved the defect rather than fixing
+    # it: with the scaffold's `class Time` gone, `compat_preamble` no longer
+    # saw the name and emitted its own definition, so the unit still held two.
+    # Every later component decides what to add by looking at what is already
+    # there, so the removal has to come after all of them have looked.
+    preamble = shim + scaffolding + seam + compat
+    preamble = emit.without_globals_the_body_declares(preamble, body)
+    preamble = emit.without_classes_the_body_defines(preamble, body)
+    return preamble + "\n" + body, ""
 
 
 # Per-process state for the unit-building pool. Each worker loads the

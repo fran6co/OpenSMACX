@@ -21,6 +21,7 @@ a refusal on account of its own extractor.
 
 from __future__ import annotations
 
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -28,6 +29,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import byte_match_census as tool  # noqa: E402
+import emit_translation_unit as emit  # noqa: E402
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 class FileModeTests(unittest.TestCase):
@@ -74,6 +78,88 @@ class FileModeTests(unittest.TestCase):
         _, refusal = tool.build_unit(
             0xDEADBEEF, {"name": "", "size": ""}, "", {}, {}, {}, None)
         self.assertEqual("no source_locations; not censusable", refusal)
+
+
+class BodyDefinedClassTests(unittest.TestCase):
+    """A class the BODY defines is not the scaffold's to define.
+
+    The same split this file's docstring is about, one path over. `writeback`
+    passes the body to `emit` and then runs the two collision filters over the
+    scaffolding; this file did neither, so the gate compiled a different unit
+    from the one the agent measured. A body carrying its own `VCall` shim with
+    typed slots - which agents write constantly, because the generated one
+    declares every slot nullary - compiled under `--body`/`--dir` and died
+    here with `C2011: 'VCall' : 'class' type redefinition`.
+
+    Measured 2026-08-14: fixing it moved 28 committed bodies out of
+    NO_COMPILE with nothing moving the other way.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # CENSUS-RECIPE ROWS ONLY. `decomp_status` builds a "writeback"
+        # annotation through `writeback.build_unit` and only a "census" one
+        # through this file, so sampling every body-mode row would test this
+        # builder against addresses the gate never hands it - a check that
+        # can fail for a path it does not guard, and pass while the path it
+        # does guard is broken.
+        import annotation_scan
+        import byte_match
+        import pefile
+        cls.functions = emit.load_functions()
+        cls.derived, cls.callees = emit.load_derived(), emit.load_callees()
+        cls.pe = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+        # A BODY DEFINING A CLASS IS NOT YET A COLLISION. The first version of
+        # this test sampled those and passed with the filter deleted, because
+        # none of the twelve it happened to draw defined a class the SCAFFOLD
+        # also defines - a check that cannot fail, which is the shape this
+        # repository has published before. So the sample is built from the
+        # collision itself: scaffold and body defining one name.
+        cls.collisions = []
+        for annotation in annotation_scan.scan_tree():
+            if annotation.recipe != "census" or len(cls.collisions) >= 6:
+                continue
+            row = cls.functions.get(annotation.address)
+            if row is None:
+                continue
+            location = f"{annotation.path}:{annotation.line}"
+            try:
+                body = tool.extract_body(location)
+            except (ValueError, OSError):
+                continue
+            defined = emit.classes_defined_in(body)
+            if not defined:
+                continue
+            try:
+                scaffolding = emit.emit(annotation.address, cls.functions,
+                                        cls.derived, cls.callees, cls.pe,
+                                        scaffolding_only=True, body=body)
+            except emit.Unsettled:
+                continue
+            shared = defined & emit.classes_defined_in(scaffolding)
+            if shared:
+                cls.collisions.append((annotation.address, row, location, shared))
+
+    def test_the_tree_has_a_real_collision_to_get_wrong(self):
+        # Non-vacuity, proved rather than assumed: at least one committed body
+        # defines a class its own scaffold also defines. Without this the test
+        # below passes the day the population no longer contains the shape.
+        self.assertGreater(len(self.collisions), 2)
+
+    def test_no_unit_defines_a_class_its_own_body_defines(self):
+        for address, row, location, shared in self.collisions:
+            text, refusal = tool.build_unit(
+                address, row, location, self.functions, self.derived,
+                self.callees, self.pe)
+            self.assertTrue(text, f"0x{address:08X} refused: {refusal}")
+            for name in shared:
+                self.assertEqual(
+                    1, len(re.findall(
+                        rf"^(?:class|struct)\s+{re.escape(name)}\s*(?::[^{{;]*)?"
+                        r"\{", text, re.M)),
+                    f"0x{address:08X}: {name} is not defined exactly once in "
+                    f"the unit; the body defines it, so a scaffold or preamble "
+                    f"definition beside it is C2011 and kills the unit")
 
 
 if __name__ == "__main__":
