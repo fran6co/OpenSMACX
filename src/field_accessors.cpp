@@ -17,7 +17,7 @@ Purpose: Return the constant 0x1.
          stack.
 ORIGINAL: 0x00406840 BYTE_EXACT
 // name      sub_406840
-// size      3 bytes
+// size      6 bytes
 // spans     0x00406840-0x00406846
 // prototype 
 // callers   0   call targets   0
@@ -47,7 +47,7 @@ Purpose: Increment the dword field at 0x58.
          stack.
 ORIGINAL: 0x004476E0 BYTE_EXACT
 // name      ?tech@SAmbience@@QAEXXZ
-// size      3 bytes
+// size      4 bytes
 // spans     0x004476E0-0x004476E4
 // prototype void (__thiscall ?tech@SAmbience@@QAEXXZ)(SAmbience* this)
 // callers   0   call targets   0
@@ -78,7 +78,7 @@ Purpose: Store 0x1 in the byte at 0x6d.
          stack.
 ORIGINAL: 0x00447AB0 BYTE_EXACT
 // name      ?design_window_show@BAmbience@@QAEXXZ
-// size      3 bytes
+// size      5 bytes
 // spans     0x00447AB0-0x00447AB5
 // prototype void (__thiscall ?design_window_show@BAmbience@@QAEXXZ)(BAmbience* this)
 // callers   0   call targets   0
@@ -108,7 +108,7 @@ Purpose: Increment the dword field at 0x58.
          stack.
 ORIGINAL: 0x00448280 BYTE_EXACT
 // name      ?tech@AAmbience@@QAEXXZ
-// size      3 bytes
+// size      4 bytes
 // spans     0x00448280-0x00448284
 // prototype void (__thiscall ?tech@AAmbience@@QAEXXZ)(AAmbience* this)
 // callers   0   call targets   0
@@ -139,7 +139,7 @@ Purpose: Read the dword field at 0x48.
          stack.
 ORIGINAL: 0x00448310 BYTE_EXACT
 // name      sub_448310
-// size      3 bytes
+// size      4 bytes
 // spans     0x00448310-0x00448314
 // prototype 
 // callers   0   call targets   0
@@ -170,7 +170,7 @@ Purpose: Read the dword field at 0x44.
          stack.
 ORIGINAL: 0x00448320 BYTE_EXACT
 // name      sub_448320
-// size      3 bytes
+// size      4 bytes
 // spans     0x00448320-0x00448324
 // prototype 
 // callers   0   call targets   0
@@ -201,7 +201,7 @@ Purpose: Read the dword field at 0x50.
          stack.
 ORIGINAL: 0x00448330 BYTE_EXACT
 // name      sub_448330
-// size      3 bytes
+// size      4 bytes
 // spans     0x00448330-0x00448334
 // prototype 
 // callers   0   call targets   0
@@ -232,7 +232,7 @@ Purpose: Read the dword field at 0x200.
          stack.
 ORIGINAL: 0x004C75A0 BYTE_EXACT
 // name      sub_4c75a0
-// size      3 bytes
+// size      7 bytes
 // spans     0x004C75A0-0x004C75A7
 // prototype 
 // callers   0   call targets   0
@@ -263,7 +263,7 @@ Purpose: Set 9 field(s) to constants.
          stack.
 ORIGINAL: 0x004C8090 BYTE_EXACT
 // name      sub_4c8090
-// size      3 bytes
+// size      35 bytes
 // spans     0x004C8090-0x004C80B3
 // prototype 
 // callers   0   call targets   0
@@ -303,7 +303,7 @@ Purpose: Set 2 field(s) to constants.
          stack.
 ORIGINAL: 0x004C8100 BYTE_EXACT
 // name      sub_4c8100
-// size      3 bytes
+// size      11 bytes
 // spans     0x004C8100-0x004C810B
 // prototype 
 // callers   0   call targets   0
@@ -336,7 +336,7 @@ Purpose: Return the constant 0xb.
          stack.
 ORIGINAL: 0x004C93E0 BYTE_EXACT
 // name      sub_4c93e0
-// size      3 bytes
+// size      8 bytes
 // spans     0x004C93E0-0x004C93E8
 // prototype 
 // callers   0   call targets   0
@@ -366,7 +366,7 @@ Purpose: Set 1 field(s) to constants.
          stack.
 ORIGINAL: 0x00590D60 BYTE_EXACT
 // name      sub_590d60
-// size      3 bytes
+// size      11 bytes
 // spans     0x00590D60-0x00590D6B
 // prototype 
 // callers   0   call targets   0
@@ -397,7 +397,7 @@ Purpose: Return the constant 0x8.
          stack.
 ORIGINAL: 0x005DA6A0 BYTE_EXACT
 // name      sub_5da6a0
-// size      3 bytes
+// size      8 bytes
 // spans     0x005DA6A0-0x005DA6A8
 // prototype 
 // callers   0   call targets   0
@@ -427,7 +427,7 @@ Purpose: Return the constant 0x8.
          stack.
 ORIGINAL: 0x005DA6B0 BYTE_EXACT
 // name      sub_5da6b0
-// size      3 bytes
+// size      8 bytes
 // spans     0x005DA6B0-0x005DA6B8
 // prototype 
 // callers   0   call targets   0
@@ -457,7 +457,7 @@ Purpose: Return the constant 0x8.
          stack.
 ORIGINAL: 0x005E2460 BYTE_EXACT
 // name      sub_5e2460
-// size      3 bytes
+// size      8 bytes
 // spans     0x005E2460-0x005E2468
 // prototype 
 // callers   0   call targets   0
@@ -487,7 +487,7 @@ Purpose: Return the constant 0x8.
          stack.
 ORIGINAL: 0x005E2470 BYTE_EXACT
 // name      sub_5e2470
-// size      3 bytes
+// size      8 bytes
 // spans     0x005E2470-0x005E2478
 // prototype 
 // callers   0   call targets   0
@@ -517,7 +517,7 @@ Purpose: Set 9 field(s) to constants.
          stack.
 ORIGINAL: 0x005E35D0 BYTE_EXACT
 // name      sub_5e35d0
-// size      3 bytes
+// size      31 bytes
 // spans     0x005E35D0-0x005E35EF
 // prototype 
 // callers   0   call targets   0
@@ -557,7 +557,7 @@ Purpose: Set 9 field(s) to constants.
          stack.
 ORIGINAL: 0x005E35F0 BYTE_EXACT
 // name      sub_5e35f0
-// size      3 bytes
+// size      29 bytes
 // spans     0x005E35F0-0x005E360D
 // prototype 
 // callers   0   call targets   0
@@ -596,7 +596,7 @@ Purpose: Read the dword field at 0x0, masked to 0x1.
          stack.
 ORIGINAL: 0x00600320 BYTE_EXACT
 // name      ?is_playing@MCIVideo@@QAEHXZ
-// size      3 bytes
+// size      6 bytes
 // spans     0x00600320-0x00600326
 // prototype int (__thiscall ?is_playing@MCIVideo@@QAEHXZ)(MCIVideo* this)
 // callers   1   call targets   0
@@ -628,7 +628,7 @@ Purpose: Set 3 field(s) to constants.
          stack.
 ORIGINAL: 0x00616B20 BYTE_EXACT
 // name      sub_616b20
-// size      3 bytes
+// size      13 bytes
 // spans     0x00616B20-0x00616B2D
 // prototype 
 // callers   0   call targets   0
@@ -662,7 +662,7 @@ Purpose: Return the constant 0x1.
          stack.
 ORIGINAL: 0x0062D390 BYTE_EXACT
 // name      sub_62d390
-// size      3 bytes
+// size      6 bytes
 // spans     0x0062D390-0x0062D396
 // prototype 
 // callers   1   call targets   0
@@ -692,7 +692,7 @@ Purpose: Set 9 field(s) to constants.
          stack.
 ORIGINAL: 0x006346C0 BYTE_EXACT
 // name      sub_6346c0
-// size      3 bytes
+// size      36 bytes
 // spans     0x006346C0-0x006346E4
 // prototype 
 // callers   0   call targets   0
@@ -732,7 +732,7 @@ Purpose: Set 9 field(s) to constants.
          stack.
 ORIGINAL: 0x006346F0 BYTE_EXACT
 // name      sub_6346f0
-// size      3 bytes
+// size      34 bytes
 // spans     0x006346F0-0x00634712
 // prototype 
 // callers   0   call targets   0
@@ -771,7 +771,7 @@ Purpose: Set 9 field(s) to constants.
          stack.
 ORIGINAL: 0x00634B70 BYTE_EXACT
 // name      sub_634b70
-// size      3 bytes
+// size      36 bytes
 // spans     0x00634B70-0x00634B94
 // prototype 
 // callers   0   call targets   0
@@ -811,7 +811,7 @@ Purpose: Set 4 field(s) to constants.
          stack.
 ORIGINAL: 0x00634FB0 BYTE_EXACT
 // name      ??0TexHeap@@QAE@XZ
-// size      3 bytes
+// size      16 bytes
 // spans     0x00634FB0-0x00634FC0
 // prototype TexHeap* (__thiscall ??0TexHeap@@QAE@XZ)(TexHeap* this)
 // callers   0   call targets   0
@@ -846,7 +846,7 @@ Purpose: Set 7 field(s) to constants.
          stack.
 ORIGINAL: 0x006354D0 BYTE_EXACT
 // name      sub_6354d0
-// size      3 bytes
+// size      25 bytes
 // spans     0x006354D0-0x006354E9
 // prototype 
 // callers   0   call targets   0
@@ -884,7 +884,7 @@ Purpose: Read the dword field at 0x4ac, masked to 0x8000.
          stack.
 ORIGINAL: 0x006363F0 BYTE_EXACT
 // name      sub_6363f0
-// size      3 bytes
+// size      12 bytes
 // spans     0x006363F0-0x006363FC
 // prototype 
 // callers   0   call targets   0
@@ -916,7 +916,7 @@ Purpose: Set 4 field(s) to constants.
          stack.
 ORIGINAL: 0x0063E520 BYTE_EXACT
 // name      sub_63e520
-// size      3 bytes
+// size      20 bytes
 // spans     0x0063E520-0x0063E534
 // prototype 
 // callers   1   call targets   0
@@ -981,7 +981,7 @@ Purpose: Return the constant 0x0.
          stack.
 ORIGINAL: 0x00616D80 BYTE_EXACT
 // name      sub_616d80
-// size      3 bytes
+// size      5 bytes
 // spans     0x00616D80-0x00616D85
 // prototype 
 // callers   0   call targets   0
@@ -1041,7 +1041,7 @@ Purpose: Do nothing; the original body is only its `ret`.
          stack.
 ORIGINAL: 0x00634C20 BYTE_EXACT
 // name      ??1FileBox@@QAE@XZ
-// size      3 bytes
+// size      1 bytes
 // spans     0x00634C20-0x00634C21
 // prototype void (__thiscall ??1FileBox@@QAE@XZ)(FileBox* this)
 // callers   4   call targets   0
@@ -1101,7 +1101,7 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          stack.
 ORIGINAL: 0x00589750 BYTE_EXACT
 // name      sub_589750
-// size      3 bytes
+// size      16 bytes
 // spans     0x00589750-0x00589760
 // prototype 
 // callers   0   call targets   0
@@ -1132,7 +1132,7 @@ Purpose: Copy 2 argument(s) into field(s) of `this`.
          stack.
 ORIGINAL: 0x00590CB0 BYTE_EXACT
 // name      sub_590cb0
-// size      3 bytes
+// size      18 bytes
 // spans     0x00590CB0-0x00590CC2
 // prototype 
 // callers   0   call targets   0
@@ -1164,7 +1164,7 @@ Purpose: Copy 1 argument(s) into field(s) of `this`.
          stack.
 ORIGINAL: 0x005F05C0 BYTE_EXACT
 // name      sub_5f05c0
-// size      3 bytes
+// size      13 bytes
 // spans     0x005F05C0-0x005F05CD
 // prototype 
 // callers   0   call targets   0
@@ -1195,7 +1195,7 @@ Purpose: Set 5 field(s) to constants.
          stack.
 ORIGINAL: 0x005D4540 BYTE_EXACT
 // name      Heap::Heap2
-// size      3 bytes
+// size      17 bytes
 // spans     0x005D4540-0x005D4551
 // prototype 
 // callers   0   call targets   0
@@ -1230,7 +1230,7 @@ Purpose: Set 8 field(s) to constants.
          stack.
 ORIGINAL: 0x00634BE0 BYTE_EXACT
 // name      ??0FileBox@@QAE@XZ
-// size      3 bytes
+// size      51 bytes
 // spans     0x00634BE0-0x00634C13
 // prototype void (__thiscall ??0FileBox@@QAE@XZ)(FileBox* this)
 // callers   4   call targets   0
@@ -1269,7 +1269,7 @@ Purpose: Set 8 field(s) to constants.
          stack.
 ORIGINAL: 0x00634F70 BYTE_EXACT
 // name      ?UNK2@FileBox@@QAEXXZ
-// size      3 bytes
+// size      49 bytes
 // spans     0x00634F70-0x00634FA1
 // prototype void (__thiscall ?UNK2@FileBox@@QAEXXZ)(FileBox* this)
 // callers   0   call targets   0
@@ -1307,7 +1307,7 @@ Purpose: Clamp field 0xc against an argument, then store unconditionally.
          stack.
 ORIGINAL: 0x004C80C0 BYTE_EXACT
 // name      sub_4c80c0
-// size      3 bytes
+// size      23 bytes
 // spans     0x004C80C0-0x004C80D7
 // prototype 
 // callers   0   call targets   0
@@ -1342,7 +1342,7 @@ Purpose: Clamp field 0x8 against an argument, then store unconditionally.
          stack.
 ORIGINAL: 0x004C80E0 BYTE_EXACT
 // name      sub_4c80e0
-// size      3 bytes
+// size      23 bytes
 // spans     0x004C80E0-0x004C80F7
 // prototype 
 // callers   0   call targets   0
@@ -1377,7 +1377,7 @@ Purpose: Sign-extend bit 0 of field 0x40: 0 or -1.
          stack.
 ORIGINAL: 0x00448380 BYTE_EXACT
 // name      sub_448380
-// size      3 bytes
+// size      10 bytes
 // spans     0x00448380-0x0044838A
 // prototype 
 // callers   0   call targets   0

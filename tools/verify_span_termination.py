@@ -95,9 +95,88 @@ def faults(rows: dict = None) -> list:
     return found
 
 
+def mismeasured(rows: dict = None) -> list:
+    """Rows whose `// size` is not what their own `// spans` cover.
+
+    THE TWO FIELDS ARE ONE FACT WRITTEN TWICE, and the spans are the half
+    every consumer reads: the comparison takes its bytes from them, and
+    `size` is only what the catalogue says about their length. So a
+    disagreement is always a fact having moved, and which half moved is not
+    in doubt.
+
+    Held to zero because it WAS zero. All 6,000 rows agreed at 185dd977, the
+    commit where `src/` became the store; 60 disagree now. 39 of them are in
+    `src/field_accessors.cpp` and 20 in `src/scroll.cpp`, each file carrying
+    one size repeated over every annotation in it - `?on_left_click@Scroll@@`
+    is three bytes and says 75 because the row above it does.
+
+    It is also the check that catches a span being REMOVED. `0x00589B60` lost
+    the `0x0066026A-0x0066028A` half of its span in batch 10 - an SEH funclet
+    the body had dropped - and taking a span out lowers the bar the body is
+    measured against, which is exactly what this file exists to refuse. The
+    truncation test above cannot see it: what is left ends on a `ret` and
+    decodes perfectly.
+    """
+    rows = emit.load_functions() if rows is None else rows
+    found = []
+    for address, row in sorted(rows.items()):
+        size = row.get("size")
+        spans = emit.parse_body_ranges(row.get("body_ranges") or "")
+        if not spans or not str(size).isdigit():
+            continue
+        covered = sum(high - low for low, high in spans)
+        if covered != int(size):
+            found.append(
+                f"0x{address:08X} {row.get('name', '')}: `// size "
+                f"{size} bytes` beside spans covering {covered}")
+    return found
+
+
+def restate(rows: dict) -> int:
+    """Rewrite every `// size` that disagrees with its own spans.
+
+    Only ever the size: the spans are what the comparison reads, so moving
+    them to agree with a stated length would change what a body is measured
+    against - the defect, not the repair.
+    """
+    import annotation_scan
+    import project_catalogue
+    resolved, _ = annotation_scan.resolve(annotation_scan.scan_tree())
+    where, by_file = {}, {}
+    for one in resolved:
+        where[one.address] = (one.path, one.line - 1)
+    for address, row in rows.items():
+        spans = emit.parse_body_ranges(row.get("body_ranges") or "")
+        if not spans or not str(row.get("size")).isdigit():
+            continue
+        covered = sum(high - low for low, high in spans)
+        if covered == int(row["size"]) or address not in where:
+            continue
+        path, index = where[address]
+        by_file.setdefault(path, []).append((index, covered))
+
+    changed = 0
+    for relative, entries in by_file.items():
+        path = project_catalogue.REPO_ROOT / relative
+        lines = path.read_text().splitlines()
+        for index, covered in entries:
+            for offset in range(index + 1, len(lines)):
+                stripped = lines[offset].strip()
+                if not (stripped.startswith("//") or stripped.startswith("*")):
+                    break
+                if lines[offset].startswith("// size "):
+                    lines[offset] = f"// size      {covered} bytes"
+                    changed += 1
+                    break
+        path.write_text("\n".join(lines) + "\n")
+    return changed
+
+
 def main(argv=None) -> int:
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repair", action="store_true",
+                        help="restate `// size` from the spans it disagrees with")
     # `--src` EXISTS SO THE DAMAGE CASE CAN RUN THIS EXACT TOOL. A proof that
     # a check can fail is worth nothing if it fails a different invocation
     # than the gate makes; this repository has published one of those. With
@@ -105,18 +184,31 @@ def main(argv=None) -> int:
     # damage case points it at a one-file tree through the same reader.
     parser.add_argument("--src", help="annotation tree to read instead of src/")
     arguments = parser.parse_args(argv)
-    if not byte_match.DEFAULT_EXE.is_file():
-        print("SKIP: the pinned executable is absent")
-        return 0
     rows = None
     if arguments.src:
         import project_catalogue
         rows = project_catalogue.from_source(Path(arguments.src))
+
+    # THE SIZE COMPARISON NEEDS NO IMAGE. It reads one annotation against
+    # itself, so it still runs on a checkout without the game - and putting it
+    # after the skip would have made "the exe is absent" silently cover both.
+    if arguments.repair:
+        print(f"restated {restate(rows or emit.load_functions())} size(s)")
+        return 0
+
+    wrong = mismeasured(rows)
+    for line in wrong:
+        print(f"  {line}")
+    print(f"span-termination: {len(wrong)} row(s) whose size and spans disagree")
+
+    if not byte_match.DEFAULT_EXE.is_file():
+        print("SKIP: the pinned executable is absent; truncation not measured")
+        return 1 if wrong else 0
     found = faults(rows)
     for line in found:
         print(f"  {line}")
     print(f"span-termination: {len(found)} truncated span(s)")
-    return 1 if found else 0
+    return 1 if found or wrong else 0
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 // size      265 bytes
 // spans     0x005592D0-0x005593D9
 // prototype int (__thiscall ?get_zoom@FontQueue@@QAEHHHHH@Z)(FontQueue* this, int, int, int, int)
-// callers   0   call targets   1
+// callers   2   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00618F40

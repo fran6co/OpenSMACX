@@ -12,10 +12,11 @@
 // size      345 bytes
 // spans     0x006276A0-0x006277F9
 // prototype
-// callers   ?   call targets   10
+// callers   ?   call targets   9
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x005F7E90 0x005FCBB0 0x006010B0 0x006010D0 0x00600F00 0x00601B80 0x00601BB0 0x00601BD0 0x00601BF0 0x00602600 0x006108E0
+// calls     0x005F7E90 0x005FCBB0 0x00600F00 0x00601B80 0x00601BB0 0x00601BD0
+//           0x00601BF0 0x00602600 0x006108E0
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z  at 0x006276A0  (345 bytes)

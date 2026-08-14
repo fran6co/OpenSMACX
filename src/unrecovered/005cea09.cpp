@@ -3,7 +3,7 @@
 // size      265 bytes
 // spans     0x005CEA09-0x005CEB12
 // prototype extern "C" void __cdecl sub_5cea09(int, int, int, int)
-// callers   0   call targets   1
+// callers   1   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005CEB12 (16x)

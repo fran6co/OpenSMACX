@@ -2,7 +2,7 @@
 // name      ?init@BasePop@@QAEHHJ@Z
 // size      490 bytes
 // spans     0x006015B0-0x0060179A
-// prototype int (__thiscall ?init@BasePop@@QAEHHJ@Z)(BasePop* this, int, long)
+// prototype int (__thiscall ?init@BasePop@@QAEHHJ@Z)(BasePop* this, int, int)
 // callers   9   call targets   6
 // kind      game
 // flags     hidden;sp_ready;purged_ok

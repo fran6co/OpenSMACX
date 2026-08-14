@@ -1,4 +1,12 @@
 // ORIGINAL: 0x005BEB70 FILE
+// name      ?tech_pick@@YAHHHHPAD@Z
+// size      275 bytes
+// spans     0x005BEB70-0x005BEC3D;0x00662A1E-0x00662A64
+// prototype int (__cdecl ?tech_pick@@YAHHHHPAD@Z)(int factionID, int, int, int8* sectionID)
+// callers   3   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00484AC0 0x00484B60 0x00486510 0x005D4DD0 0x00618EE0
 // RULED-OUT: this is the project's known EH-heavy-constructor wall (see
 //            src/recovered/units/00408490.cpp's BaseWin::BaseWin note): a
 //            local `PickTech` (GraphicWin base + 4 embedded `Font`s,

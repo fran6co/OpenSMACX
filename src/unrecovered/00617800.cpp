@@ -1,4 +1,12 @@
 // ORIGINAL: 0x00617800 FILE
+// name      ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z
+// size      278 bytes
+// spans     0x00617800-0x00617916
+// prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z)(Caviar* this, CaviarData*, LPBYTE, CaviarData*, VOX_Vect*)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00628150
 // RULED-OUT: the catalogued 4-param prototype (CaviarData*, unsigned
 //            char*, CaviarData*, VOX_Vect*) reads only 16 bytes off the
 //            stack, but this body's `ret 0x14` pops 20 and the disassembly
