@@ -182,6 +182,40 @@ TARGETED = (
      "falling into the tail, where an early return does not match.\n"
      "(3) one shared epilogue via `goto fail;` where separate early returns\n"
      "duplicate it."),
+    (("push", "mov", "sub", "test", "cmp", "xor", "lea", "and", "call"),
+     "AT INDEX 0-6, READ THE FOUR-FLAG-SET TABLE BEFORE CHANGING A LINE. The\n"
+     "verdict is chosen by mnemonic SIMILARITY before first divergence\n"
+     "(`byte_match._better`), so the `#N` above may come from the frameless\n"
+     "build while the FRAMED build of the same source is already several\n"
+     "instructions deeper. Ten bodies swept on 2026-08-14 all reported `#0`;\n"
+     "on FIVE the framed build was already at #2, #3, #4 or #7 and the frame\n"
+     "was never the defect. `verify_recovered_function.py --dir` prints all\n"
+     "four - work the row whose prologue class matches the original (framed if\n"
+     "it opens `push ebp; mov ebp, esp`, frameless otherwise).\n"
+     "Then, IN THIS ORDER, from ten controlled sweeps:\n"
+     "(1) If the body calls `strcat`/`strcpy`/`strlen`/`memset`/`memcpy`, put\n"
+     "`#pragma function(<name>)` above the definition. /O2 implies /Oi and the\n"
+     "inline expansion changes the PROLOGUE, not just the call: 0 -> 4 and\n"
+     "0 -> 22 on two bodies, and removing ONLY the pragma from a byte-exact\n"
+     "body returned it to #0. Worked on 3 of 3 applicable bodies.\n"
+     "(2) Replace the scaffold`s `*(T *)0xADDR` casts and pointer-to-member\n"
+     "call shims with real `extern` globals and real member functions. The\n"
+     "shim spells `mov reg,ADDR; call reg` where the original has one\n"
+     "`call rel32`; that extra scratch register moves the whole allocation.\n"
+     "Reverting only the call form on a byte-exact body cost BYTE_EXACT -> #22.\n"
+     "(3) Only then touch locals, and expect NO default direction: adding a\n"
+     "live local was the fix 4 times, deleting one 3 times, one body needed\n"
+     "both in different branches, and two were inert to all six forms. Pick\n"
+     "the sign by counting `push ebx/esi/edi/ebp` in the original prologue\n"
+     "against yours - too few means make a value live across the region, too\n"
+     "many means recompute it at each use.\n"
+     "TWO THINGS MEASURED NOT TO WORK. Do NOT declare N/4 locals to reproduce\n"
+     "`sub esp,N`: eleven ints, an unreferenced array and an array with a dead\n"
+     "store all left the frame at 0x18 where the original wanted 0x2c, because\n"
+     "N is bytes of AGGREGATE storage - change a type`s SIZE, not the count.\n"
+     "And do NOT add a destructor-carrying local to force an SEH frame unless\n"
+     "the original prologue actually registers a handler: five attempts, zero\n"
+     "improvements, two measurably worse."),
 )
 
 
@@ -197,7 +231,20 @@ def ledger_row(address: int, tier: str = "", note: str = "") -> dict:
     """
     if tier:
         return {"tier": tier, "note": note}
-    verdict = verifier.writeback.verify(address, verifier.committed_body(address)[0] or "")
+    # SCORE A WHOLE UNIT AS A WHOLE UNIT. `writeback.verify` wraps scaffolding
+    # around whatever it is handed, and a FILE-mode landing already carries
+    # its own typedefs, globals and callee declarations - so it double-declared
+    # them and reported `C2733: second C linkage` as NO_COMPILE on bodies the
+    # gate scores MISMATCH or BYTE_EXACT. That verdict is printed at the top of
+    # this brief as "Current verdict", so EVERY brief for a FILE-mode address
+    # opened by telling the agent its committed body does not compile - and a
+    # NO_COMPILE carries no divergence, so every targeted lesson keyed on a
+    # divergence pair switched itself off as well. Reported independently by
+    # two agents in the 2026-08-14 prologue sweep.
+    body = verifier.committed_body(address)[0] or ""
+    whole = verifier.complete_unit(body)
+    verdict = (verifier.verify_body_verbatim(address, whole) if whole
+               else verifier.writeback.verify(address, body))
     return {"tier": verdict.get("tier", ""),
             "note": verdict.get("note") or verdict.get("refusal_reason") or ""}
 
