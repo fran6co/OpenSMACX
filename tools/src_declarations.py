@@ -81,6 +81,17 @@ TYPEDEF_SIMPLE = re.compile(r"^typedef\s+.*?\b(?P<name>\w+)\s*(?:\[[^\]]*\])?;$"
 # `typedef void (__cdecl *MenuProc)(int);` - the name is inside the parens.
 TYPEDEF_FUNCPTR = re.compile(
     r"^typedef\s+.*?\(\s*(?:__\w+\s+)?\*+\s*(?P<name>\w+)\s*\)\s*\(.*\)\s*;$", re.S)
+# `typedef int(__cdecl func_game_atexit)(func_atexit_callback *);` - a
+# FUNCTION TYPE, with no star. Neither pattern above matches it: the name is
+# inside parentheses so `TYPEDEF_SIMPLE` never sees it before the `;`, and
+# `TYPEDEF_FUNCPTR` requires the star. The typedef therefore went unindexed,
+# and every declaration whose type named one was dropped whole rather than
+# emitted - `extern func_game_atexit *GameAtexit;` among them, which is the
+# seam every generated atexit thunk calls through. 388 already-written bodies
+# could not compile for want of these two lines, the single largest entry in
+# the emitter's defect histogram.
+TYPEDEF_FUNCTYPE = re.compile(
+    r"^typedef\s+.*?\(\s*(?:__\w+\s+)?(?P<name>\w+)\s*\)\s*\(.*\)\s*;$", re.S)
 # `typedef void (OriginalObject::*func_menu_repaint)();` - a member pointer.
 TYPEDEF_MEMBERPTR = re.compile(
     r"^typedef\s+.*?\(\s*\w+::\s*\*+\s*(?P<name>\w+)\s*\)\s*\(.*\)\s*;$", re.S)
@@ -217,9 +228,17 @@ class Declaration:
         return f"<Declaration {self.name} {self.kind} from {self.origin}>"
 
 
+# `LPSTR UNUSED(input) input` - `src/stdafx.h` defines UNUSED(x) as nothing,
+# so it is not part of the declaration at all. Left in, the parameter appears
+# to name a type called `UNUSED` and one called `input`, neither of which is
+# declared anywhere, and the whole function is dropped: `rnd` is the one that
+# shows up most, on 22 bodies.
+UNUSED_MACRO = re.compile(r"\bUNUSED\s*\(\s*\w*\s*\)")
+
+
 def _declaration_for(statement: str, opened_block: bool, origin: str):
     """A Declaration for one file-scope statement, or None."""
-    statement = statement.strip()
+    statement = UNUSED_MACRO.sub(" ", statement).strip()
     if not statement:
         return None
     first = IDENTIFIER.match(statement)
@@ -233,12 +252,27 @@ def _declaration_for(statement: str, opened_block: bool, origin: str):
             return None
         body = statement + ";"
         hit = (TYPEDEF_FUNCPTR.match(body) or TYPEDEF_MEMBERPTR.match(body)
-               or TYPEDEF_SIMPLE.match(body))
+               or TYPEDEF_FUNCTYPE.match(body) or TYPEDEF_SIMPLE.match(body))
         if not hit:
             return None
         name = hit.group("name")
-        return Declaration(name, body, "typedef",
-                           _named_types(body) - {name}, set(), origin)
+        # THE PARAMETER NAMES OF A FUNCTION TYPEDEF ARE NOT TYPES, exactly as
+        # they are not for a function - this file already records that lesson
+        # above `PARAM_NAME` and applied it only to `FUNCTION`. Reading every
+        # identifier here made `func_game_atexit` claim to need a type called
+        # `callback`, which is declared nowhere, so the typedef was dropped and
+        # `GameAtexit` with it. Named parameters are the norm in this tree's
+        # headers, so this cost every function typedef that has one.
+        arguments = re.search(r"\)\s*\((?P<params>.*)\)\s*;$", body, re.S)
+        if arguments:
+            head = body[:arguments.start()]
+            types = _named_types(head)
+            for spelling in _parameter_types(arguments.group("params")):
+                types |= _named_types(spelling)
+        else:
+            types = _named_types(body)
+        return Declaration(name, body, "typedef", types - {name}, set(),
+                           origin)
 
     head = TYPE_HEAD.match(statement)
     if head:
@@ -474,10 +508,33 @@ def _definition_lines(name: str, scaffolding: str, provided: set = None,
             return None
         before.extend(deeper)
 
+    # THE METHODS `src/` DECLARES, not only the layout. A definition with the
+    # right fields and no methods is `C2039: is not a member` the moment the
+    # body calls one, and that was 240 already-written bodies - 209 of them on
+    # `Sprite::close` and `CaviarData::close`, two one-line declarations that
+    # have been sitting in `src/sprite.h` and `src/caviar.h` the whole time.
+    # A declaration is never inlined and occupies no bytes, so importing one
+    # cannot move the comparison; only its absence can.
+    methods = []
+    for text, _, types in class_layouts.methods_of(name):
+        for required in sorted(types):
+            if _present(required, scaffolding) or required in provided:
+                continue
+            provided.add(required)
+            if required in windows:
+                before.append(f"typedef {windows[required]} {required};")
+            else:
+                # A NAME is all a parameter needs, even by value: C++ requires
+                # a complete type at the call and at the definition, neither
+                # of which this declaration is.
+                before.append(f"{_class_keys().get(required, 'struct')} "
+                              f"{required};")
+        methods.append(text)
+
     provided.add(name)
     key = _class_keys().get(name, "struct")
     head = f"{key} {name} {{ public:" if key == "class" else f"{key} {name} {{"
-    return before + [head] + list(members) + ["};"]
+    return before + [head] + list(members) + methods + ["};"]
 
 
 def for_body(body: str, scaffolding: str, source_path=None,
