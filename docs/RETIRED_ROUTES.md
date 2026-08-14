@@ -817,3 +817,40 @@ Two latent breakages were fixed in passing, both caused by earlier retirements
 leaving names behind: `OPENSMACX_WINE_LOCKED_TESTS` named two tests that no
 longer exist, and `add_custom_target(verify-recovery-batch)` still listed
 `globals-diff-tests` in `DEPENDS`, a target defined nowhere in the tree.
+
+## A base clause on an EMPTY shell — measured, and a loss
+
+**Tried and reverted 2026-08-14.**
+
+An agent recovering `PushButton::PushButton` (0x0062BF20) reported that the
+scaffold declares `class PushButton { public: PushButton(); };` with no base,
+though `src/pushbutton.h` derives it from `BaseButton` — so genuine
+base-subobject construction is unreachable and it landed the field stores
+without the base-constructor call. `class_layouts.layout_bases` gates the base
+clause on the DERIVED class being supplyable, and `PushButton` has no pinned
+size.
+
+The reasoning for relaxing it looked sound. A shell with no members has no
+offsets for a base clause to push down, so emitting `: public BaseButton`
+could only add: the base's real members at their real offsets, and an
+expressible base. Guarded so a shell that has members from either source — a
+pinned layout or a proved offset read out of a byte-exact body — stays flat.
+
+Measured over the whole tree, before and after:
+
+  BYTE_EXACT     1329 -> 1225   (-104)
+  NO_COMPILE      686 ->  850   (+164)
+  MISMATCH       1716 -> 1686
+
+and the ratchet reported **112 claimed-byte-exact bodies no longer
+reproducing**. Reverted the same hour.
+
+The argument was about LAYOUT and the cost is about SCOPE and ORDER: a base
+clause makes the base a dependency of the derived class in the unit, and the
+emitter's ordering only guarantees that for classes it decided to flatten. It
+also brings every base member NAME into the derived scope, where the flat form
+had none.
+
+Retrying this needs the ordering fixed first, not the gate relaxed. The
+evidence that it is worth doing is unchanged — an agent really did land a
+weaker body for want of a base — so this is a "not yet", not a "no".
