@@ -773,6 +773,75 @@ def vtable_slots(pe, spans, cap: int = VTABLE_SLOT_CAP):
         slot for slot in found if slot > cap)
 
 
+def com_slots(pe, spans, cap: int = VTABLE_SLOT_CAP) -> list:
+    """Slots dispatched COM-style: `This` PUSHED, not passed in ecx.
+
+    `vtable_shim` models a C++ virtual call, because that is what a vtable
+    dispatch is in this codebase. A COM interface calls the other way round -
+    the interface pointer is argument ZERO on the stack:
+
+        mov  eax, [0x009BE600]      ; the interface
+        mov  ecx, [eax]             ; its vtable
+        push eax                    ; `This`, as an explicit argument
+        call [ecx + 0x10]
+
+    Through the `VCall` class VC6 emits a receiver in ecx and NO push, so the
+    call shape is wrong and no body written against it can ever match. An
+    agent recovering `?create_session@Net@@` found this the hard way and
+    hand-wrote `__stdcall` function-pointer casts instead; two others in the
+    same batch hand-split the shim for unrelated reasons.
+
+    THE TELL IS THE INSTRUCTION IMMEDIATELY BEFORE THE CALL. `push <obj>`,
+    where `<obj>` is the very register the vtable was loaded FROM. Nothing
+    softer works: an ordinary thiscall dispatch also pushes arguments, and
+    only the LAST push being the object itself distinguishes the two.
+
+    Measured over the whole image: 301 such sites in 125 catalogued
+    functions, 30 of them still unrecovered. DirectPlay, DirectDraw and
+    DirectSound are COM, and `docs/EXCLUSIONS.md` puts that surface at 48.4%
+    of catalogued bytes.
+    """
+    from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+    from capstone.x86 import (X86_OP_MEM, X86_OP_REG, X86_REG_ESP,
+                              X86_REG_EBP)
+    engine = Cs(CS_ARCH_X86, CS_MODE_32)
+    engine.detail = True
+    FRAME = (X86_REG_ESP, X86_REG_EBP)
+    found = set()
+    for low, high in spans:
+        data = read_bytes(pe, low, high - low)
+        if not data:
+            continue
+        # {vtable register: the object register it was read out of}. Only a
+        # load at displacement ZERO counts: a vtable pointer lives at the top
+        # of the object, and `mov eax, [esi+0x40]` is a field.
+        vtable_of, previous = {}, None
+        for one in engine.disasm(data, low):
+            if one.mnemonic == "mov" and len(one.operands) == 2:
+                destination, source = one.operands
+                if destination.type != X86_OP_REG:
+                    pass
+                elif (source.type == X86_OP_MEM and source.mem.base
+                        and source.mem.base not in FRAME
+                        and source.mem.index == 0 and source.mem.disp == 0):
+                    vtable_of[destination.reg] = source.mem.base
+                else:
+                    vtable_of.pop(destination.reg, None)
+            elif (one.mnemonic == "call" and one.operands
+                    and one.operands[0].type == X86_OP_MEM):
+                operand = one.operands[0]
+                obj = vtable_of.get(operand.mem.base)
+                pushed = (previous is not None
+                          and previous.mnemonic == "push"
+                          and previous.operands
+                          and previous.operands[0].type == X86_OP_REG
+                          and previous.operands[0].reg == obj)
+                if obj is not None and pushed and operand.mem.disp >= 0:
+                    found.add(operand.mem.disp // 4)
+            previous = one
+    return sorted(slot for slot in found if slot <= cap)
+
+
 DECLARED_TYPE = re.compile(r"^\s*(?:class|struct)\s+(\w+)", re.M)
 
 
@@ -890,6 +959,50 @@ def vtable_shim(slots: list) -> str:
         mark = "  // <-- used" if index in slots else ""
         lines.append(f"    virtual void slot{index:03d}();{mark}")
     lines.append("};")
+    return "\n".join(lines)
+
+
+def com_shim(slots: list) -> str:
+    """Typedefs for slots that push `This` instead of passing it in ecx.
+
+    ADDITIVE, deliberately. These slots stay in the `VCall` class above as
+    well, because bodies already written against it must keep compiling - a
+    slot disappearing from that class is a recovery that stops building. What
+    this adds is the shape that can actually MATCH, beside the one that
+    cannot, with the difference stated.
+
+    Spelled as function pointers rather than as a second class because that
+    is the one thing VC6 allows here: `__thiscall` on a function pointer is
+    C4234, which is the whole reason `VCall` exists, but `__stdcall` on one
+    is fine.
+    """
+    if not slots:
+        return ""
+    lines = [
+        "// COM-STYLE DISPATCH, which the VCall class above CANNOT express.",
+        "// These slots push the interface as an explicit first argument",
+        "// instead of passing it in ecx:",
+        "//",
+        "//     mov  eax, [0x009BE600]   ; the interface",
+        "//     mov  ecx, [eax]          ; its vtable",
+        "//     push eax                 ; `This`, as argument 0",
+        "//     call [ecx + 0x10]",
+        "//",
+        "// Through VCall, VC6 emits a receiver in ecx and NO push, so no body",
+        "// written that way can match. DirectPlay, DirectDraw and DirectSound",
+        "// are COM. Set the parameters and return type to what the call needs;",
+        "// the interface is the first parameter and does not move. Spell a",
+        "// call as:",
+        "//",
+        "//     ComSlot004 fn = (ComSlot004)(*(void ***)obj)[4];",
+        "//     int result = fn(obj, arg);",
+        "//",
+        f"// This body dispatches COM-style through slot(s): "
+        f"{', '.join(str(s) for s in slots)}",
+    ]
+    for index in slots:
+        lines.append(f"typedef int (__stdcall *ComSlot{index:03d})"
+                     f"(void *self);")
     return "\n".join(lines)
 
 
@@ -1735,6 +1848,13 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     slots, over_cap = vtable_slots(pe, spans) if spans else ([], [])
     if slots:
         lines.append(vtable_shim(slots))
+        lines.append("")
+    # AND THE OTHER SHAPE, where the interface is pushed rather than passed in
+    # ecx. Emitted beside `VCall` rather than instead of it: a slot vanishing
+    # from that class is a body that stops compiling.
+    pushed = com_slots(pe, spans) if spans else []
+    if pushed:
+        lines.append(com_shim(pushed))
         lines.append("")
     if over_cap:
         # Named, never silently dropped: a slot index this large is almost

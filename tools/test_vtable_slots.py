@@ -57,5 +57,60 @@ class VtableSlotTest(unittest.TestCase):
         self.assertEqual(self.slots(0x00629D40), [48])
 
 
+class ComDispatchTest(unittest.TestCase):
+    """`This` PUSHED as argument zero, which `VCall` cannot express.
+
+    Reported by an agent recovering `?create_session@Net@@` after the
+    generated shim produced a call shape that could not match however the body
+    was written. The detector is held to that function, because the four slot
+    indices below were arrived at INDEPENDENTLY - the agent read them off the
+    disassembly by hand before this existed.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        if not byte_match.DEFAULT_EXE.is_file():
+            raise unittest.SkipTest("the pinned executable is absent")
+        cls.pe = pefile.PE(str(byte_match.DEFAULT_EXE))
+        cls.rows = byte_match.load_rows()
+        cls.shared = byte_match.shared_span_index(cls.rows)
+
+    def spans(self, address):
+        return byte_match.classify_body(
+            self.pe, self.rows[address], self.shared).primary
+
+    def test_the_directplay_call_sites_are_found(self):
+        self.assertEqual(emit.com_slots(self.pe, self.spans(0x0062EAA0)),
+                         [4, 14, 22, 24])
+
+    def test_a_thiscall_dispatch_is_not_com(self):
+        """The discriminator is the LAST push being the object itself. An
+        ordinary virtual call pushes arguments too, so anything softer than
+        that calls every dispatch COM-shaped."""
+        self.assertEqual(emit.com_slots(self.pe, self.spans(0x004C88B0)), [])
+        self.assertEqual(emit.com_slots(self.pe, self.spans(0x00629D40)), [])
+
+    def test_a_function_pointer_field_is_not_com_either(self):
+        self.assertEqual(emit.com_slots(self.pe, self.spans(0x00644910)), [])
+
+    def test_the_slot_stays_in_the_thiscall_shim_as_well(self):
+        """ADDITIVE. A slot leaving `VCall` is a body that stops compiling,
+        so both shapes are offered and the difference is stated."""
+        self.assertEqual(
+            sorted(set(emit.com_slots(self.pe, self.spans(0x0062EAA0)))
+                   - set(emit.vtable_slots(self.pe, self.spans(0x0062EAA0))[0])),
+            [])
+
+    def test_the_shim_says_which_slots_and_how_to_spell_them(self):
+        text = emit.com_shim([4, 14])
+        self.assertIn("ComSlot004", text)
+        self.assertIn("ComSlot014", text)
+        self.assertIn("__stdcall", text)
+        self.assertIn("slot(s): 4, 14", text)
+
+    def test_no_com_slots_means_no_shim(self):
+        self.assertEqual("", emit.com_shim([]))
+
+
 if __name__ == "__main__":
     unittest.main()
