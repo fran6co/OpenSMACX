@@ -872,7 +872,13 @@ class GameConstantsTests(unittest.TestCase):
             if not line.startswith("const int "):
                 continue
             value = line.split("=", 1)[1].strip().rstrip(";")
-            int(value, 0)          # raises if it is not a literal
+            for element in value.strip("{}").split(","):
+                if not element.strip():
+                    continue          # a trailing comma in the initialiser
+                # A TABLE is the same rule one dimension up: every element is
+                # a literal, so nothing in the prelude can reference a name
+                # the unit may not have.
+                int(element.strip(), 0)   # raises if it is not a literal
 
     def test_a_name_defined_twice_with_different_values_is_dropped(self):
         # The unit must not pick a side the headers do not agree on.

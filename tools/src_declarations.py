@@ -336,6 +336,43 @@ def _declaration_for(statement: str, opened_block: bool, origin: str):
                        _named_types(head_text), by_value, origin)
 
 
+def _signature_params(text: str) -> str:
+    """The parameter TYPES of a declaration, as a comparable string."""
+    match = FUNCTION.match(text.rstrip(";").strip())
+    if not match:
+        return ""
+    return "|".join(_parameter_types(match.group("params")))
+
+
+def _merge_overloads(existing, declaration):
+    """One Declaration carrying BOTH, or None when they truly conflict.
+
+    AN OVERLOAD IS NOT AN AMBIGUITY. `has_fac_built` is declared twice in
+    `src/base.h`, once taking a facility and once taking a facility and a
+    base, which is ordinary C++ and exactly what the image has. The indexer
+    treated any second spelling of a name as a guess it refused to make, so
+    the name was dropped entirely and every body calling either overload
+    failed `C2065` - 31 bodies on this name alone, 12 more on `vector_dist`.
+
+    The test is the PARAMETER TYPES. Different lists are overloads and both
+    declarations are emitted, which is what the header itself does. The same
+    list with a different return or convention is a real disagreement between
+    two headers, and that is still refused rather than resolved by a coin
+    flip - emitting both would be `C2556` and would take down a unit that
+    compiles today.
+    """
+    if existing.kind != "function" or declaration.kind != "function":
+        return None
+    if _signature_params(existing.text) == _signature_params(declaration.text):
+        return None
+    texts = sorted({existing.text.rstrip(";") + ";",
+                    declaration.text.rstrip(";") + ";"})
+    return Declaration(existing.name, "\n".join(texts), "function",
+                       existing.types | declaration.types,
+                       existing.by_value | declaration.by_value,
+                       existing.origin)
+
+
 def _index_text(text: str, origin: str, out: dict, rejected: set) -> None:
     for statement, opened_block in _statements(text):
         declaration = _declaration_for(statement, opened_block, origin)
@@ -353,6 +390,10 @@ def _index_text(text: str, origin: str, out: dict, rejected: set) -> None:
                 continue
             if existing.kind == "type" or declaration.kind == "type":
                 out[name] = existing if existing.kind == "type" else declaration
+                continue
+            merged = _merge_overloads(existing, declaration)
+            if merged is not None:
+                out[name] = merged
                 continue
             rejected.add(name)
             out.pop(name, None)

@@ -110,8 +110,26 @@ class Declarations(unittest.TestCase):
         self.assertEqual(index_of("if (x) { y(); }"), {})
 
     def test_conflicting_declarations_are_refused(self):
-        found = index_of("int both(int a);\nchar *both(char *b);\n")
+        # A REAL conflict: the same parameter types, a different return. One
+        # of the two headers is wrong and nothing here can say which, so the
+        # name is dropped. Emitting both would be `C2556` and would take down
+        # a unit that compiles today.
+        found = index_of("int both(int a);\nchar *both(int b);\n")
         self.assertNotIn("both", found)
+
+    def test_an_overload_is_not_a_conflict(self):
+        """The example this test used to carry was an overload, not a clash.
+
+        `int both(int)` beside `char *both(char *)` is ordinary C++ and both
+        declarations belong in the unit. Refusing the name cost every body
+        that called either: 31 on `has_fac_built`, which `src/base.h` declares
+        once per arity, and 12 on `vector_dist`.
+        """
+        found = index_of("int both(int a);\nchar *both(char *b);\n")
+        self.assertIn("both", found)
+        text = " ".join(found["both"].text.split())
+        self.assertIn("int both(int a);", text)
+        self.assertIn("char * both(char *b);", text)
 
     def test_forward_declaration_does_not_beat_the_definition(self):
         found = index_of("class Foo;\nclass Foo { int a_; };\n")
