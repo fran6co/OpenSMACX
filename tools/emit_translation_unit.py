@@ -1191,6 +1191,41 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
             return []
         return class_layouts.layout_bases(name)
 
+    def embeds_the_subject(name: str) -> bool:
+        """Does `name` hold the SUBJECT's class by value?
+
+        The subject's own class is emitted LAST, because its methods go with
+        its definition. `emitted_bases` already handles a class that DERIVES
+        from the subject - it emits it flat, since a base clause would name a
+        type not yet defined. A by-value MEMBER needs the identical treatment
+        and was not getting it, so the shell was emitted with a member of an
+        incomplete type: `C2079`, before the body is even reached, and no
+        spelling inside the body can route around it.
+
+        MEASURED 2026-08-14. `Scroll` holds `FlatButton flat_button_left_` and
+        `flat_button_right_` by value, so every unit whose subject is a
+        `FlatButton` method emits `Scroll` above the still-undefined
+        `FlatButton`. Reproduced at 0x00607CF0 (`??0FlatButton@@QAE@XZ`) and
+        0x00608660 (`?on_mouse_leave@FlatButton@@QAEXHH@Z`), in both cases
+        with a TRIVIAL EMPTY BODY, which is what proves it is the scaffold and
+        not the recovery. Two agents hit it independently; one moved the class
+        by hand and the address then went BYTE_EXACT, so this was costing
+        recoveries outright rather than merely wasting time.
+
+        `by_value_first` cannot fix it: it orders the classes it is GIVEN, and
+        the subject's class is deliberately excluded from that set.
+        """
+        if name == signature.klass:
+            return False
+        for line in (class_layouts.declaration_for(name) or ()):
+            stripped = line.strip()
+            if "*" in stripped or "(" in stripped:
+                continue          # a pointer or function-pointer member is fine
+            match = BY_VALUE_MEMBER.match(stripped)
+            if match and match.group(1) == signature.klass:
+                return True
+        return False
+
     def members_of_shell(name: str) -> list:
         """The member lines to put inside `name`'s shell.
 
@@ -1198,7 +1233,15 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         supplies its own; the flattened chain otherwise. Reading these two
         from different places is how a class ends up missing sizeof(base)
         bytes at the front while still compiling.
+
+        A shell that would hold the SUBJECT by value goes back to being opaque:
+        the subject is defined below it, so the member cannot be complete here.
+        Emitting nothing loses only the field NAMES - a body reaches those
+        fields by offset, exactly as it does for every other opaque class - and
+        it is the difference between a unit that compiles and one that cannot.
         """
+        if embeds_the_subject(name):
+            return []
         if emitted_bases(name):
             return class_layouts.own_declaration_for(name)
         flat = class_layouts.declaration_for(name)
