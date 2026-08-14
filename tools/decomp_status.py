@@ -131,8 +131,17 @@ def save_cache(entries: dict) -> None:
     os.replace(tmp, CACHE_PATH)
 
 
-def unit_hash(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()
+def unit_hash(unit) -> str:
+    """The cache key for a unit.
+
+    THE ORIGIN IS PART OF IT. A unit carrying one is compiled under that
+    file's extension and with that directory beside it, so two units with
+    identical text and different origins are two different compiles - and a
+    key on the text alone would serve one's verdict for the other.
+    """
+    text, origin = byte_match.unit_source(unit)
+    material = text if origin is None else f"{origin}\n{text}"
+    return hashlib.sha256(material.encode("utf-8", "replace")).hexdigest()
 
 
 # ----------------------------------------------------------------- building
@@ -188,7 +197,12 @@ def build_units(annotations: list, matched: dict, functions: dict,
         if row is None:
             continue  # uncatalogued: reported by the cross-reference, not here
         if annotation.recipe == "verbatim":
-            units[address] = annotation.region
+            # WITH ITS ORIGIN. A FILE-mode landing is a real translation unit
+            # from a real directory, and the vendored zlib says
+            # `#include "deflate.h"` - which resolves only if the compiler is
+            # given that directory. Carrying the path costs the string form
+            # nothing; see `byte_match.unit_source`.
+            units[address] = (annotation.region, annotation.path)
             continue
         tasks.append((address, annotation.recipe, annotation.region,
                       annotation.location, row))

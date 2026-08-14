@@ -342,7 +342,11 @@ def build_unit(address, row, location, functions, derived, callees, pe):
         for needle, why in REFUSE_SUBSTRINGS:
             if needle in text:
                 return None, why
-        return text, ""
+        # PAIRED WITH ITS ORIGIN. A FILE-mode landing is a real translation
+        # unit from a real directory: the vendored zlib says `#include
+        # "deflate.h"`, which resolves only where that directory is. See
+        # `byte_match.unit_source` - the string form is unaffected.
+        return (text, verbatim), ""
     try:
         body = extract_body(location)
     except (ValueError, OSError, FileNotFoundError) as error:

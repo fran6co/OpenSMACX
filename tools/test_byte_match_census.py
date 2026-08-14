@@ -47,16 +47,23 @@ class FileModeTests(unittest.TestCase):
 
     def test_a_file_mode_unit_is_the_file_and_is_not_refused(self):
         address = sorted(self.units)[0]
-        text, refusal = tool.build_unit(
+        unit, refusal = tool.build_unit(
             address, {"name": "", "size": ""}, f"{self.units[address]}:1",
             {}, {}, {}, None)
         self.assertEqual("", refusal)
-        self.assertIsNotNone(text)
+        self.assertIsNotNone(unit)
         # The FILE is the translation unit: it carries its own annotation,
         # typedefs and declarations, and nothing is prepended to it.
+        import byte_match
+        text, origin = byte_match.unit_source(unit)
         self.assertEqual(
             (tool.REPO_ROOT / self.units[address]).read_text(errors="ignore"),
             text)
+        # AND IT SAYS WHERE IT CAME FROM. A file-mode landing is a real
+        # translation unit from a real directory - the vendored zlib says
+        # `#include "deflate.h"` - so the compile has to be given that
+        # directory, and the text alone cannot say which one it is.
+        self.assertEqual(str(self.units[address]), str(origin))
 
     def test_no_file_mode_row_refuses_for_want_of_a_closing_brace(self):
         """The exact false demotion, over the whole population.

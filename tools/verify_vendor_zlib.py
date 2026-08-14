@@ -42,9 +42,20 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+# The recovery wrappers are NOT part of the release. Each carries one
+# annotation and a single `#include` of the upstream file it claims, and they
+# live here rather than in a sibling directory because the compile is handed
+# THIS directory - see `byte_match.seed_context`. They are excluded by name so
+# that adding a fourteenth recovery does not read as tampering, while any edit
+# to an actual release file still does.
+WRAPPER = re.compile(r"^recovered_[0-9a-f]{8}\.c$")
+
+
 def present() -> list:
+    if not VENDOR.is_dir():
+        return []
     return sorted(p for p in VENDOR.iterdir()
-                  if p.suffix in (".c", ".h")) if VENDOR.is_dir() else []
+                  if p.suffix in (".c", ".h") and not WRAPPER.match(p.name))
 
 
 def recorded() -> dict:
