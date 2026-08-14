@@ -79,6 +79,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import re
 import sys
 from pathlib import Path
 
@@ -179,6 +180,54 @@ def _operand_similarity(original: bytes, base: int, rebuilt: bytes) -> float:
         return 0.0
 
 
+# The banner the emitter puts on every scaffold it writes, and the `FILE`
+# marker that says the whole file is the translation unit. Either one means
+# the text already carries its own typedefs, globals and declarations.
+SELF_CONTAINED = re.compile(
+    r"^// GENERATED SKELETON\b|^// ORIGINAL: 0x[0-9A-Fa-f]{8}[^\n]*\bFILE\b",
+    re.M)
+
+
+def complete_unit(body: str) -> str:
+    """`body` when it is ALREADY a whole translation unit, else "".
+
+    `--dir` scaffolded every candidate unconditionally, which double-declares
+    everything a FILE-mode candidate carries and reports NO_COMPILE on text
+    that compiles perfectly well. That is the same defect the bare path had
+    until `verify_verbatim` was added, and it is the reason two agents in one
+    batch wrote their own `dump_unit.py` to build a FILE-mode unit by hand.
+
+    Keyed on the CANDIDATE rather than on the landing, deliberately: an agent
+    iterating on a FILE-mode address may still hand this a bare body to score
+    quickly, and that one does need scaffolding. The text says which it is.
+    """
+    return body if SELF_CONTAINED.search(body) else ""
+
+
+def build_unit_text(address: int, body: str = None) -> str:
+    """The exact unit the gate will compile - scaffolding, declfix and body.
+
+    Exposed as a command because agents keep rebuilding it themselves. Two in
+    one batch wrote a private script that calls `writeback.build_unit`, which
+    is the right function and the wrong place for it to live: a second spelling
+    of the gate's own recipe is the shape this tree keeps finding defects in.
+    """
+    import pefile
+    functions = emit.load_functions()
+    if body is None:
+        annotation = file_mode_annotation(address)
+        if annotation is not None:
+            return annotation.region
+        body, source = committed_body(address)
+        if body is None:
+            raise SystemExit(f"SKIP: {source}")
+    if complete_unit(body):
+        return body
+    return writeback.build_unit(
+        address, body, functions, emit.load_callees(), emit.load_derived(),
+        pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True))
+
+
 def score_all(address: int, bodies: dict) -> list:
     """[(name, verdict)] for every candidate, best first.
 
@@ -219,8 +268,8 @@ def score_all(address: int, bodies: dict) -> list:
             refused[name] = {"tier": "REFUSED", "refusal_reason": blocked[0]}
             continue
         try:
-            prepared[name] = writeback.build_unit(address, body, functions,
-                                                  callees, derived, scaffolding_pe)
+            prepared[name] = complete_unit(body) or writeback.build_unit(
+                address, body, functions, callees, derived, scaffolding_pe)
         except emit.Unsettled as error:
             refused[name] = {"tier": "REFUSED",
                              "refusal_reason": f"no scaffolding: {error}"}
@@ -423,6 +472,9 @@ def main(argv=None) -> int:
                         help="with --body: also score what is committed and "
                              "refuse a candidate that is WORSE")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--dump-unit", action="store_true",
+                        help="print the exact unit the gate compiles and stop; "
+                             "with --body, the unit that body would produce")
     arguments = parser.parse_args(argv)
 
     try:
@@ -437,6 +489,14 @@ def main(argv=None) -> int:
             print("error: --dir and --body are alternatives", file=sys.stderr)
             return 2
         return rank_directory(address, arguments.dir, arguments.json)
+
+    if arguments.dump_unit:
+        candidate = None
+        if arguments.body:
+            candidate = (sys.stdin.read() if arguments.body == "-"
+                         else Path(arguments.body).read_text())
+        sys.stdout.write(build_unit_text(address, candidate))
+        return 0
 
     if arguments.body:
         body = (sys.stdin.read() if arguments.body == "-"

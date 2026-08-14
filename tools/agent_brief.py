@@ -394,8 +394,14 @@ def landing_mode(scaffolding: str) -> str:
         "  recoveries were lost this way on 2026-08-13.\n"
         "- Score it with a bare `verify_recovered_function.py 0x...`, which\n"
         "  compiles the committed file verbatim - the same bytes the gate\n"
-        "  will compile. `--body` and `--dir` regenerate scaffolding and will\n"
-        "  double-declare what this file already has.\n\n")
+        "  will compile. `--dir` understands this too: a candidate carrying\n"
+        "  its own `FILE` marker or scaffold banner is compiled as it stands,\n"
+        "  and a bare body in the same directory is still scaffolded, so you\n"
+        "  can mix both. `--body` always scaffolds.\n"
+        "- `--dump-unit` prints the exact text the gate will compile. Use it\n"
+        "  instead of writing your own; two agents have already written that\n"
+        "  script, and a second spelling of the gate's recipe is how the two\n"
+        "  drift apart.\n\n")
 
 
 # `mov al, 1` then `test al, cl` - the mask held in its OWN register across

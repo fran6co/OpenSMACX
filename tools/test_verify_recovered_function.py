@@ -329,5 +329,36 @@ class FormReportScopeTests(unittest.TestCase):
         self.assertEqual(len(body), len(verifier.code_only(body)))
 
 
+class CompleteUnitTests(unittest.TestCase):
+    """`--dir` scaffolded every candidate, including the ones that are units.
+
+    A FILE-mode candidate carries its own typedefs, globals, declarations and
+    classes; wrapping it in scaffolding double-declares all of them and reports
+    NO_COMPILE on text that compiles. It is the same defect the bare path had
+    until `verify_verbatim`, and it is why two agents in one batch wrote their
+    own script to build a FILE-mode unit by hand.
+    """
+
+    def test_a_generated_scaffold_is_already_a_unit(self):
+        self.assertTrue(verifier.complete_unit(
+            "// GENERATED SKELETON - tools/emit_translation_unit.py\n"
+            "int f() { return 1; }\n"))
+
+    def test_a_file_marker_says_so_too(self):
+        self.assertTrue(verifier.complete_unit(
+            "// ORIGINAL: 0x00401000 BYTE_EXACT FILE\nint f() { return 1; }\n"))
+
+    def test_a_bare_body_still_gets_scaffolding(self):
+        # KEYED ON THE CANDIDATE, not on the landing: an agent iterating on a
+        # FILE-mode address may hand over a bare body to score quickly, and
+        # that one does need the scaffold.
+        self.assertEqual("", verifier.complete_unit(
+            "int AlphaMovie::on_modal() { return 0; }\n"))
+
+    def test_a_body_mode_marker_is_not_a_complete_unit(self):
+        self.assertEqual("", verifier.complete_unit(
+            "// ORIGINAL: 0x00401000 BYTE_EXACT\nint f() { return 1; }\n"))
+
+
 if __name__ == "__main__":
     unittest.main()
