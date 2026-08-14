@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00615840 FILE
+// RULED-OUT: direct switch(key16) transcription with per-case pointer-offset
+//            math and VCall::slot062() dispatch compiles and follows control
+//            flow faithfully, but register allocation across the ~8-case
+//            switch differs from the original from instruction #0 (prologue
+//            push order); not chased further given function size.
 // working copy - scaffold materialised by --work
 // name      ?on_key_down@EditBox@@QAEHH@Z
 // size      1331 bytes
@@ -1428,7 +1433,7 @@ class Font { public:
 };
 
 extern "C" char *strchr(const char *, int);
-extern "C" int __cdecl memcpy_0();
+extern "C" void *__cdecl memcpy_0(void *, const void *, unsigned int);
 extern "C" unsigned int strlen(const char *);
 
 // Vtable shim. VC6 rejects a free `__thiscall` function pointer
@@ -1509,9 +1514,8 @@ class VCall { public:
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00615d74 = (int *)0x00615D74;
-static int *const g_00615d90 = (int *)0x00615D90;
-static int *const g_006692ec = (int *)0x006692EC;
+typedef int (__stdcall *FnMessageBeep)(unsigned int);
+static FnMessageBeep *const g_006692ec = (FnMessageBeep *)0x006692EC;
 
 class EditBox { public:
     uint8_t pad_0_[0xB48];
@@ -1521,11 +1525,201 @@ class EditBox { public:
     int on_key_down(int);
 };
 int EditBox::on_key_down(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
+    unsigned key = static_cast<unsigned>(a1);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    if (key == 9)
+        return 0;
+
+    *reinterpret_cast<int *>(self + 0xb38) = 0;
+    if (key & 0x10000)
+        *reinterpret_cast<int *>(self + 0xb38) = 1;
+    if (key & 0x20000)
+        *reinterpret_cast<int *>(self + 0xb38) |= 2;
+
+    unsigned key16 = key & 0xffff;
+    if (key16 - 8 > 0x5e)
+        return 0;
+
+    switch (key16) {
+    case 8: {  // VK_BACK
+        if (*reinterpret_cast<int *>(self + 0xb38) != 0) {
+            (*g_006692ec)(0);
+            return 1;
+        }
+        int cur = *reinterpret_cast<int *>(self + 0xb44);
+        int mark = *reinterpret_cast<int *>(self + 0xb40);
+        if (mark == cur) {
+            if (cur == 0) {
+                (*g_006692ec)(0);
+                return 1;
+            }
+            if (*reinterpret_cast<unsigned char *>(self + 0xa14 + cur) == 0) {
+                *reinterpret_cast<char *>(self + 0xa13 + cur) = 0;
+            } else {
+                unsigned len = strlen(self + 0xa14 + cur);
+                memcpy_0(self + 0xa13 + cur, self + 0xa14 + cur, len + 1);
+            }
+        } else if (mark < cur) {
+            unsigned len = strlen(self + 0xa14 + cur);
+            memcpy_0(self + 0xa14 + mark, self + 0xa14 + cur, len + 1);
+            *reinterpret_cast<int *>(self + 0xb44) = mark + 1;
+        } else {  // mark > cur
+            unsigned len = strlen(self + 0xa14 + mark);
+            memcpy_0(self + 0xa14 + cur, self + 0xa14 + mark, len + 1);
+            *reinterpret_cast<int *>(self + 0xb44) = cur + 1;
+        }
+        int newCur = *reinterpret_cast<int *>(self + 0xb44) - 1;
+        *reinterpret_cast<int *>(self + 0xb44) = newCur;
+        *reinterpret_cast<int *>(self + 0xb40) = newCur;
+        if (newCur < *reinterpret_cast<int *>(self + 0xb18))
+            *reinterpret_cast<int *>(self + 0xb18) = newCur;
+        reinterpret_cast<VCall *>(this)->slot062();
+        return 1;
+    }
+    case 0x23: {  // VK_END
+        char *textEnd = self + 0xa14;
+        unsigned len = strlen(textEnd);
+        *reinterpret_cast<unsigned *>(self + 0xb44) = len;
+        if ((*reinterpret_cast<unsigned char *>(self + 0xb38) & 1) == 0)
+            *reinterpret_cast<unsigned *>(self + 0xb40) = len;
+
+        char *p = textEnd + len;
+        if (p > textEnd) {
+            for (;;) {
+                int widthLimit = *reinterpret_cast<int *>(self + 0x4c4);
+                int tw = reinterpret_cast<Buffer *>(self + 0x444)->text_width(p);
+                widthLimit -= *reinterpret_cast<int *>(self + 0xb34) * 2;
+                if (tw >= widthLimit)
+                    break;
+                --p;
+                if (!(p > textEnd))
+                    break;
+            }
+        }
+        if (p != textEnd)
+            ++p;
+        *reinterpret_cast<int *>(self + 0xb18) = static_cast<int>(p - self - 0xa14);
+        reinterpret_cast<VCall *>(this)->slot062();
+        return 1;
+    }
+    case 0x24: {  // VK_HOME
+        *reinterpret_cast<int *>(self + 0xb44) = 0;
+        if ((*reinterpret_cast<unsigned char *>(self + 0xb38) & 1) == 0)
+            *reinterpret_cast<int *>(self + 0xb40) = 0;
+        *reinterpret_cast<int *>(self + 0xb18) = 0;
+        reinterpret_cast<VCall *>(this)->slot062();
+        return 1;
+    }
+    case 0x25:
+    case 0x64: {  // VK_LEFT / VK_NUMPAD4
+        int cursor = *reinterpret_cast<int *>(self + 0xb44);
+        if (cursor == 0) {
+            if ((*reinterpret_cast<unsigned char *>(self + 0xb38) & 1) != 0)
+                return 1;
+            *reinterpret_cast<int *>(self + 0xb40) = 0;
+            reinterpret_cast<VCall *>(this)->slot062();
+            return 1;
+        }
+        unsigned flags = *reinterpret_cast<unsigned *>(self + 0xb38);
+        int delta = cursor;
+        if ((flags & 2) == 0) {
+            delta = 1;
+        } else if (*reinterpret_cast<unsigned char *>(self + 0xa13 + cursor) == ' ') {
+            delta = 1;
+        } else {
+            char *p = self + 0xa13 + cursor;
+            char *limit = self + 0xa14;
+            if (p > limit) {
+                for (;;) {
+                    if (*p == ' ')
+                        break;
+                    --p;
+                    if (!(p > limit))
+                        break;
+                }
+            }
+            if (p != 0)
+                delta = (cursor - reinterpret_cast<int>(p)) + reinterpret_cast<int>(self) + 0xa14;
+        }
+        int newPos = cursor - delta;
+        *reinterpret_cast<int *>(self + 0xb44) = newPos;
+        if (newPos < *reinterpret_cast<int *>(self + 0xb18))
+            *reinterpret_cast<int *>(self + 0xb18) = newPos;
+        if ((flags & 1) == 0)
+            *reinterpret_cast<int *>(self + 0xb40) = newPos;
+        reinterpret_cast<VCall *>(this)->slot062();
+        return 1;
+    }
+    case 0x27:
+    case 0x66: {  // VK_RIGHT / VK_NUMPAD6
+        unsigned flags = *reinterpret_cast<unsigned char *>(self + 0xb38);
+        int cursor = *reinterpret_cast<int *>(self + 0xb44);
+        int delta;
+        if ((flags & 2) == 0) {
+            delta = 1;
+        } else if (*reinterpret_cast<unsigned char *>(self + 0xa14 + cursor) == ' ') {
+            delta = 1;
+        } else {
+            char *found = strchr(self + 0xa14 + cursor, ' ');
+            if (found == 0)
+                delta = static_cast<int>(strlen(self + 0xa14 + cursor));
+            else
+                delta = static_cast<int>(found - self - cursor - 0xa13);
+        }
+        int newPos = cursor + delta;
+        *reinterpret_cast<int *>(self + 0xb44) = newPos;
+        if (*reinterpret_cast<unsigned char *>(self + 0xa13 + newPos) != 0)
+            goto textfits_027;
+        {
+            unsigned len = strlen(self + 0xa14);
+            unsigned maxLen = *reinterpret_cast<unsigned *>(self + 0xb14);
+            if (len == maxLen) {
+                (*g_006692ec)(0);
+                return 1;
+            }
+            *reinterpret_cast<char *>(self + 0xa13 + newPos) = ' ';
+            *reinterpret_cast<char *>(self + 0xa14 + newPos) = 0;
+        }
+textfits_027:
+        while (!this->text_fits())
+            ++*reinterpret_cast<int *>(self + 0xb18);
+        if ((flags & 1) == 0)
+            *reinterpret_cast<int *>(self + 0xb40) = *reinterpret_cast<int *>(self + 0xb44);
+        reinterpret_cast<VCall *>(this)->slot062();
+        return 1;
+    }
+    case 0x2e: {  // VK_DELETE
+        if (*reinterpret_cast<int *>(self + 0xb38) != 0) {
+            (*g_006692ec)(0);
+            return 1;
+        }
+        int cur = *reinterpret_cast<int *>(self + 0xb44);
+        int mark = *reinterpret_cast<int *>(self + 0xb40);
+        if (mark == cur) {
+            if (*reinterpret_cast<unsigned char *>(self + 0xa14 + cur) == 0) {
+                (*g_006692ec)(0);
+                return 1;
+            }
+            char *base = self + cur;
+            unsigned len = strlen(base + 0xa15);
+            memcpy_0(base + 0xa14, base + 0xa15, len + 1);
+        } else if (mark > cur) {
+            unsigned len = strlen(self + 0xa14 + mark);
+            memcpy_0(self + 0xa14 + cur, self + 0xa14 + mark, len + 1);
+        } else {  // mark < cur
+            unsigned len = strlen(self + 0xa14 + cur);
+            memcpy_0(self + 0xa14 + mark, self + 0xa14 + cur, len + 1);
+            *reinterpret_cast<int *>(self + 0xb44) = mark;
+        }
+        int newCur = *reinterpret_cast<int *>(self + 0xb44);
+        *reinterpret_cast<int *>(self + 0xb40) = newCur;
+        if (newCur < *reinterpret_cast<int *>(self + 0xb18))
+            *reinterpret_cast<int *>(self + 0xb18) = newCur;
+        reinterpret_cast<VCall *>(this)->slot062();
+        return 1;
+    }
+    default:
+        return 0;
+    }
 }
