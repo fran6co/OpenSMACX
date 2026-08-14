@@ -539,12 +539,52 @@ def _proved_body(lines: list) -> str:
     return "\n".join(lines[index:]).strip() + "\n"
 
 
+# {root: (stamp, annotations)} for the process. Keyed on what the files ARE,
+# not on having been asked before - see `scan_tree`.
+_TREE_CACHE = {}
+
+
+def tree_stamp(root: Path = SRC_ROOT) -> tuple:
+    """(path, mtime, size) for every file `scan_tree` would read.
+
+    Stat-ing 3,500 files costs about ten milliseconds; reading and parsing
+    them costs two and a half seconds. That gap is the whole reason this
+    exists, and the stamp is the same triple every build system trusts to
+    decide whether a file changed.
+    """
+    out = []
+    for path in sorted(Path(root).rglob("*.cpp")):
+        try:
+            info = path.stat()
+        except OSError:
+            continue
+        out.append((str(path), info.st_mtime_ns, info.st_size))
+    return tuple(out)
+
+
 def scan_tree(root: Path = SRC_ROOT) -> list:
-    """Every annotation under `root`, deterministic order."""
+    """Every annotation under `root`, deterministic order.
+
+    MEMOISED ON THE FILES THEMSELVES, because the callers are layered and
+    each one asks independently. `agent_brief` for a single address called
+    this TEN times and `project_catalogue.from_source` nine, at 2.6 s a call -
+    41 s for a brief whose own work is a few hundred milliseconds. The layers
+    are right; asking again is not.
+
+    Keyed on the stamp rather than on the argument, so a tool that WRITES a
+    recovery and re-scans - which `writeback` does - sees its own edit. A
+    plain `lru_cache` here would hand it the tree as it was before the write,
+    and the verdict it published would describe code that no longer exists.
+    """
+    stamp = tree_stamp(root)
+    hit = _TREE_CACHE.get(str(root))
+    if hit is not None and hit[0] == stamp:
+        return hit[1]
     found = []
     for path in sorted(Path(root).rglob("*.cpp")):
         found.extend(scan_file(path))
     found.sort(key=lambda ann: (ann.path, ann.line, ann.address))
+    _TREE_CACHE[str(root)] = (stamp, found)
     return found
 
 

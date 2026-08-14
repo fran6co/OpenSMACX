@@ -885,6 +885,7 @@ def _method_types(text: str) -> set:
     return out
 
 
+@functools.lru_cache(maxsize=None)
 def methods_of(name: str) -> list:
     """[(declaration, method name, types it names)] for `src/`'s methods.
 
@@ -955,12 +956,15 @@ def methods_of(name: str) -> list:
     return out
 
 
+@functools.lru_cache(maxsize=None)
 def method_types(name: str) -> set:
     """Types `name`'s imported methods mention, to forward-declare ahead."""
     out = set()
     for _, _, types in methods_of(name):
         out |= types
-    return out - SCALAR
+    # FROZEN: the result is cached and shared, and a caller that mutated it
+    # would corrupt every later lookup.
+    return frozenset(out - SCALAR)
 
 
 if __name__ == "__main__":

@@ -104,8 +104,18 @@ def catalogue(path: Path = None) -> dict:
     return rows
 
 
+# {root: (stamp, rows)}, keyed the same way `annotation_scan.scan_tree` is.
+_SOURCE_CACHE = {}
+
+
 def from_source(src: Path = None) -> dict:
     """The catalogue, read back out of `src/` - the same shape `emit` returns.
+
+    MEMOISED ON THE FILES, for the reason `scan_tree` gives at length: this is
+    the layer every tool starts from, and one `agent_brief` invocation reached
+    it nine times. The stamp is `annotation_scan.tree_stamp`, so a caller that
+    writes a recovery and reads the catalogue back gets its own edit; nothing
+    here is keyed on merely having been asked before.
 
     This is the direction that makes the export deletable. Every annotation
     carries its own facts and `--check` holds them to the export, so reading
@@ -113,6 +123,10 @@ def from_source(src: Path = None) -> dict:
     store instead of a CSV.
     """
     root = src or (REPO_ROOT / "src")
+    stamp = annotation_scan.tree_stamp(root)
+    hit = _SOURCE_CACHE.get(str(root))
+    if hit is not None and hit[0] == stamp:
+        return hit[1]
     rows = {}
     # `recovery_state` was never a fact ABOUT a function: the exporter derived
     # it from `src/` and wrote it back into the CSV. Deriving it HERE, once,
@@ -182,6 +196,7 @@ def from_source(src: Path = None) -> dict:
             "priority": "",
             "comments": "",
         }
+    _SOURCE_CACHE[str(root)] = (stamp, rows)
     return rows
 
 
