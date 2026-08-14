@@ -431,8 +431,46 @@ def file_scope(path: Path) -> dict:
     return out
 
 
+COMMENT_OR_STRING = re.compile(
+    r'//[^\n]*'                      # line comment
+    r'|/\*.*?\*/'                    # block comment
+    r'|"(?:\\.|[^"\\])*"'            # string literal
+    r"|'(?:\\.|[^'\\])*'",           # character literal
+    re.S)
+
+
+@functools.lru_cache(maxsize=8)
+def _code_only(text: str) -> str:
+    """`text` with its comments blanked out.
+
+    A NAME IN A COMMENT IS NOT A DECLARATION, and `_present` used to count it
+    as one. `src/original_seam.h` documents itself with
+
+        typedef void(__thiscall func_buffer_line)(Buffer *, int, int, int, int);
+
+    inside a `/* ... */`, and the day that header started being spliced into
+    the unit, `_present("Buffer", scaffolding)` answered yes for every unit in
+    the tree. `GraphicWin`'s definition was then emitted with `Buffer buffer_;`
+    and no `Buffer` anywhere - `C2079: uses undefined class` - which took
+    `??1TextureStore@@QAE@XZ` from BYTE_EXACT to NO_COMPILE. The ratchet
+    caught it; nothing else would have.
+
+    ONE LEFT-TO-RIGHT PASS, because the forms are mutually exclusive and a
+    per-form pass is not. Stripping `/*...*/` first and `//...` second reads
+    a `/*` that only appears INSIDE a line comment as a real comment opener
+    and swallows everything up to the next `*/` - real declarations included.
+    This is not hypothetical: the scaffolding for 0x00483E80 holds 8 `/*`
+    against 6 `*/`, so the naive order deleted live code and the unit gained
+    a SECOND definition of six classes, `C2011: type redefinition`. String and
+    character literals join the alternation for the same reason - a `//`
+    inside one opens no comment.
+    """
+    return COMMENT_OR_STRING.sub(
+        lambda hit: "" if hit.group()[0] == "/" else hit.group(), text)
+
+
 def _present(name: str, text: str) -> bool:
-    return re.search(rf"\b{re.escape(name)}\b", text) is not None
+    return re.search(rf"\b{re.escape(name)}\b", _code_only(text)) is not None
 
 
 @functools.lru_cache(maxsize=1)

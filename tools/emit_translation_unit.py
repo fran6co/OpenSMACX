@@ -142,6 +142,57 @@ typedef unsigned int UINT;
 """
 
 _CONSTANTS_CACHE = None
+_SEAM_CACHE = None
+SEAM_HEADER = REPO_ROOT / "src" / "original_seam.h"
+TEARDOWN_HEADER = REPO_ROOT / "src" / "vector_teardown.h"
+
+
+def _spliced(path: Path) -> str:
+    """A layout-free header, minus the lines that mean nothing in a fragment."""
+    return "\n".join(
+        line for line in path.read_text().splitlines()
+        if line.strip() != "#pragma once"
+        and not line.strip().startswith("#include")).strip()
+
+
+def teardown_header() -> str:
+    """`src/vector_teardown.h`, spliced for the same reason as the seam.
+
+    Declarations only - two iterator seams, a teardown pointer-to-member and
+    the game's `operator new` - so it emits no code either. It includes
+    `original_seam.h`, so whatever splices this must splice that first.
+    """
+    return ("\n// Spliced verbatim from src/vector_teardown.h. See "
+            "seam_header().\n" + _spliced(TEARDOWN_HEADER) + "\n")
+
+
+def seam_header() -> str:
+    """`src/original_seam.h`, spliced rather than restated.
+
+    Fifty NO_COMPILE bodies stop on `original_slot` and nine more on
+    `original_address`: both are defined in this header, every recovered
+    source that calls into the original image includes it, and the scaffold -
+    which is a standalone unit and includes nothing from src/ - did not. So
+    these bodies compile in the build and fail only under measurement, which
+    makes it a harness defect reported as a body defect.
+
+    SPLICED, NOT COPIED INTO `PRELUDE`, and the distinction is the whole
+    point: a copy is a second definition of the seam that nothing keeps equal
+    to the first, and the failure mode is a unit that measures a body against
+    a seam the build does not use. The header is uniquely suited to it - it
+    includes nothing, declares no layout, and emits no code: one incomplete
+    class, three templates and a macro. Nothing here can change a byte the
+    subject compiles to, which is what makes splicing it wholesale safe.
+    """
+    global _SEAM_CACHE
+    if _SEAM_CACHE is not None:
+        return _SEAM_CACHE
+    _SEAM_CACHE = ("\n// Spliced verbatim from src/original_seam.h so the unit "
+                   "calls into the\n// original image exactly as the build "
+                   "does. See seam_header().\n" + _spliced(SEAM_HEADER) + "\n")
+    return _SEAM_CACHE
+
+
 CONSTANT_IN_ENUM = re.compile(
     r"^\s*([A-Z][A-Z0-9_]{2,})\s*=\s*(-?(?:0[xX][0-9a-fA-F]+|\d+))\s*,?\s*(?://.*)?$")
 CONSTANT_CONSTEXPR = re.compile(
@@ -1367,6 +1418,37 @@ BY_VALUE_MEMBER = re.compile(
     r"([A-Z]\w*)\s+\w+\s*(?:\[[^\]]*\])?\s*;$")
 
 
+def layout_dependencies(name) -> list:
+    """By-value member types in the text that will actually be emitted.
+
+    Module level rather than nested inside `by_value_first`, because the
+    Module level rather than nested inside `by_value_first`, so the same
+    edges can be read by anything that needs them - `src_declarations` emits
+    layouts of its own and has to declare what they name.
+    """
+    # A BASE MUST BE COMPLETE at the derived definition, exactly as a
+    # by-value member must, and once the shell carries a base clause the
+    # base's members are no longer inlined into it - so the edge that used
+    # to arrive through the flattened member list has to arrive here
+    # instead, or the derived class is emitted above its own base.
+    found = list(class_layouts.layout_bases(name))
+    bases = set(found)
+    for line in (class_layouts.own_declaration_for(name) if bases
+                 else class_layouts.declaration_for(name)) or ():
+        stripped = line.strip()
+        # `Type name_;` and `Type name_[N];` need Type COMPLETE.
+        # `Type *name_;` does not - the forward declaration above is
+        # enough - and a function-pointer member is not a member type.
+        if "*" in stripped or "(" in stripped:
+            continue
+        match = BY_VALUE_MEMBER.match(stripped)
+        if match:
+            found.append(match.group(1))
+    for type_, _, _ in class_layouts.pinned_layouts().get(name, ()):
+        if "*" not in type_:
+            found.append(type_.replace("const", "").strip())
+    return found
+
 def by_value_first(names) -> list:
     """Order class definitions so a by-value member's type comes first.
 
@@ -1391,31 +1473,7 @@ def by_value_first(names) -> list:
     to read the same text.
     """
     ordered, placed = [], set()
-
-    def dependencies(name) -> list:
-        """By-value member types in the text that will actually be emitted."""
-        # A BASE MUST BE COMPLETE at the derived definition, exactly as a
-        # by-value member must, and once the shell carries a base clause the
-        # base's members are no longer inlined into it - so the edge that used
-        # to arrive through the flattened member list has to arrive here
-        # instead, or the derived class is emitted above its own base.
-        found = list(class_layouts.layout_bases(name))
-        bases = set(found)
-        for line in (class_layouts.own_declaration_for(name) if bases
-                     else class_layouts.declaration_for(name)) or ():
-            stripped = line.strip()
-            # `Type name_;` and `Type name_[N];` need Type COMPLETE.
-            # `Type *name_;` does not - the forward declaration above is
-            # enough - and a function-pointer member is not a member type.
-            if "*" in stripped or "(" in stripped:
-                continue
-            match = BY_VALUE_MEMBER.match(stripped)
-            if match:
-                found.append(match.group(1))
-        for type_, _, _ in class_layouts.pinned_layouts().get(name, ()):
-            if "*" not in type_:
-                found.append(type_.replace("const", "").strip())
-        return found
+    dependencies = layout_dependencies
 
     def place(name, seen):
         if name in placed or name in seen:
@@ -1724,6 +1782,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         "// emitter computes declarations; it does not carry lessons.",
         "",
         PRELUDE.rstrip(),
+        seam_header().rstrip(),
         game_constants().rstrip(),
         "",
     ]
