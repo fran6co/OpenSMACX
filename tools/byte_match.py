@@ -204,6 +204,16 @@ FLAG_SETS = (MEASURED_FLAGS, FRAMELESS_FLAGS, SIZE_FLAGS,
 TIER_ORDER = ("BYTE_EXACT", "SHAPE_EXACT", "MNEMONIC_ONLY", "MISMATCH",
               "NO_COMPILE", "SHARED_TAIL", "REFUSED")
 
+# THE TIERS NO BODY CAN EVER LEAVE, which is a different thing from a body
+# that has not been written yet. `REFUSED` is decided before a compiler is
+# reached at all - copy-protection the project has decided not to express,
+# self-modifying spans, an address that is not a function. `SHARED_TAIL` is a
+# COMDAT-folded span up to thirteen functions claim, where a per-function
+# verdict is not merely unknown but undefined. A reader of a match rate needs
+# to tell a wall from a miss, and summing them into one denominator is what
+# stops them.
+UNSCOREABLE_TIERS = ("SHARED_TAIL", "REFUSED")
+
 
 def recovery_exit_code(tier: str) -> int:
     """Only byte equality is a successful recovery-verification result."""

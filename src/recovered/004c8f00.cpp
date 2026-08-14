@@ -36,8 +36,8 @@ int VoiceTx::stop() {
         }
         *reinterpret_cast<uint32_t *>(self + 0x54) &= 0xfffffffe;
         reinterpret_cast<Wave_Device *>(g_0090d978)->enable();
-        if (field_3c_) {
-            return reinterpret_cast<VCall2 *>(field_3c_)->slot008();
+        if (field_3C_) {
+            return reinterpret_cast<VCall2 *>(field_3C_)->slot008();
         }
     }
     return 0;
