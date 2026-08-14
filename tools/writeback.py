@@ -327,6 +327,10 @@ def build_unit(address: int, body: str, functions: dict, callees: dict,
     # See `emit.without_globals_the_body_declares`: the body's spelling is the
     # one that was measured, and two spellings of one name is C2373.
     scaffolding = emit.without_globals_the_body_declares(scaffolding, body)
+    # A CLASS THE BODY DEFINES IS NOT THE SCAFFOLD'S TO DEFINE either, and for
+    # the same reason: two declarations of one name is C2011 and kills the
+    # unit. See `emit.without_classes_the_body_defines`.
+    scaffolding = emit.without_classes_the_body_defines(scaffolding, body)
     return fix_declarations(scaffolding, callee_rows) + "\n" + body
 
 

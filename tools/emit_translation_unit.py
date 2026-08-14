@@ -1366,6 +1366,59 @@ def static_for(entry) -> str:
         else ""
 
 
+# `class Foo {` / `struct Foo : Bar {` at column zero - a DEFINITION, not a
+# forward declaration.
+TOP_LEVEL_DEFINITION = re.compile(
+    r"^(?:class|struct)\s+(\w+)\s*(?::[^{;]*)?\{", re.M)
+
+
+def classes_defined_in(text: str) -> set:
+    """Class names `text` DEFINES, ignoring comments and string literals."""
+    stripped = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)
+    stripped = re.sub(r"//[^\n]*", " ", stripped)
+    return set(TOP_LEVEL_DEFINITION.findall(stripped))
+
+
+def without_classes_the_body_defines(scaffolding: str, body: str) -> str:
+    """Drop scaffold class DEFINITIONS the body defines for itself.
+
+    A BODY THAT DECLARES ITS OWN BASE IS DOING THE RIGHT THING. 0x0062C010 is
+    BYTE_EXACT precisely because it writes `class BaseButton { public:
+    ~BaseButton(); };` and calls through it - a declared, never-defined
+    destructor becomes the `jmp` the original has. When the scaffold also
+    emits BaseButton, that is `C2011: 'BaseButton' : 'class' type
+    redefinition` and the whole unit dies.
+
+    Measured 2026-08-14: this is the mechanism behind the base-clause
+    experiment that broke 112 claimed-byte-exact bodies, which I had recorded
+    as COMDAT folding on the strength of an error string rather than a
+    compile. It is not about destructors or folding. It is two declarations of
+    one name.
+
+    THE DEFINITION GOES, THE NAME STAYS. A forward declaration is left behind
+    so scaffold code above that only points at the type still compiles; code
+    needing it COMPLETE will fail - but it fails today too, with the whole
+    unit, so this is strictly better and never worse.
+    """
+    defined = classes_defined_in(body) & classes_defined_in(scaffolding)
+    if not defined:
+        return scaffolding
+    out, skipping = [], None
+    for line in scaffolding.splitlines():
+        if skipping is None:
+            hit = TOP_LEVEL_DEFINITION.match(line)
+            if hit and hit.group(1) in defined:
+                skipping = hit.group(1)
+                keyword = line.split()[0]
+                out.append(f"{keyword} {skipping};   "
+                           f"// defined by the body below")
+                continue
+            out.append(line)
+        elif line.startswith("};"):
+            skipping = None
+    return "\n".join(out) + "\n"
+
+
 def imported_methods(name: str, catalogued: set) -> list:
     """`src/`'s declarations for `name`'s methods, minus the catalogued ones.
 
