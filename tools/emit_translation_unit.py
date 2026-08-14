@@ -1439,7 +1439,7 @@ def imported_methods(name: str, catalogued: set) -> list:
 
 
 def emit(address: int, functions: dict, derived: dict, callees: dict,
-         pe, scaffolding_only: bool = False) -> str:
+         pe, scaffolding_only: bool = False, body: str = "") -> str:
     """The unit. With `scaffolding_only`, everything EXCEPT the subject's
     definition, so a caller can append a body it already has - which is what
     the census does with the 2,518 bodies already committed under `src/`."""
@@ -1447,6 +1447,9 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     if row is None:
         raise Unsettled(f"0x{address:08X} is not a catalogued function")
     keys = class_keys(functions)
+    # Classes the BODY defines for itself, so this scaffold neither defines
+    # nor inherits from them. Empty for a bare scaffold.
+    body_defines = classes_defined_in(body) if body else set()
 
     def declare(name: str, opening: bool) -> str:
         # `class X { public:` and `struct X {` differ only in default access,
@@ -1487,7 +1490,17 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         if name != signature.klass and \
                 signature.klass in class_layouts.base_chain(name):
             return []
-        return class_layouts.layout_bases(name)
+        bases = class_layouts.layout_bases(name)
+        # A BASE THE BODY DEFINES IS NOT A BASE THIS SCAFFOLD MAY NAME.
+        # `without_classes_the_body_defines` removes the colliding DEFINITION
+        # and leaves a forward declaration, which turns `C2011: type
+        # redefinition` into `C2504: base class undefined` for any shell that
+        # inherits it - reproduced on 0x0062C010 with `sizeof(PushButton)`
+        # pinned. The flat form carries the base's members, so the layout is
+        # unchanged and only the spelling is.
+        if bases and body_defines & set(bases):
+            return []
+        return bases
 
     def embeds_the_subject(name: str) -> bool:
         """Does `name` hold the SUBJECT's class by value?

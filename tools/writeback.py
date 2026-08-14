@@ -320,7 +320,7 @@ def build_unit(address: int, body: str, functions: dict, callees: dict,
     from declfix import fix_declarations
 
     scaffolding = emit.emit(address, functions, derived, callees, pe_fast,
-                            scaffolding_only=True)
+                            scaffolding_only=True, body=body)
     callee_rows = [functions[target] for target in callees.get(address, [])
                    if target in functions]
     # A GLOBAL THE BODY DECLARES ITSELF IS NOT THE SCAFFOLD'S TO DECLARE.

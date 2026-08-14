@@ -52,3 +52,4 @@ class DLLEXPORT PushButton : public BaseButton {
   uint32_t field_AF8_;  // 0xAF8
   uint32_t field_AFC_;  // 0xAFC, the IDB's last member; the class ends 0xB00
 };
+static_assert(sizeof(PushButton) == 0xB00, "probe");
