@@ -867,6 +867,14 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(array-stride-tests
                                    test_derive_array_strides.py)
 
+    # A RETURN TYPE IS INHERITED by every caller the emitter declares, so one
+    # function spelled `void` that really returns a status corrupts scaffolding
+    # far beyond itself - 47 callers, when GraphicWin::init did it. The tests
+    # are the two controls that caught this detector being wrong in each
+    # direction: it must find Cursor::init and must NOT find base_production.
+    opensmacx_add_python_tool_test(void-return-tests
+                                   test_verify_void_returns.py)
+
     # The preamble that measurement compiles a body in. This one is load
     # bearing in an unusual direction: a WRONG declaration here does not fail,
     # it silently changes what is being measured, so the tests pin the two
