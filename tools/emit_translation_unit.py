@@ -195,10 +195,62 @@ def game_constants() -> str:
                     break
     lines = [f"const int {name} = {value};"
              for name, value in sorted(found.items()) if value is not None]
+    lines.extend(constant_tables())
     _CONSTANTS_CACHE = ("\n// Integer constants restated from src/*.h, which "
                         "this standalone unit cannot include.\n"
                         + "\n".join(lines) + "\n") if lines else ""
     return _CONSTANTS_CACHE
+
+
+# `const int RadiusOffsetX[] = { 1, 0, -1, ... };` - a whole TABLE of literals.
+# The same rule as a scalar constant, one dimension up.
+CONSTANT_TABLE = re.compile(
+    r"^(?:static\s+|DLLEXPORT\s+)*const\s+"
+    r"(?:int|short|char|int8_t|uint8_t|int16_t|uint16_t|int32_t|uint32_t)\s+"
+    r"(?P<name>\w+)\s*\[\s*\w*\s*\]\s*=\s*\{(?P<values>[^}]*)\}\s*;",
+    re.M)
+# Nothing but integer literals, signs, separators and whitespace. A table with
+# a NAME in it - `{ MaxPlayerNum, 0 }` - is not restated: the name may be one
+# this unit does have, and the moment it is not the table becomes a syntax
+# error in the prelude, which costs every body rather than the one that reads
+# the table.
+LITERAL_VALUES = re.compile(r"[\s,\-+0-9xXa-fA-F]*")
+
+
+def constant_tables() -> list:
+    """`const int NAME[] = {...};` for the literal tables src/*.h defines.
+
+    A CONSTANT ARRAY CANNOT BE REACHED BY DECLARATION. `const` at namespace
+    scope has internal linkage in C++, so `extern const int RadiusOffsetX[];`
+    does not name the header's array, and an unbounded extern array is
+    `C2036: unknown size` the moment it is subscripted. The values are the
+    only way in, and they are literals sitting in `src/map.h`.
+
+    137 bodies were blocked on five of these - the radius-offset walk that
+    every base-radius loop in the game uses.
+    """
+    out, found = [], {}
+    src = REPO_ROOT / "src"
+    if not src.is_dir():
+        return out
+    for header in sorted(src.glob("*.h")):
+        try:
+            text = header.read_text(errors="replace")
+        except OSError:
+            continue
+        for hit in CONSTANT_TABLE.finditer(text):
+            name, values = hit.group("name"), hit.group("values")
+            if not LITERAL_VALUES.fullmatch(values):
+                continue
+            spelled = " ".join(values.split())
+            if name in found and found[name] != spelled:
+                found[name] = None      # two headers disagree: emit neither
+            elif name not in found:
+                found[name] = spelled
+    for name, values in sorted(found.items()):
+        if values is not None:
+            out.append(f"const int {name}[] = {{{values}}};")
+    return out
 
 
 BUILTIN = {
