@@ -1,11 +1,12 @@
 // ORIGINAL: 0x005DD730 FILE
 // name      ?wrap@Buffer@@QAEHPADHHH@Z
 // size      492 bytes
-// spans     0x005DD730-0x005DD91A
+// spans     0x005DD730-0x005DD91C
 // prototype int (__thiscall ?wrap@Buffer@@QAEHPADHHH@Z)(Buffer* this, char *, int, int, int)
-// callers   ?   call targets   3
+// callers   8   call targets   3
 // kind      game
-// calls     0x005DC410 0x005DCAE0 0x00645470
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DCAE0 0x006453E0
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?wrap@Buffer@@QAEHPADHHH@Z  at 0x005DD730  (492 bytes)

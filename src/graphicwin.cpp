@@ -459,10 +459,10 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
          Win base, then size and initialise the window's own drawing surface
          and sync it to the active palette.
 ORIGINAL: 0x005D4EF0
-// name      ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
+// name      ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
 // size      443 bytes
 // spans     0x005D4EF0-0x005D5096;0x00662B34-0x00662B49
-// prototype int (__thiscall ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)
+// prototype int (__thiscall ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)
 // callers   47   call targets   9
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -471,17 +471,21 @@ Return Value: 0 on success; otherwise the nonzero failure code passed straight
               through from Win::init or from Buffer::init
 Status: Complete with temporary Win init/nonclient_to_client, GraphicWin
         compute_min_size and Buffer init dependencies
-Verification note: the catalogued mangled name
-        ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
-        spells the return type X, void, and that name is wrong - the bytes
-        return int. BaseButton::init calls this at 0x006072A2 and immediately
-        does `test eax, eax` / `jne 0x0060734C` at 0x006072A7, and all three
-        exits set EAX deliberately: the Win::init passthrough (`jne
+Verification note: this function returns int, and the catalogue used to spell
+        the name with an X - void. BaseButton::init calls it at 0x006072A2 and
+        immediately does `test eax, eax` / `jne 0x0060734C` at 0x006072A7, and
+        all three exits set EAX deliberately: the Win::init passthrough (`jne
         0x005D5083` at 0x005D500E), the Buffer::init passthrough (`jne
         0x005D5083` at 0x005D5071), and `xor eax, eax` at 0x005D5081. The
-        independent IDA prototype in docs/recovery/functions.csv already reads
-        `int (__thiscall ...)`, so only the symbol string is stale. Do not
-        "fix" this back to void on the strength of the name.
+        independent IDA prototype already read `int (__thiscall ...)`, so only
+        the symbol string was stale.
+        CORRECTED 2026-08-14 in tools/catalogue_corrections.py, and the
+        disagreement it came from is now a gate check, `return-agreement`.
+        This note asked its readers not to "fix" the return type back to void
+        on the strength of the name, and for as long as that was all it was,
+        the emitter went on declaring void to 47 callers - none of which could
+        then capture the failure code. A fact stated in a comment is one only a
+        human re-reader can act on.
 Verification note: three stores in the original have no counterpart here
         because they belong to the omitted C++ EH frame - the operator-new
         pointer spilled into the caller's sixth argument slot at 0x005D4FB3,

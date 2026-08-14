@@ -54,6 +54,49 @@ CORRECTIONS = {
         "?do_sound@@YAXXZ",
         "?do_sound@@YAHXZ",
         "body is `xor eax, eax; ret` - a void function would emit `ret` alone"),
+    # THE TREE ALREADY KNEW THIS AND COULD NOT ACT ON IT. src/graphicwin.cpp
+    # has carried the finding in prose since the body was recovered, ending
+    # "Do not 'fix' this back to void on the strength of the name" - and the
+    # emitter went on declaring it void, because a note in a .cpp file is not
+    # something a tool can read. Reported again by an agent in batch 10, which
+    # is the cost of leaving a fact stated instead of encoded.
+    #
+    # 47 callers inherit the wrong return type, and it is not a cosmetic one:
+    # a caller that cannot capture the failure code cannot early-return on it,
+    # so the divergence is in the control flow rather than in the byte order.
+    0x005D4EF0: (
+        "?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z",
+        "?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z",
+        "BaseButton::init calls it at 0x006072A2 and immediately tests the "
+        "result (`test eax, eax` / `jne` at 0x006072A7); all three exits set "
+        "EAX deliberately - the Win::init passthrough at 0x005D500E, the "
+        "Buffer::init passthrough at 0x005D5071, and `xor eax, eax` at "
+        "0x005D5081. The independent IDA prototype already reads int, so only "
+        "the symbol string is stale"),
+    # FOUND BY THE CHECK BELOW, not by an agent - the same family, four rows
+    # of it, in one class. Each of the four ends by COMPUTING a value into EAX
+    # and returning it: `neg eax; sbb eax, eax; and al, 0xfe; add eax, 2`,
+    # which yields 1 or 2. A void function does not build a number in EAX on
+    # the instruction before `ret`, and the idiom cannot be a register restore
+    # - `sbb eax, eax` reads the carry flag and exists only to make a value.
+    0x00616350: (
+        "?start@Time@@QAEXP6AXH@ZHHH@Z",
+        "?start@Time@@QAEHP6AXH@ZHHH@Z",
+        "tail is `and al, 0xfe; add eax, 2; ret 0x10` - a computed return; "
+        "0x0063C340 tests the result at 0x0063C356 with `test eax, eax`"),
+    0x006164D0: (
+        "?pulse@Time@@QAEXP6AXH@ZHHH@Z",
+        "?pulse@Time@@QAEHP6AXH@ZHHH@Z",
+        "tail is `and al, 0xfe; add eax, 2; ret 0x10`, the same computed "
+        "return as its `start` sibling"),
+    0x00616650: (
+        "?start@Time@@QAEXXZ",
+        "?start@Time@@QAEHXZ",
+        "tail is `neg eax; sbb eax, eax; and al, 0xfe; add eax, 2; ret`"),
+    0x006166C0: (
+        "?pulse@Time@@QAEXXZ",
+        "?pulse@Time@@QAEHXZ",
+        "tail is `neg eax; sbb eax, eax; and al, 0xfe; add eax, 2; ret`"),
     # The RETURN WIDTH is byte-visible, which is easy to miss because both
     # clears are two bytes. `xor al, al` is 32 C0 and `xor eax, eax` is 33 C0,
     # and VC6 emits the narrow one only for a `bool` return. Measured: an

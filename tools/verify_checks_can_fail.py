@@ -867,9 +867,39 @@ def damage_truncated_span(workspace):
             "--src", str(tree)]
 
 
+def damage_contradicted_return_type(workspace):
+    """A name spelling `void` for a body whose prototype returns int.
+
+    THE REAL DEFECT, reproduced: `?init@GraphicWin@@QAEX...` spelled `X` for a
+    body that returns a failure code, and 47 callers inherited `void` from it
+    because the emitter follows the name. The damaged tree holds ONE
+    annotation and the tool reads it through `project_catalogue.from_source`,
+    the same reader its unflagged invocation uses on `src/`.
+
+    The tool's population floor is deliberately NOT applied under `--src`, or
+    this case would "fail" for having one row rather than for the return type,
+    and would pass just as well with the check deleted.
+    """
+    source = REPO_ROOT / "src" / "unrecovered" / "00614fe0.cpp"
+    if not source.is_file():
+        raise Skip("0x00614FE0 is not annotated in this tree")
+    text = source.read_text(encoding="utf-8")
+    intact, voided = "@@QAEHHHHHPAUWin@@H@Z", "@@QAEXHHHHPAUWin@@H@Z"
+    if intact not in text:
+        raise Skip("the mangled name is not the one this case damages")
+    tree = workspace / "src"
+    tree.mkdir(parents=True, exist_ok=True)
+    (tree / "00614fe0.cpp").write_text(text.replace(intact, voided),
+                                       encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_return_agreement.py"),
+            "--src", str(tree)]
+
+
 CASES = (
     ("span-termination", "a span two bytes short of its closing ret",
      damage_truncated_span, "truncated span"),
+    ("return-agreement", "a name spelling void where the prototype returns int",
+     damage_contradicted_return_type, "the emitter follows the name"),
     ("tool-test-registration", "a test file CMake never executes",
      damage_unregistered_tool_test, "never executed by CMake"),
     ("test-registration", "a gameplay case defined and not registered",

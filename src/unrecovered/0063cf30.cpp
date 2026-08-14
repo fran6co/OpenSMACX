@@ -1,14 +1,16 @@
 // ORIGINAL: 0x0063CF30 FILE
-// RULED-OUT: (none - lands MISMATCH; a param-7/param-3 reuse near the end
-//   was cross-checked against raw esp offsets, not Ghidra's own numbering,
-//   which disagreed by one slot after the batched allocator-call group)
 // name      sub_63cf30
 // size      492 bytes
 // spans     0x0063CF30-0x0063D11C
 // prototype 
-// callers   1   call targets   3
+// callers   1   call targets   2
 // kind      game
+// flags     hidden;sp_ready;purged_ok
 // calls     0x0063D120 0x0063D4D0
+// indirect  0x0063CFF9 0x0063D05A 0x0063D06A 0x0063D07A 0x0063D097
+// RULED-OUT: (none - lands MISMATCH; a param-7/param-3 reuse near the end
+//   was cross-checked against raw esp offsets, not Ghidra's own numbering,
+//   which disagreed by one slot after the batched allocator-call group)
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_63cf30  at 0x0063CF30  (492 bytes)

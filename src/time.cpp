@@ -82,10 +82,10 @@ void Time::init(void(__cdecl *callback)(int, int), int param, int param2, uint32
 /*
 Purpose: Start an instance of the class with a single parameter callback.
 ORIGINAL: 0x00616350
-// name      ?start@Time@@QAEXP6AXH@ZHHH@Z
+// name      ?start@Time@@QAEHP6AXH@ZHHH@Z
 // size      181 bytes
 // spans     0x00616350-0x00616405
-// prototype int (__thiscall ?start@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
+// prototype int (__thiscall ?start@Time@@QAEHP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
 // callers   11   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -143,10 +143,10 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
 /*
 Purpose: Start a pulse instance of the class with a single parameter callback.
 ORIGINAL: 0x006164D0
-// name      ?pulse@Time@@QAEXP6AXH@ZHHH@Z
+// name      ?pulse@Time@@QAEHP6AXH@ZHHH@Z
 // size      181 bytes
 // spans     0x006164D0-0x00616585
-// prototype int (__thiscall ?pulse@Time@@QAEXP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
+// prototype int (__thiscall ?pulse@Time@@QAEHP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
 // callers   2   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
@@ -207,10 +207,10 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
 /*
 Purpose: Start an instance of the timer.
 ORIGINAL: 0x00616650
-// name      ?start@Time@@QAEXXZ
+// name      ?start@Time@@QAEHXZ
 // size      106 bytes
 // spans     0x00616650-0x006166BA
-// prototype int (__thiscall ?start@Time@@QAEXXZ)(Time* this)
+// prototype int (__thiscall ?start@Time@@QAEHXZ)(Time* this)
 // callers   11   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -236,10 +236,10 @@ uint32_t Time::start() {
 /*
 Purpose: Start an instance of the pulse timer.
 ORIGINAL: 0x006166C0
-// name      ?pulse@Time@@QAEXXZ
+// name      ?pulse@Time@@QAEHXZ
 // size      108 bytes
 // spans     0x006166C0-0x0061672C
-// prototype int (__thiscall ?pulse@Time@@QAEXXZ)(Time* this)
+// prototype int (__thiscall ?pulse@Time@@QAEHXZ)(Time* this)
 // callers   1   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok

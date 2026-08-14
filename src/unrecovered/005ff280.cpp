@@ -1,10 +1,11 @@
 // ORIGINAL: 0x005FF280 FILE
 // name      ?UNK7@Palette@@QAEHHHHHHH@Z
 // size      491 bytes
-// spans     0x005FF280-0x005FF469
+// spans     0x005FF280-0x005FF46B
 // prototype int (__thiscall ?UNK7@Palette@@QAEHHHHHHH@Z)(Palette* this, int, int, int, int, int, int)
-// callers   ?   call targets   0
+// callers   1   call targets   0
 // kind      game
+// flags     hidden;sp_ready;purged_ok
 // calls     (none)
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
