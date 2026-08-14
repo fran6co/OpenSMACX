@@ -851,6 +851,14 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(class-vtable-tests
                                    test_derive_class_vtables.py)
 
+    # REWRITING SCAFFOLDING UNDER A COMMITTED BODY is the one edit that can
+    # destroy evidence while looking clean: the recovery is untouched and the
+    # claim still says BYTE_EXACT, but the unit around it compiles to
+    # something else. The tests pin the safety half - the split never eats the
+    # body, and a row that did not improve is put back.
+    opensmacx_add_python_tool_test(refresh-file-unit-tests
+                                   test_refresh_file_units.py)
+
     # The preamble that measurement compiles a body in. This one is load
     # bearing in an unusual direction: a WRONG declaration here does not fail,
     # it silently changes what is being measured, so the tests pin the two
