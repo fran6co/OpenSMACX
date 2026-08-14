@@ -318,7 +318,18 @@ def score_all(address: int, bodies: dict) -> list:
                     # agent did not write and could not see. It is a verdict,
                     # not a crash: the body did not produce comparable code.
                     try:
-                        rebuilt, rebuilt_mask = byte_match.object_code(data)
+                        # BY NAME. Without the subject this falls back to
+                        # "there is exactly one external symbol", and an agent
+                        # writing a real `Popup pop;` local - which makes VC6
+                        # synthesise `??1Popup@@` beside the body - was told
+                        # its unit was unreadable. Two agents in batch 12
+                        # worked around that by hand, one by splitting the
+                        # local into two and one by writing a loop out twice
+                        # rather than factoring it, both citing "the one-symbol
+                        # risk" that had already been removed everywhere except
+                        # here. This is the path THEY run.
+                        rebuilt, rebuilt_mask = byte_match.object_code(
+                            data, subject=row.get("name"))
                     except ValueError as error:
                         verdict = {"tier": "NO_COMPILE",
                                    "refusal_reason": str(error)[:200]}

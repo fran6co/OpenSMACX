@@ -597,6 +597,189 @@ CORRECTIONS = {
         "??_GPushButton@@UAEPAXI@Z, which executes `ret 4`; no stack access "
         "and the receiver stays in ECX. `WEEE@` re-demangles to "
         "adjustor{1092} and 1092 == 0x444, the constant subtracted"),
+
+    # ---------------------------------------------------------------
+    # zlib 1.0.2, identified BY ITS BYTES rather than by its name.
+    #
+    # IDA named 13 of these and left 41 as `sub_xxxxxx`, so a scan for
+    # zlib-shaped NAMES found a quarter of what is actually there. The
+    # identification here is a compile: `src/vendor/zlib-1.0.2/<file>` is
+    # built under `/c /O2 /Gy /GR- /GX` as C, the named symbol is lifted
+    # out of the object, and it reproduces the catalogued span BYTE FOR
+    # BYTE. 54 functions and 21,694 bytes match that way; these are the
+    # ones whose catalogued name disagrees.
+    #
+    # A name nobody could read is not a wrong name in the sense the rest
+    # of this table means - IDA guessed nothing here rather than guessing
+    # badly. It is corrected for the same reason as the others: every
+    # consumer reads the column as certain, and `byte_match` selects the
+    # subject out of the object BY THIS NAME, so an unrecognised function
+    # cannot be scored against the source it was built from.
+    # ---------------------------------------------------------------
+    0x0063CF30: (
+        'sub_63cf30',
+        '_deflateInit2_',
+        "zlib 1.0.2 deflate.c, 492 bytes, byte-exact from upstream"),
+    0x0063D120: (
+        'sub_63d120',
+        '_deflateReset',
+        "zlib 1.0.2 deflate.c, 115 bytes, byte-exact from upstream"),
+    0x0063D1A0: (
+        'sub_63d1a0',
+        '_deflate',
+        "zlib 1.0.2 deflate.c, 627 bytes, byte-exact from upstream"),
+    0x0063D420: (
+        'sub_63d420',
+        '_putShortMSB',
+        "zlib 1.0.2 deflate.c, 47 bytes, byte-exact from upstream"),
+    0x0063D450: (
+        'sub_63d450',
+        '_flush_pending',
+        "zlib 1.0.2 deflate.c, 114 bytes, byte-exact from upstream"),
+    0x0063D4D0: (
+        'sub_63d4d0',
+        '_deflateEnd',
+        "zlib 1.0.2 deflate.c, 143 bytes, byte-exact from upstream"),
+    0x0063D560: (
+        'sub_63d560',
+        '_lm_init',
+        "zlib 1.0.2 deflate.c, 147 bytes, byte-exact from upstream"),
+    0x0063D600: (
+        'sub_63d600',
+        '_deflate_stored',
+        "zlib 1.0.2 deflate.c, 239 bytes, byte-exact from upstream"),
+    0x0063D6F0: (
+        'sub_63d6f0',
+        '_fill_window',
+        "zlib 1.0.2 deflate.c, 290 bytes, byte-exact from upstream"),
+    0x0063D820: (
+        'sub_63d820',
+        '_read_buf',
+        "zlib 1.0.2 deflate.c, 113 bytes, byte-exact from upstream"),
+    0x0063D8A0: (
+        'sub_63d8a0',
+        '_deflate_fast',
+        "zlib 1.0.2 deflate.c, 559 bytes, byte-exact from upstream"),
+    0x0063DAD0: (
+        'sub_63dad0',
+        '_longest_match',
+        "zlib 1.0.2 deflate.c, 367 bytes, byte-exact from upstream"),
+    0x0063DC40: (
+        'sub_63dc40',
+        '_deflate_slow',
+        "zlib 1.0.2 deflate.c, 755 bytes, byte-exact from upstream"),
+    0x0063DF40: (
+        'sub_63df40',
+        '_inflateReset',
+        "zlib 1.0.2 inflate.c, 68 bytes, byte-exact from upstream"),
+    0x0063DF90: (
+        'sub_63df90',
+        '_inflateEnd',
+        "zlib 1.0.2 inflate.c, 77 bytes, byte-exact from upstream"),
+    0x0063DFE0: (
+        'sub_63dfe0',
+        '_inflateInit2_',
+        "zlib 1.0.2 inflate.c, 270 bytes, byte-exact from upstream"),
+    0x0063E0F0: (
+        'sub_63e0f0',
+        '_inflateInit_',
+        "zlib 1.0.2 inflate.c, 26 bytes, byte-exact from upstream"),
+    0x00640BB0: (
+        'sub_640bb0',
+        '__tr_init',
+        "zlib 1.0.2 trees.c, 114 bytes, byte-exact from upstream"),
+    0x00640C30: (
+        'sub_640c30',
+        '_tr_static_init',
+        "zlib 1.0.2 trees.c, 529 bytes, byte-exact from upstream"),
+    0x00640E50: (
+        'sub_640e50',
+        '_init_block',
+        "zlib 1.0.2 trees.c, 102 bytes, byte-exact from upstream"),
+    0x00640EC0: (
+        'sub_640ec0',
+        '_gen_codes',
+        "zlib 1.0.2 trees.c, 115 bytes, byte-exact from upstream"),
+    0x00640F40: (
+        'sub_640f40',
+        '__tr_stored_block',
+        "zlib 1.0.2 trees.c, 179 bytes, byte-exact from upstream"),
+    0x006416F0: (
+        'sub_6416f0',
+        '_pqdownheap',
+        "zlib 1.0.2 trees.c, 209 bytes, byte-exact from upstream"),
+    0x00641A00: (
+        'sub_641a00',
+        '_build_bl_tree',
+        "zlib 1.0.2 trees.c, 111 bytes, byte-exact from upstream"),
+    0x00641A70: (
+        'sub_641a70',
+        '_scan_tree',
+        "zlib 1.0.2 trees.c, 231 bytes, byte-exact from upstream"),
+    0x00642350: (
+        'sub_642350',
+        '__tr_tally',
+        "zlib 1.0.2 trees.c, 295 bytes, byte-exact from upstream"),
+    0x006428C0: (
+        'sub_6428c0',
+        '_set_data_type',
+        "zlib 1.0.2 trees.c, 116 bytes, byte-exact from upstream"),
+    0x00642940: (
+        'sub_642940',
+        '_bi_reverse',
+        "zlib 1.0.2 trees.c, 31 bytes, byte-exact from upstream"),
+    0x00642960: (
+        'sub_642960',
+        '_bi_flush',
+        "zlib 1.0.2 trees.c, 139 bytes, byte-exact from upstream"),
+    0x006429F0: (
+        'sub_6429f0',
+        '_bi_windup',
+        "zlib 1.0.2 trees.c, 124 bytes, byte-exact from upstream"),
+    0x00642A70: (
+        'sub_642a70',
+        '_copy_block',
+        "zlib 1.0.2 trees.c, 151 bytes, byte-exact from upstream"),
+    0x00642B10: (
+        'sub_642b10',
+        '_inflate_blocks_reset',
+        "zlib 1.0.2 infblock.c, 146 bytes, byte-exact from upstream"),
+    0x00642BB0: (
+        'sub_642bb0',
+        '_inflate_blocks_new',
+        "zlib 1.0.2 infblock.c, 110 bytes, byte-exact from upstream"),
+    0x00643950: (
+        'sub_643950',
+        '_inflate_blocks_free',
+        "zlib 1.0.2 infblock.c, 49 bytes, byte-exact from upstream"),
+    0x00643990: (
+        'sub_643990',
+        '_inflate_trees_bits',
+        "zlib 1.0.2 inftrees.c, 85 bytes, byte-exact from upstream"),
+    0x00643EB0: (
+        'sub_643eb0',
+        '_inflate_trees_dynamic',
+        "zlib 1.0.2 inftrees.c, 232 bytes, byte-exact from upstream"),
+    0x00643FA0: (
+        'sub_643fa0',
+        '_inflate_trees_fixed',
+        "zlib 1.0.2 inftrees.c, 318 bytes, byte-exact from upstream"),
+    0x006440E0: (
+        'sub_6440e0',
+        '_falloc',
+        "zlib 1.0.2 inftrees.c, 24 bytes, byte-exact from upstream"),
+    0x00644100: (
+        'sub_644100',
+        '_inflate_trees_free',
+        "zlib 1.0.2 inftrees.c, 63 bytes, byte-exact from upstream"),
+    0x00644140: (
+        'sub_644140',
+        '_inflate_codes_new',
+        "zlib 1.0.2 infcodes.c, 57 bytes, byte-exact from upstream"),
+    0x00644910: (
+        'sub_644910',
+        '_inflate_codes_free',
+        "zlib 1.0.2 infcodes.c, 20 bytes, byte-exact from upstream"),
 }
 
 
