@@ -3,10 +3,11 @@
 // size      269 bytes
 // spans     0x00636740-0x0063684D
 // prototype
-// callers   0   call targets   0
+// callers   1   call targets   7
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     (none)
+// calls     0x005D7470 0x005FE500 0x0063E590 0x00644DC0 0x00644DC6 0x00644EF2
+//           0x006465F0
 // indirect  0x00636770 0x006367AC 0x006367B8 0x006367D0
 // RULED-OUT: not chased to byte-exact (MISMATCH from instruction 1, 276 vs
 //            269 bytes). Landed for the field-write order and call order,

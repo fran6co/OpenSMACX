@@ -839,6 +839,16 @@ if(BUILD_TESTING)
                                    test_annotation_scan.py)
     opensmacx_add_python_tool_test(decomp-status-tests test_decomp_status.py)
 
+    # WHICH COMMENT LINE IS A FACT. src/ is the catalogue, so the answer
+    # decides what the tree believes about the binary - and the pattern was
+    # loose enough to read a RULED-OUT sentence as a function's call edges.
+    opensmacx_add_python_tool_test(project-catalogue-tests
+                                   test_project_catalogue.py)
+    opensmacx_add_python_tool_test(call-edge-tests
+                                   test_verify_call_edges.py)
+    opensmacx_add_python_tool_test(span-termination-tests
+                                   test_verify_span_termination.py)
+
     # The preamble that measurement compiles a body in. This one is load
     # bearing in an unusual direction: a WRONG declaration here does not fail,
     # it silently changes what is being measured, so the tests pin the two
@@ -1306,6 +1316,19 @@ if(BUILD_TESTING)
     add_test(NAME return-agreement
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_return_agreement.py"
+    )
+    # An annotation's call-graph facts, held to the bytes it points at rather
+    # than to a remembered copy of itself. src/ IS the catalogue, so an agent
+    # rebuilding its file's header while assembling a body is editing the
+    # evidence: three `// calls` lines lost or gained edges across batches 9
+    # and 10 and nothing noticed, because there was nothing to notice with.
+    # A direct `call rel32` is in the image at a fixed offset, so `// calls`,
+    # `call targets` and `callers` are all derivable - the first exactly, the
+    # last as a floor, since IDA counted indirect and data references this
+    # cannot see. Reads the image and the catalogue; no compiler.
+    add_test(NAME call-edges
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_call_edges.py"
     )
     # Correlates an outside human's notes with the `// yitzi 0x134` markers on
     # the `static_assert`s, three ways: the note, the marker, and the size the

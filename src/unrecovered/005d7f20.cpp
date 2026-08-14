@@ -1,6 +1,6 @@
 // ORIGINAL: 0x005D7F20 FILE
 // name      sub_5d7f20 (no mangled name - IDA guess only)
-// size      219 bytes
+// size      262 bytes
 // spans     0x005D7F20-0x005D7FFB;0x00662BD1-0x00662BFC
 // prototype extern "C" int __stdcall sub_5d7f20(int, int, int, int)
 // callers   0   call targets   4

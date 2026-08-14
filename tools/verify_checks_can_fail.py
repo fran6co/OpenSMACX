@@ -895,9 +895,64 @@ def damage_contradicted_return_type(workspace):
             "--src", str(tree)]
 
 
+def damage_removed_span(workspace):
+    """A span half deleted, which is how a body lowers its own bar.
+
+    THE REAL DEFECT, reproduced: 0x00589B60's `// spans` lost the
+    `0x0066026A-0x0066028A` half in batch 10 because the body had dropped
+    that SEH funclet. A span is a fact about the ORIGINAL; taking one out
+    shrinks what the comparison demands. The truncation test cannot see it -
+    what remains decodes cleanly and ends on a terminator - so the size the
+    annotation states beside it is the witness.
+    """
+    source = REPO_ROOT / "src" / "unrecovered" / "00402dd0.cpp"
+    if not source.is_file():
+        raise Skip("0x00402DD0 is not annotated in this tree")
+    text = source.read_text(encoding="utf-8")
+    intact = "0x00402DD0-0x00402ED2;0x006505A0-0x006505B5"
+    if intact not in text:
+        raise Skip("0x00402DD0 no longer carries the second span")
+    tree = workspace / "src"
+    tree.mkdir(parents=True, exist_ok=True)
+    (tree / "00402dd0.cpp").write_text(
+        text.replace(intact, "0x00402DD0-0x00402ED2"), encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_span_termination.py"),
+            "--src", str(tree)]
+
+
+def damage_deleted_call_edge(workspace):
+    """An agent's rebuilt header dropping a call target its own bytes make.
+
+    THE REAL DEFECT, reproduced: `Video_unk2` at 0x00636740 went from seven
+    call targets to `(none)` in batch 9 and stayed that way through batch 10,
+    because src/ is the catalogue and nothing held the header to the image.
+
+    The damaged tree holds ONE annotation and the tool reads it through
+    `project_catalogue.from_source`, the same reader its unflagged invocation
+    uses on `src/` - so what is proved able to fail is the gate's own
+    question, not a neighbouring one.
+    """
+    source = REPO_ROOT / "src" / "unrecovered" / "00636740.cpp"
+    if not source.is_file():
+        raise Skip("0x00636740 is not annotated in this tree")
+    text = source.read_text(encoding="utf-8")
+    intact = "// calls     0x005D7470"
+    if intact not in text:
+        raise Skip("0x00636740 no longer records the edge this case deletes")
+    tree = workspace / "src"
+    tree.mkdir(parents=True, exist_ok=True)
+    (tree / "00636740.cpp").write_text(
+        text.replace(intact, "// calls     "), encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_call_edges.py"), "--src", str(tree)]
+
+
 CASES = (
     ("span-termination", "a span two bytes short of its closing ret",
      damage_truncated_span, "truncated span"),
+    ("span-termination", "a second span deleted because the body dropped it",
+     damage_removed_span, "beside spans covering"),
+    ("call-edges", "a header dropping a call target its own bytes make",
+     damage_deleted_call_edge, "which its own bytes call directly"),
     ("return-agreement", "a name spelling void where the prototype returns int",
      damage_contradicted_return_type, "the emitter follows the name"),
     ("tool-test-registration", "a test file CMake never executes",
@@ -988,7 +1043,9 @@ CMAKELISTS = REPO_ROOT / "CMakeLists.txt"
 # verify_tool_test_registration's --floor uses, so the next honest retirement
 # does not take down every caller of gate_checks() before it can be reviewed;
 # test_the_floor_is_not_slack refuses more slack than two.
-GATE_CHECK_FLOOR = 26
+#
+# 26 -> 28 on 2026-08-14, with `return-agreement` and `call-edges` registered.
+GATE_CHECK_FLOOR = 28
 
 
 def without_comments(text):

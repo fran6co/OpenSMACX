@@ -3,7 +3,7 @@
 // size      258 bytes
 // spans     0x00589A30-0x00589B1D;0x00660255-0x0066026A
 // prototype
-// callers   0   call targets   6
+// callers   1   call targets   4
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D7210 0x005D7410 0x005D7DE0 0x005D9610

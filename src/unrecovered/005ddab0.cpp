@@ -3,7 +3,7 @@
 // size      246 bytes
 // spans     0x005DDAB0-0x005DDBA6
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPADPAURECT@@@Z)(Buffer* this, char*, RECT*)
-// callers   ?   call targets   2
+// callers   ?   call targets   3
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005DC410 0x005DD020 0x006453E0

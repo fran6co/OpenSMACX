@@ -15,7 +15,7 @@
 // callers   ?   call targets   5
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x005D4510 0x00644EF2 0x006453E0 0x006454E0 0x00645DD0
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470 0x00645DD0
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?UNK10@Menu@@QAEHHPAD@Z  at 0x005FB5A0  (349 bytes)

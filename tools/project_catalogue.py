@@ -53,10 +53,23 @@ import emit_translation_unit as emit  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+# A FACT LINE IS `// key value` WITH THE KEY AT COLUMN 3, exactly as `facts`
+# below writes it. The loose form - any indentation, any comment marker, the
+# key anywhere `\s*` could reach - also matched RULED-OUT prose, because a
+# continuation line is `//            calls need, so this is landed FILE-mode`
+# and "calls" is a word people write about a function. `stamped` let the last
+# match win, so 0x00402DD0's one call edge became that sentence; 13
+# annotations had a fact overwritten by prose this way, 10 of them `calls`.
+#
+# Measured over all 6,000: tightening this changes four values, every one of
+# them from prose back to the fact, and takes no `name` or `spans` away from
+# any row. The value is optional so a bare `// prototype`, which is how a row
+# with no recorded prototype is spelled once an editor strips the trailing
+# space, still registers as present-and-empty rather than absent.
 FACT_LINE = re.compile(
-    r"^\s*(?://|\*)?\s*(name|size|spans|prototype|callers|kind|flags|calls|notes"
+    r"^(?://|\*) (name|size|spans|prototype|callers|kind|flags|calls|notes"
     r"|indirect)"
-    r"\s+(.*?)\s*$")
+    r"(?: +(.*?))?\s*$")
 
 
 def catalogue(path: Path = None) -> dict:
@@ -173,6 +186,11 @@ def from_source(src: Path = None) -> dict:
                                  if present.get("callers") else "0",
             "_calls": {int(part, 16) for part in calls.split()
                        if part.startswith("0x")},
+            # THE RECORDED SPELLING, kept beside the parsed set because the
+            # line carries more than addresses: `0x005CEB12 (16x)` says
+            # sixteen sites reach one target, and a repair that rebuilds the
+            # line from the set alone silently drops what an agent measured.
+            "_calls_text": calls,
             "_indirect": {int(part, 16) for part in
                           present.get("indirect", "").split()
                           if part.startswith("0x")},
@@ -256,16 +274,49 @@ def facts(address: int, row: dict) -> list:
     return lines
 
 
+# A WRAPPED `calls` OR `indirect` VALUE. Long edge lists are re-flowed onto
+# continuation lines indented to the value's own column, and reading only the
+# first line silently shortened them: `?on_redraw@BaseWin@@QAEXXZ` carries 16
+# call targets over three lines and the catalogue reported 6. It reads as an
+# agent deleting ten edges, and the git history of the file says the batch
+# that "lost" them only re-flowed the line.
+#
+# Held to two things at once - the column the fact's own value starts at, and
+# a value made ENTIRELY of catalogue addresses. Either alone admits prose: a
+# RULED-OUT continuation lands one column further out but sometimes not, and
+# an aligned sentence is still a sentence.
+CONTINUED = re.compile(r"^(?://|\*)( +)"
+                       r"((?:0x[0-9A-Fa-f]{8}(?: \(\d+x\))?(?: |$))+)$")
+CONTINUABLE = ("calls", "indirect")
+
+
 def stamped(lines: list, index: int) -> dict:
-    """{key: value} already recorded in the comment run after a marker."""
+    """{key: value} already recorded in the comment run after a marker.
+
+    THE FIRST SPELLING OF A KEY WINS. The block is written once, by `facts`,
+    and anything further down the comment run is prose that happened to parse
+    - so a second match is never a correction, and letting it overwrite is how
+    a RULED-OUT sentence became a function's call-edge list.
+    """
     found = {}
+    open_key, column = None, None
     for line in lines[index + 1:]:
         stripped = line.strip()
         if not (stripped.startswith("//") or stripped.startswith("*")):
             break
         match = FACT_LINE.match(line)
         if match:
-            found[match.group(1)] = match.group(2)
+            key, value = match.group(1), match.group(2) or ""
+            fresh = key not in found
+            found.setdefault(key, value)
+            open_key = key if fresh and key in CONTINUABLE and value else None
+            column = line.index(value) if open_key else None
+            continue
+        carried = CONTINUED.match(line)
+        if open_key and carried and len(carried.group(1)) + 2 == column:
+            found[open_key] = f"{found[open_key]} {carried.group(2).strip()}"
+            continue
+        open_key, column = None, None
     return found
 
 
@@ -302,6 +353,32 @@ def survey(src: Path, rows: dict) -> tuple:
     return missing, disagreeing, uncatalogued
 
 
+def keep_prose(run: list) -> list:
+    """The comment run with its fact block removed, ready to re-stamp under.
+
+    A WRAPPED EDGE LIST IS PART OF THE BLOCK. Dropping only the lines that
+    match `FACT_LINE` leaves `//           0x005FCBB0` behind as prose, and it
+    then reads as a continuation of the FRESH `// calls` line written above
+    it - the block re-stamped, and the addresses said twice. Held to the same
+    rule `stamped` reads by, because the writer and the reader disagreeing
+    about where the block ends is the whole shape of this defect.
+    """
+    kept, open_key, column = [], None, None
+    for line in run:
+        match = FACT_LINE.match(line)
+        if match:
+            key, value = match.group(1), match.group(2) or ""
+            open_key = key if key in CONTINUABLE and value else None
+            column = line.index(value) if open_key else None
+            continue
+        carried = CONTINUED.match(line)
+        if open_key and carried and len(carried.group(1)) + 2 == column:
+            continue
+        open_key, column = None, None
+        kept.append(line)
+    return kept
+
+
 def apply(src: Path, rows: dict, missing: list) -> int:
     """Insert the facts under each marker that has none. Returns how many."""
     by_file = {}
@@ -329,8 +406,7 @@ def apply(src: Path, rows: dict, missing: list) -> int:
                 if not (stripped.startswith("//") or stripped.startswith("*")):
                     break
                 end += 1
-            prose = [line for line in lines[annotation.line:end]
-                     if not FACT_LINE.match(line)]
+            prose = keep_prose(lines[annotation.line:end])
             block = [line + "\n" for line in facts(annotation.address, row)]
             lines[annotation.line:end] = block + prose
             changed += 1

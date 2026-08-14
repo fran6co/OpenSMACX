@@ -178,12 +178,19 @@ HYPOTHESIS_FIELDS = ("address", "name", "argument_count", "evidence")
 # disagreement is IDA's, which is why this is a floor and not a defect: it
 # counts how far the two sources are apart, and the distance did not grow.
 # `return type` rose by one on the same two rows.
+#
+# `return type` RATCHETED 3198 -> 3203 on 2026-08-14. Five catalogued names
+# spell `void` for bodies that end `neg eax; sbb eax, eax; and al, 0xfe; add
+# eax, 2` and the corrections in `catalogue_corrections` follow the bytes -
+# `?init@GraphicWin@@...` and four `Time` methods. Left at 3198 this floor
+# would accept losing all five again in silence, which is the whole reason
+# these are ratchets and not targets.
 AGREEMENT_FLOOR = {
     "convention": (3215, 3215),
     "receiver": (3204, 3215),
     "stack layout": (3215, 3215),
     "argument types": (3163, 3215),
-    "return type": (3198, 3215),
+    "return type": (3203, 3215),
 }
 
 # The control's own size, pinned separately, because every entry above is a

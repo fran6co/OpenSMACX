@@ -15,10 +15,10 @@
 // size      349 bytes
 // spans     0x00442590-0x004426ED
 // prototype int (__thiscall ?on_key_click@DiploWin@@QAEHHH@Z)(DiploWin* this, int, int)
-// callers   ?   call targets   6
+// callers   ?   call targets   5
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// calls     0x00593190 0x006151E0 0x00629710 0x0066931C 0x00645470 0x006453E0
+// calls     0x00593190 0x006151E0 0x00629710 0x006453E0 0x00645470
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?on_key_click@DiploWin@@QAEHHH@Z  at 0x00442590  (349 bytes)

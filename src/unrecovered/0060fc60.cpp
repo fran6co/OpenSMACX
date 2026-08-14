@@ -3,7 +3,7 @@
 // size      263 bytes
 // spans     0x0060FC60-0x0060FD52;0x00662F84-0x00662F99
 // prototype int (__cdecl ?init_class@CheckBox@@QAAHXZ)()
-// callers   0   call targets   4
+// callers   1   call targets   5
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005E39A0
