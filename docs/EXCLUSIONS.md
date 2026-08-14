@@ -213,6 +213,45 @@ layout work.
 The distinction matters for planning. The first shape is a wall. The second
 is a missing measurement wearing a wall's clothes.
 
+## 2d. The self-modifying copy-protection section — refused by the harness
+
+`tools/byte_match.py` carries
+
+```python
+# The self-modifying copy-protection section. Refuse rather than compare.
+SELFMOD_RANGE = (0x00664000, 0x00669000)
+```
+
+and `classify_body` refuses any span overlapping it, unconditionally and
+before a body is looked at. **22 catalogued functions overlap that range,
+16,137 bytes.** No body, however written, can score anything but REFUSED
+there — an agent proved this the direct way on 2026-08-14 by compiling a
+one-line dummy stub for `0x00666F68` and getting the same refusal as the real
+attempt.
+
+The ground is that the bytes at those addresses are not what the shipped
+image executes: the section rewrites itself at run time, so "the original's
+bytes" is not a fixed thing to compare a rebuild against. This is a property
+of the target, not of the compiler or the source form, and it is the same
+reason §3 and §4 are here.
+
+**It had no entry in this document until 2026-08-14, and 14 of the 18 files
+in that range cited §2a instead — C++ EH unwind funclets.** That citation is
+false on its face for at least four of them: `0x00664D51`, `0x00665BA1`,
+`0x00666989` and `0x00668069` are ordinary `ret`-terminated data-store
+routines with no tail `jmp`, which is §2a's own test. They were swept into
+the funclet population by address proximity. An agent reading one of those
+files was told the wrong reason for a true refusal, and the two mistakes
+cancel only until somebody tries to retire §2a.
+
+All 18 now cite §2d, which is the reason that actually fires.
+
+The other four of the 22 are not exclusions and were left alone:
+`0x0063AEE0`, `0x0063AF00`, `0x0063AF20` and `0x0063AF40` carry landed
+FILE-mode bodies whose own `RULED-OUT` lines already say the range refuses
+them. A body that exists and cannot be scored is a truthful state; converting
+it to an exclusion would delete four recoveries to tidy a citation.
+
 ## 3. Port I/O — expressibility, and it is one function
 
 Exactly one body in this image does port I/O on a directly reachable path:
@@ -468,10 +507,10 @@ seh.except_handler3_game_functions = 0
 port_io.functions = 1
 port_io.bytes = 60
 port_io.jump_table_impostors = 1
-directx.functions = 941
-directx.bytes = 1187932
+directx.functions = 940
+directx.bytes = 1187687
 directx.percent_of_catalogued_bytes = 48.4
-indirect_call_sites = 5159
+indirect_call_sites = 5150
 netdaemon.functions = 36
 netdaemon.bytes = 43599
 netdaemon.original_dependency_bytes = 0
