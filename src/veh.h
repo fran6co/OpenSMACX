@@ -354,6 +354,15 @@ struct RulesChassis {
     int16_t preq_tech;
 };
 
+// THE STRIDE THE IMAGE INDEXES `Chassis` (0x0094A330) BY, read off 497
+// call sites by tools/derive_array_strides.py - e.g. 0x0040B87A, 0x0040DAD3. That
+// number is a measurement of the binary; `sizeof` below is the compiler's
+// arithmetic over the members declared above. The two were computed from
+// different things and agree, which is what the assertion records.
+static_assert(sizeof(RulesChassis) == 0x90,
+              "RulesChassis layout must match the original executable");
+
+
 struct RulesWeapon {
     LPSTR name;
     LPSTR name_short;

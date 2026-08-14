@@ -32,6 +32,7 @@ ListBox
 Lock
 Log
 MAmbience
+Map
 MapWin
 Menu
 MenuEntry
@@ -39,6 +40,7 @@ MessageWin
 Midi_Device
 NewTechWin
 Palette
+Player
 PlayerData
 Popup
 ProdPicker
@@ -46,7 +48,9 @@ PullDown
 PullDownItem
 PushButton
 Random
+RulesChassis
 RulesFacility
+RulesTechnology
 SAmbience
 Scroll
 SocialCategory

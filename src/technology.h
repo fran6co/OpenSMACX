@@ -137,6 +137,15 @@ struct RulesTechnology {
     int preq_tech_2;
 };
 
+// THE STRIDE THE IMAGE INDEXES `Technology` (0x0094F358) BY, read off 87
+// call sites by tools/derive_array_strides.py - e.g. 0x0042C181, 0x00430B7F. That
+// number is a measurement of the binary; `sizeof` below is the compiler's
+// arithmetic over the members declared above. The two were computed from
+// different things and agree, which is what the assertion records.
+static_assert(sizeof(RulesTechnology) == 0x2C,
+              "RulesTechnology layout must match the original executable");
+
+
 struct RulesMandate {
     LPSTR name;
     LPSTR name_caps;

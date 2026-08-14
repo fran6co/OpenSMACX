@@ -167,6 +167,23 @@ struct Map {
     uint32_t bit_visible[7]; // how each faction sees tile (ex. pods another faction already got)
 };
 
+// THE STRIDE THE IMAGE INDEXES `MapTiles` BY, at 0x0040CEBC and six other
+// sites, all of the same shape:
+//
+//     lea edx, [eax + eax*4]        ; i*5
+//     lea eax, [eax + edx*2]        ; i + i*10          = i*11
+//     mov edx, dword ptr [0x94a30c] ; *MapTiles
+//     lea eax, [edx + eax*4]        ; base + i*44       = 0x2C
+//     test byte ptr [eax + 8], 1    ; ->bit & 1
+//
+// Three member offsets fall out of the same sites and agree with the fields
+// above, which is what makes this a reading of the layout rather than only of
+// its size: `[+0]` read as a byte and masked `0xE0` is `climate`'s altitude
+// bits (0x0041ACD2), `[+0]` read whole is `climate` (0x0040B2FB), and `[+8]`
+// tested against 1 is the low byte of `bit` (0x0040CECB).
+static_assert(sizeof(Map) == 0x2C,
+              "Map layout must match the original executable");
+
 struct Landmark {
     int x;
     int y;
