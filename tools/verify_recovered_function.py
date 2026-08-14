@@ -416,6 +416,22 @@ def committed_body(address: int) -> tuple:
         return None, (f"0x{address:08X} has no source_locations, so nothing is "
                       f"recovered for it yet - use byte_match_fanout.py "
                       f"--prepare instead")
+    # THE ANNOTATION'S OWN REGION, which is what the gate compiles.
+    # `census.extract_body` is the CENSUS's reader and it counts braces from a
+    # line number; on `src/recovered/0062c010.cpp` it stopped inside the
+    # comment block above the definition and returned a body with no
+    # definition in it at all. This tool then scored a truncated text while
+    # `decomp_status` scored the real one, so the agent-facing verifier and
+    # the gate disagreed about what is committed - which is the split this
+    # tree keeps finding and the one thing this tool exists to be trusted on.
+    #
+    # `annotation_scan` is the single reader. It already carries the region
+    # for every annotation, in both modes, and the gate's `build_units` reads
+    # exactly this field.
+    import annotation_scan
+    for annotation in annotation_scan.scan_tree():
+        if annotation.address == address and annotation.region:
+            return annotation.region, annotation.location
     try:
         return census.extract_body(location), location
     except (ValueError, OSError) as error:
