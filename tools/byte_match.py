@@ -238,6 +238,9 @@ STDINT = ("typedef int int32_t;\n"
 
 # COFF constants.
 IMAGE_SYM_CLASS_EXTERNAL = 2
+# A `static` function. Invisible to the linker, but `/Gy` still gives it its
+# own COMDAT, so it is selectable BY NAME exactly as precisely as an external.
+IMAGE_SYM_CLASS_STATIC = 3
 IMAGE_SYM_CLASS_LABEL = 6
 IMAGE_REL_I386_DIR32 = 6
 IMAGE_REL_I386_REL32 = 20
@@ -572,12 +575,27 @@ def clip_jump_table(section: CoffSection, symbols: list, data: bytes,
 SYNTHESISED = ("??_G", "??_E", "??_H", "??_I")
 
 
-def choose_subject_symbol(found: list, subject: str = None):
-    """(symbol, section) for the subject among a unit's external .text symbols.
+def choose_subject_symbol(found: list, subject: str = None,
+                          internal: list = None):
+    """(symbol, section) for the subject among a unit's .text symbols.
 
     Split out from `object_code` so it can be tested without a compiler: the
-    inputs are a list of (symbol, section) pairs and a name, and every rule
+    inputs are lists of (symbol, section) pairs and a name, and every rule
     below is about names.
+
+    `internal` holds the STATIC-class symbols, and they are consulted ONLY
+    when a subject was named and no external symbol carries that name. A
+    static function is invisible to the linker but not to `/Gy`, which still
+    gives it its own COMDAT - so naming it selects a section exactly as
+    precisely as naming an external one. Without a name they stay out: the
+    count rule below is about ambiguity, and a unit's statics are exactly the
+    helpers it was never meant to score.
+
+    MEASURED 2026-08-14 on zlib. `trees.c` declares `build_tree` as `local`,
+    which zutil.h defines as `static`, and the shipped image contains a
+    standalone `_build_tree` at 0x006414B0. VC6 emits it as its own COMDAT
+    with a STATIC symbol of that exact name, so the bytes were always there
+    and only the selector could not reach them.
     """
     # A SYNTHESISED COMPANION IS NEVER THE SUBJECT - unless the subject IS
     # one, which is why this only filters while something else survives. The
@@ -596,6 +614,10 @@ def choose_subject_symbol(found: list, subject: str = None):
         # than deciding which the row is from.
         wanted = {subject, f"_{subject}", subject.lstrip("_")}
         hit = next((pair for pair in found if pair[0].name in wanted), None)
+        if hit is not None:
+            return hit
+        hit = next((pair for pair in (internal or [])
+                    if pair[0].name in wanted), None)
         if hit is not None:
             return hit
 
@@ -654,18 +676,26 @@ def object_code(data: bytes, want_eh: bool = False, subject: str = None):
                 return body, mask
         return b"", set()
 
-    found = []
+    found, internal = [], []
     for index, symbol in enumerate(symbols):
-        if symbol.storage != IMAGE_SYM_CLASS_EXTERNAL:
+        if symbol.storage not in (IMAGE_SYM_CLASS_EXTERNAL,
+                                  IMAGE_SYM_CLASS_STATIC):
             continue
         if symbol.section <= 0 or symbol.section > len(sections):
             continue
         name = sections[symbol.section - 1].name
         if not name.startswith(".text") or name.startswith(".text$x"):
             continue
-        found.append((symbol, sections[symbol.section - 1]))
+        if symbol.storage == IMAGE_SYM_CLASS_EXTERNAL:
+            found.append((symbol, sections[symbol.section - 1]))
+        # THE SECTION'S OWN SYMBOL IS NOT A FUNCTION. Every COMDAT carries a
+        # STATIC symbol named for the SECTION - `.text` - alongside any static
+        # function in it, and taking that as a candidate would offer `.text`
+        # as a subject name.
+        elif not symbol.name.startswith("."):
+            internal.append((symbol, sections[symbol.section - 1]))
 
-    symbol, section = choose_subject_symbol(found, subject)
+    symbol, section = choose_subject_symbol(found, subject, internal)
 
     start, end = symbol.value, section.raw_size
     end = clip_jump_table(section, symbols, data, start, end)
