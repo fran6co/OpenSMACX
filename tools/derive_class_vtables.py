@@ -81,6 +81,16 @@ PAIR_FLOOR = 149
 # bytes again.
 COLLISIONS_ALLOWED = 0
 
+# The slots those vtables hold. A floor for the same reason as the others.
+SLOT_FLOOR = 6292
+# EVERY SLOT MUST LAND ON A CATALOGUED FUNCTION'S FIRST BYTE, and today all
+# 6,292 do. It is not a statistic about the game, it is the tell that the run
+# is reading a vtable rather than whatever follows one: a pointer into the
+# MIDDLE of a function means the walk overran its own table, and that is the
+# failure mode that has to be impossible before a compiled class may be given
+# real virtual functions in the original's slot order.
+SLOTS_OFF_ENTRY_ALLOWED = 0
+
 
 class Image:
     """The pinned executable, with the two questions this asks of it."""
@@ -177,6 +187,51 @@ def vptr_stores(image: Image, row: dict, shared: set) -> list:
     return out
 
 
+_MEMBER_OF = re.compile(r"^\?\?(?:_[A-Za-z]|[0-9A-Za-z])([A-Za-z_]\w*)@@"
+                        r"|^\?[A-Za-z_]\w*@([A-Za-z_]\w*)@@")
+
+
+def _class_of(name: str):
+    """The class a mangled member name belongs to, or None.
+
+    Not `annotation_scan.subject_identifier`, which answers a different
+    question: there the identifier of `?close@StringStruct@@` is `close`,
+    because it names the definition to look for. Here it is `StringStruct`.
+    """
+    matched = _MEMBER_OF.match(name or "")
+    return next((one for one in matched.groups() if one), None) \
+        if matched else None
+
+
+def slot_targets(image: Image, head: int, heads: list) -> list:
+    """The function pointers a vtable holds, in order.
+
+    BOUNDED TWO WAYS, and it needs both. A vtable run ends at the first dword
+    that is not a pointer into an executable section - that is what separates
+    it from whatever `.rdata` holds next. But MSVC emits a class's vtable
+    GROUP adjacently, so `AlphaMovie`'s two sit eight bytes apart and a run
+    that only watched for non-code would read the second as more slots of the
+    first. The next known vtable head stops it.
+
+    Read for what it IS, not for what a class ought to have: a derived
+    class's vtable holds the base's function in every slot it does not
+    override, so `SAmbience`'s slot 0 is `?set_fade@Sound@@` and that is
+    correct rather than a misattribution.
+    """
+    out, at = [], head
+    stop = next((one for one in heads if one > head), head + 0x1000)
+    while at < stop:
+        raw = read_bytes(image.pe, at, 4)
+        if len(raw) != 4:
+            break
+        target = struct.unpack("<I", raw)[0]
+        if not image.is_code(target):
+            break
+        out.append(target)
+        at += 4
+    return out
+
+
 class Derivation:
     def __init__(self):
         self.vtable = {}         # (class, offset) -> vtable
@@ -229,6 +284,9 @@ class Derivation:
         if mine is None:
             return None
         return self.vtable[(name, offset)] - mine
+
+    def heads(self) -> list:
+        return sorted(set(self.vtable.values()))
 
 
 def derive(rows: dict = None, exe: Path = DEFAULT_EXE) -> Derivation:
@@ -286,6 +344,14 @@ def main(argv=None) -> int:
     kinds = collections.Counter(found.classify(name, offset)
                                 for name, offset in found.vtable)
 
+    image = Image(arguments.exe)
+    heads = found.heads()
+    catalogue = emit.load_functions() if rows is None else rows
+    slots = {key: slot_targets(image, head, heads)
+             for key, head in found.vtable.items()}
+    off_entry = [(key, target) for key, targets in slots.items()
+                 for target in targets if target not in catalogue]
+
     if not arguments.check:
         for name in sorted(found.classes):
             offsets = sorted(offset for one, offset in found.vtable
@@ -297,6 +363,9 @@ def main(argv=None) -> int:
                 print(f"    +0x{offset:<6X} 0x{found.vtable[(name, offset)]:08X}"
                       f"  {found.classify(name, offset):<13}"
                       f"  stored at 0x{found.site[(name, offset)]:08X}{near}")
+                for index, target in enumerate(slots[(name, offset)]):
+                    held = (catalogue.get(target) or {}).get("name", "")
+                    print(f"        [{index:3}] 0x{target:08X}  {held}")
 
     print(f"{len(found.classes)} class(es), {len(found.vtable)} "
           f"(class, offset) pair(s), {len(primary)} primary vtable(s)")
@@ -314,6 +383,28 @@ def main(argv=None) -> int:
     common = collections.Counter(offset for _, offset in found.vtable if offset)
     for offset, count in common.most_common(3):
         print(f"  +0x{offset:X} appears {count} time(s)")
+
+    total = sum(len(one) for one in slots.values())
+    print(f"  {total} slot(s) across those vtables, "
+          f"{total - len(off_entry)} landing on a catalogued function's first "
+          f"byte")
+
+    # SLOT 0 IS EVIDENCE AND NOT A TEST. It belongs to the class itself for 53
+    # of the 70 primaries; the rest are inherited virtuals the class does not
+    # override - every `*Ambience` holds `?set_fade@Sound@@` there, which is
+    # right - or bodies the linker folded, so a class assignment cannot be
+    # judged by it. Printed because it is a second opinion on the derivation
+    # arrived at from the vtable's CONTENTS rather than the constructor's
+    # store, and those are independent.
+    owned = 0
+    for name, head in sorted(primary.items()):
+        held = slots.get((name, 0)) or []
+        if held and _class_of((catalogue.get(held[0]) or {}).get("name", "")) \
+                == name:
+            owned += 1
+    print(f"  slot 0 belongs to the class itself on {owned} of "
+          f"{len(primary)} primary vtable(s); the rest hold an inherited "
+          f"virtual, which is what a vtable is for")
 
     both = set(primary) & set(found.destructor)
     agree = sum(1 for name in both
@@ -345,6 +436,16 @@ def main(argv=None) -> int:
         if len(found.vtable) < PAIR_FLOOR:
             failures.append(f"{len(found.vtable)} (class, offset) pairs, below "
                             f"the pinned {PAIR_FLOOR}")
+        if total < SLOT_FLOOR:
+            failures.append(f"{total} vtable slot(s), below the pinned "
+                            f"{SLOT_FLOOR}")
+    if len(off_entry) > SLOTS_OFF_ENTRY_ALLOWED:
+        for (name, offset), target in off_entry[:8]:
+            failures.append(
+                f"{name}+0x{offset:X} holds 0x{target:08X}, which is not any "
+                f"catalogued function's first byte - the walk read past the "
+                f"end of its own table, or the catalogue is wrong about where "
+                f"that function starts")
     for line in failures:
         print(f"  {line}", file=sys.stderr)
     if failures:
