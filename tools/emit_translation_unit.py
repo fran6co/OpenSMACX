@@ -742,8 +742,24 @@ def vtable_slots(pe, spans, cap: int = VTABLE_SLOT_CAP):
             if one.mnemonic == "mov" and len(one.operands) == 2:
                 destination, source = one.operands
                 if destination.type == X86_OP_REG:
+                    # A FIXED-ADDRESS SINGLETON is an object too. `mov edx,
+                    # ds:[0x7B0CB8]` has no base register at all, so the
+                    # `base != 0` test dropped it and the `call [edx+N]` that
+                    # followed was not read as a slot - the emitter produced no
+                    # shim for a body with two catalogued indirect calls, and
+                    # the agent hand-wrote one. Reported against 0x004E0FD0.
+                    #
+                    # Gated on the displacement looking like an IMAGE ADDRESS,
+                    # which is what keeps `[esp+8]` and friends out; those have
+                    # a base register and are already excluded, but an absolute
+                    # load with a small displacement would be something else
+                    # entirely and is not admitted on a guess.
+                    absolute = (source.type == X86_OP_MEM
+                                and source.mem.base == 0
+                                and source.mem.index == 0
+                                and source.mem.disp >= 0x400000)
                     if (source.type == X86_OP_MEM and source.mem.base != 0
-                            and source.mem.base not in FRAME):
+                            and source.mem.base not in FRAME) or absolute:
                         object_regs.add(destination.reg)
                     else:
                         object_regs.discard(destination.reg)
@@ -861,8 +877,11 @@ def vtable_shim(slots: list) -> str:
         "// Vtable shim. VC6 rejects a free `__thiscall` function pointer",
         "// (C4234), so an indirect virtual call is spelled by calling the Nth",
         "// virtual of a class that is never defined and never instantiated.",
-        "// Only DECLARATION ORDER matters - change a slot's signature freely",
-        "// to match the call you need; it will not move.",
+        "// Only DECLARATION ORDER matters. The PARAMETERS and RETURN TYPE of",
+        "// a slot are yours to set and setting them does not move it: write",
+        "// `virtual int slot074(int, int);` if that is the call you need.",
+        "// The slots below are spelled nullary because the emitter reads the",
+        "// vtable OFFSET from the body and not the argument list.",
         f"// This body dispatches through slot(s): "
         f"{', '.join(str(s) for s in slots)}",
         "class VCall { public:",

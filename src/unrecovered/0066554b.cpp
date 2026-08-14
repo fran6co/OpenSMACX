@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0066554B EXCLUDED S2a
+// ORIGINAL: 0x0066554B EXCLUDED S2d
 // name      sub_66554b
 // size      232 bytes
 // spans     0x0066554B-0x00665633

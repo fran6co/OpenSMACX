@@ -894,5 +894,49 @@ class GameConstantsTests(unittest.TestCase):
             self.assertIn(needed, tool.PRELUDE, needed)
 
 
+class VtableSlotTests(unittest.TestCase):
+    """Which indirect calls are read as virtual dispatch.
+
+    Assembled by hand rather than read out of the image, so the test states
+    the RULE and not one address's bytes.
+    """
+
+    def slots(self, code):
+        original = tool.read_bytes
+        tool.read_bytes = lambda pe, low, size: code
+        try:
+            return tool.vtable_slots(None, [(0x401000, 0x401000 + len(code))])
+        finally:
+            tool.read_bytes = original
+
+    def test_a_fixed_address_singleton_is_an_object(self):
+        # mov edx, ds:[0x7B0CB8] / call dword ptr [edx+8]
+        #
+        # No base register at all, so the `base != 0` test dropped it and the
+        # call that followed was not read as a slot. The emitter produced no
+        # shim for a body with two catalogued indirect calls and the agent
+        # hand-wrote one; reported against 0x004E0FD0 on 2026-08-14.
+        code = bytes.fromhex("8b15b80c7b00") + bytes.fromhex("ff5208")
+        self.assertEqual(([2], []), self.slots(code))
+
+    def test_a_stack_load_is_still_a_function_pointer_field(self):
+        # mov eax, [esp+8] / call dword ptr [eax+8] - a function pointer held
+        # in a local. Reading these as slots produced a ten-slot shim for a
+        # body with no vtable at all (0x00644910).
+        code = bytes.fromhex("8b442408") + bytes.fromhex("ff5008")
+        self.assertEqual(([], []), self.slots(code))
+
+    def test_an_absolute_load_of_a_small_address_is_not_admitted(self):
+        # mov edx, ds:[0x10] / call [edx+8]. Nothing in the image lives
+        # there, so this is not a singleton and the emitter does not guess.
+        code = bytes.fromhex("8b1510000000") + bytes.fromhex("ff5208")
+        self.assertEqual(([], []), self.slots(code))
+
+    def test_an_object_load_through_a_register_still_works(self):
+        # mov eax, [ecx] / call dword ptr [eax+0xf8] - the ordinary case.
+        code = bytes.fromhex("8b01") + bytes.fromhex("ff90f8000000")
+        self.assertEqual(([0x3e], []), self.slots(code))
+
+
 if __name__ == "__main__":
     unittest.main()
