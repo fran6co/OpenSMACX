@@ -449,6 +449,94 @@ def guard_mask_section(asm: str) -> str:
         "one of them: if the mask register is your only divergence, stop.\n\n")
 
 
+def class_section(name: str) -> str:
+    """What `src/` already declares about the subject's class.
+
+    THE SCAFFOLD IS NOT THE SUM OF WHAT IS KNOWN, and nothing said so. A class
+    whose SIZE is not pinned is emitted as an opaque shell - deliberately,
+    because a wrong offset compiles and fails later as a byte mismatch nobody
+    traces back - and the brief then presented that shell as if it were the
+    whole record. Measured 2026-08-14: 1,080 catalogued functions across 68
+    classes are in that state, 162 of them still unrecovered.
+
+    So an agent recovering `PushButton::PushButton` saw `class PushButton {
+    public: PushButton(); };` and had no way to learn that `src/pushbutton.h`
+    declares it deriving from BaseButton with 137 inherited members. It landed
+    the field stores without the base-constructor call and reported the shell
+    as the defect. The shell was not the defect; the silence was.
+
+    NAMED AS A HYPOTHESIS, and the offsets are not restated here. The gate
+    that keeps unproved layouts out of the scaffold is right and this does not
+    route around it: the brief points at the tree's own record and says what it
+    is worth, which is the same thing `arity_hypothesis` does for a prototype.
+    An agent can read the header, check an offset against the disassembly in
+    front of it, and record what it confirms - and a confirmed offset reaches
+    the next scaffold through `agent-structure-observations.csv`.
+    """
+    import class_layouts
+    if not name.startswith("?") or "@@" not in name:
+        return ""
+    # TWO SHAPES. `?init@Buffer@@QAE...` puts the method first and the class
+    # second; `??0PushButton@@QAE...` is a constructor and the class IS the
+    # first token, after the `??0`/`??1` tag. Reading position 1 for both
+    # returned an empty string for every lifecycle function - which is exactly
+    # the population that needs this section, since a constructor is where a
+    # base subobject gets built.
+    # THE TAG IS EXACTLY `??0`, `??1` or `??_X`, never a run of capitals.
+    # `[0-9A-Z_]+` is greedy and ate the class's own first letter, so
+    # `??0PushButton@@` decoded as a class called `ushButton` - which is
+    # declared nowhere, so the section stayed silent and looked correct.
+    lifecycle = re.match(r"^\?\?(?:[0-9]|_[A-Z])(?P<klass>\w+)@@", name)
+    if lifecycle:
+        klass = lifecycle.group("klass")
+    else:
+        parts = name.split("@")
+        klass = parts[1] if len(parts) > 2 else ""
+    declared = class_layouts._declared_classes()
+    if not klass or klass not in declared:
+        return ""
+    header = ""
+    for candidate in sorted((class_layouts.SRC).glob("*.h")):
+        if any(n == klass for n, _, _ in
+               class_layouts.class_bodies(candidate.read_text(errors="ignore"))):
+            header = f"src/{candidate.name}"
+            break
+    if class_layouts.supplyable(klass):
+        return ""          # the scaffold already carries it; nothing to add
+    chain = class_layouts.base_chain(klass)
+    members = class_layouts.members_of(class_layouts._body_of(klass))
+    lines = [f"# `{klass}` is declared in {header}, and your shell is not it",
+             ""]
+    if chain:
+        lines.append(f"It derives from {' -> '.join(chain)}. The scaffold "
+                     f"emits it FLAT or opaque,")
+        lines.append("so there is no base subobject in your unit to construct "
+                     "or to pass `this` as.")
+    lines.append(
+        f"{header} declares "
+        + (f"{len(members)} data member(s)" if members else "a layout this "
+           "cannot read")
+        + ", and the scaffold does NOT supply them:")
+    lines.append(
+        f"`sizeof({klass})` is not pinned against the image, so an offset "
+        f"taken from that")
+    lines.append(
+        "header is a HYPOTHESIS - one missing member shifts every field after "
+        "it.")
+    lines.append("")
+    lines.append(
+        "Read it if you need field names, check any offset you use against "
+        "the disassembly")
+    lines.append(
+        "above, and report what you CONFIRM as a `member` observation. A "
+        "confirmed offset")
+    lines.append(
+        "reaches the next agent's scaffold; an assumed one reaches nobody and "
+        "costs a match.")
+    lines.append("")
+    return "\n".join(lines) + "\n"
+
+
 def targeted_rules(note: str, found: dict = None) -> str:
     """The curated glosses this divergence selects, plus what paid for them."""
     # Punctuation is stripped, not just quotes: a compiler diagnostic arrives as
@@ -867,8 +955,8 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
 
     if body is None:
         verdict = "nothing recovered yet"
-        middle = (fresh_recovery_section(address)
-                  + landing_mode(scaffolding) + guard_mask_section(asm) + thunk
+        middle = (fresh_recovery_section(address) + landing_mode(scaffolding)
+                  + class_section(name) + guard_mask_section(asm) + thunk
                   + arity_hypothesis(address) + vcall_section(scaffolding)
                   + lifecycle_section(name))
     else:
@@ -878,6 +966,7 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
                   f"# What the divergence usually means\n\n"
                   f"{targeted_rules(note)}\n"
                   f"{landing_mode(scaffolding)}"
+                  f"{class_section(name)}"
                   f"{guard_mask_section(asm)}"
                   f"{thunk}"
                   f"{arity_hypothesis(address)}"
