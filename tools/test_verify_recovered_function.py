@@ -285,5 +285,49 @@ class FileModeTest(unittest.TestCase):
         self.assertIsNone(verifier.file_mode_annotation(0xDEADBEEF))
 
 
+class FormReportScopeTests(unittest.TestCase):
+    """The no-inline-asm rule is about what COMPILES, so it reads code only.
+
+    The annotation grammar asks a body to record why a spelling was ruled out,
+    and for the EH-funclet and copy-protection families the honest note names
+    inline assembly. Scanning the raw text refused the candidate for saying so:
+    an agent hit it on 0x0063E860 and got out by rewording the comment, which
+    is the tool teaching a body to lie about itself.
+    """
+
+    def refused(self, text):
+        return bool(verifier.form_report(text)[0])
+
+    def test_a_comment_naming_the_rule_is_not_a_violation(self):
+        self.assertFalse(self.refused(
+            "// RULED-OUT: pushfd/popfd have no non-__asm VC6 spelling\n"
+            "int f() { return 1; }\n"))
+
+    def test_a_block_comment_naming_it_is_not_either(self):
+        self.assertFalse(self.refused(
+            "/* _emit is barred by AGENTS.md:5 */\nint f() { return 1; }\n"))
+
+    def test_a_string_literal_naming_it_is_not_either(self):
+        self.assertFalse(self.refused(
+            'const char *s = "__asm";\nint f() { return 1; }\n'))
+
+    def test_real_inline_assembly_is_still_refused(self):
+        # NON-VACUITY: the check has to still be able to fail, or the three
+        # tests above pass against a rule that does nothing.
+        self.assertTrue(self.refused("int f() { __asm { nop } return 1; }"))
+
+    def test_an_escaped_quote_does_not_hide_the_rest_of_the_body(self):
+        # `"a\\"` ENDS at the escaped-backslash-then-quote, so what follows is
+        # code. A blanker that mis-parses the escape would swallow it.
+        self.assertTrue(self.refused(
+            'const char *s = "a\\\\";\nint f() { __asm nop; }\n'))
+
+    def test_blanking_preserves_every_offset(self):
+        # Blanked rather than deleted, so any position a caller reports stays
+        # honest.
+        body = "// a comment\nint f() { return 1; }\n"
+        self.assertEqual(len(body), len(verifier.code_only(body)))
+
+
 if __name__ == "__main__":
     unittest.main()
