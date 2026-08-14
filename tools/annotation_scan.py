@@ -208,6 +208,109 @@ def _rel(path: Path) -> str:
         return str(resolved)
 
 
+# A marker owns everything up to the NEXT marker. Matched loosely on purpose:
+# the point is only to stop before another piece's text, so any spelling of the
+# marker ends the region.
+NEXT_MARKER = re.compile(r"^\s*(?://|\*)?\s*ORIGINAL:\s*0x[0-9A-Fa-f]{8}\b")
+
+
+def _brace_delta(line: str, in_block: bool) -> tuple:
+    """(depth change, still inside a block comment, saw an open) for a line.
+
+    `saw_open` is separate from a positive delta because `void g() { }` opens
+    and closes on one line: its delta is zero, and testing the delta alone
+    meant a single-line definition never counted as opened at all.
+
+    COUNTED WHERE THE COMPILER COUNTS. `line.count("{")` reads a brace in a
+    comment or a string literal as structure, so prose like
+    `` `class Shim { ... };` `` inside a RULED-OUT note closed the region
+    early and the body below it was dropped in silence. An agent reported
+    exactly that after writing the idiom into a note.
+    """
+    out, index, length, saw_open = 0, 0, len(line), False
+    while index < length:
+        if in_block:
+            close = line.find("*/", index)
+            if close < 0:
+                return out, True, saw_open
+            index, in_block = close + 2, False
+            continue
+        char = line[index]
+        if char == "/" and index + 1 < length:
+            following = line[index + 1]
+            if following == "/":
+                return out, False, saw_open     # rest of the line is comment
+            if following == "*":
+                index, in_block = index + 2, True
+                continue
+        if char in "\"'":
+            quote, index = char, index + 1
+            while index < length:
+                if line[index] == "\\":
+                    index += 2
+                    continue
+                if line[index] == quote:
+                    index += 1
+                    break
+                index += 1
+            continue
+        if char == "{":
+            out += 1
+            saw_open = True
+        elif char == "}":
+            out -= 1
+        index += 1
+    return out, in_block, saw_open
+
+
+def region_end(lines: list, start: int):
+    """Index of the line that ends the region opened at `start`, or None.
+
+    THE LAST TOP-LEVEL CLOSE BEFORE THE NEXT MARKER, not the first. A body
+    that needs something ahead of its definition - a helper class expressing a
+    `__thiscall` receiver, an edited `VCall` shim whose auto-generated form is
+    nullary, an inline `operator new` for a placement-new constructor - has its
+    region closed at that helper's own `};`, and everything after it,
+    including the function the marker names, was silently dropped. The piece
+    then scores `expected one external .text symbol, found 0` while the same
+    text compiles standalone.
+
+    THREE AGENTS FOUND THIS INDEPENDENTLY in one batch and four addresses were
+    converted to FILE mode to route around it. It is also a structural
+    conflict with the emitter's own pattern: `vtable_shim` is deliberately a
+    separate top-level class, which survives `--dir` and could not survive the
+    committed-file path the gate reads.
+    """
+    depth, opened, end, in_block = 0, False, None, False
+    for offset, line in enumerate(lines[start:]):
+        # ONLY ONCE A REGION HAS OPENED. 20 annotations sit inside a doc
+        # comment that is followed by another marker before any brace - the
+        # bulk-annotated files put several markers in one header block - and
+        # breaking there ended the scan before the definition was reached,
+        # turning every one of them into "no closing brace within the file".
+        if offset and opened and NEXT_MARKER.match(line):
+            break
+        delta, in_block, saw_open = _brace_delta(line, in_block)
+        depth += delta
+        if saw_open:
+            opened = True
+        # ONLY A LINE THAT CARRIES A BRACE can end the region. Without this a
+        # blank line after a balanced definition kept extending it, since the
+        # depth is still zero there.
+        if opened and depth <= 0 and (saw_open or delta):
+            end = start + offset
+            # A TYPE DECLARATION CLOSES WITH `};`, A FUNCTION BODY WITH `}`.
+            # That is the only signal available for telling "a helper this
+            # piece needs" from "the next definition, which happens to carry
+            # no marker of its own" - and both appear in this tree. Absorbing
+            # the second is how an over-eager region swallowed a neighbouring
+            # function in `test_writeback`.
+            stripped = line.rstrip()
+            if not stripped.endswith((";", ",")):
+                break
+    return end
+
+
 def extract_forward_text(lines: list, marker_line: int) -> str:
     """The region claimed by a marker at `marker_line` (1-based), in LINES.
 
@@ -220,15 +323,7 @@ def extract_forward_text(lines: list, marker_line: int) -> str:
     extractor it mirrors.
     """
     start = marker_line - 1
-    depth, opened = 0, False
-    end = None
-    for offset, line in enumerate(lines[start:]):
-        depth += line.count("{") - line.count("}")
-        if "{" in line:
-            opened = True
-        if opened and depth <= 0:
-            end = start + offset
-            break
+    end = region_end(lines, start)
     if end is None:
         raise ValueError("no closing brace within the file")
     text = "\n".join(lines[start:end + 1]) + "\n"
