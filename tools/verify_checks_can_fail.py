@@ -867,6 +867,36 @@ def damage_truncated_span(workspace):
             "--src", str(tree)]
 
 
+def damage_span_holding_two_functions(workspace):
+    """A span restored to the 1158 bytes that covered TWO functions.
+
+    THE REAL DEFECT, reproduced. 0x0061F800's catalogued span ran to
+    0x0061FC86 and held two complete functions - `ret` at 0x0061FA23, twelve
+    `nop` of alignment, then a fresh `push ebp; mov ebp, esp` at 0x0061FA30.
+    An agent reproducing it wrote the first and had no way to learn the second
+    was meant to be in scope; the row could never have matched, and it read as
+    a hard recovery rather than a catalogue defect. The span is corrected in
+    the tree, so the damage is to put it back.
+    """
+    source = REPO_ROOT / "src" / "unrecovered" / "0061f800.cpp"
+    if not source.is_file():
+        raise Skip("0x0061F800 is not annotated in this tree")
+    text = source.read_text(encoding="utf-8")
+    fixed, broken = "0x0061F800-0x0061FA24", "0x0061F800-0x0061FC86"
+    if fixed not in text:
+        raise Skip("the span is not the one this case damages")
+    tree = workspace / "src"
+    tree.mkdir(parents=True, exist_ok=True)
+    # `// size` moves with it, or `mismeasured` fires first and this proves
+    # that check rather than the one it is aimed at.
+    (tree / "0061f800.cpp").write_text(
+        text.replace(fixed, broken).replace("// size      548 bytes",
+                                            "// size      1158 bytes"),
+        encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_span_termination.py"),
+            "--src", str(tree)]
+
+
 def damage_contradicted_return_type(workspace):
     """A name spelling `void` for a body whose prototype returns int.
 
@@ -1020,6 +1050,8 @@ CASES = (
      damage_truncated_span, "truncated span"),
     ("span-termination", "a second span deleted because the body dropped it",
      damage_removed_span, "beside spans covering"),
+    ("span-termination", "a span holding two functions back to back",
+     damage_span_holding_two_functions, "contains a SECOND prologue"),
     ("call-edges", "a header dropping a call target its own bytes make",
      damage_deleted_call_edge, "which its own bytes call directly"),
     ("class-vtables-current", "two classes deriving one vtable at offset 0",
