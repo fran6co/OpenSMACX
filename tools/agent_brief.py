@@ -155,6 +155,47 @@ TARGETED = (
      "excludes its own `ret` because the linker folded the tail onto another\n"
      "function. Check whether the branch target is the ENTRY of a different\n"
      "catalogued symbol; if it is, this is unreachable."),
+    # ------------------------------------------------------------------ the
+    # levers batches 3-6 paid for. They lived in the COORDINATOR'S PROMPT for
+    # four batches, retyped eight times each, which is the hand-maintained-list
+    # defect this repository names as its highest-yield shape - and it defeats
+    # the whole design of this table, which is that a rule reaches the agent
+    # whose divergence SELECTS it. Keyed here so they are selected, counted by
+    # `--audit`, and survive the coordinator.
+    (("C2733",),
+     "A CALLEE REDECLARATION COLLIDES WITH THE SCAFFOLD'S NULLARY ONE. The\n"
+     "emitter declares each callee with the arity it could decode, often zero,\n"
+     "and redeclaring it with the real signature is C2733. Declare a\n"
+     "DIFFERENTLY NAMED extern with the true signature and call through that -\n"
+     "the comparison is over code, and the symbol you invent is never linked.\n"
+     "Paid on _itoa, _strcat, fseek, strcmpi, GetOpenFileNameA and more."),
+    (("C4234",),
+     "`__thiscall` IS A RESERVED WORD VC6 WILL NOT ACCEPT on a free function\n"
+     "or a function-pointer typedef. Spell an indirect thiscall as a MEMBER\n"
+     "FUNCTION POINTER plus a union to convert the address, or as a method on\n"
+     "a shim class. Paid three times in one batch."),
+    (("setne", "sete", "setge", "setg", "setl", "setle"),
+     "A `set<cc>` AGAINST YOUR BRANCH is the comparison's FORM, not its\n"
+     "meaning. Measured: `(x >= 0) - 1` emits `test; setge` where the\n"
+     "algebraically identical `(-1 < x) - 1` emits `cmp; setg`. Write the\n"
+     "comparison whose operand ORDER matches the original's."),
+    (("movsd", "stosd", "scasb", "movsb", "movsw"),
+     "A `rep` STRING OPERATION IS AN INTRINSIC, and it cuts both ways.\n"
+     "`memcpy`/`memset` REPRODUCE `rep movsd`/`rep stosd` where a hand-rolled\n"
+     "loop does not - so if the original has one, call the intrinsic. If the\n"
+     "original does NOT and yours does, VC6 inlined a CRT call: stop it with\n"
+     "`#pragma function(memcpy)` (also `abs`, `strcpy`), or by calling through\n"
+     "a differently-named extern. Both directions measured."),
+    (("pop", "ret"),
+     "A DIVERGENCE IN THE TAIL IS THE EXIT SHAPE. Three measured forms:\n"
+     "(1) read whether the original sets `eax` before `ret` at all - if it\n"
+     "never does the function is `void`, and a `return 0` adds a spurious\n"
+     "`xor eax,eax`; if it ENDS in `xor eax,eax` the explicit `return 0` is\n"
+     "what reproduces it. Read the tail, do not assume either way.\n"
+     "(2) fall-through-then-`return 0` AT THE END, with the guard's false path\n"
+     "falling into the tail, where an early return does not match.\n"
+     "(3) one shared epilogue via `goto fail;` where separate early returns\n"
+     "duplicate it."),
 )
 
 
@@ -329,6 +370,38 @@ decide: {count} stack argument(s) means reads at `[esp+4]`, `[esp+8]`, ...
 before any push, or `[ebp+8]`, `[ebp+0xC]`, ... with a frame. A receiver in
 `ecx` with no matching stack slot is a `__thiscall` `this` and is NOT one of
 these arguments.
+"""
+
+
+def vcall_section(scaffolding: str) -> str:
+    """How to reach the generated vtable shim, shown only when there is one.
+
+    Keyed on the SCAFFOLD, not on a divergence: an agent needs this before it
+    has a divergence, and a body that dispatches virtually needs it every time.
+
+    Two measured facts, both of which cost matches while they lived only in the
+    coordinator's prompt. 142 of 1,891 landed bodies wrote their OWN shim
+    class - the single most common workaround in the tree.
+    """
+    if "class VCall" not in scaffolding:
+        return ""
+    return """
+# Reaching the vtable shim
+
+**Cast ONE level, not two.** `reinterpret_cast<VCall *>(this)->slot002()` is
+the call. Dereferencing to get the vtable and then indexing through it emits an
+extra load that the original does not have - two byte-exact matches in one
+batch turned on exactly this.
+
+**Retype the slot you need, in this file.** The generated shim types every slot
+`void()`, which cannot express a slot that takes arguments or returns a value.
+Only DECLARATION ORDER fixes the vtable offset, so changing a slot's signature
+moves nothing. Edit `VCall` where it sits in the unit rather than declaring a
+second class beside it.
+
+ONE SHIM IS NOT ALWAYS ENOUGH: the same slot INDEX can carry different
+signatures on `this` than on a child object the body also dispatches through.
+When that happens a second, differently-named shim class is correct.
 """
 
 
@@ -612,6 +685,13 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
         f"land it; report that rather than creating a file")
     python = interpreter()
     asm = disassembly(address)
+    # The unit as it stands, so a section can key on what the SCAFFOLD holds
+    # rather than on a divergence the agent does not have yet.
+    try:
+        scaffolding = (REPO_ROOT / landing).read_text(errors="replace") \
+            if landing and not landing.startswith("NONE") else ""
+    except OSError:
+        scaffolding = ""
     # Keyed on the SHAPE of the body rather than on a name or a divergence: a
     # thunk is a one-instruction function, and which instruction it is decides
     # between a one-candidate match and a known wall.
@@ -620,7 +700,8 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
     if body is None:
         verdict = "nothing recovered yet"
         middle = (fresh_recovery_section(address) + thunk
-                  + arity_hypothesis(address) + lifecycle_section(name))
+                  + arity_hypothesis(address) + vcall_section(scaffolding)
+                  + lifecycle_section(name))
     else:
         verdict = f"{row.get('tier', '?')}{(' - ' + note) if note else ''}"
         middle = (f"# The body as it stands ({location})\n\n"
@@ -629,6 +710,7 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
                   f"{targeted_rules(note)}\n"
                   f"{thunk}"
                   f"{arity_hypothesis(address)}"
+                  f"{vcall_section(scaffolding)}"
                   f"{lifecycle_section(name)}"
                   f"{naming_section(name, body)}")
 

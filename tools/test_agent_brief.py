@@ -401,6 +401,75 @@ class BatchModeTest(unittest.TestCase):
         self.assertFalse(hasattr(agent_brief, "CACHE_FILE"))
 
 
+class VCallSectionTest(unittest.TestCase):
+    """How to reach the generated shim, for the units that have one.
+
+    142 of 1,891 landed bodies wrote their OWN shim class - the single most
+    common workaround in the tree - and the two facts that remove it lived in
+    the coordinator's prompt for four batches instead of here.
+    """
+
+    def test_it_fires_when_the_unit_has_a_shim(self):
+        text = agent_brief.vcall_section("class VCall { public:\n"
+                                         "    virtual void slot000();\n};\n")
+        self.assertIn("Cast ONE level", text)
+
+    def test_it_is_silent_when_there_is_no_shim(self):
+        # Selectivity is the whole design of this brief: a rule an agent reads
+        # and cannot use is budget taken from the answer.
+        self.assertEqual(agent_brief.vcall_section("int f() { return 0; }"), "")
+
+    def test_it_says_to_retype_in_place_rather_than_add_a_class(self):
+        text = agent_brief.vcall_section("class VCall { public: };")
+        self.assertIn("DECLARATION ORDER", text)
+        self.assertIn("rather than declaring a\nsecond class", text)
+
+    def test_it_still_allows_the_second_shim_where_it_is_correct(self):
+        # The same slot INDEX can carry different signatures on `this` than on
+        # a child. Suppressing that would trade one wrong rule for another.
+        self.assertIn("ONE SHIM IS NOT ALWAYS ENOUGH",
+                      agent_brief.vcall_section("class VCall { public: };"))
+
+
+class PromptLeversAreInTheToolTest(unittest.TestCase):
+    """The levers must live HERE, not in whatever prompt the coordinator types.
+
+    They were carried in hand-written prompt text for four batches, retyped
+    eight times per batch. That is the hand-maintained-list defect this
+    repository calls its highest-yield shape, and it defeats the point of
+    `TARGETED`: a rule reaches the agent whose DIVERGENCE selects it, so a
+    prompt that pastes all of them gives every agent all fifteen regardless.
+    """
+
+    def keys(self):
+        return {trigger for triggers, _ in agent_brief.TARGETED
+                for trigger in triggers}
+
+    def test_the_compiler_errors_that_have_answers_are_keyed(self):
+        for code in ("C2733", "C4234", "C2065"):
+            self.assertIn(code, self.keys(), code)
+
+    def test_the_intrinsic_family_is_keyed(self):
+        # Both directions: reproduce `rep movsd` with memcpy, or stop VC6
+        # inlining one with #pragma function.
+        advice = agent_brief.targeted_rules("#3: original 'rep movsd' vs rebuilt 'mov'")
+        self.assertIn("pragma function", advice)
+        self.assertIn("memcpy", advice)
+
+    def test_the_exit_shape_family_is_keyed(self):
+        advice = agent_brief.targeted_rules("#46: original 'pop' vs rebuilt 'xor'")
+        self.assertIn("EXIT SHAPE", advice)
+        self.assertIn("void", advice)
+
+    def test_a_setcc_divergence_gets_the_comparison_form_rule(self):
+        advice = agent_brief.targeted_rules("#9: original 'setge' vs rebuilt 'setg'")
+        self.assertIn("operand ORDER", advice)
+
+    def test_c2733_gets_the_differently_named_extern(self):
+        advice = agent_brief.targeted_rules("error C2733: second C linkage")
+        self.assertIn("DIFFERENTLY NAMED", advice)
+
+
 class ArityHypothesisTest(unittest.TestCase):
     """IDA's argument count, for the functions no mangled name describes.
 
