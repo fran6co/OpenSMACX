@@ -69,14 +69,6 @@ TARGETED = (
      "off your own note. This entry is only what holds either way."),
     # WALLS. Ruled out exhaustively; each is keyed like every other entry so an
     # agent meets the one that applies rather than a catalogue of all of them.
-    (("or", "test", "and"),
-     "GUARD-MASK REGISTER. If the original holds the mask in its OWN register\n"
-     "across the test - `mov al,1; test al,cl; or cl,al` - stop. VC6 folds the\n"
-     "mask into an immediate and reuses one register. Three agents ruled this\n"
-     "out separately, across /O1 and /O2, framed and frameless, with a plain\n"
-     "immediate, a named local, a const, a volatile-adjacent read, an explicit\n"
-     "`x|0xFF`, `register` storage, a 1-bit bitfield, a discarded __fastcall\n"
-     "parameter, and a byte-exact sibling's idiom copied verbatim."),
     (("stosd", "rep"),
      "REP STOSD SETUP ORDER. The original emits `xor eax,eax` before\n"
      "`mov ecx,N`; every source form emits the count first. memset, ascending\n"
@@ -314,7 +306,12 @@ DIRECTIONAL = {
         "each use, and hoisting it into a temp forces an EBP frame and a\n"
         "spill. Paid three times on 2026-08-13 - 0x0063D4D0, 0x00611730,\n"
         "0x005EEE70 - and 271 bodies are on this side. It is the opposite of\n"
-        "what reads well, so try it deliberately."),
+        "what reads well, so try it deliberately.\n"
+        "AN EBP FRAME YOU HAVE AND THE ORIGINAL DOES NOT IS NOT A WALL. Three\n"
+        "agents in one batch reported it as a systematic one; measured over\n"
+        "the whole tree, frameless originals score BYTE_EXACT at 31% (1,073 of\n"
+        "3,469) against 17% for framed ones. They are EASIER. The frame is a\n"
+        "symptom of the live values above, not a separate problem."),
     ("sub", "push"): (
         "REGISTER ALLOCATION, and the direction says which way. The original\n"
         "allocates with `sub esp,N` and saves NO register; you save one first.\n"
@@ -399,6 +396,51 @@ def landing_mode(scaffolding: str) -> str:
         "  compiles the committed file verbatim - the same bytes the gate\n"
         "  will compile. `--body` and `--dir` regenerate scaffolding and will\n"
         "  double-declare what this file already has.\n\n")
+
+
+# `mov al, 1` then `test al, cl` - the mask held in its OWN register across
+# the test, which is the shape the guard-mask wall is about. Two instructions,
+# because that is the whole of the idiom.
+# BOTH OPERANDS MUST BE REGISTERS. `test al, 1` is the mask FOLDED INTO AN
+# IMMEDIATE, which is what VC6 emits and what this wall says cannot be turned
+# back into a register - so firing on it would tell an agent to stop on the
+# very shape its own compiler produces.
+GUARD_MASK = re.compile(
+    r"\bmov\s+(?P<reg>[abcd][lh]),\s*(?:0x[0-9a-f]+|\d+)\s*$"
+    r"(?:\n[^\n]*){0,2}?\n[^\n]*\b(?:test|or|and)\s+"
+    r"(?:(?P=reg),\s*[a-z]{2,3}|[a-z]{2,3},\s*(?P=reg))\s*$",
+    re.M)
+
+
+def guard_mask_section(asm: str) -> str:
+    """The guard-mask wall, fired on the BODY instead of on three mnemonics.
+
+    THIS WALL WAS KEYED ON `or`, `test` AND `and`. Those are three of the
+    commonest mnemonics in the image, and the entry told an agent that three
+    other agents had ruled the case out exhaustively and it should stop.
+
+    Measured 2026-08-14: it fired on 130 scored bodies and NOT ONE of them
+    contained the idiom it describes. The idiom is real and lives in exactly
+    33 bodies - `mov al, 2; test al, cl` in `0x005D71F0`, `0x005EB370` and
+    31 more - and the entry reached none of them. A wall that fires where it
+    does not apply is worse than no wall: the agent cannot tell it was
+    mis-selected, and the instruction is to stop.
+
+    Keyed on the disassembly the brief already carries, so it fires when the
+    shape is present and is silent otherwise.
+    """
+    if not asm or not GUARD_MASK.search(asm):
+        return ""
+    return (
+        "GUARD-MASK REGISTER. The original holds the mask in its OWN register\n"
+        "across the test - `mov al,1; test al,cl` - and VC6 folds a mask into\n"
+        "an immediate and reuses one register. Three agents ruled this out\n"
+        "separately, across /O1 and /O2, framed and frameless, with a plain\n"
+        "immediate, a named local, a const, a volatile-adjacent read, an\n"
+        "explicit `x|0xFF`, `register` storage, a 1-bit bitfield, a discarded\n"
+        "__fastcall parameter, and a byte-exact sibling's idiom copied\n"
+        "verbatim. Only 33 bodies in the image have this shape and yours is\n"
+        "one of them: if the mask register is your only divergence, stop.\n\n")
 
 
 def targeted_rules(note: str, found: dict = None) -> str:
@@ -820,7 +862,7 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
     if body is None:
         verdict = "nothing recovered yet"
         middle = (fresh_recovery_section(address)
-                  + landing_mode(scaffolding) + thunk
+                  + landing_mode(scaffolding) + guard_mask_section(asm) + thunk
                   + arity_hypothesis(address) + vcall_section(scaffolding)
                   + lifecycle_section(name))
     else:
@@ -830,6 +872,7 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
                   f"# What the divergence usually means\n\n"
                   f"{targeted_rules(note)}\n"
                   f"{landing_mode(scaffolding)}"
+                  f"{guard_mask_section(asm)}"
                   f"{thunk}"
                   f"{arity_hypothesis(address)}"
                   f"{vcall_section(scaffolding)}"
