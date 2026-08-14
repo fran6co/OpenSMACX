@@ -1,4 +1,7 @@
 // ORIGINAL: 0x005171D0 FILE
+// RULED-OUT: MISMATCH #3 push-vs-mov in the prologue; hoisting the two guard
+//            reads into locals before the branch did not change register
+//            allocation order. Full switch/goto structure otherwise matches.
 // working copy - scaffold materialised by --work
 // name      ?veh_key@Console@@QAEXHHH@Z
 // size      1466 bytes
@@ -1994,10 +1997,249 @@ class Console : public MapWin { public:
     void veh_key(int, int, int);
 };
 void Console::veh_key(int a1, int a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    int veh;
+    int term_arg;
+    short unit_type;
+    unsigned char terrain_byte;
+    unsigned char terrain_flag;
+    unsigned int flag;
+    MapWin **wp;
 
+    if ((*g_0093f660 != 0) && (a2 != 0x61)) {
+        if (*g_0093a938 != 0) return;
+        if (*g_0093e944 != 0) return;
+        if ((*g_0093e8ec & (1 << (*(unsigned char *)g_00939284 & 0x1f))) != 0) return;
+    }
+
+    switch (a1) {
+    case 0x42:
+        veh = field_23BDC_;
+        term_arg = 0xe;
+        goto do_terraform1;
+    case 0x45:
+        veh = field_23BDC_;
+        term_arg = 0xd;
+        goto do_terraform1;
+    case 0x46:
+        veh = field_23BDC_;
+        term_arg = 4;
+        goto do_terraform1;
+    case 0x47:
+        go_home(field_23BDC_);
+        break;
+    case 0x48:
+        hold(field_23BDC_, 10);
+        break;
+    case 0x49:
+        go_to(field_23BDC_, -3, 0);
+        break;
+    case 0x4c:
+        automate(field_23BDC_, 0xb);
+        break;
+    case 0x50:
+        wp = (MapWin **)g_007d3c3c;
+        flag = (*wp)->field_1DD70_ & 0x400000;
+        do {
+            MapWin *w = *wp;
+            if (w != 0 && (wp == (MapWin **)g_007d3c3c || w->field_1DD74_ != 0)) {
+                if (flag == 0) {
+                    w->field_1DD70_ |= 0x400000;
+                    w->draw_base_dest(1);
+                } else {
+                    w->field_1DD70_ &= 0xffbfffff;
+                    w->draw_map(1);
+                }
+            }
+            ++wp;
+        } while (wp < (MapWin **)g_007d3c5c);
+        break;
+    case 0x55:
+        unload(field_23BDC_);
+        break;
+    case 0x61:
+        if (*g_0093e944 == 0) {
+            veh = field_23BDC_;
+            activate((int)((short *)g_00952828)[veh * 0x1a], (int)((short *)g_0095282a)[veh * 0x1a], 1);
+        }
+        break;
+    case 0x66:
+        veh = field_23BDC_;
+        unit_type = ((short *)g_00952832)[veh * 0x1a];
+        if (can_arty(unit_type, 1) == 0) {
+            veh = field_23BDC_;
+            term_arg = 0;
+            goto do_terraform1;
+        }
+        arty(field_23BDC_);
+        break;
+    case 0x67:
+        go_to(field_23BDC_, 0x18, 0);
+        break;
+    case 0x68:
+        hold(field_23BDC_, 0);
+        break;
+    case 0x69:
+        use_ability(field_23BDC_);
+        break;
+    case 0x6c:
+        sentry(field_23BDC_, 0);
+        break;
+    case 0x6e:
+        veh = field_23BDC_;
+        term_arg = 0xc;
+        goto do_terraform1;
+    case 0x6f:
+        veh = field_23BDC_;
+        unit_type = ((short *)g_00952832)[veh * 0x1a];
+        if (((unsigned char *)g_009ab892)[unit_type * 0x34] != 10) {
+            term_arg = 9;
+            goto do_terraform1;
+        }
+        convoy(veh);
+        break;
+    case 0x70:
+        set_patrol(field_23BDC_);
+        break;
+    case 0x71:
+        veh = field_23BDC_;
+        term_arg = 0xf;
+        goto do_terraform1;
+    case 0x72:
+        veh = field_23BDC_;
+        term_arg = 5;
+        goto do_terraform1;
+    case 0x62:
+        veh = field_23BDC_;
+        unit_type = ((short *)g_00952832)[veh * 0x1a];
+        terrain_byte = ((unsigned char *)g_009ab88c)[unit_type * 0x34];
+        terrain_flag = ((unsigned char *)g_0094a379)[terrain_byte * 0x90];
+        if (terrain_flag == 2 && ((unsigned char *)g_009ab892)[unit_type * 0x34] != 8 &&
+            ((unsigned char *)g_0094ae68)[((unsigned char *)g_009ab88d)[unit_type * 0x34] * 0x10] != 0) {
+            automate(veh, 10);
+        } else if (((unsigned char *)g_0094ae68)[((unsigned char *)g_009ab88d)[unit_type * 0x34] * 0x10] == 0 ||
+                   terrain_flag == 2) {
+            if (((unsigned char *)g_009ab892)[unit_type * 0x34] == 9) {
+                term_arg = 0xe;
+                goto do_terraform1;
+            }
+            new_base(veh);
+        } else {
+            oblit(veh);
+        }
+        break;
+    }
+    goto switch2;
+do_terraform1:
+    terraform(veh, term_arg);
+switch2:
+
+    switch (a2) {
+    case 0x20:
+        skip(field_23BDC_);
+    default:
+        goto part3;
+    case 0x2e:
+        veh = field_23BDC_;
+        term_arg = 8;
+        goto do_terraform2;
+    case 0x2f:
+        explore(field_23BDC_);
+        goto part3;
+    case 0x5b:
+        veh = field_23BDC_;
+        term_arg = 0x11;
+        break;
+    case 0x5d:
+        veh = field_23BDC_;
+        term_arg = 0x10;
+        break;
+    case 0x5f:
+        term_arg = 0x12;
+        goto do_terraform2;
+    case 'd':
+        destroy(field_23BDC_);
+        goto part3;
+    case 'k':
+        veh = field_23BDC_;
+        term_arg = 7;
+        break;
+    case 'm':
+        term_arg = 2;
+do_terraform2:
+        veh = field_23BDC_;
+        break;
+    case 's':
+        veh = field_23BDC_;
+        term_arg = 3;
+        break;
+    }
+    terraform(veh, term_arg);
+part3:
+
+    if (a3 < 0x30047) {
+        if (a3 == 0x30046) {
+            automate(field_23BDC_, 6);
+            return;
+        }
+        if (a3 < 0x20053) {
+            if (a3 == 0x20052) {
+                road_to(field_23BDC_, 0x1b);
+                return;
+            }
+            if (a3 == 0x20044) {
+                designate(field_23BDC_);
+                return;
+            }
+            if (a3 == 0x20046) {
+                terraform(field_23BDC_, 0xb);
+                return;
+            }
+            if (a3 == 0x20048) {
+                go_home(field_23BDC_);
+                return;
+            }
+        } else {
+            if (a3 == 0x20054) {
+                road_to(field_23BDC_, 0x1c);
+                return;
+            }
+            if (a3 == 0x20055) {
+                upgrade(field_23BDC_);
+                return;
+            }
+            if (a3 == 0x30041) {
+                veh = field_23BDC_;
+                unit_type = ((short *)g_00952832)[veh * 0x1a];
+                terrain_byte = ((unsigned char *)g_009ab88c)[unit_type * 0x34];
+                if (((unsigned char *)g_0094a379)[terrain_byte * 0x90] == 2 &&
+                    ((unsigned char *)g_0094ae68)[((unsigned char *)g_009ab88d)[unit_type * 0x34] * 0x10] != 0) {
+                    automate(veh, 0xc);
+                    return;
+                }
+                automate(veh, 3);
+                return;
+            }
+        }
+    } else {
+        switch (a3) {
+        case 0x3004d:
+            automate(field_23BDC_, 5);
+            return;
+        case 0x3004f:
+            automate(field_23BDC_, 7);
+            return;
+        case 0x30052:
+            automate(field_23BDC_, 1);
+            return;
+        case 0x30053:
+            automate(field_23BDC_, 4);
+            return;
+        case 0x30054:
+            automate(field_23BDC_, 2);
+            return;
+        case 0x30055:
+            give_veh(field_23BDC_);
+            return;
+        }
+    }
 }

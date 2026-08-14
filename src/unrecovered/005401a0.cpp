@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005401A0 FILE
+// RULED-OUT: direct transcription of the Ghidra decompile (tech-cost
+//            computation, string message build via say_tech/parse_says/
+//            parse_num/strcat, X_pops purchase gate, energy/tech transfer
+//            with Console/NetDaemon dispatch); diverges at insn #5 in the
+//            prologue register-save order, not in control flow
 // working copy - scaffold materialised by --work
 // name      ?buy_tech@@YAHHHHHH@Z
 // size      1158 bytes
@@ -1999,12 +2004,142 @@ static int *const g_0096cd3c = (int *)0x0096CD3C;
 static int *const g_009a64d4 = (int *)0x009A64D4;
 static int *const g_009a6670 = (int *)0x009A6670;
 static int *const g_009b86a0 = (int *)0x009B86A0;
-int __cdecl buy_tech(int a1, int a2, int a3, int a4, int a5) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+extern "C" int __cdecl sub_5398e0();
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+int __cdecl buy_tech(int a1, int a2, int a3, int a4, int a5) {
+    int iVar2, iVar3;
+    int cost;
+    int result;
+    char itoaBuf[80];
+    char *pcVar5;
+
+    *g_0093f7cc = a2;
+    if (a5 == 5) {
+        if (*g_0093f804 < 0) {
+            scan_prototypes(a1, a2);
+            if (*g_0093f804 < 0) {
+                return 0;
+            }
+        }
+        *g_0093f800 = *g_0093f804 + 0x61;
+    } else if (a5 != 0xd) {
+        if (*g_0093f800 < 0) {
+            return 0;
+        }
+        iVar2 = strcmp((char *)g_00946a54 + a2 * 0x59c, (char *)g_0068d71c);
+        if (iVar2 == 0 && *g_0093faa8 >= 0) {
+            return 0;
+        }
+    }
+    if (a3 == 1) {
+        return 0;
+    }
+    iVar2 = tech_val(*g_0093f800, a2, 1);
+    iVar2 = iVar2 * ((*g_009a64d4 + 7 + ((*g_009a64d4 + 7 >> 0x1f) & 7)) >> 3);
+    iVar3 = great_satan(a1, 0);
+    if (iVar3 != 0) {
+        iVar2 = iVar2 * 2;
+    }
+    if (*g_0093fa3c != 0) {
+        iVar2 = iVar2 * 2;
+    }
+    if (a4 != 0) {
+        iVar2 = (iVar2 * 3) / 2;
+    }
+    iVar3 = bit_count(((unsigned char *)g_009a6670)[*g_0093f800]);
+    iVar3 = iVar3 - 1;
+    if (iVar3 < 1) {
+        iVar3 = 1;
+    } else if (iVar3 > 999) {
+        iVar3 = 999;
+    }
+    iVar2 = iVar2 / iVar3;
+    if ((((unsigned char *)g_0096c9f8)[a2 * 4 + a1 * 0x20cc] & 1) != 0) {
+        if (((int *)g_0096c9e4)[a1 * 0x833] < ((int *)g_0096c9e4)[a2 * 0x833]) {
+            if (*(int *)((char *)g_0096cd3c + a1 * 0x20cc) + 8 < *(int *)((char *)g_0096cd3c + a2 * 0x20cc)) {
+                iVar2 = (iVar2 + ((iVar2 >> 0x1f) & 3)) >> 2;
+            } else if (*(int *)((char *)g_0096cd3c + a1 * 0x20cc) < *(int *)((char *)g_0096cd3c + a2 * 0x20cc)) {
+                iVar2 = iVar2 / 2;
+            }
+        }
+    }
+    cost = ((iVar2 + 0x19) / 0x19) * 0x19;
+    if (a5 != 0xd && cost < 100) {
+        cost = 100;
+    }
+    if (((int *)g_0096cc00)[a1 * 0x833] < cost && a3 != 5 && a5 != 5) {
+        return 0;
+    }
+    *(char *)g_009b86a0 = 0;
+    say_tech((char *)g_009b86a0, *g_0093f800, 1);
+    parse_says(0, (char *)g_009b86a0, -1, -1);
+    parse_num(0, cost);
+    *(char *)g_009b86a0 = 0;
+    strcat((char *)g_009b86a0, (char *)g_0068d724);
+    if (a5 == 5) {
+        pcVar5 = (char *)g_0068d728;
+    } else {
+        if (a5 == 0xd) {
+            strcat((char *)g_009b86a0, (char *)g_0068d730);
+            parse_says(0, (char *)g_00946d54 + *g_0093fa5c * 0x59c, -1, -1);
+            goto after_strcat;
+        }
+        pcVar5 = (char *)g_0068d73c;
+    }
+    strcat((char *)g_009b86a0, pcVar5);
+after_strcat:
+    if (cost <= ((int *)g_0096cc00)[a1 * 0x833]) {
+        int rnd;
+        if (a5 == 5 || a5 == 0xd) {
+            rnd = 0;
+        } else {
+            rnd = random(0, 2);
+        }
+        _itoa(rnd, itoaBuf, 10);
+        strcat((char *)g_009b86a0, itoaBuf);
+        result = X_pops((char *)g_009b86a0, 0x100000, ((Sprite **)g_006846d8)[a2], sub_5398e0);
+        if (result == 1) {
+            iVar2 = -cost;
+            if (*g_0093f660 == 0) {
+                if (a1 != 0) {
+                    ((int *)g_0096cc00)[a1 * 0x833] = ((int *)g_0096cc00)[a1 * 0x833] + iVar2;
+                }
+                if (a2 != 0) {
+                    ((int *)g_0096cc00)[a2 * 0x833] = ((int *)g_0096cc00)[a2 * 0x833] + cost;
+                }
+                reinterpret_cast<Console *>(g_009156b0)->update_data(1);
+            } else {
+                log_say((char *)g_0068d4bc, a1, a2, iVar2);
+                message_data(0x2447, 0, a1, iVar2, a2, cost);
+            }
+            iVar2 = *g_0093f800;
+            if (*g_0093f660 == 0) {
+                tech_achieved(a1, *g_0093f800, a2, 0);
+            } else {
+                log_say((char *)g_0068d4f0, a1, *g_0093f800, a2);
+                message_data(0x244b, 0, a1, iVar2, a2, 0);
+                reinterpret_cast<NetDaemon *>(g_0093cd90)->await_diplo(1099);
+            }
+            if (a5 == 5) {
+                *g_0093f804 = -1;
+            }
+            *g_007ad330 = 0;
+            reinterpret_cast<Console *>(g_009156b0)->update_data(0);
+            diplomacy_caption(a1, a2);
+        }
+        return 1;
+    }
+    strcat((char *)g_009b86a0, (char *)g_0068d744);
+    {
+        int rnd2;
+        if (a5 == 5 || a5 == 0xd) {
+            rnd2 = 0;
+        } else {
+            rnd2 = random(0, 2);
+        }
+        _itoa(rnd2, itoaBuf, 10);
+    }
+    strcat((char *)g_009b86a0, itoaBuf);
+    X_pops((char *)g_009b86a0, 0x100000, ((Sprite **)g_006846d8)[a2], sub_5398e0);
+    return 1;
 }

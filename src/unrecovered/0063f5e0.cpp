@@ -1,4 +1,10 @@
 // ORIGINAL: 0x0063F5E0 FILE
+// RULED-OUT: 6-arg __cdecl signature derived from esp+N reads at the anchor
+//            (post-prologue esp) rather than IDA's untyped guess; the
+//            per-vertex bbox loop, sub_6280e0/sub_628150/sub_6401b0 arg
+//            order, and the final outBox/localBox clamp (which Ghidra's
+//            pseudocode also shows) are transcribed from the raw asm since
+//            Ghidra's __ftol() calls hide their FPU source operands.
 // working copy - scaffold materialised by --work
 // name      sub_63f5e0
 // size      968 bytes
@@ -1177,16 +1183,138 @@ const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
 extern "C" int __cdecl _ftol();
-extern "C" int __cdecl sub_6280e0();
-extern "C" int __cdecl sub_628150();
-extern "C" int __cdecl sub_63fa80();
-extern "C" int __cdecl sub_6401b0();
-extern "C" int __cdecl sub_63f5e0() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+extern "C" void __cdecl sub_6280e0(int, float *, float *);
+extern "C" void __cdecl sub_628150(int, float *, float *);
+extern "C" void __cdecl sub_63fa80(int);
+extern "C" void __cdecl sub_6401b0(short *, unsigned char *, int *);
+extern "C" void __cdecl sub_63f5e0(int param_1, unsigned char *param_2, int param_3, int param_4,
+                                    int *param_5, int *param_6) {
+    int *outBox = param_6;
+    outBox[4] = 0;
+    outBox[5] = 0;
+    outBox[0] = 0x7fff;
+    outBox[1] = 0x7fff;
+    outBox[2] = -0x7fff;
+    outBox[3] = -0x7fff;
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    sub_63fa80(param_4);
+
+    int localBox[6];
+    {
+        int *src = reinterpret_cast<int *>(param_1 + 0x38);
+        for (int i = 0; i < 6; i++) {
+            localBox[i] = src[i];
+        }
+    }
+
+    if (param_5[4] != 0 && param_5[5] != 0) {
+        if (localBox[0] < param_5[0]) localBox[0] = param_5[0];
+        if (localBox[1] < param_5[1]) localBox[1] = param_5[1];
+        if (param_5[2] < localBox[2]) localBox[2] = param_5[2];
+        if (param_5[3] < localBox[3]) localBox[3] = param_5[3];
+    }
+
+    if ((*param_2 & 2) == 0) {
+        int intX = static_cast<int>(*reinterpret_cast<float *>(param_3));
+        int intY = static_cast<int>(*reinterpret_cast<float *>(param_3 + 4));
+
+        sub_6401b0(reinterpret_cast<short *>(param_2 + 0x1a), param_2 + 0x14, outBox);
+
+        if (outBox[4] != 0 && outBox[5] != 0) {
+            outBox[0] = outBox[0] + intX;
+            outBox[1] = outBox[1] + intY;
+            outBox[2] = outBox[2] + intX;
+            outBox[3] = outBox[3] + intY;
+        }
+        if (outBox[2] < localBox[0] || outBox[3] < localBox[1] ||
+            localBox[2] < outBox[0] || localBox[3] < outBox[1]) {
+            outBox[2] = -0x7fff;
+            outBox[3] = -0x7fff;
+            outBox[0] = 0x7fff;
+            outBox[1] = 0x7fff;
+            outBox[4] = 0;
+            outBox[5] = 0;
+            return;
+        }
+        if (outBox[0] < localBox[0]) outBox[0] = localBox[0];
+        if (outBox[1] < localBox[1]) outBox[1] = localBox[1];
+        if (localBox[2] < outBox[2]) outBox[2] = localBox[2];
+        if (localBox[3] < outBox[3]) outBox[3] = localBox[3];
+    } else {
+        int box2[4];
+        box2[0] = 0x7fff;
+        box2[1] = 0x7fff;
+        box2[2] = -0x7fff;
+        box2[3] = -0x7fff;
+        int v20 = 0, v1c = 0;
+        unsigned char *p = param_2 + 0x2a;
+        unsigned int counter = 0;
+        if (*reinterpret_cast<int *>(param_2 + 0x26) != 0) {
+            do {
+                float pointXYZ[3];
+                pointXYZ[0] = static_cast<float>(static_cast<int>(*reinterpret_cast<short *>(p)) +
+                                                  static_cast<int>(*reinterpret_cast<short *>(p + 0x12)));
+                pointXYZ[1] = static_cast<float>(static_cast<int>(*reinterpret_cast<short *>(p + 2)) +
+                                                  static_cast<int>(*reinterpret_cast<short *>(p + 0x14)));
+                pointXYZ[2] = static_cast<float>(static_cast<int>(*reinterpret_cast<short *>(p + 4)) +
+                                                  static_cast<int>(*reinterpret_cast<short *>(p + 0x16)));
+                float outBuf3[3];
+                sub_6280e0(param_4, pointXYZ, outBuf3);
+                sub_628150(param_3, outBuf3, pointXYZ);
+
+                short deltas[3];
+                deltas[0] = *reinterpret_cast<short *>(p + 6) - *reinterpret_cast<short *>(p + 0x12);
+                deltas[1] = *reinterpret_cast<short *>(p + 8) - *reinterpret_cast<short *>(p + 0x14);
+                deltas[2] = *reinterpret_cast<short *>(p + 0xa) - *reinterpret_cast<short *>(p + 0x16);
+                sub_6401b0(deltas, p + 0xc, box2);
+
+                int ix = static_cast<int>(outBuf3[0]);
+                int iy = static_cast<int>(pointXYZ[1]);
+
+                if (v20 != 0 && v1c != 0) {
+                    box2[1] = box2[1] + iy;
+                    box2[0] = box2[0] + ix;
+                    box2[2] = box2[2] + ix;
+                    box2[3] = box2[3] + iy;
+                }
+                if (localBox[0] <= box2[2] && localBox[1] <= box2[3] &&
+                    box2[0] <= localBox[2] && box2[1] <= localBox[3]) {
+                    if (box2[0] < localBox[0]) box2[0] = localBox[0];
+                    if (box2[1] < localBox[1]) box2[1] = localBox[1];
+                    if (localBox[2] < box2[2]) box2[2] = localBox[2];
+                    if (localBox[3] < box2[3]) box2[3] = localBox[3];
+                    if (box2[2] < 0 || box2[3] < 0) {
+                        v1c = 0;
+                        v20 = 0;
+                    } else {
+                        v20 = (box2[2] - box2[0]) + 1;
+                        v1c = (box2[3] - box2[1]) + 1;
+                    }
+                    if (v20 != 0 && v1c != 0) {
+                        if (box2[0] < outBox[0]) outBox[0] = box2[0];
+                        if (box2[1] < outBox[1]) outBox[1] = box2[1];
+                        if (outBox[2] < box2[2]) outBox[2] = box2[2];
+                        if (outBox[3] < box2[3]) outBox[3] = box2[3];
+                    }
+                }
+
+                counter += *reinterpret_cast<unsigned int *>(p + 0x18);
+                unsigned int stride;
+                if ((p[0x1c] & 1) == 0) {
+                    stride = *reinterpret_cast<unsigned int *>(p + 0x18) * 3;
+                } else {
+                    stride = *reinterpret_cast<unsigned int *>(p + 0x20);
+                }
+                p = p + stride + 0x20;
+            } while (counter < *reinterpret_cast<unsigned int *>(param_2 + 0x26));
+        }
+    }
+
+    if (outBox[2] > -1 && outBox[3] > -1) {
+        outBox[4] = (outBox[2] - outBox[0]) + 1;
+        outBox[5] = (outBox[3] - outBox[1]) + 1;
+        return;
+    }
+    outBox[4] = 0;
+    outBox[5] = 0;
 }

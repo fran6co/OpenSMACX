@@ -1,4 +1,8 @@
 // ORIGINAL: 0x00402550 FILE
+// RULED-OUT: fallback __stdcall(int) signature - disasm has `mov esi,ecx` in
+//            the prologue (this-in-ecx), matched as __thiscall SpriteStruct::add
+//            per the ServiceStruct::add sibling shape; diverges at insn #7,
+//            same prologue-order divergence as 0x00401760
 // working copy - scaffold materialised by --work
 // name      SpriteStruct::add
 // size      1043 bytes
@@ -1192,7 +1196,7 @@ class Heap { public:
     void shutdown();
 };
 
-extern "C" int __cdecl exit();
+extern "C" void __cdecl exit(int);
 void * mem_get(int);
 
 // Vtable shim. VC6 rejects a free `__thiscall` function pointer
@@ -1205,7 +1209,7 @@ void * mem_get(int);
 // vtable OFFSET from the body and not the argument list.
 // This body dispatches through slot(s): 0
 class VCall { public:
-    virtual void slot000();  // <-- used
+    virtual void slot000(void *);  // <-- used
 };
 
 // ---- fixed globals this body references ----
@@ -1220,12 +1224,199 @@ static int *const g_00669448 = (int *)0x00669448;
 static int *const g_00682700 = (int *)0x00682700;
 static int *const g_00682724 = (int *)0x00682724;
 static int *const g_009b3374 = (int *)0x009B3374;
-extern "C" int __stdcall fn_00402550(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+typedef int (__stdcall *MessageBoxA_t)(HWND, LPCSTR, LPCSTR, unsigned int);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+class SpriteStruct { public:
+    int add(int);
+};
+int SpriteStruct::add(int a1) {
+    int *p = (int *)this;
+    int iVar1;
+    int *piVar2;
+
+    iVar1 = p[6];
+    if (p[4] != 0) {
+        if (iVar1 == 0) {
+LAB_00402781:
+            iVar1 = *(int *)(*(int *)(p[1] + 4) + 8 + (int)p);
+            if (iVar1 != 0) {
+                piVar2 = (int *)((Heap *)iVar1)->get(0x1c);
+                if (piVar2 != 0) goto LAB_004027cf;
+                (*(MessageBoxA_t *)g_00669318)(0, (LPCSTR)g_00682700, (LPCSTR)g_00682724, 0);
+                exit(3);
+            }
+            piVar2 = (int *)mem_get(0x1c);
+            if (piVar2 != 0) {
+                *g_009b3374 = 0;
+                iVar1 = *g_009b3374;
+                goto LAB_004027cf;
+            }
+            piVar2 = 0;
+        } else {
+            piVar2 = (int *)((Heap *)iVar1)->get(0x1c);
+            if (piVar2 == 0) {
+                (*(MessageBoxA_t *)g_00669318)(0, (LPCSTR)g_00682700, (LPCSTR)g_00682724, 0);
+                exit(3);
+                goto LAB_00402781;
+            }
+LAB_004027cf:
+            *g_009b3374 = iVar1;
+            *piVar2 = (int)g_006693c8;
+            piVar2[5] = (int)g_006693ac;
+            piVar2[6] = *g_009b3374;
+            *g_009b3374 = 0;
+            *(int **)(*(int *)(*piVar2 + 4) + (int)piVar2) = g_006693c4;
+        }
+        *(int **)(*(int *)(p[2] + 0x10) + 0xc) = piVar2;
+        iVar1 = *(int *)(*(int *)(p[2] + 0x10) + 0xc);
+        if (iVar1 == 0) {
+            return 4;
+        }
+        *(int *)(iVar1 + 0x10) = *(int *)(p[2] + 0x10);
+        *(int *)(*(int *)(p[2] + 0x10) + 0xc) = p[2];
+        *(int *)(p[2] + 0x10) = *(int *)(*(int *)(p[2] + 0x10) + 0xc);
+        iVar1 = *(int *)(p[2] + 0x10);
+        p[3] = iVar1;
+        *(int *)(iVar1 + 4) = a1;
+        iVar1 = p[6];
+        if (iVar1 == 0) {
+LAB_004028af:
+            iVar1 = *(int *)(*(int *)(p[1] + 4) + 8 + (int)p);
+            if (iVar1 == 0) {
+LAB_004028eb:
+                piVar2 = (int *)mem_get(0x20);
+                if (piVar2 != 0) {
+                    *g_009b3374 = 0;
+                    iVar1 = *g_009b3374;
+                    goto LAB_004028fd;
+                }
+                piVar2 = 0;
+            } else {
+                piVar2 = (int *)((Heap *)iVar1)->get(0x20);
+                if (piVar2 == 0) {
+                    (*(MessageBoxA_t *)g_00669318)(0, (LPCSTR)g_00682700, (LPCSTR)g_00682724, 0);
+                    exit(3);
+                    goto LAB_004028eb;
+                }
+LAB_004028fd:
+                *g_009b3374 = iVar1;
+                *piVar2 = (int)g_00669448;
+                piVar2[6] = (int)g_006693ac;
+                piVar2[7] = *g_009b3374;
+                *g_009b3374 = 0;
+                *(int **)(*(int *)(*piVar2 + 4) + (int)piVar2) = g_00669444;
+            }
+            *(int **)(p[3] + 8) = piVar2;
+        } else {
+            piVar2 = (int *)((Heap *)iVar1)->get(0x20);
+            if (piVar2 == 0) {
+                (*(MessageBoxA_t *)g_00669318)(0, (LPCSTR)g_00682700, (LPCSTR)g_00682724, 0);
+                exit(3);
+                goto LAB_004028af;
+            }
+            *g_009b3374 = iVar1;
+            *piVar2 = (int)g_00669448;
+            piVar2[6] = (int)g_006693ac;
+            piVar2[7] = *g_009b3374;
+            *g_009b3374 = 0;
+            *(int **)(*(int *)(*piVar2 + 4) + (int)piVar2) = g_00669444;
+            *(int **)(p[3] + 8) = piVar2;
+        }
+        if (*(int *)(p[3] + 8) == 0) {
+            return 4;
+        }
+        reinterpret_cast<VCall *>(this)->slot000((void *)*(int *)(p[3] + 8));
+        goto LAB_0040294e;
+    }
+    if (iVar1 == 0) {
+LAB_0040259e:
+        iVar1 = *(int *)(*(int *)(p[1] + 4) + 8 + (int)p);
+        if (iVar1 != 0) {
+            piVar2 = (int *)((Heap *)iVar1)->get(0x1c);
+            if (piVar2 != 0) goto LAB_004025ec;
+            (*(MessageBoxA_t *)g_00669318)(0, (LPCSTR)g_00682700, (LPCSTR)g_00682724, 0);
+            exit(3);
+        }
+        piVar2 = (int *)mem_get(0x1c);
+        if (piVar2 != 0) {
+            *g_009b3374 = 0;
+            iVar1 = *g_009b3374;
+            goto LAB_004025ec;
+        }
+        piVar2 = 0;
+    } else {
+        piVar2 = (int *)((Heap *)iVar1)->get(0x1c);
+        if (piVar2 == 0) {
+            (*(MessageBoxA_t *)g_00669318)(0, (LPCSTR)g_00682700, (LPCSTR)g_00682724, 0);
+            exit(3);
+            goto LAB_0040259e;
+        }
+LAB_004025ec:
+        *g_009b3374 = iVar1;
+        *piVar2 = (int)g_006693c8;
+        piVar2[5] = (int)g_006693ac;
+        piVar2[6] = *g_009b3374;
+        *g_009b3374 = 0;
+        *(int **)(*(int *)(*piVar2 + 4) + (int)piVar2) = g_006693c4;
+    }
+    p[2] = (int)piVar2;
+    if (piVar2 == 0) {
+        return 4;
+    }
+    piVar2[1] = a1;
+    *(int *)(p[2] + 0xc) = p[2];
+    *(int *)(p[2] + 0x10) = p[2];
+    iVar1 = p[6];
+    if (iVar1 == 0) {
+LAB_004026a5:
+        iVar1 = *(int *)(*(int *)(p[1] + 4) + 8 + (int)p);
+        if (iVar1 == 0) {
+LAB_004026e1:
+            piVar2 = (int *)mem_get(0x20);
+            if (piVar2 != 0) {
+                *g_009b3374 = 0;
+                iVar1 = *g_009b3374;
+                goto LAB_004026f3;
+            }
+            piVar2 = 0;
+        } else {
+            piVar2 = (int *)((Heap *)iVar1)->get(0x20);
+            if (piVar2 == 0) {
+                (*(MessageBoxA_t *)g_00669318)(0, (LPCSTR)g_00682700, (LPCSTR)g_00682724, 0);
+                exit(3);
+                goto LAB_004026e1;
+            }
+LAB_004026f3:
+            *g_009b3374 = iVar1;
+            *piVar2 = (int)g_00669448;
+            piVar2[6] = (int)g_006693ac;
+            piVar2[7] = *g_009b3374;
+            *g_009b3374 = 0;
+            *(int **)(*(int *)(*piVar2 + 4) + (int)piVar2) = g_00669444;
+        }
+        *(int **)(p[2] + 8) = piVar2;
+    } else {
+        piVar2 = (int *)((Heap *)iVar1)->get(0x20);
+        if (piVar2 == 0) {
+            (*(MessageBoxA_t *)g_00669318)(0, (LPCSTR)g_00682700, (LPCSTR)g_00682724, 0);
+            exit(3);
+            goto LAB_004026a5;
+        }
+        *g_009b3374 = iVar1;
+        *piVar2 = (int)g_00669448;
+        piVar2[6] = (int)g_006693ac;
+        piVar2[7] = *g_009b3374;
+        *g_009b3374 = 0;
+        *(int **)(*(int *)(*piVar2 + 4) + (int)piVar2) = g_00669444;
+        *(int **)(p[2] + 8) = piVar2;
+    }
+    if (*(int *)(p[2] + 8) == 0) {
+        return 4;
+    }
+    reinterpret_cast<VCall *>(this)->slot000((void *)*(int *)(p[2] + 8));
+    p[3] = p[2];
+LAB_0040294e:
+    p[5] = p[4];
+    p[4] = p[4] + 1;
+    return 0;
 }

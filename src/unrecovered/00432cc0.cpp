@@ -1,4 +1,13 @@
 // ORIGINAL: 0x00432CC0 FILE
+// RULED-OUT: direct transcription of the Ghidra decompile (tech-search loop
+//            over the 0x94ae6c/0x10-stride weapon table, Caviar::add_object
+//            special-cases, set_scaling, Sprite::draw of the 0x778400/0x160
+//            table entry, render/render_mono branch, Buffer text/caption
+//            rendering tail via panelBuf=self+0x444); diverges at insn #0,
+//            frame-pointer-vs-ESP-frame prologue shape, not control flow
+// RULED-OUT: field offsets (0x2b68, 0x2b9c, 0x3f68, 0x444, 0x45f4, 0x4600,
+//            0x4604, 0x461c) taken straight from disasm, not from
+//            hypothesis_layouts.h SelectPartWin (not consulted for offsets)
 // working copy - scaffold materialised by --work
 // name      ?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z
 // size      1191 bytes
@@ -1453,15 +1462,162 @@ static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b90d8 = (int *)0x009B90D8;
 static int *const g_009b90f8 = (int *)0x009B90F8;
 
+typedef char *(__stdcall *CharUpperA_t)(char *);
+
 class SelectPartWin { public:
     int draw_weapon(int, RECT *, int);
 };
 int SelectPartWin::draw_weapon(int a1, RECT * a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
+    int visibleCount = 0;
+    int weaponMissing = 0;
+    int idx = 0;
+    int savedThis = (int)self;
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    do {
+        if (((short *)g_0094ae6c)[idx * 8] > -2) {
+            if (visibleCount == a1) {
+                visibleCount = has_tech((int)((short *)g_0094ae6c)[idx * 8], *(int *)(self + 0x2b68)) ? 1 : 0;
+                if (visibleCount == 0) {
+                    weaponMissing = 1;
+                }
+                break;
+            }
+            visibleCount = visibleCount + 1;
+        }
+        idx = idx + 1;
+    } while (idx < 0x1a);
+    if (idx == 0x1a) {
+        return 0;
+    }
+
+    *(int *)(self + 0x3f68) = 0;
+    Caviar *caviar = reinterpret_cast<Caviar *>(self + 0x2b9c);
+    float scaleImm;
+    if (idx == 0) {
+        caviar->add_object((CaviarData *)g_007871c0, 0);
+        scaleImm = 0.2f;
+    } else if (idx == 0x10) {
+        caviar->add_object((CaviarData *)g_0078a5f0, 0);
+        scaleImm = 0.06f;
+    } else if (idx == 0x17) {
+        caviar->add_object((CaviarData *)g_00791d78, 0);
+        scaleImm = 0.06f;
+    } else if (idx == 0x18) {
+        caviar->add_object((CaviarData *)g_00791d78, 0);
+        caviar->add_object((CaviarData *)g_00788028, 0);
+        scaleImm = 0.06f;
+    } else if (idx == 0x19) {
+        caviar->add_object((CaviarData *)g_00791d78, 0);
+        caviar->add_object((CaviarData *)g_007acc10, 0);
+        scaleImm = 0.06f;
+    } else {
+        vehdraw_construct_weapon(*(int *)(self + 0x2b68), -1, idx, caviar);
+        unsigned char weaponClass = ((unsigned char *)g_0094ae6a)[idx * 0x10];
+        if (weaponClass < 3) {
+            scaleImm = 0.2f;
+        } else if (weaponClass == 9) {
+            scaleImm = 0.08f;
+        } else if (weaponClass == 0xb) {
+            scaleImm = 0.2f;
+        } else {
+            scaleImm = 0.1f;
+        }
+    }
+    caviar->set_scaling(scaleImm);
+
+    int recIdx = idx * 0x10;
+    unsigned char catByte = ((unsigned char *)g_0094ae6a)[recIdx];
+    int spriteIdx = -1;
+    bool haveSpriteIdx = false;
+    if (catByte == 8 || catByte == 9) {
+        spriteIdx = ((signed char *)g_0094ae69)[recIdx];
+        haveSpriteIdx = true;
+    } else if (catByte == 0xb) {
+        spriteIdx = *(signed char *)g_009ab9ce;
+        haveSpriteIdx = true;
+    }
+    if (haveSpriteIdx && spriteIdx >= 0) {
+        Buffer *bufTarget = self ? reinterpret_cast<Buffer *>(self + 0x444) : 0;
+        Sprite *spr = (Sprite *)((char *)0x778400 + spriteIdx * 0x160);
+        int xCoord = ((a2->right - a2->left) - 100) / 2 + a2->left;
+        int yCoord = ((a2->bottom - a2->top) - 0x4b) / 2 + a2->top;
+        spr->draw(bufTarget, spr->cTransparentIndex_, xCoord, yCoord);
+    }
+
+    if (weaponMissing != 0) {
+        Buffer *bufTarget = self ? reinterpret_cast<Buffer *>(self + 0x444) : 0;
+        int xCoord = (a2->right + a2->left) / 2;
+        int yCoord = (a2->bottom + a2->top) / 2;
+        caviar->render_mono(bufTarget, xCoord, yCoord, 0xb9, 6);
+        return weaponMissing == 0;
+    }
+
+    Buffer *bufTarget3 = self ? reinterpret_cast<Buffer *>(self + 0x444) : 0;
+    int xCoord3 = (a2->right + a2->left) / 2;
+    int yCoord3 = (a2->bottom + a2->top) / 2;
+    caviar->render(bufTarget3, xCoord3, yCoord3, 6);
+
+    Buffer *panelBuf = reinterpret_cast<Buffer *>(self + 0x444);
+    panelBuf->set_text_color(*g_008c6dd4, *g_008c6dd8, 1, 1);
+
+    RECT tmpRect;
+    tmpRect.left = a2->left;
+    tmpRect.top = a2->top;
+    tmpRect.right = a2->right;
+    int *fontField = (int *)(savedThis + 0x45f4);
+    if (*fontField < 0) {
+        tmpRect.bottom = *(int *)(savedThis + 0x4600);
+    } else {
+        tmpRect.bottom = *(int *)(savedThis + 0x4604) + *fontField;
+    }
+    tmpRect.bottom = tmpRect.bottom + tmpRect.top;
+    *(char *)g_009b86a0 = 0;
+    strcat((char *)g_009b86a0,
+           (char *)(int)reinterpret_cast<Strings *>(g_009b90d8)->get(*(int *)((char *)g_0094ae60 + recIdx)));
+    panelBuf->set_font((Font *)fontField, 0, 0, 0);
+    (*(CharUpperA_t *)g_0066931c)((char *)g_009b86a0);
+    panelBuf->wrap_cent((char *)g_009b86a0, &tmpRect);
+    panelBuf->set_text_color(*g_008c6ddc, *g_008c6de0, 1, 1);
+
+    int recIdx2 = recIdx;
+    tmpRect.left = a2->left;
+    tmpRect.right = a2->right;
+    tmpRect.bottom = a2->bottom;
+    if (*fontField < 0) {
+        tmpRect.top = *(int *)(savedThis + 0x4600);
+    } else {
+        tmpRect.top = *(int *)(savedThis + 0x4604) + *fontField;
+    }
+    tmpRect.top = tmpRect.bottom - tmpRect.top;
+    unsigned char catByte2 = ((unsigned char *)g_0094ae6a)[recIdx];
+    *(char *)g_009b86a0 = 0;
+    int strId;
+    if (catByte2 < 3) {
+        strId = *(int *)((char *)(*(int *)g_009b90f8) + 0x204);
+    } else {
+        strId = *(int *)((char *)(*(int *)g_009b90f8) + 0x200);
+    }
+    strcat((char *)g_009b86a0, (char *)(int)reinterpret_cast<Strings *>(g_009b90d8)->get(strId));
+    unsigned int msgLen = strlen((char *)g_009b86a0);
+    panelBuf->write_l((char *)g_009b86a0, &tmpRect, msgLen);
+
+    panelBuf->set_font((Font *)(savedThis + 0x461c), 0, 0, 0);
+    signed char countChar = ((signed char *)g_0094ae68)[recIdx2];
+    *(char *)g_009b86a0 = 0;
+    if (countChar == -1) {
+        strcat((char *)g_009b86a0,
+               (char *)(int)reinterpret_cast<Strings *>(g_009b90d8)->get(*(int *)((char *)(*(int *)g_009b90f8) + 0x310)));
+    } else {
+        char numBuf[80];
+        if (catByte2 > 2) {
+            countChar = ((signed char *)g_0094ae6b)[recIdx2];
+        }
+        _itoa(countChar, numBuf, 10);
+        strcat((char *)g_009b86a0, numBuf);
+    }
+    msgLen = strlen((char *)g_009b86a0);
+    panelBuf->write_right_l((char *)g_009b86a0, &tmpRect, msgLen);
+
+    return weaponMissing == 0;
 }

@@ -1221,7 +1221,7 @@ class VCall { public:
     virtual void slot020();
     virtual void slot021();
     virtual void slot022();
-    virtual void slot023();  // <-- used
+    virtual int slot023();  // <-- used
     virtual void slot024();
     virtual void slot025();  // <-- used
     virtual void slot026();  // <-- used
@@ -1232,10 +1232,10 @@ class VCall { public:
     virtual void slot031();
     virtual void slot032();
     virtual void slot033();
-    virtual void slot034();  // <-- used
-    virtual void slot035();  // <-- used
+    virtual int slot034();  // <-- used
+    virtual int slot035(void *);  // <-- used
     virtual void slot036();
-    virtual void slot037();  // <-- used
+    virtual int slot037();  // <-- used
 };
 
 // COM-STYLE DISPATCH, which the VCall class above CANNOT express.
@@ -1257,8 +1257,8 @@ class VCall { public:
 //     int result = fn(obj, arg);
 //
 // This body dispatches COM-style through slot(s): 25, 26
-typedef int (__stdcall *ComSlot025)(void *self);
-typedef int (__stdcall *ComSlot026)(void *self);
+typedef int (__stdcall *ComSlot025)(void *self, void *out1, void *out2, int flags, void *arg, void *out3);
+typedef int (__stdcall *ComSlot026)(void *self, unsigned int a, unsigned int b, int c);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -1276,11 +1276,230 @@ class Net { public:
     int __cdecl internal_receive(NetThreadInfo *);
 };
 int __cdecl Net::internal_receive(NetThreadInfo * a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    typedef int (__stdcall *SetEventFn)(void *);
+    typedef int (__stdcall *PostThreadMessageAFn)(unsigned long, unsigned int, unsigned int, long);
+    typedef int (__stdcall *MessageBoxAFn)(void *, const char *, const char *, unsigned int);
+    typedef unsigned long (__stdcall *TimeGetTimeFn)(void);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    if (*g_009be600 == 0) return 0;
+
+    char *a1p = reinterpret_cast<char *>(a1);
+    char *esi = *reinterpret_cast<char **>(a1p + 0x1c);
+    char *ebx = *reinterpret_cast<char **>(a1p + 0x20);
+
+    unsigned int v10 = 0;
+    unsigned int v14 = *reinterpret_cast<unsigned int *>(esi + 0x6e4);
+    unsigned int v18 = *reinterpret_cast<unsigned int *>(esi + 0x760);
+
+    void *iface = *reinterpret_cast<void **>(a1p + 0x18);
+    ComSlot025 fn25 = (ComSlot025)(*reinterpret_cast<void ***>(iface))[25];
+    int callResult = fn25(iface, &v10, &v18, 3, ebx, &v14);
+
+    if (callResult == 0) {
+        if (v10 == 0 || (*reinterpret_cast<unsigned char *>(ebx) & 0x80) != 0) {
+            reinterpret_cast<NetFifo *>(esi + 0x130)->add(ebx, v14, v10, 0, (unsigned long)-1);
+            ((PostThreadMessageAFn)(*reinterpret_cast<void **>(g_006692f8)))(
+                *reinterpret_cast<unsigned long *>(a1p), 0x402, 0, 0);
+            ((SetEventFn)(*reinterpret_cast<void **>(g_00669178)))(
+                *reinterpret_cast<void **>(a1p + 8));
+        } else {
+            v14 -= 0xc;
+            unsigned int word = *reinterpret_cast<unsigned short *>(ebx);
+            unsigned int msgType = word & 0xfffb;
+
+            if (msgType == 0x20) {
+                int idx = 0;
+                char *rec = esi + 0x154;
+                while (idx < 0x10 && *reinterpret_cast<unsigned int *>(rec) != v10) {
+                    idx++;
+                    rec += 0x58;
+                }
+                if (idx != 0x10) {
+                    unsigned int t = ((TimeGetTimeFn)(*reinterpret_cast<void **>(g_00669368)))();
+                    *reinterpret_cast<unsigned int *>(esi + 0x164 + idx * 0x58) = t;
+                }
+            } else if (msgType == 1) {
+                if (*reinterpret_cast<int *>(esi + 0x114) < 0xc8) {
+                    reinterpret_cast<NetFifo *>(esi + 0x10c)->add(ebx + 8, v14, v10, 0, (unsigned long)-1);
+                    ((SetEventFn)(*reinterpret_cast<void **>(g_00669178)))(
+                        *reinterpret_cast<void **>(a1p + 0x14));
+                }
+            } else if (msgType == 0x10) {
+                reinterpret_cast<NetFifo *>(esi + 0x130)->add(ebx, v14 + 0xc, v10, 0, (unsigned long)-1);
+                ((PostThreadMessageAFn)(*reinterpret_cast<void **>(g_006692f8)))(
+                    *reinterpret_cast<unsigned long *>(a1p), 0x402, 0, 0);
+                ((SetEventFn)(*reinterpret_cast<void **>(g_00669178)))(
+                    *reinterpret_cast<void **>(a1p + 8));
+            } else if (msgType == 0x100) {
+                unsigned char buf[0x48];
+                memset(buf, 0, sizeof(buf));
+                *reinterpret_cast<unsigned int *>(buf + 0x14) = v14;
+                *reinterpret_cast<unsigned int *>(buf + 0x18) = reinterpret_cast<unsigned int>(ebx + 8);
+                *reinterpret_cast<unsigned int *>(buf + 0x1c) = reinterpret_cast<unsigned int>(ebx + 8);
+                *reinterpret_cast<unsigned int *>(buf + 0x20) =
+                    reinterpret_cast<unsigned int>(ebx + 8) + v14;
+
+                void *node = *reinterpret_cast<void **>(esi + 0xb8);
+                if (node != 0) {
+                    int count = *reinterpret_cast<int *>(esi + 0xc0);
+                    *reinterpret_cast<unsigned int *>(esi + 0xc4) = 0;
+                    *reinterpret_cast<void **>(esi + 0xbc) = node;
+                    if (count > 0) {
+                        int i = 0, found = 0;
+                        for (;;) {
+                            char *cur = *reinterpret_cast<char **>(esi + 0xbc);
+                            if (*reinterpret_cast<unsigned int *>(cur + 4) == v10) { found = 1; break; }
+                            *reinterpret_cast<unsigned int *>(esi + 0xc4) =
+                                *reinterpret_cast<unsigned int *>(esi + 0xc4) + 1;
+                            i++;
+                            *reinterpret_cast<void **>(esi + 0xbc) = *reinterpret_cast<void **>(cur + 0xc);
+                            if (i >= count) break;
+                        }
+                        if (found) {
+                            void *obj = *reinterpret_cast<void **>(
+                                *reinterpret_cast<char **>(esi + 0xbc) + 8);
+                            VCall *vobj = reinterpret_cast<VCall *>(obj);
+                            int level = vobj->slot037();
+                            if ((*reinterpret_cast<int *>(esi + 0x6dc) - 1) * level < 0xc8) {
+                                vobj->slot035(buf);
+                            }
+                            int soundVer = get_sound_version();
+                            int skip = 0;
+                            if ((soundVer & 1) == 0) {
+                                if (level < 0x10) skip = 1;
+                            } else {
+                                if (level < 5) skip = 1;
+                            }
+                            if (!skip) {
+                                if (vobj->slot023() == 0) {
+                                    vobj->slot034();
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (msgType == 0x200) {
+                char *listHead = esi + 0x154;
+                if (listHead == 0) {
+                    ((MessageBoxAFn)(*reinterpret_cast<void **>(g_00669318)))(
+                        0, reinterpret_cast<const char *>(g_00697f10),
+                        reinterpret_cast<const char *>(g_00697efc), 0);
+                } else {
+                    unsigned int newSeq = *reinterpret_cast<unsigned int *>(ebx + 4);
+                    int idx = 0;
+                    char *rec = listHead;
+                    while (idx < 0x10 && *reinterpret_cast<unsigned int *>(rec) != v10) {
+                        idx++;
+                        rec += 0x58;
+                    }
+                    int skipRest = 0;
+                    if (idx != 0x10) {
+                        unsigned int *seqField =
+                            reinterpret_cast<unsigned int *>(esi + 0x158 + idx * 0x58);
+                        if (newSeq >= *seqField) skipRest = 1;
+                        else *seqField = newSeq;
+                    }
+                    if (!skipRest) {
+                        *reinterpret_cast<unsigned int *>(esi + 0xd8) &= 0xbfffffff;
+                        void *node2 = *reinterpret_cast<void **>(esi + 0xb8);
+                        if (node2 != 0) {
+                            int count2 = *reinterpret_cast<int *>(esi + 0xc0);
+                            *reinterpret_cast<unsigned int *>(esi + 0xc4) = 0;
+                            *reinterpret_cast<void **>(esi + 0xbc) = node2;
+                            if (count2 > 0) {
+                                int i2 = 0, found2 = 0;
+                                for (;;) {
+                                    char *cur2 = *reinterpret_cast<char **>(esi + 0xbc);
+                                    if (*reinterpret_cast<unsigned int *>(cur2 + 4) == v10) {
+                                        found2 = 1;
+                                        break;
+                                    }
+                                    *reinterpret_cast<unsigned int *>(esi + 0xc4) =
+                                        *reinterpret_cast<unsigned int *>(esi + 0xc4) + 1;
+                                    i2++;
+                                    *reinterpret_cast<void **>(esi + 0xbc) =
+                                        *reinterpret_cast<void **>(cur2 + 0xc);
+                                    if (i2 >= count2) break;
+                                }
+                                if (found2) {
+                                    void *obj2 = *reinterpret_cast<void **>(
+                                        *reinterpret_cast<char **>(esi + 0xbc) + 8);
+                                    reinterpret_cast<VCall *>(obj2)->slot034();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        unsigned int word2 = *reinterpret_cast<unsigned short *>(ebx);
+        unsigned int sel = word2 & 6;
+        if (sel == 2) {
+            if (*reinterpret_cast<unsigned int *>(ebx + 4) == *reinterpret_cast<unsigned int *>(esi + 0xe4)) {
+                int idx3 = 0;
+                char *rec3 = esi + 0x154;
+                while (idx3 < 0x10 && *reinterpret_cast<unsigned int *>(rec3) != v10) {
+                    idx3++;
+                    rec3 += 0x58;
+                }
+                if (idx3 < 0x10) {
+                    *reinterpret_cast<unsigned int *>(esi + 0x15c + idx3 * 0x58) = 0;
+                }
+
+                int anyPending = 0;
+                int idx4;
+                for (idx4 = 0; idx4 < 0x10; idx4++) {
+                    char *rec4 = esi + 0x154 + idx4 * 0x58;
+                    if (*reinterpret_cast<unsigned int *>(rec4) != 0 &&
+                        *reinterpret_cast<unsigned int *>(rec4 + 8) != 0) {
+                        anyPending = 1;
+                        break;
+                    }
+                }
+                if (!anyPending) {
+                    void *ev = *reinterpret_cast<void **>(a1p + 4);
+                    ((SetEventFn)(*reinterpret_cast<void **>(g_00669178)))(ev);
+                }
+            }
+        } else if (sel == 4) {
+            if ((word2 & 0xfff0) == 0) {
+                unsigned int newSeq2 = *reinterpret_cast<unsigned int *>(ebx + 4);
+                char *listHead2 = esi + 0x154;
+                if (listHead2 == 0) {
+                    ((MessageBoxAFn)(*reinterpret_cast<void **>(g_00669318)))(
+                        0, reinterpret_cast<const char *>(g_00697f10),
+                        reinterpret_cast<const char *>(g_00697efc), 0);
+                } else {
+                    int idx5 = 0;
+                    char *rec5 = listHead2;
+                    while (idx5 < 0x10 && *reinterpret_cast<unsigned int *>(rec5) != v10) {
+                        idx5++;
+                        rec5 += 0x58;
+                    }
+                    int doUpdate = 1;
+                    if (idx5 != 0x10) {
+                        unsigned int *seqField2 =
+                            reinterpret_cast<unsigned int *>(esi + 0x158 + idx5 * 0x58);
+                        if (newSeq2 >= *seqField2) doUpdate = 0;
+                        else *seqField2 = newSeq2;
+                    }
+                    if (doUpdate) {
+                        unsigned int t2 = ((TimeGetTimeFn)(*reinterpret_cast<void **>(g_00669368)))();
+                        reinterpret_cast<NetFifo *>(esi + 0x10c)->add(ebx + 8, v14, v10, 0, t2);
+                        ((SetEventFn)(*reinterpret_cast<void **>(g_00669178)))(
+                            *reinterpret_cast<void **>(a1p + 0x14));
+                    }
+                }
+            }
+            *reinterpret_cast<unsigned short *>(ebx) =
+                (unsigned short)((word2 & 0xfffb) | 2);
+            {
+                ComSlot026 fn26 = (ComSlot026)(*reinterpret_cast<void ***>(iface))[26];
+                fn26(iface, *reinterpret_cast<unsigned int *>(esi + 0x760), v18, 0);
+            }
+        }
+    }
+
+    return (callResult == 0) ? 1 : 0;
 }

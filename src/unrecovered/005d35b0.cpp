@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005D35B0 FILE
+// RULED-OUT: __fastcall(param_1,param_2) + 3 stack args (IDA's 3-arg __stdcall
+//            guess missed the two register params); the imul/shl/shr/adc
+//            fixed-point-multiply idiom is written as `__int64` products
+//            (VC6 keyword, not the forbidden `long long`) rather than
+//            replicating the exact carry sequence. MISMATCH #7, not chased.
 // working copy - scaffold materialised by --work
 // name      sub_5d35b0
 // size      976 bytes
@@ -1176,7 +1181,7 @@ const int RadiusOffsetY[] = {0, -1, 0, 1, 2, 1, 0, -1, -2, -2, 2, 2, -2, -3, -1,
 const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-extern "C" int __cdecl sub_5d2761();
+extern "C" int __cdecl sub_5d2761(int, int, unsigned int);
 extern "C" int __stdcall sub_5d2e70(int);
 extern "C" void *calloc(unsigned int, unsigned int);
 
@@ -1207,12 +1212,154 @@ static int *const g_009c4550 = (int *)0x009C4550;
 static int *const g_009c464c = (int *)0x009C464C;
 static int *const g_009c4650 = (int *)0x009C4650;
 static int *const g_009c4654 = (int *)0x009C4654;
-extern "C" int __stdcall sub_5d35b0(int a1, int a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+extern "C" int __fastcall sub_5d35b0(int *param_1, int param_2, int a1, int a2, int a3) {
+    if (*g_009b3368 == 0) {
+        *g_009b3368 = 1;
+        param_1[0x195] = reinterpret_cast<int>(calloc(1,
+            *reinterpret_cast<int *>(*param_1 + 100) * *reinterpret_cast<int *>(*param_1 + 0x60) * 4));
+        param_1[0x196] = reinterpret_cast<int>(calloc(1,
+            *reinterpret_cast<int *>(*param_1 + 100) * *reinterpret_cast<int *>(*param_1 + 0x60) * 4));
+        param_1[0x197] = reinterpret_cast<int>(calloc(1,
+            *reinterpret_cast<int *>(*param_1 + 100) * *reinterpret_cast<int *>(*param_1 + 0x60) * 4));
+    }
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    char cVar1 = *reinterpret_cast<char *>(param_2 + 0xd);
+    *g_009b3364 = (a3 != 5);
+
+    if (*g_009b336c == 0) {
+        *g_009c344c = 0xf;
+        unsigned int *p = reinterpret_cast<unsigned int *>(g_009c3450);
+        for (int i1 = 7; i1 != 0; i1--) { *p = 0x1f; p++; }
+        p = reinterpret_cast<unsigned int *>(g_009c346c);
+        for (int i2 = 8; i2 != 0; i2--) { *p = 0x2f; p++; }
+        p = reinterpret_cast<unsigned int *>(g_009c384c);
+        for (int i3 = 0x80; i3 != 0; i3--) { *p = 0x3f; p++; }
+
+        unsigned int *local_c = reinterpret_cast<unsigned int *>(g_00695b5c);
+        do {
+            unsigned int uVar5 = local_c[-1];
+            unsigned int uVar6 = local_c[0];
+            unsigned int uVar8 = local_c[2];
+            if ((uVar8 & 0xfc00) == 0) {
+                int cnt = 1 << ((0xe - static_cast<char>(uVar5)) & 0x1f);
+                unsigned int val = (((uVar6 & 0xfc00) | (uVar6 << 0x10)) << 6) | (uVar5 - 6);
+                if (cnt > 0) {
+                    unsigned int *dst = reinterpret_cast<unsigned int *>(g_009c404c) + (static_cast<int>(uVar8) >> 2);
+                    for (; cnt != 0; cnt--) { *dst = val; dst++; }
+                }
+            } else {
+                int cnt = 1 << ((9 - static_cast<char>(uVar5)) & 0x1f);
+                unsigned int val = (((uVar6 & 0xfc00) | (uVar6 << 0x10)) << 6) | uVar5;
+                if (cnt > 0) {
+                    unsigned int *dst = reinterpret_cast<unsigned int *>(g_009c344c) + (static_cast<int>(uVar8) >> 7);
+                    for (; cnt != 0; cnt--) { *dst = val; dst++; }
+                }
+            }
+            local_c = local_c + 4;
+        } while (reinterpret_cast<int>(local_c) < 0x69613c);
+
+        local_c = reinterpret_cast<unsigned int *>(g_0069613c);
+        do {
+            unsigned int uVar5 = local_c[-1];
+            unsigned int uVar6 = local_c[0];
+            unsigned int uVar8 = local_c[2];
+            char cVar3 = static_cast<char>(uVar5) + 8;
+            if ((uVar8 & 0x8000) == 0) {
+                int cnt = 1 << ((0x11 - cVar3) & 0x1f);
+                unsigned int val = (((uVar6 & 0xfc00) | (uVar6 << 0x10)) << 6) | (uVar5 - 1);
+                if (cnt > 0) {
+                    unsigned int *dst = reinterpret_cast<unsigned int *>(g_009c3c4c) + (static_cast<int>(uVar8) >> 7);
+                    for (; cnt != 0; cnt--) { *dst = val; dst++; }
+                }
+            } else {
+                int cnt = 1 << ((0xe - cVar3) & 0x1f);
+                unsigned int val = (((uVar6 & 0xfc00) | (uVar6 << 0x10)) << 6) | (uVar5 + 2);
+                if (cnt > 0) {
+                    unsigned int *dst = reinterpret_cast<unsigned int *>(g_009c404c) + (static_cast<int>(uVar8) >> 10);
+                    for (; cnt != 0; cnt--) { *dst = val; dst++; }
+                }
+            }
+            local_c = local_c + 4;
+        } while (reinterpret_cast<int>(local_c) < 0x69693c);
+
+        p = reinterpret_cast<unsigned int *>(g_009c444c);
+        for (int i4 = 0x20; i4 != 0; i4--) { *p = 1; p++; }
+
+        unsigned int *p7 = reinterpret_cast<unsigned int *>(g_009c44cc);
+        unsigned int uVar5b = 0x400000;
+        do {
+            unsigned int uVar6b = uVar5b + 0x400000;
+            *p7 = uVar5b | 6;
+            p7++;
+            uVar5b = uVar6b;
+        } while (uVar5b < 0x4400000);
+
+        *g_009b336c = 1;
+        *g_009c450c = 0xfc000006;
+    }
+
+    *g_009c464c = param_2 + 0x14;
+    *g_009c4650 = (*reinterpret_cast<unsigned short *>(param_2 + 0x10) << 16) |
+                  *reinterpret_cast<unsigned short *>(param_2 + 0x12);
+    *g_009c4654 = 0x20;
+
+    {
+        __int64 lv = static_cast<__int64>(*g_009c324c) * static_cast<__int64>((*g_00696938) << 0xf);
+        unsigned int lo = static_cast<unsigned int>(lv);
+        *g_009c454c = (lo >> 0x10) + static_cast<int>(lv >> 0x20) * 0x10000 + (((lo >> 0xf) & 1) != 0);
+    }
+
+    for (int off = 0; off < 0xfc; off += 4) {
+        int a = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_009c3250) + off);
+        int b = (*reinterpret_cast<int *>(reinterpret_cast<char *>(g_0069693c) + off)) *
+                static_cast<int>(cVar1) * 0x1000;
+        __int64 lv = static_cast<__int64>(a) * static_cast<__int64>(b);
+        unsigned int lo = static_cast<unsigned int>(lv);
+        *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(g_009c4550) + off) =
+            (lo >> 0x10) + static_cast<int>(lv >> 0x20) * 0x10000 + (((lo >> 0xf) & 1) != 0);
+    }
+
+    int local_8;
+    if (a3 == 7) {
+        local_8 = param_1[0x197];
+    } else {
+        local_8 = param_1[0x196];
+    }
+
+    unsigned int uVar5c = 0;
+    int iVar4c = *param_1;
+    if (*reinterpret_cast<int *>(iVar4c + 0x60) != 0) {
+        do {
+            unsigned int uVar6c = *reinterpret_cast<unsigned int *>(iVar4c + 100);
+            unsigned int uVar8c = 0;
+            if (uVar6c != 0) {
+                do {
+                    sub_5d2e70(uVar6c);
+                    uVar8c += 0x10;
+                    uVar6c = *reinterpret_cast<unsigned int *>(*param_1 + 100);
+                } while (uVar8c < uVar6c);
+            }
+            iVar4c = *param_1;
+            uVar5c += 0x10;
+        } while (uVar5c < *reinterpret_cast<unsigned int *>(iVar4c + 0x60));
+    }
+
+    uVar5c = 0;
+    if (*reinterpret_cast<int *>(*param_1 + 0x60) != 1) {
+        unsigned int uVar6d = *reinterpret_cast<unsigned int *>(*param_1 + 100) >> 1;
+        do {
+            sub_5d2761(local_8, a1, uVar6d);
+            a1 = a1 + a2;
+            uVar6d = *reinterpret_cast<unsigned int *>(*param_1 + 100) >> 1;
+            uVar5c += 1;
+            local_8 = local_8 + uVar6d * 4;
+        } while (uVar5c < static_cast<unsigned int>(*reinterpret_cast<int *>(*param_1 + 0x60) - 1));
+    }
+
+    if (a3 != 7) {
+        int tmp = param_1[0x195];
+        param_1[0x195] = param_1[0x196];
+        param_1[0x196] = tmp;
+    }
+    return 0;
 }

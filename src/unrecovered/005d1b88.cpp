@@ -1,4 +1,13 @@
 // ORIGINAL: 0x005D1B88 FILE
+// RULED-OUT: no conventional signature can match - the original has NO
+//            prologue/epilogue and reads esi/edi/ebp as inputs set up by
+//            the CALLER (Ghidra: unaff_ESI/unaff_EDI/unaff_EBP), which is
+//            not a calling convention VC6 can target without __asm/naked
+//            (barred). Landed as a 3-pointer __cdecl function with an
+//            8-iteration loop reproducing the exact table math (16 unrolled
+//            blocks in the original, all structurally identical) so the
+//            algorithm is faithfully documented even though the prologue
+//            can never match.
 // working copy - scaffold materialised by --work
 // name      sub_5d1b88
 // size      1199 bytes
@@ -1184,12 +1193,18 @@ static int *const g_009c832c = (int *)0x009C832C;
 static int *const g_009c872c = (int *)0x009C872C;
 static int *const g_009c8bf4 = (int *)0x009C8BF4;
 static int *const g_009c900c = (int *)0x009C900C;
-extern "C" int __cdecl sub_5d1b88() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
-
-    return (int)0;  // PLACEHOLDER - replace with the body
+extern "C" void __cdecl sub_5d1b88(unsigned int *outp, int *srcESI, int *srcEDI) {
+    int i;
+    for (i = 0; i < 8; i++) {
+        int iVar1 = ((int *)g_009c7b2c)[srcEDI[i]];
+        int iVar2 = ((int *)g_009c832c)[srcEDI[0x40 + i]];
+        unsigned int uVar4 = (unsigned int)(iVar1 + ((int *)g_009c732c)[srcESI[2 * i]] + iVar2);
+        outp[2 * i] = ((unsigned int *)g_009c8bf4)[(uVar4 & 0xff800) >> 0xb] |
+                      ((unsigned int *)g_009c872c)[uVar4 >> 0x17] |
+                      ((unsigned int *)g_009c900c)[uVar4 & 0x1ff];
+        uVar4 = (unsigned int)(((int *)g_009c732c)[srcESI[2 * i + 1]] + iVar2 + iVar1);
+        outp[2 * i + 1] = ((unsigned int *)g_009c872c)[uVar4 >> 0x17] |
+                          ((unsigned int *)g_009c900c)[uVar4 & 0x1ff] |
+                          ((unsigned int *)g_009c8bf4)[(uVar4 & 0xff800) >> 0xb];
+    }
 }

@@ -1,4 +1,8 @@
 // ORIGINAL: 0x005D2037 FILE
+// NOT ATTEMPTED - no C calling convention - entry has no prologue, esi/edi/ebp
+//            are live-in with nothing pushed by the caller (esi/edi index
+//            input arrays, ebp is the output cursor); part of the known
+//            0x005CB000-0x005D2000 no-prologue population.
 // working copy - scaffold materialised by --work
 // name      sub_5d2037
 // size      1279 bytes

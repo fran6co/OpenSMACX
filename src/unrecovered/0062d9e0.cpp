@@ -1184,8 +1184,8 @@ struct _GUID;
 extern "C" char *strcat(char *, const char *);
 extern "C" char *strchr(const char *, int);
 extern "C" char *strstr(const char *, const char *);
-extern "C" int __cdecl DirectPlayLobbyCreateA();
-extern "C" int __cdecl strcspn();
+extern "C" int __stdcall DirectPlayLobbyCreateA(void *, void **, void *, void *, unsigned int);
+extern "C" unsigned int __cdecl strcspn(const char *, const char *);
 extern "C" unsigned int strlen(const char *);
 extern "C" void free(void *);
 void * mem_get(int);
@@ -1200,7 +1200,7 @@ void * mem_get(int);
 // vtable OFFSET from the body and not the argument list.
 // This body dispatches through slot(s): 0, 2, 3, 4, 8, 12
 class VCall { public:
-    virtual void slot000();  // <-- used
+    virtual int slot000(void *, void *);  // <-- used
     virtual void slot001();
     virtual void slot002();  // <-- used
     virtual void slot003();  // <-- used
@@ -1235,9 +1235,11 @@ class VCall { public:
 //
 // This body dispatches COM-style through slot(s): 2, 3, 8, 12
 typedef int (__stdcall *ComSlot002)(void *self);
-typedef int (__stdcall *ComSlot003)(void *self);
-typedef int (__stdcall *ComSlot008)(void *self);
-typedef int (__stdcall *ComSlot012)(void *self);
+typedef int (__stdcall *ComSlot003)(void *self, int a, void *b, int c);
+typedef int (__stdcall *ComSlot004)(void *self, void *guidSP, void *guidType, void *data,
+                                     unsigned int dataSize, void *addr, unsigned int *addrSize);
+typedef int (__stdcall *ComSlot008)(void *self, int a, int b, void *c);
+typedef int (__stdcall *ComSlot012)(void *self, int a, int b, void *c);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -1264,11 +1266,190 @@ class Net { public:
     int check_for_lobby(char *, _GUID *, int, int);
 };
 int Net::check_for_lobby(char * a1, _GUID * a2, int a3, int a4) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    if (this->init(a2, a3, a4) != 0) return 0;
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    bool hostMode = false;
+    void *lobbyEarly = 0;
+    void *addrBuf = 0;
+    unsigned int addrSize = 0;
+    char nameBuf1[24]; nameBuf1[0] = 0;
+    char nameBuf2[24]; nameBuf2[0] = 0;
+
+    // DPLCONNECTION (0x20..0x48) + embedded DPSESSIONDESC2 (0x48..0x98) region.
+    // Raw offsets mirror the original's esp-relative stack layout, shifted to
+    // start at 0.
+    unsigned char sbuf[0x90];
+    for (unsigned z = 0; z < sizeof(sbuf); z++) sbuf[z] = 0;
+#define SB(off) (*reinterpret_cast<unsigned int *>(sbuf + (off) - 0x18))
+
+    if (a1 != 0) {
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x44) = a4;
+
+        strchr(a1, '/');
+        char *p = strchr(a1, '/');
+        if (p != 0) {
+            do {
+                char c = p[1];
+                char *next = p + 1;
+                if (c == 'h') {
+                    hostMode = true;
+                } else if (c == 'j') {
+                    hostMode = false;
+                } else if (c == 'n') {
+                    next = p + 2;
+                    char *sp = strchr(next, ' ');
+                    nameBuf1[0] = 0;
+                    if (sp == 0) {
+                        strcat(nameBuf1, next);
+                    } else {
+                        *sp = '\0';
+                        strcat(nameBuf1, next);
+                        *sp = ' ';
+                    }
+                }
+                p = strchr(next, '/');
+            } while (p != 0);
+
+            if (!hostMode) {
+                char *sub = strstr(a1, reinterpret_cast<const char *>(g_00697568));
+                if (sub == 0) goto after_directplay;
+                int skip = strcspn(sub, reinterpret_cast<const char *>(g_0069756c));
+                char *sp2 = strchr(sub + skip, ' ');
+                nameBuf2[0] = 0;
+                if (sp2 == 0) {
+                    strcat(nameBuf2, sub + skip);
+                } else {
+                    *sp2 = '\0';
+                    strcat(nameBuf2, sub + skip);
+                    *sp2 = ' ';
+                }
+            }
+
+            DirectPlayLobbyCreateA(0, &lobbyEarly, 0, 0, 0);
+
+            SB(0x60) = *g_00697548;
+            SB(0x68) = *g_00697550;
+            SB(0x6c) = *g_00697554;
+            SB(0x64) = *g_0069754c;
+            SB(0x58) = 0x50;
+            {
+                unsigned int *guidSrc = reinterpret_cast<unsigned int *>(a2);
+                SB(0x70) = guidSrc[0];
+                SB(0x74) = guidSrc[1];
+                SB(0x78) = guidSrc[2];
+                SB(0x7c) = guidSrc[3];
+            }
+            SB(0x98) = static_cast<unsigned int>(a4);
+            SB(0x24) = hostMode ? 1u : 2u;
+            SB(0x50) = reinterpret_cast<unsigned int>(nameBuf1);
+            SB(0x54) = reinterpret_cast<unsigned int>(nameBuf1);
+            SB(0x28) = reinterpret_cast<unsigned int>(sbuf + (0x58 - 0x18));  // &SB(0x58)
+            SB(0x2c) = reinterpret_cast<unsigned int>(sbuf + (0x48 - 0x18));  // &SB(0x48)
+            SB(0x30) = *g_006717e0;
+            SB(0x5c) = 4;
+            SB(0x80) = 7;
+            SB(0x48) = 0x10;
+            SB(0x4c) = 0;
+            SB(0x20) = 0x28;
+            SB(0x34) = *g_006717e4;
+            SB(0x38) = *g_006717e8;
+            SB(0x3c) = *g_006717ec;
+
+            if (hostMode) {
+                addrSize = 0;
+            } else {
+                ComSlot004 fn4 = (ComSlot004)(*reinterpret_cast<void ***>(lobbyEarly))[4];
+                int r = fn4(lobbyEarly, g_006717e0, g_006717d0, nameBuf2,
+                             strlen(nameBuf2) + 1, 0, &addrSize);
+                if (static_cast<unsigned int>(r) != 0x8877001e) return 0;
+
+                addrBuf = mem_get(static_cast<int>(addrSize));
+                if (addrBuf == 0) { this->close(); return 0; }
+
+                int r2 = fn4(lobbyEarly, g_006717e0, g_006717d0, nameBuf2,
+                              strlen(nameBuf2) + 1, addrBuf, &addrSize);
+                if (r2 != 0) { this->close(); return 0; }
+            }
+
+            SB(0x40) = reinterpret_cast<unsigned int>(addrBuf);
+            SB(0x44) = addrSize;
+            {
+                ComSlot012 fn12 = (ComSlot012)(*reinterpret_cast<void ***>(lobbyEarly))[12];
+                fn12(lobbyEarly, 0, 0, sbuf + (0x20 - 0x18));
+            }
+            if (addrBuf != 0) free(addrBuf);
+        }
+    after_directplay:
+        if (lobbyEarly != 0) goto have_lobby;
+    }
+
+    {
+        int hr = DirectPlayLobbyCreateA(0, &lobbyEarly, 0, 0, 0);
+        if (hr != 0) { this->close(); return 0; }
+    }
+
+have_lobby:
+    {
+        ComSlot008 fn8 = (ComSlot008)(*reinterpret_cast<void ***>(lobbyEarly))[8];
+        int r = fn8(lobbyEarly, 0, 0, sbuf + (0x20 - 0x18));
+        if (static_cast<unsigned int>(r) != 0x8877001e) {
+            ComSlot002 fn2 = (ComSlot002)(*reinterpret_cast<void ***>(lobbyEarly))[2];
+            fn2(lobbyEarly);
+            this->close();
+            return 0;
+        }
+
+        void *sessBuf = mem_get(static_cast<int>(addrSize));
+        if (sessBuf == 0) return 0;
+
+        int r2 = fn8(lobbyEarly, 0, 0, sessBuf);
+        if (r2 != 0) {
+            ComSlot002 fn2 = (ComSlot002)(*reinterpret_cast<void ***>(lobbyEarly))[2];
+            fn2(lobbyEarly);
+            free(sessBuf);
+            this->close();
+            return 0;
+        }
+
+        char *sb2 = reinterpret_cast<char *>(sessBuf);
+        int result = (*reinterpret_cast<int *>(sb2 + 4) != 2) ? 2 : 1;
+
+        char *sessStruct = *reinterpret_cast<char **>(sb2 + 8);
+        if (sessStruct != 0) {
+            *reinterpret_cast<int *>(sessStruct + 4) = 4;
+            *reinterpret_cast<int *>(sessStruct + 0x28) = 7;
+
+            ComSlot012 fn12 = (ComSlot012)(*reinterpret_cast<void ***>(lobbyEarly))[12];
+            int r3 = fn12(lobbyEarly, 0, 0, sessStruct);
+            if (r3 == 0) {
+                ComSlot003 fn3 = (ComSlot003)(*reinterpret_cast<void ***>(lobbyEarly))[3];
+                int r4 = fn3(lobbyEarly, 0, 0, 0);
+                if (r4 == 0) {
+                    VCall *selfCom = reinterpret_cast<VCall *>(this);
+                    int r5 = selfCom->slot000(g_006717c0, g_009be600);
+                    *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x1c) = *g_009be600;
+                    if (r5 == 0) {
+                        ComSlot002 fn2 = (ComSlot002)(*reinterpret_cast<void ***>(lobbyEarly))[2];
+                        fn2(lobbyEarly);
+                        if (result == 1) {
+                            *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0xd8) |= 0x10000;
+                        } else {
+                            *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0xd8) |= 0x20000;
+                        }
+                        this->join_session(0, *reinterpret_cast<char **>(*reinterpret_cast<char **>(sb2 + 0xc) + 8), 0);
+                        free(sessBuf);
+                        return result;
+                    }
+                }
+            }
+        }
+
+        if (lobbyEarly != 0) {
+            ComSlot002 fn2 = (ComSlot002)(*reinterpret_cast<void ***>(lobbyEarly))[2];
+            fn2(lobbyEarly);
+        }
+        free(sessBuf);
+        this->close();
+        return 0;
+    }
 }

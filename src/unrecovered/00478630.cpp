@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00478630 FILE
+// RULED-OUT: MISMATCH #5, register-allocation-level divergence early in the
+//            function. Ghidra's param_2/param_3 initially looked swapped
+//            against a1/a2 (param_2 is actually a1, the player-slot index;
+//            param_3 is a2, the itoa'd number) - fixed via cross-check
+//            against the raw disassembly's ebp+8/ebp+0xc reads.
 // working copy - scaffold materialised by --work
 // name      ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z
 // size      1451 bytes
@@ -1333,7 +1338,7 @@ class Heap { public:
 };
 
 class PlayerLock { public:
-    void active();
+    int active();
     void clear();
 };
 
@@ -1411,10 +1416,177 @@ class MultiWin { public:
     void draw_player(int, int, RECT *);
 };
 void MultiWin::draw_player(int a1, int a2, RECT * a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    typedef char *(__stdcall *CharUpperAFn)(char *);
 
+    Buffer *buf = (Buffer *)((char *)this + 0x444);
+    Spot *spot = (Spot *)((char *)this + 0x28ac);
+    Strings *strings = (Strings *)(void *)g_009b90d8;
+    char numbuf[0x20];
+    char *msg = (char *)g_009b86a0;
+    unsigned int flag, bit, sel, result = 0;
+    char *tail, *str;
+    int active_ret;
+
+    buf->set_font((Font *)((char *)this + 0x285c), 0, 0, 0);
+
+    int left7 = a3->left + 7;
+    int box_top = a3->top;
+    int box_bottom = a3->bottom;
+    int box_left = left7;
+    int name_left = 0, name_top = 0, name_width = 0, name_height = 0;
+    if (*g_0093f660 != 0) {
+        int h = box_bottom - box_top;
+        box_left = left7 + h;
+        name_left = left7;
+        name_top = box_top;
+        name_width = h;
+        name_height = h;
+    }
+    box_left = box_left + 3;
+    int box_right = a3->right - 10;
+
+    unsigned char bit_a1 = (unsigned char)a1;
+    if (*g_0093f660 != 0 && (*(unsigned char *)g_009a64e8 & (unsigned char)(1 << (bit_a1 & 0x1f))) != 0) {
+        spot->add(a1, 0, name_left, name_top, name_width, name_height);
+    }
+    spot->add(a1, 1, box_left, box_top, box_right - box_left, box_bottom - box_top);
+
+    int color;
+    if (*g_0093a938 == 0) color = *g_0093e8f8;
+    else color = *g_0093e8fc;
+
+    if (*g_0093f660 != 0) {
+        bit = 1u << (bit_a1 & 0x1f);
+        if ((*(unsigned char *)g_009a64e8 & (unsigned char)bit) != 0) {
+            if ((bit & *g_007fff74) == 0) {
+                sel = (unsigned int)(-(int)((bit & *g_0093e960) != 0)) & 2;
+            } else {
+                sel = 1;
+            }
+            unsigned char transparent_idx = *(unsigned char *)((char *)this + sel * 0x2c + 0x1068);
+            int sprite_y = ((box_bottom - *(int *)((char *)this + 0x107c)) - box_top) / 2 + box_top;
+            ((Sprite *)((char *)this + 0x1060 + sel * 0x2c))->draw(
+                (this != 0) ? buf : (Buffer *)0, transparent_idx, name_left, sprite_y, 1, 1);
+        }
+    }
+
+    buf->set_text_color(((int *)g_0068fa30)[a1], ((int *)g_0068fa50)[a1], 1, 1);
+
+    *msg = 0;
+    _itoa(a2, numbuf, 10);
+    strcat(msg, numbuf);
+    strcat(msg, (const char *)g_006867e0);
+    *g_009bbff0 = 0;
+    *g_009bbfec = *(int *)((char *)g_00946a50 + (long)a1 * 0x59c);
+    strcat(msg, (const char *)g_00946a84 + (long)a1 * 0x59c);
+
+    if (strlen(msg) != 0) {
+        unsigned int len = strlen(msg);
+        RECT box;
+        box.left = box_left; box.top = box_top; box.right = box_right; box.bottom = box_bottom;
+        buf->write_l(msg, &box, len);
+    }
+
+    *msg = 0;
+    if (*g_0093f660 == 0) {
+        flag = *(unsigned int *)((char *)g_0096c9f8 + (long)a1 * 4 + (long)(*g_00939284) * 0x20cc);
+        if ((flag & 1) != 0) {
+            result = *(unsigned int *)((char *)g_009b90f8 + 0x34c);
+        } else if ((flag & 2) != 0) {
+            result = *(unsigned int *)((char *)g_009b90f8 + 0x350);
+        } else if ((flag & 4) != 0) {
+            result = *(unsigned int *)((char *)g_009b90f8 + 0x354);
+        } else if ((flag & 0x10) != 0) {
+            if ((*(unsigned int *)((char *)g_00946f58 + (long)a1 * 0x59c) & 0x100) != 0) {
+                str = (char *)strings->get(*(int *)((char *)g_009b90f8 + 0xa1c));
+                strcat(msg, str);
+                (*(CharUpperAFn *)g_0066931c)(msg);
+                goto write_second;
+            }
+            result = *(unsigned int *)((char *)g_009b90f8 + 0x358);
+        } else {
+            goto write_second;
+        }
+        strcat(msg, (const char *)strings->get((int)result));
+    } else {
+        if ((*g_009a681c & 0x10) == 0 && (*g_0093e8e0 & (1 << (bit_a1 & 0x1f))) != 0) {
+            str = (char *)strings->get(*(int *)((char *)g_009b90f8 + 0x444));
+            strcat(msg, str);
+            goto write_second;
+        }
+        bit = 1u << (bit_a1 & 0x1f);
+        if ((bit & (unsigned int)color) == 0) {
+            if (*g_0093a938 != 0) {
+                strcat(msg, (const char *)g_00686788);
+                strcat(msg, (const char *)strings->get(*(int *)((char *)g_009b90f8 + 0x42c)));
+                strcat(msg, (const char *)g_00682820);
+                _itoa(*g_0093a93c, numbuf, 10);
+                strcat(msg, numbuf);
+                goto write_third;
+            }
+        lab_478a6a:
+            if ((*g_009a681c & 0x10) != 0) {
+                if (*g_009a6820 == a1) {
+                    tail = (char *)g_0068678c;
+                } else {
+                    if ((*(unsigned char *)g_009a64e8 & (unsigned char)bit) == 0) goto lab_478b26;
+                    if (*g_009a6820 < a1) tail = (char *)g_00686790;
+                    else tail = (char *)g_00686794;
+                }
+                strcat(msg, tail);
+                goto write_third;
+            }
+            if ((*(unsigned char *)g_009a64e8 & (unsigned char)bit) != 0 &&
+                (((unsigned int)color & (1u << (*(unsigned char *)g_00939284 & 0x1f))) != 0 ||
+                 (*(unsigned char *)g_009a64c0 & 0x80) != 0)) {
+                if ((bit & (unsigned int)color) == 0) {
+                    tail = (char *)g_00686798;
+                } else {
+                    if (*g_0093e8c0 == 0) goto lab_478b26;
+                    active_ret = ((PlayerLock *)((char *)g_0093e230 + (long)a1 * 0x1c))->active();
+                    if (active_ret == 0) {
+                        if (*g_0093e8c0 == 0 || *g_0093e90c == 0 || bit == 0) goto write_third;
+                        tail = (char *)g_006867a0;
+                    } else {
+                        tail = (char *)g_0068679c;
+                    }
+                }
+                strcat(msg, tail);
+                goto write_third;
+            }
+        } else {
+            if (*g_0093a938 == 0) {
+                if ((*(unsigned char *)g_009a64c0 & 0x80) == 0 &&
+                    ((unsigned int)color & (1u << (*(unsigned char *)g_00939284 & 0x1f))) == 0) goto lab_478a6a;
+                goto lab_478b26;
+            }
+            strcat(msg, (const char *)strings->get(*(int *)((char *)g_009b90f8 + 0x42c)));
+            strcat(msg, (const char *)g_00682820);
+            _itoa(*g_0093a93c, numbuf, 10);
+            strcat(msg, numbuf);
+        write_third:
+            if (*g_0093a938 != 0) goto write_second;
+        }
+    lab_478b26:
+        flag = *(unsigned int *)((char *)g_0096c9f8 + (long)a1 * 4 + (long)(*g_00939284) * 0x20cc);
+        if ((flag & 1) != 0) {
+            result = *(unsigned int *)((char *)g_009b90f8 + 0xa14);
+        } else if ((flag & 2) != 0) {
+            result = *(unsigned int *)((char *)g_009b90f8 + 0xa10);
+        } else if ((flag & 4) != 0) {
+            result = *(unsigned int *)((char *)g_009b90f8 + 0xa0c);
+        } else if ((flag & 0x10) != 0) {
+            result = *(unsigned int *)((char *)g_009b90f8 + 0xa1c);
+        } else {
+            goto write_second;
+        }
+        strcat(msg, (const char *)strings->get((int)result));
+    }
+write_second:
+    if (strlen(msg) != 0) {
+        unsigned int len2 = strlen(msg);
+        RECT box2;
+        box2.left = box_left; box2.top = box_top; box2.right = box_right; box2.bottom = box_bottom;
+        buf->write_right_l(msg, &box2, len2);
+    }
 }

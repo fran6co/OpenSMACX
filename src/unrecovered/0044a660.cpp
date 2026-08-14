@@ -1,4 +1,8 @@
 // ORIGINAL: 0x0044A660 FILE
+// RULED-OUT: MISMATCH #14, register-allocation-level divergence in the
+//            compute_score call setup; full body (score/rank tables, demote
+//            chain, 3 tie-break loops, name copies, pcx message) transcribed
+//            from the disassembly with byte-offset field access.
 // working copy - scaffold materialised by --work
 // name      ?try_to_add_me@FameWin@@QAEXXZ
 // size      1445 bytes
@@ -1354,17 +1358,204 @@ static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
 
 class FameWin { public:
-    uint8_t pad_0_[0xA918];
+    uint8_t pad_0_[0xA4C];
+    int32_t field_a4c_;
+    uint8_t pad_a50_[0xA918 - 0xA4C - 4];
     uint32_t field_a918_;
 
     void demote(int);
     void try_to_add_me();
 };
 void FameWin::try_to_add_me() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    if (*(unsigned char *)g_009a64c0 & 0x20) {
+        return;
+    }
+
+    int player_id = *g_00939284;
+    field_a4c_ = player_id;
+    compute_score(player_id, 0, 0, 0);
+    player_id = field_a4c_;
+
+    long row2099 = (long)player_id * 0x20cc;
+    int leader1 = *(int *)((char *)g_0096ea7c + row2099);
+    int rating = get_rating(player_id, leader1);
+
+    char *slot = (char *)g_009a37b4 + (long)player_id * 0x2bc;
+    int level = 0x11a;
+    for (int i = 4; i >= 0; --i, slot -= 0x8c) {
+        if (rating >= *(int *)(slot + 0x10) || (*(unsigned char *)slot & 1) == 0) {
+            level = i;
+        }
+    }
+    if (level > 4) return;
+    if (level < 4) demote(3);
+    if (level < 3) demote(2);
+    if (level < 2) demote(1);
+    if (level < 1) demote(0);
+
+    field_a918_ = level;
+    long entry_index = (long)player_id * 5 + level - 5;
+    char *rec = (char *)g_009a3840 + entry_index * 0x8c;
+
+    *(int *)(rec + 0x10) = rating;
+    *(int *)(rec + 8) = leader1;
+
+    int leader2 = *(int *)((char *)g_0096cc00 + row2099);
+    *(unsigned char *)(rec + 1) = 0;
+    *(int *)(rec + 0xc) = leader2;
+    *(unsigned char *)rec = 1;
+
+    int year = game_year(*g_009a64d4);
+    *(int *)(rec + 4) = year;
+
+    row2099 = (long)player_id * 0x20cc;
+    int sum1c = *(int *)((char *)g_0096ea94 + row2099) + *(int *)((char *)g_0096ea90 + row2099);
+    *(int *)(rec + 0x1c) = sum1c;
+
+    row2099 = (long)player_id * 0x20cc;
+    *(int *)(rec + 0x14) = *(int *)((char *)g_0096ea98 + row2099);
+
+    row2099 = (long)player_id * 0x20cc;
+    *(int *)(rec + 0x18) = *(int *)((char *)g_0096ea88 + row2099);
+
+    row2099 = (long)player_id * 0x20cc;
+    if (*(int *)((char *)g_0096ea9c + row2099) == 0) {
+        *(unsigned char *)(rec + 0x21) = 0;
+    } else if (*g_0094a2b8 == 0) {
+        *(unsigned char *)(rec + 0x21) = 1;
+    } else {
+        *(unsigned char *)(rec + 0x21) = 2;
+    }
+
+    long row359 = (long)player_id * 0x59c;
+    *g_009bbff0 = 0;
+    *g_009bbfec = *(int *)((char *)g_00946a50 + row359);
+    strncpy(rec + 0x22, (char *)g_00946a9c + row359, 0x18);
+
+    *g_009bbff0 = 0;
+    *g_009bbfec = *(int *)((char *)g_00946a50 + row359);
+    strncpy(rec + 0x3a, (char *)g_00946a84 + row359, 0x18);
+
+    *g_009bbfec = *(int *)((char *)g_00946d4c + row359);
+    *g_009bbff0 = *(int *)((char *)g_00946d50 + row359);
+    strncpy(rec + 0x52, (char *)g_00946d34 + row359, 0x18);
+
+    row2099 = (long)player_id * 0x20cc;
+    unsigned char c9e8_byte = *(unsigned char *)((char *)g_0096c9e8 + row2099);
+    *(unsigned char *)(rec + 0x20) = c9e8_byte;
+
+    if ((*g_009a649c & 0x400) != 0) {
+        *(unsigned char *)rec |= 2;
+    }
+    int c64c0 = *g_009a64c0;
+    if ((c64c0 & 0x2000) != 0) {
+        *(unsigned char *)rec |= 8;
+    } else if ((c64c0 & 0x400000) != 0) {
+        *(unsigned char *)rec |= 0x10;
+    } else if ((c64c0 & 0x200000) != 0) {
+        *(unsigned char *)rec |= 0x20;
+    } else {
+        int leader3 = *(int *)((char *)g_0096eaa0 + row2099);
+        if (leader3 != 0) {
+            *(unsigned char *)rec |= 4;
+        } else if ((c64c0 & 0x10) != 0) {
+            *(unsigned char *)rec |= 0x40;
+        }
+    }
+
+    int valid_count = 0;
+    {
+        int outer = 0;
+        int base = 0;
+        for (; base < 0x23; ++outer, base += 5) {
+            for (int j = 0; j < 5; ++j) {
+                if (outer == player_id - 1 && j == level) continue;
+                char *other = (char *)g_009a3840 + (long)(base + j) * 0x8c;
+                if ((*(unsigned char *)other & 1) == 0) continue;
+                ++valid_count;
+                if ((*(unsigned char *)(other + 1) & 1) != 0 && *(int *)(rec + 0x10) >= *(int *)(other + 0x10)) {
+                    *(unsigned char *)(rec + 1) |= 1;
+                    *(unsigned char *)(other + 1) &= 0xfe;
+                }
+                if ((*(unsigned char *)(other + 1) & 2) != 0 && *(int *)(rec + 0x1c) >= *(int *)(other + 0x1c)) {
+                    *(unsigned char *)(rec + 1) |= 2;
+                    *(unsigned char *)(other + 1) &= 0xfd;
+                }
+                if ((*(unsigned char *)(other + 1) & 4) != 0 && *(int *)(rec + 0xc) >= *(int *)(other + 0xc)) {
+                    *(unsigned char *)(rec + 1) |= 4;
+                    *(unsigned char *)(other + 1) &= 0xfb;
+                }
+                if ((*(unsigned char *)(other + 1) & 8) != 0 && *(int *)(rec + 0x18) >= *(int *)(other + 0x18)) {
+                    *(unsigned char *)(rec + 1) |= 8;
+                    *(unsigned char *)(other + 1) &= 0xf7;
+                }
+            }
+        }
+    }
+    if (valid_count == 0) {
+        *(unsigned char *)(rec + 1) = 0xf;
+    }
+
+    int cnt2 = 0;
+    {
+        int outer = 0;
+        int base = 0;
+        for (; base < 0x23; ++outer, base += 5) {
+            for (int j = 0; j < 5; ++j) {
+                if (outer == player_id - 1 && j == level) continue;
+                char *other = (char *)g_009a3840 + (long)(base + j) * 0x8c;
+                unsigned char oflags0 = *(unsigned char *)other;
+                if ((oflags0 & 1) == 0) continue;
+                if ((oflags0 & 8) == 0) continue;
+                ++cnt2;
+                unsigned char oflags1 = *(unsigned char *)(other + 1);
+                if ((oflags1 & 0x10) == 0) continue;
+                if ((*(unsigned char *)rec & 8) == 0) continue;
+                if (*(int *)(rec + 4) > *(int *)(other + 4)) continue;
+                *(unsigned char *)(rec + 1) |= 0x10;
+                *(unsigned char *)(other + 1) &= 0xef;
+            }
+        }
+    }
+    if (cnt2 == 0 && (*(unsigned char *)rec & 8) != 0) {
+        *(unsigned char *)(rec + 1) |= 0x10;
+    }
+
+    int cnt3 = 0;
+    {
+        int outer = 0;
+        int base = 0;
+        for (; base < 0x23; ++outer, base += 5) {
+            for (int j = 0; j < 5; ++j) {
+                if (outer == player_id - 1 && j == level) continue;
+                char *other = (char *)g_009a3840 + (long)(base + j) * 0x8c;
+                unsigned char oflags0 = *(unsigned char *)other;
+                if ((oflags0 & 1) == 0) continue;
+                if ((oflags0 & 4) == 0) continue;
+                ++cnt3;
+                unsigned char oflags1 = *(unsigned char *)(other + 1);
+                if ((oflags1 & 0x20) == 0) continue;
+                if ((*(unsigned char *)rec & 4) == 0) continue;
+                if (*(int *)(rec + 4) > *(int *)(other + 4)) continue;
+                *(unsigned char *)(rec + 1) |= 0x20;
+                *(unsigned char *)(other + 1) &= 0xdf;
+            }
+        }
+    }
+    if (cnt3 == 0 && (*(unsigned char *)rec & 4) != 0) {
+        *(unsigned char *)(rec + 1) |= 0x20;
+    }
+
+    char numbuf[0x20];
+    char *msg = (char *)g_009b86a0;
+    *msg = 0;
+    strcat(msg, (const char *)g_006845d0);
+    _itoa(player_id, numbuf, 10);
+    strcat(msg, numbuf);
+    strcat(msg, (const char *)g_006845d8);
+    _itoa(level + 1, numbuf, 10);
+    strcat(msg, numbuf);
+    strcat(msg, (const char *)g_006845dc);
+    ((Buffer *)g_008ea3a4)->write_pcx(msg);
 
 }

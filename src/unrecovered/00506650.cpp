@@ -1,4 +1,6 @@
 // ORIGINAL: 0x00506650 FILE
+// RULED-OUT: local var/register order (early prologue push/xor order diverges
+//            at insn #5); structure and calls match Ghidra decompile faithfully
 // working copy - scaffold materialised by --work
 // name      ?interceptor@@YAHHHHH@Z
 // size      1027 bytes
@@ -1956,7 +1958,7 @@ int parse_says(int, char *, int, int);
 int range(int, int, int);
 int stack_check(int, int, int, int, int);
 void veh_drop(int, int, int);
-void veh_lift(int);
+int veh_lift(int);
 void veh_scoot(int, int, int, int, int);
 
 // ---- fixed globals this body references ----
@@ -1987,11 +1989,127 @@ static int *const g_009ab88d = (int *)0x009AB88D;
 static int *const g_009ab88f = (int *)0x009AB88F;
 static int *const g_009ab892 = (int *)0x009AB892;
 int __cdecl interceptor(int a1, int a2, int a3, int a4) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    short *rec = (short *)g_0095282a;
+    int best = -1;
+    int trackedBest = -1;
+    int bestScore = 0;
+    int i = 0;
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    if (*g_009a64c8 > 0) {
+        do {
+            unsigned char *recb = (unsigned char *)rec;
+            int unitType = rec[4];
+            int matched = 0;
+
+            if ((int)recb[12] == a1) {
+                unsigned char abilIdx = ((unsigned char *)g_009ab88c)[unitType * 0x34];
+                if (((unsigned char *)g_0094a379)[abilIdx * 0x90] == 2) {
+                    if (has_abil(unitType, 0x20) != 0) {
+                        int recX = rec[-1];
+                        int recY = rec[0];
+                        int gridIdx = recY * *g_0068faf0 + (recX >> 1);
+                        unsigned char *mapCell = (unsigned char *)(*(int **)g_0094a30c) + gridIdx * 0x2c;
+                        if (((mapCell[8] & 1) != 0 && (mapCell[2] & 0xf) < 8) ||
+                            (*(unsigned int *)(mapCell + 8) & 0x40000) != 0 ||
+                            stack_check(i, 6, 0x80, -1, -1) != 0) {
+                            matched = 1;
+                        }
+                    }
+                }
+            }
+
+            if (matched) {
+                int recX = rec[-1];
+                int recY = rec[0];
+                int dx = abs(recX - a3);
+                if ((*(unsigned char *)g_0094988c & 1) == 0 && dx > *g_0068faf0) {
+                    dx = *g_00949870 - dx;
+                }
+                int dy = abs(recY - a4);
+                best = trackedBest;
+                if ((unsigned int)((dx + dy) & 0xfffffffe) < 5) {
+                    int weight = 1;
+                    int idx2 = unitType * 0x34;
+                    signed char moraleByte = (signed char)((unsigned char *)g_0094ae68)[
+                        ((unsigned char *)g_009ab88d)[idx2] * 0x10];
+                    if (moraleByte > 0) weight = moraleByte;
+                    int score;
+                    if (((unsigned char *)g_009ab892)[idx2] == 0xc) {
+                        score = 1;
+                    } else {
+                        score = range(((unsigned char *)g_009ab88f)[idx2], 1, 100);
+                        score *= 10;
+                    }
+                    score -= recb[14];
+                    if (score < 0) score = 0;
+                    else if (score > 9999) score = 9999;
+                    if (bestScore <= weight * score) {
+                        trackedBest = i;
+                        best = i;
+                        bestScore = weight * score;
+                    }
+                }
+            }
+
+            i++;
+            rec += 0x1a;
+        } while (i < *g_009a64c8);
+
+        if (best >= 0) {
+            if (a1 == *g_00939284 || a2 == *g_00939284) {
+                parse_says(0, (char *)g_00946d54 + a1 * 0x59c, -1, -1);
+                int y = ((short *)g_0095282a)[best * 0x1a];
+                int x = (unsigned short)((short *)g_00952828)[best * 0x1a];
+                int baseId = base_find(x, y);
+                parse_says(1, (char *)g_0097d053 + baseId * 0x134, -1, -1);
+                ((Console *)0x9156b0)->focus(x, y, a1);
+                ((NetMsg *)0x805338)->pop((const char *)g_0068a0c8, 5000, 0, 0);
+
+                for (;;) {
+                    int dx = abs(x - a3);
+                    if ((*(unsigned char *)g_0094988c & 1) == 0 && dx > *g_0068faf0) {
+                        dx = *g_00949870 - dx;
+                    }
+                    int dy = abs(y - a4);
+                    if (((dx + dy) & 0xfffffffe) == 0) break;
+
+                    int dirBest = -1;
+                    int dirBestScore = 999;
+                    int newX = -1, newY = -1;
+                    int dirIdx;
+                    for (dirIdx = 0; dirIdx < 8; dirIdx++) {
+                        int nx = ((int *)g_0066ef50)[dirIdx] + x;
+                        if ((*(unsigned char *)g_0094988c & 1) == 0) {
+                            if (nx < 0) nx = *g_00949870 + nx;
+                            else if (nx >= *g_00949870) nx -= *g_00949870;
+                        }
+                        int ny = ((int *)g_0066ef74)[dirIdx] + y;
+                        if (ny >= 0 && ny < *g_00949874 && nx >= 0 && nx < *g_00949870) {
+                            int ddx = abs(nx - a3);
+                            if ((*(unsigned char *)g_0094988c & 1) == 0 && ddx > *g_0068faf0) {
+                                ddx = *g_00949870 - ddx;
+                            }
+                            int ddy = abs(ny - a4);
+                            int score2 = (ddy + ddx) >> 1;
+                            if (score2 < dirBestScore) {
+                                dirBest = dirIdx;
+                                newY = ny;
+                                newX = nx;
+                                dirBestScore = score2;
+                            }
+                        }
+                    }
+                    if (dirBest < 0) break;
+                    veh_scoot(best, x, y, dirBest, 0);
+                    x = newX;
+                    y = newY;
+                }
+            }
+            veh_drop(veh_lift(best), a3, a4);
+            ((unsigned char *)g_00952839)[best * 0x34] = 0;
+            ((unsigned int *)g_0095282c)[best * 0xd] &= 0xfcffbdff;
+            return 1;
+        }
+    }
+    return 0;
 }

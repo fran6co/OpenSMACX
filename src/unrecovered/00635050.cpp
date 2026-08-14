@@ -1,4 +1,8 @@
 // ORIGINAL: 0x00635050 FILE
+// RULED-OUT: MISMATCH #3 mov/push - the four-register prologue (ebx/ebp/esi/edi)
+//            the original uses for this heavily-inlined free/loop/alloc body
+//            is not reproduced by writing the four inlined cleanup sites as
+//            a shared macro; register pressure differs from the start.
 // working copy - scaffold materialised by --work
 // name      ?UNK2@TexHeap@@QAEHH@Z
 // size      800 bytes
@@ -1181,15 +1185,114 @@ class TexHeap;
 extern "C" void free(void *);
 void * mem_get(int);
 
+// The same "free the buffer, free every array entry, free the array" release
+// sequence appears four times in the disassembly with no shared call target,
+// i.e. it is inlined at every site rather than a subroutine - so it is
+// spelled once here as a macro and expanded at each site to match.
+#define TH_FREE_ALL(base) \
+    do { \
+        if (*(int *)(base) != 0) { \
+            free(*(void **)(base)); \
+            *(int *)(base) = 0; \
+        } \
+        if (*(int *)((base) + 8) != 0) { \
+            if (*(int *)((base) + 0xc) + 1 > 0) { \
+                int _i = 0; \
+                do { \
+                    int _e = *(int *)(*(int *)((base) + 8) + _i * 4); \
+                    if (_e != 0) { \
+                        free((void *)_e); \
+                        *(int *)(*(int *)((base) + 8) + _i * 4) = 0; \
+                    } \
+                    _i++; \
+                } while (_i < *(int *)((base) + 0xc) + 1); \
+            } \
+            if (*(int *)((base) + 8) != 0) { \
+                free(*(void **)((base) + 8)); \
+            } \
+            *(int *)((base) + 8) = 0; \
+        } \
+    } while (0)
+
 class TexHeap { public:
     int UNK2(int);
 };
 int TexHeap::UNK2(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    TH_FREE_ALL(self);
+
+    *(int *)(self + 0xc) = a1;
+    unsigned int capacity = (unsigned int)(a1 + 1) * 0x10000;
+    *(int *)(self + 4) = (int)capacity;
+    void *buf = mem_get((int)capacity);
+    *(void **)self = buf;
+    if (buf == 0) {
+        return 4;
+    }
+
+    void *arr = mem_get((a1 + 1) * 4);
+    *(void **)(self + 8) = arr;
+    if (arr == 0) {
+        if (*(int *)self != 0) {
+            free(*(void **)self);
+        }
+        *(int *)self = 0;
+        return 4;
+    }
+
+    void *node0 = mem_get(0x14);
+    *(void **)arr = node0;
+    if (node0 == 0) {
+        TH_FREE_ALL(self);
+        *(int *)(self + 0xc) = 0;
+        *(int *)(self + 4) = 0;
+        return 4;
+    }
+
+    *(unsigned char *)node0 = 1;
+    int base_val = *(int *)self;
+    int index = 1;
+    int cursor = (base_val & 0xffff0000) + 0x10000;
+    *(int *)((char *)node0 + 4) = base_val;
+    *(int *)((char *)node0 + 8) = base_val;
+    *(int *)((char *)node0 + 0xc) = cursor - base_val;
+    *(int *)((char *)node0 + 0x10) = *(int *)((char *)node0 + 0xc);
+
+    if (a1 > 1) {
+        do {
+            void *node = mem_get(0x14);
+            *(void **)((char *)arr + index * 4) = node;
+            if (node == 0) {
+                TH_FREE_ALL(self);
+                *(int *)(self + 0xc) = 0;
+                *(int *)(self + 4) = 0;
+                return 4;
+            }
+            *(unsigned char *)node = 1;
+            *(int *)((char *)node + 4) = cursor;
+            *(int *)((char *)node + 8) = cursor;
+            cursor += 0x10000;
+            index++;
+            *(int *)((char *)node + 0xc) = 0xffff;
+            *(int *)((char *)node + 0x10) = 0xffff;
+        } while (index < a1);
+    }
+
+    void *last_node = mem_get(0x14);
+    *(void **)((char *)arr + a1 * 4) = last_node;
+    if (last_node == 0) {
+        TH_FREE_ALL(self);
+        *(int *)(self + 0xc) = 0;
+        *(int *)(self + 4) = 0;
+        return 4;
+    }
+    *(unsigned char *)last_node = 1;
+    *(int *)((char *)last_node + 4) = cursor;
+    *(int *)((char *)last_node + 8) = cursor;
+    *(int *)((char *)last_node + 0xc) = (*(int *)(self + 4) - cursor) + *(int *)self;
+    *(int *)((char *)last_node + 0x10) = (*(int *)(self + 4) - cursor) + *(int *)self;
+    return 0;
 }
+
+#undef TH_FREE_ALL

@@ -1,4 +1,7 @@
 // ORIGINAL: 0x004329B0 FILE
+// RULED-OUT: MISMATCH #6 push/mov - direct self+offset pointer arithmetic
+//            throughout gave the allocator no reason to keep `this` pinned
+//            in edi across the whole body the way the original does.
 // working copy - scaffold materialised by --work
 // name      ?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z
 // size      769 bytes
@@ -1415,15 +1418,149 @@ static int *const g_0094f1a8 = (int *)0x0094F1A8;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b90d8 = (int *)0x009B90D8;
 
+typedef void *(__stdcall *FnCharUpperA)(char *);
+
 class SelectPartWin { public:
     int draw_chassis(int, RECT *, int);
 };
 int SelectPartWin::draw_chassis(int a1, RECT * a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    // Search the 9-entry, 0x90-byte-stride chassis table at DAT_0094a3be
+    // (as an array of signed shorts) for the a1'th "enabled" (>= -1) slot.
+    short *entry = (short *)g_0094a3be;
+    int idx = 0;
+    int slot = 0;
+    int has_all_tech_flag = 0;
+
+    for (;;) {
+        if (*entry >= -1) {
+            if (idx == a1) {
+                int tech_id = *entry;
+                if (has_tech(tech_id, *(int *)(self + 0x2b68)) == 0) {
+                    has_all_tech_flag = 1;
+                }
+                break;
+            }
+            idx++;
+        }
+        entry += 0x48;
+        slot++;
+        if (!((char *)entry < (char *)g_0094a8ce)) {
+            break;
+        }
+    }
+
+    if (slot == 9) {
+        return 0;
+    }
+
+    *(int *)(self + 0x3f68) = 0;
+    vehdraw_construct_chassis(*(int *)(self + 0x2b68), slot, 0, 0,
+                               *(int *)(self + 0x2b98), (Caviar *)(self + 0x2b9c));
+    {
+        union {
+            unsigned int u;
+            float f;
+        } scale_bits;
+        scale_bits.u = 0x3d75c28f;
+        ((Caviar *)(self + 0x2b9c))->set_scaling(scale_bits.f);
+    }
+
+    if (has_all_tech_flag != 0) {
+        Buffer *buf = (self == 0) ? (Buffer *)0 : (Buffer *)(self + 0x444);
+        int x_avg = (a2->right + a2->left) / 2;
+        int y_avg = (a2->bottom + a2->top) / 2;
+        ((Caviar *)(self + 0x2b9c))->render_mono(buf, x_avg, y_avg, 0xb9, 6);
+        return has_all_tech_flag == 0;
+    }
+
+    {
+        Buffer *buf = (self == 0) ? (Buffer *)0 : (Buffer *)(self + 0x444);
+        int x_avg = (a2->right + a2->left) / 2;
+        int y_avg = (a2->bottom + a2->top) / 2;
+        ((Caviar *)(self + 0x2b9c))->render(buf, x_avg, y_avg, 6);
+    }
+
+    ((Buffer *)(self + 0x444))->set_text_color(*(int *)g_008c6dd4, *(int *)g_008c6dd8, 1, 1);
+
+    Font *font1 = (Font *)(self + 0x45f4);
+    Font *font2 = (Font *)(self + 0x461c);
+    int rec_off = slot * 0x90;
+    RECT temp;
+
+    {
+        int computed;
+        if (font1->unk_1_ >= 0) {
+            computed = font1->height_ + font1->unk_1_;
+        } else {
+            computed = font1->line_height_;
+        }
+        temp.left = a2->left;
+        temp.top = a2->top;
+        temp.right = a2->right;
+        temp.bottom = computed + a2->top;
+    }
+
+    *(char *)g_009b86a0 = 0;
+    {
+        int str_id = *(int *)((char *)g_0094a330 + rec_off);
+        int str_ptr = ((Strings *)g_009b90d8)->get(str_id);
+        strcat((char *)g_009b86a0, (const char *)str_ptr);
+    }
+    (*(FnCharUpperA *)g_0066931c)((char *)g_009b86a0);
+    ((Buffer *)(self + 0x444))->wrap_cent(font1, (char *)g_009b86a0, &temp);
+
+    ((Buffer *)(self + 0x444))->set_text_color(*(int *)g_008c6ddc, *(int *)g_008c6de0, 1, 1);
+
+    {
+        int computed;
+        if (font1->unk_1_ >= 0) {
+            computed = font1->height_ + font1->unk_1_;
+        } else {
+            computed = font1->line_height_;
+        }
+        temp.left = a2->left;
+        temp.right = a2->right;
+        temp.bottom = a2->bottom;
+        temp.top = a2->bottom - computed;
+    }
+
+    *(char *)g_009b86a0 = 0;
+    {
+        unsigned char rec_byte = *((unsigned char *)g_0094a379 + rec_off);
+        int str_id = *(int *)((char *)g_0094f1a8 + rec_byte * 4);
+        int str_ptr = ((Strings *)g_009b90d8)->get(str_id);
+        strcat((char *)g_009b86a0, (const char *)str_ptr);
+    }
+
+    ((Buffer *)(self + 0x444))->set_font(font1, 0, 0, 0);
+
+    {
+        char *msg = (char *)g_009b86a0;
+        if (msg != 0) {
+            unsigned int len = strlen(msg);
+            ((Buffer *)(self + 0x444))->write_l(msg, &temp, len);
+        }
+    }
+
+    {
+        unsigned char rec_byte = *((unsigned char *)g_0094a378 + rec_off);
+        char itoa_buf[80];
+        _itoa(rec_byte, itoa_buf, 10);
+        *(char *)g_009b86a0 = 0;
+        strcat((char *)g_009b86a0, itoa_buf);
+    }
+
+    ((Buffer *)(self + 0x444))->set_font(font2, 0, 0, 0);
+
+    {
+        char *msg = (char *)g_009b86a0;
+        if (msg != 0) {
+            unsigned int len = strlen(msg);
+            ((Buffer *)(self + 0x444))->write_right_l(msg, &temp, len);
+        }
+    }
+
+    return has_all_tech_flag == 0;
 }

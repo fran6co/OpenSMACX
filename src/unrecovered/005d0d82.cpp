@@ -1,4 +1,8 @@
 // ORIGINAL: 0x005D0D82 FILE
+// NOT ATTEMPTED - no C calling convention - entry has no prologue, esi/edi/ebp
+//            are live-in with nothing pushed by the caller (esi is a table
+//            pointer, edi a bit-offset cursor, ebp a bitstream base); part
+//            of the known 0x005CB000-0x005D2000 no-prologue population.
 // working copy - scaffold materialised by --work
 // name      sub_5d0d82
 // size      1270 bytes

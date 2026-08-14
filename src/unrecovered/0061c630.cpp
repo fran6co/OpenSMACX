@@ -1321,6 +1321,7 @@ class Texture { public:
     uint32_t borrowed_;
     int setup_edge(EdgeScan *, int);
     void close();
+    void rasterize_span_fill(Buffer *, int *, Texture *, unsigned char *, int, int);
 };
 
 
@@ -1358,12 +1359,188 @@ static int *const g_009bb53e = (int *)0x009BB53E;
 static int *const g_009bb544 = (int *)0x009BB544;
 static int *const g_009bb550 = (int *)0x009BB550;
 static int *const g_009bb554 = (int *)0x009BB554;
-extern "C" int __stdcall sub_61c630(int a1, int a2, int a3, int a4, int a5, int a6) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+void Texture::rasterize_span_fill(Buffer * bufIn, int * verts, Texture * texB, unsigned char * shadeTable, int vertCount, int unusedIn) {
+    (void)unusedIn;  // the incoming stack slot is reused below for something unrelated to its argument value
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    if (verts == 0) return;
+    if (bufIn == 0) return;
+
+    if (pixels_ != 0 && shadeTable != 0 && texB != 0) {
+        *g_009bb4ec = bufIn->get_data();
+        *g_009bb550 = reinterpret_cast<int>(shadeTable);
+        *g_009bb4f4 = reinterpret_cast<int>(verts);
+        *g_009bb544 = reinterpret_cast<int>(pixels_);
+        *g_009bb50c = static_cast<int>(iWidth_);
+        *g_009bb4c0 = static_cast<int>(iHeight_);
+        *g_009bb4b0 = vertCount;
+        *g_009bb490 = unusedIn;
+        *g_009bb49c = *reinterpret_cast<int *>(reinterpret_cast<char *>(bufIn) + 0x4a8);
+        *g_009bb4a8 = static_cast<int>(iWidth_);
+        *g_009bb554 = *reinterpret_cast<int *>(texB);
+
+        if (*g_009bb554 != 0) {
+            char *rectBase = reinterpret_cast<char *>(bufIn) + 0x20;
+            *g_009bb534 = *reinterpret_cast<int *>(rectBase + 8);
+            *g_009bb4dc = *reinterpret_cast<int *>(rectBase);
+            *g_009bb538 = *reinterpret_cast<int *>(rectBase + 0xc);
+            *g_009bb4e0 = *reinterpret_cast<int *>(rectBase + 4);
+
+            int minY = 0x7fff, maxY = -0x7ffd, minX = 0x7fff, maxX = -0x7ffd;
+            int minYIdx = 0, maxYIdx = 0;
+
+            if (vertCount > 0) {
+                int *v = verts;
+                for (int i = 0; i < vertCount; i++) {
+                    int y = v[1];
+                    if (y < minY) { minY = y; minYIdx = i; }
+                    if (y > maxY) { maxYIdx = i; maxY = y; }
+                    int x = v[0];
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    v += 2;
+                }
+
+                if (minY < maxY) {
+                    int stride = *g_009bb49c;
+                    int destBase = *g_009bb4ec;
+                    *g_009bb508 = destBase + stride * minY;
+                    *g_009bb538 = destBase + stride * (*g_009bb538);
+                    *g_009bb4e0 = destBase + stride * (*g_009bb4e0);
+
+                    int e1[15]; for (int z1 = 0; z1 < 15; z1++) e1[z1] = 0;
+                    int e2[15]; for (int z2 = 0; z2 < 15; z2++) e2[z2] = 0;
+
+                    e1[0] = -1;
+                    if (setup_edge(reinterpret_cast<EdgeScan *>(e1), minYIdx) != 0) {
+                        e2[0] = 1;
+                        if (setup_edge(reinterpret_cast<EdgeScan *>(e2), minYIdx) != 0 &&
+                            borrowed_ != 0 && texB->borrowed_ != 0) {
+
+                            double du0 = 0.0, dv0 = 0.0, invWidth = 1.0;
+                            int stepCheck = (e2[7] - e1[7]) * 0x10000;
+                            if (stepCheck > 0) {
+                                dv0 = static_cast<double>(e2[4] - e1[4]);
+                                du0 = static_cast<double>(e2[3] - e1[3]);
+                                invWidth = 1.0 / static_cast<double>(stepCheck);
+                            }
+
+                            if (*g_009bb508 < *g_009bb538) {
+                                bool done = false;
+                                for (;;) {
+                                    *g_009bb498 = e1[13];
+                                    *g_009bb4f8 = e1[3];
+                                    *g_009bb4c4 = e2[3];
+                                    *g_009bb530 = e2[4];
+                                    *g_009bb53c = e1[4];
+                                    *g_009bb4cc = e1[7];
+                                    *g_009bb4f0 = e2[7];
+
+                                    e1[1] -= 1;
+                                    if (e1[1] == 0) {
+                                        if (setup_edge(reinterpret_cast<EdgeScan *>(e1), e1[2]) != 0) {
+                                            goto edge2_step;
+                                        }
+                                        done = true;
+                                    } else {
+                                        e1[3] += e1[5];
+                                        e1[4] += e1[6];
+                                        e1[7] += e1[8];
+                                        e1[10] += e1[11];
+                                        if (e1[10] > 0) {
+                                            e1[7] += e1[9];
+                                            e1[10] -= e1[12];
+                                        }
+                                    edge2_step:
+                                        e2[1] -= 1;
+                                        if (e2[1] == 0) {
+                                            if (setup_edge(reinterpret_cast<EdgeScan *>(e2), e2[2]) == 0) {
+                                                done = true;
+                                            }
+                                        } else {
+                                            e2[3] += e2[5];
+                                            e2[7] += e2[8];
+                                            e2[4] += e2[6];
+                                            e2[10] += e2[11];
+                                            if (e2[10] > 0) {
+                                                e2[7] += e2[9];
+                                                e2[10] -= e2[12];
+                                            }
+                                        }
+                                    }
+
+                                    if (stepCheck > 0) {
+                                        float scale = *reinterpret_cast<float *>(g_00670a84);
+                                        *g_009bb4e4 = static_cast<int>(du0 * invWidth * scale);
+                                        *g_009bb4c8 = static_cast<int>(dv0 * invWidth * scale);
+                                    }
+
+                                    stepCheck = (e2[7] - e1[7]) * 0x10000;
+                                    if (stepCheck > 0) {
+                                        dv0 = static_cast<double>(e2[4] - e1[4]);
+                                        du0 = static_cast<double>(e2[3] - e1[3]);
+                                        invWidth = 1.0 / static_cast<double>(stepCheck);
+                                    }
+
+                                    if (*g_009bb538 <= *g_009bb508) break;
+
+                                    if (*g_009bb4e0 <= *g_009bb508 && *g_009bb4dc < *g_009bb4f0 &&
+                                        *g_009bb4cc < *g_009bb534 && *g_009bb4cc < *g_009bb4f0) {
+
+                                        int rightX = *g_009bb4f0;
+                                        if (*g_009bb534 <= *g_009bb4f0) rightX = *g_009bb534;
+
+                                        if (*g_009bb4cc < *g_009bb4dc) {
+                                            int skip = *g_009bb4dc - *g_009bb4cc;
+                                            *g_009bb4f8 += static_cast<int>(
+                                                static_cast<__int64>(*g_009bb4e4) * skip);
+                                            *g_009bb53c += static_cast<int>(
+                                                static_cast<__int64>(*g_009bb4c8) * skip);
+                                            *g_009bb4cc = *g_009bb4dc;
+                                        }
+
+                                        int width = rightX - *g_009bb4cc;
+                                        if (width > 0) {
+                                            unsigned char *dest = reinterpret_cast<unsigned char *>(*g_009bb508) +
+                                                                   *g_009bb4cc;
+                                            unsigned int uAccum = static_cast<unsigned int>(*g_009bb4f8);
+                                            unsigned int vAccum = static_cast<unsigned int>(*g_009bb53c);
+                                            unsigned int duStep = static_cast<unsigned int>(*g_009bb4e4);
+                                            unsigned int dvStep = static_cast<unsigned int>(*g_009bb4c8);
+                                            unsigned char *texBase =
+                                                reinterpret_cast<unsigned char *>(*g_009bb544);
+                                            unsigned char *tex2Base =
+                                                reinterpret_cast<unsigned char *>(*g_009bb554);
+                                            unsigned char *table =
+                                                reinterpret_cast<unsigned char *>(*g_009bb550);
+
+                                            for (int px = 0; px < width; px++) {
+                                                unsigned char uc = static_cast<unsigned char>(uAccum >> 16);
+                                                unsigned char vc = static_cast<unsigned char>(vAccum >> 16);
+                                                unsigned int off = (static_cast<unsigned int>(vc) << 8) + uc;
+                                                unsigned char texel = texBase[off];
+                                                unsigned char sel = tex2Base[off];
+                                                unsigned char shade = table[sel];
+                                                if (shade != 0) {
+                                                    dest[px] = (shade == 1) ? texel : shade;
+                                                }
+                                                uAccum += duStep;
+                                                vAccum += dvStep;
+                                            }
+                                        }
+                                    }
+
+                                    if (done) break;
+                                    *g_009bb508 += *g_009bb49c;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (bufIn != 0) {
+        bufIn->free_data(1);
+    }
 }

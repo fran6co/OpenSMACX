@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004E26E0 FILE
+// RULED-OUT: full transcription (guard/save-global, ServiceStruct local,
+//            BasePop::start/exec, Dialogs::item list build, join_service)
+//            compiles but this address is catalogued SHARED_TAIL - one of
+//            its spans is COMDAT-folded with another function, so no body,
+//            not even a one-line stub, gets a MISMATCH/BYTE_EXACT verdict
 // working copy - scaffold materialised by --work
 // name      ?pick_service@AlphaNet@@QAEHPAH@Z
 // size      846 bytes
@@ -2226,7 +2231,7 @@ extern "C" int abs(int);
 // vtable OFFSET from the body and not the argument list.
 // This body dispatches through slot(s): 0
 class VCall { public:
-    virtual void slot000();  // <-- used
+    virtual void slot000(int);  // <-- used
 };
 
 // ---- fixed globals this body references ----
@@ -2325,11 +2330,110 @@ class AlphaNet { public:
     int pick_service(int *);
 };
 int AlphaNet::pick_service(int * a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    int savedGlobal = *g_009b3374;
+    *g_009b3374 = 0;
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    ServiceStruct svcObj(0);
+    char *svcBuf = reinterpret_cast<char *>(&svcObj);
+
+    if (a1 != 0) {
+        *a1 = 0;
+    }
+
+    int result;
+    if (field_6E0_ == 0) {
+        svcObj.close();
+        result = 7;
+    } else {
+        typedef void *(__stdcall *GetPopFn)();
+        void *popObj = (*reinterpret_cast<GetPopFn *>(g_00696ecc))();
+        if (popObj == 0) {
+            svcObj.close();
+            result = 4;
+        } else {
+            BasePop *pop = reinterpret_cast<BasePop *>(popObj);
+            int pollResult = reinterpret_cast<Net *>(this)->poll_services(reinterpret_cast<ServiceList *>(svcBuf));
+            if (pollResult != 0 ||
+                pop->start(reinterpret_cast<char *>(g_00689238),
+                            reinterpret_cast<const char *>(g_00689228), -1, 0, 0x42, 0) != 0) {
+                result = 1;
+            } else {
+                int *count = reinterpret_cast<int *>(svcBuf + 0x18);
+                int *headField = reinterpret_cast<int *>(svcBuf + 0x20);
+
+                char *walk = 0;
+                if (*count - 1 >= -1) {
+                    walk = reinterpret_cast<char *>(*headField);
+                    if (abs(-1) <= *count) {
+                        int steps = abs(-1);
+                        if (steps > 0) {
+                            do {
+                                walk = *reinterpret_cast<char **>(walk + 0x10);
+                                steps--;
+                            } while (steps != 0);
+                        }
+                    }
+                }
+
+                Dialogs *dialogs = reinterpret_cast<Dialogs *>(reinterpret_cast<char *>(pop) + 0x21d0);
+                for (int i = 0; i < *count; i++) {
+                    reinterpret_cast<StringStruct *>(svcBuf)->next_entry();
+                    char *name = 0;
+                    if (walk != 0) {
+                        name = reinterpret_cast<char *>(4);
+                        if (*headField != 0) {
+                            name = *reinterpret_cast<char **>(*reinterpret_cast<int *>(walk + 8) + 4);
+                        }
+                    }
+                    dialogs->item(name, i);
+                }
+
+                if (a1 != 0) {
+                    int idx = reinterpret_cast<Strings *>(g_009b90d8)->get(
+                        *reinterpret_cast<int *>(*reinterpret_cast<int *>(g_009b90f8) + 0x1128));
+                    dialogs->item(reinterpret_cast<char *>(idx), 9999);
+                }
+
+                int sel = pop->exec(0, 0);
+                if (sel == -1) {
+                    result = 1;
+                } else if (sel == 9999) {
+                    result = 0;
+                    if (a1 != 0) {
+                        *a1 = 1;
+                    }
+                } else {
+                    char *found = 0;
+                    if (sel <= *count - 1) {
+                        found = reinterpret_cast<char *>(*headField);
+                        if (sel < 0) {
+                            int steps = abs(sel);
+                            if (steps <= *count) {
+                                steps = abs(sel);
+                                if (steps > 0) {
+                                    do {
+                                        found = *reinterpret_cast<char **>(found + 0x10);
+                                        steps--;
+                                    } while (steps != 0);
+                                }
+                            }
+                        } else if (sel > 0) {
+                            int steps = sel;
+                            do {
+                                found = *reinterpret_cast<char **>(found + 0xc);
+                                steps--;
+                            } while (steps != 0);
+                        }
+                    }
+                    int svcOut = (*headField == 0) ? 0 : *reinterpret_cast<int *>(found + 8);
+                    result = reinterpret_cast<Net *>(this)->join_service(reinterpret_cast<ServiceStruct *>(svcOut));
+                }
+            }
+            reinterpret_cast<VCall *>(pop)->slot000(1);
+            svcObj.close();
+        }
+    }
+
+    *g_009b3374 = savedGlobal;
+    return result;
 }

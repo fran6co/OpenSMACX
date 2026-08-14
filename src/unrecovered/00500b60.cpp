@@ -2004,7 +2004,7 @@ class VCall { public:
     virtual void slot020();
     virtual void slot021();
     virtual void slot022();
-    virtual void slot023();  // <-- used
+    virtual int slot023();  // <-- used
 };
 
 // ---- fixed globals this body references ----
@@ -2045,12 +2045,151 @@ static int *const g_009ab892 = (int *)0x009AB892;
 static int *const g_009b22e0 = (int *)0x009B22E0;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
-int __cdecl planet_busting(int a1, int a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+void __cdecl planet_busting(int a1, int a2, int a3) {
+    unsigned char faction = *(reinterpret_cast<unsigned char *>(g_00952836) + a1 * 0x34);
+    reinterpret_cast<Console *>(g_009156b0)->focus(a2, a3, faction);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    short unitId = *reinterpret_cast<short *>(reinterpret_cast<char *>(g_00952832) + a1 * 0x34);
+    int bustLevel;
+    if (*(reinterpret_cast<unsigned char *>(g_009ab892) + unitId * 0x34) == 5) {
+        bustLevel = *(reinterpret_cast<unsigned char *>(g_009ab88f) + unitId * 0x34);
+    } else {
+        bustLevel = 0;
+    }
+    int weaponCount = reinterpret_cast<int *>(g_0066f8c4)[bustLevel];
+
+    int nearestBase = base_find(a2, a3);
+
+    if (static_cast<int>(faction) != *g_00939284 && nearestBase >= 0) {
+        *g_009bbff0 = 0;
+        int recOff = faction * 0x59c;
+        *g_009bbfec = reinterpret_cast<int *>(g_00946a50)[faction * 0x167];
+        parse_says(0, reinterpret_cast<char *>(g_00946a9c) + recOff, -1, -1);
+        *g_009bbfec = reinterpret_cast<int *>(g_00946a50)[faction * 0x167];
+        *g_009bbff0 = 0;
+        parse_says(1, reinterpret_cast<char *>(g_00946a84) + recOff, -1, -1);
+        *g_009bbfec = reinterpret_cast<int *>(g_00946d4c)[faction * 0x167];
+        *g_009bbff0 = reinterpret_cast<int *>(g_00946d50)[faction * 0x167];
+        parse_says(2, reinterpret_cast<char *>(g_00946d34) + recOff, -1, -1);
+        parse_says(3, reinterpret_cast<char *>(g_0097d053) + nearestBase * 0x134, -1, -1);
+
+        short baseY = *reinterpret_cast<short *>(reinterpret_cast<char *>(g_0097d042) + nearestBase * 0x134);
+        short baseX = *reinterpret_cast<short *>(reinterpret_cast<char *>(g_0097d040) + nearestBase * 0x134);
+        int dx = abs(baseX - a2);
+        if ((*reinterpret_cast<unsigned char *>(g_0094988c) & 1) == 0 && dx > *g_0068faf0) {
+            dx = *g_00949870 - dx;
+        }
+        int dy = abs(baseY - a3);
+        const char *sndName = (((dy + dx) >> 1) <= bustLevel)
+                                   ? reinterpret_cast<const char *>(g_0068a058)
+                                   : reinterpret_cast<const char *>(g_0068a068);
+        popp(*reinterpret_cast<char **>(g_00691b0c), reinterpret_cast<const char *>(g_0068a074), 0, sndName, 0);
+    }
+
+    int notified[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    int killed = 0;
+
+    if (weaponCount > 0) {
+        for (int i = 0; i < weaponCount; i++) {
+            int rx = reinterpret_cast<int *>(g_0066efbc)[i] + a2;
+            if ((*reinterpret_cast<unsigned char *>(g_0094988c) & 1) == 0) {
+                if (rx < 0) rx += *g_00949870;
+                else if (rx >= *g_00949870) rx -= *g_00949870;
+            }
+            int ry = reinterpret_cast<int *>(g_0066f440)[i] + a3;
+            if (ry >= 0 && ry < *g_00949874 && rx >= 0 && rx < *g_00949870) {
+                int b = base_at(rx, ry);
+                if (b < 0) {
+                    int v = veh_at(rx, ry);
+                    int stackId = stack_fix(v);
+                    if (stackId >= 0) {
+                        unsigned char vf = *(reinterpret_cast<unsigned char *>(g_00952836) + stackId * 0x34);
+                        if (faction != vf &&
+                            (*(reinterpret_cast<unsigned char *>(g_0096c9f8) + vf * 4 + faction * 0x20cc) & 1) == 0 &&
+                            notified[vf] == 0) {
+                            killed = shoot(faction, vf, a2, a3);
+                            if (killed != 0) break;
+                            notified[vf] = 1;
+                        }
+                    }
+                } else {
+                    unsigned char bf = *(reinterpret_cast<unsigned char *>(g_0097d044) + b * 0x134);
+                    if (faction != bf && notified[bf] == 0) {
+                        killed = shoot(faction, bf, rx, ry);
+                        if (killed != 0) break;
+                        notified[bf] = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    int territoryOwner = whose_territory(faction, a2, a3, 0, 0);
+    if (territoryOwner >= 0 && territoryOwner != static_cast<int>(faction) && notified[territoryOwner] == 0) {
+        killed = shoot(faction, territoryOwner, a2, a3);
+    }
+
+    kill(a1);
+    draw_radius(a2, a3, 0, 2);
+
+    if (killed == 0) {
+        *g_0091561c = 1;
+        int blameBase = -1;
+        int blameVeh = -1;
+
+        if (bustLevel > 0) {
+            int n = bustLevel;
+            do {
+                world_lower_alt(a2, a3);
+                n--;
+            } while (n != 0);
+        }
+
+        world_climate();
+        *g_009b22e0 = -1;
+        reinterpret_cast<FX *>(g_00749cf8)->play(0x3b);
+        *g_0090f7d4 = bustLevel;
+        boom(a2, a3, 0x20);
+
+        if (weaponCount > 0) {
+            for (int i = 0; i < weaponCount; i++) {
+                int rx = reinterpret_cast<int *>(g_0066efbc)[i] + a2;
+                if ((*reinterpret_cast<unsigned char *>(g_0094988c) & 1) == 0) {
+                    if (rx < 0) rx += *g_00949870;
+                    else if (rx >= *g_00949870) rx -= *g_00949870;
+                }
+                int ry = reinterpret_cast<int *>(g_0066f440)[i] + a3;
+                if (ry >= 0 && ry < *g_00949874 && rx >= 0 && rx < *g_00949870) {
+                    int b = base_at(rx, ry);
+                    if (b >= 0) {
+                        unsigned char bf = *(reinterpret_cast<unsigned char *>(g_0097d044) + b * 0x134);
+                        if (blameBase < 0 && bf != faction) blameBase = bf;
+                        base_kill(b);
+                    }
+                    int v = veh_at(rx, ry);
+                    int stackId = stack_fix(v);
+                    if (stackId >= 0) {
+                        unsigned char vf = *(reinterpret_cast<unsigned char *>(g_00952836) + stackId * 0x34);
+                        if (blameVeh < 0 && vf != faction) blameVeh = vf;
+                        stack_kill(stackId);
+                    }
+                }
+            }
+        }
+
+        *g_0091561c = 0;
+        if (blameBase < 0) blameBase = blameVeh;
+
+        draw_map(0);
+        boom(a2, a3, 0x40);
+
+        while (reinterpret_cast<VCall *>(g_0074b5dc)->slot023() != 0) {
+            do_task();
+        }
+
+        reinterpret_cast<FX *>(g_00749cf8)->play(0x3c);
+        boom(a2, a3, 0x11);
+        boom(a2, a3, 0x12);
+        major_atrocity(faction, blameBase);
+    }
 }

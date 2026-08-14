@@ -1,4 +1,10 @@
 // ORIGINAL: 0x0048C360 FILE
+// RULED-OUT: Popup popup; Sprite sprite; as real locals (LEVER 1) reproduce the
+//            SEH frame/alloca/destructor cascade shape; MISMATCH #14 remains
+//            because the ~20 close()/dtor calls after popup.start() are done
+//            via raw ebp-relative reinterpret_cast rather than named embedded
+//            members (BasePop's dialogs_ region isn't typed granularly enough
+//            here to let the calls fall out of automatic C++ destruction).
 // working copy - scaffold materialised by --work
 // name      ?popv@@YAHPADPBDHH@Z
 // size      962 bytes
@@ -2159,7 +2165,7 @@ class SpriteBox { public:
 };
 
 extern "C" int __cdecl _alloca_probe();
-extern "C" int __cdecl sub_4066c0();
+extern "C" void __fastcall sub_4066c0(void *);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -2180,11 +2186,84 @@ static int *const g_00696d14 = (int *)0x00696D14;
 static int *const g_009b3374 = (int *)0x009B3374;
 static int *const g_009bc070 = (int *)0x009BC070;
 int __cdecl popv(char * a1, const char * a2, int a3, int a4) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    Popup popup;
+    Sprite sprite;
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    unsigned char blank_val = *reinterpret_cast<unsigned char *>(g_00696d14);
+    sprite.create_blank(0x64, 0x4b, blank_val);
+    popup.start(a1, a2, -1, 0, a4, 0);
+
+    unsigned char *ebp = reinterpret_cast<unsigned char *>(&popup) + 0x53b4;
+
+    Sprite *ptr1 = (*reinterpret_cast<int *>(ebp - 0x3140) != 0) ? &sprite : 0;
+    *reinterpret_cast<int *>(ebp - 0x224c) = 0x48ceb0;
+    reinterpret_cast<SpriteBox *>(ebp - 0x3174)->sprite(ptr1, 0, a3);
+
+    int result = popup.exec(0, 0);
+    *g_009bc070 = *reinterpret_cast<int *>(ebp - 0x22b4);
+
+    sprite.close();
+    popup.close();
+
+    *reinterpret_cast<int *>(ebp - 0x2184) = 0x669d58;
+    a4 = reinterpret_cast<int>(ebp - 0x2184);
+    *reinterpret_cast<int *>(ebp - 0x1d40) = 0x669d50;
+    reinterpret_cast<Scroll *>(ebp - 0x2184)->close();
+
+    a3 = reinterpret_cast<int>(ebp - 0xb8c);
+    *reinterpret_cast<int *>(ebp - 0xb8c) = 0x669754;
+    *reinterpret_cast<int *>(ebp - 0x748) = 0x66974c;
+    reinterpret_cast<FlatButton *>(ebp - 0xb8c)->close();
+    reinterpret_cast<BaseButton *>(ebp - 0xb8c)->BaseButton::~BaseButton();
+
+    *reinterpret_cast<int *>(ebp - 0x16d8) = 0x669754;
+    a3 = reinterpret_cast<int>(ebp - 0x16d8);
+    *reinterpret_cast<int *>(ebp - 0x1294) = 0x66974c;
+    reinterpret_cast<FlatButton *>(ebp - 0x16d8)->close();
+    reinterpret_cast<BaseButton *>(ebp - 0x16d8)->BaseButton::~BaseButton();
+
+    reinterpret_cast<GraphicWin *>(ebp - 0x2184)->~GraphicWin();
+
+    *reinterpret_cast<int *>(ebp - 0x53b4) = 0x6698d4;
+    *reinterpret_cast<int *>(ebp - 0x4f70) = 0x6698cc;
+    reinterpret_cast<BasePop *>(ebp - 0x53b4)->close();
+
+    reinterpret_cast<Spot *>(ebp - 0x231c)->~Spot();
+    reinterpret_cast<Dialogs *>(ebp - 0x305c)->~Dialogs();
+    reinterpret_cast<Dialog *>(ebp - 0x2644)->~Dialog();
+    reinterpret_cast<GraphicWin *>(ebp - 0x305c)->~GraphicWin();
+
+    sub_4066c0(ebp - 0x320c);
+    {
+        int t1 = *reinterpret_cast<int *>(ebp - 0x3208);
+        *reinterpret_cast<int *>(ebp - 0x320c) = 0x6693ac;
+        *g_009b3374 = t1;
+    }
+
+    sub_4066c0(ebp - 0x323c);
+    {
+        int t2 = *reinterpret_cast<int *>(ebp - 0x3238);
+        *reinterpret_cast<int *>(ebp - 0x323c) = 0x6693ac;
+        *g_009b3374 = t2;
+    }
+
+    reinterpret_cast<Sprite *>(ebp - 0x329c)->close();
+
+    *reinterpret_cast<int *>(ebp - 0x3e0c) = 0x669754;
+    a4 = reinterpret_cast<int>(ebp - 0x3e0c);
+    *reinterpret_cast<int *>(ebp - 0x39c8) = 0x66974c;
+    reinterpret_cast<FlatButton *>(ebp - 0x3e0c)->close();
+    reinterpret_cast<BaseButton *>(ebp - 0x3e0c)->BaseButton::~BaseButton();
+
+    *reinterpret_cast<int *>(ebp - 0x4958) = 0x669754;
+    a4 = reinterpret_cast<int>(ebp - 0x4958);
+    *reinterpret_cast<int *>(ebp - 0x4514) = 0x66974c;
+    reinterpret_cast<FlatButton *>(ebp - 0x4958)->close();
+    reinterpret_cast<BaseButton *>(ebp - 0x4958)->BaseButton::~BaseButton();
+
+    reinterpret_cast<Heap *>(ebp - 0x498c)->shutdown();
+
+    reinterpret_cast<GraphicWin *>(ebp - 0x53b4)->~GraphicWin();
+
+    return result;
 }

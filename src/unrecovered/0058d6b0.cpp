@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0058D6B0 FILE
+// RULED-OUT: MISMATCH #11. Real SetupWin/Popup/Buffer/Spot/StringStruct
+//            locals (Popup embeds Scroll+2 FlatButtons per the scaffold)
+//            do produce the SEH frame and destructor-chain shape, but local
+//            declaration order/count likely differs from the original's
+//            stack layout past instruction 11.
 // working copy - scaffold materialised by --work
 // name      ?map_menu@@YAHH@Z
 // size      1396 bytes
@@ -2128,7 +2133,87 @@ static int *const g_0094b35c = (int *)0x0094B35C;
 static int *const g_009b3374 = (int *)0x009B3374;
 static int *const g_009b8aa8 = (int *)0x009B8AA8;
 int __cdecl map_menu(int a1) {
-    // BODY GOES HERE.
+    SetupWin setup_win;
+    Popup popup;
+    Buffer buffer2;
+    Spot spot1;
+    StringStruct sstr;
+    Buffer buffer1;
+
+    int color = *g_00945824;
+    (void)color;
+    int choice;
+
+retry:
+    *g_00945820 = 0;
+    popup.start((char *)g_009b8aa8, (const char *)g_0068f8a0, -1, 0, 0, 0);
+    choice = *g_0094b35c;
+    if (a1 == 0) {
+        choice = setup_win.do_menu(&popup, 1, a1);
+    }
+    if (choice < 0) {
+        return 1;
+    }
+
+    *g_0094b35c = choice;
+    prefs_save(0);
+
+    if (choice < 5) {
+    dispatch:
+        switch (choice) {
+        case 0:
+        case 1:
+            if (size_of_planet(a1) != 0) goto retry;
+            if (*g_00945820 != 0) {
+                if (choice == 1) {
+                    if (custom_planet(1, a1) != 0) {
+                        choice = 1;
+                        goto dispatch;
+                    }
+                    goto after_climate;
+                }
+                if (*g_0093f660 == 0) {
+                    int r = rand();
+                    int q = (r % 7 + 1) / 2;
+                    if (q < 0) q = 0;
+                    else if (q > 2) q = 2;
+                    *g_0094a2a4 = 2 - q;
+                } else {
+                    *g_0094a2a4 = 0;
+                }
+                *g_0094a2a8 = 2 - *g_0094a2a4;
+                int r2 = rand();
+                *g_0094a2b0 = 1;
+                *g_0094a2b4 = 1;
+                *g_0094a2b8 = 1;
+                *g_0094a2ac = (r2 % 6 + 5) / 5;
+            }
+            goto after_climate;
+        case 2:
+            if (load_map_daemon((char *)g_0068f8a8) != 0) goto retry;
+            world_climate();
+            goto after_climate;
+        case 3:
+            if (load_map_daemon((char *)g_0068f8b8) != 0) goto retry;
+            world_climate();
+            goto after_climate;
+        default:
+            if (load_map() == 0) {
+                world_climate();
+                goto after_climate;
+            }
+            a1 = 0;
+            goto retry;
+        }
+    }
+after_climate:
+    if (config_game(a1) == 0) {
+        return 0;
+    }
+    goto retry;
+}
+#if 0
+void __unused_map_menu_scaffold_tail() {
     //
     // Reach fields by offset - the class is deliberately empty:
     //     char *self = reinterpret_cast<char *>(this);
@@ -2136,3 +2221,4 @@ int __cdecl map_menu(int a1) {
 
     return (int)0;  // PLACEHOLDER - replace with the body
 }
+#endif

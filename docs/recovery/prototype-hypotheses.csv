@@ -509,23 +509,23 @@ address,name,argument_count,evidence
 0x0063CE20,sub_63ce20,0,IDA 9.4 guess_type int()
 0x0063CEF0,sub_63cef0,0,IDA 9.4 guess_type int()
 0x0063CF00,deflateInit_,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
-0x0063CF30,sub_63cf30,8,"IDA 9.4 guess_type int __cdecl(int, int, int, int, int, int, int, int)"
-0x0063D120,sub_63d120,1,IDA 9.4 guess_type int __cdecl(int)
-0x0063D1A0,sub_63d1a0,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x0063D420,sub_63d420,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x0063D450,sub_63d450,1,IDA 9.4 guess_type int __cdecl(int)
-0x0063D4D0,sub_63d4d0,1,IDA 9.4 guess_type int __cdecl(int)
-0x0063D560,sub_63d560,1,IDA 9.4 guess_type int __cdecl(int)
-0x0063D600,sub_63d600,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x0063D6F0,sub_63d6f0,1,IDA 9.4 guess_type int __cdecl(int)
-0x0063D820,sub_63d820,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
-0x0063D8A0,sub_63d8a0,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x0063DAD0,sub_63dad0,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x0063DC40,sub_63dc40,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x0063DF40,sub_63df40,1,IDA 9.4 guess_type int __cdecl(int)
-0x0063DF90,sub_63df90,1,IDA 9.4 guess_type int __cdecl(int)
-0x0063DFE0,sub_63dfe0,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
-0x0063E0F0,sub_63e0f0,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
+0x0063CF30,_deflateInit2_,8,"IDA 9.4 guess_type int __cdecl(int, int, int, int, int, int, int, int)"
+0x0063D120,_deflateReset,1,IDA 9.4 guess_type int __cdecl(int)
+0x0063D1A0,_deflate,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x0063D420,_putShortMSB,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x0063D450,_flush_pending,1,IDA 9.4 guess_type int __cdecl(int)
+0x0063D4D0,_deflateEnd,1,IDA 9.4 guess_type int __cdecl(int)
+0x0063D560,_lm_init,1,IDA 9.4 guess_type int __cdecl(int)
+0x0063D600,_deflate_stored,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x0063D6F0,_fill_window,1,IDA 9.4 guess_type int __cdecl(int)
+0x0063D820,_read_buf,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
+0x0063D8A0,_deflate_fast,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x0063DAD0,_longest_match,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x0063DC40,_deflate_slow,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x0063DF40,_inflateReset,1,IDA 9.4 guess_type int __cdecl(int)
+0x0063DF90,_inflateEnd,1,IDA 9.4 guess_type int __cdecl(int)
+0x0063DFE0,_inflateInit2_,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
+0x0063E0F0,_inflateInit_,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
 0x0063E110,inflate,2,"IDA 9.4 guess_type int __cdecl(int, int)"
 0x0063E520,sub_63e520,0,IDA 9.4 guess_type int()
 0x0063E540,sub_63e540,1,IDA 9.4 guess_type int __stdcall(int)
@@ -547,40 +547,40 @@ address,name,argument_count,evidence
 0x00640A50,sub_640a50,3,"IDA 9.4 guess_type int __cdecl(int, size_t Count, size_t Size)"
 0x00640A70,sub_640a70,2,"IDA 9.4 guess_type int __cdecl(int, void *Block)"
 0x00640A80,sub_640a80,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
-0x00640BB0,sub_640bb0,1,IDA 9.4 guess_type int __cdecl(int)
-0x00640C30,sub_640c30,0,IDA 9.4 guess_type int()
-0x00640E50,sub_640e50,1,IDA 9.4 guess_type int __cdecl(int)
-0x00640EC0,sub_640ec0,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
-0x00640F40,sub_640f40,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
+0x00640BB0,__tr_init,1,IDA 9.4 guess_type int __cdecl(int)
+0x00640C30,_tr_static_init,0,IDA 9.4 guess_type int()
+0x00640E50,_init_block,1,IDA 9.4 guess_type int __cdecl(int)
+0x00640EC0,_gen_codes,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
+0x00640F40,__tr_stored_block,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
 0x00641000,__tr_align,1,IDA 9.4 guess_type int __cdecl(int)
 0x00641280,__tr_flush_block,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
 0x006414B0,_build_tree,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x006416F0,sub_6416f0,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
+0x006416F0,_pqdownheap,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
 0x006417D0,_gen_bitlen,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x00641A00,sub_641a00,1,IDA 9.4 guess_type int __cdecl(int)
-0x00641A70,sub_641a70,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
+0x00641A00,_build_bl_tree,1,IDA 9.4 guess_type int __cdecl(int)
+0x00641A70,_scan_tree,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
 0x00641B60,_send_all_trees,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
 0x00641DD0,_send_tree,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
-0x00642350,sub_642350,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
+0x00642350,__tr_tally,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
 0x00642480,_compress_block,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
-0x006428C0,sub_6428c0,1,IDA 9.4 guess_type int __cdecl(int)
-0x00642940,sub_642940,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x00642960,sub_642960,1,IDA 9.4 guess_type int __cdecl(int)
-0x006429F0,sub_6429f0,1,IDA 9.4 guess_type int __cdecl(int)
-0x00642A70,sub_642a70,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
-0x00642B10,sub_642b10,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
-0x00642BB0,sub_642bb0,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
+0x006428C0,_set_data_type,1,IDA 9.4 guess_type int __cdecl(int)
+0x00642940,_bi_reverse,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x00642960,_bi_flush,1,IDA 9.4 guess_type int __cdecl(int)
+0x006429F0,_bi_windup,1,IDA 9.4 guess_type int __cdecl(int)
+0x00642A70,_copy_block,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
+0x00642B10,_inflate_blocks_reset,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
+0x00642BB0,_inflate_blocks_new,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
 0x00642C20,_inflate_blocks,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
-0x00643950,sub_643950,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
-0x00643990,sub_643990,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
+0x00643950,_inflate_blocks_free,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
+0x00643990,_inflate_trees_bits,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
 0x006439F0,_huft_build,8,"IDA 9.4 guess_type int __cdecl(int, int, int, int, int, int, int, int)"
-0x00643EB0,sub_643eb0,8,"IDA 9.4 guess_type int __cdecl(int, int, int, int, int, int, int, int)"
-0x00643FA0,sub_643fa0,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
-0x006440E0,sub_6440e0,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x00644100,sub_644100,2,"IDA 9.4 guess_type int __cdecl(int, int)"
-0x00644140,sub_644140,5,"IDA 9.4 guess_type int __cdecl(char, char, int, int, int)"
+0x00643EB0,_inflate_trees_dynamic,8,"IDA 9.4 guess_type int __cdecl(int, int, int, int, int, int, int, int)"
+0x00643FA0,_inflate_trees_fixed,4,"IDA 9.4 guess_type int __cdecl(int, int, int, int)"
+0x006440E0,_falloc,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x00644100,_inflate_trees_free,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x00644140,_inflate_codes_new,5,"IDA 9.4 guess_type int __cdecl(char, char, int, int, int)"
 0x00644180,_inflate_codes,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
-0x00644910,sub_644910,2,"IDA 9.4 guess_type int __cdecl(int, int)"
+0x00644910,_inflate_codes_free,2,"IDA 9.4 guess_type int __cdecl(int, int)"
 0x00644930,sub_644930,3,"IDA 9.4 guess_type int __cdecl(int, int, int)"
 0x00644A70,_inflate_fast,6,"IDA 9.4 guess_type int __cdecl(int, int, int, int, int, int)"
 0x00644DD2,__cinit,0,IDA 9.4 guess_type int()

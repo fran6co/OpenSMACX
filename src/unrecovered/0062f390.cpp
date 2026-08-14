@@ -1185,6 +1185,7 @@ class Net { public:
     void check_polling();
     void close();
     void handle_sys_msg();
+    int send_group_flagged(void *, int, long, unsigned short, unsigned int);
 };
 
 class NetFifo { public:
@@ -1256,8 +1257,8 @@ class VCall { public:
 //     int result = fn(obj, arg);
 //
 // This body dispatches COM-style through slot(s): 10, 26
-typedef int (__stdcall *ComSlot010)(void *self);
-typedef int (__stdcall *ComSlot026)(void *self);
+typedef int (__stdcall *ComSlot010)(void *self, int target, int zero1, void *callback, int zero2, int zero3);
+typedef int (__stdcall *ComSlot026)(void *self, unsigned int netId, int target, int reliable, void *buf, int size);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -1278,12 +1279,219 @@ static int *const g_009b2068 = (int *)0x009B2068;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009be4bc = (int *)0x009BE4BC;
 static int *const g_009be600 = (int *)0x009BE600;
-extern "C" int __stdcall sub_62f390(int a1, int a2, int a3, int a4, int a5) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+int Net::send_group_flagged(void * a1, int a2, long a3, unsigned short a4, unsigned int a5) {
+    typedef unsigned long (__stdcall *TimeGetTimeFn)(void);
+    typedef void (__stdcall *ResetEventFn)(void *);
+    typedef unsigned long (__stdcall *WaitForMultipleObjectsFn)(unsigned int, void * const *, int, unsigned int);
+    typedef int (__stdcall *MessageBoxAFn)(void *, const char *, const char *, unsigned int);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    char *self = reinterpret_cast<char *>(this);
+    void *handles[2];
+    handles[0] = *reinterpret_cast<void **>(self + 8);
+    handles[1] = *reinterpret_cast<void **>(self + 0xc);
+
+    if (*g_009be600 == 0) return 0;
+    if (a2 < 0) return 0;
+    if (*reinterpret_cast<int *>(self + 0x6e4) < a2) return 0;
+
+    reinterpret_cast<Net *>(self)->check_polling();
+
+    unsigned char reliableFlagByte = *reinterpret_cast<unsigned char *>(self + 0xd8);
+    if ((a4 & 0xfff0) == 0 && ((reliableFlagByte & 1) != 0 || (a5 & 4) != 0)) {
+        int target = *reinterpret_cast<int *>(self + 0x760);
+        if (a3 == target) {
+            reinterpret_cast<NetFifo *>(self + 0x10c)->add(
+                a1, (unsigned long)a2, (unsigned long)target, 0, (unsigned long)-1);
+            return *reinterpret_cast<int *>(self + 0xe4);
+        }
+        if (a3 == 0) {
+            reinterpret_cast<NetFifo *>(self + 0x10c)->add(
+                a1, (unsigned long)a2, (unsigned long)target, 0, (unsigned long)-1);
+            if (*reinterpret_cast<int *>(self + 0x6dc) < 2) {
+                return *reinterpret_cast<int *>(self + 0xe4);
+            }
+        }
+    }
+
+    int allocSize = a2 + 0xc;
+    unsigned short *buf = reinterpret_cast<unsigned short *>(mem_get(allocSize));
+    if (buf == 0) return 0;
+
+    unsigned int reliable = a5 & 1;
+    if (reliable == 0) {
+        *reinterpret_cast<unsigned int *>(buf + 2) = 0;
+    } else {
+        int newSeq = *reinterpret_cast<int *>(self + 0xe4) + 1;
+        *reinterpret_cast<int *>(self + 0xe4) = newSeq;
+        *reinterpret_cast<int *>(buf + 2) = newSeq;
+    }
+
+    if (a1 != 0) {
+        memcpy(buf + 4, a1, a2);
+    }
+
+    if (reliable == 0 || (*reinterpret_cast<unsigned int *>(self + 0xd8) & 0x10000000) != 0) {
+        *buf = a4;
+        if (*g_009be600 != 0) {
+            void *iface = *reinterpret_cast<void **>(g_009be600);
+            ComSlot026 fn26 = (ComSlot026)(*reinterpret_cast<void ***>(iface))[26];
+            int r = fn26(iface, *reinterpret_cast<unsigned int *>(self + 0x760), a3,
+                          reliable != 0, buf, allocSize);
+            if (r != 0) { free(buf); return 0; }
+        }
+        free(buf);
+        return *reinterpret_cast<int *>(self + 0xe4);
+    }
+
+    // ---- unconfirmed-reliable path: wait for ack from every recipient ----
+    *buf = (unsigned short)(a4 | 4);
+    {
+        int *rec = reinterpret_cast<int *>(self + 0x15c);
+        for (int z = 0; z < 0x10; z++) { *rec = 0; rec += 0x16; }
+    }
+    *reinterpret_cast<char **>(g_009be4bc) = self + 0x154;
+    if (*g_009be600 == 0) { free(buf); return 0; }
+
+    {
+        void *iface = *reinterpret_cast<void **>(g_009be600);
+        ComSlot010 fn10 = (ComSlot010)(*reinterpret_cast<void ***>(iface))[10];
+        fn10(iface, a3, 0, reinterpret_cast<void *>(g_0062ee20), 0, 0);
+    }
+
+    unsigned int waitTimeout = 0xffffffff;
+    int foundIdx = -1;
+    {
+        char *rec = self + 0x15c;
+        for (int idx = 0; idx < 0x10; idx++) {
+            if (*reinterpret_cast<int *>(rec) != 0) { foundIdx = idx; break; }
+            rec += 0x58;
+        }
+    }
+    if (foundIdx < 0) {
+        free(buf);
+        return *reinterpret_cast<int *>(self + 0xe4);
+    }
+
+    int pending[16];
+    unsigned int retryDelay[16];
+    unsigned int baseTime[16];
+    for (int z = 0; z < 16; z++) { pending[z] = 0; retryDelay[z] = 0; baseTime[z] = 0; }
+
+    pending[foundIdx] = 1;
+    {
+        unsigned int recVal = *reinterpret_cast<unsigned int *>(self + 0x160 + foundIdx * 0x58);
+        retryDelay[foundIdx] = recVal;
+        if (recVal != 0xffffffff) waitTimeout = recVal;
+    }
+
+    for (;;) {
+        if (*g_009be600 == 0) { free(buf); return 0; }
+
+        {
+            unsigned int now = ((TimeGetTimeFn)(*reinterpret_cast<void **>(g_00669368)))();
+            for (int z = 0; z < 16; z++) baseTime[z] = now;
+        }
+
+        {
+            void *iface = *reinterpret_cast<void **>(g_009be600);
+            ComSlot026 fn26 = (ComSlot026)(*reinterpret_cast<void ***>(iface))[26];
+            int r = fn26(iface, *reinterpret_cast<unsigned int *>(self + 0x760), a3, 0, buf, allocSize);
+            if (r != 0) { free(buf); return 0; }
+        }
+
+        unsigned int start = ((TimeGetTimeFn)(*reinterpret_cast<void **>(g_00669368)))();
+        unsigned int nowT = ((TimeGetTimeFn)(*reinterpret_cast<void **>(g_00669368)))();
+        unsigned int elapsed = nowT - start;
+
+        int anyPending = 0;
+        while (elapsed < 20000) {
+            ((ResetEventFn)(*reinterpret_cast<void **>(g_00669188)))(handles[1]);
+            ((ResetEventFn)(*reinterpret_cast<void **>(g_00669188)))(handles[0]);
+            unsigned int waitResult = ((WaitForMultipleObjectsFn)(*reinterpret_cast<void **>(g_00669184)))(
+                2, handles, 0, waitTimeout);
+            if (waitResult == 1) {
+                reinterpret_cast<Net *>(self)->handle_sys_msg();
+            }
+            unsigned int nowPoll = ((TimeGetTimeFn)(*reinterpret_cast<void **>(g_00669368)))();
+
+            anyPending = 0;
+            char *rec = self + 0x160;
+            for (int idx = 0; idx < 16; idx++) {
+                if (pending[idx] != 0) {
+                    if (*reinterpret_cast<int *>(rec - 0xc) == 0) {
+                        pending[idx] = 0;
+                    } else if (*reinterpret_cast<int *>(rec - 4) == 0) {
+                        unsigned int t = ((TimeGetTimeFn)(*reinterpret_cast<void **>(g_00669368)))();
+                        unsigned int recDelay = *reinterpret_cast<unsigned int *>(rec);
+                        pending[idx] = 0;
+                        *reinterpret_cast<unsigned int *>(rec) =
+                            (t + 0x14 + (recDelay - baseTime[idx])) >> 1;
+                    } else {
+                        if (retryDelay[idx] < (unsigned int)(nowPoll - baseTime[idx])) {
+                            retryDelay[idx] = (retryDelay[idx] * 3) >> 1;
+                            if (*g_009be600 == 0) { free(buf); return 0; }
+                            unsigned int t2 = ((TimeGetTimeFn)(*reinterpret_cast<void **>(g_00669368)))();
+                            unsigned int resendId = *reinterpret_cast<unsigned int *>(rec - 0xc);
+                            baseTime[idx] = t2;
+                            void *iface2 = *reinterpret_cast<void **>(g_009be600);
+                            ComSlot026 fn26b = (ComSlot026)(*reinterpret_cast<void ***>(iface2))[26];
+                            int r2 = fn26b(iface2, *reinterpret_cast<unsigned int *>(self + 0x760),
+                                           resendId, 0, buf, allocSize);
+                            if (r2 != 0) {
+                                ((MessageBoxAFn)(*reinterpret_cast<void **>(g_00669318)))(
+                                    0, reinterpret_cast<const char *>(g_006976a8),
+                                    reinterpret_cast<const char *>(g_00697688), 0);
+                                free(buf);
+                                return 0;
+                            }
+                        }
+                        anyPending = 1;
+                    }
+                }
+                rec += 0x58;
+            }
+            if (!anyPending) {
+                free(buf);
+                return *reinterpret_cast<int *>(self + 0xe4);
+            }
+            unsigned int nowEnd = ((TimeGetTimeFn)(*reinterpret_cast<void **>(g_00669368)))();
+            elapsed = nowEnd - start;
+        }
+
+        // timed out waiting - build the "who's missing" message
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        int first = 1;
+        {
+            int *rec2 = reinterpret_cast<int *>(self + 0x154);
+            for (int idx = 0; idx < 16; idx++) {
+                if (rec2[2] != 0) {
+                    int fidx = -1;
+                    char *rec3 = self + 0x154;
+                    for (int j = 0; j < 16; j++) {
+                        if (*reinterpret_cast<int *>(rec3) == rec2[0]) { fidx = j; break; }
+                        rec3 += 0x58;
+                    }
+                    char *name = (fidx < 0) ? reinterpret_cast<char *>(0) : (self + 0x169 + fidx * 0x58);
+                    strcat(reinterpret_cast<char *>(g_009b86a0), name);
+                    if (!first) {
+                        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682e90));
+                        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682820));
+                    }
+                    first = 0;
+                }
+                rec2 += 0x16;
+            }
+        }
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_006976c0));
+        parse_says(0, reinterpret_cast<char *>(g_009b86a0), -1, -1);
+        int choice = pop(reinterpret_cast<char *>(g_006976d8), reinterpret_cast<char *>(g_006976c4), 0);
+        if (choice == 0) continue;
+        if (choice == 1) {
+            reinterpret_cast<Net *>(self)->close();
+        } else if (choice == 2) {
+            *g_009b2068 = 1;
+        }
+        free(buf);
+        return 0;
+    }
 }
