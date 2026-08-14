@@ -1,7 +1,22 @@
 // ORIGINAL: 0x004031A0 FILE
-// RULED-OUT: nothing yet - MISMATCH #0 push/sub (79% mnemonic sim), stack
-//            frame layout differs (compiler chose different spill slots
-//            for the six loop temporaries); not chased further.
+// RULED-OUT: SHAPE_EXACT now - every instruction matches and the only
+//            difference left is the FRAME LAYOUT, so these are ruled out
+//            for the LAST byte rather than for the shape. All measured:
+//            any frameless spelling, since the original keeps ebp;
+//            a real object local to force an SEH frame - div 2, this
+//            prologue registers no handler at all; declaration order of
+//            the locals - all six permutations byte-identical;
+//            statement order - 13 of 15 legal orders break the shape and
+//            the other 2 give the same slots; extra unreferenced ints or
+//            arrays to grow sub esp - reclaimed, frame stays 0x18.
+//            VC6 lays locals out by size ASCENDING, ties broken by a fixed
+//            intrinsic order top, bottom_end, top_end, i, entry, width that
+//            no source edit moved. Aggregates are therefore a real size
+//            lever and a 16-byte struct member landed 5 of the 6 slots
+//            exactly - but the original wants top_end at ebp-0x10 ABOVE top
+//            at ebp-0x18 in a 0x2c frame, which needs top_end allocated
+//            FIRST, and that forces size top_end < size top with the three
+//            summing to 0x20 and size bottom_end >= 0x10. No integers fit.
 // name      ?compute@AlphaMenu@@QAEXXZ
 // size      242 bytes
 // spans     0x004031A0-0x00403292
@@ -10,8 +25,6 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005FA8A0 0x005FA960
-// placeholder - not yet decompiled
-// To start: tools/decomp_status.py --work 0x004031A0
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?compute@AlphaMenu@@QAEXXZ  at 0x004031A0  (242 bytes)
 //
@@ -1331,32 +1344,24 @@ void AlphaMenu::compute() {
     Spot *spot = (Spot *)(self + 0xA2C);
     spot->init(*(int *)(self + 0xA18));
 
-    int iVar3 = *(int *)(self + 0x1108);
-    int uVar2 = *(int *)(self + 0x1130);
-    int local_14 = iVar3 + stride;
-    int iVar4 = (*(int *)(self + 0xA18) - 1) * stride + iVar3;
-    int local_24 = iVar4 + stride;
-
-    if (*(int *)(self + 0xA18) > 0) {
-        unsigned char *entry = (unsigned char *)(self + 0xA40);
-        int local_1c = iVar3;
-        int i = 0;
-        do {
-            if ((*entry & 1) != 0) {
-                if ((*entry & 4) == 0) {
-                    spot->add(i, 0, 0, iVar3, uVar2, local_14 - iVar3);
-                    iVar3 = local_1c + stride;
-                    local_14 = local_14 + stride;
-                    local_1c = iVar3;
-                } else {
-                    spot->add(i, 0, 0, iVar4, uVar2, local_24 - iVar4);
-                    iVar4 = iVar4 - stride;
-                    local_24 = local_24 - stride;
-                    iVar3 = local_1c;
-                }
+    int top = *(int *)(self + 0x1108);
+    int width = *(int *)(self + 0x1130);
+    int top_end = top + stride;
+    int bottom = (*(int *)(self + 0xA18) - 1) * stride + top;
+    int bottom_end = bottom + stride;
+    for (int i = 0; i < *(int *)(self + 0xA18); ++i) {
+        unsigned char *entry = (unsigned char *)(self + 0xA40 + i * 0x14);
+        if (*entry & 1) {
+            if (*entry & 4) {
+                spot->add(i, 0, 0, bottom, width, bottom_end - bottom);
+                int back = -stride;
+                bottom += back;
+                bottom_end += back;
+            } else {
+                spot->add(i, 0, 0, top, width, top_end - top);
+                top += stride;
+                top_end += stride;
             }
-            ++i;
-            entry += 0x14;
-        } while (i < *(int *)(self + 0xA18));
+        }
     }
 }

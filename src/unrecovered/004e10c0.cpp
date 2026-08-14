@@ -1,6 +1,12 @@
-// ORIGINAL: 0x004E10C0 FILE
-// RULED-OUT: hoisting count into a cached local for the loop bound (loop
-//            re-reads the global each iteration in the original)
+// ORIGINAL: 0x004E10C0 BYTE_EXACT FILE
+// LEVER: reread-global-in-loop-condition leave the loop bound as a fresh read
+//        of the global on every iteration instead of hoisting it into a
+//        cached local. This was recorded as a RULED-OUT - the thing that did
+//        NOT work - and the body then reached BYTE_EXACT with the opposite
+//        spelling, which is exactly the refutation the grammar exists to
+//        force. /O2 will not re-read a global it has already loaded unless
+//        the source asks again, so caching the bound is a one-instruction
+//        difference that persists through the whole loop.
 // working copy - scaffold materialised by --work
 // name      ?editor_fast@Console@@QAEXXZ
 // size      205 bytes
@@ -759,39 +765,26 @@ class VCall_7b0cb8 { public:
 void Console::editor_fast() {
     auto_undo();
     unsigned int state = editor_state | 4;
-    int count = veh_count;
     unsigned char *base = (unsigned char *)veh_array;
     editor_undo_a = 0;
     editor_undo_b = 0;
     editor_flag_a = 0;
     editor_flag_b = 0xffffffff;
     editor_state = state;
-    if (count > 0) {
-        unsigned int *p = (unsigned int *)(base + 8);
-        int i = 0;
-        do {
-            i++;
-            *p &= 0xfffffffc;
-            p += 0xb;
-        } while (i < veh_count);
+    for (int i = 0; i < veh_count; i++) {
+        *(unsigned int *)(base + i * 0x2c + 8) &= 0xfffffffc;
     }
-    unsigned int v = editor_state;
-    unsigned int flag80 = v & 0x80;
-    v &= 0x7f;
-    editor_state = v;
+    unsigned int flag80 = editor_state & 0x80;
+    editor_state = editor_state & 0xffffff7f;
     world_build();
     if (flag80 != 0) {
-        v = editor_state;
-        v |= 0x80;
-        editor_state = v;
+        editor_state = editor_state | 0x80;
     }
     unsigned char al = *(unsigned char *)&editor_state;
     if ((al & 0x80) != 0 && (al & 0x40) != 0) {
         reinterpret_cast<VCall_7b0cb8 *>(0x007B0CB8)->slot001(0);
-        draw_map(1);
-        return;
+    } else {
+        reinterpret_cast<VCall_7b0cb8 *>(0x007B0CB8)->slot002();
     }
-    reinterpret_cast<VCall_7b0cb8 *>(0x007B0CB8)->slot002();
     draw_map(1);
-    return;
 }

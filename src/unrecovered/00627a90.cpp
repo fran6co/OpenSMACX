@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00627A90 FILE
+// ORIGINAL: 0x00627A90 BYTE_EXACT FILE
 // working copy - scaffold materialised by --work
 // name      ?pop_ask_number@@YAHPADPADP6AHXZ@Z
 // size      200 bytes
@@ -856,27 +856,39 @@ static int *const g_009bc078 = (int *)0x009BC078;
 typedef char *(__cdecl *ItoaFn)(int, char *, int);
 typedef int (__cdecl *AtoiFn)(const char *);
 
-int __cdecl pop_ask_number(char * a1, char * a2, int (__cdecl *a3)()) {
-    BasePop *popwin;
-    char numbuf[64];
-    if (reinterpret_cast<Win *>(*g_009bc074)->is_visible() != 0) {
-        popwin = reinterpret_cast<BasePop *>(*g_009bc078);
-    } else {
-        popwin = reinterpret_cast<BasePop *>(*g_009bc074);
+// LOAD-BEARING. `/O2` implies `/Oi`, which expands `strcat` inline as
+// `repnz scasb` + `rep movs`; the original CALLS it at 0x00645470. The
+// inline expansion also needs a third callee-saved register, which changes
+// the PROLOGUE - so without this pragma the body diverges at instruction 0
+// rather than at the `strcat` itself.
+#pragma function(strcat)
+
+int __cdecl pop_ask_number(char * srcFileID, char * sectionID,
+                           int (__cdecl *exec_callback)()) {
+    // 80, not 64: the frame is `sub esp, 0x50` and this array is all of it.
+    char number_text[80];
+    int visible = reinterpret_cast<Win *>(*g_009bc074)->is_visible();
+    // Seeded and then overridden, NOT an if/else: that is what puts the load
+    // of 0x009BC078 between the call and its own test, and costs one branch
+    // instead of two.
+    BasePop *popup = reinterpret_cast<BasePop *>(*g_009bc078);
+    if (visible == 0) {
+        popup = reinterpret_cast<BasePop *>(*g_009bc074);
     }
     *reinterpret_cast<char *>(g_009b86a0) = 0;
-    reinterpret_cast<ItoaFn>(_itoa)(0, numbuf, 10);
-    strcat(reinterpret_cast<char *>(g_009b86a0), numbuf);
-    if (popwin->start(a1, a2, 9, reinterpret_cast<char *>(g_009b86a0), 0x44, 0) != 0) {
+    reinterpret_cast<ItoaFn>(_itoa)(0, number_text, 10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), number_text);
+    if (popup->start(srcFileID, sectionID, 9,
+                     reinterpret_cast<char *>(g_009b86a0), 0x44, 0) != 0) {
         return -1;
     }
-    popwin->write_check(*g_009bc06c);
-    int result = popwin->exec(0, a3);
-    if (*reinterpret_cast<int *>(reinterpret_cast<char *>(popwin) + 0xa14) == 0) {
+    popup->write_check(*g_009bc06c);
+    int result = popup->exec(0, exec_callback);
+    if (*reinterpret_cast<int *>(reinterpret_cast<char *>(popup) + 0xa14) == 0) {
         do_all_draws();
     }
-    *g_009bc070 = *reinterpret_cast<int *>(reinterpret_cast<char *>(popwin) + 0x3100);
+    *g_009bc070 = *reinterpret_cast<int *>(reinterpret_cast<char *>(popup) + 0x3100);
     *g_009bb598 = reinterpret_cast<AtoiFn>(atoi)(reinterpret_cast<char *>(g_009bb5e8));
-    popwin->close();
+    popup->close();
     return result;
 }

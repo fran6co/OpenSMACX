@@ -1,6 +1,18 @@
-// ORIGINAL: 0x00431EC0 FILE
-// RULED-OUT: if/else-if chain for the a1 dispatch instead of the negated-
-//            nested `sub/je/dec/je` shape the asm uses
+// ORIGINAL: 0x00431EC0 BYTE_EXACT FILE
+// LEVER: sub/dec a `switch` on the button id, NOT an `if`/`else if` chain.
+//        `switch (id) { case 0x10: ... case 0x11: ... default: ... }` is what
+//        lowers to `mov eax,ecx; sub eax,0x10; je; dec eax; je` with the id
+//        left live in ecx for the default arm's `push ecx`. The `if` chain
+//        emits `cmp eax,0x10; jne` instead, loads the parameter into eax
+//        before saving esi, and lays the three arms out in source order where
+//        the switch puts the default first and the cases in reverse. That one
+//        edit moved first divergence from #0 to #69 of 79 instructions.
+// LEVER: lea/mov re-derive the virtual-base `this` from the OBJECT, not from
+//        the sub-object pointer already in a register: `self + 0xf628 + disp`
+//        gives `mov edx,[ecx+esi+0xf628]` / `lea ecx,[ecx+esi+0xf628]`, where
+//        the readable `sub + disp` (with `sub` already held in ebx) gives
+//        `add ecx,ebx` / `mov edx,[ecx]`. Same address, one fewer live value,
+//        and it is the whole of the last two instructions that differed.
 // working copy - scaffold materialised by --work
 // name      ?on_button_clicked@Datalink@@QAEXH@Z
 // size      233 bytes
@@ -859,12 +871,13 @@ class DummyNullary { public: void call(); };
 typedef void (DummyNullary::*NullaryMFP)();
 union NullaryCast { void *fn; NullaryMFP mfp; };
 
-void Datalink::on_button_clicked(int a1) {
+void Datalink::on_button_clicked(int button_id) {
     char *self = reinterpret_cast<char *>(this);
 
-    if (a1 == 0x10) {
-        int idx = *reinterpret_cast<int *>(self + 0x2a34);
-        if (idx <= 1) {
+    switch (button_id) {
+    case 0x10: {
+        int depth = *reinterpret_cast<int *>(self + 0x2a34);
+        if (depth <= 1) {
             void *vtbl = *reinterpret_cast<void **>(self);
             NullaryCast c;
             c.fn = *reinterpret_cast<void **>(reinterpret_cast<char *>(vtbl) + 0xe8);
@@ -872,38 +885,48 @@ void Datalink::on_button_clicked(int a1) {
             return;
         }
 
-        idx--;
-        *reinterpret_cast<int *>(self + 0x2a34) = idx;
-        int val = *reinterpret_cast<int *>(self + 0x29e0 + idx * 4);
+        depth--;
+        *reinterpret_cast<int *>(self + 0x2a34) = depth;
+        int entry = *reinterpret_cast<int *>(self + 0x29e0 + depth * 4);
 
-        int cat = val / 10000;
+        int cat = entry / 10000;
         set_cat(static_cast<unsigned int>(cat), 0);
 
-        int remainder = val - cat * 10000;
-        *reinterpret_cast<int *>(self + 0x29e0) = remainder;
+        int item = entry - cat * 10000;
+        *reinterpret_cast<int *>(self + 0x29e0) = item;
 
         int facility = *reinterpret_cast<int *>(self + 0x29dc);
-        int selected = facility * 10000 + remainder;
+        int selected = facility * 10000 + item;
 
-        char *sub = self + 0xf628;
-        reinterpret_cast<ListBox *>(sub)->set_selected_id(selected);
+        char *listBox = self + 0xf628;
+        reinterpret_cast<ListBox *>(listBox)->set_selected_id(selected);
 
-        int vtbl2 = *reinterpret_cast<int *>(sub);
-        int disp = *reinterpret_cast<int *>(vtbl2 + 4);
-        char *adjustedThis = sub + disp;
-        int vbaseVtbl = *reinterpret_cast<int *>(adjustedThis);
+        int vbTable = *reinterpret_cast<int *>(listBox);
+        int disp = *reinterpret_cast<int *>(vbTable + 4);
+        // From `self`, deliberately, and not from `listBox`: see the LEVER note
+        // at the top of the file. Both name the same address; only this one
+        // folds into the base+index+displacement the original uses.
+        char *virtualBase = self + 0xf628 + disp;
+        int vbaseVtbl = *reinterpret_cast<int *>(virtualBase);
 
         NullaryCast c2;
         c2.fn = *reinterpret_cast<void **>(vbaseVtbl + 0xf8);
-        (reinterpret_cast<DummyNullary *>(adjustedThis)->*c2.mfp)();
+        (reinterpret_cast<DummyNullary *>(virtualBase)->*c2.mfp)();
 
         draw_entry();
-    } else if (a1 == 0x11) {
+        break;
+    }
+    case 0x11: {
         void *vtbl = *reinterpret_cast<void **>(self);
         NullaryCast c;
         c.fn = *reinterpret_cast<void **>(reinterpret_cast<char *>(vtbl) + 0xe8);
         (reinterpret_cast<DummyNullary *>(self)->*c.mfp)();
-    } else if (*reinterpret_cast<int *>(self + 0x29dc) == 0xe) {
-        reinterpret_cast<ReportWin *>(g_00876478)->on_button_clicked(a1);
+        break;
+    }
+    default:
+        if (*reinterpret_cast<int *>(self + 0x29dc) == 0xe) {
+            reinterpret_cast<ReportWin *>(g_00876478)->on_button_clicked(button_id);
+        }
+        break;
     }
 }

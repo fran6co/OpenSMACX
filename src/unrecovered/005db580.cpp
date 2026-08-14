@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005DB580 FILE
+// ORIGINAL: 0x005DB580 BYTE_EXACT FILE
 // working copy - scaffold materialised by --work
 // name      ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z
 // size      223 bytes
@@ -88,6 +88,10 @@ class Spot { public:
 };
 
 extern "C" unsigned int strlen(const char *);
+// /O2 implies /Oi, and the inlined `repnz scasb` VC6
+// substitutes for strlen is not what 0x006453E0 is called
+// from. This puts the call back.
+#pragma function(strlen)
 
 class Buffer { public:
     LPVOID vtable_;
@@ -165,39 +169,45 @@ class Buffer { public:
     int write_multi_font_raw_l(char *, int, int, int);
     int write_l(Font *, char *, int, int, int);
 };
-int Buffer::write_l(Font * a1, char * a2, int a3, int a4, int a5) {
-    Font **fontSlot = reinterpret_cast<Font **>(reinterpret_cast<char *>(this) + 0x52c);
-    Font *savedFont1 = fontSlot[0];
-    Font *savedFont2 = fontSlot[1];
-    Font *savedFont3 = fontSlot[2];
 
+// The three font slots at 0x52C are saved and restored as one 12-byte unit:
+// the original copies them through a single base register with a `lea`, which
+// is VC6's inline struct copy, not three independent member reads.
+struct FontSet {
+    Font * primary;
+    Font * secondary;
+    Font * tertiary;
+};
+int Buffer::write_l(Font * font, char * text, int x, int y, int maxLen) {
+    FontSet * fonts = reinterpret_cast<FontSet *>(&font1_);
+    FontSet savedFonts = *fonts;
     int result;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        fontSlot[0] = a1;
-        fontSlot[1] = 0;
-        fontSlot[2] = 0;
+    if (font != 0 && font->font_obj_ != 0) {
+        fonts->primary = font;
+        font2_ = 0;
+        font3_ = 0;
     }
+    int len = maxLen;
 
-    if (a2 == 0) {
-        result = a3;
-    } else if (fontSlot[0] == 0 || fontSlot[0]->font_obj_ == 0) {
+    if (text == 0) {
+        result = x;
+    } else if (fonts->primary == 0 || fonts->primary->font_obj_ == 0) {
         result = 3;
     } else {
-        int len = (int)strlen(a2) < a5 ? (int)strlen(a2) : a5;
-        if (len < 0) {
-            result = a3;
+        if (((int)strlen(text) < len ? (int)strlen(text) : len) < 0) {
+            goto nothing_drawn;
+        }
+        len = (int)strlen(text) < len ? (int)strlen(text) : len;
+        if (len == 0) {
+            // Both length exits share one block in the original: the negative
+            // case branches forward into the zero case's assignment.
+nothing_drawn:
+            result = x;
         } else {
-            len = (int)strlen(a2) < a5 ? (int)strlen(a2) : a5;
-            if (len == 0) {
-                result = a3;
-            } else {
-                result = write_multi_font_raw_l(a2, a3, a4, len);
-            }
+            result = write_multi_font_raw_l(text, x, y, len);
         }
     }
 
-    fontSlot[0] = savedFont1;
-    fontSlot[1] = savedFont2;
-    fontSlot[2] = savedFont3;
+    *fonts = savedFonts;
     return result;
 }
