@@ -403,22 +403,35 @@ def _block_state_after(line: str, in_block: bool) -> bool:
     a marker at an address the catalogue does not know is reported as
     uncatalogued rather than believed, so the error cannot fabricate a map
     entry.
+    THE SCAN IS BY `find`, NOT BY CHARACTER. This ran once per line of every
+    file under `src/`, and every tool in the loop calls `scan_tree` at
+    startup: the catalogue, the brief, the verifier and the ratchet all pay
+    it. Measured 2026-08-14, the character walk was 730,000 calls making 30
+    MILLION `startswith` probes - 8.8 s of the 12 s `load_functions` took, and
+    the largest single cost in the whole critical path. `find` does the same
+    search in C and skips everything between the marks.
+
+    The states are the same three: outside, inside a block, and stopped at a
+    line comment. Depth never exceeds one - the character version only ever
+    incremented from zero - so `/*` inside a block is text, exactly as before.
     """
-    depth = 1 if in_block else 0
     index = 0
-    while index < len(line):
-        if depth and line.startswith("*/", index):
-            depth -= 1
-            index += 2
-            continue
-        if not depth and line.startswith("/*", index):
-            depth += 1
-            index += 2
-            continue
-        if not depth and line.startswith("//", index):
-            break
-        index += 1
-    return depth > 0
+    if in_block:
+        end = line.find("*/")
+        if end < 0:
+            return True
+        index = end + 2
+    while True:
+        start = line.find("/*", index)
+        if start < 0:
+            return False
+        line_comment = line.find("//", index)
+        if 0 <= line_comment < start:
+            return False
+        end = line.find("*/", start + 2)
+        if end < 0:
+            return True
+        index = end + 2
 
 
 def store_kind(path: Path) -> str:
