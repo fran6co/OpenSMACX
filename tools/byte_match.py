@@ -556,12 +556,82 @@ def clip_jump_table(section: CoffSection, symbols: list, data: bytes,
     return clip
 
 
-def object_code(data: bytes, want_eh: bool = False):
+# Spellings reserved to the compiler: the scalar and vector deleting
+# destructors, and the array construction and destruction helpers. A source
+# file cannot define one, so a unit that holds one did not write it.
+SYNTHESISED = ("??_G", "??_E", "??_H", "??_I")
+
+
+def choose_subject_symbol(found: list, subject: str = None):
+    """(symbol, section) for the subject among a unit's external .text symbols.
+
+    Split out from `object_code` so it can be tested without a compiler: the
+    inputs are a list of (symbol, section) pairs and a name, and every rule
+    below is about names.
+    """
+    # A SYNTHESISED COMPANION IS NEVER THE SUBJECT - unless the subject IS
+    # one, which is why this only filters while something else survives. The
+    # catalogue holds 117 deleting thunks as recovery targets in their own
+    # right, and a unit whose subject is one has no other external, so it
+    # keeps its symbol.
+    if len(found) > 1:
+        real = [pair for pair in found
+                if not pair[0].name.startswith(SYNTHESISED)]
+        if real:
+            found = real
+
+    if subject:
+        # `extern "C"` __cdecl decorates with a leading underscore; a C++
+        # mangled name is already the symbol. Accept either spelling rather
+        # than deciding which the row is from.
+        wanted = {subject, f"_{subject}", subject.lstrip("_")}
+        hit = next((pair for pair in found if pair[0].name in wanted), None)
+        if hit is not None:
+            return hit
+
+    if len(found) != 1:
+        names = [s.name for s, _ in found]
+        raise ValueError(
+            f"expected one external .text symbol, found {len(found)}: {names}. "
+            f"A translation unit must define the SUBJECT and nothing else - a "
+            f"helper defined alongside it gets inlined, and the original did "
+            f"not inline it."
+            + (f" None of them is `{subject}`." if subject else ""))
+    return found[0]
+
+
+def object_code(data: bytes, want_eh: bool = False, subject: str = None):
     """(bytes, relocation mask) for the compiled subject.
 
     `want_eh` selects the `.text$x` COMDAT that `/GX` emits the unwind funclets
     and the `__ehhandler` thunk into. That section carries no external symbol,
     so it is found by name rather than by symbol lookup.
+
+    `subject` IS THE MANGLED NAME, AND NAMING IT BEATS COUNTING. Without it
+    this picks the subject by there being exactly one external `.text` symbol,
+    which is a guess the catalogue makes unnecessary - and a guess the
+    COMPILER defeats, three separate ways, each of which had to be worked
+    around on its own:
+
+      * `??_G`, the scalar deleting destructor, emitted for any class with a
+        VIRTUAL destructor. Measured 2026-08-14: a unit defining only
+        `Win::Win()`, with `virtual ~Win()` merely DECLARED, emits
+        `??0Win@@QAE@XZ` and `??_GWin@@UAEPAXI@Z` and this refused it. That
+        blocks every virtual destructor in the image, and the catalogue holds
+        117 deleting thunks.
+      * `??_H`, the array-construction helper, emitted for a class with an
+        array member. It crashed an agent on `NewTechWin::NewTechWin` before
+        `verify_recovered_function` guarded the exception.
+      * `?id@?$ctype@G@std@@$E`, which VC6's `<string>` instantiates - the
+        reason `byte_match_census.std_shim` includes that header
+        conditionally rather than always.
+
+    None of the three is a hand-written helper and none can be INLINED into
+    the subject, which is what the count exists to catch; a `static` helper is
+    not EXTERNAL and was never counted anyway. So the count stays as the
+    fallback for a caller with no name, and a named caller gets the symbol it
+    asked for. `/Gy` gives every function its own COMDAT, so selecting by name
+    selects a section exactly.
     """
     sections, symbols = parse_coff(data)
 
@@ -585,14 +655,7 @@ def object_code(data: bytes, want_eh: bool = False):
             continue
         found.append((symbol, sections[symbol.section - 1]))
 
-    if len(found) != 1:
-        names = [s.name for s, _ in found]
-        raise ValueError(
-            f"expected one external .text symbol, found {len(found)}: {names}. "
-            f"A translation unit must define the SUBJECT and nothing else - a "
-            f"helper defined alongside it gets inlined, and the original did "
-            f"not inline it.")
-    symbol, section = found[0]
+    symbol, section = choose_subject_symbol(found, subject)
 
     start, end = symbol.value, section.raw_size
     end = clip_jump_table(section, symbols, data, start, end)
