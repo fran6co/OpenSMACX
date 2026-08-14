@@ -180,14 +180,31 @@ Anything under `src/hypothesis_layouts.h` or the twelve generated `.cpp`
 files is out of scope by construction: those are regenerated, and a hand edit
 is reverted by the next build.
 
-## 2c. One-symbol verification against implicit member code
+## 2c. RETIRED 2026-08-14 — the one-symbol rule no longer refuses by count
 
-Not a property of the original at all — a property of the harness meeting the
-C++ ABI. `byte_match` refuses a candidate that defines more than the subject:
-*"expected one external .text symbol, found 2"*. That rule is right, and it
-makes two shapes unreachable no matter how the body is written. Both were
-found by agents testing an EMPTY body first, so neither is a guess about a
-body that was merely hard.
+**This section described a wall that has been removed, and both shapes it
+named are now reachable.** It is kept rather than deleted because a retired
+refusal that is simply erased leaves its conclusions circulating.
+
+What it said: `byte_match` refuses a candidate defining more than the
+subject — *"expected one external .text symbol, found 2"* — so any body whose
+compilation forces the compiler to emit a second `.text` symbol could never
+score. That was true while the subject was identified by BEING the only
+symbol. It is identified by NAME now (`choose_subject_symbol`, wired at every
+call site on 2026-08-14): `/Gy` gives the named function its own COMDAT, so
+selecting it selects exactly the subject, and a helper the compiler inlined
+INTO the subject still changes the subject's own bytes, which the comparison
+catches. Nothing became less strict about the bytes; only the count stopped
+being the test.
+
+Measured the day it changed: `??1Datalink@@QAE@XZ` no longer refuses for
+symbol count at all — it fails on `'buffer_' uses undefined class 'Buffer'`,
+which is ordinary layout work — and `?right_menu@InfoWin@@QAEXHH@Z` scores
+MISMATCH, so the workaround this section called "strictly worse" can now be
+tried on its merits.
+
+The original text follows, for the reasoning it records about the C++ ABI,
+which is still correct:
 
 **A destructor for a class with non-trivial members.** `Datalink::~Datalink`
 (0x00432290, 1,260 bytes) embeds 18 `FlatButton` members, each holding a
@@ -210,8 +227,10 @@ doing nothing scores MISMATCH, so it is strictly worse. This one is not
 permanent: it retires when `PullDown` gets a pinned size, which is ordinary
 layout work.
 
-The distinction matters for planning. The first shape is a wall. The second
-is a missing measurement wearing a wall's clothes.
+The distinction mattered for planning while it held: the first shape was a
+wall, the second a missing measurement wearing a wall's clothes. Neither is a
+wall now. The second still wants `PullDown`'s pinned size, which is the same
+ordinary layout work it always was.
 
 ## 2d. The self-modifying copy-protection section — refused by the harness
 
