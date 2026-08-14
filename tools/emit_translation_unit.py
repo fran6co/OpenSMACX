@@ -108,7 +108,98 @@ typedef unsigned short uint16;
 // catalogue ever uses it.
 typedef char int8;
 typedef unsigned char uint8;
+
+// WHAT THE BODY NEEDS, not only what the signature reaches. The unit used to
+// declare exactly the types the DECODED SIGNATURE mentioned, which is correct
+// for the definition head and wrong for everything inside it. Measured over
+// every NO_COMPILE row in the map on 2026-08-14: 1,544 implemented pieces do
+// not compile, and 899 DISTINCT undeclared identifiers cause it - led by
+// `NULL` at 50 bodies, which is one line.
+//
+// Every name below is already defined somewhere in src/*.h. The scaffold is a
+// standalone unit and cannot include those headers - they pull in the whole
+// project - so the cheap, layout-free half is restated here. Constants and
+// typedefs only: no class, no global address, nothing that could disagree with
+// a layout the emitter computes elsewhere.
+#ifndef NULL
+#define NULL 0
+#endif
+
+// Windows typedefs. The brief used to tell agents these were "a fact about the
+// unit, not about the body - do not rewrite the body to chase it", which is a
+// scaffold gap described accurately and then accepted. 432 bodies stop on
+// C2061 for want of these ten lines.
+typedef int BOOL;
+typedef char *LPSTR;
+typedef const char *LPCSTR;
+typedef unsigned long DWORD;
+typedef unsigned short WORD;
+typedef unsigned char BYTE;
+typedef void *HANDLE;
+typedef void *HWND;
+typedef void *HDC;
+typedef unsigned int UINT;
 """
+
+_CONSTANTS_CACHE = None
+CONSTANT_IN_ENUM = re.compile(
+    r"^\s*([A-Z][A-Z0-9_]{2,})\s*=\s*(-?(?:0[xX][0-9a-fA-F]+|\d+))\s*,?\s*(?://.*)?$")
+CONSTANT_CONSTEXPR = re.compile(
+    r"^\s*constexpr\s+int\s+(\w+)\s*=\s*(-?(?:0[xX][0-9a-fA-F]+|\d+))\s*;")
+
+
+def game_constants() -> str:
+    """The integer constants src/*.h already defines, restated for the unit.
+
+    THE SCAFFOLD DECLARES WHAT THE SIGNATURE REACHES, NOT WHAT THE BODY NEEDS,
+    and that is the largest blocker in the tree: measured 2026-08-14, 1,544
+    implemented pieces are NO_COMPILE and 899 distinct undeclared identifiers
+    cause it - `TRIAD_AIR`, `MaxPlayerNum`, `BIT_FUNGUS`, `MaxVehProtoFactionNum`
+    and hundreds more, every one of them already defined in a header this unit
+    cannot include, because including it would pull in the whole project.
+
+    DERIVED, NOT LISTED. A hand-written set of "the constants that matter" is
+    the defect shape this repository names as its highest-yield, and it would
+    go stale the first time a header gained a value. This reads the headers.
+
+    Deliberately narrow: only enum members and `constexpr int` with a LITERAL
+    integer value. No expressions (they can reference things this unit does not
+    have), no globals (they carry addresses the emitter computes elsewhere and
+    a second spelling could disagree), no types. A constant is a value and
+    cannot disagree with a layout.
+    """
+    global _CONSTANTS_CACHE
+    if _CONSTANTS_CACHE is not None:
+        return _CONSTANTS_CACHE
+    found: dict = {}
+    src = REPO_ROOT / "src"
+    if src.is_dir():
+        for header in sorted(src.glob("*.h")):
+            try:
+                text = header.read_text(errors="replace")
+            except OSError:
+                continue
+            for line in text.splitlines():
+                for pattern in (CONSTANT_CONSTEXPR, CONSTANT_IN_ENUM):
+                    hit = pattern.match(line)
+                    if not hit:
+                        continue
+                    name, value = hit.group(1), hit.group(2)
+                    # First definition wins, and a name defined twice with
+                    # DIFFERENT values is dropped: the unit must not pick a
+                    # side the headers do not agree on.
+                    if name in found and found[name] != value:
+                        found[name] = None
+                    elif name not in found:
+                        found[name] = value
+                    break
+    lines = [f"const int {name} = {value};"
+             for name, value in sorted(found.items()) if value is not None]
+    _CONSTANTS_CACHE = ("\n// Integer constants restated from src/*.h, which "
+                        "this standalone unit cannot include.\n"
+                        + "\n".join(lines) + "\n") if lines else ""
+    return _CONSTANTS_CACHE
+
 
 BUILTIN = {
     "void", "char", "signed", "unsigned", "short", "int", "long", "float",
@@ -1283,6 +1374,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         "// emitter computes declarations; it does not carry lessons.",
         "",
         PRELUDE.rstrip(),
+        game_constants().rstrip(),
         "",
     ]
 
