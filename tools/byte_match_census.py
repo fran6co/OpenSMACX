@@ -163,14 +163,18 @@ def body_span(source: str):
     path = REPO_ROOT / path_part
     lines = path.read_text().splitlines()
     start = int(line_part) - 1
-    depth, opened = 0, False
-    for offset, line in enumerate(lines[start:]):
-        depth += line.count("{") - line.count("}")
-        if "{" in line:
-            opened = True
-        if opened and depth <= 0:
-            return path, lines, start, start + offset
-    raise ValueError(f"{source}: no closing brace within the file")
+    # ONE READER. This counted braces itself, line by line and blind to
+    # comments and string literals, and stopped at the FIRST return to depth
+    # zero - so a helper class or an edited VCall shim ahead of the definition
+    # truncated the body, and a `{` inside a RULED-OUT note did the same.
+    # `test_annotation_scan.ExtractorEquivalence` pins these two together
+    # precisely so the copy cannot drift, and it is the test that caught this
+    # change being made in one place only.
+    import annotation_scan
+    end = annotation_scan.region_end(lines, start)
+    if end is None:
+        raise ValueError(f"{source}: no closing brace within the file")
+    return path, lines, start, end
 
 
 def extract_body(source: str) -> str:

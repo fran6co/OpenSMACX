@@ -408,5 +408,77 @@ class LessonGrammarTest(unittest.TestCase):
         self.assertEqual((a.levers, a.ruled_out), ((), ()))
 
 
+class RegionEndTests(unittest.TestCase):
+    """Where a marker's region stops. Three agents found this independently.
+
+    The counter closed the region at the FIRST return to brace depth zero, so
+    anything a body needs AHEAD of its definition - a helper class expressing
+    a `__thiscall` receiver, an edited VCall shim whose generated form is
+    nullary, an inline `operator new` - was where the region ended, and the
+    function the marker names was dropped in silence. The piece then scored
+    "expected one external .text symbol, found 0" while the same text compiled
+    standalone. Four addresses in one batch were converted to FILE mode to
+    route around it.
+    """
+
+    def end(self, *lines):
+        return scan.region_end(list(lines), 0)
+
+    def test_a_helper_class_does_not_end_the_region(self):
+        self.assertEqual(5, self.end(
+            "// ORIGINAL: 0x00401000 X",
+            "class Helper { public: void f(); };",
+            "",
+            "void g() {",
+            "  int x;",
+            "}"))
+
+    def test_an_unmarked_neighbour_is_not_absorbed(self):
+        """A type declaration closes with `};`, a function body with `}`.
+
+        That is the only signal for telling "a helper this piece needs" from
+        "the next definition, which carries no marker of its own", and both
+        are in this tree - `test_writeback` caught an over-eager region
+        swallowing a neighbouring function.
+        """
+        self.assertEqual(2, self.end(
+            "// ORIGINAL: 0x00401000 X",
+            "void g() {",
+            "}",
+            "",
+            "void later() {",
+            "}"))
+
+    def test_a_brace_in_a_string_is_not_structure(self):
+        self.assertEqual(3, self.end(
+            "// ORIGINAL: 0x00401000 X",
+            "void g() {",
+            '  char *s = "}";',
+            "}"))
+
+    def test_a_brace_in_a_comment_is_not_structure(self):
+        # An agent wrote `class Shim { ... };` into a RULED-OUT note and the
+        # note truncated its own body - the bug reproduced by describing it.
+        self.assertEqual(3, self.end(
+            "// ORIGINAL: 0x00401000 X",
+            "// note: class Shim { v(); };",
+            "void g() {",
+            "}"))
+
+    def test_a_single_line_definition_closes_the_region(self):
+        # Its delta is zero, so testing the depth change alone never saw it
+        # open at all.
+        self.assertEqual(1, self.end(
+            "// ORIGINAL: 0x00401000 X", "void g() { return; }"))
+
+    def test_the_next_marker_bounds_the_region(self):
+        self.assertEqual(1, self.end(
+            "// ORIGINAL: 0x00401000 X",
+            "void g() { return; }",
+            "",
+            "// ORIGINAL: 0x00402000 Y",
+            "void h() { }"))
+
+
 if __name__ == "__main__":
     unittest.main()

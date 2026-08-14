@@ -21,6 +21,8 @@
 typedef int (__stdcall *TimeGetTimeProc)();
 typedef int (__stdcall *MmioReadProc)(int, char *, unsigned int);
 
+extern "C" int __stdcall sub_63e6e0(int, int, int, int);
+
 static int *const g_00669368 = (int *)0x00669368;
 static int *const g_0066936c = (int *)0x0066936C;
 
