@@ -89,14 +89,28 @@ def load(functions_path: Path = None, callgraph_path: Path = None):
             states.setdefault(annotation.address, "unrecovered")
 
     inventory, callees = {}, defaultdict(set)
+    # `// callers   ?` MEANS NEVER MEASURED, and 16 rows say it. `int("?")`
+    # raised and took the WHOLE selector down - this is the tool every batch
+    # is picked with, so nothing could be selected at all. Reading it as 0
+    # would be worse than the crash: a zero-caller leaf is deliberately not
+    # handed out, so those 16 would have vanished from every future batch in
+    # silence. The catalogue can answer it itself - invert every `// calls`
+    # line - and that count is a FLOOR, since it sees only direct edges,
+    # which is exactly the right bias for "is this worth recovering".
+    inbound = defaultdict(int)
+    for row in rows.values():
+        for target in row.get("_calls") or ():
+            inbound[target] += 1
     for address, row in rows.items():
         callees[address] = set(row.get("_calls") or ())
+        recorded = str(row.get("caller_count") or "").strip()
         inventory[address] = {
             "size": int(row.get("size") or 0),
             "name": row.get("name", ""),
             "state": states.get(address, "unrecovered"),
             "kind": row.get("binary_kind", "game"),
-            "callers": int(row.get("caller_count") or 0),
+            "callers": int(recorded) if recorded.isdigit() else inbound[address],
+            "callers_measured": recorded.isdigit(),
             "targets": int(row.get("call_target_count") or 0),
         }
     return inventory, callees
