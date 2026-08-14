@@ -55,6 +55,7 @@ import argparse
 import csv
 import hashlib
 import json
+import concurrent.futures
 import os
 import re
 import sys
@@ -115,10 +116,48 @@ def unit_hash(text: str) -> str:
 # ----------------------------------------------------------------- building
 
 
+# Per-process state for the unit-building pool, loaded once per worker.
+_WORKER = {}
+
+
+def _worker_init() -> None:
+    import pefile
+    _WORKER["functions"] = emit.load_functions()
+    _WORKER["derived"] = emit.load_derived()
+    _WORKER["callees"] = emit.load_callees()
+    _WORKER["pe"] = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+
+
+def _worker_build(task):
+    """One non-verbatim unit, in a worker. Returns (address, unit, refusal)."""
+    address, recipe, region, location, row = task
+    if recipe == "writeback":
+        try:
+            return address, writeback.build_unit(
+                address, region, _WORKER["functions"], _WORKER["callees"],
+                _WORKER["derived"], _WORKER["pe"]), ""
+        except emit.Unsettled as error:
+            return address, None, f"no scaffolding: {error}"
+    unit, refusal = census.build_unit(
+        address, row, location, _WORKER["functions"], _WORKER["derived"],
+        _WORKER["callees"], _WORKER["pe"])
+    return address, unit, refusal
+
+
 def build_units(annotations: list, matched: dict, functions: dict,
-                derived: dict, callees: dict, pe_fast):
-    """{address: unit text} and {address: refusal} for implemented pieces."""
-    units, refusals = {}, {}
+                derived: dict, callees: dict, pe_fast, jobs: int = 0):
+    """{address: unit text} and {address: refusal} for implemented pieces.
+
+    THE GATE SPENT ITS WHOLE WALL CLOCK HERE, not in the compiler. Measured
+    2026-08-14: `--check` took 4 m 26 s of which 4 m 32 s was user CPU on one
+    core - the compile results were served from `unit_hash` cache and every
+    second of it was re-deriving scaffolds in straight-line Python. The census
+    had the identical shape and the identical cure.
+
+    A `verbatim` unit is the file text and costs nothing, so it stays in the
+    parent; only the two recipes that scaffold go to the pool.
+    """
+    units, refusals, tasks = {}, {}, []
     for annotation in annotations:
         if annotation.state != annotation_scan.STATE_IMPLEMENTED:
             continue
@@ -128,6 +167,31 @@ def build_units(annotations: list, matched: dict, functions: dict,
             continue  # uncatalogued: reported by the cross-reference, not here
         if annotation.recipe == "verbatim":
             units[address] = annotation.region
+            continue
+        tasks.append((address, annotation.recipe, annotation.region,
+                      annotation.location, row))
+
+    if jobs <= 0:
+        # A worker pays ~2 s to load the catalogue, so a pool is only worth
+        # building when there is real work; a spot check stays in-process.
+        jobs = max(1, min(16, (os.cpu_count() or 2) - 2))
+    if jobs > 1 and len(tasks) >= 64:
+        with concurrent.futures.ProcessPoolExecutor(
+                max_workers=jobs, initializer=_worker_init) as pool:
+            for address, unit, refusal in pool.map(_worker_build, tasks,
+                                                   chunksize=16):
+                if refusal:
+                    refusals[address] = refusal
+                elif unit is not None:
+                    units[address] = unit
+        return units, refusals
+
+    for annotation in annotations:
+        if annotation.state != annotation_scan.STATE_IMPLEMENTED:
+            continue
+        address = annotation.address
+        row = matched.get(address)
+        if row is None or annotation.recipe == "verbatim":
             continue
         if annotation.recipe == "writeback":
             try:

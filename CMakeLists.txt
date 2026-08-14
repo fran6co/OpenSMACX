@@ -849,6 +849,14 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(src-declaration-tests
                                    test_src_declarations.py)
 
+    # THE CENSUS WRITES A SHARED LEDGER, so a row it refuses is a verdict every
+    # other tool inherits. It refused every FILE-mode recovery for want of a
+    # closing brace it was never going to find, and one run demoted 1,727 rows
+    # other tools had already scored - 606 of them from BYTE_EXACT. These tests
+    # pin the reader, not the scores.
+    opensmacx_add_python_tool_test(byte-match-census-tests
+                                   test_byte_match_census.py)
+
     # THE RATCHET, and it reads `src/` rather than a committed ledger. Every
     # piece proved to recompile to the shipped bytes carries the claim on its
     # own annotation - `// ORIGINAL: 0x... BYTE_EXACT` - so the floor is the

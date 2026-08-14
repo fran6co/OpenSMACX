@@ -46,6 +46,7 @@ reaches it, so it is committable under the same rule the rest of
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import csv
 import functools
 import collections
@@ -274,10 +275,40 @@ def compat_preamble(body: str, scaffolding: str, source_path=None) -> str:
     return fixed + derived
 
 
+@functools.lru_cache(maxsize=1)
+def file_mode_units() -> dict:
+    """{address: repo-relative path} for recoveries whose FILE is the unit.
+
+    A `FILE` marker means the whole file is the translation unit - it carries
+    its own typedefs, globals, callee declarations and classes, and `region`
+    is the file. There is no body to extract and nothing to scaffold around
+    it, which is exactly what this census used to try: it read the file from
+    line 1, got a text that begins with the annotation comment and does not
+    end in a brace, and REFUSED it.
+
+    That is not a missed row, it is a FALSE DEMOTION written into a shared
+    ledger. Measured on 2026-08-14: one run turned 606 rows that other tools
+    had scored BYTE_EXACT into REFUSED, 1,727 in total, and any histogram
+    taken afterwards describes a population with the tree's best recoveries
+    cut out of it. `verify_recovered_function` had already learned this for
+    its own path; the census had not.
+    """
+    import annotation_scan
+    return {a.address: a.path for a in annotation_scan.scan_tree()
+            if a.mode == annotation_scan.MODE_FILE}
+
+
 def build_unit(address, row, location, functions, derived, callees, pe):
     """(unit text, refusal reason)."""
     if not location:
         return None, "no source_locations; not censusable"
+    verbatim = file_mode_units().get(address)
+    if verbatim is not None:
+        text = (REPO_ROOT / verbatim).read_text(errors="ignore")
+        for needle, why in REFUSE_SUBSTRINGS:
+            if needle in text:
+                return None, why
+        return text, ""
     try:
         body = extract_body(location)
     except (ValueError, OSError, FileNotFoundError) as error:
@@ -305,6 +336,53 @@ def build_unit(address, row, location, functions, derived, callees, pe):
     return shim + scaffolding + seam + compat + "\n" + body, ""
 
 
+# Per-process state for the unit-building pool. Each worker loads the
+# catalogue once and keeps it; the alternative is pickling 6,000 rows and a
+# parsed PE across the wire for every one of 4,790 tasks.
+_WORKER = {}
+
+
+def _worker_init() -> None:
+    _WORKER["functions"] = emit.load_functions()
+    _WORKER["derived"] = emit.load_derived()
+    _WORKER["callees"] = emit.load_callees()
+    _WORKER["pe"] = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+
+
+def _worker_build(task):
+    address, row, location = task
+    return address, build_unit(address, row, location, _WORKER["functions"],
+                               _WORKER["derived"], _WORKER["callees"],
+                               _WORKER["pe"])
+
+
+def build_units(subjects: list, jobs: int, functions, derived, callees, pe):
+    """{address: (text, refusal)} for every subject, across `jobs` processes.
+
+    MEASURED 2026-08-14: building the 4,790 units took 665 s of straight-line
+    Python - two thirds of the census wall clock, and none of it the compiler
+    the tool exists to run. `emit.emit` re-derives a scaffold per address and
+    `src_declarations.for_body` re-walks the headers per body; both are pure
+    functions of files that do not change during a run, so the work divides
+    with no shared state at all.
+
+    A worker pays about ten seconds to load the catalogue, so the pool is only
+    worth building when there is real work for it - one process is faster for a
+    `--limit 20` spot check than sixteen that each read the catalogue first.
+    """
+    if jobs <= 1 or len(subjects) < 64:
+        return {address: build_unit(address, row, location, functions,
+                                    derived, callees, pe)
+                for address, row, location in subjects}
+    out = {}
+    with concurrent.futures.ProcessPoolExecutor(
+            max_workers=jobs, initializer=_worker_init) as pool:
+        for address, result in pool.map(_worker_build, subjects,
+                                        chunksize=16):
+            out[address] = result
+    return out
+
+
 def run(limit: int, jobs: int, verbose: bool) -> int:
     functions = emit.load_functions()
     derived = emit.load_derived()
@@ -319,10 +397,10 @@ def run(limit: int, jobs: int, verbose: bool) -> int:
     print(f"census over {len(subjects)} source_complete functions")
 
     units, results = {}, {}
+    built = build_units(subjects, jobs, functions, derived, callees, pe_fast)
     for address, row, location in subjects:
         stem = f"c{address:08x}"
-        text, refusal = build_unit(address, row, location, functions, derived,
-                                   callees, pe_fast)
+        text, refusal = built[address]
         # `source_locations` is "src/foo.cpp:123", so the line number has to
         # come off before matching a filename. Leaving it on made every row
         # report as hand-written, which would have merged the 1,183 generated
