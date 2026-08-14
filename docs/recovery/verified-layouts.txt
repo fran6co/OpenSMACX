@@ -66,6 +66,7 @@ UV2Player
 Vector
 Veh
 VehPrototype
+VoiceTx
 Wave
 WaveControlGroup
 Wave_In_Device

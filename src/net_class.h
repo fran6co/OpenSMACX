@@ -18,6 +18,61 @@
 #pragma once
 
  /*
+  * VoiceTx class
+  *
+  * Net's first embedded subobject, and one of only two classes in this tree
+  * whose members come from TWO independent sources that agree exactly.
+  *
+  *   * The IDB gives 22 members at 0x0..0x54 summing to 0x58. Its offsets
+  *     ACCUMULATE, so on its own a probe of them proves self-consistency
+  *     rather than truth - which is the argument src/hypothesis_layouts.h
+  *     makes about itself, and why this could not simply be asserted there.
+  *   * docs/recovery/thinker-members.csv gives the same 22 members at the
+  *     same EXPLICIT offsets and the same 0x58 total. Thinker writes offsets
+  *     down rather than deriving them, so it cannot inherit an accumulation
+  *     error from the IDB.
+  *
+  * The image supplies the bound that closes it. `??0Net@@QAE@XZ` constructs
+  * this at `lea ecx, [esi+0x58]` (0x0062D6C9) and Net's next subobject sits
+  * at 0x000000B0 - a difference of exactly 0x58, so the object cannot be
+  * larger. Two agreeing member sources and an upper bound from the bytes is
+  * the standard this tree pins a size to; `derive_agreed_sizes` had already
+  * agreed 0x58 and had nowhere honest to assert it.
+  *
+  * The members are unnamed because neither source names them: `0 named` is
+  * what hypothesis_layouts.h recorded, and inventing names would be the only
+  * part of this that is not measured.
+  */
+class VoiceTx {
+ public:
+  uint32_t field_0_;    // 0x0
+  uint32_t field_4_;    // 0x4
+  uint32_t field_8_;    // 0x8
+  uint32_t field_C_;    // 0xC
+  uint32_t field_10_;   // 0x10
+  uint32_t field_14_;   // 0x14
+  uint32_t field_18_;   // 0x18
+  uint32_t field_1C_;   // 0x1C
+  uint32_t field_20_;   // 0x20
+  uint32_t field_24_;   // 0x24
+  uint32_t field_28_;   // 0x28
+  uint32_t field_2C_;   // 0x2C
+  uint32_t field_30_;   // 0x30
+  uint32_t field_34_;   // 0x34
+  uint32_t field_38_;   // 0x38
+  uint32_t field_3C_;   // 0x3C
+  uint32_t field_40_;   // 0x40
+  uint32_t field_44_;   // 0x44
+  uint32_t field_48_;   // 0x48
+  uint32_t field_4C_;   // 0x4C
+  uint32_t field_50_;   // 0x50
+  uint32_t field_54_;   // 0x54
+};
+
+static_assert(sizeof(VoiceTx) == 0x58,
+              "VoiceTx layout must match the original executable");
+
+ /*
   * Net class
   *
   * Layout not established. "Reach as far as 0x770" stood here and is
@@ -64,8 +119,11 @@ class DLLEXPORT Net {
   uint32_t field_4C_;  // 0x4C
   uint32_t field_50_;  // 0x50
   uint32_t field_54_;  // 0x54
-  uint32_t field_58_;  // 0x58
-  uint8_t field_5C_[0x54];  // 0x5C
+  // 0x58 - THE SUBOBJECT ??0Net BUILDS, not opaque storage that happens to
+  // be 0x58 wide. `lea ecx, [esi+0x58]` / `call ??0VoiceTx@@QAE@XZ` at
+  // 0x0062D6C9, and ??1Net tears it down at the same offset. The two members
+  // this replaces covered exactly 0x58 bytes, so nothing moves.
+  VoiceTx voice_tx_;  // 0x58
   uint32_t field_B0_;  // 0xB0
   uint32_t field_B4_;  // 0xB4
   uint32_t field_B8_;  // 0xB8

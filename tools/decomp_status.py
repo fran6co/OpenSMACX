@@ -429,12 +429,34 @@ def summarise(annotations: list, matched: dict, outcomes: dict,
             count, total = tiers.get(tier, (0, 0))
             tiers[tier] = (count + 1, total + size_of(annotation.address))
         exact = tiers.get("BYTE_EXACT", (0, 0))
-        print(f"\nmeasured, {label}: {exact[0]}/{len(measured)} BYTE_EXACT "
-              f"({exact[1]}/{sum(t for _, t in tiers.values())} bytes)")
+        # A THIRD POPULATION, for the same reason there are already two. A
+        # REFUSED row is copy-protection or self-modifying code the project
+        # has DECIDED not to express; a SHARED_TAIL row is a COMDAT-folded
+        # span up to thirteen functions claim, where no per-function verdict
+        # is even well defined. Neither can ever score, so counting them in
+        # the denominator states the rate against work that will never be
+        # done - and it makes a wall indistinguishable from a miss, which is
+        # the one thing a reader of this number needs to tell apart.
+        aside = {tier: value for tier, value in tiers.items()
+                 if tier in byte_match.UNSCOREABLE_TIERS}
+        scoreable = {tier: value for tier, value in tiers.items()
+                     if tier not in byte_match.UNSCOREABLE_TIERS}
+        pieces = sum(count for count, _ in scoreable.values())
+        span = sum(total for _, total in scoreable.values())
+        print(f"\nmeasured, {label}: {exact[0]}/{pieces} BYTE_EXACT "
+              f"({exact[1]}/{span} bytes)")
         for tier in byte_match.TIER_ORDER:
-            if tier in tiers:
-                count, total = tiers[tier]
+            if tier in scoreable:
+                count, total = scoreable[tier]
                 print(f"  {tier:14s} {count:6d}  {total:9d} bytes")
+        if aside:
+            print(f"  set aside as unscoreable by construction: "
+                  f"{sum(c for c, _ in aside.values())} piece(s), "
+                  f"{sum(t for _, t in aside.values())} bytes")
+            for tier in byte_match.TIER_ORDER:
+                if tier in aside:
+                    count, total = aside[tier]
+                    print(f"    {tier:12s} {count:6d}  {total:9d} bytes")
 
     if refusals:
         print(f"\nrefused before compile: {len(refusals)}")

@@ -196,6 +196,61 @@ class Drift(unittest.TestCase):
         self.assertEqual(drift["duplicates"], {})
 
 
+class UnscoreableDenominator(unittest.TestCase):
+    """A wall is not a miss, and a rate that sums them cannot say which.
+
+    145 REFUSED rows are copy-protection and self-modifying spans the project
+    has DECIDED not to express; 32 SHARED_TAIL rows are COMDAT-folded spans up
+    to thirteen functions claim, where a per-function verdict is not unknown
+    but undefined. Neither can ever move, so both sat in the denominator
+    understating every rate the project reports about itself.
+    """
+
+    def annotation(self, address):
+        return annotation_scan.Annotation(
+            address=address, mode=annotation_scan.MODE_BODY,
+            state=annotation_scan.STATE_IMPLEMENTED, path="src/x.cpp", line=1,
+            region="int f() {}\n")
+
+    def summary(self, tiers):
+        annotations, outcomes, functions = [], {}, {}
+        for index, tier in enumerate(tiers):
+            address = 0x00401000 + index * 0x10
+            annotations.append(self.annotation(address))
+            outcomes[address] = {"tier": tier}
+            functions[address] = {"size": "100"}
+        out = io.StringIO()
+        with redirect_stdout(out):
+            decomp_status.summarise(annotations, {}, outcomes, {}, functions)
+        return out.getvalue()
+
+    def test_the_denominator_excludes_them(self):
+        text = self.summary(["BYTE_EXACT", "MISMATCH", "REFUSED",
+                             "SHARED_TAIL"])
+        self.assertIn("1/2 BYTE_EXACT", text)
+        self.assertIn("100/200 bytes", text)
+
+    def test_they_are_reported_rather_than_dropped(self):
+        """Set aside, not swept away - a reader has to be able to see how
+        much of the image is wall."""
+        text = self.summary(["BYTE_EXACT", "REFUSED", "SHARED_TAIL"])
+        self.assertIn("set aside as unscoreable by construction: 2 piece(s), "
+                      "200 bytes", text)
+        self.assertIn("REFUSED", text)
+        self.assertIn("SHARED_TAIL", text)
+
+    def test_a_population_with_no_wall_says_nothing_extra(self):
+        text = self.summary(["BYTE_EXACT", "MISMATCH"])
+        self.assertIn("1/2 BYTE_EXACT", text)
+        self.assertNotIn("set aside", text)
+
+    def test_the_two_tiers_are_named_in_one_place(self):
+        """`decomp_status` must not carry a second opinion about which tiers
+        can never move; the list lives beside TIER_ORDER."""
+        for tier in byte_match.UNSCOREABLE_TIERS:
+            self.assertIn(tier, byte_match.TIER_ORDER)
+
+
 class ResolveIntegration(unittest.TestCase):
     """resolve() collapses stacked comments; precedence settles the stores."""
 
