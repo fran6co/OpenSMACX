@@ -832,5 +832,54 @@ class GuardMaskTests(unittest.TestCase):
             self.assertNotIn("GUARD-MASK", advice)
 
 
+class ClassSectionTests(unittest.TestCase):
+    """The scaffold is not the sum of what is known, and nothing said so.
+
+    A class whose size is not pinned is emitted as an opaque shell - rightly,
+    because a wrong offset compiles and fails later as a byte mismatch nobody
+    traces back. The brief then presented that shell as the whole record.
+    1,080 catalogued functions across 68 classes are in that state.
+    """
+
+    def test_a_class_src_declares_but_cannot_prove_is_named(self):
+        text = agent_brief.class_section("??0PushButton@@QAE@XZ")
+        self.assertIn("src/pushbutton.h", text)
+        self.assertIn("BaseButton", text)
+        self.assertIn("HYPOTHESIS", text)
+
+    def test_a_constructor_decodes_its_class(self):
+        """`??0PushButton@@` is a constructor and the class is the FIRST token.
+
+        Reading position 1 - right for `?init@Buffer@@` - returned an empty
+        string for every lifecycle function, which is exactly the population
+        that needs this: a constructor is where a base subobject gets built.
+        A greedy `[0-9A-Z_]+` tag then ate the class's own first letter and
+        decoded `ushButton`, which is declared nowhere, so the section stayed
+        silent and looked correct.
+        """
+        for mangled in ("??0PushButton@@QAE@XZ", "??1CouncWin@@QAE@XZ"):
+            self.assertNotEqual("", agent_brief.class_section(mangled), mangled)
+
+    def test_a_proved_class_says_nothing(self):
+        # The scaffold already carries `Buffer`'s members; repeating that
+        # spends the agent's attention on something it can already see.
+        self.assertEqual("", agent_brief.class_section(
+            "?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z"))
+
+    def test_a_free_function_says_nothing(self):
+        self.assertEqual("", agent_brief.class_section("?bitmask@@YAXHPAH0@Z"))
+
+    def test_it_does_not_restate_the_offsets(self):
+        """Pointing at the record is not the same as asserting it.
+
+        The gate that keeps unproved layouts out of the scaffold exists so a
+        wrong offset cannot reach an agent silently. This section names the
+        header and what it is worth; it does not paste offsets, which would
+        route around that gate while looking like help.
+        """
+        text = agent_brief.class_section("??0PushButton@@QAE@XZ")
+        self.assertNotIn("0x", text)
+
+
 if __name__ == "__main__":
     unittest.main()
