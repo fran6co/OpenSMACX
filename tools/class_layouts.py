@@ -858,6 +858,111 @@ def own_declaration_for(name: str) -> list:
         [f"    {type_} {member}{array};" for type_, member, array in members]
 
 
+# `int init(RECT *, LPSTR, int);` - a method DECLARATION inside a class body.
+# Not a function-pointer member (`int (*hook_)(void);`), which is storage and
+# is read by `members_of` instead.
+METHOD = re.compile(
+    r"^(?P<head>[\w\s*&:<>,]+?)\s*"
+    r"(?P<name>~?\w+|operator\s*\S+)\s*"
+    r"\((?P<params>[^)]*)\)\s*(?P<trailer>const)?\s*[;{]")
+
+# Tokens a method declaration may carry that name no type.
+METHOD_NOISE = frozenset({
+    "public", "private", "protected", "static", "inline", "explicit",
+    "virtual", "const", "friend", "DLLEXPORT", "__cdecl", "__thiscall",
+    "__stdcall", "__fastcall", "struct", "class", "enum", "unsigned",
+    "signed", "long", "short", "void",
+})
+
+
+def _method_types(text: str) -> set:
+    """Every identifier in a method declaration that has to name a type."""
+    out = set()
+    for token in re.findall(r"[A-Za-z_]\w*", text):
+        if token in METHOD_NOISE or token in SCALAR:
+            continue
+        out.add(token)
+    return out
+
+
+def methods_of(name: str) -> list:
+    """[(declaration, method name, types it names)] for `src/`'s methods.
+
+    THE SHELL USED TO DECLARE ONLY THE METHODS THE CATALOGUE SAW CALLED, and
+    that is a different set from the methods the class has. A body calling
+    anything else is `C2039: is not a member`, which reads as a bad body and
+    is a missing declaration - 275 already-written bodies were in that state,
+    209 of them on two names, `Sprite::close` and `CaviarData::close`, both
+    of which `src/sprite.h` and `src/caviar.h` have declared all along.
+
+    A declaration is never inlined and occupies no bytes, so importing one
+    cannot move the comparison; only its ABSENCE can, by keeping the unit from
+    compiling at all.
+
+    Three things are deliberately dropped rather than translated:
+
+      * `virtual`, because the shell may carry a PROVED LAYOUT and a vtable
+        pointer would move every offset in it by four. The declaration still
+        lets the call compile; spelling the dispatch INDIRECTLY is the body's
+        job and the brief has a lever for it.
+      * constructors and destructors, because declaring one suppresses the
+        implicit default and a body that says `Buffer b;` then fails to
+        compile for a reason the class did not have before. The emitter
+        already writes these from the catalogue where a body calls them.
+      * anything naming a type this module cannot place, since a method
+        mentioning an unknown type is `C2061` - strictly worse than the
+        `C2039` it was meant to cure.
+    """
+    body = _body_of(name)
+    if not body:
+        return []
+    out, seen = [], set()
+    for statement in statements(body):
+        stripped = re.sub(r"^(?:public|private|protected)\s*:\s*", "",
+                          statement).strip()
+        if "(" not in stripped or FUNCTION_POINTER_MEMBER.match(stripped):
+            continue
+        if re.search(r"\b(typedef|friend|template|operator|using)\b", stripped):
+            continue
+        match = METHOD.match(stripped)
+        if not match or match.group("name").startswith("~"):
+            continue
+        method = match.group("name")
+        if method == name:                      # a constructor
+            continue
+        head = match.group("head")
+        # `= 0` never reaches here (METHOD stops at the `)`), but `virtual`
+        # and the export macro do, and neither belongs in the shell.
+        head = re.sub(r"\b(virtual|DLLEXPORT)\b", " ", head)
+        head = re.sub(r"\s+", " ", head).strip()
+        if not head:                            # no return type: a ctor form
+            continue
+        params = re.sub(r"\s*=\s*[^,]+", "", match.group("params")).strip()
+        types = _method_types(head) | _method_types(params)
+        # A FUNCTION-POINTER TYPEDEF cannot be forward-declared. Both consumers
+        # spell an unknown type as `struct X;`, and doing that to a typedef is
+        # `C2371: redefinition; different basic types` - which takes the unit
+        # down instead of the one method that named it.
+        if any(t not in _declared_classes() and t not in WINDOWS_TYPEDEF
+               and t not in WINDOWS_STRUCT
+               or t in function_pointer_typedefs() for t in types):
+            continue
+        trailer = " const" if match.group("trailer") else ""
+        text = f"    {head} {method}({params}){trailer};"
+        if text not in seen:
+            seen.add(text)
+            out.append((text, method, types))
+    return out
+
+
+def method_types(name: str) -> set:
+    """Types `name`'s imported methods mention, to forward-declare ahead."""
+    out = set()
+    for _, _, types in methods_of(name):
+        out |= types
+    return out - SCALAR
+
+
 if __name__ == "__main__":
     layouts = pinned_layouts()
     print(f"{len(layouts)} classes with a pinned layout src/ can supply")

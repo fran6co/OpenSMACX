@@ -1231,6 +1231,25 @@ def by_value_first(names) -> list:
     return ordered
 
 
+def imported_methods(name: str, catalogued: set) -> list:
+    """`src/`'s declarations for `name`'s methods, minus the catalogued ones.
+
+    A CATALOGUED METHOD OUTRANKS THE HEADER'S, always and by name rather than
+    by signature. The catalogue's version is decoded from the mangled symbol
+    the linker wrote, so it is what the image really has; the header is what
+    this project has reconstructed, and the two disagree often enough to
+    matter. Emitting both is `C2556` - overloads differing only in return type
+    - which takes the whole unit down to cure a single missing name.
+
+    Skipping by NAME rather than by full signature also covers the overload
+    case in the safe direction: the catalogue's set is complete for any name
+    it knows at all, so nothing is lost, and a header overload of a
+    catalogued name can never contradict one that is already emitted.
+    """
+    return [text for text, method, _ in class_layouts.methods_of(name)
+            if method not in catalogued]
+
+
 def emit(address: int, functions: dict, derived: dict, callees: dict,
          pe, scaffolding_only: bool = False) -> str:
     """The unit. With `scaffolding_only`, everything EXCEPT the subject's
@@ -1431,6 +1450,11 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         grown = set(wanted)
         for name in list(wanted):
             grown |= class_layouts.referenced_types(name)
+            # A method IMPORTED from `src/` names types too, and it is emitted
+            # inside the shell - above every class that follows it. `HDC` in
+            # `Buffer::get_hdc` is the shape: without this the import cures a
+            # C2039 and buys a C2061 one line higher up.
+            grown |= class_layouts.method_types(name)
         grown -= BUILTIN
         if grown == wanted:
             break
@@ -1488,7 +1512,13 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
                 body.append(f"    {entry.returns} {entry.member_convention()}"
                             f"{entry.method}({', '.join(entry.params)});")
         if not layout and not body:
+            # STILL OPAQUE, and it must stay that way: a class emitted with
+            # nothing but imported methods has `sizeof` 1, and a body holding
+            # one by value would then compile against a wrong size instead of
+            # failing. An incomplete type fails loudly, which is correct.
             continue
+        body.extend(imported_methods(name, {e.method for e in
+                                            methods_by_class.get(name, ())}))
         lines.append(declare(name, opening=True))
         lines.extend(layout or [])
         lines.extend(sorted(set(body)))
@@ -1590,6 +1620,9 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
             if text not in seen:
                 seen.add(text)
                 lines.append(text)
+        lines.extend(imported_methods(
+            signature.klass,
+            {e.method for e in own} | {signature.method}))
         if signature.kind == "ctor":
             lines.append(f"    {signature.klass}({', '.join(signature.params)});")
         elif signature.kind == "dtor":
