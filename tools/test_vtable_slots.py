@@ -98,6 +98,28 @@ class ComDispatchTest(unittest.TestCase):
         """
         self.assertIn(31, emit.com_slots(self.pe, self.spans(0x0062E540)))
 
+    def test_it_splits_one_function_the_way_an_agent_did_by_hand(self):
+        """0x005E2690 dispatches SIX slots and only four are COM.
+
+        An INDEPENDENT ORACLE: an agent recovering this determined by reading
+        the disassembly that slots 17, 25, 26 and 32 push the receiver, and
+        separately retyped slots 1 and 3 as ordinary `void`->`int` thiscall
+        virtuals. It reported that before this test existed and its evidence
+        was not used to build the detector.
+
+        Discriminating WITHIN one function is the strong form of the claim: a
+        rule that keyed on anything about the function as a whole - the file,
+        the callee, a DirectX heuristic - would take all six or none.
+        """
+        self.assertEqual(emit.com_slots(self.pe, self.spans(0x005E2690)),
+                         [17, 25, 26, 32])
+
+    def test_a_function_where_every_dispatch_is_com(self):
+        """0x005CB6C0, the same agent: "all 16 indirect calls push the
+        receiver explicitly". Eight distinct slots, and every one of them."""
+        self.assertEqual(emit.com_slots(self.pe, self.spans(0x005CB6C0)),
+                         emit.vtable_slots(self.pe, self.spans(0x005CB6C0))[0])
+
     def test_a_thiscall_dispatch_is_not_com(self):
         """The discriminator is the LAST push being the object itself. An
         ordinary virtual call pushes arguments too, so anything softer than
