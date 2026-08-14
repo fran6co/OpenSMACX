@@ -64,15 +64,9 @@ TARGETED = (
      "body - whichever value is computed FIRST lands in EAX and the second in\n"
      "EDX, whatever order the source puts them in. Six functions have stalled\n"
      "there. If that is your only divergence, stop.\n"
-     "BEFORE you stop, DELETE YOUR CACHED LOCALS. If your rebuild has more\n"
-     "pushes or a frame the original does not, the usual cause is a temp you\n"
-     "introduced for readability: the original recomputes the expression fresh\n"
-     "at each use, and hoisting it into a local forces an EBP frame and a\n"
-     "stack spill. Paid three times on 2026-08-13 - 0x0063D4D0 (dropped cached\n"
-     "`fn`/`arg1`/`obj`, five call sites recomputed), 0x00611730 (re-read\n"
-     "`*(self+8)` at every use) and 0x005EEE70 (re-read the flags byte at each\n"
-     "test instead of caching it once). This is the opposite of what reads\n"
-     "well, so it is worth trying deliberately."),
+     "WHICH WAY ROUND YOUR DIVERGENCE IS decides the fix, and the two fixes\n"
+     "are opposites - see the DIRECTION paragraph above, which reads the side\n"
+     "off your own note. This entry is only what holds either way."),
     # WALLS. Ruled out exhaustively; each is keyed like every other entry so an
     # agent meets the one that applies rather than a catalogue of all of them.
     (("or", "test", "and"),
@@ -295,6 +289,118 @@ def evidence(src: Path = None) -> dict:
     return found
 
 
+# `#0: original 'push' vs rebuilt 'mov'` - the two sides of one divergence.
+DIVERGENCE_PAIR = re.compile(r"original '([\w.]+)' vs rebuilt '([\w.]+)'")
+
+# Keyed on the PAIR, in order, because the same two mnemonics mean opposite
+# things depending on which side carries which. Measured over the 1,537 scored
+# mismatches whose rebuild is a real attempt rather than an empty stub:
+# `push` stands on the ORIGINAL side 438 times and on the REBUILT side 514,
+# and the fix is the reverse of itself between them. The single `push`/`mov`
+# entry in TARGETED gave both populations the same paragraph.
+DIRECTIONAL = {
+    ("push", "mov"): (
+        "REGISTER ALLOCATION, and the direction says which way. The ORIGINAL\n"
+        "pushes where you move: it keeps MORE values live than your source.\n"
+        "MAKE A VALUE LIVE - hoist a repeatedly recomputed expression into one\n"
+        "local held across the calls, or index through a pointer you keep\n"
+        "re-deriving. 311 bodies are on this side and the other side's fix is\n"
+        "the exact reverse, so read the note. If the register is saved and\n"
+        "never reused, stop: two levers are already refuted there."),
+    ("mov", "push"): (
+        "REGISTER ALLOCATION, and the direction says which way. YOU push where\n"
+        "the original moves, so your body spills a register it never needed.\n"
+        "DELETE YOUR CACHED LOCALS: the original recomputes the expression at\n"
+        "each use, and hoisting it into a temp forces an EBP frame and a\n"
+        "spill. Paid three times on 2026-08-13 - 0x0063D4D0, 0x00611730,\n"
+        "0x005EEE70 - and 271 bodies are on this side. It is the opposite of\n"
+        "what reads well, so try it deliberately."),
+    ("sub", "push"): (
+        "REGISTER ALLOCATION, and the direction says which way. The original\n"
+        "allocates with `sub esp,N` and saves NO register; you save one first.\n"
+        "Same cause as `mov` vs `push` and the same cure: drop the cached\n"
+        "temporaries and let the expression recompute. 173 bodies here."),
+}
+
+# A REVERSED COMPARISON, and the cheapest real lever there is: swapping the
+# operand order of a relational test flips the branch VC6 emits. Measured 66
+# bodies whose first divergence is exactly this - `je` for `jne` 54 times,
+# `jl` for `jge` 12. `0x0063C6D0` records it as a lever in its own annotation:
+# `iVar2 <= *w` where the recovery had `*w >= iVar2`.
+BRANCH_FLIP = {
+    "je": "jne", "jne": "je", "jl": "jge", "jge": "jl", "jg": "jle",
+    "jle": "jg", "ja": "jbe", "jbe": "ja", "jb": "jae", "jae": "jb",
+    "js": "jns", "jns": "js",
+}
+
+
+def directional_rules(note: str) -> str:
+    """Advice that depends on WHICH SIDE of the divergence a mnemonic is on."""
+    hit = DIVERGENCE_PAIR.search(note)
+    if not hit:
+        return ""
+    original, rebuilt = hit.group(1), hit.group(2)
+    out = []
+    pair = DIRECTIONAL.get((original, rebuilt))
+    if pair:
+        out.append(pair)
+    if BRANCH_FLIP.get(original) == rebuilt:
+        out.append(
+            "REVERSED COMPARISON. Your branch is the exact inverse of the\n"
+            f"original's - `{original}` for `{rebuilt}` - so the condition is\n"
+            "right and its polarity is not. Swap the OPERAND ORDER of the\n"
+            "relational test (`a <= b` for `b >= a`): that flips the branch\n"
+            "without changing what the code means. Do NOT negate the condition\n"
+            "and swap the arms - that is a different body. 66 bodies in this\n"
+            "tree diverge on nothing else.")
+    return "\n\n".join(out)
+
+
+def landing_mode(scaffolding: str) -> str:
+    """What the LANDING FILE is, when the whole file is the translation unit.
+
+    Read off the file's own marker rather than looked up a second way, so the
+    brief cannot disagree with the thing that will be measured.
+
+    A `FILE` marker means `decomp_status` compiles that file AS IT STANDS -
+    `recipe == "verbatim"`. The Rules section says "submit the COMPLETE
+    definition and nothing else", which is right for a body-mode landing and
+    wrong here: obeying it replaces a self-contained unit with a bare
+    definition and DROPS THE MARKER, and the piece stops being measured at all.
+
+    This exact failure has now been paid twice. The agent definition's own
+    example stripped the marker and cost group 5 four recoveries on
+    2026-08-13; on 2026-08-14 an agent mis-landed 0x00626900 the same way and
+    caught it only by running the verifier before moving on - and reported
+    that all twelve of its briefs described a mode none of its files used.
+    """
+    if "GENERATED SKELETON" not in scaffolding and \
+            not re.search(r"^// ORIGINAL: 0x[0-9A-Fa-f]{8} \w+ FILE\b",
+                          scaffolding, re.M):
+        return ""
+    if not re.search(r"^// ORIGINAL: 0x[0-9A-Fa-f]{8}[^\n]*\bFILE\b",
+                     scaffolding, re.M):
+        return ""
+    return (
+        "# This landing is FILE mode\n\n"
+        "The marker on the landing file says `FILE`: the WHOLE FILE is the\n"
+        "translation unit, and the ratchet compiles it exactly as it stands.\n"
+        "It carries its own typedefs, fixed-address globals, callee\n"
+        "declarations and classes, and nothing is prepended to it.\n\n"
+        "So the Rules below read differently for you:\n\n"
+        "- Land the COMPLETE FILE, not a bare definition. Replacing the file\n"
+        "  with just your definition deletes the declarations the definition\n"
+        "  needs, and it compiles for nobody.\n"
+        "- KEEP THE `// ORIGINAL:` LINE INCLUDING THE WORD `FILE`, byte for\n"
+        "  byte. Drop the marker and the piece leaves the measured set: it is\n"
+        "  not scored, not banked, and not reported as missing. Four\n"
+        "  recoveries were lost this way on 2026-08-13.\n"
+        "- Score it with a bare `verify_recovered_function.py 0x...`, which\n"
+        "  compiles the committed file verbatim - the same bytes the gate\n"
+        "  will compile. `--body` and `--dir` regenerate scaffolding and will\n"
+        "  double-declare what this file already has.\n\n")
+
+
 def targeted_rules(note: str, found: dict = None) -> str:
     """The curated glosses this divergence selects, plus what paid for them."""
     # Punctuation is stripped, not just quotes: a compiler diagnostic arrives as
@@ -308,6 +414,20 @@ def targeted_rules(note: str, found: dict = None) -> str:
     for word in sorted(words):
         for address, kind, prose in found.get(word, [])[:3]:
             cited.append(f"  {kind:<9} 0x{address:08X}  {prose}")
+    directional = directional_rules(note)
+    if directional:
+        # IT REPLACES the keyed entry rather than joining it. A brief that
+        # grows is a brief that gets skimmed - `test_it_stays_small` is the
+        # guard - and where a directional rule fires it knows strictly more
+        # than the keyed one: the keyed entry matches on either mnemonic
+        # appearing anywhere, and this one has read which side each is on.
+        # Only the entries this pair fully explains are dropped; an entry
+        # keyed on a third mnemonic still has something to say.
+        hit = DIVERGENCE_PAIR.search(note)
+        pair = set(hit.groups()) if hit else set()
+        wanted = [advice for triggers, advice in TARGETED
+                  if (words & set(triggers)) and not set(triggers) <= pair]
+        wanted.insert(0, directional)
     block = "\n\n".join(wanted) if wanted else (
         "No fingerprint matched this divergence. Reason from the disassembly.")
     if cited:
@@ -699,7 +819,8 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
 
     if body is None:
         verdict = "nothing recovered yet"
-        middle = (fresh_recovery_section(address) + thunk
+        middle = (fresh_recovery_section(address)
+                  + landing_mode(scaffolding) + thunk
                   + arity_hypothesis(address) + vcall_section(scaffolding)
                   + lifecycle_section(name))
     else:
@@ -708,6 +829,7 @@ def brief(address: int, tier: str = "", note: str = "") -> str:
                   f"```cpp\n{body.strip()}\n```\n\n"
                   f"# What the divergence usually means\n\n"
                   f"{targeted_rules(note)}\n"
+                  f"{landing_mode(scaffolding)}"
                   f"{thunk}"
                   f"{arity_hypothesis(address)}"
                   f"{vcall_section(scaffolding)}"

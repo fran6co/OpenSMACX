@@ -211,11 +211,28 @@ def score_all(address: int, bodies: dict) -> list:
                     verdict = {"tier": "NO_COMPILE",
                                "refusal_reason": (diagnostics.get(name) or "")[:120]}
                 else:
-                    rebuilt, rebuilt_mask = byte_match.object_code(data)
-                    verdict = byte_match.compare(original, original_mask, low,
-                                                 rebuilt, rebuilt_mask)
-                    verdict["operand_similarity"] = _operand_similarity(
-                        original, low, rebuilt)
+                    # A UNIT THAT COMPILES CAN STILL BE UNREADABLE, and
+                    # `object_code` says so by raising: two external `.text`
+                    # symbols, a body CL folded, an object with no code at all.
+                    # `byte_match_census` has caught this since it was written;
+                    # this path did not, so the exception left the process and
+                    # took the agent's whole run with it. Reported on
+                    # 2026-08-14 against `NewTechWin::NewTechWin`, where a
+                    # class with an array member makes MSVC synthesise its own
+                    # `??_H` array-construction COMDAT - a second symbol the
+                    # agent did not write and could not see. It is a verdict,
+                    # not a crash: the body did not produce comparable code.
+                    try:
+                        rebuilt, rebuilt_mask = byte_match.object_code(data)
+                    except ValueError as error:
+                        verdict = {"tier": "NO_COMPILE",
+                                   "refusal_reason": str(error)[:200]}
+                    else:
+                        verdict = byte_match.compare(original, original_mask,
+                                                     low, rebuilt,
+                                                     rebuilt_mask)
+                        verdict["operand_similarity"] = _operand_similarity(
+                            original, low, rebuilt)
                 if name not in results or byte_match._better(verdict, results[name]):
                     results[name] = verdict
 

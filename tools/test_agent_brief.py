@@ -197,7 +197,16 @@ class SelfContainmentTest(unittest.TestCase):
         # of, and the replacement has to name the file and say why landing is
         # not optional. Measured 6,038 after; 6,100 leaves the same ~1% the
         # original bound did, which is a reword and not a section.
-        self.assertLess(len(agent_brief.brief(0x401000)), 6100)
+        #
+        # 6,500 on 2026-08-14 for the DIRECTIONAL block, which this fixture's
+        # stubbed note (`jl` for `jge`) selects. It is 394 characters and it is
+        # KEYED: at most one directional block can fire, it replaces the keyed
+        # entry where one covers the same pair, and it is silent on every note
+        # that is not a divergence pair. That is the property that keeps this
+        # bound meaningful - a section that always renders would have to earn
+        # its bytes against every brief, and this one earns them against the
+        # 66 bodies whose only divergence is an inverted branch.
+        self.assertLess(len(agent_brief.brief(0x401000)), 6500)
 
 
 class FreshRecoveryTest(unittest.TestCase):
@@ -313,9 +322,17 @@ class RealBriefSizeTest(unittest.TestCase):
         # that also earn the naming section. 7,000 leaves 6%, which is a
         # paragraph - enough that rewording passes and adding a section does
         # not.
+        #
+        # 7,400 on 2026-08-14. The note passed in here is an inverted branch,
+        # which is exactly what the DIRECTIONAL block was added for: 394 bytes
+        # naming the one-line fix for the 66 bodies whose only divergence is
+        # this. It is keyed - at most one such block renders, and none renders
+        # on a note that is not a divergence pair - so it is not the "adding a
+        # section" this bound exists to catch. What it would catch is a second
+        # always-on paragraph, and that headroom is unchanged.
         asm = text.split("```asm\n", 1)[1].split("```", 1)[0]
         prose = len(text) - len(body.strip()) - len(asm)
-        self.assertLess(prose, 7000)
+        self.assertLess(prose, 7400)
 
 
 class BatchModeTest(unittest.TestCase):
@@ -673,6 +690,107 @@ class LandingPathTest(unittest.TestCase):
             agent_brief.landing_path = original
         self.assertIn("NONE", text)
         self.assertIn("nowhere to land it", text)
+
+
+class DirectionalRulesTests(unittest.TestCase):
+    """The same two mnemonics mean opposite things depending on the side.
+
+    Measured over the 1,537 scored mismatches whose rebuild is a real attempt
+    rather than an empty stub: `push` stands on the ORIGINAL side 438 times
+    and on the REBUILT side 514. One keyed entry gave both populations the
+    same paragraph, and the correct action for one is the reverse of the
+    correct action for the other.
+    """
+
+    def test_the_two_directions_give_opposite_advice(self):
+        pushes = agent_brief.directional_rules("#0: original 'push' vs rebuilt 'mov'")
+        spills = agent_brief.directional_rules("#3: original 'mov' vs rebuilt 'push'")
+        self.assertIn("MAKE A VALUE LIVE", pushes)
+        self.assertNotIn("DELETE YOUR CACHED LOCALS", pushes)
+        self.assertIn("DELETE YOUR CACHED LOCALS", spills)
+        self.assertNotIn("MAKE A VALUE LIVE", spills)
+
+    def test_a_frame_allocation_reads_as_the_spill_direction(self):
+        # `sub esp,N` in the original against a `push` in the rebuild is the
+        # same cause as `mov` vs `push`: 173 bodies, the third largest family.
+        text = agent_brief.directional_rules("#0: original 'sub' vs rebuilt 'push'")
+        self.assertIn("recompute", text)
+
+    def test_an_inverted_branch_is_named_as_an_operand_swap(self):
+        text = agent_brief.directional_rules("#7: original 'je' vs rebuilt 'jne'")
+        self.assertIn("REVERSED COMPARISON", text)
+        self.assertIn("Swap the OPERAND ORDER", text)
+
+    def test_a_branch_that_is_not_the_inverse_says_nothing(self):
+        # `je` against `jl` is a different condition, not a flipped one, and
+        # telling an agent to swap operands would send it the wrong way.
+        self.assertEqual("", agent_brief.directional_rules(
+            "#7: original 'je' vs rebuilt 'jl'"))
+
+    def test_a_note_with_no_pair_is_silent(self):
+        self.assertEqual("", agent_brief.directional_rules(
+            "error C2065: 'GameAtexit' : undeclared identifier"))
+
+    def test_the_keyed_entry_no_longer_repeats_the_directional_half(self):
+        # Both fire on the same note; the keyed one must not restate what the
+        # directional one says better, or the agent reads it twice and cannot
+        # tell which applies.
+        keyed = [advice for triggers, advice in agent_brief.TARGETED
+                 if "push" in triggers]
+        self.assertTrue(keyed)
+        for advice in keyed:
+            self.assertNotIn("DELETE YOUR CACHED LOCALS", advice)
+
+    def test_the_directional_block_comes_first(self):
+        text = agent_brief.targeted_rules("#0: original 'push' vs rebuilt 'mov'",
+                                   found={})
+        self.assertTrue(text.startswith("REGISTER ALLOCATION, and the "
+                                "direction"), text[:60])
+
+
+class LandingModeTests(unittest.TestCase):
+    """A FILE-mode landing is not what the Rules section describes.
+
+    "Submit the COMPLETE definition and nothing else" is right for a body-mode
+    landing and destroys a FILE-mode one: the file IS the unit, so replacing
+    it with a bare definition deletes the declarations that definition needs
+    and drops the `FILE` marker with them. A piece whose marker is gone is not
+    scored, not banked, and not reported as missing.
+
+    Paid twice. The agent definition's own example stripped the marker and
+    cost four recoveries on 2026-08-13; on 2026-08-14 an agent mis-landed
+    0x00626900 the same way and reported that all twelve of its briefs
+    described a mode none of its files used.
+    """
+
+    FILE_MODE = ("// ORIGINAL: 0x00626900 BYTE_EXACT FILE\n"
+                 "// GENERATED SKELETON - tools/emit_translation_unit.py\n"
+                 "int f() { return 1; }\n")
+    BODY_MODE = ("// ORIGINAL: 0x00626900 BYTE_EXACT\n"
+                 "// GENERATED SKELETON - tools/emit_translation_unit.py\n"
+                 "int f() { return 1; }\n")
+
+    def test_a_file_mode_landing_says_so(self):
+        text = agent_brief.landing_mode(self.FILE_MODE)
+        self.assertIn("FILE mode", text)
+        self.assertIn("KEEP THE `// ORIGINAL:` LINE", text)
+        # The scoring command differs too: --body and --dir rebuild
+        # scaffolding this file already carries.
+        self.assertIn("bare `verify_recovered_function.py", text)
+
+    def test_a_body_mode_landing_says_nothing(self):
+        # Silence is the correct output here. A section that renders on every
+        # landing would push the agent to keep a marker its file does not have.
+        self.assertEqual("", agent_brief.landing_mode(self.BODY_MODE))
+
+    def test_an_absent_landing_says_nothing(self):
+        self.assertEqual("", agent_brief.landing_mode(""))
+
+    def test_it_reads_the_file_and_not_a_second_source(self):
+        """Keyed on the landing text itself, so the brief cannot disagree
+        with the thing that will actually be measured."""
+        self.assertIn("FILE mode", agent_brief.landing_mode(
+            "// ORIGINAL: 0x00401000 MISMATCH FILE\nint g();\n"))
 
 
 if __name__ == "__main__":
