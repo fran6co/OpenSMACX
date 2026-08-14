@@ -1,4 +1,8 @@
 // ORIGINAL: 0x0063A9D0 FILE
+// RULED-OUT: `if (maxOut->x < local.x)` for the max-update tests scored
+//            MISMATCH #55 (ah&1 test, wrong FPU compare polarity vs the
+//            original's ah&0x41); writing the predicate with the loaded
+//            value first, `if (local.x > maxOut->x)`, reached #76 instead
 // working copy - scaffold materialised by --work
 // name      sub_63a9d0
 // size      900 bytes
@@ -1191,9 +1195,9 @@ extern "C" void __cdecl sub_63a9d0(VOX_Vect *a, VOX_Vect *b, VOX_Vect *c, VOX_Ve
     if (local.x < minOut->x) minOut->x = local.x;
     if (local.y < minOut->y) minOut->y = local.y;
     if (local.z < minOut->z) minOut->z = local.z;
-    if (maxOut->x < local.x) maxOut->x = local.x;
-    if (maxOut->y < local.y) maxOut->y = local.y;
-    if (maxOut->z < local.z) maxOut->z = local.z;
+    if (local.x > maxOut->x) maxOut->x = local.x;
+    if (local.y > maxOut->y) maxOut->y = local.y;
+    if (local.z > maxOut->z) maxOut->z = local.z;
 
     local.x = c->x + local.x;
     local.y = local.y + c->y;
@@ -1201,9 +1205,9 @@ extern "C" void __cdecl sub_63a9d0(VOX_Vect *a, VOX_Vect *b, VOX_Vect *c, VOX_Ve
     if (local.x < minOut->x) minOut->x = local.x;
     if (local.y < minOut->y) minOut->y = local.y;
     if (local.z < minOut->z) minOut->z = local.z;
-    if (maxOut->x < local.x) maxOut->x = local.x;
-    if (maxOut->y < local.y) maxOut->y = local.y;
-    if (maxOut->z < local.z) maxOut->z = local.z;
+    if (local.x > maxOut->x) maxOut->x = local.x;
+    if (local.y > maxOut->y) maxOut->y = local.y;
+    if (local.z > maxOut->z) maxOut->z = local.z;
 
     local.x = local.x - b->x;
     local.y = local.y - b->y;
@@ -1211,9 +1215,9 @@ extern "C" void __cdecl sub_63a9d0(VOX_Vect *a, VOX_Vect *b, VOX_Vect *c, VOX_Ve
     if (local.x < minOut->x) minOut->x = local.x;
     if (local.y < minOut->y) minOut->y = local.y;
     if (local.z < minOut->z) minOut->z = local.z;
-    if (maxOut->x < local.x) maxOut->x = local.x;
-    if (maxOut->y < local.y) maxOut->y = local.y;
-    if (maxOut->z < local.z) maxOut->z = local.z;
+    if (local.x > maxOut->x) maxOut->x = local.x;
+    if (local.y > maxOut->y) maxOut->y = local.y;
+    if (local.z > maxOut->z) maxOut->z = local.z;
 
     local.x = d->x + local.x;
     local.y = d->y + local.y;
@@ -1221,9 +1225,9 @@ extern "C" void __cdecl sub_63a9d0(VOX_Vect *a, VOX_Vect *b, VOX_Vect *c, VOX_Ve
     if (local.x < minOut->x) minOut->x = local.x;
     if (local.y < minOut->y) minOut->y = local.y;
     if (local.z < minOut->z) minOut->z = local.z;
-    if (maxOut->x < local.x) maxOut->x = local.x;
-    if (maxOut->y < local.y) maxOut->y = local.y;
-    if (maxOut->z < local.z) maxOut->z = local.z;
+    if (local.x > maxOut->x) maxOut->x = local.x;
+    if (local.y > maxOut->y) maxOut->y = local.y;
+    if (local.z > maxOut->z) maxOut->z = local.z;
 
     local.x = b->x + local.x;
     local.y = local.y + b->y;
@@ -1231,9 +1235,9 @@ extern "C" void __cdecl sub_63a9d0(VOX_Vect *a, VOX_Vect *b, VOX_Vect *c, VOX_Ve
     if (local.x < minOut->x) minOut->x = local.x;
     if (local.y < minOut->y) minOut->y = local.y;
     if (local.z < minOut->z) minOut->z = local.z;
-    if (maxOut->x < local.x) maxOut->x = local.x;
-    if (maxOut->y < local.y) maxOut->y = local.y;
-    if (maxOut->z < local.z) maxOut->z = local.z;
+    if (local.x > maxOut->x) maxOut->x = local.x;
+    if (local.y > maxOut->y) maxOut->y = local.y;
+    if (local.z > maxOut->z) maxOut->z = local.z;
 
     local.x = local.x - c->x;
     local.y = local.y - c->y;
@@ -1241,9 +1245,9 @@ extern "C" void __cdecl sub_63a9d0(VOX_Vect *a, VOX_Vect *b, VOX_Vect *c, VOX_Ve
     if (local.x < minOut->x) minOut->x = local.x;
     if (local.y < minOut->y) minOut->y = local.y;
     if (local.z < minOut->z) minOut->z = local.z;
-    if (maxOut->x < local.x) maxOut->x = local.x;
-    if (maxOut->y < local.y) maxOut->y = local.y;
-    if (maxOut->z < local.z) maxOut->z = local.z;
+    if (local.x > maxOut->x) maxOut->x = local.x;
+    if (local.y > maxOut->y) maxOut->y = local.y;
+    if (local.z > maxOut->z) maxOut->z = local.z;
 
     local.x = local.x - b->x;
     local.y = local.y - b->y;
@@ -1251,7 +1255,7 @@ extern "C" void __cdecl sub_63a9d0(VOX_Vect *a, VOX_Vect *b, VOX_Vect *c, VOX_Ve
     if (local.x < minOut->x) minOut->x = local.x;
     if (local.y < minOut->y) minOut->y = local.y;
     if (local.z < minOut->z) minOut->z = local.z;
-    if (maxOut->x < local.x) maxOut->x = local.x;
-    if (maxOut->y < local.y) maxOut->y = local.y;
-    if (maxOut->z < local.z) maxOut->z = local.z;
+    if (local.x > maxOut->x) maxOut->x = local.x;
+    if (local.y > maxOut->y) maxOut->y = local.y;
+    if (local.z > maxOut->z) maxOut->z = local.z;
 }

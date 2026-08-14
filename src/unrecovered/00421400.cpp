@@ -1,4 +1,7 @@
 // ORIGINAL: 0x00421400 FILE
+// RULED-OUT: plain reinterpret_cast pointer-offset calls into close()/dtors
+//            in disasm order; no local subobjects so no SEH frame is
+//            generated (diverges at #1, the missing try/finally prologue)
 // working copy - scaffold materialised by --work
 // name      ??1PopMenu@@QAE@XZ
 // size      803 bytes

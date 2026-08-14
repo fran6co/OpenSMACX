@@ -1,4 +1,8 @@
 // ORIGINAL: 0x0059D690 FILE
+// RULED-OUT: same recipe as popv (0x0048C360): Popup popup; PullDown pulldown;
+//            real locals for the SEH/alloca lever, PopMenu::exec cast through
+//            &popup, raw ebp-relative reinterpret_cast for the ~20 close/dtor
+//            calls. MISMATCH #18 remains; not chased further.
 // working copy - scaffold materialised by --work
 // name      ?popm@@YAHPADHHP6AHXZ@Z
 // size      969 bytes
@@ -2069,7 +2073,7 @@ class Menu : public GraphicWin { public:
 
 class PopMenu { public:
     int init();
-    void exec(int, int, int (__cdecl *)());
+    int exec(int, int, int (__cdecl *)());
 };
 
 class Scroll : public GraphicWin { public:
@@ -2157,7 +2161,7 @@ class PullDown : public GraphicWin { public:
 };
 
 extern "C" int __cdecl _alloca_probe();
-extern "C" int __cdecl sub_4066c0();
+extern "C" void __fastcall sub_4066c0(void *);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -2180,11 +2184,77 @@ static int *const g_0067e5f8 = (int *)0x0067E5F8;
 static int *const g_009b3374 = (int *)0x009B3374;
 static int *const g_009b8aa8 = (int *)0x009B8AA8;
 int __cdecl popm(char * a1, int a2, int a3, int (__cdecl *a4)()) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    Popup popup;
+    PullDown pulldown;
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    popup.start(reinterpret_cast<char *>(g_009b8aa8), a1, -1, 0, 0, 0);
+
+    int result = reinterpret_cast<PopMenu *>(&popup)->exec(a2, a3, a4);
+
+    pulldown.~PullDown();
+    popup.close();
+
+    unsigned char *ebp = reinterpret_cast<unsigned char *>(&popup) + 0x62c8;
+
+    *reinterpret_cast<int *>(ebp - 0x3098) = 0x669d58;
+    a1 = reinterpret_cast<char *>(ebp - 0x3098);
+    *reinterpret_cast<int *>(ebp - 0x2c54) = 0x669d50;
+    reinterpret_cast<Scroll *>(ebp - 0x3098)->close();
+
+    *reinterpret_cast<int *>(ebp - 0x1aa0) = 0x669754;
+    a4 = reinterpret_cast<int (__cdecl *)()>(ebp - 0x1aa0);
+    *reinterpret_cast<int *>(ebp - 0x165c) = 0x66974c;
+    reinterpret_cast<FlatButton *>(ebp - 0x1aa0)->close();
+    reinterpret_cast<BaseButton *>(ebp - 0x1aa0)->BaseButton::~BaseButton();
+
+    *reinterpret_cast<int *>(ebp - 0x25ec) = 0x669754;
+    a4 = reinterpret_cast<int (__cdecl *)()>(ebp - 0x25ec);
+    *reinterpret_cast<int *>(ebp - 0x21a8) = 0x66974c;
+    reinterpret_cast<FlatButton *>(ebp - 0x25ec)->close();
+    reinterpret_cast<BaseButton *>(ebp - 0x25ec)->BaseButton::~BaseButton();
+
+    reinterpret_cast<GraphicWin *>(ebp - 0x3098)->~GraphicWin();
+
+    *reinterpret_cast<int *>(ebp - 0x62c8) = 0x6698d4;
+    *reinterpret_cast<int *>(ebp - 0x5e84) = 0x6698cc;
+    reinterpret_cast<BasePop *>(ebp - 0x62c8)->close();
+
+    reinterpret_cast<Spot *>(ebp - 0x3230)->~Spot();
+    reinterpret_cast<Dialogs *>(ebp - 0x3f70)->~Dialogs();
+    reinterpret_cast<Dialog *>(ebp - 0x3558)->~Dialog();
+    reinterpret_cast<GraphicWin *>(ebp - 0x3f70)->~GraphicWin();
+
+    sub_4066c0(ebp - 0x4120);
+    {
+        int t1 = *reinterpret_cast<int *>(ebp - 0x411c);
+        *reinterpret_cast<int *>(ebp - 0x4120) = 0x6693ac;
+        *g_009b3374 = t1;
+    }
+
+    sub_4066c0(ebp - 0x4150);
+    {
+        int t2 = *reinterpret_cast<int *>(ebp - 0x414c);
+        *reinterpret_cast<int *>(ebp - 0x4150) = 0x6693ac;
+        *g_009b3374 = t2;
+    }
+
+    reinterpret_cast<Sprite *>(ebp - 0x41b0)->close();
+
+    *reinterpret_cast<int *>(ebp - 0x4d20) = 0x669754;
+    a1 = reinterpret_cast<char *>(ebp - 0x4d20);
+    *reinterpret_cast<int *>(ebp - 0x48dc) = 0x66974c;
+    reinterpret_cast<FlatButton *>(ebp - 0x4d20)->close();
+    reinterpret_cast<BaseButton *>(ebp - 0x4d20)->BaseButton::~BaseButton();
+
+    *reinterpret_cast<int *>(ebp - 0x586c) = 0x669754;
+    a1 = reinterpret_cast<char *>(ebp - 0x586c);
+    *reinterpret_cast<int *>(ebp - 0x5428) = 0x66974c;
+    reinterpret_cast<FlatButton *>(ebp - 0x586c)->close();
+    reinterpret_cast<BaseButton *>(ebp - 0x586c)->BaseButton::~BaseButton();
+
+    reinterpret_cast<Heap *>(ebp - 0x58a0)->shutdown();
+
+    reinterpret_cast<GraphicWin *>(ebp - 0x62c8)->~GraphicWin();
+
+    return result;
 }

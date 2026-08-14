@@ -1,4 +1,9 @@
 // ORIGINAL: 0x004BF8D0 FILE
+// RULED-OUT: full transcription off Ghidra + raw disasm (table lookups,
+//            MapWin::get_relative_alt x4, VOX table triple-add, Caviar
+//            camera setup, final turn-angle wrap calc); compiles but
+//            diverges at #9 - the local stack layout / register
+//            allocation does not match the original's frame
 // working copy - scaffold materialised by --work
 // name      ?vehdraw_turn_start@@YAHHHHH@Z
 // size      919 bytes
@@ -1947,10 +1952,10 @@ class Sprite { public:
 };
 
 extern "C" int __cdecl _ftol();
-extern "C" int __cdecl sub_627f50();
-extern "C" int __cdecl sub_6280e0();
-extern "C" int __cdecl sub_628150();
-extern "C" int __cdecl sub_628220();
+extern "C" void __cdecl sub_627f50(void *, void *);
+extern "C" void __cdecl sub_6280e0(void *, VOX_Vect *, VOX_Vect *);
+extern "C" void __cdecl sub_628150(VOX_Vect *, VOX_Vect *, VOX_Vect *);
+extern "C" void __cdecl sub_628220(VOX_Vect *, VOX_Vect *);
 int pick_top_veh(int);
 void compute_camera(VOX_Vect *, VOX_Matrix *);
 
@@ -1989,12 +1994,151 @@ static int *const g_009ab88c = (int *)0x009AB88C;
 static int *const g_009ab88d = (int *)0x009AB88D;
 static int *const g_009b2278 = (int *)0x009B2278;
 static int *const g_009b2284 = (int *)0x009B2284;
-int __cdecl vehdraw_turn_start(int a1, int a2, int a3, int a4) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+struct VOX_Vect { float x, y, z; };
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+static float bit_cast_float(unsigned int bits) {
+    union { unsigned int u; float f; } c;
+    c.u = bits;
+    return c.f;
+}
+
+void __cdecl vehdraw_turn_start(int a1, int a2, int a3, int a4) {
+    float sunA = *reinterpret_cast<float *>(g_00687ad8);
+    float sunB = *reinterpret_cast<float *>(g_00687adc);
+    float sunC = *reinterpret_cast<float *>(g_00687ae0);
+
+    int vehIdx = a1;
+    if (a4 & 1) {
+        vehIdx = pick_top_veh(a1);
+    }
+
+    int mapH = *g_009b2284;
+    int mapW = *g_009b2278;
+
+    char *facingRec = reinterpret_cast<char *>(g_00952851) + vehIdx * 0x34;
+    int oldFacing = *reinterpret_cast<signed char *>(facingRec);
+    if (oldFacing == -1) {
+        oldFacing = 0;
+    }
+
+    int rowBase = (*g_0068faf0) * mapH;
+    *g_008cc820 = vehIdx;
+    *facingRec = static_cast<char>(a2);
+
+    unsigned char terrainByte = *(reinterpret_cast<unsigned char *>(g_0094a30c) +
+                                   (rowBase + (mapW >> 1)) * 0x2c);
+
+    VOX_Vect camVect;
+    bool simple = (terrainByte & 0xe0) < 0x60;
+    if (!simple) {
+        short wordVal = *reinterpret_cast<short *>(reinterpret_cast<char *>(g_00952832) + vehIdx * 0x34);
+        unsigned char flag1 = *(reinterpret_cast<unsigned char *>(g_009ab88c) + wordVal * 0x34);
+        if (flag1 == 0) {
+            unsigned char flag2 = *(reinterpret_cast<unsigned char *>(g_009ab88d) + wordVal * 0x34);
+            if (*(reinterpret_cast<unsigned char *>(g_0094ae6a) + flag2 * 0x10) < 3) {
+                simple = true;
+            }
+        }
+    }
+
+    if (!simple) {
+        MapWin *mapWin = reinterpret_cast<MapWin *>(g_009156b0);
+        int r1 = mapWin->get_relative_alt(mapW, mapH, 1);
+        int r2 = mapWin->get_relative_alt(mapW, mapH, 2);
+        int r3 = mapWin->get_relative_alt(mapW, mapH, 3);
+        int r4 = mapWin->get_relative_alt(mapW, mapH, 4);
+        int combined = r4 + ((r1 * 7 + r2) * 7 + r3) * 7;
+        int idx1 = combined * 3 - 0x4b0;
+        int idx2 = combined * 0xc;
+
+        float *tbl1 = reinterpret_cast<float *>(g_008cdd10);
+        VOX_Vect v1;
+        v1.x = tbl1[idx1];
+        v1.y = tbl1[idx1 + 1];
+        v1.z = tbl1[idx1 + 2];
+
+        VOX_Vect v2;
+        char *b2 = reinterpret_cast<char *>(g_008d3adc) + idx2;
+        v2.x = *reinterpret_cast<float *>(b2);
+        v2.y = *reinterpret_cast<float *>(b2 + 4);
+        v2.z = *reinterpret_cast<float *>(b2 + 8);
+
+        VOX_Vect v3;
+        char *b3 = reinterpret_cast<char *>(g_008dab68) + idx2;
+        v3.x = *reinterpret_cast<float *>(b3);
+        v3.y = *reinterpret_cast<float *>(b3 + 4);
+        v3.z = *reinterpret_cast<float *>(b3 + 8);
+
+        VOX_Vect v4;
+        char *b4 = reinterpret_cast<char *>(g_008e1bf4) + idx2;
+        v4.x = *reinterpret_cast<float *>(b4);
+        v4.y = *reinterpret_cast<float *>(b4 + 4);
+        v4.z = *reinterpret_cast<float *>(b4 + 8);
+
+        sub_628150(&v1, &v2, &camVect);
+        sub_628150(&camVect, &v3, &camVect);
+        sub_628150(&camVect, &v4, &camVect);
+        sub_628220(&camVect, &camVect);
+    } else {
+        camVect.x = 0.0f;
+        camVect.y = 0.0f;
+        camVect.z = 1.0f;
+    }
+
+    unsigned char matrixBuf[0x40];
+    compute_camera(&camVect, reinterpret_cast<VOX_Matrix *>(matrixBuf));
+
+    *g_008cc888 = sunA;
+    *g_008cc88c = sunB;
+    *g_008cc890 = sunC;
+
+    unsigned char buf36[0x40];
+    sub_627f50(matrixBuf, buf36);
+
+    VOX_Vect sentinel;
+    sentinel.x = bit_cast_float(0xbf13cd36u);
+    sentinel.y = bit_cast_float(0x3f13cd36u);
+    sentinel.z = bit_cast_float(0x3f13cd36u);
+
+    VOX_Vect outVec;
+    sub_6280e0(buf36, &sentinel, &outVec);
+
+    *g_008cc898 = outVec.y;
+    *g_008cc894 = outVec.x;
+    *g_008cc89c = outVec.z;
+
+    Caviar *caviar = reinterpret_cast<Caviar *>(g_008cc828);
+    caviar->set_shadow_table(reinterpret_cast<unsigned char *>(g_006f107c));
+
+    float *matFloats = reinterpret_cast<float *>(matrixBuf);
+    float lightScale = *reinterpret_cast<float *>(g_0066aa40);
+    VOX_Vect litVec;
+    litVec.x = matFloats[6] * lightScale;
+    litVec.y = matFloats[7] * lightScale;
+    litVec.z = matFloats[8] * lightScale;
+    caviar->set_camera_direct(&litVec, reinterpret_cast<VOX_Matrix *>(matrixBuf));
+
+    float turnK = *reinterpret_cast<float *>(g_0066df14);
+    float angle1 = static_cast<float>((oldFacing - 3) & 7) * turnK;
+    float angle2 = static_cast<float>((a2 - 3) & 7) * turnK;
+    *g_008cc260 = angle1;
+
+    float wrapK = *reinterpret_cast<float *>(g_0066df10);
+    float diff, other;
+    if (angle1 <= angle2) {
+        diff = angle1 - angle2;
+        other = (angle2 + wrapK) - angle1;
+    } else {
+        other = angle2 - angle1;
+        diff = (angle1 + wrapK) - angle2;
+    }
+
+    float turnMulK = *reinterpret_cast<float *>(g_0066df0c);
+    if (diff < other) {
+        int steps = static_cast<int>(a3 * diff * turnMulK);
+        *g_008cc258 = -(diff / static_cast<float>(steps));
+    } else {
+        int steps = static_cast<int>(a3 * other * turnMulK);
+        *g_008cc258 = other / static_cast<float>(steps);
+    }
 }

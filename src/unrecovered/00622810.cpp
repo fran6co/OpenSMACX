@@ -1,4 +1,11 @@
 // ORIGINAL: 0x00622810 FILE
+// RULED-OUT: MISMATCH #6. Same ESP-as-counter inner blitter
+//            family as 0x006239E0/0x0061AC60 - not reproducible without
+//            __asm. Confirmed sub_625080 is a free function (EdgeScan*,
+//            int, int*), not a Texture member, from the missing `mov ecx,
+//            this` before its call sites; confirmed the min/max-vertex scan
+//            reuses a2/a4/a5/a6's own stack slots as min_x/min_y_idx/max_x/
+//            max_y scratch, same pattern as the other two rasterizers.
 // working copy - scaffold materialised by --work
 // name      sub_622810
 // size      1438 bytes
@@ -1311,7 +1318,51 @@ class Font { public:
     void close();
 };
 
-extern "C" int __cdecl sub_625080();
+struct Vert {
+    int x;
+    int y;
+};
+
+struct EdgeScan {
+    int f[16];
+};
+
+class Texture { public:
+    void * pixels_;
+    uint32_t iWidth_;
+    uint32_t iHeight_;
+    uint8_t unmapped_[0x60];
+    uint32_t borrowed_;
+    void sub_622810(Buffer *, Vert *, int *, int, int, int, int *);
+};
+
+extern "C" int __cdecl sub_625080(EdgeScan *, int, int *);
+
+// Same per-scanline DDA step as the other gouraud rasterizer in this family
+// (0x0061AC60): f[3]/f[4] int accum, f[5]/f[6] step, f[7]/f[8] fractional
+// accum/step, f[9]-f[12] periodic correction, f[13]/f[14] the interpolated
+// light channel.
+static void edge_step(EdgeScan &e) {
+    e.f[3] += e.f[5];
+    e.f[4] += e.f[6];
+    e.f[7] += e.f[8];
+    e.f[10] += e.f[11];
+    if (e.f[10] > 0) {
+        e.f[7] += e.f[9];
+        e.f[10] -= e.f[12];
+    }
+    e.f[13] += e.f[14];
+}
+
+static unsigned int concat22(unsigned short hi, unsigned short lo) {
+    return ((unsigned int)hi << 16) | lo;
+}
+static int carry4(unsigned int a, unsigned int b) {
+    return (a + b) < a;
+}
+static int carry2(unsigned short a, unsigned short b) {
+    return ((unsigned int)a + (unsigned int)b) > 0xFFFFu;
+}
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -1333,6 +1384,9 @@ static int *const g_009bb4e0 = (int *)0x009BB4E0;
 static int *const g_009bb4e4 = (int *)0x009BB4E4;
 static int *const g_009bb4e6 = (int *)0x009BB4E6;
 static int *const g_009bb4ec = (int *)0x009BB4EC;
+static int *const g_006972c4 = (int *)0x006972C4;
+static int *const g_006972c8 = (int *)0x006972C8;
+static int *const g_009bb528 = (int *)0x009BB528;
 static int *const g_009bb4f0 = (int *)0x009BB4F0;
 static int *const g_009bb4f4 = (int *)0x009BB4F4;
 static int *const g_009bb4f8 = (int *)0x009BB4F8;
@@ -1347,12 +1401,174 @@ static int *const g_009bb538 = (int *)0x009BB538;
 static int *const g_009bb53c = (int *)0x009BB53C;
 static int *const g_009bb53e = (int *)0x009BB53E;
 static int *const g_009bb544 = (int *)0x009BB544;
-extern "C" int __stdcall sub_622810(int a1, int a2, int a3, int a4, int a5, int a6, int a7) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count, int a5, int light_thresh, int *out_flag) {
+    out_flag[1] = 0;
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    *g_009bb4ec = buf->get_data();
+    *g_009bb514 = light_thresh;
+    *g_009bb490 = a5;
+    *g_009bb4f4 = (int)(long)verts;
+    *g_009bb4b0 = count;
+    *g_009bb4fc = (int)(long)zvals;
+    *g_009bb544 = (int)(long)pixels_;
+    *g_009bb49c = (int)buf->field_4A8_;
+    *g_009bb4a8 = (int)iWidth_;
+
+    int guard_i = 0;
+    for (int i = 0; i < count; ++i) {
+        if (zvals[i] < light_thresh) break;
+        ++guard_i;
+    }
+
+    int clip_flag = 1;
+    if (guard_i != count && buf != 0) {
+        *g_009bb534 = buf->rect1_.right;
+        *g_009bb4dc = buf->rect1_.left;
+        *g_009bb538 = buf->rect1_.bottom;
+        *g_009bb4e0 = buf->rect1_.top;
+
+        int min_y = 0x7fff, min_y_idx = 0;
+        int max_y = (int)0xffff8003, max_y_idx = 0;
+        int min_x = 0x7fff;
+        int max_x = (int)0xffff8003;
+        if (count > 0) {
+            for (int i = 0; i < count; ++i) {
+                int y = verts[i].y;
+                if (y < min_y) { min_y_idx = i; min_y = y; }
+                if (max_y < y) { max_y_idx = i; max_y = y; *g_009bb4b4 = i; }
+                int x = verts[i].x;
+                if (x < min_x) min_x = x;
+                if (max_x < x) max_x = x;
+            }
+            if (min_y < max_y) {
+                *g_009bb508 = *g_009bb49c * min_y + *g_009bb4ec;
+                if (min_x < *g_009bb4dc || min_y < *g_009bb4e0 || *g_009bb534 < max_x ||
+                    *g_009bb538 < max_y) {
+                    clip_flag = 1;
+                } else {
+                    clip_flag = 0;
+                }
+                *g_009bb538 = *g_009bb538 * *g_009bb49c + *g_009bb4ec;
+                *g_009bb4e0 = *g_009bb4e0 * *g_009bb49c + *g_009bb4ec;
+
+                EdgeScan e1, e2;
+                e1.f[0] = -1;
+                if (sub_625080(&e1, min_y_idx, out_flag) != 0) {
+                    e2.f[1] = 1;
+                    if (sub_625080(&e2, min_y_idx, out_flag) != 0 && borrowed_ != 0) {
+                        double dy = (double)((e2.f[7] - e1.f[7]) << 16);
+                        double du = 0, dv = 0, dw = 0, inv_dy = 1;
+                        if (dy > 0) {
+                            du = (double)(e2.f[4] - e1.f[4]);
+                            dv = (double)(e2.f[3] - e1.f[3]);
+                            dw = (double)(e2.f[13] - e1.f[13]);
+                            inv_dy = 1.0 / dy;
+                        }
+
+                        bool done = false;
+                        while (*g_009bb508 < *g_009bb538) {
+                            *g_009bb4c4 = e2.f[3];
+                            *g_009bb4f8 = e1.f[3];
+                            *g_009bb530 = e2.f[4];
+                            *g_009bb53c = e1.f[4];
+                            *g_009bb4cc = e1.f[7];
+                            *g_009bb498 = e1.f[13];
+                            *g_009bb4f0 = e2.f[7];
+
+                            e1.f[1] -= 1;
+                            if (e1.f[1] == 0) {
+                                if (sub_625080(&e1, e1.f[2], out_flag) == 0) {
+                                    done = true;
+                                    goto per_scanline_tail;
+                                }
+                            } else {
+                                edge_step(e1);
+                            }
+                            e2.f[1] -= 1;
+                            if (e2.f[1] == 0) {
+                                if (sub_625080(&e2, e2.f[2], out_flag) == 0) {
+                                    done = true;
+                                }
+                            } else {
+                                edge_step(e2);
+                            }
+
+                        per_scanline_tail:
+                            if (dy > 0) {
+                                *g_009bb4e4 = (int)(dv * du * inv_dy * (double)*(float *)g_00670a84);
+                                *g_009bb4c8 = (int)(du * dv * inv_dy * (double)*(float *)g_00670a84);
+                                *(short *)g_009bb52c = (short)(int)(du * inv_dy * dw * (double)*(float *)g_00670a88);
+                            }
+                            dy = (double)((e2.f[7] - e1.f[7]) << 16);
+                            if (dy > 0) {
+                                du = (double)(e2.f[4] - e1.f[4]);
+                                dv = (double)(e2.f[3] - e1.f[3]);
+                                dw = (double)(e2.f[13] - e1.f[13]);
+                                inv_dy = 1.0 / dy;
+                            }
+
+                            if (*g_009bb538 <= *g_009bb508) break;
+                            if (*g_009bb4e0 <= *g_009bb508 && *g_009bb4dc < *g_009bb4f0 &&
+                                *g_009bb4cc < *g_009bb534 && *g_009bb4cc < *g_009bb4f0) {
+                                int right_x = *g_009bb4f0;
+                                if (*g_009bb534 <= *g_009bb4f0) right_x = *g_009bb534;
+                                if (*g_009bb4cc < *g_009bb4dc) {
+                                    int step = (*g_009bb4cc - *g_009bb4dc) * -0x10000;
+                                    __int64 p1 = (__int64)*g_009bb4e4 * (__int64)step;
+                                    *g_009bb4f8 = (int)(((unsigned int)p1 >> 16) | ((int)((unsigned __int64)p1 >> 32) << 16)) + *g_009bb4f8;
+                                    __int64 p2 = (__int64)*g_009bb4c8 * (__int64)step;
+                                    *g_009bb53c = *g_009bb53c + (int)(((unsigned int)p2 >> 16) | ((int)((unsigned __int64)p2 >> 32) << 16));
+                                    __int64 p3 = (__int64)(short)*(short *)g_009bb52c * (__int64)step;
+                                    *g_009bb498 = *g_009bb498 + (int)(((unsigned int)p3 >> 8) | ((int)((unsigned __int64)p3 >> 32) << 24));
+                                    *g_009bb4cc = *g_009bb4dc;
+                                }
+
+                                unsigned char *tex_row = (unsigned char *)(*g_009bb544 + *g_009bb4a8 * (*g_009bb53c >> 16) + (*g_009bb4f8 >> 16));
+                                char *dest = (char *)(long)(*g_009bb4cc + *g_009bb508 - 1);
+                                *g_006972c8 = ((*g_009bb4c8 >> 16) * *g_009bb4a8 + (*g_009bb4e4 >> 16));
+                                *g_006972c4 = *g_006972c8 + *g_009bb4a8;
+                                *g_009bb528 = *g_009bb4c8 << 16;
+
+                                unsigned int u_acc = concat22((unsigned short)*g_009bb53c, (unsigned short)*g_009bb4e4);
+                                unsigned int span = concat22((unsigned short)(((short)right_x - (short)*g_009bb4cc) - 1), (unsigned short)*g_009bb4f8);
+                                *g_009bb498 = *g_009bb498 >> 8;
+                                unsigned short light = (unsigned short)*g_009bb498;
+                                unsigned short light_step = *(unsigned short *)g_009bb52c;
+                                unsigned char threshold = *(unsigned char *)g_009bb514;
+
+                                unsigned int off = 0;
+                                for (;;) {
+                                    unsigned short light_next = (unsigned short)(light + light_step);
+                                    unsigned char light_hi = (unsigned char)(light_next >> 8);
+                                    int carry = carry4(u_acc, *(unsigned int *)g_009bb528);
+                                    u_acc = u_acc + *(unsigned int *)g_009bb528;
+                                    ++dest;
+                                    unsigned int selected_row = carry ? (unsigned int)*g_006972c4 : (unsigned int)*g_006972c8;
+                                    off = selected_row + off + (unsigned int)(carry2((unsigned short)span, (unsigned short)u_acc) ? 1 : 0);
+                                    unsigned int next_span = concat22((unsigned short)((unsigned int)span >> 16),
+                                                                       (unsigned short)((unsigned short)span + (unsigned short)u_acc));
+                                    unsigned char texel = tex_row[(int)off];
+                                    if (light_hi < threshold) {
+                                        *dest = (char)(texel + light_hi);
+                                    }
+                                    light = light_next;
+                                    span = (unsigned int)((int)next_span - 0x10000);
+                                    if ((int)span < 0) break;
+                                }
+                            }
+                            if (done) break;
+                            *g_009bb508 = *g_009bb508 + *g_009bb49c;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (buf != 0) {
+        buf->free_data(1);
+    }
+    if (clip_flag == 0) {
+        *out_flag = 0;
+    }
 }

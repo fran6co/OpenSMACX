@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0060ED10 FILE
+// RULED-OUT: MISMATCH #101 push/xor - three min/max ternaries rewritten as
+//            if/else (operand order matching the original's cmp/jcc) moved
+//            the divergence from #78 to #101; further tweaks to the
+//            text_height() ternary and the max_width loop's > vs >=
+//            made no further difference.
 // working copy - scaffold materialised by --work
 // name      ?calculate_dimensions@CheckBox@@QAEHXZ
 // size      795 bytes
@@ -1317,16 +1322,134 @@ class Font { public:
 };
 
 
+// Virtual-base offsets are read from the vbtable at runtime rather than
+// hardcoded, matching the same pattern confirmed on EditGroup::calculate_dimensions
+// (0x00612150): vbtable[1] (byte offset 4) is the GraphicWin base offset,
+// vbtable[2] (byte offset 8) is the Dialog base offset, and a Buffer member
+// sits at GraphicWin_base + 0x444.
+#define CB_VT1OFF(self) (*(int *)(*(int *)(self) + 4))
+#define CB_VT2OFF(self) (*(int *)(*(int *)(self) + 8))
+#define CB_DLG(self, off) (*(int *)((self) + CB_VT2OFF(self) + (off)))
+#define CB_BUF(self) ((Buffer *)((self) + CB_VT1OFF(self) + 0x444))
+
 class CheckBox { public:
     void close();
     int calculate_dimensions();
 };
 int CheckBox::calculate_dimensions() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    if (CB_DLG(self, 0xcc) == 0) {
+        return 7;
+    }
+
+    CB_BUF(self)->set_text_color(CB_DLG(self, 0x7c), CB_DLG(self, 0x88),
+                                  CB_DLG(self, 0x94), CB_DLG(self, 0xa0));
+    CB_BUF(self)->set_text_color2(CB_DLG(self, 0x80), CB_DLG(self, 0x8c),
+                                   CB_DLG(self, 0x98), CB_DLG(self, 0xa4));
+    CB_BUF(self)->set_text_color3(CB_DLG(self, 0x84), CB_DLG(self, 0x90),
+                                   CB_DLG(self, 0x9c), CB_DLG(self, 0xa8));
+    CB_BUF(self)->set_font((Font *)CB_DLG(self, 0x70), (Font *)CB_DLG(self, 0x74),
+                            (Font *)CB_DLG(self, 0x78), 0);
+
+    if (CB_DLG(self, 0x34) == 0 && *(int *)(self + 0x14) != 0 && *(int *)(self + 0x10) != 0) {
+        int a = *(int *)(*(int *)(self + 0x14) + 0x18);
+        int b = *(int *)(*(int *)(self + 0x10) + 0x18);
+        int r = a;
+        if (b > a) {
+            r = b;
+        }
+        CB_DLG(self, 0x34) = r;
+    }
+
+    if (CB_DLG(self, 0x48) == -1) {
+        if (*(int *)(self + 0x10) == 0 || *(int *)(self + 0x14) == 0) {
+            CB_DLG(self, 0x68) = 0;
+        } else {
+            int a = *(int *)(*(int *)(self + 0x14) + 0x1c);
+            int b = *(int *)(*(int *)(self + 0x10) + 0x1c);
+            int r = a;
+            if (b > a) {
+                r = b;
+            }
+            CB_DLG(self, 0x68) = r;
+        }
+    } else {
+        CB_DLG(self, 0x68) = CB_DLG(self, 0x48);
+    }
+
+    CB_DLG(self, 0x58) = CB_DLG(self, 0xcc);
+
+    {
+        int max_width = 0;
+        int count = CB_DLG(self, 0xcc);
+        int i;
+        for (i = 0; i < count; i++) {
+            int flag = CB_DLG(self, 0xc4);
+            if (flag != 0) {
+                CB_DLG(self, 0xc8) = *(int *)(CB_DLG(self, 0xc8) + 0xc);
+                int idx = CB_DLG(self, 0xd0) + 1;
+                CB_DLG(self, 0xd0) = idx;
+                if (idx == CB_DLG(self, 0xcc)) {
+                    CB_DLG(self, 0xd0) = 0;
+                }
+            }
+            int node = CB_DLG(self, 0xc8);
+            int label;
+            if (node == 0) {
+                label = 0;
+            } else if (flag == 0) {
+                label = *(int *)4;
+            } else {
+                label = *(int *)(*(int *)(node + 8) + 4);
+            }
+            int w = CB_BUF(self)->text_width((char *)label);
+            if (w > max_width) {
+                max_width = w;
+            }
+        }
+        CB_DLG(self, 0x64) = CB_DLG(self, 0x44) + CB_DLG(self, 0x34) + max_width;
+    }
+
+    {
+        int h1 = CB_BUF(self)->text_height();
+        int result;
+        if (CB_DLG(self, 0x68) <= h1) {
+            result = h1;
+        } else {
+            result = CB_BUF(self)->text_height();
+        }
+        CB_DLG(self, 0x68) = result;
+    }
+
+    if ((*(uint8_t *)(self + CB_VT2OFF(self) + 0x20) & 2) != 0 && CB_DLG(self, 0x2c) != 0) {
+        CB_DLG(self, 0x5c) = CB_DLG(self, 0x2c);
+        CB_DLG(self, 0x64) = (CB_DLG(self, 0x2c) - CB_DLG(self, 0x40) * 2) / CB_DLG(self, 0x4c) - CB_DLG(self, 0x44);
+    } else {
+        int term = CB_DLG(self, 0x40) * 2;
+        int a = CB_DLG(self, 0x64) * CB_DLG(self, 0x4c) + term;
+        int b = term + CB_DLG(self, 0x2c);
+        int r = b;
+        if (a >= b) {
+            r = a;
+        }
+        CB_DLG(self, 0x5c) = r;
+        CB_DLG(self, 0x64) = (CB_DLG(self, 0x5c) - CB_DLG(self, 0x40) * 2) / CB_DLG(self, 0x4c) - CB_DLG(self, 0x44);
+        CB_DLG(self, 0x5c) = CB_DLG(self, 0x5c) - CB_DLG(self, 0x44);
+    }
+
+    CB_DLG(self, 0x54) = CB_DLG(self, 0x4c);
+
+    if ((*(uint8_t *)(self + CB_VT2OFF(self) + 0x20) & 1) != 0 && CB_DLG(self, 0x30) != 0) {
+        CB_DLG(self, 0x60) = CB_DLG(self, 0x30);
+        CB_DLG(self, 0x58) = CB_DLG(self, 0x30) / CB_DLG(self, 0x68);
+        return 0;
+    }
+    CB_DLG(self, 0x60) = (CB_DLG(self, 0x68) + CB_DLG(self, 0x44)) * CB_DLG(self, 0x58);
+    return 0;
 }
+
+#undef CB_VT1OFF
+#undef CB_VT2OFF
+#undef CB_DLG
+#undef CB_BUF

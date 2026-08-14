@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CB220 FILE
+// RULED-OUT: __thiscall member (class Sub5cb220Obj) with `this` reassigned to
+//            *(int**)this, matching Ghidra's structure closely; BOTH indirect
+//            calls (slots 9 and 12) are COM-style (interface pushed as an
+//            explicit stack arg, not passed in ecx) despite the brief's
+//            emitter flagging only slot 9 - confirmed by the raw asm's
+//            "push eax; call [ecx+0x30]" shape for slot 12 too, per LEVER 3.
+//            MISMATCH #0 (frame layout), not chased further.
 // working copy - scaffold materialised by --work
 // name      sub_5cb220
 // size      1003 bytes
@@ -1230,7 +1237,18 @@ class VCall { public:
 //     int result = fn(obj, arg);
 //
 // This body dispatches COM-style through slot(s): 9
-typedef int (__stdcall *ComSlot009)(void *self);
+typedef int (__stdcall *ComSlot009)(void *self, void *outBuf);
+typedef int (__stdcall *ComSlot012)(void *self, int, int, int);
+
+typedef HANDLE (__stdcall *GetCurrentThread_t)();
+typedef int (__stdcall *SetThreadPriority_t)(HANDLE, int);
+typedef DWORD (__stdcall *GetTickCount_t)();
+typedef void (__stdcall *Sleep_t)(DWORD);
+typedef long (__stdcall *InterlockedExchange_t)(long *, long);
+typedef long (__stdcall *InterlockedIncrement_t)(long *);
+typedef long (__stdcall *InterlockedDecrement_t)(long *);
+typedef long (__stdcall *MmioSeek_t)(void *, long, int);
+typedef int (__cdecl *FnPtr0)();
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -1244,12 +1262,183 @@ static int *const g_00669100 = (int *)0x00669100;
 static int *const g_0066912c = (int *)0x0066912C;
 static int *const g_00669364 = (int *)0x00669364;
 static int *const g_00800000 = (int *)0x00800000;
-extern "C" int __cdecl sub_5cb220() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+#define I32(base, off) (*reinterpret_cast<int *>(reinterpret_cast<char *>(base) + (off)))
+#define U32(base, off) (*reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(base) + (off)))
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+class Sub5cb220Obj { public:
+    void run();
+};
+
+void Sub5cb220Obj::run() {
+    int *obj = *reinterpret_cast<int **>(this);
+
+    if ((U32(obj[0], 4) & 0x30000) == 0x30000) {
+        int priority = I32(obj[0], 0xa4);
+        HANDLE hThread = (*reinterpret_cast<GetCurrentThread_t *>(g_006690ec))();
+        (*reinterpret_cast<SetThreadPriority_t *>(g_006690f0))(hThread, priority);
+    }
+
+    if (sub_5ce2b0() != 0) {
+        goto LAB_cb5ee;
+    }
+
+    I32(obj[0], 0x94) = 0;
+    (*reinterpret_cast<InterlockedExchange_t *>(g_00669100))(
+        reinterpret_cast<long *>(reinterpret_cast<char *>(obj[0]) + 0x98), 1);
+    obj[0x182] = (*reinterpret_cast<GetTickCount_t *>(g_006690f4))();
+
+LAB_cb28e:
+    for (;;) {
+        long value = (*reinterpret_cast<InterlockedExchange_t *>(g_00669100))(
+            reinterpret_cast<long *>(reinterpret_cast<char *>(obj[0]) + 0x98), 2);
+        if (value == 3) {
+            (*reinterpret_cast<InterlockedExchange_t *>(g_00669100))(
+                reinterpret_cast<long *>(reinterpret_cast<char *>(obj[0]) + 0x98), 3);
+            do {
+                (*reinterpret_cast<Sleep_t *>(g_0066912c))(0x14);
+                value = (*reinterpret_cast<InterlockedExchange_t *>(g_00669100))(
+                    reinterpret_cast<long *>(reinterpret_cast<char *>(obj[0]) + 0x98), 3);
+            } while (value == 3);
+            (*reinterpret_cast<InterlockedExchange_t *>(g_00669100))(
+                reinterpret_cast<long *>(reinterpret_cast<char *>(obj[0]) + 0x98), value);
+        }
+        if (value == 4) {
+            goto LAB_cb5d8;
+        }
+        if (value == 2) {
+            break;
+        }
+    }
+
+    (*reinterpret_cast<Sleep_t *>(g_0066912c))(0);
+
+    if (obj[0xe8] == -1) {
+        if ((U32(obj[0], 4) & 0x8000) == 0) {
+            obj[0xe8] = -1;
+        } else {
+            (*reinterpret_cast<Sleep_t *>(g_0066912c))(0);
+            (*reinterpret_cast<MmioSeek_t *>(g_00669364))(reinterpret_cast<void *>(I32(obj[0], 0xa0)), obj[0xea], 0);
+            obj[0xe8] = sub_5c9ec0();
+        }
+        if (obj[0xe8] != -1) {
+            goto LAB_cb35f;
+        }
+    } else {
+LAB_cb35f:
+        if (obj[0xe1] < 0x16 && obj[0xe0] < 0x16) {
+            int r = sub_5c9ec0();
+            obj[0xe9] = r;
+            if (r == -1) {
+                if ((U32(obj[0], 4) & 0x8000) == 0) {
+                    obj[0xe8] = -1;
+                } else {
+                    (*reinterpret_cast<Sleep_t *>(g_0066912c))(0);
+                    (*reinterpret_cast<MmioSeek_t *>(g_00669364))(reinterpret_cast<void *>(I32(obj[0], 0xa0)), obj[0xea], 0);
+                    obj[0xe8] = sub_5c9ec0();
+                }
+            } else if (r == 1) {
+                if (I32(obj[0], 0x7c) != 0) {
+                    int r2 = sub_5c9ec0();
+                    obj[0xe8] = r2;
+                    if (r2 == 1) {
+                        I32(obj[0], 0x7c) = 0;
+                    }
+                }
+            } else if (r == 2 && (I32(obj[0], 0x80) == 0 || obj[0xe1] < 0x16)) {
+                obj[0xe8] = sub_5c9ec0();
+            }
+        }
+    }
+
+    if (obj[0xd9] == 0 && I32(obj[0], 0x7c) != 0) {
+        sub_5ce4b0();
+        obj[0xe4] = 0;
+    }
+
+    {
+        int *piVar2 = obj + (obj[0xde] % 0x18) * 4 + 0x79;
+        if (*piVar2 != 0) {
+            if (I32(obj[0], 0x94) < 3) {
+                sub_5cc940();
+                sub_5cb6c0();
+            } else {
+                int r = piVar2[3];
+                if (r == 2 || r == 1 || r == 6 || r == 5) {
+                    sub_5cc940();
+                }
+            }
+            if ((U32(obj[0], 4) & 0x40000) != 0) {
+                FnPtr0 fn = reinterpret_cast<FnPtr0>(I32(obj[0], 0xac));
+                if (fn != 0) {
+                    if (fn() != 0) {
+                        goto LAB_cb5d8;
+                    }
+                }
+            }
+            piVar2[0] = 0;
+            piVar2[1] = 0;
+            (*reinterpret_cast<InterlockedIncrement_t *>(g_006690fc))(reinterpret_cast<long *>(obj + 0xde));
+            (*reinterpret_cast<InterlockedDecrement_t *>(g_006690f8))(reinterpret_cast<long *>(obj + 0xe0));
+            sub_5cbbc0();
+        }
+    }
+
+    (*reinterpret_cast<InterlockedIncrement_t *>(g_006690fc))(
+        reinterpret_cast<long *>(reinterpret_cast<char *>(obj[0]) + 0x90));
+
+    if (obj[0xe0] == 0) {
+        int base0 = obj[0];
+        if (I32(base0, 0x7c) == 0 || (U32(base0, 4) & 0x800000) == 0) {
+            goto LAB_cb5d8;
+        }
+        if (obj[0xe1] == 0) {
+            int *piVar2b = reinterpret_cast<int *>(I32(base0, 0x5c));
+            if (piVar2b == 0) {
+                goto LAB_cb5d8;
+            }
+            unsigned char abStack_4[4];
+            ComSlot009 fn9 = reinterpret_cast<ComSlot009>((*reinterpret_cast<void ***>(piVar2b))[9]);
+            fn9(piVar2b, abStack_4);
+            if ((abStack_4[0] & 4) != 0) {
+                int *piVar2c = reinterpret_cast<int *>(I32(obj[0], 0x5c));
+                ComSlot012 fn12 = reinterpret_cast<ComSlot012>((*reinterpret_cast<void ***>(piVar2c))[12]);
+                fn12(piVar2c, 0, 0, 0);
+            }
+            if ((abStack_4[0] & 1) == 0) {
+                goto LAB_cb5d8;
+            }
+        }
+    }
+
+    if (I32(obj[0], 0x7c) != 0) {
+        int iStack_c = obj[0xe4] - 5;
+        int base90 = I32(obj[0], 0x90);
+        int iVar4 = 0;
+        bool cont;
+        do {
+            if (base90 - iStack_c < 1) break;
+            (*reinterpret_cast<Sleep_t *>(g_0066912c))(0);
+            (*reinterpret_cast<Sleep_t *>(g_0066912c))(3);
+            iStack_c = obj[0xe4] - 5;
+            cont = iVar4 < 0x97;
+            iVar4 = iVar4 + 1;
+        } while (cont);
+        I32(obj[0], 0x94) = iStack_c - base90;
+        if (I32(obj[0], 0x94) < 0) {
+            I32(obj[0], 0x94) = 0;
+        }
+    }
+
+    goto LAB_cb28e;
+
+LAB_cb5ee:
+    sub_5ce620();
+    (*reinterpret_cast<InterlockedExchange_t *>(g_00669100))(
+        reinterpret_cast<long *>(reinterpret_cast<char *>(obj[0]) + 0x98), 5);
+    return;
+
+LAB_cb5d8:
+    obj[0x183] = (*reinterpret_cast<GetTickCount_t *>(g_006690f4))();
+    sub_5ce2f0();
+    goto LAB_cb5ee;
 }

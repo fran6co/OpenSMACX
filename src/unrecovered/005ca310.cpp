@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005CA310 FILE
+// RULED-OUT: __fastcall(ecx,edx) two-arg signature + large local buffer for
+//            __alloca_probe reaches MISMATCH #3 (prologue); several output
+//            scratch locals (sub_5cdd10/5cdb90/5ce6e3 args) use fresh locals
+//            rather than the exact original stack slot, since those callees
+//            are opaque and their slot placement doesn't affect this body.
 // working copy - scaffold materialised by --work
 // name      sub_5ca310
 // size      940 bytes
@@ -1178,9 +1183,9 @@ const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
 extern "C" int __cdecl _alloca_probe();
-extern "C" int __cdecl sub_5cdb90();
-extern "C" int __cdecl sub_5cdd10();
-extern "C" int __cdecl sub_5ce6e3();
+extern "C" int __cdecl sub_5cdb90(int, int *, int *, int *, int *, int *);
+extern "C" int __cdecl sub_5cdd10(int, int *, int *, int *, int *, int *, int *, int *);
+extern "C" int __cdecl sub_5ce6e3(int *, int, int, int *, int *);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -1188,12 +1193,167 @@ extern "C" int __cdecl sub_5ce6e3();
 static int *const g_006690fc = (int *)0x006690FC;
 static int *const g_00669364 = (int *)0x00669364;
 static int *const g_0066936c = (int *)0x0066936C;
-extern "C" int __cdecl sub_5ca310() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+typedef void *HMMIO;
+typedef long LONG;
+typedef LONG (__stdcall *MmioSeek_t)(HMMIO, LONG, int);
+typedef LONG (__stdcall *MmioRead_t)(HMMIO, char *, LONG);
+typedef unsigned long (__stdcall *InterlockedIncrement_t)(long *);
+
+#define M32(base, off) (*reinterpret_cast<int *>(reinterpret_cast<char *>(base) + (off)))
+
+extern "C" int __fastcall sub_5ca310(void *a1, int a2) {
+    char bigStack[0xc008];
+    char *self = reinterpret_cast<char *>(a1);
+    int edi = a2;
+    int dataLen = 0;
+
+    if (M32(self, 0x38c) == 0) {
+        char *io0 = *reinterpret_cast<char **>(self);
+        if ((*reinterpret_cast<unsigned int *>(io0 + 4) & 0x8000) != 0) {
+            HMMIO h = *reinterpret_cast<HMMIO *>(io0 + 0xa0);
+            LONG pos = (*reinterpret_cast<MmioSeek_t *>(g_00669364))(h, 0, 1);
+            M32(self, 0x3a8) = pos - 8;
+        }
+    }
+
+    {
+        char *io0 = *reinterpret_cast<char **>(self);
+        HMMIO h = *reinterpret_cast<HMMIO *>(io0 + 0xa0);
+        LONG nRead = (*reinterpret_cast<MmioRead_t *>(g_0066936c))(h, bigStack + 0x14, edi);
+        if (nRead == 0) {
+            M32(self, 0x398) = 1;
+            return -1;
+        }
+        if (nRead == -1) {
+            return -2;
+        }
+    }
+
+    int chunkType = M32(self, 0x60);
+
+    if (chunkType == 0) {
+        unsigned int raw = *reinterpret_cast<unsigned int *>(bigStack + 0x18);
+        dataLen = static_cast<int>(raw) * 4;
+        {
+            int base = M32(self, 0x20);
+            int cursor = M32(self, 0x28) + dataLen;
+            if (cursor >= base + 0x493e0) {
+                M32(self, 0x28) = base;
+            }
+        }
+        int destPtr = M32(self, 0x28);
+        int loopCount = (dataLen + ((dataLen >> 31) & 3)) >> 2;
+        if (M32(self, 0x54) == 2) {
+            if (loopCount > 0) {
+                int *src = reinterpret_cast<int *>(bigStack + 0x1c);
+                int *dst = reinterpret_cast<int *>(destPtr);
+                for (int i = 0; i < loopCount; i++) {
+                    dst[i] = src[i];
+                }
+            }
+        } else {
+            if (loopCount > 0) {
+                short *src = reinterpret_cast<short *>(bigStack + 0x1c);
+                char *dst = reinterpret_cast<char *>(destPtr);
+                for (int i = 0; i < loopCount; i++) {
+                    short v = src[i];
+                    *reinterpret_cast<short *>(dst + i * 4 + 2) = v;
+                    *reinterpret_cast<short *>(dst + i * 4) = v;
+                }
+            }
+        }
+        edi = dataLen;
+    } else if (chunkType == 7) {
+        short w0a = *reinterpret_cast<short *>(bigStack + 0x1e);
+        short w08 = *reinterpret_cast<short *>(bigStack + 0x1c);
+        short w0e = *reinterpret_cast<short *>(bigStack + 0x22);
+        short w0c = *reinterpret_cast<short *>(bigStack + 0x20);
+        M32(self, 0x3e0) = w0a;
+        M32(self, 0x3d8) = w08;
+        M32(self, 0x3e4) = w0e;
+        M32(self, 0x3dc) = w0c;
+
+        int cchAdj = edi - 0xc;
+
+        if (M32(self, 0x54) == 2) {
+            int count = cchAdj / 30;
+            dataLen = count * 0x70;
+            {
+                int base = M32(self, 0x20);
+                int cursor = M32(self, 0x28) + dataLen;
+                if (cursor >= base + 0x493e0) {
+                    M32(self, 0x28) = base;
+                }
+            }
+            int scratchA = 0;
+            int scratchB;
+            int scratchC = M32(self, 0x28);
+            sub_5cdd10(count, &scratchA,
+                       reinterpret_cast<int *>(self + 0x3d8),
+                       reinterpret_cast<int *>(self + 0x3e0),
+                       reinterpret_cast<int *>(self + 0x3dc),
+                       reinterpret_cast<int *>(self + 0x3e4),
+                       &scratchB, &scratchC);
+        } else {
+            int count = cchAdj / 15;
+            dataLen = count * 0x70;
+            {
+                int base = M32(self, 0x20);
+                int cursor = M32(self, 0x28) + dataLen;
+                if (cursor >= base + 0x493e0) {
+                    M32(self, 0x28) = base;
+                }
+            }
+            int scratchD;
+            int scratchE;
+            int scratchF = M32(self, 0x28);
+            sub_5cdb90(count, &scratchD,
+                       reinterpret_cast<int *>(self + 0x3d8),
+                       reinterpret_cast<int *>(self + 0x3e0),
+                       &scratchE, &scratchF);
+        }
+        edi = dataLen;
+    } else if (chunkType == 0xa) {
+        dataLen = edi * 4;
+        {
+            int base = M32(self, 0x20);
+            int cursor = M32(self, 0x28) + dataLen;
+            if (cursor >= base + 0x493e0) {
+                M32(self, 0x28) = base;
+            }
+        }
+        int scratchG;
+        int destBase = M32(self, 0x28);
+        sub_5ce6e3(&scratchG, destBase, a2,
+                   reinterpret_cast<int *>(self + 0x3e8),
+                   reinterpret_cast<int *>(self + 0x3f0));
+        edi = dataLen;
+    } else {
+        edi = *reinterpret_cast<int *>(bigStack + 0x14);
+    }
+
+    if (M32(self, 0x3a0) == 2) {
+        char *io0 = *reinterpret_cast<char **>(self);
+        M32(io0, 0x80) = 1;
+    }
+    {
+        char *io0 = *reinterpret_cast<char **>(self);
+        if (M32(io0, 0x80) != 0) {
+            (*reinterpret_cast<InterlockedIncrement_t *>(g_006690fc))(reinterpret_cast<long *>(self + 0x388));
+        }
+    }
+    {
+        int rem = M32(self, 0x374) % 0x18;
+        int *ring = reinterpret_cast<int *>(self + rem * 16);
+        ring[0x19] = M32(self, 0x28);
+        ring[0x1a] = edi;
+        ring[0x1b] = M32(self, 0x388);
+        M32(self, (rem + 7) * 16) = M32(self, 0x38c);
+        M32(self, 0x28) = M32(self, 0x28) + edi;
+        (*reinterpret_cast<InterlockedIncrement_t *>(g_006690fc))(reinterpret_cast<long *>(self + 0x374));
+        (*reinterpret_cast<InterlockedIncrement_t *>(g_006690fc))(reinterpret_cast<long *>(self + 0x384));
+        (*reinterpret_cast<InterlockedIncrement_t *>(g_006690fc))(reinterpret_cast<long *>(self + 0x38c));
+    }
+    return 2;
 }

@@ -1,4 +1,8 @@
 // ORIGINAL: 0x005CBE30 FILE
+// RULED-OUT: MISMATCH #9 lea/push - thiscall member with local array frame
+//            layout differs from the original's; register/stack allocation
+//            for the two 91-int DDCAPS scratch buffers does not reproduce
+//            the original's `sub esp, 0x364` + rep-stosd shape byte-for-byte.
 // working copy - scaffold materialised by --work
 // name      sub_5cbe30
 // size      794 bytes
@@ -1246,22 +1250,207 @@ class VCall { public:
 //     int result = fn(obj, arg);
 //
 // This body dispatches COM-style through slot(s): 0, 5, 11, 22
-typedef int (__stdcall *ComSlot000)(void *self);
-typedef int (__stdcall *ComSlot005)(void *self);
-typedef int (__stdcall *ComSlot011)(void *self);
-typedef int (__stdcall *ComSlot022)(void *self);
+// Slot 0 is QueryInterface(self, GUID*, void**); slot 5 is
+// IDirectDraw::CreatePalette(self, dwFlags, LPPALETTEENTRY, LPDIRECTDRAWPALETTE*, IUnknown*);
+// slot 11 is IDirectDraw::GetCaps(self, LPDDCAPS, LPDDCAPS); slot 22 is
+// IDirectDrawSurface::GetSurfaceDesc(self, LPDDSURFACEDESC). The emitter typed
+// all four nullary; every one of these call sites pushes `self` explicitly.
+typedef int (__stdcall *ComSlot000)(void *self, const void *guid, void **out);
+typedef int (__stdcall *ComSlot005)(void *self, int flags, void *color_table, void *out_palette, void *outer);
+typedef int (__stdcall *ComSlot011)(void *self, void *caps_a, void *caps_b);
+typedef int (__stdcall *ComSlot022)(void *self, void *surface_desc);
+// Slots 21 (IDirectDrawSurface::GetPixelFormat) and 31 (::SetPalette) also
+// push `self` explicitly and are not in the VCall list the emitter produced -
+// a detector false negative, so they are declared here by hand.
+typedef int (__stdcall *ComSlot021)(void *self, void *pixel_format);
+typedef int (__stdcall *ComSlot031)(void *self, void *palette);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_0066fc38 = (int *)0x0066FC38;
 static int *const g_009c5f2c = (int *)0x009C5F2C;
-extern "C" int __cdecl sub_5cbe30() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+// The disassembly reads [ecx+N] with no stack access and never sets eax
+// before returning: the receiver is `this`, not a stack parameter, and the
+// function returns nothing. See PROPOSALS in the report for the catalogue
+// side of this change.
+class Obj_005CBE30 { public:
+    void sub_5cbe30();
+};
+
+void Obj_005CBE30::sub_5cbe30() {
+    char *self = reinterpret_cast<char *>(this);
+    char *dev = *(char **)self;
+
+    if (*(int *)(dev + 0x80) != 0) {
+        return;
+    }
+
+    if (*(int *)(dev + 0x10) == 0 && *(int *)(dev + 0xc) != 0) {
+        *(int *)(self + 0x3d4) = 1;
+        void *iface = *(void **)(dev + 0xc);
+        ComSlot000 fn0 = (ComSlot000)(*(void ***)iface)[0];
+        fn0(iface, (const void *)g_0066fc38, (void **)(dev + 0x10));
+    }
+
+    int result_flag;
+
+    if ((*(unsigned int *)(dev + 4) & 0x200) != 0) {
+        int ddcaps_a[91];
+        int ddcaps_b[91];
+        int i;
+        for (i = 0; i < 91; i++) {
+            ddcaps_a[i] = 0;
+        }
+        for (i = 0; i < 91; i++) {
+            ddcaps_b[i] = 0;
+        }
+        ddcaps_a[0] = 0x16c;
+        ddcaps_b[0] = 0x16c;
+
+        void *ddraw_iface = *(void **)(dev + 0x10);
+        ComSlot011 fn11 = (ComSlot011)(*(void ***)ddraw_iface)[11];
+        int gc_result = fn11(ddraw_iface, ddcaps_a, ddcaps_b);
+
+        if (gc_result == 0) {
+            if ((*(unsigned int *)(dev + 8) & 2) != 0 &&
+                (ddcaps_a[1] & 0x2000) != 0 && (ddcaps_a[1] & 0x4000) != 0) {
+                result_flag = 2;
+                goto set_result;
+            }
+            if ((*(unsigned int *)(dev + 8) & 4) != 0 &&
+                (ddcaps_a[1] & 0x100) != 0 && (ddcaps_a[1] & 0x200) != 0) {
+                result_flag = 4;
+                goto set_result;
+            }
+        }
+    }
+    result_flag = 1;
+
+set_result:
+    *(int *)(self + 0x4c) = result_flag;
+    *(int *)(dev + 0x1c) = 0;
+    *(int *)(dev + 0x20) = 0;
+
+    if ((*(unsigned int *)(dev + 4) & 0x800) == 0) {
+        int ddsd[27];
+        int i;
+        for (i = 0; i < 27; i++) {
+            ddsd[i] = 0;
+        }
+        ddsd[0] = 0x6c;
+
+        void *surface_iface = *(void **)(dev + 0x14);
+        ComSlot022 fn22 = (ComSlot022)(*(void ***)surface_iface)[22];
+        int gsd_result = fn22(surface_iface, ddsd);
+        if (gsd_result == 0) {
+            *(int *)(self + 4) = ddsd[3];
+            *(int *)(self + 8) = ddsd[2];
+        }
+
+        surface_iface = *(void **)(dev + 0x14);
+        if (surface_iface != 0) {
+            int pf[8];
+            for (i = 0; i < 8; i++) {
+                pf[i] = 0;
+            }
+            pf[0] = 0x20;
+            ComSlot021 fn21 = (ComSlot021)(*(void ***)surface_iface)[21];
+            fn21(surface_iface, pf);
+
+            if (pf[3] == 8) {
+                *(int *)(dev + 0x48) = 8;
+            } else {
+                int bits_red = 0, bits_green = 0, shift_const, shift_red = 0, shift_green = 0, shift_blue = 0;
+                int j;
+                unsigned int v;
+
+                for (j = 0; j < 0x1f; j++) {
+                    if ((pf[4] & (1 << (j & 0x1f))) != 0) {
+                        bits_red++;
+                    }
+                }
+                *(int *)(dev + 0x2c) = bits_red;
+
+                for (j = 0; j < 0x1f; j++) {
+                    if ((pf[5] & (1 << (j & 0x1f))) != 0) {
+                        bits_green++;
+                    }
+                }
+                *(int *)(dev + 0x30) = bits_green;
+
+                shift_const = sub_5cc430();
+                *(int *)(dev + 0x34) = shift_const;
+
+                for (v = (unsigned int)pf[4]; (v & 1) == 0; v = (unsigned int)((int)v >> 1)) {
+                    shift_red++;
+                }
+                *(int *)(dev + 0x38) = shift_red;
+
+                for (v = (unsigned int)pf[5]; (v & 1) == 0; v = (unsigned int)((int)v >> 1)) {
+                    shift_green++;
+                }
+                *(int *)(dev + 0x3c) = shift_green;
+
+                for (v = (unsigned int)pf[6]; (v & 1) == 0; v = (unsigned int)((int)v >> 1)) {
+                    shift_blue++;
+                }
+                *(int *)(dev + 0x40) = shift_blue;
+
+                *(int *)(dev + 0x48) = bits_red + shift_const + bits_green;
+                *(unsigned int *)(dev + 0x44) = (unsigned int)(pf[6] | pf[5] | pf[4]);
+            }
+        }
+
+        if (*(int *)(dev + 0x48) == 8 && (*(unsigned int *)(dev + 4) & 0x4000000) == 0) {
+            void *buf = malloc(0x400);
+            *(void **)(dev + 0x28) = buf;
+
+            void *ddraw_iface = *(void **)(dev + 0x10);
+            ComSlot005 fn5 = (ComSlot005)(*(void ***)ddraw_iface)[5];
+            fn5(ddraw_iface, 0x44, *(void **)(dev + 0x28), dev + 0x24, 0);
+
+            int *pal_buf = (int *)*(void **)(dev + 0x28);
+            for (i = 0; i < 0x100; i++) {
+                pal_buf[i] = 0;
+            }
+
+            void *surface_iface2 = *(void **)(dev + 0x14);
+            ComSlot031 fn31 = (ComSlot031)(*(void ***)surface_iface2)[31];
+            fn31(surface_iface2, *(void **)(dev + 0x24));
+        }
+    }
+
+    if ((*(unsigned int *)(dev + 4) & 0x100000) == 0) {
+        *(int *)(dev + 0x78) = 100;
+    }
+
+    if (*(int *)(dev + 0x48) == 0x10 || *(int *)(dev + 0x48) == 0xf) {
+        sub_5cc150(*(int *)(dev + 0x30), *(int *)(dev + 0x34), *(int *)(dev + 0x38),
+                   *(int *)(dev + 0x3c), *(int *)(dev + 0x40));
+    } else {
+        sub_5cc2b0();
+    }
+
+    sub_5cc450();
+
+    {
+        int v;
+        for (v = -0x200; v < 0x200; v++) {
+            int clamped;
+            if (v < -0x80) {
+                clamped = -0x80;
+            } else {
+                clamped = v;
+                if (clamped > 0x7f) {
+                    clamped = 0x7f;
+                }
+            }
+            unsigned int idx = (unsigned int)(v - 0x180);
+            ((int *)g_009c5f2c)[idx & 0x3ff] = clamped + 0x80;
+        }
+    }
+
+    *(int *)(self + 0x3c) = 1;
 }

@@ -1,4 +1,7 @@
 // ORIGINAL: 0x0060D380 FILE
+// RULED-OUT: full Ghidra-derived arithmetic transliteration (vtbl[1]/vtbl[2]
+//            base offsets, Buffer receiver fixed up) compiles and matches
+//            logic; MISMATCH #1 is prologue register-save order, not chased.
 // working copy - scaffold materialised by --work
 // name      ?calculate_dimensions@RadioButton@@QAEHXZ
 // size      965 bytes
@@ -1322,11 +1325,173 @@ class RadioButton { public:
     int calculate_dimensions();
 };
 int RadioButton::calculate_dimensions() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *thisPtr = reinterpret_cast<char *>(this);
+    int *vtbl = *reinterpret_cast<int **>(thisPtr);
+    int vtOff1 = vtbl[1];
+    int vtOff2 = vtbl[2];
+    char *base = thisPtr + vtOff2;
+    Buffer *buf = reinterpret_cast<Buffer *>(thisPtr + vtOff1 + 0x444);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    if (*reinterpret_cast<int *>(base + 0xcc) == 0) {
+        return 7;
+    }
+
+    buf->set_text_color(*reinterpret_cast<int *>(base + 0x7c),
+                         *reinterpret_cast<int *>(base + 0x88),
+                         *reinterpret_cast<int *>(base + 0x94),
+                         *reinterpret_cast<int *>(base + 0xa0));
+    buf->set_text_color2(*reinterpret_cast<int *>(base + 0x80),
+                          *reinterpret_cast<int *>(base + 0x8c),
+                          *reinterpret_cast<int *>(base + 0x98),
+                          *reinterpret_cast<int *>(base + 0xa4));
+    buf->set_text_color3(*reinterpret_cast<int *>(base + 0x84),
+                          *reinterpret_cast<int *>(base + 0x90),
+                          *reinterpret_cast<int *>(base + 0x9c),
+                          *reinterpret_cast<int *>(base + 0xa8));
+    buf->set_font(reinterpret_cast<Font *>(*reinterpret_cast<int *>(base + 0x70)),
+                  reinterpret_cast<Font *>(*reinterpret_cast<int *>(base + 0x74)),
+                  reinterpret_cast<Font *>(*reinterpret_cast<int *>(base + 0x78)),
+                  0);
+
+    if (*reinterpret_cast<int *>(thisPtr + vtOff2 + 0x34) == 0 &&
+        *reinterpret_cast<int *>(thisPtr + 4) != 0 &&
+        *reinterpret_cast<int *>(thisPtr + 8) != 0) {
+        int v1 = *reinterpret_cast<int *>(*reinterpret_cast<int *>(thisPtr + 8) + 0x18);
+        int v2 = *reinterpret_cast<int *>(*reinterpret_cast<int *>(thisPtr + 4) + 0x18);
+        if (v2 > v1) v1 = v2;
+        *reinterpret_cast<int *>(thisPtr + vtOff2 + 0x34) = v1;
+    }
+
+    int fortyEight = *reinterpret_cast<int *>(base + 0x48);
+    if (fortyEight == -1) {
+        if (*reinterpret_cast<int *>(thisPtr + 4) == 0 || *reinterpret_cast<int *>(thisPtr + 8) == 0) {
+            *reinterpret_cast<int *>(base + 0x68) = 0;
+        } else {
+            int v1 = *reinterpret_cast<int *>(*reinterpret_cast<int *>(thisPtr + 8) + 0x1c);
+            int v2 = *reinterpret_cast<int *>(*reinterpret_cast<int *>(thisPtr + 4) + 0x1c);
+            if (v1 < v2) v1 = v2;
+            *reinterpret_cast<int *>(base + 0x68) = v1;
+        }
+    } else {
+        *reinterpret_cast<int *>(base + 0x68) = fortyEight;
+    }
+
+    {
+        int a = *reinterpret_cast<int *>(base + 0x50);
+        int b = *reinterpret_cast<int *>(base + 0xcc);
+        if (a <= b) b = a;
+        *reinterpret_cast<int *>(base + 0x58) = b;
+    }
+    {
+        int a = *reinterpret_cast<int *>(base + 0x58);
+        int b = *reinterpret_cast<int *>(base + 0xcc);
+        if (a < b) {
+            int cols = b / a + 1;
+            *reinterpret_cast<int *>(base + 0x4c) = cols;
+            int rows = b / cols;
+            *reinterpret_cast<int *>(base + 0x58) = rows;
+            if (cols * rows < b) {
+                *reinterpret_cast<int *>(base + 0x58) = rows + 1;
+            }
+        }
+    }
+
+    int maxWidth;
+    if ((*reinterpret_cast<unsigned char *>(base + 0x20) & 2) == 0 ||
+        *reinterpret_cast<int *>(base + 0x2c) == 0) {
+        maxWidth = 100000;
+    } else {
+        maxWidth = (*reinterpret_cast<int *>(base + 0x2c) / *reinterpret_cast<int *>(base + 0x4c) +
+                    *reinterpret_cast<int *>(base + 0x40) * -2) -
+                   *reinterpret_cast<int *>(base + 0x34);
+    }
+
+    int maxTextWidth = 0;
+    int count = *reinterpret_cast<int *>(base + 0xcc);
+    if (count > 0) {
+        int idx = 0;
+        do {
+            int flagC4 = *reinterpret_cast<int *>(base + 0xc4);
+            if (flagC4 != 0) {
+                int *nodePtr = reinterpret_cast<int *>(base + 0xc8);
+                int node = *nodePtr;
+                *nodePtr = *reinterpret_cast<int *>(node + 0xc);
+                int posIdx = *reinterpret_cast<int *>(base + 0xd0) + 1;
+                *reinterpret_cast<int *>(base + 0xd0) = posIdx;
+                if (posIdx == *reinterpret_cast<int *>(base + 0xcc)) {
+                    *reinterpret_cast<int *>(base + 0xd0) = 0;
+                }
+            }
+            int node2 = *reinterpret_cast<int *>(base + 0xc8);
+            char *textArgPtr;
+            if (node2 == 0) {
+                textArgPtr = 0;
+            } else if (flagC4 != 0) {
+                textArgPtr = reinterpret_cast<char *>(*reinterpret_cast<int *>(*reinterpret_cast<int *>(node2 + 8) + 4));
+            } else {
+                textArgPtr = reinterpret_cast<char *>(*reinterpret_cast<int *>(4));
+            }
+            int w = buf->text_width(textArgPtr);
+            if (maxTextWidth < w) {
+                maxTextWidth = w;
+            }
+            int iVar3;
+            if (*reinterpret_cast<int *>(base + 0xc4) == 0) {
+                iVar3 = 0;
+            } else {
+                iVar3 = *reinterpret_cast<int *>(*reinterpret_cast<int *>(base + 0xc8) + 8);
+            }
+            idx++;
+            *reinterpret_cast<int *>(iVar3 + 8) = w / maxWidth + 1;
+        } while (idx < *reinterpret_cast<int *>(base + 0xcc));
+    }
+
+    *reinterpret_cast<int *>(base + 0x64) = *reinterpret_cast<int *>(base + 0x44) +
+                                             *reinterpret_cast<int *>(base + 0x34) + maxTextWidth;
+
+    {
+        int origVal = *reinterpret_cast<int *>(base + 0x68);
+        int h1 = buf->text_height();
+        int result;
+        if (origVal <= h1) {
+            result = buf->text_height();
+        } else {
+            result = origVal;
+        }
+        *reinterpret_cast<int *>(base + 0x68) = result;
+    }
+
+    unsigned char flag20 = *reinterpret_cast<unsigned char *>(base + 0x20);
+    int val2c = *reinterpret_cast<int *>(base + 0x2c);
+    if ((flag20 & 2) == 0 || val2c == 0) {
+        int v40x2 = *reinterpret_cast<int *>(base + 0x40) * 2;
+        int prod = *reinterpret_cast<int *>(base + 0x64) * *reinterpret_cast<int *>(base + 0x4c) + v40x2;
+        int alt = v40x2 + *reinterpret_cast<int *>(base + 0x2c);
+        if (alt <= prod) alt = prod;
+        *reinterpret_cast<int *>(base + 0x5c) = alt;
+        int a = *reinterpret_cast<int *>(base + 0x5c) + *reinterpret_cast<int *>(base + 0x40) * -2;
+        *reinterpret_cast<int *>(base + 0x64) = a / *reinterpret_cast<int *>(base + 0x4c) - *reinterpret_cast<int *>(base + 0x44);
+        *reinterpret_cast<int *>(base + 0x5c) = *reinterpret_cast<int *>(base + 0x5c) - *reinterpret_cast<int *>(base + 0x44);
+    } else {
+        *reinterpret_cast<int *>(base + 0x5c) = val2c;
+        int a = val2c + *reinterpret_cast<int *>(base + 0x40) * -2;
+        *reinterpret_cast<int *>(base + 0x64) = a / *reinterpret_cast<int *>(base + 0x4c) - *reinterpret_cast<int *>(base + 0x44);
+    }
+
+    *reinterpret_cast<int *>(base + 0x54) = *reinterpret_cast<int *>(base + 0x4c);
+
+    unsigned char flag20b = *reinterpret_cast<unsigned char *>(base + 0x20);
+    if ((flag20b & 1) != 0) {
+        int v30 = *reinterpret_cast<int *>(base + 0x30);
+        if (v30 != 0) {
+            *reinterpret_cast<int *>(base + 0x60) = v30;
+            *reinterpret_cast<int *>(base + 0x58) =
+                *reinterpret_cast<int *>(base + 0x30) / *reinterpret_cast<int *>(base + 0x68);
+            return 0;
+        }
+    }
+    *reinterpret_cast<int *>(base + 0x60) =
+        (*reinterpret_cast<int *>(base + 0x68) + *reinterpret_cast<int *>(base + 0x44)) *
+        *reinterpret_cast<int *>(base + 0x58);
+    return 0;
 }

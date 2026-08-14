@@ -1,4 +1,9 @@
 // ORIGINAL: 0x005D3980 FILE
+// RULED-OUT: __fastcall(int *, unsigned int *) direct transcription of the
+//            Ghidra decompile (malloc/free node-buffer growth, 10-bit signed
+//            coefficient unpack, memcpy raw blocks, 2-bit nibble pixel
+//            expansion, two helper calls); diverges at insn #4 in the
+//            prologue register-save order, not in control flow
 // working copy - scaffold materialised by --work
 // name      sub_5d3980
 // size      1136 bytes
@@ -1176,16 +1181,140 @@ const int RadiusOffsetY[] = {0, -1, 0, 1, 2, 1, 0, -1, -2, -2, 2, 2, -2, -3, -1,
 const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-extern "C" int __cdecl sub_5d439f();
-extern "C" int __cdecl sub_5d4448();
+extern "C" int __cdecl sub_5d439f(int, void *, unsigned int, unsigned int);
+extern "C" int __cdecl sub_5d4448(int, int, int, int, int, int, unsigned int, unsigned int, unsigned int);
 extern "C" void *malloc(unsigned int);
 extern "C" void free(void *);
-extern "C" int __cdecl sub_5d3980() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+extern "C" void *memcpy(void *, const void *, unsigned int);
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+extern "C" int __fastcall sub_5d3980(int *param_1, unsigned int *param_2) {
+    int *piVar1;
+    int iVar2, iVar11, iVar13;
+    unsigned int uVar3, uVar4, uVar5, uVar6, uVar8, uVar9, uVar10, uVar15;
+    void *pvVar7;
+    unsigned int *puVar12, *puVar14, *puVar16, *puVar18;
+    unsigned char *puVar17;
+    int flagOK;
+
+    iVar13 = param_1[399];
+    flagOK = 1;
+    param_1[399] = param_1[0x18e];
+    param_1[0x18e] = iVar13;
+    uVar3 = *(unsigned int *)((int)param_2 + -2) >> 0x10;
+    param_1[0x188] = uVar3;
+    uVar4 = *param_2 >> 0x10;
+    param_1[0x189] = uVar4;
+    uVar5 = *(unsigned int *)((int)param_2 + 2) >> 0x10;
+    param_1[0x18a] = uVar5;
+    uVar6 = param_2[1] >> 0x10;
+    param_1[0x18b] = uVar6;
+    if (uVar3 != 0) {
+        if (param_1[0x18c] < (int)uVar3) {
+            if (param_1[0x193] != 0) {
+                free((void *)param_1[0x193]);
+                param_1[0x193] = 0;
+                param_1[0x18c] = 0;
+            }
+            if (param_1[0x194] != 0) {
+                free((void *)param_1[0x194]);
+                param_1[0x194] = 0;
+            }
+        }
+        if (param_1[0x193] == 0) {
+            pvVar7 = malloc(uVar3 * 8);
+            param_1[0x193] = (int)pvVar7;
+            param_1[0x18c] = uVar3;
+        }
+        if (param_1[0x194] == 0) {
+            pvVar7 = malloc(uVar3 * 4);
+            param_1[0x194] = (int)pvVar7;
+            param_1[0x18c] = uVar3;
+        }
+        flagOK = param_1[0x193] != 0;
+        if (param_1[0x194] == 0) {
+            flagOK = 0;
+        }
+    }
+    iVar13 = uVar5 + uVar4;
+    if (iVar13 != 0) {
+        if ((param_1[0x18d] < iVar13) && (param_1[0x192] != 0)) {
+            free((void *)param_1[0x192]);
+            param_1[0x192] = 0;
+        }
+        if (param_1[0x192] == 0) {
+            pvVar7 = malloc(iVar13 * 0x10);
+            param_1[0x192] = (int)pvVar7;
+            param_1[0x18d] = iVar13;
+        }
+        if (param_1[0x192] == 0) {
+            return 0;
+        }
+    }
+    if (flagOK != 0) {
+        uVar10 = uVar3 * 2;
+        uVar15 = uVar3 * 0x14;
+        puVar12 = (unsigned int *)(param_1[0x193] + uVar3 * 8);
+        uVar8 = uVar3;
+        while (uVar8 != 0) {
+            uVar15 = uVar15 - 10;
+            uVar8 = *(unsigned int *)((int)param_2 + (uVar15 >> 3) + 0xc) >> (uVar15 & 7);
+            uVar9 = uVar8 & 0x3ff;
+            if ((uVar8 & 0x200) != 0) {
+                uVar9 = uVar9 | 0xfffffc00;
+            }
+            puVar12 = puVar12 - 1;
+            *puVar12 = uVar9;
+            uVar10 = uVar10 - 1;
+            uVar8 = uVar10;
+        }
+        iVar13 = *(int *)(*param_1 + 0x60);
+        iVar2 = param_1[0x191];
+        iVar11 = 0;
+        if (uVar3 != 0) {
+            do {
+                piVar1 = (int *)(param_1[0x193] + iVar11 * 8);
+                *(int *)(param_1[0x194] + iVar11 * 4) =
+                    *(int *)(iVar2 + iVar13 * 4 + piVar1[1] * 4) + *piVar1;
+                iVar11 = iVar11 + 1;
+            } while (iVar11 < (int)uVar3);
+        }
+        puVar14 = (unsigned int *)((int)param_2 + (((int)(uVar3 * 0x14 + 0x1f) >> 3) & 0xfffffffc) + 0xc);
+        if (uVar4 != 0) {
+            memcpy((void *)param_1[0x192], puVar14, uVar4 * 0x10);
+        }
+        puVar14 = puVar14 + uVar4 * 4;
+        if (uVar5 != 0) {
+            puVar17 = (unsigned char *)(param_1[0x192] + uVar4 * 0x10);
+            puVar16 = puVar14;
+            for (uVar3 = uVar5; uVar3 != 0; uVar3 = uVar3 - 1) {
+                uVar4 = puVar16[1];
+                puVar17[0xf] = *((unsigned char *)puVar16 + (uVar4 & 3));
+                puVar17[0xe] = *((unsigned char *)puVar16 + (uVar4 >> 2 & 3));
+                puVar17[0xd] = *((unsigned char *)puVar16 + (uVar4 >> 4 & 3));
+                puVar17[0xc] = *((unsigned char *)puVar16 + (uVar4 >> 6 & 3));
+                puVar17[0xb] = *((unsigned char *)puVar16 + (uVar4 >> 8 & 3));
+                puVar17[10] = *((unsigned char *)puVar16 + (uVar4 >> 10 & 3));
+                puVar17[9]  = *((unsigned char *)puVar16 + (uVar4 >> 0xc & 3));
+                puVar17[8]  = *((unsigned char *)puVar16 + (uVar4 >> 0xe & 3));
+                puVar17[7]  = *((unsigned char *)puVar16 + (uVar4 >> 0x10 & 3));
+                puVar17[6]  = *((unsigned char *)puVar16 + (uVar4 >> 0x12 & 3));
+                puVar17[5]  = *((unsigned char *)puVar16 + (uVar4 >> 0x14 & 3));
+                puVar17[4]  = *((unsigned char *)puVar16 + (uVar4 >> 0x16 & 3));
+                puVar17[3]  = *((unsigned char *)puVar16 + (uVar4 >> 0x18 & 3));
+                puVar17[2]  = *((unsigned char *)puVar16 + (uVar4 >> 0x1a & 3));
+                puVar17[1]  = *((unsigned char *)puVar16 + (uVar4 >> 0x1c & 3));
+                puVar17[0]  = *((unsigned char *)puVar16 + (uVar4 >> 0x1e));
+                puVar16 = puVar16 + 2;
+                puVar17 = puVar17 + 0x10;
+            }
+        }
+        uVar3 = (unsigned int)(*(int *)(*param_1 + 100) * *(int *)(*param_1 + 0x60)) >> 4;
+        if ((uVar6 * uVar3 + 0x1f & 0xffffffe0) != 0) {
+            sub_5d439f(param_1[400], puVar14 + uVar5 * 2, uVar3, uVar6);
+        }
+        uVar3 = *(unsigned int *)(*param_1 + 100);
+        sub_5d4448(param_1[400], param_1[399], param_1[0x18e], param_1[0x188], param_1[0x194],
+                    param_1[0x192], uVar3, uVar3 >> 2, *(unsigned int *)(*param_1 + 0x60) >> 2);
+    }
+    return flagOK;
 }

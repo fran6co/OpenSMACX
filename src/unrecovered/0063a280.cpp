@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0063A280 FILE
+// RULED-OUT: __cdecl(int,int,int,int) direct transcription of the Ghidra
+//            decompile (per-item bbox accumulation via sub_6280e0/628150/
+//            6385d0/6282e0/627e20/63f5e0, two parallel min/max passes for
+//            two bbox slots at param_1+8 and param_1+0x20); diverges at
+//            insn #13, no-frame ESP-relative local layout not reproduced
 // working copy - scaffold materialised by --work
 // name      sub_63a280
 // size      1136 bytes
@@ -1176,12 +1181,12 @@ const int RadiusOffsetY[] = {0, -1, 0, 1, 2, 1, 0, -1, -2, -2, 2, 2, -2, -3, -1,
 const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
-extern "C" int __cdecl sub_627e20();
-extern "C" int __cdecl sub_6280e0();
-extern "C" int __cdecl sub_628150();
-extern "C" int __cdecl sub_6282e0();
-extern "C" int __cdecl sub_6385d0();
-extern "C" int __cdecl sub_63f5e0();
+extern "C" void __cdecl sub_627e20(void *, int, void *);
+extern "C" void __cdecl sub_6280e0(void *, int, void *);
+extern "C" void __cdecl sub_628150(void *, void *, void *);
+extern "C" int __cdecl sub_6282e0(void *, float, int);
+extern "C" int __cdecl sub_6385d0(int, int);
+extern "C" void __cdecl sub_63f5e0(int, int, void *, void *, void *, int *);
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -1196,12 +1201,123 @@ static int *const g_009c0b2c = (int *)0x009C0B2C;
 static int *const g_009c0b50 = (int *)0x009C0B50;
 static int *const g_009c0b54 = (int *)0x009C0B54;
 static int *const g_009c0b58 = (int *)0x009C0B58;
-extern "C" int __cdecl sub_63a280() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+extern "C" void __cdecl sub_63a280(int param_1, int param_2, int param_3, int param_4) {
+    int cVar2;
+    int iVar3;
+    int iVar4, iVar6, iVar7;
+    int *piVar5;
+    int *piVar8;
+    float vecA[2];    // local_84, local_80
+    float vecB[9];    // local_78..local_58
+    int bbox[12];     // local_54[12]
+    float scaleFactor; // local_24
+    int idx20;
+    int idx1c;
+    int outResult[6]; // local_18, local_14, local_10, local_c, local_8, local_4
+    int uVar1;
+    int i;
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    bbox[6] = 0x7fff;
+    bbox[7] = 0x7fff;
+    bbox[0] = 0x7fff;
+    bbox[1] = 0x7fff;
+    bbox[8] = -0x7fff;
+    bbox[9] = -0x7fff;
+    bbox[2] = -0x7fff;
+    bbox[3] = -0x7fff;
+    idx1c = 0;
+    iVar3 = -0x7fff;
+    iVar4 = -0x7fff;
+    iVar6 = -0x7fff;
+    iVar7 = -0x7fff;
+    if (0 < *(int *)(param_2 + 4)) {
+        idx20 = 0;
+        do {
+            piVar5 = (int *)(idx20 + *(int *)(param_2 + 0xc));
+            if ((*(unsigned char *)(*piVar5 + param_4) & 0x80) == 0) {
+                uVar1 = *(int *)(*(int *)(param_2 + 0x10) + 4 + idx1c * 8);
+                sub_6280e0(g_009c0ad8, param_4 * 0xc + piVar5[1], vecA);
+                sub_628150(vecA, g_009c0acc, vecA);
+                iVar3 = sub_6385d0(uVar1, *g_009c0b00);
+                cVar2 = sub_6282e0(vecA, *(float *)(iVar3 + 8), param_3);
+                if (cVar2 == 0) {
+                    sub_627e20(g_009c0ad8, piVar5[2] + param_4 * 0x24, vecB);
+                    vecB[0] = vecB[0] * *(float *)(iVar3 + 8);
+                    vecB[1] = vecB[1] * *(float *)(iVar3 + 8);
+                    vecB[2] = vecB[2] * *(float *)(iVar3 + 8);
+                    vecB[3] = vecB[3] * *(float *)(iVar3 + 8);
+                    vecB[4] = vecB[4] * *(float *)(iVar3 + 8);
+                    vecB[5] = vecB[5] * *(float *)(iVar3 + 8);
+                    vecB[6] = vecB[6] * *(float *)(iVar3 + 8);
+                    vecB[7] = vecB[7] * *(float *)(iVar3 + 8);
+                    vecB[8] = vecB[8] * *(float *)(iVar3 + 8);
+                    sub_63f5e0(param_1, iVar3, vecA, vecB, g_009c0b08, outResult);
+                    if ((outResult[4] != 0) && (outResult[5] != 0)) {
+                        if (outResult[0] < bbox[0]) bbox[0] = outResult[0];
+                        if (outResult[1] < bbox[1]) bbox[1] = outResult[1];
+                        if (bbox[2] < outResult[2]) bbox[2] = outResult[2];
+                        if (bbox[3] < outResult[3]) bbox[3] = outResult[3];
+                    }
+                }
+                if ((*(char *)(param_2 + 0x8c) != 0) && (*(int *)(*(int *)(param_1 + 4) + 8) != 0)) {
+                    sub_6280e0(g_009c0b2c, param_4 * 0xc + piVar5[1], vecA);
+                    sub_628150(vecA, g_009c0b20, vecA);
+                    scaleFactor = *(float *)(iVar3 + 8) * *(float *)g_00671014;
+                    if ((-(scaleFactor * *(float *)g_009c0b50) <= vecA[0]) &&
+                        (((vecA[0] <= (float)*(int *)(param_3 + 0x58) + scaleFactor * *(float *)g_009c0b50) &&
+                          (-(scaleFactor * *(float *)g_009c0b54) <= vecA[1])) &&
+                         (vecA[1] <= (float)*(int *)(param_3 + 0x5c) + scaleFactor * *(float *)g_009c0b54))) {
+                        sub_627e20(g_009c0b2c, piVar5[2] + param_4 * 0x24, vecB);
+                        vecB[0] = vecB[0] * *(float *)(iVar3 + 8);
+                        vecB[1] = vecB[1] * *(float *)(iVar3 + 8);
+                        vecB[2] = vecB[2] * *(float *)(iVar3 + 8);
+                        vecB[3] = vecB[3] * *(float *)(iVar3 + 8);
+                        vecB[4] = vecB[4] * *(float *)(iVar3 + 8);
+                        vecB[5] = vecB[5] * *(float *)(iVar3 + 8);
+                        sub_63f5e0(param_1, iVar3, vecA, vecB, g_009c0b58, outResult);
+                        if ((outResult[4] != 0) && (outResult[5] != 0)) {
+                            if (outResult[0] < bbox[6]) bbox[6] = outResult[0];
+                            if (outResult[1] < bbox[7]) bbox[7] = outResult[1];
+                            if (bbox[8] < outResult[2]) bbox[8] = outResult[2];
+                            if (bbox[9] < outResult[3]) bbox[9] = outResult[3];
+                        }
+                    }
+                }
+            }
+            idx1c = idx1c + 1;
+            idx20 = idx20 + 0xc;
+            iVar3 = bbox[3];
+            iVar4 = bbox[8];
+            iVar6 = bbox[9];
+            iVar7 = bbox[2];
+        } while (idx1c < *(int *)(param_2 + 4));
+    }
+    if ((iVar7 < 0) || (iVar3 < 0)) {
+        bbox[4] = 0;
+        bbox[5] = 0;
+    } else {
+        bbox[4] = (iVar7 - bbox[0]) + 1;
+        bbox[5] = (iVar3 - bbox[1]) + 1;
+    }
+    piVar5 = bbox;
+    piVar8 = (int *)(param_1 + 8);
+    for (i = 6; i != 0; i = i - 1) {
+        *piVar8 = *piVar5;
+        piVar5 = piVar5 + 1;
+        piVar8 = piVar8 + 1;
+    }
+    if ((iVar4 < 0) || (iVar6 < 0)) {
+        bbox[10] = 0;
+        bbox[11] = 0;
+    } else {
+        bbox[10] = (iVar4 - bbox[6]) + 1;
+        bbox[11] = (iVar6 - bbox[7]) + 1;
+    }
+    piVar5 = bbox + 6;
+    piVar8 = (int *)(param_1 + 0x20);
+    for (i = 6; i != 0; i = i - 1) {
+        *piVar8 = *piVar5;
+        piVar5 = piVar5 + 1;
+        piVar8 = piVar8 + 1;
+    }
 }
