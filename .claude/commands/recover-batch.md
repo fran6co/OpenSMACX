@@ -15,10 +15,25 @@ subagents only score candidates. Follow these six steps in order.
 ```
 
 This is already joined against `annotation_scan`, so it will not hand out work
-`src/` has proved. Take the top **n** by callers — a zero-caller leaf unblocks
-nothing and does not count as progress.
+`src/` has proved, nor anything measured `SHARED_TAIL` or `REFUSED`. Take the
+top **n** by callers — a zero-caller leaf unblocks nothing and does not count
+as progress.
 
 Do not select by address order. It correlates with nothing.
+
+**When the leaf queue is empty, the leaf strategy is finished, not the work.**
+As of 2026-08-14 there are no fresh leaves left under 512 bytes at all. What
+remains is two populations, and they need different handouts:
+
+- ~350 addresses with **no body at all**, every one 500 B or more and most of
+  them virtual handlers reached only through a vtable, so they have zero
+  direct callers and will never appear in a leaf queue. These are the
+  coverage gap. Rank them by size ascending and hand them out directly.
+- ~3,700 that have a body which does not match. This is IMPROVE work, and the
+  brief must carry the incumbent body.
+
+Ranking by callers is right while leaves exist and is meaningless afterwards;
+say which population a batch came from when you report it.
 
 ## 2. Prepare
 
@@ -32,19 +47,36 @@ This materialises the scaffold over the placeholder, with `mizuchi_declfix`
 applied — so the unit an agent iterates on is the unit that will bank the
 result. One address is one file, so no two agents can collide.
 
-## 3. Brief
+## 3. Brief — the AGENT generates it, not you
 
 ```sh
 .opensmacx/venv/bin/python tools/agent_brief.py <addr> [--tier T --note "..."]
 ```
 
-The output **is** the prompt. Pass the tier and note if you already measured
-them in a previous collect; otherwise the brief measures that one function.
+The output **is** the prompt for that one function. **Tell each agent to run
+this itself, per address, as its first step.** Do not generate the briefs and
+paste them into the handout.
+
+A brief is a SNAPSHOT. Pasting it freezes the tool as it stood when the batch
+was selected, and a batch runs for a long time: batch 11 taught 13 agents the
+`// LEVER:` convention backwards and all 13 landings had to be demoted, batch
+12 handed two agents mutually exclusive instructions, and a mid-batch fix to
+`verify_recovered_function.py` never reached the agents already holding a
+brief — two of them worked around the stale refusal by hand. An agent that
+generates its own brief has the current one by construction, and the failure
+mode disappears instead of being remembered.
+
+It also keeps the coordinator's context free, which is what lets a batch be
+48 addresses instead of 12.
 
 ## 4. Fan out
 
 Launch `byte-match-recovery` subagents, **at most 6 concurrently**, 6–8
-addresses each. Give each agent its addresses and the full brief for each.
+addresses each. Give each agent its addresses, the command above, and the
+standing rules: land the body in the ONE file the brief names (a body left in
+`/tmp` banks nothing), report the verdict line verbatim, no `__asm`, no `git`,
+and never edit the `// name` / `// size` / `// spans` / `// calls` fact lines —
+those are the catalogue it is being measured against.
 
 Six is a measured ceiling, not a guess: every VC6 compile runs against the one
 prefix at `~/opt/vc6/.wineprefix`, `byte_match.compile_batches` already runs up
