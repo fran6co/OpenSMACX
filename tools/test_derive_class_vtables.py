@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import derive_class_vtables as vtables  # noqa: E402
+import emit_translation_unit as emit  # noqa: E402
 
 
 class SharedSpanTests(unittest.TestCase):
@@ -109,6 +110,76 @@ class CollisionTests(unittest.TestCase):
         self.assertEqual({}, found.collisions())
 
 
+class ClassOfTests(unittest.TestCase):
+    """Which class a mangled member name belongs to.
+
+    A DIFFERENT QUESTION from `annotation_scan.subject_identifier`, which
+    answers `close` for `?close@StringStruct@@` because it is looking for the
+    definition to compile. Here the answer is `StringStruct`. Two decoders
+    because there are two questions, and each says so.
+    """
+
+    def test_a_method_belongs_to_its_class(self):
+        self.assertEqual("StringStruct",
+                         vtables._class_of("?close@StringStruct@@QAEXXZ"))
+
+    def test_a_deleting_destructor_belongs_to_its_class(self):
+        self.assertEqual("AlphaMovie",
+                         vtables._class_of("??_GAlphaMovie@@UAEPAXI@Z"))
+
+    def test_a_constructor_belongs_to_its_class(self):
+        self.assertEqual("Patch", vtables._class_of("??0Patch@@QAE@XZ"))
+
+    def test_a_free_function_belongs_to_no_class(self):
+        self.assertIsNone(vtables._class_of("?mem_get@@YAPAXH@Z"))
+
+    def test_an_unmangled_name_belongs_to_no_class(self):
+        self.assertIsNone(vtables._class_of("sub_4482f0"))
+        self.assertIsNone(vtables._class_of(""))
+
+
+class SlotTests(unittest.TestCase):
+    """Where a vtable's run of function pointers stops."""
+
+    @classmethod
+    def setUpClass(cls):
+        if not vtables.DEFAULT_EXE.is_file():
+            raise unittest.SkipTest("the pinned executable is absent")
+        cls.found = vtables.derive()
+        cls.image = vtables.Image(vtables.DEFAULT_EXE)
+        cls.heads = cls.found.heads()
+
+    def slots(self, head):
+        return vtables.slot_targets(self.image, head, self.heads)
+
+    def test_an_adjacent_vtable_stops_the_run(self):
+        """`AlphaMovie`'s two vtables sit EIGHT BYTES apart - 0x00669450 and
+        0x00669458 - so a run that only watched for a non-code dword would
+        read the second as more slots of the first."""
+        self.assertEqual(2, len(self.slots(0x669450)))
+
+    def test_the_run_after_it_is_its_own(self):
+        self.assertGreater(len(self.slots(0x669458)), 2)
+
+    def test_the_first_slot_is_the_deleting_destructor(self):
+        held = self.slots(0x669458)[0]
+        row = emit.load_functions().get(held) or {}
+        self.assertEqual("??_GAlphaMovie@@UAEPAXI@Z", row.get("name"))
+
+    def test_no_run_reaches_the_next_head(self):
+        """The bound held over all 149, not only over the pair that motivated
+        it. A run that crossed into the next table would attribute another
+        class's virtuals to this one, which is precisely the mistake that
+        makes a converted class dispatch wrong at run time."""
+        for head in self.heads:
+            following = next((one for one in self.heads if one > head), None)
+            if following is None:
+                continue
+            self.assertLessEqual(head + 4 * len(self.slots(head)), following,
+                                 f"the run from 0x{head:08X} crossed "
+                                 f"0x{following:08X}")
+
+
 class TreeTests(unittest.TestCase):
     """The derivation over the real catalogue and the real image."""
 
@@ -127,6 +198,17 @@ class TreeTests(unittest.TestCase):
     def test_every_primary_is_a_distinct_address(self):
         primary = self.found.primary()
         self.assertEqual(len(primary), len(set(primary.values())))
+
+    def test_every_slot_lands_on_a_function_s_first_byte(self):
+        """A pointer into the MIDDLE of a function means the walk read past
+        the end of its own table. All 6,292 land on an entry point."""
+        catalogue = emit.load_functions()
+        heads = self.found.heads()
+        image = vtables.Image(vtables.DEFAULT_EXE)
+        stray = [(key, target) for key, head in self.found.vtable.items()
+                 for target in vtables.slot_targets(image, head, heads)
+                 if target not in catalogue]
+        self.assertEqual([], stray)
 
     def test_the_retired_ledger_is_not_reproduced(self):
         """0x006698C4 is the address `vtables.csv` gave to 15 classes. If the
