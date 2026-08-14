@@ -756,5 +756,90 @@ class OverloadDeclarationTests(unittest.TestCase):
         self.assertFalse(same)
 
 
+class EmbedsTheSubjectTests(unittest.TestCase):
+    """A class holding the SUBJECT by value must not be emitted with it.
+
+    The subject's class is emitted LAST, because its methods go with its
+    definition. `emitted_bases` already flattens a class that DERIVES from the
+    subject for exactly this reason; a by-value MEMBER needed the same
+    treatment and was not getting it, so the shell carried a member of an
+    incomplete type - `C2079`, before the body is reached, unfixable from
+    inside the body.
+
+    MEASURED 2026-08-14 on the real image: `Scroll` holds `FlatButton
+    flat_button_left_/_right_` by value, so every unit whose subject is a
+    `FlatButton` method emitted `Scroll` above the undefined `FlatButton`.
+    0x00607CF0 and 0x00608660 both reproduced it WITH AN EMPTY BODY, and after
+    the fix both compile (MISMATCH, from NO_COMPILE). One agent had worked
+    around it by hand and the address then went BYTE_EXACT, so it was costing
+    recoveries, not just time.
+    """
+
+    def test_the_two_measured_addresses_compile(self):
+        # The end-to-end claim, run against the pinned image. This is the test
+        # that would have caught the defect: it asks whether the SCAFFOLD is
+        # buildable, which no unit test of the ordering function can answer.
+        import byte_match
+        if not byte_match.DEFAULT_EXE.is_file():
+            self.skipTest("the pinned executable is absent")
+        import pefile
+        import tempfile
+        from pathlib import Path as _Path
+        pe = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+        functions = tool.load_functions()
+        derived, callees = tool.load_derived(), tool.load_callees()
+        flags = byte_match.FLAG_SETS[0]
+        if isinstance(flags, (list, tuple)):
+            flags = flags[-1]
+        with tempfile.TemporaryDirectory() as tmp:
+            for address in (0x00607CF0, 0x00608660):
+                whole = tool.emit(address, functions, derived, callees, pe)
+                outcome = byte_match.match_function(
+                    pe, functions, set(), address, whole, _Path(tmp), flags)
+                self.assertNotEqual(
+                    outcome.get("tier"), "NO_COMPILE",
+                    f"0x{address:08X} scaffold does not build: "
+                    f"{outcome.get('refusal_reason') or outcome.get('note')}")
+
+    def test_scroll_no_longer_holds_flatbutton_when_flatbutton_is_the_subject(self):
+        import byte_match
+        if not byte_match.DEFAULT_EXE.is_file():
+            self.skipTest("the pinned executable is absent")
+        import pefile
+        import re as _re
+        pe = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+        text = tool.emit(0x00607CF0, tool.load_functions(), tool.load_derived(),
+                         tool.load_callees(), pe, scaffolding_only=True)
+        shell = _re.search(r"^class Scroll[^;\n]*\{(.*?)^\};", text,
+                           _re.M | _re.S)
+        # Either outcome is correct, and which one happens is not the claim.
+        # With no members left AND no called methods, the emission loop skips
+        # the shell entirely and the forward declaration carries the unit -
+        # which is what this address does. What must NEVER happen is a shell
+        # holding the still-undefined subject by value.
+        if shell is not None:
+            self.assertNotIn("FlatButton", shell.group(1))
+        self.assertIn("class Scroll;", text,
+                      "the forward declaration still has to be there")
+
+    def test_an_unrelated_subject_keeps_scrolls_members(self):
+        # The fix must be narrow: Scroll is only opaque when the SUBJECT is the
+        # type it embeds. Blanket-flattening it would lose field names from
+        # every other unit for no reason.
+        import byte_match
+        if not byte_match.DEFAULT_EXE.is_file():
+            self.skipTest("the pinned executable is absent")
+        import pefile
+        import re as _re
+        pe = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+        text = tool.emit(0x005F93C0, tool.load_functions(), tool.load_derived(),
+                         tool.load_callees(), pe, scaffolding_only=True)
+        shell = _re.search(r"^class Scroll[^;\n]*\{(.*?)^\};", text,
+                           _re.M | _re.S)
+        if shell is None:
+            self.skipTest("Scroll is not in this unit")
+        self.assertIn("FlatButton", shell.group(1))
+
+
 if __name__ == "__main__":
     unittest.main()
