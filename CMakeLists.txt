@@ -859,6 +859,14 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(refresh-file-unit-tests
                                    test_refresh_file_units.py)
 
+    # THE SIZE ORACLE BEHIND `static_assert(sizeof(X) == N)`. Everything
+    # downstream takes that assertion as given, so a stride read wrongly does
+    # not fail to compile - it produces a layout that compiles with every
+    # offset moved. The tests are about refusing to answer, not about
+    # answering.
+    opensmacx_add_python_tool_test(array-stride-tests
+                                   test_derive_array_strides.py)
+
     # The preamble that measurement compiles a body in. This one is load
     # bearing in an unusual direction: a WRONG declaration here does not fail,
     # it silently changes what is being measured, so the tests pin the two

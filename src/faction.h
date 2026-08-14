@@ -342,6 +342,15 @@ struct Player {
     int soc_anti_ideology_effect; // opposition ; unused, never set in default factions
 };
 
+// THE STRIDE THE IMAGE INDEXES `Players` (0x00946A50) BY, read off 1378
+// call sites by tools/derive_array_strides.py - e.g. 0x00415CBC, 0x00419027. That
+// number is a measurement of the binary; `sizeof` below is the compiler's
+// arithmetic over the members declared above. The two were computed from
+// different things and agree, which is what the assertion records.
+static_assert(sizeof(Player) == 0x59C,
+              "Player layout must match the original executable");
+
+
 struct PlayerData {
     uint32_t flags; // see PlayerFlagsBitfield
     uint32_t ranking; // 0 (lowest) to 7 (highest) rank ; used to determine #MIGHT
