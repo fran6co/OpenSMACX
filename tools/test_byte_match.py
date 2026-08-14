@@ -536,21 +536,42 @@ class SubjectIsPassedTests(unittest.TestCase):
     that can see it, because the fallback path passes every unit test.
     """
 
-    CALLERS = ("byte_match.py", "byte_match_census.py")
+    # DERIVED, NOT LISTED. The first version of this test carried
+    # `CALLERS = ("byte_match.py", "byte_match_census.py")` - a hand-written
+    # list of the places to look, inside a test whose entire subject is a
+    # mechanism nobody invokes. It passed while
+    # `verify_recovered_function.py` called `object_code(data)` with no
+    # subject, and that is the path an AGENT runs: two of them in batch 12
+    # worked around the resulting refusal by hand, citing a "one-symbol risk"
+    # that had been removed everywhere the list happened to name.
+    SELF = "test_byte_match.py"
 
-    def call_sites(self, name):
-        text = (Path(__file__).resolve().parent / name).read_text()
+    def call_sites(self, path):
         # `object_code(` through to its closing paren, across line breaks.
-        return re.findall(r"object_code\((?:[^()]|\([^()]*\))*\)", text)
+        return re.findall(r"object_code\((?:[^()]|\([^()]*\))*\)",
+                          path.read_text())
+
+    def callers(self):
+        here = Path(__file__).resolve().parent
+        return [path for path in sorted(here.glob("*.py"))
+                if path.name != self.SELF and "object_code(" in
+                path.read_text()]
+
+    def test_the_search_finds_the_callers_it_is_meant_to(self):
+        """Guard the guard: a glob that matched nothing would pass silently."""
+        names = {path.name for path in self.callers()}
+        self.assertIn("byte_match.py", names)
+        self.assertIn("byte_match_census.py", names)
+        self.assertIn("verify_recovered_function.py", names)
 
     def test_every_call_passes_a_subject(self):
-        for name in self.CALLERS:
-            sites = [one for one in self.call_sites(name)
+        for path in self.callers():
+            sites = [one for one in self.call_sites(path)
                      if not one.startswith("object_code(data: bytes")]
-            self.assertTrue(sites, f"{name} names no call at all")
+            self.assertTrue(sites, f"{path.name} names no call at all")
             for site in sites:
                 self.assertIn("subject=", " ".join(site.split()),
-                              f"{name}: {site}")
+                              f"{path.name}: {site}")
 
 
 class SubjectSymbolTests(unittest.TestCase):

@@ -1,0 +1,26 @@
+// ORIGINAL: 0x0063DF40 BYTE_EXACT FILE
+// name      sub_63df40
+// size      68 bytes
+// spans     0x0063DF40-0x0063DF84
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00642B10
+//
+// NOT WRITTEN HERE. zlib 1.0.2 `_inflateReset` from `inflate.c`,
+// 68 bytes, byte-exact. IDA did not recognise this function -
+// it was catalogued 'sub_63df40' - and it was found by
+// COMPILING every vendored source and matching the emitted symbols
+// against the image byte for byte, rather than by its name. See
+// PROVENANCE.md beside this file.
+//
+// SUPERSEDED A HAND-WRITTEN BODY, whose reasoning is kept here
+// rather than dropped with the file (was src/unrecovered/0063df40.cpp):
+//
+//   was: RULED-OUT: byte-exact; pointer-to-member cast avoids redeclaring sub_642b10's
+//   was:            0-param scaffold decl; neg/sbb/and reproduced as a ternary
+// LEVER: upstream-source the recovery IS zlib 1.0.2 `inflate.c`,
+//        compiled as C under `/c /O2 /Gy /GR- /GX`.
+//
+#include "inflate.c"

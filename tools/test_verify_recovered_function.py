@@ -217,7 +217,10 @@ class ScoreAllOrderingTest(unittest.TestCase):
         verifier.byte_match.compile_batch = lambda units, work, flags: (
             {name: (None if verdicts[name] is None else b"obj")
              for name in units}, {"broke": "C2065"})
-        verifier.byte_match.object_code = lambda data: (b"code", b"")
+        # `subject=` is passed now: the scorer an AGENT runs selects the
+        # subject by name like every other caller.
+        verifier.byte_match.object_code = \
+            lambda data, subject=None: (b"code", b"")
         verifier.byte_match.compare = lambda *a, **k: None   # replaced below
         verifier._operand_similarity = lambda *a, **k: 0.0
 
