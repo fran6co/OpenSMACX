@@ -71,6 +71,40 @@ CRT_SIGNATURES = {
     "_read": "int _read(int, void *, unsigned int)",
     "_write": "int _write(int, const void *, unsigned int)",
     "_close": "int _close(int)",
+    # REPORTED BY AGENTS ON 2026-08-14, two independently, each having worked
+    # around it by casting a function pointer to the right type - a correct
+    # answer to the wrong problem, and one that changes the source form the
+    # comparison is judging. The failure is the one this table already exists
+    # for: the name is declared NULLARY, a real call is `C2660`, and
+    # redeclaring it in the body is `C2733`, so the function is unreachable
+    # for a reason that has nothing to do with its own bytes. `memcmp` blocked
+    # 0x00422F20 and `isdigit`/`_itoa` blocked 0x005A9DB0.
+    "_memcmp": "int _memcmp(const void *, const void *, unsigned int)",
+    "_strncpy": "char *_strncpy(char *, const char *, unsigned int)",
+    "_strchr": "char *_strchr(const char *, int)",
+    "_strrchr": "char *_strrchr(const char *, int)",
+    "_strstr": "char *_strstr(const char *, const char *)",
+    "_stricmp": "int _stricmp(const char *, const char *)",
+    "_strnicmp": "int _strnicmp(const char *, const char *, unsigned int)",
+    "_atoi": "int _atoi(const char *)",
+    "_atol": "long _atol(const char *)",
+    "_itoa": "char *_itoa(int, char *, int)",
+    "_ltoa": "char *_ltoa(long, char *, int)",
+    "_isdigit": "int _isdigit(int)",
+    "_isalpha": "int _isalpha(int)",
+    "_isspace": "int _isspace(int)",
+    "_isupper": "int _isupper(int)",
+    "_islower": "int _islower(int)",
+    "_toupper": "int _toupper(int)",
+    "_tolower": "int _tolower(int)",
+    # VARIADIC, and spelled so. A fixed arity here would be the same defect
+    # one step along: right name, wrong call.
+    "_sprintf": "int _sprintf(char *, const char *, ...)",
+    "_printf": "int _printf(const char *, ...)",
+    "_fprintf": "int _fprintf(void *, const char *, ...)",
+    "_sscanf": "int _sscanf(const char *, const char *, ...)",
+    "_qsort": "void _qsort(void *, unsigned int, unsigned int, "
+              "int (__cdecl *)(const void *, const void *))",
 }
 
 
