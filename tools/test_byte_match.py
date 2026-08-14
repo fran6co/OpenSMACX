@@ -572,6 +572,32 @@ class SubjectSymbolTests(unittest.TestCase):
     def pairs(self, *names):
         return [(self.Symbol(name), f"section for {name}") for name in names]
 
+    def test_a_static_subject_is_reachable_when_named(self):
+        """zlib declares `build_tree` as `local`, which is `static`, and the
+        shipped image holds a standalone `_build_tree`. `/Gy` gives it its own
+        COMDAT with a STATIC symbol of that name, so the bytes were always
+        there and only the selector could not reach them."""
+        chosen = tool.choose_subject_symbol(
+            [], "_build_tree", self.pairs("_build_tree", "_gen_bitlen"))
+        self.assertEqual("_build_tree", chosen[0].name)
+
+    def test_an_external_of_that_name_still_wins(self):
+        chosen = tool.choose_subject_symbol(
+            self.pairs("_build_tree"), "_build_tree",
+            [(self.Symbol("_build_tree"), "the static one")])
+        self.assertEqual("section for _build_tree", chosen[1])
+
+    def test_statics_are_ignored_without_a_name(self):
+        """The count rule is about AMBIGUITY, and a unit's statics are exactly
+        the helpers it was never meant to score. Consulting them unasked would
+        make every helper a candidate subject."""
+        with self.assertRaises(ValueError):
+            tool.choose_subject_symbol([], None, self.pairs("_helper"))
+
+    def test_a_static_that_is_not_the_subject_is_not_chosen(self):
+        with self.assertRaises(ValueError):
+            tool.choose_subject_symbol([], "_wanted", self.pairs("_other"))
+
     def test_a_lone_symbol_is_the_subject(self):
         found = self.pairs("?run@Win@@QAEHH@Z")
         self.assertEqual("?run@Win@@QAEHH@Z",
