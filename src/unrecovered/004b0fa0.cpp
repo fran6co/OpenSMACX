@@ -1,5 +1,13 @@
-// ORIGINAL: 0x004B0FA0 FILE
-// RULED-OUT: no ebp frame (esp-relative locals) vs original's push-ebp frame
+// ORIGINAL: 0x004B0FA0 BYTE_EXACT FILE
+// LEVER: push/mov the faction test lives in an `int` set on BOTH paths of the
+//   `baseID >= 0` branch and tested after the join, not inside it. The join
+//   forces VC6 to MATERIALISE the comparison (`xor eax,eax; sete al;
+//   test eax,eax`) instead of folding it into `cmp/jne`, and that one extra
+//   live value is what pushes `this` out of ecx into the callee-saved edi
+//   (`mov edi, ecx`) - the whole prologue interleave follows from it. Every
+//   in-place spelling folds: `int eq = (b==f)`, `!!`, `?1:0`, `==1`, an
+//   `__inline` helper, and a shared top-level `eq` all emit `cmp/jne`, and
+//   `& 1` / `& 0xFFFF` materialise but leak into `test al,1`.
 // working copy - scaffold materialised by --work
 // name      ?immune@SocialWin@@QAEHHHH@Z
 // size      212 bytes
@@ -799,39 +807,39 @@ class SocialWin : public GraphicWin, public SubInterface { public:
 
     int immune(int, int, int);
 };
-int SocialWin::immune(int a1, int a2, int a3) {
-    char *self = reinterpret_cast<char *>(this);
-    int faction = *reinterpret_cast<int *>(self + 0xcf4);
-
-    int rec = *g_009a6574;
-    if (rec >= 0) {
-        int idx77 = rec * 77;
-        unsigned char b = *reinterpret_cast<unsigned char *>(reinterpret_cast<int *>(g_0097d044) + idx77);
-        if (static_cast<int>(b) == faction) {
-            bool ok;
-            if (a1 == 2) {
-                ok = (a2 == 1);
-            } else {
-                ok = (a1 == 3 && a2 == 3);
-            }
-            if (ok) {
-                int idx = a2 * 11 + a3 + a1 * 53;
-                if (reinterpret_cast<int *>(g_0094b024)[idx] < 0) {
-                    return 1;
-                }
+int SocialWin::immune(int socCategory, int socModel, int effectID) {
+    // The comparison has to survive as a VALUE across the join below, or VC6
+    // folds it into a `cmp`/`jne` pair and keeps `this` in ecx.
+    int factionOwnsBase = 0;
+    int baseID = *g_009a6574;
+    if (baseID >= 0) {
+        int factionID = *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0xcf4);
+        unsigned char baseFactionID = *reinterpret_cast<unsigned char *>(
+            reinterpret_cast<int *>(g_0097d044) + baseID * 77);
+        factionOwnsBase = (static_cast<int>(baseFactionID) == factionID);
+    }
+    if (factionOwnsBase) {
+        if ((socCategory == 2 && socModel == 1)
+            || (socCategory == 3 && socModel == socCategory)) {
+            if (reinterpret_cast<int *>(g_0094b024)
+                    [socModel * 11 + effectID + socCategory * 53] < 0) {
+                return 1;
             }
         }
     }
 
-    rec = *g_009a6568;
-    if (rec >= 0) {
-        int idx77 = rec * 77;
-        unsigned char b = *reinterpret_cast<unsigned char *>(reinterpret_cast<int *>(g_0097d044) + idx77);
-        if (static_cast<int>(b) == faction) {
-            if (a1 == 3 && a2 == 1) {
-                if (reinterpret_cast<int *>(g_0094b2cc)[a3] < 0) {
-                    return 1;
-                }
+    factionOwnsBase = 0;
+    baseID = *g_009a6568;
+    if (baseID >= 0) {
+        int factionID = *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0xcf4);
+        unsigned char baseFactionID = *reinterpret_cast<unsigned char *>(
+            reinterpret_cast<int *>(g_0097d044) + baseID * 77);
+        factionOwnsBase = (static_cast<int>(baseFactionID) == factionID);
+    }
+    if (factionOwnsBase) {
+        if (socCategory == 3 && socModel == 1) {
+            if (reinterpret_cast<int *>(g_0094b2cc)[effectID] < 0) {
+                return 1;
             }
         }
     }

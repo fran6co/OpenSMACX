@@ -300,7 +300,8 @@ def score_all(address: int, bodies: dict) -> list:
         with concurrent.futures.ThreadPoolExecutor(
                 max_workers=len(byte_match.FLAG_SETS)) as pool:
             passes = list(pool.map(scored, byte_match.FLAG_SETS))
-        for objects, diagnostics in passes:
+        per_flags = {}
+        for flags, (objects, diagnostics) in zip(byte_match.FLAG_SETS, passes):
             for name, data in objects.items():
                 if data is None:
                     verdict = {"tier": "NO_COMPILE",
@@ -339,6 +340,16 @@ def score_all(address: int, bodies: dict) -> list:
                                                      rebuilt_mask)
                         verdict["operand_similarity"] = _operand_similarity(
                             original, low, rebuilt)
+                # KEPT PER FLAG SET, not only the winner. `_better` ranks
+                # similarity ABOVE first divergence - correctly, for choosing
+                # a verdict - so the note the agent reads comes from whichever
+                # build agreed on the most mnemonics, which is often the
+                # frameless one. Ten bodies swept on 2026-08-14 all reported
+                # `#0`; on five of them the FRAMED build of the same unedited
+                # source was already at #2, #3, #4 or #7 and the frame shape
+                # was never the defect. The agents chased a number produced by
+                # the build they were not looking at.
+                per_flags.setdefault(name, {})[flags] = verdict
                 if name not in results or byte_match._better(verdict, results[name]):
                     results[name] = verdict
 
@@ -363,7 +374,7 @@ def score_all(address: int, bodies: dict) -> list:
                                           -(item[1].get("operand_similarity") or 0),
                                           -(item[1].get("mnemonic_similarity") or 0),
                                           item[0]))
-    return ranked
+    return ranked, per_flags
 
 
 def file_mode_annotation(address: int):
@@ -416,6 +427,24 @@ def verify_verbatim(annotation) -> dict:
             Path(tmp), "", f"v{annotation.address:08x}")
 
 
+def verify_body_verbatim(address: int, unit: str) -> dict:
+    """Score `unit` as a whole translation unit for `address`.
+
+    The same call `verify_verbatim` makes, taking the text directly rather
+    than through an annotation, so a candidate an agent is holding in a file
+    can be scored without pretending it is a landed one.
+    """
+    import tempfile
+    import pefile
+    pe = pefile.PE(str(byte_match.DEFAULT_EXE))
+    catalogue = byte_match.load_rows()
+    shared = byte_match.shared_span_index(catalogue)
+    with tempfile.TemporaryDirectory() as tmp:
+        return byte_match.match_function(
+            pe, catalogue, shared, address, unit,
+            Path(tmp), "", f"v{address:08x}")
+
+
 def committed_body(address: int) -> tuple:
     """(body text, source location) for the recovery on disk, or (None, why)."""
     functions = emit.load_functions()
@@ -449,6 +478,52 @@ def committed_body(address: int) -> tuple:
         return None, f"{location}: {error}"
 
 
+FLAG_LABEL = {
+    0: "/O2 /Oy-  framed",
+    1: "/O2       frameless",
+    2: "/O1 /Oy-  framed",
+    3: "/O1       frameless",
+}
+
+
+def per_flag_report(name: str, per_flags: dict) -> str:
+    """All four flag sets for one candidate, not just the one that won.
+
+    `byte_match._better` ranks mnemonic similarity ABOVE first divergence,
+    which is right for choosing a verdict and misleading as a diagnostic: the
+    `#N` an agent reads comes from whichever build agreed on the most
+    mnemonics, usually the frameless one. Ten bodies swept on 2026-08-14 all
+    reported `#0`, and on FIVE of them the framed build of the same unedited
+    source was already at #2, #3, #4 or #7 - the frame was never the defect
+    and no amount of source-shape work on it could have helped.
+
+    So both numbers are printed and the agent picks the row whose prologue
+    class matches the original: framed if the original opens `push ebp; mov
+    ebp, esp`, frameless otherwise. The VERDICT is unchanged - only what the
+    agent is told about it.
+    """
+    scored = per_flags.get(name) or {}
+    if len(scored) < 2:
+        return ""
+    lines = ["", f"   all four flag sets for `{name}` - work the row whose "
+                 f"prologue class matches the original,",
+             "   not the best line above; the verdict is chosen by SIMILARITY "
+             "and may not be the",
+             "   one whose frame shape you are trying to reproduce:"]
+    for index, flags in enumerate(byte_match.FLAG_SETS):
+        verdict = scored.get(flags)
+        if verdict is None:
+            continue
+        note = verdict.get("note") or verdict.get("refusal_reason") or ""
+        similarity = verdict.get("mnemonic_similarity")
+        lines.append(
+            f"     {FLAG_LABEL.get(index, flags):22} "
+            f"{verdict.get('tier', '?'):14} "
+            f"{('sim ' + format(similarity, '.2f')) if similarity is not None else '':9} "
+            f"{note[:46]}")
+    return "\n".join(lines)
+
+
 def rank_directory(address: int, directory: Path, as_json: bool) -> int:
     """Score every `*.cpp` in `directory` and print them best-first.
 
@@ -462,7 +537,7 @@ def rank_directory(address: int, directory: Path, as_json: bool) -> int:
         print(f"error: no *.cpp found in {directory}", file=sys.stderr)
         return 2
 
-    results = score_all(address, bodies)
+    results, per_flags = score_all(address, bodies)
     if as_json:
         import json
         print(json.dumps(
@@ -474,6 +549,8 @@ def rank_directory(address: int, directory: Path, as_json: bool) -> int:
         for name, verdict in results:
             detail = verdict.get("note") or verdict.get("refusal_reason") or ""
             print(f"   {verdict.get('tier', '?'):14} {name:26} {detail[:54]}")
+        if results:
+            print(per_flag_report(results[0][0], per_flags))
     if results and results[0][1].get("tier") == MATCHED:
         if not as_json:
             print(f"\n{results[0][0]} is BYTE_EXACT.")
@@ -557,7 +634,20 @@ def main(argv=None) -> int:
         # harder to argue with.
         return 1
 
-    verdict = writeback.verify(address, body)
+    # A COMPLETE UNIT IS SCORED AS ONE, on this path too. `--dir` has done
+    # this since `complete_unit` was written; the single-body path never did,
+    # and so scaffolded text that already carries its own typedefs and callee
+    # declarations - double-declaring `_itoa`, reporting
+    # `C2733: second C linkage` as NO_COMPILE on a body the gate scores
+    # BYTE_EXACT. Two agents in the 2026-08-14 sweep hit it, and it is worse
+    # than a wrong answer here: `agent_brief.py` reprints this verdict as
+    # "Current verdict", so every brief for a FILE-mode address opened by
+    # telling the agent its committed body does not compile.
+    whole = complete_unit(body)
+    if whole:
+        verdict = verify_body_verbatim(address, whole)
+    else:
+        verdict = writeback.verify(address, body)
     tier = verdict.get("tier", "?")
 
     # A CANDIDATE THAT IS WORSE IS NOT AN IMPROVEMENT, and "byte exact or not"

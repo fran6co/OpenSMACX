@@ -113,7 +113,8 @@ class RankDirectoryTest(unittest.TestCase):
             Path(self.work, f"{name}.cpp").write_text("void f() {}\n")
 
     def run_dir(self, ranked):
-        verifier.score_all = lambda address, bodies: ranked
+        # `score_all` returns (ranking, per-flag-set verdicts).
+        verifier.score_all = lambda address, bodies: (ranked, {})
         out = io.StringIO()
         with redirect_stdout(out):
             status = verifier.main(["0x00401000", "--dir", self.work])
@@ -234,7 +235,11 @@ class ScoreAllOrderingTest(unittest.TestCase):
              mock.patch.object(verifier, "form_report", lambda body: ([], [])), \
              mock.patch.object(verifier.byte_match, "match_function",
                                lambda *a, **k: {"tier": "SHAPE_EXACT"}):
-            ranked = verifier.score_all(
+            # `score_all` returns the ranking AND the per-flag-set verdicts:
+            # the note an agent reads must be selectable per flag set, because
+            # `_better` ranks similarity above first divergence and the winner
+            # is often the frameless build.
+            ranked, per_flags = verifier.score_all(
                 0x00401000, {name: "body" for name in verdicts})
 
         tiers = {name: verdict.get("tier") for name, verdict in ranked}
@@ -361,6 +366,68 @@ class CompleteUnitTests(unittest.TestCase):
     def test_a_body_mode_marker_is_not_a_complete_unit(self):
         self.assertEqual("", verifier.complete_unit(
             "// ORIGINAL: 0x00401000 BYTE_EXACT\nint f() { return 1; }\n"))
+
+
+class CompleteUnitOnEveryPathTest(unittest.TestCase):
+    """A candidate that is already a whole unit must not be scaffolded again.
+
+    `--dir` has honoured this since `complete_unit` was written. The
+    single-body path did not: it called `writeback.verify` unconditionally,
+    which wraps scaffolding around text that already carries its own typedefs
+    and callee declarations, double-declares `_itoa`, and reports
+    `C2733: second C linkage` as NO_COMPILE on a body the gate scores
+    BYTE_EXACT.
+
+    Worse than a wrong answer in isolation - `agent_brief.py` reprints this
+    verdict as "Current verdict", so every brief for a FILE-mode address
+    opened by telling the agent its committed body did not compile. Two agents
+    in the 2026-08-14 prologue sweep reported it independently.
+    """
+
+    def setUp(self):
+        self.verify = verifier.writeback.verify
+        self.verbatim = verifier.verify_body_verbatim
+        self.body = verifier.committed_body
+        self.scaffolded = []
+        verifier.writeback.verify = lambda a, b: (
+            self.scaffolded.append(b) or {"tier": "NO_COMPILE"})
+        verifier.verify_body_verbatim = lambda a, u: {"tier": "BYTE_EXACT"}
+
+    def tearDown(self):
+        verifier.writeback.verify = self.verify
+        verifier.verify_body_verbatim = self.verbatim
+        verifier.committed_body = self.body
+
+    def run_body(self, text):
+        verifier.committed_body = lambda address: (text, "src/x.cpp:1")
+        with tempfile.TemporaryDirectory() as work:
+            path = Path(work, "candidate.cpp")
+            path.write_text(text)
+            out = io.StringIO()
+            with redirect_stdout(out):
+                status = verifier.main(["0x00401000", "--body", str(path)])
+        return status, out.getvalue()
+
+    def test_a_whole_unit_is_not_scaffolded(self):
+        whole = verifier.committed_body  # placeholder, replaced in run_body
+        text = ("// GENERATED SKELETON - tools/emit_translation_unit.py\n"
+                "typedef int int32_t;\n"
+                "void f(void) { return; }\n")
+        if not verifier.SELF_CONTAINED.search(text):
+            self.skipTest("the self-contained marker changed; update this text")
+        status, output = self.run_body(text)
+        self.assertEqual(self.scaffolded, [],
+                         "a complete unit was handed to writeback.verify")
+        self.assertEqual(status, 0)
+
+    def test_a_bare_body_still_gets_scaffolding(self):
+        # The other half: an agent iterating on a FILE-mode address may still
+        # hand over a bare body to score quickly, and THAT one needs the
+        # scaffold. Keying on the candidate text is what keeps both working.
+        text = "void f(void) { return; }\n"
+        self.assertFalse(verifier.SELF_CONTAINED.search(text))
+        self.run_body(text)
+        self.assertEqual(len(self.scaffolded), 1)
 
 
 if __name__ == "__main__":
