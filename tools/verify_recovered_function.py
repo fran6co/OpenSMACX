@@ -243,6 +243,56 @@ def score_all(address: int, bodies: dict) -> list:
     return ranked
 
 
+def file_mode_annotation(address: int):
+    """The `FILE`-mode annotation for `address`, or None.
+
+    A `FILE` marker means THE WHOLE FILE IS THE TRANSLATION UNIT: it carries
+    its own typedefs, fixed-address globals, callee declarations and classes.
+    `decomp_status` honours that with `recipe == "verbatim"` and compiles the
+    text as it stands.
+
+    This tool did not. Every path here funnels into `writeback.build_unit`,
+    which ALWAYS regenerates scaffolding and appends the text it is given - so
+    pointing it at a FILE-mode unit double-declares that unit's own
+    boilerplate and reports `NO_COMPILE` (C2011/C2370) on a file that compiles
+    perfectly well.
+
+    MEASURED across batches 3-5: FIVE agents hit this independently, and one
+    reproduced it against a control - bare `verify_recovered_function.py
+    0x00404B00` reported NO_COMPILE on a COMMITTED, BYTE_EXACT file it had
+    never touched. Agents worked around it by scoring a minimal candidate and
+    landing the full file, which works and means the thing they score is not
+    the thing they land: the same split that produced the FILE-marker bug and
+    the `_catalog_facts` drift.
+    """
+    import annotation_scan
+    for annotation in annotation_scan.scan_tree():
+        if annotation.address == address:
+            if annotation.mode == annotation_scan.MODE_FILE:
+                return annotation
+            return None
+    return None
+
+
+def verify_verbatim(annotation) -> dict:
+    """Score a FILE-mode unit as it stands, the way the ratchet does.
+
+    Deliberately the same call `writeback.verify` ends with, minus the
+    `build_unit` step - because the unit already exists. Same comparator, same
+    catalogue, same shared-span index, so a verdict here and a verdict from
+    `decomp_status` are the same measurement rather than two that agree.
+    """
+    import tempfile
+    import pefile
+    pe = pefile.PE(str(byte_match.DEFAULT_EXE))
+    catalogue = byte_match.load_rows()
+    shared = byte_match.shared_span_index(catalogue)
+    with tempfile.TemporaryDirectory() as tmp:
+        return byte_match.match_function(
+            pe, catalogue, shared, annotation.address, annotation.region,
+            Path(tmp), "", f"v{annotation.address:08x}")
+
+
 def committed_body(address: int) -> tuple:
     """(body text, source location) for the recovery on disk, or (None, why)."""
     functions = emit.load_functions()
@@ -330,6 +380,18 @@ def main(argv=None) -> int:
                 else Path(arguments.body).read_text())
         source = "candidate"
     else:
+        # A FILE-mode unit is scored AS IT STANDS. Rebuilding scaffolding
+        # around a file that already carries its own is how this path came to
+        # report NO_COMPILE on committed, byte-exact work.
+        annotation = file_mode_annotation(address)
+        if annotation is not None:
+            verdict = verify_verbatim(annotation)
+            tier = verdict.get("tier", "?")
+            note = verdict.get("note") or verdict.get("refusal_reason") or ""
+            print(f"    {annotation.path} (FILE mode, compiled verbatim)")
+            print(f"0x{address:08X}  {tier}"
+                  + (f"   {note}" if note else ""))
+            return 0 if tier == "BYTE_EXACT" else 1
         body, source = committed_body(address)
         if body is None:
             print(f"SKIP: {source}")
