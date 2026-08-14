@@ -1088,8 +1088,21 @@ def match_function(pe, rows: dict, shared: set, address: int, source: str,
     attempts = [flags] if flags else list(FLAG_SETS)
     if flags and flags in FLAG_SETS:
         attempts = list(FLAG_SETS)
-    best = None
-    for index, attempt in enumerate(attempts):
+    # THE ATTEMPTS RUN TOGETHER, which is the opposite of what
+    # `match_functions` does and right for the same reason. The plural form
+    # scores a whole ledger, so stopping at the first BYTE_EXACT means each
+    # later pass recompiles only what is still unsettled - thousands of units
+    # skipped. HERE THERE IS ONE UNIT AND NOTHING TO SKIP: if it does not
+    # match, and that is every iteration of the loop an agent is actually in,
+    # all four ran anyway and the agent waited for the sum.
+    #
+    # Measured 2026-08-14 over one real unit: 5.17 s sequential against 1.30 s
+    # concurrent, 4.0x, and `verify_recovered_function --body` is this call.
+    # The cost is three extra compiles in the one case that ends the loop.
+    # Threads rather than processes: every one of these is waiting on a Wine
+    # CL, and each already gets its own object name under `work`.
+    def attempt_at(pair):
+        index, attempt = pair
         try:
             data = compile_unit(source, work,
                                 f"{stem or f'f{address:08x}'}_{index}", attempt)
@@ -1100,10 +1113,21 @@ def match_function(pe, rows: dict, shared: set, address: int, source: str,
             candidate = compare(original, original_mask, low, rebuilt,
                                 rebuilt_mask)
         candidate["flags"] = attempt
-        if best is None or _better(candidate, best):
-            best = candidate
-        if best["tier"] == "BYTE_EXACT":
-            break
+        return candidate
+
+    best = None
+    if len(attempts) == 1:
+        best = attempt_at((0, attempts[0]))
+    else:
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(
+                max_workers=len(attempts)) as pool:
+            for candidate in pool.map(attempt_at, enumerate(attempts)):
+                # Ranked by `_better` exactly as the sequential loop did, and
+                # `pool.map` preserves order, so a tie still resolves to the
+                # EARLIER flag set - which keeps the reported `flags` stable.
+                if best is None or _better(candidate, best):
+                    best = candidate
 
     outcome.update(best)
     outcome["eh_spans_uncompared"] = sum(h - l for l, h in layout.eh)

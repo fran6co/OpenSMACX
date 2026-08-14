@@ -78,6 +78,7 @@ puts it under the tests the other mode already had.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import sys
 from pathlib import Path
 
@@ -230,10 +231,27 @@ def score_all(address: int, bodies: dict) -> list:
         low, high = int(row["address"], 16), int(row["end_address"], 16)
         original = byte_match.original_span_bytes(pe, low, high)
         original_mask = byte_match.original_relocation_mask(pe, low, high)
-        for flags in byte_match.FLAG_SETS:
+        # THE FLAG SETS RUN TOGETHER HERE, and that is the opposite of what
+        # `match_functions` does on purpose. Its comment is right for a batch:
+        # trying them in order and stopping at the first BYTE_EXACT means each
+        # later pass compiles only what is still unsettled, so a thousand
+        # already-matched units are not recompiled three more times.
+        #
+        # A SINGLE CANDIDATE HAS NOTHING TO SKIP. If it does not match - which
+        # is every iteration of the loop an agent is actually in - all four
+        # run anyway, one after another, and the agent waits for the sum.
+        # Measured 2026-08-14: 8.0 s for one candidate, of which 2.7 s was
+        # Python and the rest four sequential Wine compiles. Running them at
+        # once costs three extra compiles only in the case that ends the loop.
+        def scored(flags):
             with tempfile.TemporaryDirectory() as directory:
-                objects, diagnostics = byte_match.compile_batch(
-                    prepared, Path(directory), flags)
+                return byte_match.compile_batch(prepared, Path(directory),
+                                                flags)
+
+        with concurrent.futures.ThreadPoolExecutor(
+                max_workers=len(byte_match.FLAG_SETS)) as pool:
+            passes = list(pool.map(scored, byte_match.FLAG_SETS))
+        for objects, diagnostics in passes:
             for name, data in objects.items():
                 if data is None:
                     verdict = {"tier": "NO_COMPILE",
