@@ -1,5 +1,7 @@
 // ORIGINAL: 0x00641A70 BYTE_EXACT FILE
-// name      sub_641a70
+// name      _scan_tree
+// CORRECTED from sub_641a70
+//   zlib 1.0.2 trees.c, 231 bytes, byte-exact from upstream
 // size      231 bytes
 // spans     0x00641A70-0x00641B57
 // prototype 

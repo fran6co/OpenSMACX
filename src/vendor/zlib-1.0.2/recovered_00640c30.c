@@ -1,5 +1,7 @@
 // ORIGINAL: 0x00640C30 BYTE_EXACT FILE
-// name      sub_640c30
+// name      _tr_static_init
+// CORRECTED from sub_640c30
+//   zlib 1.0.2 trees.c, 529 bytes, byte-exact from upstream
 // size      529 bytes
 // spans     0x00640C30-0x00640E41
 // prototype 

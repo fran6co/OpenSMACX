@@ -821,6 +821,10 @@ uint32_t __fastcall base_pop_read_check_redirect(BasePop *self, void *) {
 Purpose: Allocate a BasePop on the heap and construct it.
 ORIGINAL: 0x00604E40 BYTE_EXACT
 // name      ?basepop_alloc@BasePop@@SAHXZ
+// CORRECTED from ?basepop_alloc@BasePop@@QAEHXZ
+//   the body reads ecx nowhere - `push ecx` at 0x00604E55 is a stack
+//   reservation, overwritten by `mov [esp], eax` - and all seven call
+//   sites through the 0x00696ECC hook set up no receiver
 // size      111 bytes
 // spans     0x00604E40-0x00604E9A;0x00662E17-0x00662E2C
 // prototype int (__cdecl ?basepop_alloc@BasePop@@SAHXZ)()

@@ -1,5 +1,7 @@
 // ORIGINAL: 0x00642350 BYTE_EXACT FILE
-// name      sub_642350
+// name      __tr_tally
+// CORRECTED from sub_642350
+//   zlib 1.0.2 trees.c, 295 bytes, byte-exact from upstream
 // size      295 bytes
 // spans     0x00642350-0x00642477
 // prototype

@@ -86,6 +86,10 @@ Note:    Returns `*this`, which is what leaves the receiver in EAX at `ret 4`.
          does, exactly.
 ORIGINAL: 0x00634480 BYTE_EXACT
 // name      ?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z
+// CORRECTED from ?__apl@Vector@@QAEXAAVVector@@@Z
+//   opens `mov eax, ecx` and leaves `this` in EAX at `ret 4`; with a
+//   `Vector &` return and `return *this` the body is byte-exact, with
+//   the catalogued `void` it is a different 29-byte sequence
 // size      33 bytes
 // spans     0x00634480-0x006344A1
 // prototype Vector* (__thiscall ?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z)(Vector* this, Vector*)
@@ -108,6 +112,8 @@ Vector &Vector::__apl(Vector &right) {
 Purpose: Subtract another vector from this one, component by component.
 ORIGINAL: 0x006344B0 BYTE_EXACT
 // name      ?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z
+// CORRECTED from ?__ami@Vector@@QAEXAAVVector@@@Z
+//   the same shape with fsub for fadd, and the same two verdicts
 // size      33 bytes
 // spans     0x006344B0-0x006344D1
 // prototype Vector* (__thiscall ?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z)(Vector* this, Vector*)

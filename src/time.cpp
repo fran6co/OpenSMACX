@@ -83,6 +83,9 @@ void Time::init(void(__cdecl *callback)(int, int), int param, int param2, uint32
 Purpose: Start an instance of the class with a single parameter callback.
 ORIGINAL: 0x00616350
 // name      ?start@Time@@QAEHP6AXH@ZHHH@Z
+// CORRECTED from ?start@Time@@QAEXP6AXH@ZHHH@Z
+//   tail is `and al, 0xfe; add eax, 2; ret 0x10` - a computed return;
+//   0x0063C340 tests the result at 0x0063C356 with `test eax, eax`
 // size      181 bytes
 // spans     0x00616350-0x00616405
 // prototype int (__thiscall ?start@Time@@QAEHP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
@@ -144,6 +147,9 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
 Purpose: Start a pulse instance of the class with a single parameter callback.
 ORIGINAL: 0x006164D0
 // name      ?pulse@Time@@QAEHP6AXH@ZHHH@Z
+// CORRECTED from ?pulse@Time@@QAEXP6AXH@ZHHH@Z
+//   tail is `and al, 0xfe; add eax, 2; ret 0x10`, the same computed
+//   return as its `start` sibling
 // size      181 bytes
 // spans     0x006164D0-0x00616585
 // prototype int (__thiscall ?pulse@Time@@QAEHP6AXH@ZHHH@Z)(Time* this, void (__cdecl *)(int this), int, int, int uDelay)
@@ -208,6 +214,8 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
 Purpose: Start an instance of the timer.
 ORIGINAL: 0x00616650
 // name      ?start@Time@@QAEHXZ
+// CORRECTED from ?start@Time@@QAEXXZ
+//   tail is `neg eax; sbb eax, eax; and al, 0xfe; add eax, 2; ret`
 // size      106 bytes
 // spans     0x00616650-0x006166BA
 // prototype int (__thiscall ?start@Time@@QAEHXZ)(Time* this)
@@ -237,6 +245,8 @@ uint32_t Time::start() {
 Purpose: Start an instance of the pulse timer.
 ORIGINAL: 0x006166C0
 // name      ?pulse@Time@@QAEHXZ
+// CORRECTED from ?pulse@Time@@QAEXXZ
+//   tail is `neg eax; sbb eax, eax; and al, 0xfe; add eax, 2; ret`
 // size      108 bytes
 // spans     0x006166C0-0x0061672C
 // prototype int (__thiscall ?pulse@Time@@QAEHXZ)(Time* this)

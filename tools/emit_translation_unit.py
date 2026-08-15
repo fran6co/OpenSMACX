@@ -77,7 +77,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
 
-import catalogue_corrections  # noqa: E402
 import class_layouts  # noqa: E402
 import recovery_symbols  # noqa: E402
 from generator_support import (absolute_operands, parse_body_ranges,  # noqa: E402
@@ -511,48 +510,30 @@ class Unsettled(Exception):
 # ------------------------------------------------------------------ metadata
 
 def load_functions() -> dict:
-    """The catalogue, with the names the bytes prove wrong corrected.
+    """The catalogue, read out of `src/`.
 
-    The image carries no symbols, so every catalogued mangled name is IDA's
-    analysis and 62 are contradicted by the bodies they name - see
-    `catalogue_corrections`. Correcting HERE rather than at each use is what
-    keeps the declaration, the decoded signature and the emitted symbol
-    agreeing with one another: `byte_match.load_rows` and
-    `project_catalogue.catalogue` both read through this function, and both say
-    so, because two loaders with two answers about one row is how the `QAA` ->
-    `SAA` correction on `Caviar::vx_read` once reached the emitter but not the
-    comparison.
+    SRC/ IS THE ONLY STORE, and since 2026-08-15 it is the only store of the
+    NAMES too. `docs/recovery/functions.csv` was deleted (185dd977); the
+    hand-curated overlay that corrected IDA's mangled names outlived it by two
+    days as `tools/catalogue_corrections.py`, a 109-entry dict this loader
+    applied on every read.
 
-    SRC/ IS THE ONLY STORE. `docs/recovery/functions.csv` was deleted (185dd977)
-    and the export fallback that used to stand here - it took the CSV's rows for
-    addresses `src/` did not carry, on the measured grounds that 28 rows were
-    `source_complete` with no annotation anywhere - guarded a file that cannot
-    exist. Measured against the deleted file itself, restored out of git: those
-    28 have since been annotated, so replaying the fallback over today's `src/`
-    ADDS 0 ROWS, and the CSV's address set and `from_source`'s are the same
-    6,000 with no row differing in content. Deleting it loses nothing.
+    Every one of those corrections is now written in the annotation it
+    corrects, as the `// name` line plus a `// CORRECTED from <old>` note
+    carrying the byte evidence - so a recovery is an edit to `src/` and
+    nothing else, which is what the store being `src/` was supposed to mean.
+    Retiring it removed a file that had to be touched from outside the tree
+    every time a name was found wrong, and a rewrite layer whose input and
+    output had become identical for all 109 rows.
 
-    THE APPLY IS NOT PART OF THE FALLBACK, it was only nested inside it, and it
-    was the whole tree's only call into `catalogue_corrections` - so the
-    corrections went silent the day the CSV went away, while three docstrings
-    kept promising them. It is hoisted out unconditionally rather than dropped;
-    what it restores is the tripwire - `apply` raises `Stale` rather than
-    correcting when a row's name is neither the catalogued spelling nor the
-    corrected one, which is the check that was dead, not the rewrite.
-
-    THE REWRITE IS NO LONGER A NO-OP, and that is worth stating because the
-    argument for hoisting it rested on the opposite. When the call was restored
-    it rewrote 0 of the 6,000 names - `src/` already spelled all 15 corrections
-    the corrected way - so no live measurement could distinguish a working call
-    from a deleted one. Since 2026-08-13 it rewrites 47: the
-    `??3<Class>@@SAXPAXI@Z` rows whose bodies are this-adjusting thunks are
-    still annotated with the wrong name in `src/deleting_thunks.cpp`, and this
-    is where they become right for every consumer. A regression in this call is
-    now visible in the catalogue itself, not only in the unit test.
+    What the overlay's `Stale` exception used to catch - a row whose name is
+    neither spelling, meaning the thing being corrected has MOVED - is
+    `project_catalogue.py --check` now: an annotation carrying
+    `// CORRECTED from X` may not spell `// name X`.
     """
     import project_catalogue
 
-    return catalogue_corrections.apply(project_catalogue.from_source())
+    return project_catalogue.from_source()
 
 
 def load_derived() -> dict:

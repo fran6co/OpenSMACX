@@ -523,6 +523,9 @@ void __fastcall base_button_set_redirect(BaseButton *self, void *, int value) {
 Purpose: Legacy stub; the original body returns nothing without reading its
 ORIGINAL: 0x006077F0 BYTE_EXACT
 // name      ?on_key_click@BaseButton@@QAEHHH@Z
+// CORRECTED from ?on_key_click@BaseButton@@QAEXHH@Z
+//   body is `xor eax, eax; ret 8` - it returns zero, and the sibling
+//   class BasePop declares the same handler `int on_key_click(int, int)`
 // size      5 bytes
 // spans     0x006077F0-0x006077F5
 // prototype int (__thiscall ?on_key_click@BaseButton@@QAEHHH@Z)(BaseButton* this, int, int)
@@ -546,6 +549,8 @@ void __fastcall base_button_on_key_click_redirect(
 Purpose: Legacy stub; the original body returns nothing without reading its
 ORIGINAL: 0x00607800 BYTE_EXACT
 // name      ?on_key_down@BaseButton@@QAEHH@Z
+// CORRECTED from ?on_key_down@BaseButton@@QAEXH@Z
+//   body is `xor eax, eax; ret 4`; BasePop::on_key_down returns int
 // size      5 bytes
 // spans     0x00607800-0x00607805
 // prototype int (__thiscall ?on_key_down@BaseButton@@QAEHH@Z)(BaseButton* this, int)
@@ -569,6 +574,8 @@ void __fastcall base_button_on_key_down_redirect(
 Purpose: Legacy stub; the original body returns nothing without reading its
 ORIGINAL: 0x00607810 BYTE_EXACT
 // name      ?on_key_up@BaseButton@@QAEHH@Z
+// CORRECTED from ?on_key_up@BaseButton@@QAEXH@Z
+//   body is `xor eax, eax; ret 4`; BasePop::on_key_up returns int
 // size      5 bytes
 // spans     0x00607810-0x00607815
 // prototype int (__thiscall ?on_key_up@BaseButton@@QAEHH@Z)(BaseButton* this, int)

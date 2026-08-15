@@ -204,7 +204,12 @@ void *__fastcall adjust_this_sub_404420(void *self, void *) {
 Purpose: Step the receiver back to the subobject ??_GAlphaMovie@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00404430
-// name      ??3AlphaMovie@@SAXPAXI@Z
+// name      ??_GAlphaMovie@@WEEE@AEPAXI@Z
+// CORRECTED from ??3AlphaMovie@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004043A0` into
+//   ??_GAlphaMovie@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00404430-0x0040443B
 // prototype 
@@ -303,7 +308,12 @@ void *__fastcall scalar_delete_popup(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GBasePop@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004070B0
-// name      ??3BasePop@@SAXPAXI@Z
+// name      ??_GBasePop@@WEEE@AEPAXI@Z
+// CORRECTED from ??3BasePop@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00406B40` into
+//   ??_GBasePop@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004070B0-0x004070BB
 // prototype 
@@ -323,7 +333,12 @@ void *__fastcall adjust_this_base_pop(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x004070C0
-// name      ??3Scroll@@SAXPAXI@Z
+// name      ??_GScroll@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Scroll@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00406F20` into
+//   ??_GScroll@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004070C0-0x004070CB
 // prototype 
@@ -344,7 +359,12 @@ void *__fastcall adjust_this_scroll(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GPopup@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x004070D0
-// name      ??3Popup@@SAXPAXI@Z
+// name      ??_GPopup@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Popup@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00406BD0` into
+//   ??_GPopup@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004070D0-0x004070DB
 // prototype 
@@ -364,7 +384,12 @@ void *__fastcall adjust_this_popup(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GFlatButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004070E0
-// name      ??3FlatButton@@SAXPAXI@Z
+// name      ??_GFlatButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3FlatButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004068E0` into
+//   ??_GFlatButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004070E0-0x004070EB
 // prototype 
@@ -437,7 +462,12 @@ void *__fastcall scalar_delete_alpha_save(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GAlphaSave@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00408390
-// name      ??3AlphaSave@@SAXPAXI@Z
+// name      ??_GAlphaSave@@WEEE@AEPAXI@Z
+// CORRECTED from ??3AlphaSave@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00408140` into
+//   ??_GAlphaSave@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00408390-0x0040839B
 // prototype 
@@ -458,7 +488,12 @@ void *__fastcall adjust_this_alpha_save(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GEditBox@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004083A0
-// name      ??3EditBox@@SAXPAXI@Z
+// name      ??_GEditBox@@WEEE@AEPAXI@Z
+// CORRECTED from ??3EditBox@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00408080` into
+//   ??_GEditBox@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004083A0-0x004083AB
 // prototype 
@@ -556,7 +591,12 @@ void *__fastcall scalar_delete_pop_menu(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GBaseWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00421810
-// name      ??3BaseWin@@SAXPAXI@Z
+// name      ??_GBaseWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3BaseWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004213D0` into
+//   ??_GBaseWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00421810-0x0042181B
 // prototype 
@@ -576,7 +616,12 @@ void *__fastcall adjust_this_base_win(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GProdPicker@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00421970
-// name      ??3ProdPicker@@SAXPAXI@Z
+// name      ??_GProdPicker@@WEEE@AEPAXI@Z
+// CORRECTED from ??3ProdPicker@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004213A0` into
+//   ??_GProdPicker@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00421970-0x0042197B
 // prototype 
@@ -686,7 +731,12 @@ void *__fastcall scalar_delete_counc_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GCouncWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00428740
-// name      ??3CouncWin@@SAXPAXI@Z
+// name      ??_GCouncWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3CouncWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00428710` into
+//   ??_GCouncWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00428740-0x0042874B
 // prototype 
@@ -731,7 +781,12 @@ void *__fastcall scalar_delete_credits(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GCredits@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00428F80
-// name      ??3Credits@@SAXPAXI@Z
+// name      ??_GCredits@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Credits@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00428E60` into
+//   ??_GCredits@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00428F80-0x00428F8B
 // prototype 
@@ -803,7 +858,12 @@ void *__fastcall scalar_delete_datalink(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00432830
-// name      ??3StringBox@@SAXPAXI@Z
+// name      ??_GStringBox@@WEEE@AEPAXI@Z
+// CORRECTED from ??3StringBox@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00432770` into
+//   ??_GStringBox@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00432830-0x0043283B
 // prototype 
@@ -824,7 +884,12 @@ void *__fastcall adjust_this_string_box(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDatalink@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00432840
-// name      ??3Datalink@@SAXPAXI@Z
+// name      ??_GDatalink@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Datalink@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00432800` into
+//   ??_GDatalink@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00432840-0x0043284B
 // prototype 
@@ -896,7 +961,12 @@ void *__fastcall scalar_delete_select_part_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDesignWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0043EFA0
-// name      ??3DesignWin@@SAXPAXI@Z
+// name      ??_GDesignWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3DesignWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0043EDB0` into
+//   ??_GDesignWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0043EFA0-0x0043EFAB
 // prototype 
@@ -917,7 +987,12 @@ void *__fastcall adjust_this_design_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GSelectPartWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0043EFB0
-// name      ??3SelectPartWin@@SAXPAXI@Z
+// name      ??_GSelectPartWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3SelectPartWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0043EDE0` into
+//   ??_GSelectPartWin@@UAEPAXI@Z, which executes `ret 4`; no stack
+//   access and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0043EFB0-0x0043EFBB
 // prototype 
@@ -964,7 +1039,12 @@ void *__fastcall scalar_delete_diplo_pop(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDiploPop@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00440EF0
-// name      ??3DiploPop@@SAXPAXI@Z
+// name      ??_GDiploPop@@WEEE@AEPAXI@Z
+// CORRECTED from ??3DiploPop@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00440EC0` into
+//   ??_GDiploPop@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00440EF0-0x00440EFB
 // prototype 
@@ -1010,7 +1090,12 @@ void *__fastcall scalar_delete_diplo_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDiploWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00445120
-// name      ??3DiploWin@@SAXPAXI@Z
+// name      ??_GDiploWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3DiploWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00445080` into
+//   ??_GDiploWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00445120-0x0044512B
 // prototype 
@@ -1107,7 +1192,12 @@ void *__fastcall scalar_delete_fame_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GFameWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0044B330
-// name      ??3FameWin@@SAXPAXI@Z
+// name      ??_GFameWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3FameWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0044B300` into
+//   ??_GFameWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0044B330-0x0044B33B
 // prototype 
@@ -1152,7 +1242,12 @@ void *__fastcall scalar_delete_gamma(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GGamma@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x004562B0
-// name      ??3Gamma@@SAXPAXI@Z
+// name      ??_GGamma@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Gamma@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00456280` into
+//   ??_GGamma@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004562B0-0x004562BB
 // prototype 
@@ -1198,7 +1293,12 @@ void *__fastcall scalar_delete_main_interface(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GMainInterface@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0045F1F0
-// name      ??3MainInterface@@SAXPAXI@Z
+// name      ??_GMainInterface@@WEEE@AEPAXI@Z
+// CORRECTED from ??3MainInterface@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0045F1C0` into
+//   ??_GMainInterface@@UAEPAXI@Z, which executes `ret 4`; no stack
+//   access and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0045F1F0-0x0045F1FB
 // prototype 
@@ -1245,7 +1345,12 @@ void *__fastcall scalar_delete_interlude(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GInterlude@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0045F910
-// name      ??3Interlude@@SAXPAXI@Z
+// name      ??_GInterlude@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Interlude@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0045F710` into
+//   ??_GInterlude@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0045F910-0x0045F91B
 // prototype 
@@ -1291,7 +1396,12 @@ void *__fastcall scalar_delete_monu_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GMonuWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00477E00
-// name      ??3MonuWin@@SAXPAXI@Z
+// name      ??_GMonuWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3MonuWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00477DD0` into
+//   ??_GMonuWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00477E00-0x00477E0B
 // prototype 
@@ -1337,7 +1447,12 @@ void *__fastcall scalar_delete_multi_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GMultiWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0047A760
-// name      ??3MultiWin@@SAXPAXI@Z
+// name      ??_GMultiWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3MultiWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0047A6C0` into
+//   ??_GMultiWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0047A760-0x0047A76B
 // prototype 
@@ -1382,7 +1497,12 @@ void *__fastcall scalar_delete_net_msg(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GNetMsg@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x0047AFE0
-// name      ??3NetMsg@@SAXPAXI@Z
+// name      ??_GNetMsg@@WEEE@AEPAXI@Z
+// CORRECTED from ??3NetMsg@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0047AD70` into
+//   ??_GNetMsg@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0047AFE0-0x0047AFEB
 // prototype 
@@ -1427,7 +1547,12 @@ void *__fastcall scalar_delete_net_win(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GNetWin@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x00483840
-// name      ??3NetWin@@SAXPAXI@Z
+// name      ??_GNetWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3NetWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004837C0` into
+//   ??_GNetWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00483840-0x0048384B
 // prototype 
@@ -1473,7 +1598,12 @@ void *__fastcall scalar_delete_new_tech_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GNewTechWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00484AB0
-// name      ??3NewTechWin@@SAXPAXI@Z
+// name      ??_GNewTechWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3NewTechWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00484A80` into
+//   ??_GNewTechWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00484AB0-0x00484ABB
 // prototype 
@@ -1520,7 +1650,12 @@ void *__fastcall scalar_delete_pick_tech(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPickTech@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00488740
-// name      ??3PickTech@@SAXPAXI@Z
+// name      ??_GPickTech@@WEEE@AEPAXI@Z
+// CORRECTED from ??3PickTech@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00488660` into
+//   ??_GPickTech@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00488740-0x0048874B
 // prototype 
@@ -1566,7 +1701,12 @@ void *__fastcall scalar_delete_pick_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPickWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0048ADF0
-// name      ??3PickWin@@SAXPAXI@Z
+// name      ??_GPickWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3PickWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0048ADC0` into
+//   ??_GPickWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0048ADF0-0x0048ADFB
 // prototype 
@@ -1586,7 +1726,12 @@ void *__fastcall adjust_this_pick_win(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back by the vtordisp stored ahead of it to the one
          ??_GPlanWin@@UAEPAXI@Z expects, then forward unchanged.
 ORIGINAL: 0x0048BF10
-// name      ??3PlanWin@@SAXPAXI@Z
+// name      ??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z
+// CORRECTED from ??3PlanWin@@SAXPAXI@Z
+//   8 bytes, `sub ecx, dword ptr [ecx - 4]; jmp 0x0048BF20` into
+//   ??_GPlanWin@@UAEPAXI@Z, which executes `ret 4`. `$4PPPPPPPM@A@` re-
+//   demangles to vtordisp{-4, 0} - the field at -4 and no further
+//   adjustment, which is exactly the one subtraction the body performs
 // size      8 bytes
 // spans     0x0048BF10-0x0048BF18
 // prototype 
@@ -1634,7 +1779,12 @@ void *__fastcall scalar_delete_pref_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPrefWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00492410
-// name      ??3PrefWin@@SAXPAXI@Z
+// name      ??_GPrefWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3PrefWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004923E0` into
+//   ??_GPrefWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00492410-0x0049241B
 // prototype 
@@ -1680,7 +1830,12 @@ void *__fastcall scalar_delete_quayle_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GQuayleWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004968F0
-// name      ??3QuayleWin@@SAXPAXI@Z
+// name      ??_GQuayleWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3QuayleWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004968C0` into
+//   ??_GQuayleWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004968F0-0x004968FB
 // prototype 
@@ -1727,7 +1882,12 @@ void *__fastcall scalar_delete_report_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004AD870
-// name      ??3ReportWin@@SAXPAXI@Z
+// name      ??_GReportWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3ReportWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004AD840` into
+//   ??_GReportWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004AD870-0x004AD87B
 // prototype 
@@ -1774,7 +1934,12 @@ void *__fastcall scalar_delete_setup_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GSetupWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004AE9A0
-// name      ??3SetupWin@@SAXPAXI@Z
+// name      ??_GSetupWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3SetupWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004AE760` into
+//   ??_GSetupWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004AE9A0-0x004AE9AB
 // prototype 
@@ -1846,7 +2011,12 @@ void *__fastcall scalar_delete_social_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GCheckButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004B3F80
-// name      ??3CheckButton@@SAXPAXI@Z
+// name      ??_GCheckButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3CheckButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004B3F20` into
+//   ??_GCheckButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004B3F80-0x004B3F8B
 // prototype 
@@ -1867,7 +2037,12 @@ void *__fastcall adjust_this_check_button(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GSocialWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004B3F90
-// name      ??3SocialWin@@SAXPAXI@Z
+// name      ??_GSocialWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3SocialWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004B3F50` into
+//   ??_GSocialWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004B3F90-0x004B3F9B
 // prototype 
@@ -1913,7 +2088,12 @@ void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GTutWin@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x004BEA20
-// name      ??3TutWin@@SAXPAXI@Z
+// name      ??_GTutWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3TutWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004BE9F0` into
+//   ??_GTutWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004BEA20-0x004BEA2B
 // prototype 
@@ -1959,7 +2139,12 @@ void *__fastcall scalar_delete_world_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GWorldWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004C4CA0
-// name      ??3WorldWin@@SAXPAXI@Z
+// name      ??_GWorldWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3WorldWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004C4C70` into
+//   ??_GWorldWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004C4CA0-0x004C4CAB
 // prototype 
@@ -2109,7 +2294,12 @@ void *__fastcall scalar_delete_dip_edit(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x004E23F0
-// name      ??3DipEdit@@SAXPAXI@Z
+// name      ??_GDipEdit@@WEEE@AEPAXI@Z
+// CORRECTED from ??3DipEdit@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x004E23C0` into
+//   ??_GDipEdit@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x004E23F0-0x004E23FB
 // prototype 
@@ -2155,7 +2345,12 @@ void *__fastcall scalar_delete_alpha_menu(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GAlphaMenu@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0051DF70
-// name      ??3AlphaMenu@@SAXPAXI@Z
+// name      ??_GAlphaMenu@@WEEE@AEPAXI@Z
+// CORRECTED from ??3AlphaMenu@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0051DC90` into
+//   ??_GAlphaMenu@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0051DF70-0x0051DF7B
 // prototype 
@@ -2202,7 +2397,12 @@ void *__fastcall scalar_delete_replay_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GReplayWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x005AE0E0
-// name      ??3ReplayWin@@SAXPAXI@Z
+// name      ??_GReplayWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3ReplayWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005AE0B0` into
+//   ??_GReplayWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x005AE0E0-0x005AE0EB
 // prototype 
@@ -2249,7 +2449,12 @@ void *__fastcall scalar_delete_multi_debug(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GMultiDebug@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x005C9EB0
-// name      ??3MultiDebug@@SAXPAXI@Z
+// name      ??_GMultiDebug@@WEEE@AEPAXI@Z
+// CORRECTED from ??3MultiDebug@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005C9E80` into
+//   ??_GMultiDebug@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x005C9EB0-0x005C9EBB
 // prototype 
@@ -2297,7 +2502,12 @@ void *__fastcall scalar_delete_graphic_win(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x005D7160
-// name      ??3GraphicWin@@SAXPAXI@Z
+// name      ??_GGraphicWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3GraphicWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005D7140` into
+//   ??_GGraphicWin@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x005D7160-0x005D716B
 // prototype 
@@ -2396,7 +2606,12 @@ void *__fastcall scalar_delete_pull_down(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPullDown@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x005FA790
-// name      ??3PullDown@@SAXPAXI@Z
+// name      ??_GPullDown@@WEEE@AEPAXI@Z
+// CORRECTED from ??3PullDown@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005FA770` into
+//   ??_GPullDown@@UAEPAXI@Z, which executes `ret 4`; no stack access and
+//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
+//   and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x005FA790-0x005FA79B
 // prototype 
@@ -2441,7 +2656,12 @@ void *__fastcall scalar_delete_menu(void *self, void *, unsigned int arg0) {
 Purpose: Step the receiver back to the subobject ??_GMenu@@UAEPAXI@Z expects,
          then forward unchanged.
 ORIGINAL: 0x005FC6F0
-// name      ??3Menu@@SAXPAXI@Z
+// name      ??_GMenu@@WEEE@AEPAXI@Z
+// CORRECTED from ??3Menu@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x005FC6D0` into ??_GMenu@@UAEPAXI@Z,
+//   which executes `ret 4`; no stack access and the receiver stays in
+//   ECX. `WEEE@` re-demangles to adjustor{1092} and 1092 == 0x444, the
+//   constant subtracted
 // size      11 bytes
 // spans     0x005FC6F0-0x005FC6FB
 // prototype 
@@ -2488,7 +2708,12 @@ void *__fastcall scalar_delete_base_button(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x00607CE0
-// name      ??3BaseButton@@SAXPAXI@Z
+// name      ??_GBaseButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3BaseButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into
+//   ??_GBaseButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x00607CE0-0x00607CEB
 // prototype 
@@ -2558,7 +2783,12 @@ void *__fastcall scalar_delete_image_button(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GImageButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x006256F0
-// name      ??3ImageButton@@SAXPAXI@Z
+// name      ??_GImageButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3ImageButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x006256D0` into
+//   ??_GImageButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x006256F0-0x006256FB
 // prototype 
@@ -2605,7 +2835,12 @@ void *__fastcall scalar_delete_push_button(void *self, void *,
 Purpose: Step the receiver back to the subobject ??_GPushButton@@UAEPAXI@Z
          expects, then forward unchanged.
 ORIGINAL: 0x0062C850
-// name      ??3PushButton@@SAXPAXI@Z
+// name      ??_GPushButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3PushButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0062C830` into
+//   ??_GPushButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
 // size      11 bytes
 // spans     0x0062C850-0x0062C85B
 // prototype 

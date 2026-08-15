@@ -1,5 +1,7 @@
 // ORIGINAL: 0x00641A00 BYTE_EXACT FILE
-// name      sub_641a00
+// name      _build_bl_tree
+// CORRECTED from sub_641a00
+//   zlib 1.0.2 trees.c, 111 bytes, byte-exact from upstream
 // size      111 bytes
 // spans     0x00641A00-0x00641A6F
 // prototype 

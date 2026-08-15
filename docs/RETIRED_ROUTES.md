@@ -284,7 +284,7 @@ is the part worth keeping:
   is now spelled as what it is, an MSVC this-adjusting thunk into the class's own
   `??_G` scalar deleting destructor, with the displacement the body subtracts
   written into the name (`??_GAlphaMovie@@WEEE@AEPAXI@Z`, `adjustor{1092}` ==
-  `0x444`). See `tools/catalogue_corrections.py`, which carries the byte evidence
+  `0x444`). See the annotation's own `// CORRECTED from` note, which carries the byte evidence
   per address. The lesson stands unchanged — a name that survived being wrong for
   this long did so because nothing held it to the bytes, and what finally caught
   it was the callee-purge gate, a byte-driven check, exactly as this bullet

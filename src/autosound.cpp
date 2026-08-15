@@ -231,6 +231,8 @@ void *__fastcall auto_sound_scalar_dtor_redirect(AutoSound *self, void *,
 Purpose: Legacy sound processing hook retained as a no-op.
 ORIGINAL: 0x005FD2B0 BYTE_EXACT
 // name      ?do_sound@@YAHXZ
+// CORRECTED from ?do_sound@@YAXXZ
+//   body is `xor eax, eax; ret` - a void function would emit `ret` alone
 // size      3 bytes
 // spans     0x005FD2B0-0x005FD2B3
 // prototype 

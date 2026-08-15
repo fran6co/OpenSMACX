@@ -7,7 +7,9 @@
 //        callees needed differently-named `extern "C"` redeclarations with
 //        the real (8-arg / 2-arg) signatures.
 // working copy - scaffold materialised by --work
-// name      sub_643eb0
+// name      _inflate_trees_dynamic
+// CORRECTED from sub_643eb0
+//   zlib 1.0.2 inftrees.c, 232 bytes, byte-exact from upstream
 // size      232 bytes
 // spans     0x00643EB0-0x00643F98
 // prototype 

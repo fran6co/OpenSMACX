@@ -1,5 +1,7 @@
 // ORIGINAL: 0x00642960 BYTE_EXACT FILE
-// name      sub_642960
+// name      _bi_flush
+// CORRECTED from sub_642960
+//   zlib 1.0.2 trees.c, 139 bytes, byte-exact from upstream
 // size      139 bytes
 // spans     0x00642960-0x006429EB
 // prototype 
