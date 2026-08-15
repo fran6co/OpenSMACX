@@ -312,7 +312,7 @@ int Text::item_hex() {
 }
 #include "text_recovery.h"
 // global
-Text *Txt = (Text *)0x009B7BA0;
+Text *const Txt = (Text *)0x009B7BA0;
 LPSTR *TextBufferGetPtr = (LPSTR *)0x009B7D00;
 LPSTR *TextBufferItemPtr = (LPSTR *)0x009B7D04;
 

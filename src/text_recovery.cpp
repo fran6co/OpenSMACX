@@ -39,14 +39,11 @@ Text::Text()
     file_name_[0] = 0;
 }
 
-Text::Text(size_t size)
-    : current_pos_(nullptr), text_file_(nullptr), buffer_get_(nullptr), buffer_item_(nullptr) {
-    file_name_[0] = 0;
-    buffer_get_ = static_cast<LPSTR>(mem_get(size));
-    if (buffer_get_) {
-        buffer_item_ = static_cast<LPSTR>(mem_get(size));
-    }
-}
+// Text::Text(int) is DEFINED IN text.h now, in-class, so `??__ETxt` can
+// inline it the way the image does. It also used to run its stores in the
+// wrong order: an initialiser list runs in DECLARATION order - current_pos_,
+// text_file_, buffer_get_, buffer_item_ - and then the body set
+// file_name_[0], where the image writes the byte FIRST.
 
 Text::~Text() OPENSMACX_NOEXCEPT_FALSE {
     shutdown();
