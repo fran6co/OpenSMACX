@@ -104,7 +104,7 @@ uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
         id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
             (UINT_PTR)this, TIME_PERIODIC);
     } else {
-        id_event_ = SetTimer(*HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
+        id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
     }
     return id_event_ ? 0 : 2;
 }
@@ -135,7 +135,7 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
         id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
             (UINT_PTR)this, TIME_PERIODIC);
     } else {
-        id_event_ = SetTimer(*HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
+        id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
     }
     return id_event_ ? 0 : 2;
 }
@@ -168,7 +168,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
         id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
             (UINT_PTR)this, TIME_ONESHOT);
     } else {
-        id_event_ = SetTimer(*HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
+        id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
     }
     return id_event_ ? 0 : 2;
 }
@@ -199,7 +199,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
             (UINT_PTR)this, TIME_ONESHOT);
     } else {
         unk_tgl_ = 1;
-        id_event_ = SetTimer(*HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
+        id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
     }
     return id_event_ ? 0 : 2;
 }
@@ -228,7 +228,7 @@ uint32_t Time::start() {
         id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc,
             (UINT_PTR)this, TIME_PERIODIC);
     } else {
-        id_event_ = SetTimer(*HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
+        id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
     }
     return id_event_ ? 0 : 2;
 }
@@ -257,7 +257,7 @@ uint32_t Time::pulse() {
             (UINT_PTR)this, TIME_ONESHOT);
     } else {
         unk_tgl_ = (unk_tgl_ & ~2) | 1;
-        id_event_ = SetTimer(*HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
+        id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
     }
     return id_event_ ? 0 : 2;
 }
@@ -282,7 +282,7 @@ void Time::stop() {
         if (count_ < 50) {
             timeKillEvent(id_event_);
         } else {
-            KillTimer(*HandleMain, id_event_);
+            KillTimer(HandleMain, id_event_);
         }
         id_event_ = 0;
     }
@@ -338,7 +338,7 @@ void Time::TimerProc(HWND UNUSED(hwnd), uint32_t UNUSED(msg), UINT_PTR id_timer,
                      DWORD UNUSED(elapsed)) {
     if (id_timer && (!TimeModal || id_timer == (UINT_PTR)TimeModal)
         && !reinterpret_cast<Time *>(id_timer)->unk_1_) {
-        PostMessageA(*HandleMain, WM_USER + 1, id_timer, 0);
+        PostMessageA(HandleMain, WM_USER + 1, id_timer, 0);
         reinterpret_cast<Time *>(id_timer)->unk_1_ = 1;
     }
 }
@@ -362,7 +362,7 @@ void Time::MultimediaProc(uint32_t UNUSED(timer_id), uint32_t UNUSED(msg), DWORD
                           DWORD_PTR UNUSED(dw1), DWORD_PTR UNUSED(dw2)) {
     if (user && (!TimeModal || user == (DWORD_PTR)TimeModal) 
         && !reinterpret_cast<Time *>(user)->unk_1_) {
-        PostMessageA(*HandleMain, WM_USER + 1, user, 0);
+        PostMessageA(HandleMain, WM_USER + 1, user, 0);
         reinterpret_cast<Time *>(user)->unk_1_ = 1;
     }
 }

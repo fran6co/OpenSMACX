@@ -24,6 +24,7 @@
 #include "game.h"     // control_game
 #include "general.h"  // jackal_version_check, jackal_init_real, jackal_close
 #include "palette.h"  // g_PALETTE1
+#include "popup.h"     // Popup::alloc
 #include "sound.h"    // init_sound
 #include "temp.h"     // HandleMain
 
@@ -84,10 +85,10 @@
  *   0x00404FB0  ?alloc@Popup@@QAAHXZ
  *   0x00604E40  ?basepop_alloc@BasePop@@QAEHXZ
  */
-static func_popup_alloc *const PopupAlloc =
-    reinterpret_cast<func_popup_alloc *>(0x00404FB0);
-static func_popup_alloc *const BasePopAlloc =
-    reinterpret_cast<func_popup_alloc *>(0x00604E40);
+// A MACRO, not a `const` variable, so the store below is an immediate. The
+// image writes `mov dword ptr [0x696ecc], 0x604e40`; through a file-scope
+// variable VC6 loads it first and the store becomes two instructions.
+#define BASEPOP_ALLOC reinterpret_cast<func_popup_alloc *>(0x00604E40)
 
 char CommandLineText[0x108];  // 0x007D3970
 func_popup_alloc *PopupAllocHook;  // 0x00696ECC
@@ -121,16 +122,48 @@ RULED-OUT: `reinterpret_cast<Caviar *>(0)->init_class()`. The image's names for
            tools/emit_translation_unit.py already applies to every other
            `*::init_class`, so the cast is gone.
 
-KNOWN DIVERGENCES, all of them from callees this build cannot yet name:
+RULED-OUT: every source spelling tried for the ONE instruction still
+           differing. This body is MNEMONIC_ONLY - every mnemonic agrees, in
+           order - and 458 bytes against the image's 459. The whole of the
+           remaining byte is #52:
 
-  * `if (PopupAlloc)` below is a test of a literal, so VC6 folds it and emits
-    one store where the image emits two. The image's guard is a link-time
-    address, which it could not fold. It becomes the image's shape when
-    ?alloc@Popup@@QAAHXZ (0x00404FB0) is a symbol this build links against.
-  * `*ExpansionEnabled` and `*HandleMain` are `BOOL *` and `HWND *` aimed at
-    fixed addresses, so each costs a load the image does not perform - the
-    same fault fixed here for g_JACKAL_FONT and g_PALETTE1, left alone
-    because those two names have 21 and 12 other users. See atexit_thunks.h.
+               image  mov ebx, dword ptr [ebp + 0x10]     3 bytes
+               here   mov ebx, edi                        2 bytes
+
+           Both sides put `colour_depth` in the dead parameter's home slot and
+           both read it into edi first; the image then RE-READS the slot for
+           ebx where VC6 copies the register it already has. Tried and
+           measured, all four MNEMONIC_ONLY at 458 bytes: assigning height
+           before width, routing one of them through a second local, and
+           reading `lpCmdLine` directly for both (that one is worse - MISMATCH
+           at 452 bytes, because the parameter then lives across the strcat
+           and the register saves move back into the prologue).
+
+           It is a register-allocator decision with no operand to change and
+           no ordering that reaches it, which is the class byte_match's own
+           notes call unreachable from source.
+
+WHAT GOT IT HERE, since four of the five were wrong in the first draft:
+
+  * `colour_depth` is a SEPARATE LOCAL, not the `lpCmdLine` parameter reused.
+    The image reads `[ebp+0x10]` for it, which looks like the parameter and is
+    VC6 putting a local in the dead parameter's home slot - and on the
+    non-DirectDraw path it is read WITHOUT EVER BEING WRITTEN. That is a bug
+    in the shipped game, reachable only with DirectDraw off in the ini, and
+    reproducing it is what moved the first divergence from #2 to #32.
+  * `tgl_direct_draw ? 4 : 0`, NOT `-(x != 0) & 4`. The comment that used to
+    sit here said a ternary compiles to a branch; measured, the ternary is
+    what produces the image's `neg; sbb; and` and the hand-written branchless
+    form produces `xor; test; setne`.
+  * ONE `refused` variable, not two `if`s and not `||`. See the note at the
+    statement itself - the three read the same in C and produce three
+    different block layouts.
+  * `Popup::alloc` is a real symbol (src/pending_bodies.cpp), so 0x0045F96F is
+    `mov eax, OFFSET` with a relocation the comparison masks. Through a
+    `static const` pointer variable it was `mov eax, [mem]` - a different
+    opcode, which no masking can rescue.
+  * `ExpansionEnabled` and `HandleMain` are objects rather than `BOOL *` and
+    `HWND *` aimed at fixed addresses, which cost a load each.
 */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,
                    int nShowCmd) {
@@ -139,15 +172,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         strcat(CommandLineText, lpCmdLine);
     }
 
-    *ExpansionEnabled = TRUE;
+    ExpansionEnabled = TRUE;
     PopupModalActive = 0;
     // The base game's allocator, then the expansion's over the top of it. The
     // guard is a test of the expansion allocator's own ADDRESS, which cannot
     // be null - so the first store is dead, and this pair is the seam the
     // expansion pack was linked through rather than a runtime choice.
-    PopupAllocHook = BasePopAlloc;
-    if (PopupAlloc) {
-        PopupAllocHook = PopupAlloc;
+    PopupAllocHook = BASEPOP_ALLOC;
+    if (&Popup::alloc) {
+        PopupAllocHook = &Popup::alloc;
     }
     DialogDefaultStyle |= 4;
 
@@ -156,6 +189,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     int display_width;
     int display_height;
+    int colour_depth;
     if (tgl_direct_draw) {
         if (video_mode == 0) {
             video_mode = GetSystemMetrics(SM_CXSCREEN);
@@ -171,25 +205,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // the parameter rather than spending a local on it, and 0x0045FA2B
         // reads the slot back to pass it on - so the reuse is load-bearing
         // and not an artifact of the decompilation.
-        lpCmdLine = reinterpret_cast<LPSTR>(8);
+        colour_depth = 8;
     } else {
         // Without DirectDraw the window takes its geometry and its depth from
         // the same slot, whatever the command line left in it.
-        display_width = reinterpret_cast<int>(lpCmdLine);
-        display_height = reinterpret_cast<int>(lpCmdLine);
+        display_width = colour_depth;
+        display_height = colour_depth;
     }
 
-    if (jackal_version_check("10.10")) {
-        return 0;
+    // ONE STATUS, TWO TESTS - not `if (a) return 0; if (b) return 0;` and not
+    // `if (a || b) return 0;`. All three read the same in C and none of the
+    // other two is what VC6 emitted:
+    //
+    //   two ifs   the first `return 0` gets its own inline epilogue; the
+    //             image jumps to a shared one              1 mnemonic edit
+    //   `||`      both tests jump to an epilogue at the END of the function;
+    //             the image's sits between them            3 mnemonic edits
+    //   this      every mnemonic agrees
+    //
+    // The image tests once at 0x0045FA27 and jumps past the `jackal_init_real`
+    // call to 0x0045FA54, and the second test at 0x0045FA50 falls INTO that
+    // same block. That is one condition variable written twice and tested
+    // once, which is this.
+    int refused = jackal_version_check("10.10");
+    if (!refused) {
+        refused = jackal_init_real(&g_PALETTE1, &g_JACKAL_FONT,
+                                   "Sid Meier's Alpha Centauri",
+                                   tgl_direct_draw ? 4 : 0,
+                                   display_width, display_height, colour_depth);
     }
-
-    // `-(x != 0) & 4` rather than `x ? 4 : 0`: the branchless form is what the
-    // image computes at 0x0045FA2E, and a ternary here compiles to a branch.
-    int init_flags = -(tgl_direct_draw != 0) & 4;
-    if (jackal_init_real(&g_PALETTE1, &g_JACKAL_FONT,
-                         "Sid Meier's Alpha Centauri", init_flags,
-                         display_width, display_height,
-                         reinterpret_cast<int>(lpCmdLine))) {
+    if (refused) {
         return 0;
     }
 
@@ -210,7 +255,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // Holding Shift through startup skips sound entirely. The image tests the
     // whole high byte of the result rather than just the 0x8000 down bit.
     if (HIBYTE(GetAsyncKeyState(VK_SHIFT)) == 0) {
-        init_sound(*HandleMain, sound_backends);
+        init_sound(HandleMain, sound_backends);
     }
 
     g_JACKAL_FONT.init("arialn.ttf", DefaultFontFace, 12, 0);

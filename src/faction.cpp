@@ -68,7 +68,7 @@ Return Value: Is faction a Progenitor? true/false
 Status: Complete
 */
 BOOL __cdecl is_alien_faction(uint32_t faction_id) {
-    return *ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN);
+    return ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN);
 }
 
 /*

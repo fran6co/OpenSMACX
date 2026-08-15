@@ -3667,7 +3667,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_unity(int x, int y) {
-    if (*ExpansionEnabled) {
+    if (ExpansionEnabled) {
         uint32_t loc_attempts = 0;
         if (!on_map(x, y)) {
             do {
@@ -3739,7 +3739,7 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_fossil(int x, int y) {
-    if (*ExpansionEnabled) { // added check similar to Unity Wreckage
+    if (ExpansionEnabled) { // added check similar to Unity Wreckage
         uint32_t loc_attempts = 0;
         if (!on_map(x, y)) {
             do {

@@ -105,7 +105,10 @@ extern int *BufferStrHeight;
 extern int *ParseNumTable;
 extern int *ParseStrPlurality;
 extern int *ParseStrGender;
-extern HWND *HandleMain;
+// The main window. AN OBJECT, for the reason in game.h on
+// ExpansionEnabled: 0x009B7B28 is zero-fill, so the pointer form carried
+// no information and cost a load at every use.
+extern HWND HandleMain;
 
 extern uint32_t *UnkBitfield1;
 

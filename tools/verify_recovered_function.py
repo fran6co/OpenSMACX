@@ -415,6 +415,15 @@ def verify_verbatim(annotation) -> dict:
     `build_unit` step - because the unit already exists. Same comparator, same
     catalogue, same shared-span index, so a verdict here and a verdict from
     `decomp_status` are the same measurement rather than two that agree.
+
+    WITH ITS ORIGIN, which is the half that was missing. A FILE-mode landing is
+    a real translation unit from a real directory and `byte_match.seed_context`
+    puts that directory's headers beside it - but only when the unit carries
+    the path, which `decomp_status.build_units` passes and this did not. So a
+    unit that says `#include "stdafx.h"` scored NO_COMPILE here and BYTE_EXACT
+    in the gate: `Cannot open include file: 'stdafx.h'`, on the tool an agent
+    runs to decide whether its work is finished. Two measurements of one body
+    that disagree is the one thing this file exists to prevent.
     """
     import tempfile
     import pefile
@@ -423,7 +432,8 @@ def verify_verbatim(annotation) -> dict:
     shared = byte_match.shared_span_index(catalogue)
     with tempfile.TemporaryDirectory() as tmp:
         return byte_match.match_function(
-            pe, catalogue, shared, annotation.address, annotation.region,
+            pe, catalogue, shared, annotation.address,
+            (annotation.region, annotation.path),
             Path(tmp), "", f"v{annotation.address:08x}")
 
 
@@ -561,6 +571,112 @@ def rank_directory(address: int, directory: Path, as_json: bool) -> int:
     return 1
 
 
+
+
+def describe(verdict: dict) -> list:
+    """The lines that say HOW FAR OFF a body is, not just where it first is.
+
+    `byte_match.compare` has computed `mnemonic_similarity`,
+    `mnemonics_in_common`, `edit_count` and an `edits` summary since the
+    first-divergence-only report was found to be misleading - a 1,187 B body
+    whose every call, constant, branch and store matched read as `MISMATCH at
+    index 2` because one prologue `push` was absent and everything downstream
+    shifted by one. Indistinguishable from a body that is entirely wrong.
+
+    `byte_match.py`'s own main() prints all of it. THIS tool - the one
+    .claude/agents/byte-match-recovery.md tells an agent to run, and the one
+    whose exit code is the loop condition - printed the tier, the first
+    divergence and the two byte counts, and dropped the rest. So the agent
+    doing the work saw strictly less than the harness that scored it, and
+    "am I getting closer" was not answerable from the tool that answers
+    "am I done".
+    """
+    lines = []
+    for key, label in (("note", "divergence"),
+                       ("refusal_reason", "reason"),
+                       ("first_divergence", "first differing mnemonic"),
+                       ("original_bytes", "original bytes"),
+                       ("rebuilt_bytes", "rebuilt bytes")):
+        value = verdict.get(key)
+        if value not in (None, ""):
+            lines.append(f"    {label}: {value}")
+    if "mnemonic_similarity" in verdict:
+        lines.append(
+            f"    {verdict.get('mnemonics_in_common', '?')} of "
+            f"{verdict.get('original_mnemonics', '?')} mnemonics agree "
+            f"({verdict['mnemonic_similarity']:.1%}), "
+            f"{verdict.get('edit_count', '?')} edit(s)")
+        for edit in verdict.get("edits", [])[:4]:
+            lines.append(f"      {edit['op']:8s} at #{edit['at']}: "
+                         f"original {edit['original']} vs yours "
+                         f"{edit['rebuilt']}")
+    return lines
+
+
+def render_diff(address: int, unit, flags: str, limit: int = 40) -> None:
+    """The image's instructions beside the rebuilt ones, aligned by index.
+
+    WHY THIS LIVES HERE. The verdict already names the FIRST divergence, which
+    is the right default - it is the one to fix, and a wall of text is not.
+    But "what does the rest of it look like" was answerable only by compiling
+    by hand and disassembling both sides, and doing that in a scratch script
+    duplicates `compile_unit`, the subject extraction and the span walk, none
+    of which should have a second copy. It also drifts: the scratch version
+    written on 2026-08-15 seeded the unit's own directory, which is exactly
+    the thing `verify_verbatim` was failing to do, so the two disagreed about
+    whether the body even compiled.
+
+    Indices, not addresses, because the rebuilt side has no addresses - it is
+    an object file, and every branch and absolute operand in it is still a
+    relocation. Aligning by index is also what `compare` does, so a divergence
+    reported at #2 is at #2 here.
+    """
+    import tempfile
+    import capstone
+    import pefile
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    pe = pefile.PE(str(byte_match.DEFAULT_EXE))
+    catalogue = byte_match.load_rows()
+    row = catalogue.get(address)
+    if row is None:
+        print(f"    0x{address:08X} is not catalogued; nothing to diff against")
+        return
+    layout = byte_match.classify_body(
+        pe, row, byte_match.shared_span_index(catalogue))
+    low, high = layout.primary[0]
+    original = list(md.disasm(
+        byte_match.original_span_bytes(pe, low, high), low))
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            data = byte_match.compile_unit(unit, Path(tmp), "diff", flags)
+            rebuilt_bytes, _ = byte_match.object_code(
+                data, subject=row.get("name"))
+        except ValueError as error:
+            print(f"    cannot diff: {error}")
+            return
+    rebuilt = list(md.disasm(rebuilt_bytes, low))
+    print(f"\n    image {len(original)} instructions, rebuilt {len(rebuilt)},"
+          f" under {flags.strip()}")
+    print(f"    {'#':>4}  {'IMAGE':42}  {'REBUILT':42}")
+    shown = 0
+    for index in range(max(len(original), len(rebuilt))):
+        left = (f"{original[index].mnemonic} {original[index].op_str}"
+                if index < len(original) else "-")
+        right = (f"{rebuilt[index].mnemonic} {rebuilt[index].op_str}"
+                 if index < len(rebuilt) else "-")
+        if left == right and shown:
+            continue
+        mark = "" if left == right else "   <<<"
+        print(f"    {index:>4}  {left:42}  {right:42}{mark}")
+        if left != right:
+            shown += 1
+        if shown >= limit:
+            print(f"    ... stopping after {limit} divergences")
+            break
+    if not shown:
+        print("    no divergence: every instruction agrees")
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -576,6 +692,9 @@ def main(argv=None) -> int:
                         help="with --body: also score what is committed and "
                              "refuse a candidate that is WORSE")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--diff", action="store_true",
+                        help="print the image's instructions beside the "
+                             "rebuilt ones, aligned by index")
     parser.add_argument("--dump-unit", action="store_true",
                         help="print the exact unit the gate compiles and stop; "
                              "with --body, the unit that body would produce")
@@ -616,8 +735,12 @@ def main(argv=None) -> int:
             tier = verdict.get("tier", "?")
             note = verdict.get("note") or verdict.get("refusal_reason") or ""
             print(f"    {annotation.path} (FILE mode, compiled verbatim)")
-            print(f"0x{address:08X}  {tier}"
-                  + (f"   {note}" if note else ""))
+            print(f"0x{address:08X}  {tier}")
+            for line in describe(verdict):
+                print(line)
+            if arguments.diff:
+                render_diff(address, (annotation.region, annotation.path),
+                            verdict.get("flags") or byte_match.MEASURED_FLAGS)
             return 0 if tier == "BYTE_EXACT" else 1
         body, source = committed_body(address)
         if body is None:
@@ -672,14 +795,8 @@ def main(argv=None) -> int:
                           "source": source}, indent=2, default=str))
     else:
         print(f"0x{address:08X}  {tier}   ({source})")
-        for key, label in (("note", "divergence"),
-                           ("refusal_reason", "reason"),
-                           ("first_divergence", "first differing mnemonic"),
-                           ("original_bytes", "original bytes"),
-                           ("rebuilt_bytes", "rebuilt bytes")):
-            value = verdict.get(key)
-            if value not in (None, ""):
-                print(f"    {label}: {value}")
+        for line in describe(verdict):
+            print(line)
     return 0 if tier == MATCHED else 1
 
 
