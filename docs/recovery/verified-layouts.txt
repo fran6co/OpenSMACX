@@ -48,9 +48,12 @@ PullDown
 PullDownItem
 PushButton
 Random
+RulesArmor
 RulesChassis
 RulesFacility
+RulesNatural
 RulesTechnology
+RulesWeapon
 SAmbience
 Scroll
 SocialCategory

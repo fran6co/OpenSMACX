@@ -204,6 +204,21 @@ struct RulesNatural {
     LPSTR name_short;
 };
 
+// THE ARRAY EXACTLY FILLS THE SPACE BETWEEN ITS BASE AND THE NEXT NAMED
+// GLOBAL, which is what makes this a measurement and not a restatement.
+// `Natural` sits at 0x0094ADE0 and `Weapon` at 0x0094AE60, a gap of
+// 0x80. 16 elements of 0x8 is 0x80 - exactly that,
+// with nothing left over. A wrong element size would either overflow the
+// neighbour or leave a hole, and the element count is the tree's own
+// (MaxNaturalNum).
+//
+// This is the SINGLETON-AND-ARRAY case that tools/derive_array_strides.py
+// cannot reach: it reads a stride off an index computation, and code that
+// walks these tables with a pointer never computes one.
+static_assert(sizeof(RulesNatural) == 0x8,
+              "RulesNatural layout must match the original executable");
+
+
 constexpr int MaxNaturalNum = 16;
 constexpr int MaxLandmarkNum = 64;
 constexpr int RegionBounds = 63;

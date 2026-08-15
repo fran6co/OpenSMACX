@@ -374,6 +374,21 @@ struct RulesWeapon {
     int16_t padding;
 };
 
+// THE ARRAY EXACTLY FILLS THE SPACE BETWEEN ITS BASE AND THE NEXT NAMED
+// GLOBAL, which is what makes this a measurement and not a restatement.
+// `Weapon` sits at 0x0094AE60 and `SocialCategories` at 0x0094B000, a gap of
+// 0x1A0. 26 elements of 0x10 is 0x1A0 - exactly that,
+// with nothing left over. A wrong element size would either overflow the
+// neighbour or leave a hole, and the element count is the tree's own
+// (the [26] in src/veh.cpp).
+//
+// This is the SINGLETON-AND-ARRAY case that tools/derive_array_strides.py
+// cannot reach: it reads a stride off an index computation, and code that
+// walks these tables with a pointer never computes one.
+static_assert(sizeof(RulesWeapon) == 0x10,
+              "RulesWeapon layout must match the original executable");
+
+
 struct RulesArmor {
     LPSTR name;
     LPSTR name_short;
@@ -384,6 +399,21 @@ struct RulesArmor {
     int16_t preq_tech;
     int16_t padding2;
 };
+
+// THE ARRAY EXACTLY FILLS THE SPACE BETWEEN ITS BASE AND THE NEXT NAMED
+// GLOBAL, which is what makes this a measurement and not a restatement.
+// `Armor` sits at 0x0094F278 and `Technology` at 0x0094F358, a gap of
+// 0xE0. 14 elements of 0x10 is 0xE0 - exactly that,
+// with nothing left over. A wrong element size would either overflow the
+// neighbour or leave a hole, and the element count is the tree's own
+// (the [14] in src/veh.cpp).
+//
+// This is the SINGLETON-AND-ARRAY case that tools/derive_array_strides.py
+// cannot reach: it reads a stride off an index computation, and code that
+// walks these tables with a pointer never computes one.
+static_assert(sizeof(RulesArmor) == 0x10,
+              "RulesArmor layout must match the original executable");
+
 
 struct Veh {
     int16_t x;
