@@ -1,4 +1,15 @@
 // ORIGINAL: 0x00459680 FILE
+// DEFERRED: 2101 instructions, declined twice before this pass too. Read
+//   through the prologue, the 11-entry jump table (0x0045B1DC, sparse index
+//   table at 0x0045B52C) and the first ~2100 lines of disasm: calls thread
+//   through six distinct embedded-widget vtables at this-relative offsets
+//   0xe00, 0x2fe4, 0x3b30, 0x51c8, 0x6860 (per the brief) whose slot
+//   semantics are still unpinned - each needs its argument count/types
+//   worked out from the call site before the surrounding layout-constant
+//   tables (which ARE mechanical) can be trusted. That slot-resolution pass
+//   did not fit this budget on top of landing 0x0052C880 in the same batch.
+//   Left as BODY GOES HERE for the next pass with more budget to spend
+//   entirely on the vtable slots.
 // working copy - scaffold materialised by --work
 // name      ?init@MainInterface@@QAEHH@Z
 // size      7829 bytes

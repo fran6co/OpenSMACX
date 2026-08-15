@@ -1,4 +1,48 @@
 // ORIGINAL: 0x0056B5B0 FILE
+// DEFERRED: reading only this pass (per instructions), no body attempted.
+//   17440 raw instructions, single param `a1` (a vehicle id - every veh_*
+//   helper takes it directly, no outer loop over the roster: this is the
+//   per-turn "what does this one enemy unit do" entry point, called in a
+//   loop elsewhere, not itself the loop).
+//   - Only 806/17440 instructions (4.6%) are calls, to 105 distinct callees;
+//     the rest is inline compare/branch/address math, not mechanical
+//     repetition of a handful of subroutines.
+//   - 34 `ret` sites spread roughly evenly across the whole 0x56B5B0-
+//     0x579208 span -> the function is a long, mostly-flat, priority-ordered
+//     CHAIN of independent heuristics ("if this situation, decide + return"),
+//     the classic monolithic Civ-style unit-AI shape - not one big loop.
+//   - Two 64-uint scratch arrays at the top of the frame plus the heaviest
+//     callees (stack_check x79, x_dist x57, xrange x53, on_map x51,
+//     go_to x41, veh_at x29, whose_territory x28) show the single largest
+//     RECURRING shape is "gather up to 64 candidate tiles, score, pick
+//     best" - structurally similar but NOT byte-identical across sections,
+//     since each heuristic scores differently.
+//   - 13 log_say debug calls (mostly clustered 0x56F803-0x572209, two more
+//     at 0x578D48) carry literal strings Ghidra preserved despite its type
+//     corruption: "Auto sending DESTROY/DESTROY2/ARTY message", "Enemy doing
+//     GATE", "Enemy doing OBLIT", "AUTOROADSDONE"/"AUTOTUBESDONE" - these
+//     name at least 5-6 distinct heuristic sections (native-life combat,
+//     psi-gate use, planet-buster use, Former auto-terraform completion)
+//     and are a genuine lever for the next pass: Ghidra's TYPES are garbage
+//     (everything decays to IMAGE_DOS_HEADER*, per the batch-20 note) but
+//     its control-flow skeleton and string literals both checked out against
+//     raw disasm everywhere I spot-checked.
+//   - The one jump table (12 entries, sparse index at 0x0094AE68) sits in
+//     the LAST ~9% of the function (0x577DDA-0x579208, ~5.2KB) and, by case
+//     count and position (only reached after everything else has been ruled
+//     out), reads as the ORDERA_TERRA_* auto-improve-order dispatch for
+//     Former units, not the function's overall structure.
+//   Judgement: multi-pass job, NOT an EXCLUSIONS.md candidate - nothing
+//   structurally unrecoverable (plain __cdecl(int), no SEH, Ghidra's control
+//   flow is directionally trustworthy). But it is not a one-sitting target
+//   either: it is ~15-25 semi-independent heuristic sections (bounded by the
+//   34 return points / log_say boundaries above), each comparable in size to
+//   a medium already-recovered function, and VC6 needs the WHOLE body at
+//   once to compile - there's no way to land "just section 3" separately.
+//   Recommend a dedicated multi-session effort that first extends this
+//   section map (return-point boundaries + log_say category names) across
+//   the untouched two-thirds of the function before anyone attempts
+//   prose-to-C++ transcription of a single section.
 // working copy - scaffold materialised by --work
 // name      ?enemy_move@@YAHH@Z
 // size      56408 bytes

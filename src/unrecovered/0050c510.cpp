@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0050C510 FILE
+// RULED-OUT: full struct-based transcription (Base@0x97D040, PlayerData@0x96C9E0,
+//            Player@0x946A50, Map@0x94A30C, Veh@0x952828, RulesFacility@0x9A4B68,
+//            all cross-checked against base.h/faction.h/map.h/veh.h offsets and
+//            static_asserts) diverges at instruction #3 (prologue reg-save/stack
+//            layout order) - not yet matched at the frame-shape level.
 // working copy - scaffold materialised by --work
 // name      ?capture_base@@YAXHHH@Z
 // size      6271 bytes
@@ -1920,7 +1925,7 @@ class Console : public MapWin { public:
     void editor_polar();
     void editor_redo();
     void editor_undo();
-    void focus(int, int, int);
+    int focus(int, int, int);
     void menu_update();
     void on_sys_close();
     void set_adv_preferences();
@@ -2288,11 +2293,1066 @@ static int *const g_009b90d8 = (int *)0x009B90D8;
 static int *const g_009b90f8 = (int *)0x009B90F8;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
-void __cdecl capture_base(int a1, int a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
 
+// ---- Layouts read from base.h / faction.h / map.h / veh.h (self-contained
+// copies - this translation unit cannot #include project headers) ----
+struct Base {
+    short x;
+    short y;
+    unsigned char faction_id_current;
+    unsigned char faction_id_former;
+    signed char population_size;
+    unsigned char assimilation_turns_left;
+    unsigned char nerve_staple_turns_left;
+    unsigned char unk_1;
+    unsigned char visibility;
+    unsigned char faction_pop_size_intel[8];
+    char name_string[25];
+    short unk_x;
+    short unk_y;
+    unsigned int state;
+    unsigned int event;
+    unsigned int governor;
+    int nutrients_accumulated;
+    int minerals_accumulated;
+    int production_id_last;
+    int eco_damage;
+    unsigned int queue_size;
+    int queue_production_id[10];
+    int resource_sqr_radius;
+    int specialist_total;
+    int specialist_unk_1;
+    unsigned int spec[2];
+    unsigned char facilities_built[12];
+    int mineral_surplus_final;
+    int minerals_accumulated_2;
+    int unk_6;
+    int unk_7;
+    int unk_8;
+    int unk_9;
+    int nutrient_intake_1;
+    int mineral_intake_1;
+    int energy_intake_1;
+    int unused_intake_1;
+    int nutrient_intake_2;
+    int mineral_intake_2;
+    int energy_intake_2;
+    int unused_intake_2;
+    int nutrient_surplus;
+    int mineral_surplus;
+    int energy_surplus;
+    int unused_surplus;
+    int nutrient_inefficiency;
+    int mineral_inefficiency;
+    int energy_inefficiency;
+    int unused_inefficiency;
+    int nutrient_consumption;
+    int mineral_consumption;
+    int energy_consumption;
+    int unused_consumption;
+    int economy_total;
+    int psych_total;
+    int labs_total;
+    int unk_10;
+    short auto_forward_land_base_id;
+    short auto_forward_sea_base_id;
+    short auto_forward_air_base_id;
+    short padding_0;
+    int talent_total;
+    int drone_total;
+    int super_drone_total;
+    int random_event_turns;
+    int nerve_staple_count;
+    int unk_11;
+    int unk_12;
+};
+static Base *const g_Bases = (Base *)0x0097D040;
+
+struct SocialCategory { unsigned int politics; unsigned int economics; unsigned int values; unsigned int future; };
+struct SocialEffect {
+    int economy; int efficiency; int support; int talent; int morale;
+    int police; int growth; int planet; int probe; int industry; int research;
+};
+struct Goal { short type; short priority; int x; int y; int base_id; };
+
+struct PlayerData {
+    unsigned int flags;
+    unsigned int ranking;
+    int diff_level;
+    unsigned int base_name_offset;
+    unsigned int base_sea_name_offset;
+    int last_turn_new_base;
+    unsigned int diplo_treaties[8];
+    int diplo_agenda[8];
+    unsigned int diplo_friction[8];
+    int diplo_spoke[8];
+    int diplo_merc[8];
+    char diplo_patience[8];
+    int sanction_turns;
+    int loan_balance[8];
+    int loan_payment[8];
+    int unk_12[8];
+    int integrity_blemishes;
+    int global_reputation;
+    int diplo_unk1[8];
+    int diplo_wrongs[8];
+    int diplo_betrayed[8];
+    int diplo_unk3[8];
+    int diplo_unk4[8];
+    int traded_maps;
+    int base_governor_adv;
+    int atrocities;
+    int major_atrocities;
+    unsigned int mind_control_total;
+    unsigned int diplo_mind_control[8];
+    unsigned int stolen_data_count[8];
+    int energy_reserves;
+    unsigned int hurry_cost_total;
+    SocialCategory soc_category_pending;
+    SocialCategory soc_category_active;
+    int soc_upheaval_cost_paid;
+    SocialEffect soc_effect_pending;
+    SocialEffect soc_effect_active;
+    SocialEffect soc_effect_temp;
+    SocialEffect soc_effect_base;
+    int unk_13;
+    unsigned int maint_cost_total;
+    int tech_commerce_bonus;
+    int turn_commerce_income;
+    int unk_17;
+    int unk_18;
+    int tech_fungus_nutrient;
+    int tech_fungus_mineral;
+    int tech_fungus_energy;
+    int tech_fungus_unk;
+    int se_alloc_psych;
+    int se_alloc_labs;
+    unsigned int tech_pact_shared_goals[12];
+    int tech_ranking;
+    int unk_26;
+    unsigned int sat_odp_deployed;
+    int theory_of_everything;
+    char tech_trade_source[92];
+    int tech_accumulated;
+    int tech_id_researching;
+    int tech_cost;
+    int earned_techs_saved;
+    int net_random_event;
+    int ai_fight;
+    int ai_growth;
+    int ai_tech;
+    int ai_wealth;
+    int ai_power;
+    int x_target;
+    int y_target;
+    int unk_28;
+    int council_call_turn;
+    int unk_29[11];
+    int unk_30[11];
+    unsigned char facility_announced[4];
+    int unk_32;
+    char unk_33;
+    char unk_34;
+    char unk_35;
+    char unk_36;
+    int planet_ecology;
+    int base_id_atk_target;
+    int unk_37;
+    char saved_queue_name[8][24];
+    int saved_queue_size[8];
+    int saved_queue_items[8][10];
+    int unk_38[8];
+    int unk_39[8][9];
+    int unk_46[9];
+    int unk_47;
+    int unk_48;
+    int unk_49;
+    unsigned int nutrient_surplus_total;
+    int labs_total;
+    unsigned int satellites_nutrient;
+    unsigned int satellites_mineral;
+    unsigned int satellites_energy;
+    unsigned int satellites_odp_total;
+    int best_weapon_value;
+    int best_psi_offense;
+    int best_psi_defense;
+    int best_armor_value;
+    int best_land_speed;
+    int enemy_best_weapon_value;
+    int enemy_best_armor_value;
+    int enemy_best_land_speed;
+    int enemy_best_psi_offense;
+    int enemy_best_psi_defense;
+    int unk_64;
+    int unk_65;
+    int unk_66;
+    int unk_67;
+    int unk_68;
+    char unk_69[4];
+    unsigned char proto_id_active[512];
+    unsigned char proto_id_queue[512];
+    short proto_id_lost[512];
+    int total_mil_veh;
+    unsigned int current_num_bases;
+    int mil_strength_1;
+    int mil_strength_2;
+    int pop_total;
+    int unk_70;
+    int planet_busters;
+    int unk_71;
+    int unk_72;
+    unsigned short region_total_combat_vehs[128];
+    unsigned char region_total_bases[128];
+    unsigned char region_total_offensive_vehs[128];
+    unsigned short region_force_rating[128];
+    unsigned short unk_77[128];
+    unsigned short unk_78[128];
+    unsigned short unk_79[128];
+    unsigned short unk_80[128];
+    unsigned short unk_81[128];
+    unsigned char unk_82[128];
+    unsigned char unk_83[128];
+    unsigned char region_base_plan[128];
+    Goal goals[75];
+    Goal sites[25];
+    int unk_93;
+    int unk_94;
+    int unk_95;
+    int unk_96;
+    int unk_97;
+    unsigned int tech_achieved;
+    int time_bonus_count;
+    int unk_99;
+    unsigned int secret_project_intel[8];
+    int corner_market_turn;
+    int corner_market_active;
+    int unk_101;
+    int unk_102;
+    int unk_103;
+    unsigned int flags_ext;
+    int unk_105;
+    int unk_106;
+    int unk_107;
+    int unk_108;
+    int unk_109;
+    int unk_110;
+    char unk_111[4];
+    int unk_112;
+    int unk_113;
+    int unk_114;
+    int unk_115;
+    int unk_116;
+    int unk_117;
+    int unk_118;
+};
+static PlayerData *const g_PlayerData = (PlayerData *)0x0096C9E0;
+
+struct Player {
+    int is_leader_female;
+    char filename[24];
+    char search_key[24];
+    char name_leader[24];
+    char title_leader[24];
+    char adj_leader[128];
+    char adj_insult_leader[128];
+    char adj_faction[128];
+    char adj_insult_faction[128];
+    unsigned char padding1[128];
+    char noun_faction[24];
+    int noun_gender;
+    int is_noun_plural;
+    char adj_name_faction[128];
+    char formal_name_faction[40];
+    char insult_leader[24];
+    char desc_name_faction[24];
+    char assistant_name[24];
+    char scientist_name[24];
+    char assistant_city[24];
+    unsigned char padding2[176];
+    int rule_tech_selected;
+    int rule_morale;
+    int rule_research;
+    int rule_drone;
+    int rule_talent;
+    int rule_energy;
+    int rule_interest;
+    int rule_population;
+    int rule_hurry;
+    int rule_techcost;
+    int rule_psi;
+    int rule_sharetech;
+    int rule_commerce;
+    int rule_flags;
+    int faction_bonus_count;
+    int faction_bonus_id[8];
+    int faction_bonus_val1[8];
+    int faction_bonus_val2[8];
+    int ai_fight;
+    int ai_growth;
+    int ai_tech;
+    int ai_wealth;
+    int ai_power;
+    int soc_ideology_category;
+    int soc_anti_ideology_category;
+    int soc_ideology_model;
+    int soc_anti_ideology_model;
+    int soc_ideology_effect;
+    int soc_anti_ideology_effect;
+};
+static Player *const g_Players = (Player *)0x00946A50;
+
+struct Map {
+    unsigned char climate;
+    unsigned char contour;
+    unsigned char val2;
+    unsigned char region;
+    unsigned char visibility;
+    unsigned char val3;
+    unsigned char unk_1;
+    signed char territory;
+    unsigned int bit;
+    unsigned int bit2;
+    unsigned int bit_visible[7];
+};
+static Map **const g_MapTiles = (Map **)0x0094A30C;
+
+struct Veh {
+    short x;
+    short y;
+    unsigned int state;
+    unsigned short flags;
+    short proto_id;
+    unsigned short unk_1;
+    unsigned char faction_id;
+    unsigned char year_end_lurking;
+    unsigned char dmg_incurred;
+    signed char order;
+    unsigned char waypoint_count;
+    unsigned char patrol_current_point;
+    short waypoint_x[4];
+    short waypoint_y[4];
+    unsigned char morale;
+    unsigned char terraforming_turns;
+    unsigned char order_auto_type;
+    unsigned char visibility;
+    unsigned char moves_expended;
+    signed char unk_5;
+    unsigned char unk_6;
+    unsigned char move_to_ai_type;
+    unsigned char probe_action;
+    unsigned char probe_sabotage_id;
+    short home_base_id;
+    short next_veh_id_stack;
+    short prev_veh_id_stack;
+};
+static Veh *const g_Vehs = (Veh *)0x00952828;
+
+struct RulesFacility {
+    char *name;
+    char *effect;
+    unsigned int pad;
+    int cost;
+    unsigned int maint;
+    int preq_tech;
+    int free_tech;
+    int sp_ai_fight;
+    int sp_ai_growth;
+    int sp_ai_tech;
+    int sp_ai_wealth;
+    int sp_ai_power;
+};
+static RulesFacility *const g_Facility = (RulesFacility *)0x009A4B68;
+
+static int *const g_MapLongitude = (int *)0x0068FAF0;
+static int *const g_MapLongitudeBounds = (int *)0x00949870;
+static int *const g_MapLatitudeBounds = (int *)0x00949874;
+static int *const g_MapIsFlat = (int *)0x0094988C;
+static int *const g_LocalFaction = (int *)0x00939284;
+static int *const g_IsMultiplayerNet = (int *)0x0093F660;
+static int *const g_BaseCurrentCount = (int *)0x009A64CC;
+static int *const g_VehCurrentCount = (int *)0x009A64C8;
+static int *const g_TurnCurrentNum = (int *)0x009A64D4;
+static unsigned int *const g_FactionActiveMask = (unsigned int *)0x009A64E8;
+static int *const g_SPBuiltOwner = (int *)0x009A63FC;
+static int *const g_9A6490 = (int *)0x009A6490;
+static int *const g_9A649C = (int *)0x009A649C;
+static int *const g_9A64C0 = (int *)0x009A64C0;
+static int *const g_9A6564 = (int *)0x009A6564;
+static int *const g_0090D91C = (int *)0x0090D91C;
+static int **const g_9B90F8_p = (int **)0x009B90F8;
+static char **const g_ScriptPtr = (char **)0x00691B0C;
+static int *const g_DirX = (int *)0x0066EFBC;
+static int *const g_DirY = (int *)0x0066F440;
+
+#pragma function(strcpy, strcat)
+
+void __cdecl capture_base(int a1, int a2, int a3) {
+    unsigned char bVar11;
+    char cVar2, cVar4;
+    int iVar5, iVar8, iVar10, iVar15, iVar17;
+    unsigned int uVar13, uVar14;
+    int uVar7, uVar20, uVar21;
+    char *pcVar18;
+    char *pcVar19;
+    char *hqName;
+    char local_174[256];
+    char local_74[32];
+    unsigned int local_5c;
+    int local_58;
+    int local_54;
+    int local_50;
+    unsigned int local_4c;
+    int local_48;
+    unsigned int local_44;
+    int local_40;
+    unsigned int local_3c;
+    int local_38;
+    int local_34;
+    int local_30;
+    unsigned int local_2c;
+    int local_28;
+    int local_1c;
+    unsigned int local_18;
+    int local_14;
+    unsigned int local_10;
+    unsigned int local_8;
+    int wipeOut;
+    int j, k, otherIdx, techIdx, fc, dirOff, i, f;
+    int found;
+    int idxTmp, maskTmp;
+    int cnt3, popFactor, techVal;
+    int doSkip;
+    unsigned int owner2;
+    int tileIdx, protoBase;
+    Map *tile;
+    int bestBase;
+
+    log_say((char *)g_0068a358, g_Bases[a1].name_string, a1, a2, 0);
+    local_8 = (unsigned int)(unsigned char)g_Bases[a1].faction_id_current;
+    local_1c = (int)g_Bases[a1].y;
+    local_3c = (unsigned int)(g_Bases[a1].faction_id_former == (unsigned char)a2);
+    local_28 = (int)g_Bases[a1].x;
+    local_44 = (unsigned int)(*g_MapTiles)[(*g_MapLongitude) * local_1c + (local_28 >> 1)].region;
+    local_4c = (unsigned int)a2 * 2099u;
+    cVar4 = g_Bases[a1].population_size;
+    local_48 = (int)((local_4c + local_8) * 4u);
+    g_PlayerData[a2].diplo_unk4[local_8] = g_PlayerData[a2].diplo_unk4[local_8] + cVar4 * 2;
+    g_PlayerData[a2].diplo_unk3[local_8] = g_PlayerData[a2].diplo_unk3[local_8] + cVar4 * 2;
+    strcpy(local_74, g_Bases[a1].name_string);
+    treaty_off(a2, (int)local_8, 0x40);
+    bVar11 = (unsigned char)a2;
+    local_5c = 1u << (bVar11 & 0x1f);
+    if (((local_5c & *g_FactionActiveMask & 0xff) != 0) ||
+        ((*g_FactionActiveMask & 0xff & (1u << (local_8 & 0x1f))) != 0)) {
+        treaty_on(a2, (int)local_8, 0x2000);
+    }
+
+    uVar14 = local_8;
+    for (uVar13 = 1; (int)uVar13 < 8; uVar13++) {
+        if (uVar13 != (unsigned int)a2 && uVar13 != uVar14 &&
+            (g_PlayerData[uVar14].diplo_treaties[uVar13] & 1) != 0 &&
+            (g_PlayerData[uVar13].diplo_treaties[a2] & 0x10) == 0) {
+            treaty_on((int)uVar14, (int)uVar13, 0x2000);
+            uVar14 = local_8;
+        }
+    }
+
+    if (a2 == *g_LocalFaction) {
+        iVar5 = g_Bases[a1].queue_production_id[0];
+        if (iVar5 < -0x45) {
+            if (iVar5 < 0) iVar5 = -iVar5;
+            if (g_SPBuiltOwner[iVar5] == -1) {
+                found = 0;
+                if (*g_BaseCurrentCount > 0) {
+                    for (otherIdx = 0; otherIdx < *g_BaseCurrentCount; otherIdx++) {
+                        if (otherIdx != a1 &&
+                            g_Bases[otherIdx].faction_id_current == uVar14 &&
+                            g_Bases[otherIdx].queue_production_id[0] == g_Bases[a1].queue_production_id[0]) {
+                            local_18 = (unsigned int)g_Bases[otherIdx].queue_production_id[0];
+                            parse_says(0, g_Players[uVar14].adj_name_faction, -1, -1);
+                            parse_say(1, (int)g_Facility[(int)local_18].name, -1, -1);
+                            popp(*g_ScriptPtr, (char *)g_0068a378, 0, (char *)g_0068a368, 0);
+                            uVar14 = local_8;
+                            found = 1;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    *g_009bbff0 = 0;
+                    *g_009bbfec = g_Players[uVar14].is_leader_female;
+                    parse_says(0, g_Players[uVar14].title_leader, -1, -1);
+                    *g_009bbfec = g_Players[uVar14].is_leader_female;
+                    *g_009bbff0 = 0;
+                    parse_says(1, g_Players[uVar14].name_leader, -1, -1);
+                    *g_009bbfec = g_Players[uVar14].noun_gender;
+                    *g_009bbff0 = g_Players[uVar14].is_noun_plural;
+                    parse_says(2, g_Players[uVar14].noun_faction, -1, -1);
+                    iVar5 = g_Bases[a1].queue_production_id[0];
+                    if (iVar5 < 0) iVar5 = -iVar5;
+                    parse_say(3, (int)g_Facility[iVar5].name, -1, -1);
+                    popp(*g_ScriptPtr, (char *)g_0068a398, 0, (char *)g_0068a388, 0);
+                    iVar5 = g_Bases[a1].queue_production_id[0];
+                    if (iVar5 < 0) iVar5 = -iVar5;
+                    bitmask(iVar5 - 0x46, &local_54, &local_58);
+                    g_PlayerData[local_8].secret_project_intel[local_54] &= ~(unsigned int)local_58;
+                    uVar14 = local_8;
+                }
+            }
+        }
+    }
+
+    if (a2 == *g_LocalFaction || uVar14 == (unsigned int)*g_LocalFaction) {
+        unsigned char *recPtr = (unsigned char *)0x009A5888;
+        int *ownerArr = (int *)0x009A6514;
+        while ((int)ownerArr < 0x009A6614) {
+            if (*ownerArr == a1) {
+                parse_say(0, *(int *)recPtr, -1, -1);
+                if (a2 == *g_LocalFaction) {
+                    pcVar19 = (char *)g_0068a3a4;
+                    pcVar18 = (char *)g_0068a3b4;
+                } else {
+                    pcVar19 = (char *)g_0068a3c4;
+                    pcVar18 = (char *)g_0068a3d4;
+                }
+                popp(*g_ScriptPtr, pcVar18, 0, pcVar19, 0);
+            }
+            ownerArr++;
+            recPtr += 0x30;
+        }
+    }
+
+    if (g_PlayerData[local_8].energy_reserves < 1) {
+        local_40 = 0;
+    } else {
+        local_40 = (g_Bases[a1].population_size * g_PlayerData[local_8].energy_reserves) /
+                   (g_PlayerData[local_8].pop_total + 1);
+    }
+
+    bitmask(1, &idxTmp, &maskTmp);
+    local_10 = (unsigned int)((g_Bases[a1].facilities_built[idxTmp] & maskTmp) != 0);
+    if (local_10 != 0 && 999 < g_PlayerData[local_8].energy_reserves) {
+        local_34 = 9999;
+        local_38 = -1;
+        if (*g_BaseCurrentCount > 0) {
+            for (local_14 = 0; local_14 < *g_BaseCurrentCount; local_14++) {
+                if (local_14 != a1 && g_Bases[local_14].faction_id_current == (unsigned char)local_8) {
+                    int aBase, bBase, hi, lo;
+                    local_30 = g_Bases[local_14].y;
+                    uVar14 = (unsigned int)(unsigned short)g_Bases[local_14].x;
+                    local_50 = 1;
+                    local_2c = (unsigned int)(*g_MapTiles)[(*g_MapLongitude) * local_30 + ((int)uVar14 >> 1)].region;
+                    local_10 = uVar14;
+                    if (*g_BaseCurrentCount > 0) {
+                        for (j = 0; j < *g_BaseCurrentCount; j++) {
+                            if (j != local_14 && j != a1 &&
+                                g_Bases[j].faction_id_current == (unsigned char)local_8) {
+                                iVar15 = abs((int)uVar14 - (int)g_Bases[j].x);
+                                if ((*g_MapIsFlat & 1) == 0 && *g_MapLongitude < iVar15) {
+                                    iVar15 = *g_MapLongitudeBounds - iVar15;
+                                }
+                                iVar8 = abs(local_30 - (int)g_Bases[j].y);
+                                aBase = abs(iVar15);
+                                bBase = abs(iVar8);
+                                hi = (aBase > bBase) ? aBase : bBase;
+                                lo = (aBase < bBase) ? aBase : bBase;
+                                iVar15 = hi - (((aBase + bBase >> 1) - lo) + 1 >> 1);
+                                tile = &(*g_MapTiles)[(*g_MapLongitude) * (int)g_Bases[j].y + ((int)g_Bases[j].x >> 1)];
+                                if ((unsigned int)tile->region != local_2c) {
+                                    iVar15 = iVar15 * 2;
+                                }
+                                local_50 = local_50 + iVar15;
+                                uVar14 = local_10;
+                            }
+                        }
+                    }
+                    iVar8 = (local_50 << 8) /
+                            (int)((unsigned int)g_PlayerData[local_8].region_total_bases[local_2c] +
+                                  (int)g_Bases[local_14].population_size * 2);
+                    if (iVar8 < local_34) {
+                        local_38 = local_14;
+                        local_34 = iVar8;
+                    }
+                }
+            }
+            if (0 < local_38) {
+                parse_says(0, local_74, -1, -1);
+                parse_says(1, g_Bases[local_38].name_string, -1, -1);
+                if (*g_IsMultiplayerNet != 0 || local_8 != (unsigned int)*g_LocalFaction ||
+                    X_pop((const char *)g_0068a3e0, 0) != 0) {
+                    uVar14 = local_8;
+                    g_PlayerData[local_8].energy_reserves -= 1000;
+                    set_fac(1, local_38, 1);
+                    set_fac(1, a1, 0);
+                    if (uVar14 == (unsigned int)*g_LocalFaction) {
+                        if (*g_IsMultiplayerNet != 0) {
+                            pcVar18 = (char *)g_0068a3f0;
+                            ((NetMsg *)0x00805338)->pop(pcVar18, 5000, 0, 0);
+                        }
+                    } else {
+                        *g_009bbfec = g_Players[uVar14].noun_gender;
+                        *g_009bbff0 = g_Players[uVar14].is_noun_plural;
+                        parse_says(2, g_Players[uVar14].noun_faction, -1, -1);
+                        pcVar18 = (char *)g_0068a3e8;
+                        ((NetMsg *)0x00805338)->pop(pcVar18, 5000, 0, 0);
+                    }
+                    if ((*g_FactionActiveMask & (1u << (uVar14 & 0x1f))) == 0) {
+                        base_reset(local_38, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    bitmask(1, &idxTmp, &maskTmp);
+    uVar14 = local_8;
+    local_10 = (unsigned int)((g_Bases[a1].facilities_built[idxTmp] & maskTmp) != 0);
+    if (local_10 != 0 && *g_TurnCurrentNum < g_PlayerData[local_8].corner_market_turn &&
+        0 < g_PlayerData[local_8].corner_market_active) {
+        g_PlayerData[local_8].energy_reserves += g_PlayerData[local_8].corner_market_active;
+        uVar13 = (unsigned int)*g_LocalFaction;
+        local_40 = local_40 + g_PlayerData[local_8].corner_market_active / 2;
+        g_PlayerData[local_8].corner_market_active = 0;
+        g_PlayerData[local_8].corner_market_turn = 0;
+        if (local_8 == uVar13) {
+            popp(*g_ScriptPtr, (char *)g_0068a40c, 0, (char *)g_0068a3fc, 0);
+        } else {
+            parse_says(0, g_Players[local_8].adj_name_faction, -1, -1);
+            popp(*g_ScriptPtr, (char *)g_0068a42c, 0, (char *)g_0068a41c, 0);
+        }
+    }
+
+    g_PlayerData[a2].energy_reserves += local_40;
+    {
+        int newVal = g_PlayerData[uVar14].energy_reserves - local_40;
+        if (newVal < 0) newVal = 0;
+        else if (9999999 < newVal) newVal = 9999999;
+        g_PlayerData[uVar14].energy_reserves = newVal;
+    }
+
+    wipeOut = 0;
+    if (a3 == 0 && local_3c == 0 &&
+        (g_Bases[a1].state & 0x40000) == 0 &&
+        is_objective(a1) == 0 &&
+        (g_Bases[a1].population_size > 1 ||
+         (*g_FactionActiveMask & g_Bases[a1].visibility) != 0 ||
+         *g_IsMultiplayerNet != 0)) {
+        cVar4 = g_Bases[a1].population_size - 1;
+        g_Bases[a1].population_size = cVar4;
+        wipeOut = (cVar4 == 0);
+    }
+
+    if (wipeOut) {
+        base_kill(a1);
+        draw_map(1);
+        a1 = -1;
+    } else if (a1 >= 0) {
+        g_Bases[a1].faction_id_current = bVar11;
+        for (f = 1; f < 8; f++) {
+            if (g_PlayerData[f].base_id_atk_target == a1) g_PlayerData[f].base_id_atk_target = -1;
+        }
+        g_Bases[a1].nerve_staple_turns_left = 0;
+        if (g_Bases[a1].faction_id_former == (unsigned char)a2) {
+            g_Bases[a1].assimilation_turns_left = 0;
+        } else {
+            g_Bases[a1].faction_id_former = (unsigned char)uVar14;
+            g_Bases[a1].assimilation_turns_left = 0x32;
+        }
+        g_PlayerData[a2].last_turn_new_base = *g_TurnCurrentNum;
+        g_PlayerData[uVar14].current_num_bases -= 1;
+        g_PlayerData[a2].current_num_bases += 1;
+        replay_base(1, local_28, local_1c, a2);
+        g_Bases[a1].minerals_accumulated = 0;
+        g_Bases[a1].unk_6 = 0;
+        if ((int)g_Bases[a1].queue_size >= 0) {
+            int *item = &g_Bases[a1].queue_production_id[0];
+            int cnt = (int)g_Bases[a1].queue_size + 1;
+            do {
+                if (*item >= 0) {
+                    g_PlayerData[uVar14].proto_id_queue[*item] -= 1;
+                }
+                item++;
+                cnt--;
+            } while (cnt != 0);
+        }
+        g_Bases[a1].queue_size = 0;
+        g_Bases[a1].production_id_last = -69;
+        g_Bases[a1].queue_production_id[0] = -69;
+
+        local_34 = 0;
+        local_38 = -1;
+        if (*g_BaseCurrentCount > 0) {
+            for (j = 0; j < *g_BaseCurrentCount; j++) {
+                if (j != a1 && g_Bases[j].faction_id_current == (unsigned char)a2) {
+                    int val = (int)g_Bases[j].population_size;
+                    bitmask(1, &idxTmp, &maskTmp);
+                    if ((g_Bases[j].facilities_built[idxTmp] & maskTmp) != 0) val = val * 2;
+                    if (local_34 < val) { local_38 = j; local_34 = val; }
+                }
+            }
+            if (local_38 >= 0) {
+                g_Bases[a1].governor = g_Bases[local_38].governor;
+            }
+        }
+
+        g_Bases[a1].state &= 0xffdef7b1u;
+
+        if (a3 == 0 && local_3c == 0) {
+            for (k = 1; k < 0x46; k++) {
+                if (k != 0x1a && (rand() % 3) == 0) {
+                    set_fac(k, a1, 0);
+                }
+            }
+        }
+        set_fac(1, a1, 0);
+        if (local_3c == 0) {
+            set_fac(6, a1, 0);
+            set_fac(3, a1, 0);
+        }
+
+        {
+            int mapW = *g_MapLongitudeBounds;
+            for (dirOff = 0; dirOff < 0x54; dirOff += 4) {
+                int dx = *(int *)((char *)g_DirX + dirOff);
+                int tx = dx + local_28;
+                int dy, ty;
+                if ((*g_MapIsFlat & 1) == 0) {
+                    if (tx < 0) tx += mapW;
+                    else if (mapW <= tx) tx -= mapW;
+                }
+                dy = *(int *)((char *)g_DirY + dirOff);
+                ty = dy + local_1c;
+                if (ty >= 0 && ty < *g_MapLatitudeBounds && tx >= 0 && tx < mapW) {
+                    using_set(tx, ty, a2);
+                    tile = &(*g_MapTiles)[(*g_MapLongitude) * ty + (tx >> 1)];
+                    tile->visibility = (unsigned char)(tile->visibility | (1u << (bVar11 & 0x1f)));
+                    synch_bit(tx, ty, a2);
+                    iVar5 = veh_at(tx, ty);
+                    mapW = *g_MapLongitudeBounds;
+                    if (iVar5 >= 0 && g_Vehs[iVar5].faction_id == (unsigned char)a2) {
+                        while (iVar5 >= 0) {
+                            g_Vehs[iVar5].state &= 0xfffbffffu;
+                            iVar5 = g_Vehs[iVar5].next_veh_id_stack;
+                            mapW = *g_MapLongitudeBounds;
+                        }
+                    }
+                }
+            }
+        }
+
+        spot_base(a1, (int)local_8);
+        reset_territory();
+        for (i = *g_VehCurrentCount - 1; i >= 0; i--) {
+            if (i < *g_VehCurrentCount && g_Vehs[i].faction_id == (unsigned char)local_8 &&
+                g_Vehs[i].home_base_id == a1) {
+                int vy, dx8, dy8, killIt;
+                g_Bases[a1].faction_id_current = 0xff;
+                iVar5 = base_find(local_28, local_1c, (int)local_8);
+                g_Bases[a1].faction_id_current = bVar11;
+                killIt = 1;
+                if (iVar5 >= 0) {
+                    vy = g_Vehs[i].y;
+                    dx8 = abs(local_28 - g_Vehs[i].x);
+                    if ((*g_MapIsFlat & 1) == 0 && *g_MapLongitude < dx8) {
+                        dx8 = *g_MapLongitudeBounds - dx8;
+                    }
+                    dy8 = abs(local_1c - vy);
+                    if (((dx8 + dy8) & 0xfffffffe) != 0) {
+                        g_Vehs[i].home_base_id = (short)iVar5;
+                        killIt = 0;
+                    }
+                }
+                if (killIt) {
+                    kill(i);
+                }
+            }
+        }
+
+        for (fc = 0; fc < 2; fc++) {
+            int fid = (fc == 0) ? a2 : (int)local_8;
+            int cnt2 = g_Players[fid].faction_bonus_count;
+            for (k = 0; k < cnt2; k++) {
+                if (g_Players[fid].faction_bonus_id[k] == 2 ||
+                    (g_Players[fid].faction_bonus_id[k] == 0xc &&
+                     has_tech(g_Facility[g_Players[fid].faction_bonus_val1[k]].preq_tech, a2) != 0)) {
+                    int fv = g_Players[fid].faction_bonus_val1[k];
+                    if (fv < 1) fv = 1;
+                    else if (fv > 0x45) fv = 0x45;
+                    set_fac(fv, *g_00689370, 1);
+                }
+            }
+        }
+        base_first(a1);
+    }
+
+    iVar5 = local_1c;
+    iVar15 = local_28;
+    owner_set(local_28, local_1c, a2);
+    draw_map(1);
+    *g_0090D91C |= 2;
+    ((GraphicWin *)0x008E9F60)->redraw();
+
+    *g_009bbfec = g_Players[a2].noun_gender;
+    *g_009bbff0 = g_Players[a2].is_noun_plural;
+    parse_says(0, g_Players[a2].noun_faction, -1, -1);
+    parse_says(1, local_74, -1, -1);
+    *g_009bbfec = g_Players[local_8].noun_gender;
+    *g_009bbff0 = g_Players[local_8].is_noun_plural;
+    parse_says(2, g_Players[local_8].noun_faction, -1, -1);
+    parse_num(0, local_40);
+    local_174[0] = 0;
+    pcVar18 = (char *)g_0068a448;
+    if (local_3c == 0) pcVar18 = (char *)g_0068a454;
+    strcat(local_174, pcVar18);
+    strcat(local_174, (char *)g_0068a45c);
+
+    local_10 = 1u << (local_8 & 0x1f);
+    if ((*g_FactionActiveMask & 0xff & local_10) != 0 &&
+        (local_5c & *g_FactionActiveMask & 0xff) == 0 &&
+        a1 >= 0 &&
+        (g_Bases[a1].state & 0x80) == 0 && local_3c == 0) {
+        g_Bases[a1].state |= 0x10000;
+    }
+
+    if (a2 == *g_LocalFaction || local_8 == (unsigned int)*g_LocalFaction) {
+        iVar10 = ((Console *)0x009156B0)->focus(iVar15, iVar5, *g_LocalFaction);
+        if (iVar10 == 0) {
+            draw_tile_fixup(iVar15, iVar5, 1, 2);
+        }
+        ((Console *)0x009156B0)->update_data(0);
+        pcVar18 = (char *)g_0068a464;
+        if (a2 != *g_LocalFaction) pcVar18 = (char *)g_0068a474;
+        popp(*g_ScriptPtr, local_174, 0, pcVar18, 0);
+        ambience(0xd5);
+    } else {
+        draw_tile_fixup(iVar15, iVar5, 1, 2);
+        if ((g_PlayerData[*g_LocalFaction].diplo_treaties[a2] & 1) == 0 &&
+            ((g_PlayerData[a2].diplo_treaties[*g_LocalFaction] & 0x80) == 0 ||
+             (g_PlayerData[a2].diplo_treaties[local_8] & 0x40) == 0)) {
+            if ((g_PlayerData[*g_LocalFaction].diplo_treaties[local_8] & 1) == 0 &&
+                ((g_PlayerData[local_8].diplo_treaties[*g_LocalFaction] & 0x80) == 0 ||
+                 (g_PlayerData[local_8].diplo_treaties[a2] & 0x40) == 0)) {
+                int notSpying = 0;
+                iVar15 = spying(a2);
+                if (iVar15 == 0) {
+                    iVar15 = spying((int)local_8);
+                    if (iVar15 == 0) notSpying = 1;
+                }
+                if (!notSpying) {
+                    strcat(local_174, (char *)g_0068a4ac);
+                    pcVar18 = (char *)g_0068a4b0;
+                    popp(*g_ScriptPtr, local_174, 0, pcVar18, 0);
+                }
+            } else {
+                strcat(local_174, (char *)g_0068a498);
+                pcVar18 = (char *)g_0068a49c;
+                popp(*g_ScriptPtr, local_174, 0, pcVar18, 0);
+            }
+        } else {
+            strcat(local_174, (char *)g_0068a484);
+            pcVar18 = (char *)g_0068a488;
+            popp(*g_ScriptPtr, local_174, 0, pcVar18, 0);
+        }
+    }
+
+    if (((g_Players[local_8].rule_flags ^ g_Players[a2].rule_flags) & 0x80) != 0 && a1 >= 0 &&
+        g_Bases[a1].population_size >= 2) {
+        *g_009bbff0 = g_Players[a2].is_noun_plural;
+        *g_009bbfec = g_Players[a2].noun_gender;
+        uVar14 = (unsigned int)(g_Bases[a1].population_size / 2);
+        local_18 = uVar14;
+        parse_says(0, g_Players[a2].noun_faction, -1, -1);
+        parse_says(1, local_74, -1, -1);
+        parse_num(0, (int)uVar14);
+        g_Bases[a1].population_size = 1;
+        draw_tile((int)g_Bases[a1].x, (int)g_Bases[a1].y, 2);
+
+        if ((g_Players[a2].rule_flags & 0x80) == 0) {
+            if (a2 == *g_LocalFaction) {
+                if (uVar14 == 1) {
+                    pcVar19 = (char *)g_0068a530; pcVar18 = (char *)g_0068a540;
+                    popp(*g_ScriptPtr, pcVar18, 0, pcVar19, 0);
+                } else if (uVar14 != 0) {
+                    pcVar19 = (char *)g_0068a54c; pcVar18 = (char *)g_0068a55c;
+                    popp(*g_ScriptPtr, pcVar18, 0, pcVar19, 0);
+                }
+                interlude(0x19, g_Bases[a1].name_string, 1, 0);
+            }
+            if (local_8 == (unsigned int)*g_LocalFaction) {
+                if (uVar14 == 1) {
+                    pcVar19 = (char *)g_0068a568; pcVar18 = (char *)g_0068a578;
+                    popp(*g_ScriptPtr, pcVar18, 0, pcVar19, 0);
+                } else if (uVar14 != 0) {
+                    pcVar19 = (char *)g_0068a584; pcVar18 = (char *)g_0068a594;
+                    popp(*g_ScriptPtr, pcVar18, 0, pcVar19, 0);
+                }
+            }
+            a3 = 1;
+            iVar5 = *g_MapLongitudeBounds;
+        } else {
+            if (a2 == *g_LocalFaction) {
+                if (uVar14 == 1) {
+                    pcVar19 = (char *)g_0068a4c0; pcVar18 = (char *)g_0068a4d0;
+                    popp(*g_ScriptPtr, pcVar18, 0, pcVar19, 0);
+                } else if (uVar14 != 0) {
+                    pcVar19 = (char *)g_0068a4dc; pcVar18 = (char *)g_0068a4ec;
+                    popp(*g_ScriptPtr, pcVar18, 0, pcVar19, 0);
+                }
+                interlude(0x25, g_Bases[a1].name_string, 1, 0);
+            }
+            if (local_8 == (unsigned int)*g_LocalFaction) {
+                if (uVar14 == 1) {
+                    pcVar19 = (char *)g_0068a4f8; pcVar18 = (char *)g_0068a508;
+                    popp(*g_ScriptPtr, pcVar18, 0, pcVar19, 0);
+                } else if (uVar14 != 0) {
+                    pcVar19 = (char *)g_0068a514; pcVar18 = (char *)g_0068a524;
+                    popp(*g_ScriptPtr, pcVar18, 0, pcVar19, 0);
+                }
+                interlude(0x18, g_Bases[a1].name_string, 1, 0);
+            }
+            a3 = 1;
+            iVar5 = *g_MapLongitudeBounds;
+        }
+
+        do {
+            iVar10 = a3;
+            if (a3 < 9) {
+                uVar14 = (unsigned int)rand();
+                uVar14 = uVar14 & 0x80000007u;
+                if ((int)uVar14 < 0) {
+                    uVar14 = (uVar14 - 1) | 0xfffffff8u;
+                    uVar14 = uVar14 + 1;
+                }
+                iVar10 = (int)uVar14 + 1;
+                iVar5 = *g_MapLongitudeBounds;
+            }
+            iVar15 = *(int *)((char *)g_DirX + iVar10 * 4) + (int)g_Bases[a1].x;
+            if ((*g_MapIsFlat & 1) == 0) {
+                if (iVar15 < 0) iVar15 += iVar5;
+                else if (iVar5 <= iVar15) iVar15 -= iVar5;
+            }
+            iVar10 = *(int *)((char *)g_DirY + iVar10 * 4) + (int)g_Bases[a1].y;
+            if (-1 < iVar10 && iVar10 < *g_MapLatitudeBounds && -1 < iVar15 && iVar15 < iVar5) {
+                tileIdx = (*g_MapLongitude) * iVar10 + (iVar15 >> 1);
+                tile = &(*g_MapTiles)[tileIdx];
+                doSkip = 0;
+                if ((tile->bit & 3) != 0 && (unsigned int)(tile->val2 & 0xf) < 8) {
+                    if ((tile->bit & 3) == 0 || (owner2 = (unsigned int)(tile->val2 & 0xf), owner2 > 7)) {
+                        owner2 = 0xffffffff;
+                    }
+                    iVar5 = *g_MapLongitudeBounds;
+                    if (owner2 != local_8) {
+                        doSkip = 1;
+                    }
+                }
+                if (!doSkip) {
+                    protoBase = ((tile->climate & 0xe0) < 0x60) ? 0x15 : 0;
+                    veh_init(protoBase, (int)local_8, iVar15, iVar10);
+                    draw_tile(iVar15, iVar10, 2);
+                    local_18 = local_18 - 1;
+                    iVar5 = *g_MapLongitudeBounds;
+                    if (local_18 == 0) break;
+                }
+            }
+            a3 = a3 + 1;
+        } while (a3 < 0x15);
+    }
+
+    uVar14 = local_8;
+    if ((*g_9A649C & 0x4000) == 0 && (g_Players[a2].rule_flags & 0x10) == 0) {
+        cnt3 = 0;
+        for (techIdx = 0; techIdx < 0x59; techIdx++) {
+            if (has_tech(techIdx, (int)local_8) != 0 && has_tech(techIdx, a2) == 0) {
+                cnt3 = cnt3 + 1;
+            }
+        }
+        if (a1 < 0) popFactor = 1;
+        else popFactor = (int)g_Bases[a1].population_size + 1;
+        techVal = (g_PlayerData[a2].tech_ranking + 3) * cnt3 * popFactor;
+        g_PlayerData[a2].tech_accumulated += (techVal + ((techVal >> 0x1f) & 7)) >> 3;
+    } else {
+        steal_tech(a2, (int)local_8, 1);
+        if (a1 >= 0 && *g_9A6564 == a1) {
+            steal_tech(a2, (int)uVar14, 1);
+        }
+    }
+
+    if (((unsigned char)local_10 & (unsigned char)*g_FactionActiveMask) == 0) {
+        bases_reset((int)local_8, (int)local_44, 0);
+    }
+    mon_conquer_base(a2, local_74);
+
+    if (a2 == *g_LocalFaction && a1 >= 0 &&
+        (g_Bases[a1].state & 0x40000) != 0 &&
+        (*g_9A6490 & 0x40000) == 0 && *g_IsMultiplayerNet == 0) {
+        parse_says(6, g_Players[*g_LocalFaction].assistant_city, -1, -1);
+        hqName = g_Bases[a1].name_string;
+        parse_says(5, hqName, -1, -1);
+        parse_says(7, g_Players[local_8].adj_name_faction, -1, -1);
+        cVar4 = 0;
+        if (*g_BaseCurrentCount > 0) {
+            bestBase = -1;
+            for (iVar15 = 0; iVar15 < *g_BaseCurrentCount; iVar15++) {
+                if (g_Bases[iVar15].faction_id_current == (unsigned char)a2 && iVar15 != a1) {
+                    bitmask(1, &idxTmp, &maskTmp);
+                    if ((g_Bases[iVar15].facilities_built[idxTmp] & maskTmp) != 0) {
+                        parse_says(2, g_Bases[iVar15].name_string, -1, -1);
+                        bestBase = iVar15;
+                        break;
+                    }
+                    cVar2 = g_Bases[iVar15].population_size;
+                    if (cVar4 < cVar2) {
+                        parse_says(2, g_Bases[iVar15].name_string, -1, -1);
+                        cVar4 = cVar2;
+                    }
+                }
+            }
+            (void)bestBase;
+        }
+        iVar15 = local_28;
+        iVar5 = base_find(local_28, local_1c, (int)local_8);
+        if (iVar5 < 0) {
+            uVar7 = *(int *)((char *)(*g_9B90F8_p) + 0x64c);
+        } else {
+            iVar10 = (int)g_Bases[iVar5].x;
+            iVar8 = iVar10 - iVar15;
+            if (iVar8 < 0) iVar8 = iVar15 - iVar10;
+            iVar17 = (int)g_Bases[iVar5].y;
+            iVar5 = iVar17 - local_1c;
+            if (iVar5 < 0) iVar5 = local_1c - iVar17;
+            if ((iVar8 * 3) / 2 < iVar5) {
+                if (iVar17 < local_1c) uVar7 = *(int *)((char *)(*g_9B90F8_p) + 0x64c);
+                else uVar7 = *(int *)((char *)(*g_9B90F8_p) + 0x654);
+            } else {
+                iVar15 = iVar15 - iVar10;
+                if (*g_MapLongitudeBounds / 2 < iVar15) iVar15 -= *g_MapLongitudeBounds;
+                if (iVar15 < -(*g_MapLongitudeBounds / 2)) iVar15 += *g_MapLongitudeBounds;
+                if (iVar15 < 1) uVar7 = *(int *)((char *)(*g_9B90F8_p) + 0x650);
+                else uVar7 = *(int *)((char *)(*g_9B90F8_p) + 0x658);
+            }
+        }
+        uVar21 = -1; uVar20 = -1;
+        uVar7 = ((Strings *)0x009B90D8)->get(uVar7);
+        parse_says(4, (char *)uVar7, uVar20, uVar21);
+        strcpy(hqName, g_Players[*g_LocalFaction].assistant_city);
+        make_base_unique(a1);
+        interlude(7, 0, 1, 1);
+        draw_map(1);
+        text_close();
+    }
+
+    eliminate_player((int)local_8, a2);
+    if (a1 >= 0) {
+        set_base(a1);
+        base_compute(1);
+        if (a2 == *g_LocalFaction) {
+            iVar15 = ((Console *)0x009156B0)->ready_search(-1);
+            if (iVar15 < 0) {
+                *g_9A64C0 |= 4;
+                return;
+            }
+            ((BaseWin *)0x006A7628)->zoom(a1, 0);
+        }
+    }
+    return;
 }

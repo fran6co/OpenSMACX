@@ -1,4 +1,45 @@
 // ORIGINAL: 0x004F81A0 FILE
+// DEFERRED: 10205-instruction / 32280-byte base-build AI, the largest
+//           function in the image and never attempted before this pass.
+//           Reading only, per the brief's own instruction that a rushed
+//           body here is worse than none. Confirmed from raw disassembly
+//           (Ghidra drops call arguments throughout - e.g. 0x4F84B2's
+//           three-arg push of eax/ecx/0xa shows as FUN_0050ba00() with no
+//           args - so any real pass must work from the raw listing, not
+//           the decompiler output at lines 10471-15166 of the brief):
+//             - prologue: `mov eax,0x1f6c; call __alloca_probe` for a
+//               ~8KB frame, then ~9 `rep stosd` blocks zeroing large
+//               sub-arrays of it (0x4F83F7-0x4F8923 region) before any
+//               real work - this is C's zero-initialization of several
+//               big local arrays/structs, not something to hand-copy.
+//             - normalizes baseID (handles the "negative means relative"
+//               convention seen elsewhere in this codebase), then
+//               set_base/base_compute, then computes best_reactor and a
+//               chassis-affordability/desirability table across the 15
+//               chassis kinds (0..14) before reaching a central
+//               `jmp dword ptr [eax*4 + 0x4fffb8]` 72-entry switch at
+//               0x4FA56E on the current prototype's chassis byte
+//               ([ecx+0x9ab892]), reached inside a `do` loop over all
+//               buildable unit prototypes that scores each by
+//               veh_cost/cost_factor against the base's mineral output.
+//               Table read from the image (not inferred - three prior
+//               agents on an unrelated function guessed a table like this
+//               without reading it first): cases 15-21 alias to two
+//               targets (0x4FCB33/0x4FCBBF), and there are three more
+//               narrower jump tables at 0x4FCB2C (57), 0x4FD777 (48) and
+//               0x4FD97C (36 entries, itself reached through a
+//               BYTE index table at 0x5000D8) chaining off the tail of
+//               the first, i.e. this is one large per-item-type
+//               desirability dispatch that keeps narrowing, not four
+//               independent switches.
+//             - epilogue returns an accumulated `esi` and, if the fourth
+//               parameter is non-null, stores a second result through it;
+//               matches the catalogue prototype
+//               `int (baseID, int*, int*, int*)`.
+//           Not attempted: transcribing the ~9700 instructions of the 72
+//           case bodies (each one a distinct facility/project/unit-class
+//           scoring routine) and the desirability comparisons that choose
+//           among them after the switch returns.
 // working copy - scaffold materialised by --work
 // name      ?base_build@@YAHHPAH00@Z
 // size      32280 bytes

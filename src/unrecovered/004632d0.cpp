@@ -1,4 +1,13 @@
 // ORIGINAL: 0x004632D0 FILE
+// DEFERRED: 14804 bytes, 10 parameters. Registers a real SEH frame
+//   (`ExceptionList = &local_10; ...; ExceptionList = local_10;` around the
+//   body, with FUN_00625730/40/50/70 as the filter/finally helpers) - per
+//   the lever notes this needs an RAII wrapper class, never a hand-written
+//   `fs:[0]` chain, and no such wrapper is yet identified for this call
+//   shape. The frame also carries one `Random` object at [ebp-0x70]. Dense
+//   procedural terrain-polygon math (MapWin::gen_terrain_poly) over 38 call
+//   targets and several nested loops; not attempted without first pinning
+//   the SEH RAII shape. Left as BODY GOES HERE.
 // working copy - scaffold materialised by --work
 // name      ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z
 // size      14804 bytes

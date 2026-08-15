@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0057F4B0 FILE
+// RULED-OUT: full goto-per-branch literal transcription of all 1404
+//            instructions (register vars + B/W/D/SB/SW byte-address macros);
+//            compiles and matches control flow/field offsets/call order but
+//            diverges at instr #0 (prologue/frame layout, MSVC's register
+//            allocation for this huge frame is not reproduced by hand).
 // working copy - scaffold materialised by --work
 // name      ?prune_protos@@YAXHHH@Z
 // size      5033 bytes
@@ -1414,11 +1419,1299 @@ static int *const g_009abb99 = (int *)0x009ABB99;
 static int *const g_009ac58d = (int *)0x009AC58D;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b90d8 = (int *)0x009B90D8;
-void __cdecl prune_protos(int a1, int a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+// Literal address-arithmetic helpers: the original addresses every field as
+// `index_in_bytes + FIXED_ABSOLUTE_CONSTANT`, so these macros reproduce that
+// exactly instead of routing through a struct type this unit does not have.
+#define B(a)  (*(unsigned char *)(unsigned int)(a))
+#define SB(a) (*(signed char *)(unsigned int)(a))
+#define W(a)  (*(unsigned short *)(unsigned int)(a))
+#define SW(a) (*(short *)(unsigned int)(a))
+#define D(a)  (*(int *)(unsigned int)(a))
 
+void __cdecl prune_protos(int a1, int a2, int a3) {
+    int eax, ebx, ecx, edx, esi, edi;
+    int local_8, local_c, local_10, local_14, local_18, local_1c, local_20,
+        local_24, local_28, local_2c, local_30;
+    unsigned char local_1;
+    int _p1, _p2, _p3, _p4, _p5;
+    int _pp_this, _pp_a, _pp_b, _pp_c, _pp_cb;
+    int cond_fe2c;
+
+    eax = a2;
+    edi = a1;
+    if (eax < 0x40) goto L_0057F4D8;
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    if ((B(edx * 4 + 0x9AB898) & 4) == 0) goto L_0057F699;
+L_0057F4D8:
+    eax = edi + edi * 2;
+    local_2c = 0x40;
+    edi = edi + eax * 4;
+    edi = edi << 8;
+L_0057F4E8:
+    eax = (eax & ~0xFFFF) | W(edi + 0x9AB898);
+    if ((eax & 0xFF & 1) == 0) goto L_0057F689;
+    if ((eax & 0xFF & 4) != 0) goto L_0057F689;
+    eax = 0;
+    local_1c = eax;
+    local_20 = eax;
+    local_24 = eax;
+    local_18 = eax;
+    edx = a1;
+L_0057F50D:
+    if (eax >= 0x40) goto L_0057F519;
+    ecx = 0;
+    goto L_0057F51E;
+L_0057F519:
+    ecx = edx;
+    ecx = ecx << 6;
+L_0057F51E:
+    eax = eax & 0x8000003f;
+    if (eax >= 0) goto L_0057F52A;
+    eax = eax - 1;
+    eax = eax | 0xffffffc0;
+    eax = eax + 1;
+L_0057F52A:
+    eax = eax + ecx;
+    ecx = eax + eax * 2;
+    esi = eax + ecx * 4;
+    esi = esi << 2;
+    ecx = (ecx & ~0xFFFF) | W(esi + 0x9AB898);
+    if ((ecx & 0xFF & 1) == 0) goto L_0057F659;
+    if (eax >= 0x40) goto L_0057F565;
+    _p1 = edx;
+    edx = SW(esi + 0x9AB89A);
+    _p2 = edx;
+    eax = has_tech(_p2, _p1);
+    if (eax == 0) goto L_0057F659;
+    goto L_0057F56E;
+L_0057F565:
+    if ((ecx & 0xFF & 4) == 0) goto L_0057F659;
+L_0057F56E:
+    eax = (eax & ~0xFF) | B(esi + 0x9AB88D);
+    ebx = (ebx & ~0xFF) | B(edi + 0x9AB88D);
+    if ((eax & 0xFF) != (ebx & 0xFF)) goto L_0057F588;
+    local_24 = 1;
+L_0057F588:
+    eax = (eax & ~0xFF) | B(esi + 0x9AB88E);
+    edx = (edx & ~0xFF) | B(edi + 0x9AB88E);
+    local_14 = (eax & 0xFF);
+    local_30 = (edx & 0xFF);
+    if ((eax & 0xFF) != (edx & 0xFF)) goto L_0057F5A5;
+    local_20 = 1;
+L_0057F5A5:
+    eax = (eax & ~0xFF) | B(esi + 0x9AB88C);
+    ecx = (ecx & ~0xFF) | B(edi + 0x9AB88C);
+    if ((eax & 0xFF) != (ecx & 0xFF)) goto L_0057F5BC;
+    local_1c = 1;
+L_0057F5BC:
+    ebx = ebx & 0xff;
+    ebx = ebx << 4;
+    ebx = (ebx & ~0xFF) | B(ebx + 0x94AE68);
+    if ((signed char)(ebx & 0xFF) <= 0) goto L_0057F5ED;
+    edx = local_28;
+    edx = edx & 0xff;
+    edx = edx << 4;
+    if (SB(edx + 0x94AE68) < (signed char)(ebx & 0xFF)) goto L_0057F5EA;
+    local_24 = 1;
+L_0057F5EA:
+    edx = local_30;
+L_0057F5ED:
+    edx = edx & 0xff;
+    edx = edx << 4;
+    edx = (edx & ~0xFF) | B(edx + 0x94F280);
+    if ((signed char)(edx & 0xFF) <= 0) goto L_0057F61B;
+    esi = local_14;
+    esi = esi & 0xff;
+    esi = esi << 4;
+    if (SB(esi + 0x94F280) < (signed char)(edx & 0xFF)) goto L_0057F61B;
+    local_20 = 1;
+L_0057F61B:
+    eax = eax & 0xff;
+    ecx = ecx & 0xff;
+    eax = eax + eax * 8;
+    ecx = ecx + ecx * 8;
+    eax = eax << 4;
+    ecx = ecx << 4;
+    ebx = (ebx & ~0xFF) | B(eax + 0x94A379);
+    edx = (edx & ~0xFF) | B(ecx + 0x94A379);
+    if ((edx & 0xFF) != (ebx & 0xFF)) goto L_0057F659;
+    eax = (eax & ~0xFF) | B(eax + 0x94A378);
+    edx = (edx & ~0xFF) | B(ecx + 0x94A378);
+    if ((unsigned char)(eax & 0xFF) < (unsigned char)(edx & 0xFF)) goto L_0057F659;
+    local_1c = 1;
+L_0057F659:
+    eax = local_18;
+    eax = eax + 1;
+    local_18 = eax;
+    if (eax < 0x80) goto L_0057F50D;
+    eax = local_24;
+    if (eax == 0) goto L_0057F689;
+    eax = local_20;
+    if (eax == 0) goto L_0057F689;
+    eax = local_1c;
+    if (eax == 0) goto L_0057F689;
+    W(edi + 0x9AB898) |= 0x104;
+L_0057F689:
+    eax = local_2c;
+    edi = edi + 0x34;
+    eax = eax - 1;
+    local_2c = eax;
+    if (eax != 0) goto L_0057F4E8;
+L_0057F699:
+    ecx = a1;
+    eax = (eax & ~0xFF) | B(0x9A64E8);
+    edx = 1;
+    edx = edx << (ecx & 0xFF);
+    local_28 = edx;
+    if (((edx & 0xFF) & (eax & 0xFF)) != 0) goto L_0057FCFA;
+    ebx = ecx;
+    local_1c = 0x40;
+    esi = ebx;
+    ecx = ebx + ebx * 2;
+    esi = esi << 6;
+    ebx = ebx + ecx * 4;
+    local_20 = esi;
+    ebx = ebx << 8;
+    edi = ebx;
+    local_18 = esi;
+    local_24 = ebx;
+    a2 = edi;
+    goto L_0057F6DD;
+L_0057F6DA:
+    edx = local_28;
+L_0057F6DD:
+    eax = (eax & ~0xFFFF) | W(edi + 0x9AB898);
+    if ((eax & 0xFF & 1) == 0) goto L_0057FCD9;
+    if ((B(edi + 0x9AB894) & (edx & 0xFF)) != 0) goto L_0057FCD9;
+    if (local_18 >= 0x40) goto L_0057F81A;
+    eax = SW(edi + 0x9AB89A);
+    edx = a1;
+    _p1 = edx;
+    _p2 = eax;
+    eax = has_tech(_p2, _p1);
+    if (eax == 0) goto L_0057FCD9;
+L_0057F71E:
+    local_30 = 1;
+    local_8 = 0;
+    esi = 0x9AB88D;
+L_0057F731:
+    if ((B(esi + 0xB) & 1) == 0) goto L_0057F9F4;
+    ecx = local_8;
+    eax = local_18;
+    if (ecx == eax) goto L_0057F9F4;
+    if (esi >= 0x9AC58D) goto L_0057F772;
+    edx = 0;
+    edx = (edx & ~0xFF) | B(esi);
+    edx = edx << 4;
+    eax = (eax & ~0xFF) | B(edx + 0x94AE68);
+    if ((signed char)(eax & 0xFF) < 0) goto L_0057F9F4;
+    if (esi == 0x9ABB99) goto L_0057F9F4;
+L_0057F772:
+    eax = (eax & ~0xFF) | B(esi + 6);
+    ecx = (ecx & ~0xFF) | B(edi + 0x9AB893);
+    if ((eax & 0xFF) != (ecx & 0xFF)) goto L_0057F9F4;
+    eax = 0;
+    ecx = 0;
+    eax = B(esi - 1);
+    ecx = B(edi + 0x9AB88C);
+    eax = eax + eax * 8;
+    ecx = ecx + ecx * 8;
+    eax = eax << 4;
+    ecx = ecx << 4;
+    edx = (edx & ~0xFF) | B(eax + 0x94A379);
+    if ((edx & 0xFF) != B(ecx + 0x94A379)) goto L_0057F9F4;
+    edx = (edx & ~0xFF) | B(esi + 5);
+    ebx = (ebx & ~0xFF) | B(edi + 0x9AB892);
+    if ((edx & 0xFF) != (ebx & 0xFF)) goto L_0057F9F4;
+    edx = (edx & ~0xFF) | B(esi + 2);
+    ebx = (ebx & ~0xFF) | B(edi + 0x9AB88F);
+    if ((unsigned char)(edx & 0xFF) >= (unsigned char)(ebx & 0xFF)) goto L_0057F7E1;
+    edx = 0;
+    edx = (edx & ~0xFF) | B(esi);
+    edx = edx << 4;
+    ebx = (ebx & ~0xFF) | B(edx + 0x94AE68);
+    if ((signed char)(ebx & 0xFF) >= 0) goto L_0057F9D2;
+L_0057F7E1:
+    eax = (eax & ~0xFF) | B(eax + 0x94A37A);
+    edx = (edx & ~0xFF) | B(ecx + 0x94A37A);
+    if ((eax & 0xFF) != (edx & 0xFF)) goto L_0057F9F4;
+    eax = (eax & ~0xFF) | B(esi);
+    ecx = eax;
+    ecx = ecx & 0xff;
+    ecx = ecx << 4;
+    ecx = (ecx & ~0xFF) | B(ecx + 0x94AE68);
+    if ((signed char)(ecx & 0xFF) > 0) goto L_0057F82E;
+    if ((eax & 0xFF) != B(edi + 0x9AB88D)) goto L_0057F9F4;
+    goto L_0057F845;
+L_0057F81A:
+    if ((eax & 0xFF & 4) != 0) goto L_0057F71E;
+    local_30 = 0;
+    goto L_0057FA10;
+L_0057F82E:
+    edx = 0;
+    edx = (edx & ~0xFF) | B(edi + 0x9AB88D);
+    edx = edx << 4;
+    if ((signed char)(ecx & 0xFF) > SB(edx + 0x94AE68)) goto L_0057F9F4;
+L_0057F845:
+    eax = (eax & ~0xFF) | B(esi + 3);
+    ecx = (ecx & ~0xFF) | B(edi + 0x9AB890);
+    if ((unsigned char)(eax & 0xFF) > (unsigned char)(ecx & 0xFF)) goto L_0057F9F4;
+    ecx = (ecx & ~0xFF) | B(esi + 1);
+    eax = ecx;
+    eax = eax & 0xff;
+    edx = eax;
+    edx = edx << 4;
+    ebx = (ebx & ~0xFF) | B(edx + 0x94F280);
+    if ((signed char)(ebx & 0xFF) > 0) goto L_0057F880;
+    if ((ecx & 0xFF) != B(edi + 0x9AB88E)) goto L_0057F9F4;
+    goto L_0057F974;
+L_0057F880:
+    ebx = a1;
+    if (ebx < 0) goto L_0057F8E4;
+    ecx = D(0x9A6488);
+    if (ecx != 0) goto L_0057F89D;
+    if (eax <= 9) goto L_0057F89D;
+    eax = 1;
+    goto L_0057F8EE;
+L_0057F89D:
+    eax = eax << 4;
+    eax = (eax & ~0xFF) | B(eax + 0x94F280);
+    if ((signed char)(eax & 0xFF) >= 0) goto L_0057F8DF;
+    eax = ebx;
+    _p1 = 0;
+    eax = eax << 6;
+    eax = eax + ebx;
+    _p2 = 0;
+    _p3 = ebx;
+    ecx = ebx + eax * 2;
+    edx = ebx + ecx * 8;
+    eax = ebx + edx * 2;
+    eax = D(eax * 4 + 0x96D20C);
+    eax = eax * D(0x9497A8);
+    eax = eax / D(0x94979C);
+    _p4 = eax;
+    eax = psi_factor(_p4, _p3, _p2, _p1);
+    goto L_0057F8EE;
+L_0057F8DF:
+    eax = (signed char)(eax & 0xFF);
+    goto L_0057F8EE;
+L_0057F8E4:
+    eax = eax << 4;
+    eax = SB(eax + 0x94F280);
+L_0057F8EE:
+    ecx = a2;
+    edi = eax + eax;
+    eax = 0;
+    eax = B(ecx + 0x9AB88E);
+    if (ebx < 0) goto L_0057F95D;
+    ecx = D(0x9A6488);
+    if (ecx != 0) goto L_0057F916;
+    if (eax <= 9) goto L_0057F916;
+    eax = 1;
+    goto L_0057F967;
+L_0057F916:
+    eax = eax << 4;
+    eax = (eax & ~0xFF) | B(eax + 0x94F280);
+    if ((signed char)(eax & 0xFF) >= 0) goto L_0057F958;
+    edx = ebx;
+    _p1 = 0;
+    edx = edx << 6;
+    edx = edx + ebx;
+    _p2 = 0;
+    _p3 = ebx;
+    eax = ebx + edx * 2;
+    ecx = ebx + eax * 8;
+    edx = ebx + ecx * 2;
+    eax = D(edx * 4 + 0x96D20C);
+    eax = eax * D(0x9497A8);
+    eax = eax / D(0x94979C);
+    _p4 = eax;
+    eax = psi_factor(_p4, _p3, _p2, _p1);
+    goto L_0057F967;
+L_0057F958:
+    eax = (signed char)(eax & 0xFF);
+    goto L_0057F967;
+L_0057F95D:
+    eax = eax << 4;
+    eax = SB(eax + 0x94F280);
+L_0057F967:
+    eax = eax + eax;
+    if (edi > eax) { edi = a2; goto L_0057F9F4; }
+    edi = a2;
+L_0057F974:
+    eax = 0;
+    eax = B(edi + 0x9AB88C);
+    ecx = eax + eax * 8;
+    eax = 0;
+    eax = B(esi - 1);
+    ecx = ecx << 4;
+    edx = eax + eax * 8;
+    edx = edx << 4;
+    eax = (eax & ~0xFF) | B(edx + 0x94A378);
+    edx = (edx & ~0xFF) | B(ecx + 0x94A378);
+    if ((unsigned char)(eax & 0xFF) > (unsigned char)(edx & 0xFF)) goto L_0057F9F4;
+    ecx = D(esi - 5);
+    ebx = D(edi + 0x9AB888);
+    ecx = ecx & ebx;
+    _p1 = ecx;
+    eax = bit_count(_p1);
+    edx = D(esi - 5);
+    ebx = eax;
+    _p2 = edx;
+    eax = bit_count(_p2);
+    if (ebx < eax) goto L_0057F9F4;
+    eax = D(esi - 5);
+    edx = D(edi + 0x9AB888);
+    eax = eax ^ edx;
+    if ((eax & 0x408418) != 0) goto L_0057F9F4;
+L_0057F9D2:
+    ecx = a1;
+    eax = a3;
+    edx = (edx & ~0xFF) | 1;
+    edx = (edx & ~0xFF) | (unsigned char)(1 << (ecx & 0xFF));
+    ecx = (ecx & ~0xFF) | B(esi + 7);
+    ecx = (ecx & ~0xFF) | ((ecx & 0xFF) | (edx & 0xFF));
+    B(esi + 7) = (unsigned char)(ecx & 0xFF);
+    if (eax == 0) goto L_0057F9F4;
+    eax = local_8;
+    _p1 = eax;
+    synch_obs(_p1);
+L_0057F9F4:
+    edx = local_8;
+    esi = esi + 0x34;
+    edx = edx + 1;
+    local_8 = edx;
+    if (esi < 0x9AC58D) goto L_0057F731;
+    ebx = local_24;
+    esi = local_20;
+L_0057FA10:
+    local_14 = esi;
+    esi = ebx + 0x9AB892;
+    local_2c = 0x40;
+L_0057FA20:
+    edx = (edx & ~0xFFFF) | W(esi + 6);
+    if ((edx & 0xFF & 1) == 0) goto L_0057FCBC;
+    ecx = local_18;
+    eax = local_14;
+    if (eax == ecx) goto L_0057FCBC;
+    eax = (eax & ~0xFF) | B(esi + 1);
+    ecx = (ecx & ~0xFF) | B(edi + 0x9AB893);
+    if ((eax & 0xFF) != (ecx & 0xFF)) goto L_0057FCBC;
+    eax = 0;
+    ecx = 0;
+    eax = B(esi - 6);
+    ecx = B(edi + 0x9AB88C);
+    eax = eax + eax * 8;
+    ecx = ecx + ecx * 8;
+    eax = eax << 4;
+    ecx = ecx << 4;
+    ebx = (ebx & ~0xFF) | B(eax + 0x94A379);
+    if ((ebx & 0xFF) != B(ecx + 0x94A379)) goto L_0057FCBC;
+    ebx = (ebx & ~0xFF) | B(esi);
+    if ((ebx & 0xFF) != B(edi + 0x9AB892)) goto L_0057FCBC;
+    ebx = local_30;
+    if (ebx != 0) goto L_0057FA95;
+    if ((edx & 0xFF & 4) != 0) goto L_0057FCBC;
+L_0057FA95:
+    edx = (edx & ~0xFF) | B(esi - 3);
+    ebx = (ebx & ~0xFF) | B(edi + 0x9AB88F);
+    if ((unsigned char)(edx & 0xFF) < (unsigned char)(ebx & 0xFF)) goto L_0057FC95;
+    edx = (edx & ~0xFF) | B(esi - 2);
+    ebx = (ebx & ~0xFF) | B(edi + 0x9AB890);
+    if ((unsigned char)(edx & 0xFF) > (unsigned char)(ebx & 0xFF)) goto L_0057FCBC;
+    eax = (eax & ~0xFF) | B(eax + 0x94A37A);
+    edx = (edx & ~0xFF) | B(ecx + 0x94A37A);
+    if ((eax & 0xFF) != (edx & 0xFF)) goto L_0057FCBC;
+    eax = (eax & ~0xFF) | B(esi - 5);
+    ecx = eax;
+    ecx = ecx & 0xff;
+    ecx = ecx << 4;
+    ecx = (ecx & ~0xFF) | B(ecx + 0x94AE68);
+    if ((signed char)(ecx & 0xFF) > 0) goto L_0057FAF1;
+    if ((eax & 0xFF) != B(edi + 0x9AB88D)) goto L_0057FCBC;
+    goto L_0057FB08;
+L_0057FAF1:
+    edx = 0;
+    edx = (edx & ~0xFF) | B(edi + 0x9AB88D);
+    edx = edx << 4;
+    if ((signed char)(ecx & 0xFF) > SB(edx + 0x94AE68)) goto L_0057FCBC;
+L_0057FB08:
+    ecx = (ecx & ~0xFF) | B(esi - 4);
+    eax = ecx;
+    eax = eax & 0xff;
+    edx = eax;
+    edx = edx << 4;
+    ebx = (ebx & ~0xFF) | B(edx + 0x94F280);
+    if ((signed char)(ebx & 0xFF) > 0) goto L_0057FB35;
+    if ((ecx & 0xFF) != B(edi + 0x9AB88E)) goto L_0057FCBC;
+    ebx = a1;
+    goto L_0057FC26;
+L_0057FB35:
+    ebx = a1;
+    if (ebx < 0) goto L_0057FB99;
+    ecx = D(0x9A6488);
+    if (ecx != 0) goto L_0057FB52;
+    if (eax <= 9) goto L_0057FB52;
+    eax = 1;
+    goto L_0057FBA3;
+L_0057FB52:
+    eax = eax << 4;
+    eax = (eax & ~0xFF) | B(eax + 0x94F280);
+    if ((signed char)(eax & 0xFF) >= 0) goto L_0057FB94;
+    eax = ebx;
+    _p1 = 0;
+    eax = eax << 6;
+    eax = eax + ebx;
+    _p2 = 0;
+    _p3 = ebx;
+    ecx = ebx + eax * 2;
+    edx = ebx + ecx * 8;
+    eax = ebx + edx * 2;
+    eax = D(eax * 4 + 0x96D20C);
+    eax = eax * D(0x9497A8);
+    eax = eax / D(0x94979C);
+    _p4 = eax;
+    eax = psi_factor(_p4, _p3, _p2, _p1);
+    goto L_0057FBA3;
+L_0057FB94:
+    eax = (signed char)(eax & 0xFF);
+    goto L_0057FBA3;
+L_0057FB99:
+    eax = eax << 4;
+    eax = SB(eax + 0x94F280);
+L_0057FBA3:
+    ecx = a2;
+    edi = eax + eax;
+    eax = 0;
+    eax = B(ecx + 0x9AB88E);
+    if (ebx < 0) goto L_0057FC12;
+    ecx = D(0x9A6488);
+    if (ecx != 0) goto L_0057FBCB;
+    if (eax <= 9) goto L_0057FBCB;
+    eax = 1;
+    goto L_0057FC1C;
+L_0057FBCB:
+    eax = eax << 4;
+    eax = (eax & ~0xFF) | B(eax + 0x94F280);
+    if ((signed char)(eax & 0xFF) >= 0) goto L_0057FC0D;
+    edx = ebx;
+    _p1 = 0;
+    edx = edx << 6;
+    edx = edx + ebx;
+    _p2 = 0;
+    _p3 = ebx;
+    eax = ebx + edx * 2;
+    ecx = ebx + eax * 8;
+    edx = ebx + ecx * 2;
+    eax = D(edx * 4 + 0x96D20C);
+    eax = eax * D(0x9497A8);
+    eax = eax / D(0x94979C);
+    _p4 = eax;
+    eax = psi_factor(_p4, _p3, _p2, _p1);
+    goto L_0057FC1C;
+L_0057FC0D:
+    eax = (signed char)(eax & 0xFF);
+    goto L_0057FC1C;
+L_0057FC12:
+    eax = eax << 4;
+    eax = SB(eax + 0x94F280);
+L_0057FC1C:
+    eax = eax + eax;
+    if (edi > eax) goto L_0057FCB9;
+L_0057FC26:
+    ecx = a2;
+    eax = 0;
+    eax = B(ecx + 0x9AB88C);
+    edx = eax + eax * 8;
+    eax = 0;
+    eax = B(esi - 6);
+    edx = edx << 4;
+    eax = eax + eax * 8;
+    eax = eax << 4;
+    ecx = (ecx & ~0xFF) | B(eax + 0x94A378);
+    eax = (eax & ~0xFF) | B(edx + 0x94A378);
+    if ((unsigned char)(ecx & 0xFF) > (unsigned char)(eax & 0xFF)) goto L_0057FCB9;
+    if ((B(esi + 6) & 4) == 0) goto L_0057FC7E;
+    edx = a2;
+    edi = D(esi - 0xA);
+    eax = D(edx + 0x9AB888);
+    eax = eax & edi;
+    _p1 = eax;
+    eax = bit_count(_p1);
+    ecx = D(esi - 0xA);
+    edi = eax;
+    _p2 = ecx;
+    eax = bit_count(_p2);
+    if (edi < eax) goto L_0057FCB9;
+L_0057FC7E:
+    edx = a2;
+    eax = D(edx + 0x9AB888);
+    edx = D(esi - 0xA);
+    eax = eax ^ edx;
+    if ((eax & 0x408418) != 0) goto L_0057FCB9;
+    goto L_0057FC98;
+L_0057FC95:
+    ebx = a1;
+L_0057FC98:
+    eax = a3;
+    edx = (edx & ~0xFF) | 1;
+    ecx = ebx;
+    edx = (edx & ~0xFF) | (unsigned char)(1 << (ecx & 0xFF));
+    ecx = (ecx & ~0xFF) | B(esi + 2);
+    ecx = (ecx & ~0xFF) | ((ecx & 0xFF) | (edx & 0xFF));
+    B(esi + 2) = (unsigned char)(ecx & 0xFF);
+    if (eax == 0) goto L_0057FCB9;
+    eax = local_14;
+    _p1 = eax;
+    synch_obs(_p1);
+L_0057FCB9:
+    edi = a2;
+L_0057FCBC:
+    ecx = local_14;
+    eax = local_2c;
+    esi = esi + 0x34;
+    ecx = ecx + 1;
+    eax = eax - 1;
+    local_14 = ecx;
+    local_2c = eax;
+    if (eax != 0) goto L_0057FA20;
+    ebx = local_24;
+    esi = local_20;
+L_0057FCD9:
+    ecx = local_18;
+    eax = local_1c;
+    edi = edi + 0x34;
+    ecx = ecx + 1;
+    eax = eax - 1;
+    a2 = edi;
+    local_18 = ecx;
+    local_1c = eax;
+    if (eax != 0) goto L_0057F6DA;
+    return;
+L_0057FCFA:
+    eax = D(0x93F660);
+    if (eax != 0) goto L_0057FD13;
+    if ((D(0x9A6494) & 0x100000) == 0) goto L_00580852;
+L_0057FD13:
+    eax = 0;
+    local_24 = eax;
+    goto L_0057FD20;
+L_0057FD1A:
+    ecx = a1;
+    eax = local_24;
+L_0057FD20:
+    esi = eax;
+    esi = esi & 0x8000003f;
+    if (esi >= 0) goto L_0057FD2F;
+    esi = esi - 1;
+    esi = esi | 0xffffffc0;
+    esi = esi + 1;
+L_0057FD2F:
+    local_14 = esi;
+    if (eax < 0x40) goto L_0057FD41;
+    ecx = ecx << 6;
+    esi = esi + ecx;
+    local_14 = esi;
+    goto L_0057FD61;
+L_0057FD41:
+    _p1 = ecx;
+    ecx = esi + esi * 2;
+    edx = esi + ecx * 4;
+    eax = SW(edx * 4 + 0x9AB89A);
+    _p2 = eax;
+    eax = has_tech(_p2, _p1);
+    if (eax == 0) goto L_00580840;
+L_0057FD61:
+    ecx = esi + esi * 2;
+    edx = (edx & ~0xFF) | (local_28 & 0xFF);
+    eax = esi + ecx * 4;
+    eax = eax << 2;
+    local_c = eax;
+    if ((B(eax + 0x9AB894) & (edx & 0xFF)) != 0) goto L_00580840;
+    if ((B(eax + 0x9AB898) & 1) == 0) goto L_00580840;
+    local_18 = 0;
+L_0057FD90:
+    eax = local_18;
+    ecx = eax;
+    ecx = ecx & 0x8000003f;
+    if (ecx >= 0) goto L_0057FDA2;
+    ecx = ecx - 1;
+    ecx = ecx | 0xffffffc0;
+    ecx = ecx + 1;
+L_0057FDA2:
+    ebx = a1;
+    local_8 = ecx;
+    if (eax < 0x40) goto L_0057FDB7;
+    edx = ebx;
+    edx = edx << 6;
+    ecx = ecx + edx;
+    local_8 = ecx;
+L_0057FDB7:
+    if (eax == local_24) goto L_0058082E;
+    eax = ecx + ecx * 2;
+    edi = ecx + eax * 4;
+    edi = edi << 2;
+    local_10 = edi;
+    eax = (eax & ~0xFFFF) | W(edi + 0x9AB898);
+    if ((eax & 0xFF & 1) == 0) goto L_0058082E;
+    edx = (edx & ~0xFF) | (local_28 & 0xFF);
+    if ((B(edi + 0x9AB894) & (edx & 0xFF)) != 0) goto L_0058082E;
+    if (ecx >= 0x40) goto L_0057FE10;
+    edx = 0;
+    edx = (edx & ~0xFF) | B(edi + 0x9AB88D);
+    edx = edx << 4;
+    if (SB(edx + 0x94AE68) < 0) goto L_0058082E;
+    if (ecx == 0xF) goto L_0058082E;
+L_0057FE10:
+    edx = eax;
+    edx = edx & 0x200;
+    if (edx != 0) goto L_0058082E;
+    esi = local_14;
+    edx = eax;
+    edx = edx & 8;
+    edx = edx >> 3;
+    cond_fe2c = (esi < 0x40);
+    esi = local_c;
+    local_30 = edx;
+    if (cond_fe2c) goto L_0057FE51;
+    if ((B(esi + 0x9AB898) & 4) != 0) goto L_0057FE51;
+    if (ecx < 0x40) goto L_0058082E;
+    if ((eax & 0xFF & 4) != 0) goto L_0058082E;
+L_0057FE51:
+    if (edx == 0) goto L_0057FE69;
+    eax = (eax & ~0xFF) | B(edi + 0x9AB88F);
+    ecx = (ecx & ~0xFF) | B(esi + 0x9AB88F);
+    if ((unsigned char)(eax & 0xFF) >= (unsigned char)(ecx & 0xFF)) goto L_0058082E;
+L_0057FE69:
+    eax = (eax & ~0xFF) | B(edi + 0x9AB88D);
+    ecx = eax;
+    ecx = ecx & 0xff;
+    ecx = ecx << 4;
+    ecx = (ecx & ~0xFF) | B(ecx + 0x94AE68);
+    if ((signed char)(ecx & 0xFF) > 0) goto L_0057FE92;
+    if ((eax & 0xFF) != B(esi + 0x9AB88D)) goto L_0058082E;
+    goto L_0057FEA9;
+L_0057FE92:
+    edx = 0;
+    edx = (edx & ~0xFF) | B(esi + 0x9AB88D);
+    edx = edx << 4;
+    if ((signed char)(ecx & 0xFF) > SB(edx + 0x94AE68)) goto L_0058082E;
+L_0057FEA9:
+    ecx = (ecx & ~0xFF) | B(edi + 0x9AB88E);
+    eax = ecx;
+    eax = eax & 0xff;
+    edx = eax;
+    edx = edx << 4;
+    if (SB(edx + 0x94F280) > 0) goto L_0057FED5;
+    if ((ecx & 0xFF) != B(esi + 0x9AB88E)) goto L_0058082E;
+    goto L_0057FFC6;
+L_0057FED5:
+    if (ebx < 0) goto L_0057FF36;
+    ecx = D(0x9A6488);
+    if (ecx != 0) goto L_0057FEEF;
+    if (eax <= 9) goto L_0057FEEF;
+    eax = 1;
+    goto L_0057FF40;
+L_0057FEEF:
+    eax = eax << 4;
+    eax = (eax & ~0xFF) | B(eax + 0x94F280);
+    if ((signed char)(eax & 0xFF) >= 0) goto L_0057FF31;
+    eax = ebx;
+    _p1 = 0;
+    eax = eax << 6;
+    eax = eax + ebx;
+    _p2 = 0;
+    _p3 = ebx;
+    ecx = ebx + eax * 2;
+    edx = ebx + ecx * 8;
+    eax = ebx + edx * 2;
+    eax = D(eax * 4 + 0x96D20C);
+    eax = eax * D(0x9497A8);
+    eax = eax / D(0x94979C);
+    _p4 = eax;
+    eax = psi_factor(_p4, _p3, _p2, _p1);
+    goto L_0057FF40;
+L_0057FF31:
+    eax = (signed char)(eax & 0xFF);
+    goto L_0057FF40;
+L_0057FF36:
+    eax = eax << 4;
+    eax = SB(eax + 0x94F280);
+L_0057FF40:
+    ecx = local_c;
+    esi = eax + eax;
+    eax = 0;
+    eax = B(ecx + 0x9AB88E);
+    if (ebx < 0) goto L_0057FFAF;
+    ecx = D(0x9A6488);
+    if (ecx != 0) goto L_0057FF68;
+    if (eax <= 9) goto L_0057FF68;
+    eax = 1;
+    goto L_0057FFB9;
+L_0057FF68:
+    eax = eax << 4;
+    eax = (eax & ~0xFF) | B(eax + 0x94F280);
+    if ((signed char)(eax & 0xFF) >= 0) goto L_0057FFAA;
+    edx = ebx;
+    _p1 = 0;
+    edx = edx << 6;
+    edx = edx + ebx;
+    _p2 = 0;
+    _p3 = ebx;
+    eax = ebx + edx * 2;
+    ecx = ebx + eax * 8;
+    edx = ebx + ecx * 2;
+    eax = D(edx * 4 + 0x96D20C);
+    eax = eax * D(0x9497A8);
+    eax = eax / D(0x94979C);
+    _p4 = eax;
+    eax = psi_factor(_p4, _p3, _p2, _p1);
+    goto L_0057FFB9;
+L_0057FFAA:
+    eax = (signed char)(eax & 0xFF);
+    goto L_0057FFB9;
+L_0057FFAF:
+    eax = eax << 4;
+    eax = SB(eax + 0x94F280);
+L_0057FFB9:
+    eax = eax + eax;
+    if (esi > eax) goto L_0058082E;
+    esi = local_c;
+L_0057FFC6:
+    if (B(edi + 0x9AB892) == 3) goto L_0058003B;
+    ecx = 0;
+    edx = 0;
+    ecx = (ecx & ~0xFF) | B(edi + 0x9AB88D);
+    ecx = ecx << 4;
+    edx = (SB(ecx + 0x94AE68) > 1) ? 1 : 0;
+    eax = 0;
+    ecx = 0;
+    eax = B(esi + 0x9AB88D);
+    eax = eax << 4;
+    ecx = (SB(eax + 0x94AE68) > 1) ? 1 : 0;
+    if (edx != ecx) goto L_0058082E;
+    edx = 0;
+    eax = 0;
+    edx = B(edi + 0x9AB88E);
+    edx = edx << 4;
+    eax = (SB(edx + 0x94F280) > 1) ? 1 : 0;
+    ecx = 0;
+    edx = 0;
+    ecx = B(esi + 0x9AB88E);
+    ecx = ecx << 4;
+    edx = (SB(ecx + 0x94F280) > 1) ? 1 : 0;
+    if (eax != edx) goto L_0058082E;
+L_0058003B:
+    eax = (eax & ~0xFF) | B(edi + 0x9AB88F);
+    ecx = (ecx & ~0xFF) | B(esi + 0x9AB88F);
+    if ((unsigned char)(eax & 0xFF) > (unsigned char)(ecx & 0xFF)) goto L_0058082E;
+    eax = (eax & ~0xFF) | B(edi + 0x9AB890);
+    ecx = (ecx & ~0xFF) | B(esi + 0x9AB890);
+    if ((unsigned char)(eax & 0xFF) > (unsigned char)(ecx & 0xFF)) goto L_0058082E;
+    ecx = a2;
+    eax = (eax & ~0xFF) | B(edi + 0x9AB88C);
+    eax = eax & 0xff;
+    edx = ecx + ecx * 2;
+    eax = eax + eax * 8;
+    ecx = ecx + edx * 4;
+    edx = 0;
+    eax = eax << 4;
+    edx = (edx & ~0xFF) | B(ecx * 4 + 0x9AB88C);
+    ecx = edx;
+    edx = (edx & ~0xFF) | B(eax + 0x94A37A);
+    ecx = ecx + ecx * 8;
+    ecx = ecx << 4;
+    if ((edx & 0xFF) != B(ecx + 0x94A37A)) goto L_0058082E;
+    ecx = local_c;
+    ebx = (ebx & ~0xFF) | B(eax + 0x94A379);
+    edx = (edx & ~0xFF) | B(ecx + 0x9AB88C);
+    ecx = edx;
+    ecx = ecx & 0xff;
+    ecx = ecx + ecx * 8;
+    ecx = ecx << 4;
+    if ((ebx & 0xFF) != B(ecx + 0x94A379)) goto L_0058082E;
+    eax = (eax & ~0xFF) | B(eax + 0x94A378);
+    ebx = (ebx & ~0xFF) | B(ecx + 0x94A378);
+    if ((unsigned char)(eax & 0xFF) > (unsigned char)(ebx & 0xFF)) goto L_0058082E;
+    edi = local_10;
+    ebx = local_c;
+    ecx = D(edi + 0x9AB888);
+    esi = D(ebx + 0x9AB888);
+    if (ecx == esi) goto L_005801DB;
+    eax = esi;
+    eax = eax ^ ecx;
+    if ((eax & 0xfffbd5fc) != 0) goto L_0058082E;
+    eax = (eax & ~0xFF) | B(edi + 0x9AB88F);
+    if ((unsigned char)(eax & 0xFF) < B(ebx + 0x9AB88F)) goto L_005801DB;
+    eax = esi;
+    eax = eax & ecx;
+    if (eax == ecx) goto L_005801DB;
+    if (local_14 < 0x40) goto L_0058082E;
+    eax = a1;
+    edi = eax;
+    edi = edi << 6;
+    edi = edi + eax;
+    edi = eax + edi * 2;
+    edi = eax + edi * 8;
+    eax = eax + edi * 2;
+    edi = local_8;
+    eax = eax << 2;
+    ebx = (ebx & ~0xFF) | B(eax + edi + 0x96D238);
+    if ((ebx & 0xFF) != 0) goto L_0058082E;
+    ebx = (ebx & ~0xFF) | B(eax + edi + 0x96D438);
+    if ((ebx & 0xFF) != 0) goto L_0058082E;
+    ebx = local_c;
+L_0058016B:
+    edi = local_10;
+    eax = (eax & ~0xFF) | B(edi + 0x9AB892);
+    if ((eax & 0xFF) != B(ebx + 0x9AB892)) goto L_0058082E;
+    eax = local_30;
+    if (eax == 0) goto L_005801A0;
+    eax = (eax & ~0xFF) | B(edi + 0x9AB893);
+    if ((eax & 0xFF) != B(ebx + 0x9AB893)) goto L_0058082E;
+    esi = esi & ecx;
+    if (esi != ecx) goto L_0058082E;
+L_005801A0:
+    ecx = (ecx & ~0xFF) | B(edi + 0x9AB891);
+    eax = (eax & ~0xFF) | B(ebx + 0x9AB891);
+    if ((unsigned char)(ecx & 0xFF) >= (unsigned char)(eax & 0xFF)) goto L_005801E3;
+    eax = (eax & ~0xFF) | B(edi + 0x9AB88F);
+    ecx = (ecx & ~0xFF) | B(ebx + 0x9AB88F);
+    if ((unsigned char)(eax & 0xFF) < (unsigned char)(ecx & 0xFF)) goto L_005801E3;
+    esi = local_8;
+    if (esi < 0x40) goto L_0058082E;
+    if ((B(edi + 0x9AB898) & 8) != 0) goto L_0058082E;
+    goto L_005801E6;
+L_005801DB:
+    edi = local_10;
+    ebx = local_c;
+    goto L_0058016B;
+L_005801E3:
+    esi = local_8;
+L_005801E6:
+    eax = (eax & ~0xFF) | B(edi + 0x9AB88D);
+    ecx = (ecx & ~0xFF) | B(ebx + 0x9AB88D);
+    if ((eax & 0xFF) != (ecx & 0xFF)) goto L_00580231;
+    ecx = (ecx & ~0xFF) | B(edi + 0x9AB88E);
+    eax = (eax & ~0xFF) | B(ebx + 0x9AB88E);
+    if ((ecx & 0xFF) != (eax & 0xFF)) goto L_00580231;
+    if (B(edi + 0x9AB88C) != (edx & 0xFF)) goto L_00580231;
+    eax = (eax & ~0xFF) | B(edi + 0x9AB88F);
+    ecx = (ecx & ~0xFF) | B(ebx + 0x9AB88F);
+    if ((eax & 0xFF) != (ecx & 0xFF)) goto L_00580231;
+    if (esi < 0x40) goto L_0058082E;
+    if (local_14 < 0x40) goto L_0058082E;
+L_00580231:
+    if (esi != a2) goto L_00580256;
+    eax = a3;
+    B(edi + 0x9AB898) |= 8;
+    if (eax == 0) goto L_0058082E;
+    _p1 = esi;
+    synch_obs(_p1);
+    goto L_0058082E;
+L_00580256:
+    ecx = a1;
+    eax = (eax & ~0xFF) | 1;
+    eax = (eax & ~0xFF) | (unsigned char)(1 << (ecx & 0xFF));
+    ecx = (ecx & ~0xFF) | B(edi + 0x9AB894);
+    ebx = 0;
+    local_1 = (unsigned char)(eax & 0xFF);
+    ecx = (ecx & ~0xFF) | ((ecx & 0xFF) | (eax & 0xFF));
+    eax = a3;
+    B(edi + 0x9AB894) = (unsigned char)(ecx & 0xFF);
+    if (eax == ebx) goto L_00580280;
+    _p1 = esi;
+    synch_obs(_p1);
+L_00580280:
+    eax = local_8;
+    local_20 = ebx;
+    local_30 = ebx;
+    if (eax >= 0x40) goto L_005802AA;
+    eax = SW(edi + 0x9AB89A);
+    edx = a1;
+    _p1 = edx;
+    _p2 = eax;
+    eax = has_tech(_p2, _p1);
+    if (eax == 0) goto L_0058082E;
+L_005802AA:
+    eax = D(0x9A64CC);
+    edi = 0;
+    local_2c = edi;
+    if (eax <= 0) goto L_00580302;
+    esi = 0x97D08C;
+L_005802BD:
+    eax = a1;
+    ecx = esi + 4;
+    edx = 0;
+    edx = (edx & ~0xFF) | B(ecx - 0x4C);
+    if (edx != eax) goto L_005802E6;
+    edx = D(esi);
+    eax = 0;
+    if (edx < 0) goto L_005802E6;
+    ebx = local_8;
+L_005802D7:
+    if (D(ecx) == ebx) goto L_005802F8;
+    eax = eax + 1;
+    ecx = ecx + 4;
+    if (eax <= edx) goto L_005802D7;
+L_005802E6:
+    eax = D(0x9A64CC);
+    edi = edi + 1;
+    esi = esi + 0x134;
+    if (edi >= eax) goto L_00580302;
+    goto L_005802BD;
+L_005802F8:
+    ebx = local_20;
+    local_2c = 1;
+L_00580302:
+    eax = D(0x9A64CC);
+    local_1c = 0;
+    if (eax <= 0) goto L_0058082E;
+    local_20 = 0x97D08C;
+L_0058031D:
+    ecx = local_20;
+    eax = 0;
+    eax = B(ecx - 0x48);
+    ecx = a1;
+    if (eax != ecx) goto L_005805DD;
+    eax = D(0x93F660);
+    if (eax != 0) goto L_00580354;
+    edx = D(0x939284);
+    eax = ecx;
+    if (eax != edx) goto L_00580354;
+    eax = local_2c;
+    if (eax == 0) goto L_005805DD;
+    if (ebx == 0) goto L_0058038F;
+L_00580354:
+    eax = local_2c;
+    if (eax == 0) goto L_005805DD;
+    eax = a3;
+    if (eax == 0) goto L_00580382;
+    eax = local_1c;
+    _p1 = -1;
+    _p2 = -1;
+    _p3 = 0;
+    _p4 = eax;
+    ecx = 0x93CD90;
+    eax = ((NetDaemon *)ecx)->lock_base(_p4, _p3, _p2, _p1);
+    if (eax != 0) goto L_005805DD;
+L_00580382:
+    eax = D(0x93F660);
+    if (eax != 0) goto L_00580599;
+L_0058038F:
+    ecx = D(0x939284);
+    eax = a1;
+    if (eax != ecx) goto L_00580599;
+    if (ebx != 0) goto L_00580599;
+    B(0x9B86A0) = (unsigned char)(ebx & 0xFF);
+    ebx = local_10;
+    edx = ebx + 0x9AB868;
+    _p1 = edx;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = 0x682820;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = 0x682E9C;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    eax = local_8;
+    _p1 = eax;
+    _p2 = 0x9B86A0;
+    say_stats_2((char *)_p2, _p1);
+    eax = D(ebx + 0x9AB888);
+    if (eax == 0) goto L_0058044E;
+    _p1 = 0x682820;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    edi = 0;
+    esi = 0x9AB540;
+L_00580414:
+    eax = D(ebx + 0x9AB888);
+    edx = 1;
+    ecx = edi;
+    edx = 1 << (ecx & 0xFF);
+    if ((eax & edx) == 0) goto L_00580442;
+    eax = D(esi);
+    ecx = 0x9B90D8;
+    _p1 = eax;
+    eax = ((Strings *)ecx)->get(_p1);
+    _p1 = eax;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+L_00580442:
+    esi = esi + 0x1C;
+    edi = edi + 1;
+    if (esi < 0x9AB86C) goto L_00580414;
+L_0058044E:
+    _p1 = 0x682E98;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = -1;
+    _p2 = -1;
+    _p3 = 0x9B86A0;
+    _p4 = 0;
+    eax = parse_says(_p4, (char *)_p3, _p2, _p1);
+    ebx = local_c;
+    B(0x9B86A0) = 0;
+    eax = ebx + 0x9AB868;
+    _p1 = eax;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = 0x682820;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = 0x682E9C;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    ecx = local_14;
+    _p1 = ecx;
+    _p2 = 0x9B86A0;
+    say_stats_2((char *)_p2, _p1);
+    eax = D(ebx + 0x9AB888);
+    if (eax == 0) goto L_00580514;
+    _p1 = 0x682820;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    edi = 0;
+    esi = 0x9AB540;
+L_005804DA:
+    eax = D(ebx + 0x9AB888);
+    edx = 1;
+    ecx = edi;
+    edx = 1 << (ecx & 0xFF);
+    if ((eax & edx) == 0) goto L_00580508;
+    eax = D(esi);
+    ecx = 0x9B90D8;
+    _p1 = eax;
+    eax = ((Strings *)ecx)->get(_p1);
+    _p1 = eax;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+L_00580508:
+    esi = esi + 0x1C;
+    edi = edi + 1;
+    if (esi < 0x9AB86C) goto L_005804DA;
+L_00580514:
+    _p1 = 0x682E98;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = -1;
+    _p2 = -1;
+    _p3 = 0x9B86A0;
+    _p4 = 1;
+    eax = parse_says(_p4, (char *)_p3, _p2, _p1);
+    esi = local_10;
+    eax = (eax & ~0xFFFF) | W(esi + 0x9AB898);
+    eax = eax & 0x200;
+    if (eax != 0) goto L_0058056E;
+    eax = local_30;
+    if (eax != 0) goto L_0058056E;
+    _p1 = 0;
+    _p2 = 0x68F164;
+    eax = X_pop((const char *)_p2, (int (__cdecl *)())_p1);
+    if (eax <= 1) goto L_0058057A;
+    local_30 = 1;
+    goto L_00580599;
+L_0058056E:
+    ecx = local_30;
+    eax = 1;
+    if (ecx != 0) goto L_00580599;
+L_0058057A:
+    ecx = (ecx & ~0xFFFF) | W(esi + 0x9AB898);
+    ecx = ecx & 0x200;
+    if (ecx != 0) goto L_005807E2;
+    if (eax == 1) goto L_005807E2;
+L_00580599:
+    edx = local_20;
+    ecx = 0;
+    ebx = 1;
+    if (D(edx) < 0) goto L_005805BF;
+    esi = local_8;
+    edi = local_14;
+    eax = edx + 4;
+L_005805B1:
+    if (D(eax) != esi) goto L_005805B7;
+    D(eax) = edi;
+L_005805B7:
+    ecx = ecx + 1;
+    eax = eax + 4;
+    if (ecx <= D(edx)) goto L_005805B1;
+L_005805BF:
+    eax = D(0x93F660);
+    if (eax == 0) goto L_005805DD;
+    eax = a3;
+    if (eax == 0) goto L_005805DD;
+    edx = local_1c;
+    ecx = 0x93CD90;
+    _p1 = edx;
+    ((NetDaemon *)ecx)->unlock_base(_p1);
+L_005805DD:
+    eax = local_1c;
+    edx = local_20;
+    ecx = D(0x9A64CC);
+    eax = eax + 1;
+    edx = edx + 0x134;
+    local_1c = eax;
+    local_20 = edx;
+    if (eax < ecx) goto L_0058031D;
+    if (ebx == 0) goto L_0058082E;
+    eax = D(0x93F660);
+    if (eax == 0) goto L_0058082E;
+    eax = D(0x939284);
+    ecx = a1;
+    if (ecx != eax) goto L_0058082E;
+    esi = local_10;
+    B(0x9B86A0) = 0;
+    ecx = esi + 0x9AB868;
+    _p1 = ecx;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = 0x682820;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = 0x682E9C;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    edx = local_8;
+    _p1 = edx;
+    _p2 = 0x9B86A0;
+    say_stats_2((char *)_p2, _p1);
+    eax = D(esi + 0x9AB888);
+    if (eax == 0) goto L_005806CB;
+    _p1 = 0x682820;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    edi = 0;
+    esi = 0x9AB540;
+L_00580690:
+    eax = 1;
+    ecx = edi;
+    eax = 1 << (ecx & 0xFF);
+    ecx = local_10;
+    if ((D(ecx + 0x9AB888) & eax) == 0) goto L_005806BF;
+    eax = D(esi);
+    ecx = 0x9B90D8;
+    _p1 = eax;
+    eax = ((Strings *)ecx)->get(_p1);
+    _p1 = eax;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+L_005806BF:
+    esi = esi + 0x1C;
+    edi = edi + 1;
+    if (esi < 0x9AB86C) goto L_00580690;
+L_005806CB:
+    _p1 = 0x682E98;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = -1;
+    _p2 = -1;
+    _p3 = 0x9B86A0;
+    _p4 = 0;
+    eax = parse_says(_p4, (char *)_p3, _p2, _p1);
+    esi = local_c;
+    B(0x9B86A0) = 0;
+    edx = esi + 0x9AB868;
+    _p1 = edx;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = 0x682820;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = 0x682E9C;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    eax = local_14;
+    _p1 = eax;
+    _p2 = 0x9B86A0;
+    say_stats_2((char *)_p2, _p1);
+    eax = D(esi + 0x9AB888);
+    if (eax == 0) goto L_00580792;
+    _p1 = 0x682820;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    edi = 0;
+    esi = 0x9AB540;
+L_00580757:
+    eax = local_c;
+    edx = 1;
+    ecx = edi;
+    edx = 1 << (ecx & 0xFF);
+    if ((D(eax + 0x9AB888) & edx) == 0) goto L_00580786;
+    eax = D(esi);
+    ecx = 0x9B90D8;
+    _p1 = eax;
+    eax = ((Strings *)ecx)->get(_p1);
+    _p1 = eax;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+L_00580786:
+    esi = esi + 0x1C;
+    edi = edi + 1;
+    if (esi < 0x9AB86C) goto L_00580757;
+L_00580792:
+    _p1 = 0x682E98;
+    _p2 = 0x9B86A0;
+    strcat((char *)_p2, (const char *)_p1);
+    _p1 = -1;
+    _p2 = -1;
+    _p3 = 0x9B86A0;
+    _p4 = 1;
+    eax = parse_says(_p4, (char *)_p3, _p2, _p1);
+    ecx = a1;
+    eax = ecx + ecx * 4;
+    _pp_cb = 0;
+    edx = eax + eax * 8;
+    edx = edx << 3;
+    edx = edx - ecx;
+    if ((B(edx * 4 + 0x946F58) & 0x80) == 0) goto L_00580813;
+    eax = D(0x691B0C);
+    _pp_c = 0x68F174;
+    _pp_b = 0;
+    _pp_a = 0x68F184;
+    _pp_this = eax;
+    goto L_00580826;
+L_00580813:
+    ecx = D(0x691B0C);
+    _pp_c = 0x68F190;
+    _pp_b = 0;
+    _pp_a = 0x68F19C;
+    _pp_this = ecx;
+L_00580826:
+    eax = popp((char *)_pp_this, (const char *)_pp_a, _pp_b, (const char *)_pp_c,
+               (int (__cdecl *)())_pp_cb);
+    goto L_0058082E;
+L_005807E2:
+    eax = (eax & ~0xFF) | local_1;
+    edx = (edx & ~0xFF) | B(esi + 0x9AB894);
+    eax = (eax & ~0xFF) | ((~eax) & 0xFF);
+    edx = (edx & ~0xFF) | ((edx & 0xFF) & (eax & 0xFF));
+    B(esi + 0x9AB894) = (unsigned char)(edx & 0xFF);
+    eax = (eax & ~0xFFFF) | W(esi + 0x9AB898);
+    if ((eax & 0xFF & 8) == 0) goto L_0058080A;
+    eax = eax | 0x200;
+    W(esi + 0x9AB898) = (unsigned short)(eax & 0xFFFF);
+L_0058080A:
+    B(esi + 0x9AB898) |= 8;
+    goto L_0058082E;
+L_0058082E:
+    eax = local_18;
+    eax = eax + 1;
+    local_18 = eax;
+    if (eax < 0x80) goto L_0057FD90;
+L_00580840:
+    eax = local_24;
+    eax = eax + 1;
+    local_24 = eax;
+    if (eax < 0x80) goto L_0057FD1A;
+L_00580852:
+    return;
 }
+
+#undef B
+#undef SB
+#undef W
+#undef SW
+#undef D

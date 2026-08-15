@@ -1,4 +1,19 @@
 // ORIGINAL: 0x0053EB50 FILE
+// DEFERRED: 1642 instructions, 6684 bytes, free function
+//   `void __cdecl buy_council_vote(int,int,int,int)`. No computed jmp
+//   table - dispatch is a long chain of explicit compares/branches over
+//   the diplomacy-proposal outcome, calling wants_prop/eligible/
+//   diplomacy_check/diplomacy_caption/tech_analysis/parse_says/X_pop/
+//   X_pops repeatedly. A body could exist: not attempted for lack of
+//   budget after 0x00438460 (below) used the pass.
+//   Frame carries the SAME Popup/BasePop/Scroll/2x-FlatButton/Dialogs
+//   layout as 0x00438460 (DesignWin::on_button_clicked, same batch,
+//   recovered below sibling file 00438460.cpp) at IDENTICAL relative
+//   offsets from the Popup base (0xA5C flat_button1_, 0x15A8
+//   flat_button2_, 0x21D0-ish Dialogs region, 0x3230 scroll_, scroll_'s
+//   own 0xAAC/0x15F8 flat_button_left_/right_): `Popup popup;` local,
+//   let the compiler place the rest, exactly as there. That recipe is
+//   proven (MISMATCH, compiles) and should transplant directly.
 // working copy - scaffold materialised by --work
 // name      ?buy_council_vote@@YAXHHHH@Z
 // size      6684 bytes

@@ -1,4 +1,11 @@
 // ORIGINAL: 0x0052C880 FILE
+// RULED-OUT: literal register/goto transcription of all ~85 branches and the
+//            10-entry switch resolved from the image; Popup+embedded Scroll+
+//            2 embedded FlatButton locals (BasePop+0x3230=Scroll start,
+//            Scroll+0xAAC/0x15F8=flat_button_left_/right_, matching the
+//            SEH thunks at 0x65DB99/0x65DBA7); vtable-reassert writes before
+//            every close() and the per-site EH state bytes are compiler
+//            artifacts, not transcribed. #18 first divergence still open.
 // working copy - scaffold materialised by --work
 // name      ?call_council@@YAXH@Z
 // size      5613 bytes
@@ -1608,7 +1615,7 @@ class Buffer { public:
     int init_class();
     int text_height();
     int text_line_height();
-    int get_pcx_dimensions(const char *, int *, int *);
+    static int get_pcx_dimensions(const char *, int *, int *);
     void clear_links();
     void close();
     void close_class();
@@ -2389,11 +2396,506 @@ static int *const g_009b2068 = (int *)0x009B2068;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b8aa8 = (int *)0x009B8AA8;
 static int *const g_009b90d8 = (int *)0x009B90D8;
-void __cdecl call_council(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+#pragma function(strcat)
 
+bool has_tech(int, int);
+int council_votes(int);
+int council_get_vote(int, int, int);
+int can_call_council(int, int);
+int wants_prop(int, int, int);
+int parse_num(int, int);
+int game_year(int);
+int diplo_lock(int);
+void diplo_unlock();
+void wait_loop();
+void council(int, int, int);
+void message_data(int, int, int, int, int, int);
+
+void __cdecl call_council(int a1) {
+    Popup popup;
+    Sprite tempSprite;
+    void *spritePtr;
+    int eax, ebx, ecx, edx, esi, edi;
+    int s10, s14, s18, s1c, s20, s24, s28, s2c, s30, s34, s38;
+
+    spritePtr = 0;
+    ebx = a1;
+    eax = *g_009a6488;
+    if (eax != 0 && (*(unsigned char *)((char *)g_00946f58 + (unsigned)ebx * 0x59c) & 0x80) != 0) {
+        popup.close();
+        popup.scroll_.close();
+        return;
+    }
+    if (ebx == 0) {
+        popup.close();
+        popup.scroll_.close();
+        return;
+    }
+
+    eax = *g_0093a938;
+    if (eax != 0) {
+        if ((*(unsigned char *)g_009a64e8 & (1 << ebx)) != 0 || *g_0093f660 != 0) {
+            popup.close();
+            popup.scroll_.close();
+            return;
+        }
+    }
+
+    eax = (ebx == *g_00939284 && (*(unsigned char *)g_009a64e8 & (1 << ebx)) != 0) ? 1 : 0;
+    if (can_call_council(ebx, eax) == 0) {
+        popup.close();
+        popup.scroll_.close();
+        return;
+    }
+
+    edx = *(unsigned char *)g_009a64e8;
+    eax = 1 << ebx;
+    s18 = eax;
+    esi = edx & eax;
+    if (esi == 0 && *g_009a6614 > 0 && (((*g_009a64d4 + ebx * 2) & 0xf) != 0)) {
+        popup.close();
+        popup.scroll_.close();
+        return;
+    }
+
+    if (esi == 0 && (*(unsigned char *)g_009a64c0 & 1) != 0) {
+        popup.close();
+        popup.scroll_.close();
+        return;
+    }
+
+    if (*g_0093f660 != 0 && (*(unsigned char *)g_009a681c & 0x10) != 0 && esi != 0 && *g_009a6820 == ebx) {
+        ((NetMsg *)g_00805338)->pop((const char *)g_0068c068, 0x1388, 0, (const char *)0);
+        popup.close();
+        popup.scroll_.close();
+        return;
+    }
+
+    ecx = 1;
+    eax = 0x9474f4;
+    while (eax < 0x949c38) {
+        if (esi != 0 || ((edx >> ecx) & 1) != 0) {
+            if ((*(unsigned char *)eax & 0x80) != 0) {
+                popup.close();
+                popup.scroll_.close();
+                return;
+            }
+        }
+        eax += 0x59c;
+        ecx++;
+    }
+
+    edi = 0;
+    s24 = edi;
+    s2c = -1;
+    s1c = ebx;
+    s30 = edi;
+    popup.start((char *)g_009b8aa8, (const char *)g_0068c070, -1, (char *)0, 64, (GraphicWin *)0);
+    eax = Buffer::get_pcx_dimensions((const char *)g_0068c080, &s38, &s34);
+    if (eax == 0 && tempSprite.init((char *)g_0068c090, s38, s34) == 0) {
+        spritePtr = &tempSprite;
+    }
+    s28 = edi;
+
+L_CDB7:
+    s20 = edi * 12;
+    ecx = *(int *)((char *)g_009a6830 + s20);
+    eax = has_tech(ecx, ebx);
+    if (eax == 0) {
+        eax = *g_009a64c0;
+        if ((eax & 0x80) == 0) goto L_D27F;
+        if ((eax & 0x1000) == 0) goto L_D27F;
+    }
+    if (*(int *)((char *)g_009a6830 + s20) < -1) goto L_D27F;
+    if ((unsigned int)edi > 9) goto L_D154;
+    switch (edi) {
+    case 0: goto L_CE07;
+    case 1: goto L_D01F;
+    case 2: goto L_D00B;
+    case 3: goto L_D11D;
+    case 4: goto L_D132;
+    case 5: goto L_D00B;
+    case 6: goto L_D147;
+    case 7: goto L_D154;
+    case 8: goto L_D0F3;
+    case 9: goto L_D108;
+    }
+
+L_CE07:
+    eax = *g_009a6488;
+    s10 = 0;
+    if (eax != 0) {
+        if ((*(unsigned char *)((char *)g_00946f58 + (unsigned)ebx * 0x59c) & 0x80) != 0) goto L_CE7C;
+    }
+    edi = council_votes(ebx);
+    for (esi = 1; esi < 8; esi++) {
+        if (ebx != esi && (*(unsigned char *)g_009a64e9 & (1 << esi)) != 0) {
+            if (council_votes(esi) > edi) s10++;
+        }
+    }
+    if (s10 < 2) goto L_CF19;
+L_CE7C:
+    eax = s18 & 0xff;
+    ecx = *(unsigned char *)g_009a64e8;
+    esi = *g_009a6614;
+    if ((eax & ecx) == 0 && esi > 0) goto L_D27F;
+    goto L_CF22;
+
+L_CF19:
+    eax = s18 & 0xff;
+    esi = *g_009a6614;
+L_CF22:
+    if (esi == ebx) {
+        if ((*(unsigned char *)g_009a64e8 & (unsigned char)eax) == 0) goto L_D27F;
+    }
+    if ((*(unsigned char *)g_009a64e8 & (unsigned char)eax) != 0) goto L_D154;
+    if (esi <= 0) goto L_CFA1;
+    edx = ebx; edx = edx * 65;
+    eax = ebx + edx * 2;
+    edx = esi + ebx;
+    ecx = ebx + eax * 8;
+    eax = edx + ecx * 2;
+    eax = *(int *)((char *)g_0096c9f8 + eax * 4);
+    if ((eax & 1) == 0) goto L_CFA1;
+    ecx = esi; ecx = ecx * 65;
+    edx = esi + ecx * 2;
+    ecx = esi + edx * 8;
+    edx = esi + ecx * 2;
+    ecx = ebx; ecx = ecx * 65;
+    esi = *(int *)((char *)g_0096c9e4 + edx * 4);
+    ecx = ebx + ecx * 2;
+    ecx = ebx + ecx * 8;
+    ecx = ebx + ecx * 2;
+    ecx = *(int *)((char *)g_0096c9e4 + ecx * 4);
+    if (ecx < esi) goto L_D27F;
+    if ((eax & 0x2000000) != 0) goto L_D27F;
+L_CFA1:
+    edi = 0;
+    ebx = 0;
+    for (esi = 1; esi < 8; esi++) {
+        eax = council_votes(esi);
+        edx = s1c;
+        edi += eax;
+        eax = council_get_vote(esi, 0, edx);
+        ecx = a1;
+        if (eax == ecx) {
+            eax = council_votes(esi);
+            ebx += eax;
+        }
+    }
+    eax = ebx + ebx;
+    if (eax >= edi) goto L_D154;
+    ecx = *g_009a6614;
+    if (ecx <= 0) goto L_D154;
+    eax = *(unsigned char *)g_009a64e8;
+    edx = 1 << (ecx & 0x1f);
+    if ((eax & edx) == 0) goto L_D27C_target;
+    goto L_D154;
+
+L_D01F:
+    if ((*(unsigned char *)g_009a649c & 8) == 0) goto L_D27F;
+    if ((eax & 1) != 0) goto L_D27F;
+    eax = *g_009a661c;
+    if (eax != 0) goto L_D27F;
+    eax = *g_009a6488;
+    s10 = 0;
+    if (eax != 0) {
+        if ((*(unsigned char *)((char *)g_00946f58 + (unsigned)ebx * 0x59c) & 0x80) != 0) goto L_D27F;
+    }
+    edi = council_votes(ebx);
+    for (esi = 1; esi < 8; esi++) {
+        if (ebx != esi && (*(unsigned char *)g_009a64e9 & (1 << esi)) != 0) {
+            if (council_votes(esi) > edi) s10++;
+        }
+    }
+    if (s10 < 2) goto L_D27F;
+    edi = 1;
+    s14 = 0;
+    esi = edi;
+    eax = 0x9474f4;
+    while (eax < 0x949c38) {
+        if ((*(unsigned char *)eax & 0x80) != 0) {
+            edx = edi << esi;
+            if ((*(unsigned char *)g_009a64e9 & (unsigned char)edx) != 0) {
+                s14 = edi;
+            }
+        }
+        eax += 0x59c;
+        esi++;
+    }
+    goto L_D154;
+
+L_D00B:
+    eax = *(int *)((char *)g_009a6618 + edi * 4);
+    if (eax != 0) goto L_D27F;
+    goto L_D154;
+
+L_D11D:
+    ecx = *g_009a6624;
+    eax = *g_009a6628;
+    if (ecx > eax) goto L_D27F;
+    goto L_D154;
+
+L_D132:
+    edx = *g_009a6628;
+    eax = *g_009a6624;
+    if (edx == eax) goto L_D27F;
+    goto L_D154;
+
+L_D147:
+    eax = *g_009a662c;
+    if (eax == 0) goto L_D27F;
+    goto L_D154;
+
+L_D0F3:
+    edx = *g_009a6638;
+    eax = *g_009a663c;
+    if (edx > eax) goto L_D27F;
+    goto L_D154;
+
+L_D108:
+    eax = *g_009a663c;
+    ecx = *g_009a6638;
+    if (eax >= ecx) goto L_D27F;
+    goto L_D154;
+
+L_D154:
+    esi = s20;
+    *(char *)g_009b86a0 = 0;
+    eax = *(int *)((char *)g_009a6828 + esi);
+    eax = ((Strings *)g_009b90d8)->get(eax);
+    strcat((char *)g_009b86a0, (char *)eax);
+    strcat((char *)g_009b86a0, (char *)g_0068c0a0);
+    eax = *(int *)((char *)g_009a682c + esi);
+    eax = ((Strings *)g_009b90d8)->get(eax);
+    strcat((char *)g_009b86a0, (char *)eax);
+    esi = s28;
+    ((Dialogs *)popup.dialogs_)->item((char *)g_009b86a0, esi);
+    edx = s30;
+    eax = s18 & 0xff;
+    ecx = *(unsigned char *)g_009a64e8;
+    ebx = a1;
+    edx++;
+    s30 = edx;
+    if ((eax & ecx) != 0) goto L_D27F;
+    ecx = ebx; ecx = ecx * 65;
+    edx = ebx + ecx * 2;
+    eax = ebx + edx * 8;
+    eax = ebx + eax * 2;
+    ecx = eax + esi;
+    edx = *(int *)((char *)g_0096cde0 + ecx * 4);
+    if (edx == 0) goto L_D313;
+    if (esi != 0) goto L_D27F;
+    edi = *(int *)((char *)g_0096ce0c + eax * 4);
+    eax = *g_009a6488;
+    s10 = esi;
+    if (eax != 0) {
+        if ((*(unsigned char *)((char *)g_00946f58 + (unsigned)edi * 0x59c) & 0x80) != 0) goto L_D31B;
+    }
+    ebx = council_votes(edi);
+    for (esi = 1; esi < 8; esi++) {
+        if (edi != esi && (*(unsigned char *)g_009a64e9 & (1 << esi)) != 0) {
+            if (council_votes(esi) > ebx) s10++;
+        }
+    }
+    if (s10 >= 2) goto L_D31B;
+L_D27C_target:
+    ebx = a1;
+    goto L_D27F;
+
+L_D313:
+    if (esi != 0) goto L_D3D6;
+
+L_D31B:
+    edi = 1;
+    s20 = 0x9474f4;
+    while (edi != *g_009a6614) {
+        eax = *g_009a6488;
+        s10 = 0;
+        if (eax != 0) {
+            edx = s20;
+            if ((*(unsigned char *)edx & 0x80) != 0) goto L_D31B_incr;
+        }
+        ebx = council_votes(edi);
+        for (esi = 1; esi < 8; esi++) {
+            if (edi != esi && (*(unsigned char *)g_009a64e9 & (1 << esi)) != 0) {
+                if (council_votes(esi) > ebx) s10++;
+            }
+        }
+        if (s10 >= 2) goto L_D31B_incr;
+        edx = a1;
+        eax = wants_prop(edx, 0, edi);
+        ecx = s24;
+        if (eax > ecx) {
+            s24 = eax;
+            s2c = 0;
+            s1c = edi;
+        }
+    L_D31B_incr:
+        eax = s20;
+        edi++;
+        eax += 0x59c;
+        s20 = eax;
+    }
+    goto L_D27C_target;
+
+L_D3D6:
+    eax = wants_prop(ebx, esi, ebx);
+    ecx = s14;
+    if (ecx != 0) goto L_D27F;
+    if (eax <= s24) goto L_D27F;
+    s24 = eax;
+    s2c = esi;
+    s1c = ebx;
+    goto L_D27F;
+
+L_D27F:
+    edi = s28;
+    edi++;
+    s28 = edi;
+    if (edi < 0xb) goto L_CDB7;
+    eax = s30;
+    if (eax != 0) goto L_D403;
+    popup.close();
+    popup.scroll_.close();
+    return;
+
+L_D403:
+    edx = s18 & 0xff;
+    eax = *(unsigned char *)g_009a64e8;
+    if ((edx & eax) != 0) {
+        esi = popup.exec(0, 0);
+        edx = s18 & 0xff;
+    } else {
+        esi = s2c;
+    }
+    eax = s14;
+    if (eax == 0) goto L_D4E0;
+    if (esi != 1) goto L_D4E0;
+    if (ebx == *g_00939284) {
+        if ((*(unsigned char *)g_009a64e8 & (unsigned char)edx) != 0) {
+            ((NetMsg *)g_00805338)->pop((const char *)g_0068c0b4, 0xffffec78, 0, (const char *)g_0068c0a4);
+        }
+    }
+    popup.close();
+    popup.scroll_.close();
+    return;
+
+L_D4E0:
+    if (esi < 0) {
+        popup.close();
+        popup.scroll_.close();
+        return;
+    }
+
+    ecx = *g_009a64d4;
+    edi = *g_009497cc;
+    if (esi == 0) goto L_D6B5;
+    eax = *g_009a64c0;
+    if ((eax & 0x80) == 0) goto L_D589;
+    if ((eax & 0x1000) == 0) goto L_D589;
+    if ((*(unsigned char *)g_009a64e8 & (unsigned char)edx) != 0) goto L_D6B5;
+L_D589:
+    eax = *g_009a6614;
+    if (ebx == eax) {
+        eax = edi / 2;
+    } else {
+        eax = edi;
+    }
+    edx = ebx * 2099;
+    ebx = ecx - *(int *)((char *)g_0096cddc + edx * 4);
+    if (ebx >= eax) goto L_D6AF;
+
+    eax = *g_00939284;
+    ecx = a1;
+    if (ecx == eax) {
+        ecx = s18 & 0xff;
+        edx = *(unsigned char *)g_009a64e8;
+        if ((ecx & edx) != 0) {
+            edx = eax; edx = edx * 65;
+            ecx = eax + edx * 2;
+            edx = eax + ecx * 8;
+            eax = eax + edx * 2;
+            ecx = *(int *)((char *)g_0096cddc + eax * 4);
+            eax = game_year(ecx);
+            parse_num(0, eax);
+            edx = *g_009497cc;
+            parse_num(1, edx);
+            eax = *g_009497cc;
+            eax = eax / 2;
+            parse_num(2, eax);
+            ((NetMsg *)g_00805338)->pop((const char *)g_0068c0d8, 0xffffec78, 0, (const char *)g_0068c0c8);
+        }
+    }
+    popup.close();
+    popup.scroll_.close();
+    return;
+
+L_D6AF:
+    ebx = a1;
+    edx = s18 & 0xff;
+L_D6B5:
+    eax = *(int *)((char *)g_009a6644 + esi * 4);
+    ecx = ecx - eax;
+    if (ecx >= edi) goto L_D7D1;
+    ecx = *g_009a64c0;
+    if ((ecx & 0x80) == 0) goto L_D6E2;
+    if ((ecx & 0x1000) == 0) goto L_D6E2;
+    if ((*(unsigned char *)g_009a64e8 & (unsigned char)edx) != 0) goto L_D7D1;
+L_D6E2:
+    if (ebx == *g_00939284) {
+        if ((*(unsigned char *)g_009a64e8 & (unsigned char)edx) != 0) {
+            parse_num(0, game_year(eax));
+            ecx = *g_009497cc;
+            parse_num(1, ecx);
+            ((NetMsg *)g_00805338)->pop((const char *)g_0068c0fc, 0xffffec78, 0, (const char *)g_0068c0ec);
+        }
+    }
+    popup.close();
+    popup.scroll_.close();
+    return;
+
+L_D7D1:
+    eax = *g_0093f660;
+    if (eax == 0) goto L_D9BC;
+    if ((*(unsigned char *)g_009a64e8 & (unsigned char)edx) != 0) goto L_D8A4;
+    ecx = s1c;
+    *g_0068bf38 = ebx;
+    *g_0068bf3c = esi;
+    *g_0068bf40 = ecx;
+    popup.close();
+    popup.scroll_.close();
+    return;
+
+L_D8A4:
+    ((NetMsg *)g_00805338)->pop((const char *)g_0068c110, 0xbb8, 0, (const char *)0);
+    eax = diplo_lock(0x32);
+    if (eax == 0) {
+        eax = s1c;
+        message_data(0x2600, 0, ebx, esi, eax, 0);
+        *g_00703de0 = 1;
+        for (;;) {
+            eax = *g_009b2068;
+            if (eax != 0) break;
+            wait_loop();
+            eax = *g_00703de0;
+            if (eax == 0) break;
+        }
+        diplo_unlock();
+    } else {
+        ((NetMsg *)g_00805338)->close();
+        popup.close();
+        popup.scroll_.close();
+        return;
+    }
+    goto L_D9CA;
+
+L_D9BC:
+    ecx = s1c;
+    council(ebx, esi, ecx);
+
+L_D9CA:
+    popup.close();
+    popup.scroll_.close();
+    return;
 }

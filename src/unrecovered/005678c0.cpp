@@ -1,4 +1,25 @@
 // ORIGINAL: 0x005678C0 FILE
+// DEFERRED: no object-model or SEH obstacle (plain __cdecl scoring function,
+//           see the contract signature) - the blocker is sheer density. This
+//           is an AI air-unit redeployment scorer that walks the global veh
+//           array (stride 0x9a at &DAT_0097d040/42/44...), the VehProto
+//           table (stride 0x34/0x1a at &DAT_00952832 etc.), the per-faction
+//           relation matrix (stride 0x20cc at &DAT_0096c9e0/DAT_0096d22c/
+//           DAT_0096db5c/DAT_0096e35c...) and the Map tile array, with 7-8
+//           levels of nested conditions reusing near-identical index
+//           expressions (`param_1 * 0x1a` for THIS unit's prototype vs
+//           `local_18 * 0x1a` for the CANDIDATE unit's, one character apart)
+//           across ~3700 instructions / ~1380 lines of Ghidra output. That
+//           shape is exactly where a fast, lightly-checked transcription
+//           produces a body that compiles and LOOKS right but transposes an
+//           index - "worse than useless" per the brief, since it would look
+//           done. Read in full through Ghidra line 4882 of 5126 (roughly
+//           85%) without finding a natural break simple enough to land
+//           partially; the remaining ~250 lines are the same density.
+//           Tractable with the same instruction-by-instruction discipline
+//           used for 004BC6E0 (tour), just at roughly 2x the length and
+//           without tour's phase boundaries to checkpoint against - budget
+//           for a dedicated pass, not a fifth address in a five-address batch.
 // working copy - scaffold materialised by --work
 // name      ?air_power@@YAHHHHPAH0@Z
 // size      12254 bytes

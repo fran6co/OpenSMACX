@@ -1,4 +1,14 @@
 // ORIGINAL: 0x004736E0 FILE
+// DEFERRED: 12387 bytes, SEH frame plus a 21-entry jump table at 0x00473827
+//   (16 distinct targets, cases 15-20 collapsed to one). `MonuWin` is a
+//   real header (src/hypothesis_layouts.h) rather than an opaque scaffold
+//   class, and the brief's own "Reaching the vtable shim" section flags
+//   that calls on `this` go through a vtable this file does not supply on
+//   its own - the same class of problem as 0x00459680's six widget
+//   vtables, at smaller scale (one `Buffer` local at ebp-0x65C plus the
+//   `this`-relative vtable dispatch). Did not fit after landing 0x0052C880
+//   and reading enough of setup_player and this one to size them
+//   accurately; both need a dedicated pass. Left as BODY GOES HERE.
 // working copy - scaffold materialised by --work
 // name      ?on_redraw@MonuWin@@QAEXXZ
 // size      12387 bytes

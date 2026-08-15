@@ -1,4 +1,39 @@
 // ORIGINAL: 0x004D06C0 FILE
+// DEFERRED: 1912-instruction vehicle-upgrade dialog, read in full from raw
+//           disasm (Ghidra's output here is unusable - it treats the SEH
+//           scope-table stores and inline return-address pushes as real
+//           data movement and never recovers a call argument). Structure
+//           established with confidence:
+//             - `Popup popup;` (Popup : BasePop, adding only `Scroll
+//               scroll_;`) is the one top-level RAII local; MSVC generates
+//               its whole SEH unwind table automatically from ordinary
+//               nested-scope C++, so the `mov byte ptr [ebp-4],N` state
+//               writes and the four-call teardown quartet
+//               (Scroll::close, ~FlatButton x2 for scroll_'s two buttons,
+//               shared tail at 0x4d14b4 doing ~GraphicWin then
+//               ~BasePop) are NOT something to hand-transcribe - they
+//               fall out of writing `popup.close(); popup.scroll_.close();
+//               return N;` at each of the ~9 early-exit points and letting
+//               the compiler do the rest.
+//             - a1<0 => close popup, return 1. Then: faction already-moved
+//               NetMsg popup check (twice, before/after lock_veh); has_abil
+//               gate on both units; upgrade_cost/parse_num/parse_says to
+//               build a confirmation string; on confirm, two near-identical
+//               (chassis-upgrade vs non-chassis) `popp()` Y/N dialogs that
+//               each transfer morale/vet-status abilities between the old
+//               and new unit and call draw_tile/synch_veh/synch_proto.
+//             - a second, separately-scoped local (BasePop-derived, with
+//               its OWN Dialogs/Dialog/Spot/ListBox/2x FlatButton/Sprite/
+//               Heap teardown inlined explicitly around 0x4d1b3d rather
+//               than through a shared ~BasePop call) backs the actual
+//               upgrade-selection list UI built from ~0x4d0c93 onward via
+//               repeated Sprite::init/get_pcx_dimensions and
+//               Dialogs::item() calls in a 0x40-entry unit-class scan.
+//           Not attempted: the ~800 remaining instructions of that second
+//           dialog's item-population loop and its exact field offsets
+//           within BasePop's `dialogs_` blob were not walked field-by-
+//           field against the scaffold's embedded-Dialogs layout, and a
+//           guessed offset there compiles but reads the wrong member.
 // working copy - scaffold materialised by --work
 // name      ?upgrade@Console@@QAEHH@Z
 // size      8225 bytes

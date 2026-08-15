@@ -1,4 +1,11 @@
 // ORIGINAL: 0x00589D30 FILE
+// DEFERRED: 2618 instructions, 10376 bytes, `int __cdecl config_game(int a1)`.
+//   Frame constructs TWO C++ locals up front: a Popup (lea ecx,[ebp-0x6ac4];
+//   ??0Popup) and a SetupWin (lea ecx,[ebp-0x1748]; ??0SetupWin@@QAE@XZ at
+//   0x4ad880) - SetupWin is a class this batch has not looked at, so its
+//   layout is not established the way Popup/BasePop/Dialogs now are (see
+//   00438460.cpp, this batch, for that recipe on the Popup half). No
+//   computed jmp table in the brief. Not attempted for lack of budget.
 // working copy - scaffold materialised by --work
 // name      ?config_game@@YAHH@Z
 // size      10376 bytes

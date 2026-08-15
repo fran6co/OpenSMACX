@@ -79,6 +79,15 @@ class DLLEXPORT Dialogs {
   // at 0xBA0 and sizeof(Dialog) is 0xF4, so the object ends at 0xC94 and this
   // slab is exactly that long.
   //
+  // WHAT THE UNSPELLED EDGE DOES NOT BLOCK. `Dialogs dialogs;` as a stack
+  // local compiles today and is used by landed units - 0047e340.cpp:972,
+  // 0047f5f0.cpp:978 and 004e0b00.cpp:929 all declare one directly. Three
+  // functions in one batch read the paragraph below as "a Dialogs cannot be
+  // declared" and deferred on it. It says something narrower: a body that only
+  // CONSTRUCTS and DESTROYS a Dialogs is fine, because the slab is the right
+  // size and its ctor/dtor are the real ones; a body that must reproduce the
+  // vbtable-relative stores of the inheritance itself is the blocked case.
+  //
   // WHY THE EDGE IS STILL NOT DECLARED. `class Dialogs : ListBox` cannot be
   // spelled at 0xC94 today. Measured with VC6 12.00.8168 against one frozen
   // copy of src/, sizeof(Dialogs) per spelling:

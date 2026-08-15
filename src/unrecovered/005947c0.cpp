@@ -8,6 +8,26 @@
 //   types throughout. An order of magnitude past the largest function
 //   landed in this project (0x005CC940, 2380 bytes, UNRECOVERABLE-partial);
 //   left as BODY GOES HERE.
+// DEFERRED (2026-08-15 update): the SEH/frame puzzle this note flags IS now
+//   solved, for whoever picks this up next. `lea ecx,[ebp-0x5410]; call
+//   ??0Popup@@QAE@XZ` at entry is a plain `Popup popup;` local (0x537C,
+//   BasePop+Scroll, matching the class-map's [ebp-0x5410]..[ebp-0xBE8]
+//   region) - `Popup`/`BasePop` (src/popup.h, src/basepop.h) ALREADY model
+//   the embedded Heap, 2x FlatButton, Sprite, Spot and a raw
+//   `uint8_t dialogs_[0xC94]` buffer as BasePop's own members, so none of
+//   that needs hand-placed sub-objects; `Dialogs dialogs;` also already
+//   compiles standalone (src/recovered/units/0047e340.cpp, 0047f5f0.cpp) for
+//   wherever this function placement-constructs one into that buffer. This
+//   was cross-checked against two siblings this same batch: tech_achieved
+//   (0x5BB000, DEFERRED) and BaseWin::production (0x417040, DEFERRED) share
+//   the identical frame shape byte-for-byte (BasePop@0x5400/0x158A4-class
+//   gaps, the same 0xB4C=sizeof(FlatButton) and 0xA5C signature gaps). The
+//   remaining blocker is purely the 6708-instruction if/else volume, not the
+//   object model - the same instruction-by-instruction discipline used for
+//   0x004BC6E0 (tour, landed MISMATCH this batch) would work here, just at
+//   roughly 4x the length and with Ghidra's own type-propagation not settling
+//   (see its output's leading WARNING), so raw disassembly is the only
+//   trustworthy source throughout - budget for it as its own pass.
 // working copy - scaffold materialised by --work
 // name      ?order_veh@@YAHHHH@Z
 // size      23716 bytes

@@ -1,4 +1,27 @@
 // ORIGINAL: 0x005AEDE0 FILE
+// DEFERRED: 1790-instruction faction-founding routine, read in full (raw
+//           disasm + Ghidra cross-check) but not transcribed this pass.
+//           Body: pick a start-tech/turn table by rand()%3; per faction
+//           bit in the 0x9a64e9 mask, build the first base (base_find,
+//           veh_init x2, set_fac x5, tech_ai/tech_advance loop, then THREE
+//           near-duplicate but subtly different 0x40x0x80 cell scans over
+//           (&DAT_009ab898)[i*0x1a]/[i*0x34] picking unit types 6/2/1, each
+//           with its own wrap (i>0x3f ? faction*0x40-0x40+i : i) and its
+//           own has_tech gate) to pick the first veh_init site; then for
+//           each of local_34-1 extra colonists a dense terrain-scoring
+//           scan over the whole map (DAT_0066f020/0x66f4a4 offset table,
+//           sign-dependent map-wrap via DAT_0094988c bit0, three
+//           magnitude corrections keyed on row band 0xe0/0x320/0x60 that
+//           are literal edi=edi*3/2, edi-=edi/4, edi=edi/2) feeding
+//           world_site/site_set and base_init; then base_compute +
+//           conditional base_terraform loop, goody-hut scan over the
+//           faction's territory (goody_at + synch_bit), then a second
+//           full-map pass doing Path::find (ecx=g_00945b00, a Path
+//           object) pathing checks with veh_lift/veh_drop relocation.
+//           Not attempted: correctness of the map-wrap sign corrections
+//           is exactly the failure mode this address was flagged for,
+//           and getting it wrong compiles clean but is silently the
+//           wrong function, which is worse than leaving it unattempted.
 // working copy - scaffold materialised by --work
 // name      ?time_warp@@YAXXZ
 // size      5682 bytes

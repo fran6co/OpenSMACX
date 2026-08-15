@@ -1,4 +1,23 @@
 // ORIGINAL: 0x00417040 FILE
+// DEFERRED: object layout IS solved (not the blocker) - the whole
+//           [ebp-0x158A4..ebp-0xAB4] frame is FOUR separate `Popup popup;`
+//           locals (each 0x537C = sizeof(BasePop)+sizeof(Scroll), matching
+//           the class-map gaps exactly), because BasePop already models
+//           Heap/2xFlatButton/Sprite/Spot/`uint8_t dialogs_[0xC94]` as its
+//           own members (src/basepop.h) - no hand-placed sub-objects needed.
+//           The blocker is the SEH: an 11-entry jump table at
+//           0x41786E-0x418DC0 (4-entry nested one at 0x417C0B) interleaves
+//           FOUR RAII'd Popup lifetimes across branches, and Ghidra's
+//           decompilation is dominated by the compiler's fs:[0] unwind-index
+//           writes (`local_8._0_1_ = N` before every call) which it cannot
+//           interpret as C++ EH and which must NOT be hand-transcribed (the
+//           lever is `Popup popup;` RAII, which emits its own index writes).
+//           One jump-table case (the rich-popup path, ~0x4181FD) also
+//           placement-constructs a real `Dialogs` into a popup's raw
+//           `dialogs_` buffer - `Dialogs dialogs;` already compiles
+//           standalone elsewhere in src/recovered/ (0047e340.cpp,
+//           0047f5f0.cpp), so that part is tractable too, just not reached
+//           in the budget left after 004BC6E0 and 005BB000 in this batch.
 // working copy - scaffold materialised by --work
 // name      ?production@BaseWin@@QAEXHH@Z
 // size      9193 bytes

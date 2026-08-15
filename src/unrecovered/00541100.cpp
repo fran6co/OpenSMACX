@@ -1,4 +1,15 @@
 // ORIGINAL: 0x00541100 FILE
+// DEFERRED: ~2920 instructions, same giant-dialog category as 0x005275B0:
+//           constructs a `Popup` near entry (0x0054112B, ??0Popup) under an
+//           SEH frame, then dispatches through many early-return paths, each
+//           with its own inlined unwind sequence - call histogram shows 48x
+//           ~Scroll, 47x ~FlatButton, 32x ~BasePop, 30x Popup::close, 24x
+//           ~GraphicWin, 18x ~BaseButton destructor calls, consistent with
+//           several FlatButton/Scroll widgets torn down on every exit edge.
+//           The `Popup popup;` RAII lever applies, but resolving which
+//           destructor call belongs to which frame-slot local (as for
+//           0x005275B0) needs a full frame-map pass before a body can be
+//           written faithfully rather than guessed.
 // working copy - scaffold materialised by --work
 // name      ?tech_trade@@YAHHHHHH@Z
 // size      12193 bytes

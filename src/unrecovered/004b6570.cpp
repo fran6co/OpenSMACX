@@ -1,4 +1,14 @@
 // ORIGINAL: 0x004B6570 FILE
+// DEFERRED: 2569 instructions, 8885 bytes,
+//   `void StatusWin::draw_status(int,int,int,int,int)`. No computed jmp
+//   table and no C++ objects with destructors in the frame (the brief
+//   emits neither a "Jump tables" nor a "C++ objects" section) - this is
+//   a long, mostly-linear draw/report routine (opens by delegating to
+//   BattleWin::battle_report(0x421b50) when a1/a2 are non-negative, then
+//   continues into StatusWin's own field writes at [ebx+0x15dc] etc.,
+//   ebx=this cached at [ebp-0x18]). A body could exist: not attempted
+//   for lack of budget in this pass - see 00438460.cpp (this batch) for
+//   the level of transcription a function this size costs.
 // working copy - scaffold materialised by --work
 // name      ?draw_status@StatusWin@@QAEXHHHHH@Z
 // size      8885 bytes

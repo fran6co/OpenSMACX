@@ -1,4 +1,14 @@
 // ORIGINAL: 0x0057A660 FILE
+// DEFERRED: no C++ object frame (plain locals), but dominated by a 26-way
+//           switch (jump table at 0x0057A9BF, sparse byte index at
+//           0x00952836) over pod/artifact outcome kinds; each arm runs
+//           independent game-effect logic (site_radius(), rand()-driven
+//           placement/faction reward selection) and the switch bodies span
+//           roughly 0x0057A9C6-0x0057CDE8, i.e. most of the function's 3172
+//           raw instructions. A second 8-entry table at 0x0057C451 and a
+//           4-entry one at 0x0057C531 sit nested inside one of those arms.
+//           Only tractable case-by-case; no single lever shortens it, and no
+//           attempt was made this pass.
 // working copy - scaffold materialised by --work
 // name      ?goody_box@@YAHHH@Z
 // size      10118 bytes
