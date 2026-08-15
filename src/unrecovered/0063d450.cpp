@@ -1,4 +1,12 @@
 // ORIGINAL: 0x0063D450 BYTE_EXACT FILE
+// name      _flush_pending
+// size      114 bytes
+// spans     0x0063D450-0x0063D4C2
+// prototype 
+// callers   4   call targets   0
+// kind      
+// flags     
+// calls     (none)
 // LEVER: `rep movsd`/`rep movsb` is VC6's /Oi expansion of memcpy(dst, src,
 //        n) for a runtime-determined n, not a hand-rolled loop (matches the
 //        strcpy lesson already in src/recovered/00639390.cpp). Catalogued
@@ -11,12 +19,6 @@
 //        count)` compiles to `jae`, and a `cond ? a : b` ternary compiles to
 //        `ja` - same logic, three different branch mnemonics.
 // working copy - scaffold materialised by --work
-// name      sub_63d450
-// size      114 bytes
-// spans     0x0063D450-0x0063D4C2
-// prototype 
-// callers   4   call targets   0
-// calls     (none)
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_63d450  at 0x0063D450  (114 bytes)

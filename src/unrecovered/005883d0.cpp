@@ -1,11 +1,13 @@
 // ORIGINAL: 0x005883D0 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ?scroll_small@@YAXXZ
 // size      141 bytes
 // spans     0x005883D0-0x0058845D
 // prototype 
 // callers   6   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?scroll_small@@YAXXZ  at 0x005883D0  (141 bytes)

@@ -1,12 +1,14 @@
 // ORIGINAL: 0x00611730 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      sub_611730
 // size      147 bytes
 // spans     0x00611730-0x006117C3
 // prototype 
 // callers   3   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // indirect  0x0061176E 0x00611780 0x0061179C
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_611730  at 0x00611730  (147 bytes)

@@ -1,11 +1,13 @@
 // ORIGINAL: 0x005C1F20 FILE
-// working copy - scaffold materialised by --work
 // name      ?UNK1@Fractal@@QAEHHH@Z
 // size      153 bytes
 // spans     0x005C1F20-0x005C1FB9
 // prototype int (__thiscall ?UNK1@Fractal@@QAEHHH@Z)(Fractal* this, int, int)
 // callers   3   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?UNK1@Fractal@@QAEHHH@Z  at 0x005C1F20  (153 bytes)

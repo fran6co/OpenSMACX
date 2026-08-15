@@ -1,4 +1,12 @@
 // ORIGINAL: 0x004C44E0 FILE
+// name      ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z
+// size      242 bytes
+// spans     0x004C44E0-0x004C45D2
+// prototype int (__thiscall ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z)(WorldWin* this, int, int, int*, int*)
+// callers   3   call targets   0
+// kind      
+// flags     
+// calls     (none)
 // RULED-OUT: nested `if`/`else if` clamp plus a single `||`-chained bounds
 //            check (`if (row<0 || row>=numRows || a1<0 || a1>=numCols)
 //            return 1;`) matches the prologue's push/pop set exactly
@@ -26,12 +34,6 @@
 //            `*g_00949874` for the final divisions, matching `idiv dword
 //            ptr [0x949874]` reloading rather than reusing a register.
 // working copy - scaffold materialised by --work
-// name      ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z
-// size      242 bytes
-// spans     0x004C44E0-0x004C45D2
-// prototype int (__thiscall ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z)(WorldWin* this, int, int, int*, int*)
-// callers   3   call targets   0
-// calls     (none)
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z  at 0x004C44E0  (242 bytes)

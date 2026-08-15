@@ -1,12 +1,14 @@
 // ORIGINAL: 0x005D4560 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ??0Heap@@QAE@XZ
 // size      19 bytes
 // spans     0x005D4560-0x005D4573
 // prototype void (__thiscall ??0Heap@@QAE@XZ)(Heap* this)
 // callers   6   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned constructor
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ??0Heap@@QAE@XZ  at 0x005D4560  (19 bytes)

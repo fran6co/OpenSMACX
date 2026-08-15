@@ -1,11 +1,13 @@
 // ORIGINAL: 0x0047B380 FILE
-// working copy - scaffold materialised by --work
 // name      ?get_player_color@NetWin@@QAEHH@Z
 // size      194 bytes
 // spans     0x0047B380-0x0047B442
 // prototype int (__thiscall ?get_player_color@NetWin@@QAEHH@Z)(NetWin* this, int)
 // callers   4   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?get_player_color@NetWin@@QAEHH@Z  at 0x0047B380  (194 bytes)

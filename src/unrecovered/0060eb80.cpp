@@ -1,4 +1,12 @@
 // ORIGINAL: 0x0060EB80 BYTE_EXACT FILE
+// name      ?set_state_id@CheckBox@@QAEXHH@Z
+// size      139 bytes
+// spans     0x0060EB80-0x0060EC0B
+// prototype void (__thiscall ?set_state_id@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// callers   3   call targets   0
+// kind      
+// flags     
+// calls     (none)
 // LEVER: same node-list search as get_state_id@CheckBox (0x0060EC10, this
 //        exact repo), but `idx = 0` is initialised INSIDE the `head != 0`
 //        guard (right after loading count), not before it - the disassembly
@@ -16,12 +24,6 @@
 //        the original and changes the `lea`/`add` used to build the
 //        pointer.
 // working copy - scaffold materialised by --work
-// name      ?set_state_id@CheckBox@@QAEXHH@Z
-// size      139 bytes
-// spans     0x0060EB80-0x0060EC0B
-// prototype void (__thiscall ?set_state_id@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
-// callers   3   call targets   0
-// calls     (none)
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?set_state_id@CheckBox@@QAEXHH@Z  at 0x0060EB80  (139 bytes)

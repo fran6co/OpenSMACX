@@ -1,11 +1,13 @@
 // ORIGINAL: 0x0055BA80 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ?agenda_on@@YAXHHH@Z
 // size      169 bytes
 // spans     0x0055BA80-0x0055BB29
 // prototype 
 // callers   8   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?agenda_on@@YAXHHH@Z  at 0x0055BA80  (169 bytes)

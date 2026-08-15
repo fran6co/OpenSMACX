@@ -1,12 +1,14 @@
 // ORIGINAL: 0x00616890 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ?close_class@Time@@QAAXXZ
 // size      7 bytes
 // spans     0x00616890-0x00616897
 // prototype 
 // callers   1   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned cleanup
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?close_class@Time@@QAAXXZ  at 0x00616890  (7 bytes)

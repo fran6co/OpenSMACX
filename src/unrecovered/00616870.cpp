@@ -1,12 +1,14 @@
 // ORIGINAL: 0x00616870 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ?release_modal@Time@@QAAXXZ
 // size      11 bytes
 // spans     0x00616870-0x0061687B
 // prototype 
 // callers   4   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned method
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?release_modal@Time@@QAAXXZ  at 0x00616870  (11 bytes)

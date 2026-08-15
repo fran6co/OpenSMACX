@@ -1,11 +1,13 @@
 // ORIGINAL: 0x00626470 FILE
-// working copy - scaffold materialised by --work
 // name      sub_626470
 // size      208 bytes
 // spans     0x00626470-0x00626540
 // prototype 
 // callers   3   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_626470  at 0x00626470  (208 bytes)

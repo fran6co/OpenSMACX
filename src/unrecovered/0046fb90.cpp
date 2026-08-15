@@ -1,11 +1,13 @@
 // ORIGINAL: 0x0046FB90 FILE
-// working copy - scaffold materialised by --work
 // name      ?clear_alt@MapWin@@QAEXHHH@Z
 // size      153 bytes
 // spans     0x0046FB90-0x0046FC29
 // prototype void (__thiscall ?clear_alt@MapWin@@QAEXHHH@Z)(MapWin* this, int, int, int)
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?clear_alt@MapWin@@QAEXHHH@Z  at 0x0046FB90  (153 bytes)

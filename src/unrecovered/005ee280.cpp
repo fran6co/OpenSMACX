@@ -1,11 +1,13 @@
 // ORIGINAL: 0x005EE280 FILE
-// working copy - scaffold materialised by --work
 // name      ?release_modal@Win@@QAEXXZ
 // size      167 bytes
 // spans     0x005EE280-0x005EE327
 // prototype void (__thiscall ?release_modal@Win@@QAEXXZ)(Win* this)
 // callers   5   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?release_modal@Win@@QAEXXZ  at 0x005EE280  (167 bytes)

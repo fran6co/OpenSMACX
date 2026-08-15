@@ -1,11 +1,13 @@
 // ORIGINAL: 0x005EABBF FILE
-// working copy - scaffold materialised by --work
 // name      ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z
 // size      170 bytes
 // spans     0x005EABBF-0x005EAC69
 // prototype int (__thiscall ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z)(Spot* this, RECT*, RECT*, int*, int*, int*, int*)
 // callers   8   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z  at 0x005EABBF  (170 bytes)

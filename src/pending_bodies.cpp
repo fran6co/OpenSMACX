@@ -21,6 +21,7 @@
 #include "game.h"
 #include "general.h"
 #include "palette.h"
+#include "basepop.h"
 #include "popup.h"
 #include "sound.h"
 
@@ -111,4 +112,13 @@ void __cdecl control_game() {
 int Popup::alloc() {
     typedef int(__cdecl *pending)();
     return PENDING_BODY(0x00404FB0, pending)();
+}
+
+// 0x00604E40  ?basepop_alloc@BasePop@@QAEHXZ  body in src/unrecovered/00604e40.cpp
+//
+// Reached for its ADDRESS, like Popup::alloc: WinMain stores it into the
+// popup allocator hook and never calls it from there.
+int BasePop::basepop_alloc() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x00604E40, pending)();
 }

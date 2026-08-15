@@ -1,9 +1,11 @@
 // ORIGINAL: 0x006429F0 BYTE_EXACT FILE
-// name      sub_6429f0
+// name      _bi_windup
 // size      124 bytes
 // spans     0x006429F0-0x00642A6C
 // prototype 
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
 //
 // NOT WRITTEN HERE. zlib 1.0.2 `_bi_windup` from `trees.c`,
