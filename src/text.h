@@ -72,6 +72,22 @@ class DLLEXPORT Text {
   LPSTR get_buffer_item() { return buffer_item_; }
   LPSTR get_buffer_get() { return buffer_get_; }
 
+  // THE RECOVERED FREE FUNCTIONS, as friends rather than through a mirror.
+  //
+  // `?text_open@@YAHPADPAD@Z` and its neighbours are free functions in the
+  // image, not methods, so they cannot reach these members - and
+  // src/text_recovery.cpp answered that with a private `struct TextState`
+  // repeating the layout field for field, pinned by five `static_assert`s
+  // and reached through a `reinterpret_cast`. Five asserts is a good mirror
+  // and a mirror is still a second copy of a layout: it has to be corrected
+  // twice, and the compiler cannot tell you the day it stops matching, only
+  // the day a size does.
+  friend void __cdecl text_close_source(Text *text);
+  friend void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output);
+  friend void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output);
+  friend LPSTR __cdecl text_get_source(Text *text);
+  friend LPSTR __cdecl text_item_source(Text *text);
+
  private:
   char file_name_[80];  // (+0)    : stores text filename string
   char file_path_[256]; // (+0x50) : stores path of last opened file
@@ -103,3 +119,19 @@ DLLEXPORT int __cdecl text_item_number();
 DLLEXPORT int __cdecl text_item_binary();
 DLLEXPORT int __cdecl text_item_hex();
 DLLEXPORT int __cdecl text_get_number(int min, int max);
+
+// Recovered free functions, formerly declared in the retired
+// text_recovery.h. They are the image's own shapes - free functions taking
+// a `Text *` - and several are friends of the class above.
+class Strings;
+void __cdecl text_close_source(Text *text);
+void __cdecl text_set_get_ptr_source(Text *text, LPSTR *output);
+void __cdecl text_set_item_ptr_source(Text *text, LPSTR *output);
+LPSTR __cdecl text_get_source(Text *text);
+LPSTR __cdecl text_string_source(Text *text, Strings *strings);
+LPSTR __cdecl text_item_source(Text *text);
+LPSTR __cdecl text_item_string_source(Text *text, Strings *strings);
+int __cdecl text_item_number_source(Text *text);
+int __cdecl text_item_binary_source(Text *text);
+int __cdecl text_item_hex_source(Text *text);
+int __cdecl text_get_number_source(Text *text, int min, int max);
