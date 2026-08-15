@@ -1,4 +1,37 @@
 // ORIGINAL: 0x00621870 FILE
+// UNRECOVERABLE: entry is `mov esi, ecx` then `mov ecx, [ebp+8]` - the true
+//   receiver is __thiscall (`this` in ecx, dereferenced as *param_1,
+//   param_1[1], param_1[0x1b] throughout), not the catalogued
+//   `__stdcall sub_621870(a1..a6)`; Ghidra also drops the x87 stack here
+//   (extraout_ST0/in_ST2/in_ST3..6), confirming its pseudocode cannot be
+//   trusted for the FPU math either.
+//   The defeating instruction is 0x00621AC5 `fdivr st(4)` (mirrored at
+//   0x00621C69): `fld1` (0x621A84) plus three `fild [ebp+0x14]` pushes put
+//   1.0 at ST(4) and three fixed-point deltas above it, then `fdivr st(4)`
+//   leaves ST(4..0) = {denom, d3, d2, d1, d1/denom} STANDING ON THE STACK
+//   with NO pop, and the stack is not touched again until 0x00621C00's
+//   `fmul st(1),st(0); fmul st(2),st(0); fmulp st(3)` - roughly 350
+//   instructions and an entire conditional pixel-blit loop later, with the
+//   loop-taken/not-taken paths leaving the stack at two different depths
+//   (1 vs 5). No portable C expression carries an x87 register live across
+//   that span without the compiler choosing to spill it (which the original
+//   did not: it stayed resident). A C translation cannot reproduce a
+//   register that is not addressable operand-by-operand, so this instruction
+//   defeats a faithful transcription.
+//   The surrounding integer-only code (interpolation setup, min/max
+//   clamping down to 0x621AC7, the tail cleanup from 0x6221C7) is separable
+//   and could be recovered on its own, but it is under 20% of the function
+//   and does not stand alone as `sub_621870` - it would still need the FPU
+//   inner loops wired through it to be a body of THIS function, so nothing
+//   is landed rather than land a body that silently skips the interpolation
+//   the disassembly shows.
+// PROPOSAL: extern "C" int __stdcall sub_621870(int a1..a6) ->
+//   __thiscall sub_621870(int param_2, int *param_3, int *param_4,
+//   unsigned param_5, unsigned param_6, int *param_7) on a receiver typed
+//   for the fields the body reads: *this (0x006218D4 `mov eax,[esi]`),
+//   this[1] (0x006218E9 `mov eax,[esi+4]`), this[0x1b] i.e. offset 0x6c
+//   (0x00621A5F..0621A67 `mov edx,[ebp-0x7c]{=this}; mov eax,[edx+0x6c];
+//   test eax,eax; je` - Ghidra's `param_1[0x1b] == 0` gate).
 // working copy - scaffold materialised by --work
 // name      sub_621870
 // size      2433 bytes
@@ -1305,6 +1338,26 @@ class Spot;
 class Texture;
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
+//
+// `static` ON A CALLEE IS DELIBERATE. A method whose
+// mangled infix is `QAA` or `QAG` takes NO `this` -
+// every argument is on the stack - so the call site is
+// `Class::method(...)` with no object, and declared
+// non-static that spelling is `C2352: illegal call of
+// non-static member function`. It does change the
+// mangling from QAA to SA, which matters only for the
+// SUBJECT; a callee is reached by a relocation the
+// comparison masks, so its mangling reaches nothing.
+//
+// THE class/struct KEY IS NOT A GUESS EITHER, and must
+// not be `corrected` against the catalogue. MSVC
+// mangles struct `U` and class `V`, six classes
+// disagree with THEMSELVES in the catalogue, and the
+// image carries no RTTI to settle it. Both objects are
+// ours: `recovery_symbols.canonicalise_class_keys`
+// rewrites the TARGET object with the same map this
+// unit uses, so they agree by construction. Changing
+// one side alone is what breaks it.
 struct RECT {
     long left;
     long top;
