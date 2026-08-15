@@ -26,7 +26,7 @@ second comparator:
   * FILE mode                  the file text, compiled as-is.
 
 Units then go through `byte_match.match_functions`: batched response-file
-compiles under Wine (~2 ms a file), four flag sets, best verdict kept, early
+compiles under Wine (~2 ms a file), six flag sets, best verdict kept, early
 exit on BYTE_EXACT. States PLACEHOLDER and EXCLUDED are never compiled: a
 placeholder has nothing to compile, and exclusion is a decision, not a
 measurement.
@@ -138,9 +138,23 @@ def unit_hash(unit) -> str:
     file's extension and with that directory beside it, so two units with
     identical text and different origins are two different compiles - and a
     key on the text alone would serve one's verdict for the other.
+
+    AND SO ARE THE FLAG SETS, since 2026-08-15. A verdict is the best result
+    across `byte_match.FLAG_SETS`, so it is a fact about the source AND the
+    invocation, and the key held only the source. Editing the flag sets
+    therefore left every cached verdict in place and served it as if it had
+    been measured under the new ones - which is not a stale number, it is a
+    number attributed to a compile that never ran. Hit while adding
+    `/O2 /Oi-`: the first `--check` after the change reported the same 1,526
+    without recompiling anything.
+
+    Cheap and self-maintaining: the flags are hashed, not counted, so adding,
+    reordering or editing a set invalidates exactly what it should and nothing
+    has to remember to bump a version.
     """
     text, origin = byte_match.unit_source(unit)
     material = text if origin is None else f"{origin}\n{text}"
+    material = f"{chr(31).join(byte_match.FLAG_SETS)}\n{material}"
     return hashlib.sha256(material.encode("utf-8", "replace")).hexdigest()
 
 
@@ -259,7 +273,7 @@ def measure(units: dict, cache: dict, no_cache: bool, jobs: int):
 
     `byte_match.match_functions` is the ratchet's own arithmetic, so the
     batch is handed to it whole: layout classification, SHARED_TAIL and
-    selfmod refusals, the four flag sets, the best-of rule and the early
+    selfmod refusals, the six flag sets, the best-of rule and the early
     exit all stay where they already live.
     """
     import pefile
@@ -314,9 +328,23 @@ def span_class_string(outcome: dict) -> str:
     return str(classes)
 
 
+def flag_set_digest() -> str:
+    """A short digest of `byte_match.FLAG_SETS`, stamped on every ledger row.
+
+    A verdict is the BEST result across the flag sets, so it is a fact about
+    the source AND the invocation; a row recording only the first half cannot
+    be told apart from one measured under a configuration since edited. Eight
+    hex characters, because this distinguishes configurations rather than
+    authenticating them.
+    """
+    material = chr(31).join(byte_match.FLAG_SETS)
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()[:8]
+
+
 def ledger_row(address: int, annotation, outcome: dict, row: dict) -> dict:
     return {
         "address": f"0x{address:08X}",
+        "flag_digest": flag_set_digest(),
         "name": row.get("name", ""),
         "source_location": annotation.location,
         "generated": int(is_generated(annotation)),
@@ -341,16 +369,35 @@ def merge_ledger(rows_to_write: dict) -> tuple:
     either a tooling change or a lost scaffolding, and both need a human -
     so the old row is kept and the disagreement is returned for reporting,
     not silently rewritten into the floor.
+
+    UNLESS THE FLAG SETS THEMSELVES CHANGED, since 2026-08-15. The protection
+    assumes the incumbent was produced by THIS tool; when the flag sets are
+    edited it is not, and a row measured under a configuration that no longer
+    exists is preserved indefinitely against every later run that disagrees.
+    Hit for real: `/O2 /Oi-` was tried as two extra flag sets, wrote sixteen
+    BYTE_EXACT rows, and was reverted - after which sixteen rows kept
+    asserting a match no invocation this tool performs can reproduce, while
+    every run dutifully printed the disagreement nobody reads sixteen times.
+    `.opensmacx/byte-match.csv` is what `agent_brief` reads, so those rows
+    were on their way into a brief.
+
+    A row now carries the digest of the flag sets that produced it. Protection
+    applies only where the digest AGREES, so a flag-set edit demotes what it
+    invalidates on the next run instead of freezing it. Old rows have no
+    digest and are treated as disagreeing, which is correct: nothing recorded
+    what produced them.
     """
     existing = {}
     if LEDGER.is_file():
         with LEDGER.open(newline="", encoding="utf-8-sig") as handle:
             existing = {row["address"]: row for row in csv.DictReader(handle)}
+    current = flag_set_digest()
     protected = {}
     for address, row in rows_to_write.items():
         incumbent = existing.get(address)
         if incumbent and incumbent.get("tier") == "BYTE_EXACT" \
-                and row.get("tier") != "BYTE_EXACT":
+                and row.get("tier") != "BYTE_EXACT" \
+                and incumbent.get("flag_digest") == current:
             protected[address] = (incumbent, row)
             continue
         existing[address] = row

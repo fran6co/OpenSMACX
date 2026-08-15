@@ -43,6 +43,27 @@
 #include <windows.h>
 #include <vector>
 
+// THE STRING ROUTINES ARE CALLS IN THE SHIPPED IMAGE, NOT INTRINSICS, and one
+// line here is the whole of reproducing that.
+//
+// `/O2` implies `/Oi`, which expands `strcat` into an inlined `repne scasb`
+// walk. The image does not have one: it makes 4,332 direct `call _strcat`,
+// 875 `_strlen`, 339 `_strcpy` and 155 `_strcmp`. It DID inline the block
+// routines - 19 BYTE_EXACT bodies carry a `rep stosd` or `rep movsd` that
+// only `/Oi` produces - and 34 functions call `strcat` and inline a block op
+// in the SAME body, which no per-file compiler flag can produce. So the split
+// is not in the invocation, it is here, and it is the ordinary 1990s move:
+// turn off the string expansion that bloats a binary and keep `memset`.
+//
+// It has to follow <string.h> (via <windows.h> above), which declares the
+// four; `#pragma function` on an undeclared name is C4163. The scaffold the
+// byte match compiles carries the same line in `PRELUDE`
+// (tools/emit_translation_unit.py), so the measured unit and the built one
+// agree about it.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma function(strcat, strcpy, strlen, strcmp)
+#endif
+
 // Marks a parameter as deliberately unused. Expands to NOTHING, which
 // works for both spellings in this tree: `int UNUSED(x)` leaves an unnamed
 // parameter, and `LPSTR UNUSED(input) input` leaves a named one. It used to

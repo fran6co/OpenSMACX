@@ -161,8 +161,37 @@ FRAMELESS_FLAGS = "/c /O2 /Gy /GR- /GX"
 # emits `add esp, 4` - the size-optimisation idiom. So `/O1` bodies exist and
 # are refused by an `/O2`-only tool.
 #
-# Four sets, two optimisation levels crossed with the frame pointer. At 44 ms a
-# compile the whole cross costs under 200 ms, which is far cheaper than any
+# `/Oi-` IS NOT THE ANSWER, AND THE CORPUS SAID SO. Tried as flag sets five
+# and six on 2026-08-15 and reverted the same day; the reasoning is kept
+# because the observation that motivated it is real and will come back.
+#
+# The observation: `_strcat` has 4,332 direct `E8` call sites in .text,
+# `_strlen` 875, `_strcpy` 339, `_strcmp` 155, `_memcpy` 130, `_memset` 73. A
+# program compiled with `/Oi` throughout would have almost none of those,
+# since `/O2` implies `/Oi` and turns `strcat` into an inlined `repne scasb`
+# walk. So `/Oi` looks wrong for the image.
+#
+# But 19 of the BYTE_EXACT bodies carry an inlined `rep stosd` or `rep movsd`
+# that only `/Oi` produces, and `/Oi-` on all four sets breaks ten of them. So
+# `/Oi` looks right for the image too.
+#
+# WHAT SETTLED IT: 34 functions do BOTH IN ONE BODY - they call `strcat` and
+# inline a block op in the same 200 bytes. No per-translation-unit flag can
+# produce that, so the axis is not a flag at all. `#pragma function(strcat,
+# strcpy, strlen, strcmp)` in a shared header reproduces exactly the split:
+# measured, it turns WinMain's `strcat` into the call the image makes while
+# leaving `ButtonGroup::init`'s `memset(buttons_, 0, sizeof buttons_)` as the
+# `rep stosd` the image also makes. That is one build configuration and one
+# line of source, which is what a 1999 project would have had - nobody typed
+# `/Oi-`, and plenty of people turned off inline string expansion to stop it
+# bloating the binary. The pragma is in `PRELUDE` in
+# tools/emit_translation_unit.py and in src/stdafx.h.
+#
+# And the flag sets bought nothing on their own: over 120 byte-exact bodies,
+# `/O2 /Oi-` reproduced the SAME 94 as `/O2`, to the body - see
+# tools/derive_build_flags.py, which is what asking the corpus looks like.
+# Four sets, two optimisation levels crossed with the frame pointer. At 44 ms
+# a compile the whole cross costs under 200 ms, which is far cheaper than any
 # rule for choosing between them.
 SIZE_FLAGS = "/c /O1 /Gy /GR- /Oy- /GX"
 SIZE_FRAMELESS_FLAGS = "/c /O1 /Gy /GR- /GX"
