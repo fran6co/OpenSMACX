@@ -545,6 +545,16 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(member-map-tests
                                    test_member_map.py)
 
+    # WHICH CMakeLists.txt THE CHECKS READ. Three of them derive their whole
+    # population from it, and all three named the root file - which held every
+    # `add_test` until this file existed. The move left one check reading zero
+    # registrations, a second refusing on its floor, and a third catching that
+    # refusal and falling back to a weaker population while printing the same
+    # shape. The tests pin the two properties that keep the discovery honest:
+    # a subdirectory file is found, and a generated copy under build/ is not.
+    opensmacx_add_python_tool_test(cmake-source-tests
+                                   test_cmake_sources.py)
+
     # The preamble that measurement compiles a body in. This one is load
     # bearing in an unusual direction: a WRONG declaration here does not fail,
     # it silently changes what is being measured, so the tests pin the two

@@ -534,10 +534,17 @@ def registered_check_scripts(cmakelists=None):
     have to: gate_checks wants to return {name: script}, at which point this
     function is one call. That edit belongs to verify_checks_can_fail.py.)
     """
-    path = Path(cmakelists or CMAKELISTS)
+    # EVERY CMakeLists.txt when no file is named, for the reason spelled out
+    # in tools/cmake_sources.py: the `add_test` blocks moved into
+    # tests/CMakeLists.txt, gate_checks refused the empty root file, and THIS
+    # function caught that refusal and fell back to matching tool names by
+    # prefix - still printing a sweep, over a population it no longer derived.
+    import cmake_sources
     import verify_checks_can_fail as coverage
+    path = Path(cmakelists) if cmakelists else None
     names = coverage.gate_checks(path)
-    body = re.sub(r"(?<!\\)#.*", "", path.read_text(errors="replace"))
+    source = path.read_text(errors="replace") if path else cmake_sources.cmake_text()
+    body = re.sub(r"(?<!\\)#.*", "", source)
     found = {}
     for match in ADD_TEST.finditer(body):
         if match.group(1) not in names:

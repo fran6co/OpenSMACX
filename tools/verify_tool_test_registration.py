@@ -40,6 +40,10 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import cmake_sources  # noqa: E402  - needs tools/ on the path first
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 HELPER_CALL = re.compile(
@@ -97,15 +101,17 @@ def mentioned_tests(cmake_text):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--cmake", type=Path,
-                        default=REPO_ROOT / "CMakeLists.txt")
+    # Defaults to EVERY CMakeLists.txt in the project rather than the root
+    # one; see tools/cmake_sources.py. `--cmake <file>` still reads exactly
+    # that file, which is what the damage case plants its defect in.
+    parser.add_argument("--cmake", type=Path, default=None)
     parser.add_argument("--tools", type=Path, default=REPO_ROOT / "tools")
     parser.add_argument("--floor", type=int, default=50,
                         help="refuse to report clean over fewer test files "
                              "than this; a wrong --tools finds nothing")
     arguments = parser.parse_args()
 
-    if not arguments.cmake.is_file():
+    if arguments.cmake is not None and not arguments.cmake.is_file():
         print(f"tool-test-registration: {arguments.cmake} is absent, so this "
               f"check verified NOTHING", file=sys.stderr)
         return 1
@@ -114,7 +120,11 @@ def main():
               f"so this check verified NOTHING", file=sys.stderr)
         return 1
 
-    cmake_text = arguments.cmake.read_text(encoding="utf-8")
+    cmake_text = (arguments.cmake.read_text(encoding="utf-8")
+                  if arguments.cmake is not None
+                  else cmake_sources.cmake_text())
+    where = arguments.cmake if arguments.cmake is not None \
+        else "the project's CMakeLists.txt files"
     present = sorted(path.name for path in arguments.tools.glob("test_*.py"))
     if len(present) < arguments.floor:
         print(f"tool-test-registration: found only {len(present)} test files "
@@ -126,7 +136,7 @@ def main():
     executed = executed_tests(cmake_text)
     if not executed:
         print("tool-test-registration: parsed ZERO registrations out of "
-              f"{arguments.cmake}. The file's shape has changed and this "
+              f"{where}. The build's shape has changed and this "
               "check can no longer see registrations at all.", file=sys.stderr)
         return 1
 

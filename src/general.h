@@ -17,6 +17,9 @@
  */
 #pragma once
 
+class Font;     // forward declaration
+class Palette;  // forward declaration
+
  /*
   * General related objects, variables and functions.
   */
@@ -85,6 +88,20 @@ DLLEXPORT int __cdecl htoi(LPCSTR str);
 DLLEXPORT int __cdecl stoi(LPCSTR str);
 DLLEXPORT LPSTR __cdecl findnum(LPSTR str);
 DLLEXPORT BOOL __cdecl jackal_version_check(LPCSTR version);
+// The Jackal engine's bring-up and teardown, called once each from WinMain.
+// `jackal_init_real` returns ZERO on success - WinMain's `test eax, eax` at
+// 0x0045FA50 jumps INTO the game when the result is zero and returns 0 from
+// WinMain when it is not, which is the opposite sense of every neighbouring
+// call and the one thing the first transcription of that body got backwards.
+// `LPSTR` rather than `LPCSTR` for the window title because the image's own
+// name for it - ?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z - spells
+// that parameter `PAD`, and the mangling is what the byte match will look the
+// body up by when 0x0062D3A0 lands.
+DLLEXPORT int __cdecl jackal_init_real(Palette *palette, Font *font,
+                                       LPSTR window_name, int tgl_direct_draw,
+                                       int display_width, int display_height,
+                                       int colour_depth);
+DLLEXPORT void __cdecl jackal_close();
 DLLEXPORT char __cdecl filefind_cd_drive_letter();
 DLLEXPORT void __cdecl filefind_set_alternative(LPCSTR path);
 DLLEXPORT LPSTR __cdecl filefind_get(LPCSTR file_name);

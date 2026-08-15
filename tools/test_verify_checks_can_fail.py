@@ -22,7 +22,12 @@ from pathlib import Path
 
 import verify_checks_can_fail as harness
 
-REAL_CMAKE = (harness.REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+# EVERY CMakeLists.txt, which is where the `add_test` blocks live since the
+# tooling moved behind OPENSMACX_BUILD_TOOLING; see tools/cmake_sources.py.
+# Read from the root file alone, every assertion below ran against zero
+# derived checks and the floor assertions passed vacuously.
+import cmake_sources
+REAL_CMAKE = cmake_sources.cmake_text()
 
 
 class SubstituteTests(unittest.TestCase):

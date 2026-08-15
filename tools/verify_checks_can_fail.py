@@ -55,6 +55,7 @@ TOOLS = REPO_ROOT / "tools"
 sys.path.insert(0, str(TOOLS))
 
 import byte_match  # noqa: E402  - needs TOOLS on the path first
+import cmake_sources  # noqa: E402
 PYTHON = sys.executable
 EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
 
@@ -98,11 +99,20 @@ def copy_tree(source, destination, patterns):
 # ---------------------------------------------------------------- damage cases
 
 def damage_unregistered_tool_test(workspace):
-    """A tools/test_*.py that CMakeLists.txt never executes."""
+    """A tools/test_*.py that CMakeLists.txt never executes.
+
+    THE CMAKE TEXT IS EVERY CMakeLists.txt, CONCATENATED, and that is the
+    whole difference between this case proving something and proving nothing.
+    It used to copy the root file alone. On 2026-08-15 every `add_test` moved
+    into tests/CMakeLists.txt, so the copy held no registrations at all, and
+    the check went red on its own vacuity guard - "parsed ZERO registrations"
+    - while this case recorded the red as the planted defect being caught. A
+    damage case that passes for the wrong reason is worse than one that fails.
+    """
     tools = copy_tree(TOOLS, workspace / "tools", ("test_*.py",))
     (tools / "test_zzz_damage_probe.py").write_text("", encoding="utf-8")
     cmake = workspace / "CMakeLists.txt"
-    shutil.copy2(REPO_ROOT / "CMakeLists.txt", cmake)
+    cmake.write_text(cmake_sources.cmake_text(), encoding="utf-8")
     return [PYTHON, str(TOOLS / "verify_tool_test_registration.py"),
             "--cmake", str(cmake), "--tools", str(tools)]
 
@@ -1227,7 +1237,11 @@ CMAKELISTS = REPO_ROOT / "CMakeLists.txt"
 #
 # 26 -> 28 on 2026-08-14, with `return-agreement` and `call-edges` registered,
 # then 28 -> 29 with `vendor-zlib-current`.
-GATE_CHECK_FLOOR = 29
+# 29 -> 31 on 2026-08-15: `member-offset-names` and `tool-documentation`
+# were registered, and the count is derived from every CMakeLists.txt
+# rather than the root one - which had gone to zero when the tooling
+# moved into tests/CMakeLists.txt.
+GATE_CHECK_FLOOR = 31
 
 
 def without_comments(text):
@@ -1316,11 +1330,20 @@ def gate_checks(cmakelists=None) -> dict:
     a scan that quietly stopped matching would shrink that sweep while it
     printed the same shape - the same defect one level further out.
     """
-    path = cmakelists or CMAKELISTS
-    gates = parse_gate_checks(path.read_text(errors="replace"))
+    # EVERY CMakeLists.txt, not the root one. `add_test` moved wholesale into
+    # tests/CMakeLists.txt on 2026-08-15 when the tooling went behind
+    # OPENSMACX_BUILD_TOOLING, and this read zero registrations from a root
+    # file that no longer holds any. The floor below is what caught it. A
+    # caller that names one file still gets exactly that file, because the
+    # damage cases plant their defect in a single written-out CMakeLists.
+    source, where = ((Path(cmakelists).read_text(errors="replace"),
+                      Path(cmakelists).name) if cmakelists
+                     else (cmake_sources.cmake_text(),
+                           "the project's CMakeLists.txt files"))
+    gates = parse_gate_checks(source)
     if len(gates) < GATE_CHECK_FLOOR:
         raise SystemExit(f"gate_checks found only {len(gates)} checks in "
-                         f"{path.name}, below the floor of {GATE_CHECK_FLOOR}; "
+                         f"{where}, below the floor of {GATE_CHECK_FLOOR}; "
                          f"the scan is broken")
     return gates
 

@@ -175,6 +175,7 @@ endif()
 set(OPENSMACX_SOURCES
     src/alpha.cpp
     src/main.cpp
+    src/pending_bodies.cpp
     src/atexit_thunks.cpp
     src/init_thunks.cpp
     src/adjustor_thunks.cpp
@@ -343,6 +344,14 @@ endif()
 # rather than pulled from an archive on demand, so an undefined symbol anywhere
 # is a link error. The DLL gave that guarantee only for the 488 names its `.def`
 # exported.
+#
+# IT IS `OpenSMACX.exe` SINCE 2026-08-15, not `opensmacx-link-check.exe`. The
+# link check was all it could be while `main()` returned 0 and nothing else was
+# reachable; it now has the shipped entry point - the recovered `_WinMain@16`
+# in src/main.cpp - and calls the game's own startup sequence from it. It is
+# not yet a game: six of WinMain's callees are still reached through
+# src/pending_bodies.cpp. But the artifact is the program being recovered
+# rather than a probe, and its name should say so.
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
 target_compile_definitions(OpenSMACX PRIVATE
@@ -351,12 +360,20 @@ target_compile_definitions(OpenSMACX PRIVATE
 target_precompile_headers(OpenSMACX PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h")
 target_link_libraries(OpenSMACX PRIVATE user32 gdi32 winmm)
 
+# `/subsystem:windows`, because the entry point is `WinMain` and not `main`.
+# Left at the default the linker looks for `main`, finds only `_WinMain@16` and
+# fails with LNK2001 - the property is what selects which of the two CRT entry
+# stubs is pulled in.
+#
+# NO `CXX_STANDARD`. It said 11, which was never true of anything here: cl
+# 12.00.8168 predates every `/std:` switch, this file already sets
+# CMAKE_CXX_STANDARD_DEFAULT to nothing for that reason, and the C++11
+# spellings the tree uses arrive as macros from src/vc6_compat.h. CMake could
+# only honour it by passing a flag VC6 has never heard of, so with
+# `CXX_STANDARD_REQUIRED YES` beside it the setting was one CMake upgrade away
+# from failing the configure over a standard nothing was asking for.
 set_target_properties(OpenSMACX PROPERTIES
-    OUTPUT_NAME opensmacx-link-check
-    PREFIX ""
-    CXX_EXTENSIONS OFF
-    CXX_STANDARD 11
-    CXX_STANDARD_REQUIRED YES
+    WIN32_EXECUTABLE ON
 )
 
 # VC6 is the only compiler, so its warning level is unconditional rather than

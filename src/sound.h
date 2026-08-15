@@ -125,3 +125,9 @@ void *__fastcall sound_scalar_dtor_redirect(Sound *self, void *,
                                             unsigned int mode);
 int __fastcall sound_attach_redirect(Sound *self, void *);
 int __fastcall sound_detach_redirect(Sound *self, void *);
+
+// Sound subsystem bring-up, called once from WinMain with the main window and
+// a bitmask of the requested backends. `void *` rather than `HWND` because the
+// image's own name for it - ?init_sound@@YAHPAXK@Z - spells the first
+// parameter `PAX`.
+int __cdecl init_sound(void *window, unsigned long backends);

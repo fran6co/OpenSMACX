@@ -308,6 +308,21 @@ static_assert(sizeof(Palette) == 0x454,
               "Palette layout must match the legacy ABI");
 
 extern int *PaletteInitialized;
+
+/*
+ * The process palette, at 0x0094C590 in the image. The name is the image's
+ * own: its dynamic initialiser is `??__Eg_PALETTE1@@YAXXZ`, recovered in
+ * src/init_thunks.cpp, and its teardown `??__Fg_PALETTE1@@YAXXZ`.
+ *
+ * AN OBJECT, NOT A `Palette *` TO A FIXED ADDRESS. Both spellings name the
+ * same storage while the DLL is injected into the shipped image, but they are
+ * not the same C++: `WinMain` passes the palette to `jackal_init_real` as
+ * `push 0x94c590`, which is the address of a global, and a `Palette *`
+ * variable would compile that same source into `push dword ptr [g_PALETTE1]`
+ * - a load the image does not perform. Declaring it as what it is costs
+ * nothing and removes an indirection from every future call site.
+ */
+extern Palette g_PALETTE1;
 int __fastcall palette_get_rgbquad_redirect(
     Palette *self, void *, RGBQUAD *output, int start, int count);
 

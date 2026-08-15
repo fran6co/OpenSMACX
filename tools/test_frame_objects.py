@@ -92,9 +92,6 @@ class AgainstTheImageTests(unittest.TestCase):
         self.assertEqual(tool.render(self.pe, spans, self.functions), "")
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class FrameSizeTests(unittest.TestCase):
     """The number four of seven bodies in one batch needed and did not have."""
@@ -113,3 +110,6 @@ class FrameSizeTests(unittest.TestCase):
         # -1 and 0 must stay distinct: a function that reserves nothing is a
         # fact, and "could not read it" is not that fact.
         self.assertEqual(tool.frame_size(None, []), -1)
+
+if __name__ == "__main__":
+    unittest.main()

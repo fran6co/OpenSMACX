@@ -404,7 +404,26 @@ extern Sprite *g_UNUSED_SPRITE_VAR82;
 extern Sprite *g_UNUSED_SPRITE_VAR83;
 extern Sprite *g_BASEWIN_SPRITES;
 extern Wave *g_MAININTERFACE_WAVE;
-extern Font *g_JACKAL_FONT;
+/*
+ * AN OBJECT, WHERE EVERY OTHER LINE HERE HOLDS A POINTER. Both forms name the
+ * same storage while this tree is injected into the shipped image, and while
+ * that was the only way to run it the pointer form cost nothing. It is not
+ * free any more: the artifact is now an executable of its own with the
+ * recovered `WinMain` as its entry point (src/main.cpp), and `(Font *)
+ * 0x007D3948` in a program that is not the shipped image is a pointer into
+ * nothing. The first call WinMain makes through this global would fault.
+ *
+ * It also compiles differently, which is the half a byte match can see.
+ * `g_JACKAL_FONT.init(...)` on an object is `mov ecx, OFFSET g_JACKAL_FONT` -
+ * the `mov ecx, 0x7d3948` at 0x0045FAF6. Through a pointer variable the same
+ * source is `mov ecx, dword ptr [g_JACKAL_FONT]`, a load the image never
+ * performs.
+ *
+ * The other ~400 globals below have the same latent fault and are left as
+ * they are until the entry point reaches them; this one is on WinMain's path
+ * today. `g_PALETTE1` in palette.h is the same conversion.
+ */
+extern Font g_JACKAL_FONT;
 extern Sprite *g_IFACE_GREEN_RIGHT_ARROW_SPRITE;
 extern Wave *g_MULTIWIN_WAVE;
 extern ButtonGroup *g_PREFWIN_BUTTONGROUP;

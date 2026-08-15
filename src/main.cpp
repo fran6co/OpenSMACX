@@ -16,33 +16,202 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "main.h"
+#include "alpha.h"          // prefs_get, prefs_put
+#include "atexit_thunks.h"  // g_JACKAL_FONT
+#include "caviar.h"
+#include "font.h"
+#include "game.h"     // control_game
+#include "general.h"  // jackal_version_check, jackal_init_real, jackal_close
+#include "palette.h"  // g_PALETTE1
+#include "sound.h"    // init_sound
+#include "temp.h"     // HandleMain
 
 /*
- * THE LINK CHECK. This entry point exists so `cmake --build` still answers a
- * real question about the recovered tree: does all of it compile, and does
- * every symbol it names resolve?
+ * `/O2` implies `/Oi`, so `strcat` below compiles to an inlined
+ * `repne scasb` pair - 18 instructions of open-coded string walk where
+ * 0x0045F967 is a five-byte `call _strcat`. That is not a constant this body
+ * got wrong, it is a different function, and it dragged the register saves
+ * into the prologue with it: the intrinsic needs esi and edi, so VC6 pushed
+ * ebx/esi/edi at entry where the image defers all three to 0x0045F9A0.
  *
- * It replaces `DllMain`. Until 2026-08-12 the buildable artifact was a DLL that
- * injected into the shipped executable - 2,049 fixed-address redirects
- * installed at process attach, each validating a byte signature before writing
- * an `E9 rel32` jump. That machinery is retired (docs/RETIRED_ROUTES.md) while
- * the recovery is finished by byte-matching, which runs nothing. It can come
- * back if the recovery turns out not to reach far enough to stand alone.
+ * Measured on one basis - capstone over the whole emitted symbol - the image
+ * is 142 instructions, this unit is 180 with the intrinsic and 162 with the
+ * pragma. The original calls the CRT here, so this build does too.
  *
- * WHY AN EXECUTABLE AND NOT A LIBRARY. Every object listed on the target is
- * linked directly rather than pulled from an archive on demand, so EVERY
- * undefined symbol in any recovered translation unit has to resolve. That is
- * the property worth keeping: a body that calls a function nobody has written
- * yet, or that names a member no header declares, fails here. A DLL gave the
- * same guarantee only for the 488 names its `.def` happened to export.
+ * DECLARING `strcat` DOES NOT DO THIS, and it is the obvious thing to try.
+ * `<string.h>` already declares it through stdafx.h, and `/Oi` substitutes by
+ * NAME after lookup succeeds - so adding `extern "C" char *__cdecl
+ * strcat(char *, const char *);` here emits byte-identical code to adding
+ * nothing, 180 instructions with no `_strcat` symbol referenced at all. The
+ * pragma is not an alternative to calling the real one; it is what makes the
+ * call happen, after which the linker resolves `_strcat` out of the same VC6
+ * CRT that put `_strcat` at 0x00645470 in the shipped image.
  *
- * WHY MAIN DOES NOTHING. Running the recovered code needs the game's data, its
- * globals initialised, and the original process image - none of which exists
- * without the injection route this replaced. Pretending otherwise by calling
- * into it would produce a binary that links and then faults, which is a worse
- * signal than one that links and exits. The question this build answers is
- * "does it compile and link", and it answers exactly that.
+ * `/Oi-` gives the identical 162 and is the wrong instrument: the four flag
+ * sets in tools/byte_match.py are shared by every unit measured, and 19 of
+ * the 1,526 BYTE_EXACT claims contain an inlined `rep stosd` or `rep movsd`.
+ * Turning intrinsics off to fix one body would break those nineteen.
  */
-int main() {
-    return 0;
+#pragma function(strcat)
+
+/*
+ * THE ENTRY POINT, and the top of the recovery.
+ *
+ * This file used to hold a `main()` that returned 0, so that `cmake --build`
+ * answered "does the recovered tree compile, and does every symbol it names
+ * resolve". It still answers that - every object is linked directly, so an
+ * undefined symbol anywhere is a link error - but it now answers it about the
+ * program's own entry point rather than a placeholder beside it.
+ *
+ * WHAT STILL DOES NOT RUN. Six of the eleven functions WinMain calls have
+ * bodies in src/unrecovered/ and src/recovered/ that are not in this build
+ * yet, and reach it through src/pending_bodies.cpp instead. Their transitive
+ * closure is 1,489 catalogued addresses, so they arrive a subtree at a time
+ * rather than all at once. Until then this links and starts and stops at the
+ * first of them; that is a worse program than the shipped one and a better
+ * signal than a binary that pretends to be finished.
+ */
+
+/*
+ * The two candidate popup allocators, spelt as the addresses the image stores
+ * because storing them is all WinMain does - neither is called from here.
+ *
+ *   0x00404FB0  ?alloc@Popup@@QAAHXZ
+ *   0x00604E40  ?basepop_alloc@BasePop@@QAEHXZ
+ */
+static func_popup_alloc *const PopupAlloc =
+    reinterpret_cast<func_popup_alloc *>(0x00404FB0);
+static func_popup_alloc *const BasePopAlloc =
+    reinterpret_cast<func_popup_alloc *>(0x00604E40);
+
+char CommandLineText[0x108];  // 0x007D3970
+func_popup_alloc *PopupAllocHook;  // 0x00696ECC
+int PopupModalActive;  // 0x009469FC
+int DialogDefaultStyle;  // 0x006970DC
+
+/*
+Purpose: Bring up the process - preferences, display, sound, fonts - run the
+         game, and tear it back down.
+ORIGINAL: 0x0045F950 FILE
+// name      _WinMain@16
+// size      459 bytes
+// spans     0x0045F950-0x0045FB1B
+// prototype int (__stdcall _WinMain@16)(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+// callers   1   call targets   11
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C5CE0 0x0052AA30 0x0059DB40 0x0059E530 0x006185A0 0x00618D20 0x006190D0 0x0062D3A0 0x0062D500 0x0062D570 0x00645470
+// indirect  0x0045F9DE 0x0045FAC9
+Return Value: 1 once the game has run and shut down; 0 if any stage of the
+              bring-up refuses.
+Status: Complete
+
+RULED-OUT: `reinterpret_cast<Caviar *>(0)->init_class()`. The image's names for
+           Caviar::init_class and ::close_class end in `QAA` - a public member
+           declared __cdecl - and 0x0045FA5D calls the first with no ecx set
+           up at all, so there is no receiver and a non-static declaration
+           makes the only legal spelling C2352. Calling through a null
+           `Caviar *` was the way around that while caviar.h declared them as
+           instance methods; they are `static` there now, which is the rule
+           tools/emit_translation_unit.py already applies to every other
+           `*::init_class`, so the cast is gone.
+
+KNOWN DIVERGENCES, all of them from callees this build cannot yet name:
+
+  * `if (PopupAlloc)` below is a test of a literal, so VC6 folds it and emits
+    one store where the image emits two. The image's guard is a link-time
+    address, which it could not fold. It becomes the image's shape when
+    ?alloc@Popup@@QAAHXZ (0x00404FB0) is a symbol this build links against.
+  * `*ExpansionEnabled` and `*HandleMain` are `BOOL *` and `HWND *` aimed at
+    fixed addresses, so each costs a load the image does not perform - the
+    same fault fixed here for g_JACKAL_FONT and g_PALETTE1, left alone
+    because those two names have 21 and 12 other users. See atexit_thunks.h.
+*/
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,
+                   int nShowCmd) {
+    CommandLineText[0] = '\0';
+    if (lpCmdLine) {
+        strcat(CommandLineText, lpCmdLine);
+    }
+
+    *ExpansionEnabled = TRUE;
+    PopupModalActive = 0;
+    // The base game's allocator, then the expansion's over the top of it. The
+    // guard is a test of the expansion allocator's own ADDRESS, which cannot
+    // be null - so the first store is dead, and this pair is the seam the
+    // expansion pack was linked through rather than a runtime choice.
+    PopupAllocHook = BasePopAlloc;
+    if (PopupAlloc) {
+        PopupAllocHook = PopupAlloc;
+    }
+    DialogDefaultStyle |= 4;
+
+    int video_mode = prefs_get("Video Mode", 0, false);
+    int tgl_direct_draw = prefs_get("DirectDraw", 1, false);
+
+    int display_width;
+    int display_height;
+    if (tgl_direct_draw) {
+        if (video_mode == 0) {
+            video_mode = GetSystemMetrics(SM_CXSCREEN);
+        }
+        if (video_mode >= 1024) {
+            display_width = 1024;
+            display_height = 768;
+        } else {
+            display_width = 800;
+            display_height = 600;
+        }
+        // The colour depth, in `lpCmdLine`'s stack slot. The original reuses
+        // the parameter rather than spending a local on it, and 0x0045FA2B
+        // reads the slot back to pass it on - so the reuse is load-bearing
+        // and not an artifact of the decompilation.
+        lpCmdLine = reinterpret_cast<LPSTR>(8);
+    } else {
+        // Without DirectDraw the window takes its geometry and its depth from
+        // the same slot, whatever the command line left in it.
+        display_width = reinterpret_cast<int>(lpCmdLine);
+        display_height = reinterpret_cast<int>(lpCmdLine);
+    }
+
+    if (jackal_version_check("10.10")) {
+        return 0;
+    }
+
+    // `-(x != 0) & 4` rather than `x ? 4 : 0`: the branchless form is what the
+    // image computes at 0x0045FA2E, and a ternary here compiles to a branch.
+    int init_flags = -(tgl_direct_draw != 0) & 4;
+    if (jackal_init_real(&g_PALETTE1, &g_JACKAL_FONT,
+                         "Sid Meier's Alpha Centauri", init_flags,
+                         display_width, display_height,
+                         reinterpret_cast<int>(lpCmdLine))) {
+        return 0;
+    }
+
+    if (Caviar::init_class()) {
+        return 0;
+    }
+
+    unsigned long sound_backends = 10;
+    if (prefs_get("ds3d", 1, false)) {
+        sound_backends = 0x2A;
+        prefs_put("ds3d", 1, false);
+        if (prefs_get("eax", 1, false)) {
+            sound_backends = 0x6A;
+            prefs_put("eax", 1, false);
+        }
+    }
+
+    // Holding Shift through startup skips sound entirely. The image tests the
+    // whole high byte of the result rather than just the 0x8000 down bit.
+    if (HIBYTE(GetAsyncKeyState(VK_SHIFT)) == 0) {
+        init_sound(*HandleMain, sound_backends);
+    }
+
+    g_JACKAL_FONT.init("arialn.ttf", *DefaultFontFace, 12, 0);
+    control_game();
+    Caviar::close_class();
+    jackal_close();
+    return 1;
 }
