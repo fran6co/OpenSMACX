@@ -19,6 +19,24 @@
 #include "original_seam.h"
 #include "sounddevice.h"
 
+// init() for both device classes is reached by init_sound(); their bodies are
+// not yet recovered, so each forwards into the original image through the seam.
+typedef int (OriginalObject::*func_midi_device_init)(void *, unsigned long);
+static func_midi_device_init MidiDeviceInitOriginal =
+    original_method<func_midi_device_init>(0x004C57A0);
+
+int Midi_Device::init(void *window, unsigned long backends) {
+    return (ORIGINAL(this)->*MidiDeviceInitOriginal)(window, backends);
+}
+
+typedef int (OriginalObject::*func_wave_in_device_init)(void *, unsigned long);
+static func_wave_in_device_init WaveInDeviceInitOriginal =
+    original_method<func_wave_in_device_init>(0x004C5A10);
+
+int Wave_In_Device::init(void *window, unsigned long backends) {
+    return (ORIGINAL(this)->*WaveInDeviceInitOriginal)(window, backends);
+}
+
 /*
 Purpose: Midi_Device devices decline to be polled; the legacy implementation is a bare return.
 ORIGINAL: 0x004C58B0 BYTE_EXACT

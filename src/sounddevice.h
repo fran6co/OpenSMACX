@@ -40,6 +40,7 @@ class DLLEXPORT Midi_Device {
  public:
   Midi_Device() { ; }
   ~Midi_Device() { ; }
+  int init(void *window, unsigned long backends);  // 004C57A0
   void update_sound();
   void suspend();
   void restart();
@@ -75,6 +76,7 @@ class DLLEXPORT Wave_In_Device {
  public:
   Wave_In_Device() { ; }
   ~Wave_In_Device() { ; }
+  int init(void *window, unsigned long backends);  // 004C5A10
   void update_sound();
   void suspend();
   void restart();
