@@ -283,8 +283,12 @@ def measure(units: dict, cache: dict, no_cache: bool, jobs: int):
         shared = byte_match.shared_span_index(rows)
         subjects = [(address, pending[address], "") for address in
                     sorted(pending)]
+        # ONE UNIT PER `cl`, NOT `jobs` OF THEM. `jobs` is the build pool's
+        # worker count and has nothing to say about how the compiler should be
+        # invoked; passing it here is what put 120 bodies into a single
+        # response file and compiled them one after another on one core.
         results = byte_match.match_functions(pe, rows, shared, subjects, "",
-                                             chunk=jobs)
+                                             chunk=1)
         for address, outcome in results.items():
             outcomes[address] = outcome
             entries[hashed[address]] = outcome
@@ -1154,8 +1158,22 @@ def main(argv=None) -> int:
                         help="measure from scratch, ignoring the cache")
     parser.add_argument("--no-ledger", action="store_true",
                         help="do not write the .opensmacx/byte-match.csv cache")
-    parser.add_argument("--jobs", type=int, default=120,
-                        help="units per CL response-file batch")
+    # ONE NUMBER WAS DRIVING TWO UNRELATED THINGS, which is how a collect ran
+    # 86 minutes on one core of sixteen. `--jobs` is a WORKER COUNT for the
+    # unit-building pool, and it was ALSO passed through as the number of
+    # units crammed into a single `cl` invocation. Its default of 120 meant
+    # every collect this project ever ran put all its units through one `cl`
+    # that compiled them end to end - invisible while they were placeholders
+    # compiling in 2 ms, ruinous once batch 22 landed 20 real bodies.
+    #
+    # Setting it to 1 to defeat the batching then silently disabled the
+    # build pool as well (`if jobs > 1`), which is the same defect over again
+    # in the other direction. So the two are separate now: this is workers,
+    # and the compiler gets one unit per invocation with the OS scheduling
+    # them. 0 means "pick a sensible pool size".
+    parser.add_argument("--jobs", type=int, default=0,
+                        help="worker processes for unit building "
+                             "(0 = one per core, less two)")
     parser.add_argument("--json", action="store_true",
                         help="machine-readable result instead of prose")
     parser.add_argument("--generate-placeholders", action="store_true",
