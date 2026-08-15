@@ -137,6 +137,12 @@ directory, so lanes do not contend for it.
 That last flag is not optional. Without it CMake takes `/usr/bin/python3`, which
 lacks `pefile`, and the oracle extraction fails partway through a build.
 
+The VC6 toolchain is NOT a flag: `CMakeLists.txt` defaults
+`CMAKE_TOOLCHAIN_FILE` to `cmake/toolchains/vc6.cmake`, where the cross system,
+the wrappers and the VC6 include directory are declared. It moved there from
+the root file on 2026-08-15 so tools that read CMake's view of the compile -
+CLion first among them - can see it.
+
 `-G Ninja` is not optional either, and this line said `--preset
 mingw-i686-debug` until 2026-08-12 - a preset `a673bf79` deleted when it made
 VC6 the only compiler. There has been no `CMakePresets.json` since, so the
