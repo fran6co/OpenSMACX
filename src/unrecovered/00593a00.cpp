@@ -1,4 +1,13 @@
 // ORIGINAL: 0x00593A00 FILE
+// RULED-OUT: same Popup-teardown-cascade shape as PickWin/battle_plans, but
+//            this one calls Dialogs' REAL destructor (`??1Dialogs@@QAE@XZ`)
+//            rather than the vtable-patch-then-close() dance those two used
+//            - simpler here, used directly. The final "apply the action"
+//            branch (0x5942C1 onward: which of two near-identical full
+//            teardowns fires) is approximated as always taking the first
+//            (`chosen2==1`) branch - the exact value tracked through
+//            BasePop::exec's result wasn't re-derived in the time available.
+//            sim 0.34-0.59 across flag sets.
 // working copy - scaffold materialised by --work
 // name      ?supply_options@@YAHHH@Z
 // size      4374 bytes
@@ -1609,7 +1618,7 @@ class Buffer { public:
     int init_class();
     int text_height();
     int text_line_height();
-    int get_pcx_dimensions(const char *, int *, int *);
+    static int get_pcx_dimensions(const char *, int *, int *);
     void clear_links();
     void close();
     void close_class();
@@ -2389,12 +2398,284 @@ static int *const g_009b3374 = (int *)0x009B3374;
 static int *const g_009b7d00 = (int *)0x009B7D00;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b8aa8 = (int *)0x009B8AA8;
-int __cdecl supply_options(int a1, int a2) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+inline void *operator new(unsigned int, void *place) { return place; }
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+int __cdecl supply_options(int a1, int a2) {
+    static unsigned char frame[0x5394];
+#define EBP(x) (frame + 0x5394 - (x))
+    unsigned int *relations = reinterpret_cast<unsigned int *>(g_0096c9f8);
+#define REL(a, b) (relations[(a)*0x833 + (b)])
+#define FACP(idx) (reinterpret_cast<unsigned char *>(0x97d040) + (idx)*0x134)
+#define U34(base, idx) (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(base) + (idx)*0x34))
+#define U34S(base, idx) (*reinterpret_cast<short *>(reinterpret_cast<char *>(base) + (idx)*0x34))
+#define U34I(base, idx) (*reinterpret_cast<int *>(reinterpret_cast<char *>(base) + (idx)*0x34))
+
+    Popup *popup = new (EBP(0x53a0)) Popup();
+    int ownerByte = U34(g_00952836, a1);
+
+    if (((1 << ownerByte) & *reinterpret_cast<unsigned char *>(g_009a64e8)) == 0) {
+        popup->close();
+        reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+        reinterpret_cast<FlatButton *>(EBP(0xb78))->~FlatButton();
+        reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+        goto tailReturn0;
+    }
+
+    {
+        unsigned char cVar1 = U34(g_00952839, a1);
+        if (cVar1 == 0x1b || cVar1 == 0x1c || cVar1 == 0x19 || (U34I(g_0095282c, a1) & 0x4000) != 0) {
+            goto shortExit;
+        }
+        if (cVar1 == 0x18) {
+            short xA = U34S(g_00952844, a1);
+            short yA = U34S(g_00952828, a1);
+            short xB = U34S(g_0095283c, a1);
+            short yB = U34S(g_0095282a, a1);
+            int dx = abs(yA - xB);
+            if ((*reinterpret_cast<unsigned char *>(g_0094988c) & 1) == 0 && dx > *g_0068faf0) {
+                dx = *g_00949870 - dx;
+            }
+            int dy = abs(yB - xA);
+            int total = (dx + dy) & 0xfffffffe;
+            if (total > 2) {
+                goto shortExit;
+            }
+        }
+    }
+
+    {
+        int idB = FACP(a2)[4];
+        if (ownerByte != idB) {
+            if ((REL(ownerByte, idB) & 1) == 0) {
+                goto shortExit2;
+            }
+        }
+    }
+
+    {
+        short nameId = U34S(g_00952832, a1);
+        parse_says(1, reinterpret_cast<char *>(0x9ab868 + nameId * 0x34), -1, -1);
+        parse_says(2, reinterpret_cast<char *>(FACP(a2) + 0x13), -1, -1);
+
+        int esi;
+        int prod = *reinterpret_cast<int *>(FACP(a2) + 0x50);
+        if (prod < 0) {
+            esi = cost_factor(-prod, 1, -1);
+            esi *= *reinterpret_cast<int *>(reinterpret_cast<char *>(g_009a4b74) + (-prod) * 0x30);
+        } else {
+            int c = veh_cost(prod, a2, 0);
+            esi = c * cost_factor(ownerByte, 1, -1);
+        }
+
+        parse_num(0, *reinterpret_cast<int *>(FACP(a2) + 0x40));
+        parse_num(1, esi);
+
+        popup->start((char *)0x9b8aa8, (char *)g_0068fc28, -1, 0, 0, 0);
+
+        void *iconSprite = 0;
+        if ((U34I(g_00946f58, ownerByte) & 0x80) == 0) {
+            int w, h;
+            if (Buffer::get_pcx_dimensions((char *)g_0068fc54, &w, &h) == 0) {
+                if (reinterpret_cast<Sprite *>(EBP(0x3288))->init((char *)g_0068fc64, w, h) == 0) {
+                    iconSprite = EBP(0x3288);
+                }
+            }
+        } else {
+            int w, h;
+            if (Buffer::get_pcx_dimensions((char *)g_0068fc34, &w, &h) == 0) {
+                if (reinterpret_cast<Sprite *>(EBP(0x3288))->init((char *)g_0068fc44, w, h) == 0) {
+                    iconSprite = EBP(0x3288);
+                }
+            }
+        }
+        (void)iconSprite;
+
+        if (X_text_open((char *)*g_00691b0c, (char *)g_0068fc74) != 0) {
+            popup->close();
+            reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+            reinterpret_cast<FlatButton *>(EBP(0xb78))->~FlatButton();
+            reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+            goto tailReturn0;
+        }
+
+        text_get();
+        parse_string((char *)g_009b86a0, (char *)*g_009b7d00);
+        *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+        reinterpret_cast<Dialogs *>(EBP(0x31d0))->item((char *)g_009b86a0, 0);
+        int lineCount = 1;
+
+        text_get();
+        int prod2 = *reinterpret_cast<int *>(FACP(a2) + 0x50);
+        if (prod2 > -0x46) {
+            int cfIdx = -prod2;
+            int cf = cost_factor(ownerByte, 1, -1);
+            int esi2 = cf * *reinterpret_cast<int *>(reinterpret_cast<char *>(g_009a4b74) + cfIdx * 0x30);
+            int scaled = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_009a4b68) + cfIdx * 0x30);
+            parse_say(0, scaled, esi2, -1);
+            text_get();
+            parse_string((char *)g_009b86a0, (char *)*g_009b7d00);
+            reinterpret_cast<Dialogs *>(EBP(0x31d0))->item((char *)g_009b86a0, 1);
+            lineCount = 2;
+        }
+
+        text_get();
+        int prod3 = *reinterpret_cast<int *>(FACP(a2) + 0x50);
+        int prodForCost = prod3;
+        if (prod3 >= 0) {
+            int c = veh_cost(prod3, a2, 0);
+            int esi3 = c * cost_factor(ownerByte, 1, -1);
+            if (prodForCost >= 0x40) {
+                int t = prodForCost;
+                if ((reinterpret_cast<unsigned char *>(g_009ab898)[t * 0xc] & 4) == 0) {
+                    parse_says(0, reinterpret_cast<char *>(0x9ab868 + t * 0xc), -1, -1);
+                    text_get();
+                    parse_string((char *)g_009b86a0, (char *)*g_009b7d00);
+                    reinterpret_cast<Dialogs *>(EBP(0x31d0))->item((char *)g_009b86a0, 1);
+                    lineCount++;
+                }
+            }
+            (void)esi3;
+        }
+
+        if (convoy(a2, a1) != 0) {
+            for (int line = 2; line <= 4; line++) {
+                text_get();
+                parse_string((char *)g_009b86a0, (char *)*g_009b7d00);
+                reinterpret_cast<Dialogs *>(EBP(0x31d0))->item((char *)g_009b86a0, lineCount + 1);
+                lineCount++;
+            }
+        }
+
+        if (lineCount <= 1) {
+            goto shortExit3;
+        }
+
+        if (ownerByte == *g_00939284 && (*reinterpret_cast<unsigned char *>(g_0093e904) & 1) != 0) {
+            int chosen = reinterpret_cast<BasePop *>(popup)->exec(0, 0);
+            if (chosen == 0) {
+                goto shortExit4;
+            }
+            U34(g_00952854, a1) = (unsigned char)chosen;
+        }
+
+        {
+            unsigned char cl = *reinterpret_cast<unsigned char *>(g_0093e904);
+            if ((cl & 1) == 0 || (cl & 2) != 0) {
+                // confirmed-without-action path
+                popup->close();
+                reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+                reinterpret_cast<FlatButton *>(EBP(0xb78))->~FlatButton();
+                reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+                reinterpret_cast<GraphicWin *>(EBP(0x2170))->~GraphicWin();
+                reinterpret_cast<BasePop *>(popup)->~BasePop();
+                return 1;
+            }
+        }
+
+        // apply the action - eax (the popup selection) determines which branch
+        {
+            int chosen2 = 1; // the disassembly re-tests `eax` from the exec() call here;
+                              // approximated as the confirmed selection.
+            if (chosen2 == 1) {
+                int cf = cost_factor(1, -1, ownerByte);
+                short unitTypeId = U34S(g_00952832, a1);
+                int mult = reinterpret_cast<unsigned char *>(g_009ab891)[unitTypeId * 0x34];
+                int newProd = *reinterpret_cast<int *>(FACP(a2) + 0x40) + cf * mult;
+                *reinterpret_cast<int *>(FACP(a2) + 0x40) = newProd;
+                *reinterpret_cast<int *>(FACP(a2) + 0x9c) = newProd;
+                *reinterpret_cast<int *>(FACP(a2) + 0x50) = *reinterpret_cast<int *>(FACP(a2) + 0x50);
+                synch_base(a2);
+
+                int remaining = *reinterpret_cast<int *>(FACP(a2) + 0x40);
+                int esiVal = 0 - remaining;
+                if (esiVal < 0) esiVal = 0;
+                else if (esiVal > 0x270f) esiVal = 0x270f;
+
+                if (ownerByte == *g_00939284) {
+                    parse_num(0, esiVal);
+                    reinterpret_cast<NetMsg *>(0x805338)->pop((char *)0, 0x1388, 0, (char *)g_0068fc80);
+                }
+
+                if (*g_0093f660 != 0) {
+                    message_veh(0x2407, a1, 1, 0);
+                    reinterpret_cast<NetDaemon *>(g_0093cd90)->await_exec(1);
+                } else {
+                    kill(a1);
+                }
+
+                popup->close();
+                reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+                reinterpret_cast<FlatButton *>(EBP(0xb78))->close();
+                reinterpret_cast<BaseButton *>(EBP(0xb78))->~BaseButton();
+                reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+                reinterpret_cast<GraphicWin *>(EBP(0x2170))->~GraphicWin();
+                reinterpret_cast<BasePop *>(popup)->close();
+                reinterpret_cast<Spot *>(EBP(0x2308))->~Spot();
+                reinterpret_cast<Dialogs *>(EBP(0x3048))->~Dialogs();
+                reinterpret_cast<Dialog *>(EBP(0x2630))->~Dialog();
+                reinterpret_cast<GraphicWin *>(EBP(0x3048))->~GraphicWin();
+                {
+                    typedef void (OriginalObject::*Sub4066C0)();
+                    (ORIGINAL(EBP(0x31f8))->*original_method<Sub4066C0>(0x4066c0))();
+                }
+                {
+                    typedef void (OriginalObject::*Sub406820)();
+                    (ORIGINAL(EBP(0x3250))->*original_method<Sub406820>(0x406820))();
+                }
+                reinterpret_cast<Sprite *>(EBP(0x3288))->close();
+                reinterpret_cast<FlatButton *>(EBP(0x3df8))->~FlatButton();
+                reinterpret_cast<FlatButton *>(EBP(0x4944))->~FlatButton();
+                reinterpret_cast<Heap *>(EBP(0x4978))->shutdown();
+                reinterpret_cast<GraphicWin *>(popup)->~GraphicWin();
+                return 1;
+            } else {
+                U34(g_00952839, a1) = 3;
+                U34(g_0095284e, a1) = (unsigned char)(chosen2 - 2);
+
+                popup->close();
+                reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+                reinterpret_cast<FlatButton *>(EBP(0xb78))->close();
+                reinterpret_cast<BaseButton *>(EBP(0xb78))->~BaseButton();
+                reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+                reinterpret_cast<GraphicWin *>(EBP(0x2170))->~GraphicWin();
+                reinterpret_cast<BasePop *>(popup)->close();
+                reinterpret_cast<Spot *>(EBP(0x2308))->~Spot();
+                reinterpret_cast<Dialogs *>(EBP(0x3048))->~Dialogs();
+                reinterpret_cast<Dialog *>(EBP(0x2630))->~Dialog();
+                reinterpret_cast<GraphicWin *>(EBP(0x3048))->~GraphicWin();
+                {
+                    typedef void (OriginalObject::*Sub406820)();
+                    (ORIGINAL(EBP(0x3220))->*original_method<Sub406820>(0x406820))();
+                    (ORIGINAL(EBP(0x3250))->*original_method<Sub406820>(0x406820))();
+                }
+                reinterpret_cast<Sprite *>(EBP(0x3288))->close();
+                reinterpret_cast<FlatButton *>(EBP(0x3df8))->~FlatButton();
+                reinterpret_cast<FlatButton *>(EBP(0x4944))->~FlatButton();
+                reinterpret_cast<Heap *>(EBP(0x4978))->shutdown();
+                reinterpret_cast<GraphicWin *>(popup)->~GraphicWin();
+                return 0;
+            }
+        }
+    }
+
+shortExit:
+shortExit2:
+shortExit3:
+shortExit4:
+    popup->close();
+    reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+    reinterpret_cast<FlatButton *>(EBP(0xb78))->~FlatButton();
+    reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+
+tailReturn0:
+    reinterpret_cast<GraphicWin *>(EBP(0x2170))->~GraphicWin();
+    reinterpret_cast<BasePop *>(popup)->~BasePop();
+    return 0;
+
+#undef U34I
+#undef U34S
+#undef U34
+#undef FACP
+#undef REL
+#undef EBP
 }

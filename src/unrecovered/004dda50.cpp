@@ -1,4 +1,26 @@
 // ORIGINAL: 0x004DDA50 FILE
+// RULED-OUT: like 0x005AE120, this has a real SEH frame with ~40 widget
+//            destructor calls; used the same real-RAII-for-Popup +
+//            separate-approximate-locals-for-the-rest strategy. The
+//            harder problem here was call ARGUMENTS: this compiler emits
+//            /EHsc calls through a FIXED scratch-slot area (puStack_20,
+//            pcStack_24, ... one slot per 4 bytes, reused across every
+//            call) rather than push/pop, because esp must stay constant
+//            for the fs:[0] chain - so Ghidra shows every call as
+//            `FUN_xxx();` with the real arguments as separate slot
+//            assignments beforehand, in scratch-slot order rather than
+//            argument order. Confirmed against several call sites'
+//            raw asm (veh_at, X_pop, strcat) that argument order is the
+//            REVERSE of assignment order (nearest-to-the-call assignment
+//            is arg1), and used that rule mechanically to reconstruct
+//            all ~50 call sites; ONE callee (itoa) broke the rule and
+//            was fixed by hand from its own push sequence. The scratch
+//            slots were declared `void *` uniformly (with `int *`/
+//            `unsigned char *` kept only where real pointer arithmetic
+//            or dereference was needed) since their type varies call to
+//            call - this is why the rebuilt prologue class already
+//            diverges at #0. Every FUN_ callee resolved to a real name
+//            from the disassembly's own comments; none were guessed.
 // working copy - scaffold materialised by --work
 // name      ?editor_edit_veh@Console@@QAEXH@Z
 // size      4512 bytes
@@ -2621,10 +2643,735 @@ class Console : public MapWin { public:
     void editor_edit_veh(int);
 };
 void Console::editor_edit_veh(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+  int param_1 = a1;
+  Popup popup;
+  Dialogs dialogsObj;
+  GraphicWin graphicWinObj;
+  Dialog dialogObj;
+  Spot spotObj;
+  Sprite spriteObj;
+  FlatButton flatButtonA;
+  BaseButton baseButtonA;
+  Heap heapObj;
+
+  unsigned char bVar1;
+  short sVar2;
+  unsigned char uVar3;
+  unsigned int uVar4;
+  int iVar5;
+  int iVar6;
+  unsigned int uVar7;
+  short extraout_var;
+  short extraout_var_00;
+  unsigned char *puVar8;
+  int iVar9;
+  int *puVar10;
+  int local_328c [4];
+  int local_327c;
+  void *local_3268;
+  int local_3264;
+  void *local_3260;
+  int local_325c [4];
+  int local_324c;
+  void *local_3238;
+  int local_3234;
+  void *local_21b0;
+  void *local_1d6c;
+  void *local_1704;
+  void *local_12c0;
+  void *local_bb8;
+  void *local_774;
+  int uStack_68;
+  int local_64;
+  void *puStack_60;
+  void *pcStack_5c;
+  int uStack_58;
+  void *puStack_54;
+  void *puStack_50;
+  void *puStack_4c;
+  void *puStack_48;
+  void *puStack_44;
+  int iStack_40;
+  void *puStack_3c;
+  int uStack_38;
+  void *puStack_34;
+  void *pcStack_30;
+  void *puStack_2c;
+  void *puStack_28;
+  void *pcStack_24;
+  void *puStack_20;
+  void *local_10;
+  void *puStack_c;
+  int local_8;
+  
+  puStack_20 = (int *)0x4dda80;
+    local_8 = 0;
+  puStack_20 = (int *)0x4dda8c;
+  auto_undo();
+  if (param_1 < 0) {
+    if ((*(int *)0x939288) == 0) {
+      puStack_20 = (int *)(((int *)0x939340))[(*(int *)0x9392b8)];
+      pcStack_24 = (char *)(((int *)0x9392c0))[(*(int *)0x9392b8)];
+      puStack_28 = (unsigned char *)0x4ddaee;
+      puVar8 = (unsigned char *)veh_at((int)(pcStack_24), (int)(puStack_20));
+      if ((int)puVar8 < 0) {
+        local_8 = 2;
+        puStack_20 = (int *)0x4ddb1b;
+        popup.close();
+        local_8 = 1;
+        puStack_20 = (int *)0x4ddb2a;
+        popup.scroll_.close();
+        goto LAB_004de349;
+      }
+      puStack_20 = (int *)0x1;
+      pcStack_24 = ((char *)0x00689018);
+      puStack_2c = (int *)0x4ddb3c;
+      puStack_28 = puVar8;
+      param_1 = veh_pick((int)(puStack_28), (const char *)(pcStack_24), (int)(puStack_20));
+      if (param_1 < 0) {
+        local_8 = 4;
+        puStack_20 = (int *)0x4ddb72;
+        popup.close();
+        local_8 = 3;
+        puStack_20 = (int *)0x4ddb81;
+        popup.scroll_.close();
+        goto LAB_004de349;
+      }
+    }
+    else {
+      param_1 = (*(int *)0x93928c);
+    }
+  }
+  iVar9 = param_1 * 0x34;
+  uVar4 = (unsigned int)*(short *)(((unsigned char *)0x952830) + iVar9);
+  if ((uVar4 >> 5 & 1) == 0) {
+    uVar7 = (*(int *)0x9bc06c) & 0xfffffffe;
+  }
+  else {
+    uVar7 = (*(int *)0x9bc06c) | 1;
+  }
+  if ((uVar4 >> 7 & 1) == 0) {
+    uVar7 = uVar7 & 0xfffffffd;
+  }
+  else {
+    uVar7 = uVar7 | 2;
+  }
+  if ((uVar4 >> 8 & 1) == 0) {
+    uVar7 = uVar7 & 0xfffffffb;
+  }
+  else {
+    uVar7 = uVar7 | 4;
+  }
+  if ((uVar4 >> 9 & 1) == 0) {
+    uVar7 = uVar7 & 0xfffffff7;
+  }
+  else {
+    uVar7 = uVar7 | 8;
+  }
+  if ((uVar4 >> 6 & 1) == 0) {
+    uVar7 = uVar7 & 0xffffffef;
+  }
+  else {
+    uVar7 = uVar7 | 0x10;
+  }
+  if ((uVar4 >> 10 & 1) == 0) {
+    uVar7 = uVar7 & 0xffffffdf;
+  }
+  else {
+    uVar7 = uVar7 | 0x20;
+  }
+  if (((((int *)0x95282c))[param_1 * 0xd] & 0x100) == 0) {
+    (*(int *)0x9bc06c) = uVar7 & 0xffffffbf;
+  }
+  else {
+    (*(int *)0x9bc06c) = uVar7 | 0x40;
+  }
+  *(unsigned char *)0x9b86a0 = 0;
+  puStack_20 = (int *)(((unsigned char *)0x9ab868) + (short)(((short *)0x952832))[param_1 * 0x1a] * 0x34);
+  pcStack_24 = ((unsigned char *)0x9b86a0);
+  puStack_28 = (unsigned char *)0x4ddc36;
+  strcat((char *)((char *)pcStack_24), (const char *)(puStack_20));
+  puStack_28 = ((unsigned char *)0x682820);
+  puStack_2c = (int *)((unsigned char *)0x9b86a0);
+  pcStack_30 = (char *)0x4ddc45;
+  strcat((char *)((char *)puStack_2c), (const char *)(puStack_28));
+  pcStack_30 = ((unsigned char *)0x682e9c);
+  puStack_34 = ((unsigned char *)0x9b86a0);
+  uStack_38 = 0x4ddc54;
+  strcat((char *)((char *)puStack_34), (const char *)(pcStack_30));
+  puStack_3c = &local_64;
+  uStack_38 = 10;
+  puStack_44 = (int *)0x4ddc60;
+  iStack_40 = param_1;
+  _itoa((int)(iStack_40), (char *)&local_64, 10);
+  puStack_44 = &local_64;
+  puStack_48 = (int *)((unsigned char *)0x9b86a0);
+  puStack_4c = (unsigned char *)0x4ddc6e;
+  strcat((char *)((char *)puStack_48), (const char *)(puStack_44));
+  puStack_4c = ((unsigned char *)0x682e98);
+  puStack_50 = (int *)((unsigned char *)0x9b86a0);
+  puStack_54 = (unsigned char *)0x4ddc7d;
+  strcat((char *)((char *)puStack_50), (const char *)(puStack_4c));
+  puStack_54 = (unsigned char *)0x0;
+  uStack_58 = 0x41;
+  pcStack_5c = ((char *)0x00689024);
+  puStack_60 = (unsigned char *)0x4ddc8b;
+  iVar5 = X_pop((const char *)((const char *)pcStack_5c), (int)(uStack_58), (int (__cdecl *)())(puStack_54));
+  if (iVar5 < 0) {
+    local_8 = 6;
+    puStack_20 = (int *)0x4ddcb8;
+    popup.close();
+    local_8 = 5;
+    puStack_20 = (int *)0x4ddcc7;
+    popup.scroll_.close();
+    goto LAB_004de349;
+  }
+  *(unsigned short *)(((unsigned char *)0x952830) + iVar9) = *(unsigned short *)(((unsigned char *)0x952830) + iVar9) & 0xf81f;
+  uVar7 = (*(int *)0x9bc06c);
+  uVar4 = (*(int *)0x9bc06c) & 1;
+  (((int *)0x95282c))[param_1 * 0xd] = (((int *)0x95282c))[param_1 * 0xd] & 0xfffffeff;
+  if (uVar4 != 0) {
+    (((unsigned char *)0x952830))[iVar9] = (((unsigned char *)0x952830))[iVar9] | 0x20;
+  }
+  if ((uVar7 & 2) != 0) {
+    (((unsigned char *)0x952830))[iVar9] = (((unsigned char *)0x952830))[iVar9] | 0x80;
+  }
+  if ((uVar7 & 4) != 0) {
+    *(unsigned short *)(((unsigned char *)0x952830) + iVar9) = *(unsigned short *)(((unsigned char *)0x952830) + iVar9) | 0x100;
+  }
+  if ((uVar7 & 8) != 0) {
+    (((unsigned char *)0x952831))[iVar9] = (((unsigned char *)0x952831))[iVar9] | 2;
+  }
+  if ((uVar7 & 0x10) != 0) {
+    (((unsigned char *)0x952830))[iVar9] = (((unsigned char *)0x952830))[iVar9] | 0x40;
+  }
+  if ((uVar7 & 0x20) != 0) {
+    (((unsigned char *)0x952831))[iVar9] = (((unsigned char *)0x952831))[iVar9] | 4;
+  }
+  if ((uVar7 & 0x40) != 0) {
+    (((int *)0x95282c))[param_1 * 0xd] = (((int *)0x95282c))[param_1 * 0xd] | 0x100;
+  }
+  if ((*(unsigned short *)(((unsigned char *)0x952830) + iVar9) & 0x400) != 0) {
+    pcStack_24 = (char *)(int)(short)(((short *)0x95282a))[param_1 * 0x1a];
+    puStack_28 = (unsigned char *)(int)(short)(((short *)0x952828))[param_1 * 0x1a];
+    puStack_20 = (int *)0xffffffff;
+    puStack_2c = (int *)0x4ddd5e;
+    owner_set((int)(puStack_20), (int)(puStack_28), (int)(pcStack_24));
+  }
+  puStack_20 = (int *)0x0;
+  pcStack_24 = (char *)0x4ddd6d;
+  ((Console *)0x9156b0)->update_data((int)(puStack_20));
+  pcStack_24 = (char *)(int)(short)(((short *)0x95282a))[param_1 * 0x1a];
+  puStack_28 = (unsigned char *)(int)(short)(((short *)0x952828))[param_1 * 0x1a];
+  puStack_20 = (int *)0x1;
+  puStack_2c = (int *)0x4ddd84;
+  draw_tile((int)(puStack_20), (int)(puStack_28), (int)(pcStack_24));
+  if ((*(int *)0x9bc070) == 1) {
+    puStack_20 = (int *)0x0;
+    pcStack_24 = (char *)0x40;
+    puStack_28 = (unsigned char *)0x0;
+    puStack_2c = (int *)0xffffffff;
+    pcStack_30 = ((char *)0x0068902c);
+    puStack_34 = ((unsigned char *)0x9b8aa8);
+    uStack_38 = 0x4dddb2;
+    popup.start((char *)(puStack_34), (const char *)(pcStack_30), (int)(puStack_2c), (char *)(puStack_28), (int)(pcStack_24), (GraphicWin *)(puStack_20));
+    iVar5 = 0;
+    puVar10 = ((int *)0x952328);
+    do {
+      sVar2 = (((short *)0x952832))[param_1 * 0x1a];
+      *(unsigned char *)0x9b86a0 = 0;
+      if ((sVar2 < 0x40) &&
+         (((char)(((char *)0x94ae68))[(unsigned int)(unsigned char)(((unsigned char *)0x9ab88d))[sVar2 * 0x34] * 0x10] < '\0' ||
+          (sVar2 == 0xf)))) {
+        puStack_20 = (int *)puVar10[1];
+      }
+      else {
+        puStack_20 = (int *)*puVar10;
+      }
+      pcStack_24 = (char *)0x4dde04;
+      puStack_20 = (int *)((Strings *)0x9156b0)->get((int)(puStack_20));
+      pcStack_24 = ((unsigned char *)0x9b86a0);
+      puStack_28 = (unsigned char *)0x4dde0f;
+      strcat((char *)((char *)pcStack_24), (const char *)(puStack_20));
+      pcStack_24 = ((unsigned char *)0x9b86a0);
+      puStack_28 = (unsigned char *)0x4dde23;
+      puStack_20 = (int *)iVar5;
+      dialogsObj.item((char *)((char *)puStack_20), (int)(pcStack_24));
+      puStack_20 = (int *)0x0;
+      pcStack_24 = (char *)0x1;
+      puStack_28 = (unsigned char *)param_1;
+      puStack_2c = (int *)0x4dde30;
+      morale_veh((int)(puStack_28), (int)(pcStack_24), (int)(puStack_20));
+      puVar10 = puVar10 + 2;
+      iVar5 = iVar5 + 1;
+    } while ((int)puVar10 < 0x952360);
+    puStack_20 = (int *)0x0;
+    pcStack_24 = (char *)0x1;
+    puStack_28 = (unsigned char *)param_1;
+    puStack_2c = (int *)0x4dde5a;
+    iVar5 = morale_veh((int)(puStack_28), (int)(pcStack_24), (int)(puStack_20));
+    bVar1 = (((unsigned char *)0x95284c))[iVar9];
+    puStack_20 = (int *)0x0;
+    pcStack_24 = (char *)0x0;
+    puStack_28 = (unsigned char *)0x4dde78;
+    iVar6 = popup.exec((int)(pcStack_24), (int (__cdecl *)())(puStack_20));
+    if (iVar6 < 0) {
+      local_8 = 8;
+      puStack_20 = (int *)0x4ddea4;
+      popup.close();
+      local_21b0 = ((void *)0x00669d58);
+      local_1d6c = ((void *)0x00669d50);
+      local_8 = 0xb;
+      puStack_20 = (int *)0x4dded0;
+      popup.scroll_.close();
+      local_8 = 10;
+      puStack_20 = (int *)0x4ddedf;
+      flatButtonA.~FlatButton();
+      local_8 = 9;
+      puStack_20 = (int *)0x4ddeee;
+      flatButtonA.~FlatButton();
+      local_8 = 7;
+LAB_004de33e:
+      puStack_20 = (int *)0x4de349;
+      graphicWinObj.~GraphicWin();
+LAB_004de349:
+      puStack_20 = (int *)0x4de35b;
+      popup.BasePop::~BasePop();
+      return;
+    }
+    iVar5 = iVar6 - (iVar5 - (unsigned int)bVar1);
+    if (iVar5 < 0) {
+      iVar5 = 0;
+    }
+    else if (6 < iVar5) {
+      iVar5 = 6;
+    }
+    (((unsigned char *)0x95284c))[iVar9] = (char)iVar5;
+    if ((((unsigned char *)0x952836))[iVar9] == '\0') {
+      if (iVar6 != 0) {
+        while( true ) {
+          puStack_20 = (int *)0x0;
+          pcStack_24 = (char *)param_1;
+          puStack_28 = (unsigned char *)0x4ddf2e;
+          iVar5 = morale_alien((int)(pcStack_24), (int)(puStack_20));
+          if (iVar5 <= iVar6) break;
+          uVar4 = (*(unsigned short *)(((unsigned char *)0x952830) + iVar9) >> 3 & 3);
+          if (uVar4 == 0) break;
+          *(unsigned short *)(((unsigned char *)0x952830) + iVar9) =
+               (short)uVar4 * 8 - 8U | *(unsigned short *)(((unsigned char *)0x952830) + iVar9) & 0xffe7;
+        }
+      }
+      if (iVar6 < 7) {
+        while( true ) {
+          puStack_20 = (int *)0x0;
+          puStack_28 = (unsigned char *)0x4ddf6f;
+          pcStack_24 = (char *)param_1;
+          iVar5 = morale_alien((int)(pcStack_24), (int)(puStack_20));
+          if (iVar6 <= iVar5) break;
+          uVar4 = (*(unsigned short *)(((unsigned char *)0x952830) + iVar9) >> 3 & 3);
+          if (2 < uVar4) break;
+          *(unsigned short *)(((unsigned char *)0x952830) + iVar9) =
+               (short)uVar4 * 8 + 8U | *(unsigned short *)(((unsigned char *)0x952830) + iVar9) & 0xffe7;
+        }
+      }
+    }
+LAB_004de66a:
+    puStack_20 = (int *)0x0;
+    pcStack_24 = (char *)0x4de676;
+    ((Console *)0x9156b0)->update_data((int)(puStack_20));
+  }
+  else {
+    if ((*(int *)0x9bc070) != 2) {
+      if ((*(int *)0x9bc070) == 3) {
+        puStack_20 = (int *)0x0;
+        pcStack_24 = (char *)0x42;
+        puStack_28 = (unsigned char *)0x0;
+        puStack_2c = (int *)0xffffffff;
+        pcStack_30 = ((char *)0x00689050);
+        puStack_34 = ((unsigned char *)0x9b8aa8);
+        uStack_38 = 0x4de256;
+        popup.start((char *)(puStack_34), (const char *)(pcStack_30), (int)(puStack_2c), (char *)(puStack_28), (int)(pcStack_24), (GraphicWin *)(puStack_20));
+        iVar5 = 0;
+        puVar10 = ((int *)0x946d4c);
+        do {
+          (*(int *)0x9bbff0) = puVar10[1];
+          (*(int *)0x9bbfec) = *puVar10;
+          puStack_20 = puVar10 + -6;
+          pcStack_24 = ((unsigned char *)0x9b86a0);
+          *(unsigned char *)0x9b86a0 = 0;
+          puStack_28 = (unsigned char *)0x4de282;
+          strcat((char *)((unsigned char *)0x9b86a0), (const char *)pcStack_24);
+          pcStack_24 = ((unsigned char *)0x9b86a0);
+          puStack_28 = (unsigned char *)0x4de296;
+          puStack_20 = (int *)iVar5;
+          dialogsObj.item((char *)((char *)puStack_20), (int)(pcStack_24));
+          puVar10 = puVar10 + 0x167;
+          iVar5 = iVar5 + 1;
+        } while ((int)puVar10 < 0x949a2c);
+        puStack_20 = (int *)0x0;
+        pcStack_24 = (char *)0x0;
+        puStack_28 = (unsigned char *)0x4de2c2;
+        iVar5 = popup.exec((int)(pcStack_24), (int (__cdecl *)())(puStack_20));
+        if (iVar5 < 0) {
+          local_8 = 0x12;
+          puStack_20 = (int *)0x4de2f0;
+          popup.close();
+          local_21b0 = ((void *)0x00669d58);
+          local_1d6c = ((void *)0x00669d50);
+          local_8 = 0x15;
+          puStack_20 = (int *)0x4de31c;
+          popup.scroll_.close();
+          local_8 = 0x14;
+          puStack_20 = (int *)0x4de32b;
+          flatButtonA.~FlatButton();
+          local_8 = 0x13;
+          puStack_20 = (int *)0x4de33a;
+          flatButtonA.~FlatButton();
+          local_8 = 0x11;
+          goto LAB_004de33e;
+        }
+        (((unsigned char *)0x952836))[iVar9] = (char)iVar5;
+      }
+      else {
+        if ((*(int *)0x9bc070) != 4) goto LAB_004de676;
+        puStack_20 = (int *)0x0;
+        pcStack_24 = (char *)0x42;
+        puStack_28 = (unsigned char *)0x0;
+        puStack_2c = (int *)0xffffffff;
+        pcStack_30 = ((char *)0x0068905c);
+        puStack_34 = ((unsigned char *)0x9b8aa8);
+        uStack_38 = 0x4de39f;
+        popup.start((char *)(puStack_34), (const char *)(pcStack_30), (int)(puStack_2c), (char *)(puStack_28), (int)(pcStack_24), (GraphicWin *)(puStack_20));
+        *(unsigned char *)0x9b86a0 = 0;
+        puStack_20 = *(int **)((*(int *)0x9b90f8) + 100);
+        pcStack_24 = (char *)0x4de3ba;
+        puStack_20 = (int *)((Strings *)0x9156b0)->get((int)(puStack_20));
+        pcStack_24 = ((unsigned char *)0x9b86a0);
+        puStack_28 = (unsigned char *)0x4de3c5;
+        strcat((char *)((char *)pcStack_24), (const char *)(puStack_20));
+        puStack_20 = (int *)0x270f;
+        pcStack_24 = ((unsigned char *)0x9b86a0);
+        puStack_28 = (unsigned char *)0x4de3dd;
+        dialogsObj.item((char *)((char *)pcStack_24), (int)(puStack_20));
+        iVar5 = 0;
+        if (0 < (*(int *)0x9a64cc)) {
+          puVar8 = ((unsigned char *)0x97d053);
+          do {
+            if (puVar8[-0xf] == (((unsigned char *)0x952836))[iVar9]) {
+              puStack_28 = (unsigned char *)0x4de407;
+              pcStack_24 = puVar8;
+              puStack_20 = (int *)iVar5;
+              dialogsObj.item((char *)((char *)puStack_20), (int)(pcStack_24));
+            }
+            iVar5 = iVar5 + 1;
+            puVar8 = puVar8 + 0x134;
+          } while (iVar5 < (*(int *)0x9a64cc));
+        }
+        puStack_20 = (int *)0x0;
+        pcStack_24 = (char *)0x0;
+        puStack_28 = (unsigned char *)0x4de447;
+        iVar9 = popup.exec((int)(pcStack_24), (int (__cdecl *)())(puStack_20));
+        if (iVar9 < 0) {
+          local_8 = 0x17;
+          puStack_20 = (int *)0x4de475;
+          popup.close();
+          local_21b0 = ((void *)0x00669d58);
+          local_1d6c = ((void *)0x00669d50);
+          local_8 = 0x1a;
+          puStack_20 = (int *)0x4de4a1;
+          popup.scroll_.close();
+          local_bb8 = ((void *)0x00669754);
+          local_774 = ((void *)0x0066974c);
+          local_8 = 0x1b;
+          puStack_20 = (int *)0x4de4cf;
+          flatButtonA.close();
+          local_8 = 0x19;
+          puStack_20 = (int *)0x4de4de;
+          baseButtonA.~BaseButton();
+          local_1704 = ((void *)0x00669754);
+          local_12c0 = ((void *)0x0066974c);
+          local_8 = 0x1c;
+          puStack_20 = (int *)0x4de502;
+          flatButtonA.close();
+          local_8 = 0x18;
+          puStack_20 = (int *)0x4de511;
+          baseButtonA.~BaseButton();
+          local_8 = 0x16;
+          puStack_20 = (int *)0x4de520;
+          graphicWinObj.~GraphicWin();
+          local_8 = 0x25;
+          puStack_20 = (int *)0x4de546;
+          popup.BasePop::close();
+          local_8 = 0x24;
+          puStack_20 = (int *)0x4de555;
+          spotObj.~Spot();
+          local_8 = 0x23;
+          puStack_20 = (int *)0x4de564;
+          dialogsObj.~Dialogs();
+          puStack_20 = (int *)0x4de56f;
+          dialogObj.~Dialog();
+          puStack_20 = (int *)0x4de57a;
+          graphicWinObj.~GraphicWin();
+          local_8 = 0x22;
+          puStack_20 = (int *)0x4de589;
+          sub_4066c0();
+          (*(int *)0x9b3374) = local_3234;
+          local_3238 = ((void *)0x006693ac);
+          local_8 = 0x21;
+          puStack_20 = (int *)0x4de5af;
+          sub_4066c0();
+          local_3268 = ((void *)0x006693ac);
+          (*(int *)0x9b3374) = local_3264;
+          local_8 = 0x20;
+          puStack_20 = (int *)0x4de5d0;
+          spriteObj.close();
+          local_8 = 0x26;
+          puStack_20 = (int *)0x4de5f4;
+          flatButtonA.close();
+          local_8 = 0x1f;
+          puStack_20 = (int *)0x4de603;
+          baseButtonA.~BaseButton();
+          local_8 = 0x27;
+          puStack_20 = (int *)0x4de627;
+          flatButtonA.close();
+          local_8 = 0x1e;
+          puStack_20 = (int *)0x4de636;
+          baseButtonA.~BaseButton();
+          local_8 = 0x1d;
+          goto LAB_004de92b;
+        }
+        if (iVar9 == 9999) {
+          iVar9 = -1;
+        }
+        (((short *)0x952856))[param_1 * 0x1a] = (short)iVar9;
+      }
+      pcStack_24 = (char *)(int)(short)(((short *)0x95282a))[param_1 * 0x1a];
+      puStack_28 = (unsigned char *)(int)(short)(((short *)0x952828))[param_1 * 0x1a];
+      puStack_20 = (int *)0x1;
+      puStack_2c = (int *)0x4de667;
+      draw_tile((int)(puStack_20), (int)(puStack_28), (int)(pcStack_24));
+      goto LAB_004de66a;
+    }
+    pcStack_24 = (char *)&local_64;
+    puStack_28 = (unsigned char *)(unsigned int)(unsigned char)(((unsigned char *)0x952838))[iVar9];
+    puStack_20 = (int *)0xa;
+    *(unsigned char *)0x9b86a0 = 0;
+    puStack_2c = (int *)0x4ddfcb;
+    _itoa((int)(puStack_28), (char *)&local_64, 10);
+    puStack_2c = &local_64;
+    pcStack_30 = ((unsigned char *)0x9b86a0);
+    puStack_34 = (unsigned char *)0x4ddfd9;
+    strcat((char *)((char *)pcStack_30), (const char *)(puStack_2c));
+    puStack_34 = (unsigned char *)0xffffffff;
+    uStack_38 = 0xffffffff;
+    puStack_3c = (int *)((unsigned char *)0x9b86a0);
+    iStack_40 = 0;
+    puStack_44 = (int *)0x4ddfe9;
+    parse_says((int)(iStack_40), (char *)(puStack_3c), (int)(uStack_38), (int)(puStack_34));
+    puStack_48 = &local_64;
+    puStack_4c = (unsigned char *)(unsigned int)(unsigned char)(((unsigned char *)0x952850))[iVar9];
+    puStack_44 = (int *)0xa;
+    *(unsigned char *)0x9b86a0 = 0;
+    puStack_50 = (int *)0x4de004;
+    _itoa((int)(puStack_4c), (char *)&local_64, 10);
+    puStack_50 = &local_64;
+    puStack_54 = ((unsigned char *)0x9b86a0);
+    uStack_58 = 0x4de012;
+    strcat((char *)((char *)puStack_54), (const char *)(puStack_50));
+    uStack_58 = 0xffffffff;
+    pcStack_5c = (char *)0xffffffff;
+    puStack_60 = ((unsigned char *)0x9b86a0);
+    local_64 = 1;
+    uStack_68 = 0x4de022;
+    parse_says((int)(local_64), (char *)(puStack_60), (int)(pcStack_5c), (int)(uStack_58));
+    puStack_28 = (unsigned char *)(unsigned int)(unsigned char)(((unsigned char *)0x952837))[iVar9];
+    pcStack_24 = (char *)&local_64;
+    puStack_20 = (int *)0xa;
+    *(unsigned char *)0x9b86a0 = 0;
+    puStack_2c = (int *)0x4de040;
+    _itoa((int)(pcStack_24), (char *)&local_64, 10);
+    puStack_2c = &local_64;
+    pcStack_30 = ((unsigned char *)0x9b86a0);
+    puStack_34 = (unsigned char *)0x4de04e;
+    strcat((char *)((char *)pcStack_30), (const char *)(puStack_2c));
+    puStack_34 = (unsigned char *)0xffffffff;
+    uStack_38 = 0xffffffff;
+    puStack_3c = (int *)((unsigned char *)0x9b86a0);
+    iStack_40 = 2;
+    puStack_44 = (int *)0x4de05e;
+    parse_says((int)(iStack_40), (char *)(puStack_3c), (int)(uStack_38), (int)(puStack_34));
+    if (1 < (unsigned char)(((unsigned char *)0x94a37a))
+                  [(unsigned int)(unsigned char)(((unsigned char *)0x9ab88c))[(short)(((short *)0x952832))[param_1 * 0x1a] * 0x34] * 0x90
+                  ]) {
+      pcStack_24 = (char *)&local_64;
+      puStack_28 = (unsigned char *)(unsigned int)(unsigned char)(((unsigned char *)0x95284d))[iVar9];
+      puStack_20 = (int *)0xa;
+      *(unsigned char *)0x9b86a0 = 0;
+      puStack_2c = (int *)0x4de0a1;
+      _itoa((int)(puStack_28), (char *)&local_64, 10);
+      puStack_2c = &local_64;
+      pcStack_30 = ((unsigned char *)0x9b86a0);
+      puStack_34 = (unsigned char *)0x4de0af;
+      strcat((char *)((char *)pcStack_30), (const char *)(puStack_2c));
+      puStack_34 = (unsigned char *)0xffffffff;
+      uStack_38 = 0xffffffff;
+      puStack_3c = (int *)((unsigned char *)0x9b86a0);
+      iStack_40 = 3;
+      puStack_44 = (int *)0x4de0bf;
+      parse_says((int)(iStack_40), (char *)(puStack_3c), (int)(uStack_38), (int)(puStack_34));
+    }
+    pcStack_30 = ((char *)0x00689038);
+    if ((unsigned char)(((unsigned char *)0x94a37a))
+              [(unsigned int)(unsigned char)(((unsigned char *)0x9ab88c))[(short)(((short *)0x952832))[param_1 * 0x1a] * 0x34] * 0x90] <
+        2) {
+      pcStack_30 = ((char *)0x00689044);
+    }
+    puStack_20 = (int *)0x0;
+    pcStack_24 = (char *)0x44;
+    puStack_28 = (unsigned char *)0x0;
+    puStack_2c = (int *)0xffffffff;
+    puStack_34 = ((unsigned char *)0x9b8aa8);
+    uStack_38 = 0x4de10c;
+    popup.start((char *)(puStack_34), (const char *)(puStack_2c), (int)(puStack_28), (char *)(pcStack_24), (int)(puStack_20), (GraphicWin *)(pcStack_30));
+    puStack_20 = (int *)0x0;
+    pcStack_24 = (char *)0x0;
+    puStack_28 = (unsigned char *)0x4de11b;
+    iVar5 = popup.exec((int)(pcStack_24), (int (__cdecl *)())(puStack_20));
+    if (iVar5 < 0) {
+      local_8 = 0xd;
+      puStack_20 = (int *)0x4de145;
+      popup.close();
+      local_21b0 = ((void *)0x00669d58);
+      local_1d6c = ((void *)0x00669d50);
+      local_8 = 0x10;
+      puStack_20 = (int *)0x4de171;
+      popup.scroll_.close();
+      local_8 = 0xf;
+      puStack_20 = (int *)0x4de180;
+      flatButtonA.~FlatButton();
+      local_8 = 0xe;
+      puStack_20 = (int *)0x4de18f;
+      flatButtonA.~FlatButton();
+      local_8 = 0xc;
+      goto LAB_004de33e;
+    }
+    puStack_20 = (int *)((unsigned char *)0x9bb5e8);
+    pcStack_24 = (char *)0x4de1a2;
+    uVar3 = atoi((const char *)(puStack_20));
+    pcStack_24 = ((unsigned char *)0x9bb6e8);
+    (((unsigned char *)0x952838))[iVar9] = uVar3;
+    puStack_28 = (unsigned char *)0x4de1b2;
+    uVar3 = atoi((const char *)(pcStack_24));
+    puStack_28 = ((unsigned char *)0x9bb7e8);
+    (((unsigned char *)0x952850))[iVar9] = uVar3;
+    puStack_2c = (int *)0x4de1c2;
+    uVar3 = atoi((const char *)(puStack_28));
+    (((unsigned char *)0x952837))[iVar9] = uVar3;
+    if (1 < (unsigned char)(((unsigned char *)0x94a37a))
+                  [(unsigned int)(unsigned char)(((unsigned char *)0x9ab88c))[(short)(((short *)0x952832))[param_1 * 0x1a] * 0x34] * 0x90
+                  ]) {
+      puStack_20 = (int *)((unsigned char *)0x9bb8e8);
+      pcStack_24 = (char *)0x4de1fc;
+      uVar3 = atoi((const char *)(puStack_20));
+      (((unsigned char *)0x95284d))[iVar9] = uVar3;
+    }
+    puStack_20 = (int *)0x0;
+    pcStack_24 = (char *)0x4de211;
+    ((Console *)0x9156b0)->update_data((int)(puStack_20));
+    pcStack_24 = (char *)(int)(short)(((short *)0x95282a))[param_1 * 0x1a];
+    puStack_28 = (unsigned char *)(int)(short)(((short *)0x952828))[param_1 * 0x1a];
+    puStack_20 = (int *)0x1;
+    puStack_2c = (int *)0x4de228;
+    draw_tile((int)(puStack_20), (int)(puStack_28), (int)(pcStack_24));
+  }
+LAB_004de676:
+  local_8 = 0x29;
+  puStack_20 = (int *)0x4de69c;
+  popup.close();
+  local_21b0 = ((void *)0x00669d58);
+  local_1d6c = ((void *)0x00669d50);
+  local_8 = 0x2c;
+  puStack_20 = (int *)0x4de6c8;
+  popup.scroll_.close();
+  local_bb8 = ((void *)0x00669754);
+  local_774 = ((void *)0x0066974c);
+  local_8 = 0x2d;
+  puStack_20 = (int *)0x4de6f6;
+  flatButtonA.close();
+  local_8 = 0x2b;
+  puStack_20 = (int *)0x4de705;
+  baseButtonA.~BaseButton();
+  local_1704 = ((void *)0x00669754);
+  local_12c0 = ((void *)0x0066974c);
+  local_8 = 0x2e;
+  puStack_20 = (int *)0x4de729;
+  flatButtonA.close();
+  local_8 = 0x2a;
+  puStack_20 = (int *)0x4de738;
+  baseButtonA.~BaseButton();
+  local_8 = 0x28;
+  puStack_20 = (int *)0x4de747;
+  graphicWinObj.~GraphicWin();
+  local_8 = 0x37;
+  puStack_20 = (int *)0x4de76d;
+  popup.BasePop::close();
+  local_8 = 0x36;
+  puStack_20 = (int *)0x4de77c;
+  spotObj.~Spot();
+  local_8 = 0x35;
+  puStack_20 = (int *)0x4de78b;
+  dialogsObj.~Dialogs();
+  puStack_20 = (int *)0x4de796;
+  dialogObj.~Dialog();
+  puStack_20 = (int *)0x4de7a1;
+  graphicWinObj.~GraphicWin();
+  local_3260 = ((void *)0x006698c4);
+  *(unsigned char ***)((int)local_325c + *(int *)(local_325c[0] + 4)) = (unsigned char **)((void *)0x006698c0);
+  local_8 = 0x38;
+  puStack_20 = (int *)0x4de7d7;
+  fn_00402970();
+  local_8 = 0x34;
+  local_324c = 0;
+  local_3260 = ((void *)0x006693a4);
+  *(unsigned char ***)((int)local_325c + *(int *)(local_325c[0] + 4)) = (unsigned char **)((void *)0x006693a0);
+  puStack_20 = (int *)0x4de80c;
+  fn_00402970();
+  local_324c = 0;
+  local_3238 = ((void *)0x006693ac);
+  (*(int *)0x9b3374) = local_3234;
+  *(unsigned char ***)((int)local_328c + *(int *)(local_328c[0] + 4)) = (unsigned char **)((void *)0x006698c0);
+  local_8 = 0x39;
+  puStack_20 = (int *)0x4de85f;
+  fn_00402970();
+  local_327c = 0;
+  local_8 = 0x33;
+  *(unsigned char ***)((int)local_328c + *(int *)(local_328c[0] + 4)) = (unsigned char **)((void *)0x006693a0);
+  puStack_20 = (int *)0x4de896;
+  fn_00402970();
+  local_327c = 0;
+  (*(int *)0x9b3374) = local_3264;
+  local_3268 = ((void *)0x006693ac);
+  local_8 = 0x32;
+  puStack_20 = (int *)0x4de8c1;
+  spriteObj.close();
+  local_8 = 0x3a;
+  puStack_20 = (int *)0x4de8e5;
+  flatButtonA.close();
+  local_8 = 0x31;
+  puStack_20 = (int *)0x4de8f4;
+  baseButtonA.~BaseButton();
+  local_8 = 0x3b;
+  puStack_20 = (int *)0x4de918;
+  flatButtonA.close();
+  local_8 = 0x30;
+  puStack_20 = (int *)0x4de927;
+  baseButtonA.~BaseButton();
+  local_8 = 0x2f;
+LAB_004de92b:
+  puStack_20 = (int *)0x4de936;
+  heapObj.shutdown();
+  puStack_20 = (int *)0x4de948;
+  graphicWinObj.~GraphicWin();
+  return;
 
 }

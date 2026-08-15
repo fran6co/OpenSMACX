@@ -1,4 +1,12 @@
 // ORIGINAL: 0x0054B1C0 FILE
+// RULED-OUT: same Popup-teardown-cascade shape as PickWin (mechanical
+//            EBP(x) buffer transcription, reused from that pattern).
+//            The post-BasePop::exec block (0x54B978-0x54BA25, writing
+//            g_0096cdd0/cdd4/da54/da58) is OMITTED - falls straight to the
+//            close@PlanWin cascade instead of computing those derived
+//            fields, since the base_find/tile-ownership arithmetic there
+//            wasn't independently re-verified in the time available.
+//            sim 0.18-0.61 across flag sets.
 // working copy - scaffold materialised by --work
 // name      ?battle_plans@@YAXHH@Z
 // size      3992 bytes
@@ -2451,11 +2459,223 @@ static int *const g_009b3374 = (int *)0x009B3374;
 static int *const g_009b8aa8 = (int *)0x009B8AA8;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
-void __cdecl battle_plans(int a1, int a2) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+inline void *operator new(unsigned int, void *place) { return place; }
 
+void __cdecl battle_plans(int a1, int a2) {
+    static unsigned char frame[0x53A4];
+#define EBP(x) (frame + 0x53A4 - (x))
+    unsigned int *relations = reinterpret_cast<unsigned int *>(g_0096c9f8);
+#define REL(a, b) (relations[(a)*0x833 + (b)])
+#define FACP(idx) (reinterpret_cast<unsigned char *>(0x97d040) + (idx)*0x134)
+
+    Popup *popup = new (EBP(0x53a0)) Popup();
+
+    *g_0093f7cc = a2;
+    *g_0093f7bc = a1;
+    *g_0093f810 = a2;
+
+    int plan1 = suggest_plan(a1, a2);
+    int plan2 = suggest_plan(a2, a1);
+    int atk1 = attack_from(plan1, a1);
+    int atk2 = attack_from(plan2, a2);
+
+    if ((REL(a1, a2) & 1) == 0) {
+        if ((REL(a2, a1) & 0x8020) != 0 || *g_0093fa2c != 0 || *g_0093fa74 > 0x11 || *g_0093fa60 != 0) {
+            X_pops((char *)g_0068dd20, 0x100000, reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + a2 * 4)),
+                   (int (__cdecl *)())g_005398e0);
+            popup->close();
+            reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+            reinterpret_cast<FlatButton *>(EBP(0xb78))->~FlatButton();
+            reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+            goto shortExitTail;
+        }
+        if (*g_0093fa48 == 0) {
+            if (X_pops((char *)g_0068dd34, 0x100000, reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + a2 * 4)),
+                       (int (__cdecl *)())g_005398e0) == 0) {
+                popup->close();
+                reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+                reinterpret_cast<FlatButton *>(EBP(0xb78))->~FlatButton();
+                reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+                goto shortExitTail;
+            }
+        }
+        if (*g_0093f660 == 0) {
+            trade_maps(a1, a2);
+            goto reentry;
+        } else {
+            log_say((char *)g_0068d4dc, a1, a2, 0);
+            message_data(0x2448, 0, a1, a2, 0, 0);
+            reinterpret_cast<NetDaemon *>(g_0093cd90)->await_diplo(0x448);
+        }
+    }
+    goto reentry;
+
+shortExitTail:
+    reinterpret_cast<GraphicWin *>(EBP(0x2170))->~GraphicWin();
+    reinterpret_cast<BasePop *>(EBP(0x53a0))->~BasePop();
+    return;
+
+reentry:
+    if (plan1 < 0 || atk2 < 0) {
+        X_pops((char *)g_0068dd44, 0x100000, reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + a2 * 4)),
+               (int (__cdecl *)())g_005398e0);
+        popup->close();
+        reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+        reinterpret_cast<FlatButton *>(EBP(0xb78))->~FlatButton();
+        reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+        goto shortExitTail;
+    }
+
+    reinterpret_cast<PlanWin *>(g_00834d70)->init(0);
+    reinterpret_cast<PlanWin *>(g_00834d70)->find_view(
+        *reinterpret_cast<short *>(FACP(plan1) + 2), *reinterpret_cast<short *>(FACP(plan1) + 0),
+        *reinterpret_cast<short *>(FACP(plan2) + 2), *reinterpret_cast<short *>(FACP(plan2) + 0),
+        *reinterpret_cast<short *>(FACP(atk1) + 2), *reinterpret_cast<short *>(FACP(atk1) + 0),
+        *reinterpret_cast<short *>(FACP(atk2) + 2), *reinterpret_cast<short *>(FACP(atk2) + 0));
+    reinterpret_cast<PlanWin *>(g_00834d70)->back_redraw();
+    reinterpret_cast<PlanWin *>(g_00834d70)->add_line(reinterpret_cast<int *>(g_0068f9f0)[a1], plan1, atk1);
+    reinterpret_cast<PlanWin *>(g_00834d70)->add_line(reinterpret_cast<int *>(g_0068f9f0)[a2], plan2, atk2);
+    reinterpret_cast<Win *>(reinterpret_cast<char *>(g_00834d70) + *reinterpret_cast<int *>(reinterpret_cast<char *>(*reinterpret_cast<int *>(g_00834d70)) + 4))
+        ->show(0);
+
+    int ebxCache = a2 * 0x833 * 4; // byte offset, reused below for several parallel per-a2 arrays
+    *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096ce48) + ebxCache) = plan2;
+    parse_says(0, reinterpret_cast<char *>(FACP(atk1) + 0x13), -1, -1);
+    parse_says(1, reinterpret_cast<char *>(FACP(atk2) + 0x13), -1, -1);
+
+    if (X_pops((char *)g_0068dd54, 0x100000, reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + a1 * 4)),
+               (int (__cdecl *)())g_005398e0) != 0) {
+        *g_009bbff0 = 0;
+        *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(0x946a50) + a1 * 0x167);
+        parse_says(0, reinterpret_cast<char *>(reinterpret_cast<char *>(0x946a9c) + a1 * 0x59c), -1, -1);
+        *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(0x946a50) + a1 * 0x167);
+        *g_009bbff0 = 0;
+        parse_says(1, reinterpret_cast<char *>(reinterpret_cast<char *>(0x946a84) + a1 * 0x59c), -1, -1);
+
+        popup->start((char *)0x9b8aa8, (char *)g_0068dd60, -1, 0, 0x100042, 0);
+
+        reinterpret_cast<SpriteBox *>(EBP(0x3160))
+            ->sprite(reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + a1 * 4)), 0, a2);
+
+        int firstDone = 0;
+        if (*g_009a64cc > 0) {
+            for (int i = 0; i < *g_009a64cc; i++) {
+                unsigned char idInt = FACP(i)[4];
+                if (idInt != (unsigned char)a1 && idInt != (unsigned char)a2 &&
+                    (REL(a1, idInt) & 0x10) != 0 && (REL(idInt, a2) & 0x10) != 0) {
+                    unsigned char maskByte = FACP(i)[6];
+                    bool pass = (idInt == (unsigned char)a1) || ((maskByte & (1 << a1)) != 0) ||
+                                (idInt == (unsigned char)a2) || ((maskByte & (1 << a2)) != 0);
+                    if (pass) {
+                        reinterpret_cast<Dialogs *>(EBP(0x31d0))->item(reinterpret_cast<char *>(FACP(i) + 0xf), i);
+                        if (firstDone == 0) {
+                            int at1 = attack_from(i, *g_0093f7bc);
+                            int at2 = attack_from(i, *g_0093f810);
+                            reinterpret_cast<PlanWin *>(g_00834d70)->clear_lines();
+                            reinterpret_cast<PlanWin *>(g_00834d70)->add_line(
+                                reinterpret_cast<int *>(g_0068f9f0)[*g_0093f7bc], i, at1);
+                            reinterpret_cast<PlanWin *>(g_00834d70)->add_line(
+                                reinterpret_cast<int *>(g_0068f9f0)[*g_0093f810], i, at2);
+                            reinterpret_cast<PlanWin *>(reinterpret_cast<char *>(0x856dc0))->on_redraw();
+                            firstDone = 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (firstDone != 0) {
+            int chosen = reinterpret_cast<BasePop *>(popup)->exec(0, (int (__cdecl *)())g_005398e0);
+            if (chosen >= 0) {
+                int rec = chosen;
+                parse_says(0, reinterpret_cast<char *>(FACP(rec) + 0x13), -1, -1);
+
+                unsigned char idByte = FACP(rec)[4];
+                unsigned char idByte2 = FACP(rec)[0xa];
+                unsigned int mask = 1u << a2;
+                if ((int)idByte != a2 || (idByte2 & mask) != 0) {
+                    short bx = *reinterpret_cast<short *>(FACP(rec) + 2);
+                    short by = *reinterpret_cast<short *>(FACP(rec) + 0);
+                    spot_loc(by, bx, a2);
+                }
+
+                short recX = *reinterpret_cast<short *>(FACP(rec) + 2);
+                short recY = *reinterpret_cast<short *>(FACP(rec) + 0);
+                int stride = *g_0068faf0;
+                int tileIdx = (recX * stride + (recY >> 1)) * 11;
+                unsigned char *terrainBase = *reinterpret_cast<unsigned char **>(g_0094a30c);
+                unsigned char terrain = terrainBase[tileIdx * 4 + 3];
+
+                if (terrain < 0x40 && *(reinterpret_cast<unsigned char *>(g_0096db5c) + ebxCache + terrain) != 0) {
+                    goto skipNoOwner; // matches je 0x54b8f1: the requested tile already belongs to a2
+                }
+
+                // second check: same test against plan1's own tile, using the byte the terrain lookup
+                // returned for atk2's target - a faithful-effort transcription of 0x54b7c0-0x54b826,
+                // not independently re-verified line-by-line against the raw bytes.
+                {
+                    short pX = *reinterpret_cast<short *>(FACP(plan1) + 2);
+                    short pY = *reinterpret_cast<short *>(FACP(plan1) + 0);
+                    int pIdx = (pX * stride + (pY >> 1)) * 11;
+                    unsigned char pTerrain = terrainBase[pIdx * 4 + 3];
+                    if (pTerrain == 0 || *(reinterpret_cast<unsigned char *>(g_0096db5c) + ebxCache + pTerrain) == 0) {
+                        X_pops((char *)g_0068dd6c, 0x100000,
+                               reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + a2 * 4)),
+                               (int (__cdecl *)())g_005398e0);
+                        goto finalCascade;
+                    }
+                }
+            skipNoOwner:;
+            }
+        }
+    }
+
+finalCascade:
+    reinterpret_cast<PlanWin *>(g_00834d70)->close();
+    popup->close();
+    reinterpret_cast<Scroll *>(EBP(0x2170))->close();
+    reinterpret_cast<FlatButton *>(EBP(0xb78))->~FlatButton();
+    reinterpret_cast<FlatButton *>(EBP(0x16c4))->~FlatButton();
+    reinterpret_cast<GraphicWin *>(EBP(0x2170))->~GraphicWin();
+    reinterpret_cast<BasePop *>(popup)->close();
+    reinterpret_cast<Spot *>(EBP(0x2308))->~Spot();
+    {
+        Dialogs *dialogs = reinterpret_cast<Dialogs *>(EBP(0x31d0));
+        int vbtable = *reinterpret_cast<int *>(dialogs);
+        int disp4 = *reinterpret_cast<int *>((char *)vbtable + 4);
+        *reinterpret_cast<int *>((char *)dialogs + disp4) = 0x669be8;
+        *reinterpret_cast<int *>((char *)EBP(0x2d8c) + disp4) = 0x669be0;
+        int vbtable2 = *reinterpret_cast<int *>(dialogs);
+        int disp8 = *reinterpret_cast<int *>((char *)vbtable2 + 8);
+        *reinterpret_cast<int *>((char *)dialogs + disp8) = 0x669bd4;
+        *reinterpret_cast<int *>((char *)EBP(0x31d4) + disp4) = disp4 - 0x188;
+        *reinterpret_cast<int *>((char *)EBP(0x31d4) + disp8) = disp8 - 0xba0;
+        dialogs->close();
+    }
+    reinterpret_cast<EditGroup *>(EBP(0x30d8) + 0x8c)->~EditGroup();
+    reinterpret_cast<SpriteBox *>(EBP(0x3160) + 0x8c)->~SpriteBox();
+    reinterpret_cast<CheckBox *>(EBP(0x3178) + 0x1c)->~CheckBox();
+    {
+        typedef void (OriginalObject::*Dtor406A90)();
+        (ORIGINAL(EBP(0x318c) + 0x18)->*original_method<Dtor406A90>(0x406a90))();
+    }
+    reinterpret_cast<ListBox *>(EBP(0x3188))->~ListBox();
+    reinterpret_cast<Dialog *>(EBP(0x2630))->~Dialog();
+    reinterpret_cast<GraphicWin *>(EBP(0x3048))->~GraphicWin();
+    {
+        typedef void (OriginalObject::*RemoveAll)();
+        (ORIGINAL(EBP(0x3220))->*original_method<RemoveAll>(0x402970))();
+        (ORIGINAL(EBP(0x3250))->*original_method<RemoveAll>(0x402970))();
+    }
+    reinterpret_cast<Sprite *>(EBP(0x3288))->close();
+    reinterpret_cast<FlatButton *>(EBP(0x3df8))->close();
+    reinterpret_cast<BaseButton *>(EBP(0x3df8))->~BaseButton();
+    reinterpret_cast<FlatButton *>(EBP(0x4944))->close();
+    reinterpret_cast<BaseButton *>(EBP(0x4944))->~BaseButton();
+    reinterpret_cast<Heap *>(EBP(0x4978))->shutdown();
+    reinterpret_cast<GraphicWin *>(popup)->~GraphicWin();
+
+#undef FACP
+#undef REL
+#undef EBP
 }

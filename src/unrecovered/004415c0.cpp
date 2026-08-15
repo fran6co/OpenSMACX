@@ -1,4 +1,14 @@
 // ORIGINAL: 0x004415C0 FILE
+// RULED-OUT: 15-way jump table (resolved in the brief) transcribed as a
+//            switch/goto over (a1+2); same Popup-teardown-cascade shape as
+//            the other DiploWin/PickWin siblings, plus one extra pair of
+//            vtable-relative writes (self and self+0x444) for an embedded
+//            RadioButton this function's Dialogs region has that the others
+//            don't. Cases 5/6/8/9 (tech-trade and base-swap proposal loops)
+//            are the largest handlers and were transcribed at "good faith"
+//            fidelity - the array-scan/skip conditions and REL() bit tests
+//            were matched to the raw bytes but not independently re-verified
+//            a second time given the time remaining. sim 0.12-0.34.
 // working copy - scaffold materialised by --work
 // name      ?on_button_clicked@DiploWin@@QAEXH@Z
 // size      4512 bytes
@@ -2754,9 +2764,384 @@ class DiploWin { public:
     void UNK2();
     void on_button_clicked(int);
 };
+inline void *operator new(unsigned int, void *place) { return place; }
+
 void DiploWin::on_button_clicked(int a1) {
-    // BODY GOES HERE.
-    //
+    static unsigned char frame[0x5390];
+#define EBP(x) (frame + 0x5390 - (x))
+    char *self = reinterpret_cast<char *>(this);
+#define I(off) (*reinterpret_cast<int *>(self + (off)))
+#define UI(off) (*reinterpret_cast<unsigned int *>(self + (off)))
+    unsigned int *relations = reinterpret_cast<unsigned int *>(g_0096c9f8);
+#define REL(a, b) (relations[(a)*0x833 + (b)])
+
+    Popup *popup = new (EBP(0x538c)) Popup();
+
+    {
+        unsigned idx = static_cast<unsigned>(a1 + 2);
+        if (idx > 14) goto L4420B2;
+        switch (idx) {
+        case 0: goto L4417F0;
+        case 1: goto L4420B2;
+        case 2: goto L441C9A;
+        case 3: goto L441C89;
+        case 4: goto L44160F;
+        case 5: goto L441694;
+        case 6: goto L4417F0;
+        case 7: goto L441926;
+        case 8: goto L441835;
+        case 9: goto L441E10;
+        case 10: goto L441F28;
+        case 11: goto L441823;
+        case 12: goto L441811;
+        case 13: goto L4417FF;
+        case 14: goto L441CCF;
+        }
+    }
+
+L44160F: // a1 == -2
+    {
+        *g_007492d0 = 1;
+        I(0xa24) = 1;
+        reinterpret_cast<VCall *>(this)->slot062();
+        message_data(0x1509, I(0xab8), 1, 0, 0, 0);
+        if (I(0xa24) == 1 && I(0xa28) == 1) {
+            message_data(0x150a, I(0xab8), 0, 0, 0, 0);
+            if (*g_0093a95c != 0) {
+                this->do_it();
+            }
+        }
+    }
+    goto L4420B2;
+
+L441694: // a1 == -1
+    {
+        *g_007492d0 = 1;
+        I(0xa24) = 2;
+        reinterpret_cast<VCall *>(this)->slot062();
+        message_data(0x1509, I(0xab8), 2, 0, 0, 0);
+        if (*g_0093f660 != 0) goto L4420B2;
+        if (*g_0093a95c != 0) goto L4420B2;
+
+        I(0xa20) = 0;
+        int r2 = rand() % 2;
+        if (r2 != 0) {
+            int v = rand() % 50;
+            this->add_offer(1, 1, (v * 5 + 5) * 5); // lea eax,[edx+edx*4+5]; lea edx,[eax+eax*4]
+        } else {
+            int v = rand() % 89;
+            this->add_offer(1, 0, v);
+            if (rand() % 3 != 0) {
+                int v2 = rand() % 89;
+                this->add_offer(1, 0, v2);
+            }
+        }
+
+        int r4 = rand() % 4;
+        switch (r4) {
+        case 0: this->add_offer(1, 4, 0); break;
+        case 1: this->add_offer(1, 3, 0); break;
+        case 2: this->add_offer(1, 2, 0); break;
+        default: break;
+        }
+    }
+    goto L4420B2;
+
+L4417F0: // a1 == 0 or a1 == 4
+    reinterpret_cast<VCall *>(this)->slot058();
+    goto L4420B2;
+
+L4417FF: // a1 == 11
+    this->add_offer(0, 2, 0);
+    goto L4420B2;
+
+L441811: // a1 == 10
+    this->add_offer(0, 3, 0);
+    goto L4420B2;
+
+L441823: // a1 == 9
+    this->add_offer(0, 4, 0);
+    goto L4420B2;
+
+L441835: // a1 == 6: ask for an energy amount to request
+    {
+        int n = I(0xa1c);
+        int best = 0;
+        for (int i = 0; i < n; i++) {
+            if (*reinterpret_cast<int *>(self + 0xa2c + i * 4) == 1) {
+                best = *reinterpret_cast<int *>(self + 0xa6c + i * 4);
+            }
+        }
+        int answered = X_pop_ask_number((char *)g_00683978, best, (int (__cdecl *)())g_005398e0);
+        if (answered != 0) {
+            popup->close();
+            reinterpret_cast<Scroll *>(EBP(0x215c))->close();
+            reinterpret_cast<FlatButton *>(EBP(0xb64))->~FlatButton();
+            reinterpret_cast<FlatButton *>(EBP(0x16b0))->~FlatButton();
+            goto L441C48;
+        }
+        int other = I(0xab4);
+        int idx = other * 0x833; // matches the shl6/add/lea*2/*8/*2 chain -> other*0x833
+        int cap1 = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096cc00) + idx * 4);
+        int cap = *g_009bb598;
+        if (cap > cap1) {
+            cap = cap1;
+            *g_009bb598 = cap;
+        }
+        this->add_offer(0, 1, cap);
+    }
+    goto L4420B2;
+
+L441926: // a1 == 5: propose a tech trade
+    {
+        popup->start((char *)g_009b8aa8, (char *)g_00683984, -1, 0, 0x40, 0);
+        int lineCount = 0;
+        int myFaction = I(0xab4);
+        for (int t = 0; t < 0x59; t++) {
+            if (!has_tech(t, myFaction)) continue;
+            int n = I(0xa1c);
+            bool already = false;
+            for (int i = 0; i < n; i++) {
+                int type = *reinterpret_cast<int *>(self + 0xa2c + i * 4);
+                if (type != 0) continue;
+                if (*reinterpret_cast<int *>(self + 0xa6c + i * 4) == t) { already = true; break; }
+            }
+            if (already) continue;
+            bool theyHave = has_tech(t, I(0xab8));
+            *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+            if (!theyHave) {
+                strcat((char *)g_009b86a0, (char *)g_00683990);
+            }
+            say_tech((char *)g_009b86a0, t, 1);
+            if (*g_009bc054 == 0 && !theyHave) {
+                strcat((char *)g_009b86a0, (char *)g_00683994);
+            }
+            reinterpret_cast<Dialogs *>(EBP(0x31bc))->item((char *)g_009b86a0, t);
+            lineCount++;
+        }
+        int otherFaction = I(0xab8);
+        for (int f = 1; f < 8; f++) {
+            if (f == myFaction || f == otherFaction) continue;
+            if (((1 << f) & *reinterpret_cast<unsigned char *>(g_009a64e9)) == 0) continue;
+            if ((REL(otherFaction, f) & 8) == 0) continue;
+            if ((REL(f, otherFaction) & 8) != 0) continue;
+            int techId = f + 0x59;
+            int n = I(0xa1c);
+            bool already = false;
+            for (int i = 0; i < n; i++) {
+                if (*reinterpret_cast<int *>(self + 0xa2c + i * 4) != 0) continue;
+                if (*reinterpret_cast<int *>(self + 0xa6c + i * 4) == techId) { already = true; break; }
+            }
+            if (already) continue;
+            *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+            say_tech((char *)g_009b86a0, techId, 1);
+            reinterpret_cast<Dialogs *>(EBP(0x31bc))->item((char *)g_009b86a0, techId);
+            lineCount++;
+        }
+        int n2 = I(0xa1c);
+        bool haveEnd = false;
+        for (int i = 0; i < n2; i++) {
+            if (*reinterpret_cast<int *>(self + 0xa2c + i * 4) != 0) continue;
+            if (*reinterpret_cast<int *>(self + 0xa6c + i * 4) == 0x270f) { haveEnd = true; break; }
+        }
+        if (!haveEnd) {
+            *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+            strcat((char *)g_009b86a0, (char *)reinterpret_cast<Strings *>(g_009b90d8)
+                                            ->get(*reinterpret_cast<int *>(*g_009b90f8 + 0x4c8)));
+            reinterpret_cast<Dialogs *>(EBP(0x31bc))->item((char *)g_009b86a0, 0x270f);
+            lineCount++;
+        }
+        if (lineCount == 0) {
+            popup->close();
+            reinterpret_cast<Scroll *>(EBP(0x215c))->close();
+            reinterpret_cast<FlatButton *>(EBP(0xb64))->~FlatButton();
+            reinterpret_cast<FlatButton *>(EBP(0x16b0))->~FlatButton();
+            goto L441C48;
+        }
+        int chosen = reinterpret_cast<BasePop *>(popup)->exec(0, (int (__cdecl *)())g_005398e0);
+        if (chosen < 0) goto L4420B2;
+        this->add_offer(0, 5, chosen);
+    }
+    goto L4420B2;
+
+L441C89: // a1 == 1
+    reinterpret_cast<Console *>(0x9156b0)->chat(0);
+    goto L4420B2;
+
+L441C9A: // a1 == 12
+    I(0xa1c) = 0;
+    message_data(0x1508, I(0xab8), 0, 0, 0, 0);
+    reinterpret_cast<VCall *>(this)->slot058();
+    goto L4420B2;
+
+L441CCF: // a1 == 12 (second entry, end-treaty confirmation)
+    {
+        int other = I(0xab8);
+        int idx = other * 0x59c;
+        *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946a50) + idx);
+        parse_says(0, reinterpret_cast<char *>(reinterpret_cast<char *>(g_00946a9c) + idx), -1, -1);
+        *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946a50) + idx);
+        parse_says(1, reinterpret_cast<char *>(reinterpret_cast<char *>(g_00946a84) + idx), -1, -1);
+        *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946d50) + idx);
+        *g_009bbff0 = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946d4c) + idx);
+        parse_says(2, reinterpret_cast<char *>(reinterpret_cast<char *>(g_00946d34) + idx), -1, -1);
+
+        int myFaction = I(0xab4);
+        if ((REL(myFaction, other) & 1) == 0) {
+            X_pop((char *)g_006839a4, 0);
+            goto L4420B2;
+        }
+        if (X_pop((char *)g_006839b4, (int (__cdecl *)())g_005398e0) == 0) goto L4420B2;
+        if (diplo_lock(0x32) == 0) {
+            net_pact_ends(myFaction, other, 1);
+            diplo_unlock();
+        }
+        *g_007492d0 = 1;
+    }
+    goto L4420B2;
+
+L441E10: // a1 == 8: propose a peace/pact-ish tech-based offer
+    {
+        int other = I(0xab8);
+        int myFaction = I(0xab4);
+        for (int t = 0; t < 0x59; t++) {
+            if (!has_tech(t, myFaction)) continue;
+            int n = I(0xa1c);
+            bool already = false;
+            for (int i = 0; i < n; i++) {
+                if (*reinterpret_cast<int *>(self + 0xa2c + i * 4) == 0 &&
+                    *reinterpret_cast<int *>(self + 0xa6c + i * 4) == 0) {
+                    already = true;
+                    break;
+                }
+            }
+            if (already) continue;
+            if (has_tech(t, other)) continue;
+            this->add_offer(0, 0, 0);
+        }
+        for (int f = 1; f < 8; f++) {
+            if (f == myFaction || f == other) continue;
+            if (((1 << f) & *reinterpret_cast<unsigned char *>(g_009a64e9)) == 0) continue;
+            if ((REL(myFaction, f) & 8) == 0) continue;
+            if ((REL(f, other) & 8) != 0) continue;
+            int techId = f + 0x59;
+            int n = I(0xa1c);
+            bool already = false;
+            for (int i = 0; i < n; i++) {
+                if (*reinterpret_cast<int *>(self + 0xa2c + i * 4) == 0 &&
+                    *reinterpret_cast<int *>(self + 0xa6c + i * 4) == techId) {
+                    already = true;
+                    break;
+                }
+            }
+            if (already) continue;
+            this->add_offer(techId, 0, 0);
+        }
+        this->add_offer(0x270f, 0, 0);
+    }
+    goto L4420B2;
+
+L441F28: // a1 == 9: propose a base swap
+    {
+        popup->start((char *)g_009b8aa8, (char *)g_006839c4, -1, 0, 0x40, 0);
+        int lineCount = 0;
+        int myFaction = I(0xab4);
+        int other = I(0xab8);
+        unsigned char *rec = reinterpret_cast<unsigned char *>(g_00946fec);
+        for (int b = 1; rec < reinterpret_cast<unsigned char *>(0x949730); b++, rec += 0x59c) {
+            if (b == myFaction || b == other) continue;
+            if (((1 << b) & *reinterpret_cast<unsigned char *>(g_009a64e8)) == 0) continue;
+            if ((REL(b, myFaction) & 8) != 0) continue;
+            if ((REL(b, other) & 8) != 0) continue;
+            *g_009bbfec = *reinterpret_cast<int *>(rec);
+            *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+            *g_009bbff0 = 0;
+            parse_says(0, reinterpret_cast<char *>(rec + 0x4c), -1, -1);
+            *g_009bbfec = *reinterpret_cast<int *>(rec);
+            *g_009bbff0 = 0;
+            parse_says(1, reinterpret_cast<char *>(rec + 0x34), -1, -1);
+            *g_009bbfec = *reinterpret_cast<int *>(rec + 0x2fc);
+            *g_009bbff0 = *reinterpret_cast<int *>(rec + 0x300);
+            parse_says(2, reinterpret_cast<char *>(rec + 0x2e4), -1, -1);
+            parse_it((char *)*g_00691b0c, (char *)g_006839d4);
+            reinterpret_cast<Dialogs *>(EBP(0x31bc))->item((char *)g_009b86a0, b);
+            lineCount++;
+        }
+        if (lineCount > 0) {
+            int chosen = reinterpret_cast<BasePop *>(popup)->exec(0, (int (__cdecl *)())g_005398e0);
+            if (chosen < 0) goto L4420B2;
+            this->add_offer(0, 5, chosen);
+        } else {
+            reinterpret_cast<NetMsg *>(0x805338)->pop((char *)g_006839e4, 0x1388, 0, 0);
+        }
+    }
+    goto L4420B2;
+
+L441C48:
+    reinterpret_cast<GraphicWin *>(EBP(0x215c))->~GraphicWin();
+    reinterpret_cast<BasePop *>(popup)->~BasePop();
+    return;
+
+L4420B2:
+    popup->close();
+    reinterpret_cast<Scroll *>(EBP(0x215c))->close();
+    reinterpret_cast<FlatButton *>(EBP(0xb64))->~FlatButton();
+    reinterpret_cast<FlatButton *>(EBP(0x16b0))->~FlatButton();
+    reinterpret_cast<GraphicWin *>(EBP(0x215c))->~GraphicWin();
+    reinterpret_cast<BasePop *>(popup)->close();
+    reinterpret_cast<Spot *>(EBP(0x22f4))->~Spot();
+    {
+        Dialogs *dialogs = reinterpret_cast<Dialogs *>(EBP(0x31bc));
+        int vbtable = *reinterpret_cast<int *>(dialogs);
+        int disp4 = *reinterpret_cast<int *>((char *)vbtable + 4);
+        *reinterpret_cast<int *>((char *)dialogs + disp4) = 0x669be8;
+        *reinterpret_cast<int *>((char *)EBP(0x2d78) + disp4) = 0x669be0;
+        int vbtable2 = *reinterpret_cast<int *>(dialogs);
+        int disp8 = *reinterpret_cast<int *>((char *)vbtable2 + 8);
+        *reinterpret_cast<int *>((char *)dialogs + disp8) = 0x669bd4;
+        *reinterpret_cast<int *>((char *)EBP(0x31c0) + disp4) = disp4 - 0x188;
+        *reinterpret_cast<int *>((char *)EBP(0x31c0) + disp8) = disp8 - 0xba0;
+        dialogs->close();
+    }
+    reinterpret_cast<EditGroup *>(EBP(0x30c4) + 0x8c)->~EditGroup();
+    reinterpret_cast<SpriteBox *>(EBP(0x314c) + 0x8c)->~SpriteBox();
+    reinterpret_cast<CheckBox *>(EBP(0x3164) + 0x1c)->~CheckBox();
+    {
+        // a second, embedded RadioButton-bearing widget is patched with two
+        // more vtable-relative writes (self and self+0x444) before its own
+        // close(); reproduced with the same displacement chase as above.
+        unsigned char *base = EBP(0x3178);
+        int *vt = *reinterpret_cast<int **>(base);
+        int d4 = vt[1];
+        *reinterpret_cast<int *>(base + d4) = 0x669a6c;
+        *reinterpret_cast<int *>(base + d4 + 0x444) = 0x669a64;
+        int d8 = vt[2];
+        *reinterpret_cast<int *>(base + d8) = 0x669a58;
+        *reinterpret_cast<int *>(base + d4 - 4) = d4 - 0x18;
+        *reinterpret_cast<int *>(base + d8 - 4) = d8 - 0xa30;
+        reinterpret_cast<RadioButton *>(base)->close();
+    }
+    reinterpret_cast<ListBox *>(EBP(0x3174))->~ListBox();
+    reinterpret_cast<Dialog *>(EBP(0x261c))->~Dialog();
+    reinterpret_cast<GraphicWin *>(EBP(0x3034))->~GraphicWin();
+    {
+        typedef void (OriginalObject::*RemoveAll)();
+        (ORIGINAL(EBP(0x320c))->*original_method<RemoveAll>(0x402970))();
+        (ORIGINAL(EBP(0x323c))->*original_method<RemoveAll>(0x402970))();
+    }
+    reinterpret_cast<Sprite *>(EBP(0x3274))->close();
+    reinterpret_cast<FlatButton *>(EBP(0x3de4))->close();
+    reinterpret_cast<BaseButton *>(EBP(0x3de4))->~BaseButton();
+    reinterpret_cast<FlatButton *>(EBP(0x4930))->close();
+    reinterpret_cast<BaseButton *>(EBP(0x4930))->~BaseButton();
+    reinterpret_cast<Heap *>(EBP(0x4964))->shutdown();
+    reinterpret_cast<GraphicWin *>(popup)->~GraphicWin();
+    return;
+
+#undef REL
+#undef UI
+#undef I
+#undef EBP
     // Reach fields by offset - the class is deliberately empty:
     //     char *self = reinterpret_cast<char *>(this);
     //     int v = *reinterpret_cast<int *>(self + 0x24);
