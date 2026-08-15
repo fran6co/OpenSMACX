@@ -113,14 +113,20 @@ extern Font **FontDefaultPtr;
 
 /*
  * The face name every `Font::init` call site passes when it does not name one
- * of its own: 0x00691B2C, which holds a pointer to the literal "Arial". Read
- * as `*DefaultFontFace`; the extra level of pointer is the tree's convention
- * for a global that lives at a fixed address in the shipped image.
+ * of its own. WinMain passes it as the FACE while naming "arialn.ttf" as the
+ * FILE, which is why the four-argument `init` overload exists.
  *
- * WinMain passes it as the FACE while naming "arialn.ttf" as the FILE, which
- * is why the four-argument `init` overload exists.
+ * ITS VALUE IS RECOVERED, NOT POINTED AT. The variable is at 0x00691B2C and
+ * the image STORES its initial value there - `.data` is stored in the file up
+ * to 0x006A8000 and this is below that line - so the four bytes read
+ * 0x00691BD4, which is the literal "Arial". That is a fact about the shipped
+ * binary and it belongs in the source as the string it is.
+ *
+ * The pointer-to-fixed-address spelling this replaces also compiled wrong:
+ * WinMain's `mov ecx, [0x691b2c]` is ONE load of a `char *` variable, and
+ * `*DefaultFontFace` through an `LPCSTR *` is two.
  */
-extern LPCSTR *DefaultFontFace;
+extern LPCSTR DefaultFontFace;
 
 int __fastcall font_unk1_redirect(
     Font *self, void *, int a, int b, int c, int d);
