@@ -94,3 +94,22 @@ class AgainstTheImageTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FrameSizeTests(unittest.TestCase):
+    """The number four of seven bodies in one batch needed and did not have."""
+
+    @unittest.skipUnless(HAVE_IMAGE, "needs the shipped terranx.exe")
+    def test_the_reserved_size_is_read_from_the_prologue(self):
+        import pefile
+        import emit_translation_unit as emit
+        pe = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+        functions = emit.load_functions()
+        row = functions[0x0053A980]      # the body that diagnosed the cause
+        spans = emit.parse_body_ranges(row.get("body_ranges") or "")
+        self.assertGreater(tool.frame_size(pe, spans), 0)
+
+    def test_no_span_is_not_a_frame_of_zero(self):
+        # -1 and 0 must stay distinct: a function that reserves nothing is a
+        # fact, and "could not read it" is not that fact.
+        self.assertEqual(tool.frame_size(None, []), -1)
