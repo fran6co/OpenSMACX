@@ -128,6 +128,10 @@ WINDOWS_STRUCT = {
              ("long", "right", ""), ("long", "bottom", "")),
     "POINT": (("long", "x", ""), ("long", "y", "")),
     "SIZE": (("long", "cx", ""), ("long", "cy", "")),
+    # Four bytes, ABI-frozen like RECT; Palette holds the full 256-entry table
+    # by value as `PALETTEENTRY entries_[256]`.
+    "PALETTEENTRY": (("BYTE", "peRed", ""), ("BYTE", "peGreen", ""),
+                     ("BYTE", "peBlue", ""), ("BYTE", "peFlags", "")),
 }
 
 
