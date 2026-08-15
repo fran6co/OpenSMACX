@@ -298,7 +298,15 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   process dies before its first instruction with exit 53 and no diagnostic -
   which reads exactly like the recovered code faulting immediately. Today it
   faults at `0x0062D3C2` inside `jackal_init_real`, which is the frontier:
-  everything before it is compiled in and ran
+  everything before it is compiled in and ran.
+
+  `--gdb` starts it under winedbg's gdb proxy and bridges that to a FIXED
+  `localhost:12345`, which is what an IDE needs — winedbg picks a random port
+  every launch and honours neither `WINEDBG_PORT` nor `WINE_GDB_PORT`. Point
+  CLion's *Remote Debug* configuration at that port. It is ASSEMBLY level: the
+  executable carries a CodeView directory pointing at a PDB and gdb cannot
+  read one, so every frame is `?? ()`. For a matching decompilation that is
+  most of what there is to want, because the address IS the catalogue key
 - `tools/cmake_sources.py` — every `CMakeLists.txt` the build reads, found
   rather than named. Three checks derive their population from "the
   CMakeLists" and each had spelled that as the root file; when every
