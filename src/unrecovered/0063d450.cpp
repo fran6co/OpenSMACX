@@ -1,5 +1,7 @@
 // ORIGINAL: 0x0063D450 BYTE_EXACT FILE
 // name      _flush_pending
+// CORRECTED from sub_63d450
+//   zlib 1.0.2 deflate.c, 114 bytes, byte-exact from upstream
 // size      114 bytes
 // spans     0x0063D450-0x0063D4C2
 // prototype 

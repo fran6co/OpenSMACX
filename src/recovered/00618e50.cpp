@@ -1,5 +1,8 @@
 // ORIGINAL: 0x00618E50 BYTE_EXACT
 // name      ?vx_write@Caviar@@SAXHPAXJ@Z
+// CORRECTED from ?vx_write@Caviar@@QAAXHPAXJ@Z
+//   same +4 shift as vx_read, mirrored; pure stack-operand forwarding
+//   with zero ecx-as-receiver use
 // size      24 bytes
 // spans     0x00618E50-0x00618E68
 // prototype 

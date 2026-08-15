@@ -1,5 +1,7 @@
 // ORIGINAL: 0x006416F0 BYTE_EXACT FILE
-// name      sub_6416f0
+// name      _pqdownheap
+// CORRECTED from sub_6416f0
+//   zlib 1.0.2 trees.c, 209 bytes, byte-exact from upstream
 // size      209 bytes
 // spans     0x006416F0-0x006417C1
 // prototype 

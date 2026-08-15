@@ -1,5 +1,7 @@
 // ORIGINAL: 0x006440E0 BYTE_EXACT
-// name      sub_6440e0
+// name      _falloc
+// CORRECTED from sub_6440e0
+//   zlib 1.0.2 inftrees.c, 24 bytes, byte-exact from upstream
 // size      24 bytes
 // spans     0x006440E0-0x006440F8
 // prototype 

@@ -545,38 +545,50 @@ class LoadFunctionsCorrectsNamesTests(unittest.TestCase):
         finally:
             project_catalogue.from_source = original
 
-    def test_a_catalogued_name_the_bytes_contradict_is_rewritten(self):
-        import catalogue_corrections
-        address, (catalogued, corrected, _why) = next(
-            iter(catalogue_corrections.CORRECTIONS.items()))
-        rows = self.load_with(address, catalogued)
-        self.assertEqual(corrected, rows[address]["name"])
+    def test_the_corrected_names_live_in_src_and_need_no_rewrite(self):
+        """`load_functions` reads `src/` and rewrites nothing.
 
-    def test_a_third_spelling_raises_rather_than_being_corrected(self):
-        # The half that is not the rewrite: a row that is neither spelling has
-        # MOVED, and forcing the correction onto it would be a guess.
-        import catalogue_corrections
-        address = next(iter(catalogue_corrections.CORRECTIONS))
-        with self.assertRaises(catalogue_corrections.Stale):
-            self.load_with(address, "?moved@Elsewhere@@QAEXXZ")
+        `tools/catalogue_corrections.py` held 109 names the bytes contradict
+        and this loader applied them on every read. All 109 are now the
+        `// name` line of the annotation they correct, carrying a
+        `// CORRECTED from <old>` note with the evidence - so a recovery is an
+        edit to `src/` and nothing else, and this loader is one call.
+        """
+        import project_catalogue
+        self.assertEqual(tool.load_functions(), project_catalogue.from_source())
 
-    def test_the_LIVE_catalogue_shows_the_corrections_being_applied(self):
-        # No fixture, no monkeypatch: the real load. Every row whose correction
-        # `src/` has not adopted must come back corrected, and none may come
-        # back under the spelling the bytes contradict. This is the assertion
-        # the 0-rewrite era could not make.
-        import catalogue_corrections
-        rows = tool.load_functions()
-        rewritten = 0
-        for address, (catalogued, corrected, _why) in \
-                catalogue_corrections.CORRECTIONS.items():
-            row = rows.get(address)
-            if row is None:
-                continue
-            self.assertNotEqual(catalogued, row["name"], hex(address))
-            self.assertEqual(corrected, row["name"], hex(address))
-            rewritten += 1
-        self.assertGreaterEqual(rewritten, 47)
+    def test_no_annotation_spells_a_name_it_records_as_corrected_away_from(self):
+        """The assertion `catalogue_corrections.Stale` used to make.
+
+        A name written down once can be written back, and the note saying it
+        was corrected does not stop anyone - so the note is held to it.
+        `decomp_status.reverted_corrections` is the gate's copy of this; here
+        it is checked against the live tree so a bad edit fails the unit
+        suite too.
+        """
+        import decomp_status
+        import annotation_scan
+        faults = decomp_status.reverted_corrections(
+            annotation_scan.scan_tree(tool.REPO_ROOT / "src"))
+        self.assertEqual([], faults)
+
+    def test_every_correction_note_names_a_spelling_that_is_gone(self):
+        """A `CORRECTED from` note is evidence, so it has to be legible.
+
+        Both halves are asserted: the note names a mangled name rather than
+        prose, and the tree still carries a good number of them - a migration
+        that quietly dropped them would otherwise pass everything above.
+        """
+        import annotation_scan
+        import decomp_status
+        notes = 0
+        for annotation in annotation_scan.scan_tree(tool.REPO_ROOT / "src"):
+            for line in (annotation.region or "").splitlines():
+                match = decomp_status.CORRECTED_FROM.match(line)
+                if match:
+                    notes += 1
+                    self.assertRegex(match.group("old"), r"^[?_@$A-Za-z]")
+        self.assertGreaterEqual(notes, 100, "the corrections have gone missing")
 
 
 

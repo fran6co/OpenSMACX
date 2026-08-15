@@ -1,5 +1,7 @@
 // ORIGINAL: 0x006429F0 BYTE_EXACT FILE
 // name      _bi_windup
+// CORRECTED from sub_6429f0
+//   zlib 1.0.2 trees.c, 124 bytes, byte-exact from upstream
 // size      124 bytes
 // spans     0x006429F0-0x00642A6C
 // prototype 

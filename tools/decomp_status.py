@@ -734,6 +734,48 @@ def generate_placeholders(functions: dict, annotated: set, force: bool) -> int:
 MALFORMED_LEVER = re.compile(r"^\s*(?://|\*)?\s*LEVER:\s*(?:\S+\s*)?$")
 
 
+
+CORRECTED_FROM = re.compile(r"^\s*(?://|\*)\s*CORRECTED from\s+(?P<old>\S+)")
+
+
+def reverted_corrections(annotations: list) -> list:
+    """[(location, why)] for a corrected name that has gone back to the wrong one.
+
+    THE TRIPWIRE `catalogue_corrections.Stale` USED TO BE. That module held
+    every name the bytes contradict as `(catalogued, corrected, why)` and
+    raised when a row spelled neither - which meant the thing being corrected
+    had moved. It was retired on 2026-08-15 because `src/` is the store: all
+    109 corrections are now the `// name` line itself, with a
+    `// CORRECTED from <old>` note carrying the evidence, so a recovery is an
+    edit to `src/` and nothing else.
+
+    What that gave up is the assertion. A name written down once can be
+    written back, and a comment saying it was corrected does not stop anyone
+    - so the comment is held to it here: an annotation that says it was
+    corrected FROM a spelling may not currently BE that spelling. Cheap, and
+    it is the whole of what the exception protected.
+    """
+    faults = []
+    for annotation in annotations:
+        lines = (annotation.region or "").splitlines()
+        old = [m.group("old") for m in
+               (CORRECTED_FROM.match(line) for line in lines) if m]
+        if not old:
+            continue
+        current = ""
+        for line in lines:
+            match = re.match(r"^\s*(?://|\*) name +(\S+)", line)
+            if match:
+                current = match.group(1)
+                break
+        if current and current in old:
+            faults.append((annotation.location,
+                           f"`// name {current}` is the spelling this "
+                           f"annotation says it was CORRECTED from - the "
+                           f"correction has been undone, or the note is stale"))
+    return faults
+
+
 def lesson_report(annotations: list) -> list:
     """[(location, why)] for every lesson marker that contradicts its state.
 
@@ -1312,6 +1354,15 @@ def main(argv=None) -> int:
     # no image, so a checkout without VC6 - which takes the SKIP path below and
     # exits 0 - must still enforce them. Put after the skip, the grammar would
     # be checked only on machines that could already measure everything.
+    reverted = reverted_corrections(annotations)
+    if reverted:
+        print(f"\nREVERTED CORRECTION: {len(reverted)} annotation(s) spell a "
+              f"name they record as corrected away from.", file=sys.stderr)
+        for location, why in reverted:
+            print(f"  {location}: {why}", file=sys.stderr)
+        if arguments.check:
+            return 1
+
     lesson_faults = lesson_report(annotations)
     if lesson_faults:
         print(f"\nLESSON GRAMMAR: {len(lesson_faults)} annotation(s) carry a "

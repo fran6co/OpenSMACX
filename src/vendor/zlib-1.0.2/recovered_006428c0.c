@@ -1,5 +1,7 @@
 // ORIGINAL: 0x006428C0 BYTE_EXACT FILE
-// name      sub_6428c0
+// name      _set_data_type
+// CORRECTED from sub_6428c0
+//   zlib 1.0.2 trees.c, 116 bytes, byte-exact from upstream
 // size      116 bytes
 // spans     0x006428C0-0x00642934
 // prototype 

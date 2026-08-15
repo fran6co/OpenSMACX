@@ -1,5 +1,7 @@
 // ORIGINAL: 0x0063E0F0 BYTE_EXACT
-// name      sub_63e0f0
+// name      _inflateInit_
+// CORRECTED from sub_63e0f0
+//   zlib 1.0.2 inflate.c, 26 bytes, byte-exact from upstream
 // size      26 bytes
 // spans     0x0063E0F0-0x0063E10A
 // prototype 

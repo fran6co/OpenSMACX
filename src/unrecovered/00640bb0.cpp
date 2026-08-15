@@ -2,7 +2,9 @@
 // LEVER: no explicit `eax` set before `ret` -> `void`, not `int`; the
 //        contract's `int` plus a `return 0` adds a spurious `xor eax,eax`
 // working copy - scaffold materialised by --work
-// name      sub_640bb0
+// name      __tr_init
+// CORRECTED from sub_640bb0
+//   zlib 1.0.2 trees.c, 114 bytes, byte-exact from upstream
 // size      114 bytes
 // spans     0x00640BB0-0x00640C22
 // prototype 

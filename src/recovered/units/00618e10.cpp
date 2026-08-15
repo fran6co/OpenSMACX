@@ -1,5 +1,8 @@
 // ORIGINAL: 0x00618E10 FILE
 // name      ?vx_malloc@Caviar@@SAXK@Z
+// CORRECTED from ?vx_malloc@Caviar@@QAAXK@Z
+//   reads its sole parameter at [esp+4]; a non-static __cdecl member
+//   puts `this` there and the parameter at [esp+8]. No ecx use anywhere
 // size      14 bytes
 // spans     0x00618E10-0x00618E1E
 // prototype 

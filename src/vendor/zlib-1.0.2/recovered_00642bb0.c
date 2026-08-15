@@ -1,5 +1,7 @@
 // ORIGINAL: 0x00642BB0 BYTE_EXACT FILE
-// name      sub_642bb0
+// name      _inflate_blocks_new
+// CORRECTED from sub_642bb0
+//   zlib 1.0.2 infblock.c, 110 bytes, byte-exact from upstream
 // size      110 bytes
 // spans     0x00642BB0-0x00642C1E
 // prototype 

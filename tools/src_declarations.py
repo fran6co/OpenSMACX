@@ -616,6 +616,36 @@ def _definition_lines(name: str, scaffolding: str, provided: set = None,
     return before + [head] + list(members) + methods + ["};"]
 
 
+
+def code_only(text: str) -> str:
+    """`text` with comments and string literals blanked out.
+
+    THE SCAFFOLDER READ TYPE NAMES OUT OF COMMENTS. `for_body` collects every
+    identifier in the body and supplies a declaration for each one `src/`
+    knows, and it collected them from the RAW text - so a comment that
+    mentions a class pulled that class's full definition into the unit.
+
+    Found on 0x006077F0 (`BaseButton::on_key_click`) when its annotation
+    gained the note "the sibling class BasePop declares the same handler":
+    the word `BasePop` in prose grew the unit from 1,972 lines to 2,386 and
+    broke it with `C2086: 'heap_' : redefinition`. Three BYTE_EXACT claims
+    went NO_COMPILE on a comment.
+
+    Blanked rather than deleted so nothing shifts - every offset stays where
+    it was, which keeps any position a caller reports honest. Same treatment
+    `classes_defined_in` in the emitter and `code_only` in
+    `verify_recovered_function` already apply, for the same reason.
+    """
+    def blank(match):
+        return re.sub(r"\S", " ", match.group(0))
+
+    # Block comments, then line comments, then literals: a `//` inside a
+    # string is not a comment, and a quote inside a comment opens nothing.
+    stripped = re.sub(r"/\*.*?\*/", blank, text, flags=re.S)
+    stripped = re.sub(r"//[^\n]*", blank, stripped)
+    return re.sub(r'"(?:\\.|[^"\\])*"' r"|'(?:\\.|[^'\\])*'", blank, stripped)
+
+
 def for_body(body: str, scaffolding: str, source_path=None,
              src: Path = SRC) -> str:
     """Declarations `body` needs that `scaffolding` does not already carry.
@@ -704,7 +734,7 @@ def for_body(body: str, scaffolding: str, source_path=None,
         wanted.append(declaration)
         return True
 
-    for name in sorted(set(IDENTIFIER.findall(body))):
+    for name in sorted(set(IDENTIFIER.findall(code_only(body)))):
         if name in SCALARS or name in NOT_A_DECLARATION:
             continue
         if _present(name, scaffolding):

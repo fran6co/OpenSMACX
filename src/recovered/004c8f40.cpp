@@ -1,5 +1,10 @@
 // ORIGINAL: 0x004C8F40 BYTE_EXACT
 // name      ?unload@VoiceTx@@QAEHXZ
+// CORRECTED from ?unload@VoiceTx@@QAEXXZ
+//   ends `mov dword ptr [esi+0x3c], 0; xor eax, eax; pop esi; ret`. The
+//   clear is the LAST thing before the epilogue and nothing reads it, so
+//   it is a `return 0`. With the void head the body matches 17 of 18
+//   mnemonics and is 2 bytes short; with `int` it is byte-exact
 // size      48 bytes
 // spans     0x004C8F40-0x004C8F70
 // prototype int (__thiscall ?unload@VoiceTx@@QAEHXZ)(VoiceTx* this)

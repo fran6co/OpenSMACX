@@ -460,6 +460,13 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
          and sync it to the active palette.
 ORIGINAL: 0x005D4EF0
 // name      ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
+// CORRECTED from ?init@GraphicWin@@QAEXHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z
+//   BaseButton::init calls it at 0x006072A2 and immediately tests the
+//   result (`test eax, eax` / `jne` at 0x006072A7); all three exits set
+//   EAX deliberately - the Win::init passthrough at 0x005D500E, the
+//   Buffer::init passthrough at 0x005D5071, and `xor eax, eax` at
+//   0x005D5081. The independent IDA prototype already reads int, so only
+//   the symbol string is stale
 // size      443 bytes
 // spans     0x005D4EF0-0x005D5096;0x00662B34-0x00662B49
 // prototype int (__thiscall ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z)(GraphicWin* this, int, int, int, int, int8*, int, Win*, Menu*, BorderSizing*)

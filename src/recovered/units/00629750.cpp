@@ -1,5 +1,10 @@
 // ORIGINAL: 0x00629750 FILE
 // name      ?add_special@StringBox@@QAEHPAD@Z
+// CORRECTED from ?add_special@StringBox@@QAEXPAD@Z
+//   ends `xor eax, eax; pop esi; ret 4`. No source form for a genuinely
+//   void function reproduces an unread clear: a `volatile` local spills
+//   to the stack instead of the register, and a plain one is dead-store
+//   eliminated. It is a `return 0`
 // size      36 bytes
 // spans     0x00629750-0x00629774
 // prototype int (__thiscall ?add_special@StringBox@@QAEHPAD@Z)(StringBox* this, int8*)

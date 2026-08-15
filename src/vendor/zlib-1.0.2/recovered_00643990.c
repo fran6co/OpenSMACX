@@ -1,5 +1,7 @@
 // ORIGINAL: 0x00643990 BYTE_EXACT FILE
-// name      sub_643990
+// name      _inflate_trees_bits
+// CORRECTED from sub_643990
+//   zlib 1.0.2 inftrees.c, 85 bytes, byte-exact from upstream
 // size      85 bytes
 // spans     0x00643990-0x006439E5
 // prototype 

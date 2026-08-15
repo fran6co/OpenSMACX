@@ -63,8 +63,14 @@ were deferred in one batch against headers that named every offset they
 needed, which is what `member_map` now settles.
 
 The catalogue's own claims are not trusted where the bytes disagree:
-`tools/catalogue_corrections.py` records the mangled names IDA reconstructed
-wrongly and the instruction that says so, and `tools/recovery_symbols.py` is
+the retired `catalogue_corrections` held the mangled names IDA reconstructed
+wrongly; those 109 corrections are written in the annotations they correct
+now — the `// name` line plus a `// CORRECTED from <old>` note carrying the
+byte evidence — so a recovery is an edit to `src/` and nothing else.
+`tools/decomp_status.py --check` holds the note to its name: an annotation
+saying it was corrected FROM a spelling may not currently BE that spelling,
+which is the tripwire the retired module's `Stale` exception used to be.
+`tools/recovery_symbols.py` is
 the one place that decides what symbol a recovered function carries.
 `tools/recover_conventions.py` and `tools/derive_prototypes_from_names.py` read
 the convention and the prototype the mangled name already states; and

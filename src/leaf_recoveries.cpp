@@ -1042,7 +1042,9 @@ Purpose: Reverse the low `count` bits of a value.
          the shift happens after the OR rather than before it.
 
 ORIGINAL: 0x00642940 BYTE_EXACT
-// name      sub_642940
+// name      _bi_reverse
+// CORRECTED from sub_642940
+//   zlib 1.0.2 trees.c, 31 bytes, byte-exact from upstream
 // size      31 bytes
 // spans     0x00642940-0x0064295F
 // prototype 
@@ -1528,7 +1530,9 @@ Purpose: Append a 16-bit value to a byte stream, most significant byte first.
          and are left alone rather than papered over.
 
 ORIGINAL: 0x0063D420
-// name      sub_63d420
+// name      _putShortMSB
+// CORRECTED from sub_63d420
+//   zlib 1.0.2 deflate.c, 47 bytes, byte-exact from upstream
 // size      47 bytes
 // spans     0x0063D420-0x0063D44F
 // prototype 

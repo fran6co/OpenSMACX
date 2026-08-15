@@ -1,5 +1,8 @@
 // ORIGINAL: 0x004C7AB0 BYTE_EXACT
 // name      ?is_trackset_playing@Midi@@QAE_NI@Z
+// CORRECTED from ?is_trackset_playing@Midi@@QAEHI@Z
+//   the no-delegate path is `xor al, al`, which clears AL alone; only a
+//   bool return produces that opcode, and `H` (int) cannot
 // size      32 bytes
 // spans     0x004C7AB0-0x004C7AD0
 // prototype bool (__thiscall ?is_trackset_playing@Midi@@QAE_NI@Z)(Midi* this, unsigned int)

@@ -1,5 +1,7 @@
 // ORIGINAL: 0x0063D120 BYTE_EXACT FILE
-// name      sub_63d120
+// name      _deflateReset
+// CORRECTED from sub_63d120
+//   zlib 1.0.2 deflate.c, 115 bytes, byte-exact from upstream
 // size      115 bytes
 // spans     0x0063D120-0x0063D193
 // prototype 

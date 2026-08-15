@@ -1,5 +1,7 @@
 // ORIGINAL: 0x00644100 FILE
-// name      sub_644100
+// name      _inflate_trees_free
+// CORRECTED from sub_644100
+//   zlib 1.0.2 inftrees.c, 63 bytes, byte-exact from upstream
 // size      63 bytes
 // spans     0x00644100-0x0064413F
 // prototype 

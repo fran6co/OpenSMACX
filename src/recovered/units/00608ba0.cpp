@@ -1,5 +1,9 @@
 // ORIGINAL: 0x00608BA0 BYTE_EXACT FILE
 // name      ?add_special@StringList@@QAEHPAD@Z
+// CORRECTED from ?add_special@StringList@@QAEXPAD@Z
+//   ends `neg eax; sbb eax, eax; neg eax; ret 4` - the canonical VC6
+//   normalisation of a value into 0 or 1, which a void function has no
+//   reason to compute
 // size      92 bytes
 // spans     0x00608BA0-0x00608BFC
 // prototype int (__thiscall ?add_special@StringList@@QAEHPAD@Z)(StringList* this, int8*)

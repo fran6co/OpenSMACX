@@ -1,5 +1,7 @@
 // ORIGINAL: 0x0063D6F0 BYTE_EXACT FILE
-// name      sub_63d6f0
+// name      _fill_window
+// CORRECTED from sub_63d6f0
+//   zlib 1.0.2 deflate.c, 290 bytes, byte-exact from upstream
 // size      290 bytes
 // spans     0x0063D6F0-0x0063D812
 // prototype
