@@ -833,6 +833,12 @@ def main(argv=None) -> int:
         print(f"0x{address:08X}  {tier}   ({source})")
         for line in describe(verdict):
             print(line)
+        if arguments.diff:
+            # The unit that was scored, not the body: `whole` when the
+            # candidate is already a translation unit, the built one
+            # otherwise, so the listing is of what the verdict measured.
+            render_diff(address, whole or build_unit_text(address, body),
+                        verdict.get("flags") or byte_match.MEASURED_FLAGS)
     return 0 if tier == MATCHED else 1
 
 

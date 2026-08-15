@@ -62,6 +62,38 @@ Text::~Text() OPENSMACX_NOEXCEPT_FALSE {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00645398
 // notes     Staged hybrid export redirect calls the source-owned initializer
+// RULED-OUT: letting VC6 GENERATE this. `Text Txt(512);` with the constructor
+//            defined in-class does produce a dynamic initialiser with the
+//            constructor inlined - but VC6 names it `_$E<n>` and registers it
+//            through `.CRT$XCU`, and there is no `??__ETxt@@YAXXZ` symbol in
+//            the object at all. That name is IDA's reconstruction, not
+//            something the compiler emits, which is why every `??__E` in
+//            src/init_thunks.cpp is hand-written like this one.
+// RULED-OUT: `new (Txt) Text(512)`, which is what stands below. It compiles
+//            in the build - text_recovery.cpp includes text.h - but the
+//            measurement scaffold carries neither `Text` nor `Txt`, so this
+//            body has never been scored at all: NO_COMPILE, `'Txt' :
+//            undeclared identifier`. And it could not match if it were: the
+//            image INLINES the constructor, writing the fields directly,
+//            where this emits `call ??0Text@@QAE@H@Z` to 0x005FD880.
+//
+//            What the image does, read off the bytes, is Text::Text(size_t)
+//            inlined onto the global: `file_name_[0] = 0`, then
+//            `current_pos_`, `text_file_`, `buffer_get_`, `buffer_item_`
+//            zeroed, then `buffer_get_ = mem_get(size)` and, only if that
+//            succeeded, `buffer_item_ = mem_get(size)`. Written that way
+//            against fixed addresses it measures 95.5%, 86 bytes against 86,
+//            with TWO edits: the image hoists `push 0x200` above the five
+//            field stores and this does not. Three source forms produce the
+//            same ordering - the stores written out, a `const int size` held
+//            first, and an `inline` helper taking the size - so the hoist is
+//            the compiler's scheduling of an inlined constructor and not a
+//            spelling.
+//
+//            Landing it needs `Text::Text(size_t)` defined IN text.h, so the
+//            initialiser can inline it the way the original did; the members
+//            it writes are private and 0x005FD880 is the out-of-line copy.
+//            That is a change to the class, not to this body.
 void __cdecl text_txt() {
     new (Txt) Text(512);
     atexit(text_txt_exit);
