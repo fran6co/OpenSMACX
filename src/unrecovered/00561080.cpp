@@ -1,24 +1,25 @@
 // ORIGINAL: 0x00561080 FILE
-// DEFERRED: 4239-instruction per-faction AI turn (enemy_strategy), the
-//           largest of this batch's four non-giant addresses. Plain
-//           __cdecl, no SEH frame, and Ghidra's output is coherent here
-//           (no dropped `this`, since there is none) so it is usable as a
-//           reading aid the way it was for 0x00498B30, unlike the two SEH
-//           dialogs in this same batch. Opening confirmed against raw
-//           disasm: zeroes the faction's whole per-faction AI scratch
-//           block (DAT_0096da38.. DAT_0096da58, 9 dwords) and two
-//           0x80/0x200-entry per-tile arrays (DAT_0096d238/0x96d438,
-//           DAT_0096dd5c-relative flags) before a `do { } while (iVar20 <
-//           DAT_009a64cc)` scan over every vehicle in the game, taking a
-//           very different branch per vehicle depending on whether
-//           `factionID == vehicle.faction` (own-unit bookkeeping: morale/
-//           vet counters, base_forward calls) versus other factions
-//           (threat assessment feeding the same scratch block). This is
-//           the same shape as 0x005AEDE0 (time_warp) - long runs of
-//           near-duplicate map/unit-scan blocks with sign-dependent
-//           corrections - and was not pursued further for the same
-//           reason: getting one of those corrections backwards compiles
-//           clean and is silently the wrong function.
+// DEFERRED: this is the AI military-planning engine (single `int
+//     factionID` param), not a UI or I/O function - 4239 instructions,
+//     1875 Ghidra lines, frame 0x288 bytes (moderate: real locals, no
+//     giant embedded C++ object graph the way the Popup/Dialogs-heavy
+//     addresses in this batch have). Its call list is the opposite shape
+//     from goody_box/game_data: LOW repetition, many DISTINCT one- or
+//     two-off calls (?stack_check@@ 17x is the only high-frequency one;
+//     ?add_goal@@ 7x; then base_at/veh_at/weap_val/veh_cargo/is_coast/
+//     has_abil/garrison_check/zoc_sea/weap_strat/wants_to_attack/
+//     veh_kill/terraform_cost/stack_fix/planet_buster/kill/contiguous/
+//     bitmask each 1-5x, plus 20x _abs). That is the same risk profile
+//     as tech_achieved (0x005BB000, deferred earlier in this batch for a
+//     confirmed hand-arithmetic error on scaled-pointer-index field
+//     offsets) rather than game_data's or goody_box's - bespoke per-site
+//     reasoning, not a mechanically repeatable pattern, so the same
+//     caution applies: a first hand pass is exactly where a wrong
+//     PlayersData/base/veh field offset would compile clean and be wrong.
+// UNBLOCKER: build the address->g_00xxxxxx cross-check (this file's own
+//     extracted globals list, populated from real relocations) BEFORE
+//     writing any indexed/scaled field access, the way it caught a real
+//     bug on 0x005BB000 - do not hand-multiply Ghidra's array indices.
 // working copy - scaffold materialised by --work
 // name      ?enemy_strategy@@YAXH@Z
 // size      14344 bytes

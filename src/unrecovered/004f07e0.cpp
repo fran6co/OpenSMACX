@@ -1,16 +1,4 @@
 // ORIGINAL: 0x004F07E0 FILE
-// DEFERRED: 4133 instructions, 16430 bytes - no jump table, a single
-//   Popup + fs:[0] __try/__finally frame carrying the compiler's own local
-//   unwind-index state machine (raw scope indices and return-address
-//   stores land in Ghidra's `local_30`, alongside its own "Type
-//   propagation algorithm not settling" warning and 7-level pointer types
-//   throughout the 2294-line hypothesis: 229 `if`, 40 `goto`, 0 `switch`).
-//   617 branches (15%) and 351 call sites into 90 distinct callees. Three
-//   orders of magnitude past any function landed in this project so far
-//   (the largest UNRECOVERABLE-partial on record, 0x005CC940, is 2380
-//   bytes); a hand transcription risked landing a body that compiles but
-//   computes something else, so none was attempted - left as BODY GOES
-//   HERE for a dedicated multi-pass effort.
 // working copy - scaffold materialised by --work
 // name      ?base_production@@YAXXZ
 // size      16430 bytes

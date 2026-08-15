@@ -1,13 +1,4 @@
 // ORIGINAL: 0x0059F120 FILE
-// DEFERRED: 7854 instructions, 28292 bytes - two small jump tables (6
-//   entries each, at 0x5A1795 and 0x5A23A7) inside an otherwise
-//   if/else-chained covert-action handler; 973 branches and 723 call sites
-//   into 120 distinct callees. Ghidra's 5011-line hypothesis carries 127
-//   `goto`, 456 `if`, 6 `switch` and the same Popup/__try-__finally
-//   scope-index state machine (raw return addresses stored into
-//   `local_30`) and 7-level pointer types seen on the other four largest
-//   functions. Left as BODY GOES HERE - far past any function this project
-//   has landed a body for.
 // working copy - scaffold materialised by --work
 // name      ?probe@@YAHHHHH@Z
 // size      28292 bytes
@@ -3005,6 +2996,44 @@ static int *const g_009b90d8 = (int *)0x009B90D8;
 static int *const g_009b90f8 = (int *)0x009B90F8;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
+// DEFERRED: unlike this batch's other three addresses, the Ghidra hypothesis
+// for THIS one is diagnosably degenerate, not merely large. The brief's own
+// dump carries "WARNING: Type propagation algorithm not settling", and the
+// body backs that up: 308 references to the four params and 551 locals
+// typed with FOUR TO SEVEN levels of pointer indirection (`int *******`),
+// e.g. `param_1` itself declared `int *******`. That is not a real type -
+// it is the decompiler failing to converge, confirmed by a second, separate
+// symptom: this function opens the same SEH prologue as sub_630d70 and
+// gen_terrain_poly (`puStack_c = &LAB_00661b33; ExceptionList = &local_10;`
+// then a zero-arg `FUN_00645550()` bootstrap call), and Ghidra's stack-slot
+// tracking loses the plot across it - genuine call arguments and the
+// per-call EH state/label writes both surface as `local_XX = (T*******)V;`
+// assignments immediately before a call shown with NO visible arguments,
+// indistinguishable from each other without checking, per call site,
+// whether V falls inside this function's own address range (EH marker) or
+// not (real argument). Traced one such site by hand: the two-argument,
+// already-recovered `morale_veh(int,int)` (0x005C0E40) is called as
+// `local_28=0; local_2c=1; local_30=param_1; local_34=(addr in this
+// function); local_28=FUN_005c0e40();` - three decoy/bookkeeping writes
+// surrounding the two real arguments (local_2c, local_30), with no marker
+// distinguishing them from the ones that same shape is dead. That
+// disambiguation would have to be redone by hand at every one of the ~300
+// call sites across a 5,009-line dump reaching 120 distinct callees (69 of
+// which already have real recovered names/signatures elsewhere in the
+// tree - a usable head start for whoever takes this next) - not a
+// tractable amount of unverifiable-by-compiler work for one pass. The
+// frame itself is legible even though the hypothesis is not: 0x53FC bytes,
+// an embedded BasePop/Popup at [ebp-0x53FC] (GraphicWin/Scroll/FlatButton
+// members within it, per the brief's frame map), matching the
+// "declare the object, let the compiler build the frame" lever proven on
+// gen_terrain_poly's Random - IF a future pass can locate BasePop's real
+// constructor call the way sub_630d70's ClassX::sub_4e3730 was found for
+// ServiceStruct. Two switches are already resolved from the image (not
+// re-derivable from Ghidra): jmp at 0x005A1795, 6 entries, sparse index
+// table at 0x005A5850; jmp at 0x005A23A7, 6 entries, sparse index table at
+// 0x0094A378. Mangled name and prototype
+// (?probe@@YAHHHHH@Z -> int __cdecl(int,int,int,int)) match the given
+// contract already; no signature change is proposed.
 int __cdecl probe(int a1, int a2, int a3, int a4) {
     // BODY GOES HERE.
     //

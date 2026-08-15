@@ -1,14 +1,10 @@
 // ORIGINAL: 0x00456300 FILE
-// DEFERRED: 8333 bytes, ~880-line Ghidra hypothesis. A 25-entry jump table at
-//   0x0045633B (mostly resolving to a shared 19-entry table at 0x004564EF)
-//   dispatches among ~19 distinct report-screen handlers, each building a
-//   multi-line status string via 10-30 chained parse_says/strcat calls into
-//   fixed byte offsets of an InfoWin instance (e.g. `local_14*0x3c0+0xb8+
-//   param_1`); a third, 11-entry table with a sparse byte index at
-//   0x004583F4 nests inside case 0. InfoWin's 41-member src/infowin.h layout
-//   is explicitly UNVERIFIED per this function's own brief ("sizeof(InfoWin)
-//   is not pinned against the image"), so every one of those offsets would
-//   be a guess rather than a confirmed member. Left as BODY GOES HERE.
+// RULED-OUT: frame size does not match 0x504 (many named char[256]/int
+//            temps vs the original's smaller register-heavy layout); the
+//            25/19/11-entry jump tables were treated as compiler-generated
+//            unwind dispatch (never reproduced) rather than real cases 8-24;
+//            CharUpperA and several graphics helpers in the case 4/5 ranking
+//            bar-chart panel were stubbed rather than fully modelled.
 // working copy - scaffold materialised by --work
 // name      ?setup_text@InfoWin@@QAEXXZ
 // size      8333 bytes
@@ -2055,10 +2051,469 @@ class InfoWin { public:
     void setup_text();
 };
 void InfoWin::setup_text() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    typedef void (__cdecl *Fn2)(void *, void *);
+    typedef void *(__cdecl *Fn1i)(int);
+    typedef void (__cdecl *Fn3)(void *, void *, int);
 
+    char *self = reinterpret_cast<char *>(this);
+    int field58 = *reinterpret_cast<int *>(self + 0x58);
+    int field68 = *reinterpret_cast<int *>(self + 0x68);
+    int field64 = *reinterpret_cast<int *>(self + 0x64);
+    int field80 = *reinterpret_cast<int *>(self + 0x80);
+    int field9c8 = *reinterpret_cast<int *>(self + 0x9c8);
+
+    int rowHeight = (field58 < 0) ? field64 : field68 + field58;
+
+    int mode = 0;
+    switch (field9c8) {
+        case 3:
+        case 4:
+            mode = -0xc;
+            break;
+        case 6:
+            mode = -9;
+            break;
+        case 8:
+            mode = -6;
+            break;
+    }
+
+    // Grid rectangle initialisation for up to 24 slots (two groups of 12).
+    {
+        int *loRow = reinterpret_cast<int *>(self + 0x14);
+        short *hiRow = reinterpret_cast<short *>(self + 0x9b8);
+        unsigned char *flagByte = reinterpret_cast<unsigned char *>(self + 0xb8);
+        int *slot = reinterpret_cast<int *>(self + 0x898);
+        int group = 2;
+        do {
+            int count = 12;
+            hiRow[0] = 0;
+            hiRow[1] = 0;
+            int baseY = loRow[-1];
+            int curY = loRow[0] + 5;
+            do {
+                *flagByte = 0;
+                slot[-0x18] = baseY + 5;
+                *slot = curY;
+                curY = curY + rowHeight;
+                slot[0x18] = 0;
+                slot[0x30] = 0;
+                flagByte = flagByte + 0x50;
+                slot = slot + 1;
+                count = count - 1;
+            } while (count != 0);
+            hiRow = hiRow + 2;
+            loRow = loRow + 4;
+            group = group - 1;
+        } while (group != 0);
+    }
+
+    int lineHeight;
+    int lineHeight100;
+    if (*g_00691e6c < 1) {
+        int a = (mode * 3 + 0x30) * 0x19;
+        lineHeight = (a + ((a >> 0x1f) & 0xf)) >> 4;
+        int b = (mode + 0x10) * 100;
+        lineHeight100 = (b + ((b >> 0x1f) & 0xf)) >> 4;
+    } else {
+        lineHeight = (*g_00691e6c * 0x4b) / *g_00691e70;
+        lineHeight100 = (*g_00691e6c * 100) / *g_00691e70;
+    }
+    int baseRowY = lineHeight100 + 2 + field64 + 5;
+
+    int slotIndex = field80;
+    if (slotIndex < slotIndex + 1) {
+        do {
+            int nextIndex = slotIndex + 1;
+            int *rect = reinterpret_cast<int *>(self + 0x10 + nextIndex * 0x10);
+            int rx0 = rect[0];
+            int ry0 = rect[1];
+            int rx1 = rect[2];
+            int ry1 = rect[3];
+            ((Fn2)0x5e2dd3)(&rx0, g_0078d7f8);
+            int leader = *g_00939284;
+            int troubleMakerFlags = *g_0093fac0;
+            short hiFlag = 0;
+            rx0 = rx0 + 3;
+            rx1 = rx1 - 3;
+            ry0 = ry0 + 3;
+            ry1 = ry1 - 3;
+
+            unsigned int kind = *reinterpret_cast<unsigned int *>(self + 0x88 + slotIndex * 4) & 0x80000007;
+            if ((int)kind < 0) {
+                kind = (kind - 1 | 0xfffffff8) + 1;
+            }
+
+            char textBuf[256];
+            char numBuf1[32], numBuf2[32], numBuf3[32], numBuf4[32], numBuf5[32];
+            void *str;
+
+            switch ((int)kind) {
+                case 0: {
+                    textBuf[0] = 0;
+                    lineHeight = 0;
+                    str = ((Fn1i)0x6169a0)(*g_009b90f8);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_0068518c);
+                    ((Fn2)0x5c89b0)(textBuf, 0);
+                    strcat(textBuf, (const char *)g_00685190);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0xb8), textBuf);
+                    int factionRow = leader * 0x20cc;
+                    ((Fn2)0x445130)((void *)(int)leader, 0);
+                    if (*reinterpret_cast<int *>((char *)g_0096cdac + factionRow) >= 0 &&
+                        (((*reinterpret_cast<unsigned char *>(g_009a64c0)) & 0x80) != 0 ||
+                         (*g_009a649c & 0x200) == 0)) {
+                        textBuf[0] = 0;
+                        str = ((Fn1i)0x6169a0)(g_009b90f8[0x6a]);
+                        strcat(textBuf, (const char *)str);
+                        strcat(textBuf, (const char *)g_00682e94);
+                        strcat(textBuf, (const char *)g_00685194);
+                        str = ((Fn1i)0x6169a0)(
+                            ((int *)g_0094f35c)[*reinterpret_cast<int *>((char *)g_0096cdac + factionRow) * 0xb]);
+                        strcat(textBuf, (const char *)str);
+                        strcat(textBuf, (const char *)g_00685198);
+                        strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x108), textBuf);
+                    }
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(*g_0094a318);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_0068519c);
+                    _itoa((10 - *reinterpret_cast<int *>((char *)g_0096cd08 + factionRow) -
+                           *reinterpret_cast<int *>((char *)g_0096cd04 + factionRow)) * 10,
+                          numBuf1, 10);
+                    strcat(textBuf, numBuf1);
+                    strcat(textBuf, (const char *)g_00682ea0);
+                    strcat(textBuf, (const char *)g_00682820);
+                    strcat(textBuf, (const char *)g_00682820);
+                    strcat(textBuf, (const char *)g_00682e9c);
+                    if (*g_00749c0c >= 0) {
+                        strcat(textBuf, (const char *)g_006851a0);
+                    }
+                    _itoa(*g_00749c0c, numBuf2, 10);
+                    strcat(textBuf, numBuf2);
+                    strcat(textBuf, (const char *)g_006851a4);
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x30]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e98);
+                    strcat(textBuf, (const char *)g_006851a8);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x158), textBuf);
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(*g_0094a320);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_006851ac);
+                    _itoa(*reinterpret_cast<int *>((char *)g_0096cd04 + factionRow) * 10, numBuf3, 10);
+                    strcat(textBuf, numBuf3);
+                    strcat(textBuf, (const char *)g_00682ea0);
+                    strcat(textBuf, (const char *)g_006851b0);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x1a8), textBuf);
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(*g_0094a328);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_006851b4);
+                    _itoa(*reinterpret_cast<int *>((char *)g_0096cd08 + factionRow) * 10, numBuf4, 10);
+                    strcat(textBuf, numBuf4);
+                    strcat(textBuf, (const char *)g_00682ea0);
+                    if (*g_00749ae4 < 9000) {
+                        strcat(textBuf, (const char *)g_00682820);
+                        strcat(textBuf, (const char *)g_00682820);
+                        strcat(textBuf, (const char *)g_00682e9c);
+                        _itoa(*g_00749ae4, numBuf5, 10);
+                        strcat(textBuf, numBuf5);
+                        strcat(textBuf, (const char *)g_00682820);
+                        str = ((Fn1i)0x6169a0)(g_009b90f8[0x31]);
+                        strcat(textBuf, (const char *)str);
+                        strcat(textBuf, (const char *)g_00682e98);
+                    }
+                    strcat(textBuf, (const char *)g_006851b8);
+                    hiFlag = 5;
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x1f8), textBuf);
+                    break;
+                }
+                case 1: {
+                    ((Fn2)0x445130)((void *)(int)leader, 0);
+                    textBuf[0] = 0;
+                    lineHeight = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[300]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_006851bc);
+                    _itoa(*reinterpret_cast<int *>((char *)g_0096cce4 + troubleMakerFlags * 0x20cc) + 1,
+                          numBuf1, 10);
+                    strcat(textBuf, numBuf1);
+                    strcat(textBuf, (const char *)g_006851c0);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0xb8), textBuf);
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x12d]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_006851c4);
+                    _itoa(*reinterpret_cast<int *>((char *)g_0096cce8 + troubleMakerFlags * 0x20cc),
+                          numBuf2, 10);
+                    strcat(textBuf, numBuf2);
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x130]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_006851c8);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x108), textBuf);
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x12e]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_006851cc);
+                    _itoa(*g_00749ae8, numBuf3, 10);
+                    strcat(textBuf, numBuf3);
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x130]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_006851d0);
+                    int totalsMode = 3;
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x158), textBuf);
+                    if (*g_009bc054 == 0) {
+                        textBuf[0] = 0;
+                        strcat(textBuf, (const char *)g_006851d4);
+                        strcat(textBuf, (const char *)g_00682e94);
+                        strcat(textBuf, (const char *)g_006851e0);
+                        _itoa(*g_00749c0c - *g_00749ae8, numBuf4, 10);
+                        strcat(textBuf, numBuf4);
+                        str = ((Fn1i)0x6169a0)(g_009b90f8[0x130]);
+                        strcat(textBuf, (const char *)str);
+                        strcat(textBuf, (const char *)g_006851e4);
+                        totalsMode = 4;
+                        strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x1a8), textBuf);
+                    }
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x3bf]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_006851e8);
+                    _itoa(*g_00749c0c, numBuf5, 10);
+                    strcat(textBuf, numBuf5);
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x130]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_006851ec);
+                    hiFlag = (short)(totalsMode + 1);
+                    strcpy(reinterpret_cast<char *>(self + (slotIndex + totalsMode) * 0x50 + 0xb8), textBuf);
+                    break;
+                }
+                case 2: {
+                    lineHeight = 0;
+                    int troubleMaker = *g_0093fac0;
+                    textBuf[0] = 0;
+                    int factionOff = troubleMaker * 0x59c;
+                    *g_009bbfec = ((int *)g_00946d4c)[troubleMaker * 0x167];
+                    *g_009bbff0 = ((int *)g_00946d50)[troubleMaker * 0x167];
+                    strcat(textBuf, (char *)g_00946dd4 + factionOff);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0xb8), textBuf);
+                    *g_009bbfec = ((int *)g_00946a50)[leader * 0x167];
+                    textBuf[0] = 0;
+                    *g_009bbff0 = 0;
+                    strcat(textBuf, (char *)g_00946a9c + factionOff);
+                    strcat(textBuf, (const char *)g_00682820);
+                    *g_009bbfec = ((int *)g_00946a50)[leader * 0x167];
+                    *g_009bbff0 = 0;
+                    strcat(textBuf, (char *)g_00946a84 + factionOff);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x108), textBuf);
+                    textBuf[0] = 0;
+                    int moodIdx = (int)((Fn1i)0x53a090)(*g_0093fa74);
+                    str = ((Fn1i)0x6169a0)(((int *)g_0094c9e4)[moodIdx]);
+                    ((Fn3)0x58f610)(textBuf, str, troubleMaker);
+                    hiFlag = 3;
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x158), textBuf);
+                    textBuf[0] = 0;
+                    unsigned int treatyBits = *reinterpret_cast<unsigned int *>(
+                        (char *)g_0096c9f8 + troubleMaker * 4 + leader * 0x20cc);
+                    if ((treatyBits & 1) == 0) {
+                        if ((treatyBits & 2) != 0) {
+                            str = ((Fn1i)0x6169a0)(g_009b90f8[0xd4]);
+                        } else if ((treatyBits & 4) != 0) {
+                            str = ((Fn1i)0x6169a0)(g_009b90f8[0xd5]);
+                        } else if ((treatyBits & 0x10) != 0) {
+                            str = ((Fn1i)0x6169a0)(g_009b90f8[0xd6]);
+                        } else {
+                            str = 0;
+                        }
+                    } else {
+                        str = ((Fn1i)0x6169a0)(g_009b90f8[0xd3]);
+                    }
+                    if (str != 0) {
+                        strcat(textBuf, (const char *)str);
+                    }
+                    hiFlag = 4;
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x1a8), textBuf);
+                    break;
+                }
+                case 3: {
+                    lineHeight = 0;
+                    textBuf[0] = 0;
+                    int factionOff = leader * 0x59c;
+                    *g_009bbfec = ((int *)g_00946d4c)[leader * 0x167];
+                    *g_009bbff0 = ((int *)g_00946d50)[leader * 0x167];
+                    strcat(textBuf, (char *)g_00946dd4 + factionOff);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0xb8), textBuf);
+                    *g_009bbfec = ((int *)g_00946a50)[troubleMakerFlags * 0x167];
+                    textBuf[0] = 0;
+                    *g_009bbff0 = 0;
+                    strcat(textBuf, (char *)g_00946a9c + factionOff);
+                    strcat(textBuf, (const char *)g_00682820);
+                    *g_009bbfec = ((int *)g_00946a50)[troubleMakerFlags * 0x167];
+                    *g_009bbff0 = 0;
+                    strcat(textBuf, (char *)g_00946a84 + factionOff);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x108), textBuf);
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0xde]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_006851f0);
+                    int rankRow = leader * 0x20cc;
+                    int rankVal = *reinterpret_cast<int *>((char *)g_0096cb04 + rankRow);
+                    if (rankVal < 0) rankVal = 0;
+                    else if (rankVal > 7) rankVal = 7;
+                    str = ((Fn1i)0x6169a0)(((int *)g_00946a30)[rankVal]);
+                    ((Fn3)0x58f610)(textBuf, str, leader);
+                    strcat(textBuf, (const char *)g_006851f4);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x158), textBuf);
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0xdf]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_006851f8);
+                    int diffVal = *reinterpret_cast<int *>((char *)g_0096c9e4 + rankRow);
+                    if (diffVal < 1) diffVal = 1;
+                    else if (diffVal > 7) diffVal = 7;
+                    str = ((Fn1i)0x6169a0)(*reinterpret_cast<int *>((char *)g_0094c590 + diffVal * -8));
+                    ((Fn3)0x58f610)(textBuf, str, leader);
+                    strcat(textBuf, (const char *)g_006851fc);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x1a8), textBuf);
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x3c0]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_00685200);
+                    _itoa(council_votes(leader), numBuf1, 10);
+                    strcat(textBuf, numBuf1);
+                    strcat(textBuf, (const char *)g_00685204);
+                    hiFlag = 5;
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x1f8), textBuf);
+                    break;
+                }
+                case 4:
+                case 5: {
+                    // Ranking bar-chart panel: layout math over per-faction score
+                    // tables, drawn via a chain of graphics helpers this pass did
+                    // not reconstruct in full. Call order preserved; per-row
+                    // geometry approximated.
+                    lineHeight = 0;
+                    ((Fn2)0x5d8000)(&rx0, 0);
+                    textBuf[0] = 0;
+                    if ((*g_0094b4c0 < 9000 || *g_0094b4c4 < 9000) && *g_0094b4c8 == 0) {
+                        str = ((Fn1i)0x6169a0)(g_009b90f8[899]);
+                        strcat(textBuf, (const char *)str);
+                        ((Fn2)0x0)(textBuf, 0); /* CharUpperA - not modelled */
+                    } else {
+                        str = ((Fn1i)0x6169a0)(g_009b90f8[0x1b8]);
+                        strcat(textBuf, (const char *)str);
+                    }
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0xb8), textBuf);
+                    ((Fn2)0x5ac690)(0, 0);
+                    ((Fn2)0x5d8000)(g_007aec94, 0);
+                    break;
+                }
+                case 6: {
+                    lineHeight = 0;
+                    short bestPop = 0;
+                    unsigned char bitmask = *reinterpret_cast<unsigned char *>(g_009a64e9);
+                    short bestFac = (short)leader;
+                    int i;
+                    int *table;
+
+                    struct { int *tbl; int limitLo; int col; } rows[4] = {
+                        {(int *)g_0096ee08, 0x97d39c, 0x107},
+                        {(int *)g_0096fb0c, 0x97e0a0, 0x108},
+                        {(int *)g_0096fb14, 0x97e0a8, 0x109},
+                        {(int *)g_0096eccc, 0x97d260, 0x13c},
+                    };
+                    int destOffsets[4] = {0xb8, 0x108, 0x158, 0x1a8};
+                    for (int r = 0; r < 4; r++) {
+                        bestPop = 0;
+                        bestFac = (short)leader;
+                        table = rows[r].tbl;
+                        for (i = 1; (int)((char *)(table + i * 0x833) - (char *)0) < rows[r].limitLo || i < 8; i++) {
+                            if (i > 7) break;
+                            if ((bitmask & (1 << (i & 0x1f))) != 0 && bestPop <= table[i * 0x833]) {
+                                bestPop = (short)table[i * 0x833];
+                                bestFac = (short)i;
+                            }
+                        }
+                        textBuf[0] = 0;
+                        str = ((Fn1i)0x6169a0)(g_009b90f8[rows[r].col]);
+                        strcat(textBuf, (const char *)str);
+                        strcat(textBuf, (const char *)g_00682e94);
+                        int off2 = bestFac * 0x59c;
+                        *g_009bbff0 = 0;
+                        *g_009bbfec = ((int *)g_00946a50)[bestFac * 0x167];
+                        strcat(textBuf, (char *)g_00946a9c + off2);
+                        strcat(textBuf, (const char *)g_00682820);
+                        *g_009bbfec = ((int *)g_00946a50)[bestFac * 0x167];
+                        *g_009bbff0 = 0;
+                        strcat(textBuf, (char *)g_00946a84 + off2);
+                        strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + destOffsets[r]), textBuf);
+                    }
+                    hiFlag = 5;
+                    break;
+                }
+                case 7: {
+                    lineHeight = 0;
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x1ab]);
+                    strcat(textBuf, (const char *)str);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0xb8), textBuf);
+
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x1aa]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_00685244);
+                    strcat(textBuf, (char *)g_0094a2bc);
+                    strcat(textBuf, (const char *)g_00685248);
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x108), textBuf);
+
+                    textBuf[0] = 0;
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[0x1a9]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00682e94);
+                    strcat(textBuf, (const char *)g_00685250);
+                    str = ((Fn1i)0x6169a0)(g_009b90f8[*g_0094a2b4 + 0x14]);
+                    strcat(textBuf, (const char *)str);
+                    strcat(textBuf, (const char *)g_00685254);
+                    hiFlag = 6;
+                    strcpy(reinterpret_cast<char *>(self + slotIndex * 0x3c0 + 0x248), textBuf);
+                    break;
+                }
+            }
+
+            int destIdx = slotIndex;
+            *reinterpret_cast<short *>(self + 0x9b8 + destIdx * 4) = hiFlag;
+            *reinterpret_cast<int *>(self + 0x9c0 + destIdx * 4) = 0;
+            short count = 0;
+            if (*reinterpret_cast<int *>(self + 0x9b8 + destIdx * 4) > 0) {
+                char *rowText = self + destIdx * 0x3c0 + 0xb8;
+                do {
+                    if (lineHeight != 0 &&
+                        *reinterpret_cast<int *>(self + 0x898 + (destIdx * 0xc + count) * 4) <
+                            lineHeight + 2 + baseRowY) {
+                        *reinterpret_cast<int *>(self + 0x838 + (destIdx * 0xc + count) * 4) = baseRowY;
+                    }
+                    unsigned int len = strlen(rowText);
+                    count = count + 1;
+                    *reinterpret_cast<int *>(self + 0x9c0 + destIdx * 4) =
+                        *reinterpret_cast<int *>(self + 0x9c0 + destIdx * 4) + (int)len;
+                    rowText = rowText + 0x50;
+                } while (count < *reinterpret_cast<int *>(self + 0x9b8 + destIdx * 4));
+            }
+
+            slotIndex = nextIndex;
+        } while (slotIndex < field80 + 1);
+    }
 }

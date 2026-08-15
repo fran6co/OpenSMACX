@@ -1,15 +1,12 @@
 // ORIGINAL: 0x00534400 FILE
-// DEFERRED: 5097 instructions, 18489 bytes - a 75-way message-type
-//   `jmp` dispatch (0x53459B-0x5388BC) with a nested 64-way sub-dispatch
-//   (0x534E1C-0x5388E8) inside it. Ghidra produced NO decompilation
-//   hypothesis at all for this address - a stronger failure than the
-//   garbled-type output on the other four largest functions. NetDaemon
-//   (the receiver) declares 47 data members in src/netdaemon.h that the
-//   scaffold does not supply, so any field access through `this` would be
-//   a guessed offset. 558 branches, 476 call sites into 133 distinct
-//   callees. Same order of magnitude too large to transcribe faithfully in
-//   one pass; left as BODY GOES HERE rather than guess 75 case bodies and
-//   NetDaemon's layout at once.
+// RULED-OUT: no Ghidra hypothesis was available for this one (raw asm
+//            only). The real dispatcher spans ~67 distinct message-type
+//            case bodies across several chained range checks up to type
+//            0x1300+; only the first band (0xF05-0xF0F, 11 cases) and the
+//            shared default "fixup_message + send_message" forwarding path
+//            (the target of the large majority of jump-table slots) were
+//            read from the disassembly and modelled. Everything above type
+//            0x1101 is unimplemented.
 // working copy - scaffold materialised by --work
 // name      ?process_message@NetDaemon@@QAEXPADKH@Z
 // size      18489 bytes
@@ -3153,10 +3150,100 @@ class NetDaemon { public:
     void process_message(char *, unsigned long, int);
 };
 void NetDaemon::process_message(char * a1, unsigned long a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    Popup popup;
+    Filemap filemap;
+    char *self = reinterpret_cast<char *>(this);
+
+    unsigned char *msg = reinterpret_cast<unsigned char *>(a1);
+    unsigned short type = *reinterpret_cast<unsigned short *>(a1);
+
+    // Special-cased "file transfer" message-type band (0x1500-0x15FF).
+    bool skip500 = ((type & 0xf00) != 0x500) || (type == 0x1501);
+    if (!skip500 && *g_007492cc != 0 && *g_0073b790 == (int)a2) {
+        skip500 = true;
+    }
+    if (!skip500) {
+        if (type == 0x1505) {
+            filemap.~Filemap();
+            popup.close();
+            return;
+        }
+        message_data(0x1505, (int)a2, 0, 0, 0, 0);
+    }
+
+    type = *reinterpret_cast<unsigned short *>(a1);
+
+    // First dispatch band: message types 0xF05-0xF0F. Bodies below are a
+    // faithful-shape but incomplete reading of what is a much larger
+    // (roughly 67-case) dispatcher spanning the rest of the type space;
+    // see the RULED-OUT note on the file header.
+    if (type <= 0x1101) {
+        if (type == 0x1101) {
+            // TODO: 0x53624a - not reconstructed (schedule/ready-state update).
+            return;
+        }
+        unsigned int idx = (unsigned int)(type - 0xf05);
+        if (idx <= 0xa) {
+            switch (idx) {
+                case 0: {
+                    typedef void (OriginalObject::*FnV1)(void *);
+                    FnV1 fn = original_method<FnV1>(0x481fd0);
+                    (ORIGINAL((void *)0x80a6f8)->*fn)(a1);
+                    return;
+                }
+                case 1: {
+                    typedef int (OriginalObject::*FnVisible)();
+                    typedef int (OriginalObject::*FnPick)(int);
+                    FnVisible isVisible = original_method<FnVisible>(0x5f7e90);
+                    if ((ORIGINAL((void *)0x80a6f8)->*isVisible)()) {
+                        FnPick pickPass = original_method<FnPick>(0x47c970);
+                        (ORIGINAL((void *)0x80a6f8)->*pickPass)(1);
+                    }
+                    return;
+                }
+                case 2:
+                case 3:
+                case 4:
+                case 7:
+                case 8:
+                case 9:
+                case 10: {
+                    // Modal-dialog guard: when no popup is currently active
+                    // (self+0x1b30 == 0), reject and unwind the locals this
+                    // function opened; otherwise the original shows a
+                    // reason-specific popup this pass does not reconstruct.
+                    if (*reinterpret_cast<int *>(self + 0x1b30) == 0) {
+                        filemap.~Filemap();
+                        popup.close();
+                        return;
+                    }
+                    return;
+                }
+                case 5:
+                case 6: {
+                    int field4 = *reinterpret_cast<int *>(a1 + 4);
+                    int slot = field4 * 103;
+                    *reinterpret_cast<unsigned char *>(self + slot * 4 + 0x794) =
+                        (idx == 5) ? 1 : 2;
+                    return;
+                }
+            }
+        }
+    }
+
+    // Default path, reached by the overwhelming majority of message types
+    // (the vast majority of jump-table slots point here in the original):
+    // validate and re-broadcast the message.
+    if ((msg[1] & 0xa0) != 0) {
+        int fixResult = fixup_message(a1);
+        if (fixResult == 0) {
+            unsigned short masked = (unsigned short)((type & 0x1fff) | 0x4000);
+            *reinterpret_cast<unsigned short *>(a1) = masked;
+            int *seq = reinterpret_cast<int *>(self + 0x1b2c);
+            *seq = *seq + 1;
+            *reinterpret_cast<int *>(a1 + 0xc) = *seq;
+            send_message(a1, a2, 0);
+        }
+    }
 
 }

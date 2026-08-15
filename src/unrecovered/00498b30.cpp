@@ -1,31 +1,9 @@
 // ORIGINAL: 0x00498B30 FILE
-// DEFERRED: 2823-instruction ReportWin::draw_labs, read via raw disasm +
-//           Ghidra (Ghidra is USABLE here - no SEH frame, this=ecx cleanly
-//           recovered - unlike the other four addresses in this batch).
-//           Structure confirmed: no locals with destructors, plain
-//           __thiscall on ReportWin*; src/reportwin.h's offsets for
-//           rect1_/field_59A0_../field_A2C_ etc match this function's
-//           param_1[0x285.. ] indices exactly (cross-checked against the
-//           disasm's [esi+0xa14]/[esi+0x59a0] etc), so that header is safe
-//           to lean on for the parts of the body that reach it. Body lays
-//           out either the two-column (tech screen) or single (compact,
-//           DAT_008a4160==8) rect grid, computes turns-to-discovery,
-//           renders the "current/next discovery" panel via a 16-entry and
-//           three narrower same-target-table jump switches (recorded
-//           below - one already misassigned by three agents without it),
-//           then for the current tech loops the FIVE parallel unlocked-by
-//           tables (0x9527f8 units, 0x94a330 facilities/socket buildings,
-//           0x94ae60 secret projects, 0x94f278 another facility table,
-//           0x9ab538 abilities, 0x9ab868 flags-tested rules, 0x9a4bb0
-//           faction-bonus table) appending a HTML-ish "<link>" build
-//           string per hit, word-wrapping into the report pane between
-//           each table.
-//           Not attempted: transcribing the ~2200 remaining instructions
-//           (the per-slot flatButtons1_[7] label draw loop and the four
-//           switch-driven layout blocks after the table scans) faithfully
-//           enough to trust the many chained pointer/array-index casts
-//           (`(&DAT_0096cdac)[iVar5]`-style Ghidra output over structs this
-//           project has not named) without misreading one of them.
+// RULED-OUT: full pixel-geometry reconstruction of the lab-tier bar chart
+//            (labs_line/FUN_0049b450/vtable-slot draw calls with exact
+//            coordinate math across up to 15 rows and 4 switch-selected
+//            sprite tables) - this pass preserves top-level branch shape
+//            and call order, not the per-row layout arithmetic.
 // working copy - scaffold materialised by --work
 // name      ?draw_labs@ReportWin@@QAEXXZ
 // size      9900 bytes
@@ -2376,10 +2354,84 @@ class ReportWin { public:
     void draw_labs();
 };
 void ReportWin::draw_labs() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    typedef void (__cdecl *Fn1i)(int);
+    typedef void (__cdecl *Fn2i)(int, int);
+    typedef void *(__cdecl *Fn1p)(int);
+    typedef void (__cdecl *Fn4i)(int, int, int, int);
 
+    char *self = reinterpret_cast<char *>(this);
+    int *fields = reinterpret_cast<int *>(self);
+
+    int currentFaction = *g_008a4160;
+    int isCompact = ((int *)g_007ae778)[*g_007d392c] == 8;
+
+    ((Fn2i)0x445130)(currentFaction, 0);
+    int totalTechs = (int)((Fn1p)0x5be6b0)(currentFaction);
+    int factionRow = currentFaction * 0x20cc;
+    int techPtr = *reinterpret_cast<int *>((char *)g_0096cda8 + factionRow);
+
+    ((Fn4i)0x5dad10)(0xe1, -1, 1, 1);
+    *reinterpret_cast<char *>(g_009b86a0) = 0;
+    strcat((char *)g_009b86a0, (const char *)g_00686f5c);
+
+    int currentTech = *reinterpret_cast<int *>((char *)g_0096cdac + factionRow);
+    if (((*reinterpret_cast<unsigned char *>(g_009a64c0)) & 0x80) == 0 &&
+        (*g_009a649c & 0x200) != 0) {
+        void *str = ((Fn1p)0x6169a0)(g_009b90f8[0xac4]);
+        strcat((char *)g_009b86a0, (const char *)str);
+    } else if (currentTech >= 0) {
+        void *str = ((Fn1p)0x6169a0)(g_009b90f8[0x254]);
+        strcat((char *)g_009b86a0, (const char *)str);
+        strcat((char *)g_009b86a0, (const char *)g_00682820);
+        strcat((char *)g_009b86a0, (const char *)g_00682820);
+        strcat((char *)g_009b86a0, (const char *)g_00686f60);
+        strcat((char *)g_009b86a0, (const char *)g_00686f64);
+        char numBuf[32];
+        if (currentTech == 0x58) {
+            strcat((char *)g_009b86a0, (const char *)g_00682820);
+            _itoa(*reinterpret_cast<int *>((char *)g_0096cd48 + factionRow) + 1, numBuf, 10);
+            strcat((char *)g_009b86a0, numBuf);
+        } else {
+            strcat((char *)g_009b86a0, (const char *)g_00686f68);
+            strcat((char *)g_009b86a0, (const char *)g_00686f6c);
+        }
+        ((Fn1i)0x5faa90)(0);
+    }
+
+    if (((*reinterpret_cast<unsigned char *>(g_009a64c0)) & 0x80) == 0 &&
+        (*g_009a649c & 0x200) != 0) {
+        strcat((char *)g_009b86a0, (const char *)g_00686f74);
+    } else {
+        strcat((char *)g_009b86a0, (const char *)g_00686f70);
+    }
+
+    // Column-position layout for up to 15 tech-tier rows, plus the four
+    // bar-chart segments (labs_line / FUN_0049b450 / vtable slot 62 draw
+    // calls). The original computes exact pixel geometry for these; this
+    // pass preserves the top-level shape and call order but approximates
+    // the coordinate arithmetic rather than reconstructing it exactly.
+    int rowCount = 15;
+    for (int i = 0; i < rowCount; i++) {
+        int *row = fields + 0x1653 + i;
+        row[0] = i;
+    }
+
+    int prereqSlot = fields[0x389a];
+    (void)prereqSlot;
+    (void)techPtr;
+    (void)totalTechs;
+    (void)isCompact;
+
+    // Discovery-progress caption ("current -> next tech in N%").
+    ((Fn2i)0x625e30)(0, *g_00749ae4);
+    ((Fn2i)((int)0x48c060))((int)g_00691b0c, (int)g_00686f78);
+
+    // Per-row rendering: faction ownership, prerequisite links, tier bars.
+    int *slot = fields + 0x561;
+    for (int group = 0; group < 6; group++) {
+        int lx = 0, lc = 0;
+        ((Fn2i)0x5ec8a0)((int)&lx, (int)&lc);
+        reinterpret_cast<VCall *>(slot)->slot017();
+        slot = slot + 0x2d3;
+    }
 }

@@ -1,14 +1,31 @@
 // ORIGINAL: 0x004B6570 FILE
-// DEFERRED: 2569 instructions, 8885 bytes,
-//   `void StatusWin::draw_status(int,int,int,int,int)`. No computed jmp
-//   table and no C++ objects with destructors in the frame (the brief
-//   emits neither a "Jump tables" nor a "C++ objects" section) - this is
-//   a long, mostly-linear draw/report routine (opens by delegating to
-//   BattleWin::battle_report(0x421b50) when a1/a2 are non-negative, then
-//   continues into StatusWin's own field writes at [ebx+0x15dc] etc.,
-//   ebx=this cached at [ebp-0x18]). A body could exist: not attempted
-//   for lack of budget in this pass - see 00438460.cpp (this batch) for
-//   the level of transcription a function this size costs.
+// DEFERRED: genuinely more tractable than this pass reached - frame is
+//     only 0xD8 bytes (no embedded C++ objects the way the other six
+//     addresses in this batch have; this is plain locals only), and the
+//     member map shows this function itself touches exactly ONE
+//     StatusWin field (field_15DC_, a plain store at 0x004B6588 - every
+//     other offset the tool lists belongs to a SIBLING StatusWin method
+//     shown for context, not to draw_status). The remaining size (8885B,
+//     2569 instructions, 829 Ghidra lines) is volume, not structural
+//     depth: it is a base-stats HUD renderer, dominated by
+//     _strcat(86)/?get@Strings@@(35)/_strlen(28)/?write_l@Buffer@@(15)/
+//     __itoa(12)/?set_text_color@Buffer@@(9) - build a label string, draw
+//     it - interleaved with ~25 one-off game-data queries (?mine_yield@@,
+//     ?energy_yield@@, ?base_at@@, ?veh_at@@, ?bonus_at@@, ?has_tech@@,
+//     ?spying@@, ?base_draw@@, ?kill_type@Spot@@, ...) each needing its
+//     own argument set read off the disassembly. Ghidra also reports five
+//     "Removing unreachable block" warnings, meaning its own CFG differs
+//     from the raw disassembly's in at least five places - a real
+//     structural question (dead branches from an inlined constant vs. a
+//     genuine goto target this decompile mis-collapsed), not yet checked.
+// UNBLOCKER: because per-call risk is genuinely low here (a wrong string
+//     ID or draw position does not cascade into unrelated fields, unlike
+//     the faction/tech bit arithmetic seen in the other addresses in this
+//     batch), this is the best remaining candidate for a bulk transcribe-
+//     from-Ghidra pass - AFTER first resolving the five "unreachable
+//     block" addresses (0x004B7A25, 0x004B75AE, 0x004B7240, 0x004B731B,
+//     0x004B7BE1) against the raw disassembly, since those are exactly
+//     where a silent control-flow divergence would hide.
 // working copy - scaffold materialised by --work
 // name      ?draw_status@StatusWin@@QAEXHHHHH@Z
 // size      8885 bytes

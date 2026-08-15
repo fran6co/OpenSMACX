@@ -1,17 +1,13 @@
 // ORIGINAL: 0x005275B0 FILE
-// DEFERRED: ~1880 instructions, registers an SEH frame (ExceptionList swap +
-//           handler at 0x0065db5d) around a `Popup` ctor/dtor pair - the
-//           `Popup popup;` RAII lever applies. Frame map shows 10 distinct
-//           widget locals ([ebp-0x53AC] Popup(BasePop/GraphicWin base),
-//           [ebp-0x4950] and [ebp-0x16D0] each a standalone FlatButton - the
-//           two gaps that equal sizeof(FlatButton) exactly - plus
-//           independently-sized ListBox/Dialogs/Dialog/Spot/GraphicWin
-//           locals whose gaps (0xA5C,0xC70,0x140,0xA18,0x328,0x198,0xAAC)
-//           match no catalogued class, so they are NOT nested in Popup
-//           (Popup's only member is `Scroll scroll_`) and need their own
-//           per-offset declarations. Ghidra's call sites are unusable
-//           (FUN_xxx() with zero recovered arguments throughout); every
-//           call needs its args read from the raw disassembly directly.
+// RULED-OUT: mismatch #11 near prologue (xor vs push) - popup/end_game_pop
+//            declared as real C++ locals rather than the original's
+//            staggered same-slot vtable-poke construction; the "big
+//            dialog" tail (Dialogs/Spot/ListBox/CheckBox/EditGroup/
+//            SpriteBox/StringStruct x2/Sprite) is reached by raw offset
+//            casts into BasePop's own dialogs_/spot_/sprite_ members,
+//            not by a modelled derived class - faithful call order/args,
+//            not byte fidelity. Main loop, faction dispatch, diplomacy/
+//            tech/council logic transcribed directly from the disasm.
 // working copy - scaffold materialised by --work
 // name      ?control_turn@@YAXXZ
 // size      7534 bytes
@@ -2898,11 +2894,486 @@ static int *const g_009b8aa8 = (int *)0x009B8AA8;
 static int *const g_009bb5e8 = (int *)0x009BB5E8;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
-void __cdecl control_turn() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
 
+// The "end of game" results popup shares BasePop's own layout (its
+// dialogs_/spot_/sprite_/flat_button1_/flat_button2_ members) but is a
+// SEPARATE local from `popup` above - the disassembly re-pokes the same
+// two vtable words (0x6698D4 / 0x6698CC) into freshly-scoped memory,
+// never calling Popup's own out-of-line constructor for it. Reached
+// only by raw offset because its sub-widgets (ListBox/CheckBox/
+// EditGroup/SpriteBox) are held at overlapping offsets inside BasePop's
+// opaque `dialogs_` blob, which this file does not break out further.
+static void egp_construct(BasePop &pop) {
+    *(unsigned int *)&pop = 0x6698D4u;
+    *(unsigned int *)((char *)&pop + 0x444) = 0x6698CCu;
+}
+
+static void egp_destroy_basic(BasePop &pop) {
+    char *egp = (char *)&pop;
+    ((Spot *)(egp + 0x3098))->~Spot();
+    ((Dialog *)(egp + 0x2D70))->~Dialog();
+    ((GraphicWin *)(egp + 0x2358))->~GraphicWin();
+    ((StringStruct *)(egp + 0x2150))->remove_all();
+    ((StringStruct *)(egp + 0x2150))->close();
+    ((StringStruct *)(egp + 0x2180))->remove_all();
+    ((StringStruct *)(egp + 0x2180))->close();
+    ((Sprite *)(egp + 0x2118))->close();
+    ((FlatButton *)(egp + 0x15A8))->close();
+    ((FlatButton *)(egp + 0x15A8))->~FlatButton();
+    ((FlatButton *)(egp + 0xA5C))->close();
+    ((FlatButton *)(egp + 0xA5C))->~FlatButton();
+}
+
+static void egp_destroy_full(BasePop &pop) {
+    char *egp = (char *)&pop;
+    ((Dialogs *)(egp + 0x21D0))->close();
+    ((EditGroup *)(egp + 0x2354))->~EditGroup();
+    ((SpriteBox *)(egp + 0x22CC))->~SpriteBox();
+    ((CheckBox *)(egp + 0x2244))->~CheckBox();
+    ((ListBox *)(egp + 0x2218))->~ListBox();
+    egp_destroy_basic(pop);
+}
+
+void __cdecl control_turn() {
+    Popup popup;
+    BasePop end_game_pop;
+    int retry_count = 0;
+    int save_pending;
+    int result;
+
+    egp_construct(end_game_pop);
+
+    if (*g_009a64d4 == 0 && *g_009b2070 == 0 &&
+        (((unsigned char)*g_009a64e8 >> (*g_00939284 & 0x1f)) & 1) != 0) {
+        if (*g_0093a95c == 0) {
+            crash_landing(*g_00939284);
+        }
+    }
+    if (*g_0093a95c == 0) {
+        draw_map(1);
+    }
+
+    *g_0093a940 = 1;
+    if (*g_009b2070 != 0 &&
+        (((unsigned char)*g_009a64e8 >> (*g_00939284 & 0x1f)) & 1) == 0) {
+        ((Console *)0x9156B0)->human_turn();
+    }
+
+    do {
+        if (*g_0093a95c == 0) {
+            ((MessageWin *)0x7F67F8)->clear();
+        }
+        if (*g_009b2070 == 0) {
+            *g_0093a938 = 1;
+            turn_upkeep();
+            if (end_of_game(1) != 0) {
+                popup.close();
+                popup.scroll_.close();
+                return;
+            }
+        } else {
+            rankings(1);
+        }
+
+        int human_turn_shown = 0;
+        int faction = 0;
+        do {
+            unsigned int alive_mask = (unsigned char)(*g_009a64e8 >> 8);
+            if (((alive_mask >> (faction & 0x1f)) & 1) != 0 && *g_009b2070 <= faction) {
+                int active = *g_00939284;
+                *g_009a6820 = faction;
+                unsigned int report_mask = (unsigned char)*g_009a64e8;
+                int has_report = ((report_mask >> (faction & 0x1f)) & 1) != 0;
+                if (!has_report ||
+                    (faction == active && (*g_009a681c & 0x20) == 0 && *g_0093a95c == 0)) {
+                    goto LAB_5281E4;
+                }
+
+                // Build the faction's end-of-turn mail message.
+                parse_says(0, (char *)0x93AA04, -1, -1);
+                {
+                    char *rec = (char *)0x946A50 + (unsigned int)faction * 0x59C;
+                    *g_009bbfec = *(int *)(rec + 0);
+                    *g_009bbff0 = 0;
+                    parse_says(1, (char *)0x946A9C + (unsigned int)faction * 0x59C, -1, -1);
+                    *g_009bbfec = *(int *)(rec + 0);
+                    *g_009bbff0 = 0;
+                    parse_says(2, (char *)0x946A84 + (unsigned int)faction * 0x59C, -1, -1);
+                    *g_009bbff0 = *(int *)(rec + 0x300);
+                    *g_009bbfec = *(int *)(rec + 0x2FC);
+                    parse_says(3, (char *)0x946D34 + (unsigned int)faction * 0x59C, -1, -1);
+                }
+                *g_00939284 = faction;
+
+                if (*((int *)0x7AE778 + *g_007d392c) == 10) {
+                    ((BattleWin *)0x6EEED8)->stop_timer();
+                    ((SubInterface *)0x6EEED8)->release_iface_mode();
+                }
+                stop_timers();
+                ((BaseWin *)0x6A7628)->exit();
+                ((AlphaMenu *)0x9380DC)->hide();
+                ((MultiWin *)0x7FD648)->hide();
+                {
+                    int *base = *(int **)0x7F685C;
+                    ((Win *)((char *)base + *(int *)((char *)base + 4)))->hide();
+                }
+                ((Win *)0x7CD2EC)->hide();
+                ((WorldWin *)0x8E9F60)->hide_all();
+
+                {
+                    RECT r;
+                    BoxSpriteParams *p1 = (BoxSpriteParams *)0x78D870;
+                    BoxSpriteParams *p2 = (BoxSpriteParams *)0x78D7F8;
+                    Buffer *buf = (Buffer *)0x7AEC64;
+
+                    r.left = *(long *)0x7AF4FC;
+                    r.top = *(long *)0x7AF500;
+                    r.right = *(long *)0x7AF504;
+                    r.bottom = *(long *)0x7AF508;
+                    buf->box_sprite(&r, p1);
+                    r.left += 3; r.top += 3; r.right -= 3; r.bottom -= 3;
+                    buf->box_sprite(&r, p2);
+
+                    r.left = *(long *)0x7AF4EC;
+                    r.top = *(long *)0x7AF4F0;
+                    r.right = *(long *)0x7AF4F4;
+                    r.bottom = *(long *)0x7AF4F8;
+                    buf->box_sprite(&r, p1);
+                    r.left += 3; r.top += 3; r.right -= 3; r.bottom -= 3;
+                    buf->box_sprite(&r, p2);
+
+                    r.left = *(long *)0x7AF50C;
+                    r.top = *(long *)0x7AF510;
+                    r.right = *(long *)0x7AF514;
+                    r.bottom = *(long *)0x7AF518;
+                    buf->box_sprite(&r, p1);
+                    r.left += 3; r.top += 3; r.right -= 3; r.bottom -= 3;
+                    buf->box_sprite(&r, p2);
+
+                    r.left = *(long *)0x7AF51C;
+                    r.top = *(long *)0x7AF520;
+                    r.right = *(long *)0x7AF524;
+                    r.bottom = *(long *)0x7AF528;
+                    buf->box_sprite(&r, p1);
+                    r.left += 3; r.top += 3; r.right -= 3; r.bottom -= 3;
+                    buf->box_sprite(&r, p2);
+
+                    r.left = *(long *)0x7AF53C;
+                    r.top = *(long *)0x7AF540;
+                    r.right = *(long *)0x7AF544;
+                    r.bottom = *(long *)0x7AF548;
+                    buf->box_sprite(&r, p1);
+                    r.left += 3; r.top += 3; r.right -= 3; r.bottom -= 3;
+                    buf->box_sprite(&r, p2);
+
+                    r.left = *(long *)0x7AF52C;
+                    r.top = *(long *)0x7AF530;
+                    r.right = *(long *)0x7AF534;
+                    r.bottom = *(long *)0x7AF538;
+                    buf->box_sprite(&r, p2);
+                }
+
+                ((GraphicWin *)0x7AE820)->update(0);
+                *(int *)0x7AD34C = 1;
+                ((GraphicWin *)0x937118)->fill(0);
+                ((Win *)0x937118)->show(0);
+                do_all_draws();
+                ((StringBox *)0x7CD2EC)->clear();
+
+            LAB_527AA9:
+                {
+                    const char *icon = ((int *)0x96EA68)[(unsigned int)faction * 0x833] == 0
+                                            ? (const char *)0x68BA70
+                                            : (const char *)0x68BA64;
+                    popup.start((char *)0x9B8AA8, icon, -1, 0, 0x800004, 0);
+                }
+                result = popup.exec(0, 0);
+                if (result < 0) {
+                    if (*g_009b2068 != 0) goto LAB_528811;
+                    goto LAB_527AA9;
+                }
+
+                save_pending = *(int *)((char *)&popup + 0x3100);
+                if (save_pending != 0) {
+                    *g_009a681c = *g_009a681c | 0x40;
+                    if (save_game(0) == 0) {
+                        popup.close();
+                        popup.scroll_.close();
+                        return;
+                    }
+                    *g_009a681c = *g_009a681c & ~0x40;
+                    if (*g_009b2068 != 0) {
+                        popup.close();
+                        popup.scroll_.close();
+                        return;
+                    }
+                    goto LAB_527AA9;
+                }
+
+                {
+                    int checksum = checksum_password((char *)0x9BB5E8);
+                    int *slot = (int *)0x96EA68 + (unsigned int)faction * 0x833;
+                    if (checksum == *slot) goto LAB_527BB4;
+                    if (*slot != 0) {
+                        retry_count = retry_count + 1;
+                        if (retry_count > 2) {
+                            *g_009a681c = *g_009a681c | 0x40;
+                            save_game(0);
+                            {
+                                Console *c = (Console *)0x9156B0;
+                                ((Win *)c)->hide();
+                            }
+                            *g_009b2068 = 1;
+                            *g_0093a948 = 0;
+                            popup.close();
+                            popup.scroll_.close();
+                            return;
+                        }
+                        goto LAB_527B99;
+                    }
+                    if (X_pop_ask((const char *)0x68BA7C, 0x50, (char *)0x93AA08, 0, 0x800000) != 0)
+                        goto LAB_527B99;
+                    if (checksum_password((char *)0x9BB5E8) != checksum)
+                        goto LAB_527B99;
+                    *slot = checksum;
+                }
+                goto LAB_527BB4;
+            LAB_527B99:
+                if (*g_009b2068 != 0) goto LAB_528811;
+                goto LAB_527AA9;
+            LAB_527BB4:
+                if (*g_009b2068 == 0) {
+                    int idx = 0;
+                    if (*g_009a64cc > 0) {
+                        unsigned char *p = (unsigned char *)0x97D044;
+                        while ((unsigned int)*p != (unsigned int)*g_00939284) {
+                            idx = idx + 1;
+                            p = p + 0x134;
+                            if (idx >= *g_009a64cc) goto LAB_527C39;
+                        }
+                        {
+                            short *rec = (short *)((char *)0x97D040 + idx * 0x134);
+                            ((MapWin *)0x9156B0)->set_center(rec[0], rec[1], 1);
+                            ((Console *)0x9156B0)->set_cursor(rec[0], rec[1]);
+                        }
+                        if (idx < *g_009a64cc) goto LAB_527C99;
+                    }
+                LAB_527C39:
+                    idx = 0;
+                    if (*g_009a64c8 > 0) {
+                        unsigned char *p = (unsigned char *)0x952836;
+                        while ((unsigned int)*p != (unsigned int)*g_00939284) {
+                            idx = idx + 1;
+                            p = p + 0x34;
+                            if (idx >= *g_009a64c8) goto LAB_527C99;
+                        }
+                        {
+                            short *rec = (short *)((char *)0x952828 + idx * 0x34);
+                            ((MapWin *)0x9156B0)->set_center(rec[0], rec[1], 1);
+                            ((Console *)0x9156B0)->set_cursor(rec[0], rec[1]);
+                        }
+                    }
+                LAB_527C99:
+                    ((Win *)0x937118)->hide();
+                    *g_007ad34c = 0;
+                    ((StatusWin *)0x8C5568)->on_redraw();
+                    *(int *)0x90D91C = *(int *)0x90D91C | 4;
+                    ((WorldWin *)0x8E9F60)->show_all();
+                    ((GraphicWin *)0x8E9F60)->redraw();
+                    ((Win *)0x7CD2EC)->show(0);
+                    ((MessageWin *)0x7F67F8)->clear();
+
+                    {
+                        int cur = *g_00939284;
+                        int val = ((int *)0x93A96C)[cur];
+                        if (val != 0 || ((int *)0x93A98C)[cur] != 0) {
+                            parse_num(val, 0);
+                            parse_num(((int *)0x93A98C)[cur], 1);
+                            popp(*(char **)0x691B0C, (const char *)0x68BA98, 0,
+                                 (const char *)0x68BA8C, 0);
+                        }
+                    }
+                    if (sub_51e530() != 0) {
+                        ((ButtonGroup *)0x7CD098)->set(1, 0x3E8);
+                    }
+                    if (*(int *)0x7CD11C == 0x3E8) {
+                        ((Win *)0x7F685C)->show(0);
+                    }
+                    ((Console *)0x9156B0)->update_data(0);
+                    start_timers();
+                    do_all_draws();
+
+                    {
+                        int cur = *g_00939284;
+                        int diplo_slot = ((int *)0x93A9B8)[cur];
+                        if (diplo_slot != 0) {
+                            char *rec = (char *)0x946A50 + (unsigned int)diplo_slot * 0x59C;
+                            *g_009bbfec = *(int *)(rec + 0);
+                            *g_009bbff0 = 0;
+                            parse_says(0, (char *)0x946A9C + (unsigned int)diplo_slot * 0x59C, -1, -1);
+                            *g_009bbfec = *(int *)(rec + 0);
+                            *g_009bbff0 = 0;
+                            parse_says(1, (char *)0x946A84 + (unsigned int)diplo_slot * 0x59C, -1, -1);
+                            *g_009bbff0 = *(int *)(rec + 0x300);
+                            *g_009bbfec = *(int *)(rec + 0x2FC);
+                            parse_says(2, (char *)0x946D34 + (unsigned int)diplo_slot * 0x59C, -1, -1);
+                            parse_num(((int *)0x93A9D8)[cur], 0);
+                            X_pop((const char *)0x68BAA0, 0);
+                            cur = *g_00939284;
+                            ((int *)0x93A9B8)[cur] = 0;
+                            ((int *)0x93A9D8)[cur] = 0;
+                        }
+                    }
+
+                    {
+                        int cur = *g_00939284;
+                        while (((int *)0x96CDB4)[(unsigned int)cur * 0x833] > 0) {
+                            ((int *)0x96CDB4)[(unsigned int)cur * 0x833] -= 1;
+                            tech_advance(cur);
+                            cur = *g_00939284;
+                        }
+
+                        int i = 1;
+                        int *slot = (int *)0x93F67C;
+                        unsigned int *rec = (unsigned int *)0x946FEC;
+                        do {
+                            *slot = ((int *)0x93F698)[i + cur * 2];
+                            ((int *)0x93F698)[i + cur * 2] = 0;
+                            if (i != cur) {
+                                if ((((unsigned char)*g_009a64e8 >> (i & 0x1f)) & 1) == 0) {
+                                    if (*slot != 0) {
+                                        communicate(cur, i, 0);
+                                        cur = *g_00939284;
+                                    }
+                                } else if (*slot != 0) {
+                                    if (((int *)0x7388E0)[(i + cur * 2) * 9] == 3) {
+                                        ((int *)0x7388E0)[(i + cur * 2) * 9] = 0;
+                                        *g_009bbfec = rec[0];
+                                        *g_009bbff0 = 0;
+                                        parse_says(0, (char *)(rec + 0x13), -1, -1);
+                                        *g_009bbfec = rec[0];
+                                        *g_009bbff0 = 0;
+                                        parse_says(1, (char *)(rec + 0xD), -1, -1);
+                                        *g_009bbfec = rec[0xBF];
+                                        *g_009bbff0 = rec[0xC0];
+                                        parse_says(2, (char *)(rec + 0xB9), -1, -1);
+                                        X_pop((const char *)0x68BAAC, 0);
+                                        cur = *g_00939284;
+                                    } else {
+                                        diplo(i, cur);
+                                        cur = *g_00939284;
+                                    }
+                                }
+                                *slot = 0;
+                            }
+                            rec = rec + 0x167;
+                            i = i + 1;
+                            slot = slot + 1;
+                        } while ((int)rec < 0x949730);
+
+                        if (*(int *)0x703DE8 == 0) {
+                            if (((int *)0x703E0C)[cur] != 0) {
+                                int target = ((int *)0x703DEC)[cur];
+                                int val = *(int *)((char *)0x9A6828 + target * 3 * 4);
+                                parse_say(0, val, -1, -1);
+                                cur = *g_00939284;
+                                const char *pic;
+                                const char *msg;
+                                if (((int *)0x703DEC)[cur] == 0) {
+                                    if (*g_009a6614 > 0) {
+                                        char *rec2 = (char *)0x946A50 + (unsigned int)*g_009a6614 * 0x59C;
+                                        *g_009bbfec = *(int *)(rec2 + 0);
+                                        *g_009bbff0 = 0;
+                                        parse_says(0, (char *)0x946A9C + (unsigned int)*g_009a6614 * 0x59C, -1, -1);
+                                        *g_009bbfec = *(int *)(rec2 + 0);
+                                        *g_009bbff0 = 0;
+                                        parse_says(1, (char *)0x946A84 + (unsigned int)*g_009a6614 * 0x59C, -1, -1);
+                                        *g_009bbff0 = *(int *)(rec2 + 0x300);
+                                        *g_009bbfec = *(int *)(rec2 + 0x2FC);
+                                        parse_says(2, (char *)0x946D34 + (unsigned int)*g_009a6614 * 0x59C, -1, -1);
+                                    }
+                                    if (((int *)0x703E0C)[cur] == 1) {
+                                        pic = (const char *)0x68BB1C;
+                                        msg = (const char *)0x68BB2C;
+                                    } else if (*g_009a6614 < 1) {
+                                        pic = (const char *)0x68BB64;
+                                        msg = (const char *)0x68BB74;
+                                        goto LAB_5281C2;
+                                    } else {
+                                        pic = (const char *)0x68BB40;
+                                        msg = (const char *)0x68BB50;
+                                    }
+                                } else if (((int *)0x703E0C)[cur] == 1) {
+                                    pic = (const char *)0x68BABC;
+                                    msg = (const char *)0x68BACC;
+                                } else if (((int *)0x703E0C)[cur] == -2) {
+                                    pic = (const char *)0x68BADC;
+                                    msg = (const char *)0x68BAEC;
+                                } else {
+                                    pic = (const char *)0x68BAFC;
+                                    msg = (const char *)0x68BB0C;
+                                }
+                            LAB_5281C2:
+                                popp(*(char **)0x691B0C, msg, 0, pic, 0);
+                                cur = *g_00939284;
+                                clear_council_notify(cur);
+                            }
+                        } else {
+                            council(cur, 0, 0);
+                            cur = *g_00939284;
+                        }
+                    }
+                }
+            LAB_5281E4:
+                if (*g_009b2068 == 0) {
+                    if (*g_009b2070 == 0 ||
+                        (*g_0093a95c != 0 && (*g_009a681c & 0x40) != 0)) {
+                        *g_0093a938 = 1;
+                        faction_upkeep(faction);
+                        result = end_of_game(0);
+                        if (result != 0) {
+                            egp_destroy_full(end_game_pop);
+                            goto LAB_528E66;
+                        }
+                    }
+                    *g_009a681c = *g_009a681c & ~0x40;
+                    *g_0093a938 = 0;
+                    {
+                        unsigned int alive2 = (unsigned char)*g_009a64e8;
+                        int active_now = *g_00939284;
+                        if ((alive2 & (1u << (faction & 0x1f))) == 0) {
+                            enemy_turn(faction);
+                        } else {
+                            if (faction != active_now && bit_count(alive2) < 2) {
+                                goto LAB_5282B5;
+                            }
+                            ((Console *)0x9156B0)->human_turn();
+                            if (*g_009b2070 != 0) {
+                                faction = 0;
+                                goto LAB_5282B5_after;
+                            }
+                            human_turn_shown = 1;
+                        }
+                    }
+                LAB_5282B5:
+                    *g_009b2070 = 0;
+                    if (*g_009b2068 == 0) {
+                        if (end_of_game(0) == 0) goto LAB_5282B5_after;
+                    }
+                }
+            LAB_5282B5_after:;
+            }
+            faction = faction + 1;
+        } while (faction < 8);
+        if (human_turn_shown == 0) {
+            ((Console *)0x9156B0)->human_turn();
+        }
+    } while (*g_009b2068 == 0);
+
+LAB_528811:
+    egp_destroy_full(end_game_pop);
+LAB_528E66:
+    end_game_pop.heap_.shutdown();
+    popup.close();
+    return;
 }

@@ -1,11 +1,4 @@
 // ORIGINAL: 0x005178C0 FILE
-// DEFERRED: thiscall method (Console::on_key_click), no object frame beyond
-//           `this`. Only an 8-entry jump table (0x00517929) but 4161 raw
-//           instructions total, so the per-key-code arms (AC's debug/cheat
-//           console command dispatcher) are individually large; not the
-//           small-switch-many-times shape the low case count suggests. Not
-//           attempted this pass - no reading beyond the jump-table section
-//           and the contract was done.
 // working copy - scaffold materialised by --work
 // name      ?on_key_click@Console@@QAEHHH@Z
 // size      15809 bytes
@@ -3352,6 +3345,21 @@ class Console : public MapWin { public:
     void clear_group();
     int on_key_click(int, int);
 };
+// DEFERRED: no Ghidra hypothesis is available for this address (unlike its
+// four siblings in this batch), so any body would have to come from a
+// line-by-line reading of the raw disassembly alone. That disassembly is
+// ~4,160 lines resolving into FIFTEEN separate jump tables (the brief lists
+// them: entry counts 8, 4, 10, 13, 9, 6, 42, 30, 25, 14, 12, 29, 9, 21, 13,
+// 5 - several sparse-indexed, one keyed on a byte table with 111 entries),
+// consistent with this being the game's global keyboard/hotkey dispatcher
+// (every key and shift/ctrl/alt chord the Console recognises). Frame is a
+// comparatively small 0x534 bytes with only one real C++ local (`Log` at
+// [ebp-0x18]), so the BLOCKER is not layout - it is the sheer number of
+// independent case bodies (order of magnitude beyond the other four
+// addresses in this batch combined) that would each need tracing against
+// the raw assembly with no decompiler scaffold to start from. Landing this
+// faithfully is a same-order-of-magnitude effort as the rest of this batch
+// by itself, so it did not fit inside this pass.
 int Console::on_key_click(int a1, int a2) {
     // BODY GOES HERE.
     //

@@ -1,26 +1,4 @@
 // ORIGINAL: 0x00412AA0 FILE
-// DEFERRED: read in full (all ~2090 instructions) but not transcribed - a
-//           faithful body needs the same instruction-by-instruction rigor
-//           0x0053A980 took, and a partial/guessed body here would compute
-//           something else while looking done, which is worse than nothing.
-//           Findings for the next pass:
-//             - the local `Font` at [ebp-0x134] is real RAII: declare
-//               `Font font_local;` and the compiler emits the observed
-//               __try/__finally frame (push -1; push 0x651b6c handler)
-//               itself - do not hand-write fs:[0].
-//             - `edi` is reassigned ONCE, early (`add edi, 0x444`), and
-//               EVERY later `mov ecx, edi; call Buffer::*` targets
-//               `this+0x444`, not `this`. `[ebp-0x38]` keeps the real
-//               `this` and is used for `GraphicWin::fill` instead.
-//             - `box_sprite`'s 2nd arg (`BoxSpriteParams *`) is a fixed
-//               constant address (0x78d690, 0x78d5a0, 0x78d528, 0x78d618)
-//               in every call, never a locally-built struct - pass the
-//               address straight through as an opaque pointer.
-//             - body is entry-branch (display==0x320 short-circuits
-//               through draw_energy_alloc) + three near-duplicate rows of
-//               (signed-percentage digit formatting via itoa/strcat/
-//               write_l) + (tile-loop coloured bar + GraphicWin::fill
-//               remainder), ending in update/soft_update + set_clip.
 // working copy - scaffold materialised by --work
 // name      ?draw_expenses@BaseWin@@QAEXH@Z
 // size      8365 bytes
@@ -1986,11 +1964,1015 @@ class BaseWin { public:
     void UNK7();
     void draw_expenses(int);
 };
-void BaseWin::draw_expenses(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+extern "C" __declspec(dllimport) char *__stdcall CharUpperA(char *);
 
+void BaseWin::draw_expenses(int a1) {
+    typedef unsigned int uint;
+    typedef unsigned int undefined4;
+    typedef unsigned int size_t;
+
+    char *self = reinterpret_cast<char *>(this);
+    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    Font local_font;
+
+    int param_1 = reinterpret_cast<int>(self);
+    int param_2 = a1;
+
+    int *piVar1;
+    int iVar2;
+    undefined4 uVar3;
+    size_t sVar4;
+    int iVar5;
+    int iVar6;
+    uint uVar7;
+    char *(__stdcall *pcVar8)(char *);
+    undefined4 uVar9;
+    int local_110;
+    int local_10c;
+    int local_108;
+    int local_104;
+    int local_100;
+    int local_fc;
+    int local_f8;
+    int local_f4;
+    char local_f0[80];
+    int local_a0;
+    int local_9c;
+    int local_98;
+    int local_94;
+    uint local_90;
+    int local_8c;
+    int local_88;
+    uint local_84;
+    int local_80;
+    int local_7c;
+    int local_78;
+    int local_74;
+    int local_70;
+    int local_6c;
+    int local_68;
+    int local_64;
+    int local_60;
+    int local_5c;
+    int local_58;
+    int local_54;
+    uint local_50;
+    int local_4c;
+    int local_48;
+    int local_44;
+    int *local_40;
+    int local_3c;
+    uint local_38;
+    int local_34;
+    int local_30;
+    int local_2c;
+    int local_28;
+    uint local_24;
+    int local_20;
+    uint local_1c;
+    int local_18;
+    int local_14;
+
+  local_3c = param_1;
+  local_90 = (uint)(*g_009b7b1c != 800);
+  local_8c = 0;
+  if (local_90 == 0) {
+    if ((*(int *)(param_1 + 0x1a1e4) != 0) && (param_2 < 2)) {
+      draw_energy_alloc(param_2);
+      return;
+    }
+  }
+  else {
+    draw_energy_alloc(param_2);
+  }
+  local_font.init(reinterpret_cast<char *>(*g_00691b2c), 0xc, 1);
+  piVar1 = (int *)(param_1 + 0x40c4c);
+  local_100 = *piVar1;
+  local_fc = *(undefined4 *)(param_1 + 0x40c50);
+  local_f8 = *(undefined4 *)(param_1 + 0x40c54);
+  local_f4 = *(undefined4 *)(param_1 + 0x40c58);
+  local_110 = *(undefined4 *)(param_1 + 0x464);
+  local_10c = *(undefined4 *)(param_1 + 0x468);
+  local_108 = *(undefined4 *)(param_1 + 0x46c);
+  local_104 = *(undefined4 *)(param_1 + 0x470);
+  local_40 = piVar1;
+  buffer->set_clip(reinterpret_cast<RECT *>(&local_100));
+  local_a0 = 0x17;
+  local_9c = 0;
+  local_98 = 0x2bf;
+  local_94 = 0x194;
+  buffer->box_sprite(reinterpret_cast<RECT *>(&local_a0), reinterpret_cast<BoxSpriteParams *>(g_0078d690));
+  buffer->box_sprite(reinterpret_cast<RECT *>(piVar1), reinterpret_cast<BoxSpriteParams *>(g_0078d5a0));
+  local_a0 = 0x12a;
+  local_9c = 0x107;
+  local_98 = 0x2b9;
+  local_94 = 0x145;
+  buffer->box_sprite(reinterpret_cast<RECT *>(&local_a0), reinterpret_cast<BoxSpriteParams *>(g_0078d528));
+  local_a0 = *piVar1;
+  local_9c = *(undefined4 *)(param_1 + 0x40c50);
+  local_98 = *(undefined4 *)(param_1 + 0x40c54);
+  local_94 = *(undefined4 *)(param_1 + 0x40c58);
+  local_60 = *(int *)((*g_0090ea30 + 0xe8));
+  local_74 = *(int *)((*g_0090ea30 + 0xd8));
+  local_54 = *(int *)((*g_0090ea30 + 0xf8)) + local_60;
+  local_64 = *(int *)((*g_0090ea30 + 0xd0));
+  local_68 = *(int *)((*g_0090ea30 + 0xf0));
+  local_14 = local_68 + *(int *)((*g_0090ea30 + 0xe0));
+  local_6c = *(int *)((*g_0090ea30 + 0xf4));
+  local_88 = *(int *)((*g_0090ea30 + 0xe4)) + local_6c;
+  local_5c = *(int *)((*g_0090ea30 + 0xd4));
+  local_70 = local_74;
+  if (local_74 < 0) {
+    local_70 = -local_74;
+  }
+  iVar2 = local_5c;
+  if (local_5c < 0) {
+    iVar2 = -local_5c;
+  }
+  iVar6 = local_64;
+  if (local_64 < 0) {
+    iVar6 = -local_64;
+  }
+  if (iVar6 + local_14 < iVar2 + local_88) {
+    local_28 = local_5c;
+    if (local_5c < 0) {
+      local_28 = -local_5c;
+    }
+    local_28 = local_28 + local_88;
+  }
+  else {
+    local_28 = local_64;
+    if (local_64 < 0) {
+      local_28 = -local_64;
+    }
+    local_28 = local_28 + local_14;
+  }
+  if (local_28 < local_70 + local_54) {
+    local_58 = local_74;
+    if (local_74 < 0) {
+      local_58 = -local_74;
+    }
+    local_58 = local_58 + local_54;
+  }
+  else {
+    iVar2 = local_5c;
+    if (local_5c < 0) {
+      iVar2 = -local_5c;
+    }
+    iVar6 = local_64;
+    if (local_64 < 0) {
+      iVar6 = -local_64;
+    }
+    if (iVar6 + local_14 < local_88 + iVar2) {
+      local_58 = local_5c;
+      if (local_5c < 0) {
+        local_58 = -local_5c;
+      }
+      local_58 = local_58 + local_88;
+    }
+    else {
+      local_58 = local_64;
+      if (local_64 < 0) {
+        local_58 = -local_64;
+      }
+      local_58 = local_58 + local_14;
+    }
+  }
+  {
+    // The original computes this as an x87 clamp: ratio = C1 / (float)local_54,
+    // then clamp(ratio, lowerBound, upperBound), converted to int via `(int)`
+    // (which VC6 lowers to the same __ftol as the original).
+    float ratioF = *reinterpret_cast<float *>(0x66AA3C) / static_cast<float>(local_54);
+    float lowerBoundF = *reinterpret_cast<float *>(0x66AA34);
+    float upperBoundF = *reinterpret_cast<float *>(0x66AA38);
+    if (ratioF > upperBoundF) {
+      ratioF = upperBoundF;
+    } else if (!(ratioF >= lowerBoundF)) {
+      ratioF = lowerBoundF;
+    }
+    iVar2 = static_cast<int>(ratioF);
+  }
+  local_1c = 0x2b8;
+  local_18 = 0x11b;
+  local_7c = 0x2b8;
+  local_78 = 0x11b;
+  local_58 = (int)(0xc2 / (__int64)iVar2) + 1;
+  local_70 = iVar2 * local_58;
+  local_20 = 0x107;
+  local_80 = 0x107;
+  local_24 = 0xa9;
+  local_84 = 0xa9;
+  buffer->set_font(&local_font,0,0,0);
+  local_44 = local_18;
+  local_4c = local_20;
+  *(uint *)(local_3c + 0x40ccc) = local_24;
+  *(int *)(local_3c + 0x40cd0) = local_20;
+  local_48 = 0x128;
+  *(uint *)(local_3c + 0x40cd4) = local_1c;
+  *(int *)(local_3c + 0x40cd8) = local_18;
+  if (local_90 == 0) {
+    local_50 = 0xbf;
+  }
+  else {
+    local_50 = *local_40 + 3;
+  }
+  buffer->box_sprite(reinterpret_cast<RECT *>(&local_50), reinterpret_cast<BoxSpriteParams *>(g_0078d618));
+  local_50 = local_50 + 3;
+  local_48 = local_48 + -3;
+  local_44 = local_44 + -3;
+  local_4c = local_4c + 3;
+  buffer->set_text_color(*g_008c6cc4,*g_008c6cc8,1,1);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  uVar3 = reinterpret_cast<Strings *>(g_009b90d8)->get(*(undefined4 *)((*g_009b90f8 + 0x820)));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(uVar3));
+  CharUpperA(reinterpret_cast<char *>(g_009b86a0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  buffer->write_cent_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_50), sVar4);
+  iVar6 = *(int *)((*g_0090ea30 + 0xc0));
+  local_1c = local_1c + -3;
+  local_20 = local_20 + 3;
+  local_18 = local_18 + -3;
+  local_24 = 0x133;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  uVar3 = *g_008c6d14;
+  uVar9 = *g_008c6d18;
+  if (-1 < iVar6) {
+    uVar3 = *g_008c6cc4;
+    uVar9 = *g_008c6cc8;
+  }
+  buffer->set_text_color(uVar3,uVar9,1,1);
+  iVar5 = iVar6;
+  if (iVar6 < 0) {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b48));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+    *reinterpret_cast<char *>(g_009b86a0) = 0;
+    iVar5 = -iVar6;
+  }
+  if (iVar5 < 100) {
+    if (-1 < iVar6) {
+      _itoa(0,local_f0,10);
+      strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+      sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+      local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+      *reinterpret_cast<char *>(g_009b86a0) = 0;
+      goto LAB_00413015;
+    }
+LAB_0041301d:
+    iVar5 = -iVar6;
+  }
+  else {
+LAB_00413015:
+    iVar5 = iVar6;
+    if (iVar6 < 0) goto LAB_0041301d;
+  }
+  if (iVar5 < 10) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+    *reinterpret_cast<char *>(g_009b86a0) = 0;
+  }
+  if (iVar6 < 0) {
+    iVar6 = -iVar6;
+  }
+  _itoa(iVar6,local_f0,10);
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b4c));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  iVar6 = local_14;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (local_14 < 100) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (iVar6 < 10) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (iVar6 < 0) {
+    iVar6 = -iVar6;
+  }
+  _itoa(iVar6,local_f0,10);
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682820));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682820));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_38 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  local_28 = 1;
+  if (0 < iVar2 + -1) {
+    local_28 = iVar2 + -1;
+  }
+  local_30 = local_28 + local_38;
+  local_34 = ((local_18 - local_20) - local_font.height_) / 2 + local_20;
+  local_2c = local_34 + local_font.height_;
+  local_14 = 0;
+  local_40 = (int *)local_34;
+  local_24 = local_38;
+  if (local_64 < 1) {
+    if (0 < local_68) {
+      local_28 = local_3c + 0xbd20;
+      local_40 = (int *)local_68;
+      local_14 = local_68;
+      iVar6 = local_68;
+      do {
+        buffer->tile(reinterpret_cast<Sprite *>(local_28), local_38,local_34,local_38,local_34,local_30 - local_38,
+                     local_2c - local_34);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        iVar6 = iVar6 + -1;
+      } while (iVar6 != 0);
+    }
+    iVar6 = 0;
+    while( true ) {
+      iVar5 = local_64;
+      if (local_64 < 0) {
+        iVar5 = -local_64;
+      }
+      if (iVar5 <= iVar6) break;
+      buffer->tile(reinterpret_cast<Sprite *>(local_3c + 0xbda4), local_38,local_34,local_38,local_34,local_30 - local_38,
+                   local_2c - local_34);
+      local_38 = local_38 + iVar2;
+      local_30 = local_30 + iVar2;
+      local_14 = local_14 + 1;
+      iVar6 = iVar6 + 1;
+    }
+  }
+  else {
+    if (0 < local_68) {
+      local_28 = local_3c + 0xbd20;
+      local_40 = (int *)local_68;
+      local_14 = local_68;
+      iVar6 = local_68;
+      do {
+        buffer->tile(reinterpret_cast<Sprite *>(local_28), local_38,local_34,local_38,local_34,local_30 - local_38,
+                     local_2c - local_34);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        iVar6 = iVar6 + -1;
+      } while (iVar6 != 0);
+    }
+    iVar6 = (local_58 - local_64) - local_68;
+    if (0 < iVar6) {
+      local_14 = local_14 + iVar6;
+      local_28 = iVar6;
+      do {
+        reinterpret_cast<GraphicWin *>(self)->fill(reinterpret_cast<RECT *>(&local_38),0xf0);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        local_28 = local_28 + -1;
+      } while (local_28 != 0);
+      local_28 = 0;
+    }
+    iVar6 = local_3c;
+    if (0 < local_64) {
+      local_28 = local_64;
+      local_14 = local_14 + local_64;
+      do {
+        buffer->tile(reinterpret_cast<Sprite *>(iVar6 + 0xbd4c), local_38,local_34,local_38,local_34,local_30 - local_38,
+                     local_2c - local_34);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        local_28 = local_28 + -1;
+      } while (local_28 != 0);
+      local_28 = 0;
+    }
+  }
+  if (local_14 < local_58) {
+    local_28 = local_58 - local_14;
+    do {
+      reinterpret_cast<GraphicWin *>(self)->fill(reinterpret_cast<RECT *>(&local_38),0xf0);
+      local_38 = local_38 + iVar2;
+      local_30 = local_30 + iVar2;
+      local_28 = local_28 + -1;
+    } while (local_28 != 0);
+  }
+  local_24 = local_24 + local_70;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b50));
+  iVar6 = local_64;
+  uVar3 = *g_008c6ccc;
+  uVar9 = *g_008c6cd0;
+  if (local_64 < 0) {
+    uVar3 = *g_008c6d14;
+    uVar9 = *g_008c6d18;
+  }
+  buffer->set_text_color(uVar3,uVar9,1,1);
+  if (iVar6 < 0) {
+    local_8c = 1;
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b5c));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  }
+  else {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b58));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  }
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  iVar5 = iVar6;
+  if (iVar6 < 0) {
+    iVar5 = -iVar6;
+  }
+  if (iVar5 < 100) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  iVar5 = iVar6;
+  if (iVar6 < 0) {
+    iVar5 = -iVar6;
+  }
+  if (iVar5 < 10) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (iVar6 < 0) {
+    iVar6 = -iVar6;
+  }
+  _itoa(iVar6,local_f0,10);
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  local_1c = local_7c;
+  local_80 = local_80 + 0x15;
+  local_24 = local_84;
+  *(uint *)(local_3c + 0x40cdc) = local_84;
+  local_50 = local_84;
+  *(int *)(local_3c + 0x40ce0) = local_80;
+  local_78 = local_78 + 0x15;
+  *(int *)(local_3c + 0x40ce4) = local_7c;
+  *(int *)(local_3c + 0x40ce8) = local_78;
+  local_48 = 0x128;
+  local_4c = local_80;
+  local_44 = local_78;
+  local_20 = local_80;
+  local_18 = local_78;
+  buffer->box_sprite(reinterpret_cast<RECT *>(&local_50), reinterpret_cast<BoxSpriteParams *>(g_0078d618));
+  local_50 = local_50 + 3;
+  local_4c = local_4c + 3;
+  local_48 = local_48 + -3;
+  local_44 = local_44 + -3;
+  buffer->set_text_color(*g_008c6cd4,*g_008c6cd8,1,1);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  uVar3 = reinterpret_cast<Strings *>(g_009b90d8)->get(*(undefined4 *)((*g_009b90f8 + 0xa0)));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(uVar3));
+  CharUpperA(reinterpret_cast<char *>(g_009b86a0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  buffer->write_cent_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_50), sVar4);
+  iVar6 = *(int *)((*g_0090ea30 + 0xc4));
+  local_1c = local_1c + -3;
+  local_20 = local_20 + 3;
+  local_18 = local_18 + -3;
+  local_24 = 0x133;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  uVar3 = *g_008c6d14;
+  uVar9 = *g_008c6d18;
+  if (-1 < iVar6) {
+    uVar3 = *g_008c6cd4;
+    uVar9 = *g_008c6cd8;
+  }
+  buffer->set_text_color(uVar3,uVar9,1,1);
+  iVar5 = iVar6;
+  if (iVar6 < 0) {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b60));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+    *reinterpret_cast<char *>(g_009b86a0) = 0;
+    iVar5 = -iVar6;
+  }
+  if (iVar5 < 100) {
+    if (-1 < iVar6) {
+      _itoa(0,local_f0,10);
+      strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+      sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+      local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+      *reinterpret_cast<char *>(g_009b86a0) = 0;
+      goto LAB_00413885;
+    }
+LAB_0041388d:
+    iVar5 = -iVar6;
+  }
+  else {
+LAB_00413885:
+    iVar5 = iVar6;
+    if (iVar6 < 0) goto LAB_0041388d;
+  }
+  if (iVar5 < 10) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+    *reinterpret_cast<char *>(g_009b86a0) = 0;
+  }
+  if (iVar6 < 0) {
+    iVar6 = -iVar6;
+  }
+  _itoa(iVar6,local_f0,10);
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b64));
+  local_90 = local_24;
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  iVar6 = local_88;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (local_88 < 100) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (iVar6 < 10) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (iVar6 < 0) {
+    iVar6 = -iVar6;
+  }
+  _itoa(iVar6,local_f0,10);
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682820));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682820));
+  buffer->set_text_color(*g_008c6cd4,*g_008c6cd8,1,1);
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_38 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  local_28 = 1;
+  if (0 < iVar2 + -1) {
+    local_28 = iVar2 + -1;
+  }
+  local_30 = local_28 + local_38;
+  local_34 = ((local_18 - local_20) - local_font.height_) / 2 + local_20;
+  local_2c = local_34 + local_font.height_;
+  local_14 = 0;
+  local_40 = (int *)local_34;
+  local_24 = local_38;
+  if (local_5c < 1) {
+    if (local_5c < 0) {
+      local_8c = 1;
+    }
+    if (0 < local_6c) {
+      local_28 = local_3c + 0xbcc8;
+      local_40 = (int *)local_6c;
+      local_14 = local_6c;
+      iVar6 = local_6c;
+      do {
+        buffer->tile(reinterpret_cast<Sprite *>(local_28), local_38,local_34,local_38,local_34,local_30 - local_38,
+                     local_2c - local_34);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        iVar6 = iVar6 + -1;
+      } while (iVar6 != 0);
+    }
+    iVar6 = 0;
+    while( true ) {
+      iVar5 = local_5c;
+      if (local_5c < 0) {
+        iVar5 = -local_5c;
+      }
+      if (iVar5 <= iVar6) break;
+      buffer->tile(reinterpret_cast<Sprite *>(local_3c + 0xbda4), local_38,local_34,local_38,local_34,local_30 - local_38,
+                   local_2c - local_34);
+      local_38 = local_38 + iVar2;
+      local_30 = local_30 + iVar2;
+      local_14 = local_14 + 1;
+      iVar6 = iVar6 + 1;
+    }
+  }
+  else {
+    if (0 < local_6c) {
+      local_28 = local_3c + 0xbcc8;
+      local_40 = (int *)local_6c;
+      local_14 = local_6c;
+      iVar6 = local_6c;
+      do {
+        buffer->tile(reinterpret_cast<Sprite *>(local_28), local_38,local_34,local_38,local_34,local_30 - local_38,
+                     local_2c - local_34);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        iVar6 = iVar6 + -1;
+      } while (iVar6 != 0);
+    }
+    iVar6 = (local_58 - local_5c) - local_6c;
+    if (0 < iVar6) {
+      local_14 = local_14 + iVar6;
+      local_28 = iVar6;
+      do {
+        reinterpret_cast<GraphicWin *>(self)->fill(reinterpret_cast<RECT *>(&local_38),0xf0);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        local_28 = local_28 + -1;
+      } while (local_28 != 0);
+      local_28 = 0;
+    }
+    iVar6 = local_3c;
+    if (0 < local_5c) {
+      local_28 = local_5c;
+      local_14 = local_14 + local_5c;
+      do {
+        buffer->tile(reinterpret_cast<Sprite *>(iVar6 + 0xbcf4), local_38,local_34,local_38,local_34,local_30 - local_38,
+                     local_2c - local_34);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        local_28 = local_28 + -1;
+      } while (local_28 != 0);
+      local_28 = 0;
+    }
+  }
+  if (local_14 < local_58) {
+    local_28 = local_58 - local_14;
+    do {
+      reinterpret_cast<GraphicWin *>(self)->fill(reinterpret_cast<RECT *>(&local_38),0xf0);
+      local_38 = local_38 + iVar2;
+      local_30 = local_30 + iVar2;
+      local_28 = local_28 + -1;
+    } while (local_28 != 0);
+  }
+  local_24 = local_24 + local_70;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b68));
+  iVar6 = local_5c;
+  uVar3 = *g_008c6d14;
+  uVar9 = *g_008c6d18;
+  if ((-1 < local_5c) &&
+     (uVar3 = *g_008c6cdc, uVar9 = *g_008c6ce0, *(int *)((*g_0090ea30 + 0x50)) == -0x45)) {
+    uVar3 = *g_008c6d5c;
+    uVar9 = *g_008c6d60;
+  }
+  buffer->set_text_color(uVar3,uVar9,1,1);
+  if (iVar6 < 0) {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b74));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  }
+  else {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b70));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  }
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  iVar5 = iVar6;
+  if (iVar6 < 0) {
+    iVar5 = -iVar6;
+  }
+  if (iVar5 < 100) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  iVar5 = iVar6;
+  if (iVar6 < 0) {
+    iVar5 = -iVar6;
+  }
+  if (iVar5 < 10) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  iVar5 = iVar6;
+  if (iVar6 < 0) {
+    iVar5 = -iVar6;
+  }
+  _itoa(iVar5,local_f0,10);
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+  if ((-1 < iVar6) && (*(int *)((*g_0090ea30 + 0x50)) == -0x45)) {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b78));
+  }
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  local_1c = local_7c;
+  local_80 = local_80 + 0x15;
+  local_78 = local_78 + 0x15;
+  *(uint *)(local_3c + 0x40cbc) = local_84;
+  *(int *)(local_3c + 0x40cc0) = local_80;
+  *(int *)(local_3c + 0x40cc4) = local_7c;
+  local_24 = local_84;
+  *(int *)(local_3c + 0x40cc8) = local_78;
+  local_50 = *(int *)(local_3c + 0x40c4c) + 3;
+  local_48 = 0x128;
+  local_4c = local_80;
+  local_44 = local_78;
+  local_20 = local_80;
+  local_18 = local_78;
+  buffer->box_sprite(reinterpret_cast<RECT *>(&local_50), reinterpret_cast<BoxSpriteParams *>(g_0078d618));
+  local_50 = local_50 + 3;
+  local_4c = local_4c + 3;
+  local_48 = local_48 + -3;
+  local_44 = local_44 + -3;
+  buffer->set_text_color(*g_008c6cb4,*g_008c6cb8,1,1);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  uVar3 = reinterpret_cast<Strings *>(g_009b90d8)->get(*(undefined4 *)((*g_009b90f8 + 0x90)));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(uVar3));
+  CharUpperA(reinterpret_cast<char *>(g_009b86a0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  buffer->write_cent_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_50), sVar4);
+  iVar6 = *(int *)((*g_0090ea30 + 200));
+  local_1c = local_1c + -3;
+  local_20 = local_20 + 3;
+  local_18 = local_18 + -3;
+  local_24 = 0x133;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  uVar3 = *g_008c6d14;
+  uVar9 = *g_008c6d18;
+  if (-1 < iVar6) {
+    uVar3 = *g_008c6cb4;
+    uVar9 = *g_008c6cb8;
+  }
+  buffer->set_text_color(uVar3,uVar9,1,1);
+  iVar5 = iVar6;
+  if (iVar6 < 0) {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b7c));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+    *reinterpret_cast<char *>(g_009b86a0) = 0;
+    iVar5 = -iVar6;
+  }
+  if (iVar5 < 100) {
+    if (-1 < iVar6) {
+      _itoa(0,local_f0,10);
+      strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+      sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+      local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+      *reinterpret_cast<char *>(g_009b86a0) = 0;
+      goto LAB_00414178;
+    }
+LAB_00414180:
+    iVar5 = -iVar6;
+  }
+  else {
+LAB_00414178:
+    iVar5 = iVar6;
+    if (iVar6 < 0) goto LAB_00414180;
+  }
+  if (iVar5 < 10) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+    *reinterpret_cast<char *>(g_009b86a0) = 0;
+  }
+  if (iVar6 < 0) {
+    iVar6 = -iVar6;
+  }
+  _itoa(iVar6,local_f0,10);
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b80));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  iVar6 = local_54;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (local_54 < 100) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (iVar6 < 10) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (iVar6 < 0) {
+    iVar6 = -iVar6;
+  }
+  _itoa(iVar6,local_f0,10);
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682820));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682820));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_38 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  local_54 = 1;
+  if (0 < iVar2 + -1) {
+    local_54 = iVar2 + -1;
+  }
+  local_30 = local_54 + local_38;
+  local_34 = ((local_18 - local_20) - local_font.height_) / 2 + local_20;
+  local_2c = local_34 + local_font.height_;
+  local_14 = 0;
+  local_40 = (int *)local_34;
+  local_24 = local_38;
+  if (local_74 < 0) {
+    local_8c = 1;
+    if (0 < local_60) {
+      local_54 = local_3c + 0xbda4;
+      local_40 = (int *)local_60;
+      local_14 = local_60;
+      iVar6 = local_60;
+      do {
+        buffer->tile(reinterpret_cast<Sprite *>(local_54), local_38,local_34,local_38,local_34,local_30 - local_38,
+                     local_2c - local_34);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        iVar6 = iVar6 + -1;
+      } while (iVar6 != 0);
+    }
+    for (iVar6 = 0; iVar6 < -local_74; iVar6 = iVar6 + 1) {
+      buffer->tile(reinterpret_cast<Sprite *>(local_3c + 0xbda4), local_38,local_34,local_38,local_34,local_30 - local_38,
+                   local_2c - local_34);
+      local_38 = local_38 + iVar2;
+      local_30 = local_30 + iVar2;
+      local_14 = local_14 + 1;
+    }
+  }
+  else {
+    if (0 < local_60) {
+      local_54 = local_3c + 0xbda4;
+      local_40 = (int *)local_60;
+      local_14 = local_60;
+      iVar6 = local_60;
+      do {
+        buffer->tile(reinterpret_cast<Sprite *>(local_54), local_38,local_34,local_38,local_34,local_30 - local_38,
+                     local_2c - local_34);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        iVar6 = iVar6 + -1;
+      } while (iVar6 != 0);
+    }
+    iVar6 = (local_58 - local_74) - local_60;
+    if (0 < iVar6) {
+      local_14 = local_14 + iVar6;
+      do {
+        reinterpret_cast<GraphicWin *>(self)->fill(reinterpret_cast<RECT *>(&local_38),0xf0);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        iVar6 = iVar6 + -1;
+      } while (iVar6 != 0);
+    }
+    if (0 < local_74) {
+      local_40 = (int *)local_74;
+      local_14 = local_14 + local_74;
+      iVar6 = local_74;
+      do {
+        buffer->tile(reinterpret_cast<Sprite *>(local_3c + 0xbc9c), local_38,local_34,local_38,local_34,local_30 - local_38,
+                     local_2c - local_34);
+        local_38 = local_38 + iVar2;
+        local_30 = local_30 + iVar2;
+        iVar6 = iVar6 + -1;
+      } while (iVar6 != 0);
+    }
+  }
+  if (local_14 < local_58) {
+    iVar6 = local_58 - local_14;
+    do {
+      reinterpret_cast<GraphicWin *>(self)->fill(reinterpret_cast<RECT *>(&local_38),0xf0);
+      local_38 = local_38 + iVar2;
+      local_30 = local_30 + iVar2;
+      iVar6 = iVar6 + -1;
+    } while (iVar6 != 0);
+  }
+  uVar7 = local_24 + local_70;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  local_24 = uVar7;
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b84));
+  iVar2 = local_74;
+  uVar3 = *g_008c6cbc;
+  uVar9 = *g_008c6cc0;
+  if (local_74 < 0) {
+    uVar3 = *g_008c6d14;
+    uVar9 = *g_008c6d18;
+  }
+  buffer->set_text_color(uVar3,uVar9,1,1);
+  if (iVar2 < 0) {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b90));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  }
+  else {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b8c));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  }
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  iVar6 = iVar2;
+  if (iVar2 < 0) {
+    iVar6 = -iVar2;
+  }
+  if (iVar6 < 100) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  iVar6 = iVar2;
+  if (iVar2 < 0) {
+    iVar6 = -iVar2;
+  }
+  if (iVar6 < 10) {
+    _itoa(0,local_f0,10);
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (iVar2 < 0) {
+    iVar2 = -iVar2;
+  }
+  _itoa(iVar2,local_f0,10);
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(local_f0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  buffer->set_text_color(*g_008c6cac,*g_008c6cb0,1,1);
+  local_18 = local_78 + 0x15;
+  local_20 = local_80 + 0x15;
+  local_24 = local_84;
+  local_1c = local_7c;
+  buffer->box_sprite(reinterpret_cast<RECT *>(&local_24), reinterpret_cast<BoxSpriteParams *>(g_0078d618));
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  local_24 = uVar7;
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b94));
+  if (local_8c == 0) {
+    uVar3 = reinterpret_cast<Strings *>(g_009b90d8)->get(*(undefined4 *)((*g_009b90f8 + 0xd0)));
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(uVar3));
+    pcVar8 = &CharUpperA;
+    CharUpperA(reinterpret_cast<char *>(g_009b86a0));
+  }
+  else {
+    buffer->set_text_color(*g_008c6d14,*g_008c6d18,1,1);
+    uVar3 = reinterpret_cast<Strings *>(g_009b90d8)->get(*(undefined4 *)((*g_009b90f8 + 0xae4)));
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(uVar3));
+    pcVar8 = &CharUpperA;
+  }
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  buffer->set_text_color(*g_008c6cac,*g_008c6cb0,1,1);
+  local_24 = local_90;
+  local_1c = local_90;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  uVar3 = reinterpret_cast<Strings *>(g_009b90d8)->get(*(undefined4 *)((*g_009b90f8 + 0xa3c)));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(uVar3));
+  (*pcVar8)(reinterpret_cast<char *>(g_009b86a0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  buffer->write_right_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682b9c));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  iVar6 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  iVar2 = local_60;
+  local_24 = iVar6 + 5;
+  *reinterpret_cast<char *>(g_009b86a0) = 0;
+  if (local_60 != 0) {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682ba0));
+  }
+  uVar3 = reinterpret_cast<Strings *>(g_009b90d8)->get(*(undefined4 *)((*g_009b90f8 + 0xa40)));
+  strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(uVar3));
+  if (iVar2 != 0) {
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00682ba4));
+  }
+  (*pcVar8)(reinterpret_cast<char *>(g_009b86a0));
+  sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+  uVar7 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+  if (local_60 != 0) {
+    buffer->set_text_color(*g_008c6d14,*g_008c6d18,1,1);
+    *reinterpret_cast<char *>(g_009b86a0) = 0;
+    uVar3 = reinterpret_cast<Strings *>(g_009b90d8)->get(*(undefined4 *)((*g_009b90f8 + 0xe0)));
+    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(uVar3));
+    (*pcVar8)(reinterpret_cast<char *>(g_009b86a0));
+    local_24 = uVar7;
+    sVar4 = strlen(reinterpret_cast<const char *>(g_009b86a0));
+    local_24 = buffer->write_l(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<RECT *>(&local_24), sVar4);
+    buffer->set_text_color(*g_008c6cac,*g_008c6cb0,1,1);
+    sVar4 = strlen(reinterpret_cast<const char *>(g_00682ba8));
+    buffer->write_l(reinterpret_cast<char *>(g_00682ba8), reinterpret_cast<RECT *>(&local_24), sVar4);
+  }
+  if (param_2 == 0) {
+    reinterpret_cast<GraphicWin *>(self)->soft_update(reinterpret_cast<RECT *>(local_3c + 0x40c4c));
+  }
+  else {
+    reinterpret_cast<GraphicWin *>(self)->update(reinterpret_cast<RECT *>(local_3c + 0x40c4c), reinterpret_cast<GraphicWin *>(0));
+  }
+  buffer->set_clip(reinterpret_cast<RECT *>(&local_110));
+  return;
 }
+
