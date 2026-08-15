@@ -1005,10 +1005,22 @@ def compile_batch(units: dict, work: Path, flags: str) -> dict:
 def compile_batches(chunks: list, flags: str, workers: int = 0) -> list:
     """Compile several batches CONCURRENTLY, one directory each.
 
-    `compile_batch` already buys 21.6x by putting many units through a single
-    response file. What it does not do is use the other fifteen cores: the
-    census compiled ~13 chunks per flag set strictly one after another, which
-    is most of why a full census took 12 to 19 minutes.
+    ONE UNIT PER INVOCATION, AND THE SCHEDULER DECIDES. Grouping units into
+    big response files was tuned for a workload that no longer exists: 44 ms
+    of `wine CL` startup against 2 ms of compiling meant startup WAS the cost,
+    and one response file beat one-at-a-time by 21.6x. That measurement is
+    serial-against-serial. Once the invocations run at once, the startup is
+    amortised across cores instead of across a response file, and the grouping
+    buys nothing while costing everything: a fixed chunk of 120 meant batch
+    22's 34 addresses formed a single chunk, took the serial path below, and
+    one `cl` compiled all 34 bodies end to end on a 16-core machine - 86
+    minutes and still going. Every per-batch collect this project has run was
+    single-threaded, invisibly, because until now the units were placeholders
+    that compiled in 2 ms.
+
+    So the chunking is gone rather than retuned. There is no size to pick, no
+    heuristic to get wrong when the mix of body sizes changes, and a 1,400-line
+    /O2 body no longer blocks 33 cheap ones behind it.
 
     EACH BATCH NEEDS ITS OWN DIRECTORY. cl writes `<stem>.obj` and reads
     `cl.rsp` from the working directory, so two batches sharing one would
@@ -1020,7 +1032,12 @@ def compile_batches(chunks: list, flags: str, workers: int = 0) -> list:
     from isolated compiles only in COFF byte 4, the timestamp - and no batch
     can see another's files.
     """
-    workers = workers or min(8, (os.cpu_count() or 2))
+    # EVERY CORE, not eight of them. The old cap predates one-unit-per-`cl`,
+    # where eight in flight left half a 16-core machine idle. The pool is here
+    # to keep the process count bounded and nothing more - which of them run
+    # when is the OS scheduler's problem, and it is better at it than a chunk
+    # size chosen in advance.
+    workers = workers or (os.cpu_count() or 2)
 
     def one(chunk):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1116,7 +1133,7 @@ def _better(candidate: dict, incumbent: dict) -> bool:
 
 
 def match_functions(pe, rows: dict, shared: set, subjects: list,
-                    flags: str, chunk: int = 120) -> dict:
+                    flags: str, chunk: int = 1) -> dict:
     """`match_function` for MANY units at once. {address: outcome}.
 
     Identical arithmetic to the singular form and deliberately so - it is the
