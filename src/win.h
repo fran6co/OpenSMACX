@@ -62,6 +62,15 @@ class DLLEXPORT Win {
   int is_descendant(Win *candidate);
   int is_dialog_focus();
   int set_cursor(int name);
+  // `static`, because the image's name ends in `QAA` - a public member
+  // declared __cdecl, taking no receiver. jackal_init_real calls it with
+  // no ecx set up, so `Class::method()` is the only legal spelling.
+  static int set_display_mode(int width, int height, int depth, int tgl);
+  // `static`: the image's name ends in `QAA` - a public member declared
+  // __cdecl, taking no receiver - and jackal_init_real calls it with no
+  // ecx set up, so `Class::method()` is the only legal spelling.
+  static int init_class(LPSTR window_name);   // 005F01F0
+  static void flip(RECT *area);              // 005EFD20
   static void clear_bubble_text();
   static void set_def_focus(int focus);
   void UNK8(int value);

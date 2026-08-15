@@ -108,4 +108,3 @@ LPSTR Strings::get(int address) {
 }
 
 // global
-Strings *StringTable = (Strings *)0x009B90D8;

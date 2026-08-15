@@ -54,6 +54,10 @@
   */
 class DLLEXPORT RadioButton {
  public:
+  // `static`: the image's name ends in `QAA` - a public member declared
+  // __cdecl, taking no receiver - and jackal_init_real calls it with no
+  // ecx set up, so `Class::method()` is the only legal spelling.
+  static int init_class();   // 0060E4D0
   void on_mouse_leave(int a1, int a2);
   void on_dialog_focus(int a1);
   RadioButton() { ; }

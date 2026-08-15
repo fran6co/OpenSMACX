@@ -4,14 +4,65 @@ Byte-matching is the project's only live verification route: write a body, ask
 VC6 12.00.8168, compare the bytes. Everything below was built to answer the same
 question a different way, and is retired rather than deleted from memory.
 
-**This file is a reachability root.** `tools/verify_tool_reachability.py` globs
-`docs/*.md`, so a tool named here stays reachable and a tool whose line is struck
-must be deleted in the same commit. That is the graded retirement path: keeping
-an idea costs one paragraph, and dropping one is a visible edit.
+**This file used to be a reachability root.** `verify_tool_reachability.py`
+globbed `docs/*.md`, so a tool named here stayed reachable and a tool whose
+line was struck had to be deleted in the same commit. That tool went with the
+suite below; the convention survives it as a convention, and naming a tool here
+is still how an idea is kept for one paragraph instead of rebuilt from scratch.
 
 Nothing here is a recommendation to rebuild it as it was. Each section ends with
 the measurement that priced it, because the numbers are the part that does not
 survive re-derivation.
+
+---
+
+## The ctest suite — retired 2026-08-15
+
+`tests/` was a 1,487-line `CMakeLists.txt` registering 95 tests: ~60 Python
+tool-test files, the `recovery-gameplay-tests` C++ fixture target, and the ABI,
+vtable, class-layout, span-termination, call-edge and annotation-integrity
+gates. Roughly 6,600 lines of test code.
+
+**Why it went. Nothing consumed its results.** The suite was run on 2026-08-15
+and reported 21% passing — 75 failures, every one of them
+`ModuleNotFoundError: No module named 'pefile'`. The cause was a plain
+`cmake -S . -B build`, which reconfigures without `-DOPENSMACX_PYTHON` and
+falls back to `/usr/bin/python3` instead of the venv every tool in this tree
+runs on. That is not a state somebody sees and tolerates for a while; it is
+what a suite nobody runs looks like from the inside.
+
+The corroborating measurement: `test_agent_brief.py`'s prose bound was failing
+at `52e624fb`, **the commit that introduced the bound**, and stayed red through
+every commit after it. A check that has never once been green is not enforcing
+anything, and neither is a green one nobody reads — which is the argument that
+settled this. Green and red were equally uninformative here, so the split
+between them was not worth preserving either.
+
+**What replaced it: nothing, deliberately.** The gate is
+`tools/decomp_status.py --check` — 1,540 BYTE_EXACT claims recompiled against
+the shipped image, 0 not reproduced, run every batch and read every time. It
+was always the only load-bearing check; the rest was apparatus around it.
+
+**What was kept.** Every verifier whose subject is the IMAGE or the CATALOGUE
+still exists and still runs standalone: `verify_member_offsets`,
+`verify_class_layouts`, `verify_recovery_abi`, `verify_recovery_pipeline`,
+`verify_span_termination`, `verify_call_edges`, `verify_return_agreement`,
+`verify_vendor_zlib`, `verify_void_returns`, `verify_documented_counts`.
+
+**What was deleted with it.** Every verifier whose subject was the SUITE:
+`verify_checks_can_fail`, `verify_check_tests_observe`,
+`verify_tool_test_registration`, `verify_test_registration`,
+`verify_tests_all_run`, `verify_tests_do_not_write`, `verify_tool_reachability`,
+`verify_build_freshness`, `verify_cmake_paths_exist`, `cmake_sources` and
+`run_windows_test`. Ten of the eleven checked a property of the tests
+themselves; with no tests, each was vacuously green.
+
+**The cost, stated plainly.** Six invariants now have no automatic enforcement:
+class layouts against the image, ABI agreement, span termination, call-edge
+completeness, vendored-source integrity and documented counts. A regression in
+any of them will be found by someone running the tool, or not at all. The
+byte-exactness of 1,540 functions is unaffected — that is what the gate
+measures.
 
 ---
 
@@ -802,7 +853,14 @@ file plus one `add_test`, and the floor should then be derived from the
 generated `CTestTestfile.cmake` — what CTest will really run — rather than from
 a list in this file, which is what let it drift.
 
-**`recovery-gameplay-tests` IS NOT RETIRED, and was proposed for retirement
+**SUPERSEDED 2026-08-15 — `recovery-gameplay-tests` IS retired, with the whole
+`tests/` directory (see the section at the top of this file). The argument
+below is preserved because it is still the correct account of WHAT was lost:
+37 functions whose only behavioural observer it was. What changed is not that
+the argument was refuted, but that the suite holding it was not being run at
+all, so the observation it offered was never actually made.**
+
+**[Historical] `recovery-gameplay-tests` IS NOT RETIRED, and was proposed for retirement
 alongside this check on a framing that turned out to be wrong.** It looked like
 the last vestige of the runtime route retired 2026-08-12. It is not: 16,228
 lines and 2,217 assertions, and by this document's own measurement at line 418

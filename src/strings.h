@@ -41,4 +41,13 @@ static_assert(sizeof(Strings) == 0x18, "Strings layout must match the legacy ABI
 #endif
 
 // global
-extern Strings *StringTable;
+// THE ADDRESS, NOT A VARIABLE HOLDING IT. `jackal_init_real` calls
+// `StringTable->init(0x8000)` and the image sets the receiver up as
+// `mov ecx, 0x9b90d8` - an immediate. An `extern Strings *` compiles the
+// same source to `mov ecx, dword ptr [0x9b90d8]`, a load the image never
+// performs, and the extra instruction was the whole gap between that
+// function and BYTE_EXACT. Call sites are unchanged: `->` still works.
+// Safe as a header-scope static because nothing takes `&StringTable`;
+// see the note on `GenderDefault` in general.h for the two cases where
+// this spelling is NOT safe.
+static Strings *const StringTable = (Strings *)0x009B90D8;

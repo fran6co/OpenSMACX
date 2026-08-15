@@ -711,6 +711,46 @@ def render_diff(address: int, unit, flags: str, limit: int = 40) -> None:
         print("    no divergence: every instruction agrees")
 
 
+def census_unit_text(address: int):
+    """The unit the GATE builds for a committed body-mode function, or None.
+
+    THE TWO RECIPES ARE FOR TWO BODY STYLES, NOT TWO QUESTIONS. A candidate
+    typed at this tool is scaffolded text and has no file around it, so it is
+    assembled by the writeback recipe. A COMMITTED body is different: it lives
+    in a real translation unit next to real headers, and the gate assembles it
+    with `byte_match_census.build_unit`, which adds the compat preamble that
+    supplies whatever `src/*.h` declares - globals included.
+
+    Asking the writeback recipe about a committed body therefore asks about a
+    unit nobody compiles. Measured on `jackal_init_real` the day it moved from
+    `src/unrecovered/` into `src/general.cpp`: the gate said MISMATCH and this
+    tool said NO_COMPILE, `'JackalInitFlags' : undeclared identifier`, because
+    the preamble that declares it is not part of the writeback recipe. The
+    name is declared, in `src/general.h`, and the unit that ships compiles.
+
+    So the committed path uses the gate's recipe. This CANNOT move a claim:
+    `decomp_status.py --check` was already the census and is untouched. It can
+    only stop this tool from disagreeing with it.
+    """
+    import byte_match_census
+    import pefile
+
+    functions = emit.load_functions()
+    row = functions.get(address)
+    if row is None:
+        return None
+    location = row.get("source_locations") or ""
+    if not location:
+        return None
+    unit, _refusal = byte_match_census.build_unit(
+        address, row, location, functions, emit.load_derived(),
+        emit.load_callees(), pefile.PE(str(byte_match.DEFAULT_EXE),
+                                       fast_load=True))
+    # A FILE-mode subject comes back as `(text, origin)` and is already
+    # handled above by `verify_verbatim`; only the plain-text form is ours.
+    return unit if isinstance(unit, str) else None
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -755,6 +795,7 @@ def main(argv=None) -> int:
         sys.stdout.write(build_unit_text(address, candidate))
         return 0
 
+    census_text = None
     if arguments.body:
         body = (sys.stdin.read() if arguments.body == "-"
                 else Path(arguments.body).read_text())
@@ -780,6 +821,7 @@ def main(argv=None) -> int:
         if body is None:
             print(f"SKIP: {source}")
             return 0
+        census_text = census_unit_text(address)
 
     refusals, notes = form_report(body)
     for why in refusals:
@@ -800,7 +842,7 @@ def main(argv=None) -> int:
     # than a wrong answer here: `agent_brief.py` reprints this verdict as
     # "Current verdict", so every brief for a FILE-mode address opened by
     # telling the agent its committed body does not compile.
-    whole = complete_unit(body)
+    whole = census_text or complete_unit(body)
     if whole:
         landed = file_mode_annotation(address)
         verdict = verify_body_verbatim(address, whole,
