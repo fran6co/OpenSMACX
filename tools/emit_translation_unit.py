@@ -195,8 +195,17 @@ def seam_header() -> str:
 
 CONSTANT_IN_ENUM = re.compile(
     r"^\s*([A-Z][A-Z0-9_]{2,})\s*=\s*(-?(?:0[xX][0-9a-fA-F]+|\d+))\s*,?\s*(?://.*)?$")
+# ANY INTEGRAL TYPE, not just `int`. The pattern read `constexpr int` and
+# `src/` writes `constexpr size_t` for every offset and slot constant it has -
+# DialogsDestructorAdjustment, ListBoxDestructorAdjustment,
+# StringStructDerivedCloseAdjustment, BufferSurfaceLockSlot, MapWinActiveOffset
+# and the rest - so a body using one got `C2065: undeclared identifier` for a
+# value sitting in a header two directories away. Restating it is the whole
+# point of this function; it was just spelled too narrowly to find them.
 CONSTANT_CONSTEXPR = re.compile(
-    r"^\s*constexpr\s+int\s+(\w+)\s*=\s*(-?(?:0[xX][0-9a-fA-F]+|\d+))\s*;")
+    r"^\s*constexpr\s+(?:unsigned\s+)?"
+    r"(?:int|size_t|long|short|char|uint\d+_t|int\d+_t)\s+(\w+)\s*=\s*"
+    r"(-?(?:0[xX][0-9a-fA-F]+|\d+))\s*;")
 
 
 def game_constants() -> str:
