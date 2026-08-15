@@ -64,6 +64,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import annotation_scan  # noqa: E402
+import cpu
 import byte_match  # noqa: E402
 import byte_match_census as census  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
@@ -221,10 +222,10 @@ def build_units(annotations: list, matched: dict, functions: dict,
         tasks.append((address, annotation.recipe, annotation.region,
                       annotation.location, row))
 
-    if jobs <= 0:
-        # A worker pays ~2 s to load the catalogue, so a pool is only worth
-        # building when there is real work; a spot check stays in-process.
-        jobs = max(1, min(16, (os.cpu_count() or 2) - 2))
+    # A worker pays ~2 s to load the catalogue, so a pool is only worth
+    # building when there is real work; a spot check stays in-process, which
+    # is what the `len(tasks) >= 64` guard below is for.
+    jobs = cpu.worker_count(jobs)
     if jobs > 1 and len(tasks) >= 64:
         with concurrent.futures.ProcessPoolExecutor(
                 max_workers=jobs, initializer=_worker_init) as pool:
@@ -1262,7 +1263,7 @@ def main(argv=None) -> int:
     # them. 0 means "pick a sensible pool size".
     parser.add_argument("--jobs", type=int, default=0,
                         help="worker processes for unit building "
-                             "(0 = one per core, less two)")
+                             "(0 = every hardware core; 1 = serial)")
     parser.add_argument("--json", action="store_true",
                         help="machine-readable result instead of prose")
     parser.add_argument("--generate-placeholders", action="store_true",
@@ -1405,8 +1406,28 @@ def main(argv=None) -> int:
 
     duplicates = set(drift["duplicates"])
     measurable = [a for a in annotations if a.address not in duplicates]
+
+    # THE GATE ASKS ABOUT CLAIMS, SO IT MEASURES CLAIMS. `--check`'s question
+    # is "does every BYTE_EXACT claim in src/ still reproduce" - 1,540 of the
+    # 5,606 annotations. Measuring the other 4,066 answered a question nobody
+    # asked and cost roughly three quarters of the wall clock, in a command
+    # that runs after every edit.
+    #
+    # NOT A WEAKER CHECK. `claim_regressions` only ever inspected claims;
+    # every address dropped here is one whose outcome was computed, printed
+    # in the summary, and then not used to decide anything. What IS lost is
+    # the map - the tier counts and the piece list - so gate mode does not
+    # print them and says which question it answered.
+    #
+    # `--record-matches` is the opposite question ("has anything BECOME
+    # byte-exact") and still needs every annotation, so it opts out.
+    gate_only = arguments.check and not arguments.record_matches
+    if gate_only:
+        measurable = [a for a in measurable if a.matched]
+
     units, refusals = build_units(measurable, cross.matched, functions,
-                                  derived, callees, pe_fast)
+                                  derived, callees, pe_fast,
+                                  jobs=arguments.jobs)
 
     cache = load_cache(arguments.no_cache)
     outcomes, entries = measure(units, cache, arguments.no_cache,
@@ -1444,11 +1465,21 @@ def main(argv=None) -> int:
         print(json.dumps(printable, indent=2))
         return 0
 
-    summarise(annotations, cross.matched, outcomes, refusals, functions)
-    print(f"\ncatalogue rows with no annotation anywhere: "
-          f"{len(cross.catalog_only)}")
-    print_pieces(measurable, outcomes, arguments.verbose,
-                 arguments.placeholders_only)
+    if gate_only:
+        # A PARTIAL MAP IS A WRONG MAP. `summarise` counts tiers out of
+        # `outcomes`, and in gate mode that holds claims only - printing it
+        # would report 1,540 pieces as though they were the tree. Say what
+        # was measured instead, and name the command that answers the other
+        # question.
+        print(f"\nmeasured {len(measurable)} BYTE_EXACT claim(s) - the gate's "
+              f"question. Run without --check for the full map, or with "
+              f"--record-matches to look for new matches.")
+    else:
+        summarise(annotations, cross.matched, outcomes, refusals, functions)
+        print(f"\ncatalogue rows with no annotation anywhere: "
+              f"{len(cross.catalog_only)}")
+        print_pieces(measurable, outcomes, arguments.verbose,
+                     arguments.placeholders_only)
     print_drift(drift)
     if protected:
         print(f"\nUNREPRODUCED BYTE_EXACT rows kept, not downgraded: "
