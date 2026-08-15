@@ -122,26 +122,40 @@ RULED-OUT: `reinterpret_cast<Caviar *>(0)->init_class()`. The image's names for
            tools/emit_translation_unit.py already applies to every other
            `*::init_class`, so the cast is gone.
 
-RULED-OUT: every source spelling tried for the ONE instruction still
-           differing. This body is MNEMONIC_ONLY - every mnemonic agrees, in
-           order - and 458 bytes against the image's 459. The whole of the
-           remaining byte is #52:
+RULED-OUT: eleven source spellings for the ONE instruction still differing.
+           This body is MNEMONIC_ONLY - every mnemonic agrees, in order, 141
+           against 141 - and 458 bytes against the image's 459. The whole of
+           the remaining byte is #52:
 
-               image  mov ebx, dword ptr [ebp + 0x10]     3 bytes
-               here   mov ebx, edi                        2 bytes
+               image  mov ebx, dword ptr [ebp + 0x10]   8B 5D 10   3 bytes
+               here   mov ebx, edi                      8B DF      2 bytes
 
            Both sides put `colour_depth` in the dead parameter's home slot and
-           both read it into edi first; the image then RE-READS the slot for
-           ebx where VC6 copies the register it already has. Tried and
-           measured, all four MNEMONIC_ONLY at 458 bytes: assigning height
-           before width, routing one of them through a second local, and
-           reading `lpCmdLine` directly for both (that one is worse - MISMATCH
-           at 452 bytes, because the parameter then lives across the strcat
-           and the register saves move back into the prologue).
+           both load it into edi first. The image LOADS IT AGAIN for ebx; VC6
+           here reuses the register it already has. Every other difference in
+           the body is a relocated operand the comparison masks.
 
-           It is a register-allocator decision with no operand to change and
-           no ordering that reaches it, which is the class byte_match's own
-           notes call unreachable from source.
+           Tried, all still MNEMONIC_ONLY at 458 bytes: assigning height
+           before width; routing one through a second local; chaining
+           `width = height = depth`; reading the second through `*&depth`;
+           assigning `height = width`; and all three declaration orders,
+           including one on a single line - the slot a local gets is decided
+           there, so it was the one axis with a mechanism behind it.
+
+           Two made it worse. `volatile int colour_depth` drops to MISMATCH at
+           #59 - it forces the DirectDraw path's store and the argument reload
+           as well, which the image does not have. Reading `lpCmdLine` for both
+           is MISMATCH at 452 bytes, because the parameter then lives across
+           the strcat and the register saves move back into the prologue.
+
+           `*static_cast<volatile int *>(&depth)` does not compile on VC6.
+
+           What is left is a register allocator choosing a copy over a reload
+           with no operand, ordering or storage class that reaches it - the
+           class docs/recovery/agent-structure-observations.csv already records
+           twice as unreachable from source. Iterate with
+           `tools/verify_recovered_function.py 0x0045F950 --dir <candidates>`;
+           it scores a whole directory of spellings in one call.
 
 WHAT GOT IT HERE, since four of the five were wrong in the first draft:
 
