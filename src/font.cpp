@@ -23,7 +23,7 @@
 HDC Font::FontHDC;
 int Font::FontInitCount;
 
-LPCSTR *DefaultFontFace = reinterpret_cast<LPCSTR *>(0x00691B2C);
+LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
 
 /*
 Purpose: Initialize the class using the font name, height and style.

@@ -92,7 +92,7 @@ static func_popup_alloc *const BasePopAlloc =
 char CommandLineText[0x108];  // 0x007D3970
 func_popup_alloc *PopupAllocHook;  // 0x00696ECC
 int PopupModalActive;  // 0x009469FC
-int DialogDefaultStyle;  // 0x006970DC
+int DialogDefaultStyle = 3;  // 0x006970DC
 
 /*
 Purpose: Bring up the process - preferences, display, sound, fonts - run the
@@ -213,7 +213,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         init_sound(*HandleMain, sound_backends);
     }
 
-    g_JACKAL_FONT.init("arialn.ttf", *DefaultFontFace, 12, 0);
+    g_JACKAL_FONT.init("arialn.ttf", DefaultFontFace, 12, 0);
     control_game();
     Caviar::close_class();
     jackal_close();
