@@ -1890,6 +1890,31 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     if declarations or methods_by_class:
         lines.append("// ---- callees, declared and never defined "
                      "(a definition would be inlined) ----")
+        # WHY TWO THINGS BELOW LOOK WRONG AND ARE NOT. An agent recovering
+        # 0x0048C650 "fixed" both of them, and one of the fixes would have
+        # broken the pairing it was trying to restore. They are explained
+        # HERE because this is what an agent reads; the emitter's docstrings
+        # are not in the brief.
+        lines.append("//")
+        lines.append("// `static` ON A CALLEE IS DELIBERATE. A method whose")
+        lines.append("// mangled infix is `QAA` or `QAG` takes NO `this` -")
+        lines.append("// every argument is on the stack - so the call site is")
+        lines.append("// `Class::method(...)` with no object, and declared")
+        lines.append("// non-static that spelling is `C2352: illegal call of")
+        lines.append("// non-static member function`. It does change the")
+        lines.append("// mangling from QAA to SA, which matters only for the")
+        lines.append("// SUBJECT; a callee is reached by a relocation the")
+        lines.append("// comparison masks, so its mangling reaches nothing.")
+        lines.append("//")
+        lines.append("// THE class/struct KEY IS NOT A GUESS EITHER, and must")
+        lines.append("// not be `corrected` against the catalogue. MSVC")
+        lines.append("// mangles struct `U` and class `V`, six classes")
+        lines.append("// disagree with THEMSELVES in the catalogue, and the")
+        lines.append("// image carries no RTTI to settle it. Both objects are")
+        lines.append("// ours: `recovery_symbols.canonicalise_class_keys`")
+        lines.append("// rewrites the TARGET object with the same map this")
+        lines.append("// unit uses, so they agree by construction. Changing")
+        lines.append("// one side alone is what breaks it.")
     for name in by_value_first(definable):
         layout = members_of_shell(name)
         body = []
