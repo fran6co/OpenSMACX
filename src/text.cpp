@@ -312,8 +312,8 @@ int Text::item_hex() {
 }
 // global
 Text *const Txt = (Text *)0x009B7BA0;
-LPSTR *TextBufferGetPtr = (LPSTR *)0x009B7D00;
-LPSTR *TextBufferItemPtr = (LPSTR *)0x009B7D04;
+LPSTR TextBufferGetPtr;   // 0x009B7D00
+LPSTR TextBufferItemPtr;  // 0x009B7D04
 
 // ORIGINAL: 0x005FD4C0
 // name      ?text_set_get_ptr@@YAXXZ
@@ -326,7 +326,7 @@ LPSTR *TextBufferItemPtr = (LPSTR *)0x009B7D04;
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_set_get_ptr() {
-    text_set_get_ptr_source(Txt, TextBufferGetPtr);
+    text_set_get_ptr_source(Txt, &TextBufferGetPtr);
 }
 
 // ORIGINAL: 0x005FD4D0
@@ -340,7 +340,7 @@ void __cdecl text_set_get_ptr() {
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_set_item_ptr() {
-    text_set_item_ptr_source(Txt, TextBufferItemPtr);
+    text_set_item_ptr_source(Txt, &TextBufferItemPtr);
 }
 
 // ORIGINAL: 0x005FD530

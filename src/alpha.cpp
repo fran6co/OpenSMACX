@@ -75,7 +75,7 @@ int __cdecl tech_name(LPSTR name) {
     }
     parse_says(0, Txt->get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
-    parse_says(2, *TextBufferGetPtr, -1, -1);
+    parse_says(2, TextBufferGetPtr, -1, -1);
     X_pop("BADTECHKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
     return DisabledValue;
 }
@@ -109,7 +109,7 @@ int __cdecl chas_name(LPSTR name) {
     }
     parse_says(0, Txt->get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
-    parse_says(2, *TextBufferGetPtr, -1, -1);
+    parse_says(2, TextBufferGetPtr, -1, -1);
     X_pop("BADCHASKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
     return 0;
 }
@@ -143,7 +143,7 @@ int __cdecl weap_name(LPSTR name) {
     }
     parse_says(0, Txt->get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
-    parse_says(2, *TextBufferGetPtr, -1, -1);
+    parse_says(2, TextBufferGetPtr, -1, -1);
     X_pop("BADWEAPKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
     return 0;
 }
@@ -177,7 +177,7 @@ int __cdecl arm_name(LPSTR name) {
     }
     parse_says(0, Txt->get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
-    parse_says(2, *TextBufferGetPtr, -1, -1);
+    parse_says(2, TextBufferGetPtr, -1, -1);
     X_pop("BADARMKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
     return DisabledValue;
 }
@@ -361,7 +361,7 @@ BOOL __cdecl read_tech() {
         text_get();
         text_item();
         text_item();
-        strncpy_s(Technology[i].id, 8, *TextBufferItemPtr, strlen(*TextBufferItemPtr));
+        strncpy_s(Technology[i].id, 8, TextBufferItemPtr, strlen(TextBufferItemPtr));
         Technology[i].id[7] = 0;
         for (int j = 0; j < i; j++) {
             if (!strcmp(Technology[i].id, Technology[j].id)) {
@@ -369,7 +369,7 @@ BOOL __cdecl read_tech() {
                 parse_num(1, j);
                 parse_says(0, Technology[i].id, -1, -1);
                 parse_says(1, FilefindPath->last_path, -1, -1);
-                parse_says(2, *TextBufferGetPtr, -1, -1);
+                parse_says(2, TextBufferGetPtr, -1, -1);
                 X_pop("DUPLICATETECH", NULL);
             }
         }
@@ -1366,11 +1366,11 @@ Status: Complete
 */
 LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default) {
     if (use_default ||
-        (GetPrivateProfileStringA("Alpha Centauri", "Prefs Format", "0", *TextBufferGetPtr, 256,
-            ".\\Alpha Centauri.ini"), atoi(*TextBufferGetPtr) != 12)) {
-        strcpy_s(*TextBufferGetPtr, 256, default_value);
+        (GetPrivateProfileStringA("Alpha Centauri", "Prefs Format", "0", TextBufferGetPtr, 256,
+            ".\\Alpha Centauri.ini"), atoi(TextBufferGetPtr) != 12)) {
+        strcpy_s(TextBufferGetPtr, 256, default_value);
     } else {
-        GetPrivateProfileStringA("Alpha Centauri", key_name, default_value, *TextBufferGetPtr, 256,
+        GetPrivateProfileStringA("Alpha Centauri", key_name, default_value, TextBufferGetPtr, 256,
             ".\\Alpha Centauri.ini");
     }
     return Txt->update();
@@ -1486,9 +1486,9 @@ Status: Complete
 int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
     _itoa_s(default_value, stringTemp->str, 256, 10);
     if (use_default) {
-        strcpy_s(*TextBufferGetPtr, 256, stringTemp->str);
+        strcpy_s(TextBufferGetPtr, 256, stringTemp->str);
     } else {
-        GetPrivateProfileStringA("Alpha Centauri", key_name, stringTemp->str, *TextBufferGetPtr, 
+        GetPrivateProfileStringA("Alpha Centauri", key_name, stringTemp->str, TextBufferGetPtr, 
             256, ".\\Alpha Centauri.ini");
     }
     return atoi(Txt->update());

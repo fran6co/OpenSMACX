@@ -103,8 +103,15 @@ class DLLEXPORT Text {
 // `cmp`/`je` guard the image does not have - 98 bytes against 86 - because
 // the pointer is a variable it cannot fold. Nothing assigns to it.
 extern Text *const Txt;
-extern LPSTR *TextBufferGetPtr;
-extern LPSTR *TextBufferItemPtr;
+// AN OBJECT, not a pointer to 0x009B7D00. That address is above the end
+// of stored `.data` (0x006A8000), so it is zero-fill and the pointer form
+// carried no information the object form does not - it only cost a load
+// at each of its 26 uses, and dangles in an executable that is not the
+// shipped image. `text_set_get_ptr` fills it from `Txt->buffer_get_`,
+// which is why it already holds a heap pointer by WinMain's first
+// prefs_get: 0x01A31BE0, read out of the running original.
+extern LPSTR TextBufferGetPtr;
+extern LPSTR TextBufferItemPtr;
 DLLEXPORT void __cdecl text_txt();
 DLLEXPORT void __cdecl text_txt_exit();
 DLLEXPORT void __cdecl text_set_get_ptr();
