@@ -24,6 +24,10 @@
 Palette g_PALETTE1;  // 0x0094C590
 HPALETTE PaletteInitialized;  // 0x009B8178
 int PaletteUsesSystemColours;  // 0x009B8188
+Palette *PaletteActive;                 // 0x009B8180
+Buffer *ScreenBuffer;                   // 0x009B7490
+int PaletteSeedCache;                   // 0x009B8184
+void *PaletteDirectDrawSurface;         // 0x009BC4A0
 
 // 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
 const uint8_t SystemColours[80] = {
@@ -259,44 +263,36 @@ ORIGINAL: 0x005FE460
 // calls     0x005DE8F0
 //
 // Promoted 2026-08-15 from src/unrecovered/005fe460.cpp to retire its
-// pending_bodies forwarder. AnimatePalette is read straight out of the IAT
-// slot 0x006690A8, and the DirectDraw-path branch calls through the surface
-// vtable at offset 0x18, both as the original does.
+// pending_bodies forwarder, then rewritten from raw self_addr/g_ pointer
+// arithmetic into ordinary member and global access: the DirectDraw branch
+// publishes through the surface vtable's slot 6, the GDI branch syncs the
+// screen buffer and animates the ramp entries when the seed changed.
 Status: Complete
 */
-static int *const g_006690a8 = (int *)0x006690A8;
-static int *const g_009b7490 = (int *)0x009B7490;
-static int *const g_009b8178 = (int *)0x009B8178;
-static int *const g_009b8180 = (int *)0x009B8180;
-static int *const g_009b8184 = (int *)0x009B8184;
-static int *const g_009b8188 = (int *)0x009B8188;
-static int *const g_009bc494 = (int *)0x009BC494;
-static int *const g_009bc4a0 = (int *)0x009BC4A0;
-
 int Palette::set() {
-    if (*g_009bc494 == 0) {
-        if (*g_009b8178 == 0) {
-            return 7;
-        }
-        *g_009b8180 = reinterpret_cast<int>(this);
-        reinterpret_cast<Buffer *>(g_009b7490)->sync_to_palette(this);
-        if (*g_009b8188 == 0) {
-            int cur = *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x400);
-            if (*g_009b8184 != cur) {
-                typedef int(__stdcall *AnimatePaletteFn)(int, int, int, void *);
-                AnimatePaletteFn animate = reinterpret_cast<AnimatePaletteFn>(*g_006690a8);
-                animate(*g_009b8178, 0xa, 0xec, reinterpret_cast<char *>(this) + 0x28);
-                *g_009b8184 = cur;
-            }
+    if (*BufferDirectDrawActive) {
+        // DirectDraw is active: publish the palette through the surface
+        // object's vtable slot 6 instead of GDI.
+        void *surface = PaletteDirectDrawSurface;
+        if (surface != 0) {
+            typedef int(__stdcall *SurfacePublish)(void *, int, int, int, void *);
+            SurfacePublish publish = reinterpret_cast<SurfacePublish>(
+                (*reinterpret_cast<void ***>(surface))[6]);
+            publish(surface, 0, 0, 0x100, this);
         }
         return 0;
-    } else if (*g_009bc4a0 != 0) {
-        int objPtr = *g_009bc4a0;
-        int vtbl = *reinterpret_cast<int *>(objPtr);
-        typedef int(__stdcall *Fn18)(int, int, int, int, int);
-        Fn18 fn = reinterpret_cast<Fn18>(*reinterpret_cast<int *>(vtbl + 0x18));
-        fn(objPtr, 0, 0, 0x100, reinterpret_cast<int>(this));
-        return 0;
+    }
+    if (PaletteInitialized == 0) {
+        return 7;
+    }
+    PaletteActive = this;
+    ScreenBuffer->sync_to_palette(this);
+    if (PaletteUsesSystemColours == 0) {
+        // Animate only when the seed changed; entries 10-245 are the ramp.
+        if (PaletteSeedCache != seed_) {
+            AnimatePalette(PaletteInitialized, 10, 236, &entries_[10]);
+            PaletteSeedCache = seed_;
+        }
     }
     return 0;
 }

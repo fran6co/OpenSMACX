@@ -18,7 +18,8 @@
 #pragma once
 #include "time.h"
 
-class Win;  // forward declaration
+class Win;     // forward declaration
+class Buffer;  // forward declaration
 
  /*
   * Palette class
@@ -121,6 +122,34 @@ extern int PaletteUsesSystemColours;
  * back out of the image and they are the standard Windows twenty.
  */
 extern const uint8_t SystemColours[80];
+
+/*
+ * 0x009B8180. The palette currently being realised: Palette::set stores
+ * `this` here before syncing, so the rest of the engine can ask which palette
+ * is live. Zero-fill like PaletteInitialized, an object pointer for the same
+ * reason.
+ */
+extern Palette *PaletteActive;
+
+/*
+ * 0x009B7490. The screen buffer Palette::set realises against (the same
+ * buffer Win::init_class sets up). Named here rather than re-derived in each
+ * caller.
+ */
+extern Buffer *ScreenBuffer;
+
+/*
+ * 0x009B8184. The seed_ value Palette::set last animated, so it can skip
+ * re-animating an unchanged palette (Buffer caches the same comparison).
+ */
+extern int PaletteSeedCache;
+
+/*
+ * 0x009BC4A0. The DirectDraw surface object Palette::set reaches when
+ * BufferDirectDrawActive is on; its vtable slot 6 publishes the palette.
+ * Opaque - only the vtable call is recovered.
+ */
+extern void *PaletteDirectDrawSurface;
 
 /*
  * The process palette, at 0x0094C590 in the image. The name is the image's
