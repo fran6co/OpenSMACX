@@ -1,11 +1,13 @@
 // ORIGINAL: 0x0048AE90 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ?add_line@PlanWin@@QAEXHHH@Z
 // size      132 bytes
 // spans     0x0048AE90-0x0048AF14
 // prototype void (__thiscall ?add_line@PlanWin@@QAEXHHH@Z)(PlanWin* this, int, int, int)
 // callers   4   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?add_line@PlanWin@@QAEXHHH@Z  at 0x0048AE90  (132 bytes)

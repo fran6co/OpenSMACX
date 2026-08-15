@@ -1,11 +1,13 @@
 // ORIGINAL: 0x0064F09C BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      sub_64f09c
 // size      3 bytes
 // spans     0x0064F09C-0x0064F09F
 // prototype 
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_64f09c  at 0x0064F09C  (3 bytes)

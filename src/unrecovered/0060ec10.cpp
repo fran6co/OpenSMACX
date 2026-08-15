@@ -1,4 +1,12 @@
 // ORIGINAL: 0x0060EC10 BYTE_EXACT FILE
+// name      ?get_state_id@CheckBox@@QAEHH@Z
+// size      105 bytes
+// spans     0x0060EC10-0x0060EC79
+// prototype int (__thiscall ?get_state_id@CheckBox@@QAEHH@Z)(CheckBox* this, int)
+// callers   6   call targets   0
+// kind      
+// flags     
+// calls     (none)
 // LEVER: a `for (idx = 0; idx < count; idx = idx + 1) { ...; if (match) break; ... }`
 //        matches the original's single `cmp;jl` loop back-edge exactly; the
 //        equivalent `if (0 < count) { do { ...; if (match) break; ... }
@@ -13,12 +21,6 @@
 //        `base` local - reusing it compiles to extra reload instructions
 //        the original does not have.
 // working copy - scaffold materialised by --work
-// name      ?get_state_id@CheckBox@@QAEHH@Z
-// size      105 bytes
-// spans     0x0060EC10-0x0060EC79
-// prototype int (__thiscall ?get_state_id@CheckBox@@QAEHH@Z)(CheckBox* this, int)
-// callers   6   call targets   0
-// calls     (none)
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?get_state_id@CheckBox@@QAEHH@Z  at 0x0060EC10  (105 bytes)

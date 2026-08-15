@@ -1,12 +1,14 @@
 // ORIGINAL: 0x005CBAE0 FILE
-// working copy - scaffold materialised by --work
 // name      sub_5cbae0
 // size      214 bytes
 // spans     0x005CBAE0-0x005CBBB6
 // prototype 
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // indirect  0x005CBB6C 0x005CBBA0
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_5cbae0  at 0x005CBAE0  (214 bytes)

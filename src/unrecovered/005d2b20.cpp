@@ -1,4 +1,12 @@
 // ORIGINAL: 0x005D2B20 FILE
+// name      sub_5d2b20
+// size      234 bytes
+// spans     0x005D2B20-0x005D2C0A
+// prototype 
+// callers   2   call targets   0
+// kind      
+// flags     
+// calls     (none)
 // RULED-OUT: BYTE_EXACT is likely structurally unreachable here without
 //            `__asm` (banned). The disassembly reads `esi` as an 8-int
 //            input array from instruction #1 (`mov ebx,[esi+0x14]`) and
@@ -28,12 +36,6 @@
 //            a plain `(int)(double)expr` cast was NOT enough to reproduce
 //            it; the exact bias/rounding trick was not reverse-engineered.
 // working copy - scaffold materialised by --work
-// name      sub_5d2b20
-// size      234 bytes
-// spans     0x005D2B20-0x005D2C0A
-// prototype 
-// callers   2   call targets   0
-// calls     (none)
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_5d2b20  at 0x005D2B20  (234 bytes)

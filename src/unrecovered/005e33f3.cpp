@@ -1,12 +1,14 @@
 // ORIGINAL: 0x005E33F3 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ?get_data@Buffer@@QAEHHH@Z
 // size      170 bytes
 // spans     0x005E33F3-0x005E349D
 // prototype int (__thiscall ?get_data@Buffer@@QAEHHH@Z)(Buffer* this, int, int)
 // callers   9   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // indirect  0x005E3456
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?get_data@Buffer@@QAEHHH@Z  at 0x005E33F3  (170 bytes)

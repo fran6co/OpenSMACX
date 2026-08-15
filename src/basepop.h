@@ -28,6 +28,19 @@
 class DLLEXPORT BasePop : GraphicWin {
  public:
   static void fallout();
+
+  // `static`, because the receiver its catalogued name claims is a receiver
+  // NOTHING PASSES AND NOTHING READS. The body at 0x00604E40 is a factory -
+  // `operator new(0x3230)` then `BasePop::BasePop()` on the result - and its
+  // `push ecx` at 0x00604E55 is VC6 reserving four stack bytes, overwritten
+  // by `mov [esp], eax` two instructions later; every later `mov ecx, ...`
+  // WRITES ecx, for the constructor call and for the SEH unlink. All seven
+  // `call dword ptr [0x696ecc]` sites reach it with no ecx set up at all.
+  //
+  // So `QAE` in `?basepop_alloc@BasePop@@QAEHXZ` describes a `this` that does
+  // not exist, and declaring it static is what lets WinMain take its ADDRESS
+  // - which is the only thing WinMain does with it.
+  static int basepop_alloc();
   void UNK3(int a1);
   void UNK4(int a1);
   int on_key_click(int a1, int a2);
@@ -59,6 +72,26 @@ class DLLEXPORT BasePop : GraphicWin {
   int item(char *text, int index);
   int set_button_font(Font *font1, Font *font2, Font *font3);
   static int set_def_button_font(Font *font1, Font *font2, Font *font3);
+  // AN EMPTY INLINE CONSTRUCTOR MAKES `new BasePop()` UNRECOVERABLE, and
+  // this header has 145 of them across 75 classes.
+  //
+  // `BasePop::basepop_alloc` (0x00604E40) is `return (int)new BasePop();` and
+  // it is BYTE_EXACT in src/unrecovered/00604e40.cpp - whose scaffold
+  // declares the constructor OUT OF LINE. Measured on the same body with the
+  // only difference being this line:
+  //
+  //     BasePop();        declared, defined elsewhere   BYTE_EXACT
+  //     BasePop() { ; }   defined inline and empty      MISMATCH at #1
+  //
+  // VC6 inlines the empty body, so the `call ??0BasePop@@QAE@XZ` the image
+  // makes at 0x00604E75 never appears and every instruction after it shifts.
+  // That is why 0x00604E40 cannot move into src/basepop.cpp yet: it would
+  // compile against this header and stop reproducing.
+  //
+  // Left as it is deliberately. Changing it needs a definition to link
+  // against - the constructor at 0x00600860 is not compiled in - and the same
+  // question applies to the other 74 classes, so it is a decision about the
+  // tree rather than an edit to one line.
   BasePop() { ; }
   ~BasePop() { ; }
   void set_loc(int x, int y);

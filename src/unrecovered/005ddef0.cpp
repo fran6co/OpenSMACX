@@ -1,11 +1,13 @@
 // ORIGINAL: 0x005DDEF0 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ?wrap_height_flying_flush@Buffer@@QAEHXZ
 // size      111 bytes
 // spans     0x005DDEF0-0x005DDF5F
 // prototype int (__thiscall ?wrap_height_flying_flush@Buffer@@QAEHXZ)(Buffer* this)
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?wrap_height_flying_flush@Buffer@@QAEHXZ  at 0x005DDEF0  (111 bytes)

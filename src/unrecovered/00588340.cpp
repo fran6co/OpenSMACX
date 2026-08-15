@@ -1,15 +1,17 @@
 // ORIGINAL: 0x00588340 BYTE_EXACT FILE
-// LEVER: plain sequential stores of the scaffold's own fixed-address
-//        globals (`*g_dst = (int)g_src;`) - no address arithmetic here, so
-//        the `static T *const` spelling is exactly right, no `extern`
-//        rebind needed.
-// working copy - scaffold materialised by --work
 // name      ?scroll_normal@@YAXXZ
 // size      141 bytes
 // spans     0x00588340-0x005883CD
 // prototype 
 // callers   8   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// LEVER: plain sequential stores of the scaffold's own fixed-address
+//        globals (`*g_dst = (int)g_src;`) - no address arithmetic here, so
+//        the `static T *const` spelling is exactly right, no `extern`
+//        rebind needed.
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?scroll_normal@@YAXXZ  at 0x00588340  (141 bytes)

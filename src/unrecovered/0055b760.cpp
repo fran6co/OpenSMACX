@@ -1,11 +1,13 @@
 // ORIGINAL: 0x0055B760 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ?treaty_off@@YAXHHH@Z
 // size      184 bytes
 // spans     0x0055B760-0x0055B818
 // prototype 
 // callers   14   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?treaty_off@@YAXHHH@Z  at 0x0055B760  (184 bytes)

@@ -1,11 +1,13 @@
 // ORIGINAL: 0x004C43F0 FILE
-// working copy - scaffold materialised by --work
 // name      ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z
 // size      227 bytes
 // spans     0x004C43F0-0x004C44D3
 // prototype int (__thiscall ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z)(WorldWin* this, int, int, int*, int*)
 // callers   3   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z  at 0x004C43F0  (227 bytes)

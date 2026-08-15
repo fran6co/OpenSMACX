@@ -1,12 +1,14 @@
 // ORIGINAL: 0x005CE2F0 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      sub_5ce2f0
 // size      70 bytes
 // spans     0x005CE2F0-0x005CE336
 // prototype 
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // indirect  0x005CE30B 0x005CE310 0x005CE31F 0x005CE324
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_5ce2f0  at 0x005CE2F0  (70 bytes)

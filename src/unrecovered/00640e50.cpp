@@ -1,11 +1,13 @@
 // ORIGINAL: 0x00640E50 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
-// name      sub_640e50
+// name      _init_block
 // size      102 bytes
 // spans     0x00640E50-0x00640EB6
 // prototype 
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_640e50  at 0x00640E50  (102 bytes)

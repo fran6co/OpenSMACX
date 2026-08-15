@@ -1,16 +1,18 @@
 // ORIGINAL: 0x00616860 FILE
-// RULED-OUT: (int)this; pointer-cast this; address-of-first-member
-//            (&unk_tgl_, == this); named local; unsigned casts; omitting
-//            the convention keyword. All 9 compile identically - see the
-//            note above the definition below.
-// working copy - scaffold materialised by --work
 // name      ?set_modal@Time@@QAAXXZ
 // size      7 bytes
 // spans     0x00616860-0x00616867
 // prototype 
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned method
+// RULED-OUT: (int)this; pointer-cast this; address-of-first-member
+//            (&unk_tgl_, == this); named local; unsigned casts; omitting
+//            the convention keyword. All 9 compile identically - see the
+//            note above the definition below.
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?set_modal@Time@@QAAXXZ  at 0x00616860  (7 bytes)

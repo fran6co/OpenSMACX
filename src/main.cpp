@@ -23,6 +23,7 @@
 #include "font.h"
 #include "game.h"     // control_game
 #include "general.h"  // jackal_version_check, jackal_init_real, jackal_close
+#include "basepop.h"   // BasePop::basepop_alloc
 #include "palette.h"  // g_PALETTE1
 #include "popup.h"     // Popup::alloc
 #include "sound.h"    // init_sound
@@ -222,7 +223,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // guard is a test of the expansion allocator's own ADDRESS, which cannot
     // be null - so the first store is dead, and this pair is the seam the
     // expansion pack was linked through rather than a runtime choice.
-    PopupAllocHook = BASEPOP_ALLOC;
+    PopupAllocHook = &BasePop::basepop_alloc;
     if (&Popup::alloc) {
         PopupAllocHook = &Popup::alloc;
     }

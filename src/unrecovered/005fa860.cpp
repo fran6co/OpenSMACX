@@ -1,12 +1,14 @@
 // ORIGINAL: 0x005FA860 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ??0Spot@@QAE@XZ
 // size      13 bytes
 // spans     0x005FA860-0x005FA86D
 // prototype void (__thiscall ??0Spot@@QAE@XZ)(Spot* this)
 // callers   19   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned constructor
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ??0Spot@@QAE@XZ  at 0x005FA860  (13 bytes)

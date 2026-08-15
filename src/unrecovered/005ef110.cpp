@@ -1,12 +1,14 @@
 // ORIGINAL: 0x005EF110 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ?nonclient_to_client@Win@@QAEXPAURECT@@@Z
 // size      193 bytes
 // spans     0x005EF110-0x005EF1D1
 // prototype void (__thiscall ?nonclient_to_client@Win@@QAEXPAURECT@@@Z)(Win* this, RECT*)
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // indirect  0x005EF1C4
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?nonclient_to_client@Win@@QAEXPAURECT@@@Z  at 0x005EF110  (193 bytes)

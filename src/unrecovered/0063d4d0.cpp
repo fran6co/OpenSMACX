@@ -1,12 +1,14 @@
 // ORIGINAL: 0x0063D4D0 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
-// name      sub_63d4d0
+// name      _deflateEnd
 // size      143 bytes
 // spans     0x0063D4D0-0x0063D55F
 // prototype 
 // callers   2   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // indirect  0x0063D4EC 0x0063D501 0x0063D516 0x0063D52B 0x0063D53D
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_63d4d0  at 0x0063D4D0  (143 bytes)

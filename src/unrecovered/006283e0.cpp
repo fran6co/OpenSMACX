@@ -1,13 +1,15 @@
 // ORIGINAL: 0x006283E0 BYTE_EXACT FILE
-// working copy - scaffold materialised by --work
 // name      ??1Filemap@@QAE@XZ
 // size      67 bytes
 // spans     0x006283E0-0x00628423
 // prototype void (__thiscall ??1Filemap@@QAE@XZ)(Filemap* this)
 // callers   15   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // indirect  0x006283EB 0x00628405 0x00628417
 // notes     Staged hybrid export redirect calls the source-owned destructor
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ??1Filemap@@QAE@XZ  at 0x006283E0  (67 bytes)

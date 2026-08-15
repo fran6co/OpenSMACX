@@ -1,12 +1,14 @@
 // ORIGINAL: 0x00446A00 FILE
-// working copy - scaffold materialised by --work
 // name      ?play@FX@@QAEXH@Z
 // size      142 bytes
 // spans     0x00446A00-0x00446A8E
 // prototype void (__thiscall ?play@FX@@QAEXH@Z)(FX* this, int)
 // callers   24   call targets   0
+// kind      
+// flags     
 // calls     (none)
 // indirect  0x00446A2E 0x00446A3C 0x00446A4E 0x00446A5C 0x00446A7B 0x00446A85
+// working copy - scaffold materialised by --work
 
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: ?play@FX@@QAEXH@Z  at 0x00446A00  (142 bytes)
