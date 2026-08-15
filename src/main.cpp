@@ -201,14 +201,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             display_width = 800;
             display_height = 600;
         }
-        // The colour depth, in `lpCmdLine`'s stack slot. The original reuses
-        // the parameter rather than spending a local on it, and 0x0045FA2B
-        // reads the slot back to pass it on - so the reuse is load-bearing
-        // and not an artifact of the decompilation.
         colour_depth = 8;
     } else {
-        // Without DirectDraw the window takes its geometry and its depth from
-        // the same slot, whatever the command line left in it.
+        // BUG IN THE ORIGINAL: `colour_depth` is read here having never been
+        // written. It is the only path that does not set it, and it feeds the
+        // window width, the height AND the depth passed to jackal_init_real -
+        // so with `DirectDraw=0` in the ini the game asks for a window sized
+        // by whatever was in that stack slot.
+        //
+        // This is not a transcription artefact. VC6 gave the local
+        // `lpCmdLine`'s home slot, which is dead after the strcat above, so
+        // the image reads `[ebp+0x10]` twice here and the value is the
+        // command-line pointer reinterpreted as a number. Reproducing it is
+        // what took this body from MISMATCH at instruction #2 to
+        // MNEMONIC_ONLY: writing the sane thing moves the register saves into
+        // the prologue and the divergence with them.
+        //
+        // LEFT AS IT IS ON PURPOSE, because byte-exactness is the goal and a
+        // fix here would be a different program. Worth fixing once the tree
+        // compiles to the shipped bytes and can be diffed against them.
         display_width = colour_depth;
         display_height = colour_depth;
     }
