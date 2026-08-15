@@ -114,11 +114,14 @@ int Popup::alloc() {
     return PENDING_BODY(0x00404FB0, pending)();
 }
 
-// 0x00604E40  ?basepop_alloc@BasePop@@QAEHXZ  body in src/unrecovered/00604e40.cpp
+// 0x00600860  ??0BasePop@@QAE@XZ  body in src/unrecovered/00600860.cpp
 //
-// Reached for its ADDRESS, like Popup::alloc: WinMain stores it into the
-// popup allocator hook and never calls it from there.
-int BasePop::basepop_alloc() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x00604E40, pending)();
+// THE FRONTIER MOVED HERE when basepop_alloc was recovered into
+// src/basepop.cpp: `new BasePop()` needs a constructor to link against, and
+// basepop.h no longer defines one inline. The forwarder that used to sit here
+// for basepop_alloc itself is gone - the linker enforces that, since two
+// definitions of one symbol is LNK2005.
+BasePop::BasePop() {
+    typedef void(__cdecl *pending)(void *);
+    PENDING_BODY(0x00600860, pending)(this);
 }

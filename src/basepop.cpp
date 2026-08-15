@@ -817,3 +817,26 @@ uint32_t BasePop::read_check() {
 uint32_t __fastcall base_pop_read_check_redirect(BasePop *self, void *) {
     return self->read_check();
 }
+/*
+Purpose: Allocate a BasePop on the heap and construct it.
+ORIGINAL: 0x00604E40 BYTE_EXACT
+// name      ?basepop_alloc@BasePop@@SAHXZ
+// size      111 bytes
+// spans     0x00604E40-0x00604E9A;0x00662E17-0x00662E2C
+// prototype int (__cdecl ?basepop_alloc@BasePop@@SAHXZ)()
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00600860 0x0064557F 0x0064558A
+// LEVER: `new BasePop()` reproduces the whole /GX operator-new + SEH-frame +
+//        conditional-constructor-call sequence verbatim
+// LEVER: ctor-not-inline  basepop.h declares `BasePop();` rather than
+//        defining it empty inline. An inline empty constructor is inlined
+//        away and the `call ??0BasePop@@QAE@XZ` at 0x00604E75 never appears;
+//        with it declared, this is BYTE_EXACT and without it MISMATCH at #1.
+Return Value: The new object as an int, or zero if the allocation failed
+Status: Complete
+*/
+int BasePop::basepop_alloc() {
+    return (int)new BasePop();
+}
