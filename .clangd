@@ -1,0 +1,26 @@
+# clangd only - the build never reads this file.
+#
+# clangd reads the compile commands, sees a compiler named tools/vc6-cl with
+# flags like /Zm200, and cannot tell it is looking at MSVC code: __declspec
+# and __stdcall become errors, every symbol after the first error shows red,
+# and index-based navigation is the only thing still working. Force the MSVC
+# driver and a 32-bit Windows target, and strip what belongs to the wrapper
+# (--deptarget/--depfile) and to VC6's precompiled-header mechanism (/Yu,
+# /Fp) - clangd gets stdafx.h through the sources themselves, or through the
+# /FI force-include, which is a plain include and needs no PCH.
+#
+# -Wno-everything because clang's opinion of 1999 code and its headers is
+# noise here: VC6 is the only compiler whose diagnostics carry information.
+CompileFlags:
+  Compiler: clang-cl
+  Add:
+    - --target=i686-pc-windows-msvc
+    - -Wno-everything
+  Remove:
+    - --deptarget=*
+    - --depfile=*
+    - /Yu*
+    - /Yc*
+    - /Fp*
+    - /Zm*
+    - /GX
