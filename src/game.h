@@ -99,7 +99,11 @@ enum GameDifficultyLevel {
     DLVL_TRANSCEND = 5,
 };
 
-extern BOOL *ExpansionEnabled; // SMACX mode (true); SMAC mode (false)
+// SMACX mode (true); SMAC mode (false). AN OBJECT, not a `BOOL *` to a
+// fixed address: 0x009A6488 is above the end of stored `.data`, so its
+// initial value is zero either way and the pointer form only bought an
+// extra load. WinMain's `mov dword ptr [0x9a6488], 1` is a direct store.
+extern BOOL ExpansionEnabled;
 extern uint32_t *GamePreferences;
 extern uint32_t *GameMorePreferences;
 extern uint32_t *GameWarnings; // used for setting pop notifications

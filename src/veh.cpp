@@ -2081,7 +2081,7 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
         if (has_tech(Armor[i].preq_tech, faction_id) && Armor[i].cost <= max_cost
             && Armor[i].defense_rating >= 0) { // excludes PSI
             int defense_compare = Armor[i].defense_rating;
-            if (faction_id >= 0 && !*ExpansionEnabled && i > 9) {
+            if (faction_id >= 0 && !ExpansionEnabled && i > 9) {
                 defense_compare = 1; // Pulse + Resonance in non-expansion mode
             }                       // This really only affects Pulse 8 Armor (Super Tensile Solids)
             defense_compare *= 2;
@@ -3298,7 +3298,7 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
     }
     uint8_t weap_id;
     uint32_t abil_flag;
-    if (!*ExpansionEnabled && (VehPrototypes[proto_id].armor_id > ARM_PSI_DEFENSE
+    if (!ExpansionEnabled && (VehPrototypes[proto_id].armor_id > ARM_PSI_DEFENSE
         || (weap_id = VehPrototypes[proto_id].weapon_id, weap_id == WPN_RESONANCE_LASER
             || weap_id == WPN_RESONANCE_BOLT || weap_id == WPN_STRING_DISRUPTOR
             || weap_id == WPN_TECTONIC_PAYLOAD || weap_id == WPN_FUNGAL_PAYLOAD)

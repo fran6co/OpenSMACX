@@ -33,6 +33,14 @@
 class DLLEXPORT Popup : BasePop {
  public:
   int on_nc_hittest(int a1, int a2);
+
+  // `static`, because the image's name ends in `QAA` - a public member
+  // declared __cdecl, taking no receiver. WinMain stores its ADDRESS into the
+  // popup allocator hook and never calls it from there, and it has to be a
+  // real symbol for that store to be the `mov eax, OFFSET` the image emits
+  // rather than a load of a constant a header made up.
+  static int alloc();
+
   Popup() { ; }
   ~Popup() { ; }
   void close();

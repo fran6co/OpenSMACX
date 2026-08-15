@@ -79,6 +79,33 @@ class ScopedSeam {
 };
 
 /*
+ * A global that IS AN OBJECT cannot be re-pointed, so it is saved and put
+ * back instead.
+ *
+ * `ScopedSeam` above redirects a `T *` global at a fixture field for the
+ * duration of a test. That works while the global is a pointer to a fixed
+ * address in the shipped image, and `ExpansionEnabled` stopped being one on
+ * 2026-08-15 - it is a `BOOL` now, because the pointer form aimed at
+ * 0x009A6488 dangles in an executable that is not terranx.exe and cost a
+ * load at every use. `&ExpansionEnabled` is a `BOOL *` after that, and the
+ * seam wants a `BOOL **`.
+ *
+ * The fixture field it used to point at was written and never read - the code
+ * under test reached it only THROUGH the seam - so the tests now write the
+ * global directly and this restores whatever was there before.
+ */
+template <class T>
+class ScopedValue {
+ public:
+    explicit ScopedValue(T *global) : global_(global), saved_(*global) { }
+    ~ScopedValue() { *global_ = saved_; }
+
+ private:
+    T *global_;
+    T saved_;
+};
+
+/*
  * Self-registration, so adding a test touches ONE place instead of two.
  *
  * main() used to call all 56 cases by name. That list was the only part of
@@ -2314,7 +2341,6 @@ struct YieldWorld {
     BOOL is_flat;
     uint32_t map_rand_seed;
     uint32_t game_rules;
-    BOOL expansion;
     int dust_cloud;
     int restricted;
     int base_square_energy;
@@ -2427,7 +2453,7 @@ class YieldSeams {
           players_(&Players, g_yield_world.players),
           technology_(&Technology, g_yield_world.technology),
           achieved_(&GameTechAchieved, g_yield_world.tech_achieved),
-          expansion_(&ExpansionEnabled, &g_yield_world.expansion),
+          expansion_(&ExpansionEnabled),
           dust_(&DustCloudDuration, &g_yield_world.dust_cloud),
           restricted_(&TileYieldRestricted, &g_yield_world.restricted),
           base_energy_(&BaseSquareEnergy, &g_yield_world.base_square_energy),
@@ -2452,7 +2478,7 @@ class YieldSeams {
     ScopedSeam<Player> players_;
     ScopedSeam<RulesTechnology> technology_;
     ScopedSeam<uint8_t> achieved_;
-    ScopedSeam<BOOL> expansion_;
+    ScopedValue<BOOL> expansion_;
     ScopedSeam<int> dust_;
     ScopedSeam<int> restricted_;
     ScopedSeam<int> base_energy_;
@@ -2610,7 +2636,7 @@ void test_crop_yield() {
     ytile(X, Y).climate = YALT_DEEP;
     ytile(X, Y).bit = BIT_FARM;
     YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1);
-    g_yield_world.expansion = 1;
+    ExpansionEnabled = 1;
     YCHECK(crop_yield(YFACTION, 0, X, Y, 0) == 1 + 19);
     // A sea mine takes its nutrient back, and only above 1.
     yield_reset();
@@ -2962,7 +2988,7 @@ void test_mine_yield() {
     ytile(X, Y).climate = YALT_DEEP;
     ytile(X, Y).bit = BIT_MINE;
     YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2);
-    g_yield_world.expansion = 1;
+    ExpansionEnabled = 1;
     YCHECK(mine_yield(YFACTION, 0, X, Y, 0) == 2 + 20);
 
     // ---- a base square ------------------------------------------------------
@@ -3223,7 +3249,7 @@ void test_energy_yield() {
     ytile(X, Y).climate = YALT_DEEP;
     ytile(X, Y).bit = BIT_SOLAR_TIDAL;
     YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 0);
-    g_yield_world.expansion = 1;
+    ExpansionEnabled = 1;
     YCHECK(energy_yield(YFACTION, 0, X, Y, 0) == 3 + 21);
     // Sea fungus - as forest on an ocean tile - costs one.
     yield_reset();
@@ -3694,7 +3720,6 @@ struct SupportWorld {
     uint32_t map_rand_seed;
     uint32_t game_rules;
     uint32_t game_state;
-    BOOL expansion;
     int dust_cloud;
     int restricted;
     int base_square_energy;
@@ -3825,7 +3850,7 @@ class SupportSeams {
           players_(&Players, g_support_world.players),
           technology_(&Technology, g_support_world.technology),
           achieved_(&GameTechAchieved, g_support_world.tech_achieved),
-          expansion_(&ExpansionEnabled, &g_support_world.expansion),
+          expansion_(&ExpansionEnabled),
           dust_(&DustCloudDuration, &g_support_world.dust_cloud),
           restricted_(&TileYieldRestricted, &g_support_world.restricted),
           base_energy_(&BaseSquareEnergy, &g_support_world.base_square_energy),
@@ -3864,7 +3889,7 @@ class SupportSeams {
     ScopedSeam<Player> players_;
     ScopedSeam<RulesTechnology> technology_;
     ScopedSeam<uint8_t> achieved_;
-    ScopedSeam<BOOL> expansion_;
+    ScopedValue<BOOL> expansion_;
     ScopedSeam<int> dust_;
     ScopedSeam<int> restricted_;
     ScopedSeam<int> base_energy_;
@@ -9242,7 +9267,6 @@ struct ScanWorld {
     RulesArmor armor[8];
     RulesBasic rules;
     PlayerData players_data[8];
-    BOOL expansion;
     int best_trade;
     int best_mention;
 };
@@ -9274,7 +9298,7 @@ VehPrototype &scan_rival(int slot) {
 
 void scan_reset() {
     std::memset(&g_scan_world, 0, sizeof(g_scan_world));
-    g_scan_world.expansion = 1;   // keep arm_strat/weap_strat off their psi paths
+    ExpansionEnabled = 1;   // keep arm_strat/weap_strat off their psi paths
 
     // Chassis 0 and 1 are the same triad at different speeds; chassis 2 is a
     // different triad at chassis 0's speed, so a triad mismatch can be set up
@@ -9368,7 +9392,7 @@ class ScanSeams {
           armor_(&Armor, g_scan_world.armor),
           rules_(&Rules, &g_scan_world.rules),
           players_data_(&PlayersData, g_scan_world.players_data),
-          expansion_(&ExpansionEnabled, &g_scan_world.expansion),
+          expansion_(&ExpansionEnabled),
           trade_(&BestProtoForTrade, &g_scan_world.best_trade),
           mention_(&BestProtoToMention, &g_scan_world.best_mention) { }
 
@@ -9379,7 +9403,7 @@ class ScanSeams {
     ScopedSeam<RulesArmor> armor_;
     ScopedSeam<RulesBasic> rules_;
     ScopedSeam<PlayerData> players_data_;
-    ScopedSeam<BOOL> expansion_;
+    ScopedValue<BOOL> expansion_;
     ScopedSeam<int> trade_;
     ScopedSeam<int> mention_;
 };
@@ -11241,7 +11265,6 @@ struct OddsWorld {
     BOOL is_flat;
     int veh_count;
     int base_count;
-    BOOL expansion;
     // veh_at()'s diagnostic path is never taken by these fixtures - every tile
     // that carries BIT_VEH_IN_TILE holds a unit inside VehCurrentCount. The
     // three seams exist so that a fixture mistake writes here instead of into
@@ -11275,7 +11298,7 @@ void odds_reset() {
     g_odds_world.is_flat = 1;
     g_odds_world.veh_count = ODDS_VEH_COUNT;   // the guard slot is outside the roster
     g_odds_world.base_count = 0;               // no base until a case builds one
-    g_odds_world.expansion = 0;                // keeps is_alien_faction() out of has_abil
+    ExpansionEnabled = 0;                // keeps is_alien_faction() out of has_abil
 
     // ---- units: every slot off the map, unstacked, and owned by nobody we ----
     // ---- ever ask about. The underflow slot and the guard get the same. ------
@@ -11460,7 +11483,7 @@ class OddsSeams {
           bases_(&Bases, g_odds_world.bases),
           base_count_(&BaseCurrentCount, &g_odds_world.base_count),
           veh_count_(&VehCurrentCount, &g_odds_world.veh_count),
-          expansion_(&ExpansionEnabled, &g_odds_world.expansion),
+          expansion_(&ExpansionEnabled),
           bit_error_(&VehBitError, &g_odds_world.veh_bit_error),
           state_(&GameState, &g_odds_world.game_state),
           net_(&IsMultiplayerNet, &g_odds_world.is_net) { }
@@ -11480,7 +11503,7 @@ class OddsSeams {
     ScopedSeam<Base> bases_;
     ScopedSeam<int> base_count_;
     ScopedSeam<int> veh_count_;
-    ScopedSeam<BOOL> expansion_;
+    ScopedValue<BOOL> expansion_;
     ScopedSeam<BOOL> bit_error_;
     ScopedSeam<uint32_t> state_;
     ScopedSeam<BOOL> net_;
@@ -12355,7 +12378,6 @@ struct CtWorld {
     uint32_t more_preferences;
     int turn_current;
     int local_faction;
-    BOOL expansion;
     int dust_cloud;
     int restricted;
     int base_square_energy;
@@ -12573,7 +12595,7 @@ class CtSeams {
           players_(&Players, g_ct_world.players),
           technology_(&Technology, g_ct_world.technology),
           achieved_(&GameTechAchieved, g_ct_world.tech_achieved),
-          expansion_(&ExpansionEnabled, &g_ct_world.expansion),
+          expansion_(&ExpansionEnabled),
           dust_(&DustCloudDuration, &g_ct_world.dust_cloud),
           restricted_(&TileYieldRestricted, &g_ct_world.restricted),
           base_energy_(&BaseSquareEnergy, &g_ct_world.base_square_energy),
@@ -12605,7 +12627,7 @@ class CtSeams {
     ScopedSeam<Player> players_;
     ScopedSeam<RulesTechnology> technology_;
     ScopedSeam<uint8_t> achieved_;
-    ScopedSeam<BOOL> expansion_;
+    ScopedValue<BOOL> expansion_;
     ScopedSeam<int> dust_;
     ScopedSeam<int> restricted_;
     ScopedSeam<int> base_energy_;

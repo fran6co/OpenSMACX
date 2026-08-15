@@ -1665,7 +1665,7 @@ void __cdecl prefs_save(BOOL save_factions) {
     std::string custom_world_str = ss.str();
     prefs_put("Custom World", custom_world_str.c_str());
     prefs_put("Time Controls", AlphaIniPrefs->time_controls, false);
-    if (save_factions && *ExpansionEnabled) {
+    if (save_factions && ExpansionEnabled) {
         for (uint32_t i = 1; i < MaxPlayerNum; i++) {
             sprintf_s(stringTemp->str, sizeof(stringTemp->str), "Faction %d", i);
             prefs_put(stringTemp->str, Players[i].filename);

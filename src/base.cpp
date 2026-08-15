@@ -999,7 +999,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                 crop++;
             }
             if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF
-                || *ExpansionEnabled) {
+                || ExpansionEnabled) {
                 // A kelp farm.
                 if (bit & BIT_FARM) {
                     crop += ResourceInfo[RSCINFO_IMPROVED_SEA].nutrients;
@@ -1169,7 +1169,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
             && (tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF) {
             mineral++;
         }
-        if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF || *ExpansionEnabled) {
+        if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF || ExpansionEnabled) {
             if ((bit & BIT_MINE) || assume_improved) {
                 mineral += ResourceInfo[RSCINFO_IMPROVED_SEA].minerals;
                 if (has_tech(Rules->tech_mining_platform_bonus, faction_id)) {
@@ -1331,7 +1331,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         }
         skip_shared_tail = true;
     } else if (is_ocean_tile) {
-        if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF || *ExpansionEnabled) {
+        if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF || ExpansionEnabled) {
             energy = ResourceInfo[RSCINFO_OCEAN_SQ].energy;
             if ((bit & BIT_SOLAR_TIDAL) || assume_improved) {
                 energy += ResourceInfo[RSCINFO_IMPROVED_SEA].energy;
@@ -3010,7 +3010,7 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
         return false;
     }
     // Secret Project availability
-    if (!*ExpansionEnabled && (facility_id == FAC_MANIFOLD_HARMONICS
+    if (!ExpansionEnabled && (facility_id == FAC_MANIFOLD_HARMONICS
         || facility_id == FAC_NETHACK_TERMINUS || facility_id == FAC_CLOUDBASE_ACADEMY
         || facility_id == FAC_PLANETARY_ENERGY_GRID)) {
         return false;
@@ -3066,13 +3066,13 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
       case FAC_AQUAFARM:
       case FAC_SUBSEA_TRUNKLINE:
       case FAC_THERMOCLINE_TRANSDUCER:
-        return *ExpansionEnabled && is_coast(Bases[base_id].x, Bases[base_id].y, false);
+        return ExpansionEnabled && is_coast(Bases[base_id].x, Bases[base_id].y, false);
       case FAC_COVERT_OPS_CENTER:
       case FAC_BROOD_PIT:
       case FAC_FLECHETTE_DEFENSE_SYS:
-        return *ExpansionEnabled;
+        return ExpansionEnabled;
       case FAC_GEOSYNC_SURVEY_POD: // SMACX only & must have Aerospace Complex
-        return *ExpansionEnabled && (has_fac(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
+        return ExpansionEnabled && (has_fac(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
             || has_project(SP_CLOUDBASE_ACADEMY, faction_id)
             || has_project(SP_SPACE_ELEVATOR, faction_id));
       case FAC_SKY_HYDRO_LAB:

@@ -21,6 +21,7 @@
 #include "game.h"
 #include "general.h"
 #include "palette.h"
+#include "popup.h"
 #include "sound.h"
 
 /*
@@ -100,4 +101,14 @@ int __cdecl init_sound(void *window, unsigned long backends) {
 void __cdecl control_game() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x0052AA30, pending)();
+}
+
+// 0x00404FB0  ?alloc@Popup@@QAAHXZ  body in src/unrecovered/00404fb0.cpp
+//
+// Reached for its ADDRESS rather than by call: WinMain stores it into the
+// popup allocator hook. A forwarder still has to exist, because the address
+// of a function that nothing defines does not link.
+int Popup::alloc() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x00404FB0, pending)();
 }
