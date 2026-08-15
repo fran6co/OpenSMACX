@@ -90,12 +90,6 @@ void Caviar::close_class() {
     PENDING_BODY(0x00618D20, pending)();
 }
 
-// 0x004C5CE0  ?init_sound@@YAHPAXK@Z  body in src/unrecovered/004c5ce0.cpp
-int __cdecl init_sound(void *window, unsigned long backends) {
-    typedef int(__cdecl *pending)(void *, unsigned long);
-    return PENDING_BODY(0x004C5CE0, pending)(window, backends);
-}
-
 // 0x0052AA30  ?control_game@@YAXXZ  body in src/unrecovered/0052aa30.cpp
 void __cdecl control_game() {
     typedef void(__cdecl *pending)();

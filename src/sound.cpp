@@ -20,6 +20,8 @@
 #include "sound.h"
 #include "general.h"
 #include "wave.h"
+#include "wave_device.h"    // Wave_Device in init_sound
+#include "sounddevice.h"    // Midi_Device / Wave_In_Device in init_sound
 #include <cstring>
 
 /*
@@ -929,4 +931,70 @@ int Sound::detach() {
 
 int __fastcall sound_detach_redirect(Sound *self, void *) {
     return self->detach();
+}
+
+// load_sound_dll's body is not yet recovered; forward into the original image.
+int __cdecl load_sound_dll() {
+    typedef int(__cdecl *func_load_sound_dll)();
+    return reinterpret_cast<func_load_sound_dll>(0x004C5E50)();
+}
+
+/*
+ORIGINAL: 0x004C5CE0
+// name      ?init_sound@@YAHPAXK@Z
+// size      174 bytes
+// spans     0x004C5CE0-0x004C5D8E
+// prototype
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C4F40 0x004C57A0 0x004C5A10 0x004C5E50
+//
+// Promoted 2026-08-15 from src/unrecovered/004c5ce0.cpp to retire its
+// pending_bodies forwarder. Brings up the wave device, then the midi and
+// wave-in devices per the backend bitmask. The driver-unload and FreeLibrary
+// calls are read out of their fixed slots, as the original does.
+Status: Complete
+*/
+typedef void(__cdecl *ZeroArgFn)(int, int);
+typedef void(__stdcall *FreeLibraryFn)(int);
+
+static int *const g_00669128 = (int *)0x00669128;
+static int *const g_0090d950 = (int *)0x0090D950;
+static int *const g_0090d978 = (int *)0x0090D978;
+static int *const g_0090db24 = (int *)0x0090DB24;
+static int *const g_0090db2c = (int *)0x0090DB2C;
+static int *const g_0090db50 = (int *)0x0090DB50;
+static int *const g_0090db78 = (int *)0x0090DB78;
+static int *const g_0090db7c = (int *)0x0090DB7C;
+
+int __cdecl init_sound(void *a1, unsigned long a2) {
+    int loadResult = load_sound_dll();
+    if (loadResult != 0) {
+        return loadResult;
+    }
+    if (*g_0090db78 != 0) {
+        (*reinterpret_cast<ZeroArgFn *>(g_0090db2c))(0, 0);
+    }
+    Wave_Device *waveDevice = reinterpret_cast<Wave_Device *>(g_0090d978);
+    int result = waveDevice->init(a1, a2);
+    if (result != 0) {
+        *g_0090db7c = 0;
+        if (*g_0090db78 != 0) {
+            (*reinterpret_cast<FreeLibraryFn *>(g_00669128))(*g_0090db78);
+            *g_0090db78 = 0;
+        }
+        memset(g_0090db24, 0, 0xb * 4);
+        return result;
+    }
+    if ((a2 & 2) != 0) {
+        Midi_Device *midiDevice = reinterpret_cast<Midi_Device *>(g_0090d950);
+        midiDevice->init(a1, 2);
+    }
+    if ((a2 & 8) != 0) {
+        Wave_In_Device *waveInDevice = reinterpret_cast<Wave_In_Device *>(g_0090db50);
+        waveInDevice->init(a1, a2);
+    }
+    *g_0090db7c = 1;
+    return 0;
 }

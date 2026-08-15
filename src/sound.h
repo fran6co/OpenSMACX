@@ -131,3 +131,7 @@ int __fastcall sound_detach_redirect(Sound *self, void *);
 // image's own name for it - ?init_sound@@YAHPAXK@Z - spells the first
 // parameter `PAX`.
 int __cdecl init_sound(void *window, unsigned long backends);
+
+// Loads the sound driver DLL; returns zero on success. Called first thing by
+// init_sound. Body not yet recovered.
+int __cdecl load_sound_dll();
