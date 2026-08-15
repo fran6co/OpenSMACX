@@ -180,12 +180,28 @@ def _operand_similarity(original: bytes, base: int, rebuilt: bytes) -> float:
         return 0.0
 
 
-# The banner the emitter puts on every scaffold it writes, and the `FILE`
-# marker that says the whole file is the translation unit. Either one means
-# the text already carries its own typedefs, globals and declarations.
-SELF_CONTAINED = re.compile(
-    r"^// GENERATED SKELETON\b|^// ORIGINAL: 0x[0-9A-Fa-f]{8}[^\n]*\bFILE\b",
-    re.M)
+# The banner the emitter puts on every scaffold it writes. The OTHER half of
+# this test - the `FILE` marker - is not spelled here any more: it was
+# `^// ORIGINAL: 0x... FILE`, which requires the marker to open a line with
+# `//`, and `annotation_scan.MARKER` requires no such thing. src/main.cpp
+# carries its marker inside a `/* Purpose: ... */` block with no comment
+# prefix at all, so the authority read it as FILE mode and this did not - and
+# `--body` on that address scaffolded a unit that already had scaffolding and
+# reported NO_COMPILE.
+#
+# A second, stricter spelling of a parser this repo already owns is the shape
+# it keeps finding defects in; `is_file_mode` below asks the authority.
+SELF_CONTAINED = re.compile(r"^// GENERATED SKELETON\b", re.M)
+
+
+def is_file_mode(body: str) -> bool:
+    """Does `body` carry a FILE-mode marker, as `annotation_scan` reads them?"""
+    import annotation_scan
+    try:
+        notes = annotation_scan.scan_text(body, Path("candidate.cpp"))
+    except Exception:
+        return False
+    return any(note.mode == annotation_scan.MODE_FILE for note in notes)
 
 
 def complete_unit(body: str) -> str:
@@ -201,7 +217,7 @@ def complete_unit(body: str) -> str:
     iterating on a FILE-mode address may still hand this a bare body to score
     quickly, and that one does need scaffolding. The text says which it is.
     """
-    return body if SELF_CONTAINED.search(body) else ""
+    return body if (SELF_CONTAINED.search(body) or is_file_mode(body)) else ""
 
 
 def build_unit_text(address: int, body: str = None) -> str:
@@ -258,7 +274,7 @@ def score_all(address: int, bodies: dict) -> list:
     #
     # The RANKING is done here; the VERDICT is not. The winner goes back through
     # `match_function`, which is the only thing that applies the SHARED_TAIL and
-    # self-modifying refusals and the best-of rule across all six flag sets. A
+    # self-modifying refusals and the best-of rule across all flag sets. A
     # fast ranking that quietly disagreed with the authoritative scorer would be
     # worse than a slow one.
     prepared, refused = {}, {}
@@ -292,10 +308,18 @@ def score_all(address: int, bodies: dict) -> list:
         # Measured 2026-08-14: 8.0 s for one candidate, of which 2.7 s was
         # Python and the rest four sequential Wine compiles. Running them at
         # once costs three extra compiles only in the case that ends the loop.
+        # SEEDED WITH THE LANDED UNIT'S DIRECTORY, for the reason spelled
+        # out in `verify_body_verbatim`: a FILE-mode candidate includes the
+        # headers that sit beside the file it came from, and a bare temporary
+        # directory has none of them. `compile_batch` puts every candidate in
+        # one workspace, so seeding it once serves all of them.
+        landed = file_mode_annotation(address)
         def scored(flags):
             with tempfile.TemporaryDirectory() as directory:
-                return byte_match.compile_batch(prepared, Path(directory),
-                                                flags)
+                work = Path(directory)
+                if landed is not None:
+                    byte_match.seed_context(work, Path(landed.path))
+                return byte_match.compile_batch(prepared, work, flags)
 
         with concurrent.futures.ThreadPoolExecutor(
                 max_workers=len(byte_match.FLAG_SETS)) as pool:
@@ -437,12 +461,21 @@ def verify_verbatim(annotation) -> dict:
             Path(tmp), "", f"v{annotation.address:08x}")
 
 
-def verify_body_verbatim(address: int, unit: str) -> dict:
+def verify_body_verbatim(address: int, unit: str, origin=None) -> dict:
     """Score `unit` as a whole translation unit for `address`.
 
     The same call `verify_verbatim` makes, taking the text directly rather
     than through an annotation, so a candidate an agent is holding in a file
     can be scored without pretending it is a landed one.
+
+    WITH THE LANDED UNIT'S ORIGIN, so a candidate for a FILE-mode address is
+    compiled where its headers are. Without it `--body` and `--dir` could not
+    score a FILE-mode address AT ALL - `Cannot open include file: 'stdafx.h'`,
+    NO_COMPILE, for a body that differs from the committed one by a line - and
+    FILE mode is 2,446 of the landed units. So the "score these nine
+    spellings" loop this tool exists for was unavailable on most of the
+    corpus, and the only way to iterate was to edit the tree and put it back
+    by hand.
     """
     import tempfile
     import pefile
@@ -451,7 +484,8 @@ def verify_body_verbatim(address: int, unit: str) -> dict:
     shared = byte_match.shared_span_index(catalogue)
     with tempfile.TemporaryDirectory() as tmp:
         return byte_match.match_function(
-            pe, catalogue, shared, address, unit,
+            pe, catalogue, shared, address,
+            (unit, origin) if origin else unit,
             Path(tmp), "", f"v{address:08x}")
 
 
@@ -497,7 +531,7 @@ FLAG_LABEL = {
 
 
 def per_flag_report(name: str, per_flags: dict) -> str:
-    """All six flag sets for one candidate, not just the one that won.
+    """All flag sets for one candidate, not just the one that won.
 
     `byte_match._better` ranks mnemonic similarity ABOVE first divergence,
     which is right for choosing a verdict and misleading as a diagnostic: the
@@ -515,7 +549,7 @@ def per_flag_report(name: str, per_flags: dict) -> str:
     scored = per_flags.get(name) or {}
     if len(scored) < 2:
         return ""
-    lines = ["", f"   all six flag sets for `{name}` - work the row whose "
+    lines = ["", f"   all flag sets for `{name}` - work the row whose "
                  f"prologue class matches the original,",
              "   not the best line above; the verdict is chosen by SIMILARITY "
              "and may not be the",
@@ -768,7 +802,9 @@ def main(argv=None) -> int:
     # telling the agent its committed body does not compile.
     whole = complete_unit(body)
     if whole:
-        verdict = verify_body_verbatim(address, whole)
+        landed = file_mode_annotation(address)
+        verdict = verify_body_verbatim(address, whole,
+                                       landed.path if landed else None)
     else:
         verdict = writeback.verify(address, body)
     tier = verdict.get("tier", "?")

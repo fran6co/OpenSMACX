@@ -391,7 +391,10 @@ class CompleteUnitOnEveryPathTest(unittest.TestCase):
         self.scaffolded = []
         verifier.writeback.verify = lambda a, b: (
             self.scaffolded.append(b) or {"tier": "NO_COMPILE"})
-        verifier.verify_body_verbatim = lambda a, u: {"tier": "BYTE_EXACT"}
+        # `origin` since 2026-08-15: a FILE-mode candidate is compiled
+        # where its headers are, so the landed unit's path comes too.
+        verifier.verify_body_verbatim = \
+            lambda a, u, origin=None: {"tier": "BYTE_EXACT"}
 
     def tearDown(self):
         verifier.writeback.verify = self.verify

@@ -155,7 +155,7 @@ tools/decomp_status.py --no-cache --verbose --json
 
 Measurement reuses the ratchet's machinery VERBATIM — census extractor and
 scaffolding for body mode, the writeback recipe for the proved store,
-`byte_match.match_functions` (batched response-file compiles, six flag
+`byte_match.match_functions` (batched response-file compiles, four flag
 sets, best-of, early exit on BYTE_EXACT) for the comparison. A cold pass
 over the whole tree is ~2 minutes; a content-hash cache
 (`.opensmacx/decomp-status-cache.json`, keyed on the BUILT unit) makes warm

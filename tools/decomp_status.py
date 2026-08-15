@@ -26,7 +26,7 @@ second comparator:
   * FILE mode                  the file text, compiled as-is.
 
 Units then go through `byte_match.match_functions`: batched response-file
-compiles under Wine (~2 ms a file), six flag sets, best verdict kept, early
+compiles under Wine (~2 ms a file), flag sets, best verdict kept, early
 exit on BYTE_EXACT. States PLACEHOLDER and EXCLUDED are never compiled: a
 placeholder has nothing to compile, and exclusion is a decision, not a
 measurement.
@@ -273,7 +273,7 @@ def measure(units: dict, cache: dict, no_cache: bool, jobs: int):
 
     `byte_match.match_functions` is the ratchet's own arithmetic, so the
     batch is handed to it whole: layout classification, SHARED_TAIL and
-    selfmod refusals, the six flag sets, the best-of rule and the early
+    selfmod refusals, the flag sets, the best-of rule and the early
     exit all stay where they already live.
     """
     import pefile
