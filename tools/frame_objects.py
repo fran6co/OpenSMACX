@@ -117,11 +117,56 @@ def scan(pe, spans, functions: dict) -> tuple:
     return frame, fields
 
 
+def frame_size(pe, spans) -> int:
+    """How many bytes the original reserves for locals, from its own prologue.
+
+    FOUR OF SEVEN BODIES IN BATCH 21 DIVERGED IN THE PROLOGUE AND NOWHERE
+    ELSE, and the agent that landed 0x0053A980 diagnosed why: "my ~35 named
+    temporaries vs. the original's tighter 0x68-byte frame". Not register
+    allocation - local COUNT. Every named temporary that the original kept in
+    a register costs four bytes of frame, `sub esp` moves, and instruction #0
+    is already wrong however faithful the logic below it is.
+
+    An agent cannot count its locals against a number nobody told it. This is
+    that number, and it is the cheapest fact in the whole brief: it is the
+    immediate of the `sub esp` the compiler wrote.
+    """
+    from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+    import jump_tables
+
+    if not spans:
+        return -1
+    low, high = spans[0]
+    data = jump_tables._read(pe, low, min(high - low, 32))
+    if not data:
+        return -1
+    engine = Cs(CS_ARCH_X86, CS_MODE_32)
+    for one in engine.disasm(data, low):
+        if one.mnemonic == "sub" and one.op_str.startswith("esp, 0x"):
+            try:
+                return int(one.op_str.split(", ")[1], 16)
+            except ValueError:
+                return -1
+        # A frame is set up in the first few instructions or not at all; going
+        # further finds a `sub esp` that belongs to an inlined alloca.
+        if one.mnemonic in ("call", "jmp", "ret"):
+            break
+    return -1
+
+
 def render(pe, spans, functions: dict) -> str:
     """The frame map for the brief, or "" when the function holds no objects."""
     frame, fields = scan(pe, spans, functions)
+    reserved = frame_size(pe, spans)
     if not frame and not fields:
-        return ""
+        if reserved <= 0:
+            return ""
+        return ("\n# The original's frame is 0x%X bytes\n\n"
+                "Count your locals against it. Four of seven bodies in one\n"
+                "batch diverged at the prologue and nowhere else, because\n"
+                "naming a temporary the original kept in a register costs\n"
+                "four bytes of frame and moves `sub esp` - so instruction #0\n"
+                "is wrong however faithful everything below it is." % reserved)
     # THE SIZES THE TREE HAS PINNED, from the `static_assert`s themselves -
     # the same source `derive_array_strides --check` reads. A gap that equals
     # one of these is the whole point of printing gaps at all.
@@ -140,6 +185,13 @@ def render(pe, spans, functions: dict) -> str:
              "let the compiler generate the rest, rather than declaring each",
              "separately and getting the frame wrong.",
              ""]
+    if reserved > 0:
+        lines += [f"The original reserves 0x{reserved:X} bytes for locals.",
+                  "COUNT YOURS AGAINST IT: naming a temporary the original",
+                  "kept in a register costs four bytes of frame and moves",
+                  "`sub esp`, which is why four of seven bodies in one batch",
+                  "diverged at the prologue and nowhere else.",
+                  ""]
     for (base, offset), classes in sorted(frame.items(), key=lambda kv: kv[0][1]):
         spelled = f"[{base} {'-' if offset < 0 else '+'} 0x{abs(offset):X}]"
         lines.append(f"    {spelled:22} {', '.join(classes)}")
