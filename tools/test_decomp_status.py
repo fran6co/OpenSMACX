@@ -17,6 +17,7 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
+from unittest import mock
 from pathlib import Path
 from unittest import mock
 
@@ -30,9 +31,13 @@ FIELDS = decomp_status.FIELDS
 
 
 def make_row(address: str, tier: str, **extra) -> dict:
+    # `flag_digest` defaults to the CURRENT one, because that is the ordinary
+    # case: a row this tool wrote, under the flag sets it is running now.
+    # Every merge assertion below is about that case; the one that is not
+    # passes a different digest explicitly.
     row = {field: "" for field in FIELDS}
     row.update({"address": address, "tier": tier, "name": "?x@@YAHXZ",
-                "size": "16"})
+                "size": "16", "flag_digest": decomp_status.flag_set_digest()})
     row.update(extra)
     return row
 
@@ -120,6 +125,30 @@ class LedgerMerge(unittest.TestCase):
         self.assertEqual(self.read()["0x00401000"]["source_location"],
                          "old.cpp:1")
         self.assertIn("0x00401000", protected)
+
+    def test_a_row_from_OTHER_flag_sets_is_not_protected(self):
+        """The never-downgrade rule assumes the incumbent came from this tool.
+
+        It did not, on 2026-08-15: `/O2 /Oi-` ran as two extra flag sets,
+        wrote sixteen BYTE_EXACT rows, and was reverted - after which those
+        rows asserted a match no invocation this tool performs can reproduce,
+        against every later run that disagreed. `.opensmacx/byte-match.csv` is
+        what agent_brief reads, so they were on their way into a brief.
+        """
+        stale = make_row("0x00401000", "BYTE_EXACT", flag_digest="deadbeef")
+        self.seed([stale])
+        fresh = make_row("0x00401000", "MISMATCH")
+        total, protected = self.merge({"0x00401000": fresh})
+        self.assertEqual(self.read()["0x00401000"]["tier"], "MISMATCH")
+        self.assertEqual(protected, {}, "a verdict from flag sets that no "
+                                        "longer exist must not be protected")
+
+    def test_the_digest_moves_when_the_flag_sets_do(self):
+        before = decomp_status.flag_set_digest()
+        with mock.patch.object(decomp_status.byte_match, "FLAG_SETS",
+                               decomp_status.byte_match.FLAG_SETS + ("/c /O2 /Oi-",)):
+            self.assertNotEqual(decomp_status.flag_set_digest(), before)
+        self.assertEqual(decomp_status.flag_set_digest(), before)
 
     def test_byte_exact_reproduction_writes(self):
         self.seed([make_row("0x00401000", "BYTE_EXACT")])

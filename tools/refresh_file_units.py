@@ -46,6 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pefile                                                 # noqa: E402
 
 import annotation_scan                                        # noqa: E402
+import byte_match                                             # noqa: E402
 import emit_translation_unit as emit                          # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -54,12 +55,31 @@ LEDGER = REPO_ROOT / ".opensmacx" / "byte-match.csv"
 # Better is further down. A row that moves the other way is a regression and
 # gets its file back; `UNSCOREABLE` and `REFUSED` are not on this scale at all,
 # so a move into them is a regression by the same rule - they are absent.
-TIER_ORDER = ("NO_COMPILE", "MNEMONIC_ONLY", "MISMATCH", "SHAPE_EXACT",
-              "BYTE_EXACT")
-
-
+# DERIVED FROM byte_match, NOT RESTATED. This file used to carry its own
+# worst-first tuple, and it disagreed with the authority about one pair: it
+# ranked MISMATCH ABOVE MNEMONIC_ONLY, where byte_match ranks MNEMONIC_ONLY
+# above MISMATCH - correctly, since "every mnemonic agrees" is strictly
+# stronger evidence than "they do not". A body that went MNEMONIC_ONLY ->
+# MISMATCH was therefore KEPT as an improvement, which is the one outcome
+# this tool promises cannot happen. It happened twice in the 2026-08-15
+# re-scaffold, on 0x00476B70 and 0x00617620.
+#
+# A second copy of a ranking is a second answer to "which of these is better",
+# and the disagreement is invisible until it decides something.
 def rank(tier: str) -> int:
-    return TIER_ORDER.index(tier) if tier in TIER_ORDER else -1
+    """Higher is better. Unknown, unmeasured and UNSCOREABLE are all worst.
+
+    `byte_match.UNSCOREABLE_TIERS` are walls rather than misses - SHARED_TAIL
+    is a COMDAT-folded span up to thirteen functions claim, where a
+    per-function verdict is undefined, and REFUSED is decided before a
+    compiler is reached. Neither is a rung on this ladder, so moving onto one
+    is never an improvement to keep. They sit inside byte_match's order, which
+    is why deriving from it needs this line and not just an index.
+    """
+    order = byte_match.TIER_ORDER          # best-first
+    if tier not in order or tier in byte_match.UNSCOREABLE_TIERS:
+        return -1
+    return len(order) - order.index(tier)
 
 
 def normalise(address: str) -> str:
