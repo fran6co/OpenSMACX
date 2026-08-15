@@ -39,13 +39,35 @@ tools/disasm.py 0x00405C20 --length 120   # the bytes, always the first move
 tools/agent_brief.py 0x00405C20           # everything known, in one message
 ```
 
+`agent_brief.py` is the one to reach for. It assembles every reading below
+into a single document, and the sections that pay are at the END of it.
+
+Three of them answer questions the disassembly alone cannot, and each exists
+because agents were measured guessing the answer:
+
+```sh
+tools/jump_tables.py 0x00490B00      # the case targets behind a computed jump
+tools/frame_objects.py 0x004D61A0    # which C++ objects the frame holds, and
+                                     # how big the original's frame is
+tools/member_map.py InfoWin          # where this class's fields are, read off
+                                     # its own [ecx + N] accesses
+```
+
+A switch's targets are DATA and appear in no disassembly; three agents in one
+batch guessed a case order and all three said so. A `Popup` local carries a
+`Scroll`, two `FlatButton`, a `Spot`, a `Sprite`, a `Heap` and a `Dialogs`
+region, and from the disassembly each looks like an independent local —
+declaring them separately gets the frame wrong at instruction zero. And a
+header's caveat about `sizeof` is not a caveat about offsets: two functions
+were deferred in one batch against headers that named every offset they
+needed, which is what `member_map` now settles.
+
 The catalogue's own claims are not trusted where the bytes disagree:
 `tools/catalogue_corrections.py` records the mangled names IDA reconstructed
 wrongly and the instruction that says so, and `tools/recovery_symbols.py` is
 the one place that decides what symbol a recovered function carries.
 `tools/recover_conventions.py` and `tools/derive_prototypes_from_names.py` read
-the convention and the prototype the mangled name already states;
-the retired `jump_tables` recovers the targets behind a computed jump; and
+the convention and the prototype the mangled name already states; and
 `tools/indirect_call_sites.py` reports the call sites the call graph cannot
 see.
 
@@ -57,6 +79,15 @@ its field offsets are known. Three independent readings, none a model.
 ```sh
 tools/verify_member_offsets.py --check    # declared boundaries vs access widths
 tools/verify_member_offsets.py --pins     # which pinned sizes the image backs
+tools/verify_member_offsets.py --check-names   # every field_<HEX>_ IS at that
+                                          # offset, against the compiler. The
+                                          # brief tells agents to trust the
+                                          # naming convention; this is what
+                                          # makes that safe to say, and it
+                                          # found six names that lied.
+tools/derive_array_strides.py             # a struct size read off the code
+                                          # that indexes a global array
+tools/derive_class_vtables.py             # which vtable belongs to which class
 the retired `verify_subobjects`                # what a ctor/dtor builds, and where
 the retired `split_proved_fields` --apply      # name the fields inside a slab
 ```
@@ -110,6 +141,12 @@ the retired `msvc6_byte_match` is the original five-function spike the route gre
 out of, kept because `BYTE_MATCH_ROUTE.md` reports its numbers.
 the retired `x86_lower`, the retired `x86_smt` and `tools/generator_support.py` are
 shared machinery underneath.
+
+A LANDED UNIT FREEZES ITS SCAFFOLDING, so an emitter fix reaches only the
+units written after it. `tools/refresh_file_units.py --apply` re-scaffolds the
+landed FILE-mode units while keeping their bodies, ratchets by tier so a unit
+can only improve, and reverts anything that regressed. One pass banked 20
+BYTE_EXACT with no agent time at all; run it after any emitter change.
 
 Landing a match: the retired `harvest_proven_units` and
 the retired `preserve_worked_units` rescue proved work out of the build tree,
@@ -218,8 +255,9 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   directory means nothing
 - `tools/verify_tests_do_not_write.py` — runs every tool test in its own
   subprocess and fails if one edits or deletes a tracked file. It caught
-  `test_integrate_recovery.py` deleting a byte-exact proof and rewriting the
-  catalogue on every run, and the second test that was passing *because* of it
+  the since-retired `test_integrate_recovery` deleting a byte-exact proof and
+  rewriting the catalogue on every run, and the second test that was passing
+  *because* of it
 - `tools/verify_test_registration.py`,
   `tools/verify_tool_test_registration.py`,
   `tools/verify_tool_reachability.py`,
@@ -232,6 +270,19 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   route's CMake lines outlive it silently, because a target outside `all` is
   never built and so never resolves its own COMMAND,
   `tools/verify_documented_counts.py` — the checks that watch the checks
+- `tools/verify_span_termination.py` — no catalogued span stops mid-instruction
+  or holds two functions back to back. Nine rows were truncated this way, and
+  nothing pointed back at it: the agent is simply told its last instruction
+  diverges
+- `tools/verify_call_edges.py` — no header drops a call target its own bytes make
+- `tools/verify_return_agreement.py` — no name spells `void` over a prototype
+  that returns a status
+- `tools/verify_vendor_zlib.py` — a vendored source is the upstream one, byte
+  for byte
+- `tools/verify_void_returns.py` — a review aid rather than a gate: names that
+  say `void` over bodies that return a constant. It reads the CALLEE only, and
+  four agents have now found returns that only the caller reveals, so it is
+  known-incomplete by measurement
 - `tools/verify_checks_can_fail.py` — damages real inputs and requires each
   gate to go red
 - `tools/verify_check_tests_observe.py` — mutates each check and requires its

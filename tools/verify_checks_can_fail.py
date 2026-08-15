@@ -856,6 +856,35 @@ def damage_misnamed_member(workspace):
             "--src", str(src)]
 
 
+def damage_undocumented_tool(workspace):
+    """A live tool that `docs/TOOLS.md` does not name.
+
+    Reachable is not findable. The wired-into-ctest tool below satisfies every
+    other arm of this check and still appears in no document a person reads,
+    which is how eleven tools drifted out of TOOLS.md - including the three the
+    recovery brief leans on hardest - while the file's own opening paragraph
+    claimed the drift could not happen.
+
+    TOOLS.md is written so that the ABSENT tool is the damage, not a missing
+    file: it names `documented.py`, so a run that only checked "is there a
+    TOOLS.md" would pass here.
+    """
+    root = workspace / "documentation-root"
+    (root / "tools").mkdir(parents=True, exist_ok=True)
+    (root / "docs").mkdir(parents=True, exist_ok=True)
+    (root / "tools" / "documented.py").write_text("", encoding="utf-8")
+    (root / "tools" / "undocumented.py").write_text("", encoding="utf-8")
+    (root / "docs" / "TOOLS.md").write_text(
+        "# tools\n\n`tools/documented.py` does a thing.\n", encoding="utf-8")
+    (root / "CMakeLists.txt").write_text(
+        'add_test(NAME a COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/'
+        'tools/documented.py")\n'
+        'add_test(NAME b COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/'
+        'tools/undocumented.py")\n', encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_tool_reachability.py"),
+            "--root", str(root)]
+
+
 def damage_unreachable_tool(workspace):
     """A tool no entry point names and nothing reachable imports.
 
@@ -1179,6 +1208,8 @@ CASES = (
      damage_misnamed_member, "not at the offset they state"),
     ("tool-reachability", "a tool no entry point names",
      damage_unreachable_tool, "no entry point names it"),
+    ("tool-reachability", "a live tool docs/TOOLS.md does not name",
+     damage_undocumented_tool, "does not name it"),
 )
 
 CMAKELISTS = REPO_ROOT / "CMakeLists.txt"

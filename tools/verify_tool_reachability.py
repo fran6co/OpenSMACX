@@ -114,12 +114,44 @@ def audit(root: Path = REPO_ROOT) -> tuple:
     return stale, sorted(production - seen), len(seen & production)
 
 
+def undocumented(root: Path) -> list:
+    """Production tools `docs/TOOLS.md` does not name.
+
+    REACHABLE IS NOT THE SAME AS FINDABLE. Any entry point satisfies the audit
+    above, and `CMakeLists.txt` is one - so a tool wired only into ctest passes
+    while appearing in no document a person reads. Eleven had drifted out that
+    way when this was added, including the three the recovery brief leans on
+    hardest, and TOOLS.md's own opening paragraph claimed the drift was
+    impossible: "Keeping a tool means placing it below. Deleting one means
+    striking its line. Neither can drift."
+
+    That sentence is the specification. This is the check that makes it true.
+    A hand-maintained list nobody verifies is the most reliable defect shape in
+    this tree, and a list that ADVERTISES being verified while not being
+    verified is strictly worse - it converts a reader's correct doubt into
+    misplaced confidence.
+
+    Retired tools are named in TOOLS.md WITHOUT the `.py` suffix, on purpose,
+    so the stale-reference half above does not demand that they exist. That
+    convention is what makes "named" mean "named as a live tool" here.
+    """
+    doc = root / "docs" / "TOOLS.md"
+    if not doc.is_file():
+        return []
+    text = doc.read_text(encoding="utf-8", errors="replace")
+    named_here = set(re.findall(r"(\w+)\.py", text))
+    production = {path.stem for path in (root / "tools").glob("*.py")
+                  if not path.name.startswith("test_")}
+    return sorted(production - named_here)
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=REPO_ROOT)
     args = parser.parse_args(argv)
 
     stale, unreachable, reached = audit(args.root)
+    missing = undocumented(args.root)
     print(f"tool reachability: {reached} reached from "
           f"{len(entry_points(args.root))} entry points")
     for name in stale:
@@ -128,9 +160,13 @@ def main(argv=None) -> int:
     for stem in unreachable:
         print(f"  UNREACHABLE tools/{stem}.py - no entry point names it and "
               f"nothing reachable imports it")
-    if stale or unreachable:
+    for stem in missing:
+        print(f"  UNDOCUMENTED tools/{stem}.py - docs/TOOLS.md does not name "
+              f"it, so nobody reading the docs can find it")
+    if stale or unreachable or missing:
         print(f"FAIL: {len(stale)} stale reference(s), "
-              f"{len(unreachable)} unreachable tool(s)")
+              f"{len(unreachable)} unreachable tool(s), "
+              f"{len(missing)} undocumented tool(s)")
         return 1
     if not reached:
         print("FAIL: nothing was reached, so this run proves nothing")
