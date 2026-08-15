@@ -104,13 +104,32 @@ def debug(exe: Path, game: Path, port: int) -> int:
     reached here, and a TCP relay was written to bridge a fixed port onto the
     random one winedbg was assumed to insist on. wine 9.0 needs no such thing.
 
-    NO SOURCE-LEVEL DEBUGGING, and it is worth knowing before you try: the
-    executable carries a CodeView debug directory pointing at a PDB, which gdb
-    cannot read, so it reports `(No debugging symbols found)` and every frame
-    is `?? ()`. What you get is the assembly, the registers and the fault
-    address - which for a matching decompilation is most of what there is to
-    want, because the ADDRESS is the catalogue key. `describe()` turns one
-    into a function name.
+    NO SOURCE-LEVEL DEBUGGING THROUGH GDB, which is a fact about gdb and not
+    about the build. The executable carries a CodeView directory pointing at
+    `OpenSMACX.pdb`; gdb reads neither, so it says `(No debugging symbols
+    found)` and every frame is `?? ()`. What it gives is the assembly, the
+    registers and the fault address - and for a matching decompilation the
+    ADDRESS is the catalogue key, so `describe()` turns one into a function
+    name.
+
+    IF YOU WANT SOURCE-LEVEL, USE `--winedbg`. winedbg reads the PDB through
+    dbghelp and gives function names, FILE AND LINE, parameter values and
+    locals:
+
+        Breakpoint 1 at 0x00408421 WinMain+0x21 [src\main.cpp:214]
+        =>0 WinMain+0x21(hInstance=00400000, lpCmdLine="",
+              colour_depth=0xcccccccc, ...) [src/main.cpp:214]
+         1 WinMainCRTStartup+0x1b3(...) [crtexe.c:330]
+
+    EMBEDDING THE SYMBOLS MAKES THIS WORSE, and it is the obvious thing to
+    reach for. `link /debugtype:both /pdb:none` does embed them - measured,
+    11,042 COFF symbols and 2.2 MB of CodeView in the image, and `objdump -t`
+    resolves `_WinMain@16` and every mangled name. But it removes the PDB
+    winedbg was reading, so winedbg drops to "No symbols found for WinMain",
+    and gdb SEGFAULTS on the COFF debug directory whether or not CodeView is
+    there beside it - offline, on `file` alone, before any target. So the
+    default `/debug /pdbtype:sept` is the setting that debugs best, and the
+    two front ends want opposite things from it.
     """
     windows_path = subprocess.run(
         ["winepath", "-w", str((game / exe.name).resolve())],
@@ -124,6 +143,28 @@ def debug(exe: Path, game: Path, port: int) -> int:
     return server.returncode
 
 
+
+def winedbg(exe: Path, game: Path, commands: str = "") -> int:
+    """Drop into winedbg, which reads the PDB and knows the source.
+
+    Piped commands rather than a terminal when `commands` is given, so this is
+    scriptable: `--winedbg-command "break WinMain" --winedbg-command cont`.
+    """
+    windows_path = subprocess.run(
+        ["winepath", "-w", str((game / exe.name).resolve())],
+        env=byte_match.wine_environment(), capture_output=True,
+        text=True).stdout.strip() or exe.name
+    environment = {**byte_match.wine_environment(), "WINEDEBUG": "-all"}
+    if commands:
+        done = subprocess.run(["winedbg", windows_path], cwd=game,
+                              env=environment, input=commands + "\nquit\n",
+                              text=True)
+    else:
+        done = subprocess.run(["winedbg", windows_path], cwd=game,
+                              env=environment)
+    return done.returncode
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
@@ -135,6 +176,13 @@ def main() -> int:
                              "remote-debug configuration can hold a fixed "
                              "port")
     parser.add_argument("--port", type=int, default=GDB_PORT)
+    parser.add_argument("--winedbg", action="store_true",
+                        help="debug it in winedbg, which reads the PDB and "
+                             "gives function names, file and line, parameters "
+                             "and locals - unlike the gdb proxy")
+    parser.add_argument("--winedbg-command", action="append", default=[],
+                        metavar="CMD",
+                        help="a winedbg command to pipe in; repeatable")
     arguments = parser.parse_args()
 
     if not arguments.exe.is_file():
@@ -148,6 +196,9 @@ def main() -> int:
 
     staged = stage(arguments.exe, arguments.game)
     print(f"staged {len(staged)} file(s) into {arguments.game}")
+    if arguments.winedbg or arguments.winedbg_command:
+        return winedbg(arguments.exe, arguments.game,
+                       "\n".join(arguments.winedbg_command))
     if arguments.gdb:
         return debug(arguments.exe, arguments.game, arguments.port)
     try:

@@ -300,12 +300,25 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   faults at `0x0062D3C2` inside `jackal_init_real`, which is the frontier:
   everything before it is compiled in and ran.
 
+  `--winedbg` is the one to reach for when you want to LOOK at something: it
+  reads `OpenSMACX.pdb` through dbghelp and gives function names, file and
+  line, parameter values and locals — `WinMain+0x21 [src/main.cpp:214]` with
+  `colour_depth=0xcccccccc`, which is the `/GZ` fill showing the uninitialised
+  read in the flesh.
+
   `--gdb` starts it under winedbg's gdb proxy on a fixed `localhost:12345`,
-  which is what an IDE needs. Point CLion's *Remote Debug* configuration at
-  that port. `winedbg`'s `--port` is order-sensitive — it must follow `--gdb`
-  and take its value as a separate argument, and the usage message it prints
-  otherwise names none of its options, so a rejected `--port` reads exactly
-  like a winedbg that has none. It is ASSEMBLY level: the
+  for CLion's *Remote Debug* configuration. That one is ASSEMBLY level — gdb
+  reads neither PDB nor CodeView. `winedbg`'s `--port` is order-sensitive: it
+  must follow `--gdb` and take its value as a separate argument, and the usage
+  message it prints otherwise names none of its options, so a rejected
+  `--port` reads exactly like a winedbg that has none.
+
+  DO NOT EMBED THE SYMBOLS to try to fix that. `link /debugtype:both
+  /pdb:none` genuinely embeds them — 11,042 COFF symbols and 2.2 MB of
+  CodeView, and `objdump -t` resolves every mangled name — but it removes the
+  PDB winedbg reads, so winedbg drops to "No symbols found", and gdb
+  SEGFAULTS on the COFF debug directory offline, on `file` alone. The default
+  `/debug /pdbtype:sept` debugs best; the two front ends want opposite things. It is ASSEMBLY level: the
   executable carries a CodeView directory pointing at a PDB and gdb cannot
   read one, so every frame is `?? ()`. For a matching decompilation that is
   most of what there is to want, because the address IS the catalogue key
