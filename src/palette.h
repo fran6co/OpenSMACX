@@ -37,6 +37,7 @@ class DLLEXPORT Palette {
   // 2026-08-15 against two independent bytes; see the annotation on the body
   // in palette.cpp.
   void init();                       // 005FE330
+  void close();                      // 005FE500
   int set();                         // 005FE460
   static void init_palette_class(int mode);
   static void set_active_window(Win *window);
