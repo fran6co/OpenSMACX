@@ -735,6 +735,24 @@ def lesson_report(annotations: list) -> list:
                            "UNRECOVERABLE on a piece that HAS a body - if a "
                            "body exists the claim is refuted; delete it, or "
                            "say what the body is if it is a stub"))
+        # DEFERRED carries the same placement rule and the same evidence
+        # requirement as UNRECOVERABLE - it differs only in what it MEANS and
+        # therefore in whether the selector keeps offering the address.
+        if annotation.deferred and \
+                annotation.state != annotation_scan.STATE_PLACEHOLDER:
+            faults.append((annotation.location,
+                           "DEFERRED on a piece that HAS a body - it means "
+                           "nobody has written one yet, so a body refutes it"))
+        if annotation.deferred and annotation.unrecoverable:
+            faults.append((annotation.location,
+                           "both DEFERRED and UNRECOVERABLE - one says a body "
+                           "can exist and the other says it cannot; pick one"))
+        for prose in annotation.deferred:
+            if len(prose.split()) < 6:
+                faults.append((annotation.location,
+                               f"DEFERRED with no evidence ({prose!r}) - give "
+                               f"the instruction count, the shape, and what "
+                               f"would defeat a transcription"))
         for prose in annotation.unrecoverable:
             # Evidence is the whole content of the claim. "cannot be done" is
             # a wall with no reason, and this repository has had walls outlive

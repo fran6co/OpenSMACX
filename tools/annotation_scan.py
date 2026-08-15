@@ -128,6 +128,7 @@ class Annotation:
     levers: tuple = ()         # (fingerprint, prose) that MADE this match
     ruled_out: tuple = ()      # spellings tried on this body that did not
     unrecoverable: tuple = ()  # prose: no C body CAN exist for this piece
+    deferred: tuple = ()       # prose: a body can exist, nobody has written it
 
     @property
     def location(self) -> str:
@@ -144,6 +145,10 @@ LESSON_CONTINUED = re.compile(r"^\s*(?://|\*)\s{2,}(?P<prose>\S.*?)\s*$")
 # The third token, and the only one that BELONGS on a placeholder.
 LESSON_UNRECOVERABLE = re.compile(
     r"^\s*(?://|\*)?\s*UNRECOVERABLE:\s*(?P<prose>.+?)\s*$")
+# The FOURTH, and it exists because the third was used for something it does
+# not mean. See `lessons`.
+LESSON_DEFERRED = re.compile(
+    r"^\s*(?://|\*)?\s*DEFERRED:\s*(?P<prose>.+?)\s*$")
 
 
 def lessons(lines: list, index: int) -> tuple:
@@ -158,6 +163,13 @@ def lessons(lines: list, index: int) -> tuple:
           divergence is still live, so the key is MEASURED rather than written -
           and a key that is never written can never be stale.
       UNRECOVERABLE: <evidence>            on a PLACEHOLDER, and only there.
+          NO C BODY CAN EXIST for this piece. It is a decision, and
+          `recovery_frontier` filters it out of batch selection the way it
+          filters EXCLUDED.
+      DEFERRED: <evidence>                 also on a PLACEHOLDER only.
+          A body CAN exist; nobody has had the budget to write one. This does
+          NOT filter the address out of selection - the whole point is that it
+          comes back.
 
     THE THIRD TOKEN EXISTS BECAUSE THE FIRST TWO COULD NOT SAY IT. The grammar
     used to hold that a RULED-OUT belongs only on a landed body - "you cannot
@@ -181,7 +193,7 @@ def lessons(lines: list, index: int) -> tuple:
     A continuation line is an indented comment line carrying no token of its own,
     which is how a long RULED-OUT list stays readable.
     """
-    levers, ruled, unrecoverable, current = [], [], [], None
+    levers, ruled, unrecoverable, deferred, current = [], [], [], [], None
     for line in lines[index + 1:]:
         stripped = line.strip()
         if not (stripped.startswith("//") or stripped.startswith("*")):
@@ -201,6 +213,11 @@ def lessons(lines: list, index: int) -> tuple:
             unrecoverable.append(dead.group("prose"))
             current = ("unrecoverable", len(unrecoverable) - 1)
             continue
+        later = LESSON_DEFERRED.match(line)
+        if later:
+            deferred.append(later.group("prose"))
+            current = ("deferred", len(deferred) - 1)
+            continue
         joined = LESSON_CONTINUED.match(line)
         if joined and current:
             kind, position = current
@@ -209,11 +226,13 @@ def lessons(lines: list, index: int) -> tuple:
                 levers[position] = (key, prose + " " + joined.group("prose"))
             elif kind == "unrecoverable":
                 unrecoverable[position] += " " + joined.group("prose")
+            elif kind == "deferred":
+                deferred[position] += " " + joined.group("prose")
             else:
                 ruled[position] = ruled[position] + " " + joined.group("prose")
             continue
         current = None
-    return tuple(levers), tuple(ruled), tuple(unrecoverable)
+    return tuple(levers), tuple(ruled), tuple(unrecoverable), tuple(deferred)
 
 
 @dataclass
@@ -542,7 +561,8 @@ def scan_text(text: str, path) -> list:
         if parsed is None:
             continue
         address, keyword, rest, matched = parsed
-        found_levers, found_ruled, found_dead = lessons(lines, index)
+        found_levers, found_ruled, found_dead, found_later = \
+            lessons(lines, index)
         if keyword == "FILE":
             region = text
             found.append(Annotation(
@@ -550,14 +570,14 @@ def scan_text(text: str, path) -> list:
                 state=_state_of(region, ""), path=_rel(path),
                 line=index + 1, region=region, recipe="verbatim",
                 matched=matched, levers=found_levers, ruled_out=found_ruled,
-                unrecoverable=found_dead))
+                unrecoverable=found_dead, deferred=found_later))
         elif keyword == "EXCLUDED":
             found.append(Annotation(
                 address=address, mode=MODE_BODY, state=STATE_EXCLUDED,
                 path=_rel(path), line=index + 1,
                 exclusion=_exclusion_citation(rest), matched=matched,
                 levers=found_levers, ruled_out=found_ruled,
-                unrecoverable=found_dead))
+                unrecoverable=found_dead, deferred=found_later))
         else:
             if kind == "proved":
                 # Proved bodies keep the writeback semantics even once an
@@ -578,7 +598,7 @@ def scan_text(text: str, path) -> list:
                 line=index + 1, region=region, extract_error=error,
                 recipe=recipe, matched=matched,
                 levers=found_levers, ruled_out=found_ruled,
-                unrecoverable=found_dead))
+                unrecoverable=found_dead, deferred=found_later))
 
     if not found:
         found.extend(_legacy_file_annotations(path, text, lines, kind))
