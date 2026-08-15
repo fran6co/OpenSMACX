@@ -107,3 +107,38 @@ measurement**, and the new claim total.
 If an agent's report and your measurement disagree, say so — a divergence
 between claim and measurement is a finding about the harness, not a rounding
 error.
+
+## 7. Between batches
+
+The gate being green is not the end of a batch. Three of these have paid for
+themselves more than once, and none of them costs agent time.
+
+```sh
+# Landed units freeze their scaffolding, so an emitter fix reaches only the
+# units written after it. A re-scaffold pass banked 20 BYTE_EXACT with no
+# agent time at all; it keeps bodies and ratchets, and reverts regressions.
+.opensmacx/venv/bin/python tools/refresh_file_units.py --apply
+
+# A field name that lies about its offset is read straight into a body. Every
+# brief for a class with observed accesses tells the agent that the field at
+# 0x838 is spelled `field_838_`; this is what holds that true, against the
+# compiler rather than against a header comment.
+.opensmacx/venv/bin/python tools/verify_member_offsets.py --check-names
+
+# What a class's own code proves about where its fields are, for any class an
+# agent reported as unverified. This is already in every brief - run it
+# directly when triaging a DEFERRED note that blames a layout.
+.opensmacx/venv/bin/python tools/member_map.py <Class>
+
+# Names that say void over bodies that return a status. A review aid, not a
+# gate: it reads constants only, and the caller-side half is still unbuilt.
+.opensmacx/venv/bin/python tools/verify_void_returns.py
+```
+
+**Act on the agents' STRUCTURE rows, and check the ones that blame a header.**
+Two functions were deferred in one batch against headers that named every
+offset they needed — one agent read "sizeof is not pinned" in `infowin.h` as
+"these offsets are guesses", another read the unspelled inheritance edge in
+`dialogs.h` as "a `Dialogs` cannot be declared". Both headers were right and
+both agents were wrong, which is only discoverable by reading the header
+rather than the report.

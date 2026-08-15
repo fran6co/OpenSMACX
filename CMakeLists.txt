@@ -894,6 +894,17 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(frame-object-tests
                                    test_frame_objects.py)
 
+    # WHERE A CLASS'S FIELDS ARE, restated in the brief from the image's own
+    # accesses. Two functions were deferred in one batch against headers that
+    # named every offset they needed, both agents reporting that "every offset
+    # used would be a guess" - they had read a caveat about sizeof as a caveat
+    # about the offsets. The tests pin the edge that keeps the map safe to
+    # follow: an offset the header does not declare must be called out, since
+    # that is the one case where the "the name IS the offset" instruction would
+    # have an agent invent a member.
+    opensmacx_add_python_tool_test(member-map-tests
+                                   test_member_map.py)
+
     # The preamble that measurement compiles a body in. This one is load
     # bearing in an unusual direction: a WRONG declaration here does not fail,
     # it silently changes what is being measured, so the tests pin the two
@@ -1357,6 +1368,22 @@ if(BUILD_TESTING)
         COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_member_offsets.py"
             --check
+            --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
+    )
+    # A FIELD NAME THAT LIES ABOUT ITS OFFSET IS READ STRAIGHT INTO A BODY.
+    # Every brief for a class with observed accesses now tells the agent that
+    # the field at 0x838 is spelled `field_838_`, so it can write an offset it
+    # read off the disassembly without looking anything up. Nothing held the
+    # names to the slots: `uint32_t field_6E_` after two bytes at 0x6C and 0x6D
+    # does not sit at 0x6E, because MSVC aligns a 4-byte type to 4 and puts it
+    # at 0x70 - silently, taking every member below it along. This found six
+    # such names in AAmbience and BAmbience on its first run, all emitted by
+    # emit_hypothesis_layouts believing a width without checking where it
+    # landed. Compares against the compiler, not against a header comment.
+    add_test(NAME member-names-state-their-offset
+        COMMAND "${OPENSMACX_PYTHON_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_member_offsets.py"
+            --check-names
             --exe "${OPENSMACX_LEGACY_LEAF_EXE}"
     )
     # A SPAN THAT STOPS MID-INSTRUCTION CANNOT BE MATCHED BY ANY BODY, and

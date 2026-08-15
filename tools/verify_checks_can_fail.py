@@ -814,6 +814,48 @@ def damage_overrun_member_access(workspace):
             "--accesses", str(copy)]
 
 
+def damage_misnamed_member(workspace):
+    """A field whose name states an offset the compiler does not put it at.
+
+    The real defect, reduced: `uint32_t field_1_` after one byte does not sit
+    at 0x1, because MSVC aligns a 4-byte type to 4 and puts it at 0x4. That is
+    the exact shape `emit_hypothesis_layouts` shipped six times in AAmbience
+    and BAmbience, and it is invisible - the header compiles, the name reads
+    right, and an agent following the brief's "the name IS the offset" writes
+    a member that reads three bytes past where it meant to.
+
+    A HEADER IS THE DAMAGE because a name and its slot only disagree through
+    the compiler; there is no CSV to corrupt. `--src` is the tool's own input
+    for declared layouts, so the gate's invocation and this one differ in the
+    headers alone.
+
+    THE TREE'S OWN HEADERS ARE COPIED IN, not just the damaged one. A probe
+    unit includes `stdafx.h`, so a lone header refuses to compile, contributes
+    no layout, and the run fails for having measured nothing - which is a
+    different failure that would have passed this case while proving the
+    opposite. The vacuity guard caught that on this case's first run.
+    """
+    import byte_match as bm
+
+    reason = bm.available()
+    if reason:
+        raise Skip(f"needs the VC6 prefix to compile a probe: {reason}")
+    src = workspace / "misnamed-src"
+    src.mkdir(parents=True, exist_ok=True)
+    for header in sorted((REPO_ROOT / "src").glob("*.h")):
+        shutil.copy2(header, src / header.name)
+    (src / "damaged.h").write_text(
+        "#pragma once\n"
+        "#include \"stdafx.h\"\n"
+        "class Damaged {\n"
+        " public:\n"
+        "  uint8_t field_0_;\n"
+        "  uint32_t field_1_;   // MSVC puts this at 0x4, not 0x1\n"
+        "};\n", encoding="utf-8")
+    return [PYTHON, str(TOOLS / "verify_member_offsets.py"), "--check-names",
+            "--src", str(src)]
+
+
 def damage_unreachable_tool(workspace):
     """A tool no entry point names and nothing reachable imports.
 
@@ -1132,6 +1174,9 @@ CASES = (
      damage_contradicted_yitzi_marker, "marked 0xBAD"),
     ("member-offsets-current", "an access past the end of a declared class",
      damage_overrun_member_access, "declared boundaries the image contradicts"),
+    ("member-names-state-their-offset",
+     "a field whose name states an offset the compiler does not use",
+     damage_misnamed_member, "not at the offset they state"),
     ("tool-reachability", "a tool no entry point names",
      damage_unreachable_tool, "no entry point names it"),
 )
