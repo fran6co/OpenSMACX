@@ -50,6 +50,26 @@ CORRECTIONS = {
         "?on_key_up@BaseButton@@QAEXH@Z",
         "?on_key_up@BaseButton@@QAEHH@Z",
         "body is `xor eax, eax; ret 4`; BasePop::on_key_up returns int"),
+    # THE RECEIVER NOTHING PASSES AND NOTHING READS. `QAE` says __thiscall and
+    # the body never uses ecx as an input: `push ecx` at 0x00604E55 is VC6
+    # reserving four stack bytes, overwritten by `mov [esp], eax` two
+    # instructions later, and every later `mov ecx, ...` WRITES it - the new
+    # object for the constructor call, the SEH link on unwind. It is a
+    # factory, `operator new(0x3230)` then `BasePop::BasePop()`, where a
+    # receiver is meaningless. No caller supplies one either: all seven
+    # `call dword ptr [0x696ecc]` sites reach it with no ecx set up.
+    #
+    # It is load-bearing rather than cosmetic. WinMain only ever takes this
+    # function's ADDRESS, and C++ gives no plain code address for a non-static
+    # member - so under `QAE` the call site can only spell 0x00604E40 as a
+    # literal, and the body can only live in a scaffold that declares the
+    # class itself.
+    0x00604E40: (
+        "?basepop_alloc@BasePop@@QAEHXZ",
+        "?basepop_alloc@BasePop@@SAHXZ",
+        "the body reads ecx nowhere - `push ecx` at 0x00604E55 is a stack "
+        "reservation, overwritten by `mov [esp], eax` - and all seven call "
+        "sites through the 0x00696ECC hook set up no receiver"),
     0x005FD2B0: (
         "?do_sound@@YAXXZ",
         "?do_sound@@YAHXZ",
