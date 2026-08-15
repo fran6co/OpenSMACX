@@ -121,6 +121,19 @@ def debug(exe: Path, game: Path, port: int) -> int:
               colour_depth=0xcccccccc, ...) [src/main.cpp:214]
          1 WinMainCRTStartup+0x1b3(...) [crtexe.c:330]
 
+    AND GDB'S NAMES HERE ARE WORSE THAN NO NAMES. It finds no debug info, so
+    it falls back to the EXPORT TABLE - and this tree marks its classes
+    `DLLEXPORT`, so the executable exports hundreds of symbols. gdb then
+    labels any address by the nearest preceding export, which is usually an
+    unrelated function: breaking at WinMain's first instruction reports
+
+        Breakpoint 1, 0x00408400 in OpenSMACX!??4Sound@@QAEAAV0@ABV0@@Z ()
+
+    naming a `Sound::operator=` 48 bytes earlier. The disassembly under it is
+    correct; the label is not. `set print max-symbolic-offset 1` restores bare
+    addresses in the listing, which is where it matters - a wrong name on
+    every instruction is how a debugging session goes wrong quietly.
+
     EMBEDDING THE SYMBOLS MAKES THIS WORSE, and it is the obvious thing to
     reach for. `link /debugtype:both /pdb:none` does embed them - measured,
     11,042 COFF symbols and 2.2 MB of CodeView in the image, and `objdump -t`
@@ -135,8 +148,12 @@ def debug(exe: Path, game: Path, port: int) -> int:
         ["winepath", "-w", str((game / exe.name).resolve())],
         env=byte_match.wine_environment(), capture_output=True,
         text=True).stdout.strip() or exe.name
-    print(f"  gdb remote on localhost:{port}")
-    print(f"  attach with: target remote localhost:{port}")
+    print(f"  gdb remote on localhost:{port}. Attach with:")
+    print(f"      gdb -ex 'set architecture i386' \\")
+    print(f"          -ex 'set print max-symbolic-offset 1' \\")
+    print(f"          -ex 'target remote localhost:{port}'")
+    print(f"  break by ADDRESS - `break *0x00408400` - and read the note on")
+    print(f"  max-symbolic-offset in this tool before believing a name.")
     server = subprocess.run(
         ["winedbg", "--gdb", "--port", str(port), "--no-start", windows_path],
         cwd=game, env={**byte_match.wine_environment(), "WINEDEBUG": "-all"})
