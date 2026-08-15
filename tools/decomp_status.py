@@ -412,6 +412,62 @@ def drift_report(annotations: list, matched: dict, functions: dict) -> dict:
 # ----------------------------------------------------------------- report
 
 
+# Below this, a landing has reproduced so little of the function that calling
+# it a recovery overstates it. Not a hard line - see `stubs`.
+STUB_FRACTION = 0.5
+
+
+def stubs(measured: list) -> None:
+    """Name the landings that reproduce a small fraction of their function.
+
+    A TIER CANNOT SEE THIS. `MISMATCH` means "does not reproduce the bytes",
+    and a body transcribed instruction by instruction and a body that covers
+    its opening and stubs the rest both answer no. As function sizes grew the
+    second kind appeared: batch 18's agents reported "only the entry gate
+    (~10% of the function)", "plausible stand-ins, not transcriptions" and
+    "the remainder stubbed" in their own words, and nothing in the ledger
+    distinguished those from the faithful ones beside them.
+
+    The signal was already there and unread - `original_mnemonics` and
+    `rebuilt_mnemonics` are counts, so their ratio is instruction-count
+    coverage. Measured over the batches that had already collected: medians
+    of 90-99%, with a tail of 2 to 7 rows per batch under half. So the
+    typical landing IS faithful and the tail is what needs naming.
+
+    A STUB DETECTOR, NOT A FIDELITY MEASURE, and the difference matters:
+    - the right NUMBER of wrong instructions scores well here;
+    - a legitimately shorter body scores badly. Where the original hand-
+      unrolls a loop - four Duff's devices found so far - a correct C rewrite
+      is far shorter BY DESIGN and will sit in this tail without being a
+      defect.
+    Use it to find rows worth a second look, never to rank the ones above it.
+    """
+    ratios = []
+    for annotation, outcome in measured:
+        original = outcome.get("original_mnemonics")
+        rebuilt = outcome.get("rebuilt_mnemonics")
+        if not original or rebuilt is None:
+            continue
+        ratios.append((rebuilt / original, annotation, outcome))
+    thin = sorted((r for r in ratios if r[0] < STUB_FRACTION),
+                  key=lambda row: row[0])
+    if not thin:
+        return
+    print(f"\n  reproducing under {STUB_FRACTION:.0%} of their instructions "
+          f"({len(thin)} of {len(ratios)}) - worth a second look, because a "
+          f"stub reads as MISMATCH exactly like a\n  faithful body. NOT all "
+          f"of these are stubs: where the original hand-unrolls a loop a "
+          f"correct C rewrite is\n  short by design, and on batch 17 five of "
+          f"the six named here were Duff's-device blitters:")
+    for fraction, annotation, outcome in thin[:12]:
+        print(f"    {annotation.address_hex}  {fraction:5.0%}  "
+              f"{outcome.get('rebuilt_mnemonics')}/"
+              f"{outcome.get('original_mnemonics')} instructions  "
+              f"{annotation.location}")
+    if len(thin) > 12:
+        print(f"    ... and {len(thin) - 12} more")
+
+
 def summarise(annotations: list, matched: dict, outcomes: dict,
               refusals: dict, functions: dict) -> None:
     """Byte-weighted state. Counts flatter; bytes do not."""
@@ -471,6 +527,7 @@ def summarise(annotations: list, matched: dict, outcomes: dict,
                 if tier in aside:
                     count, total = aside[tier]
                     print(f"    {tier:12s} {count:6d}  {total:9d} bytes")
+        stubs(measured)
 
     if refusals:
         print(f"\nrefused before compile: {len(refusals)}")
