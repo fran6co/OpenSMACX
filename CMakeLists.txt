@@ -884,6 +884,16 @@ if(BUILD_TESTING)
     opensmacx_add_python_tool_test(jump-table-tests
                                    test_jump_tables.py)
 
+    # WHICH C++ OBJECTS A FRAME HOLDS, and how they nest. Guessing that was
+    # the biggest source of wasted effort in batches 18-20: a `Popup` carries
+    # a `Scroll`, two `FlatButton`, a `Spot`, a `Sprite`, a `Heap` and a
+    # `Dialogs` region, and from the disassembly each looks like an
+    # independent local. The tests pin the NESTING - a base and its derived
+    # class share one offset, a register receiver is not a frame slot - since
+    # getting those backwards makes the tool invent locals.
+    opensmacx_add_python_tool_test(frame-object-tests
+                                   test_frame_objects.py)
+
     # The preamble that measurement compiles a body in. This one is load
     # bearing in an unusual direction: a WRONG declaration here does not fail,
     # it silently changes what is being measured, so the tests pin the two
