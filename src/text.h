@@ -20,10 +20,39 @@
  /*
   * Text class: Handles basic text operations.
   */
+// `mem_get` is general.h's, declared here because the constructor below is
+// defined in-class and calls it. Spelled identically to general.h's line, or
+// VC6 reports `C2373: redefinition; different type modifiers` on whichever
+// declaration it sees second.
+DLLEXPORT LPVOID __cdecl mem_get(size_t size);
+
 class DLLEXPORT Text {
  public:
   Text(); // 005FD860
-  Text(size_t size); // 005FD880
+  // DEFINED IN-CLASS so it can be INLINED, which is what the image does.
+  // `??__ETxt@@YAXXZ` at 0x005FD400 - the dynamic initialiser for `Txt` -
+  // writes these fields directly instead of calling 0x005FD880, and it can
+  // only do that if the definition is visible where the object is
+  // constructed. Measured on that initialiser: declared out of line it
+  // diverges at instruction #1 with the constructor called; defined here it
+  // reproduces 22 of 22 mnemonics, 87 bytes against 86, with ONE extra
+  // instruction - VC6 materialises `this` into eax for the first store,
+  // where the image addresses it absolutely, and no spelling of that store
+  // moves it (array index, `*file_name_`, a cast of `this`, a local).
+  //
+  // `int`, NOT `size_t`. The image's own name for it is `??0Text@@QAE@H@Z`
+  // and `H` is `int`; 0x005FD880 is BYTE_EXACT against a body taking one.
+  Text(int size) {           // 005FD880
+    file_name_[0] = 0;
+    current_pos_ = 0;
+    text_file_ = 0;
+    buffer_get_ = 0;
+    buffer_item_ = 0;
+    buffer_get_ = (LPSTR)mem_get(size);
+    if (buffer_get_) {
+      buffer_item_ = (LPSTR)mem_get(size);
+    }
+  }
   ~Text() OPENSMACX_NOEXCEPT_FALSE; // 00608C00
 
   int init(size_t size);
@@ -53,7 +82,11 @@ class DLLEXPORT Text {
 };
 
 // global
-extern Text *Txt;
+// `*const`, so VC6 can prove the placement in `??__ETxt` is not null.
+// Through a plain `Text *` the placement `new (Txt) Text(512)` there emits a
+// `cmp`/`je` guard the image does not have - 98 bytes against 86 - because
+// the pointer is a variable it cannot fold. Nothing assigns to it.
+extern Text *const Txt;
 extern LPSTR *TextBufferGetPtr;
 extern LPSTR *TextBufferItemPtr;
 DLLEXPORT void __cdecl text_txt();
