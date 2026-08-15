@@ -1,4 +1,26 @@
 // ORIGINAL: 0x00412AA0 FILE
+// DEFERRED: read in full (all ~2090 instructions) but not transcribed - a
+//           faithful body needs the same instruction-by-instruction rigor
+//           0x0053A980 took, and a partial/guessed body here would compute
+//           something else while looking done, which is worse than nothing.
+//           Findings for the next pass:
+//             - the local `Font` at [ebp-0x134] is real RAII: declare
+//               `Font font_local;` and the compiler emits the observed
+//               __try/__finally frame (push -1; push 0x651b6c handler)
+//               itself - do not hand-write fs:[0].
+//             - `edi` is reassigned ONCE, early (`add edi, 0x444`), and
+//               EVERY later `mov ecx, edi; call Buffer::*` targets
+//               `this+0x444`, not `this`. `[ebp-0x38]` keeps the real
+//               `this` and is used for `GraphicWin::fill` instead.
+//             - `box_sprite`'s 2nd arg (`BoxSpriteParams *`) is a fixed
+//               constant address (0x78d690, 0x78d5a0, 0x78d528, 0x78d618)
+//               in every call, never a locally-built struct - pass the
+//               address straight through as an opaque pointer.
+//             - body is entry-branch (display==0x320 short-circuits
+//               through draw_energy_alloc) + three near-duplicate rows of
+//               (signed-percentage digit formatting via itoa/strcat/
+//               write_l) + (tile-loop coloured bar + GraphicWin::fill
+//               remainder), ending in update/soft_update + set_clip.
 // working copy - scaffold materialised by --work
 // name      ?draw_expenses@BaseWin@@QAEXH@Z
 // size      8365 bytes

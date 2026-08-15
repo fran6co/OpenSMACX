@@ -1,4 +1,10 @@
 // ORIGINAL: 0x0054DCF0 FILE
+// RULED-OUT: byte-exact prologue global-write order (a64cc load/cmp interleaved
+//            between fa30/fa7c/f7cc/fab0/fa34/fa5c in the original, sequential
+//            here); the six-panel Popup/Dialogs dispatch, item()/exec() gating
+//            and faction-loop strides are transcribed from raw disasm + the
+//            (uncorrupted for this function) Ghidra hypothesis cross-checked
+//            against it - diverges first at #11, in the prologue.
 // working copy - scaffold materialised by --work
 // name      ?proposal_menu@@YAHHH@Z
 // size      6552 bytes
@@ -2461,11 +2467,500 @@ static int *const g_009b8aa8 = (int *)0x009B8AA8;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
 int __cdecl proposal_menu(int a1, int a2) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    Popup popup;
+    Dialogs *dlg = reinterpret_cast<Dialogs *>(popup.dialogs_);
+    SpriteBox *sbox = reinterpret_cast<SpriteBox *>(reinterpret_cast<char *>(dlg) + 0x70);
+    char *const buf = reinterpret_cast<char *>(g_009b86a0);
+    char *const title = reinterpret_cast<char *>(g_009b8aa8);
+    const int pairOff = a2 * 4 + a1 * 0x20CC;  // byte offset for g_0096c9f8[a1][a2]
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    *g_0093fa30 = -1;
+    *g_0093fa7c = -1;
+    *g_0093f7cc = a2;
+    *g_0093fab0 = 0;
+    *g_0093fa34 = 0;
+    *g_0093fa5c = 0;
+
+    int missingCap = 0;   // count of my bases lacking the ability tested below
+    if (*g_009a64cc > 0) {
+        for (int bi = 0; bi < *g_009a64cc; ++bi) {
+            char *base = reinterpret_cast<char *>(g_0097d044) + bi * SpyingBaseStride;
+            unsigned char owner = *reinterpret_cast<unsigned char *>(base);
+            if (owner == static_cast<unsigned char>(a2) &&
+                (owner == static_cast<unsigned char>(a1) ||
+                 (*reinterpret_cast<unsigned char *>(base + 6) & (1 << (a1 & 0x1f))) != 0)) {
+                int bmB = 0, bmA = 0;
+                bitmask(1, &bmB, &bmA);
+                unsigned char cap = *reinterpret_cast<unsigned char *>(base + 0x88 + bmB);
+                if ((cap & static_cast<unsigned char>(bmA)) == 0) {
+                    ++missingCap;
+                }
+            }
+        }
+    }
+
+    int alienOk = 0;  // count of other-faction slots eligible per the alien check
+    for (int p = 1; p < 8; ++p) {
+        unsigned char sel = *reinterpret_cast<unsigned char *>(g_009a64e9);
+        if (((1 << (p & 0x1f)) & sel) != 0 && p != a1 && p != a2) {
+            int flags = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096c9f8) + p * 4 + a1 * 0x20CC);
+            if ((flags & 8) != 0) {
+                // faction p already flagged - contributes nothing here
+            } else if (*g_009a6524 < 0 ||
+                       *(reinterpret_cast<unsigned char *>(g_0097d044) + (*g_009a6524) * SpyingBaseStride) ==
+                           static_cast<unsigned char>(a1)) {
+                ++alienOk;
+            }
+        }
+    }
+
+    parse_num(0, *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096caa4) + pairOff));
+    diplomacy_caption(a1, a2);
+
+    popup.start(title, reinterpret_cast<const char *>(g_0068de7c), -1, 0, 0x100000, 0);
+    dlg->field_A4_ = (dlg->field_A4_ == 0) ? *reinterpret_cast<int *>(reinterpret_cast<char *>(g_006846d8) + a2 * 4) : 0;
+    sbox->sprite(*reinterpret_cast<Sprite **>(reinterpret_cast<char *>(g_006846d8) + a2 * 4), 0, 0);
+
+    if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(g_0068de88)) != 0) {
+        popup.close();
+        popup.scroll_.~Scroll();
+        popup.BasePop::~BasePop();
+        return 0;
+    }
+
+    // ---- panel 1 item list ----
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    dlg->item(buf, 0);
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    dlg->item(buf, 1);
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    {
+        int flags = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096c9f8) + pairOff);
+        if ((flags & 2) != 0 && (flags & 1) == 0) {
+            dlg->item(buf, 2);
+        }
+    }
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    {
+        int flags = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096c9f8) + pairOff);
+        if ((flags & 2) == 0) {
+            dlg->item(buf, 3);
+        }
+    }
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    if ((*g_009a649c & 0x2000000) == 0) {
+        dlg->item(buf, 4);
+    }
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    if (missingCap != 0) {
+        dlg->item(buf, 0xd);
+    }
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    dlg->item(buf, 6);
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    {
+        int v = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096caa4) + pairOff);
+        int cap = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096cc00) + a1 * 0x20CC);
+        if (v != 0 && v <= cap) {
+            dlg->item(buf, 0xb);
+        }
+    }
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    text_get();
+    buf[0] = 0;
+    char *aliveText = parse_string(*reinterpret_cast<char **>(g_009b7d00), buf) ? buf : buf;
+    (void)aliveText;
+    {
+        int treatyLine = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096da3c) + a2 * 0x20CC);
+        if (treatyLine != 0) {
+            dlg->item(buf, 8);
+        }
+    }
+
+    text_get();
+    buf[0] = 0;
+    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+    if (*reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096da3c) + a1 * 0x20CC) > 1 &&
+        alienOk != 0 && *g_0093f660 == 0) {
+        dlg->item(buf, 9);
+    }
+
+    *g_0093fa34 = popup.exec(0, original_method<int (__cdecl *)()>(0x005398E0));
+
+    if (*g_0093fa34 == 8) {
+        popup.start(title, reinterpret_cast<const char *>(g_0068de98), -1, 0, 0x100040, 0);
+        dlg->field_A4_ = (dlg->field_A4_ == 0) ? *reinterpret_cast<int *>(reinterpret_cast<char *>(g_006846d8) + a2 * 4) : 0;
+        sbox->sprite(*reinterpret_cast<Sprite **>(reinterpret_cast<char *>(g_006846d8) + a2 * 4), 0, 0);
+
+        if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(g_0068dea8)) == 0) {
+            text_get();
+            char *frow = reinterpret_cast<char *>(g_00946fec);
+            char *pbrow = reinterpret_cast<char *>(g_0096c9fc) + a1 * 0x20CC;
+            for (int f = 1; reinterpret_cast<int>(frow) < 0x949730; frow += SpyingFactionStride, pbrow += 4, ++f) {
+                unsigned char sel1 = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_009a64e8) + 1);
+                if (((1 << (f & 0x1f)) & sel1) != 0 && f != a1 && f != a2 &&
+                    ((*reinterpret_cast<unsigned char *>(pbrow) & 8) != 0 ||
+                     (*reinterpret_cast<unsigned char *>(g_009a64e8) & (1 << (f & 0x1f))) != 0)) {
+                    *g_009bbfec = *reinterpret_cast<int *>(frow);
+                    *g_009bbff0 = 0;
+                    parse_says(-1, frow + 0x4c, -1, 0);
+                    *g_009bbfec = *reinterpret_cast<int *>(frow);
+                    *g_009bbff0 = 0;
+                    parse_says(-1, frow + 0x34, -1, 1);
+                    *g_009bbfec = *reinterpret_cast<int *>(frow + 0x300);
+                    *g_009bbff0 = *reinterpret_cast<int *>(frow + 0x2fc);
+                    parse_says(-1, frow + 0x2e4, -1, 2);
+                    buf[0] = 0;
+                    parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+                    dlg->item(buf, f);
+                }
+            }
+
+            *g_0093fa5c = popup.exec(0, original_method<int (__cdecl *)()>(0x005398E0));
+            if (*g_0093fa5c >= 0) {
+                int tflags = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096c9f8) + (*g_0093fa5c) * 4 + a2 * 0x20CC);
+                if ((tflags & 0x10) != 0) {
+                    char *frec = reinterpret_cast<char *>(g_00946a50) + (*g_0093fa5c) * SpyingFactionStride;
+                    *g_009bbfec = *reinterpret_cast<int *>(frec);
+                    *g_009bbff0 = 0;
+                    parse_says(-1, reinterpret_cast<char *>(g_00946a9c) + (*g_0093fa5c) * SpyingFactionStride, -1, 0);
+                    *g_009bbfec = *reinterpret_cast<int *>(frec);
+                    *g_009bbff0 = 0;
+                    parse_says(-1, reinterpret_cast<char *>(g_00946a84) + (*g_0093fa5c) * SpyingFactionStride, 1, 0);
+                    X_pops(reinterpret_cast<const char *>(g_0068deb8), 0x100000,
+                           *reinterpret_cast<Sprite **>(reinterpret_cast<char *>(g_006846d8) + a2 * 4),
+                           original_method<int (__cdecl *)()>(0x005398E0));
+                }
+            } else {
+                *g_0093fa34 = 0;
+                goto returnSelection;
+            }
+        } else {
+            *g_0093fa34 = 0;
+            goto returnSelection;
+        }
+    } else if (*g_0093fa34 == 0xd) {
+        popup.start(title, reinterpret_cast<const char *>(g_0068dec8), -1, 0, 0x100040, 0);
+        dlg->field_A4_ = (dlg->field_A4_ == 0) ? *reinterpret_cast<int *>(reinterpret_cast<char *>(g_006846d8) + a2 * 4) : 0;
+        sbox->sprite(*reinterpret_cast<Sprite **>(reinterpret_cast<char *>(g_006846d8) + a2 * 4), 0, 0);
+
+        if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(g_0068ded8)) != 0) {
+            *g_0093fa34 = 0;
+            goto returnSelection;
+        }
+
+        text_get();
+        char *frow = reinterpret_cast<char *>(g_00946fec);
+        char *pbrow = reinterpret_cast<char *>(g_0096c9fc) + a1 * 0x20CC;
+        for (int f = 1; reinterpret_cast<int>(frow) < 0x949730; frow += SpyingFactionStride, pbrow += 4, ++f) {
+            unsigned char sel1 = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_009a64e8) + 1);
+            if (((1 << (f & 0x1f)) & sel1) != 0 && f != a1 && f != a2 &&
+                (*reinterpret_cast<unsigned char *>(pbrow) & 8) == 0) {
+                *g_009bbfec = *reinterpret_cast<int *>(frow);
+                *g_009bbff0 = 0;
+                parse_says(-1, frow + 0x4c, -1, 0);
+                *g_009bbfec = *reinterpret_cast<int *>(frow);
+                *g_009bbff0 = 0;
+                parse_says(-1, frow + 0x34, -1, 1);
+                *g_009bbfec = *reinterpret_cast<int *>(frow + 0x300);
+                *g_009bbff0 = *reinterpret_cast<int *>(frow + 0x2fc);
+                parse_says(-1, frow + 0x2e4, -1, 2);
+                buf[0] = 0;
+                parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+                dlg->item(buf, f);
+            }
+        }
+
+        *g_0093fa5c = popup.exec(0, original_method<int (__cdecl *)()>(0x005398E0));
+        if (*g_0093fa5c < 0) {
+            *g_0093fa34 = 0;
+            goto returnSelection;
+        }
+
+        int tflags2 = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096c9f8) + (*g_0093fa5c) * 4 + a2 * 0x20CC);
+        if ((tflags2 & 8) == 0 &&
+            (*g_009a6524 < 0 ||
+             *(reinterpret_cast<unsigned char *>(g_0097d044) + (*g_009a6524) * SpyingBaseStride) !=
+                 static_cast<unsigned char>(a2))) {
+            char *frec = reinterpret_cast<char *>(g_00946a50) + (*g_0093fa5c) * SpyingFactionStride;
+            *g_009bbfec = *reinterpret_cast<int *>(frec);
+            *g_009bbff0 = 0;
+            parse_says(-1, reinterpret_cast<char *>(g_00946a9c) + (*g_0093fa5c) * SpyingFactionStride, -1, 0);
+            *g_009bbfec = *reinterpret_cast<int *>(frec);
+            *g_009bbff0 = 0;
+            parse_says(-1, reinterpret_cast<char *>(g_00946a84) + (*g_0093fa5c) * SpyingFactionStride, 1, 0);
+            int idx = *g_0093fa5c;
+            *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946d4c) + idx * SpyingFactionStride);
+            *g_009bbff0 = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946d50) + idx * SpyingFactionStride);
+            parse_says(2, reinterpret_cast<char *>(g_00946d34) + idx * SpyingFactionStride, -1, -1);
+            *g_0093fa34 = 0;
+            X_pops(reinterpret_cast<const char *>(g_0068dee8),
+                   *reinterpret_cast<Sprite **>(reinterpret_cast<char *>(g_006846d8) + a2 * 4),
+                   original_method<int (__cdecl *)()>(0x005398E0));
+        }
+    } else if (*g_0093fa34 == 9) {
+        (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)(char *)>(0x0048BC60))(0);
+        (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)()>(0x0048B3F0))();
+        popup.start(title, reinterpret_cast<const char *>(g_0068def4), -1, 0, 0x100040, 0);
+        dlg->field_A4_ = (dlg->field_A4_ == 0) ? *reinterpret_cast<int *>(reinterpret_cast<char *>(g_006846d8) + a2 * 4) : 0;
+        sbox->sprite(*reinterpret_cast<Sprite **>(reinterpret_cast<char *>(g_006846d8) + a2 * 4), 0, 0);
+
+        bool anyBase = false;
+        int fCount = 0;
+        if (*g_009a64cc > 0) {
+            for (int bi = 0; bi < *g_009a64cc; ++bi) {
+                char *base = reinterpret_cast<char *>(g_0097d044) + bi * SpyingBaseStride;
+                if (*reinterpret_cast<unsigned char *>(base) == static_cast<unsigned char>(a2)) {
+                    int bmB = 0, bmA = 0;
+                    bitmask(1, &bmB, &bmA);
+                    unsigned char cap = *(reinterpret_cast<unsigned char *>(g_0097d0cc) + bi * SpyingBaseStride + bmB);
+                    if ((cap & static_cast<unsigned char>(bmA)) == 0) {
+                        buf[0] = 0;
+                        say_base(buf, fCount);
+                        dlg->item(buf, fCount);
+                        if (!anyBase) {
+                            anyBase = true;
+                            (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)()>(0x0048AF20))();
+                            short y = *reinterpret_cast<short *>(reinterpret_cast<char *>(g_0097d042) + bi * SpyingBaseStride);
+                            short x = *reinterpret_cast<short *>(reinterpret_cast<char *>(g_0097d040) + bi * SpyingBaseStride);
+                            (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)(int, int, int)>(0x0048B8E0))(x, y, 0);
+                            (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)(int, int, int)>(0x0048AE90))(0, 0, 0);
+                            (ORIGINAL(g_00856dc0)->*original_method<void (OriginalObject::*)()>(0x0048AF30))();
+                        }
+                    }
+                }
+                ++fCount;
+            }
+        }
+
+        if (!anyBase) {
+            *g_0093fa7c = -1;
+            *g_0093fa34 = 0;
+        } else {
+            (ORIGINAL(reinterpret_cast<char *>(*g_00834d70) + *reinterpret_cast<int *>(*g_00834d70 + 4))
+                ->*original_method<void (OriginalObject::*)(int)>(0x005ED9D0))(0);
+            *g_0093fa7c = popup.exec(0, original_method<int (__cdecl *)()>(0x005398E0));
+            if (*g_0093fa7c < 0) {
+                *g_0093fa34 = 0;
+            }
+        }
+        (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)()>(0x0048BC50))();
+    }
+
+    if (*g_0093fa34 != 0 && *g_0093fa34 != 7 && *g_0093fa34 != 0xa && *g_0093fa34 != 0xb &&
+        *g_0093fa34 != 5 && *g_0093fa34 != 0xc) {
+        // panel 5 - build the confirmation message and let the human counter-propose
+        char *frec = reinterpret_cast<char *>(g_00946a50) + a2 * SpyingFactionStride;
+        *g_009bbfec = *reinterpret_cast<int *>(frec);
+        *g_009bbff0 = 0;
+        parse_says(-1, reinterpret_cast<char *>(g_00946a9c) + a2 * SpyingFactionStride, -1, 0);
+        *g_009bbfec = *reinterpret_cast<int *>(frec);
+        *g_009bbff0 = 0;
+        parse_says(-1, reinterpret_cast<char *>(g_00946a84) + a2 * SpyingFactionStride, 1, -1);
+        parse_says(2, get_pact_hood(a1, a2), -1, -1);
+        diplomacy_caption(a1, a2);
+        buf[0] = 0;
+        strcat(buf, reinterpret_cast<const char *>(g_0068df00));
+        char numbuf[32];
+        _itoa(*g_0093fa34 == 1, numbuf, 10);
+        strcat(buf, numbuf);
+
+        popup.start(title, buf, -1, 0, 0x100000, 0);
+        dlg->field_A4_ = (dlg->field_A4_ == 0) ? *reinterpret_cast<int *>(reinterpret_cast<char *>(g_006846d8) + a2 * 4) : 0;
+        sbox->sprite(*reinterpret_cast<Sprite **>(reinterpret_cast<char *>(g_006846d8) + a2 * 4), 0, 0);
+
+        if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(g_0068df08)) != 0) {
+            popup.close();
+            popup.scroll_.close();
+            popup.scroll_.flat_button_right_.~FlatButton();
+            popup.scroll_.flat_button_left_.~FlatButton();
+            popup.GraphicWin::~GraphicWin();
+            popup.BasePop::~BasePop();
+            return 0;
+        }
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        dlg->item(buf, 0);
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        if (*g_0093fa34 == 6) {
+            dlg->item(buf, 6);
+        }
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        if (*g_0093fa34 != 1) {
+            dlg->item(buf, 1);
+        }
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        if (*g_0093fa34 != 1) {
+            dlg->item(buf, 2);
+        }
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        {
+            int pf = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096c9f8) + pairOff);
+            if (*g_0093fa34 != 1 && (pf & 1) == 0) {
+                dlg->item(buf, 3);
+            }
+        }
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        {
+            int pf = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096c9f8) + pairOff);
+            if (*g_0093fa34 != 1 && (pf & 1) != 0) {
+                dlg->item(buf, 3);
+            }
+        }
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        if ((*g_009a649c & 0x2000000) == 0) {
+            dlg->item(buf, 4);
+        }
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        if (*g_0093fa34 == 1) {
+            dlg->item(buf, 7);
+        }
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        if (*g_0093fa34 != 6) {
+            dlg->item(buf, 5);
+        }
+
+        text_get();
+        buf[0] = 0;
+        parse_string(*reinterpret_cast<char **>(g_009b7d00), buf);
+        if (*reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096da3c) + a1 * 0x20CC) > 1 &&
+            *g_0093f660 == 0 && (*g_0093fa34 == 9 || *g_0093fa34 == 1)) {
+            dlg->item(buf, 8);
+        }
+
+        *g_0093fab0 = popup.exec(0, original_method<int (__cdecl *)()>(0x005398E0));
+        if (*g_0093fab0 == 8) {
+            // panel 6 - which of my bases counters
+            (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)(char *)>(0x0048BC60))(0);
+            (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)()>(0x0048B3F0))();
+            popup.start(title, reinterpret_cast<const char *>(g_0068df14), -1, 0, 0x100040, 0);
+            dlg->field_A4_ = (dlg->field_A4_ == 0) ? *reinterpret_cast<int *>(reinterpret_cast<char *>(g_006846d8) + a2 * 4) : 0;
+            sbox->sprite(*reinterpret_cast<Sprite **>(reinterpret_cast<char *>(g_006846d8) + a2 * 4), 0, 0);
+
+            bool anyBase2 = false;
+            if (*g_009a64cc > 0) {
+                int fCount2 = 0;
+                for (int bi = 0; bi < *g_009a64cc; ++bi) {
+                    char *base = reinterpret_cast<char *>(g_0097d044) + bi * SpyingBaseStride;
+                    if (*reinterpret_cast<unsigned char *>(base) == static_cast<unsigned char>(a1)) {
+                        int bmB = 0, bmA = 0;
+                        bitmask(1, &bmB, &bmA);
+                        unsigned char cap = *(reinterpret_cast<unsigned char *>(g_0097d0cc) + bi * SpyingBaseStride + bmB);
+                        if ((cap & static_cast<unsigned char>(bmA)) == 0) {
+                            buf[0] = 0;
+                            say_base(buf, fCount2);
+                            dlg->item(buf, fCount2);
+                            if (!anyBase2) {
+                                anyBase2 = true;
+                                (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)()>(0x0048AF20))();
+                                short y = *reinterpret_cast<short *>(reinterpret_cast<char *>(g_0097d042) + bi * SpyingBaseStride);
+                                short x = *reinterpret_cast<short *>(reinterpret_cast<char *>(g_0097d040) + bi * SpyingBaseStride);
+                                (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)(int, int, int)>(0x0048B8E0))(x, y, 0);
+                                (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)(int, int, int)>(0x0048AE90))(0, 0, 0);
+                                (ORIGINAL(g_00856dc0)->*original_method<void (OriginalObject::*)()>(0x0048AF30))();
+                            }
+                        }
+                    }
+                    ++fCount2;
+                }
+            }
+
+            if (anyBase2) {
+                (ORIGINAL(reinterpret_cast<char *>(*g_00834d70) + *reinterpret_cast<int *>(*g_00834d70 + 4))
+                    ->*original_method<void (OriginalObject::*)(int)>(0x005ED9D0))(0);
+                *g_0093fa30 = popup.exec(0, original_method<int (__cdecl *)()>(0x005398E0));
+                if (*g_0093fa30 < 0) {
+                    *g_0093fa34 = 0;
+                }
+            }
+            (ORIGINAL(g_00834d70)->*original_method<void (OriginalObject::*)()>(0x0048BC50))();
+        }
+
+        if (*g_0093fab0 == 0) {
+            *g_0093fa34 = 0;
+        }
+
+        // natural exit - full teardown, keep whatever selection ended up in fa34
+        {
+            int result = *g_0093fa34;
+            popup.close();
+            popup.scroll_.close();
+            popup.scroll_.flat_button_right_.close();
+            popup.scroll_.flat_button_right_.BaseButton::~BaseButton();
+            popup.scroll_.flat_button_left_.close();
+            popup.scroll_.flat_button_left_.BaseButton::~BaseButton();
+            popup.scroll_.GraphicWin::~GraphicWin();
+            popup.BasePop::close();
+            popup.spot_.~Spot();
+            dlg->close();
+            popup.field_2144_ = 0;  // best-effort placeholder for the virtual-base teardown
+            return result;
+        }
+    }
+
+returnSelection:
+    *g_0093fab0 = 1;
+    popup.close();
+    popup.scroll_.close();
+    popup.scroll_.flat_button_right_.~FlatButton();
+    popup.scroll_.flat_button_left_.~FlatButton();
+    popup.GraphicWin::~GraphicWin();
+    popup.BasePop::~BasePop();
+    return *g_0093fa34;
 }

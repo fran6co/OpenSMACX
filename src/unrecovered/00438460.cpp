@@ -1,4 +1,9 @@
 // ORIGINAL: 0x00438460 FILE
+// RULED-OUT: fresh-temporary destructor sequencing for the Popup/Scroll/
+//            BasePop/Dialogs teardown tail (same technique as
+//            Console::editor_diff, 0x004DD6F0) instead of hand-replaying the
+//            SEH funclet's exact interleave - compiles, MISMATCH #10
+//            push/mov, sim ~0.59 on the framed row.
 // working copy - scaffold materialised by --work
 // name      ?on_button_clicked@DesignWin@@QAEXH@Z
 // size      4973 bytes
@@ -2593,10 +2598,588 @@ class DesignWin { public:
     void on_button_clicked(int);
 };
 void DesignWin::on_button_clicked(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    // Field offsets resolved against src/designwin.h: 0xCE4 draw-stack index,
+    // 0xCDC last-clicked slot, 0x141F4 factionID_, 0x141F8 protoID_,
+    // 0x141FC protoChassisType_, 0x14200 protoWeaponType_, 0x14204
+    // protoArmorType_, 0x14208 protoAbilityFlags_, 0x1420C protoReactorType_,
+    // 0x14218/0x1421C protoAbilityID1_/2_.
+    char *self = reinterpret_cast<char *>(this);
 
+    // The frame's C++ objects, per the brief's offset map: a Popup local
+    // whose BasePop base already carries flat_button1_/2_, sprite_, spot_,
+    // heap_ and a Dialogs region at the exact offsets the disassembly's
+    // destructor calls name (0xA5C, 0x15A8, 0x2118, 0x21D0, 0x3098, 0xA28
+    // from the Popup base), and whose own Scroll member's flat_button_left_/
+    // right_ (0xAAC, 0x15F8 from the Scroll base) match the two FlatButtons
+    // torn down right after Scroll::close(). Declaring the one outer object
+    // lets the compiler place the rest.
+    Popup popup;
+    char *popup_base = reinterpret_cast<char *>(&popup);
+    Dialogs *dialogs = reinterpret_cast<Dialogs *>(popup_base + 0x21D0);
+
+    int eax = 0, ebx = 0, ecx = 0, edx = 0, edi = 0;
+    int match_count = 0;
+    int local14 = 0;
+    int faction2 = 0;
+    int i = 0;
+
+    ebx = 0;
+    reinterpret_cast<TutWin *>(g_008c6e68)->reset();
+
+    switch (a1) {
+        case -2: case 8: goto L438510;
+        case -1: case 4: goto L438531;
+        case 0: goto L438795;
+        case 1: goto L438561;
+        case 2: goto L4385D5;
+        case 3: goto L438673;
+        case 5: goto L43898E;
+        case 6: goto L43899A;
+        case 7: goto L438AF8;
+        case 23: goto L4384BF;
+        case 24: goto L4384E5;
+        default: goto L438EF4;
+    }
+
+L4384BF:
+    eax = *reinterpret_cast<int *>(self + 0xce4) - 1;
+    *reinterpret_cast<int *>(self + 0xce4) = eax;
+    if (eax < 0) {
+        *reinterpret_cast<int *>(self + 0xce4) = *g_00945b40;
+    }
+    this->draw_stack();
+    goto L4390B8;
+
+L4384E5:
+    edx = *reinterpret_cast<int *>(self + 0xce4) + 1;
+    *reinterpret_cast<int *>(self + 0xce4) = edx;
+    if (edx == *g_00945b40) {
+        *reinterpret_cast<int *>(self + 0xce4) = 0;
+    }
+    this->draw_stack();
+    goto L4390B8;
+
+L438510:
+    *reinterpret_cast<int *>(self + 0xcdc) = ebx;
+    reinterpret_cast<VCall *>(this)->slot058();
+    reinterpret_cast<FX *>(g_00749cf8)->fade(0x18);
+    goto L4390B8;
+
+L438531:
+    reinterpret_cast<FX *>(g_00749cf8)->fade(0x18);
+    eax = this->design_it();
+    *reinterpret_cast<int *>(self + 0xcdc) = eax;
+    if (eax == 0) goto L4390B8;
+    reinterpret_cast<VCall *>(this)->slot058();
+    goto L4390B8;
+
+L438561:
+    eax = this->design_it();
+    this->setup_veh(*reinterpret_cast<int *>(self + 0x141f8), 0);
+    *reinterpret_cast<int *>(self + 0xcdc) = eax;
+    proto_sort_2(*reinterpret_cast<int *>(self + 0x141f4));
+    ebx = *reinterpret_cast<int *>(self + 0x141f8);
+    edi = *g_00945b40;
+    ecx = *reinterpret_cast<int *>(self + 0xce4);
+    if (ecx < ecx + edi) {
+        int loop_bound = ecx + edi;
+        for (;;) {
+            eax = ecx;
+            edx = eax % edi;
+            if (ebx == g_00945b44[edx]) {
+                *reinterpret_cast<int *>(self + 0xce4) = (edx + edi - 5) % edi;
+                goto L43897F;
+            }
+            ecx++;
+            if (ecx < loop_bound) continue;
+            break;
+        }
+    }
+    reinterpret_cast<VCall *>(this)->slot062();
+    goto L4390B8;
+L43897F:
+    reinterpret_cast<VCall *>(this)->slot062();
+    goto L4390B8;
+
+L4385D5:
+    if (!(*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x40)) goto L4390B8;
+    eax = this->design_it();
+    this->setup_veh(*reinterpret_cast<int *>(self + 0x141f8), 0);
+    *reinterpret_cast<int *>(self + 0xcdc) = eax;
+    proto_sort_2(*reinterpret_cast<int *>(self + 0x141f4));
+    ebx = *reinterpret_cast<int *>(self + 0x141f8);
+    edi = *g_00945b40;
+    ecx = *reinterpret_cast<int *>(self + 0xce4);
+    if (ecx < ecx + edi) {
+        int loop_bound = ecx + edi;
+        for (;;) {
+            eax = ecx;
+            edx = eax % edi;
+            if (ebx == g_00945b44[edx]) {
+                *reinterpret_cast<int *>(self + 0xce4) = (edx + edi - 5) % edi;
+                break;
+            }
+            ecx++;
+            if (ecx < loop_bound) continue;
+            break;
+        }
+    }
+    eax = *reinterpret_cast<int *>(self + 0x141f8);
+    *reinterpret_cast<unsigned short *>(reinterpret_cast<char *>(0x009AB898) + eax * 13 * 4) ^= 4;
+    reinterpret_cast<VCall *>(this)->slot062();
+    goto L4390B8;
+
+L438673:
+    if (!(*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x40)) goto L4390B8;
+    eax = *reinterpret_cast<int *>(self + 0x141f4);
+    ecx = eax * 359;
+    if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x00946F58) + ecx * 4) & 0x80) {
+        eax = popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x006836D8),
+                   0, reinterpret_cast<const char *>(0x006836C8), 0);
+    } else {
+        eax = popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x006836F0),
+                   0, reinterpret_cast<const char *>(0x006836E4), 0);
+    }
+    if (eax == 0) goto L4390B8;
+    {
+        int faction;
+        char *p = reinterpret_cast<char *>(0x009AC598);
+        for (faction = 1; p < reinterpret_cast<char *>(0x009B2098); faction++, p += 0xD00) {
+            if (eax >= 2 || faction == *reinterpret_cast<int *>(self + 0x141f4)) {
+                unsigned char *flagbyte = reinterpret_cast<unsigned char *>(0x009AB894);
+                unsigned char *pbyte = reinterpret_cast<unsigned char *>(p);
+                unsigned char mask = static_cast<unsigned char>(1 << faction);
+                for (; flagbyte < reinterpret_cast<unsigned char *>(0x009AC594); flagbyte += 0x34, pbyte += 0x34) {
+                    *flagbyte &= static_cast<unsigned char>(~mask);
+                    *pbyte &= 0xFE;
+                }
+                clear_bunglist(faction);
+            }
+        }
+    }
+    this->setup_veh(0, 0);
+    proto_sort_2(*reinterpret_cast<int *>(self + 0x141f4));
+    edi = *g_00945b40;
+    ecx = *reinterpret_cast<int *>(self + 0xce4);
+    ebx = ecx + edi;
+    if (ecx < ebx) {
+        int loop_bound = ebx;
+        for (;;) {
+            eax = ecx;
+            edx = eax % edi;
+            if (g_00945b44[edx] != 0) {
+                *reinterpret_cast<int *>(self + 0xce4) = (edx + edi - 5) % edi;
+                break;
+            }
+            ecx++;
+            if (ecx < loop_bound) continue;
+            break;
+        }
+    }
+    reinterpret_cast<VCall *>(this)->slot062();
+    goto L4390B8;
+
+L438795:
+    eax = *reinterpret_cast<int *>(self + 0x141f8);
+    {
+        char *addr = reinterpret_cast<char *>(0x009AB868) + eax * 13 * 4;
+        parse_says(ebx, addr, -1, -1);
+    }
+    eax = *reinterpret_cast<int *>(self + 0x141f4);
+    ecx = *reinterpret_cast<int *>(self + 0x141f8);
+    edx = eax * 2099;
+    {
+        unsigned char ability = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x0096D238) + ecx + edx * 4);
+        int bit_set = (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x00946F58) + eax * 359 * 4) & 0x80) != 0;
+        if (bit_set) {
+            if (ability != 0) {
+                parse_num(ebx, ability);
+                eax = popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x0068370C),
+                           ebx, reinterpret_cast<const char *>(0x006836FC), reinterpret_cast<int (__cdecl *)()>(0x005398E0));
+            } else {
+                eax = popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x00683728),
+                           ebx, reinterpret_cast<const char *>(0x00683718), reinterpret_cast<int (__cdecl *)()>(0x005398E0));
+            }
+        } else {
+            if (ability != 0) {
+                parse_num(ebx, ability);
+                eax = popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x00683740),
+                           ebx, reinterpret_cast<const char *>(0x00683734), reinterpret_cast<int (__cdecl *)()>(0x005398E0));
+            } else {
+                eax = popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x00683758),
+                           ebx, reinterpret_cast<const char *>(0x0068374C), reinterpret_cast<int (__cdecl *)()>(0x005398E0));
+            }
+        }
+    }
+    if (eax == ebx) goto L4390B8;
+    eax = *g_0093f660;
+    if (eax == 0) {
+        edx = *reinterpret_cast<int *>(self + 0x141f4);
+        eax = *reinterpret_cast<int *>(self + 0x141f8);
+        retire_proto(eax, edx);
+    } else {
+        eax = diplo_lock(0x19);
+        if (eax != 0) goto L4390B8;
+        ecx = *reinterpret_cast<int *>(self + 0x141f8);
+        eax = *reinterpret_cast<int *>(self + 0x141f4);
+        message_data(0x2415, 0, ecx, eax, ebx, ebx);
+        reinterpret_cast<NetDaemon *>(g_0093cd90)->await_exec(0);
+        diplo_unlock();
+    }
+    this->setup_veh(*reinterpret_cast<int *>(self + 0x141f8), 0);
+    proto_sort_2(*reinterpret_cast<int *>(self + 0x141f4));
+    ebx = *reinterpret_cast<int *>(self + 0x141f8);
+    edi = *g_00945b40;
+    ecx = *reinterpret_cast<int *>(self + 0xce4);
+    if (ecx < ecx + edi) {
+        int loop_bound = ecx + edi;
+        for (;;) {
+            eax = ecx;
+            edx = eax % edi;
+            if (ebx == g_00945b44[edx]) {
+                *reinterpret_cast<int *>(self + 0xce4) = (edx + edi - 5) % edi;
+                break;
+            }
+            ecx++;
+            if (ecx < loop_bound) continue;
+            break;
+        }
+    }
+    reinterpret_cast<VCall *>(this)->slot062();
+    goto L4390B8;
+
+L43898E:
+    this->select_name();
+    goto L4390B8;
+
+L43899A:
+    eax = *reinterpret_cast<int *>(self + 0x141f8);
+    eax = eax * 13 * 4;
+    ecx = *reinterpret_cast<int *>(self + 0x141f4);
+    edx = 1 << (ecx & 0xff);
+    if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB894) + eax) & edx) {
+        unsigned short flags16 = *reinterpret_cast<unsigned short *>(reinterpret_cast<char *>(0x009AB898) + eax);
+        if (flags16 & 8) {
+            flags16 |= 0x200;
+            *reinterpret_cast<unsigned short *>(reinterpret_cast<char *>(0x009AB898) + eax) = flags16;
+        }
+        eax = *reinterpret_cast<int *>(self + 0x141f8);
+        eax = eax * 13;
+        *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB898) + eax * 4) |= 8;
+    } else {
+        *reinterpret_cast<unsigned short *>(reinterpret_cast<char *>(0x009AB898) + eax) &= 0xFDF7;
+    }
+    eax = *reinterpret_cast<int *>(self + 0x141f8);
+    ecx = *reinterpret_cast<int *>(self + 0x141f4);
+    eax = eax * 13;
+    edx = 1 << (ecx & 0xff);
+    ebx = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB894) + eax * 4);
+    ebx ^= edx;
+    *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB894) + eax * 4) = static_cast<unsigned char>(ebx);
+    synch_obs(*reinterpret_cast<int *>(self + 0x141f8));
+    ecx = *reinterpret_cast<int *>(self + 0xce4);
+    edi = *g_00945b40;
+    ebx = ecx + edi;
+    if (ecx < ebx) {
+        int loop_bound = ebx;
+        for (;;) {
+            eax = ecx;
+            edx = eax % edi;
+            if (*reinterpret_cast<int *>(self + 0x141f8) == g_00945b44[edx]) {
+                eax = ecx + 1;
+                edx = eax % edi;
+                *reinterpret_cast<int *>(self + 0x141f8) = g_00945b44[edx];
+                break;
+            }
+            ecx++;
+            if (ecx < loop_bound) continue;
+            break;
+        }
+    }
+    this->setup_veh(*reinterpret_cast<int *>(self + 0x141f8), 0);
+    ebx = *reinterpret_cast<int *>(self + 0x141f8);
+    proto_sort_2(*reinterpret_cast<int *>(self + 0x141f4));
+    edi = *g_00945b40;
+    ecx = *reinterpret_cast<int *>(self + 0xce4);
+    if (ecx < ecx + edi) {
+        int loop_bound = ecx + edi;
+        for (;;) {
+            eax = ecx;
+            edx = eax % edi;
+            if (ebx == g_00945b44[edx]) {
+                eax = edx + edi - 5;
+                int old_val = *reinterpret_cast<int *>(self + 0xce4);
+                edx = eax % edi;
+                *reinterpret_cast<int *>(self + 0xce4) = edx;
+                if (edx != old_val) this->draw_stack();
+                goto L438AE9;
+            }
+            ecx++;
+            if (ecx < loop_bound) continue;
+            break;
+        }
+    }
+L438AE9:
+    reinterpret_cast<VCall *>(this)->slot062();
+    goto L4390B8;
+
+L438AF8:
+    eax = reinterpret_cast<NetDaemon *>(g_0093cd90)->lock(2, -1, -1, ebx, -1, -1);
+    if (eax != 0) goto L4390B8;
+    edi = 0;
+    *g_0090ea3c = edi;
+    match_count = 0;
+    eax = *reinterpret_cast<int *>(self + 0x141f8);
+    eax = eax * 13 * 4;
+    parse_says(edi, reinterpret_cast<char *>(0x009AB868) + eax, -1, -1);
+    popup.start(reinterpret_cast<char *>(0x009B8AA8), reinterpret_cast<const char *>(0x00683764), -1, 0, 0x40, 0);
+    local14 = 0;
+    for (i = 0; i < 0x40; i++) {
+        ecx = *reinterpret_cast<int *>(self + 0x141f4);
+        ebx = (ecx << 6) + i;
+        eax = *reinterpret_cast<int *>(self + 0x141f8);
+        if (ebx == eax) continue;
+        edi = ebx * 13 * 4;
+        if (!(*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB898) + edi) & 1)) continue;
+        edx = 1 << (ecx & 0xff);
+        if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB894) + edi) & edx) continue;
+        int protoOffset = eax * 13 * 4;
+        if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB88C) + edi) !=
+            *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB88C) + protoOffset)) continue;
+        {
+            unsigned int x = (*reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(0x009AB888) + edi)) ^
+                              (*reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(0x009AB888) + protoOffset));
+            if ((x >> 8) & 0x80) continue;
+        }
+        {
+            unsigned char slotVal = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB892) + edi);
+            unsigned char protoVal = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB892) + protoOffset);
+            if (slotVal != protoVal) {
+                if (protoVal > 3) continue;
+                if (slotVal > 3) continue;
+            }
+        }
+        unsigned char table1;
+        unsigned char slotVal8D = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB88D) + edi);
+        {
+            unsigned char idx = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB88D) + protoOffset);
+            table1 = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x0094AE68) + idx * 16);
+        }
+        if (table1 != 0) {
+            unsigned char lookup2 = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x0094AE68) + slotVal8D * 16);
+            if (static_cast<signed char>(table1) > static_cast<signed char>(lookup2)) continue;
+        } else {
+            if (table1 != slotVal8D) continue;
+        }
+        unsigned char reactorTable;
+        {
+            unsigned char idx = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB88E) + edi);
+            reactorTable = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x0094F280) + idx * 16);
+        }
+        {
+            unsigned char idx2 = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB88E) + protoOffset);
+            unsigned char v2 = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x0094F280) + idx2 * 16);
+            if (v2 <= reactorTable) {
+                if (reactorTable == 1) continue;
+                if (table1 != 0) {
+                    unsigned char v3 = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x0094AE68) + slotVal8D * 16);
+                    if (v3 <= table1) continue;
+                }
+            }
+        }
+        match_count++;
+        eax = edi;
+        {
+            char *addr = reinterpret_cast<char *>(0x009AB868) + eax;
+            *reinterpret_cast<unsigned char *>(0x009B86A0) = 0;
+            strcat(reinterpret_cast<char *>(0x009B86A0), addr);
+        }
+        strcat(reinterpret_cast<char *>(0x009B86A0), reinterpret_cast<const char *>(0x00683774));
+        say_stats_3(reinterpret_cast<char *>(0x009B86A0), ebx);
+        if (!(*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB898) + edi) & 4)) {
+            eax = *reinterpret_cast<int *>(self + 0x141f8);
+            int selfIdx = eax * 13 * 4;
+            if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x009AB898) + selfIdx) & 4) {
+                strcat(reinterpret_cast<char *>(0x009B86A0), reinterpret_cast<const char *>(0x00683778));
+            }
+        }
+        dialogs->item(reinterpret_cast<char *>(0x009B86A0), ebx);
+        local14 = ebx;
+    }
+    reinterpret_cast<NetDaemon *>(g_0093cd90)->unlock();
+    if (match_count == 0) {
+        int faction = *reinterpret_cast<int *>(self + 0x141f4);
+        eax = faction * 359;
+        if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x00946F58) + eax * 4) & 0x80) {
+            popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x006837A8),
+                 0, reinterpret_cast<const char *>(0x00683798), reinterpret_cast<int (__cdecl *)()>(0x005398E0));
+        } else {
+            popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x006837D8),
+                 0, reinterpret_cast<const char *>(0x006837CC), reinterpret_cast<int (__cdecl *)()>(0x005398E0));
+        }
+        goto L4390B8;
+    }
+    if (match_count == 1) {
+        edi = local14;
+    } else {
+        edi = reinterpret_cast<BasePop *>(popup_base)->exec(0, reinterpret_cast<int (__cdecl *)()>(0x005398E0));
+    }
+    if (edi < 0) goto L4390B8;
+    eax = *reinterpret_cast<int *>(self + 0x141f4);
+    ecx = *reinterpret_cast<int *>(self + 0x141f8);
+    edx = eax * 2099;
+    ebx = (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x0096D238) + ecx + edx * 4) == 0) ? 1 : 0;
+    local14 = ebx;
+    eax = upgrade_prototype(eax, edi, ecx, 0);
+    if (eax != 0) {
+        *reinterpret_cast<int *>(self + 0x141f8) = edi;
+        this->setup_veh(edi, 0);
+        eax = *reinterpret_cast<int *>(self + 0x141f4);
+        ebx = *reinterpret_cast<int *>(self + 0x141f8);
+        proto_sort_2(eax);
+        edi = *g_00945b40;
+        ecx = *reinterpret_cast<int *>(self + 0xce4);
+        if (ecx < ecx + edi) {
+            int loop_bound = ecx + edi;
+            for (;;) {
+                eax = ecx;
+                edx = eax % edi;
+                if (ebx == g_00945b44[edx]) {
+                    eax = edx + edi - 5;
+                    int old_val = *reinterpret_cast<int *>(self + 0xce4);
+                    edx = eax % edi;
+                    *reinterpret_cast<int *>(self + 0xce4) = edx;
+                    if (edx != old_val) this->draw_stack();
+                    break;
+                }
+                ecx++;
+                if (ecx < loop_bound) continue;
+                break;
+            }
+        }
+        reinterpret_cast<VCall *>(this)->slot062();
+        ebx = local14;
+    }
+    faction2 = *reinterpret_cast<int *>(self + 0x141f4);
+    eax = faction2 * 359;
+    if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x00946F58) + eax * 4) & 0x80) {
+        if (ebx == 0) goto L4390B8;
+        popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x006837F4),
+             0, reinterpret_cast<const char *>(0x006837E4), reinterpret_cast<int (__cdecl *)()>(0x005398E0));
+        goto L4390B8;
+    } else {
+        if (ebx == 0) goto L4390B8;
+        popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x0068380C),
+             0, reinterpret_cast<const char *>(0x00683800), reinterpret_cast<int (__cdecl *)()>(0x005398E0));
+        goto L4390B8;
+    }
+
+L438EF4:
+    eax = -1;
+    if (static_cast<unsigned int>(a1 - 9) <= 13) {
+        switch (a1) {
+            case 9: eax = 2; break;
+            case 10: eax = 3; break;
+            case 11: eax = 1; break;
+            case 12: eax = 4; break;
+            case 13: eax = 0xa; break;
+            case 14: eax = 6; break;
+            case 15: eax = 7; break;
+            case 16: eax = 8; break;
+            case 17: eax = 9; break;
+            case 18: eax = 0x11; break;
+            case 19: eax = 0xd; break;
+            case 20: eax = 0xe; break;
+            case 21: eax = 0xb; break;
+            case 22: eax = 0xc; break;
+        }
+    }
+    *g_0093fc54 = 1;
+    *g_0093fc38 = eax;
+    *g_0093fc3c = *reinterpret_cast<int *>(self + 0x14200);
+    *g_0093fc50 = *reinterpret_cast<int *>(self + 0x14204);
+    *g_0093fc40 = *reinterpret_cast<int *>(self + 0x141fc);
+    *g_0093fc34 = *reinterpret_cast<int *>(self + 0x14208);
+    *g_0093fc44 = *reinterpret_cast<int *>(self + 0x1420c);
+    consider_designs(*reinterpret_cast<int *>(self + 0x141f4));
+    *reinterpret_cast<int *>(self + 0x14200) = *g_0093fc3c;
+    *reinterpret_cast<int *>(self + 0x14204) = *g_0093fc50;
+    *reinterpret_cast<int *>(self + 0x14208) = *g_0093fc34;
+    *reinterpret_cast<int *>(self + 0x141fc) = *g_0093fc40;
+    *reinterpret_cast<int *>(self + 0x1420c) = *g_0093fc44;
+    *reinterpret_cast<int *>(self + 0x14218) = -1;
+    *reinterpret_cast<int *>(self + 0x1421c) = -1;
+    for (ecx = 0; ecx < 0x1d; ecx++) {
+        edx = 1 << ecx;
+        if (*reinterpret_cast<int *>(self + 0x14208) & edx) {
+            for (eax = 0; eax < 2; eax++) {
+                if (*reinterpret_cast<int *>(self + 0x14218 + eax * 4) < ebx) {
+                    *reinterpret_cast<int *>(self + 0x14218 + eax * 4) = ecx;
+                    break;
+                }
+            }
+        }
+    }
+    if (*g_0093fc54 <= 1) {
+        eax = *reinterpret_cast<int *>(self + 0x141f4);
+        ecx = eax * 359;
+        if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(0x00946F58) + ecx * 4) & 0x80) {
+            popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x00683828),
+                 0, reinterpret_cast<const char *>(0x00683818), reinterpret_cast<int (__cdecl *)()>(g_005398e0));
+        } else {
+            popp(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<const char *>(0x00683840),
+                 0, reinterpret_cast<const char *>(0x00683834), reinterpret_cast<int (__cdecl *)()>(g_005398e0));
+        }
+        reinterpret_cast<FX *>(g_00749cf8)->play(0x27);
+    } else {
+        reinterpret_cast<FX *>(g_00749cf8)->play(0x2b);
+    }
+    *g_0093fc54 = 0;
+    reinterpret_cast<VCall *>(this)->slot012();
+    reinterpret_cast<VCall *>(this)->slot063();
+    goto L4390B8;
+
+L4390B8:
+    // Common exit: tear down the Popup local. The explicit close()/shutdown()
+    // calls mirror the disassembly's own separate statements; the automatic
+    // destructor cascade of `popup` going out of scope (Scroll's two
+    // FlatButtons -> ~BaseButton, BasePop's Spot -> ~Spot, BasePop's two
+    // FlatButtons -> ~BaseButton, the GraphicWin bases) supplies the rest,
+    // in the compiler's own order rather than the original's interleaving.
+    popup.close();
+    popup.scroll_.close();
+    popup.scroll_.flat_button_right_.close();
+    popup.scroll_.flat_button_left_.close();
+    reinterpret_cast<BasePop *>(popup_base)->close();
+    dialogs->close();
+    {
+        EditGroup tmp_eg;
+        (void)tmp_eg;
+    }
+    {
+        SpriteBox tmp_sb;
+        (void)tmp_sb;
+    }
+    {
+        CheckBox tmp_cb;
+        (void)tmp_cb;
+    }
+    {
+        RadioButton tmp_rb;
+        tmp_rb.close();
+    }
+    {
+        ListBox tmp_lb;
+        (void)tmp_lb;
+    }
+    {
+        Dialog tmp_dlg;
+        (void)tmp_dlg;
+    }
+    fn_00402970();
+    fn_00402970();
+    popup.sprite_.close();
+    popup.flat_button2_.close();
+    popup.flat_button1_.close();
+    popup.heap_.shutdown();
 }

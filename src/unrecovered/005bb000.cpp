@@ -1,4 +1,22 @@
 // ORIGINAL: 0x005BB000 FILE
+// DEFERRED: entry/exit use a simple Popup+Scroll+2xFlatButton pattern (the
+//           `Popup popup;` RAII lever applies cleanly there), but a deep
+//           branch at 0x5BC60C-0x5BC760 constructs/tears down a `Dialogs`
+//           (dialogs.h) inline at ebp-0x3230 via hand-written vbtable-relative
+//           stores (mov eax,[ebp-0x3230]; mov ecx,[eax+4]; mov [ebp+ecx-0x3230],
+//           0x669be8 ...) matching dialogs.h's own documented teardown at
+//           0x406910 byte-for-byte (same 0x188/0xBA0/0x8c/0x1c offsets, same
+//           0x669be8/be0/bd4/a6c/a64/a58 vtables). dialogs.h itself records
+//           that no C++ spelling of Dialogs as a nested/derived object has
+//           been found that reproduces its layout (REFUSED: `: ListBox`
+//           duplicates 0xB08 bytes; virtual-base spellings hit C2243 or a
+//           4-byte vtordisp mismatch) - this is a currently-unresolved
+//           project-wide modeling gap, not something to improvise per call
+//           site. A body could still exist (opaque byte buffer + raw
+//           vbtable-relative writes replicating the asm literally, skipping
+//           the Dialogs class entirely) but working that out safely needs
+//           more budget than was left after the other four addresses in
+//           this batch.
 // working copy - scaffold materialised by --work
 // name      ?tech_achieved@@YAXHHHH@Z
 // size      7779 bytes

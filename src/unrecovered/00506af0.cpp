@@ -1,4 +1,12 @@
 // ORIGINAL: 0x00506AF0 FILE
+// DEFERRED: 6096 instructions / 19875 bytes, the largest of this batch.
+//           A prior reading found Ghidra's decompilation usable here (spot-
+//           checked call args against raw disassembly, clean types, no
+//           thiscall-drop or SEH pattern), which makes it the one giant
+//           where a Ghidra-assisted pass is viable - but that pass, and the
+//           raw-disasm cross-checking it still needs call-by-call, was not
+//           run in this batch: no budget left after 0x0057F4B0 (landed) and
+//           the frame-map/Ghidra-reliability triage on the other three.
 // working copy - scaffold materialised by --work
 // name      ?battle_fight@@YAHHHHHHHPAH@Z
 // size      19875 bytes

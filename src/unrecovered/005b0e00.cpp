@@ -1,4 +1,17 @@
 // ORIGINAL: 0x005B0E00 FILE
+// DEFERRED: 9596 bytes, no SEH frame (plain push ebx/esi/edi, no __try), but
+//   read in full through roughly the first third (0x005B0E00-0x005B1B66):
+//   three near-identical faction-name string-search-and-suffix blocks are
+//   genuinely mechanical, but the site-placement logic that follows is not
+//   - nested nine-neighbour scans over the world map with chained
+//   imul/idiv/sar fixed-point terrain-suitability scoring, a base_find
+//   call selecting between two overloads on a runtime condition, and a
+//   0x54-entry probability table walk feeding a rounded imul division. A
+//   literal register-for-register transcription (the technique that landed
+//   0x0052C880 in this batch) is possible here too but at roughly the same
+//   or greater cost for a function with ~1.7x the instruction count and no
+//   destructor/SEH structure to lean on for cross-checking; did not fit
+//   after landing 0x0052C880. Left as BODY GOES HERE.
 // working copy - scaffold materialised by --work
 // name      ?setup_player@@YAHHHH@Z
 // size      9596 bytes

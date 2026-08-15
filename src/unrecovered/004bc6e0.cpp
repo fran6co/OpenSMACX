@@ -1,4 +1,8 @@
 // ORIGINAL: 0x004BC6E0 FILE
+// RULED-OUT: full structural transcription of both scoring loops and the
+//            10x tut_win/client_to_screen chain (from raw disasm, cross-checked
+//            against Ghidra); diverges at instr #33 (push vs mov) - register
+//            allocation for the phase-1 direction-search loop, not a logic gap.
 // working copy - scaffold materialised by --work
 // name      ?tour@TutWin@@QAEXXZ
 // size      5598 bytes
@@ -2618,11 +2622,799 @@ class TutWin : public Popup { public:
     void UNK1();
     void tour();
 };
-void TutWin::tour() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+struct TourMapTile {
+    uint8_t climate;
+    uint8_t contour;
+    uint8_t val2;
+    uint8_t region;
+    uint8_t visibility;
+    uint8_t val3;
+    uint8_t unk_1;
+    int8_t territory;
+    uint32_t bit;
+    uint32_t bit2;
+    uint32_t bit_visible[7];
+};
 
+void TutWin::tour() {
+    // Every local is declared up front (C89-style) because this body has
+    // many early-exit `goto tour_cleanup;` jumps, and VC6 rejects a goto
+    // that crosses an initializer.
+    int tourStep;
+    int iVar3, iVar4, iVar9;
+    unsigned int uVar5, uVar6, uVar7, uVar8, uVar10;
+    unsigned int bVar2;
+    unsigned int local_e0[4];
+    unsigned int local_d0;
+    int local_cc[32];
+    unsigned int auStack_11c[24];
+    int local_4c, local_48, local_44, local_40, local_3c, local_38, local_34;
+    int local_30, local_2c, local_28, local_24, local_20, local_1c, local_18;
+    TourMapTile *local_14;
+    int local_8, local_c;
+    int cx, cy;
+    MapWin *curMapWin;
+    GraphicWin *base;
+    char *puVar11;
+    int idx;
+    int compassOff;
+    short techType;
+
+    if (field_53B4_ != 0) {
+        return;
+    }
+
+    tourStep = field_53C0_;
+    field_53B4_ = 1;
+
+    if (tourStep == 1) {
+        tour1();
+        goto tour_cleanup;
+    }
+    if (tourStep == 5) {
+        tour5();
+        goto tour_cleanup;
+    }
+    if (tourStep == 6) {
+        tour6();
+        goto tour_cleanup;
+    }
+    if (tourStep == 7) {
+        tour7();
+        goto tour_cleanup;
+    }
+
+    reinterpret_cast<Win *>(g_008e9f60)->hide();
+    idx = *g_009392b8;
+    curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+    curMapWin->set_center(g_009392c0[idx], g_00939340[idx], 1);
+
+    local_3c = 0;
+    local_34 = 0;
+    local_4c = (int)random(0, 8);
+    idx = *g_009392b8;
+    local_38 = g_009392c0[idx];
+    local_30 = g_00939340[idx];
+    local_18 = *g_0094988c & 1;
+    local_1c = 0;
+    do {
+        local_20 = (local_1c + local_4c) & 0x80000007;
+        if (local_20 < 0) {
+            local_20 = ((local_20 - 1) | 0xfffffff8) + 1;
+        }
+        local_8 = g_0066ef50[local_20] + local_38;
+        if (local_18 == 0) {
+            if (local_8 < 0) {
+                local_8 += *g_00949870;
+            } else if (local_8 >= *g_00949870) {
+                local_8 -= *g_00949870;
+            }
+        }
+        local_c = local_30 + g_0066ef74[local_20];
+        if (local_c >= 0 && local_c < *g_00949874 && local_8 >= 0 && local_8 < *g_00949870) {
+            local_14 = *reinterpret_cast<TourMapTile **>(g_0094a30c) +
+                       (*g_0068faf0 * local_c + (local_8 >> 1));
+            bVar2 = local_14->climate & 0xe0;
+            local_44 = local_8;
+            if ((bVar2 < 0x61 ||
+                 (int)(curMapWin->field_1DDA8_ + 2) <= (local_c - (local_14->climate >> 5)) + 3) &&
+                (int)(curMapWin->field_1DDA8_ + 2) <= local_c &&
+                local_c < (int)(curMapWin->field_1DDD8_ + curMapWin->field_1DDD0_ - 2 +
+                                 curMapWin->field_1DDA8_)) {
+                uVar5 = local_8;
+                if (local_18 == 0) {
+                    if ((int)local_8 < (int)(curMapWin->field_1DDA4_ + 2)) {
+                        uVar5 = local_8 + *g_00949870;
+                    }
+                    if ((int)uVar5 >= (int)(curMapWin->field_1DDD4_ + curMapWin->field_1DDCC_ - 2 +
+                                             curMapWin->field_1DDA4_)) {
+                        uVar5 -= *g_00949870;
+                    }
+                }
+                if ((int)(curMapWin->field_1DDA4_ + 2) <= (int)uVar5 &&
+                    (int)uVar5 < (int)(curMapWin->field_1DDD4_ + curMapWin->field_1DDCC_ - 2 +
+                                        curMapWin->field_1DDA4_) &&
+                    bVar2 > 0x5f) {
+                    uVar5 = 8;
+                    if ((local_14->bit & 0x20) != 0 && bVar2 > 0x3f) {
+                        uVar5 = 4;
+                    }
+                    if (g_0066ef50[local_20] == 0 || g_0066ef74[local_20] == 0) {
+                        uVar5 += 1;
+                    }
+                    if (local_3c <= (int)uVar5) {
+                        local_3c = uVar5;
+                        local_34 = local_20;
+                    }
+                }
+            }
+        }
+        local_1c += 1;
+    } while (local_1c < 8);
+
+    if (field_53C0_ == 0) {
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00687914));
+        if (*g_00939288 == 0 || *g_0093928c < 0) {
+            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_0068791c));
+        } else {
+            techType = *reinterpret_cast<short *>(reinterpret_cast<char *>(g_00952832) +
+                                                   (*g_0093928c) * 0x34);
+            if (techType == 2) {
+                parse_says(0, reinterpret_cast<char *>(g_009ab8d0), -1, -1);
+            } else {
+                puVar11 = reinterpret_cast<char *>(g_009ab868) + techType * 0x34;
+                parse_says(0, puVar11, -1, -1);
+                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00687920));
+            }
+        }
+        idx = *g_009392b8;
+        iVar3 = tut_map(reinterpret_cast<char *>(g_009b86a0), g_009392c0[idx], g_00939340[idx],
+                         *g_0093928c, 0, 2, -1, -1);
+        if (iVar3 == 0) {
+            goto tour_cleanup;
+        }
+        curMapWin->field_1DD70_ |= 0x20000;
+        curMapWin->draw_map(1);
+
+        idx = local_34;
+        parse_num(0, g_0066ef98[idx]);
+        iVar3 = text_open(*reinterpret_cast<char **>(g_00691b14), reinterpret_cast<char *>(g_00687924));
+        if (iVar3 == 0) {
+            if (idx >= 0) {
+                iVar4 = idx + 1;
+                do {
+                    text_get();
+                    iVar4 -= 1;
+                } while (iVar4 != 0);
+            }
+            text_close();
+            parse_says(0, *reinterpret_cast<char **>(g_009b7d00), -1, -1);
+        }
+        idx = *g_009392b8;
+        iVar3 = tut_map(reinterpret_cast<char *>(g_00687930), g_009392c0[idx], g_00939340[idx],
+                         *g_0093928c, 0, 2, -1, -1);
+        if (iVar3 == 0) {
+            curMapWin->field_1DD70_ &= 0xfffdffff;
+            curMapWin->draw_map(1);
+            goto tour_cleanup;
+        }
+    } else if (field_53C0_ == 3 && *g_0093928c >= 0 &&
+               *reinterpret_cast<short *>(reinterpret_cast<char *>(g_00952832) +
+                                          (*g_0093928c) * 0x34) == 1) {
+        iVar3 = tut_map(reinterpret_cast<char *>(g_00687938), local_38, local_30, *g_0093928c, 0, 2,
+                         -1, -1);
+        if (iVar3 == 0) {
+            goto tour_cleanup;
+        }
+    }
+
+    curMapWin->field_1DD70_ &= 0xfffdffff;
+    curMapWin->draw_map(1);
+
+    // ---- phase 2: score every terrain type found around the start ----
+    local_cc[0x19] = 3;
+    local_cc[7] = 3;
+    local_cc[0x1e] = 3;
+    local_cc[0x11] = -1;
+    local_cc[10] = -1;
+    local_34 = -1;
+    local_30 = -1;
+    local_4c = -1;
+    local_cc[0x12] = -1;
+    local_cc[0x14] = -1;
+    local_44 = -1;
+    local_cc[0x16] = -1;
+    local_cc[0x18] = -1;
+    local_cc[0x1a] = -1;
+    local_cc[9] = -1;
+    local_cc[0x1c] = -1;
+    local_cc[0x1d] = -1;
+    local_cc[6] = -1;
+    local_cc[8] = -1;
+    local_cc[0xf] = -1;
+    local_28 = -1;
+    local_24 = -1;
+    local_3c = -1;
+    local_cc[0x17] = -1;
+    local_cc[0xc] = -1;
+    local_cc[0xb] = -1;
+    local_cc[0xd] = -1;
+    local_cc[0x13] = -1;
+    local_cc[0x10] = -1;
+    local_cc[0x1b] = -1;
+    local_cc[0x15] = -1;
+    local_cc[0xe] = -1;
+    local_cc[0] = -1;
+    local_cc[3] = -1;
+    local_e0[0] = (unsigned int)-1;
+    local_cc[1] = -1;
+    local_cc[4] = -1;
+    local_e0[1] = (unsigned int)-1;
+    local_cc[2] = -1;
+    local_cc[5] = -1;
+    local_e0[2] = (unsigned int)-1;
+    local_38 = 0;
+    do {
+        local_20 = 1;
+        do {
+            local_8 = g_0066efbc[local_20] + g_009392c0[*g_009392b8];
+            local_18 = *g_0094988c & 1;
+            if (local_18 == 0) {
+                if (local_8 < 0) {
+                    local_8 = *g_00949870 + local_8;
+                } else if (local_8 >= *g_00949870) {
+                    local_8 -= *g_00949870;
+                }
+            }
+            local_c = g_0066f440[local_20] + g_00939340[*g_009392b8];
+            if (local_c >= 0 && local_c < *g_00949874 && local_8 >= 0 && local_8 < *g_00949870) {
+                local_14 = *reinterpret_cast<TourMapTile **>(g_0094a30c) +
+                           (*g_0068faf0 * local_c + (local_8 >> 1));
+                bVar2 = local_14->climate & 0xe0;
+                if ((bVar2 < 0x61 ||
+                     (int)(curMapWin->field_1DDA8_ + 2) <=
+                         (local_c - (local_14->climate >> 5)) + 3) &&
+                    (int)(curMapWin->field_1DDA8_ + 2) <= local_c &&
+                    local_c < (int)(curMapWin->field_1DDD8_ + curMapWin->field_1DDD0_ - 2 +
+                                     curMapWin->field_1DDA8_)) {
+                    uVar5 = local_8;
+                    if (local_18 == 0) {
+                        if ((int)local_8 < (int)(curMapWin->field_1DDA4_ + 2)) {
+                            uVar5 = *g_00949870 + local_8;
+                        }
+                        if ((int)uVar5 >= (int)(curMapWin->field_1DDD4_ + curMapWin->field_1DDCC_ -
+                                                 2 + curMapWin->field_1DDA4_)) {
+                            uVar5 -= *g_00949870;
+                        }
+                    }
+                    if ((int)(curMapWin->field_1DDA4_ + 2) <= (int)uVar5 &&
+                        (int)uVar5 < (int)(curMapWin->field_1DDD4_ + curMapWin->field_1DDCC_ - 2 +
+                                            curMapWin->field_1DDA4_) &&
+                        ((*reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(g_0096c9e0) +
+                                                             (*g_00939284) * 0x20cc) &
+                          0x200) != 0 ||
+                         (local_14->visibility & (1 << (*g_00939284 & 0x1f))) != 0 ||
+                         (*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0)) {
+                        if (bVar2 < 0x60) {
+                            iVar3 = 2;
+                            if ((local_14->bit & 0x20) == 0) {
+                                iVar3 = 2;
+                            } else if (bVar2 < 0x40) {
+                                iVar3 = 1;
+                            } else {
+                                iVar3 = 2;
+                            }
+                            if (local_cc[0xd] < iVar3) {
+                                local_cc[10] = local_8;
+                                local_cc[0xd] = iVar3;
+                                local_cc[0x11] = local_c;
+                            }
+                        } else if ((local_14->bit & 0x20) == 0 || bVar2 < 0x40) {
+                            iVar3 = goody_at(local_8, local_c);
+                            if (iVar3 == 0 && (iVar3 = bonus_at(local_8, local_c, 0), iVar3 == 0) &&
+                                (local_14->bit & 0x2000) == 0) {
+                                local_1c = 0;
+                            } else {
+                                local_1c = 1;
+                            }
+                            local_cc[0x1f] = crop_yield(*g_00939284, -1, local_8, local_c, 0);
+                            uVar8 = local_8;
+                            uVar5 = local_c;
+                            local_14 = *reinterpret_cast<TourMapTile **>(g_0094a30c) +
+                                       (*g_0068faf0 * local_c + (local_8 >> 1));
+                            local_e0[3] = local_14->bit;
+                            local_d0 = local_e0[3] & 0x80;
+                            if ((local_e0[3] & 0x20) == 0) {
+                                local_2c = 0;
+                            } else if ((local_14->climate & 0xe0) < 0x40) {
+                                local_2c = 1;
+                            } else {
+                                local_2c = 0;
+                            }
+                            local_48 = 0;
+                            local_40 = 0;
+                            for (compassOff = 0; compassOff < 8; compassOff++) {
+                                iVar4 = g_0066ef50[compassOff] + local_8;
+                                if ((*g_0094988c & 1) == 0) {
+                                    if (iVar4 < 0) {
+                                        iVar4 += *g_00949870;
+                                    } else if (iVar4 >= *g_00949870) {
+                                        iVar4 -= *g_00949870;
+                                    }
+                                }
+                                iVar9 = g_0066ef74[compassOff] + local_c;
+                                if (iVar9 >= 0 && iVar9 < *g_00949874 && iVar4 >= 0 &&
+                                    iVar4 < *g_00949870) {
+                                    bVar2 = (*reinterpret_cast<TourMapTile **>(g_0094a30c) +
+                                             (*g_0068faf0 * iVar9 + (iVar4 >> 1)))
+                                                ->climate &
+                                            0xe0;
+                                    if (bVar2 > 0x5f) {
+                                        if ((local_14->climate & 0xe0) < bVar2) {
+                                            if (compassOff == 0 || compassOff > 0x17) {
+                                                local_48 = 1;
+                                            }
+                                            if (local_20 > 1 && local_20 < 5) {
+                                                local_40 = 1;
+                                            }
+                                        }
+                                        if (bVar2 < (local_14->climate & 0xe0)) {
+                                            if (compassOff == 0 || compassOff > 0x17) {
+                                                local_40 = 1;
+                                            }
+                                            if (local_20 > 1 && local_20 < 5) {
+                                                local_48 = 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (local_48 == 0 || local_40 != 0) {
+                                iVar3 = 0;
+                            } else {
+                                iVar3 = 1;
+                            }
+                            local_18 = local_2c + local_1c;
+                            iVar4 = (8 - local_40) * 2;
+                            iVar3 = ((iVar3 - local_18 * 3) - (int)local_d0) + iVar4;
+                            if (local_1c == 0) {
+                                bVar2 = local_14->val3 & 0xc0;
+                                if ((local_14->val3 & 0xc0) == 0) {
+                                    if (local_cc[0x10] < iVar3) {
+                                        local_cc[0x10] = iVar3;
+                                        local_4c = local_c;
+                                        local_cc[0x12] = local_8;
+                                    }
+                                } else if (bVar2 == 0x40) {
+                                    iVar3 = local_cc[0x1f] + iVar3 * 8;
+                                    if (local_cc[0xc] < iVar3 && (local_38 == 0 || local_44 < 0)) {
+                                        local_cc[0xc] = iVar3;
+                                        local_cc[0x14] = local_c;
+                                        local_44 = local_8;
+                                    }
+                                } else if (bVar2 == 0x80 && local_cc[0x1b] < iVar3) {
+                                    local_cc[0x1b] = iVar3;
+                                    local_cc[0x16] = local_c;
+                                    local_cc[0x18] = local_8;
+                                }
+                            }
+                            bVar2 = local_14->climate;
+                            uVar7 = (unsigned int)(bVar2 >> 5);
+                            if (uVar7 == 3) {
+                                iVar3 = local_cc[0x1f] +
+                                        (((((4 - local_40) * 2 - local_2c) - local_1c) * 2 -
+                                          local_48) -
+                                         (int)local_d0) *
+                                            8;
+                                if ((local_14->val3 & 0xc0) > 0x40) {
+                                    iVar3 = 0;
+                                }
+                                if (local_cc[0xb] < iVar3) {
+                                    local_cc[0xb] = iVar3;
+                                    local_cc[0x1a] = local_c;
+                                    local_cc[9] = local_8;
+                                }
+                            }
+                            if (local_cc[0x19] < (int)uVar7) {
+                                local_cc[0x19] = uVar7;
+                                local_cc[0x1d] = local_8;
+                                local_cc[0x1c] = local_c;
+                            }
+                            uVar7 = bVar2 & 7;
+                            uVar10 = (bVar2 >> 3) & 3;
+                            if (local_48 == 0) {
+                                local_2c = 0;
+                            } else if (local_40 != 0) {
+                                local_2c = 0;
+                            } else {
+                                local_2c = 1;
+                            }
+                            uVar6 = (unsigned int)((local_18 * -3 - (int)(local_14->val3 >> 6)) -
+                                                    (int)local_d0 + local_2c + iVar4);
+                            if (local_cc[uVar7 + 3] < (int)uVar6) {
+                                auStack_11c[uVar7 + 6] = local_8;
+                                auStack_11c[uVar7 + 3] = uVar5;
+                                auStack_11c[uVar7] = uVar7;
+                                local_cc[uVar7 + 3] = uVar7;
+                            }
+                            if (local_cc[uVar10] < (int)uVar6) {
+                                auStack_11c[uVar10 + 0xc] = uVar8;
+                                auStack_11c[uVar10 + 9] = uVar5;
+                                auStack_11c[uVar10 + 0xf] = uVar10;
+                                local_cc[uVar10] = uVar6;
+                            }
+                            if ((int)local_3c < (int)uVar10 ||
+                                (uVar10 == (unsigned int)local_3c &&
+                                 local_cc[uVar10] <= (int)uVar6)) {
+                                local_3c = uVar10;
+                                local_cc[8] = uVar8;
+                                local_cc[6] = uVar5;
+                            }
+                            if ((int)uVar10 < local_cc[7] ||
+                                (uVar10 == (unsigned int)local_cc[7] &&
+                                 local_cc[uVar10] <= (int)uVar6)) {
+                                local_cc[7] = uVar10;
+                                local_cc[0xf] = uVar8;
+                            }
+                            if (local_cc[0x17] < (int)uVar7 ||
+                                (uVar7 == (unsigned int)local_cc[0x17] &&
+                                 local_cc[uVar7 + 3] <= (int)uVar6)) {
+                                local_cc[0x17] = uVar7;
+                            }
+                            if ((int)uVar7 < local_cc[0x1e] ||
+                                (uVar7 == (unsigned int)local_cc[0x1e] &&
+                                 local_cc[uVar7 + 3] <= (int)uVar6)) {
+                                local_cc[0x1e] = uVar7;
+                            }
+                            if (local_1c == 0 && (local_e0[3] & 0xa000) == 0) {
+                                if (local_cc[0x1f] == 1) {
+                                    if (local_cc[0x15] < (int)uVar6) {
+                                        local_cc[0x15] = uVar6;
+                                    }
+                                } else if (local_cc[0x1f] == 2 && local_cc[0xe] < (int)uVar6) {
+                                    local_cc[0xe] = uVar6;
+                                }
+                                iVar3 = world_site(uVar8, uVar5, 0);
+                                if (local_cc[0x13] < iVar3) {
+                                    local_24 = local_8;
+                                    local_28 = local_c;
+                                    local_cc[0x13] = iVar3;
+                                }
+                            }
+                        } else if (local_34 < 0 || *g_00949874 <= local_34 || local_30 < 0 ||
+                                   *g_00949870 <= local_30 || (local_14->val3 & 0xc0) < 0x80) {
+                            local_34 = local_c;
+                            local_30 = local_8;
+                        }
+                    }
+                }
+            }
+            local_20 += 1;
+        } while (local_20 < 0x15);
+        local_38 += 1;
+    } while (local_38 < 2);
+
+    if (field_53C0_ == 0) {
+        if ((local_cc[10] >= 0 ||
+             (iVar3 = tut_map(reinterpret_cast<char *>(g_00687944), local_cc[10], local_cc[0x11],
+                               -1, 0, 2, -1, -1),
+              iVar3 != 0)) &&
+            (local_30 < 0 ||
+             (iVar3 = tut_map(reinterpret_cast<char *>(g_00687950), local_30, local_34, -1, 0, 2, -1,
+                               -1),
+              iVar3 != 0))) {
+            if (*g_00945830 != 0) {
+                reinterpret_cast<WorldWin *>(g_008e9f60)->show_all();
+            }
+            do_all_draws();
+            iVar3 = reinterpret_cast<Win *>(g_009380dc)->is_visible();
+            if (iVar3 == 0) {
+                reinterpret_cast<AlphaMenu *>(g_009380dc)->show();
+            }
+            cx = (*g_007af284 - *g_007af27c) / 2 + *g_007af27c;
+            cy = (*g_007af288 - *g_007af280) / 2 + *g_007af280;
+            reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&cx, &cy);
+            curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+            if (curMapWin == 0) {
+                base = 0;
+            } else {
+                base = reinterpret_cast<GraphicWin *>(reinterpret_cast<char *>(curMapWin) +
+                                                       (*reinterpret_cast<int **>(curMapWin))[1]);
+            }
+            iVar3 = tut_win(base, reinterpret_cast<char *>(g_006879f4), cx, cy, 0, 2, -1, -1);
+            if (iVar3 != 0) {
+                reinterpret_cast<AlphaMenu *>(g_009380dc)->hide();
+                if (*g_007fe06c == 0) {
+                    reinterpret_cast<MultiWin *>(g_007fd648)->show();
+                }
+                cx = (*g_007af294 - *g_007af28c) / 2 + *g_007af28c;
+                cy = (*g_007af298 - *g_007af290) / 2 + *g_007af290;
+                reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&cx, &cy);
+                curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+                if (curMapWin == 0) {
+                    base = 0;
+                } else {
+                    base = reinterpret_cast<GraphicWin *>(
+                        reinterpret_cast<char *>(curMapWin) +
+                        (*reinterpret_cast<int **>(curMapWin))[1]);
+                }
+                iVar3 = tut_win(base, reinterpret_cast<char *>(g_00687a00), cx, cy, 0, 2, -1, -1);
+                if (iVar3 != 0) {
+                    reinterpret_cast<MultiWin *>(g_007fd648)->hide();
+                    cx = (*g_007af504 - *g_007af4fc) / 2 + *g_007af4fc;
+                    cy = (*g_007af508 - *g_007af500) / 2 + *g_007af500;
+                    reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&cx, &cy);
+                    curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+                    if (curMapWin == 0) {
+                        base = 0;
+                    } else {
+                        base = reinterpret_cast<GraphicWin *>(
+                            reinterpret_cast<char *>(curMapWin) +
+                            (*reinterpret_cast<int **>(curMapWin))[1]);
+                    }
+                    iVar3 = tut_win(base, reinterpret_cast<char *>(g_00687a10), cx, cy, 0, 2, -1, -1);
+                    if (iVar3 != 0) {
+                        cx = (*g_007af4f4 - *g_007af4ec) / 2 + *g_007af4ec;
+                        cy = (*g_007af4f8 - *g_007af4f0) / 2 + *g_007af4f0;
+                        reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&cx, &cy);
+                        curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+                        if (curMapWin == 0) {
+                            base = 0;
+                        } else {
+                            base = reinterpret_cast<GraphicWin *>(
+                                reinterpret_cast<char *>(curMapWin) +
+                                (*reinterpret_cast<int **>(curMapWin))[1]);
+                        }
+                        iVar3 = tut_win(base, reinterpret_cast<char *>(g_00687a20), cx, cy, 0, 2, -1,
+                                         -1);
+                        if (iVar3 != 0) {
+                            cx = (*g_007af514 - *g_007af50c) / 2 + *g_007af50c;
+                            cy = (*g_007af518 - *g_007af510) / 2 + *g_007af510;
+                            reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&cx, &cy);
+                            curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+                            if (curMapWin == 0) {
+                                base = 0;
+                            } else {
+                                base = reinterpret_cast<GraphicWin *>(
+                                    reinterpret_cast<char *>(curMapWin) +
+                                    (*reinterpret_cast<int **>(curMapWin))[1]);
+                            }
+                            iVar3 = tut_win(base, reinterpret_cast<char *>(g_00687a30), cx, cy, 0, 2,
+                                             -1, -1);
+                            if (iVar3 != 0) {
+                                cx = (*g_007af544 - *g_007af53c) / 2 + *g_007af53c;
+                                cy = (*g_007af548 - *g_007af540) / 2 + *g_007af540;
+                                reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&cx, &cy);
+                                curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+                                if (curMapWin == 0) {
+                                    base = 0;
+                                } else {
+                                    base = reinterpret_cast<GraphicWin *>(
+                                        reinterpret_cast<char *>(curMapWin) +
+                                        (*reinterpret_cast<int **>(curMapWin))[1]);
+                                }
+                                iVar3 = tut_win(base, reinterpret_cast<char *>(g_00687a40), cx, cy, 0,
+                                                 2, -1, -1);
+                                if (iVar3 != 0) {
+                                    cx = (*g_007af254 - *g_007af24c) / 2 + *g_007af24c;
+                                    cy = (*g_007af258 - *g_007af250) / 2 + *g_007af250;
+                                    reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&cx, &cy);
+                                    curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+                                    if (curMapWin == 0) {
+                                        base = 0;
+                                    } else {
+                                        base = reinterpret_cast<GraphicWin *>(
+                                            reinterpret_cast<char *>(curMapWin) +
+                                            (*reinterpret_cast<int **>(curMapWin))[1]);
+                                    }
+                                    iVar3 = tut_win(base, reinterpret_cast<char *>(g_00687a50), cx, cy,
+                                                     0, 2, -1, -1);
+                                    if (iVar3 != 0) {
+                                        cx = (*g_007af264 - *g_007af25c) / 2 + *g_007af25c;
+                                        cy = (*g_007af268 - *g_007af260) / 2 + *g_007af260;
+                                        reinterpret_cast<Win *>(g_007ae820)
+                                            ->client_to_screen(&cx, &cy);
+                                        curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+                                        if (curMapWin == 0) {
+                                            base = 0;
+                                        } else {
+                                            base = reinterpret_cast<GraphicWin *>(
+                                                reinterpret_cast<char *>(curMapWin) +
+                                                (*reinterpret_cast<int **>(curMapWin))[1]);
+                                        }
+                                        iVar3 = tut_win(base, reinterpret_cast<char *>(g_00687a64),
+                                                         cx, cy, 0, 2, -1, -1);
+                                        if (iVar3 != 0) {
+                                            cx = (*g_007af524 - *g_007af51c) / 2 + *g_007af51c;
+                                            cy = (*g_007af528 - *g_007af520) / 2 + *g_007af520;
+                                            reinterpret_cast<Win *>(g_007ae820)
+                                                ->client_to_screen(&cx, &cy);
+                                            curMapWin = *reinterpret_cast<MapWin **>(g_007d3c3c);
+                                            if (curMapWin == 0) {
+                                                base = 0;
+                                            } else {
+                                                base = reinterpret_cast<GraphicWin *>(
+                                                    reinterpret_cast<char *>(curMapWin) +
+                                                    (*reinterpret_cast<int **>(curMapWin))[1]);
+                                            }
+                                            iVar3 = tut_win(base,
+                                                             reinterpret_cast<char *>(g_00687a74),
+                                                             cx, cy, 0, 2, -1, -1);
+                                            if (iVar3 != 0) {
+                                                cx = (*g_007af534 - *g_007af52c) / 2 + *g_007af52c;
+                                                cy = (*g_007af538 - *g_007af530) / 2 + *g_007af530;
+                                                reinterpret_cast<Win *>(g_007ae820)
+                                                    ->client_to_screen(&cx, &cy);
+                                                curMapWin =
+                                                    *reinterpret_cast<MapWin **>(g_007d3c3c);
+                                                if (curMapWin == 0) {
+                                                    base = 0;
+                                                } else {
+                                                    base = reinterpret_cast<GraphicWin *>(
+                                                        reinterpret_cast<char *>(curMapWin) +
+                                                        (*reinterpret_cast<int **>(
+                                                            curMapWin))[1]);
+                                                }
+                                                iVar3 = tut_win(
+                                                    base, reinterpret_cast<char *>(g_00687a84), cx,
+                                                    cy, 0, 2, -1, -1);
+                                                if (iVar3 != 0 && *g_00939288 != 0 &&
+                                                    *g_009a64d4 < 2) {
+                                                    if (field_53D4_ != 0) {
+                                                        field_53A4_ = 0;
+                                                        reinterpret_cast<VCall *>(this)->slot002();
+                                                        reinterpret_cast<VCall *>(field_53D4_)
+                                                            ->slot063();
+                                                        do_all_draws();
+                                                    }
+                                                    field_53D4_ = 0;
+                                                    field_53A4_ = 0;
+                                                    field_5380_ = -1;
+                                                    field_537C_ = -1;
+                                                    field_539C_ = -1;
+                                                    field_53A8_ = 0;
+                                                    field_53AC_ = -1;
+                                                    field_53B8_ = 0;
+                                                    field_53C4_ = 0;
+                                                    *g_008cc244 = 0;
+                                                    field_53B4_ = 0;
+                                                    uVar5 = local_24;
+                                                    uVar8 = local_28;
+                                                    if (local_24 < 1) {
+                                                        uVar5 = g_009392c0[*g_009392b8];
+                                                        uVar8 = g_00939340[*g_009392b8];
+                                                    }
+                                                    tut_map(reinterpret_cast<char *>(g_00687a94),
+                                                             uVar5, uVar8, *g_0093928c, 0, 0, -1,
+                                                             -1);
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        idx = *g_009392b8;
+        iVar3 = tut_map(reinterpret_cast<char *>(g_0068795c), g_009392c0[idx], g_00939340[idx], -1,
+                         0, 2, -1, -1);
+        if (iVar3 != 0) {
+            if (local_cc[8] >= 0 && local_cc[0xf] >= 0) {
+                iVar3 = tut_map(reinterpret_cast<char *>(g_00687964), local_cc[8], local_cc[6], -1,
+                                 0, 2, -1, -1);
+                if (iVar3 == 0) {
+                    goto tour_cleanup;
+                }
+                iVar3 = 2;
+                do {
+                    if ((int)auStack_11c[iVar3 + 0xf] >= 0) {
+                        *reinterpret_cast<char *>(g_009b86a0) = 0;
+                        strcat(reinterpret_cast<char *>(g_009b86a0),
+                               reinterpret_cast<char *>(g_00687970));
+                        if (iVar3 == 0) {
+                            puVar11 = reinterpret_cast<char *>(g_0068797c);
+                            if (local_3c == 0) {
+                                puVar11 = reinterpret_cast<char *>(g_00687980);
+                            }
+                            strcat(reinterpret_cast<char *>(g_009b86a0), puVar11);
+                        } else if (iVar3 == 1) {
+                            puVar11 = reinterpret_cast<char *>(g_00687988);
+                            strcat(reinterpret_cast<char *>(g_009b86a0), puVar11);
+                        } else if (iVar3 == 2) {
+                            puVar11 = reinterpret_cast<char *>(g_0068798c);
+                            strcat(reinterpret_cast<char *>(g_009b86a0), puVar11);
+                        }
+                        iVar4 = tut_map(reinterpret_cast<char *>(g_009b86a0),
+                                         auStack_11c[iVar3 + 0xc], auStack_11c[iVar3 + 9], -1, 0, 2,
+                                         -1, -1);
+                        if (iVar4 == 0) {
+                            goto tour_cleanup;
+                        }
+                    }
+                    iVar3 -= 1;
+                } while (iVar3 >= 0);
+            }
+            if ((local_cc[9] >= 0 && local_cc[0x1d] >= 0 &&
+                 (iVar3 = tut_map(reinterpret_cast<char *>(g_00687990), local_cc[9], local_cc[0x1a],
+                                   -1, 0, 2, local_cc[0x1d], local_cc[0x1c]),
+                  iVar3 != 0)) ||
+                (local_cc[0x18] >= 0 &&
+                 (iVar3 = tut_map(reinterpret_cast<char *>(g_00687998), local_cc[0x18],
+                                   local_cc[0x16], -1, 0, 2, -1, -1),
+                  iVar3 != 0)) ||
+                (local_44 >= 0 &&
+                 (iVar3 = tut_map(reinterpret_cast<char *>(g_006879a4), local_44, local_cc[0x14],
+                                   -1, 0, 2, -1, -1),
+                  iVar3 != 0))) {
+                if (local_cc[0x12] >= 0) {
+                    iVar3 = tut_map(reinterpret_cast<char *>(g_006879b0), local_cc[0x12], local_4c,
+                                     -1, 0, 2, -1, -1);
+                    if (iVar3 == 0) {
+                        goto tour_cleanup;
+                    }
+                }
+                if (local_24 < 1) {
+                    local_24 = g_009392c0[*g_009392b8];
+                    local_28 = g_00939340[*g_009392b8];
+                }
+                iVar3 = tut_map(reinterpret_cast<char *>(g_006879bc), local_24, local_28, -1, 0, 2,
+                                 -1, -1);
+                if (iVar3 != 0) {
+                    iVar3 = tut_map(reinterpret_cast<char *>(g_006879c8), local_24, local_28, -1, 0,
+                                     2, -1, -1);
+                    if (iVar3 != 0) {
+                        iVar3 = tut_map(reinterpret_cast<char *>(g_006879d4), local_24, local_28, -1,
+                                         0, 2, -1, -1);
+                        if (iVar3 != 0) {
+                            if (field_53D4_ != 0) {
+                                field_53A4_ = 0;
+                                reinterpret_cast<VCall *>(this)->slot002();
+                                reinterpret_cast<VCall *>(field_53D4_)->slot063();
+                                do_all_draws();
+                            }
+                            field_5380_ = -1;
+                            field_537C_ = -1;
+                            field_539C_ = -1;
+                            field_53AC_ = -1;
+                            field_53D4_ = 0;
+                            field_53A4_ = 0;
+                            field_53A8_ = 0;
+                            field_53B8_ = 0;
+                            field_53C4_ = 0;
+                            *g_008cc244 = 0;
+                            field_53B4_ = 0;
+                            tut_map(reinterpret_cast<char *>(g_006879e4), local_24, local_28, -1, 0,
+                                    2, -1, -1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+tour_cleanup:
+    desktop_update();
+    if (field_53D4_ != 0) {
+        field_53A4_ = 0;
+        reinterpret_cast<VCall *>(this)->slot002();
+        reinterpret_cast<VCall *>(field_53D4_)->slot063();
+        do_all_draws();
+    }
+    field_53D4_ = 0;
+    field_53A4_ = 0;
+    field_5380_ = -1;
+    field_537C_ = -1;
+    field_539C_ = -1;
+    field_53A8_ = 0;
+    field_53AC_ = -1;
+    field_53B8_ = 0;
+    field_53C4_ = 0;
+    *g_008cc244 = 0;
+    field_53B4_ = 0;
 }

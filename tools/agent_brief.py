@@ -216,6 +216,15 @@ TARGETED = (
      "And do NOT add a destructor-carrying local to force an SEH frame unless\n"
      "the original prologue actually registers a handler: five attempts, zero\n"
      "improvements, two measurably worse."),
+    (("jae", "jbe", "ja", "jb", "jge", "jle", "jg", "jl"),
+     "A SIGNED COMPARE THAT CAME OUT UNSIGNED IS A LITERAL'S TYPE, not your\n"
+     "comparison. MSVC types a bare hex literal like `0xfffffc18` as\n"
+     "`unsigned int`, so `x >= 0xfffffc18` silently compiles to `jae` where\n"
+     "the original has `jge` - no warning, and the body is WRONG rather than\n"
+     "merely unmatched. Cast the operand: `x >= (int)0xfffffc18`. Measured\n"
+     "2026-08-15: moved one function's divergence from #19 to #33. Check\n"
+     "every negative constant written in hex, and read the original's own\n"
+     "jCC to see which signedness it wanted."),
 )
 
 

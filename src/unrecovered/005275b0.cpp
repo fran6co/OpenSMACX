@@ -1,4 +1,17 @@
 // ORIGINAL: 0x005275B0 FILE
+// DEFERRED: ~1880 instructions, registers an SEH frame (ExceptionList swap +
+//           handler at 0x0065db5d) around a `Popup` ctor/dtor pair - the
+//           `Popup popup;` RAII lever applies. Frame map shows 10 distinct
+//           widget locals ([ebp-0x53AC] Popup(BasePop/GraphicWin base),
+//           [ebp-0x4950] and [ebp-0x16D0] each a standalone FlatButton - the
+//           two gaps that equal sizeof(FlatButton) exactly - plus
+//           independently-sized ListBox/Dialogs/Dialog/Spot/GraphicWin
+//           locals whose gaps (0xA5C,0xC70,0x140,0xA18,0x328,0x198,0xAAC)
+//           match no catalogued class, so they are NOT nested in Popup
+//           (Popup's only member is `Scroll scroll_`) and need their own
+//           per-offset declarations. Ghidra's call sites are unusable
+//           (FUN_xxx() with zero recovered arguments throughout); every
+//           call needs its args read from the raw disassembly directly.
 // working copy - scaffold materialised by --work
 // name      ?control_turn@@YAXXZ
 // size      7534 bytes

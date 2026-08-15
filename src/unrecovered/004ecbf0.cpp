@@ -1,4 +1,14 @@
 // ORIGINAL: 0x004ECBF0 FILE
+// DEFERRED: 2791 instructions, no SEH/C++ objects - same "plain algorithmic"
+//           shape as 0x0057F4B0 (prune_protos), just ~2x its size, so the
+//           same goto-per-branch/byte-address-macro method applies but was
+//           not run to completion in this pass. Ghidra is NOT trustworthy
+//           here without a raw-disasm cross-check: its second statement
+//           reads `*(byte*)(DAT_0090ea30 + 2)` where the raw disassembly's
+//           first few instructions are `mov esi,[0x90ea30]; mov cl,[esi+4]`
+//           - Ghidra has the wrong field offset (+2 vs +4) in literally the
+//           second decompiled line, so every offset it reports needs a
+//           disasm cross-check before use, same as the other giants.
 // working copy - scaffold materialised by --work
 // name      ?base_terraform@@YAXH@Z
 // size      9073 bytes

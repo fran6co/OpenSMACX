@@ -1,4 +1,14 @@
 // ORIGINAL: 0x00456300 FILE
+// DEFERRED: 8333 bytes, ~880-line Ghidra hypothesis. A 25-entry jump table at
+//   0x0045633B (mostly resolving to a shared 19-entry table at 0x004564EF)
+//   dispatches among ~19 distinct report-screen handlers, each building a
+//   multi-line status string via 10-30 chained parse_says/strcat calls into
+//   fixed byte offsets of an InfoWin instance (e.g. `local_14*0x3c0+0xb8+
+//   param_1`); a third, 11-entry table with a sparse byte index at
+//   0x004583F4 nests inside case 0. InfoWin's 41-member src/infowin.h layout
+//   is explicitly UNVERIFIED per this function's own brief ("sizeof(InfoWin)
+//   is not pinned against the image"), so every one of those offsets would
+//   be a guess rather than a confirmed member. Left as BODY GOES HERE.
 // working copy - scaffold materialised by --work
 // name      ?setup_text@InfoWin@@QAEXXZ
 // size      8333 bytes

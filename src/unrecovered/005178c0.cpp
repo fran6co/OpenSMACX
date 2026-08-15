@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005178C0 FILE
+// DEFERRED: thiscall method (Console::on_key_click), no object frame beyond
+//           `this`. Only an 8-entry jump table (0x00517929) but 4161 raw
+//           instructions total, so the per-key-code arms (AC's debug/cheat
+//           console command dispatcher) are individually large; not the
+//           small-switch-many-times shape the low case count suggests. Not
+//           attempted this pass - no reading beyond the jump-table section
+//           and the contract was done.
 // working copy - scaffold materialised by --work
 // name      ?on_key_click@Console@@QAEHHH@Z
 // size      15809 bytes

@@ -1,4 +1,31 @@
 // ORIGINAL: 0x00498B30 FILE
+// DEFERRED: 2823-instruction ReportWin::draw_labs, read via raw disasm +
+//           Ghidra (Ghidra is USABLE here - no SEH frame, this=ecx cleanly
+//           recovered - unlike the other four addresses in this batch).
+//           Structure confirmed: no locals with destructors, plain
+//           __thiscall on ReportWin*; src/reportwin.h's offsets for
+//           rect1_/field_59A0_../field_A2C_ etc match this function's
+//           param_1[0x285.. ] indices exactly (cross-checked against the
+//           disasm's [esi+0xa14]/[esi+0x59a0] etc), so that header is safe
+//           to lean on for the parts of the body that reach it. Body lays
+//           out either the two-column (tech screen) or single (compact,
+//           DAT_008a4160==8) rect grid, computes turns-to-discovery,
+//           renders the "current/next discovery" panel via a 16-entry and
+//           three narrower same-target-table jump switches (recorded
+//           below - one already misassigned by three agents without it),
+//           then for the current tech loops the FIVE parallel unlocked-by
+//           tables (0x9527f8 units, 0x94a330 facilities/socket buildings,
+//           0x94ae60 secret projects, 0x94f278 another facility table,
+//           0x9ab538 abilities, 0x9ab868 flags-tested rules, 0x9a4bb0
+//           faction-bonus table) appending a HTML-ish "<link>" build
+//           string per hit, word-wrapping into the report pane between
+//           each table.
+//           Not attempted: transcribing the ~2200 remaining instructions
+//           (the per-slot flatButtons1_[7] label draw loop and the four
+//           switch-driven layout blocks after the table scans) faithfully
+//           enough to trust the many chained pointer/array-index casts
+//           (`(&DAT_0096cdac)[iVar5]`-style Ghidra output over structs this
+//           project has not named) without misreading one of them.
 // working copy - scaffold materialised by --work
 // name      ?draw_labs@ReportWin@@QAEXXZ
 // size      9900 bytes

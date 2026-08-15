@@ -1,4 +1,24 @@
 // ORIGINAL: 0x00561080 FILE
+// DEFERRED: 4239-instruction per-faction AI turn (enemy_strategy), the
+//           largest of this batch's four non-giant addresses. Plain
+//           __cdecl, no SEH frame, and Ghidra's output is coherent here
+//           (no dropped `this`, since there is none) so it is usable as a
+//           reading aid the way it was for 0x00498B30, unlike the two SEH
+//           dialogs in this same batch. Opening confirmed against raw
+//           disasm: zeroes the faction's whole per-faction AI scratch
+//           block (DAT_0096da38.. DAT_0096da58, 9 dwords) and two
+//           0x80/0x200-entry per-tile arrays (DAT_0096d238/0x96d438,
+//           DAT_0096dd5c-relative flags) before a `do { } while (iVar20 <
+//           DAT_009a64cc)` scan over every vehicle in the game, taking a
+//           very different branch per vehicle depending on whether
+//           `factionID == vehicle.faction` (own-unit bookkeeping: morale/
+//           vet counters, base_forward calls) versus other factions
+//           (threat assessment feeding the same scratch block). This is
+//           the same shape as 0x005AEDE0 (time_warp) - long runs of
+//           near-duplicate map/unit-scan blocks with sign-dependent
+//           corrections - and was not pursued further for the same
+//           reason: getting one of those corrections backwards compiles
+//           clean and is silently the wrong function.
 // working copy - scaffold materialised by --work
 // name      ?enemy_strategy@@YAXH@Z
 // size      14344 bytes

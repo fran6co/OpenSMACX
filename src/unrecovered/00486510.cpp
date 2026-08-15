@@ -1,4 +1,15 @@
 // ORIGINAL: 0x00486510 FILE
+// DEFERRED: 9911 bytes. The stack frame carries FIVE repeated groups of
+//   nested UI objects - BasePop/GraphicWin, FlatButton, BaseButton,
+//   Dialogs/GraphicWin, Dialog, Spot, Scroll/GraphicWin, a second
+//   FlatButton/BaseButton pair, and another BaseButton - spanning a
+//   0x15010-byte frame (agent_brief's C++-objects section lists all 34
+//   slots and the gaps that pin FlatButton/ListBox sizes within them). A
+//   faithful body needs correct layouts for 7+ still-opaque UI classes
+//   (BasePop, Dialogs, Dialog, Spot, Scroll, FlatButton, BaseButton) before
+//   a single field access is trustworthy; declaring them wrong compiles but
+//   scores worse than no body. 48 call targets, PickTech::pick is a
+//   tech-selection dialog builder/handler. Left as BODY GOES HERE.
 // working copy - scaffold materialised by --work
 // name      ?pick@PickTech@@QAEHHHHPAD@Z
 // size      9911 bytes
