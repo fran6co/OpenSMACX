@@ -1344,6 +1344,18 @@ Status: Complete
 // ONE expression. Naming either result as a local is still correct C++, but
 // VC6 then defers the `movsx` that widens the SHORT until after the second
 // call instead of folding it straight after the first.
+// DECLARED HERE THOUGH <windows.h> ALREADY DECLARES THEM, and not by
+// oversight. These lines sit inside the region the byte match EXTRACTS: a
+// body is lifted out and compiled in a standalone scaffold that includes no
+// Windows headers at all, so without them the unit is `C2065: undeclared
+// identifier` and the verdict is NO_COMPILE. Measured by deleting the
+// GetSystemMetrics line: 0x005EC960 goes from BYTE_EXACT to NO_COMPILE.
+//
+// They are matching redeclarations, not redefinitions - identical to
+// winuser.h's, so the build is indifferent and the measurement is not. If
+// this grows past the two functions here, the place to fix it is the
+// scaffold's PRELUDE in tools/emit_translation_unit.py rather than more
+// lines like these.
 extern "C" __declspec(dllimport) short __stdcall GetAsyncKeyState(int key);
 extern "C" __declspec(dllimport) int __stdcall GetSystemMetrics(int index);
 

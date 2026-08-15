@@ -2123,6 +2123,18 @@ Status: Complete
 // `__declspec(dllimport)` is load-bearing: without it VC6 emits a direct
 // `call rel32` (5 bytes) where the original calls indirectly through the
 // import slot at 0x00669334 with `call dword ptr` (6 bytes).
+// DECLARED HERE THOUGH <windows.h> ALREADY DECLARES THEM, and not by
+// oversight. These lines sit inside the region the byte match EXTRACTS: a
+// body is lifted out and compiled in a standalone scaffold that includes no
+// Windows headers at all, so without them the unit is `C2065: undeclared
+// identifier` and the verdict is NO_COMPILE. Measured by deleting the
+// GetSystemMetrics line: 0x005EC960 goes from BYTE_EXACT to NO_COMPILE.
+//
+// They are matching redeclarations, not redefinitions - identical to
+// winuser.h's, so the build is indifferent and the measurement is not. If
+// this grows past the two functions here, the place to fix it is the
+// scaffold's PRELUDE in tools/emit_translation_unit.py rather than more
+// lines like these.
 extern "C" __declspec(dllimport) int __stdcall GetSystemMetrics(int index);
 
 extern "C" void __cdecl sub_6051c0() {
