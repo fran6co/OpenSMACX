@@ -287,7 +287,6 @@ set(OPENSMACX_SOURCES
     src/stdafx.cpp
     src/stringbox.cpp
     src/stringstruct.cpp
-    src/text_recovery.cpp
     src/strings.cpp
     src/technology.cpp
     src/temp.cpp

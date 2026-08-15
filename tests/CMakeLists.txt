@@ -216,7 +216,7 @@ set(OPENSMACX_SPOT_OBJECT
 set(OPENSMACX_STRINGS_OBJECT
     "${OPENSMACX_BUILD_ROOT}/CMakeFiles/OpenSMACX.dir/src/strings.cpp.obj")
 set(OPENSMACX_TEXT_OBJECT
-    "${OPENSMACX_BUILD_ROOT}/CMakeFiles/OpenSMACX.dir/src/text_recovery.cpp.obj")
+    "${OPENSMACX_BUILD_ROOT}/CMakeFiles/OpenSMACX.dir/src/text.cpp.obj")
 set(OPENSMACX_TEXT_INDEX_OBJECT
     "${OPENSMACX_BUILD_ROOT}/CMakeFiles/OpenSMACX.dir/src/textindex_recovery.cpp.obj")
 set(OPENSMACX_TIME_OBJECT
@@ -333,7 +333,6 @@ if(BUILD_TESTING)
         ${OPENSMACX_ROOT}/src/temp.cpp
         ${OPENSMACX_ROOT}/src/terraforming.cpp
         ${OPENSMACX_ROOT}/src/text.cpp
-        ${OPENSMACX_ROOT}/src/text_recovery.cpp
         ${OPENSMACX_ROOT}/src/textindex.cpp
         ${OPENSMACX_ROOT}/src/textindex_recovery.cpp
         ${OPENSMACX_ROOT}/src/time.cpp
