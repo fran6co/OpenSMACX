@@ -1,4 +1,11 @@
 // ORIGINAL: 0x00511BB0 FILE
+// RULED-OUT: literal per-instruction register simulation (eax/ebx/ecx/edx/esi/edi as
+//            locals) with goto-labeled control flow matching every branch target;
+//            not tried: reconstructing idiomatic per-block source (member/local
+//            variable reuse) that would let the compiler's CSE match the original's
+//            code size - rebuilt is 4555 bytes against 8149 original, same first
+//            divergence at the prologue (push vs sub), so the whole body likely
+//            needs restructuring, not a single-instruction fix.
 // working copy - scaffold materialised by --work
 // name      ?give_hints@Console@@QAEXXZ
 // size      8149 bytes
@@ -2572,10 +2579,1497 @@ class Console : public MapWin { public:
     void give_hints();
 };
 void Console::give_hints() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
+    int eax, ebx, ecx, edx, esi, edi;
+    int local_4, local_8, local_c, local_10, local_14, local_18, local_1c, local_20, local_24;
+    TutWin *tutwin = reinterpret_cast<TutWin *>(0x8c6e68);
+    const char *tm_p1; int tm_p2, tm_p3, tm_p4; Sprite *tm_p5; int tm_p6, tm_p7, tm_p8;
 
+    edi = reinterpret_cast<int>(self);
+    local_c = edi;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<int *>(edx * 4 + 0x95282c);
+    if ((eax & 0x4200) != 0) goto LAB_00513b7e;
+    if (*reinterpret_cast<int *>(0x93f660) != 0) goto LAB_00513b7e;
+    ecx = 0x6a7628;
+    if (reinterpret_cast<Win *>(ecx)->is_visible() != 0) goto LAB_00513b7e;
+    ecx = 0x8a6270;
+    if (reinterpret_cast<Win *>(ecx)->is_visible() != 0) goto LAB_00513b7e;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    eax = (eax + ecx * 4) << 2;
+    esi = *reinterpret_cast<short *>(eax + 0x952828);
+    ebx = *reinterpret_cast<short *>(eax + 0x95282a);
+    ecx = *reinterpret_cast<int *>(eax + 0x95282c);
+    local_4 = esi;
+    if ((ecx & 0x2000) == 0) goto LAB_0051222c;
+    local_8 = ebx;
+    ecx = *reinterpret_cast<short *>(eax + 0x952832);
+    edx = ecx + ecx * 2;
+    ecx = ecx + edx * 4;
+    if (*reinterpret_cast<unsigned char *>(ecx * 4 + 0x9ab892) > 3) goto LAB_00511d12;
+    if (*reinterpret_cast<short *>(eax + 0x952856) < 0) goto LAB_00511d12;
+    if (tut_check(8) == 0) goto LAB_00511d12;
+    if (*reinterpret_cast<int *>(0x9a64d4) >= 0x19) goto LAB_00511d12;
+    *reinterpret_cast<unsigned char *>(0x9b86a0) = 0;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = eax + eax * 2;
+    eax = eax + edx * 4;
+    ecx = *reinterpret_cast<short *>(eax * 4 + 0x952856);
+    say_base(reinterpret_cast<char *>(0x9b86a0), ecx);
+    parse_says(0, reinterpret_cast<char *>(0x9b86a0), -1, -1);
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = eax + eax * 2;
+    eax = eax + edx * 4;
+    eax = *reinterpret_cast<short *>(eax * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = edx * 4 + 0x9ab868;
+    parse_says(1, reinterpret_cast<char *>(eax), -1, -1);
+    ecx = *reinterpret_cast<int *>(edi + 0x23bdc);
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a610), esi, ebx, ecx, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_00511d12:
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = eax + eax * 2;
+    eax = eax + edx * 4;
+    eax = *reinterpret_cast<short *>(eax * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    if (*reinterpret_cast<unsigned char *>(edx * 4 + 0x9ab892) > 3) goto LAB_00511d74;
+    if (tut_check(0x10) == 0) goto LAB_00511d74;
+    if (*reinterpret_cast<int *>(0x9a64d4) < 0x28) goto LAB_00511d74;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a618), esi, ebx, eax, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_00511d74:
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    ecx = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    eax = ecx + ecx * 2;
+    edx = ecx + eax * 4;
+    if (*reinterpret_cast<unsigned char *>(edx * 4 + 0x9ab892) != 9) goto LAB_00511e99;
+    eax = *reinterpret_cast<int *>(edi + 0x23bd4);
+    edx = eax;
+    edx = edx * 65;
+    edx = eax + edx * 2;
+    edx = eax + edx * 8;
+    eax = eax + edx * 2;
+    if (*reinterpret_cast<unsigned char *>(ecx + eax * 4 + 0x96d238) != 1) goto LAB_00511e99;
+    if (tut_check(0x10000) == 0) goto LAB_00511e99;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<unsigned char *>(edx * 4 + 0x9ab88c);
+    eax = (eax + eax * 8) << 4;
+    if (*reinterpret_cast<unsigned char *>(eax + 0x94a379) == 1) goto LAB_00511e99;
+    *reinterpret_cast<unsigned char *>(0x9b86a0) = 0;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952856);
+    say_base(reinterpret_cast<char *>(0x9b86a0), eax);
+    parse_says(0, reinterpret_cast<char *>(0x9b86a0), -1, -1);
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = edx * 4 + 0x9ab868;
+    parse_says(1, reinterpret_cast<char *>(eax), -1, -1);
+    *reinterpret_cast<int *>(0x8cc228) = 2;
+    ecx = *reinterpret_cast<int *>(edi + 0x23bdc);
+    tm_p1 = reinterpret_cast<const char *>(0x68a624); tm_p2 = esi; tm_p3 = ebx; tm_p4 = ecx;
+    tm_p5 = reinterpret_cast<Sprite *>(0); tm_p6 = 0x100; tm_p7 = -1; tm_p8 = -1;
+    goto LAB_005134e1;
+
+LAB_005134e1:
+    tutwin->tut_map(tm_p1, tm_p2, tm_p3, tm_p4, tm_p5, tm_p6, tm_p7, tm_p8);
+LAB_005134eb:
+    eax = *reinterpret_cast<int *>(0x9a64c0);
+    eax = eax | 0x400;
+    *reinterpret_cast<int *>(0x9a64c0) = eax;
+    return;
+
+LAB_00511e99:
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = eax + eax * 2;
+    eax = (eax + edx * 4) << 2;
+    ecx = *reinterpret_cast<short *>(eax + 0x952832);
+    edx = ecx + ecx * 2;
+    ecx = (ecx + edx * 4) << 2;
+    if (*reinterpret_cast<unsigned char *>(ecx + 0x9ab892) != 8) goto LAB_0051222c;
+    edx = *reinterpret_cast<unsigned char *>(ecx + 0x9ab88c);
+    ecx = (edx + edx * 8) << 4;
+    edx = *reinterpret_cast<unsigned char *>(ecx + 0x94a379);
+    if (edx != 0) goto LAB_0051222c;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x1000000) != 0) goto LAB_0051222c;
+    edx = *reinterpret_cast<int *>(0x939284);
+    eax = -1;
+    local_20 = eax;
+    local_1c = eax;
+    local_10 = 0;
+    reinterpret_cast<Console *>(0x9156b0)->focus(esi, ebx, edx);
+    for (local_14 = 0; local_14 < 0x3c0; local_14 += 4) {
+        edx = local_14;
+        eax = *reinterpret_cast<int *>(edx + 0x66f080);
+        edi = local_4;
+        ecx = *reinterpret_cast<int *>(0x94988c);
+        eax = eax + edi;
+        ecx = ecx & 1;
+        local_24 = ecx;
+        if (ecx != 0) {
+            ecx = *reinterpret_cast<int *>(0x949870);
+            ebx = eax;
+        } else {
+            ecx = *reinterpret_cast<int *>(0x949870);
+            if (eax >= 0) {
+                if (eax >= ecx) eax = eax - ecx;
+                ebx = eax;
+            } else {
+                ebx = ecx + eax;
+            }
+        }
+        esi = *reinterpret_cast<int *>(edx + 0x66f504);
+        eax = local_8;
+        esi = esi + eax;
+        if (esi < 0) continue;
+        if (esi >= *reinterpret_cast<int *>(0x949874)) continue;
+        if (ebx < 0) continue;
+        if (ebx >= ecx) continue;
+        eax = *reinterpret_cast<int *>(0x68faf0);
+        ecx = ebx;
+        eax = eax * esi;
+        ecx = ecx >> 1;
+        eax = eax + ecx;
+        local_18 = ecx;
+        edi = ebx;
+        ecx = eax + eax * 4;
+        edx = eax + ecx * 2;
+        eax = *reinterpret_cast<int *>(0x94a30c);
+        ecx = eax + edx * 4;
+        eax = *reinterpret_cast<unsigned char *>(ecx);
+        edx = eax & 0xffffffe0;
+        if (edx > 0x60) {
+            eax = eax >> 5;
+            edx = esi - eax;
+            eax = *reinterpret_cast<int *>(0x7d3c3c);
+            edx = edx + 3;
+            eax = *reinterpret_cast<int *>(eax + 0x1dda8);
+            eax = eax + 2;
+            if (edx < eax) continue;
+        }
+        eax = *reinterpret_cast<int *>(0x7d3c3c);
+        edx = *reinterpret_cast<int *>(eax + 0x1dda8);
+        edx = edx + 2;
+        if (esi < edx) continue;
+        edx = *reinterpret_cast<int *>(eax + 0x1ddd8);
+        edx = edx + *reinterpret_cast<int *>(eax + 0x1ddd0);
+        eax = *reinterpret_cast<int *>(eax + 0x1dda8);
+        eax = edx + eax - 2;
+        if (esi >= eax) continue;
+        eax = local_24;
+        if (eax == 0) {
+            eax = *reinterpret_cast<int *>(0x7d3c3c);
+            edx = *reinterpret_cast<int *>(eax + 0x1dda4);
+            edx = edx + 2;
+            if (ebx < edx) {
+                edx = *reinterpret_cast<int *>(0x949870);
+                edi = edx + ebx;
+            }
+            edx = *reinterpret_cast<int *>(eax + 0x1ddd4);
+            edx = edx + *reinterpret_cast<int *>(eax + 0x1ddcc);
+            eax = *reinterpret_cast<int *>(eax + 0x1dda4);
+            eax = edx + eax - 2;
+            if (edi >= eax) {
+                edi = edi - *reinterpret_cast<int *>(0x949870);
+            }
+        }
+        eax = *reinterpret_cast<int *>(0x7d3c3c);
+        edx = *reinterpret_cast<int *>(eax + 0x1dda4);
+        edx = edx + 2;
+        if (edi < edx) continue;
+        edx = *reinterpret_cast<int *>(eax + 0x1ddd4);
+        edx = edx + *reinterpret_cast<int *>(eax + 0x1ddcc);
+        eax = *reinterpret_cast<int *>(eax + 0x1dda4);
+        eax = edx + eax - 2;
+        if (edi >= eax) continue;
+        eax = *reinterpret_cast<int *>(0x68faf0);
+        edx = local_4;
+        eax = eax * local_8;
+        edx = edx >> 1;
+        eax = eax + edx;
+        edx = eax + eax * 4;
+        eax = eax + edx * 2;
+        edx = *reinterpret_cast<int *>(0x94a30c);
+        if (*reinterpret_cast<unsigned char *>(ecx + 3) != *reinterpret_cast<unsigned char *>(edx + eax * 4 + 3)) continue;
+        eax = local_c;
+        edi = *reinterpret_cast<int *>(eax + 0x23bd4);
+        eax = whose_territory(edi, ebx, esi, 0, 0);
+        if (eax != edi) continue;
+        ecx = edi;
+        ecx = ecx * 65;
+        edx = edi + ecx * 2;
+        eax = edi + edx * 8;
+        ecx = edi + eax * 2;
+        eax = *reinterpret_cast<int *>(ecx * 4 + 0x96c9e0);
+        if ((eax & 0x200) == 0) {
+            eax = *reinterpret_cast<int *>(0x68faf0);
+            ecx = local_18;
+            eax = eax * esi;
+            eax = eax + ecx;
+            ecx = edi;
+            edx = eax + eax * 4;
+            eax = eax + edx * 2;
+            edx = 1;
+            edx = edx << (ecx & 0x1f);
+            ecx = *reinterpret_cast<int *>(0x94a30c);
+            if ((*reinterpret_cast<unsigned char *>(ecx + eax * 4 + 4) & edx) == 0) continue;
+        }
+        eax = *reinterpret_cast<int *>(0x68faf0);
+        edx = local_18;
+        eax = eax * esi;
+        ecx = *reinterpret_cast<int *>(0x94a30c);
+        eax = eax + edx;
+        edx = eax + eax * 4;
+        eax = eax + edx * 2;
+        eax = ecx + eax * 4;
+        if ((*reinterpret_cast<unsigned char *>(eax + 8) & 0x20) != 0) {
+            edx = *reinterpret_cast<unsigned char *>(eax);
+            edx = edx & 0xffffffe0;
+            if (edx >= 0x40) continue;
+        }
+        ecx = *reinterpret_cast<unsigned char *>(eax + 5);
+        ecx = ecx & 0xffffffc0;
+        if (ecx > 0x40) continue;
+        ecx = *reinterpret_cast<int *>(eax + 8);
+        if ((ecx & 0x1000) != 0) {
+            eax = 0;
+        } else {
+            edx = *reinterpret_cast<unsigned char *>(eax + 2);
+            eax = edx >> 4;
+            if (eax != 0) goto LAB_0051217a;
+            eax = world_site(ebx, esi, 0);
+            edi = eax;
+            site_set(ebx, esi, edi);
+            eax = edi;
+        }
+LAB_0051217a:
+        if (eax < local_10) continue;
+        local_10 = eax;
+        local_20 = ebx;
+        local_1c = esi;
+    }
+    esi = local_c;
+    *reinterpret_cast<unsigned char *>(0x9b86a0) = 0;
+    eax = *reinterpret_cast<int *>(esi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952856);
+    say_base(reinterpret_cast<char *>(0x9b86a0), eax);
+    parse_says(0, reinterpret_cast<char *>(0x9b86a0), -1, -1);
+    eax = *reinterpret_cast<int *>(0x939284);
+    ecx = eax + eax * 4;
+    ecx = ecx + ecx * 8;
+    ecx = ecx << 3;
+    ecx = ecx - eax;
+    eax = *reinterpret_cast<int *>(ecx * 4 + 0x946f58);
+    if ((eax & 0x100) != 0) goto LAB_00513b7e;
+    edx = local_1c;
+    eax = local_20;
+    ecx = *reinterpret_cast<int *>(esi + 0x23bd4);
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a634), local_4, local_8, ecx, reinterpret_cast<Sprite *>(0), 0x1000000, local_20, local_1c);
+    return;
+
+LAB_0051222c:
+    ecx = *reinterpret_cast<int *>(0x8cc210);
+    if (ecx != 0) goto LAB_00513b7e;
+    ecx = *reinterpret_cast<short *>(eax + 0x952832);
+    edx = ecx + ecx * 2;
+    ecx = ecx + edx * 4;
+    edx = *reinterpret_cast<unsigned char *>(ecx * 4 + 0x9ab88c);
+    ecx = (edx + edx * 8) << 4;
+    {
+        int abilityMatch = (*reinterpret_cast<unsigned char *>(ecx + 0x94a379) == 1) ? 1 : 0;
+        unsigned char siteFlagByte = *reinterpret_cast<unsigned char *>(eax + 0x952838);
+        local_14 = abilityMatch;
+        if (siteFlagByte == 0) goto LAB_005122a9;
+    }
+    if (tut_check(0x200000) == 0) goto LAB_005122a9;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a640), esi, ebx, eax, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_005122a9:
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<unsigned char *>(edx * 4 + 0x9ab88c);
+    eax = (eax + eax * 8) << 4;
+    if (*reinterpret_cast<unsigned char *>(eax + 0x94a379) != 0) goto LAB_00512b8a;
+    eax = *reinterpret_cast<int *>(0x68faf0);
+    ecx = esi;
+    eax = eax * ebx;
+    ecx = ecx >> 1;
+    eax = eax + ecx;
+    edx = eax + eax * 4;
+    eax = eax + edx * 2;
+    edx = *reinterpret_cast<int *>(0x94a30c);
+    ecx = *reinterpret_cast<unsigned char *>(edx + eax * 4);
+    ecx = ecx & 0xffffffe0;
+    if (ecx < 0x60) goto LAB_00512b90;
+    for (local_18 = 0; local_18 < 0x20; local_18 += 4) {
+        ecx = *reinterpret_cast<int *>(0x949870);
+        edx = local_18;
+        esi = local_4;
+        ebx = *reinterpret_cast<unsigned char *>(0x94988c);
+        eax = *reinterpret_cast<int *>(edx + 0x66ef50);
+        eax = eax + esi;
+        if ((ebx & 1) != 0) {
+            ebx = eax;
+        } else {
+            if (eax >= 0) {
+                if (eax < ecx) ebx = eax; else ebx = eax - ecx;
+            } else {
+                ebx = ecx + eax;
+            }
+        }
+        eax = *reinterpret_cast<int *>(edx + 0x66ef74);
+        edx = local_8;
+        eax = eax + edx;
+        local_10 = eax;
+        if (eax < 0) continue;
+        if (eax >= *reinterpret_cast<int *>(0x949874)) continue;
+        if (ebx < 0) continue;
+        if (ebx >= ecx) continue;
+        ecx = eax;
+        esi = veh_at(ebx, ecx);
+        if (esi < 0) continue;
+        edx = esi + esi * 2;
+        eax = (esi + edx * 4) << 2;
+        if (*reinterpret_cast<unsigned char *>(eax + 0x952836) != 0) continue;
+        if (*reinterpret_cast<short *>(eax + 0x952832) != 8) continue;
+        if (tut_check(0x4000000) != 0) goto LAB_005124c5;
+    }
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    ecx = (eax + ecx * 4) << 2;
+    eax = *reinterpret_cast<unsigned char *>(ecx + 0x9ab88c);
+    eax = (eax + eax * 8) << 4;
+    if (*reinterpret_cast<unsigned char *>(eax + 0x94a379) != 0) goto LAB_005124e9;
+    if (*reinterpret_cast<unsigned char *>(eax + 0x94a378) != 2) goto LAB_005124e9;
+    edx = *reinterpret_cast<unsigned char *>(ecx + 0x9ab88d);
+    edx = edx << 4;
+    if (*reinterpret_cast<unsigned char *>(edx + 0x94ae68) == 0) goto LAB_005124e9;
+    if (tut_check(0x2000000) == 0) goto LAB_005124e9;
+    *reinterpret_cast<unsigned char *>(0x9b86a0) = 0;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    say_stats_3(reinterpret_cast<char *>(0x9b86a0), eax);
+    parse_says(1, reinterpret_cast<char *>(0x9b86a0), -1, -1);
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = edx * 4 + 0x9ab868;
+    parse_says(0, reinterpret_cast<char *>(eax), -1, -1);
+    ecx = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = local_8;
+    eax = local_4;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a654), eax, edx, ecx, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_005124c5:
+    eax = local_10;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a648), ebx, eax, esi, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_005124e9:
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    edx = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    eax = edx + edx * 2;
+    ecx = (edx + eax * 4) << 2;
+    eax = *reinterpret_cast<unsigned char *>(ecx + 0x9ab88c);
+    eax = (eax + eax * 8) << 4;
+    if (*reinterpret_cast<unsigned char *>(eax + 0x94a379) != 0) goto LAB_00512602;
+    if (*reinterpret_cast<unsigned char *>(eax + 0x94a378) != 1) goto LAB_00512602;
+    eax = *reinterpret_cast<unsigned char *>(ecx + 0x9ab88d);
+    eax = eax << 4;
+    if (*reinterpret_cast<unsigned char *>(eax + 0x94ae68) <= 1) goto LAB_00512602;
+    if (can_arty(edx, 1) != 0) goto LAB_00512602;
+    if (tut_check(0x40000000) == 0) goto LAB_00512602;
+    *reinterpret_cast<unsigned char *>(0x9b86a0) = 0;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    say_stats_3(reinterpret_cast<char *>(0x9b86a0), eax);
+    parse_says(1, reinterpret_cast<char *>(0x9b86a0), -1, -1);
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = edx * 4 + 0x9ab868;
+    parse_says(0, reinterpret_cast<char *>(eax), -1, -1);
+    ecx = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = local_8;
+    eax = local_4;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a660), eax, edx, ecx, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_00512602:
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    ecx = *reinterpret_cast<unsigned char *>(edx * 4 + 0x9ab88c);
+    ecx = (ecx + ecx * 8) << 4;
+    if (*reinterpret_cast<unsigned char *>(ecx + 0x94a379) != 0) goto LAB_005126bd;
+    if (can_arty(eax, 1) == 0) goto LAB_005126bd;
+    if (tut_check(static_cast<int>(0x80000000)) == 0) goto LAB_005126bd;
+    *reinterpret_cast<unsigned char *>(0x9b86a0) = 0;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = eax + eax * 2;
+    eax = eax + edx * 4;
+    eax = *reinterpret_cast<short *>(eax * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = edx * 4 + 0x9ab868;
+    parse_says(0, reinterpret_cast<char *>(eax), -1, -1);
+    ecx = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = local_8;
+    eax = local_4;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a668), eax, edx, ecx, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_005126bd:
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    ecx = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    edx = ecx + ecx * 2;
+    ecx = ecx + edx * 4;
+    edx = *reinterpret_cast<unsigned char *>(ecx * 4 + 0x9ab88c);
+    ecx = (edx + edx * 8) << 4;
+    if (*reinterpret_cast<unsigned char *>(ecx + 0x94a379) != 1) goto LAB_00512739;
+    if ((*reinterpret_cast<unsigned char *>(0x9a64ac) & 0x20) != 0) goto LAB_0051272d;
+    edx = local_8;
+    tm_p4 = eax;
+    eax = local_4;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a674), eax, edx, tm_p4, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    eax = *reinterpret_cast<int *>(0x9a64ac);
+    eax = eax | 0x20;
+    *reinterpret_cast<int *>(0x9a64ac) = eax;
+    return;
+
+LAB_0051272d:
+    eax = *reinterpret_cast<int *>(0x9a64ac);
+    eax = eax | 0x20;
+    *reinterpret_cast<int *>(0x9a64ac) = eax;
+
+LAB_00512739:
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    ecx = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    edx = ecx + ecx * 2;
+    ecx = ecx + edx * 4;
+    edx = *reinterpret_cast<unsigned char *>(ecx * 4 + 0x9ab88c);
+    ecx = (edx + edx * 8) << 4;
+    if (*reinterpret_cast<unsigned char *>(ecx + 0x94a379) != 2) goto LAB_005127b5;
+    if ((*reinterpret_cast<unsigned char *>(0x9a64ac) & 0x40) != 0) goto LAB_005127a9;
+    edx = local_8;
+    tm_p4 = eax;
+    eax = local_4;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a67c), eax, edx, tm_p4, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    eax = *reinterpret_cast<int *>(0x9a64ac);
+    eax = eax | 0x40;
+    *reinterpret_cast<int *>(0x9a64ac) = eax;
+    return;
+
+LAB_005127a9:
+    eax = *reinterpret_cast<int *>(0x9a64ac);
+    eax = eax | 0x40;
+    *reinterpret_cast<int *>(0x9a64ac) = eax;
+
+LAB_005127b5:
+    ecx = local_8;
+    edx = local_4;
+    eax = base_at(edx, ecx);
+    if (eax < 0) goto LAB_00512959;
+    ecx = eax + eax * 8;
+    edx = eax + ecx * 2;
+    ecx = 0;
+    esi = (eax + edx * 4) << 2;
+    eax = *reinterpret_cast<int *>(edi + 0x23bd4);
+    ecx = *reinterpret_cast<unsigned char *>(esi + 0x97d044);
+    if (ecx != eax) goto LAB_00512959;
+    if (*reinterpret_cast<unsigned char *>(esi + 0x97d046) > 2) goto LAB_00512836;
+    edx = eax;
+    edx = edx * 65;
+    ecx = eax + edx * 2;
+    edx = eax + ecx * 8;
+    ecx = eax + edx * 2;
+    ecx = ecx << 2;
+    if (*reinterpret_cast<int *>(ecx + 0x96da38) > 3) goto LAB_00512836;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = eax + eax * 2;
+    eax = eax + edx * 4;
+    edx = *reinterpret_cast<short *>(eax * 4 + 0x952832);
+    if (*reinterpret_cast<unsigned char *>(edx + ecx + 0x96d238) <= 1) goto LAB_00512959;
+
+LAB_00512836:
+    ecx = *reinterpret_cast<int *>(edi + 0x23bdc);
+    eax = ~ecx;
+    if (enemy_move(eax) == 0) goto LAB_00512959;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x800000) != 0) goto LAB_00512959;
+    *reinterpret_cast<unsigned char *>(0x9b86a0) = 0;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    say_stats_3(reinterpret_cast<char *>(0x9b86a0), eax);
+    parse_says(2, reinterpret_cast<char *>(0x9b86a0), -1, -1);
+    ecx = esi + 0x97d053;
+    parse_says(0, reinterpret_cast<char *>(ecx), -1, -1);
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    edx = eax + eax * 2;
+    eax = eax + edx * 4;
+    eax = *reinterpret_cast<short *>(eax * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = edx * 4 + 0x9ab868;
+    parse_says(1, reinterpret_cast<char *>(eax), -1, -1);
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    ecx = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    edx = ecx + ecx * 2;
+    ecx = (ecx + edx * 4) << 2;
+    if (*reinterpret_cast<unsigned char *>(ecx + 0x9ab892) == 2) {
+        edx = *reinterpret_cast<unsigned char *>(ecx + 0x9ab88d);
+        ebx = *reinterpret_cast<unsigned char *>(ecx + 0x9ab88e);
+        edx = edx << 4;
+        ebx = ebx << 4;
+        edx = *reinterpret_cast<unsigned char *>(edx + 0x94ae68);
+        if (*reinterpret_cast<signed char *>(ebx + 0x94f280) > static_cast<signed char>(edx) && edx == 1) {
+            ecx = 0x68a684;
+        } else {
+            ecx = 0x68a690;
+        }
+    } else {
+        ecx = 0x68a690;
+    }
+    edx = local_4;
+    tm_p4 = eax;
+    eax = local_8;
+    tutwin->tut_map(reinterpret_cast<const char *>(ecx), edx, eax, tm_p4, reinterpret_cast<Sprite *>(0), 0x800000, -1, -1);
+    return;
+
+LAB_00512959:
+    if (*reinterpret_cast<int *>(0x9a64d4) < 0x14) goto LAB_00512b8a;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x4000000) != 0) goto LAB_00512b8a;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<unsigned char *>(edx * 4 + 0x9ab88d);
+    eax = eax << 4;
+    if (*reinterpret_cast<unsigned char *>(eax + 0x94ae68) == 0) goto LAB_00512b8a;
+    eax = *reinterpret_cast<int *>(0x9a64cc);
+    local_18 = 0;
+    if (eax <= 0) goto LAB_00512b8a;
+    edi = 0x97d042;
+    local_10 = edi;
+
+LAB_005129c6:
+    edx = local_c;
+    ecx = *reinterpret_cast<unsigned char *>(edi + 2);
+    if (ecx != *reinterpret_cast<int *>(edx + 0x23bd4)) goto LAB_00512b17;
+    eax = *reinterpret_cast<short *>(edi);
+    ecx = *reinterpret_cast<short *>(edi - 2);
+    if (veh_at(ecx, eax) >= 0) goto LAB_00512b17;
+    if (*reinterpret_cast<unsigned char *>(edi + 4) == 1) goto LAB_00512b17;
+    ecx = *reinterpret_cast<short *>(edi);
+    edx = *reinterpret_cast<short *>(edi - 2);
+    esi = *reinterpret_cast<int *>(0x7d3c3c);
+    if (ecx < 0) goto LAB_00512a6c;
+    if (ecx >= *reinterpret_cast<int *>(0x949874)) goto LAB_00512a6c;
+    if (edx < 0) goto LAB_00512a6c;
+    if (edx >= *reinterpret_cast<int *>(0x949870)) goto LAB_00512a6c;
+    eax = ecx;
+    edi = edx;
+    eax = eax * (*reinterpret_cast<int *>(0x68faf0));
+    edi = edi >> 1;
+    eax = eax + edi;
+    edi = eax + eax * 4;
+    eax = eax + edi * 2;
+    edi = *reinterpret_cast<int *>(0x94a30c);
+    ebx = *reinterpret_cast<unsigned char *>(edi + eax * 4);
+    eax = ebx;
+    edi = eax & 0xffffffe0;
+    if (edi > 0x60) {
+        eax = eax >> 5;
+        edi = ecx - eax;
+        eax = *reinterpret_cast<int *>(esi + 0x1dda8);
+        edi = edi + 3;
+        eax = eax + 2;
+        if (edi < eax) goto LAB_00512b14;
+    }
+    edi = local_10;
+LAB_00512a6c:
+    eax = *reinterpret_cast<int *>(esi + 0x1dda8);
+    ebx = eax + 2;
+    if (ecx < ebx) goto LAB_00512b17;
+    ebx = *reinterpret_cast<int *>(esi + 0x1ddd8);
+    ebx = ebx + *reinterpret_cast<int *>(esi + 0x1ddd0);
+    eax = ebx + eax - 2;
+    if (ecx >= eax) goto LAB_00512b17;
+    if ((*reinterpret_cast<unsigned char *>(0x94988c) & 1) == 0) {
+        eax = *reinterpret_cast<int *>(esi + 0x1dda4);
+        ecx = eax + 2;
+        if (edx < ecx) {
+            edx = edx + *reinterpret_cast<int *>(0x949870);
+        }
+        ecx = *reinterpret_cast<int *>(esi + 0x1ddd4);
+        ebx = *reinterpret_cast<int *>(esi + 0x1ddcc);
+        ecx = ecx + ebx;
+        eax = ecx + eax - 2;
+        if (edx >= eax) {
+            edx = edx - *reinterpret_cast<int *>(0x949870);
+        }
+    }
+    eax = *reinterpret_cast<int *>(esi + 0x1dda4);
+    ecx = eax + 2;
+    if (edx < ecx) goto LAB_00512b17;
+    ecx = *reinterpret_cast<int *>(esi + 0x1ddd4);
+    ebx = *reinterpret_cast<int *>(esi + 0x1ddcc);
+    ecx = ecx + ebx;
+    eax = ecx + eax - 2;
+    if (edx >= eax) goto LAB_00512b17;
+    if (tut_check2(0x100) != 0) goto LAB_00512b37;
+    eax = *reinterpret_cast<int *>(0x9a64d4);
+    edx = eax % 20;
+    if (edx == 0) goto LAB_00512b37;
+    goto LAB_00512b17;
+
+LAB_00512b14:
+    edi = local_10;
+LAB_00512b17:
+    eax = local_18;
+    ecx = *reinterpret_cast<int *>(0x9a64cc);
+    eax = eax + 1;
+    edi = edi + 0x134;
+    local_18 = eax;
+    local_10 = edi;
+    if (eax < ecx) goto LAB_005129c6;
+    goto LAB_00512b87;
+
+LAB_00512b37:
+    esi = local_18;
+    edx = esi + esi * 8;
+    eax = esi + edx * 2;
+    esi = (esi + eax * 4) << 2;
+    ecx = esi + 0x97d053;
+    parse_says(0, reinterpret_cast<char *>(ecx), -1, -1);
+    edx = *reinterpret_cast<short *>(esi + 0x97d042);
+    eax = *reinterpret_cast<short *>(esi + 0x97d040);
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a69c), eax, edx, -1, reinterpret_cast<Sprite *>(0), 0x4000000, -1, -1);
+LAB_00512b87:
+    edi = local_c;
+LAB_00512b8a:
+    ebx = local_8;
+    esi = local_4;
+
+LAB_00512b90:
+    ecx = *reinterpret_cast<int *>(0x68faf0);
+    eax = esi;
+    ecx = ecx * ebx;
+    eax = eax >> 1;
+    ecx = ecx + eax;
+    local_24 = eax;
+    eax = ecx;
+    ecx = eax + eax * 4;
+    edx = eax + ecx * 2;
+    eax = *reinterpret_cast<int *>(0x94a30c);
+    ecx = *reinterpret_cast<unsigned char *>(eax + edx * 4 + 8);
+    eax = eax + edx * 4;
+    if ((ecx & 1) != 0) {
+        eax = *reinterpret_cast<unsigned char *>(eax + 2);
+        eax = eax & 0xf;
+        if (eax < 8) {
+            if (eax >= 0) goto LAB_00513b7e;
+        }
+    }
+
+LAB_00512bce:
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    ecx = eax + eax * 2;
+    edx = eax + ecx * 4;
+    if (*reinterpret_cast<unsigned char *>(edx * 4 + 0x9ab892) != 0xc) goto LAB_00512c2a;
+    if (tut_check(0x1000000) == 0) goto LAB_00512c2a;
+    eax = *reinterpret_cast<int *>(edi + 0x23bdc);
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a6a8), esi, ebx, eax, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_00512c2a:
+    if (tut_check2(0x20000) == 0) goto LAB_00512c82;
+    edi = *reinterpret_cast<int *>(edi + 0x23bdc);
+    ecx = edi + edi * 2;
+    edx = edi + ecx * 4;
+    eax = *reinterpret_cast<short *>(edx * 4 + 0x952832);
+    if (eax != 0x10 && eax != 0x11 && eax != 0x12) goto LAB_00512c82;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a6b4), esi, ebx, edi, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_00512c82:
+    for (local_18 = 0; local_18 < 0x20; local_18 += 4) {
+        edx = *reinterpret_cast<int *>(0x949870);
+        ecx = local_18;
+        esi = local_4;
+        ebx = *reinterpret_cast<unsigned char *>(0x94988c);
+        eax = *reinterpret_cast<int *>(ecx + 0x66ef50);
+        eax = eax + esi;
+        if ((ebx & 1) != 0) {
+            ebx = eax;
+        } else {
+            if (eax >= 0) {
+                if (eax < edx) ebx = eax; else ebx = eax - edx;
+            } else {
+                ebx = edx + eax;
+            }
+        }
+        eax = *reinterpret_cast<int *>(ecx + 0x66ef74);
+        ecx = local_8;
+        eax = eax + ecx;
+        local_10 = eax;
+        if (eax < 0) continue;
+        if (eax >= *reinterpret_cast<int *>(0x949874)) continue;
+        if (ebx < 0) continue;
+        if (ebx >= edx) continue;
+        ecx = eax;
+        esi = veh_at(ebx, ecx);
+        if (esi < 0) continue;
+        edx = esi + esi * 2;
+        edi = (esi + edx * 4) << 2;
+        if (*reinterpret_cast<unsigned char *>(edi + 0x952836) != 0) continue;
+        if (*reinterpret_cast<short *>(edi + 0x952832) == 0xf) {
+            if (tut_check2(0x80000) != 0) goto LAB_00512d79;
+        } else if (*reinterpret_cast<short *>(edi + 0x952832) == 0xe) {
+            if (tut_check2(0x40000) != 0) goto LAB_00512d9d;
+        }
+    }
+
+LAB_00512d79:
+    eax = local_10;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a6bc), ebx, eax, esi, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_00512d9d:
+    ecx = local_10;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a6cc), ebx, ecx, esi, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_00512d4e:
+    edi = local_8;
+    for (local_18 = 0; local_18 < 0x20; local_18 += 4) {
+        eax = local_18;
+        ebx = local_4;
+        ecx = *reinterpret_cast<unsigned char *>(0x94988c);
+        esi = *reinterpret_cast<int *>(eax + 0x66ef50);
+        esi = esi + ebx;
+        edx = *reinterpret_cast<int *>(0x949870);
+        if ((ecx & 1) == 0) {
+            if (esi < 0) esi = esi + edx;
+            else if (esi >= edx) esi = esi - edx;
+        }
+        ebx = *reinterpret_cast<int *>(eax + 0x66ef74);
+        ebx = ebx + edi;
+        if (ebx < 0) continue;
+        if (ebx >= *reinterpret_cast<int *>(0x949874)) continue;
+        if (esi < 0) continue;
+        if (esi >= edx) continue;
+        eax = *reinterpret_cast<int *>(0x68faf0);
+        ecx = esi;
+        eax = eax * ebx;
+        ecx = ecx >> 1;
+        eax = eax + ecx;
+        ecx = eax + eax * 4;
+        eax = eax + ecx * 2;
+        ecx = *reinterpret_cast<int *>(0x94a30c);
+        eax = ecx + eax * 4;
+        if ((*reinterpret_cast<unsigned char *>(eax + 8) & 3) != 0) {
+            ecx = *reinterpret_cast<unsigned char *>(eax + 2);
+            ecx = ecx & 0xf;
+            if (ecx < 8) {
+                if (ecx >= 0) continue;
+            }
+        }
+        if ((*reinterpret_cast<int *>(eax + 8) & 0x81e02850) != 0) continue;
+        if (goody_at(esi, ebx) != 0) goto LAB_00512e91;
+        eax = bonus_at(esi, ebx, 0);
+        if (eax == 1) {
+            if (tut_check(0x20000) != 0) goto LAB_00512fa5;
+        } else if (eax == 2) {
+            if (tut_check(0x40000) != 0) goto LAB_00512f64;
+        } else if (eax == 3) {
+            if (tut_check(0x80000) != 0) goto LAB_00512f23;
+        }
+LAB_00512e91:
+        edx = *reinterpret_cast<int *>(0x949870);
+    }
+    eax = *reinterpret_cast<int *>(0x68faf0);
+    ebx = local_24;
+    eax = eax * edi;
+    eax = eax + ebx;
+    ecx = eax + eax * 4;
+    eax = eax + ecx * 2;
+    ecx = *reinterpret_cast<int *>(0x94a30c);
+    eax = ecx + eax * 4;
+    if ((*reinterpret_cast<unsigned char *>(eax + 8) & 0x20) == 0) goto LAB_00513022;
+    ecx = *reinterpret_cast<unsigned char *>(eax);
+    eax = ecx & 0xe0;
+    if (eax < 0x40) goto LAB_00513022;
+    if (eax < 0x60) goto LAB_00512fe6;
+    if (tut_check(0x100) == 0) goto LAB_0051301c;
+    edx = local_4;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a700), edx, edi, -1, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_00512f23:
+    eax = bonus_at(esi, ebx, 0);
+    edx = local_14;
+    eax = edx + eax * 2 - 2;
+    ecx = eax + eax * 4;
+    edx = eax + ecx * 2;
+    eax = edx * 8 + 0x75b230;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a6f4), esi, ebx, -1, reinterpret_cast<Sprite *>(eax), 0, -1, -1);
+    return;
+
+LAB_00512f64:
+    eax = bonus_at(esi, ebx, 0);
+    ecx = local_14;
+    eax = ecx + eax * 2 - 2;
+    edx = eax + eax * 4;
+    eax = eax + edx * 2;
+    ecx = eax * 8 + 0x75b230;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a6e4), esi, ebx, -1, reinterpret_cast<Sprite *>(ecx), 0, -1, -1);
+    return;
+
+LAB_00512fa5:
+    eax = bonus_at(esi, ebx, 0);
+    edx = local_14;
+    eax = edx + eax * 2 - 2;
+    ecx = eax + eax * 4;
+    edx = eax + ecx * 2;
+    eax = edx * 8 + 0x75b230;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a6d4), esi, ebx, -1, reinterpret_cast<Sprite *>(eax), 0, -1, -1);
+    return;
+
+LAB_00512fe6:
+    if (tut_check(0x8000) == 0) goto LAB_0051301c;
+    eax = local_4;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a710), eax, edi, -1, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_0051301c:
+    edx = *reinterpret_cast<int *>(0x949870);
+
+LAB_00513022:
+    eax = *reinterpret_cast<int *>(0x9a64c0);
+    if ((eax & 0x400) != 0) goto LAB_00513b7e;
+    ecx = local_c;
+    eax = *reinterpret_cast<int *>(ecx + 0x23bdc);
+    ecx = eax + eax * 2;
+    eax = eax + ecx * 4;
+    eax = *reinterpret_cast<unsigned char *>(eax * 4 + 0x9ab892);
+    if (eax != 8) goto LAB_0051323a;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x10000) != 0) goto LAB_0051323a;
+    eax = *reinterpret_cast<int *>(0x68faf0);
+    eax = eax * edi;
+    eax = eax + ebx;
+    ecx = eax + eax * 4;
+    eax = eax + ecx * 2;
+    ecx = *reinterpret_cast<int *>(0x94a30c);
+    eax = ecx + eax * 4;
+    ecx = *reinterpret_cast<int *>(eax + 8);
+    if ((ecx & 0x1000) != 0) {
+        ecx = 0;
+        local_18 = ecx;
+        esi = ecx;
+        goto LAB_005130ce;
+    }
+    ecx = *reinterpret_cast<unsigned char *>(eax + 2);
+    esi = ecx;
+    esi = esi >> 4;
+    if (esi != 0) {
+        ecx = esi;
+        local_18 = ecx;
+        goto LAB_005130ce;
+    }
+    edx = local_4;
+    esi = world_site(edx, edi, 0);
+    eax = local_4;
+    site_set(eax, edi, esi);
+    edx = *reinterpret_cast<int *>(0x949870);
+    ecx = esi;
+    local_18 = ecx;
+
+LAB_005130ce:
+    if (esi >= 4) goto LAB_00513119;
+    eax = *reinterpret_cast<int *>(0x68faf0);
+    eax = eax * edi;
+    eax = eax + ebx;
+    ebx = 0;
+    esi = eax + eax * 4;
+    eax = eax + esi * 2;
+    esi = *reinterpret_cast<int *>(0x94a30c);
+    ebx = *reinterpret_cast<unsigned char *>(esi + eax * 4 + 3);
+    eax = local_c;
+    eax = *reinterpret_cast<int *>(eax + 0x23bd4);
+    esi = eax;
+    esi = esi * 65;
+    esi = eax + esi * 2;
+    esi = eax + esi * 8;
+    esi = eax + esi * 2;
+    eax = *reinterpret_cast<unsigned char *>(ebx + esi * 4 + 0x96e25c);
+    if (ecx < eax) goto LAB_00513b7e;
+
+LAB_00513119:
+    edi = 0;
+    local_20 = edi;
+    for (local_20 = 0; local_20 < 0x54; local_20 += 4) {
+        edi = local_20;
+        eax = *reinterpret_cast<int *>(edi + 0x66efbc);
+        esi = local_4;
+        ecx = *reinterpret_cast<unsigned char *>(0x94988c);
+        eax = eax + esi;
+        if ((ecx & 1) == 0) {
+            if (eax < 0) esi = eax + edx;
+            else if (eax >= edx) esi = eax - edx;
+            else esi = eax;
+        } else {
+            esi = eax;
+        }
+        ebx = *reinterpret_cast<int *>(edi + 0x66f440);
+        eax = local_8;
+        ebx = ebx + eax;
+        if (ebx < 0) goto LAB_005131f8;
+        if (ebx >= *reinterpret_cast<int *>(0x949874)) goto LAB_005131f8;
+        if (esi < 0) goto LAB_005131f8;
+        if (esi >= edx) goto LAB_005131f8;
+        ecx = local_c;
+        edx = *reinterpret_cast<int *>(ecx + 0x23bd4);
+        eax = whose_territory(edx, esi, ebx, 0, 0);
+        if (eax >= 0) {
+            ecx = local_c;
+            if (eax == *reinterpret_cast<int *>(ecx + 0x23bd4)) goto LAB_005131f2;
+        }
+        eax = *reinterpret_cast<int *>(0x68faf0);
+        edx = esi;
+        eax = eax * ebx;
+        edx = edx >> 1;
+        eax = eax + edx;
+        ecx = eax + eax * 4;
+        edx = eax + ecx * 2;
+        eax = *reinterpret_cast<int *>(0x94a30c);
+        ecx = *reinterpret_cast<int *>(eax + edx * 4 + 8);
+        eax = eax + edx * 4;
+        if ((ecx & 0x1000) != 0) {
+            eax = 0;
+        } else {
+            ecx = *reinterpret_cast<unsigned char *>(eax + 2);
+            eax = ecx >> 4;
+            if (eax == 0) {
+                edi = world_site(esi, ebx, 0);
+                site_set(esi, ebx, edi);
+                eax = edi;
+                edi = local_20;
+            }
+        }
+        if (eax > local_18) goto LAB_00513b7e;
+LAB_005131f2:
+        edx = *reinterpret_cast<int *>(0x949870);
+LAB_005131f8:
+        ;
+    }
+    edx = local_c;
+    ecx = local_8;
+    eax = *reinterpret_cast<int *>(edx + 0x23bdc);
+    edx = local_4;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a71c), edx, ecx, eax, reinterpret_cast<Sprite *>(0), 0x10000, -1, -1);
+    return;
+
+LAB_0051323a:
+    if (eax != 9) goto LAB_00513505;
+    if (local_14 != 0) goto LAB_00513505;
+    ecx = local_c;
+    eax = local_4;
+    edx = *reinterpret_cast<int *>(ecx + 0x23bd4);
+    esi = base_find(eax, edi, edx);
+    if (esi < 0) goto LAB_00513b7e;
+    if (*reinterpret_cast<int *>(0x90ea04) > 2) goto LAB_005134ff;
+    ecx = local_c;
+    eax = local_4;
+    edx = *reinterpret_cast<int *>(ecx + 0x23bd4);
+    eax = at_goal(edx, 0x29, eax, edi);
+    if (eax == 0) goto LAB_005132f7;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x200000) != 0) goto LAB_005132f7;
+    eax = *reinterpret_cast<int *>(0x90ea30);
+    eax = eax + 0x13;
+    parse_says(0, reinterpret_cast<char *>(eax), -1, -1);
+    eax = *reinterpret_cast<int *>(0x68faf0);
+    eax = eax * edi;
+    eax = eax + ebx;
+    ecx = eax + eax * 4;
+    edx = eax + ecx * 2;
+    eax = *reinterpret_cast<int *>(0x94a30c);
+    if ((*reinterpret_cast<unsigned char *>(eax + edx * 4 + 8) & 0x40) == 0) goto LAB_005134eb;
+    ecx = local_4;
+    tm_p1 = reinterpret_cast<const char *>(0x68a728); tm_p2 = ecx; tm_p3 = edi; tm_p4 = -1;
+    tm_p5 = reinterpret_cast<Sprite *>(0); tm_p6 = 0x200000; tm_p7 = -1; tm_p8 = -1;
+    goto LAB_005134e1;
+
+LAB_005132f7:
+    eax = local_c;
+    edx = local_4;
+    ecx = *reinterpret_cast<int *>(eax + 0x23bd4);
+    eax = can_terraform(ecx, edx, edi, 0, esi);
+    if (eax != 4) goto LAB_005133a6;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x100000) != 0) goto LAB_00513433;
+    eax = *reinterpret_cast<int *>(0x68faf0);
+    ecx = *reinterpret_cast<int *>(0x94a30c);
+    eax = eax * edi;
+    eax = eax + ebx;
+    edx = eax + eax * 4;
+    eax = eax + edx * 2;
+    edx = *reinterpret_cast<int *>(ecx + eax * 4 + 8);
+    if ((edx & 0x800000) != 0) goto LAB_00513433;
+    edx = esi + esi * 8;
+    ebx = *reinterpret_cast<int *>(0x9a64c0);
+    eax = esi + edx * 2;
+    ebx = ebx | 0x400;
+    *reinterpret_cast<int *>(0x9a64c0) = ebx;
+    ecx = esi + eax * 4;
+    edx = ecx * 4 + 0x97d053;
+    parse_says(0, reinterpret_cast<char *>(edx), -1, -1);
+    eax = local_4;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a734), eax, edi, -1, reinterpret_cast<Sprite *>(0x79204c), 0x100000, -1, -1);
+    return;
+
+LAB_005133a6:
+    if (eax != 6) goto LAB_005133d6;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x40000) != 0) goto LAB_00513433;
+    ecx = local_4;
+    tm_p1 = reinterpret_cast<const char *>(0x68a740); tm_p2 = ecx; tm_p3 = edi; tm_p4 = -1;
+    tm_p5 = reinterpret_cast<Sprite *>(0x776a50); tm_p6 = 0x40000; tm_p7 = -1; tm_p8 = -1;
+    goto LAB_005134e1;
+
+LAB_005133d6:
+    if (eax != 7) goto LAB_00513406;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x20000) != 0) goto LAB_00513433;
+    edx = local_4;
+    tm_p1 = reinterpret_cast<const char *>(0x68a74c); tm_p2 = edx; tm_p3 = edi; tm_p4 = -1;
+    tm_p5 = reinterpret_cast<Sprite *>(0x7991f8); tm_p6 = 0x20000; tm_p7 = -1; tm_p8 = -1;
+    goto LAB_005134e1;
+
+LAB_00513406:
+    if (eax != 8) goto LAB_00513433;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x400000) != 0) goto LAB_00513433;
+    eax = local_4;
+    tm_p1 = reinterpret_cast<const char *>(0x68a758); tm_p2 = eax; tm_p3 = edi; tm_p4 = -1;
+    tm_p5 = reinterpret_cast<Sprite *>(0); tm_p6 = 0x400000; tm_p7 = -1; tm_p8 = -1;
+    goto LAB_005134e1;
+
+LAB_00513433:
+    ecx = local_c;
+    esi = local_4;
+    edx = *reinterpret_cast<int *>(ecx + 0x23bd4);
+    eax = at_goal(edx, 0x79, esi, edi);
+    if (eax != 0) goto LAB_00513464;
+    eax = *reinterpret_cast<int *>(0x939284);
+    eax = good_sensor(eax, esi, edi);
+    if (eax == 0) goto LAB_00513486;
+
+LAB_00513464:
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x2000000) != 0) goto LAB_00513486;
+    tm_p1 = reinterpret_cast<const char *>(0x68a764); tm_p2 = esi; tm_p3 = edi; tm_p4 = -1;
+    tm_p5 = reinterpret_cast<Sprite *>(0); tm_p6 = 0x2000000; tm_p7 = -1; tm_p8 = -1;
+    goto LAB_005134e1;
+
+LAB_00513486:
+    eax = *reinterpret_cast<int *>(0x68faf0);
+    eax = eax * edi;
+    eax = eax + ebx;
+    ecx = eax + eax * 4;
+    edx = eax + ecx * 2;
+    eax = *reinterpret_cast<int *>(0x94a30c);
+    eax = *reinterpret_cast<int *>(eax + edx * 4 + 8);
+    if ((eax & 4) != 0) goto LAB_005134ff;
+    if ((*reinterpret_cast<int *>(0x9a64bc) & 0x80000) != 0) goto LAB_005134ff;
+    if ((eax & 0x10) != 0) goto LAB_005134cd;
+    ecx = local_c;
+    edx = *reinterpret_cast<int *>(ecx + 0x23bd4);
+    eax = at_goal(edx, 9, esi, edi);
+    if (eax == 0) goto LAB_005134ff;
+
+LAB_005134cd:
+    tm_p1 = reinterpret_cast<const char *>(0x68a770); tm_p2 = esi; tm_p3 = edi; tm_p4 = -1;
+    tm_p5 = reinterpret_cast<Sprite *>(0); tm_p6 = 0x80000; tm_p7 = -1; tm_p8 = -1;
+    goto LAB_005134e1;
+
+LAB_005134ff:
+    edx = *reinterpret_cast<int *>(0x949870);
+
+LAB_00513505:
+    eax = *reinterpret_cast<int *>(0x9a64ac);
+    if ((eax & 0x2000) != 0) goto LAB_005135ad;
+    edi = 0;
+    for (; edi < 0x20; edi += 4) {
+        eax = *reinterpret_cast<int *>(edi + 0x66ef50);
+        esi = local_4;
+        ecx = *reinterpret_cast<unsigned char *>(0x94988c);
+        eax = eax + esi;
+        if ((ecx & 1) == 0) {
+            if (eax < 0) esi = eax + edx;
+            else if (eax >= edx) esi = eax - edx;
+            else esi = eax;
+        } else {
+            esi = eax;
+        }
+        ebx = *reinterpret_cast<int *>(edi + 0x66ef74);
+        eax = local_8;
+        ebx = ebx + eax;
+        if (ebx < 0) continue;
+        if (ebx >= *reinterpret_cast<int *>(0x949874)) continue;
+        if (esi < 0) continue;
+        if (esi >= edx) continue;
+        if (goody_at(esi, ebx) == 0) {
+            edx = *reinterpret_cast<int *>(0x949870);
+            continue;
+        }
+        eax = *reinterpret_cast<int *>(0x68faf0);
+        ecx = esi;
+        eax = eax * ebx;
+        ecx = ecx >> 1;
+        eax = eax + ecx;
+        ecx = eax + eax * 4;
+        eax = eax + ecx * 2;
+        edx = *reinterpret_cast<int *>(0x94a30c);
+        ecx = *reinterpret_cast<unsigned char *>(edx + eax * 4);
+        ecx = ecx & 0xffffffe0;
+        eax = (ecx < 0x60) ? 1 : 0;
+        if (eax == local_14) goto LAB_005135e6;
+        edx = *reinterpret_cast<int *>(0x949870);
+    }
+    edi = local_8;
+
+LAB_005135ad:
+    if ((*reinterpret_cast<int *>(0x9a64ac) & 0x8000000) != 0) goto LAB_005138b3;
+    for (local_14 = 0; local_14 < 0x20; local_14 += 4) {
+        ecx = local_14;
+        esi = local_4;
+        eax = *reinterpret_cast<int *>(ecx + 0x66ef50);
+        ecx = *reinterpret_cast<unsigned char *>(0x94988c);
+        eax = eax + esi;
+        if ((ecx & 1) == 0) {
+            if (eax < 0) ebx = eax + edx;
+            else if (eax >= edx) ebx = eax - edx;
+            else ebx = eax;
+        } else {
+            ebx = eax;
+        }
+        eax = local_14;
+        edi = *reinterpret_cast<int *>(eax + 0x66ef74);
+        eax = local_8;
+        edi = edi + eax;
+        if (edi < 0) continue;
+        if (edi >= *reinterpret_cast<int *>(0x949874)) continue;
+        if (ebx < 0) continue;
+        if (ebx >= edx) continue;
+        esi = base_at(ebx, edi);
+        if (esi < 0) {
+            edx = *reinterpret_cast<int *>(0x949870);
+            continue;
+        }
+        ecx = esi + esi * 8;
+        edx = esi + ecx * 2;
+        ecx = 0;
+        eax = esi + edx * 4;
+        ecx = *reinterpret_cast<unsigned char *>(eax * 4 + 0x97d044);
+        eax = local_c;
+        eax = *reinterpret_cast<int *>(eax + 0x23bd4);
+        if (ecx != eax) goto LAB_005136fb;
+        edx = *reinterpret_cast<int *>(0x949870);
+    }
+    edi = local_8;
+
+LAB_005135e6:
+    if (tut_check(0x2000) == 0) goto LAB_00513b7e;
+    ecx = esi * 8;
+    eax = ebx + ebx * 4;
+    ecx = ecx - esi;
+    eax = eax + ecx;
+    edx = 0;
+    ecx = 3;
+    { int quot = eax / ecx; int rem = eax % ecx; eax = quot; edx = rem; }
+    eax = local_14;
+    eax = eax + edx * 2;
+    ecx = eax + eax * 4;
+    edx = eax + ecx * 2;
+    eax = edx * 4 + 0x77aff8;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a77c), esi, ebx, -1, reinterpret_cast<Sprite *>(eax), 0, -1, -1);
+    return;
+
+LAB_005136fb:
+    if (tut_check(0x8000000) == 0) goto LAB_00513b7e;
+    eax = esi + esi * 8;
+    ecx = esi + eax * 2;
+    esi = (esi + ecx * 4) << 2;
+    edx = esi + 0x97d053;
+    parse_says(0, reinterpret_cast<char *>(edx), -1, -1);
+    ecx = *reinterpret_cast<unsigned char *>(esi + 0x97d044);
+    eax = ecx + ecx * 4;
+    eax = (eax + eax * 8) << 3;
+    eax = eax - ecx;
+    eax = eax << 2;
+    ecx = *reinterpret_cast<int *>(eax + 0x946a50);
+    edx = eax + 0x946a9c;
+    *reinterpret_cast<int *>(0x9bbfec) = ecx;
+    *reinterpret_cast<int *>(0x9bbff0) = 0;
+    parse_says(1, reinterpret_cast<char *>(edx), -1, -1);
+    ecx = *reinterpret_cast<unsigned char *>(esi + 0x97d044);
+    eax = ecx + ecx * 4;
+    eax = (eax + eax * 8) << 3;
+    eax = eax - ecx;
+    eax = eax << 2;
+    ecx = *reinterpret_cast<int *>(eax + 0x946a50);
+    edx = eax + 0x946a84;
+    *reinterpret_cast<int *>(0x9bbfec) = ecx;
+    *reinterpret_cast<int *>(0x9bbff0) = 0;
+    parse_says(2, reinterpret_cast<char *>(edx), -1, -1);
+    ecx = *reinterpret_cast<unsigned char *>(esi + 0x97d044);
+    eax = ecx + ecx * 4;
+    eax = (eax + eax * 8) << 3;
+    eax = eax - ecx;
+    eax = eax << 2;
+    ecx = *reinterpret_cast<int *>(eax + 0x946d4c);
+    edx = *reinterpret_cast<int *>(eax + 0x946d50);
+    eax = eax + 0x946d34;
+    *reinterpret_cast<int *>(0x9bbfec) = ecx;
+    *reinterpret_cast<int *>(0x9bbff0) = edx;
+    parse_says(3, reinterpret_cast<char *>(eax), -1, -1);
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a788), ebx, edi, -1, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+
+LAB_005136b7:
+    if ((*reinterpret_cast<int *>(0x9a64ac) & 0x10000000) != 0) goto LAB_005138b3;
+    for (local_18 = 0; local_18 < 0x20; local_18 += 4) {
+        ecx = local_18;
+        esi = local_4;
+        ebx = *reinterpret_cast<unsigned char *>(0x94988c);
+        eax = *reinterpret_cast<int *>(ecx + 0x66ef50);
+        eax = eax + esi;
+        if ((ebx & 1) == 0) {
+            if (eax < 0) ebx = eax + edx;
+            else if (eax >= edx) ebx = eax - edx;
+            else ebx = eax;
+        } else {
+            ebx = eax;
+        }
+        ecx = *reinterpret_cast<int *>(ecx + 0x66ef74);
+        ecx = ecx + edi;
+        local_10 = ecx;
+        if (ecx < 0) continue;
+        if (ecx >= *reinterpret_cast<int *>(0x949874)) continue;
+        if (ebx < 0) continue;
+        if (ebx >= edx) continue;
+        eax = *reinterpret_cast<int *>(0x68faf0);
+        esi = ebx;
+        eax = eax * ecx;
+        esi = esi >> 1;
+        eax = eax + esi;
+        esi = eax + eax * 4;
+        eax = eax + esi * 2;
+        esi = *reinterpret_cast<int *>(0x94a30c);
+        {
+            int bitFlag = *reinterpret_cast<unsigned char *>(esi + eax * 4 + 8);
+            eax = esi + eax * 4;
+            if ((bitFlag & 1) != 0) {
+                eax = *reinterpret_cast<unsigned char *>(eax + 2);
+                eax = eax & 0xf;
+                if (eax < 8) {
+                    if (eax >= 0) continue;
+                }
+            }
+        }
+        esi = veh_at(ecx, ebx);
+        if (esi < 0) {
+            edx = *reinterpret_cast<int *>(0x949870);
+            continue;
+        }
+        ecx = esi + esi * 2;
+        edx = esi + ecx * 4;
+        eax = *reinterpret_cast<unsigned char *>(edx * 4 + 0x952836);
+        edx = local_c;
+        ecx = eax & 0xff;
+        if (ecx == *reinterpret_cast<int *>(edx + 0x23bd4)) {
+            edx = *reinterpret_cast<int *>(0x949870);
+            continue;
+        }
+        if (eax != 0) goto LAB_005138f7;
+        edx = *reinterpret_cast<int *>(0x949870);
+    }
+    edi = local_8;
+
+LAB_005138f7:
+    if (tut_check(0x10000000) == 0) goto LAB_00513b7e;
+    eax = esi + esi * 2;
+    edi = (esi + eax * 4) << 2;
+    ecx = *reinterpret_cast<unsigned char *>(edi + 0x952836);
+    eax = ecx + ecx * 4;
+    eax = (eax + eax * 8) << 3;
+    eax = eax - ecx;
+    eax = eax << 2;
+    ecx = *reinterpret_cast<int *>(eax + 0x946a50);
+    edx = eax + 0x946a9c;
+    *reinterpret_cast<int *>(0x9bbfec) = ecx;
+    *reinterpret_cast<int *>(0x9bbff0) = 0;
+    parse_says(1, reinterpret_cast<char *>(edx), -1, -1);
+    ecx = *reinterpret_cast<unsigned char *>(edi + 0x952836);
+    eax = ecx + ecx * 4;
+    eax = (eax + eax * 8) << 3;
+    eax = eax - ecx;
+    eax = eax << 2;
+    ecx = *reinterpret_cast<int *>(eax + 0x946a50);
+    edx = eax + 0x946a84;
+    *reinterpret_cast<int *>(0x9bbfec) = ecx;
+    *reinterpret_cast<int *>(0x9bbff0) = 0;
+    parse_says(2, reinterpret_cast<char *>(edx), -1, -1);
+    ecx = *reinterpret_cast<unsigned char *>(edi + 0x952836);
+    eax = ecx + ecx * 4;
+    eax = (eax + eax * 8) << 3;
+    eax = eax - ecx;
+    eax = eax << 2;
+    ecx = *reinterpret_cast<int *>(eax + 0x946d4c);
+    edx = *reinterpret_cast<int *>(eax + 0x946d50);
+    eax = eax + 0x946d34;
+    *reinterpret_cast<int *>(0x9bbfec) = ecx;
+    *reinterpret_cast<int *>(0x9bbff0) = edx;
+    parse_says(3, reinterpret_cast<char *>(eax), -1, -1);
+    ecx = local_10;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a794), ebx, ecx, esi, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+    return;
+
+LAB_005138b3:
+    if ((*reinterpret_cast<int *>(0x9a64ac) & 0x20000000) != 0) goto LAB_00513b7e;
+    for (local_18 = 0; local_18 < 0x20; local_18 += 4) {
+        ecx = local_18;
+        esi = local_4;
+        ebx = *reinterpret_cast<unsigned char *>(0x94988c);
+        eax = *reinterpret_cast<int *>(ecx + 0x66ef50);
+        eax = eax + esi;
+        if ((ebx & 1) == 0) {
+            if (eax < 0) edi = eax + edx;
+            else if (eax >= edx) edi = eax - edx;
+            else edi = eax;
+        } else {
+            edi = eax;
+        }
+        ecx = *reinterpret_cast<int *>(ecx + 0x66ef74);
+        eax = local_8;
+        ecx = ecx + eax;
+        local_10 = ecx;
+        if (ecx < 0) continue;
+        if (ecx >= *reinterpret_cast<int *>(0x949874)) continue;
+        if (edi < 0) continue;
+        if (edi >= edx) continue;
+        eax = *reinterpret_cast<int *>(0x68faf0);
+        esi = edi;
+        eax = eax * ecx;
+        esi = esi >> 1;
+        eax = eax + esi;
+        esi = eax + eax * 4;
+        eax = eax + esi * 2;
+        esi = *reinterpret_cast<int *>(0x94a30c);
+        ebx = *reinterpret_cast<unsigned char *>(esi + eax * 4 + 8);
+        eax = esi + eax * 4;
+        if ((ebx & 3) != 0) {
+            eax = *reinterpret_cast<unsigned char *>(eax + 2);
+            eax = eax & 0xf;
+            if (eax < 8) {
+                if (eax >= 0) continue;
+            }
+        }
+        esi = local_c;
+        eax = *reinterpret_cast<int *>(esi + 0x23bd4);
+        ebx = whose_territory(eax, edi, ecx, 0, 0);
+        if (ebx != eax && ebx >= 0) {
+            edx = local_8;
+            ecx = local_4;
+            eax = whose_territory(eax, ecx, edx, 0, 0);
+            if (eax != ebx) goto LAB_00513ac1;
+        }
+        edx = *reinterpret_cast<int *>(0x949870);
+    }
+    return;
+
+LAB_00513ac1:
+    if (tut_check(0x20000000) == 0) goto LAB_00513b7e;
+    esi = ebx + ebx * 4;
+    esi = (esi + esi * 8) << 3;
+    esi = esi - ebx;
+    esi = esi << 2;
+    edx = *reinterpret_cast<int *>(esi + 0x946a50);
+    eax = esi + 0x946a9c;
+    *reinterpret_cast<int *>(0x9bbfec) = edx;
+    *reinterpret_cast<int *>(0x9bbff0) = 0;
+    parse_says(1, reinterpret_cast<char *>(eax), -1, -1);
+    ecx = *reinterpret_cast<int *>(esi + 0x946a50);
+    edx = esi + 0x946a84;
+    *reinterpret_cast<int *>(0x9bbfec) = ecx;
+    *reinterpret_cast<int *>(0x9bbff0) = 0;
+    parse_says(2, reinterpret_cast<char *>(edx), -1, -1);
+    eax = *reinterpret_cast<int *>(esi + 0x946d4c);
+    ecx = *reinterpret_cast<int *>(esi + 0x946d50);
+    edx = esi + 0x946d34;
+    *reinterpret_cast<int *>(0x9bbfec) = eax;
+    *reinterpret_cast<int *>(0x9bbff0) = ecx;
+    parse_says(3, reinterpret_cast<char *>(edx), -1, -1);
+    eax = local_10;
+    tutwin->tut_map(reinterpret_cast<const char *>(0x68a7a0), edi, eax, -1, reinterpret_cast<Sprite *>(0), 0, -1, -1);
+
+LAB_00513b7e:
+    return;
 }

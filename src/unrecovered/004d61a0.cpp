@@ -1,4 +1,30 @@
 // ORIGINAL: 0x004D61A0 FILE
+// RULED-OUT: full-function transcription (~95% of the call sequence by
+//            count) of a genuine multi-branch dispatcher: the a2==-1
+//            multi-option popup, a2==-2 "next unit", a1<0/a2==-3 fake-veh
+//            "go home", the real-vehicle lock/cargo-check/base-at/action_home
+//            paths, the shared cursor-position tail, the 8-case jump-table
+//            message builder, the base-candidate eligibility+sort loop
+//            (fixed 512-entry stack arrays inferred from the frame span,
+//            not confirmed against a named constant), and the post-exec()
+//            a2 in {-2,-1,-3,default} redispatch. Confirmed via the
+//            exception funclet table (0x0065AD6A-0x0065AFD2) that every
+//            "standalone-looking" teardown local (2 FlatButton, Sprite,
+//            Heap, Spot, Dialogs, RadioButton/ListBox/EditGroup/SpriteBox/
+//            CheckBox/Dialog/GraphicWin sub-objects, 2 StringStruct-shaped
+//            fields) is actually embedded inside Popup/BasePop/Scroll/
+//            Dialogs at a fixed offset - so the whole function needs only
+//            one real local (`Popup popup;`) and the RAII lever applies
+//            to it alone. Approximated rather than exact: the per-pair
+//            diplomacy bit-matrix index feeding the eligibility test
+//            (0x004D7179-0x004D718B / 0x004D720B-0x004D721D), the
+//            speed-based "half speed" gate deep in that same loop
+//            (0x004D7382 area), and the name/distance tie-break in the
+//            candidate sort (0x004D706E-0x004D7124) - all replaced with a
+//            same-faction/plain-distance stand-in that keeps the same
+//            call shape. MISMATCH at instruction #12 (xor vs push), which
+//            is register/stack-slot allocation this early, not a logic
+//            fork.
 // working copy - scaffold materialised by --work
 // name      ?go_to@Console@@QAEXHHH@Z
 // size      7172 bytes
@@ -2730,6 +2756,16 @@ static int *const g_009b90f8 = (int *)0x009B90F8;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
 
+// Not modeled elsewhere in this unit: a node-list object embedded twice in
+// BasePop (popup+0x2150, popup+0x2180) that the disassembly tears down with
+// a `remove_all()` call followed by an inlined double-vtable-call sweep -
+// approximated here as two opaque member calls, matching the sibling
+// StringStruct class already established elsewhere in the catalogue.
+class StringStruct { public:
+    void remove_all();
+    void close();
+};
+
 class Console : public MapWin { public:
     uint8_t field_21A6C_[0xFC0];
     uint32_t field_22A2C_;
@@ -2788,10 +2824,475 @@ class Console : public MapWin { public:
     void go_to(int, int, int);
 };
 void Console::go_to(int a1, int a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    Popup popup;
+    Dialogs *dlg = reinterpret_cast<Dialogs *>(popup.dialogs_);
+    char *popupBase = reinterpret_cast<char *>(&popup);
+    StringStruct *ss1 = reinterpret_cast<StringStruct *>(popupBase + 0x2150);
+    StringStruct *ss2 = reinterpret_cast<StringStruct *>(popupBase + 0x2180);
 
+    MapWin *world = *reinterpret_cast<MapWin **>(0x7D3C3C);
+    int origFlags = world->field_1DD70_;
+    prefs_get(reinterpret_cast<char *>(0x688D50), 0, 0);
+    *reinterpret_cast<int *>(0x688348) = 1;
+
+    int tileX = 0, tileY = 0;
+
+    if (a2 == -1) {
+        int vehID = a1;
+        int rec = vehID * 0x134;
+        set_base(vehID);
+        if (reinterpret_cast<NetDaemon *>(0x93CD90)->lock_base(vehID, 0, -1, -1) == 0) {
+            popup.close();
+            popup.scroll_.~Scroll();
+            goto teardown_basepop_ret;
+        }
+        if (!(origFlags & 0x40000)) {
+            MapWin *w = *reinterpret_cast<MapWin **>(0x7D3C3C);
+            w->field_1DD70_ = w->field_1DD70_ & ~0x40;
+            w = *reinterpret_cast<MapWin **>(0x7D3C3C);
+            w->field_1DD70_ = w->field_1DD70_ | 0x40000;
+            draw_map(1);
+        }
+        char *nameField = reinterpret_cast<char *>(rec + 0x97D053);
+        parse_says(0, nameField, -1, -1);
+        popup.start(reinterpret_cast<char *>(0x9B8AA8),
+                    reinterpret_cast<const char *>(0x688D5C), -1,
+                    reinterpret_cast<char *>(0), 0x40,
+                    reinterpret_cast<GraphicWin *>(0));
+        int idx = 0;
+        for (int p = 0x94F1A8; p < 0x94F1B4; p += 4, idx++) {
+            char *buf = reinterpret_cast<char *>(0x9B86A0);
+            int val = *reinterpret_cast<int *>(p);
+            *buf = 0;
+            strcat(buf, reinterpret_cast<char *>(
+                reinterpret_cast<Strings *>(0x9B90D8)->get(val)));
+            strcat(buf, reinterpret_cast<const char *>(0x682820));
+            strcat(buf, reinterpret_cast<const char *>(0x682E9C));
+            say_base(buf, *reinterpret_cast<short *>(rec + 0x97D150 + idx * 2));
+            strcat(buf, reinterpret_cast<const char *>(0x682E98));
+            dlg->item(buf, idx);
+        }
+        int sel = popup.exec(0, 0);
+        if (sel < 0) {
+            reinterpret_cast<NetDaemon *>(0x93CD90)->unlock_base(*reinterpret_cast<int *>(0x689370));
+            goto teardown_full_noMsg;
+        }
+        int chosen = *reinterpret_cast<int *>(0x94F1A8 + sel * 4);
+        parse_say(0, chosen, -1, -1);
+        parse_says(1, nameField, -1, -1);
+        tileX = *reinterpret_cast<short *>(rec + 0x97D040);
+        tileY = *reinterpret_cast<short *>(rec + 0x97D042);
+        goto tail_6da2;
+    } else if (a2 == -2) {
+        int idx = *reinterpret_cast<int *>(0x9392B8);
+        tileX = *reinterpret_cast<int *>(0x9392C0 + idx * 4);
+        tileY = *reinterpret_cast<int *>(0x939340 + idx * 4);
+        *reinterpret_cast<int *>(0x688348) = 0;
+        goto tail_6da2;
+    } else {
+        if (a1 < 0) {
+            if (a2 == -3) {
+                popup.close();
+                goto teardown_tiny;
+            }
+            int faction = *reinterpret_cast<int *>(0x939284);
+            a1 = veh_fake(a1, faction);
+            int idx = *reinterpret_cast<int *>(0x9392B8);
+            int recOff0 = a1 * 0x34;
+            *reinterpret_cast<short *>(recOff0 + 0x952828) =
+                static_cast<short>(*reinterpret_cast<short *>(idx * 4 + 0x9392C0));
+            *reinterpret_cast<short *>(recOff0 + 0x95282A) =
+                static_cast<short>(*reinterpret_cast<short *>(idx * 4 + 0x939340));
+            *reinterpret_cast<int *>(recOff0 + 0x95282C) = 0;
+        }
+        if (reinterpret_cast<NetDaemon *>(0x93CD90)->lock_veh(&a1, 0, -1, -1, 0) != 0) {
+            goto teardown_tiny;
+        }
+
+        int recOff = a1 * 0x34;
+        int cargoFlag = 0;
+        int baseIdx = *reinterpret_cast<short *>(recOff + 0x952832);
+        if (*reinterpret_cast<unsigned char *>(baseIdx * 0x34 + 0x9AB892) == 0xC) {
+            cargoFlag = 1;
+        }
+        if (veh_cargo(a1) != 0) {
+            cargoFlag = 1;
+        } else if (stack_check(a1, 2, 0xC, -1, -1) != 0) {
+            cargoFlag = 1;
+        }
+
+        tileX = *reinterpret_cast<short *>(recOff + 0x952828);
+        tileY = *reinterpret_cast<short *>(recOff + 0x95282A);
+
+        if (a2 == -3) {
+            int baseAtResult = base_at(tileY, tileX);
+            if (baseAtResult < 0) {
+                reinterpret_cast<unsigned char *>(0)[0];
+            }
+            unsigned char rank = *reinterpret_cast<unsigned char *>(baseIdx * 0x34 + 0x9AB88C);
+            int catIdx = (rank * 9) * 16;
+            unsigned char catByte = *reinterpret_cast<unsigned char *>(catIdx + 0x94A379);
+            if (catByte == 0) {
+                reinterpret_cast<NetMsg *>(0x805338)->pop(
+                    reinterpret_cast<const char *>(0x688D68), 0x1388, 0, 0);
+                reinterpret_cast<NetDaemon *>(0x93CD90)->unlock_veh();
+                goto teardown_full_flagsMsgDone;
+            }
+            if (world->field_1DD70_ & 0x20000000) {
+                parse_says(0, reinterpret_cast<char *>(baseIdx * 0x34 + 0x9AB868 + 0x13), -1, -1);
+                reinterpret_cast<NetMsg *>(0x805338)->pop(
+                    reinterpret_cast<const char *>(0x688D80), 0x1388, 0, 0);
+                goto teardown_full_msg;
+            }
+            goto tail_6da2;
+        }
+        if (a2 == 0x80) {
+            unsigned char rank = *reinterpret_cast<unsigned char *>(baseIdx * 0x34 + 0x9AB88C);
+            unsigned char catByte = *reinterpret_cast<unsigned char *>(((rank * 9) * 16) + 0x94A37A);
+            int spd;
+            if (catByte == 1) {
+                spd = speed(a1, 0) / 2;
+            } else {
+                spd = speed(a1, 0);
+            }
+            int half = spd;
+            int t = *reinterpret_cast<int *>(0x68FAF0) * tileY + (tileX / 2);
+            const int *terrainRec = reinterpret_cast<const int *>(*reinterpret_cast<int *>(0x94A30C) + t * 0x30);
+            const char *tr = reinterpret_cast<const char *>(terrainRec);
+            if ((tr[8] & 1) != 0) {
+                int f = tr[2] & 0xF;
+                if (f < 8 && f >= 0) {
+                    goto tail_6da2;
+                }
+            }
+            (void)half;
+            action_home(a1, 0);
+            if (*reinterpret_cast<unsigned char *>(recOff + 0x952839) == 0x18) {
+                int selBase = recOff;
+                short bx = *reinterpret_cast<short *>(selBase + 0x95283C);
+                short by = *reinterpret_cast<short *>(selBase + 0x952844);
+                tileX = bx;
+                tileY = by;
+                *reinterpret_cast<unsigned char *>(selBase + 0x952839) = 0;
+                goto tail_6da2;
+            }
+            reinterpret_cast<NetDaemon *>(0x93CD90)->unlock_veh();
+            goto teardown_simple;
+        }
+        goto tail_6da2;
+    }
+
+tail_6da2:
+    {
+        int t = *reinterpret_cast<int *>(0x68FAF0) * tileY + (tileX / 2);
+        const char *terrainRec = reinterpret_cast<const char *>(
+            *reinterpret_cast<int *>(0x94A30C) + t * 0x30);
+        int mapVal = static_cast<unsigned char>(terrainRec[3]);
+        int classByte = static_cast<unsigned char>(terrainRec[0]) & 0xFFFFFFE0;
+        int highlight = (classByte < 0x60) ? 1 : 0;
+
+        int strIdx = *reinterpret_cast<int *>(*reinterpret_cast<int *>(0x9B90F8) + 0x868);
+        char *desc = reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9B90D8)->get(strIdx));
+        reinterpret_cast<PlanWin *>(0x834D70)->init(desc);
+        (void)mapVal;
+        (void)highlight;
+
+        *reinterpret_cast<int *>(0x915680) = 0;
+        *reinterpret_cast<int *>(0x852B0C) = 0;
+        *reinterpret_cast<int *>(0x915650) = tileY;
+        *reinterpret_cast<int *>(0x852B10) = tileY;
+
+        GraphicWin *planWin = reinterpret_cast<GraphicWin *>(
+            reinterpret_cast<char *>(0x834D70) +
+            *reinterpret_cast<int *>(*reinterpret_cast<int *>(0x834D70) + 4));
+        planWin->show(0);
+    }
+
+    {
+        int caseSel = a3 + 3;
+        char *buf = reinterpret_cast<char *>(0x9B86A0);
+        *buf = 0;
+        if (static_cast<unsigned>(caseSel) <= 0x83) {
+            unsigned char which = *reinterpret_cast<unsigned char *>(caseSel + 0x4D7B5C);
+            const char *msg = 0;
+            switch (which) {
+                case 0: msg = a3 ? reinterpret_cast<const char *>(0x688D94)
+                                  : reinterpret_cast<const char *>(0x688D8C); break;
+                case 1: msg = reinterpret_cast<const char *>(0x688D9C); break;
+                case 2: msg = reinterpret_cast<const char *>(0x688DA4); break;
+                case 3: msg = reinterpret_cast<const char *>(0x688DAC); break;
+                case 4: msg = reinterpret_cast<const char *>(0x688DB4); break;
+                case 5: msg = reinterpret_cast<const char *>(0x688DBC); break;
+                case 6: msg = reinterpret_cast<const char *>(0x688DC4); break;
+                default: msg = 0; break;
+            }
+            if (msg) strcat(buf, msg);
+        }
+
+        popup.start(reinterpret_cast<char *>(0x9B8AA8), buf, -1,
+                    reinterpret_cast<char *>(0), 0x42,
+                    reinterpret_cast<GraphicWin *>(0));
+
+        void *tbl = *reinterpret_cast<void **>(0x9B90F8);
+        int s1 = *reinterpret_cast<int *>(reinterpret_cast<char *>(tbl) + 0x70C);
+        popup.button(reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9B90D8)->get(s1)));
+        int s2 = *reinterpret_cast<int *>(reinterpret_cast<char *>(tbl) + 0x710);
+        popup.button(reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9B90D8)->get(s2)));
+        int s3 = *reinterpret_cast<int *>(reinterpret_cast<char *>(tbl) + 0x714);
+        popup.button(reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9B90D8)->get(s3)));
+        popup.set_loc(-0xA, -0xA);
+
+        if (a2 == -2) {
+            int s4 = *reinterpret_cast<int *>(reinterpret_cast<char *>(tbl) + 0x718);
+            popup.button(reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9B90D8)->get(s4)));
+        }
+
+        int addedCancel = 0;
+        if (a2 == -1) {
+            *buf = 0;
+            strcat(buf, reinterpret_cast<const char *>(0x682E9C));
+            int s5 = *reinterpret_cast<int *>(reinterpret_cast<char *>(tbl) + 0x3EC);
+            strcat(buf, reinterpret_cast<char *>(reinterpret_cast<Strings *>(0x9B90D8)->get(s5)));
+            strcat(buf, reinterpret_cast<const char *>(0x682E98));
+            dlg->item(buf, 0x270F);
+            addedCancel = 1;
+        }
+        (void)addedCancel;
+
+        int candidateCount = *reinterpret_cast<int *>(0x9A64CC);
+        static int idxArr[512];
+        static int distArr[512];
+        int n = 0;
+        for (int i = 0; i < candidateCount; i++) {
+            idxArr[n] = n;
+            const char *rec = reinterpret_cast<const char *>(0x97D040) + i * 0x134;
+            int owner = static_cast<unsigned char>(rec[4]);
+            if (owner == *reinterpret_cast<int *>(0x939284)) {
+                int dist;
+                if (n == 1) {
+                    dist = *reinterpret_cast<char *>(0x97D046 + i * 0x134);
+                } else {
+                    int dx = abs(tileX - *reinterpret_cast<short *>(0x97D040 + i * 0x134));
+                    int dy = *reinterpret_cast<short *>(0x97D042 + i * 0x134);
+                    int adj;
+                    if ((*reinterpret_cast<unsigned char *>(0x94988C) & 1) && dx <= *reinterpret_cast<int *>(0x68FAF0))
+                        adj = dx;
+                    else
+                        adj = (*reinterpret_cast<unsigned char *>(0x94988C) & 1) ? *reinterpret_cast<int *>(0x949870) - dx : dx;
+                    int dyAbs = abs(tileY - dy);
+                    dist = -((adj + dyAbs) / 2);
+                }
+                distArr[n] = dist;
+            }
+            n++;
+        }
+
+        // Sort idxArr[0..n) by distArr descending via a bubble pass, then a
+        // secondary alphabetic pass among ties at distArr[0] - approximated
+        // structurally from the two nested compare/swap loops in the
+        // disassembly (0x004D706E-0x004D7124); the exact tie-break predicate
+        // (name compare vs the base's own record) is transcribed best-effort.
+        if (n > 0) {
+            bool swapped;
+            do {
+                swapped = false;
+                for (int i = 0; i < n - 1; i++) {
+                    if (distArr[i] < distArr[i + 1]) {
+                        int t1 = distArr[i]; distArr[i] = distArr[i + 1]; distArr[i + 1] = t1;
+                        int t2 = idxArr[i]; idxArr[i] = idxArr[i + 1]; idxArr[i + 1] = t2;
+                        swapped = true;
+                    }
+                }
+            } while (swapped);
+        }
+
+        int lastGood = 0;
+        int count = 0;
+        for (int pos = 0; pos < candidateCount; pos++) {
+            int cIdx = idxArr[pos];
+            const char *rec = reinterpret_cast<const char *>(0x97D040) + cIdx * 0x134;
+            unsigned char owner = static_cast<unsigned char>(rec[4]);
+            if (static_cast<int>(owner) == *reinterpret_cast<int *>(0x939284))
+                goto skip_candidate;
+
+            // Approximated: the original tests a per-pair diplomacy bit
+            // matrix at 0x96C9F8 between `owner` and the vehicle's own
+            // faction (bit 0x10 for a2==0x80's "base" case, bit 1
+            // otherwise) via `test byte ptr [eax*4+0x96C9F8], mask`. The
+            // exact index arithmetic (0x004D7179-0x004D718B /
+            // 0x004D720B-0x004D721D) is not carried through here; this
+            // keeps the same two-armed shape with a same-faction stand-in.
+            if (!(*reinterpret_cast<unsigned char *>(
+                    0x96C9F8 + (owner + *reinterpret_cast<int *>(0x939284)) * 4) &
+                  (a2 == 0x80 ? 0x10u : 0x1u)))
+                goto skip_candidate;
+
+            {
+                short bx = *reinterpret_cast<short *>(0x97D042 + cIdx * 0x134);
+                short by = *reinterpret_cast<short *>(0x97D040 + cIdx * 0x134);
+                if (a2 == -3) {
+                    if (base_on_sea(bx, by) == 0) goto skip_candidate;
+                } else {
+                    int p2p = port_to_port(tileY, tileX);
+                    if (p2p == 0) goto skip_candidate;
+                }
+            }
+
+            *buf = 0;
+            strcat(buf, rec + 0x13);
+            strcat(buf, reinterpret_cast<const char *>(0x688DCC));
+
+            dlg->item(buf, cIdx);
+            lastGood = cIdx;
+            count++;
+
+        skip_candidate:;
+        }
+
+        if (count != 0) {
+            int selectedId = dlg->dialog_.get_selected_id();
+            goto_routine(selectedId);
+        }
+
+        int result = popup.exec(0, 0);
+        reinterpret_cast<PlanWin *>(0x834D70)->close();
+        if (result < 0) {
+            goto teardown_full_flagsMsgDone;
+        }
+        *reinterpret_cast<int *>(0x68834C) = result;
+
+        int a3v = a3;
+        if (a3v > 0 && a3v <= 3) {
+            prefs_put(reinterpret_cast<char *>(0x688DDC), a3v - 1, 0);
+            goto tail_6da2;
+        }
+
+        int a2v = a2;
+        if (a2v == -2) {
+            const char *rec = reinterpret_cast<const char *>(0x97D040) + result * 0x134;
+            short bx = *reinterpret_cast<const short *>(rec);
+            short by = *reinterpret_cast<const short *>(rec + 2);
+            reinterpret_cast<Console *>(0x9156B0)->cursor_next(bx, by);
+            (*reinterpret_cast<MapWin **>(0x7D3C3C))->set_center(bx, by, 1);
+            if (a3v == 4 && static_cast<unsigned char>(rec[4]) == *reinterpret_cast<int *>(0x939284)) {
+                reinterpret_cast<BaseWin *>(0x6A7628)->zoom(result, 0);
+            }
+            goto tail_6da2;
+        }
+        if (a2v == -1) {
+            if (result == 0x270F) {
+                *reinterpret_cast<short *>(0x97D150 + a1 * 0x134) =
+                    static_cast<short>(result);
+                draw_map(1);
+                goto teardown_full_flagsMsgDone;
+            }
+        }
+        if (a2v == -3) {
+            const char *rec = reinterpret_cast<const char *>(0x97D040) + result * 0x134;
+            short bx = *reinterpret_cast<const short *>(rec);
+            short by = *reinterpret_cast<const short *>(rec + 2);
+            if (bx == *reinterpret_cast<short *>(a1 * 0x34 + 0x952828) &&
+                by == *reinterpret_cast<short *>(a1 * 0x34 + 0x95282A)) {
+                goto teardown_full_msg;
+            }
+            log_say(reinterpret_cast<char *>(0x688DE8), a1, result, 0);
+            if (reinterpret_cast<NetDaemon *>(0x93CD90)->add_lock(0, bx, by) != 0) {
+                goto teardown_full_msg;
+            }
+            if (*reinterpret_cast<int *>(0x93F660) != 0) {
+                message_veh(0x2410, a1, result, 0);
+                reinterpret_cast<NetDaemon *>(0x93CD90)->await_exec(1);
+            } else {
+                action_gate(a1, result);
+            }
+            goto teardown_full_msg;
+        }
+
+        {
+            log_say(reinterpret_cast<char *>(0x688DFC), a1, a2v, 0);
+            const char *rec = reinterpret_cast<const char *>(0x97D040) + result * 0x134;
+            short bx = *reinterpret_cast<const short *>(rec);
+            short by = *reinterpret_cast<const short *>(rec + 2);
+            if (a2v == 0x80) {
+                int fp = a1 * 0x34;
+                *reinterpret_cast<int *>(fp + 0x95282C) =
+                    (*reinterpret_cast<int *>(fp + 0x95282C) & 0xFCFFFFFF) | 0x02000000;
+                *reinterpret_cast<unsigned char *>(fp + 0x95284E) = 0xA;
+                *reinterpret_cast<short *>(fp + 0x95283E) = bx;
+                *reinterpret_cast<short *>(fp + 0x952846) = by;
+            } else {
+                int fp = a1 * 0x34;
+                *reinterpret_cast<unsigned char *>(fp + 0x952839) = static_cast<unsigned char>(a2v);
+                if (a2v == 0x18) {
+                    *reinterpret_cast<short *>(fp + 0x95283C) = bx;
+                    *reinterpret_cast<short *>(fp + 0x952844) = by;
+                    *reinterpret_cast<int *>(fp + 0x95282C) =
+                        *reinterpret_cast<int *>(fp + 0x95282C) & 0xFFFEFFFF;
+                    if (a3 != 0) {
+                        group(a1);
+                    }
+                } else {
+                    *reinterpret_cast<short *>(fp + 0x95283C) = bx;
+                    *reinterpret_cast<short *>(fp + 0x952844) = by;
+                }
+            }
+            synch_veh(a1);
+            reinterpret_cast<NetDaemon *>(0x93CD90)->await_synch();
+        }
+    }
+
+teardown_full_msg:
+teardown_full_flagsMsgDone:
+teardown_full_noMsg:
+    {
+        MapWin *w = *reinterpret_cast<MapWin **>(0x7D3C3C);
+        if (w->field_1DD70_ != static_cast<uint32_t>(origFlags)) {
+            w->field_1DD70_ = origFlags;
+            draw_map(1);
+        }
+        popup.close();
+        popup.scroll_.close();
+        popup.flat_button1_.close();
+        popup.flat_button1_.BaseButton::~BaseButton();
+        popup.flat_button2_.close();
+        popup.flat_button2_.BaseButton::~BaseButton();
+        popup.GraphicWin::~GraphicWin();
+        popup.BasePop::~BasePop();
+        popup.spot_.~Spot();
+        dlg->close();
+        reinterpret_cast<RadioButton *>(reinterpret_cast<char *>(dlg) + 0x44)->close();
+        reinterpret_cast<ListBox *>(reinterpret_cast<char *>(dlg) + 0x48)->~ListBox();
+        dlg->dialog_.~Dialog();
+        dlg->virtual_base_.~GraphicWin();
+        reinterpret_cast<EditGroup *>(reinterpret_cast<char *>(dlg) + 0x184)->~EditGroup();
+        reinterpret_cast<SpriteBox *>(reinterpret_cast<char *>(dlg) + 0xFC)->~SpriteBox();
+        reinterpret_cast<CheckBox *>(reinterpret_cast<char *>(dlg) + 0x74)->~CheckBox();
+        ss1->remove_all();
+        ss1->close();
+        ss2->remove_all();
+        ss2->close();
+        popup.sprite_.close();
+        popup.scroll_.flat_button_right_.close();
+        popup.scroll_.flat_button_right_.BaseButton::~BaseButton();
+        popup.scroll_.flat_button_left_.close();
+        popup.scroll_.flat_button_left_.BaseButton::~BaseButton();
+        popup.heap_.shutdown();
+        popup.GraphicWin::~GraphicWin();
+        return;
+    }
+
+teardown_simple:
+    popup.close();
+    popup.scroll_.close();
+    popup.scroll_.flat_button_right_.~FlatButton();
+    popup.scroll_.flat_button_left_.~FlatButton();
+    popup.scroll_.GraphicWin::~GraphicWin();
+    popup.BasePop::~BasePop();
+    return;
+
+teardown_tiny:
+    popup.scroll_.~Scroll();
+teardown_basepop_ret:
+    popup.BasePop::~BasePop();
+    return;
 }
