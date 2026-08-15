@@ -258,7 +258,7 @@ def score_all(address: int, bodies: dict) -> list:
     #
     # The RANKING is done here; the VERDICT is not. The winner goes back through
     # `match_function`, which is the only thing that applies the SHARED_TAIL and
-    # self-modifying refusals and the best-of rule across all four flag sets. A
+    # self-modifying refusals and the best-of rule across all six flag sets. A
     # fast ranking that quietly disagreed with the authoritative scorer would be
     # worse than a slow one.
     prepared, refused = {}, {}
@@ -487,7 +487,7 @@ FLAG_LABEL = {
 
 
 def per_flag_report(name: str, per_flags: dict) -> str:
-    """All four flag sets for one candidate, not just the one that won.
+    """All six flag sets for one candidate, not just the one that won.
 
     `byte_match._better` ranks mnemonic similarity ABOVE first divergence,
     which is right for choosing a verdict and misleading as a diagnostic: the
@@ -505,7 +505,7 @@ def per_flag_report(name: str, per_flags: dict) -> str:
     scored = per_flags.get(name) or {}
     if len(scored) < 2:
         return ""
-    lines = ["", f"   all four flag sets for `{name}` - work the row whose "
+    lines = ["", f"   all six flag sets for `{name}` - work the row whose "
                  f"prologue class matches the original,",
              "   not the best line above; the verdict is chosen by SIMILARITY "
              "and may not be the",

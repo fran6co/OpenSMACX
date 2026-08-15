@@ -988,5 +988,47 @@ class VtableSlotTests(unittest.TestCase):
         self.assertEqual(([0x3e], []), self.slots(code))
 
 
+
+class StringRoutinePragmaTests(unittest.TestCase):
+    """`#pragma function(...)` for the routines the image calls but /Oi inlines."""
+
+    def test_it_names_only_what_the_unit_declares(self):
+        # A pragma naming a routine nothing declared is SILENTLY ignored, so
+        # emitting all four where one is used makes the working names look
+        # like the ignored ones.
+        lines = tool.string_routine_pragma(
+            ['extern "C" char *strcat(char *, const char *);'])
+        self.assertEqual(lines[0], "#pragma function(strcat)")
+
+    def test_it_emits_nothing_when_no_string_routine_is_declared(self):
+        self.assertEqual(tool.string_routine_pragma(
+            ['extern "C" int in_box(int, int);']), [])
+
+    def test_it_keeps_the_catalogue_order(self):
+        lines = tool.string_routine_pragma([
+            'extern "C" unsigned int strlen(const char *);',
+            'extern "C" char *strcat(char *, const char *);'])
+        self.assertEqual(lines[0], "#pragma function(strcat, strlen)")
+
+    def test_the_emitted_pragma_follows_the_declarations(self):
+        # THE ENTIRE TRICK. Above them it is ignored without a diagnostic:
+        # measured on 0x00634E80, the pragma at the top of the unit leaves it
+        # MISMATCH at 0.4872 and one line below the declarations makes it
+        # BYTE_EXACT.
+        import byte_match
+        if not byte_match.DEFAULT_EXE.is_file():
+            self.skipTest("the pinned executable is absent")
+        import pefile
+        pe = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
+        text = tool.emit(0x00634E80, tool.load_functions(), tool.load_derived(),
+                         tool.load_callees(), pe)
+        pragma = next(i for i, line in enumerate(text.splitlines())
+                      if line.startswith("#pragma function"))
+        declaration = max(i for i, line in enumerate(text.splitlines())
+                          if line.startswith('extern "C"')
+                          and any(r in line for r in tool.STRING_ROUTINES))
+        self.assertGreater(pragma, declaration,
+                           "a pragma above the declaration is a no-op")
+
 if __name__ == "__main__":
     unittest.main()

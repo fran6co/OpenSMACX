@@ -137,8 +137,15 @@ GENERATED_FILES = (
     "field_accessors.cpp", "global_arith.cpp", "generated_signature_oracle.cpp",
 )
 
-FIELDS = ("address", "name", "source_location", "generated", "size",
-          "span_classes", "tier", "original_bytes", "rebuilt_bytes",
+# `flag_digest` identifies the `byte_match.FLAG_SETS` that produced the row.
+# A verdict is the BEST result across those sets, so it is a fact about the
+# source AND the invocation, and a row recording only the first half cannot be
+# told from one measured under a configuration since edited - which is how
+# sixteen rows from a reverted `/O2 /Oi-` experiment kept asserting matches no
+# invocation could reproduce. `decomp_status.merge_ledger` reads it to decide
+# whether its never-downgrade rule still applies.
+FIELDS = ("address", "flag_digest", "name", "source_location", "generated",
+          "size", "span_classes", "tier", "original_bytes", "rebuilt_bytes",
           "original_mnemonics", "rebuilt_mnemonics", "first_divergence",
           "note", "refusal_reason")
 

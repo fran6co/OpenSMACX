@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005BF480
+// ORIGINAL: 0x005BF480 BYTE_EXACT
 // name      ?X_pop@@YAHPADPBDHPADHP6AHXZ@Z
 // size      322 bytes
 // spans     0x005BF480-0x005BF5C2
@@ -7,17 +7,22 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x006272C0 0x00645598 0x00645646 0x00645660
-// RULED-OUT: calling fopen/fclose directly by name - the catalogue records
-//            them unmangled with no CRT_SIGNATURES entry, so declfix leaves
-//            them nullary (C2660) and a local redeclaration is C2733
-//            (second C linkage); routed through function-pointer casts
-//            instead, mirroring 0x005BFBC0 (X_pop_ask)'s Ghidra shape for
-//            the branch structure - bit clear on the per-mod flag table
-//            takes the 0x93f7cc-range-checked alienuscript path
-//            (0x691ca4/0x691ca8, pop via 0x691b24); bit set takes the
-//            simple path (0x691c8c/0x691c90, pop via 0x691b20).
-//            Best reached: MISMATCH, edit_count 5, 398 bytes vs 322,
-//            mnemonic similarity ~0.83.
+// LEVER: crt-by-pointer  fopen/fclose reached through function-pointer casts
+//        rather than by name. The catalogue records them unmangled with no
+//        CRT_SIGNATURES entry, so declfix leaves them nullary (C2660) and a
+//        local redeclaration is C2733 (second C linkage); the cast is the
+//        only spelling that compiles, and it emits the same call.
+//        The branch structure mirrors 0x005BFBC0 (X_pop_ask)'s Ghidra shape:
+//        bit clear on the per-mod flag table takes the 0x93f7cc-range-checked
+//        alienuscript path (0x691ca4/0x691ca8, pop via 0x691b24); bit set
+//        takes the simple path (0x691c8c/0x691c90, pop via 0x691b20).
+// LEVER: string-routines-are-calls  what closed the last gap was not this
+//        body. It sat at MISMATCH, 398 bytes against 322, similarity ~0.83,
+//        for as long as the scaffold compiled its `strcmp` into an inlined
+//        `/Oi` expansion the image does not have. The scaffold now emits
+//        `#pragma function(...)` below the declarations it names
+//        (emit_translation_unit.string_routine_pragma) and the body was
+//        already right.
 int __cdecl X_pop(char * a1, const char * a2, int a3, char * a4, int a5, int (__cdecl *a6)()) {
     typedef void *(__cdecl *FopenFn)(const char *, const char *);
     typedef int (__cdecl *FcloseFn)(void *);

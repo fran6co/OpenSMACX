@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005BFBC0
+// ORIGINAL: 0x005BFBC0 BYTE_EXACT
 // name      ?X_pop_ask@@YAHPADPBDHPADP6AHXZH@Z
 // size      322 bytes
 // spans     0x005BFBC0-0x005BFD02
@@ -7,17 +7,20 @@
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00627910 0x00645598 0x00645646 0x00645660
-// RULED-OUT: same shape as 0x005BF480 (X_pop): fopen/fclose called direct
-//            by name is C2660 (nullary via declfix, not in CRT_SIGNATURES),
-//            local redeclaration is C2733; routed through function-pointer
-//            casts. Branch structure follows this address's own Ghidra
-//            decompilation directly (it was available here, unlike
-//            0x005BF480): per-mod flag bit clear takes the range-checked
-//            alienuscript path (0x691d1c/0x691d20, pop_ask via 0x691b24);
-//            bit set takes the simple path (0x691d04/0x691d08, pop_ask via
-//            0x691b20).
-//            Best reached: MISMATCH, edit_count 5, 398 bytes vs 322,
-//            mnemonic similarity ~0.83.
+// LEVER: crt-by-pointer  same shape as 0x005BF480 (X_pop): fopen/fclose by
+//        name is C2660 (nullary via declfix, not in CRT_SIGNATURES) and a
+//        local redeclaration is C2733, so both go through function-pointer
+//        casts. Branch structure follows this address's own Ghidra
+//        decompilation directly, which was available here and not for
+//        0x005BF480: per-mod flag bit clear takes the range-checked
+//        alienuscript path (0x691d1c/0x691d20, pop_ask via 0x691b24); bit
+//        set takes the simple path (0x691d04/0x691d08, pop_ask via
+//        0x691b20).
+// LEVER: string-routines-are-calls  it sat at MISMATCH, 398 bytes against
+//        322, similarity ~0.83, while the scaffold inlined its `strcmp` as
+//        an `/Oi` expansion the image does not have. The scaffold now emits
+//        `#pragma function(...)` below the declarations it names, and the
+//        body was already right.
 int __cdecl X_pop_ask(char * a1, const char * a2, int a3, char * a4, int (__cdecl *a5)(), int a6) {
     typedef void *(__cdecl *FopenFn)(const char *, const char *);
     typedef int (__cdecl *FcloseFn)(void *);

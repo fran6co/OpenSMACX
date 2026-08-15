@@ -422,12 +422,34 @@ class FlagSetTests(unittest.TestCase):
         Frame pointer: 1,518 remaining targets open `push ebp; mov ebp, esp`
         and 1,544 do not. Optimisation level: `_malloc` reproduces only under
         `/O1`, and `sub_515430` clears a stack argument with `pop` where `/O2`
-        emits `add esp, 4`."""
+        emits `add esp, 4`.
+
+        FOUR, NOT SIX. `/O2 /Oi-` was added as a fifth and sixth on
+        2026-08-15 and reverted the same day: over 120 byte-exact bodies it
+        reproduced the SAME 94 as `/O2`, to the body, and the CRT-calling
+        bodies it did help are explained instead by
+        `emit_translation_unit.string_routine_pragma` - one build
+        configuration and one line of source. A flag set that never wins
+        alone is four compiles per body of nothing.
+        """
         self.assertEqual(len(tool.FLAG_SETS), 4)
+        self.assertEqual(len(set(tool.FLAG_SETS)), 4, "a duplicated set is a "
+                         "compile that runs twice and can never win")
         for level in ("/O1", "/O2"):
             at_level = [f for f in tool.FLAG_SETS if level in f]
             self.assertEqual(len(at_level), 2, f"{level} needs both frames")
             self.assertEqual(len([f for f in at_level if "/Oy-" in f]), 1)
+
+    def test_no_flag_set_disables_the_intrinsics(self):
+        """`/Oi-` is a source question here, not an invocation one.
+
+        The image calls `_strcat` 4,332 times, which `/Oi` would have inlined,
+        AND carries `rep stosd` in 19 byte-exact bodies, which only `/Oi`
+        produces - with 34 functions doing both inside one body. No flag can
+        be both, so the split lives in `#pragma function(...)`; see
+        `emit_translation_unit.string_routine_pragma`.
+        """
+        self.assertEqual([f for f in tool.FLAG_SETS if "/Oi-" in f], [])
 
     def test_every_flag_set_keeps_the_settings_that_are_not_optional(self):
         """`/GX` reproduces the EH funclets 387 bodies carry; `/Gy` is

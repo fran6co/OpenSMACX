@@ -28,32 +28,36 @@
 #include "temp.h"     // HandleMain
 
 /*
- * `/O2` implies `/Oi`, so `strcat` below compiles to an inlined
- * `repne scasb` pair - 18 instructions of open-coded string walk where
- * 0x0045F967 is a five-byte `call _strcat`. That is not a constant this body
- * got wrong, it is a different function, and it dragged the register saves
- * into the prologue with it: the intrinsic needs esi and edi, so VC6 pushed
- * ebx/esi/edi at entry where the image defers all three to 0x0045F9A0.
+ * NOTHING SUPPRESSES THE `strcat` INTRINSIC HERE, and nothing needs to. This
+ * unit is an `/O1` one.
  *
- * Measured on one basis - capstone over the whole emitted symbol - the image
- * is 142 instructions, this unit is 180 with the intrinsic and 162 with the
- * pragma. The original calls the CRT here, so this build does too.
+ * `/O2` implies `/Oi`, which compiles the `strcat` below into an inlined
+ * `repne scasb` walk - 38 instructions where 0x0045F967 is a five-byte
+ * `call _strcat` - and drags the register saves into the prologue with it,
+ * since the intrinsic needs esi and edi where the image defers all three
+ * pushes to 0x0045F9A0. `/O1` implies no `/Oi`, so the same source emits the
+ * call. Measured with capstone over the whole emitted symbol:
  *
- * DECLARING `strcat` DOES NOT DO THIS, and it is the obvious thing to try.
- * `<string.h>` already declares it through stdafx.h, and `/Oi` substitutes by
- * NAME after lookup succeeds - so adding `extern "C" char *__cdecl
- * strcat(char *, const char *);` here emits byte-identical code to adding
- * nothing, 180 instructions with no `_strcat` symbol referenced at all. The
- * pragma is not an alternative to calling the real one; it is what makes the
- * call happen, after which the linker resolves `_strcat` out of the same VC6
- * CRT that put `_strcat` at 0x00645470 in the shipped image.
+ *     image                  142 instructions, calls _strcat
+ *     /O2  (MEASURED_FLAGS)  180                inlined
+ *     /O2  (FRAMELESS)       167                inlined
+ *     /O1  (SIZE_FLAGS)      142                calls _strcat
+ *     /O1  (SIZE_FRAMELESS)  142                calls _strcat
  *
- * `/Oi-` gives the identical 162 and is the wrong instrument: the four flag
- * sets in tools/byte_match.py are shared by every unit measured, and 19 of
- * the 1,526 BYTE_EXACT claims contain an inlined `rep stosd` or `rep movsd`.
- * Turning intrinsics off to fix one body would break those nineteen.
+ * tools/byte_match.py tries all four in order, so this is already what the
+ * measurement sees; there was never a flag to fix or a pragma to add. A
+ * `#pragma function(strcat)` sat here briefly and was removed: it bought
+ * nothing at `/O1`, where the call is what the compiler emits anyway, and at
+ * `/O2` it papered over a wrong flag set with a source edit.
+ *
+ * THE IMAGE IS A MIX OF `/O1` AND `/O2` UNITS, which is the fact underneath
+ * all of this and the reason four flag sets exist. `_strcat` has 4,332 direct
+ * call sites in .text, `_strlen` 875, `_memcpy` 130, `_memset` 73 - and yet
+ * 19 of the BYTE_EXACT bodies contain an inlined `rep stosd` or `rep movsd`,
+ * which only `/Oi` produces. Measured: adding `/Oi-` to all four flag sets
+ * breaks ten of those nineteen and fixes nothing, because the answer is not
+ * one setting for the program.
  */
-#pragma function(strcat)
 
 /*
  * THE ENTRY POINT, and the top of the recovery.

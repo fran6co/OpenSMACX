@@ -1635,6 +1635,45 @@ def imported_methods(name: str, catalogued: set) -> list:
             if method not in catalogued]
 
 
+
+# The CRT string routines the shipped image CALLS rather than inlines, with
+# the count of direct `E8` sites behind each. `/O2` implies `/Oi`, which
+# expands all four inline; the image has none of those expansions.
+STRING_ROUTINES = ("strcat", "strcpy", "strlen", "strcmp")
+
+
+def string_routine_pragma(declarations: list) -> list:
+    """`#pragma function(...)` for the string routines this unit declares.
+
+    WHY THE IMAGE NEEDS IT. `_strcat` has 4,332 direct call sites in .text,
+    `_strlen` 875, `_strcpy` 339, `_strcmp` 155 - a program compiled with
+    `/Oi` throughout would have almost none. But 19 BYTE_EXACT bodies carry a
+    `rep stosd` or `rep movsd` that ONLY `/Oi` produces, and 34 functions call
+    `strcat` and inline a block op in the SAME body. No per-unit compiler flag
+    can produce that; a pragma naming the four string routines and leaving the
+    block ones alone produces exactly it. `/O2 /Oi-` was tried as two extra
+    flag sets first and reverted - see byte_match.FLAG_SETS.
+
+    AFTER THE DECLARATIONS, WHICH IS THE ENTIRE TRICK. `#pragma function` on a
+    name nothing has declared yet is SILENTLY IGNORED - no C4163, no warning
+    at any level, identical bytes. Measured on 0x00634E80
+    (`FileBox::set_def_ext`, which calls strcat and strlen): the pragma at the
+    top of the unit leaves it MISMATCH at 0.4872 similarity, and the same
+    pragma one line below the `extern "C"` declarations makes it BYTE_EXACT.
+
+    ONLY WHAT THIS UNIT DECLARES, so a scaffold that never mentions `strcmp`
+    does not name it - `#pragma function` on a routine with no declaration in
+    scope is the ignored case above, and emitting four names where one is
+    used makes the working ones look like the ignored ones.
+    """
+    named = [routine for routine in STRING_ROUTINES
+             if any(f" {routine}(" in text or f"*{routine}(" in text
+                    for text in declarations if text)]
+    if not named:
+        return []
+    return [f"#pragma function({', '.join(named)})", ""]
+
+
 def emit(address: int, functions: dict, derived: dict, callees: dict,
          pe, scaffolding_only: bool = False, body: str = "") -> str:
     """The unit. With `scaffolding_only`, everything EXCEPT the subject's
@@ -1953,6 +1992,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         lines.append(text)
     if declarations or methods_by_class:
         lines.append("")
+    lines.extend(string_routine_pragma(declarations))
 
     # A vtable shim, where the body dispatches indirectly.
     slots, over_cap = vtable_slots(pe, spans) if spans else ([], [])
