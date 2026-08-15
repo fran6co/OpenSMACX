@@ -22,6 +22,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 VC6_ROOT = Path(os.environ.get("VC6_ROOT", Path.home() / "opt" / "vc6"))
@@ -69,6 +70,69 @@ def translate(argument: str) -> str:
     if argument.startswith("@"):
         return "@" + windows_path(argument[1:])
     return windows_path(argument)
+
+
+def response_tokens(text: str) -> list:
+    """The arguments inside a response file, quotes honoured and removed."""
+    out, current, quoted = [], [], False
+    for character in text:
+        if character == '"':
+            quoted = not quoted
+            continue
+        if not quoted and character in " \t\r\n":
+            if current:
+                out.append("".join(current))
+                current = []
+            continue
+        current.append(character)
+    if current:
+        out.append("".join(current))
+    return out
+
+
+def expand_responses(arguments: list, depth: int = 0) -> list:
+    """Replace every `@file` with the arguments inside it.
+
+    THE WRAPPER ONLY EVER SAW ARGV, and a generator that passes its flags in a
+    response file therefore defeated everything this file does. Two failures,
+    one cause:
+
+      * `/FI<path>` reached cl untranslated, cl read the leading `/` of the
+        POSIX path as the start of another option, and the build stopped on
+        `D2004: '/FI' requires an argument` - the exact error PATH_PREFIXES was
+        written to prevent, reappearing because the translation never got to
+        look at the flag.
+      * `--depfile=` and `--deptarget=` were never taken out, so no depfile was
+        written and none of them reached the code that writes one. That is the
+        silent half: ninja records `#deps 0`, editing a header rebuilds
+        nothing, and the build reports success over stale objects.
+
+    Neither showed up under `Unix Makefiles`, which puts flags on the command
+    line. Ninja uses response files, so the generator choice decided whether
+    the compiler wrapper worked - and only one of the two failures is loud.
+
+    Recursive, because a response file may name another; bounded, because a
+    file naming itself would otherwise hang the build.
+    """
+    if depth > 8:
+        return list(arguments)
+    out = []
+    for argument in arguments:
+        if argument.startswith("@"):
+            path = Path(argument[1:])
+            if path.is_file():
+                out.extend(expand_responses(
+                    response_tokens(path.read_text(errors="replace")),
+                    depth + 1))
+                continue
+        out.append(argument)
+    return out
+
+
+# Windows caps a command line near 32k and wine enforces it, so a link line
+# naming every object can still need a response file - just one this wrapper
+# writes itself, after translating, rather than one it cannot read.
+COMMAND_LINE_LIMIT = 30000
 
 
 def environment() -> dict:
@@ -188,15 +252,30 @@ def main(argv: list) -> int:
         print(f"{executable} not found; set VC6_ROOT", file=sys.stderr)
         return 127
 
+    # BEFORE ANYTHING READS THE ARGUMENTS. Both the depfile extraction below
+    # and the path translation are blind to whatever sits inside a `@file`.
+    arguments = expand_responses(arguments)
     arguments, dep_target, dep_file = take_depfile(arguments)
     if dep_file:
         # Before the real compile, and unconditionally: a depfile is what
         # tells ninja to try again once the header is fixed, so it has to
         # exist even when the compile that follows fails.
         write_depfile(executable, arguments, dep_file, dep_target or "")
-    command = ["wine", str(executable)] + [translate(a) for a in arguments]
+    translated = [translate(a) for a in arguments]
+    scratch = None
+    if sum(len(a) + 1 for a in translated) > COMMAND_LINE_LIMIT:
+        scratch = tempfile.NamedTemporaryFile(
+            "w", suffix=".rsp", delete=False, encoding="utf-8")
+        # Quoted per line: a translated path holds backslashes and may hold
+        # spaces, and cl splits an unquoted response file on whitespace.
+        scratch.write("\n".join(f'"{a}"' for a in translated) + "\n")
+        scratch.close()
+        translated = ["@" + windows_path(scratch.name)]
+    command = ["wine", str(executable)] + translated
     finished = subprocess.run(command, env=environment(), capture_output=True,
                               text=True, errors="replace")
+    if scratch is not None:
+        os.unlink(scratch.name)
     # CL writes the source file name to stdout before any diagnostic. It is
     # noise in a build log and CMake does not need it, but a diagnostic that
     # follows it does, so only the bare echo line is dropped. The
