@@ -350,93 +350,67 @@ ORIGINAL: 0x005FE330
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FE500 0x00625810
 //
-// Promoted 2026-08-15 from src/recovered/units/005fe330.cpp to retire its
-// pending_bodies forwarder. GetDC/GetSystemPaletteEntries/ReleaseDC are read
-// straight out of their IAT slots; the two table-fill loops and the trailing
-// random-seed write are byte-for-byte the original's pointer arithmetic.
+// Promoted 2026-08-15 from src/recovered/units/005fe330.cpp and rewritten
+// from raw self_addr pointer arithmetic into ordinary member access. Reloads
+// the 256 entries - from the system palette when PaletteUsesSystemColours is
+// set, otherwise from the built-in SystemColours plus a grey ramp - then
+// picks a fresh non-zero seed.
 Status: Complete
 */
-typedef void *(__stdcall *GetDcFn)(void *);
-typedef int(__stdcall *GetPalEntriesFn)(void *, int, int, void *);
-typedef int(__stdcall *ReleaseDcFn)(void *, void *);
-
-static int *const g_006690ac = (int *)0x006690AC;
-static int *const g_0066927c = (int *)0x0066927C;
-static int *const g_00669280 = (int *)0x00669280;
-static int *const g_0067022c = (int *)0x0067022C;
-static int *const g_00670252 = (int *)0x00670252;
-static int *const g_00670253 = (int *)0x00670253;
-static int *const g_00670254 = (int *)0x00670254;
-
 void Palette::init() {
     close();
-    uint32_t self_addr = reinterpret_cast<uint32_t>(this);
-
-    if (*g_009b8188 != 0) {
-        void *hdc = (*reinterpret_cast<GetDcFn *>(g_0066927c))(0);
-        (*reinterpret_cast<GetPalEntriesFn *>(g_006690ac))(hdc, 0, 0x100, this);
-        (*reinterpret_cast<ReleaseDcFn *>(g_00669280))(0, hdc);
+    if (PaletteUsesSystemColours) {
+        HDC screen = GetDC(0);
+        GetSystemPaletteEntries(screen, 0, 256, entries_);
+        ReleaseDC(0, screen);
     } else {
-        uint32_t edi = reinterpret_cast<uint32_t>(g_0067022c) - self_addr;
-        uint32_t ebp = reinterpret_cast<uint32_t>(g_00670254) - self_addr;
-        uint32_t edx = reinterpret_cast<uint32_t>(g_00670253) - self_addr;
-        uint32_t ebx = reinterpret_cast<uint32_t>(g_00670252) - self_addr;
-        uint32_t ecx = reinterpret_cast<uint32_t>(g_0067022c);
-        uint32_t eax = self_addr + 2;
-        do {
-            uint8_t bl = *reinterpret_cast<uint8_t *>(edi + eax);
-            ecx += 4;
-            *reinterpret_cast<uint8_t *>(eax - 2) = bl;
-            bl = *reinterpret_cast<uint8_t *>(ecx - 3);
-            *reinterpret_cast<uint8_t *>(eax - 1) = bl;
-            bl = *reinterpret_cast<uint8_t *>(ecx - 4);
-            *reinterpret_cast<uint8_t *>(eax) = bl;
-            *reinterpret_cast<uint8_t *>(eax + 1) = 4;
-            bl = *reinterpret_cast<uint8_t *>(eax + ebp);
-            *reinterpret_cast<uint8_t *>(eax + 0x3d6) = bl;
-            bl = *reinterpret_cast<uint8_t *>(eax + edx);
-            *reinterpret_cast<uint8_t *>(eax + 0x3d7) = bl;
-            bl = *reinterpret_cast<uint8_t *>(eax + ebx);
-            *reinterpret_cast<uint8_t *>(eax + 0x3d8) = bl;
-            *reinterpret_cast<uint8_t *>(eax + 0x3d9) = 4;
-            eax += 4;
-        } while (ecx < reinterpret_cast<uint32_t>(g_00670254));
-
-        uint8_t counter = 0xa;
-        uint32_t ramp = self_addr + 0x2a;
-        do {
-            *reinterpret_cast<uint8_t *>(ramp - 2) = counter;
-            *reinterpret_cast<uint8_t *>(ramp - 1) = counter;
-            *reinterpret_cast<uint8_t *>(ramp) = counter;
-            *reinterpret_cast<uint8_t *>(ramp + 1) = 5;
-            counter++;
-            ramp += 4;
-        } while (counter < 0xf6);
-
-        uint32_t index = 0;
-        uint32_t last = self_addr + 0x21;
-        do {
-            uint8_t hi = static_cast<uint8_t>(index);
-            last += 4;
-            hi += 8;
-            *reinterpret_cast<uint8_t *>(last - 5) = hi;
-            uint8_t lo = static_cast<uint8_t>(index);
-            *reinterpret_cast<uint8_t *>(last - 4) = 0;
-            *reinterpret_cast<uint8_t *>(last - 3) = 0;
-            lo -= 0xb;
-            *reinterpret_cast<uint8_t *>(last - 2) = 2;
-            *reinterpret_cast<uint8_t *>(last + 0x3b3) = lo;
-            *reinterpret_cast<uint8_t *>(last + 0x3b4) = 0;
-            *reinterpret_cast<uint8_t *>(last + 0x3b5) = 0;
-            *reinterpret_cast<uint8_t *>(last + 0x3b6) = 2;
-            index++;
-        } while (index < 2);
+        // The twenty static colours, RGBQUAD (blue, green, red) on the way in
+        // and PALETTEENTRY (red, green, blue) on the way out - hence the
+        // reversal. Entries 0-9 and 246-255 are the range GDI reserves.
+        const uint8_t *colour = SystemColours;
+        const uint8_t *high_colour = SystemColours + 40;
+        for (int i = 0; i < 10; ++i) {
+            entries_[i].peRed = colour[2];
+            entries_[i].peGreen = colour[1];
+            entries_[i].peBlue = colour[0];
+            entries_[i].peFlags = 4;  // PC_NOCOLLAPSE
+            entries_[i + 246].peRed = high_colour[2];
+            entries_[i + 246].peGreen = high_colour[1];
+            entries_[i + 246].peBlue = high_colour[0];
+            entries_[i + 246].peFlags = 4;
+            colour += 4;
+            high_colour += 4;
+        }
+        // Everything between the two reserved runs is ours to animate; the
+        // original fills it with a grey ramp. VC6 leaks a for-loop's declared
+        // variable into the enclosing scope, so this loop must not redeclare
+        // the `i` the colour loop above already declared.
+        for (int grey = 10; grey < 246; ++grey) {
+            entries_[grey].peRed = (uint8_t)grey;
+            entries_[grey].peGreen = (uint8_t)grey;
+            entries_[grey].peBlue = (uint8_t)grey;
+            entries_[grey].peFlags = 5;  // PC_RESERVED | PC_NOCOLLAPSE
+        }
+        // Four entries are handed back to the system by INDEX: PC_EXPLICIT
+        // means peRed holds a system palette slot rather than an intensity.
+        for (int pair = 0; pair < 2; ++pair) {
+            entries_[8 + pair].peRed = (uint8_t)(8 + pair);
+            entries_[8 + pair].peGreen = 0;
+            entries_[8 + pair].peBlue = 0;
+            entries_[8 + pair].peFlags = 2;  // PC_EXPLICIT
+            // BUG IN THE ORIGINAL: entry 246 is given system index 245 and
+            // entry 247 index 246, one below each entry's own slot.
+            entries_[246 + pair].peRed = (uint8_t)(pair - 11);
+            entries_[246 + pair].peGreen = 0;
+            entries_[246 + pair].peBlue = 0;
+            entries_[246 + pair].peFlags = 2;  // PC_EXPLICIT
+        }
     }
 
-    *reinterpret_cast<int32_t *>(self_addr + 0x400) = 0;
-    int32_t value;
+    // Pick a non-zero generation seed; Buffer caches it to skip republishing
+    // an unchanged palette.
+    seed_ = 0;
     do {
-        value = random(0, 0xffff);
-        *reinterpret_cast<int32_t *>(self_addr + 0x400) = value;
-    } while (value == 0);
+        seed_ = random(0, 0xffff);
+    } while (seed_ == 0);
 }
