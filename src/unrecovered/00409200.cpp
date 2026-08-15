@@ -1,4 +1,16 @@
 // ORIGINAL: 0x00409200 FILE
+// RULED-OUT: hand-inlined SEH/dtor-cascade transcription (neg/sbb/and null-guards, vtable
+//            re-pokes at every partial-teardown site) - approximated instead as a real
+//            `struct { Popup popup; PullDown pull_down; }` local (the family lever), whose
+//            `.popup.close()` + implicit scope-exit destruction stands in for every one of
+//            the original's ~15 duplicated inline teardown copies. PopMenu::exec's scaffold
+//            return type (void) was wrong for a call site that reads eax after it - fixed
+//            via a same-layout PopMenuExecShim, the established precedent for this exact
+//            mismatch. Business logic (a1<=1 short-circuit, is_visible/lock_base/production/
+//            draw_queue gating, parse_say(s)+popm prompt build, the 5-way switch incl. both
+//            PopMenu item-loop/exec/set_base/base_compute branches and the X_pop_ask confirm
+//            + queue-slot remap loops) is transcribed field-by-field from the disassembly;
+//            ~67% of the original's 958 mnemonics are reproduced (645 rebuilt), MISMATCH.
 // working copy - scaffold materialised by --work
 // name      ?queue_click@BaseWin@@QAEXHHHH@Z
 // size      4888 bytes
@@ -2388,11 +2400,338 @@ class BaseWin { public:
     void UNK7();
     void queue_click(int, int, int, int);
 };
-void BaseWin::queue_click(int a1, int a2, int a3, int a4) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+// PopMenu::exec is declared `void exec(int,int,int(__cdecl*)())` in the
+// scaffold, but the call site captures a return value (`mov edi,eax` right
+// after the call) - the real symbol returns int. A same-layout shim with
+// the correct signature reaches the same relocation; see the established
+// PopMenuExecShim precedent for this exact mismatch elsewhere in this
+// family.
+class PopMenuExecShim { public:
+    int exec(int, int, int (__cdecl *)());
+};
 
+// The Popup+PullDown widget the original builds as one inlined multi-base
+// local (see LEVER note in the file header once landed). Declaring it as a
+// real struct with real member objects lets VC6 generate the SEH frame and
+// the whole destructor cascade for BOTH sub-objects itself, in declaration
+// order (Popup then PullDown) - matching the original's construction order
+// and, in reverse, its teardown order.
+struct PopupPullDownWidget {
+    Popup popup;
+    PullDown pull_down;
+};
+
+void BaseWin::queue_click(int a1, int a2, int a3, int a4) {
+    char *self = reinterpret_cast<char *>(this);
+
+    PopupPullDownWidget widget;
+    char *w = reinterpret_cast<char *>(&widget);
+    // The original re-pokes the vtable slots right after the two base-object
+    // constructors return, matching a PopMenu-shaped (Popup+PullDown) local
+    // rather than a plain Popup.
+    *reinterpret_cast<void **>(w + 0x0) = reinterpret_cast<void *>(g_0066a8a8);
+    *reinterpret_cast<void **>(w + 0x444) = reinterpret_cast<void *>(g_0066a8a0);
+    *reinterpret_cast<void **>(w + 0x537c) = reinterpret_cast<void *>(g_0066a738);
+    *reinterpret_cast<void **>(w + 0x57c0) = reinterpret_cast<void *>(g_0066a730);
+
+    unsigned char factionFlag = *reinterpret_cast<unsigned char *>(
+        reinterpret_cast<char *>(*g_0090ea30) + 4);
+
+    if (a1 > 1) {
+        int slot = a1 - 2;
+        if (slot == *reinterpret_cast<int *>(self + 0x40b2c)) {
+            goto LAB_teardown;
+        }
+        if (a4 == 0) {
+            char *rec = reinterpret_cast<char *>(*g_0090ea30);
+            int cnt = *reinterpret_cast<int *>(rec + 0x4c) + 1;
+            int newPos = (cnt < slot) ? cnt : slot;
+            *reinterpret_cast<int *>(self + 0x40b2c) = newPos;
+            *reinterpret_cast<int *>(self + 0x40b30) = 0;
+            this->draw_queue(1);
+            Win *scrollWin = reinterpret_cast<Win *>(self + 0xa1c);
+            int vis = scrollWin->is_visible();
+            if (vis != 0) {
+                if (*reinterpret_cast<int *>(self + 0x1584) != 0) {
+                    goto LAB_teardown;
+                }
+            }
+            int netHandle = *g_00689370;
+            int lockResult = reinterpret_cast<NetDaemon *>(g_0093cd90)->lock_base(
+                netHandle, 0, -1, -1);
+            if (lockResult == 0) {
+                this->production(slot, 1);
+                netHandle = *g_00689370;
+                reinterpret_cast<NetDaemon *>(g_0093cd90)->unlock_base(netHandle);
+            }
+            goto LAB_teardown;
+        } else {
+            Win *scrollWin = reinterpret_cast<Win *>(self + 0xa1c);
+            int vis = scrollWin->is_visible();
+            if (vis == 0) {
+                char *rec = reinterpret_cast<char *>(*g_0090ea30);
+                int entry = *reinterpret_cast<int *>(rec + 0x50 + slot * 4);
+                if (entry >= 0) {
+                    int tab = entry * 3;
+                    tab = entry + tab * 4;
+                    char *p = reinterpret_cast<char *>(g_009ab868) + tab * 4;
+                    parse_says(-1, p, entry, -1);
+                } else {
+                    int neg = -entry;
+                    int idx = neg * 3;
+                    idx = neg + idx * 4;
+                    int v = *reinterpret_cast<int *>(
+                        reinterpret_cast<char *>(g_009a4b68) + idx * 16);
+                    parse_say(0, v, -1, -1);
+                }
+                reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&a2, &a3);
+                *reinterpret_cast<char *>(g_009b86a0) = 0;
+                strcat(reinterpret_cast<char *>(g_009b86a0),
+                       reinterpret_cast<char *>(g_0068283c));
+                char numBuf[40];
+                _itoa((entry < 0) ? 2 : 1, numBuf, 10);
+                strcat(reinterpret_cast<char *>(g_009b86a0), numBuf);
+                int promptResult = popm(reinterpret_cast<char *>(g_009b86a0),
+                                        a2 + 2, a3, 0);
+                int idx5 = promptResult + 1;
+                if (entry < 0 && idx5 > 1) idx5 = idx5 + 1;
+                idx5 = idx5 - 1;
+                if (static_cast<unsigned int>(idx5) > 4) goto LAB_teardown;
+                switch (idx5) {
+                case 0: {
+                    char *rec2 = reinterpret_cast<char *>(*g_0090ea30);
+                    int cnt2 = *reinterpret_cast<int *>(rec2 + 0x4c) + 1;
+                    int newPos = (cnt2 < slot) ? cnt2 : slot;
+                    *reinterpret_cast<int *>(self + 0x40b2c) = newPos;
+                    *reinterpret_cast<int *>(self + 0x40b30) = 0;
+                    this->draw_queue(1);
+                    if (scrollWin->is_visible() != 0) goto LAB_teardown;
+                    int lockResult = reinterpret_cast<NetDaemon *>(g_0093cd90)
+                                          ->lock_base(*g_00689370, 0, -1, -1);
+                    if (lockResult == 0) {
+                        this->production(slot, 1);
+                        reinterpret_cast<NetDaemon *>(g_0093cd90)
+                            ->unlock_base(*g_00689370);
+                        goto LAB_teardown;
+                    }
+                    goto LAB_teardown;
+                }
+                case 1: {
+                    if (scrollWin->is_visible() == 0) {
+                        int lockResult = reinterpret_cast<NetDaemon *>(g_0093cd90)
+                                              ->lock_base(*g_00689370, 0, -1, -1);
+                        if (lockResult != 0) {
+                            goto LAB_teardown;
+                        }
+                    }
+                    char *rec3 = reinterpret_cast<char *>(*g_0090ea30);
+                    if (*reinterpret_cast<int *>(rec3 + 0x4c) < slot) {
+                        int p = *reinterpret_cast<int *>(self + 0x40b2c) - 1;
+                        if (p < 2) p = 1;
+                        *reinterpret_cast<int *>(self + 0x40b2c) = p;
+                    } else {
+                        if (slot < 9) {
+                            char *base = rec3 + 0x50 + slot * 4;
+                            while (base < rec3 + 0x74) {
+                                *reinterpret_cast<int *>(base) =
+                                    *reinterpret_cast<int *>(base + 4);
+                                base += 4;
+                            }
+                        }
+                        *reinterpret_cast<int *>(rec3 + 0x4c) -= 1;
+                        int cnt3 = *reinterpret_cast<int *>(rec3 + 0x4c);
+                        if (cnt3 < *reinterpret_cast<int *>(self + 0x40b2c)) {
+                            int p = cnt3;
+                            if (p < 2) p = 1;
+                            *reinterpret_cast<int *>(self + 0x40b2c) = p;
+                        }
+                        this->draw_queue(1);
+                    }
+                    if (scrollWin->is_visible() == 0) {
+                        reinterpret_cast<NetDaemon *>(g_0093cd90)
+                            ->unlock_base(*g_00689370);
+                        goto LAB_teardown;
+                    }
+                    goto LAB_teardown;
+                }
+                case 2: {
+                    if (scrollWin->is_visible() == 0) {
+                        int lockResult = reinterpret_cast<NetDaemon *>(g_0093cd90)
+                                              ->lock_base(*g_00689370, 0, -1, -1);
+                        if (lockResult != 0) {
+                            goto LAB_teardown;
+                        }
+                    }
+                    int xpop = X_pop(reinterpret_cast<const char *>(g_00682844), 0);
+                    if (xpop != 0) {
+                        *reinterpret_cast<int *>(
+                            reinterpret_cast<char *>(*g_0090ea30) + 0x4c) = 0;
+                        this->draw_queue(1);
+                    }
+                    if (scrollWin->is_visible() == 0) {
+                        reinterpret_cast<NetDaemon *>(g_0093cd90)
+                            ->unlock_base(*g_00689370);
+                    }
+                    goto LAB_teardown;
+                }
+                case 3: {
+                    reinterpret_cast<PopMenu *>(w)->init();
+                    long itemStride = static_cast<long>(factionFlag) * 0x20cc;
+                    char *itemBase = reinterpret_cast<char *>(g_0096ce50) + itemStride;
+                    for (int i = 0; i < 8; ++i) {
+                        reinterpret_cast<Dialogs *>(w + 0x21d0)->item(itemBase, i);
+                        itemBase += 0x18;
+                    }
+                    int picked = reinterpret_cast<PopMenuExecShim *>(w)->exec(
+                        a2, a3, reinterpret_cast<int (__cdecl *)()>(g_00539920));
+                    int selIdx = *reinterpret_cast<int *>(self + 0x40b0c);
+                    int prevBase = reinterpret_cast<int *>(g_0097d0b8)[selIdx * 0x4d];
+                    set_base(selIdx);
+                    base_compute(0);
+                    if (*g_0093f660 != 0 && *g_0093a938 == 0 &&
+                        prevBase != reinterpret_cast<int *>(g_0097d0b8)[
+                            *reinterpret_cast<int *>(self + 0x40b0c) * 0x4d]) {
+                        int lockResult = reinterpret_cast<NetDaemon *>(g_0093cd90)
+                                              ->lock_base(*g_00689370, 0, -1, -1);
+                        if (lockResult == 0) {
+                            reinterpret_cast<NetDaemon *>(g_0093cd90)
+                                ->unlock_base(*g_00689370);
+                        }
+                    }
+                    if (picked >= 0 && (*g_009a64c0 & 0x800) == 0) {
+                        char *pickedText = reinterpret_cast<char *>(g_0096ce50) +
+                                            picked * 0x18 + itemStride;
+                        int askResult = X_pop_ask(
+                            reinterpret_cast<const char *>(g_00682850), 0x17,
+                            pickedText, 0, 0);
+                        if (askResult != 0) goto LAB_teardown;
+                        int popResult = X_pop(
+                            reinterpret_cast<const char *>(g_0068285c), 0);
+                        if (popResult == 0) goto LAB_teardown;
+                        strcpy(reinterpret_cast<char *>(g_009bb5e8), pickedText);
+                        char *rec4 = reinterpret_cast<char *>(*g_0090ea30);
+                        reinterpret_cast<int *>(g_0096cf10)[picked + factionFlag * 2099] =
+                            *reinterpret_cast<int *>(rec4 + 0x4c);
+                        int *dest = reinterpret_cast<int *>(
+                            reinterpret_cast<char *>(g_0096cf30) + itemStride +
+                            picked * 0x28);
+                        int *src = reinterpret_cast<int *>(rec4 + 0x50);
+                        for (int i = 0; i < 10; ++i) {
+                            int val = src[i];
+                            if (val >= 0) {
+                                unsigned char icon = *reinterpret_cast<unsigned char *>(
+                                    reinterpret_cast<char *>(g_009ab893) + val * 0x34);
+                                val = val + (static_cast<int>(icon) << 16);
+                            }
+                            dest[i] = val;
+                        }
+                        synch_template(factionFlag);
+                        reinterpret_cast<NetDaemon *>(g_0093cd90)
+                            ->unlock_base(*g_00689370);
+                        this->draw_queue(1);
+                    }
+                    goto LAB_teardown;
+                }
+                case 4: {
+                    int lockResult = reinterpret_cast<NetDaemon *>(g_0093cd90)
+                                          ->lock_base(*g_00689370, 0, -1, -1);
+                    if (lockResult != 0) goto LAB_teardown;
+                    reinterpret_cast<PopMenu *>(w)->init();
+                    long itemStride = static_cast<long>(factionFlag) * 0x20cc;
+                    char *itemBase = reinterpret_cast<char *>(g_0096ce50) + itemStride;
+                    for (int i = 0; i < 8; ++i) {
+                        reinterpret_cast<Dialogs *>(w + 0x21d0)->item(itemBase, i);
+                        itemBase += 0x18;
+                    }
+                    int picked = reinterpret_cast<PopMenuExecShim *>(w)->exec(
+                        a2, a3, reinterpret_cast<int (__cdecl *)()>(g_00539920));
+                    int selIdx = *reinterpret_cast<int *>(self + 0x40b0c);
+                    int prevBase = reinterpret_cast<int *>(g_0097d0b8)[selIdx * 0x4d];
+                    set_base(selIdx);
+                    base_compute(0);
+                    if (*g_0093f660 != 0 && *g_0093a938 == 0 &&
+                        prevBase != reinterpret_cast<int *>(g_0097d0b8)[
+                            *reinterpret_cast<int *>(self + 0x40b0c) * 0x4d]) {
+                        int lockResult2 = reinterpret_cast<NetDaemon *>(g_0093cd90)
+                                               ->lock_base(*g_00689370, 0, -1, -1);
+                        if (lockResult2 == 0) {
+                            reinterpret_cast<NetDaemon *>(g_0093cd90)
+                                ->unlock_base(*g_00689370);
+                        }
+                    }
+                    char *rec5 = reinterpret_cast<char *>(*g_0090ea30);
+                    if (picked >= 0 && (*g_009a64c0 & 0x800) == 0) {
+                        unsigned char *usage = reinterpret_cast<unsigned char *>(g_0096d438);
+                        if (*reinterpret_cast<int *>(rec5 + 0x4c) >= 0) {
+                            int *entry = reinterpret_cast<int *>(rec5 + 0x50);
+                            int j = 0;
+                            do {
+                                if (*entry >= 0) {
+                                    usage[itemStride + *entry] -= 1;
+                                }
+                                ++j;
+                                ++entry;
+                            } while (j <= *reinterpret_cast<int *>(rec5 + 0x4c));
+                        }
+                        *reinterpret_cast<int *>(rec5 + 0x4c) =
+                            reinterpret_cast<int *>(g_0096cf10)[picked + factionFlag * 2099];
+                        if (*reinterpret_cast<int *>(rec5 + 0x4c) >= 0) {
+                            int *src = reinterpret_cast<int *>(
+                                reinterpret_cast<char *>(g_0096cf30) + itemStride +
+                                picked * 0x28);
+                            int *dst = reinterpret_cast<int *>(rec5 + 0x50);
+                            int j = 0;
+                            do {
+                                int raw = src[j];
+                                int mapped = raw;
+                                if (raw >= 0) {
+                                    int lo = raw & 0xffff;
+                                    unsigned char storedIcon =
+                                        *reinterpret_cast<unsigned char *>(
+                                            reinterpret_cast<char *>(g_009ab893) + lo * 0x34);
+                                    unsigned char flags =
+                                        *reinterpret_cast<unsigned char *>(
+                                            reinterpret_cast<char *>(g_009ab894) + lo * 0x34);
+                                    mapped = lo;
+                                    if (storedIcon != static_cast<unsigned int>(raw) >> 16 ||
+                                        (flags & (1 << (factionFlag & 0x1f))) != 0) {
+                                        int k = 0;
+                                        char *tabRow = reinterpret_cast<char *>(g_009ab894) +
+                                                        factionFlag * 0xd00;
+                                        while (k < 0x40) {
+                                            if ((tabRow[4] & 1) != 0 &&
+                                                (tabRow[0] & (1 << (factionFlag & 0x1f))) == 0 &&
+                                                static_cast<unsigned char>(tabRow[-1]) ==
+                                                    (static_cast<unsigned int>(raw) >> 16)) {
+                                                mapped = factionFlag * 0x40 + k;
+                                            }
+                                            ++k;
+                                            tabRow += 0x34;
+                                        }
+                                    }
+                                }
+                                dst[j] = mapped;
+                                if (mapped >= 0) {
+                                    usage[itemStride + mapped] += 1;
+                                }
+                                ++j;
+                            } while (j <= *reinterpret_cast<int *>(rec5 + 0x4c));
+                        }
+                        reinterpret_cast<NetDaemon *>(g_0093cd90)
+                            ->unlock_base(*g_00689370);
+                        this->draw_queue(1);
+                    }
+                    goto LAB_teardown;
+                }
+                default:
+                    goto LAB_teardown;
+                }
+            }
+            // vis != 0: fall straight through to LAB_teardown.
+        }
+    }
+
+LAB_teardown:
+    widget.popup.close();
+    return;
 }

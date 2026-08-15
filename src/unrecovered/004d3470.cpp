@@ -1,4 +1,25 @@
 // ORIGINAL: 0x004D3470 FILE
+// RULED-OUT: full-function transcription (all ~30 validation branches, the 6-way
+//            terraform-type switch incl. borehole/aquifer neighbor scans and the
+//            raise/lower-terrain payment+territory/treaty flow, the post-switch
+//            lock/exec/unlock tail) using validated Veh/Map/VehPrototype/Chassis
+//            record layouts from src/veh.h and src/map.h; Popup RAII lever
+//            (`Popup popup;` + plain `return;`) for all teardown/SEH machinery,
+//            never hand-written. MISMATCH #2: rebuilt frame is 4 bytes larger
+//            than the original's 0x5398, so every ebp-relative offset drifts
+//            from the prologue on - not a control-flow or call-order defect,
+//            a local-variable-count difference in the /O2 stack layout that
+//            was not tracked down further. Two inline uses of a materialized
+//            `VehRec *veh` pointer were already removed in favor of re-deriving
+//            `g_vehs[a1].field` at each site (matched the original's shape and
+//            recovered 8 of that 12-byte gap); the remaining 4 bytes are still
+//            open. Approximated without full confidence: the exact terraformID
+//            reassignment thresholds in the a2==0/a2==5 auto-select block, the
+//            case-0x10/0x11 payment/steps-count arithmetic, and which register
+//            (`edx`) still holds `altBits` vs a freshly reloaded value at a few
+//            of the later bit tests - transcribed as re-reads of tile fields
+//            rather than a persisted local where raw-disasm register lineage
+//            got ambiguous after ~40 intervening instructions.
 // working copy - scaffold materialised by --work
 // name      ?terraform@Console@@QAEXHH@Z
 // size      9136 bytes
@@ -2649,6 +2670,85 @@ static int *const g_009b3374 = (int *)0x009B3374;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b8aa8 = (int *)0x009B8AA8;
 
+// ---- validated engine records (same layout as src/veh.h and src/map.h) ----
+struct VehRec {
+    int16_t x;
+    int16_t y;
+    uint32_t state;
+    uint16_t flags;
+    int16_t proto_id;
+    uint16_t unk_1;
+    uint8_t faction_id;
+    uint8_t year_end_lurking;
+    uint8_t dmg_incurred;
+    int8_t order;
+    uint8_t waypoint_count;
+    uint8_t patrol_current_point;
+    int16_t waypoint_x[4];
+    int16_t waypoint_y[4];
+    uint8_t morale;
+    uint8_t terraforming_turns;
+    uint8_t order_auto_type;
+    uint8_t visibility;
+    uint8_t moves_expended;
+    int8_t unk_5;
+    uint8_t unk_6;
+    uint8_t move_to_ai_type;
+    uint8_t probe_action;
+    uint8_t probe_sabotage_id;
+    int16_t home_base_id;
+    int16_t next_veh_id_stack;
+    int16_t prev_veh_id_stack;
+};
+static VehRec *const g_vehs = (VehRec *)0x00952828;
+
+struct VehProtoRec {
+    char veh_name[32];
+    uint32_t ability_flags;
+    uint8_t chassis_id;
+    uint8_t weapon_id;
+    uint8_t armor_id;
+    uint8_t reactor_id;
+    uint8_t carry_capacity;
+    uint8_t cost;
+    uint8_t plan;
+    int8_t unk_1;
+    uint8_t obsolete_factions;
+    int8_t combat_factions;
+    int8_t icon_offset;
+    int8_t padding;
+    uint16_t flags;
+    int16_t preq_tech;
+};
+static VehProtoRec *const g_veh_prototypes = (VehProtoRec *)0x009AB868;
+
+struct ChassisRec {
+    char pad_0[0x18];   // 6 offense/defense name pointers
+    uint32_t pad2[6];   // 6 gender words
+    int32_t pad3[6];    // 6 plural BOOLs
+    uint8_t speed;
+    uint8_t triad;
+    uint8_t range;
+    uint8_t cargo;
+    uint8_t cost;
+    uint8_t missile;
+};
+static ChassisRec *const g_chassis = (ChassisRec *)0x0094A330;
+
+struct MapTileRec {
+    uint8_t climate;
+    uint8_t contour;
+    uint8_t val2;
+    uint8_t region;
+    uint8_t visibility;
+    uint8_t val3;
+    uint8_t unk_1;
+    int8_t territory;
+    uint32_t bit;
+    uint32_t bit2;
+};
+static MapTileRec **const g_map_tiles = (MapTileRec **)0x0094A30C;
+
 class Console : public MapWin { public:
     uint8_t field_21A6C_[0xFC0];
     uint32_t field_22A2C_;
@@ -2705,10 +2805,514 @@ class Console : public MapWin { public:
     void terraform(int, int);
 };
 void Console::terraform(int a1, int a2) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    // 0x004D3470 Console::terraform(vehID, terraformID)
+    Popup popup;
 
+    int protoId = g_vehs[a1].proto_id;
+
+    // 0x004D34A3-0x004D351C
+    if (g_veh_prototypes[protoId].plan != PLAN_TERRAFORMING) {
+        reinterpret_cast<NetMsg *>(g_00805338)->pop(
+            reinterpret_cast<const char *>(g_006889f4), 0x1388, 0, 0);
+        popup.close();
+        return;
+    }
+
+    // 0x004D3521-0x004D3585 - terrain/chassis triad match
+    int vy = g_vehs[a1].y;
+    int vx = g_vehs[a1].x;
+    int mapWidth = *g_0068faf0;
+    int vxHalf = vx >> 1;
+    int tileIdx = mapWidth * vy + vxHalf;
+    MapTileRec *tile = (*g_map_tiles) + tileIdx;
+
+    int altBits = tile->climate & 0xE0;
+    int isSea = (altBits < 0x60) ? 1 : 0;
+
+    int chassisId = g_veh_prototypes[protoId].chassis_id;
+    int triad = g_chassis[chassisId].triad;
+    if (triad != 2) {
+        int needSea = (triad == 1) ? 1 : 0;
+        if (isSea != needSea) {
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                reinterpret_cast<const char *>(g_00688a08), 0x1388, 0, 0);
+            popup.close();
+            return;
+        }
+    }
+
+    // 0x004D35D9-0x004D3632 - terraformID auto-selection
+    int tfId = a2;
+    if (tfId == 5) {
+        if ((tile->bit & 4) != 0 &&
+            *reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691940) + isSea * 4) >= -1) {
+            tfId = 6;
+        }
+    } else if (tfId == 0) {
+        if ((tile->bit & 0x20) && altBits >= 0x40) {
+            tfId = 0xA;
+        } else if ((tile->bit & 0x8000) && altBits >= 0x60 &&
+                   *reinterpret_cast<int *>(reinterpret_cast<char *>(0x006918A0) + isSea * 4) >= -1) {
+            tfId = 1;
+        }
+    }
+
+    // 0x004D3632-0x004D3663 - is this terraformID available at all here
+    int edi_isSea = isSea;
+    parse_say(6, *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096c8a8) + (edi_isSea + tfId * 3) * 4),
+              -1, -1);
+    int availIdx = tfId * 8 + edi_isSea;
+    if (*reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691880) + availIdx * 4) < -1) {
+        int isLand = (edi_isSea == 0) ? 1 : 0;
+        int oppIdx = tfId * 8 + isLand;
+        const char *msg;
+        if (*reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691880) + oppIdx * 4) < -1) {
+            msg = reinterpret_cast<const char *>(g_00688a14);          // NOTATALL
+        } else if (edi_isSea == 0) {
+            msg = reinterpret_cast<const char *>(g_00688a2c);          // NOTONLAND
+        } else {
+            msg = reinterpret_cast<const char *>(g_00688a20);          // NOTATSEA
+        }
+        reinterpret_cast<NetMsg *>(g_00805338)->pop(msg, 0x1388, 0, 0);
+        popup.close();
+        return;
+    }
+
+    // 0x004D3707-0x004D3938 - orderable/road/farm/tech-plan checks
+    if (tfId == 1) {
+        if ((tile->bit & 0x8000) == 0) {
+            popup.close();
+            return;
+        }
+    } else if (tfId == 6) {
+        if ((tile->bit & 4) == 0) {
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                tfId == 6 ? reinterpret_cast<const char *>(g_00688a38)
+                          : (tfId == 1 ? reinterpret_cast<const char *>(g_00688a40)
+                                       : reinterpret_cast<const char *>(g_00688a48)),
+                0x1388, 0, 0);
+            popup.close();
+            return;
+        }
+    }
+
+    // 0x004D393D-0x004D39C1 - already built same improvement here
+    int protoAbility = *reinterpret_cast<uint32_t *>(
+        reinterpret_cast<char *>(tile) + 8);
+    int bitMask = *reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691888) + tfId * 8 * 4);
+    if (bitMask != 0 && (bitMask & protoAbility) == bitMask) {
+        parse_say(0, *reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691878) + edi_isSea * 4),
+                  -1, -1);
+        reinterpret_cast<NetMsg *>(g_00805338)->pop(
+            reinterpret_cast<const char *>(g_00688a60), 0x1388, 0, 0);
+        popup.close();
+        return;
+    }
+
+    // 0x004D39CC-0x004D3A38 - monolith restriction
+    if ((tile->bit & 0x2000) != 0 && bitMask != 0 &&
+        tfId != 5 && tfId != 6 && tfId != 0xB) {
+        reinterpret_cast<NetMsg *>(g_00805338)->pop(
+            reinterpret_cast<const char *>(g_00688a70), 0x1388, 0, 0);
+        popup.close();
+        return;
+    }
+
+    // 0x004D3A3D-0x004D3B36 - low tidal / advanced ecological engineering
+    if (edi_isSea != 0 && altBits < 0x40 && tfId != 0x10 && tfId != 0x11) {
+        int faction = this->field_23BD4_;
+        if ((*reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(g_00946f58) + faction * 0x59c) & 0x100)
+            == 0) {
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                reinterpret_cast<const char *>(g_00688a80), 0x1388, 0, 0);
+            popup.close();
+            return;
+        }
+        if (!has_tech(0x3e, faction)) {
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                reinterpret_cast<const char *>(g_00688a8c), 0x1388, 0, 0);
+            popup.close();
+            return;
+        }
+    }
+
+    // 0x004D3B3B-0x004D3C10 - volcano restriction
+    uint32_t bit2 = *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(tile) + 0xC);
+    if ((bit2 & 0x80000002) == 2) {
+        int riskyMask = *reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691888) + tfId * 8 * 4);
+        if ((riskyMask & 0x208000) != 0 || (bit2 & 0xff000000) == 0) {
+            g_009b86a0[0] = 0;
+            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00688a9c));
+            if ((*reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691888) + tfId * 8 * 4) & 0x208000)
+                == 0) {
+                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00688aac));
+            }
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                reinterpret_cast<const char *>(g_009b86a0), 0x1388, 0, 0);
+            popup.close();
+            return;
+        }
+    }
+
+    // 0x004D3C15-0x004D3C80 - rocky terrain restriction
+    if (edi_isSea == 0) {
+        int contour = tile->contour & 0xC0;
+        if (contour > 0x40) {
+            int riskyMask = *reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691888) + tfId * 8 * 4);
+            if ((riskyMask & 0x208000) != 0) {
+                reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                    reinterpret_cast<const char *>(g_00688ab0), 0x1388, 0, 0);
+                popup.close();
+                return;
+            }
+        }
+    }
+
+    // 0x004D3C85-0x004D3E28 - fungus removal tech gating
+    if ((tile->bit & 0x20) != 0 && altBits >= 0x40) {
+        int riskyMask = *reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691888) + tfId * 8 * 4);
+        if ((riskyMask & 4) != 0) {
+            int faction = this->field_23BD4_;
+            if (!has_tech(*g_00949774, faction)) {
+                const char *msg2;
+                if (*g_00949774 < 0) {
+                    msg2 = reinterpret_cast<const char *>(g_00688ad8);
+                } else {
+                    say_tech(reinterpret_cast<char *>(g_009b86a0), *g_00949774, 0);
+                    parse_says(0, reinterpret_cast<char *>(g_009b86a0), -1, -1);
+                    msg2 = reinterpret_cast<const char *>(g_00688ae4);
+                }
+                reinterpret_cast<NetMsg *>(g_00805338)->pop(msg2, 0x1388, 0, 0);
+                popup.close();
+                return;
+            }
+        }
+    } else if ((tile->bit & 0x20) != 0) {
+        int faction = this->field_23BD4_;
+        if (!has_tech(*g_0094977c, faction)) {
+            const char *msg2;
+            if (*g_0094977c < 0) {
+                msg2 = reinterpret_cast<const char *>(g_00688abc);
+            } else {
+                say_tech(reinterpret_cast<char *>(g_009b86a0), *g_0094977c, 0);
+                parse_says(0, reinterpret_cast<char *>(g_009b86a0), -1, -1);
+                msg2 = reinterpret_cast<const char *>(g_00688ac8);
+            }
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(msg2, 0x1388, 0, 0);
+            popup.close();
+            return;
+        }
+    }
+
+    // 0x004D3E28-0x004D3E3F - dispatch table on terraformID
+    switch (tfId) {
+    case 3: {
+        // 0x004D3E46
+        int faction = this->field_23BD4_;
+        if (energy_yield(faction, -1, vx, vy, 1) == 0) {
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                reinterpret_cast<const char *>(g_00688af4), 0x1388, 0, 0);
+            popup.close();
+            return;
+        }
+        break;
+    }
+    case 0xE: {
+        // 0x004D3EBC - borehole placement: scan the 8 adjacent tiles
+        int ownAltLevel = tile->climate >> 5;
+        int i;
+        for (i = 0; i < 0x20; i += 4) {
+            int rowCand = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066ef50) + i) + vx;
+            if ((*g_0094988c & 1) == 0) {
+                if (rowCand < 0) {
+                    rowCand += *g_00949870;
+                } else if (rowCand >= *g_00949870) {
+                    rowCand -= *g_00949870;
+                }
+            }
+            int colCand = vy + *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066ef74) + i);
+            if (colCand >= 0 && colCand < *g_00949874 && rowCand >= 0 && rowCand < *g_00949870) {
+                int r2 = rowCand >> 1;
+                MapTileRec *adjTile = (*g_map_tiles) + (mapWidth * colCand + r2);
+                if ((adjTile->climate & 0xE0) > 0x5F) {
+                    if ((adjTile->bit & 0x1000000) != 0) {
+                        X_pop(reinterpret_cast<const char *>(g_00688b00), 0);
+                        reinterpret_cast<NetMsg *>(g_00805338);
+                        popup.close();
+                        popup.scroll_.close();
+                        return;
+                    }
+                    int foundVehIdx = veh_at(colCand, r2);
+                    if (foundVehIdx >= 0) {
+                        int scanIdx = foundVehIdx;
+                        bool matched = false;
+                        while (scanIdx >= 0) {
+                            if (g_vehs[scanIdx].faction_id == this->field_23BD4_ &&
+                                g_vehs[scanIdx].order == 0x12) {
+                                X_pop(reinterpret_cast<const char *>(g_00688b10), 0);
+                                popup.close();
+                                popup.scroll_.close();
+                                return;
+                            }
+                            scanIdx = g_vehs[scanIdx].next_veh_id_stack;
+                        }
+                    }
+                    if ((adjTile->climate >> 5) < ownAltLevel) {
+                        X_pop(reinterpret_cast<const char *>(g_00688b20), 0);
+                        popup.close();
+                        popup.scroll_.close();
+                        return;
+                    }
+                }
+            }
+        }
+        break;
+    }
+    case 0xF: {
+        // 0x004D4159 - aquifer: scan 8 adjacent tiles for an eligible one
+        int i;
+        bool found = false;
+        for (i = 0; i < 0x20 && !found; i += 4) {
+            int rowCand = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066ef50) + i) + vx;
+            if ((*g_0094988c & 1) == 0) {
+                if (rowCand < 0) {
+                    rowCand += *g_00949870;
+                } else if (rowCand >= *g_00949870) {
+                    rowCand -= *g_00949870;
+                }
+            }
+            int colCand = vy + *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066ef74) + i);
+            if (colCand >= 0 && colCand < *g_00949874 && rowCand >= 0 && rowCand < *g_00949870) {
+                int r2 = rowCand >> 1;
+                MapTileRec *adjTile = (*g_map_tiles) + (mapWidth * colCand + r2);
+                if ((adjTile->climate & 0xE0) > 0x5F && (adjTile->bit & 0x80) != 0) {
+                    found = true;
+                }
+            }
+        }
+        if (!found) {
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                reinterpret_cast<const char *>(g_00688b2c), 0x1388, 0, 0);
+            popup.close();
+            popup.scroll_.close();
+            return;
+        }
+        break;
+    }
+    case 0x10:
+    case 0x11: {
+        // 0x004D4314 - raise/lower terrain
+        if ((*g_009a649c & 0x800000) != 0) {
+            reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                reinterpret_cast<const char *>(g_00688b40), 0x1388, 0, 0);
+            popup.close();
+            popup.scroll_.close();
+            return;
+        }
+        int rawAlt = tile->climate & 0xE0;
+        if (tfId == 0x10) {
+            if (rawAlt >= 0x60) {
+                if (rawAlt >= 0xC0) {
+                    reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                        reinterpret_cast<const char *>(g_00688b5c), 0x1388, 0, 0);
+                    popup.close();
+                    popup.scroll_.close();
+                    return;
+                }
+            } else if (rawAlt >= 0x40) {
+                reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                    reinterpret_cast<const char *>(g_00688b50), 0x1388, 0, 0);
+                popup.close();
+                popup.scroll_.close();
+                return;
+            }
+        } else {
+            if (rawAlt >= 0x60) {
+                if (rawAlt <= 0x60) {
+                    if (rawAlt == 0) {
+                        reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                            reinterpret_cast<const char *>(g_00688b64), 0x1388, 0, 0);
+                    }
+                } else {
+                    reinterpret_cast<NetMsg *>(g_00805338)->pop(
+                        reinterpret_cast<const char *>(g_00688b70), 0x1388, 0, 0);
+                    popup.close();
+                    popup.scroll_.close();
+                    return;
+                }
+            }
+        }
+
+        int faction = this->field_23BD4_;
+        log_say(reinterpret_cast<char *>(g_00688b78), faction, 0, 0);
+        if (stack_check(a1, 9, -1, -1, tfId) == 0) {
+            int cost = terraform_cost(vxHalf, vy, faction);
+            int payAmount = cost;
+            if (cost != 0) {
+                parse_num(0, cost);
+                parse_num(1, *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096cc00) + faction * 0x20cc));
+                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<const char *>(g_00688b8c));
+                popup.start(reinterpret_cast<char *>(g_009b8aa8), reinterpret_cast<const char *>(g_009b86a0),
+                            -1, 0, 0, 0);
+                if (*reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096cc00) + faction * 0x20cc)
+                    >= payAmount) {
+                    popup.start(reinterpret_cast<char *>(g_009b8aa8),
+                                (tfId == 0x11) ? reinterpret_cast<const char *>(g_00688ba0)
+                                               : reinterpret_cast<const char *>(g_00688b98),
+                                -1, 0, 0x80, 0);
+                    log_say(reinterpret_cast<char *>(g_00688bb0), 0, 0, 0);
+                }
+                int paid = popup.exec(0, 0);
+                if (paid == 0) {
+                    log_say(reinterpret_cast<char *>(g_00688bdc), 0, 0, 0);
+                    popup.close();
+                    popup.scroll_.close();
+                    return;
+                }
+                log_say(reinterpret_cast<char *>(g_00688bc8), 0, 0, 0);
+                *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096cc00) + faction * 0x20cc) -= payAmount;
+                synch_energy(faction);
+                this->update_data(0);
+            }
+
+            int steps = 1;
+            if (tfId == 0x10) {
+                int lvl = (tile->climate >> 5) + 1;
+                if (lvl >= 4 && lvl < 7) {
+                    steps = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066f8b8) + lvl * 4);
+                } else if (lvl >= 7) {
+                    steps = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066f8b8) + 6 * 4);
+                }
+            } else {
+                int lvl = (tile->climate >> 5) - 1;
+                if (lvl >= 0) {
+                    if (lvl <= 6 && lvl <= 3) {
+                        int idx = 3 - lvl;
+                        if (idx < 0) idx = lvl - 3;
+                        steps = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066f8c8) + idx * 4);
+                    }
+                }
+            }
+
+            for (int s = 0; s < steps; ++s) {
+                int rowCand = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066efbc) + s * 4) + vx;
+                if ((*g_0094988c & 1) == 0) {
+                    if (rowCand < 0) {
+                        rowCand += *g_00949870;
+                    } else if (rowCand >= *g_00949870) {
+                        rowCand -= *g_00949870;
+                    }
+                }
+                int colCand = vy + *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0066f440) + s * 4);
+                if (colCand >= 0 && colCand < *g_00949874 && rowCand >= 0 && rowCand < *g_00949870) {
+                    int foundFaction = whose_territory(faction, rowCand, colCand, 0, 0);
+                    if (foundFaction >= 0 && foundFaction != faction &&
+                        (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(g_0096c9f8) + foundFaction * 4
+                                                       + faction * 0x20cc) & 7) != 0) {
+                        int locked = reinterpret_cast<NetDaemon *>(g_0093cd90)->lock_veh(&a1, 2, -1, -1, 0);
+                        if (locked != 0) {
+                            popup.close();
+                            popup.scroll_.close();
+                            return;
+                        }
+                        if (break_treaty(faction, foundFaction, 7) == 0) {
+                            if (*g_0093f660 != 0) {
+                                message_data(0x2440, 0, faction, foundFaction, -1, 0);
+                                reinterpret_cast<NetDaemon *>(g_0093cd90)->await_exec(1);
+                            } else {
+                                double_cross(faction, foundFaction, -1);
+                            }
+                        } else {
+                            reinterpret_cast<NetDaemon *>(g_0093cd90)->unlock_veh();
+                            popup.close();
+                            popup.scroll_.close();
+                            return;
+                        }
+                    }
+                }
+            }
+
+            if (tut_check(0x800) != 0) {
+                popt(reinterpret_cast<char *>(*g_00691b14), reinterpret_cast<const char *>(g_00688c00),
+                     -1, 0, 0);
+            }
+        }
+        break;
+    }
+    case 0x12: {
+        // 0x004D4270
+        if ((tile->contour & 0xC0) == 0) {
+            X_pop(reinterpret_cast<const char *>(g_00688b38), 0);
+            popup.close();
+            popup.scroll_.close();
+            return;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    // 0x004D4A2B-0x004D4CD3 - common post-switch tail
+    tile = (*g_map_tiles) + (mapWidth * vy + vxHalf);
+    if (tfId != 0xA && tfId != 0x10 && tfId != 0x11) {
+        int rawAlt2 = tile->climate & 0xE0;
+        if (rawAlt2 > 0x3F) {
+            uint32_t conflict = *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(0x0069188C)) &
+                                 tile->bit;
+            if (conflict != 0) {
+                int idx;
+                for (idx = 0; idx < 22; ++idx) {
+                    uint32_t entry = reinterpret_cast<uint32_t *>(0x00691888)[idx * 8];
+                    if ((entry & conflict) != 0) {
+                        int landIdx = (rawAlt2 < 0x60) ? 0 : 1;
+                        parse_say(0,
+                                  *reinterpret_cast<int *>(reinterpret_cast<char *>(0x00691878) + (landIdx + idx * 8) * 4),
+                                  -1, -1);
+                        if (X_pop(reinterpret_cast<const char *>(g_00688c0c), 0) == 0) {
+                            popup.close();
+                            popup.scroll_.close();
+                            return;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x004D4ECA-0x004D4FB4 - lock, execute order, unlock
+    if (*g_0093e940 == 0) {
+        int locked2 = reinterpret_cast<NetDaemon *>(g_0093cd90)->lock_veh(&a1, 0, -1, -1, 0);
+        if (locked2 != 0) {
+            popup.close();
+            return;
+        }
+    } else {
+        log_say(reinterpret_cast<char *>(g_00688c14), 0, 0, 0);
+        if (*g_0093e940 != 0) {
+            popup.close();
+            return;
+        }
+    }
+
+    g_vehs[a1].order = static_cast<int8_t>(tfId + 4);
+    synch_veh(a1);
+    log_say(reinterpret_cast<char *>(g_00688c38), a1, tfId + 1, 0);
+    if (*g_0093f660 == 0) {
+        reinterpret_cast<NetDaemon *>(g_0093cd90)->unlock_veh();
+    } else {
+        int spd = speed(a1, 0);
+        int diff = spd - g_vehs[a1].moves_expended;
+        if (diff >= 0 && !(diff < 1000 && spd == g_vehs[a1].moves_expended)) {
+            reinterpret_cast<NetDaemon *>(g_0093cd90)->action(a1, 1);
+        } else {
+            reinterpret_cast<NetDaemon *>(g_0093cd90)->unlock_veh();
+        }
+    }
+    log_say(reinterpret_cast<char *>(g_00688c50), a1, tfId + 1, 0);
+    this->field_23BE4_ = 0;
+
+    popup.close();
 }
+

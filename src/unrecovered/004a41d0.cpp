@@ -1,4 +1,13 @@
 // ORIGINAL: 0x004A41D0 FILE
+// RULED-OUT: full hand transcription from raw disassembly (not Ghidra, whose
+//            &DAT_x+idx*N pseudocode over-scales by 4x on 0x96cdac/0x96c9f8 -
+//            fixed here against the raw asm multiply chain and byte tests);
+//            covers close path (switch+jump table+loops), init path (7-button
+//            report loop, 4 button groups, single-column cef..cf8, has_tech/
+//            bitmask channel grid, spying flags, 4-way spy-report geometry,
+//            scroll/report/slide tail). First divergence is instruction #3
+//            (prologue 'mov'/'push' scheduling) - approximate throughout, not
+//            byte-verified block by block beyond the ones cited above.
 // working copy - scaffold materialised by --work
 // name      ?on_status@ReportIf@@QAEXH@Z
 // size      7426 bytes
@@ -1993,6 +2002,7 @@ class WorldWin { public:
 
 bool has_tech(int, int);
 extern "C" char *strcat(char *, const char *);
+extern "C" char *__stdcall CharUpperA(char *);
 int spying(int);
 void bitmask(int, int *, int *);
 void scroll_hide(GraphicWin *, Scroll *);
@@ -2067,7 +2077,7 @@ class VCall { public:
     virtual void slot054();
     virtual void slot055();
     virtual void slot056();
-    virtual void slot057();  // <-- used
+    virtual void slot057(int, void *, void *);  // <-- used
     virtual void slot058();
     virtual void slot059();
     virtual void slot060();
@@ -2220,10 +2230,740 @@ class ReportIf { public:
     void on_status(int);
 };
 void ReportIf::on_status(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
 
+    if (a1 == 0) {
+        // ---- 0x004A5D72: tear the interface down ----
+        *g_008a6240 = 0;
+        reinterpret_cast<Time *>(g_008846ec)->stop();
+        if (*g_00882570 != 0) {
+            scroll_hide(reinterpret_cast<GraphicWin *>(g_00876478), reinterpret_cast<Scroll *>(g_00882584));
+            *g_00882570 = 0;
+        }
+        slide_hide(reinterpret_cast<GraphicWin *>(g_00876478), 0);
+        reinterpret_cast<Win *>(g_00876478)->hide();
+        reinterpret_cast<FlatButton *>(g_0087d524)->close();
+        reinterpret_cast<FlatButton *>(g_0087c9d8)->close();
+
+        {
+            char *p = self + 0x5384;
+            int n = 7;
+            do {
+                reinterpret_cast<VCall *>(p)->slot090();
+                p += 0xB4C;
+            } while (--n != 0);
+        }
+        {
+            char *p = self + 0x80;
+            int n = 7;
+            do {
+                reinterpret_cast<VCall *>(p)->slot090();
+                p += 0xB4C;
+            } while (--n != 0);
+        }
+
+        switch (*reinterpret_cast<int *>(self + 8)) {
+        case 3:
+            reinterpret_cast<ListBox *>(g_0087be84)->close();
+            // fall through
+        case 0:
+            reinterpret_cast<ListBox *>(self + 0xA2D0)->close();
+            reinterpret_cast<ListBox *>(self + 0xAE24)->close();
+            break;
+        case 2:
+            reinterpret_cast<ListBox *>(self + 0xA2D0)->close();
+            reinterpret_cast<VCall *>(self + 0xBA0C)->slot002();
+            reinterpret_cast<VCall *>(self + 0xC558)->slot002();
+            break;
+        case 4:
+            close_ops();
+            break;
+        case 6:
+            close_sat();
+            break;
+        case 7:
+            reinterpret_cast<VCall *>(self + 0x1BF9C)->slot002();
+            reinterpret_cast<VCall *>(self + 0x1D634)->slot002();
+            reinterpret_cast<VCall *>(self + 0x1CAE8)->slot002();
+            break;
+        default:
+            break;
+        }
+
+        reinterpret_cast<WorldWin *>(g_008e9f60)->hide_all();
+
+        {
+            char *p = reinterpret_cast<char *>(g_007b39e8);
+            char *stop = reinterpret_cast<char *>(g_007b4534);
+            do {
+                reinterpret_cast<VCall *>(p)->slot002();
+                p += 0xB4C;
+            } while (p <= stop);
+        }
+        return;
+    }
+
+    // ---- 0x004A41E8: (re)build the interface ----
+    if (*g_008a6240 != 0) {
+        *g_008a6240 = 0;
+        return;
+    }
+
+    *reinterpret_cast<int *>(self + 0x1E238) = 1;
+    *reinterpret_cast<int *>(self + 0x1E234) = 1;
+    *g_00882570 = 0;
+    *reinterpret_cast<int *>(self + 0x1E23C) = 1;
+    reinterpret_cast<GraphicWin *>(g_00876478)->fill(9);
+    *reinterpret_cast<int *>(self + 0x1E228) = *g_00939284;
+    {
+        int *p = reinterpret_cast<int *>(self + 0x1E1DC);
+        int n = 0x13;
+        do {
+            *p++ = -1;
+        } while (--n != 0);
+    }
+    *g_0087be24 = -1;
+    *reinterpret_cast<int *>(self + 0x1E1D8) = 1;
+
+    {
+        int playerIdx = *reinterpret_cast<int *>(self + 0x1E228);
+        if ((*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0 ||
+            (*g_009a649c & 0x200) != 0) {
+            int val = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096cdac) + playerIdx * 0x20CC);
+            *g_00885f30 = val;
+            if (val < 0 || val > 0x59) {
+                *g_00885f30 = 0;
+            }
+        } else {
+            *g_00885f30 = 0;
+        }
+    }
+
+    // ---- 0x004A42B8: 7 report-mode buttons ----
+    {
+        int strOff = 0xAC4;
+        int *colorArr = reinterpret_cast<int *>(self + 0xA298);
+        char *textEntry = self + 0x4FC0;
+        FlatButton *btn = reinterpret_cast<FlatButton *>(self + 0x5384);
+        for (int i = 0; i < 7; i++) {
+            *reinterpret_cast<char *>(g_009b86a0) = 0;
+            int sid = *reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + strOff);
+            int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(sid);
+            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+
+            btn->init(0, a1 + 2, *colorArr,
+                      *reinterpret_cast<int *>(self + 0xA2CC),
+                      *reinterpret_cast<int *>(self + 0x4FAC),
+                      *reinterpret_cast<int *>(self + 0x4FB0),
+                      reinterpret_cast<Win *>(g_007ae820), 0);
+            btn->field_AD8_ = reinterpret_cast<uint32_t>(textEntry);
+            btn->field_AD4_ = reinterpret_cast<uint32_t>(textEntry - 0x2C);
+            btn->field_ADC_ = reinterpret_cast<uint32_t>(textEntry + 0x2C);
+            btn->set_bubble_text(reinterpret_cast<char *>(g_009b86a0));
+            btn->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+            reinterpret_cast<VCall *>(btn)->slot062();
+            reinterpret_cast<VCall *>(btn)->slot062();
+
+            strOff += 4;
+            colorArr++;
+            textEntry += 0x84;
+            btn = reinterpret_cast<FlatButton *>(reinterpret_cast<char *>(btn) + 0xB4C);
+        }
+    }
+
+    // ---- 0x004A4397: shared caption geometry ----
+    int capIVar8;
+    {
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        *g_0087e074 = *g_0087bdf8 + 7;
+        *g_0087e07c = *g_0087bdf8 + 0x1B;
+        *g_0087e070 = *g_0087bdec + 0x4B;
+        *g_0087e078 = (*g_0087bdf4 - *g_0087bdec) + -0x96 + *g_0087e070;
+        capIVar8 = (*g_0087bdf4 + *g_0087bdec) / 2;
+        int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x86C));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+
+        // button id=1 (0x87d524), parent = main window
+        *reinterpret_cast<int *>(self + 0x1E1C8) = *g_0087e070;
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *g_0087e074;
+        *reinterpret_cast<int *>(self + 0x1E1D0) = capIVar8 - 1;
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *g_0087e074 + 0x14;
+        reinterpret_cast<BaseButton *>(g_0087d524)->init(
+            reinterpret_cast<char *>(g_009b86a0), 1,
+            *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+            *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+            *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+            reinterpret_cast<Win *>(g_00876478), 0);
+        reinterpret_cast<Buffer *>(g_0087d524)->set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(g_0087d524)->slot062();
+        reinterpret_cast<GraphicWin *>(g_0087d524)->redraw();
+
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xA64));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+
+        // button id=9 (0x87c9d8), parent = main window
+        int rightEdge = capIVar8 + 1 + (capIVar8 - *g_0087e070) - 1;
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *g_0087e074;
+        *reinterpret_cast<int *>(self + 0x1E1C8) = capIVar8 + 1;
+        *reinterpret_cast<int *>(self + 0x1E1D0) = rightEdge;
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *g_0087e074 + 0x14;
+        reinterpret_cast<BaseButton *>(g_0087c9d8)->init(
+            reinterpret_cast<char *>(g_009b86a0), 9,
+            *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+            rightEdge - *reinterpret_cast<int *>(self + 0x1E1C8),
+            *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+            reinterpret_cast<Win *>(g_00876478), 0);
+        reinterpret_cast<Buffer *>(g_0087c9d8)->set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(g_0087c9d8)->slot062();
+        reinterpret_cast<GraphicWin *>(g_0087c9d8)->redraw();
+    }
+
+    // ---- 0x004A44FD: report-mode group A (id 2), buttons 0x92/0x93 ----
+    *reinterpret_cast<int *>(self + 0xC) = *reinterpret_cast<int *>(self + 0x20) + 9;
+    *reinterpret_cast<int *>(self + 0x10) = *reinterpret_cast<int *>(self + 0x24) + 9;
+    *reinterpret_cast<int *>(self + 0x14) = (*reinterpret_cast<int *>(self + 0x28) - *reinterpret_cast<int *>(self + 0x20)) - 0x12;
+    reinterpret_cast<ButtonGroup *>(self + 0xB978)->init(2, 0);
+    {
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x5D4));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        *reinterpret_cast<int *>(self + 0x1E1C8) = *reinterpret_cast<int *>(self + 0xC);
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0xC) + *reinterpret_cast<int *>(self + 0x14) / 2 - 1;
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        FlatButton *b92 = reinterpret_cast<FlatButton *>(self + 0xBA0C);
+        b92->init(reinterpret_cast<char *>(g_009b86a0), 0x92,
+                  *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+                  *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+                  *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+                  reinterpret_cast<Win *>(g_007ae820), 0);
+        b92->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(b92)->slot062();
+        reinterpret_cast<VCall *>(b92)->slot002();
+
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x5D8));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        int iVar3 = *reinterpret_cast<int *>(self + 0x14) / 2;
+        int iLeft = iVar3 + 1 + *reinterpret_cast<int *>(self + 0xC);
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1C8) = iLeft;
+        *reinterpret_cast<int *>(self + 0x1E1D0) = iLeft + iVar3;
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        FlatButton *b93 = reinterpret_cast<FlatButton *>(self + 0xC558);
+        b93->init(reinterpret_cast<char *>(g_009b86a0), 0x93,
+                  *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+                  *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+                  *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+                  reinterpret_cast<Win *>(g_007ae820), 0);
+        b93->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(b93)->slot062();
+        reinterpret_cast<VCall *>(b93)->slot002();
+
+        ButtonGroup *grpA = reinterpret_cast<ButtonGroup *>(self + 0xB978);
+        grpA->add(b92);
+        grpA->add(b93);
+        grpA->set(0x92, 1);
+    }
+
+    // ---- 0x004A472C: report-mode group B (id 4), buttons 0xd0a/0xd0b ----
+    *reinterpret_cast<int *>(self + 0xC) = *reinterpret_cast<int *>(self + 0x20) + 9;
+    *reinterpret_cast<int *>(self + 0x10) = *reinterpret_cast<int *>(self + 0x24) + 9;
+    *reinterpret_cast<int *>(self + 0x14) = (*reinterpret_cast<int *>(self + 0x28) - *reinterpret_cast<int *>(self + 0x20)) - 0x12;
+    reinterpret_cast<ButtonGroup *>(self + 0xD0A4)->init(4, 0);
+    {
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x7B8));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        *reinterpret_cast<int *>(self + 0x1E1C8) = *reinterpret_cast<int *>(self + 0xC);
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0xC) + *reinterpret_cast<int *>(self + 0x14) / 2 - 1;
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        FlatButton *bA = reinterpret_cast<FlatButton *>(self + 0xD138);
+        bA->init(reinterpret_cast<char *>(g_009b86a0), 0xD0A,
+                 *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+                 *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+                 *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+                 reinterpret_cast<Win *>(g_007ae820), 0);
+        bA->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(bA)->slot062();
+        reinterpret_cast<VCall *>(bA)->slot002();
+
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xAA8));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        int iVar3 = *reinterpret_cast<int *>(self + 0x14) / 2;
+        int iLeft = iVar3 + 1 + *reinterpret_cast<int *>(self + 0xC);
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        *reinterpret_cast<int *>(self + 0x1E1C8) = iLeft;
+        *reinterpret_cast<int *>(self + 0x1E1D0) = iLeft + iVar3;
+        FlatButton *bB = reinterpret_cast<FlatButton *>(self + 0xDC84);
+        bB->init(reinterpret_cast<char *>(g_009b86a0), 0xD0B,
+                 *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+                 *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+                 *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+                 reinterpret_cast<Win *>(g_007ae820), 0);
+        bB->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(bB)->slot062();
+        reinterpret_cast<VCall *>(bB)->slot002();
+
+        ButtonGroup *grpB = reinterpret_cast<ButtonGroup *>(self + 0xD0A4);
+        grpB->add(bA);
+        grpB->add(bB);
+        grpB->set(0xD0A, 1);
+    }
+
+    // ---- 0x004A48F5: fixed group 0x87e080 (id 4), buttons 0x8b3/0x8b4/0x8b5 ----
+    *reinterpret_cast<int *>(self + 0xC) = *g_0087bdec + 3;
+    *reinterpret_cast<int *>(self + 0x10) = *reinterpret_cast<int *>(self + 0x1C) + *g_0087bdf0 + 0xB;
+    *reinterpret_cast<int *>(self + 0x14) = (*g_0087bdf4 - *g_0087bdec) - 6;
+    reinterpret_cast<ButtonGroup *>(g_0087e080)->init(4, 0);
+    {
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xCB0));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        int left = *reinterpret_cast<int *>(self + 0xC);
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1C8) = left;
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0x14) / 3 - 2 + left;
+        reinterpret_cast<BaseButton *>(g_0087e114)->init(
+            reinterpret_cast<char *>(g_009b86a0), 0x8B3, left, *reinterpret_cast<int *>(self + 0x1E1CC),
+            *reinterpret_cast<int *>(self + 0x1E1D0) - left,
+            *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+            reinterpret_cast<Win *>(g_00876478), 0);
+        reinterpret_cast<Buffer *>(g_0087e114)->set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(g_0087e114)->slot062();
+        if (*g_0087ebbc == 0) {
+            *g_0087ebb0 = 0;
+        }
+        reinterpret_cast<Win *>(g_0087e114)->hide();
+
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xBA4));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        int iVar3 = *reinterpret_cast<int *>(self + 0x14) / 3;
+        int iLeft = *reinterpret_cast<int *>(self + 0xC) + iVar3;
+        int iRight = *reinterpret_cast<int *>(self + 0xC) + iVar3 * 2;
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        *reinterpret_cast<int *>(self + 0x1E1C8) = iLeft;
+        *reinterpret_cast<int *>(self + 0x1E1D0) = iRight;
+        reinterpret_cast<BaseButton *>(g_0087ec60)->init(
+            reinterpret_cast<char *>(g_009b86a0), 0x8B4, iLeft, *reinterpret_cast<int *>(self + 0x1E1CC),
+            iRight - iLeft, *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+            reinterpret_cast<Win *>(g_00876478), 0);
+        reinterpret_cast<Buffer *>(g_0087ec60)->set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(g_0087ec60)->slot062();
+        if (*g_0087f708 == 0) {
+            *g_0087f6fc = 0;
+        }
+        reinterpret_cast<Win *>(g_0087ec60)->hide();
+
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xFC));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        int rowBottom = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1D4) = rowBottom;
+        *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0xC) + *reinterpret_cast<int *>(self + 0x14);
+        int cLeft = *reinterpret_cast<int *>(self + 0xC) + 2 + (*reinterpret_cast<int *>(self + 0x14) / 3) * 2;
+        *reinterpret_cast<int *>(self + 0x1E1C8) = cLeft;
+        reinterpret_cast<BaseButton *>(g_0087f7ac)->init(
+            reinterpret_cast<char *>(g_009b86a0), 0x8B5, cLeft, *reinterpret_cast<int *>(self + 0x1E1CC),
+            *reinterpret_cast<int *>(self + 0x1E1D0) - cLeft, rowBottom - *reinterpret_cast<int *>(self + 0x1E1CC),
+            reinterpret_cast<Win *>(g_00876478), 0);
+        reinterpret_cast<Buffer *>(g_0087f7ac)->set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(g_0087f7ac)->slot062();
+        if (*g_00880254 == 0) {
+            *g_00880248 = 0;
+        }
+        reinterpret_cast<Win *>(g_0087f7ac)->hide();
+
+        ButtonGroup *grpC = reinterpret_cast<ButtonGroup *>(g_0087e080);
+        grpC->add(reinterpret_cast<BaseButton *>(g_0087e114));
+        grpC->add(reinterpret_cast<BaseButton *>(g_0087ec60));
+        grpC->add(reinterpret_cast<BaseButton *>(g_0087f7ac));
+        int def = *reinterpret_cast<int *>(self + 0x1E240);
+        grpC->set(def == 0 ? 0x8B3 : def, 1);
+    }
+
+    // ---- 0x004A4C13: fixed group 0x8802f8 (id 6), buttons 0xd3c/0xd3d ----
+    *reinterpret_cast<int *>(self + 0xC) = *g_0087bdec + 3;
+    *reinterpret_cast<int *>(self + 0x10) = *reinterpret_cast<int *>(self + 0x1C) + *g_0087bdf0 + 0xB;
+    *reinterpret_cast<int *>(self + 0x14) = (*g_0087bdf4 - *g_0087bdec) - 6;
+    reinterpret_cast<ButtonGroup *>(g_008802f8)->init(6, 0);
+    {
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xCB0));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        int left = *reinterpret_cast<int *>(self + 0xC);
+        int top = *reinterpret_cast<int *>(self + 0x10);
+        int right = *reinterpret_cast<int *>(self + 0x14) / 2 - 1 + left;
+        *reinterpret_cast<int *>(self + 0x1E1C8) = left;
+        *reinterpret_cast<int *>(self + 0x1E1CC) = top;
+        *reinterpret_cast<int *>(self + 0x1E1D0) = right;
+        *reinterpret_cast<int *>(self + 0x1E1D4) = top + 0x14;
+        reinterpret_cast<BaseButton *>(g_0088038c)->init(
+            reinterpret_cast<char *>(g_009b86a0), 0xD3C, left, top, right - left, 0x14,
+            reinterpret_cast<Win *>(g_00876478), 0);
+        reinterpret_cast<Buffer *>(g_0088038c)->set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(g_0088038c)->slot062();
+        if (*g_00880e34 == 0) {
+            *g_00880e28 = 0;
+        }
+        reinterpret_cast<Win *>(g_0088038c)->hide();
+
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xCB4));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        int local18 = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        int iLeft2 = *reinterpret_cast<int *>(self + 0x14) / 2 + 1 + *reinterpret_cast<int *>(self + 0xC);
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0xC) + *reinterpret_cast<int *>(self + 0x14);
+        *reinterpret_cast<int *>(self + 0x1E1D4) = local18;
+        *reinterpret_cast<int *>(self + 0x1E1C8) = iLeft2;
+        reinterpret_cast<BaseButton *>(g_00880ed8)->init(
+            reinterpret_cast<char *>(g_009b86a0), 0xD3D, iLeft2, *reinterpret_cast<int *>(self + 0x1E1CC),
+            *reinterpret_cast<int *>(self + 0x1E1D0) - iLeft2, local18 - *reinterpret_cast<int *>(self + 0x1E1CC),
+            reinterpret_cast<Win *>(g_00876478), 0);
+        reinterpret_cast<Buffer *>(g_00880ed8)->set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(g_00880ed8)->slot062();
+        if (*g_00881980 == 0) {
+            *g_00881974 = 0;
+        }
+        reinterpret_cast<Win *>(g_00880ed8)->hide();
+
+        ButtonGroup *grpD = reinterpret_cast<ButtonGroup *>(g_008802f8);
+        grpD->add(reinterpret_cast<BaseButton *>(g_0088038c));
+        grpD->add(reinterpret_cast<BaseButton *>(g_00880ed8));
+        grpD->set(0xD3C, 1);
+    }
+
+    // ---- 0x004A4E1C: single button 0xd3e (0x881a24), parent = main window ----
+    {
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xCB8));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        int right = *g_0087e078;
+        int left = *g_0087e070;
+        int bottom = *g_0087bdf8 - 6;
+        int top = *g_0087bdf8 - 0x1A;
+        *reinterpret_cast<int *>(self + 0x1E1C8) = *g_0087e070;
+        *reinterpret_cast<int *>(self + 0x1E1CC) = top;
+        *reinterpret_cast<int *>(self + 0x1E1D0) = right;
+        *reinterpret_cast<int *>(self + 0x1E1D4) = bottom;
+        reinterpret_cast<BaseButton *>(g_00881a24)->init(
+            reinterpret_cast<char *>(g_009b86a0), 0xD3E, left, top, right - left, bottom - top,
+            reinterpret_cast<Win *>(g_00876478), 0);
+        reinterpret_cast<Buffer *>(g_00881a24)->set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(g_00881a24)->slot062();
+        *g_008824ec = (int)g_0078dc80;
+        *g_008824f0 = (int)g_0078dc58;
+        *g_008824f4 = (int)g_0078dc30;
+        if (*g_008824cc == 0) {
+            *g_008824c0 = 0;
+        }
+        reinterpret_cast<Win *>(g_00881a24)->hide();
+    }
+
+    // ---- 0x004A4EFF: report/order rect, single column cef..cf5 ----
+    *reinterpret_cast<int *>(self + 0xC) = *reinterpret_cast<int *>(self + 0x20) + 9;
+    *reinterpret_cast<int *>(self + 0x10) = *reinterpret_cast<int *>(self + 0x24) + 0x23;
+    *reinterpret_cast<int *>(self + 0x14) = (*reinterpret_cast<int *>(self + 0x28) - *reinterpret_cast<int *>(self + 0x20)) - 0x12;
+    {
+        static const int strOffs[7] = {0xBA8, 0xBAC, 0xBAC, 0xBAC, 0xBAC, 0xBB0, 0xBB4};
+        static const int extraOffs[7] = {-1, 0x824, 0x828, 0x82C, 0x830, -1, -1};
+        static const int ids[7] = {0xCEF, 0xCF0, 0xCF1, 0xCF2, 0xCF3, 0xCF4, 0xCF5};
+        char *addrs[7];
+        addrs[0] = self + 0xE7D0;
+        addrs[1] = self + 0xF31C;
+        addrs[2] = self + 0xFE68;
+        addrs[3] = self + 0x109B4;
+        addrs[4] = self + 0x11500;
+        addrs[5] = self + 0x1204C;
+        addrs[6] = self + 0x12B98;
+        for (int i = 0; i < 7; i++) {
+            *reinterpret_cast<char *>(g_009b86a0) = 0;
+            int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + strOffs[i]));
+            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+            if (extraOffs[i] >= 0) {
+                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00682820));
+                sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + extraOffs[i]));
+                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+            }
+            *reinterpret_cast<int *>(self + 0x1E1C8) = *reinterpret_cast<int *>(self + 0xC);
+            *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+            *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0xC) + *reinterpret_cast<int *>(self + 0x14);
+            *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+            FlatButton *btn = reinterpret_cast<FlatButton *>(addrs[i]);
+            btn->init(reinterpret_cast<char *>(g_009b86a0), ids[i],
+                      *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+                      *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+                      *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+                      reinterpret_cast<Win *>(g_007ae820), 0);
+            btn->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+            reinterpret_cast<VCall *>(btn)->slot062();
+            reinterpret_cast<VCall *>(btn)->slot002();
+            *reinterpret_cast<int *>(self + 0x10) += 0x16;
+        }
+    }
+
+    // ---- 0x004A54FD: new column base, buttons cf6/cf8/cf7 ----
+    *reinterpret_cast<int *>(self + 0xC) = *reinterpret_cast<int *>(self + 0x30) + 9;
+    *reinterpret_cast<int *>(self + 0x10) = *reinterpret_cast<int *>(self + 0x34) + 0x20;
+    *reinterpret_cast<int *>(self + 0x14) = (*reinterpret_cast<int *>(self + 0x38) - *reinterpret_cast<int *>(self + 0x30)) - 0x12;
+    {
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xEEC));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        *reinterpret_cast<int *>(self + 0x1E1C8) = *reinterpret_cast<int *>(self + 0xC);
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0xC) + *reinterpret_cast<int *>(self + 0x14);
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        FlatButton *btn = reinterpret_cast<FlatButton *>(self + 0x1BF9C);
+        btn->init(reinterpret_cast<char *>(g_009b86a0), 0xCF6,
+                  *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+                  *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+                  *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+                  reinterpret_cast<Win *>(g_007ae820), 0);
+        btn->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(btn)->slot062();
+        reinterpret_cast<VCall *>(btn)->slot002();
+        *reinterpret_cast<int *>(self + 0x10) += 0x16;
+
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xB6C));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        *reinterpret_cast<int *>(self + 0x1E1C8) = *reinterpret_cast<int *>(self + 0xC);
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0xC) + *reinterpret_cast<int *>(self + 0x14);
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        FlatButton *btn8 = reinterpret_cast<FlatButton *>(self + 0x1D634);
+        btn8->init(reinterpret_cast<char *>(g_009b86a0), 0xCF8,
+                   *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+                   *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+                   *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+                   reinterpret_cast<Win *>(g_007ae820), 0);
+        btn8->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(btn8)->slot062();
+        reinterpret_cast<VCall *>(btn8)->slot002();
+        *reinterpret_cast<int *>(self + 0x10) += 0x16;
+
+        *reinterpret_cast<char *>(g_009b86a0) = 0;
+        sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0xB6C));
+        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+        CharUpperA(reinterpret_cast<char *>(g_009b86a0));
+        *reinterpret_cast<int *>(self + 0x1E1C8) = *reinterpret_cast<int *>(self + 0xC);
+        *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+        *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0xC) + *reinterpret_cast<int *>(self + 0x14);
+        *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+        FlatButton *btn7 = reinterpret_cast<FlatButton *>(self + 0x1CAE8);
+        btn7->init(reinterpret_cast<char *>(g_009b86a0), 0xCF7,
+                   *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+                   *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+                   *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+                   reinterpret_cast<Win *>(g_007ae820), 0);
+        btn7->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+        reinterpret_cast<VCall *>(btn7)->slot062();
+        reinterpret_cast<VCall *>(btn7)->slot002();
+    }
+
+    // ---- 0x004A5773: group E (id 0x6a) init; members added below by the faction loop ----
+    *reinterpret_cast<int *>(self + 0xC) = *reinterpret_cast<int *>(self + 0x20) + 9;
+    *reinterpret_cast<int *>(self + 0x10) = *reinterpret_cast<int *>(self + 0x24) + 0x20;
+    *reinterpret_cast<int *>(self + 0x14) = (*reinterpret_cast<int *>(self + 0x28) - *reinterpret_cast<int *>(self + 0x20)) - 0x12;
+    reinterpret_cast<ButtonGroup *>(self + 0x136E4)->init(0x6A, 0);
+
+    // ---- 0x004A57A7: per-faction "channel" grid (has_tech / bitmask driven) ----
+    {
+        char *nameCursor = self + 0x13778;
+        FlatButton *btn = reinterpret_cast<FlatButton *>(nameCursor);
+        for (int factionIdx = 1; factionIdx <= 7; factionIdx++, btn = reinterpret_cast<FlatButton *>(reinterpret_cast<char *>(btn) + 0xB4C)) {
+            if (factionIdx == *g_00939284) {
+                continue;
+            }
+            int ownerMatches = 0;
+            int baseCount = *g_009a64cc;
+            if (baseCount > 0) {
+                int cursorOff = 0;
+                for (int b = 0; b < baseCount; b++, cursorOff += 0x134) {
+                    unsigned char owner = *(reinterpret_cast<unsigned char *>(g_0097d044) + cursorOff);
+                    if (owner == static_cast<unsigned char>(factionIdx)) {
+                        int byteOff = 0, mask = 0;
+                        bitmask(0x29, &byteOff, &mask);
+                        unsigned char bits = *(reinterpret_cast<unsigned char *>(g_0097d0cc) + cursorOff + byteOff);
+                        if ((bits & mask) != 0) {
+                            ownerMatches++;
+                        }
+                    }
+                }
+            }
+            bool techA = has_tech(*g_009a57ac, factionIdx);
+            bool show = techA;
+            if (!show) {
+                int *stats = reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096f2bc) + (factionIdx - 1) * 0x20CC);
+                int sum = stats[-2] + stats[-1] + stats[1] + ownerMatches + stats[0];
+                show = (sum != 0);
+                if (!show) {
+                    show = has_tech(*g_009a532c, factionIdx);
+                }
+            }
+            if (!show) {
+                continue;
+            }
+
+            char *nameBase = reinterpret_cast<char *>(g_009472ec) + (factionIdx - 1) * 0x59C;
+            *reinterpret_cast<char *>(g_009b86a0) = 0;
+            *g_009bbfec = *reinterpret_cast<int *>(nameBase - 4);
+            *g_009bbff0 = *reinterpret_cast<int *>(nameBase);
+            strcat(reinterpret_cast<char *>(g_009b86a0), nameBase - 0x1C);
+
+            *reinterpret_cast<int *>(self + 0x1E1C8) = *reinterpret_cast<int *>(self + 0xC);
+            *reinterpret_cast<int *>(self + 0x1E1CC) = *reinterpret_cast<int *>(self + 0x10);
+            *reinterpret_cast<int *>(self + 0x1E1D0) = *reinterpret_cast<int *>(self + 0xC) + *reinterpret_cast<int *>(self + 0x14);
+            *reinterpret_cast<int *>(self + 0x1E1D4) = *reinterpret_cast<int *>(self + 0x10) + 0x14;
+            btn->init(reinterpret_cast<char *>(g_009b86a0), factionIdx,
+                      *reinterpret_cast<int *>(self + 0x1E1C8), *reinterpret_cast<int *>(self + 0x1E1CC),
+                      *reinterpret_cast<int *>(self + 0x1E1D0) - *reinterpret_cast<int *>(self + 0x1E1C8),
+                      *reinterpret_cast<int *>(self + 0x1E1D4) - *reinterpret_cast<int *>(self + 0x1E1CC),
+                      reinterpret_cast<Win *>(g_007ae820), 0);
+            btn->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+            reinterpret_cast<VCall *>(btn)->slot062();
+            reinterpret_cast<VCall *>(btn)->slot002();
+            reinterpret_cast<ButtonGroup *>(self + 0x136E4)->add(btn);
+            *reinterpret_cast<int *>(self + 0x10) += 0x16;
+        }
+    }
+
+    // ---- 0x004A594F: per-faction visibility flags ----
+    int factionFlags[7];
+    *g_0087be28 = 1;
+    {
+        int cursor = 0x833;
+        int factionIdx = 1;
+        int i = 0;
+        do {
+            unsigned char bit = *(reinterpret_cast<unsigned char *>(g_0096c9f8) + (cursor + *g_00939284) * 4);
+            if ((bit & 1) == 0 && spying(factionIdx) == 0 && factionIdx != *g_00939284 &&
+                (*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) == 0) {
+                factionFlags[i] = 0;
+            } else {
+                factionFlags[i] = 1;
+            }
+            cursor += 0x833;
+            factionIdx++;
+            i++;
+        } while (cursor < 0x4198);
+    }
+
+    // ---- 0x004A59CD: per-faction "spy report" grid ----
+    {
+        char *statsCursor = self + 0x5334;
+        int *pointCursor = reinterpret_cast<int *>(self + 0x5C);
+        char *nameCursor = reinterpret_cast<char *>(g_00946fec);
+        FlatButton *btn = reinterpret_cast<FlatButton *>(self + 0x80);
+        for (int i = 0; i < 7; i++) {
+            int factionIdx = i + 1;
+            if (factionFlags[i] != 0) {
+                *reinterpret_cast<char *>(g_009b86a0) = 0;
+                *g_009bbfec = *reinterpret_cast<int *>(nameCursor);
+                *g_009bbff0 = 0;
+                strcat(reinterpret_cast<char *>(g_009b86a0), nameCursor + 0x4C);
+                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00682820));
+                *g_009bbff0 = 0;
+                *g_009bbfec = *reinterpret_cast<int *>(nameCursor);
+                strcat(reinterpret_cast<char *>(g_009b86a0), nameCursor + 0x34);
+                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00682820));
+                {
+                    int sid = *reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x2D0);
+                    int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(sid);
+                    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+                }
+                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00682820));
+                *g_009bbfec = *reinterpret_cast<int *>(nameCursor + 0x2FC);
+                *g_009bbff0 = *reinterpret_cast<int *>(nameCursor + 0x300);
+                strcat(reinterpret_cast<char *>(g_009b86a0), nameCursor + 0x2E4);
+
+                int curPlayer = *g_00939284;
+                int modeFlag = *reinterpret_cast<int *>(self + 0x1E230);
+                int bonus = (modeFlag != 0) ? 5 : 0;
+                int left, top, right, bottom;
+                if (factionIdx < curPlayer) {
+                    top = *reinterpret_cast<int *>(self + 0x7C);
+                    left = pointCursor[1];
+                    right = left + bonus + 0x25;
+                    bottom = top + 0x1D;
+                } else if (factionIdx > curPlayer) {
+                    top = *reinterpret_cast<int *>(self + 0x7C);
+                    left = pointCursor[0];
+                    right = left + bonus + 0x25;
+                    bottom = top + 0x1D;
+                } else if (modeFlag != 0) {
+                    left = *reinterpret_cast<int *>(self + 0x50) + 0xF;
+                    top = *reinterpret_cast<int *>(self + 0x54) + 0xF;
+                    right = left + 0x46;
+                    bottom = top + 0x46;
+                } else {
+                    left = *reinterpret_cast<int *>(self + 0x50) + 9;
+                    top = *reinterpret_cast<int *>(self + 0x7C);
+                    right = left + 0x25;
+                    bottom = top + 0x1D;
+                }
+                *reinterpret_cast<int *>(self + 0x1E1C8) = left;
+                *reinterpret_cast<int *>(self + 0x1E1CC) = top;
+                *reinterpret_cast<int *>(self + 0x1E1D0) = right;
+                *reinterpret_cast<int *>(self + 0x1E1D4) = bottom;
+
+                btn->init(0, factionIdx + 9999, left, top, right - left, bottom - top,
+                          reinterpret_cast<Win *>(g_007ae820), 0);
+
+                int *sc = reinterpret_cast<int *>(statsCursor);
+                btn->field_ADC_ = static_cast<uint32_t>(sc[1]);
+                btn->field_AD4_ = static_cast<uint32_t>(sc[-1]);
+                btn->field_AD8_ = static_cast<uint32_t>(sc[0]);
+                btn->set_bubble_text(reinterpret_cast<char *>(g_009b86a0));
+                btn->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+                reinterpret_cast<VCall *>(btn)->slot062();
+                reinterpret_cast<VCall *>(btn)->slot062();
+            }
+            nameCursor += 0x59C;
+            pointCursor += 1;
+            statsCursor += 0xC;
+            btn = reinterpret_cast<FlatButton *>(reinterpret_cast<char *>(btn) + 0xB4C);
+        }
+    }
+
+    // ---- 0x004A5C45: index-selected report window, scroll, "report" event ----
+    {
+        int idx1 = *g_00939284;
+        int off1 = idx1 * 0x20CC - 0x14;
+        *reinterpret_cast<int *>(self + off1) = 2;
+        int idx2 = *g_00939284;
+        FlatButton *sel = reinterpret_cast<FlatButton *>(self + idx2 * 0x20CC - 0xACC);
+        reinterpret_cast<VCall *>(sel)->slot062();
+    }
+    *g_008846d0 = 0;
+    *g_008846d4 = 0;
+    *g_008846d8 = 0x20;
+    *g_008846dc = 0x12C;
+    reinterpret_cast<Scroll *>(g_00882584)->init(reinterpret_cast<RECT *>(g_008846d0), reinterpret_cast<Win *>(g_00876478), 0, 0);
+    reinterpret_cast<Win *>(g_00882584)->hide();
+    *reinterpret_cast<int *>(self + 0x1E234) = 0;
+    reinterpret_cast<ReportIf *>(g_00885f38)->report(*g_00885f40, *g_008a4160, *g_008a4164);
+    slide_show(reinterpret_cast<GraphicWin *>(g_00876478), 0);
+    reinterpret_cast<Win *>(g_00876478)->show(3);
+    *g_008a4170 = 0;
+    if (*g_008846e4 != 0) {
+        scroll_show(reinterpret_cast<GraphicWin *>(g_00876478), reinterpret_cast<Scroll *>(g_00882584));
+        *g_008846e4 = 0;
+        *g_00882570 = 1;
+    }
+
+    if (*g_009b7ae0 != 0x876478) {
+        *g_008a6240 = 1;
+        reinterpret_cast<VCall *>(g_00876478)->slot057(0, g_005398e0, g_007ae820);
+    }
 }

@@ -1,4 +1,17 @@
 // ORIGINAL: 0x0048D840 FILE
+// RULED-OUT: full hand transcription from raw disassembly (Ghidra had only one
+//            benign unreachable-block warning and was trustworthy here). The
+//            six "BASICPREFS/ADVANCEDPREFS/AUTOMATIONPREFS/AUDIOVISUALPREFS/
+//            BASEWARNINGS/(unconditional)/MAPPREFS" tab pages each resolve an
+//            embedded CheckBox's own vtable slot at +8 (a stored byte offset
+//            to an embedded Dialog sub-object, not a function pointer) and
+//            dispatch that Dialog's vtable slot 1/2 - confirmed against raw
+//            asm receiver setup (`lea ecx,[esi+N]` before each call), not
+//            trusted from Ghidra's frequently-dropped implicit `this`. Two
+//            VCall shims used since slot002 is nullary on one dispatch chain
+//            and takes one int on the sibling chain. First divergence is
+//            instruction #5 (prologue scheduling) - not byte-verified beyond
+//            the receiver/signature spot-checks cited above.
 // working copy - scaffold materialised by --work
 // name      ?init@PrefWin@@QAEXXZ
 // size      8629 bytes
@@ -1985,7 +1998,7 @@ void text_close();
 // This body dispatches through slot(s): 1, 2, 49, 62
 class VCall { public:
     virtual void slot000();
-    virtual void slot001();  // <-- used
+    virtual void slot001(void *, int, int, int);  // <-- used
     virtual void slot002();  // <-- used
     virtual void slot003();
     virtual void slot004();
@@ -2033,7 +2046,7 @@ class VCall { public:
     virtual void slot046();
     virtual void slot047();
     virtual void slot048();
-    virtual void slot049();  // <-- used
+    virtual void slot049(int, int);  // <-- used
     virtual void slot050();
     virtual void slot051();
     virtual void slot052();
@@ -2047,6 +2060,15 @@ class VCall { public:
     virtual void slot060();
     virtual void slot061();
     virtual void slot062();  // <-- used
+};
+
+// Slot 2 also dispatches on a sibling embedded-widget pointer, taking one int
+// argument there where VCall's slot002 above is nullary - a second,
+// differently-named shim as the rules call for.
+class VCallDlg { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002(int);  // <-- used
 };
 
 // ---- fixed globals this body references ----
@@ -2176,10 +2198,411 @@ class PrefWin { public:
     void init();
 };
 void PrefWin::init() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    int *self = reinterpret_cast<int *>(this);
 
+    self[0x285] = 0;
+    self[0x286] = 0;
+    self[0x287] = 0;
+    self[0x297] = 0;
+
+    int yTop;
+    int frameAdj = 0;
+    if (*g_009b7b1c == 800) {
+        *g_008578d0 = *g_008578d0 - 0x32;
+        *g_00872ca8 = 0x32;
+        yTop = 0;
+        frameAdj = 0x50;
+    } else {
+        yTop = *g_009b7b20 - 0x26A;
+    }
+
+    reinterpret_cast<GraphicWin *>(this)->init(
+        *g_009b7b1c / 2 - *g_00686b7c / 2, yTop, *g_00686b7c + 0x4E, *g_00686b80,
+        reinterpret_cast<char *>(g_00872cac), 0x1000000,
+        reinterpret_cast<Win *>(reinterpret_cast<char *>(g_009156b0) +
+                                 *reinterpret_cast<int *>(reinterpret_cast<char *>(g_009156b0) + 4)),
+        0, 0);
+    reinterpret_cast<GraphicWin *>(this)->fill(9);
+
+    self[0x6CED] = find_font(0x10, 0);
+    self[0x6CEE] = find_font(0xC, 0);
+    self[0x6CEF] = find_font(0xC, 2);
+    self[0x6CF0] = find_font(0xC, 1);
+    self[0x6CF1] = find_font(0xE, 0);
+    self[0x6CF2] = find_font(0xE, 2);
+    self[0x6CF3] = find_font(0xE, 1);
+
+    reinterpret_cast<GraphicWin *>(this)->buffer_.set_font(
+        reinterpret_cast<Font *>(*g_00872c90), reinterpret_cast<Font *>(*g_00872c90),
+        reinterpret_cast<Font *>(*g_00872c9c), 0);
+    reinterpret_cast<GraphicWin *>(this)->buffer_.set_text_color(*g_0068a5a4, *g_0068a5b0, 1, 1);
+
+    // ---- 0x0048D9CC: title bar buttons, id 0..6, embedded at self[0x298..0x138A] ----
+    {
+        static const int strOffs[7] = {3000, 0xBBC, 0xBC0, 0xBC4, 0xBC8, 0x10D4, 0x10D8};
+        static const int yOffs[7] = {0, 0x16, 0x2C, 0x42, 0x58, 0x6E, 0x9A};
+        static const int selfIdx[7] = {0x298, 0x56B, 0x83E, 0xB11, 0xDE4, 0x10B7, 0x138A};
+        for (int i = 0; i < 7; i++) {
+            *reinterpret_cast<char *>(g_009b86a0) = 0;
+            int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + strOffs[i]));
+            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+            BaseButton *btn = reinterpret_cast<BaseButton *>(self + selfIdx[i]);
+            btn->init(reinterpret_cast<char *>(g_009b86a0), i, *g_0085788c, *g_00857890 + yOffs[i],
+                      *g_00857894, *g_00686b88, reinterpret_cast<Win *>(g_008578d8), 0);
+            btn->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+            reinterpret_cast<VCall *>(btn)->slot062();
+        }
+    }
+
+    // ---- 0x0048DD3D: group the first six title buttons ----
+    {
+        ButtonGroup *grp = reinterpret_cast<ButtonGroup *>(g_008577f0);
+        grp->init(0x5D, 0);
+        grp->add(reinterpret_cast<BaseButton *>(self + 0x298));
+        grp->add(reinterpret_cast<BaseButton *>(self + 0x56B));
+        grp->add(reinterpret_cast<BaseButton *>(self + 0x83E));
+        grp->add(reinterpret_cast<BaseButton *>(self + 0xB11));
+        grp->add(reinterpret_cast<BaseButton *>(self + 0xDE4));
+        grp->add(reinterpret_cast<BaseButton *>(self + 0x10B7));
+        grp->set(0, 1);
+    }
+
+    // ---- 0x0048DDB4: BASICPREFS / ADVANCEDPREFS / AUTOMATIONPREFS / AUDIOVISUALPREFS /
+    // BASEWARNINGS / (unconditional) / MAPPREFS tab pages. Each page: close the shared
+    // checkbox context, resolve the embedded Dialog through the checkbox's own vtable
+    // (slot at +8 holds a byte offset from the checkbox to the Dialog), init it, add
+    // checkbox items built from text_get()+two strcats, then dispatch the Dialog's own
+    // vtable slot 1 (finalize) through the same checkbox-vtable indirection.
+    if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<char *>(g_00686b98)) == 0) {
+        {
+            const int idx = 0x165D;
+            CheckBox *cb = reinterpret_cast<CheckBox *>(self + idx);
+            cb->close();
+            int off = *reinterpret_cast<int *>(self[idx] + 8);
+            reinterpret_cast<Dialog *>(reinterpret_cast<char *>(self + idx) + off)
+                ->init(*g_008578c8, *g_008578c4, *g_008578a0, *g_008578a4, 0);
+            self[idx + 4] = reinterpret_cast<int>(g_00779504);
+            self[idx + 5] = reinterpret_cast<int>(g_00779530);
+            static int *const strs[] = {g_00686ba4, g_00686ba8, g_00686bac, g_00686bb0,
+                                         g_00686bb4, g_00686bb8, g_00686bbc, g_00686bc0};
+            static const int ids[] = {7, 8, 9, 10, 0xB, 0xC, 0xD, 0xE};
+            for (int i = 0; i < 8; i++) {
+                *reinterpret_cast<char *>(g_009b86a0) = 0;
+                text_get();
+                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(strs[i]));
+                strcat(reinterpret_cast<char *>(g_009b86a0), *reinterpret_cast<char **>(g_009b7d00));
+                cb->item(reinterpret_cast<char *>(g_009b86a0), ids[i], 0);
+            }
+            off = *reinterpret_cast<int *>(self[idx] + 8);
+            reinterpret_cast<VCall *>(reinterpret_cast<char *>(self + idx) + off)
+                ->slot001(g_008578d8, *g_008578c8, *g_008578c4, 0x1000120);
+        }
+        text_close();
+
+        if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<char *>(g_00686bc4)) == 0) {
+            {
+                const int idx = 0x1927;
+                CheckBox *cb = reinterpret_cast<CheckBox *>(self + idx);
+                cb->close();
+                int off = *reinterpret_cast<int *>(self[idx] + 8);
+                reinterpret_cast<Dialog *>(reinterpret_cast<char *>(self + idx) + off)
+                    ->init(*g_008578c8, *g_008578c4, *g_008578a0, *g_008578a4, 0);
+                self[idx + 4] = reinterpret_cast<int>(g_00779504);
+                self[idx + 5] = reinterpret_cast<int>(g_00779530);
+                static int *const strs[] = {g_00686bd4, g_00686bd8, g_00686bdc, g_00686be0,
+                                             g_00686be4, g_00686be8, g_00686bec, g_00686bf0,
+                                             g_00686bf4, g_00686bf8, g_00686bfc, g_00686c00};
+                static const int ids[] = {0xF, 0x10, 0x11, 0x12, 0x13, 0x1C,
+                                           0x14, 0x15, 0x17, 0x18, 0x19, 0x1A};
+                for (int i = 0; i < 12; i++) {
+                    *reinterpret_cast<char *>(g_009b86a0) = 0;
+                    text_get();
+                    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(strs[i]));
+                    strcat(reinterpret_cast<char *>(g_009b86a0), *reinterpret_cast<char **>(g_009b7d00));
+                    cb->item(reinterpret_cast<char *>(g_009b86a0), ids[i], 0);
+                }
+                off = *reinterpret_cast<int *>(self[idx] + 8);
+                reinterpret_cast<VCall *>(reinterpret_cast<char *>(self + idx) + off)
+                    ->slot001(g_008578d8, *g_008578c8, *g_008578c4, 0x1000120);
+            }
+            text_close();
+
+            if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<char *>(g_00686c04)) == 0) {
+                {
+                    const int idx = 0x1BF1;
+                    CheckBox *cb = reinterpret_cast<CheckBox *>(self + idx);
+                    cb->close();
+                    int off = *reinterpret_cast<int *>(self[idx] + 8);
+                    reinterpret_cast<Dialog *>(reinterpret_cast<char *>(self + idx) + off)
+                        ->init(*g_008578c8, *g_008578c4, *g_008578a0, *g_008578a4, 0);
+                    self[idx + 4] = reinterpret_cast<int>(g_00779504);
+                    self[idx + 5] = reinterpret_cast<int>(g_00779530);
+                    static int *const strs[] = {g_00686c14, g_00686c18, g_00686c1c, g_00686c20,
+                                                 g_00686c24, g_00686c28, g_00686c2c, g_00686c30,
+                                                 g_00686c34, g_00686c38, g_00686c3c, g_00686c40,
+                                                 g_00686c44, g_00686c48};
+                    static const int ids[] = {0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x2A, 0x22,
+                                               0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29};
+                    for (int i = 0; i < 14; i++) {
+                        *reinterpret_cast<char *>(g_009b86a0) = 0;
+                        text_get();
+                        strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(strs[i]));
+                        strcat(reinterpret_cast<char *>(g_009b86a0), *reinterpret_cast<char **>(g_009b7d00));
+                        cb->item(reinterpret_cast<char *>(g_009b86a0), ids[i], 0);
+                    }
+                    off = *reinterpret_cast<int *>(self[idx] + 8);
+                    reinterpret_cast<VCall *>(reinterpret_cast<char *>(self + idx) + off)
+                        ->slot001(g_008578d8, *g_008578c8, *g_008578c4, 0x1000120);
+                }
+                text_close();
+
+                if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<char *>(g_00686c4c)) == 0) {
+                    {
+                        const int idx = 0x1EBB;
+                        CheckBox *cb = reinterpret_cast<CheckBox *>(self + idx);
+                        cb->close();
+                        int off = *reinterpret_cast<int *>(self[idx] + 8);
+                        int posY = (*g_008578a4 - *g_00686b78) - *g_008577e0 - frameAdj;
+                        reinterpret_cast<Dialog *>(reinterpret_cast<char *>(self + idx) + off)
+                            ->init(*g_008578c8, *g_008578c4, *g_008578a0, posY, 0);
+                        self[idx + 4] = reinterpret_cast<int>(g_00779504);
+                        self[idx + 5] = reinterpret_cast<int>(g_00779530);
+                        static int *const strs[] = {g_00686c60, g_00686c64, g_00686c68, g_00686c6c,
+                                                     g_00686c70, g_00686c74, g_00686c78, g_00686c7c};
+                        static const int ids[] = {0x40, 0x41, 0x42, 0x47, 0x43, 0x44, 0x45, 0x16};
+                        for (int i = 0; i < 8; i++) {
+                            *reinterpret_cast<char *>(g_009b86a0) = 0;
+                            text_get();
+                            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(strs[i]));
+                            strcat(reinterpret_cast<char *>(g_009b86a0), *reinterpret_cast<char **>(g_009b7d00));
+                            cb->item(reinterpret_cast<char *>(g_009b86a0), ids[i], 0);
+                        }
+                        off = *reinterpret_cast<int *>(self[idx] + 8);
+                        reinterpret_cast<VCall *>(reinterpret_cast<char *>(self + idx) + off)
+                            ->slot001(g_008578d8, *g_008578c8, *g_008578c4, 0x1000120);
+                    }
+                    text_close();
+
+                    if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<char *>(g_00686c80)) == 0) {
+                        {
+                            const int idx = 0x2185;
+                            CheckBox *cb = reinterpret_cast<CheckBox *>(self + idx);
+                            cb->close();
+                            int off = *reinterpret_cast<int *>(self[idx] + 8);
+                            int posY = (*g_008578a4 - *g_00686b78) - *g_008577e0 + 0x28;
+                            reinterpret_cast<Dialog *>(reinterpret_cast<char *>(self + idx) + off)
+                                ->init(*g_008578c8, *g_008578c4, *g_008578a0, posY, 0);
+                            self[idx + 4] = reinterpret_cast<int>(g_00779504);
+                            self[idx + 5] = reinterpret_cast<int>(g_00779530);
+                            static int *const strs[] = {g_00686c90, g_00686c94, g_00686c98, g_00686c9c,
+                                                         g_00686ca0, g_00686ca4, g_00686ca8, g_00686cac,
+                                                         g_00686cb0, g_00686cb4, g_00686cb8, g_00686cbc,
+                                                         g_00686cc0};
+                            static const int ids[] = {0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31,
+                                                       0x32, 0x33, 0x34, 0x36, 0x37, 0x38};
+                            for (int i = 0; i < 13; i++) {
+                                *reinterpret_cast<char *>(g_009b86a0) = 0;
+                                text_get();
+                                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(strs[i]));
+                                strcat(reinterpret_cast<char *>(g_009b86a0), *reinterpret_cast<char **>(g_009b7d00));
+                                cb->item(reinterpret_cast<char *>(g_009b86a0), ids[i], 0);
+                            }
+                            off = *reinterpret_cast<int *>(self[idx] + 8);
+                            reinterpret_cast<VCall *>(reinterpret_cast<char *>(self + idx) + off)
+                                ->slot001(g_008578d8, *g_008578c8, *g_008578c4, 0x1000120);
+                        }
+
+                        // Unconditional extra page (no X_text_open guard in the original).
+                        {
+                            const int idx = 0x244F;
+                            CheckBox *cb = reinterpret_cast<CheckBox *>(self + idx);
+                            cb->close();
+                            int off = *reinterpret_cast<int *>(self[idx] + 8);
+                            int posY = (*g_008578a4 - *g_00686b78) - *g_008577e0;
+                            reinterpret_cast<Dialog *>(reinterpret_cast<char *>(self + idx) + off)
+                                ->init(*g_008578c8, *g_008578c4, *g_008578a0, posY, 0);
+                            self[idx + 4] = reinterpret_cast<int>(g_00779504);
+                            self[idx + 5] = reinterpret_cast<int>(g_00779530);
+                            static int *const strs[] = {g_00686cc4, g_00686cc8, g_00686ccc, g_00686cd0};
+                            static const int ids[] = {0x39, 0x3A, 0x3B, 0x3C};
+                            for (int i = 0; i < 4; i++) {
+                                *reinterpret_cast<char *>(g_009b86a0) = 0;
+                                text_get();
+                                strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(strs[i]));
+                                strcat(reinterpret_cast<char *>(g_009b86a0), *reinterpret_cast<char **>(g_009b7d00));
+                                cb->item(reinterpret_cast<char *>(g_009b86a0), ids[i], 0);
+                            }
+                            off = *reinterpret_cast<int *>(self[idx] + 8);
+                            reinterpret_cast<VCall *>(reinterpret_cast<char *>(self + idx) + off)
+                                ->slot001(g_008578d8, *g_008578c8, *g_008578c4, 0x1000120);
+                        }
+                        text_close();
+
+                        if (X_text_open(reinterpret_cast<char *>(*g_00691b0c), reinterpret_cast<char *>(g_00686cd4)) == 0) {
+                            {
+                                const int idx = 0x2719;
+                                CheckBox *cb = reinterpret_cast<CheckBox *>(self + idx);
+                                cb->close();
+                                int off = *reinterpret_cast<int *>(self[idx] + 8);
+                                reinterpret_cast<Dialog *>(reinterpret_cast<char *>(self + idx) + off)
+                                    ->init(*g_008578c8, *g_008578c4, *g_008578a0, *g_008578a4, 0);
+                                self[idx + 4] = reinterpret_cast<int>(g_00779504);
+                                self[idx + 5] = reinterpret_cast<int>(g_00779530);
+                                static int *const strs[] = {g_00686ce0, g_00686ce4, g_00686ce8, g_00686cec,
+                                                             g_00686cf0, g_00686cf4, g_00686cf8, g_00686cfc};
+                                static const int ids[] = {0x48, 0x49, 0x4E, 0x4A, 0x4B, 0x4C, 0x4D, 0x4F};
+                                for (int i = 0; i < 8; i++) {
+                                    *reinterpret_cast<char *>(g_009b86a0) = 0;
+                                    text_get();
+                                    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(strs[i]));
+                                    strcat(reinterpret_cast<char *>(g_009b86a0), *reinterpret_cast<char **>(g_009b7d00));
+                                    cb->item(reinterpret_cast<char *>(g_009b86a0), ids[i], 0);
+                                }
+                                off = *reinterpret_cast<int *>(self[idx] + 8);
+                                reinterpret_cast<VCall *>(reinterpret_cast<char *>(self + idx) + off)
+                                    ->slot001(g_008578d8, *g_008578c8, *g_008578c4, 0x1000120);
+                            }
+                            text_close();
+
+                            // ---- 0x0048E5D8: master volume scrollbars ----
+                            reinterpret_cast<Scroll *>(self + 0x29E3)->init_horz(*g_008578d0, *g_008578b8, 0x50, reinterpret_cast<Win *>(g_008578d8), 0);
+                            reinterpret_cast<Scroll *>(self + 0x3236)->init_horz(*g_008578d0 + 0x16, *g_008578b8, 0x51, reinterpret_cast<Win *>(g_008578d8), 0);
+                            reinterpret_cast<Scroll *>(self + 0x3A89)->init_horz(*g_008578d0 + 0x2C, *g_008578b8, 0x52, reinterpret_cast<Win *>(g_008578d8), 0);
+                            reinterpret_cast<Scroll *>(self + 0x42DC)->init_horz(*g_008578d0 + 0x42, *g_008578b8, 0x53, reinterpret_cast<Win *>(g_008578d8), 0);
+                            reinterpret_cast<Scroll *>(0)->set_range(0, 0x7F);
+                            reinterpret_cast<Scroll *>(0)->set_range(0, 0x7F);
+                            reinterpret_cast<Scroll *>(0)->set_range(0, 0x7F);
+                            reinterpret_cast<Scroll *>(0)->set_range(0, 0x7F);
+                            int vol = prefs_get(reinterpret_cast<char *>(g_00686d00), 0x7F, 0);
+                            reinterpret_cast<Scroll *>(self + 0x29E3)->set_pos(vol);
+                            reinterpret_cast<VCall *>(self)->slot049(0x50, self[0x2C6E]);
+                            vol = prefs_get(reinterpret_cast<char *>(g_00686d0c), 0x55, 0);
+                            reinterpret_cast<Scroll *>(self + 0x3236)->set_pos(vol);
+                            reinterpret_cast<VCall *>(self)->slot049(0x51, self[0x34C1]);
+                            vol = prefs_get(reinterpret_cast<char *>(g_00686d1c), 0x5F, 0);
+                            reinterpret_cast<Scroll *>(self + 0x3A89)->set_pos(vol);
+                            reinterpret_cast<VCall *>(self)->slot049(0x52, self[0x3D14]);
+                            if (*g_0074daa0 == 0) {
+                                reinterpret_cast<Scroll *>(self + 0x42DC)->set_pos(0);
+                            } else {
+                                vol = prefs_get(reinterpret_cast<char *>(g_00686d28), 0x3F, 0);
+                                reinterpret_cast<Scroll *>(self + 0x42DC)->set_pos(vol);
+                                reinterpret_cast<VCall *>(self)->slot049(0x53, self[0x4567]);
+                            }
+                            reinterpret_cast<VCall *>(self + 0x29E3)->slot002();
+                            reinterpret_cast<VCall *>(self + 0x3236)->slot002();
+                            reinterpret_cast<VCall *>(self + 0x3A89)->slot002();
+                            reinterpret_cast<VCall *>(self + 0x42DC)->slot002();
+                            {
+                                int off = *reinterpret_cast<int *>(self[0x165D] + 4);
+                                reinterpret_cast<VCallDlg *>(reinterpret_cast<char *>(self + 0x165D) + off)->slot002(0);
+                            }
+                            {
+                                int off = *reinterpret_cast<int *>(self[0x1927] + 4);
+                                reinterpret_cast<VCallDlg *>(reinterpret_cast<char *>(self + 0x1927) + off)->slot002(0);
+                            }
+                            {
+                                int off = *reinterpret_cast<int *>(self[0x1BF1] + 4);
+                                reinterpret_cast<VCallDlg *>(reinterpret_cast<char *>(self + 0x1BF1) + off)->slot002(0);
+                            }
+                            {
+                                int off = *reinterpret_cast<int *>(self[0x1EBB] + 4);
+                                reinterpret_cast<VCallDlg *>(reinterpret_cast<char *>(self + 0x1EBB) + off)->slot002(0);
+                            }
+                            {
+                                int off = *reinterpret_cast<int *>(self[0x2185] + 4);
+                                reinterpret_cast<VCallDlg *>(reinterpret_cast<char *>(self + 0x2185) + off)->slot002(0);
+                            }
+                            {
+                                int off = *reinterpret_cast<int *>(self[0x244F] + 4);
+                                reinterpret_cast<VCallDlg *>(reinterpret_cast<char *>(self + 0x244F) + off)->slot002(0);
+                            }
+
+                            // ---- 0x0048EA61: transcript/warning window on the base warnings page ----
+                            int sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x10E0));
+                            reinterpret_cast<BaseButton *>(self + 0x5382)->init(
+                                reinterpret_cast<char *>(sres), 0x55, *g_008578b4, *g_008578bc - *g_00872ca8,
+                                *g_00686b8c, *g_00686b90, reinterpret_cast<Win *>(g_008578d8), 0);
+                            sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x10E8));
+                            reinterpret_cast<BaseButton *>(self + 0x5928)->init(
+                                reinterpret_cast<char *>(sres), 0x57, *g_008578b4, (*g_008578bc - *g_00872ca8) + 0x16,
+                                *g_00686b8c, *g_00686b90, reinterpret_cast<Win *>(g_008578d8), 0);
+                            sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x10F0));
+                            reinterpret_cast<BaseButton *>(self + 0x5655)->init(
+                                reinterpret_cast<char *>(sres), 0x56, *g_008578b4, (*g_008578bc - *g_00872ca8) + 0x2C,
+                                *g_00686b8c, *g_00686b90, reinterpret_cast<Win *>(g_008578d8), 0);
+                            sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x10F8));
+                            reinterpret_cast<BaseButton *>(self + 0x5BFB)->init(
+                                reinterpret_cast<char *>(sres), 0x58, *g_008578b4, (*g_008578bc - *g_00872ca8) + 0x42,
+                                *g_00686b8c, *g_00686b90, reinterpret_cast<Win *>(g_008578d8), 0);
+
+                            reinterpret_cast<BaseButton *>(self + 0x5382)->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+                            reinterpret_cast<VCall *>(self + 0x5382)->slot062();
+                            reinterpret_cast<BaseButton *>(self + 0x5928)->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+                            reinterpret_cast<VCall *>(self + 0x5928)->slot062();
+                            reinterpret_cast<BaseButton *>(self + 0x5655)->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+                            reinterpret_cast<VCall *>(self + 0x5655)->slot062();
+                            reinterpret_cast<BaseButton *>(self + 0x5BFB)->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+                            reinterpret_cast<VCall *>(self + 0x5BFB)->slot062();
+                            self[0x5608] = 0;
+                            self[0x5BAE] = 0;
+                            self[0x58DB] = 0;
+                            self[0x5E81] = 0;
+                            reinterpret_cast<VCall *>(self + 0x5382)->slot002();
+                            reinterpret_cast<VCall *>(self + 0x5928)->slot002();
+                            reinterpret_cast<VCall *>(self + 0x5655)->slot002();
+                            reinterpret_cast<VCall *>(self + 0x5BFB)->slot002();
+
+                            sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x10DC));
+                            reinterpret_cast<BaseButton *>(self + 0x61A1)->init(
+                                reinterpret_cast<char *>(sres), 0x5A, *g_0085788c,
+                                (*g_008578c0 - *g_00872ca8) - 0x45 + *g_00857884, *g_00857894, *g_00686b88,
+                                reinterpret_cast<Win *>(g_008578d8), 0);
+
+                            *reinterpret_cast<char *>(g_009b86a0) = 0;
+                            sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x194));
+                            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+                            reinterpret_cast<BaseButton *>(self + 0x6747)->init(
+                                reinterpret_cast<char *>(g_009b86a0), 0x5C, *g_0085788c,
+                                (*g_008578c0 - *g_00872ca8) - 0x2E + *g_00857884, *g_00857894, *g_00686b88,
+                                reinterpret_cast<Win *>(g_008578d8), 0);
+
+                            *reinterpret_cast<char *>(g_009b86a0) = 0;
+                            sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x198));
+                            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(sres));
+                            reinterpret_cast<BaseButton *>(self + 0x6474)->init(
+                                reinterpret_cast<char *>(g_009b86a0), 0x5B, *g_0085788c,
+                                (*g_008578c0 - *g_00872ca8) - 0x17 + *g_00857884, *g_00857894, *g_00686b88,
+                                reinterpret_cast<Win *>(g_008578d8), 0);
+
+                            reinterpret_cast<BaseButton *>(self + 0x61A1)->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+                            reinterpret_cast<VCall *>(self + 0x61A1)->slot062();
+                            reinterpret_cast<BaseButton *>(self + 0x6747)->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+                            reinterpret_cast<VCall *>(self + 0x6747)->slot062();
+                            reinterpret_cast<BaseButton *>(self + 0x6474)->buffer_.set_font(reinterpret_cast<Font *>(g_006e84b4), 0, 0, 0);
+                            reinterpret_cast<VCall *>(self + 0x6474)->slot062();
+                            self[0x6427] = 0;
+                            self[0x69CD] = 0;
+                            self[0x66FA] = 0;
+                            reinterpret_cast<VCall *>(self + 0x61A1)->slot002();
+                            reinterpret_cast<VCall *>(self + 0x6747)->slot002();
+                            reinterpret_cast<VCall *>(self + 0x6474)->slot002();
+
+                            sres = reinterpret_cast<Strings *>(g_009b90d8)->get(*reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + 0x1100));
+                            reinterpret_cast<BaseButton *>(self + 0x61A1)->init(
+                                reinterpret_cast<char *>(sres), 0x5E, *g_008578c8,
+                                *g_00857898 - 0x17 + *g_008578a4, *g_00857894, *g_00686b88,
+                                reinterpret_cast<Win *>(g_008578d8), 0);
+
+                            self[0x6CA0] = 0;
+                            reinterpret_cast<VCall *>(self + 0x6A1A)->slot002();
+                            reinterpret_cast<VCall *>(self)->slot002();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return;
 }

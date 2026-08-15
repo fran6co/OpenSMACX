@@ -1,4 +1,11 @@
 // ORIGINAL: 0x0041E8D0 FILE
+// RULED-OUT: sim 0.70 (framed /O2 /Oy-), first divergence #9 push-vs-mov in the
+//            prologue/Wave-init region; every field store, BaseButton/Sprite/Buffer
+//            /Caviar/Time/Spot/Font/Wave call and its receiver was cross-checked
+//            against the raw disassembly (not Ghidra's dropped-this renderings),
+//            including the trailing 22x1 BaseButton array and the two vtable
+//            slot002/slot062 dispatch loops; RECT/float scratch temporaries use
+//            fresh locals rather than the original's exact reused stack slots.
 // working copy - scaffold materialised by --work
 // name      ?init@BaseWin@@QAEXXZ
 // size      8578 bytes
@@ -2287,7 +2294,9 @@ class Wave_Device { public:
 char * text_get();
 extern "C" char *strcat(char *, const char *);
 extern "C" char *strcpy(char *, const char *);
-extern "C" int __cdecl sub_627d00();
+extern "C" int __cdecl sub_627d00(int *, char *);
+extern "C" int __stdcall CharUpperA(char *);
+extern "C" int __stdcall UnionRect(RECT *, const RECT *, const RECT *);
 int text_item_number();
 int text_open(char *, char *);
 void text_close();
@@ -2454,10 +2463,774 @@ class BaseWin { public:
     void init();
 };
 void BaseWin::init() {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    Buffer bufLocal;
+    int *piVar1;
+    int *piVar8;
+    float fVar2;
+    int iVar3;
+    int iVar4;
+    int iVar6;
+    int iVar7;
+    int iVar9;
+    int iVar10;
+    char *uVar5;
+    unsigned int local_40;
+    float local_3c;
+    float local_38;
+    float local_34;
+    float negY;
+    float negZ;
+    char *local_30;
+    int *local_2c;
+    RECT local_28;
+    void *local_18;
+    int local_14;
 
-}
+  *(int *)(((char*)this + 0x40b00)) = 0xffffffff;
+  ((Wave*)g_006eee68)->load((char*)g_00682e60,0x10);
+  ((Wave_Device*)g_0090d978)->add_to_group(1,(Wave*)g_006eee68);
+  ((Wave*)g_006eee68)->set_volume(0x41);
+  ((Wave*)g_006eee68)->set_pitch(300);
+  (*g_007ae7fc) = (int)((char*)this + 0xa14);
+  local_40 = (unsigned int)((*g_009b7b1c) != 800);
+  *(int *)(((char*)this + 0xa18)) = 3;
+  if (local_40 == 0) {
+    *(int *)(((char*)this + 0x40d3c)) = 0xbf;
+    *(int *)(((char*)this + 0x40d40)) = 0x162;
+    *(int *)(((char*)this + 0x40d44)) = 0x171;
+    *(int *)(((char*)this + 0x40d48)) = 0x176;
+    *(int *)(((char*)this + 0x40d30)) = 0x162;
+    *(int *)(((char*)this + 0x40d38)) = 0x176;
+    *(int *)(((char*)this + 0x40d2c)) = 0x175;
+    *(int *)(((char*)this + 0x40d34)) = 0x227;
+    *(int *)(((char*)this + 0x40b8c)) = 0xa6;
+    *(int *)(((char*)this + 0x40b90)) = 0x21;
+    *(int *)(((char*)this + 0x40b94)) = 0x230;
+    *(int *)(((char*)this + 0x40b98)) = 0x101;
+    *(int *)(((char*)this + 0x40bdc)) = 0x1e;
+    *(int *)(((char*)this + 0x40be0)) = 0xaa;
+    *(int *)(((char*)this + 0x40be4)) = 0xa0;
+    *(int *)(((char*)this + 0x40be8)) = 0x125;
+    *(int *)(((char*)this + 0x40bcc)) = 0x1e;
+    *(int *)(((char*)this + 0x40bd0)) = 0x95;
+    *(int *)(((char*)this + 0x40bd4)) = 0xa0;
+    *(int *)(((char*)this + 0x40bd8)) = 0xa9;
+    *(int *)(((char*)this + 0x40bec)) = 0x1b;
+    *(int *)(((char*)this + 0x40bf0)) = 0x92;
+    *(int *)(((char*)this + 0x40bf4)) = 0xa3;
+    *(int *)(((char*)this + 0x40bf8)) = 0x128;
+    *(int *)(((char*)this + 0x40bac)) = 0x236;
+    *(int *)(((char*)this + 0x40bb0)) = 0x39;
+    *(int *)(((char*)this + 0x40bb4)) = 0x2b8;
+    *(int *)(((char*)this + 0x40bb8)) = 0xfe;
+    *(int *)(((char*)this + 0x40ba4)) = 0x2b8;
+    *(int *)(((char*)this + 0x40b9c)) = 0x236;
+    *(int *)(((char*)this + 0x40ba0)) = 0x24;
+    *(int *)(((char*)this + 0x40ba8)) = 0x38;
+    *(int *)(((char*)this + 0x40bbc)) = 0x233;
+    *(int *)(((char*)this + 0x40bc0)) = 0x21;
+    *(int *)(((char*)this + 0x40bc4)) = 699;
+    *(int *)(((char*)this + 0x40bc8)) = 0x101;
+    *(int *)(((char*)this + 0x40bfc)) = 0x1e;
+    *(int *)(((char*)this + 0x40c00)) = 0x39;
+    *(int *)(((char*)this + 0x40c04)) = 0xa0;
+    *(int *)(((char*)this + 0x40c08)) = 0x8c;
+    *(int *)(((char*)this + 0x40c0c)) = 0x1e;
+    *(int *)(((char*)this + 0x40c10)) = 0x24;
+    *(int *)(((char*)this + 0x40c14)) = 0xa0;
+    *(int *)(((char*)this + 0x40c18)) = 0x38;
+    *(int *)(((char*)this + 0x40c1c)) = 0x1b;
+    *(int *)(((char*)this + 0x40c20)) = 0x21;
+    *(int *)(((char*)this + 0x40c24)) = 0xa3;
+    *(int *)(((char*)this + 0x40c28)) = 0x8f;
+    *(int *)(((char*)this + 0x40c4c)) = 0xa6;
+    *(int *)(((char*)this + 0x40c50)) = 0x104;
+    *(int *)(((char*)this + 0x40c54)) = 699;
+    *(int *)(((char*)this + 0x40c58)) = 0x15d;
+    *(int *)(((char*)this + 0x40c3c)) = *(int *)(((char*)this + 0x40c4c));
+    *(int *)(((char*)this + 0x40c40)) = *(int *)(((char*)this + 0x40c50));
+    *(int *)(((char*)this + 0x40c44)) = *(int *)(((char*)this + 0x40c54));
+    *(int *)(((char*)this + 0x40c48)) = *(int *)(((char*)this + 0x40c58));
+    local_14 = (*g_009b7b20) - (*g_007af59c);
+    if (0x18e < local_14) {
+      local_14 = 0x18e;
+    }
+  }
+  else {
+    *(int *)(((char*)this + 0x40b8c)) = 0xa6;
+    *(int *)(((char*)this + 0x40b90)) = 0x21;
+    *(int *)(((char*)this + 0x40b94)) = 0x230;
+    *(int *)(((char*)this + 0x40b98)) = 0x101;
+    *(int *)(((char*)this + 0x40bdc)) = 0x1e;
+    *(int *)(((char*)this + 0x40be0)) = 0xaa;
+    *(int *)(((char*)this + 0x40be4)) = 0xa0;
+    *(int *)(((char*)this + 0x40be8)) = 0x125;
+    *(int *)(((char*)this + 0x40bcc)) = 0x1e;
+    *(int *)(((char*)this + 0x40bd0)) = 0x95;
+    *(int *)(((char*)this + 0x40bd4)) = 0xa0;
+    *(int *)(((char*)this + 0x40bd8)) = 0xa9;
+    *(int *)(((char*)this + 0x40bec)) = 0x1b;
+    *(int *)(((char*)this + 0x40bf0)) = 0x92;
+    *(int *)(((char*)this + 0x40bf4)) = 0xa3;
+    *(int *)(((char*)this + 0x40bf8)) = 0x128;
+    *(int *)(((char*)this + 0x40bac)) = 0x236;
+    *(int *)(((char*)this + 0x40bb0)) = 0x39;
+    *(int *)(((char*)this + 0x40bb4)) = 0x2b8;
+    *(int *)(((char*)this + 0x40bb8)) = 0xfe;
+    *(int *)(((char*)this + 0x40ba4)) = 0x2b8;
+    *(int *)(((char*)this + 0x40b9c)) = 0x236;
+    *(int *)(((char*)this + 0x40ba0)) = 0x24;
+    *(int *)(((char*)this + 0x40ba8)) = 0x38;
+    *(int *)(((char*)this + 0x40bbc)) = 0x233;
+    *(int *)(((char*)this + 0x40bc0)) = 0x21;
+    *(int *)(((char*)this + 0x40bc4)) = 699;
+    *(int *)(((char*)this + 0x40bc8)) = 0x101;
+    *(int *)(((char*)this + 0x40c04)) = 0xa0;
+    *(int *)(((char*)this + 0x40bfc)) = 0x1e;
+    *(int *)(((char*)this + 0x40c00)) = 0x39;
+    *(int *)(((char*)this + 0x40c08)) = 0x8c;
+    *(int *)(((char*)this + 0x40c14)) = 0xa0;
+    *(int *)(((char*)this + 0x40c0c)) = 0x1e;
+    *(int *)(((char*)this + 0x40c10)) = 0x24;
+    *(int *)(((char*)this + 0x40c18)) = 0x38;
+    *(int *)(((char*)this + 0x40c20)) = 0x21;
+    *(int *)(((char*)this + 0x40c1c)) = 0x1b;
+    *(int *)(((char*)this + 0x40c24)) = 0xa3;
+    *(int *)(((char*)this + 0x40c28)) = 0x8f;
+    *(int *)(((char*)this + 0x40c4c)) = 0xa6;
+    *(int *)(((char*)this + 0x40c50)) = 0x104;
+    *(int *)(((char*)this + 0x40c54)) = 699;
+    *(int *)(((char*)this + 0x40c58)) = 0x15d;
+    *(int *)(((char*)this + 0x40c3c)) = *(int *)(((char*)this + 0x40c4c));
+    *(int *)(((char*)this + 0x40c40)) = *(int *)(((char*)this + 0x40c50));
+    *(int *)(((char*)this + 0x40c44)) = *(int *)(((char*)this + 0x40c54));
+    *(int *)(((char*)this + 0x40c48)) = *(int *)(((char*)this + 0x40c58));
+    iVar9 = *(int *)(((char*)this + 0x40c48));
+    iVar3 = *(int *)(((char*)this + 0x40c40));
+    iVar4 = (*(int *)(((char*)this + 0x40c48)) - iVar3) + 3;
+    iVar7 = *(int *)(((char*)this + 0x40c48)) + iVar4;
+    iVar4 = iVar3 + iVar4;
+    *(int *)(((char*)this + 0x40c40)) = iVar4;
+    *(int *)(((char*)this + 0x40c48)) = iVar7;
+    iVar3 = (iVar9 - iVar3) / 2;
+    iVar9 = (iVar7 - iVar4) / 2;
+    *(int *)(((char*)this + 0x40be0)) = *(int *)(((char*)this + 0x40be0)) + iVar9;
+    *(int *)(((char*)this + 0x40be8)) = *(int *)(((char*)this + 0x40be8)) + iVar9;
+    *(int *)(((char*)this + 0x40bf0)) = *(int *)(((char*)this + 0x40bf0)) + iVar3;
+    *(int *)(((char*)this + 0x40bf8)) = *(int *)(((char*)this + 0x40bf8)) + iVar3;
+    *(int *)(((char*)this + 0x40bd0)) = *(int *)(((char*)this + 0x40bd0)) + iVar3;
+    *(int *)(((char*)this + 0x40bd8)) = *(int *)(((char*)this + 0x40bd8)) + iVar3;
+    *(int *)(((char*)this + 0x40be8)) = *(int *)(((char*)this + 0x40be8)) + iVar3;
+    *(int *)(((char*)this + 0x40bf8)) = *(int *)(((char*)this + 0x40bf8)) + iVar3;
+    *(int *)(((char*)this + 0x40c08)) = *(int *)(((char*)this + 0x40c08)) + iVar3;
+    *(int *)(((char*)this + 0x40c28)) = *(int *)(((char*)this + 0x40c28)) + iVar3;
+    *(int *)(((char*)this + 0x40d2c)) = 0x17d;
+    iVar9 = *(int *)(((char*)this + 0x40c48)) - *(int *)(((char*)this + 0x40c40));
+    *(int *)(((char*)this + 0x40d34)) = 0x26b;
+    *(int *)(((char*)this + 0x40d30)) = iVar9 + 0x168;
+    *(int *)(((char*)this + 0x40d38)) = iVar9 + 0x17c;
+    *(int *)(((char*)this + 0x40d3c)) = 0x83;
+    iVar9 = *(int *)(((char*)this + 0x40c48)) - *(int *)(((char*)this + 0x40c40));
+    *(int *)(((char*)this + 0x40d44)) = 0x171;
+    *(int *)(((char*)this + 0x40d40)) = iVar9 + 0x168;
+    *(int *)(((char*)this + 0x40d48)) = iVar9 + 0x17c;
+    local_14 = (*(int *)(((char*)this + 0x40c48)) - *(int *)(((char*)this + 0x40c40))) + 0x191;
+  }
+  *(int *)(((char*)this + 0x40d1c)) = *(int *)(((char*)this + 0x40bec));
+  *(int *)(((char*)this + 0x40d20)) = *(int *)(((char*)this + 0x40bf8)) + 3;
+  *(int *)(((char*)this + 0x40d24)) = *(int *)(((char*)this + 0x40bf4));
+  *(int *)(((char*)this + 0x40d28)) = *(int *)(((char*)this + 0x40d30)) + -6;
+  piVar1 = (int *)(((char*)this + 0x40c2c));
+  *(int *)(((char*)this + 0x40b2c)) = 0;
+  *(int *)(((char*)this + 0x40b30)) = 0;
+  *piVar1 = (*g_007af5d0);
+  *(int *)(((char*)this + 0x40c30)) = (*g_007af5d4);
+  *(int *)(((char*)this + 0x40c34)) = (*g_007af5d8);
+  *(int *)(((char*)this + 0x40c38)) = (*g_007af5dc);
+  *piVar1 = *piVar1 + 4;
+  *(int *)(((char*)this + 0x40c34)) = *(int *)(((char*)this + 0x40c34)) + -4;
+  *(int *)(((char*)this + 0x40c30)) = *(int *)(((char*)this + 0x40c30)) + 4;
+  *(int *)(((char*)this + 0x40c38)) = *(int *)(((char*)this + 0x40c38)) + -4;
+  piVar8 = (int *)(((char*)this + 0x40c6c));
+  *piVar1 = *piVar1 + -4;
+  *piVar8 = (*g_007af5a0);
+  *(int *)(((char*)this + 0x40c70)) = (*g_007af5a4);
+  *(int *)(((char*)this + 0x40c74)) = (*g_007af5a8);
+  *(int *)(((char*)this + 0x40c78)) = (*g_007af5ac);
+  *(int *)(((char*)this + 0x40c74)) = ((*(int *)(((char*)this + 0x40c74)) - *piVar8) * 7) / 0xc;
+  *piVar8 = *piVar8 + 4;
+  *(int *)(((char*)this + 0x40c74)) = *(int *)(((char*)this + 0x40c74)) + -4;
+  *(int *)(((char*)this + 0x40c70)) = *(int *)(((char*)this + 0x40c70)) + 4;
+  *(int *)(((char*)this + 0x40c78)) = *(int *)(((char*)this + 0x40c78)) + -4;
+  iVar9 = *(int *)(((char*)this + 0x40c78));
+  iVar3 = *(int *)(((char*)this + 0x40c74)) + 3;
+  *(int *)(((char*)this + 0x40dfc)) = iVar3;
+  *(int *)(((char*)this + 0x40e00)) = iVar9 + -0x17;
+  *(int *)(((char*)this + 0x40e04)) = *piVar1 + -7;
+  *(int *)(((char*)this + 0x40e08)) = iVar9 + -3;
+  *(int *)(((char*)this + 0x40dec)) = iVar3;
+  *(int *)(((char*)this + 0x40df0)) = iVar9 + -0x2d;
+  *(int *)(((char*)this + 0x40df4)) = *piVar1 + -7;
+  *(int *)(((char*)this + 0x40df8)) = iVar9 + -0x19;
+  iVar3 = (*g_007af5a8);
+  iVar9 = (*g_007af5a4);
+  iVar7 = (*g_007af5a4) + 4;
+  *(int *)(((char*)this + 0x40c9c)) = *(int *)(((char*)this + 0x40c74)) + 4;
+  iVar4 = *(int *)(((char*)this + 0x40c74)) + 7;
+  *(int *)(((char*)this + 0x40ca0)) = iVar7;
+  *(int *)(((char*)this + 0x40ca4)) = iVar3 + -4;
+  iVar3 = iVar3 + -7;
+  *(int *)(((char*)this + 0x40ca8)) = *(int *)(((char*)this + 0x40df0)) + -7;
+  iVar7 = *(int *)(((char*)this + 0x40df0)) + -10;
+  *(int *)(((char*)this + 0x40c7c)) = iVar4;
+  *(int *)(((char*)this + 0x40c80)) = iVar9 + 7;
+  *(int *)(((char*)this + 0x40c84)) = iVar3;
+  *(int *)(((char*)this + 0x40c88)) = iVar7;
+  *(int *)(((char*)this + 0x40c88)) = *(int *)(((char*)this + 0x40c80)) + 0x14;
+  *(int *)(((char*)this + 0x40c8c)) = iVar4;
+  *(int *)(((char*)this + 0x40c90)) = iVar9 + 7;
+  *(int *)(((char*)this + 0x40c94)) = iVar3;
+  *(int *)(((char*)this + 0x40c98)) = iVar7;
+  *(int *)(((char*)this + 0x40c90)) = *(int *)(((char*)this + 0x40c88)) + 2;
+  *(int *)(((char*)this + 0x40e6c)) = *(int *)(((char*)this + 0x40c7c));
+  *(int *)(((char*)this + 0x40e70)) = *(int *)(((char*)this + 0x40c80));
+  *(int *)(((char*)this + 0x40e74)) = *(int *)(((char*)this + 0x40c84));
+  *(int *)(((char*)this + 0x40e78)) = *(int *)(((char*)this + 0x40c88));
+  iVar9 = (*g_007af5cc);
+  iVar3 = (*g_007af5c8) + -4;
+  iVar7 = (*g_007af5c4) + 4;
+  iVar4 = (*g_007af5cc) + -4;
+  *(int *)(((char*)this + 0x40c5c)) = (*g_007af5c0) + 4;
+  *(int *)(((char*)this + 0x40c60)) = iVar7;
+  *(int *)(((char*)this + 0x40c64)) = iVar3;
+  *(int *)(((char*)this + 0x40c68)) = iVar4;
+  *(int *)(((char*)this + 0x40c60)) = iVar9 + -0x3a;
+  piVar1 = (int *)(((char*)this + 0x40cac));
+  *(int *)(((char*)this + 0x40c64)) = (*g_007af5c8) + -0x3e;
+  *piVar1 = (*g_007af5c0);
+  *(int *)(((char*)this + 0x40cb0)) = (*g_007af5c4);
+  *(int *)(((char*)this + 0x40cb4)) = (*g_007af5c8);
+  *(int *)(((char*)this + 0x40cb8)) = (*g_007af5cc);
+  *(int *)(((char*)this + 0x40cb8)) = *(int *)(((char*)this + 0x40c60));
+  *piVar1 = *piVar1 + 4;
+  *(int *)(((char*)this + 0x40cb4)) = *(int *)(((char*)this + 0x40cb4)) + -4;
+  *(int *)(((char*)this + 0x40cb0)) = *(int *)(((char*)this + 0x40cb0)) + 4;
+  *(int *)(((char*)this + 0x40cb8)) = *(int *)(((char*)this + 0x40cb8)) + -4;
+  *(int *)(((char*)this + 0x40cb8)) = *(int *)(((char*)this + 0x40cb8)) + 1;
+  iVar9 = (*g_007af5c8) + -7;
+  *(int *)(((char*)this + 0x40e2c)) = *(int *)(((char*)this + 0x40c64)) + 7;
+  *(int *)(((char*)this + 0x40e30)) = *(int *)(((char*)this + 0x40c60)) + 3;
+  *(int *)(((char*)this + 0x40e34)) = iVar9;
+  *(int *)(((char*)this + 0x40e38)) = *(int *)(((char*)this + 0x40c68)) + -3;
+  iVar7 = (*g_007af5bc);
+  iVar4 = (*g_007af5b8);
+  iVar3 = (*g_007af5b4);
+  iVar9 = (*g_007af5b0);
+  iVar10 = (*g_007af5bc) + -4;
+  iVar6 = (*g_007af5b4) + 4;
+  *(int *)(((char*)this + 0x40b7c)) = (*g_007af5b0) + 4;
+  *(int *)(((char*)this + 0x40b80)) = iVar6;
+  *(int *)(((char*)this + 0x40b84)) = iVar4 + -4;
+  *(int *)(((char*)this + 0x40b88)) = iVar10;
+  iVar4 = iVar4 + -7;
+  *(int *)(((char*)this + 0x40b5c)) = iVar9 + 7;
+  *(int *)(((char*)this + 0x40b60)) = iVar3 + 7;
+  *(int *)(((char*)this + 0x40b64)) = iVar4;
+  *(int *)(((char*)this + 0x40b68)) = iVar7 + -7;
+  *(int *)(((char*)this + 0x40b68)) = *(int *)(((char*)this + 0x40b60)) + 0x14;
+  *(int *)(((char*)this + 0x40b6c)) = iVar9 + 7;
+  *(int *)(((char*)this + 0x40b70)) = iVar3 + 7;
+  *(int *)(((char*)this + 0x40b74)) = iVar4;
+  *(int *)(((char*)this + 0x40b78)) = iVar7 + -7;
+  *(int *)(((char*)this + 0x40b70)) = *(int *)(((char*)this + 0x40b68)) + 2;
+  local_28.bottom = *(int *)(((char*)this + 0x40bb8)) + -3;
+  local_28.left = *(int *)(((char*)this + 0x40bac)) + 3;
+  local_28.top = *(int *)(((char*)this + 0x40bb8)) + -0x17;
+  local_28.right = *(int *)(((char*)this + 0x40bb4)) + -3;
+  *(long *)(((char*)this + 0x40e7c)) = local_28.left;
+  *(long *)(((char*)this + 0x40e80)) = local_28.top;
+  local_30 = ((char*)this + 0x40e8c);
+  *(long *)(((char*)this + 0x40e84)) = local_28.right;
+  *(long *)(((char*)this + 0x40e88)) = local_28.bottom;
+  ((Font*)((char*)this + 0x40e8c))->init((char*)g_00691b2c,0xe,1);
+  iVar9 = text_open((char*)g_00682830,(char*)g_00682824);
+  if (iVar9 == 0) {
+    text_get();
+    (*g_006eee60) = text_item_number();
+    iVar9 = 0;
+    if (0 < (*g_006eee60)) {
+      local_18 = ((void*)g_006a7528);
+      do {
+        text_get();
+        strcpy((char*)local_18,(char*)(*g_009b7d00));
+        iVar9 = iVar9 + 1;
+        local_18 = (void*)((char*)local_18 + 0x20);
+      } while (iVar9 < (*g_006eee60));
+    }
+    text_close();
+  }
+  ((Buffer*)((char*)this + 0x40ecc))->init(100,0x32,0,0);
+  ((Sprite*)g_007acbb8)->draw((Buffer*)((char*)this + 0x40ecc),(*g_007acbc0) & 0xff,0,0,1,1);
+  *(int *)(((char*)this + 0x40b1c)) = 0xffffffff;
+  *(int *)(((char*)this + 0x40b20)) = 0xffffffff;
+  *(int *)(((char*)this + 0x40b24)) = 0xffffffff;
+  *(int *)(((char*)this + 0x40b54)) = 0xffffffff;
+  *(int *)(((char*)this + 0x40b58)) = 0xdf;
+  *(int *)(((char*)this + 0x40afc)) = 0;
+  *(int *)(((char*)this + 0x40af4)) = 0;
+  *(int *)(((char*)this + 0x40af8)) = 0;
+  *(int *)(((char*)this + 0x40b40)) = 0;
+  ((Spot*)((char*)this + 0x40ec0))->init(200);
+  ((Spot*)((char*)this + 0x40eb4))->init(200);
+  ((Caviar*)((char*)this + 0x1d170))->init();
+  *(unsigned char *)(((char*)this + 0x1d214)) = 0;
+  *(int *)(((char*)this + 0x1e640)) = 0;
+  *(int *)(((char*)this + 0x1e644)) = 0;
+  *(int *)(((char*)this + 0x1e648)) = 0x3f48f5c3;
+  sub_627d00((int *)((char*)this + 0x1e640), (char*)this + 0x1e64c);
+  fVar2 = *(float *)(((char*)this + 0x1e664));
+  *(float *)(((char*)this + 0x1e664)) = -fVar2;
+  negY = -*(float *)(((char*)this + 0x1e668));
+  *(float *)(((char*)this + 0x1e668)) = negY;
+  negZ = -*(float *)(((char*)this + 0x1e66c));
+  *(float *)(((char*)this + 0x1e66c)) = negZ;
+  local_3c = -fVar2 * (*(float*)g_0066aa40);
+  local_38 = negY * (*(float*)g_0066aa40);
+  local_34 = negZ * (*(float*)g_0066aa40);
+  ((Caviar*)((char*)this + 0x1d170))->set_camera_direct((VOX_Vect*)&local_3c,(VOX_Matrix*)((char*)this + 0x1e64c));
+  { int scaleBits = 0x3e3851ec; ((Caviar*)((char*)this + 0x1d170))->set_scaling(*(float*)&scaleBits); }
+  local_3c = 0.0;
+  local_38 = 0.0;
+  local_34 = 1.0;
+  *(int *)(((char*)this + 0x1d1dc)) = 0;
+  *(int *)(((char*)this + 0x1d1e0)) = 0;
+  *(int *)(((char*)this + 0x1d1e4)) = 0x3f800000;
+  *(int *)(((char*)this + 0x1d1d0)) = 0;
+  *(int *)(((char*)this + 0x1d1d4)) = 0;
+  *(int *)(((char*)this + 0x1d1d8)) = 0x3f800000;
+  ((Time*)((char*)this + 0x1d148))->init((void (__cdecl *)(int, int))g_0041af40,0,(int)this,0x32,5);
+  ((GraphicWin*)this)->init(((*g_009b7b1c) + -0x2d6) / 2,((*g_009b7b20) - (*g_007af59c)) - local_14,0x2f6,local_14,0
+               ,0x5000000,(Win*)((int)((void*)g_009156b0) + *(int *)((*g_009156b0) + 4)),0,0);
+  ((GraphicWin*)this)->fill(9);
+  local_28.left = *(int *)(((char*)this + 0x474)) + 0x17;
+  local_28.top = *(long *)(((char*)this + 0x478));
+  local_28.right = *(int *)(((char*)this + 0x47c)) + -0x37;
+  local_28.bottom = *(int *)(((char*)this + 0x480)) + 3;
+  ((Buffer*)((char*)this + 0x444))->box_sprite(&local_28,(BoxSpriteParams*)g_0078d690);
+  local_28.left = 0x1b;
+  local_28.top = 4;
+  local_28.right = 699;
+  local_28.bottom = 0x1e;
+  ((Buffer*)((char*)this + 0x444))->box_sprite(&local_28,(BoxSpriteParams*)g_0078d708);
+  UnionRect(&local_28,(RECT *)(((char*)this + 0x40d2c)),(RECT *)(((char*)this + 0x40d3c)));
+  local_28.right = local_28.right + 3;
+  local_28.left = local_28.left + -3;
+  local_28.bottom = local_28.bottom + 3;
+  local_28.top = local_28.top + -3;
+  ((Buffer*)((char*)this + 0x444))->box_sprite(&local_28,(BoxSpriteParams*)g_0078d5a0);
+  bufLocal.load_pcx((char*)g_00682e70,0,10,0xec);
+  local_14 = (int)((char*)this + 0xbdfc);
+  iVar9 = 1;
+  local_18 = (void*)0x3;
+  do {
+    ((Sprite*)(void*)local_14)->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x300,iVar9,0x30,0x30,0);
+    iVar9 = iVar9 + 0x31;
+    local_14 = local_14 + 0x2c;
+    local_18 = (void*)((int)local_18 + -1);
+  } while (local_18 != (void*)0x0);
+  bufLocal.load_pcx((char*)g_00682e80,0,10,0xec);
+  local_14 = (int)((char*)this + 0xc9cc);
+  iVar9 = 1;
+  local_18 = (void*)0x3;
+  do {
+    ((Sprite*)(void*)local_14)->extract((&bufLocal),(*(unsigned char*)g_00696d14),0xf7,iVar9,0x14,0x14,0);
+    iVar9 = iVar9 + 0x15;
+    local_14 = local_14 + 0x2c;
+    local_18 = (void*)((int)local_18 + -1);
+  } while (local_18 != (void*)0x0);
+  local_14 = (int)((char*)this + 0xca50);
+  iVar9 = 1;
+  local_18 = (void*)0x3;
+  do {
+    ((Sprite*)(void*)local_14)->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x10c,iVar9,0x15,0x14,0);
+    iVar9 = iVar9 + 0x15;
+    local_14 = local_14 + 0x2c;
+    local_18 = (void*)((int)local_18 + -1);
+  } while (local_18 != (void*)0x0);
+  local_14 = (int)((char*)this + 0xcad4);
+  iVar9 = 0x40;
+  local_18 = (void*)0x3;
+  do {
+    ((Sprite*)(void*)local_14)->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x122,iVar9,0x14,0x23,0);
+    iVar9 = iVar9 + 0x24;
+    local_14 = local_14 + 0x2c;
+    local_18 = (void*)((int)local_18 + -1);
+  } while (local_18 != (void*)0x0);
+  local_14 = (int)((char*)this + 0xcb58);
+  iVar9 = 0x40;
+  local_18 = (void*)0x3;
+  do {
+    ((Sprite*)(void*)local_14)->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x137,iVar9,0x14,0x23,0);
+    iVar9 = iVar9 + 0x24;
+    local_14 = local_14 + 0x2c;
+    local_18 = (void*)((int)local_18 + -1);
+  } while (local_18 != (void*)0x0);
+  local_14 = (int)((char*)this + 0xcbdc);
+  iVar9 = 1;
+  local_18 = (void*)0x3;
+  do {
+    ((Sprite*)(void*)local_14)->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x14c,iVar9,0x30,0x30,0);
+    iVar9 = iVar9 + 0x31;
+    local_14 = local_14 + 0x2c;
+    local_18 = (void*)((int)local_18 + -1);
+  } while (local_18 != (void*)0x0);
+  ((Sprite*)((char*)this + 0xbc70))->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x18d,1,0x14,0x14,0);
+  ((Sprite*)((char*)this + 0xbc9c))->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x1a2,1,0x14,0x14,0);
+  ((Sprite*)((char*)this + 0xbd20))->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x18d,0x16,0x14,0x14,0);
+  ((Sprite*)((char*)this + 0xbd4c))->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x1a2,0x16,0x14,0x14,0);
+  ((Sprite*)((char*)this + 0xbcc8))->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x18d,0x2b,0x14,0x14,0);
+  ((Sprite*)((char*)this + 0xbcf4))->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x1a2,0x2b,0x14,0x14,0);
+  ((Sprite*)((char*)this + 0xbd78))->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x18d,0x40,0x14,0x14,0);
+  ((Sprite*)((char*)this + 0xbda4))->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x1a2,0x40,0x14,0x14,0);
+  ((Sprite*)((char*)this + 0xbdd0))->extract((&bufLocal),(*(unsigned char*)g_00696d14),0x1b7,0x40,0x14,0x14,0);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x77c));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  ((BaseButton*)((char*)this + 0x1b9b0))->init(((char*)g_009b86a0),0x14,*(int *)(((char*)this + 0x40e6c)),*(int *)(((char*)this + 0x40e70)),
+               *(int *)(((char*)this + 0x40e74)) - *(int *)(((char*)this + 0x40e6c)),
+               *(int *)(((char*)this + 0x40e78)) - *(int *)(((char*)this + 0x40e70)),(Win*)g_007ae820,0);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc30));
+  ((BaseButton*)((char*)this + 0x1b9b0))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x108));
+  strcat(((char*)g_009b86a0),uVar5);
+  local_28.left = *piVar1 + 3;
+  local_28.top = *(int *)(((char*)this + 0x40cb0)) + 3;
+  local_28.right = *(int *)(((char*)this + 0xcaec)) + local_28.left;
+  local_28.bottom = *(int *)(((char*)this + 0xcaf0)) + local_28.top;
+  *(int *)(((char*)this + 0x40d4c)) = local_28.left;
+  *(long *)(((char*)this + 0x40d50)) = local_28.top;
+  *(long *)(((char*)this + 0x40d54)) = local_28.right;
+  *(long *)(((char*)this + 0x40d58)) = local_28.bottom;
+  local_2c = *(int **)(((char*)this + 0x40d4c));
+  ((BaseButton*)((char*)this + 0xee58))->init(0,2,(int)local_2c,*(int *)(((char*)this + 0x40d50)),*(int *)(((char*)this + 0x40d54)) - (int)local_2c,
+               *(int *)(((char*)this + 0x40d58)) - *(int *)(((char*)this + 0x40d50)),(Win*)g_007ae820,0);
+  *(int *)(((char*)this + 0xf92c)) = (int)((char*)this + 0xcad4);
+  *(int *)(((char*)this + 0xf934)) = (int)((char*)this + 0xcb2c);
+  *(int *)(((char*)this + 0xf930)) = (int)((char*)this + 0xcb00);
+  ((BaseButton*)((char*)this + 0xee58))->set_bubble_text(((char*)g_009b86a0));
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x104));
+  strcat(((char*)g_009b86a0),uVar5);
+  local_28.right = *(int *)(((char*)this + 0x40cb4)) + -3;
+  local_28.left = local_28.right - *(int *)(((char*)this + 0xcaec));
+  *(int *)(((char*)this + 0x40d5c)) = local_28.left;
+  *(long *)(((char*)this + 0x40d60)) = local_28.top;
+  *(long *)(((char*)this + 0x40d64)) = local_28.right;
+  *(long *)(((char*)this + 0x40d68)) = local_28.bottom;
+  local_2c = *(int **)(((char*)this + 0x40d5c));
+  ((BaseButton*)((char*)this + 0xf9a4))->init(0,3,(int)local_2c,*(int *)(((char*)this + 0x40d60)),*(int *)(((char*)this + 0x40d64)) - (int)local_2c,
+               *(int *)(((char*)this + 0x40d68)) - *(int *)(((char*)this + 0x40d60)),(Win*)g_007ae820,0);
+  *(int *)(((char*)this + 0x10478)) = (int)((char*)this + 0xcb58);
+  *(int *)(((char*)this + 0x10480)) = (int)((char*)this + 0xcbb0);
+  *(int *)(((char*)this + 0x1047c)) = (int)((char*)this + 0xcb84);
+  *(int *)(((char*)this + 0x103b8)) = 1;
+  ((BaseButton*)((char*)this + 0xf9a4))->set_bubble_text(((char*)g_009b86a0));
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x194));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  local_2c = (int *)(((char*)this + 0xd7c0));
+  ((BaseButton*)((char*)this + 0xd7c0))->init(((char*)g_009b86a0),0,*(int *)(((char*)this + 0x40d2c)),*(int *)(((char*)this + 0x40d30)),
+               *(int *)(((char*)this + 0x40d34)) - *(int *)(((char*)this + 0x40d2c)),
+               *(int *)(((char*)this + 0x40d38)) - *(int *)(((char*)this + 0x40d30)),(Win*)this,0);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 500));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  ((BaseButton*)((char*)this + 0xe30c))->init(((char*)g_009b86a0),1,*(int *)(((char*)this + 0x40d3c)),*(int *)(((char*)this + 0x40d40)),
+               *(int *)(((char*)this + 0x40d44)) - *(int *)(((char*)this + 0x40d3c)),
+               *(int *)(((char*)this + 0x40d48)) - *(int *)(((char*)this + 0x40d40)),(Win*)this,0);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x814));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  ((BaseButton*)((char*)this + 0x15f50))->init(((char*)g_009b86a0),0xc,*(int *)(((char*)this + 0x40dec)),*(int *)(((char*)this + 0x40df0)),
+               *(int *)(((char*)this + 0x40df4)) - *(int *)(((char*)this + 0x40dec)),
+               *(int *)(((char*)this + 0x40df8)) - *(int *)(((char*)this + 0x40df0)),(Win*)g_007ae820,0);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc28));
+  ((BaseButton*)((char*)this + 0x15f50))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xac));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  ((BaseButton*)((char*)this + 0x16a9c))->init(((char*)g_009b86a0),0xd,*(int *)(((char*)this + 0x40dfc)),*(int *)(((char*)this + 0x40e00)),
+               *(int *)(((char*)this + 0x40e04)) - *(int *)(((char*)this + 0x40dfc)),
+               *(int *)(((char*)this + 0x40e08)) - *(int *)(((char*)this + 0x40e00)),(Win*)g_007ae820,0);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc2c));
+  ((BaseButton*)((char*)this + 0x16a9c))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x4fc));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40dcc)) = 0xa9;
+  *(int *)(((char*)this + 0x40dd0)) = 0xea;
+  *(int *)(((char*)this + 0x40dd4)) = 0x129;
+  *(int *)(((char*)this + 0x40dd8)) = 0xfe;
+  ((BaseButton*)((char*)this + 0x148b8))->init(((char*)g_009b86a0),10,*(int *)(((char*)this + 0x40dcc)),*(int *)(((char*)this + 0x40dd0)),
+               *(int *)(((char*)this + 0x40dd4)) - *(int *)(((char*)this + 0x40dcc)),
+               *(int *)(((char*)this + 0x40dd8)) - *(int *)(((char*)this + 0x40dd0)),(Win*)this,0);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc1c));
+  ((BaseButton*)((char*)this + 0x148b8))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xd4));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40dbc)) = 299;
+  *(int *)(((char*)this + 0x40dc0)) = 0xea;
+  *(int *)(((char*)this + 0x40dc4)) = 0x1ab;
+  *(int *)(((char*)this + 0x40dc8)) = 0xfe;
+  ((BaseButton*)((char*)this + 0x13d6c))->init(((char*)g_009b86a0),9,*(int *)(((char*)this + 0x40dbc)),*(int *)(((char*)this + 0x40dc0)),
+               *(int *)(((char*)this + 0x40dc4)) - *(int *)(((char*)this + 0x40dbc)),
+               *(int *)(((char*)this + 0x40dc8)) - *(int *)(((char*)this + 0x40dc0)),(Win*)this,0);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc20));
+  ((BaseButton*)((char*)this + 0x13d6c))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x4f8));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40ddc)) = 0x1ad;
+  *(int *)(((char*)this + 0x40de0)) = 0xea;
+  *(int *)(((char*)this + 0x40de4)) = 0x22d;
+  *(int *)(((char*)this + 0x40de8)) = 0xfe;
+  ((BaseButton*)((char*)this + 0x15404))->init(((char*)g_009b86a0),0xb,*(int *)(((char*)this + 0x40ddc)),*(int *)(((char*)this + 0x40de0)),
+               *(int *)(((char*)this + 0x40de4)) - *(int *)(((char*)this + 0x40ddc)),
+               *(int *)(((char*)this + 0x40de8)) - *(int *)(((char*)this + 0x40de0)),(Win*)this,0);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc24));
+  ((BaseButton*)((char*)this + 0x15404))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x824));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40d6c)) = 0x1e;
+  *(int *)(((char*)this + 0x40d70)) = 7;
+  *(int *)(((char*)this + 0x40d74)) = 0x8e;
+  *(int *)(((char*)this + 0x40d78)) = 0x1b;
+  ((BaseButton*)((char*)this + 0x104f0))->init(((char*)g_009b86a0),4,*(int *)(((char*)this + 0x40d6c)),*(int *)(((char*)this + 0x40d70)),
+               *(int *)(((char*)this + 0x40d74)) - *(int *)(((char*)this + 0x40d6c)),
+               *(int *)(((char*)this + 0x40d78)) - *(int *)(((char*)this + 0x40d70)),(Win*)this,0);
+  *(void**)(((char*)this + 0x11000)) = ((void*)g_0077a754);
+  *(void**)(((char*)this + 0x11004)) = ((void*)g_0077a7d8);
+  *(void**)(((char*)this + 0x11008)) = ((void*)g_0077a85c);
+  *(void**)(((char*)this + 0x10fe8)) = ((void*)g_0077a780);
+  *(void**)(((char*)this + 0x10fec)) = ((void*)g_0077a804);
+  *(void**)(((char*)this + 0x10ff0)) = ((void*)g_0077a888);
+  *(void**)(((char*)this + 0x1100c)) = ((void*)g_0077a7ac);
+  *(void**)(((char*)this + 0x11010)) = ((void*)g_0077a830);
+  *(void**)(((char*)this + 0x11014)) = ((void*)g_0077a8b4);
+  *(int *)(((char*)this + 0x10fac)) = (*g_008c6c54);
+  *(int *)(((char*)this + 0x10fb0)) = (*g_008c6c58);
+  *(int *)(((char*)this + 0x10fb4)) = (*g_008c6c5c);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc08));
+  ((BaseButton*)((char*)this + 0x104f0))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x828));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40d7c)) = 0x90;
+  *(int *)(((char*)this + 0x40d80)) = 7;
+  *(int *)(((char*)this + 0x40d84)) = 0x100;
+  *(int *)(((char*)this + 0x40d88)) = 0x1b;
+  ((BaseButton*)((char*)this + 0x1103c))->init(((char*)g_009b86a0),5,*(int *)(((char*)this + 0x40d7c)),*(int *)(((char*)this + 0x40d80)),
+               *(int *)(((char*)this + 0x40d84)) - *(int *)(((char*)this + 0x40d7c)),
+               *(int *)(((char*)this + 0x40d88)) - *(int *)(((char*)this + 0x40d80)),(Win*)this,0);
+  *(void**)(((char*)this + 0x11b4c)) = ((void*)g_0077a754);
+  *(void**)(((char*)this + 0x11b50)) = ((void*)g_0077a7d8);
+  *(void**)(((char*)this + 0x11b54)) = ((void*)g_0077a85c);
+  *(void**)(((char*)this + 0x11b34)) = ((void*)g_0077a780);
+  *(void**)(((char*)this + 0x11b38)) = ((void*)g_0077a804);
+  *(void**)(((char*)this + 0x11b3c)) = ((void*)g_0077a888);
+  *(void**)(((char*)this + 0x11b58)) = ((void*)g_0077a7ac);
+  *(void**)(((char*)this + 0x11b5c)) = ((void*)g_0077a830);
+  *(void**)(((char*)this + 0x11b60)) = ((void*)g_0077a8b4);
+  *(int *)(((char*)this + 0x11af8)) = (*g_008c6c54);
+  *(int *)(((char*)this + 0x11afc)) = (*g_008c6c58);
+  *(int *)(((char*)this + 0x11b00)) = (*g_008c6c5c);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc0c));
+  ((BaseButton*)((char*)this + 0x1103c))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xa54));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40e4c)) = 0x102;
+  *(int *)(((char*)this + 0x40e50)) = 7;
+  *(int *)(((char*)this + 0x40e54)) = *(int *)(((char*)this + 0xc9e4)) + 0x102;
+  *(int *)(((char*)this + 0x40e58)) = *(int *)(((char*)this + 0xc9e8)) + 7;
+  ((BaseButton*)((char*)this + 0x1a318))->init(0,0x12,*(int *)(((char*)this + 0x40e4c)),*(int *)(((char*)this + 0x40e50)),
+               *(int *)(((char*)this + 0x40e54)) - *(int *)(((char*)this + 0x40e4c)),
+               *(int *)(((char*)this + 0x40e58)) - *(int *)(((char*)this + 0x40e50)),(Win*)this,0);
+  *(int *)(((char*)this + 0x1adec)) = (int)((char*)this + 0xc9cc);
+  *(int *)(((char*)this + 0x1adf0)) = (int)((char*)this + 0xc9f8);
+  *(int *)(((char*)this + 0x1adf4)) = (int)((char*)this + 0xca24);
+  ((BaseButton*)((char*)this + 0x1a318))->set_bubble_text(((char*)g_009b86a0));
+  *(int *)(((char*)this + 0x1add4)) = (*g_008c6c60);
+  *(int *)(((char*)this + 0x1add8)) = (*g_008c6c64);
+  *(int *)(((char*)this + 0x1addc)) = (*g_008c6c68);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x724));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40dac)) = 0x118;
+  *(int *)(((char*)this + 0x40db0)) = 7;
+  *(int *)(((char*)this + 0x40db4)) = 0x1be;
+  *(int *)(((char*)this + 0x40db8)) = 0x1b;
+  ((BaseButton*)((char*)this + 0x13220))->init(((char*)g_009b86a0),8,*(int *)(((char*)this + 0x40dac)),*(int *)(((char*)this + 0x40db0)),
+               *(int *)(((char*)this + 0x40db4)) - *(int *)(((char*)this + 0x40dac)),
+               *(int *)(((char*)this + 0x40db8)) - *(int *)(((char*)this + 0x40db0)),(Win*)this,0);
+  *(void**)(((char*)this + 0x13d30)) = ((void*)g_0077a5c8);
+  *(void**)(((char*)this + 0x13d34)) = ((void*)g_0077a64c);
+  *(void**)(((char*)this + 0x13d38)) = ((void*)g_0077a6d0);
+  *(void**)(((char*)this + 0x13d18)) = ((void*)g_0077a5f4);
+  *(void**)(((char*)this + 0x13d1c)) = ((void*)g_0077a678);
+  *(void**)(((char*)this + 0x13d20)) = ((void*)g_0077a6fc);
+  *(void**)(((char*)this + 0x13d3c)) = ((void*)g_0077a620);
+  *(void**)(((char*)this + 0x13d40)) = ((void*)g_0077a6a4);
+  *(void**)(((char*)this + 0x13d44)) = ((void*)g_0077a728);
+  *(int *)(((char*)this + 0x13cdc)) = (*g_008c6c60);
+  *(int *)(((char*)this + 0x13ce0)) = (*g_008c6c64);
+  *(int *)(((char*)this + 0x13ce4)) = (*g_008c6c68);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc18));
+  ((BaseButton*)((char*)this + 0x13220))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xa54));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40e5c)) = 0x1c0;
+  *(int *)(((char*)this + 0x40e60)) = 7;
+  *(int *)(((char*)this + 0x40e64)) = *(int *)(((char*)this + 0xc9e4)) + 0x1c0;
+  *(int *)(((char*)this + 0x40e68)) = *(int *)(((char*)this + 0xc9e8)) + 7;
+  ((BaseButton*)((char*)this + 0x1ae64))->init(0,0x13,*(int *)(((char*)this + 0x40e5c)),*(int *)(((char*)this + 0x40e60)),
+               *(int *)(((char*)this + 0x40e64)) - *(int *)(((char*)this + 0x40e5c)),
+               *(int *)(((char*)this + 0x40e68)) - *(int *)(((char*)this + 0x40e60)),(Win*)this,0);
+  *(int *)(((char*)this + 0x1b938)) = (int)((char*)this + 0xc9cc);
+  *(int *)(((char*)this + 0x1b93c)) = (int)((char*)this + 0xc9f8);
+  *(int *)(((char*)this + 0x1b940)) = (int)((char*)this + 0xca24);
+  ((BaseButton*)((char*)this + 0x1ae64))->set_bubble_text(((char*)g_009b86a0));
+  *(int *)(((char*)this + 0x1b920)) = (*g_008c6c60);
+  *(int *)(((char*)this + 0x1b924)) = (*g_008c6c64);
+  *(int *)(((char*)this + 0x1b928)) = (*g_008c6c68);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x82c));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40d8c)) = 0x1d6;
+  *(int *)(((char*)this + 0x40d90)) = 7;
+  *(int *)(((char*)this + 0x40d94)) = 0x246;
+  *(int *)(((char*)this + 0x40d98)) = 0x1b;
+  ((BaseButton*)((char*)this + 0x11b88))->init(((char*)g_009b86a0),6,*(int *)(((char*)this + 0x40d8c)),*(int *)(((char*)this + 0x40d90)),
+               *(int *)(((char*)this + 0x40d94)) - *(int *)(((char*)this + 0x40d8c)),
+               *(int *)(((char*)this + 0x40d98)) - *(int *)(((char*)this + 0x40d90)),(Win*)this,0);
+  *(void**)(((char*)this + 0x12698)) = ((void*)g_0077a754);
+  *(void**)(((char*)this + 0x1269c)) = ((void*)g_0077a7d8);
+  *(void**)(((char*)this + 0x126a0)) = ((void*)g_0077a85c);
+  *(void**)(((char*)this + 0x12680)) = ((void*)g_0077a780);
+  *(void**)(((char*)this + 0x12684)) = ((void*)g_0077a804);
+  *(void**)(((char*)this + 0x12688)) = ((void*)g_0077a888);
+  *(void**)(((char*)this + 0x126a4)) = ((void*)g_0077a7ac);
+  *(void**)(((char*)this + 0x126a8)) = ((void*)g_0077a830);
+  *(void**)(((char*)this + 0x126ac)) = ((void*)g_0077a8b4);
+  *(int *)(((char*)this + 0x12644)) = (*g_008c6c54);
+  *(int *)(((char*)this + 0x12648)) = (*g_008c6c58);
+  *(int *)(((char*)this + 0x1264c)) = (*g_008c6c5c);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc10));
+  ((BaseButton*)((char*)this + 0x11b88))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0x830));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  *(int *)(((char*)this + 0x40d9c)) = 0x248;
+  *(int *)(((char*)this + 0x40da0)) = 7;
+  *(int *)(((char*)this + 0x40da4)) = 0x2b8;
+  *(int *)(((char*)this + 0x40da8)) = 0x1b;
+  ((BaseButton*)((char*)this + 0x126d4))->init(((char*)g_009b86a0),7,*(int *)(((char*)this + 0x40d9c)),*(int *)(((char*)this + 0x40da0)),
+               *(int *)(((char*)this + 0x40da4)) - *(int *)(((char*)this + 0x40d9c)),
+               *(int *)(((char*)this + 0x40da8)) - *(int *)(((char*)this + 0x40da0)),(Win*)this,0);
+  *(void**)(((char*)this + 0x131e4)) = ((void*)g_0077a754);
+  *(void**)(((char*)this + 0x131e8)) = ((void*)g_0077a7d8);
+  *(void**)(((char*)this + 0x131ec)) = ((void*)g_0077a85c);
+  *(void**)(((char*)this + 0x131cc)) = ((void*)g_0077a780);
+  *(void**)(((char*)this + 0x131d0)) = ((void*)g_0077a804);
+  *(void**)(((char*)this + 0x131d4)) = ((void*)g_0077a888);
+  *(void**)(((char*)this + 0x131f0)) = ((void*)g_0077a7ac);
+  *(void**)(((char*)this + 0x131f4)) = ((void*)g_0077a830);
+  *(void**)(((char*)this + 0x131f8)) = ((void*)g_0077a8b4);
+  *(int *)(((char*)this + 0x13190)) = (*g_008c6c54);
+  *(int *)(((char*)this + 0x13194)) = (*g_008c6c58);
+  *(int *)(((char*)this + 0x13198)) = (*g_008c6c5c);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xc14));
+  ((BaseButton*)((char*)this + 0x126d4))->set_bubble_text(uVar5);
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xa58));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  ((BaseButton*)((char*)this + 0x18c80))->init(0,0x10,*(int *)(((char*)this + 0x40e2c)),*(int *)(((char*)this + 0x40e30)),
+               *(int *)(((char*)this + 0x40e34)) - *(int *)(((char*)this + 0x40e2c)),
+               *(int *)(((char*)this + 0x40e38)) - *(int *)(((char*)this + 0x40e30)),(Win*)g_007ae820,0);
+  *(int *)(((char*)this + 0x19754)) = (int)((char*)this + 0xcbdc);
+  *(int *)(((char*)this + 0x1975c)) = (int)((char*)this + 0xcc34);
+  *(int *)(((char*)this + 0x19758)) = (int)((char*)this + 0xcc08);
+  ((BaseButton*)((char*)this + 0x18c80))->set_bubble_text(((char*)g_009b86a0));
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xa58));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  piVar1 = (int *)(((char*)this + 0xbe80));
+  ((BaseButton*)((char*)this + 0xbe80))->init(0,0x10,*(int *)(((char*)this + 0x40e2c)),*(int *)(((char*)this + 0x40e30)),
+               *(int *)(((char*)this + 0x40e34)) - *(int *)(((char*)this + 0x40e2c)),
+               *(int *)(((char*)this + 0x40e38)) - *(int *)(((char*)this + 0x40e30)),(Win*)g_007ae820,0);
+  *(int *)(((char*)this + 0xc954)) = (int)((char*)this + 0xbdfc);
+  *(int *)(((char*)this + 0xc958)) = (int)((char*)this + 0xbe28);
+  *(int *)(((char*)this + 0xc95c)) = (int)((char*)this + 0xbe54);
+  ((BaseButton*)((char*)this + 0xbe80))->set_bubble_text(((char*)g_009b86a0));
+  (*(char*)g_009b86a0) = 0;
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xd38));
+  strcat(((char*)g_009b86a0),uVar5);
+  CharUpperA((char*)g_009b86a0);
+  ((BaseButton*)((char*)this + 0x1c4fc))->init(((char*)g_009b86a0),0x15,*(int *)(((char*)this + 0x40e7c)),*(int *)(((char*)this + 0x40e80)),
+               *(int *)(((char*)this + 0x40e84)) - *(int *)(((char*)this + 0x40e7c)),
+               *(int *)(((char*)this + 0x40e88)) - *(int *)(((char*)this + 0x40e80)),(Win*)this,0);
+  uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xd3c));
+  ((BaseButton*)((char*)this + 0x1c4fc))->set_bubble_text(uVar5);
+  if (local_40 == 0) {
+    (*(char*)g_009b86a0) = 0;
+    uVar5 = (char*)((Strings*)g_009b90d8)->get(*(int *)((*g_009b90f8) + 0xa4c));
+    strcat(((char*)g_009b86a0),uVar5);
+    CharUpperA((char*)g_009b86a0);
+    *(int *)(((char*)this + 0x40e3c)) = 0xa9;
+    *(int *)(((char*)this + 0x40e40)) = 0x107;
+    *(int *)(((char*)this + 0x40e44)) = *(int *)(((char*)this + 0xca68)) + 0xa9;
+    *(int *)(((char*)this + 0x40e48)) = *(int *)(((char*)this + 0xca6c)) + 0x107;
+    ((BaseButton*)((char*)this + 0x197cc))->init(0,0x11,*(int *)(((char*)this + 0x40e3c)),*(int *)(((char*)this + 0x40e40)),
+                 *(int *)(((char*)this + 0x40e44)) - *(int *)(((char*)this + 0x40e3c)),
+                 *(int *)(((char*)this + 0x40e48)) - *(int *)(((char*)this + 0x40e40)),(Win*)this,0);
+    *(int *)(((char*)this + 0x1a2a0)) = (int)((char*)this + 0xca50);
+    *(int *)(((char*)this + 0x1a2a4)) = (int)((char*)this + 0xca7c);
+    *(int *)(((char*)this + 0x1a2a8)) = (int)((char*)this + 0xcaa8);
+    ((BaseButton*)((char*)this + 0x197cc))->set_bubble_text(((char*)g_009b86a0));
+  }
+  iVar9 = 0x16;
+  piVar8 = local_2c;
+  do {
+    ((VCall*)piVar8)->slot002();
+    ((Buffer*)((char*)piVar8 + 0x444))->set_font((Font*)local_30,0,0,0);
+    ((VCall*)piVar8)->slot062();
+    ((VCall*)piVar8)->slot062();
+    piVar8 = piVar8 + 0x2d3;
+    iVar9 = iVar9 + -1;
+  } while (iVar9 != 0);
+  ((VCall*)piVar1)->slot002();
+  ((Buffer*)((char*)piVar1 + 0x444))->set_font((Font*)local_30,0,0,0);
+  ((VCall*)piVar1)->slot062();
+  ((VCall*)piVar1)->slot062();
+  return;}
