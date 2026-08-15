@@ -57,7 +57,7 @@ class AAmbience {
   uint32_t field_68_;  // 0x68
   uint8_t field_6C_;  // 0x6C
   uint8_t field_6D_;  // 0x6D
-  uint32_t field_6E_;  // 0x6E
+  uint8_t field_6E_[0x4];  // 0x6E
 };
 
 /* 0x6058 bytes, 8 member(s), 8 named. From the IDB. 19 function(s) in the image. */
@@ -159,10 +159,10 @@ class BAmbience {
   uint32_t field_68_;  // 0x68
   uint8_t field_6C_;  // 0x6C
   uint8_t field_6D_;  // 0x6D
-  uint32_t field_6E_;  // 0x6E
-  uint32_t field_72_;  // 0x72
-  uint32_t field_76_;  // 0x76
-  uint32_t field_7A_;  // 0x7A
+  uint8_t field_6E_[0x4];  // 0x6E
+  uint8_t field_72_[0x4];  // 0x72
+  uint8_t field_76_[0x4];  // 0x76
+  uint8_t field_7A_[0x4];  // 0x7A
   uint16_t field_7E_;  // 0x7E
 };
 

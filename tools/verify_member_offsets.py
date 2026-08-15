@@ -557,6 +557,45 @@ def load_accesses(path: Path = ACCESSES_CSV) -> tuple:
     return found, typed
 
 
+# `field_838_` states that it sits at 0x838. Anything else names nothing.
+NAMED_OFFSET = re.compile(r"^field_([0-9A-Fa-f]+)_$")
+
+
+def misnamed(layouts: dict) -> tuple:
+    """([(class, member, claimed, actual)], how many names were examined).
+
+    THE CONVENTION IS LOAD-BEARING, WHICH IS WHY IT NEEDS A CHECK. Agents are
+    told - by `member_map`, in every brief for a class with observed accesses -
+    that the field at 0x838 is spelled `field_838_`, so they can write an
+    offset they read off the disassembly without looking anything up. That
+    instruction is only safe while the names agree with the slots the compiler
+    assigns, and nothing held them together: a member inserted or widened above
+    slides everything below it while the names stay put, and the result
+    compiles perfectly and reads the wrong bytes for ever.
+
+    Read from the same compiled probe as the rest of this module, so the
+    `actual` column is where MSVC really put the member, not where a header
+    comment says it went.
+    """
+    wrong, examined = [], 0
+    for klass, members in sorted(layouts.items()):
+        for member, offset, _size, _spelling in members:
+            # A BASE'S MEMBERS ARRIVE REBASED INTO THE DERIVED OBJECT, spelled
+            # `GraphicWin::field_10_` at the base's offset plus where the
+            # subobject sits. Their names state an offset within the BASE and
+            # are right to; comparing them here would invent a failure for
+            # every inherited field in the tree. Each is checked against its
+            # own class, where the name does describe the slot.
+            found = NAMED_OFFSET.match(member)
+            if not found:
+                continue
+            examined += 1
+            claimed = int(found.group(1), 16)
+            if claimed != offset:
+                wrong.append((klass, member, claimed, offset))
+    return wrong, examined
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exe", type=Path)
@@ -564,6 +603,8 @@ def main(argv=None) -> int:
                         help="rewrite docs/recovery/member-accesses.csv")
     parser.add_argument("--check", action="store_true",
                         help="fail on any overrun or straddle")
+    parser.add_argument("--check-names", action="store_true",
+                        help="fail if a field_<HEX>_ name is not at that offset")
     parser.add_argument("--class", dest="only", help="report one class")
     parser.add_argument("--pins", action="store_true",
                         help="which pinned sizes the image corroborates")
@@ -607,6 +648,28 @@ def main(argv=None) -> int:
     # enumerated is never refused either.
     wanted = set(classes(args.src))
     missing = sorted(wanted - set(layouts))
+
+    if args.check_names:
+        wrong, examined = misnamed(layouts)
+        print(f"classes with declared members: {len(layouts)}; "
+              f"field_<HEX>_ names examined: {examined}")
+        for klass, member, claimed, actual in wrong:
+            print(f"  {klass}::{member} claims 0x{claimed:X} "
+                  f"but sits at 0x{actual:X}")
+        # SILENCE MUST NOT READ AS AGREEMENT, the same rule `--check` below
+        # states at two scales. A name that was never compared cannot disagree,
+        # so an empty probe would report a clean tree while proving nothing -
+        # and this check exists precisely to be believed by an agent writing an
+        # offset it never verified.
+        if not layouts or not examined:
+            print("FAIL: nothing was compared, so this proves nothing")
+            return 1
+        if wrong:
+            print(f"FAIL: {len(wrong)} field name(s) not at the offset they "
+                  f"state; `member_map` tells agents to trust these")
+            return 1
+        print("OK: every field name states the offset it sits at")
+        return 0
 
     if args.pins:
         audit = audit_pins(sizes, observed, args.src)

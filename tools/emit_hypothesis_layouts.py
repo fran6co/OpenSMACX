@@ -338,20 +338,26 @@ def owns_functions() -> collections.Counter:
     return owned
 
 
-def storage(size: int, name: str) -> str:
-    """A member declaration holding exactly `size` bytes and nothing else.
+def storage(size: int, name: str, offset: int = 0) -> str:
+    """A member declaration holding exactly `size` bytes AT `offset`.
 
     Never another class by value: see the module docstring. 1, 2 and 4 get the
     integer of that width because that is what the tree writes for a scalar
     member; anything else is a byte array, which is honest about the fact that
     the only thing known here is how much room it takes.
+
+    UNLESS THE TYPE'S ALIGNMENT WOULD MOVE IT. `uint32_t field_6E_` after two
+    bytes at 0x6C and 0x6D does not sit at 0x6E - MSVC aligns a 4-byte type to
+    4 and puts it at 0x70, silently, taking the five members below it along.
+    The IDB records unaligned members and this emitter believed the width
+    without checking where it landed, so `AAmbience` and `BAmbience` shipped
+    six names that state an offset the compiler does not use. An agent is told
+    by `member_map` that a name IS its offset, so a lie here is read straight
+    into a body as a wrong byte. A byte array aligns to 1 and therefore lands
+    exactly where the source says.
     """
-    if size == 1:
-        return f"uint8_t {name};"
-    if size == 2:
-        return f"uint16_t {name};"
-    if size == 4:
-        return f"uint32_t {name};"
+    if size in (1, 2, 4) and offset % size == 0:
+        return {1: "uint8_t", 2: "uint16_t", 4: "uint32_t"}[size] + f" {name};"
     return f"uint8_t {name}[0x{size:X}];"
 
 
@@ -555,7 +561,7 @@ def render(names: list, idb: dict, thinker: dict,
             if size <= 0:
                 continue
             lines.append(
-                f"  {storage(size, member_name(member, offset, taken))}"
+                f"  {storage(size, member_name(member, offset, taken), offset)}"
                 f"  // 0x{offset:X}")
         lines.append("};")
         lines.append("")

@@ -294,8 +294,20 @@ def disassembly(address: int) -> str:
     # them looks like an independent local.
     import frame_objects
     frame = frame_objects.render(pe, spans, functions)
+    # WHERE THIS CLASS'S FIELDS ARE, read off its own `[ecx + N]` accesses.
+    # `class_section` withholds declared offsets on purpose, because an
+    # unproved layout that compiles fails later as a byte mismatch nobody
+    # traces back. These are not that: they are observed accesses, the same
+    # kind of evidence as the two blocks above. Withholding them cost two
+    # functions in one batch, both deferred with the reason "every offset used
+    # would be a guess" against headers that named every offset they needed.
+    import derive_access_bounds
+    import member_map
+    scope = derive_access_bounds.receiver_scope(row.get("name") or "")
+    members = member_map.render(scope) if scope else ""
     return text + ("\n" + tables if tables else "") \
-                + ("\n" + frame if frame else "")
+                + ("\n" + frame if frame else "") \
+                + ("\n" + members if members else "")
 
 
 def prompt_section(address: int, heading: str) -> str:
