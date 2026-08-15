@@ -2,6 +2,7 @@
 
 import argparse
 import concurrent.futures
+import cpu
 import os
 import re
 from pathlib import Path
@@ -99,6 +100,7 @@ def plan_prefetch(args, swept):
 
 
 def prefetch(commands, workers):
+    workers = cpu.worker_count(workers)
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
         pending = {pool.submit(_execute, command): command
                    for command in commands}
@@ -140,10 +142,13 @@ def main():
                         help="refuse to report clean over fewer objects than "
                              "this; an empty directory sweeps nothing")
     # Parallel by default - an agent should not have to remember a flag to get
-    # the fast path. Capped rather than cpu_count() because two gate lanes run
-    # concurrently, each already at `ctest --parallel 8`.
+    # the fast path. 0 means every hardware core, resolved by
+    # `byte_match.worker_count`. It used to be capped at 8 "because two gate
+    # lanes run concurrently, each already at `ctest --parallel 8`" - a reason
+    # that retired with the ctest suite on 2026-08-15, and the kind of stale
+    # justification that outlives what made it true.
     parser.add_argument("--jobs", type=int,
-                        default=min(8, os.cpu_count() or 1),
+                        default=0,
                         help="workers used to prefetch objdump/nm output; "
                              "1 disables prefetching entirely")
     # Brought under the -fno-exceptions sweep below, which iterates every

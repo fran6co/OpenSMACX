@@ -20,6 +20,33 @@
 #include "general.h"  // mem_get
 
 Palette g_PALETTE1;  // 0x0094C590
+HPALETTE PaletteInitialized;  // 0x009B8178
+int PaletteUsesSystemColours;  // 0x009B8188
+
+// 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
+const uint8_t SystemColours[80] = {
+      0,   0,   0, 0,   // 0   black
+      0,   0, 128, 0,   // 1   dark red
+      0, 128,   0, 0,   // 2   dark green
+      0, 128, 128, 0,   // 3   olive
+    128,   0,   0, 0,   // 4   dark blue
+    128,   0, 128, 0,   // 5   dark magenta
+    128, 128,   0, 0,   // 6   teal
+    192, 192, 192, 0,   // 7   light grey
+    192, 220, 192, 0,   // 8   money green
+    240, 202, 166, 0,   // 9   sky blue
+    240, 251, 255, 0,   // 246 cream
+    164, 160, 160, 0,   // 247 medium grey
+    128, 128, 128, 0,   // 248 dark grey
+      0,   0, 255, 0,   // 249 red
+      0, 255,   0, 0,   // 250 green
+      0, 255, 255, 0,   // 251 yellow
+    255,   0,   0, 0,   // 252 blue
+    255,   0, 255, 0,   // 253 magenta
+    255, 255,   0, 0,   // 254 cyan
+    255, 255, 255, 0,   // 255 white
+};
+
 Palette *PaletteCurrent;  // 0x009B8174
 
 /*
@@ -41,7 +68,7 @@ int Palette::get_rgbquad(RGBQUAD *output, int start, int count) {
     if (!output) {
         return 3;
     }
-    if (*PaletteInitialized == 0) {
+    if (PaletteInitialized == 0) {
         return 7;
     }
     if (count <= 0) {
@@ -153,10 +180,10 @@ Return Value: none
 Status: Complete
 */
 void Palette::init_palette_class(int use_system_colours) {
-    int existing = *PaletteInitialized;
+    HPALETTE existing = PaletteInitialized;
     if (existing) {
-        DeleteObject((void *)existing);
-        *PaletteInitialized = 0;
+        DeleteObject(existing);
+        PaletteInitialized = 0;
     }
     uint8_t *header = (uint8_t *)mem_get(0x404);
     if (!header) {
@@ -164,7 +191,7 @@ void Palette::init_palette_class(int use_system_colours) {
     }
     *(uint16_t *)header = 0x300;
     *(uint16_t *)(header + 2) = 0x100;
-    *PaletteUsesSystemColours = use_system_colours;
+    PaletteUsesSystemColours = use_system_colours;
     if (use_system_colours) {
         HDC screen = GetDC(0);
         GetSystemPaletteEntries(screen, 0, 256, (PALETTEENTRY *)(header + 4));
@@ -214,6 +241,6 @@ void Palette::init_palette_class(int use_system_colours) {
             reserved += 4;
         }
     }
-    *PaletteInitialized = (int)CreatePalette((const LOGPALETTE *)header);
+    PaletteInitialized = CreatePalette((const LOGPALETTE *)header);
     free(header);
 }

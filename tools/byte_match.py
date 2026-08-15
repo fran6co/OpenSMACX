@@ -105,6 +105,7 @@ import os
 import shutil
 import struct
 import concurrent.futures
+import functools
 import subprocess
 import sys
 import tempfile
@@ -113,6 +114,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import cpu  # noqa: E402
 import pefile  # noqa: E402
 
 from generator_support import parse_body_ranges, read_bytes  # noqa: E402
@@ -1123,12 +1125,7 @@ def compile_batches(chunks: list, flags: str, workers: int = 0) -> list:
     from isolated compiles only in COFF byte 4, the timestamp - and no batch
     can see another's files.
     """
-    # EVERY CORE, not eight of them. The old cap predates one-unit-per-`cl`,
-    # where eight in flight left half a 16-core machine idle. The pool is here
-    # to keep the process count bounded and nothing more - which of them run
-    # when is the OS scheduler's problem, and it is better at it than a chunk
-    # size chosen in advance.
-    workers = workers or (os.cpu_count() or 2)
+    workers = cpu.worker_count(workers)
 
     def one(chunk):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1223,6 +1220,72 @@ def _better(candidate: dict, incumbent: dict) -> bool:
     return mine < theirs
 
 
+# Per-process state for the COMPARISON pool, below. A worker re-opens the
+# image rather than receiving it: `pefile.PE` does not pickle cheaply, and the
+# only things a comparison needs from it are the original bytes and the
+# relocation mask for one span.
+_COMPARE_PE = None
+
+
+def _compare_init(exe_path: str) -> None:
+    import pefile
+    global _COMPARE_PE
+    # NOT `fast_load`: `original_relocation_mask` reads the .reloc directory,
+    # which a fast load does not parse. A worker that skipped it would return
+    # an EMPTY mask and call every relocated operand a divergence - the whole
+    # corpus would go MISMATCH at the first `call`.
+    _COMPARE_PE = pefile.PE(exe_path)
+
+
+@functools.lru_cache(maxsize=None)
+def _original(low: int, high: int):
+    """The image side of one span. Cached because it is asked for repeatedly.
+
+    `match_functions` tries up to four flag sets, and every attempt re-derived
+    the same bytes and the same relocation mask for the same address. The
+    cache lives per worker process and the image never changes during a run.
+    """
+    return (original_span_bytes(_COMPARE_PE, low, high),
+            original_relocation_mask(_COMPARE_PE, low, high))
+
+
+def _compare_one(task):
+    """One (compile output -> verdict). The unit of the comparison pool."""
+    address, data, name, low, high = task
+    try:
+        rebuilt, rebuilt_mask = object_code(data, subject=name)
+        original, mask = _original(low, high)
+        return address, compare(original, mask, low, rebuilt, rebuilt_mask)
+    except ValueError as error:
+        return address, {"tier": "NO_COMPILE", "refusal_reason": str(error)}
+
+
+def _compare_all(tasks: list) -> dict:
+    """{address: verdict} for every compiled object, across every core.
+
+    Serial below a floor: a pool costs each worker a full `pefile.PE` parse of
+    the image, which is worth paying for thousands of comparisons and not for
+    the handful a single `--addresses` run produces.
+    """
+    if not tasks:
+        return {}
+    workers = cpu.worker_count()
+    if workers < 2 or len(tasks) < 64:
+        return dict(_compare_one_serial(task) for task in tasks)
+    with concurrent.futures.ProcessPoolExecutor(
+            max_workers=workers, initializer=_compare_init,
+            initargs=(str(DEFAULT_EXE),)) as pool:
+        return dict(pool.map(_compare_one, tasks, chunksize=8))
+
+
+def _compare_one_serial(task):
+    """`_compare_one` without the pool's per-process image."""
+    global _COMPARE_PE
+    if _COMPARE_PE is None:
+        _compare_init(str(DEFAULT_EXE))
+    return _compare_one(task)
+
+
 def match_functions(pe, rows: dict, shared: set, subjects: list,
                     flags: str, chunk: int = 1) -> dict:
     """`match_function` for MANY units at once. {address: outcome}.
@@ -1284,30 +1347,38 @@ def match_functions(pe, rows: dict, shared: set, subjects: list,
         batches = compile_batches(
             [{stem: pending[stems[stem]] for stem in group} for group in groups],
             attempt)
+        # THE COMPARISON WAS THE SERIAL HALF. Compiling has run across every
+        # core since one-unit-per-`cl`; the verdict that follows it - parse the
+        # COFF, disassemble both sides, align them - ran in this loop, one
+        # object at a time, in the parent. Measured on a cold `--check`: 286 s
+        # of CPU against 294 s of wall clock, which is one core of sixteen, and
+        # the compiler was not the thing being waited for.
+        #
+        # Each object's verdict depends on nothing but that object, so they go
+        # to a pool. `data is None` stays here because its reason comes from
+        # the batch's diagnostics, which belong to the compile, not the
+        # comparison.
+        candidates = {}
+        tasks = []
         for objects, diagnostics in batches:
             for stem, data in objects.items():
                 address = stems[stem]
-                layout = layouts[address]
-                low, high = layout.primary[0]
                 if data is None:
-                    candidate = {"tier": "NO_COMPILE",
-                                 "refusal_reason": diagnostics.get(
-                                     stem, "CL emitted no object")}
-                else:
-                    try:
-                        # By NAME - see the note at the census's own call.
-                        rebuilt, rebuilt_mask = object_code(
-                            data, subject=rows.get(address, {}).get("name"))
-                        candidate = compare(
-                            original_span_bytes(pe, low, high),
-                            original_relocation_mask(pe, low, high),
-                            low, rebuilt, rebuilt_mask)
-                    except ValueError as error:
-                        candidate = {"tier": "NO_COMPILE",
-                                     "refusal_reason": str(error)}
-                candidate["flags"] = attempt
-                if address not in best or _better(candidate, best[address]):
-                    best[address] = candidate
+                    candidates[address] = {
+                        "tier": "NO_COMPILE",
+                        "refusal_reason": diagnostics.get(
+                            stem, "CL emitted no object")}
+                    continue
+                low, high = layouts[address].primary[0]
+                # By NAME - see the note at the census's own call.
+                tasks.append((address, data,
+                              rows.get(address, {}).get("name"), low, high))
+        candidates.update(_compare_all(tasks))
+
+        for address, candidate in candidates.items():
+            candidate["flags"] = attempt
+            if address not in best or _better(candidate, best[address]):
+                best[address] = candidate
         for address in [a for a in pending
                         if best.get(a, {}).get("tier") == "BYTE_EXACT"]:
             del pending[address]

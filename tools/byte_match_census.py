@@ -59,6 +59,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pefile  # noqa: E402
 
+import cpu
 import byte_match  # noqa: E402
 import emit_translation_unit as emit  # noqa: E402
 import declfix  # noqa: E402
@@ -438,6 +439,7 @@ def build_units(subjects: list, jobs: int, functions, derived, callees, pe):
     worth building when there is real work for it - one process is faster for a
     `--limit 20` spot check than sixteen that each read the catalogue first.
     """
+    jobs = cpu.worker_count(jobs)
     if jobs <= 1 or len(subjects) < 64:
         return {address: build_unit(address, row, location, functions,
                                     derived, callees, pe)

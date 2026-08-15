@@ -322,25 +322,56 @@ static_assert(sizeof(Palette) == 0x454,
 // the process is using.
 extern Palette *PaletteCurrent;
 
-// 0x009B8178. THE HPALETTE ITSELF, not a flag: `init_palette_class` stores
-// `CreatePalette`'s result here and `DeleteObject`s whatever was here first,
-// so "initialised" and "non-null" are the same question and `get_rgbquad`
-// asks it that way. A constant address rather than `extern int *` for the
-// reason spelled out on `GenderDefault` in general.h - the indirection is
-// byte-visible and this global is only ever loaded and stored.
-static int *const PaletteInitialized = (int *)0x009B8178;
+/*
+ * 0x009B8178. THE HPALETTE ITSELF, not a flag: `init_palette_class` stores
+ * `CreatePalette`'s result here and `DeleteObject`s whatever was here first,
+ * so "initialised" and "non-null" are the same question and `get_rgbquad`
+ * asks it that way. The name is the project's, not the image's - this binary
+ * carries no symbols - and it is kept only because the tree already uses it.
+ *
+ * AN OBJECT, NOT AN ADDRESS. It was `static int *const ... = (int *)0x9B8178`,
+ * which names a location in the SHIPPED process and nothing at all in
+ * `build/OpenSMACX.exe`: 0x009B8178 lies past `.data`'s stored bytes, which
+ * end at 0x006A8000, so the image itself only reserves it as zero-fill. A
+ * real global is what the original declaration was - the linker places it, the
+ * loader zeroes it, and the executable this repository now builds can actually
+ * read it.
+ *
+ * IT COSTS NO BYTES. `mov eax, [0x9b8178]` through the constant and
+ * `mov eax, [PaletteInitialized]` through the global are the same instruction;
+ * the four bytes of address are a relocation, and the comparison masks a
+ * relocated operand on either side. Same argument as `g_PALETTE1` below, and
+ * the same measurement: `get_rgbquad` and `init_palette_class` both held their
+ * verdict across the change.
+ *
+ * `HPALETTE` rather than `int` because that is what the two GDI calls at
+ * either end of its life say it is, and it removes a cast from each.
+ */
+extern HPALETTE PaletteInitialized;
 
 // 0x009B8188. The argument `init_palette_class` was called with, kept so the
 // rest of the engine can ask which palette it got. Non-zero means the entries
 // were taken from the system palette with `GetSystemPaletteEntries`; zero
 // means the built-in twenty were installed and the middle 236 left free.
-static int *const PaletteUsesSystemColours = (int *)0x009B8188;
+// Zero-fill like `PaletteInitialized` above, and an object for the same
+// reason.
+extern int PaletteUsesSystemColours;
 
-// 0x0067022C. Twenty RGBQUADs - the Windows static colours. The first ten
-// become palette entries 0-9 and the last ten entries 246-255, which is the
-// layout GDI reserves. Bytes, not a struct, because `RGBQUAD` is opaque in a
-// measured unit; index it as `[entry * 4 + BLUE|GREEN|RED]`.
-static const uint8_t *const SystemColours = (const uint8_t *)0x0067022C;
+/*
+ * 0x0067022C. Twenty RGBQUADs - the Windows static colours. The first ten
+ * become palette entries 0-9 and the last ten entries 246-255, which is the
+ * layout GDI reserves. Bytes, not a struct, because `RGBQUAD` is opaque in a
+ * measured unit; index it as `[entry * 4 + BLUE|GREEN|RED]`.
+ *
+ * THE VALUES ARE CARRIED, not the address, and this one had to be: unlike
+ * `PaletteInitialized` above, 0x0067022C is BELOW `.data`'s stored bytes,
+ * so these eighty bytes are real content in the shipped image rather than
+ * zero-fill. A constant address would read whatever happens to sit there in
+ * `build/OpenSMACX.exe` - which is how a global that "works" under injection
+ * turns into a wrong palette in a standalone binary, silently. They were read
+ * back out of the image and they are the standard Windows twenty.
+ */
+extern const uint8_t SystemColours[80];
 
 /*
  * The process palette, at 0x0094C590 in the image. The name is the image's
