@@ -73,7 +73,7 @@ int __cdecl tech_name(LPSTR name) {
             return tech_id;
         }
     }
-    parse_says(0, Txt->get_file_path(), -1, -1);
+    parse_says(0, Txt.get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
     parse_says(2, TextBufferGetPtr, -1, -1);
     X_pop("BADTECHKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
@@ -107,7 +107,7 @@ int __cdecl chas_name(LPSTR name) {
             return chas_id;
         }
     }
-    parse_says(0, Txt->get_file_path(), -1, -1);
+    parse_says(0, Txt.get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
     parse_says(2, TextBufferGetPtr, -1, -1);
     X_pop("BADCHASKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
@@ -141,7 +141,7 @@ int __cdecl weap_name(LPSTR name) {
             return weap_id;
         }
     }
-    parse_says(0, Txt->get_file_path(), -1, -1);
+    parse_says(0, Txt.get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
     parse_says(2, TextBufferGetPtr, -1, -1);
     X_pop("BADWEAPKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
@@ -175,7 +175,7 @@ int __cdecl arm_name(LPSTR name) {
             return arm_id;
         }
     }
-    parse_says(0, Txt->get_file_path(), -1, -1);
+    parse_says(0, Txt.get_file_path(), -1, -1);
     parse_says(1, name, -1, -1);
     parse_says(2, TextBufferGetPtr, -1, -1);
     X_pop("BADARMKEY", NULL); // TODO: Fix crash bug if BADTECHKEY is triggered.
@@ -1373,7 +1373,7 @@ LPSTR __cdecl prefs_get(LPCSTR key_name, LPCSTR default_value, BOOL use_default)
         GetPrivateProfileStringA("Alpha Centauri", key_name, default_value, TextBufferGetPtr, 256,
             ".\\Alpha Centauri.ini");
     }
-    return Txt->update();
+    return Txt.update();
 }
 
 /*
@@ -1491,7 +1491,7 @@ int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_default) {
         GetPrivateProfileStringA("Alpha Centauri", key_name, stringTemp->str, TextBufferGetPtr, 
             256, ".\\Alpha Centauri.ini");
     }
-    return atoi(Txt->update());
+    return atoi(Txt.update());
 }
 
 /*
