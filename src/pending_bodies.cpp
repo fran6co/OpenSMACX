@@ -28,6 +28,7 @@
 #include "cursor.h"
 #include "filewin.h"
 #include "radiobutton.h"
+#include "sprite.h"
 #include "time.h"
 #include "win.h"
 #include "popup.h"
@@ -101,16 +102,6 @@ void __cdecl control_game() {
     PENDING_BODY(0x0052AA30, pending)();
 }
 
-// 0x00404FB0  ?alloc@Popup@@QAAHXZ  body in src/unrecovered/00404fb0.cpp
-//
-// Reached for its ADDRESS rather than by call: WinMain stores it into the
-// popup allocator hook. A forwarder still has to exist, because the address
-// of a function that nothing defines does not link.
-int Popup::alloc() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x00404FB0, pending)();
-}
-
 // 0x00600860  ??0BasePop@@QAE@XZ  body in src/unrecovered/00600860.cpp
 //
 // THE FRONTIER MOVED HERE when basepop_alloc was recovered into
@@ -137,18 +128,6 @@ void Palette::init() {
     PENDING_BODY(0x005FE330, pending)(this);
 }
 
-// 0x005FE460  ?set@Palette@@QAEHXZ
-int Palette::set() {
-    typedef int(__cdecl *pending)(void *);
-    return PENDING_BODY(0x005FE460, pending)(this);
-}
-
-// 0x005F01F0  ?init_class@Win@@QAAHPAD@Z
-int Win::init_class(LPSTR window_name) {
-    typedef int(__cdecl *pending)(LPSTR);
-    return PENDING_BODY(0x005F01F0, pending)(window_name);
-}
-
 // 0x005F2C40  ?set_display_mode@Win@@QAAHHHHH@Z
 int Win::set_display_mode(int width, int height, int depth, int tgl) {
     typedef int(__cdecl *pending)(int, int, int, int);
@@ -161,30 +140,6 @@ void Win::flip(RECT *area) {
     PENDING_BODY(0x005EFD20, pending)(area);
 }
 
-// 0x0060FC60  ?init_class@CheckBox@@QAAHXZ
-int CheckBox::init_class() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x0060FC60, pending)();
-}
-
-// 0x0060E4D0  ?init_class@RadioButton@@QAAHXZ
-int RadioButton::init_class() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x0060E4D0, pending)();
-}
-
-// 0x00604590  ?init_class@BasePop@@QAAHXZ
-int BasePop::init_class() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x00604590, pending)();
-}
-
-// 0x00614D90  ?init_class@FileWin@@QAAHXZ
-int FileWin::init_class() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x00614D90, pending)();
-}
-
 // 0x0063B910  ?init_cursor_class@Cursor@@QAAXXZ - `int` here, see cursor.h
 int Cursor::init_cursor_class() {
     typedef int(__cdecl *pending)();
@@ -195,10 +150,4 @@ int Cursor::init_cursor_class() {
 int __cdecl trig_init() {
     typedef int(__cdecl *pending)();
     return PENDING_BODY(0x0063B940, pending)();
-}
-
-// 0x0063CE20  no catalogued name
-int __cdecl sub_63ce20() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x0063CE20, pending)();
 }

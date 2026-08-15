@@ -573,6 +573,35 @@ int __fastcall buffer_copy_rect_redirect(Buffer *self, void *, Buffer *buffer,
     return self->copy(buffer, rect);
 }
 
+// Surface setup and image load reached by the promoted window init_class
+// bodies. Their own bodies are not yet recovered, so each forwards into the
+// original image through the seam. The seven-argument copy reuses
+// BufferCopyFull, already bound above to 0x005DFF00.
+typedef int (OriginalObject::*func_buffer_init)(int, int, int, ExtDirectDraw *);
+typedef int (OriginalObject::*func_buffer_fill)(int);
+typedef int (OriginalObject::*func_buffer_load_pcx)(const char *, Palette *, int, int);
+static func_buffer_init BufferInitOriginal = original_method<func_buffer_init>(0x005D7670);
+static func_buffer_fill BufferFillOriginal = original_method<func_buffer_fill>(0x005DFB50);
+static func_buffer_load_pcx BufferLoadPcxOriginal = original_method<func_buffer_load_pcx>(0x005D7DE0);
+
+int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
+    return (ORIGINAL(this)->*BufferInitOriginal)(width, height, tgl, direct_draw);
+}
+
+int Buffer::fill(int color) {
+    return (ORIGINAL(this)->*BufferFillOriginal)(color);
+}
+
+int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height) {
+    return (ORIGINAL(this)->*BufferLoadPcxOriginal)(filename, palette, tgl, height);
+}
+
+int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width, int height,
+                 int src_width, int src_height) {
+    return (ORIGINAL(this)->*BufferCopyFull)(buffer, xCoord, yCoord, width,
+                                             height, src_width, src_height);
+}
+
 /*
 Purpose: Release every resource the buffer owns and reset it to its
          constructed state.

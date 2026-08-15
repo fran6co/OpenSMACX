@@ -247,3 +247,42 @@ void CheckBox::on_mouse_leave(int a1, int a2) {
             *reinterpret_cast<int **>(
                 reinterpret_cast<char *>(this) - 0x1C)) + 4))->slot062();
 }
+
+/*
+ORIGINAL: 0x0060FC60
+// name      ?init_class@CheckBox@@QAAHXZ
+// size      263 bytes
+// spans     0x0060FC60-0x0060FD52;0x00662F84-0x00662F99
+// prototype int (__cdecl ?init_class@CheckBox@@QAAHXZ)()
+// callers   1   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005E39A0
+//
+// Promoted 2026-08-15 from src/unrecovered/0060fc60.cpp to retire its
+// pending_bodies forwarder.
+// RULED-OUT: a real local `Buffer buf;` double-destructs (the explicit
+//            ~Buffer() call plus the automatic scope-exit one). A raw
+//            `char[sizeof(Buffer)]` + placement `new` + explicit `->~Buffer()`
+//            is the shape the original uses. SEH prologue/unwind funclet not
+//            reproduced (same gap as the RadioButton sibling).
+Status: Complete
+*/
+static int *const g_0069710c = (int *)0x0069710C;
+static int *const g_009b8f60 = (int *)0x009B8F60;
+static int *const g_009b8f90 = (int *)0x009B8F90;
+
+int __cdecl CheckBox::init_class() {
+    char bufMem[sizeof(Buffer)];
+    Buffer *buf = new (bufMem) Buffer();
+    buf->init(0x20, 0x20, 0, 0);
+    int result = buf->load_pcx(reinterpret_cast<const char *>(g_0069710c), 0, 10, 0xec);
+    if (result != 0) {
+        buf->~Buffer();
+        return result;
+    }
+    reinterpret_cast<Sprite *>(g_009b8f60)->extract(buf, 0x109, 1, 0x44, 0x20, 0x20, 0);
+    reinterpret_cast<Sprite *>(g_009b8f90)->extract(buf, 0x109, 0x22, 0x44, 0x20, 0x20, 0);
+    buf->~Buffer();
+    return 0;
+}

@@ -121,3 +121,39 @@ void RadioButton::on_mouse_leave(int a1, int a2) {
             *reinterpret_cast<int **>(
                 reinterpret_cast<char *>(this) - 0x18)) + 4))->slot062();
 }
+
+/*
+ORIGINAL: 0x0060E4D0
+// name      ?init_class@RadioButton@@QAAHXZ
+// size      263 bytes
+// spans     0x0060E4D0-0x0060E5C2;0x00662F44-0x00662F59
+// prototype int (__cdecl ?init_class@RadioButton@@QAAHXZ)()
+// callers   1   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005E39A0
+//
+// Promoted 2026-08-15 from src/unrecovered/0060e4d0.cpp to retire its
+// pending_bodies forwarder. Sibling of CheckBox::init_class; same
+// placement-new Buffer shape and the same SEH-funclet gap (see that body's
+// RULED-OUT).
+Status: Complete
+*/
+static int *const g_006970f8 = (int *)0x006970F8;
+static int *const g_009b8ef8 = (int *)0x009B8EF8;
+static int *const g_009b8f28 = (int *)0x009B8F28;
+
+int __cdecl RadioButton::init_class() {
+    char bufMem[sizeof(Buffer)];
+    Buffer *buf = new (bufMem) Buffer();
+    buf->init(0x20, 0x20, 0, 0);
+    int result = buf->load_pcx(reinterpret_cast<const char *>(g_006970f8), 0, 10, 0xec);
+    if (result != 0) {
+        buf->~Buffer();
+        return result;
+    }
+    reinterpret_cast<Sprite *>(g_009b8ef8)->extract(buf, 0x109, 1, 0x23, 0x20, 0x20, 0);
+    reinterpret_cast<Sprite *>(g_009b8f28)->extract(buf, 0x109, 0x22, 0x23, 0x20, 0x20, 0);
+    buf->~Buffer();
+    return 0;
+}

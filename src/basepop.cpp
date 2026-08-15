@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "basepop.h"
 #include "dialogs.h"
+#include "general.h"  // mem_get in init_class
 #include <cstring>
 
 /*
@@ -843,4 +844,77 @@ Status: Complete
 */
 int BasePop::basepop_alloc() {
     return (int)new BasePop();
+}
+
+/*
+ORIGINAL: 0x00604590
+// name      ?init_class@BasePop@@QAAHXZ
+// size      234 bytes
+// spans     0x00604590-0x0060467A
+// prototype
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+// indirect  0x00604650 0x00604665
+//
+// Promoted 2026-08-15 from src/unrecovered/00604590.cpp to retire its
+// pending_bodies forwarder. Copies the two default-caption strings into
+// heap buffers, then reaches the two allocation hooks through the pointer at
+// 0x00696ECC, as the original does.
+Status: Complete
+*/
+static int *const g_00696ecc = (int *)0x00696ECC;
+static int *const g_00697008 = (int *)0x00697008;
+static int *const g_00697010 = (int *)0x00697010;
+static int *const g_009b8d80 = (int *)0x009B8D80;
+static int *const g_009b8d84 = (int *)0x009B8D84;
+static int *const g_009b8d98 = (int *)0x009B8D98;
+static int *const g_009b8da8 = (int *)0x009B8DA8;
+static int *const g_009bb484 = (int *)0x009BB484;
+static int *const g_009bc074 = (int *)0x009BC074;
+static int *const g_009bc078 = (int *)0x009BC078;
+
+int __cdecl BasePop::init_class() {
+    *g_009b8d98 = *g_009bb484;
+    *g_009b8da8 = *g_009bb484;
+
+    if (g_00697008 != 0) {
+        if (*g_009b8d84 != 0) {
+            free(reinterpret_cast<void *>(*g_009b8d84));
+            *g_009b8d84 = 0;
+        }
+        unsigned int len = strlen(reinterpret_cast<char *>(g_00697008));
+        void *p = mem_get(len + 1);
+        *g_009b8d84 = reinterpret_cast<int>(p);
+        if (p != 0) {
+            *reinterpret_cast<char *>(p) = 0;
+            strcat(reinterpret_cast<char *>(p), reinterpret_cast<char *>(g_00697008));
+        }
+    }
+
+    if (g_00697010 != 0) {
+        if (*g_009b8d80 != 0) {
+            free(reinterpret_cast<void *>(*g_009b8d80));
+            *g_009b8d80 = 0;
+        }
+        unsigned int len2 = strlen(reinterpret_cast<char *>(g_00697010));
+        void *p2 = mem_get(len2 + 1);
+        *g_009b8d80 = reinterpret_cast<int>(p2);
+        if (p2 != 0) {
+            *reinterpret_cast<char *>(p2) = 0;
+            strcat(reinterpret_cast<char *>(p2), reinterpret_cast<char *>(g_00697010));
+        }
+    }
+
+    typedef int(__cdecl *FnPtr)();
+    FnPtr fn = reinterpret_cast<FnPtr>(*g_00696ecc);
+    int r1 = fn();
+    *g_009bc074 = r1;
+    if (r1 != 0) {
+        int r2 = fn();
+        *g_009bc078 = r2;
+        return (-(static_cast<unsigned int>(r2 != 0)) & 0xfffffffc) + 4;
+    }
+    return 4;
 }

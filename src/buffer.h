@@ -33,6 +33,11 @@ class Palette;
 // `Vert *` through can compile.
 struct Vert;
 
+// DirectDraw surface handle passed to `init`. No definition is known - the
+// original forwards it straight into the DirectDraw create call - so a forward
+// declaration is all `init`'s signature needs to compile.
+struct ExtDirectDraw;
+
  /*
   * Buffer class
   */
@@ -74,6 +79,16 @@ class DLLEXPORT Buffer {
   // trivial and embedding classes keep their existing implicit destruction.
   void destroy();
   void free_data(int count);
+  // Surface setup and image blits. Declared so the recovered window
+  // initialization bodies (Win::init_class and the per-control init_class
+  // functions) can call them; their own bodies are still pending_bodies
+  // forwarders. The seven-argument `copy` is a distinct overload from the
+  // four-argument one above.
+  int init(int width, int height, int tgl, ExtDirectDraw *direct_draw);
+  int fill(int color);
+  int load_pcx(const char *filename, Palette *palette, int tgl, int height);
+  int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height,
+           int src_width, int src_height);
 
  private:
   typedef int32_t Dib;
@@ -101,8 +116,15 @@ class DLLEXPORT Buffer {
   uint32_t field_74_;
   HBITMAP bitmap_handle_;
   const BITMAPINFO *bitmap_info_;
+
+ public:
+  // Read by Win::init_class to centre the splash bitmap; the original plainly
+  // reached these, so they were not private there. Kept at this exact point in
+  // the member order - moving them would move the layout.
   uint32_t width_;
   uint32_t height_;
+
+ private:
   uint16_t field_88_;
   uint16_t field_8A_;
   uint32_t field_8C_;
