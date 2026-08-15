@@ -185,62 +185,62 @@ void Palette::init_palette_class(int use_system_colours) {
         DeleteObject(existing);
         PaletteInitialized = 0;
     }
-    uint8_t *header = (uint8_t *)mem_get(0x404);
+    // 0x404 is 4 + 256 * 4: a LOGPALETTE with a full 256-entry table.
+    LOGPALETTE *header = (LOGPALETTE *)mem_get(0x404);
     if (!header) {
         return;
     }
-    *(uint16_t *)header = 0x300;
-    *(uint16_t *)(header + 2) = 0x100;
+    header->palVersion = 0x300;
+    header->palNumEntries = 0x100;
     PaletteUsesSystemColours = use_system_colours;
     if (use_system_colours) {
         HDC screen = GetDC(0);
-        GetSystemPaletteEntries(screen, 0, 256, (PALETTEENTRY *)(header + 4));
+        GetSystemPaletteEntries(screen, 0, 256, header->palPalEntry);
         ReleaseDC(0, screen);
     } else {
         // The twenty static colours, RGBQUAD (blue, green, red) on the way in
         // and PALETTEENTRY (red, green, blue) on the way out - hence the
-        // reversal. Entries 0-9 and 246-255 are the range GDI reserves, and
-        // 984 is (246 - 0) * 4: the same walk writes both ends.
-        uint8_t *entry = header + 4;
+        // reversal. Entries 0-9 and 246-255 are the range GDI reserves.
+        PALETTEENTRY *entry = header->palPalEntry;
         const uint8_t *colour = SystemColours;
         const uint8_t *high_colour = SystemColours + 40;
         for (int i = 0; i < 10; ++i) {
-            entry[0] = colour[2];
-            entry[1] = colour[1];
-            entry[2] = colour[0];
-            entry[3] = 0;
-            entry[984] = high_colour[2];
-            entry[985] = high_colour[1];
-            entry[986] = high_colour[0];
-            entry[987] = 0;
-            entry += 4;
+            entry[0].peRed = colour[2];
+            entry[0].peGreen = colour[1];
+            entry[0].peBlue = colour[0];
+            entry[0].peFlags = 0;
+            entry[246].peRed = high_colour[2];
+            entry[246].peGreen = high_colour[1];
+            entry[246].peBlue = high_colour[0];
+            entry[246].peFlags = 0;
+            ++entry;
             colour += 4;
             high_colour += 4;
         }
         // Everything between the two reserved runs is ours to animate.
-        uint8_t *flags = header + 0x2F;
+        PALETTEENTRY *free_entry = header->palPalEntry + 10;
         for (int remaining = 236; remaining != 0; --remaining) {
-            *flags = 5;  // PC_RESERVED | PC_NOCOLLAPSE
-            flags += 4;
+            free_entry->peFlags = 5;  // PC_RESERVED | PC_NOCOLLAPSE
+            ++free_entry;
         }
         // Four entries are handed back to the system by INDEX: PC_EXPLICIT
         // means peRed holds a system palette slot rather than an intensity.
-        uint8_t *reserved = header + 4 + 8 * 4;
+        PALETTEENTRY *reserved = header->palPalEntry + 8;
         for (int pair = 0; pair < 2; ++pair) {
-            reserved[0] = (uint8_t)(pair + 8);
-            reserved[1] = 0;
-            reserved[2] = 0;
-            reserved[3] = 2;  // PC_EXPLICIT
+            reserved[0].peRed = (uint8_t)(pair + 8);
+            reserved[0].peGreen = 0;
+            reserved[0].peBlue = 0;
+            reserved[0].peFlags = 2;  // PC_EXPLICIT
             // BUG IN THE ORIGINAL: entry 246 is given system index 245 and
             // entry 247 index 246, one below each entry's own slot. The four
             // lines above get this right for entries 8 and 9.
-            reserved[952] = (uint8_t)(pair - 11);
-            reserved[953] = 0;
-            reserved[954] = 0;
-            reserved[955] = 2;  // PC_EXPLICIT
-            reserved += 4;
+            reserved[238].peRed = (uint8_t)(pair - 11);
+            reserved[238].peGreen = 0;
+            reserved[238].peBlue = 0;
+            reserved[238].peFlags = 2;  // PC_EXPLICIT
+            ++reserved;
         }
     }
-    PaletteInitialized = CreatePalette((const LOGPALETTE *)header);
+    PaletteInitialized = CreatePalette(header);
     free(header);
 }
