@@ -30,6 +30,20 @@ cmake -S . -B build -G Ninja -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python
 cmake --build build
 ```
 
+The VC6 toolchain defaults in from `cmake/toolchains/vc6.cmake` - no
+`-DCMAKE_TOOLCHAIN_FILE` needed; pass one to override it and the default
+stands aside. One one-time step belongs to the VC6 install itself, not the
+build: its headers are spelled UPPERCASE (`WINDOWS.H`) while the source
+includes lowercase, which wine papers over but a host IDE will not - so the
+install carries lowercase symlinks beside them:
+
+```sh
+cd "$VC6_ROOT/INCLUDE"   # default ~/opt/vc6/INCLUDE
+find . -type d -exec sh -c 'for f in "$1"/*; do b=$(basename "$f"); \
+    l=$(printf "%s" "$b" | tr A-Z a-z); [ "$l" != "$b" ] && [ ! -e "$1/$l" ] \
+    && ln -s "$b" "$1/$l"; done' _ {} \;
+```
+
 The product is `opensmacx-link-check.exe`: it exists so the recovered bodies
 must compile and LINK, which is what catches a body that type-checks in
 isolation and cannot resolve its callees. It is not the game.
