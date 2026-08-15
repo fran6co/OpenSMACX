@@ -1,12 +1,13 @@
-// ORIGINAL: 0x0058F4F0 FILE
-// RULED-OUT: if/else-if chain for the gender/number branches (matches
-//   Ghidra's structure); a goto-to-shared-call-site variant scored
-//   identically. Landed as MISMATCH: VC6 lowers `local_104[0]=0;` as
-//   `and byte ptr [buf],0` rather than the original's `mov byte ptr
-//   [buf],0`, and each gender/number branch shares one `lea` instead of
-//   recomputing it per-branch the way the original does (three different
-//   registers, one per branch) - both are compiler instruction-selection/
-//   scheduling choices at /O1 that plain restatement did not move.
+// ORIGINAL: 0x0058F4F0 BYTE_EXACT FILE
+// LEVER: string-routines-are-calls  the body was already right; the scaffold
+//        was compiling a string routine the image CALLS into an `/Oi` inline
+//        expansion. What was written down here as a ruled-out source form -
+//        "VC6 lowers `local_104[0]=0;` as `and byte ptr [buf],0` rather than
+//        `mov`, and each branch shares one `lea` instead of recomputing it,
+//        both compiler instruction-selection choices at /O1 that plain
+//        restatement did not move" - was that expansion changing the
+//        register pressure around them. The if/else-if chain matching
+//        Ghidra's structure is the right shape and always was.
 // working copy - scaffold materialised by --work
 // name      sub_58f4f0
 // size      281 bytes
@@ -17,6 +18,19 @@
 // flags     frame;sp_ready;purged_ok
 // calls     0x00625880 0x00645470
 
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_58f4f0  at 0x0058F4F0  (281 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_58f4f0  at 0x0058F4F0  (281 bytes)
 //
@@ -80,6 +94,120 @@ typedef void *HANDLE;
 typedef void *HWND;
 typedef void *HDC;
 typedef unsigned int UINT;
+
+// Spliced verbatim from src/original_seam.h so the unit calls into the
+// original image exactly as the build does. See seam_header().
+/*
+ * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
+ * Copyright (C) 2013-2021 Brendan Casey
+ *
+ * OpenSMACX is free software: you can redistribute it and / or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OpenSMACX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * Calling a method of the ORIGINAL image, which lives at a fixed address in
+ * terranx.exe rather than anywhere this DLL can link against.
+ *
+ * These used to be spelled as free function pointers carrying the convention
+ * by hand:
+ *
+ *     typedef void(__thiscall func_buffer_line)(Buffer *, int, int, int, int);
+ *     func_buffer_line *BufferHLine = (func_buffer_line *)0x005E1A80;
+ *     BufferHLine(this, a, b, c, d);
+ *
+ * cl 12.00.8168 - the compiler that built the original, and the only one
+ * whose output can say whether a recovered body is right - reserves the
+ * `__thiscall` keyword and refuses it (C4234). Disabling that warning is a
+ * TRAP: it compiles, and the call it emits is
+ *
+ *     push d; push c; push b; push a; call ...; add esp, 0x10
+ *
+ * which is __cdecl. The receiver goes on the stack instead of into ECX and
+ * the caller cleans a frame the callee already cleaned. Every seam into the
+ * original image would corrupt the stack, silently, at runtime.
+ *
+ * A pointer-to-member IS thiscall, in every compiler, without naming the
+ * convention at all. The same call becomes
+ *
+ *     typedef void (OriginalObject::*func_buffer_line)(int, int, int, int);
+ *     func_buffer_line BufferHLine = original_method<func_buffer_line>(0x005E1A80);
+ *     (ORIGINAL(this)->*BufferHLine)(a, b, c, d);
+ *
+ * and VC6 emits `mov ecx, this; push d..a; call` - the receiver in ECX and
+ * the callee cleaning up, which is what the original expects. Measured
+ * against the real compiler, not inferred.
+ *
+ * The object is `OriginalObject` rather than the real class because the
+ * receiver is frequently only known as `void *`, and because the pointer
+ * value is all that is ever needed - none of these methods is resolved
+ * through this type.
+ */
+
+/*
+ * `__single_inheritance` pins the pointer-to-member representation to a bare
+ * code address. Without it the class is incomplete, MSVC assumes the most
+ * general form - virtual bases and all - and every call site grows a
+ * twenty-instruction adjustment sequence around it.
+ */
+class __single_inheritance OriginalObject;
+
+/*
+ * An address is not convertible to a pointer-to-member by any cast, so it
+ * goes through a union. Implementation-defined in principle; pinned here by
+ * the representation above and verified against the compiler.
+ */
+template <class Method>
+Method original_method(unsigned long address) {
+  union {
+    unsigned long address;
+    Method method;
+  } cast;
+  cast.address = address;
+  return cast.method;
+}
+
+/*
+ * The same union read the other way. `reinterpret_cast<unsigned long>` on a
+ * pointer-to-member is `error C2440` on VC6 - it is not a pointer as far as
+ * the language is concerned, whatever the representation - so recovering the
+ * bare code address needs the same pinned punning that creating one does.
+ */
+template <class Method>
+unsigned long original_address(Method method) {
+  union {
+    unsigned long address;
+    Method method;
+  } cast;
+  cast.address = 0;
+  cast.method = method;
+  return cast.address;
+}
+
+/*
+ * A vtable slot, read as a pinned pointer-to-member. The recovered code spelt
+ * this `(*reinterpret_cast<Method *>(vtable + 0x14))(object)` in seventy-odd
+ * places - reading the slot AS a pointer-to-member and then calling it as a
+ * free function, which is `C2064: term does not evaluate to a function`. The
+ * slot holds a bare code address; this reads it as one and hands it to
+ * original_method, leaving the call site an honest `->*`.
+ */
+template <class Method>
+Method original_slot(const void *slot) {
+  return original_method<Method>(*reinterpret_cast<const unsigned long *>(slot));
+}
+
+#define ORIGINAL(pointer) (reinterpret_cast<OriginalObject *>(pointer))
 
 // Integer constants restated from src/*.h, which this standalone unit cannot include.
 const int ABL_AAA = 0x100;
@@ -279,6 +407,8 @@ const int BSTATE_UNK_8000 = 0x8000;
 const int BSTATE_UNK_80000 = 0x80000;
 const int BSTATE_UNK_8000000 = 0x8000000;
 const int BSTATE_UNK_8000000000 = 0x80000000;
+const int BufferSurfaceLockSlot = 0x64;
+const int BufferSurfaceUnlockSlot = 0x80;
 const int CHSI_COPTER = 6;
 const int CHSI_CRUISER = 4;
 const int CHSI_FOIL = 3;
@@ -349,6 +479,7 @@ const int DTREATY_UNK_80000000 = 0x80000000;
 const int DTREATY_VENDETTA = 0x10;
 const int DTREATY_WANT_REVENGE = 0x20;
 const int DTREATY_WANT_TO_TALK = 0x2000;
+const int DialogsDestructorAdjustment = 0x188;
 const int DisabledValue = -2;
 const int FAC_AEROSPACE_COMPLEX = 29;
 const int FAC_AQUAFARM = 36;
@@ -485,6 +616,7 @@ const int FAC_WEATHER_PARADIGM = 72;
 const int FAC_XENOEMPATHY_DOME = 78;
 const int FacilityRepStart = 65;
 const int FacilitySPStart = 70;
+const int FontSizeTableCount = 12;
 const int GENDER_FEMALE = 1;
 const int GENDER_MALE = 0;
 const int GENDER_NEUTRAL = 2;
@@ -528,6 +660,7 @@ const int LM_SARGASSO = 4;
 const int LM_UNITY = 14;
 const int LM_URANIUM = 3;
 const int LM_VOLCANO = 1;
+const int ListBoxDestructorAdjustment = 0x48;
 const int MOOD_AMBIVALENT = 4;
 const int MOOD_BELLIGERENT = 7;
 const int MOOD_COOPERATIVE = 2;
@@ -570,6 +703,8 @@ const int MPREF_MAP_SHOW_FLAT_TERRAIN = 0x10000;
 const int MPREF_MAP_SHOW_FOG_WAR = 0x1;
 const int MPREF_MAP_SHOW_GRID_OCEAN_SQ = 0x800000;
 const int MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES = 0x1000;
+const int MapWinActiveOffset = 0x1DD74;
+const int MapWinTableSlots = 8;
 const int MaxAbilityNum = 29;
 const int MaxArmorNum = 14;
 const int MaxBaseNum = 512;
@@ -956,6 +1091,12 @@ const int STATE_VICTORY_CONQUER = 0x2000;
 const int STATE_VICTORY_DIPLOMATIC = 0x200000;
 const int STATE_VICTORY_ECONOMIC = 0x400000;
 const int STATE_VOLCANO_ERUPTED = 0x20000;
+const int SpyingBaseStride = 0x134;
+const int SpyingFactionStride = 0x59C;
+const int SpyingStatusStride = 2099;
+const int StringListVirtualBaseOffset = 0x28;
+const int StringStructCloseAdjustment = 0x1C;
+const int StringStructDerivedCloseAdjustment = 0x28;
 const int TECH_ADAPDOC = 80;
 const int TECH_ADAPECO = 81;
 const int TECH_AGRAV = 23;
@@ -1184,8 +1325,30 @@ const int RadiusOffsetY[] = {0, -1, 0, 1, 2, 1, 0, -1, -2, -2, 2, 2, -2, -3, -1,
 const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
+//
+// `static` ON A CALLEE IS DELIBERATE. A method whose
+// mangled infix is `QAA` or `QAG` takes NO `this` -
+// every argument is on the stack - so the call site is
+// `Class::method(...)` with no object, and declared
+// non-static that spelling is `C2352: illegal call of
+// non-static member function`. It does change the
+// mangling from QAA to SA, which matters only for the
+// SUBJECT; a callee is reached by a relocation the
+// comparison masks, so its mangling reaches nothing.
+//
+// THE class/struct KEY IS NOT A GUESS EITHER, and must
+// not be `corrected` against the catalogue. MSVC
+// mangles struct `U` and class `V`, six classes
+// disagree with THEMSELVES in the catalogue, and the
+// image carries no RTTI to settle it. Both objects are
+// ours: `recovery_symbols.canonicalise_class_keys`
+// rewrites the TARGET object with the same map this
+// unit uses, so they agree by construction. Changing
+// one side alone is what breaks it.
 extern "C" char *strcat(char *, const char *);
-int parse_string(char *, char *);
+int __cdecl parse_string(char *, char *);
+
+#pragma function(strcat)
 
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
@@ -1201,6 +1364,7 @@ static int *const g_0068fa8c = (int *)0x0068FA8C;
 static int *const g_00946d54 = (int *)0x00946D54;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
+
 extern "C" char * __cdecl sub_58f4f0(char *a1, int a2, int a3, int a4) {
     char local_204[256];
     char local_104[256];
