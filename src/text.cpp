@@ -311,7 +311,52 @@ int Text::item_hex() {
     return htoi(item());
 }
 // global
-Text *const Txt = (Text *)0x009B7BA0;
+/*
+Purpose: The reader every `.txt` the game parses goes through, and the two
+         initialisers MSVC emits for it.
+ORIGINAL: 0x005FD400
+// name      ??__ETxt@@YAXXZ
+// size      86 bytes
+// spans     0x005FD400-0x005FD456
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00645398
+ORIGINAL: 0x005FD460
+// name      ??__FTxt@@YAXXZ
+// size      85 bytes
+// spans     0x005FD460-0x005FD4B5
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2 0x00645598
+Return Value: n/a
+Status: Complete
+
+TWO ADDRESSES AND ONE DEFINITION, with no function to hang either on. MSVC
+emits a dynamic initialiser and an atexit thunk for every namespace-scope
+object with a non-trivial constructor and destructor: `??__ETxt` inlines
+`Text::Text(512)` and registers `??__FTxt`, which inlines `~Text()`. Both are
+defined in-class in text.h so that inlining can happen. This line is the only
+source either comes from.
+
+RULED-OUT: hand-writing them over `Text *const Txt = (Text *)0x009B7BA0`,
+           which is what stood here. It could be scored - 0x005FD400 reached
+           97.8%, 87 bytes against 86 - and it could not RUN: that address is
+           mapped in terranx.exe and in nothing this tree builds, so the
+           first `Txt.` faults. It was also two hand-written copies of
+           functions the compiler emits anyway.
+
+UNRECOVERABLE: a measurement of either. VC6 names a generated initialiser
+               `_$E<n>` and registers it through `.CRT$XCU`, while `??__E`
+               and `??__F` are IDA's reconstruction of what they DO; the byte
+               match looks its subject up by name. Nothing that is correct
+               can carry those symbols. Both were NO_COMPILE before this
+               change and had never been scored, so no claim is lost.
+*/
+Text Txt(512);  // 0x009B7BA0
 LPSTR TextBufferGetPtr;   // 0x009B7D00
 LPSTR TextBufferItemPtr;  // 0x009B7D04
 
@@ -326,7 +371,7 @@ LPSTR TextBufferItemPtr;  // 0x009B7D04
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_set_get_ptr() {
-    text_set_get_ptr_source(Txt, &TextBufferGetPtr);
+    text_set_get_ptr_source(&Txt, &TextBufferGetPtr);
 }
 
 // ORIGINAL: 0x005FD4D0
@@ -340,7 +385,7 @@ void __cdecl text_set_get_ptr() {
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 void __cdecl text_set_item_ptr() {
-    text_set_item_ptr_source(Txt, &TextBufferItemPtr);
+    text_set_item_ptr_source(&Txt, &TextBufferItemPtr);
 }
 
 // ORIGINAL: 0x005FD530
@@ -353,7 +398,7 @@ void __cdecl text_set_item_ptr() {
 // flags     sp_ready;purged_ok
 // calls     0x00645598
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-void __cdecl text_close() { text_close_source(Txt); }
+void __cdecl text_close() { text_close_source(&Txt); }
 
 // ORIGINAL: 0x005FD570
 // name      ?text_get@@YAPADXZ
@@ -365,7 +410,7 @@ void __cdecl text_close() { text_close_source(Txt); }
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006007B0 0x00600820 0x0064726A
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-LPSTR __cdecl text_get() { return text_get_source(Txt); }
+LPSTR __cdecl text_get() { return text_get_source(&Txt); }
 
 // ORIGINAL: 0x005FD5E0
 // name      ?text_string@@YAPADXZ
@@ -377,7 +422,7 @@ LPSTR __cdecl text_get() { return text_get_source(Txt); }
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006007B0 0x00600820 0x00616970 0x0064726A
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-LPSTR __cdecl text_string() { return text_string_source(Txt, StringTable); }
+LPSTR __cdecl text_string() { return text_string_source(&Txt, StringTable); }
 
 // ORIGINAL: 0x005FD670
 // name      ?text_item@@YAPADXZ
@@ -389,7 +434,7 @@ LPSTR __cdecl text_string() { return text_string_source(Txt, StringTable); }
 // flags     sp_ready;purged_ok
 // calls     0x006007B0
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-LPSTR __cdecl text_item() { return text_item_source(Txt); }
+LPSTR __cdecl text_item() { return text_item_source(&Txt); }
 
 // ORIGINAL: 0x005FD6D0
 // name      ?text_item_string@@YAPADXZ
@@ -402,7 +447,7 @@ LPSTR __cdecl text_item() { return text_item_source(Txt); }
 // calls     0x006007B0 0x00616970
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_item_string() {
-    return text_item_string_source(Txt, StringTable);
+    return text_item_string_source(&Txt, StringTable);
 }
 
 // ORIGINAL: 0x005FD740
@@ -415,7 +460,7 @@ LPSTR __cdecl text_item_string() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006007B0 0x00628950
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-int __cdecl text_item_number() { return text_item_number_source(Txt); }
+int __cdecl text_item_number() { return text_item_number_source(&Txt); }
 
 // ORIGINAL: 0x005FD7A0
 // name      ?text_item_binary@@YAHXZ
@@ -427,7 +472,7 @@ int __cdecl text_item_number() { return text_item_number_source(Txt); }
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006007B0 0x006288D0
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-int __cdecl text_item_binary() { return text_item_binary_source(Txt); }
+int __cdecl text_item_binary() { return text_item_binary_source(&Txt); }
 
 // ORIGINAL: 0x005FD800
 // name      ?text_item_hex@@YAHXZ
@@ -439,7 +484,7 @@ int __cdecl text_item_binary() { return text_item_binary_source(Txt); }
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006007B0 0x006288F0
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-int __cdecl text_item_hex() { return text_item_hex_source(Txt); }
+int __cdecl text_item_hex() { return text_item_hex_source(&Txt); }
 
 // ORIGINAL: 0x00585120
 // name      ?text_get_number@@YAHHH@Z
@@ -452,7 +497,7 @@ int __cdecl text_item_hex() { return text_item_hex_source(Txt); }
 // calls     0x005FD570 0x005FD740
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 int __cdecl text_get_number(int min, int max) {
-    return text_get_number_source(Txt, min, max);
+    return text_get_number_source(&Txt, min, max);
 }
 
 // ---------------------------------------------------------------------------
@@ -472,70 +517,6 @@ Text::Text()
 // text_file_, buffer_get_, buffer_item_ - and then the body set
 // file_name_[0], where the image writes the byte FIRST.
 
-Text::~Text() OPENSMACX_NOEXCEPT_FALSE {
-    shutdown();
-}
-
-// ORIGINAL: 0x005FD400
-// name      ??__ETxt@@YAXXZ
-// size      86 bytes
-// spans     0x005FD400-0x005FD456
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4510 0x00645398
-// notes     Staged hybrid export redirect calls the source-owned initializer
-// RULED-OUT: letting VC6 GENERATE this. `Text Txt(512);` with the constructor
-//            defined in-class does produce a dynamic initialiser with the
-//            constructor inlined - but VC6 names it `_$E<n>` and registers it
-//            through `.CRT$XCU`, and there is no `??__ETxt@@YAXXZ` symbol in
-//            the object at all. That name is IDA's reconstruction, not
-//            something the compiler emits, which is why every `??__E` in
-//            src/init_thunks.cpp is hand-written like this one.
-// RULED-OUT: `new (Txt) Text(512)`, which is what stands below. It compiles
-//            in the build - text_recovery.cpp includes text.h - but the
-//            measurement scaffold carries neither `Text` nor `Txt`, so this
-//            body has never been scored at all: NO_COMPILE, `'Txt' :
-//            undeclared identifier`. And it could not match if it were: the
-//            image INLINES the constructor, writing the fields directly,
-//            where this emits `call ??0Text@@QAE@H@Z` to 0x005FD880.
-//
-//            What the image does, read off the bytes, is Text::Text(size_t)
-//            inlined onto the global: `file_name_[0] = 0`, then
-//            `current_pos_`, `text_file_`, `buffer_get_`, `buffer_item_`
-//            zeroed, then `buffer_get_ = mem_get(size)` and, only if that
-//            succeeded, `buffer_item_ = mem_get(size)`. Written that way
-//            against fixed addresses it measures 95.5%, 86 bytes against 86,
-//            with TWO edits: the image hoists `push 0x200` above the five
-//            field stores and this does not. Three source forms produce the
-//            same ordering - the stores written out, a `const int size` held
-//            first, and an `inline` helper taking the size - so the hoist is
-//            the compiler's scheduling of an inlined constructor and not a
-//            spelling.
-//
-//            Landing it needs `Text::Text(size_t)` defined IN text.h, so the
-//            initialiser can inline it the way the original did; the members
-//            it writes are private and 0x005FD880 is the out-of-line copy.
-//            That is a change to the class, not to this body.
-void __cdecl text_txt() {
-    new (Txt) Text(512);
-    atexit(text_txt_exit);
-}
-
-// ORIGINAL: 0x005FD460
-// name      ??__FTxt@@YAXXZ
-// size      85 bytes
-// spans     0x005FD460-0x005FD4B5
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00644EF2 0x00645598
-// notes     Staged hybrid export redirect calls the source-owned exit cleanup
-void __cdecl text_txt_exit() {
-    Txt->~Text();
-}
 
 // ORIGINAL: 0x005FD550
 // name      ?text_open@@YAHPADPAD@Z
@@ -548,7 +529,7 @@ void __cdecl text_txt_exit() {
 // calls     0x005FDA00
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
-    return Txt->open(src_id, section_id);
+    return Txt.open(src_id, section_id);
 }
 
 void __cdecl text_close_source(Text *text) {

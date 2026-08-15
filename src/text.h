@@ -53,7 +53,11 @@ class DLLEXPORT Text {
       buffer_item_ = (LPSTR)mem_get(size);
     }
   }
-  ~Text() OPENSMACX_NOEXCEPT_FALSE; // 00608C00
+  // IN-CLASS for the same reason as the constructor above: `??__FTxt` at
+  // 0x005FD460 - the atexit thunk the compiler pairs with `??__ETxt` - runs
+  // the destructor INLINE, doing the fclose and the frees itself with no
+  // `call ??1Text@@QAE@XZ` anywhere in it.
+  ~Text() OPENSMACX_NOEXCEPT_FALSE { shutdown(); }   // 00608C00
 
   int init(size_t size);
   void shutdown();
@@ -102,26 +106,29 @@ class DLLEXPORT Text {
 // Through a plain `Text *` the placement `new (Txt) Text(512)` there emits a
 // `cmp`/`je` guard the image does not have - 98 bytes against 86 - because
 // the pointer is a variable it cannot fold. Nothing assigns to it.
-// AND IT STAYS A POINTER, unlike TextBufferGetPtr beside it. 0x009B7BA0 is
-// the OBJECT, not a pointer variable, so `Text *const Txt` names its address
-// rather than pointing at a word that holds one - and being `const` with a
-// literal initialiser, VC6 folds it: the four field stores in `??__ETxt`
-// compile to `mov dword ptr [0x9b7cf0], ebx` and so on, absolutely, with no
-// load anywhere. The cost the other conversions removed is already absent.
+// THE OBJECT, at 0x009B7BA0 in the shipped image.
 //
-// RULED-OUT: `Text Txt(512);`, which is what the image really has. It is
-// worse twice over. Measured on ??__ETxt it diverges at instruction #0 where
-// the const pointer diverges at #1. And a namespace-scope object of a class
-// type MAKES THE COMPILER GENERATE the dynamic initialiser - VC6 names that
-// `_$E<n>` and registers it through `.CRT$XCU`, so `??__ETxt@@YAXXZ` would
-// stop existing as a symbol and 0x005FD400 could never carry a claim.
+// It was `Text *const Txt = (Text *)0x009B7BA0` - the injected-DLL spelling,
+// naming storage inside a process this is no longer part of. That address is
+// mapped in terranx.exe and in nothing this tree builds, so every `Txt->` in
+// the recovered executable faults, and the program cannot reach its first
+// line of text. A recovery that cannot run is not the goal.
 //
-// What this does give up is a runnable pointer: 0x009B7BA0 is mapped in
-// terranx.exe and in nothing this tree builds, so `Txt->` faults in the
-// standalone executable. That is the byte-exactness goal and the running-
-// program goal pulling opposite ways, and it is the first place in this tree
-// where they cannot both be had.
-extern Text *const Txt;
+// `Text Txt(512);` in text.cpp is what the image has, and declaring it is
+// what produces BOTH catalogued initialisers: MSVC emits the constructor
+// call and the `atexit` registration for any namespace-scope object with a
+// non-trivial constructor and destructor. `??__ETxt` (0x005FD400) and
+// `??__FTxt` (0x005FD460) are that pair. They are annotated on the
+// definition itself, because there is no other source line they come from.
+//
+// WHAT IT COSTS, stated where the decision is: neither can ever be measured.
+// VC6 names generated initialisers `_$E<n>` and registers them through
+// `.CRT$XCU`; the `??__E`/`??__F` spellings are IDA's reconstruction of what
+// they DO, and the byte match looks a subject up by name. The hand-written
+// stand-ins that used to sit in text.cpp could be scored - one reached 97.8%
+// - and were deleted with this change, because a hand-written copy of a
+// function the compiler emits anyway is two definitions of one thing.
+extern Text Txt;
 // AN OBJECT, not a pointer to 0x009B7D00. That address is above the end
 // of stored `.data` (0x006A8000), so it is zero-fill and the pointer form
 // carried no information the object form does not - it only cost a load
