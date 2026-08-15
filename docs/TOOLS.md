@@ -300,10 +300,12 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   faults at `0x0062D3C2` inside `jackal_init_real`, which is the frontier:
   everything before it is compiled in and ran.
 
-  `--gdb` starts it under winedbg's gdb proxy and bridges that to a FIXED
-  `localhost:12345`, which is what an IDE needs — winedbg picks a random port
-  every launch and honours neither `WINEDBG_PORT` nor `WINE_GDB_PORT`. Point
-  CLion's *Remote Debug* configuration at that port. It is ASSEMBLY level: the
+  `--gdb` starts it under winedbg's gdb proxy on a fixed `localhost:12345`,
+  which is what an IDE needs. Point CLion's *Remote Debug* configuration at
+  that port. `winedbg`'s `--port` is order-sensitive — it must follow `--gdb`
+  and take its value as a separate argument, and the usage message it prints
+  otherwise names none of its options, so a rejected `--port` reads exactly
+  like a winedbg that has none. It is ASSEMBLY level: the
   executable carries a CodeView directory pointing at a PDB and gdb cannot
   read one, so every frame is `?? ()`. For a matching decompilation that is
   most of what there is to want, because the address IS the catalogue key
