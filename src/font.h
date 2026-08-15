@@ -111,5 +111,16 @@ DLLEXPORT Font *__cdecl find_font(int size, int style);
 // global
 extern Font **FontDefaultPtr;
 
+/*
+ * The face name every `Font::init` call site passes when it does not name one
+ * of its own: 0x00691B2C, which holds a pointer to the literal "Arial". Read
+ * as `*DefaultFontFace`; the extra level of pointer is the tree's convention
+ * for a global that lives at a fixed address in the shipped image.
+ *
+ * WinMain passes it as the FACE while naming "arialn.ttf" as the FILE, which
+ * is why the four-argument `init` overload exists.
+ */
+extern LPCSTR *DefaultFontFace;
+
 int __fastcall font_unk1_redirect(
     Font *self, void *, int a, int b, int c, int d);

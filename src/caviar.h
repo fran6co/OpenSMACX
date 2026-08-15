@@ -47,6 +47,18 @@ class DLLEXPORT Caviar {
   void UNK8(int a1);
   void UNK10(int a1, int a2, int a3);
   void set_scene_rotation(float x, float y, float z);
+
+  // `static`, because the image's own names for these end in `QAA` - a public
+  // member declared `__cdecl`, which takes no receiver in ecx and puts every
+  // argument on the stack. WinMain's `call 0x6185a0` sets up no ecx at all, so
+  // the only spelling a call site can use is `Caviar::init_class()`, and that
+  // is `C2352: illegal call of non-static member function` unless it is
+  // declared this way. Same rule tools/emit_translation_unit.py applies to
+  // every other `*::init_class`, and the same one palette.h already follows
+  // for `set_active_window`.
+  static int init_class();
+  static void close_class();
+
  private:
   float scene_scale_;
   // Fields are carved out of the opaque span rather than appended, keeping

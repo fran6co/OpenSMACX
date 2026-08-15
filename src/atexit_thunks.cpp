@@ -406,7 +406,7 @@ Sprite *g_UNUSED_SPRITE_VAR82 = (Sprite *)0x007ACB58;
 Sprite *g_UNUSED_SPRITE_VAR83 = (Sprite *)0x007ACC20;
 Sprite *g_BASEWIN_SPRITES = (Sprite *)0x0077A5C8;
 Wave *g_MAININTERFACE_WAVE = (Wave *)0x007D38B8;
-Font *g_JACKAL_FONT = (Font *)0x007D3948;
+Font g_JACKAL_FONT;  // 0x007D3948
 Sprite *g_IFACE_GREEN_RIGHT_ARROW_SPRITE = (Sprite *)0x007F67C8;
 Wave *g_MULTIWIN_WAVE = (Wave *)0x007FFF00;
 ButtonGroup *g_PREFWIN_BUTTONGROUP = (ButtonGroup *)0x008577F0;
@@ -6430,7 +6430,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl destroy_jackal_font() {
-    g_JACKAL_FONT->~Font();
+    g_JACKAL_FONT.~Font();
 }
 
 /*

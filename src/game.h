@@ -139,3 +139,7 @@ DLLEXPORT void __cdecl clear_scenario();
 DLLEXPORT uint32_t __cdecl game_year(int turn);
 DLLEXPORT void __cdecl say_year(LPSTR output);
 DLLEXPORT void __cdecl repair_phase(int faction_id);
+
+// The game's main loop, called once from WinMain between Jackal bring-up and
+// teardown. Everything the player ever sees happens inside this call.
+DLLEXPORT void __cdecl control_game();

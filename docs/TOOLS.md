@@ -283,6 +283,13 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   say `void` over bodies that return a constant. It reads the CALLEE only, and
   four agents have now found returns that only the caller reveals, so it is
   known-incomplete by measurement
+- `tools/cmake_sources.py` — every `CMakeLists.txt` the build reads, found
+  rather than named. Three checks derive their population from "the
+  CMakeLists" and each had spelled that as the root file; when every
+  `add_test` moved into `tests/CMakeLists.txt` behind
+  `OPENSMACX_BUILD_TOOLING`, two of them refused on their own floors and the
+  third caught the refusal and fell back to a weaker population while
+  printing the same shape
 - `tools/verify_checks_can_fail.py` — damages real inputs and requires each
   gate to go red
 - `tools/verify_check_tests_observe.py` — mutates each check and requires its

@@ -6568,7 +6568,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_jackal_font() {
-    (ORIGINAL(g_JACKAL_FONT)->*FontInitCtor)();
+    (ORIGINAL(&g_JACKAL_FONT)->*FontInitCtor)();
     GameAtexit(reinterpret_cast<func_atexit_callback *>(0x0045F940));
 }
 

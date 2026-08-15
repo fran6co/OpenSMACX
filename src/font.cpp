@@ -23,6 +23,8 @@
 HDC Font::FontHDC;
 int Font::FontInitCount;
 
+LPCSTR *DefaultFontFace = reinterpret_cast<LPCSTR *>(0x00691B2C);
+
 /*
 Purpose: Initialize the class using the font name, height and style.
 ORIGINAL: 0x00618F40
