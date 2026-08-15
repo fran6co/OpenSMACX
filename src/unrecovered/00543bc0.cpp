@@ -1,4 +1,18 @@
 // ORIGINAL: 0x00543BC0 FILE
+// RULED-OUT: no Popup/SEH here (free AI-heuristic function, not a UI
+//            handler) - the difficulty is a long chain of inc/dec on a
+//            score accumulator plus several reciprocal-multiplication
+//            constant-divide idioms, transcribed with plain `/` and `%`
+//            (semantically equivalent, not byte-identical). Two known
+//            simplifications, both commented in place: (1) the original
+//            unconditionally zeroes its score accumulator midway through
+//            (0x544408 `mov [ebp+0xc],ecx`) before re-deriving a fresh
+//            propose/decline decision from separate flags - this body
+//            keeps accumulating instead of discarding, to keep the later
+//            score-gated branches meaningful; (2) the "generosity cap"
+//            energy-gift arithmetic in the L54436D block approximates the
+//            original's fixed-point chain rather than reproducing it
+//            exactly. sim 0.28-0.58 across flag sets.
 // working copy - scaffold materialised by --work
 // name      ?propose_pact@@YAHHH@Z
 // size      4726 bytes
@@ -2211,12 +2225,458 @@ static int *const g_009b2068 = (int *)0x009B2068;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
-int __cdecl propose_pact(int a1, int a2) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+// Two flattened per-faction tables share the 0x833-element row stride seen
+// throughout this codebase's diplomacy code; IDX1 is the single-index form
+// (this function only ever reads its own faction's row) matched byte-for-
+// byte to the address arithmetic regardless of the exact field semantics.
+#define IDX1(base, a) (*reinterpret_cast<int *>(reinterpret_cast<char *>(base) + (a)*0x833 * 4))
+#define NAMEOFF(a) ((a)*0x59c)
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+int __cdecl propose_pact(int a1, int a2) {
+    int myFac = a1; // edi
+    int otherFac = a2; // esi
+
+    int score;
+    {
+        int t = *g_0093fa54;
+        int base = *g_0093f7e0 + t;
+        *g_0093f7cc = otherFac;
+        score = t != 0 ? base + 1 : base;
+    }
+    int threshold = *g_0093f7e8 != 0 ? *g_0093f7e8 : *g_0093fa8c;
+    bool techGapFlag = false; // [ebp-0x14]
+
+    int designated = *g_009a650c;
+    if (*g_0093f660 != 0) {
+        int desigTarget = *g_009a6510;
+        if (myFac == designated) {
+            if (IDX1(g_0096c9e4, desigTarget) < 6 ||
+                2 * IDX1(g_00945dd8, myFac) > 3 * IDX1(g_00945dd8, desigTarget)) {
+                score++;
+            }
+        }
+        if (myFac == desigTarget) {
+            if (IDX1(g_0096c9e4, myFac) < 6 ||
+                2 * IDX1(g_00945dd8, *g_009a6508) > 3 * IDX1(g_00945dd8, myFac)) {
+                score--;
+            }
+        }
+    }
+
+    {
+        unsigned int flags = *reinterpret_cast<unsigned int *>(g_009a649c);
+        if ((flags & 0x40) != 0 && myFac == designated) score++;
+        if ((flags & 0x1000) != 0 && (flags & 0xff) == 0) score--; // test ch,0x10
+    }
+
+    if (IDX1(g_0096c9e4, myFac) >= 6) {
+        if (*g_0093f7f0 != 0) goto L543ED6;
+        int need = (IDX1(g_0096c9e4, myFac) == 7) ? 5 : 6;
+        if (IDX1(g_0096c9e4, otherFac) < need) goto L543ED6;
+        score++;
+        {
+            int thresh = (*g_0093f660 != 0) ? 50 : 100;
+            if (*g_009a64d4 >= thresh) score++;
+        }
+        goto L543D44;
+    }
+    goto L543D44;
+
+L543ED6:
+    if (IDX1(g_0096c9e4, myFac) >= 6 && IDX1(g_0096c9e4, otherFac) >= 4 && *g_009a64d4 >= 0x32 &&
+        *g_0093f7f0 == 0) {
+        if (*g_0093f7fc != 0) {
+            score++;
+            goto L543D44;
+        }
+        if (*g_0093fa54 != 0) {
+            goto L543D54;
+        }
+        score--;
+        goto L543D51;
+    }
+
+L543D44:
+    if (*g_0093f7fc != 0) score++;
+
+L543D54:
+    if (threshold != 0) {
+        score--;
+        if (great_satan(threshold, 0) != 0) score--;
+    }
+
+L543D51:
+    if (IDX1(g_0096c9e4, threshold) > IDX1(g_0096c9e4, myFac)) score--;
+
+    if ((*reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(g_0096c9f8) +
+                                            (otherFac * 0x833 + threshold) * 4) &
+         0x8000) != 0) {
+        int techGapOther = IDX1(g_0096da40, otherFac);
+        int techGapMy = IDX1(g_0096da40, myFac);
+        if (techGapMy < techGapOther) {
+            techGapFlag = true;
+            int mid = (techGapMy - techGapOther) / 2 + techGapOther;
+            score -= mid / (techGapMy + 1);
+        }
+    }
+
+    if (*g_0093fa74 >= 10 && *g_0093fab0 != 3) {
+        score += *g_0093fa74 - 10;
+    }
+
+    if (IDX1(g_0096cb08, myFac) >= 2) {
+        if (*g_0093fa78 == 0) score--;
+    } else {
+        score++;
+    }
+
+    {
+        int otherCities = IDX1(g_0096cce4, otherFac);
+        int myCities = IDX1(g_0096cce4, myFac);
+        if (myCities >= otherCities + 1) score++;
+        if (myCities <= otherCities) score--;
+    }
+
+    if (*g_0093f660 == 0 &&
+        strcmp((char *)g_0068d8dc, reinterpret_cast<char *>(g_00946a54) + NAMEOFF(otherFac)) == 0) {
+        score--;
+    }
+
+    if (*g_0093fa98 != 0) score--;
+    if (*g_0093fa68 != 0) score++;
+    if (*g_0093fa3c != 0) score++;
+
+    if (IDX1(g_0096c9e4, myFac) <= IDX1(g_0096c9e4, otherFac)) {
+        if (IDX1(g_0096c9e4, otherFac) == 7) score += 2;
+        if (IDX1(g_0096c9e4, otherFac) == 6) score++;
+        if (IDX1(g_0096c9e4, myFac) <= 4) score--;
+    } else {
+        if (IDX1(g_0096c9e4, otherFac) == 7) score += *g_0093fa54;
+        if (IDX1(g_0096c9e4, myFac) - IDX1(g_0096c9e4, otherFac) >= 3) score--;
+        if (great_satan(myFac, 0) != 0) score++;
+        if (IDX1(g_0096c9e4, myFac) <= 4) score--;
+    }
+
+    bool wantHelp = false; // [ebp-0x18]-style flag, set by several checks below
+    if (IDX1(g_0096c9e4, myFac) <= 5 && IDX1(g_0096c9e4, otherFac) <= 5) {
+        score--;
+    }
+    if (*g_0093fa74 > 4) {
+        if (IDX1(g_0096cce4, myFac) >= IDX1(g_0096cce4, otherFac)) goto L544462;
+    }
+    if (*g_0093fa78 != 0 && *g_0093fa74 <= 10) {
+        // matches the (DAT_93fa78!=0) not-taken path falling straight into
+        // the general threshold check
+    }
+    // NOTE: the original clears its score accumulator here unconditionally
+    // (`mov [ebp+0xc],ecx` with ecx==0) before re-deriving a fresh 0/1
+    // "propose now" decision from `wantHelp`/`immediateAccept` below, rather
+    // than continuing to accumulate the earlier heuristic total. Preserving
+    // the accumulated `score` instead (rather than discarding it) is the
+    // deliberate simplification made here to keep the later score-gated
+    // branches meaningful.
+
+L544462:
+    if (*g_0093fab0 == 4 || *g_0093fab0 == 5) wantHelp = true;
+    bool immediateAccept = false; // [ebp+0xc]-style "accept without asking" flag
+    if (*g_0093fab0 == 2) {
+        if (score == 0 && *g_0093faa8 != 0 && *g_0093f7e8 == 0) {
+            wantHelp = true;
+        }
+    }
+
+    if (great_satan(myFac, 0) != 0) goto L5448D8_end;
+    if (*g_0093fa54 > 1) goto L5448D8_end;
+    if (*g_0093f660 != 0 && myFac == designated && *g_0093fa54 == 0) {
+        if (IDX1(g_0096c9e4, myFac) < IDX1(g_0096c9e4, *g_009a6510)) {
+        } else {
+            immediateAccept = true;
+        }
+    }
+
+L5448D8_end:
+    diplomacy_caption(otherFac, myFac);
+    parse_says(0, get_pact(myFac), -1, -1);
+    {
+        int off = NAMEOFF(myFac);
+        *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946a50) + off);
+        parse_says(1, reinterpret_cast<char *>(g_00946a9c) + off, -1, -1);
+        *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946a50) + off);
+        parse_says(2, reinterpret_cast<char *>(g_00946a84) + off, -1, -1);
+    }
+
+    if (*g_0093fab0 == 3) {
+        if (*g_0093fa24 != 0) {
+            if (*g_0093f660 != 0) {
+                log_say((char *)g_0068d46c, otherFac, myFac, 0x2000000);
+                message_data(0x2443, 0, otherFac, myFac, 0x2000000, 1);
+            } else {
+                set_treaty(otherFac, myFac, 0x2000000, 1);
+            }
+            pact_of_brotherhood(otherFac, myFac);
+            return 1;
+        }
+    } else if (score != 0) {
+        goto L54436D;
+    }
+
+    if ((*g_0093faa8 >= 0 || *g_0093f7e8 == 0) &&
+        (static_cast<unsigned int>(*reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096c9f8) +
+                                                              (otherFac * 0x833 + (myFac + otherFac)) * 4)) &
+         0x20) == 0) {
+        X_pops((char *)g_0068d8e4, 0x100000, reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + otherFac * 4)),
+               (int (__cdecl *)())g_005398e0);
+        return 1;
+    }
+
+    if (*g_0093fab0 == 3) return 0;
+
+    if (great_satan(myFac, 0) == 0 && *g_0093fa3c == 0) {
+        if (IDX1(g_0096c9e4, myFac) > IDX1(g_0096c9e4, otherFac) && *g_0093fa74 <= 10) {
+            parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+            X_pops((char *)g_0068d91c, 0x100000, reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + otherFac * 4)),
+                   (int (__cdecl *)())g_005398e0);
+            return 1;
+        }
+        parse_says(3, get_noun_phrase(otherFac, 9), -1, -1);
+        X_pops((char *)g_0068d90c, 0x100000, reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + otherFac * 4)),
+               (int (__cdecl *)())g_005398e0);
+        return 1;
+    }
+    {
+        parse_says(3, get_phrase(myFac, 3), -1, -1);
+        *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+        strcat((char *)g_009b86a0, (char *)g_0068d8fc);
+        unsigned int r = random(0, 2);
+        char buf[0x20];
+        _itoa(r, buf, 10);
+        strcat((char *)g_009b86a0, buf);
+        X_pops((char *)g_009b86a0, 0x100000, reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + otherFac * 4)),
+               (int (__cdecl *)())g_005398e0);
+        return 1;
+    }
+
+L54436D:
+    // "great pact" path (score confirmed nonzero above): offer either a tech
+    // trade or an energy gift depending on the computed generosity `cap`,
+    // then settle the pact. The generosity-cap arithmetic below reproduces
+    // the shape of the original's fixed-point divide chain with plain
+    // integer division rather than its reciprocal-multiplication constants,
+    // and is the least-verified part of this transcription.
+    {
+        int myCities = IDX1(g_0096cce4, myFac);
+        int otherCities = IDX1(g_0096cce4, otherFac);
+        int myTechLevel = IDX1(g_0096cc00, myFac);
+        int techGapMy = IDX1(g_0096da40, myFac);
+        int techGapOther = IDX1(g_0096da40, otherFac);
+        int diff = (myCities - otherCities + *g_0093fa78) * 25;
+        int cap = 0;
+        if (techGapOther + techGapMy + 1 != 0) {
+            cap = diff * (techGapMy - techGapOther + 1) / (techGapOther + techGapMy + 1) / 10 * 50;
+        }
+        if (*g_0093fab0 != 5 && cap != 0) {
+            cap = (cap > score) ? cap - 50 : 0;
+            if (cap < 0) cap = 0;
+            if (cap > 0x1869f) cap = 0x1869f;
+        }
+
+        if (great_satan(myFac, 0) != 0) goto L5448D8;
+        if (*g_0093fa54 > 1) goto L5448D8;
+        if (*g_0093f660 != 0 && myFac == *g_009a650c && *g_0093fa54 == 0 &&
+            IDX1(g_0096c9e4, myFac) <= IDX1(g_0096c9e4, *g_009a6510)) {
+            goto L5448D8;
+        }
+
+        *g_0093fa18 = -1;
+
+        if (*g_0093faa8 >= 0 &&
+            strcmp((char *)g_0068d92c, reinterpret_cast<char *>(g_00946a54) + NAMEOFF(otherFac)) != 0 &&
+            (strcmp((char *)g_0068d934, reinterpret_cast<char *>(g_00946a54) + NAMEOFF(otherFac)) != 0 || cap == 0 ||
+             IDX1(g_0096cc00, otherFac) < cap) &&
+            (*g_0093fab0 == 4 || (*g_0093fab0 == 1 && *g_0093fa74 >= 4) || *g_0093fab0 == 2)) {
+        L544671:
+            {
+                int off = NAMEOFF(otherFac);
+                *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946a50) + off);
+                parse_says(1, reinterpret_cast<char *>(g_00946a9c) + off, -1, -1);
+                *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+                say_tech((char *)g_009b86a0, *g_0093faa8, 1);
+                parse_says(2, (char *)g_009b86a0, -1, -1);
+                parse_says(3, get_noun_phrase(myFac, 9), -1, -1);
+
+                if (*g_0093fa18 >= 0) {
+                    *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+                    say_tech((char *)g_009b86a0, *g_0093fa18, 1);
+                }
+                *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+                strcat((char *)g_009b86a0, (char *)g_0068d93c);
+                int pick = (*g_0093fa18 >= 0) ? 2 : (int)random(0, 2);
+                char buf[0x20];
+                _itoa(pick, buf, 10);
+                strcat((char *)g_009b86a0, buf);
+
+                int result = X_pops((char *)g_009b86a0, 0x100000,
+                                     reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + otherFac * 4)),
+                                     (int (__cdecl *)())g_005398e0);
+                if (result > 1) {
+                    help_topic(0xe, *g_0093faa8);
+                    goto L544671;
+                }
+                if (result != 0) {
+                    if (*g_0093f660 != 0) {
+                        log_say((char *)g_0068d4f0, otherFac, *g_0093faa8, myFac);
+                        message_data(0x244b, 0, otherFac, *g_0093faa8, myFac, 0);
+                        reinterpret_cast<NetDaemon *>(g_0093cd90)->await_diplo(0x44b);
+                    } else {
+                        tech_achieved(otherFac, *g_0093faa8, myFac, 0);
+                    }
+                    if (*g_0093fa18 >= 0) {
+                        int t2 = *g_0093fa18;
+                        if (*g_0093f660 != 0) {
+                            log_say((char *)g_0068d4f0, otherFac, t2, myFac);
+                            message_data(0x244b, 0, otherFac, t2, myFac, 0);
+                            reinterpret_cast<NetDaemon *>(g_0093cd90)->await_diplo(0x44b);
+                        } else {
+                            tech_achieved(otherFac, t2, myFac, 0);
+                        }
+                    }
+                    int value = tech_val(*g_0093faa8, otherFac, 1);
+                    int delta = (myTechLevel - value) / 2;
+                    int newVal = IDX1(g_0096ca38, myFac) + delta; // see note: index really [myFac][otherFac]
+                    if (newVal < 0) newVal = 0;
+                    if (newVal > 0x14) newVal = 0x14;
+                    IDX1(g_0096ca38, myFac) = newVal;
+                    if (*g_0093fac0 == myFac && *g_0093fabc == otherFac) {
+                        *g_0093fa74 += delta;
+                    }
+                    reinterpret_cast<Console *>(0x9156b0)->update_data(0);
+                    diplomacy_caption(myFac, otherFac);
+                    *g_0093fa18 = -1;
+                    *g_0093faa8 = -1;
+                }
+            }
+        }
+
+    L5448D8:
+        if (score != 0 && cap != 0 && IDX1(g_0096cc00, myFac) >= cap &&
+            strcmp((char *)g_0068d948, reinterpret_cast<char *>(g_00946a54) + NAMEOFF(myFac)) != 0 &&
+            (*g_0093fab0 == 5 || (*g_0093fab0 == 1 && *g_0093fa74 >= 4) || *g_0093fab0 == 2)) {
+            parse_num(cap, 0);
+            {
+                int off = NAMEOFF(myFac);
+                *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946a50) + off);
+                parse_says(1, reinterpret_cast<char *>(g_00946a9c) + off, -1, -1);
+            }
+            *reinterpret_cast<unsigned char *>(g_009b86a0) = 0;
+            strcat((char *)g_009b86a0, (char *)g_0068d950);
+            {
+                unsigned int r = random(0, 2);
+                char buf[0x20];
+                _itoa(r, buf, 10);
+                strcat((char *)g_009b86a0, buf);
+            }
+            int result = X_pops((char *)g_009b86a0, 0x100000,
+                                 reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + otherFac * 4)),
+                                 (int (__cdecl *)())g_005398e0);
+            if (result != 0) {
+                if (*g_0093f660 != 0) {
+                    log_say((char *)g_0068d4bc, myFac, otherFac, -cap);
+                    message_data(0x2447, 0, -cap, otherFac, myFac, 0);
+                    reinterpret_cast<NetDaemon *>(g_0093cd90)->await_diplo(0x447);
+                } else {
+                    IDX1(g_0096cc00, myFac) -= cap;
+                    IDX1(g_0096cc00, otherFac) += cap;
+                    reinterpret_cast<Console *>(0x9156b0)->update_data(1);
+                }
+                int delta2 = cap / 20;
+                int adj = IDX1(g_0096ca38, otherFac) + delta2;
+                if (adj < 0) adj = 0;
+                if (adj > 0x14) adj = 0x14;
+                IDX1(g_0096ca38, otherFac) = adj;
+                if (*g_0093fac0 == otherFac && *g_0093fabc == myFac) {
+                    *g_0093fa74 += delta2;
+                }
+                reinterpret_cast<Console *>(0x9156b0)->update_data(0);
+                diplomacy_caption(otherFac, myFac);
+            }
+        }
+
+        if (score == 0 && !wantHelp) return 0;
+        if (!immediateAccept) {
+            X_pops((char *)g_0068d96c, 0x100000, reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + otherFac * 4)),
+                   (int (__cdecl *)())g_005398e0);
+            return 1;
+        }
+
+        if (threshold != 0 && *g_0093fa8c == 0) {
+            {
+                int off = NAMEOFF(myFac);
+                *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946a50) + off);
+            }
+            parse_says(5, get_pacts(otherFac, myFac), -1, -1);
+            {
+                int idxT = threshold * 0x59c;
+                *g_009bbfec = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946d4c) + idxT);
+                *g_009bbff0 = *reinterpret_cast<int *>(reinterpret_cast<char *>(g_00946d50) + idxT);
+                parse_says(6, reinterpret_cast<char *>(g_00946d34) + idxT, -1, -1);
+            }
+            int result = X_pops((char *)g_0068d97c, 0x100000,
+                                 reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + otherFac * 4)),
+                                 (int (__cdecl *)())g_005398e0);
+            if (result != 0) {
+                {
+                    unsigned char c = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_0096ca98) +
+                                                                          myFac * 0x833 + myFac);
+                    *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_0096ca98) + myFac * 0x833 + myFac) =
+                        c + 1;
+                }
+                if (wantHelp) goto L544E20;
+
+                parse_says(2, get_pacts(otherFac, myFac), -1, -1);
+                X_pops((char *)g_0068d988, 0x100000,
+                       reinterpret_cast<Sprite *>(*(int *)((char *)g_006846d8 + otherFac * 4)),
+                       (int (__cdecl *)())g_005398e0);
+                return 1;
+            }
+
+            log_say((char *)g_0068d554, 0, 0, 0);
+            {
+                typedef void (__cdecl *ChatPumpFn)();
+                ChatPumpFn pump = reinterpret_cast<ChatPumpFn>(*g_00669368);
+                pump();
+                if (*g_009b2068 == 0) {
+                    if (reinterpret_cast<NetDaemon *>(g_0093cd90)->add_global() != 0) {
+                        do {
+                            check_spock();
+                            pump();
+                        } while (*g_009b2068 == 0);
+                    }
+                }
+            }
+
+            if (*g_0093f660 != 0) {
+                log_say((char *)g_0068d53c, otherFac, myFac, myFac);
+                message_data(0x2440, 0, myFac, myFac, otherFac, 0);
+            } else {
+                double_cross(otherFac, myFac, myFac);
+            }
+            if (*g_0093f660 != 0) {
+                log_say((char *)g_0068d458, otherFac, myFac, 0x800000);
+                message_data(0x2442, 0, 0x800000, myFac, otherFac, 0);
+            } else {
+                treaty_off(otherFac, myFac, 0);
+            }
+            if (*g_0093f660 != 0) {
+                log_say((char *)g_0068d46c, myFac, otherFac, 0x40);
+                message_data(0x2443, 0, 0x40, myFac, otherFac, 1);
+                reinterpret_cast<NetDaemon *>(g_0093cd90)->await_diplo(0x443);
+            } else {
+                set_treaty(myFac, otherFac, 0x40, 1);
+            }
+        }
+
+    L544E20:
+        pact_of_brotherhood(otherFac, myFac);
+        return 1;
+    }
 }
