@@ -1095,6 +1095,17 @@ def compile_batch(units: dict, work: Path, flags: str) -> dict:
     return out, diagnostics
 
 
+def _compile_chunk(task):
+    """One batch, in its own directory. Module level so a process can pickle it.
+
+    The closure this replaces could not cross a process boundary, which is the
+    only reason `compile_batches` was a thread pool rather than a process one.
+    """
+    chunk, flags = task
+    with tempfile.TemporaryDirectory() as tmp:
+        return compile_batch(chunk, Path(tmp), flags)
+
+
 def compile_batches(chunks: list, flags: str, workers: int = 0) -> list:
     """Compile several batches CONCURRENTLY, one directory each.
 
@@ -1124,17 +1135,22 @@ def compile_batches(chunks: list, flags: str, workers: int = 0) -> list:
     serial ones - `compile_batch`'s own docstring records that they differ
     from isolated compiles only in COFF byte 4, the timestamp - and no batch
     can see another's files.
+
+    PROCESSES, NOT THREADS. Threads only help while blocked on `wine`, and
+    that is not where the time went: per unit this writes the whole generated
+    unit to disk, reads the object back and parses CL's diagnostics, all of it
+    Python holding the GIL. Measured with threads on a 5,606-unit
+    `--record-matches`: seven `CL.EXE` running at once and the PARENT pegged
+    at 87% of one core for 180 s of a 225 s run - the compiler was never what
+    anyone was waiting for. A worker now does its own file I/O.
     """
     workers = cpu.worker_count(workers)
-
-    def one(chunk):
-        with tempfile.TemporaryDirectory() as tmp:
-            return compile_batch(chunk, Path(tmp), flags)
-
     if len(chunks) < 2 or workers < 2:
-        return [one(chunk) for chunk in chunks]
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        return list(pool.map(one, chunks))
+        return [_compile_chunk((chunk, flags)) for chunk in chunks]
+    with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(_compile_chunk,
+                            [(chunk, flags) for chunk in chunks],
+                            chunksize=8))
 
 
 def batch_diagnostics(output: str, units: dict) -> dict:
