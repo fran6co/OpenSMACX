@@ -15,8 +15,9 @@
 // calls     0x00455EB0 0x0050F3D0 0x00538FB0 0x005873C0 0x006018A0 0x00601910 0x006168F0 0x006169A0 0x00616A00 0x006257E0 0x00626450 0x00645470
 // indirect  0x0058F304 0x0058F30F 0x0058F38D 0x0058F3CD
 
-extern "C" __declspec(dllimport) DWORD __stdcall timeGetTime();
-extern "C" __declspec(dllimport) char *__stdcall CharUpperA(char *);
+// timeGetTime and CharUpperA come from the scaffold
+// (emit_translation_unit.WIN32_IMPORTS), `__declspec(dllimport)` included
+// so the calls keep the original's IAT-indirect shape.
 
 extern "C" int __cdecl set_def_cancel_text(char *);
 extern "C" int __cdecl set_def_ok_text(char *);

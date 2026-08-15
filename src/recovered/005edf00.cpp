@@ -17,11 +17,11 @@
 
 // 0x00669320 is the IAT slot for ShowWindow: the original calls through
 // the SLOT's address (`call dword ptr [0x669320]`), not a direct relative
-// call. `dllimport` tells the compiler the call goes through an import
-// thunk, which is exactly this shape - a memory-operand call, no register
-// load first.
-extern "C" __declspec(dllimport) int __stdcall ShowWindow(void *hWnd,
-                                                           int nCmdShow);
+// call, so the declaration that makes this body compile carries
+// `__declspec(dllimport)` - that is the difference between a memory-operand
+// call and a direct one. It used to sit here; the scaffold supplies it now
+// (emit_translation_unit.WIN32_IMPORTS), with the same attribute for the
+// same reason.
 
 int Win::show_maximize() {
     int active = *g_009b7abc;

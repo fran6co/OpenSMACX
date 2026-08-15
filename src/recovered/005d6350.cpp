@@ -15,7 +15,9 @@
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
-extern "C" __declspec(dllimport) int __stdcall GetWindowLongA(void *hwnd, int index);
+// GetWindowLongA comes from the scaffold (emit_translation_unit.WIN32_IMPORTS),
+// `__declspec(dllimport)` included so the call keeps the original's
+// IAT-indirect shape.
 
 class VCall3 { public:
     virtual void slot000();

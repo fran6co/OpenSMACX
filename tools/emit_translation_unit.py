@@ -1664,9 +1664,10 @@ STRING_ROUTINES = ("strcat", "strcpy", "strlen", "strcmp")
 # HAND-MAINTAINED, AND ONLY WHAT THE SCAFFOLD CAN SPELL. There is no
 # machine-readable Win32 signature source in this tree, so the table is
 # written out; and every entry here uses only types the PRELUDE above
-# already provides - `int`, `short`, `void *`, `char *`. An import whose
-# signature needs `HDC` or `RECT` cannot be supplied this way and still
-# belongs beside its body, where the surrounding scaffold declares those.
+# already provides or builtin ones - `int`, `long`, `short`, `void *`,
+# `char *`. Handle-taking parameters are spelled `void *`, which every
+# handle type is. An import whose signature needs a struct the scaffold
+# cannot spell, like `RECT`, still belongs beside its body.
 WIN32_IMPORTS = {
     "GetSystemMetrics":
         'extern "C" __declspec(dllimport) int __stdcall GetSystemMetrics(int);',
@@ -1700,6 +1701,33 @@ WIN32_IMPORTS = {
     "GetSystemPaletteEntries":
         'extern "C" __declspec(dllimport) unsigned int __stdcall '
         'GetSystemPaletteEntries(void *, unsigned int, unsigned int, void *);',
+    # The batch that lets the BODY-MODE store files drop their own `extern "C"
+    # __declspec(dllimport)` lines (src/recovered/005d6350.cpp and the
+    # src/unrecovered/ working copies 0058f2f0 and 005f1480), the same way the
+    # original five let src/win.cpp and src/leaf_recoveries.cpp drop theirs.
+    # FILE-mode units keep their own declarations - they compile verbatim and
+    # never pass through this scaffold.
+    "GetWindowLongA":
+        'extern "C" __declspec(dllimport) int __stdcall GetWindowLongA(void *, int);',
+    "CharUpperA":
+        'extern "C" __declspec(dllimport) char *__stdcall CharUpperA(char *);',
+    # `InvalidateRect` really takes `const RECT *`, but the body passes a null
+    # pointer constant and the `void *` spelling compiles it without modelling
+    # the struct.
+    "InvalidateRect":
+        'extern "C" __declspec(dllimport) int __stdcall InvalidateRect(void *, void *, int);',
+    # `HDC` and `HPALETTE` as `void *`, as in the palette five above.
+    "SelectPalette":
+        'extern "C" __declspec(dllimport) int __stdcall SelectPalette(void *, void *, int);',
+    "RealizePalette":
+        'extern "C" __declspec(dllimport) int __stdcall RealizePalette(void *);',
+    # The fourth parameter is `LPARAM` in `windows.h`, but `Win::OnActivate`
+    # forwards its `void *` argument there, so `void *` is the spelling that
+    # compiles the caller; the decoration `_DefWindowProcA@16` only depends on
+    # the four argument widths, which are identical.
+    "DefWindowProcA":
+        'extern "C" __declspec(dllimport) long __stdcall '
+        'DefWindowProcA(void *, unsigned int, unsigned int, void *);',
 }
 
 
@@ -1741,18 +1769,55 @@ def win32_declarations(body: str) -> list:
 WIN32_STRUCTS = ("LOGPALETTE", "PALETTEENTRY", "RGBQUAD", "BITMAPINFO",
                  "BITMAPINFOHEADER", "DDSURFACEDESC", "DDSCAPS")
 
+# DEFINED, not merely named, where the layout is fixed by the Win32 ABI and
+# small enough to state without doubt.
+#
+# A forward declaration lets a body CAST to the type; it does not let a body
+# say `header->palVersion`, and that is how the original wrote it. Recovered
+# against forward declarations only, `init_palette_class` had to spell its
+# LOGPALETTE as `*(uint16_t *)header = 0x300` - a byte cast standing in for a
+# field name, which is the scaffold's constraint leaking into `src/` rather
+# than anything the original did.
+#
+# SAFE BECAUSE THE LAYOUT IS NOT A GUESS. These are the Windows headers' own
+# and have been ABI-frozen since Win32 shipped; `0x404` is `4 + 256 * 4`,
+# which is this LOGPALETTE with 256 entries, and the image's
+# `mov word ptr [esi], 0x300` / `mov word ptr [esi + 2], 0x100` is exactly
+# `palVersion` then `palNumEntries`. A definition mangles identically to a
+# forward declaration - `PAULOGPALETTE@@` either way - so nothing that reaches
+# these by name is disturbed. The real build gets the real `windows.h`; these
+# exist only for the measured unit, which has no headers at all.
+#
+# ORDER IS DEPENDENCY ORDER, not alphabetical: LOGPALETTE embeds
+# PALETTEENTRY, and sorting the names put the container first.
+WIN32_STRUCT_DEFINITIONS = (
+    ("PALETTEENTRY",
+     "struct PALETTEENTRY { unsigned char peRed, peGreen, peBlue, peFlags; };"),
+    ("LOGPALETTE",
+     "struct LOGPALETTE { unsigned short palVersion; "
+     "unsigned short palNumEntries; struct PALETTEENTRY palPalEntry[1]; };"),
+)
+# What a definition drags in with it, so naming the container is enough.
+WIN32_STRUCT_NEEDS = {"LOGPALETTE": ("PALETTEENTRY",)}
+
 
 def win32_struct_declarations(body: str) -> list:
-    """`struct X;` for every Win32 struct `body` names. Same rule as above."""
+    """Win32 struct types `body` names: defined where known, else forward."""
     if not body:
         return []
     import src_declarations
     code = src_declarations.code_only(body)
-    named = sorted(name for name in WIN32_STRUCTS
-                   if re.search(rf"\b{name}\b", code))
+    named = {name for name in WIN32_STRUCTS
+             if re.search(rf"\b{name}\b", code)}
     if not named:
         return []
-    return [f"struct {name};" for name in named] + [""]
+    for name in list(named):
+        named.update(WIN32_STRUCT_NEEDS.get(name, ()))
+    defined = [text for name, text in WIN32_STRUCT_DEFINITIONS
+               if name in named]
+    forward = [f"struct {name};" for name in sorted(named)
+               if name not in dict(WIN32_STRUCT_DEFINITIONS)]
+    return forward + defined + [""]
 
 
 def string_routine_pragma(declarations: list) -> list:
