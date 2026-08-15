@@ -1623,6 +1623,66 @@ def imported_methods(name: str, catalogued: set) -> list:
 STRING_ROUTINES = ("strcat", "strcpy", "strlen", "strcmp")
 
 
+
+# WIN32 IMPORTS A BODY MAY CALL, since the scaffold includes no <windows.h>.
+#
+# A body in a COMPILED unit gets these from stdafx.h and needs nothing; the
+# same body lifted into a measurement scaffold gets `C2065: undeclared
+# identifier` and scores NO_COMPILE. Until now the answer was to write the
+# declaration into the source beside the body - four such lines in
+# src/win.cpp and src/leaf_recoveries.cpp - which makes the tree carry
+# declarations the build does not need, and reads to any later editor as
+# redundancy to be tidied away. Deleting one took 0x005EC960 from BYTE_EXACT
+# to NO_COMPILE.
+#
+# `#include <windows.h>` IS THE OBVIOUS ALTERNATIVE AND DOES NOT WORK.
+# Measured on 0x005EC960's unit: 10 errors, led by `C2371: 'HWND' :
+# redefinition; different basic types`, then HDC and BITMAPINFO. The scaffold
+# declares its own Win32 types - it has to, since most units need two or
+# three of them and not the header - and the real ones collide. Cost was not
+# the objection: 1.3 s without the include against 1.4 s with it. Using the
+# header would mean giving up the scaffold's own typedefs, which is a much
+# larger change than five declarations.
+#
+# HAND-MAINTAINED, AND ONLY WHAT THE SCAFFOLD CAN SPELL. There is no
+# machine-readable Win32 signature source in this tree, so the table is
+# written out; and every entry here uses only types the PRELUDE above
+# already provides - `int`, `short`, `void *`, `char *`. An import whose
+# signature needs `HDC` or `RECT` cannot be supplied this way and still
+# belongs beside its body, where the surrounding scaffold declares those.
+WIN32_IMPORTS = {
+    "GetSystemMetrics":
+        'extern "C" __declspec(dllimport) int __stdcall GetSystemMetrics(int);',
+    "GetAsyncKeyState":
+        'extern "C" __declspec(dllimport) short __stdcall GetAsyncKeyState(int);',
+    "GetKeyState":
+        'extern "C" __declspec(dllimport) short __stdcall GetKeyState(int);',
+    "GetCurrentThreadId":
+        'extern "C" __declspec(dllimport) unsigned long __stdcall '
+        'GetCurrentThreadId(void);',
+    "timeGetTime":
+        'extern "C" __declspec(dllimport) unsigned long __stdcall timeGetTime(void);',
+}
+
+
+def win32_declarations(body: str) -> list:
+    """Declarations for the Win32 imports `body` actually names.
+
+    Emitted on reference rather than always, for the reason every other
+    supplied declaration is: a scaffold that declares things the body does
+    not use is a scaffold that can collide with something it does.
+    """
+    if not body:
+        return []
+    import src_declarations
+    code = src_declarations.code_only(body)
+    named = [name for name in WIN32_IMPORTS
+             if re.search(rf"\b{name}\b", code)]
+    if not named:
+        return []
+    return [WIN32_IMPORTS[name] for name in sorted(named)] + [""]
+
+
 def string_routine_pragma(declarations: list) -> list:
     """`#pragma function(...)` for the string routines this unit declares.
 
@@ -1667,6 +1727,10 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # Classes the BODY defines for itself, so this scaffold neither defines
     # nor inherits from them. Empty for a bare scaffold.
     body_defines = classes_defined_in(body) if body else set()
+    # Captured HERE: `body` is rebound to a list of member lines by the
+    # class-shell loop below, so anything wanting the subject's text has
+    # to take it before that happens.
+    win32_lines = win32_declarations(body)
 
     def declare(name: str, opening: bool) -> str:
         # `class X { public:` and `struct X {` differ only in default access,
@@ -1973,6 +2037,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         lines.append(text)
     if declarations or methods_by_class:
         lines.append("")
+    lines.extend(win32_lines)
     lines.extend(string_routine_pragma(declarations))
 
     # A vtable shim, where the body dispatches indirectly.
