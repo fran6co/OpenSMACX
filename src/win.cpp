@@ -1414,3 +1414,177 @@ int Win::on_nc_hittest(int a1, int a2) {
 void Win::release_modal() {
     (ORIGINAL(this)->*WinOriginalReleaseModal)();
 }
+
+/*
+ORIGINAL: 0x005F01F0
+// name      ?init_class@Win@@QAAHPAD@Z
+// size      761 bytes
+// spans     0x005F01F0-0x005F04D4;0x00662CCC-0x00662CE1
+// prototype
+// callers   1   call targets   7
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005DFB50 0x005DFF00 0x005EFD20
+// indirect  0x005F0236 0x005F0263 0x005F0273 0x005F028E 0x005F02D0 0x005F02D9 0x005F030A
+//           0x005F036F 0x005F0375 0x005F039A 0x005F03A9 0x005F03BD 0x005F03E3 0x005F03F5
+//           0x005F0498
+//
+// Promoted 2026-08-15 from src/unrecovered/005f01f0.cpp to retire its
+// pending_bodies forwarder. Was MISMATCH #7 (push/lea) as a FILE unit; the
+// FILE-mode scaffold kept esi/edi live differently, and the buffer/sprite
+// calls now go through the real class declarations. Win32 imports are read
+// straight out of the IAT slots below, as the original does.
+Status: Complete
+*/
+// DirectDraw-surface GetDC/ReleaseDC, reached through the vtable at slots 17
+// and 26. Named to NOT read as `ComSlotNNN` - the measurement scaffold
+// supplies its own one-argument `ComSlot` typedefs for any it sees referenced,
+// and these take two.
+typedef int(__stdcall *IfaceGetHdcProc)(void *self, int *hdc_out);
+typedef int(__stdcall *IfaceReleaseHdcProc)(void *self, int hdc);
+
+static int *const g_005f0650 = (int *)0x005F0650;
+static int *const g_00669050 = (int *)0x00669050;
+static int *const g_00669068 = (int *)0x00669068;
+static int *const g_006690b8 = (int *)0x006690B8;
+static int *const g_006690c0 = (int *)0x006690C0;
+static int *const g_00669138 = (int *)0x00669138;
+static int *const g_0066927c = (int *)0x0066927C;
+static int *const g_00669280 = (int *)0x00669280;
+static int *const g_00669298 = (int *)0x00669298;
+static int *const g_0066929c = (int *)0x0066929C;
+static int *const g_006692a0 = (int *)0x006692A0;
+static int *const g_00669320 = (int *)0x00669320;
+static int *const g_00669334 = (int *)0x00669334;
+static int *const g_00696dc8 = (int *)0x00696DC8;
+static int *const g_00696dd4 = (int *)0x00696DD4;
+static int *const g_00696de0 = (int *)0x00696DE0;
+static int *const g_009b3ab0 = (int *)0x009B3AB0;
+static int *const g_009b6ef8 = (int *)0x009B6EF8;
+static int *const g_009b6efc = (int *)0x009B6EFC;
+static int *const g_009b6f00 = (int *)0x009B6F00;
+static int *const g_009b6f04 = (int *)0x009B6F04;
+static int *const g_009b7510 = (int *)0x009B7510;
+static int *const g_009b7514 = (int *)0x009B7514;
+static int *const g_009b7b14 = (int *)0x009B7B14;
+static int *const g_009b7b1c = (int *)0x009B7B1C;
+static int *const g_009b7b20 = (int *)0x009B7B20;
+static int *const g_009b7b28 = (int *)0x009B7B28;
+static int *const g_009b7b2c = (int *)0x009B7B2C;
+static int *const g_009b8178 = (int *)0x009B8178;
+static int *const g_009b8180 = (int *)0x009B8180;
+static int *const g_009bc498 = (int *)0x009BC498;
+static int *const g_009bc4b0 = (int *)0x009BC4B0;
+
+int __cdecl Win::init_class(char *a1) {
+    struct WndClassA_ {
+        uint32_t style;
+        void *lpfnWndProc;
+        int cbClsExtra;
+        int cbWndExtra;
+        int hInstance;
+        int hIcon;
+        int hCursor;
+        int hbrBackground;
+        char *lpszMenuName;
+        char *lpszClassName;
+    };
+
+    typedef void *(__stdcall *FnGetModuleHandleA)(const char *);
+    typedef void *(__stdcall *FnLoadIconA)(int, const char *);
+    typedef int(__stdcall *FnGetStockObject)(int);
+    typedef unsigned short(__stdcall *FnRegisterClassA)(WndClassA_ *);
+    typedef int(__stdcall *FnGetSystemMetrics)(int);
+    typedef void *(__stdcall *FnCreateWindowExA)(unsigned int, const char *, const char *, unsigned int,
+                                                 int, int, int, int, int, int, int, int);
+    typedef void *(__stdcall *FnGetDC)(int);
+    typedef int(__stdcall *FnReleaseDC)(int, int);
+    typedef int(__stdcall *FnSetBkMode)(int, int);
+    typedef int(__stdcall *FnSetSystemPaletteUse)(int, int);
+    typedef void *(__stdcall *FnSelectPalette)(int, int, int);
+    typedef int(__stdcall *FnShowWindow)(int, int);
+    typedef void(__cdecl *FnFlip)(RECT *);
+
+    Buffer buf;
+    Buffer *const screen = (Buffer *)0x009B7490;
+
+    WndClassA_ wndclass;
+
+    *g_009b6ef8 = 0;
+    *g_009b6efc = 0;
+    *g_009b7b14 = (int)(*(FnGetModuleHandleA *)g_00669138)(0);
+    *g_009b6f00 = 0;
+    *g_009b6f04 = 0;
+
+    wndclass.style = 0x2b;
+    wndclass.lpfnWndProc = (void *)g_005f0650;
+    wndclass.cbClsExtra = 0;
+    wndclass.cbWndExtra = 0;
+    wndclass.hInstance = *g_009b7b14;
+    wndclass.hIcon = (int)(*(FnLoadIconA *)g_006692a0)(0, (const char *)0x7f00);
+    wndclass.hCursor = 0;
+    wndclass.hbrBackground = (*(FnGetStockObject *)g_006690c0)(4);
+    wndclass.lpszMenuName = 0;
+    wndclass.lpszClassName = (char *)g_00696dc8;
+
+    if ((*(FnRegisterClassA *)g_0066929c)(&wndclass) == 0) {
+        return 1;
+    }
+
+    *g_009b7b1c = (*(FnGetSystemMetrics *)g_00669334)(0);
+    *g_009b7b20 = (*(FnGetSystemMetrics *)g_00669334)(1);
+    *g_009b7b28 = (int)(*(FnCreateWindowExA *)g_00669298)(
+        0x40000, (const char *)g_00696dd4, a1, 0x80000000,
+        0, 0, *g_009b7b1c, *g_009b7b20,
+        0, 0, *g_009b7b14, 0);
+
+    if (*g_009b7b28 == 0) {
+        return 1;
+    }
+
+    if (*g_009b3ab0 == 0) {
+        if (*g_009bc498 == 0) {
+            *g_009b7b2c = (int)(*(FnGetDC *)g_0066927c)(*g_009b7b28);
+        } else {
+            IfaceGetHdcProc fn17 = (IfaceGetHdcProc)(*(void ***)*g_009bc498)[17];
+            fn17((void *)*g_009bc498, g_009b7b2c);
+        }
+        if (*g_009b7b2c != 0) {
+            *g_009b3ab0 = 1;
+        }
+    } else {
+        *g_009b3ab0 = *g_009b3ab0 + 1;
+    }
+
+    (*(FnSetBkMode *)g_00669068)(*g_009b7b2c, 1);
+    (*(FnSetSystemPaletteUse *)g_00669050)(*g_009b7b2c, 1);
+    (*(FnSelectPalette *)g_006690b8)(*g_009b7b2c, *g_009b8178, 0);
+
+    *g_009b3ab0 = *g_009b3ab0 - 1;
+    if (*g_009b3ab0 == 0) {
+        if (*g_009bc498 == 0) {
+            (*(FnReleaseDC *)g_00669280)(*g_009b7b28, *g_009b7b2c);
+        } else {
+            IfaceReleaseHdcProc fn26 = (IfaceReleaseHdcProc)(*(void ***)*g_009bc498)[26];
+            fn26((void *)*g_009bc498, *g_009b7b2c);
+        }
+        *g_009b7b2c = 0;
+    }
+
+    screen->init(*g_009b7b1c, *g_009b7b20, 0, 0);
+    screen->fill(0);
+    int pcx_rc = buf.load_pcx((const char *)g_00696de0, (Palette *)*g_009b8180, 10, 0xec);
+    if (pcx_rc == 0) {
+        buf.copy(screen, 0, 0,
+                 (*g_009b7510 - (int)buf.width_) / 2,
+                 ((int)buf.height_ - *g_009b7514) / 2,
+                 buf.width_, -(int)buf.height_);
+    }
+
+    if ((*(uint8_t *)g_009bc4b0 & 4) == 0) {
+        (*(FnShowWindow *)g_00669320)(*g_009b7b28, 5);
+        ((FnFlip)0x005EFD20)(0);
+    }
+
+    return 0;
+}

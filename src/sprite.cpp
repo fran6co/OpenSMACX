@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "sprite.h"
+#include "buffer.h"
 
 #include <new>
 
@@ -232,4 +233,53 @@ void Sprite::UNK4(int, int) {
 
 void __fastcall sprite_unk4_redirect(Sprite *self, void *, int a1, int a2) {
     self->UNK4(a1, a2);
+}
+
+/*
+ORIGINAL: 0x0063CE20
+// name      sub_63ce20
+// size      220 bytes
+// spans     0x0063CE20-0x0063CEE7;0x00663998-0x006639AD
+// prototype
+// callers   1   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7DE0 0x005E39A0 0x005EAF3F
+//
+// Promoted 2026-08-15 from src/unrecovered/0063ce20.cpp to retire its
+// pending_bodies forwarder. Loads the 16x16 sprite at 0x9BEAE8 from a PCX, or
+// creates it blank if the PCX is missing.
+// RULED-OUT: the original wraps the local Buffer in an fs:[0] SEH frame; no
+//            swept flag set reproduces that prologue/epilogue or the secondary
+//            0x663998 span, so the SEH shape stays unmatched.
+Status: Complete
+*/
+static int *const g_00698cac = (int *)0x00698CAC;
+static int *const g_009beae8 = (int *)0x009BEAE8;
+
+int __cdecl sub_63ce20() {
+    Buffer buf;
+    int result;
+    if (buf.load_pcx(reinterpret_cast<const char *>(g_00698cac), 0, 10, 0xec) != 0) {
+        result = reinterpret_cast<Sprite *>(g_009beae8)->create_blank(0x10, 0x10, 9);
+    } else {
+        result = reinterpret_cast<Sprite *>(g_009beae8)->extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
+    }
+    return result;
+}
+
+// Sheet extraction / blank creation reached by the per-control init_class
+// bodies. Bodies not yet recovered; each forwards through the seam.
+typedef int (OriginalObject::*func_sprite_extract)(Buffer *, int, int, int, int, int, TexHeap *);
+typedef int (OriginalObject::*func_sprite_create_blank)(int, int, int);
+static func_sprite_extract SpriteExtractOriginal = original_method<func_sprite_extract>(0x005E39A0);
+static func_sprite_create_blank SpriteCreateBlankOriginal = original_method<func_sprite_create_blank>(0x005EAF3F);
+
+int Sprite::extract(Buffer *buffer, int a, int b, int c, int width, int height,
+                    TexHeap *heap) {
+    return (ORIGINAL(this)->*SpriteExtractOriginal)(buffer, a, b, c, width, height, heap);
+}
+
+int Sprite::create_blank(int width, int height, int depth) {
+    return (ORIGINAL(this)->*SpriteCreateBlankOriginal)(width, height, depth);
 }

@@ -816,3 +816,26 @@ Status: Complete
 int Popup::on_nc_hittest(int a1, int a2) {
     return reinterpret_cast<Win *>(this)->on_nc_hittest(a1, a2);
 }
+
+/*
+ORIGINAL: 0x00404FB0
+// name      ?alloc@Popup@@QAAHXZ
+// size      137 bytes
+// spans     0x00404FB0-0x0040501C;0x00650772-0x0065078F
+// prototype
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00600860 0x006051D0 0x0064557F 0x0064558A
+//
+// Promoted 2026-08-15 from src/unrecovered/00404fb0.cpp to retire its
+// pending_bodies forwarder. WinMain stores this function's address into the
+// popup allocator hook, so it must stay a real symbol.
+// RULED-OUT: spelling the allocation as manual operator-new + placement-new
+//            of BasePop diverges at the EH state-byte store and runs longer
+//            than the original; plain `new Popup` is the shape that matches.
+Status: Complete
+*/
+int __cdecl Popup::alloc() {
+    return (int)new Popup;
+}

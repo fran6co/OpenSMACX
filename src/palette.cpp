@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "palette.h"
 #include "general.h"  // mem_get
+#include "buffer.h"   // Buffer::sync_to_palette in set()
 
 Palette g_PALETTE1;  // 0x0094C590
 HPALETTE PaletteInitialized;  // 0x009B8178
@@ -243,4 +244,58 @@ void Palette::init_palette_class(int use_system_colours) {
     }
     PaletteInitialized = CreatePalette(header);
     free(header);
+}
+
+/*
+ORIGINAL: 0x005FE460
+// name      ?set@Palette@@QAEHXZ
+// size      139 bytes
+// spans     0x005FE460-0x005FE4EB
+// prototype int (__thiscall ?set@Palette@@QAEHXZ)(Palette* this)
+// callers   12   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DE8F0
+//
+// Promoted 2026-08-15 from src/unrecovered/005fe460.cpp to retire its
+// pending_bodies forwarder. AnimatePalette is read straight out of the IAT
+// slot 0x006690A8, and the DirectDraw-path branch calls through the surface
+// vtable at offset 0x18, both as the original does.
+Status: Complete
+*/
+static int *const g_006690a8 = (int *)0x006690A8;
+static int *const g_009b7490 = (int *)0x009B7490;
+static int *const g_009b8178 = (int *)0x009B8178;
+static int *const g_009b8180 = (int *)0x009B8180;
+static int *const g_009b8184 = (int *)0x009B8184;
+static int *const g_009b8188 = (int *)0x009B8188;
+static int *const g_009bc494 = (int *)0x009BC494;
+static int *const g_009bc4a0 = (int *)0x009BC4A0;
+
+int Palette::set() {
+    if (*g_009bc494 == 0) {
+        if (*g_009b8178 == 0) {
+            return 7;
+        }
+        *g_009b8180 = reinterpret_cast<int>(this);
+        reinterpret_cast<Buffer *>(g_009b7490)->sync_to_palette(this);
+        if (*g_009b8188 == 0) {
+            int cur = *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x400);
+            if (*g_009b8184 != cur) {
+                typedef int(__stdcall *AnimatePaletteFn)(int, int, int, void *);
+                AnimatePaletteFn animate = reinterpret_cast<AnimatePaletteFn>(*g_006690a8);
+                animate(*g_009b8178, 0xa, 0xec, reinterpret_cast<char *>(this) + 0x28);
+                *g_009b8184 = cur;
+            }
+        }
+        return 0;
+    } else if (*g_009bc4a0 != 0) {
+        int objPtr = *g_009bc4a0;
+        int vtbl = *reinterpret_cast<int *>(objPtr);
+        typedef int(__stdcall *Fn18)(int, int, int, int, int);
+        Fn18 fn = reinterpret_cast<Fn18>(*reinterpret_cast<int *>(vtbl + 0x18));
+        fn(objPtr, 0, 0, 0x100, reinterpret_cast<int>(this));
+        return 0;
+    }
+    return 0;
 }

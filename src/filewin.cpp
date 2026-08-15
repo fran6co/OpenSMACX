@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "filewin.h"
+#include "text.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -115,4 +116,53 @@ func_file_win_unk4 FileWinUNK4 =
  */
 void FileWin::UNK4() {
     (ORIGINAL(this)->*FileWinUNK4)();
+}
+
+/*
+ORIGINAL: 0x00614D90 BYTE_EXACT
+// name      ?init_class@FileWin@@QAAHXZ
+// size      158 bytes
+// spans     0x00614D90-0x00614E2E
+// prototype
+// callers   1   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005FD550 0x005FD570 0x00644EF2 0x006453E0 0x00645470
+//
+// Promoted 2026-08-15 from src/unrecovered/00614d90.cpp, where it measured
+// BYTE_EXACT as a self-contained FILE unit, to retire its pending_bodies
+// forwarder. The FILE unit forced the strlen/strcat calls through `_strlen`/
+// `_strcat` externs - one underscore too deep to LINK, a debt FILE-mode
+// measurement never sees. The original plainly called the CRT, so this does
+// too; the measurement scaffold supplies the `#pragma function` that keeps
+// the calls real where the image has real calls (string_routine_pragma).
+Status: Complete
+*/
+static int *const g_006971cc = (int *)0x006971CC;
+static int *const g_006971d4 = (int *)0x006971D4;
+static int *const g_009b90a8 = (int *)0x009B90A8;
+
+int __cdecl FileWin::init_class() {
+    if (*g_009b90a8 != 0) {
+        free(reinterpret_cast<void *>(*g_009b90a8));
+        *g_009b90a8 = 0;
+    }
+    if (text_open(reinterpret_cast<char *>(g_006971d4), reinterpret_cast<char *>(g_006971cc)) != 0) {
+        return 6;
+    }
+    char *str = text_get();
+    if (str == 0) {
+        return 1;
+    }
+    if (*g_009b90a8 != 0) {
+        free(reinterpret_cast<void *>(*g_009b90a8));
+        *g_009b90a8 = 0;
+    }
+    *g_009b90a8 = reinterpret_cast<int>(mem_get(strlen(str) + 1));
+    if (*g_009b90a8 == 0) {
+        return 4;
+    }
+    *reinterpret_cast<char *>(*g_009b90a8) = 0;
+    strcat(reinterpret_cast<char *>(*g_009b90a8), str);
+    return 0;
 }

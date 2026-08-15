@@ -145,6 +145,20 @@ typedef void *HANDLE;
 typedef void *HWND;
 typedef void *HDC;
 typedef unsigned int UINT;
+
+// Placement new. The recovered window init_class bodies construct a Buffer in a
+// raw `char[sizeof(Buffer)]` (a plain local would double-destruct), which
+// needs `operator new(size_t, void *)`. The build gets it from the STL headers
+// stdafx.h pulls in, but this standalone unit includes none of them, so it is
+// restated here - guarded by the SAME macro VC6's own <new> uses, because the
+// std-shim includes the real <new> before this prelude whenever the body names
+// `std::`, and a second definition of the inline is a C2084 (measured: it
+// unreproduced 0x0050E9B0). Inline and unused-elsewhere, it emits nothing in
+// units that do not placement-new.
+#ifndef __PLACEMENT_NEW_INLINE
+#define __PLACEMENT_NEW_INLINE
+inline void *__cdecl operator new(unsigned int, void *p) { return p; }
+#endif
 """
 
 _CONSTANTS_CACHE = None

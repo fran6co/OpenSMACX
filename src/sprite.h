@@ -20,6 +20,7 @@
 #include "original_seam.h"
 
 class Buffer;  // forward declaration
+struct TexHeap;  // texture-heap handle, only ever passed through as a pointer
 
  /*
   * Sprite class
@@ -29,6 +30,12 @@ class DLLEXPORT Sprite {
   int UNK1(int a, int b, int c, int d, int e, int f, int g);
   int UNK2(int a, int b, int c, int d, int e);
   int draw(Buffer *buffer, int a, int b, int c, int x, int y);
+  // Sprite-sheet extraction used by the per-control init_class bodies; declared
+  // here so they compile, still pending_bodies forwarders. `extract`'s last
+  // parameter is a texture-heap pointer the callers pass as null.
+  int extract(Buffer *buffer, int a, int b, int c, int width, int height,
+              TexHeap *heap);
+  int create_blank(int width, int height, int depth);
   Sprite();
   ~Sprite() { ; }
 
