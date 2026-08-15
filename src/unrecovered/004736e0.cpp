@@ -1,14 +1,4 @@
 // ORIGINAL: 0x004736E0 FILE
-// DEFERRED: 12387 bytes, SEH frame plus a 21-entry jump table at 0x00473827
-//   (16 distinct targets, cases 15-20 collapsed to one). `MonuWin` is a
-//   real header (src/hypothesis_layouts.h) rather than an opaque scaffold
-//   class, and the brief's own "Reaching the vtable shim" section flags
-//   that calls on `this` go through a vtable this file does not supply on
-//   its own - the same class of problem as 0x00459680's six widget
-//   vtables, at smaller scale (one `Buffer` local at ebp-0x65C plus the
-//   `this`-relative vtable dispatch). Did not fit after landing 0x0052C880
-//   and reading enough of setup_player and this one to size them
-//   accurately; both need a dedicated pass. Left as BODY GOES HERE.
 // working copy - scaffold materialised by --work
 // name      ?on_redraw@MonuWin@@QAEXXZ
 // size      12387 bytes
@@ -2000,6 +1990,29 @@ static int *const g_009bbff0 = (int *)0x009BBFF0;
 class MonuWin { public:
     void on_redraw();
 };
+// DEFERRED: prologue is largely solved - `self+0x444` is the `Buffer`
+// sub-object for every `set_font`/`set_text_color`/`set_clip` call (confirmed
+// against 0x00473756 `lea edi,[esi+0x444]` then repeated `mov ecx,edi`), a
+// real `Buffer` local lives at [ebp-0x65c] (`call 0x5d7210 ; ??0Buffer@@QAE@XZ`
+// at 0x004737A1), and a `StringStruct(int)` local is constructed at
+// [ebp-0x48] via a real call (0x00473733) immediately followed by a
+// virtual-base vtable fixup on its own second field - the same
+// read-vbptr/add-adjustment/store-0x6698c0 shape already landed in
+// src/recovered/units/00492420.cpp's `ProdPicker::ProdPicker()`.
+//
+// UNBLOCKER NEEDED: past that, the 21-case switch (resolved in the brief)
+// makes ~15 calls each to `?draw@Sprite@@QAEHPAUBuffer@@HHH@Z` and
+// `?add@Spot@@QAEHHHHHHH@Z`, both `__thiscall`, whose receiver (`ecx`) is set
+// several instructions before the call by a loop/table walk with no
+// intervening `mov ecx` next to the `call` itself (checked directly, e.g.
+// 0x00476258 and 0x0047627E) - so each receiver needs tracing back through
+// the surrounding loop rather than reading off the call site, across ~15
+// call sites and several large monument-type data tables
+// (DAT_0094ca08/0c/10/14/18/1c, DAT_0094cd60, DAT_0094cea0/b4/cc/e4, each
+// scaled by the monument-type index at `self+0xa50`). That per-site tracing,
+// times ~15 sites, did not fit inside this pass; the prologue and the
+// StringStruct/Buffer locals above are the concrete unblocker for whoever
+// continues this.
 void MonuWin::on_redraw() {
     // BODY GOES HERE.
     //

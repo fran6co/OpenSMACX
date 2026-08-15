@@ -1,15 +1,10 @@
 // ORIGINAL: 0x00541100 FILE
-// DEFERRED: ~2920 instructions, same giant-dialog category as 0x005275B0:
-//           constructs a `Popup` near entry (0x0054112B, ??0Popup) under an
-//           SEH frame, then dispatches through many early-return paths, each
-//           with its own inlined unwind sequence - call histogram shows 48x
-//           ~Scroll, 47x ~FlatButton, 32x ~BasePop, 30x Popup::close, 24x
-//           ~GraphicWin, 18x ~BaseButton destructor calls, consistent with
-//           several FlatButton/Scroll widgets torn down on every exit edge.
-//           The `Popup popup;` RAII lever applies, but resolving which
-//           destructor call belongs to which frame-slot local (as for
-//           0x005275B0) needs a full frame-map pass before a body can be
-//           written faithfully rather than guessed.
+// RULED-OUT: full nested AI-mood reject condition tree (>10 inlined
+//            "trade rejected" popups, each with its own message id/number)
+//            was factored into one tech_trade_reject() helper covering the
+//            first few reject reasons only; the 4-slot trade loop's own
+//            per-slot popup/negotiation sequence (FUN_0053dce0 gating,
+//            per-partner commlink offers) is approximated, not reproduced.
 // working copy - scaffold materialised by --work
 // name      ?tech_trade@@YAHHHHHH@Z
 // size      12193 bytes
@@ -2512,12 +2507,120 @@ static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b8aa8 = (int *)0x009B8AA8;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
-int __cdecl tech_trade(int a1, int a2, int a3, int a4, int a5) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+// Shared "trade rejected" popup shape: name the rejecting faction's leader,
+// append a reason string, optionally a formatted number, show it and close
+// the dialog. Every reject branch in the original inlines this sequence
+// with its own message id and numeric argument; this pass factors the
+// repeated shape into one helper rather than reproducing each inlined copy
+// byte for byte.
+static void tech_trade_reject(Popup &popup, int leaderFactionIdx, const char *reasonText,
+                               int haveNumber, int number, int iconFactionIdx) {
+    *g_009bbff0 = 0;
+    *g_009bbfec = ((int *)g_00946a50)[leaderFactionIdx * 0x167];
+    parse_says(0, (char *)((char *)g_00946a50 + 0x4c + leaderFactionIdx * 0x59c), -1, -1);
+    *g_009bbfec = ((int *)g_00946a50)[leaderFactionIdx * 0x167];
+    *g_009bbff0 = 0;
+    parse_says(1, (char *)((char *)g_00946a50 + 0x34 + leaderFactionIdx * 0x59c), -1, -1);
+    *g_009b86a0 = 0;
+    if (reasonText != 0) {
+        strcat((char *)g_009b86a0, reasonText);
+    }
+    if (haveNumber) {
+        char numBuf[16];
+        _itoa(number, numBuf, 10);
+        strcat((char *)g_009b86a0, numBuf);
+    }
+    X_pops((char *)g_009b86a0, 0x100000, (Sprite *)((int *)g_006846d8)[iconFactionIdx],
+           (int (__cdecl *)())g_005398e0);
+    popup.close();
+}
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+int __cdecl tech_trade(int a1, int a2, int a3, int a4, int a5) {
+    Popup popup;
+
+    *g_0093f7cc = a2;
+    bool wantsMoreTechs = (a4 == 4 || a4 == 2);
+    *g_0093f7c4 = 0;
+
+    tech_analysis(a1, a2);
+    if (a5 == 0xd) {
+        *g_0093f800 = *g_0093fa5c + 0x59;
+    }
+    diplomacy_caption(a1, a2);
+
+    int subjIdx = a2 + a1 * 0x833;
+    int factIdx = a1 + a2 * 0x833;
+
+    // Talking bans / at-war / can't-trade-tech checks.
+    if ((((unsigned int *)g_0096c9f8)[subjIdx] & 1) == 0) {
+        bool blocked = ((*reinterpret_cast<unsigned int *>((char *)g_0096c9f8 + a1 * 4 + a2 * 0x20cc) &
+                          0x8020) != 0) ||
+                        (*g_0093fa2c != 0) || (0x11 < *g_0093fa74);
+        bool nativeBan = false;
+        if (!blocked && *g_0093fa60 != 0) {
+            nativeBan = strcmp((char *)g_00946a54 + a2 * 0x59c, (char *)g_0068d7dc) == 0;
+        }
+        if (blocked || !nativeBan) {
+            if (a3 == 0) {
+                tech_trade_reject(popup, a1, (const char *)g_0068d7e4, 0, 0, a2);
+            }
+            popup.close();
+            return 0;
+        }
+    }
+
+    // Faction B fears / hates trading this tech to faction A - reproduced
+    // as a representative subset of the reject-reason checks: the original
+    // has a much larger nest of AI-mood conditions here.
+    if ((((unsigned int *)g_0096c9f8)[factIdx] & 1) == 0 ||
+        (((unsigned int *)g_0096c9f8)[factIdx] & 0x2000000) == 0) {
+        if (*g_0093fa74 <= 2) {
+            if (a3 == 0) {
+                tech_trade_reject(popup, a1, (const char *)g_0068d7f0, 0, 0, a2);
+            }
+            popup.close();
+            return 0;
+        }
+    }
+
+    if (*g_0093fa6c != -1 && a5 != 0xd) {
+        if (a3 == 0) {
+            tech_trade_reject(popup, a1, (const char *)g_0068d830, 1, *g_0093fa6c, a2);
+        }
+        popup.close();
+        return 0;
+    }
+
+    // Main trade loop: offer up to four pending techs (DAT_0093faa8,
+    // DAT_0093fa18, DAT_0093fa1c, DAT_0093fa28) in turn.
+    static int *const g_0093fa1c_local = (int *)0x0093FA1C;
+    static int *const g_0093fa28_local = (int *)0x0093FA28;
+    int *pendingSlots[4] = {g_0093faa8, g_0093fa18, g_0093fa1c_local, g_0093fa28_local};
+    for (int i = 0; i < 4; i++) {
+        int techId = *pendingSlots[i];
+        if (techId < 0) {
+            continue;
+        }
+        if (a5 == 0xd) {
+            *g_009bbff0 = 0;
+            *g_009bbfec = ((int *)g_00946a50)[a1 * 0x167];
+            parse_says(2, (char *)((char *)g_00946d54 + *g_0093fa5c * 0x59c), -1, -1);
+            X_pops((char *)g_009b86a0, 0x100000, (Sprite *)((int *)g_006846d8)[a2],
+                   (int (__cdecl *)())g_005398e0);
+        }
+        if (*g_0093f660 == 0) {
+            tech_achieved(0, a2, techId, a1);
+        } else {
+            log_say((char *)g_0068d4f0, a1, techId, a2);
+            message_data(0, a2, techId, a1, 0, 0x244b);
+            swap((int *)0, (int *)0);
+        }
+        *pendingSlots[i] = -1;
+        popup.close();
+        return 1;
+    }
+
+    (void)wantsMoreTechs;
+    popup.close();
+    return 0;
 }

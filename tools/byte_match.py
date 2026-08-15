@@ -968,6 +968,63 @@ def compile_unit(unit, work: Path, stem: str, flags: str) -> bytes:
     return obj.read_bytes()
 
 
+# A UNIT THAT CANNOT BE COMPILED IN BOUNDED TIME IS A MEASUREMENT, NOT A HANG.
+# Measured on 0x005B0E00 (`setup_player`, 3,135 lines): `/O2` and `/O1` both
+# run past 150 s, and the collect that was waiting on it reached 54 minutes of
+# CPU in a single `cl`. `/Od` compiles the same file in 0 s, and `/O2` with
+# `#pragma optimize("g", off)` also compiles in 0 s - so the global optimiser
+# is the whole of it, and no amount of waiting was going to help.
+#
+# 60 s, and that is already 10x the slowest healthy compile ever measured here.
+# The whole game builds 129 units in 7 s; every unit in batch 22 but one came
+# back in under 2 s. There is no middle ground on this compiler - a unit either
+# optimises in seconds or does not finish at all - so a longer wait buys no
+# extra measurements and costs a minute per flag set on every doomed one.
+COMPILE_TIMEOUT_SECONDS = int(
+    os.environ.get("OPENSMACX_COMPILE_TIMEOUT", "60"))
+
+# `<HHIIIHH` in parse_coff: the COFF file header every real object starts with.
+COFF_HEADER_SIZE = 20
+
+
+def run_compiler(command: list, work: Path):
+    """Run `cl`, and leave nothing behind if it has to be stopped.
+
+    KILLING THE WRAPPER DOES NOT KILL THE COMPILER. `wine` launches CL.EXE as
+    a child; kill the wine process and CL.EXE is reparented to init and keeps
+    running with nothing left to collect its output. Measured twice today: a
+    collect stopped with `pkill` left a CL.EXE burning a full core for 48
+    minutes, and a probe stopped by `timeout` did the same. So the compiler
+    goes into its own session and the whole group is signalled.
+    """
+    import signal
+
+    process = subprocess.Popen(
+        command, cwd=work, env=wine_environment(),
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, errors="replace", start_new_session=True)
+    try:
+        stdout, stderr = process.communicate(
+            timeout=COMPILE_TIMEOUT_SECONDS)
+        return subprocess.CompletedProcess(
+            command, process.returncode, stdout, stderr)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            process.kill()
+        process.communicate()
+        # Spelled as a diagnostic `cl` would never write, so it reaches the
+        # per-unit report as the reason rather than vanishing into a missing
+        # .obj that reads as an ordinary compile failure.
+        return subprocess.CompletedProcess(
+            command, 1, "",
+            f"fatal error OPENSMACX0: the optimiser did not finish within "
+            f"{COMPILE_TIMEOUT_SECONDS}s; measured cause on the one unit that "
+            f"does this is /Og, which /Od and #pragma optimize(\"g\",off) both "
+            f"clear in 0s")
+
+
 def compile_batch(units: dict, work: Path, flags: str) -> dict:
     """Compile many units in ONE invocation. 21.6x, measured.
 
@@ -987,9 +1044,7 @@ def compile_batch(units: dict, work: Path, flags: str) -> dict:
     response = work / "cl.rsp"
     response.write_text(" ".join(flags.split()) + "\n"
                         + "\n".join(names[stem] for stem in units) + "\n")
-    done = subprocess.run(["wine", str(VC6_CL), "/nologo", "@cl.rsp"],
-                          cwd=work, env=wine_environment(),
-                          capture_output=True, text=True)
+    done = run_compiler(["wine", str(VC6_CL), "/nologo", "@cl.rsp"], work)
     # RETURNED, not stashed on the function. This used to be
     # `compile_batch.diagnostics = ...`, a single slot on a module-level
     # object, which is exactly one shared mutable cell - fine while the only
@@ -998,7 +1053,14 @@ def compile_batch(units: dict, work: Path, flags: str) -> dict:
     out = {}
     for stem in units:
         obj = work / f"{stem}.obj"
-        out[stem] = obj.read_bytes() if obj.is_file() else None
+        # EXISTING IS NOT THE SAME AS COMPLETE. A compiler stopped partway
+        # leaves the .obj it had opened, and `is_file()` alone called that a
+        # successful compile: a zero-byte object went to `parse_coff`, which
+        # asked for the 20-byte COFF header and died on the whole run with a
+        # struct.error - one killed unit taking 33 finished measurements with
+        # it. Anything too short to hold a header never compiled.
+        data = obj.read_bytes() if obj.is_file() else None
+        out[stem] = data if data and len(data) >= COFF_HEADER_SIZE else None
     return out, diagnostics
 
 

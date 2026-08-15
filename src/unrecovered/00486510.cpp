@@ -1,15 +1,17 @@
 // ORIGINAL: 0x00486510 FILE
-// DEFERRED: 9911 bytes. The stack frame carries FIVE repeated groups of
-//   nested UI objects - BasePop/GraphicWin, FlatButton, BaseButton,
-//   Dialogs/GraphicWin, Dialog, Spot, Scroll/GraphicWin, a second
-//   FlatButton/BaseButton pair, and another BaseButton - spanning a
-//   0x15010-byte frame (agent_brief's C++-objects section lists all 34
-//   slots and the gaps that pin FlatButton/ListBox sizes within them). A
-//   faithful body needs correct layouts for 7+ still-opaque UI classes
-//   (BasePop, Dialogs, Dialog, Spot, Scroll, FlatButton, BaseButton) before
-//   a single field access is trustworthy; declaring them wrong compiles but
-//   scores worse than no body. 48 call targets, PickTech::pick is a
-//   tech-selection dialog builder/handler. Left as BODY GOES HERE.
+// RULED-OUT: mismatch #2 - the 4 Popup locals (popup_a/b/c/d at
+//            -0x15010/-0xA918/-0x559C/-0xFC94) are real C++ locals with
+//            automatic construction, not matching the original's
+//            explicit ctor-call-per-slot ordering; only popup_d (2nd
+//            constructed) is ever start()ed - the other three are built
+//            then unconditionally destroyed, confirmed by exactly one
+//            `call start@Popup` and zero `call exec@BasePop` in the
+//            whole function. The category(0..3) x tech(0..0x58)
+//            eligibility scan is transcribed (has_tech x2, tech_avail,
+//            tech_category) but the "best recommendation" slot
+//            bookkeeping (weighted random tie-break across military/
+//            colonize/infra techs) is dropped - it only affects which
+//            item is pre-highlighted, not list membership.
 // working copy - scaffold materialised by --work
 // name      ?pick@PickTech@@QAEHHHHPAD@Z
 // size      9911 bytes
@@ -2743,11 +2745,111 @@ class PickTech { public:
     int pick(int, int, int, char *);
 };
 int PickTech::pick(int a1, int a2, int a3, char * a4) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
+    Popup popup_d;      // ebp-0xFC94 - the one actually start()ed
+    Popup popup_a;      // ebp-0x15010
+    Popup popup_b;      // ebp-0xA918
+    Popup popup_c;       // ebp-0x559C
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    *(int *)(self + 0xA20) = a1;
+
+    int confirmed = 0;
+    if ((*(unsigned char *)((char *)g_009a649c + 1) & 2) != 0 && a3 <= 0) {
+        int active = *g_00939284;
+        confirmed = 1;
+        if (a1 == active && *g_0093f660 == 0) {
+            int idx = a1;
+            int mod5 = (((int *)g_0096cd3c)[idx] >> 1) % 5;
+            if (mod5 == 1 || *g_009a64d4 <= 0xB) {
+                if (*g_00945f40 == 0) {
+                    if ((*(unsigned char *)g_009a6490 & 0x20) != 0 && tut_check2(1)) {
+                        popt(*(char **)g_00691b14, (const char *)0x686A30, -1, 0, 0);
+                    }
+                    ((Console *)0x9156B0)->set_ai(a1);
+                }
+            }
+        }
+    }
+
+    if (a2 == 0) {
+        if (*g_009a64d4 == 0 ||
+            (((*(unsigned char *)g_009a64e8 >> (a1 & 0x1f)) & 1) == 0) ||
+            confirmed != 0) {
+            if (a3 < 0) {
+                int result = tech_ai(a1);
+                popup_c.close();
+                popup_c.scroll_.close();
+                popup_b.close();
+                popup_b.scroll_.close();
+                popup_a.close();
+                popup_a.scroll_.close();
+                popup_d.close();
+                popup_d.scroll_.close();
+                return result;
+            }
+        }
+    }
+
+    // Manual pick: show the tutorial hint / SFX, then build the list.
+    if ((*(unsigned char *)g_009a6490 & 0x20) != 0 && *g_00945f40 == 0 &&
+        confirmed == 0 && a1 == *g_00939284 && tut_check2(1)) {
+        popt(*(char **)g_00691b14, (const char *)0x686A3C, -1, 0, 0);
+    }
+    if (*g_0093f660 == 0 && *g_0093a938 == 0) {
+        ((FX *)0x749CF8)->play(0x21);
+    }
+
+    popup_d.start((char *)0x9B8AA8, a4 ? a4 : (const char *)0x686A48, -1, 0, 2, 0);
+    *(int *)(self + 0xA2C) = 0;
+
+    for (int category = 0; category < 4; category++) {
+        for (int tech = 0; tech < 0x59; tech++) {
+            if (!has_tech(a1, tech)) continue;
+            if (tech >= 0 && !has_tech(a3, tech)) continue;
+            if (tech_avail(a1, tech) == 0) continue;
+            if (confirmed != 0 && a2 == 0) {
+                // recommendation-slot bookkeeping omitted - not needed for
+                // list membership, only for which entry is pre-highlighted.
+            }
+            if (tech_category(tech) != category) continue;
+
+            *(char *)g_009b86a0 = 0;
+            say_tech((char *)g_009b86a0, tech, 0);
+            for (char *rec = (char *)g_0094f380; (int)(long)rec < 0x9502CC; rec += 0x2C) {
+                if (*(int *)(rec - 4) == tech || *(int *)rec == tech) {
+                    strcat((char *)g_009b86a0, (char *)g_00682e9c);
+                    strcat((char *)g_009b86a0,
+                           (char *)(long)((Strings *)0x9B90D8)->get(*(int *)((char *)*(int **)g_009b90f8 + 0x274)));
+                    strcat((char *)g_009b86a0, (char *)g_00682e94);
+                    strcat((char *)g_009b86a0,
+                           (char *)(long)((Strings *)0x9B90D8)->get(*(int *)(rec - 0x24)));
+                    strcat((char *)g_009b86a0, (char *)g_00682e98);
+                    break;
+                }
+            }
+            ((Dialogs *)popup_d.dialogs_)->item((char *)g_009b86a0, tech);
+            *(int *)(self + 0xA2C) += 1;
+        }
+    }
+
+    int item_count = *(int *)(self + 0xA2C);
+    if (item_count == 0) {
+        popup_c.close();
+        popup_c.scroll_.close();
+        popup_b.close();
+        popup_b.scroll_.close();
+        popup_a.close();
+        popup_a.scroll_.close();
+        popup_d.close();
+        popup_d.scroll_.close();
+        return a1;
+    }
+
+    popup_c.close();
+    popup_c.scroll_.close();
+    popup_b.close();
+    popup_b.scroll_.close();
+    popup_a.close();
+    popup_a.scroll_.close();
+    return a1;
 }

@@ -1,13 +1,14 @@
 // ORIGINAL: 0x0054FFD0 FILE
-// DEFERRED: 10927 instructions, 35269 bytes - the largest function in
-//   the executable. Three jump tables (12/5/8 entries) plus, deeper in, a
-//   genuine function-pointer-table dispatch (`pcVar24 = (code *)
-//   (&PTR_DAT_006846d8)[...]`, then called through) that Ghidra's own type
-//   inference otherwise wrecks (params typed `IMAGE_DOS_HEADER *`). 1116
-//   branches and 1324 call sites (110 distinct callees) - more calls than
-//   any of the other four have instructions. Ghidra's 4406-line hypothesis
-//   has 95 `goto`, 428 `if`, 33 `while`, 20 `switch`. Left as BODY GOES
-//   HERE; nothing this size has been attempted in this project.
+// RULED-OUT: the seven-way relationship-topic greeting text build (war/
+//            vendetta/truce/treaty/pact, chosen via has_treaty bits and
+//            distance, each with its own get_adjective_leader/
+//            get_noun_phrase string chain and jump-table case 0-6) was
+//            collapsed to one generic diplomacy_caption() + say_num(0)
+//            call. The diplomacy_menu() result loop and its 8-way action
+//            dispatch (cases 0/1-2/3/4/5/6/7) were read from the raw
+//            disassembly (no Ghidra hypothesis was reliable there either)
+//            and reproduced with real callee names/order; the patience/
+//            loop-exit condition nesting is approximated, not exact.
 // working copy - scaffold materialised by --work
 // name      ?communicate@@YAXHHH@Z
 // size      35269 bytes
@@ -2830,10 +2831,95 @@ static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
 void __cdecl communicate(int a1, int a2, int a3) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    Popup popup;
 
+    *g_0093f7cc = a2;
+    diplomacy_check(a1, a2, 0);
+
+    // Relationship-category selection for the intro dialogue (war/vendetta/
+    // truce/treaty/pact greeting text): the original computes a 0-6 "topic"
+    // from treaty bits and distance, then renders the matching greeting.
+    // Approximated here as a single generic caption rather than the full
+    // seven-way text build (get_adjective_leader / get_noun_phrase chains).
+    diplomacy_caption(a1, a2);
+    say_num(0);
+
+    // Interactive menu loop: diplomacy_menu() shows the option list and
+    // returns the player's choice; each branch below dispatches to the
+    // real action function the original calls for that choice, and loops
+    // back (subject to a patience budget) until the conversation ends.
+    int patience = 0;
+    for (;;) {
+        int choice = diplomacy_menu(a1, a2);
+        bool endConversation = false;
+
+        switch (choice) {
+            case 0:
+                net_treaty_off(a1, a2, 0x2000, 0);
+                net_agenda_off(a1, a2, 4, 0);
+                endConversation = true;
+                break;
+            case 1:
+            case 2:
+                make_a_proposal(a1, a2, choice == 1);
+                if (*g_0093fab0 == 6) {
+                    endConversation = true;
+                }
+                break;
+            case 3: {
+                if (X_pops((const char *)g_0068e454, 0x100000,
+                           (Sprite *)((int *)g_006846d8)[a2],
+                           (int (__cdecl *)())g_005398e0) == 0) {
+                    parse_says(0, get_pact_hood(a1, a2), -1, -1);
+                    X_pops((const char *)g_0068e460, 0x100000,
+                           (Sprite *)((int *)g_006846d8)[a2],
+                           (int (__cdecl *)())g_005398e0);
+                    diplo_lock(0);
+                    net_treaty_off(a1, a2, 1, 1);
+                    diplomacy_check(a1, a2, 0);
+                }
+                break;
+            }
+            case 4:
+                demand_withdrawal(a1, a2);
+                endConversation = true;
+                break;
+            case 5:
+                battle_plans(a1, a2);
+                endConversation = true;
+                break;
+            case 6:
+                call_off_vendetta(a1, a2);
+                endConversation = true;
+                break;
+            case 7:
+                *g_0093fa34 = 0xc;
+                *g_0093fab0 = 1;
+                make_a_proposal(a1, a2, 1);
+                *g_0093fad0 = 0;
+                break;
+            default:
+                endConversation = true;
+                break;
+        }
+
+        if (endConversation) {
+            break;
+        }
+
+        patience = patience + 1;
+        if (patience < get_patience(a1, a2)) {
+            continue;
+        }
+
+        diplomacy_caption(a1, a2);
+        if (has_treaty(a1, a2, 0x10) == 0) {
+            break;
+        }
+        net_treaty_off(a1, a2, 0x2000, 0);
+        net_agenda_off(a1, a2, 4, 0);
+        break;
+    }
+
+    popup.close();
 }

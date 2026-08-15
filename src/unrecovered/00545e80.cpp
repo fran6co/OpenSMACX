@@ -1,16 +1,4 @@
 // ORIGINAL: 0x00545E80 FILE
-// DEFERRED: same single-Popup/Dialogs RAII frame as proposal_menu (0x0054DCF0,
-//           identical BasePop+Scroll+2xFlatButton layout - that lever applies
-//           here too) but ~85% of the 2220 raw instructions, from 0x00545EA5
-//           to the first start@Popup at 0x0054711D, is AI combat-odds math:
-//           contiguous() reachability, great_satan() Planet-Cult alignment
-//           check, magic-constant integer division (0x66666667~/5,
-//           0x55555556~/3) against faction-relation tables at 0x96c9f8,
-//           0x96db5c, 0x96cb04, 0x96da40, 0x96c9e4, 0x96cdbc, 0x945dd8.
-//           Four early-exit sites converge on a shared `jmp 0x547380`
-//           (close(popup); ~Scroll()) tail. Ghidra is corrupted for this
-//           address (per brief) so none of that math is cross-checkable the
-//           way proposal_menu's was - raw disasm only, not done this pass.
 // working copy - scaffold materialised by --work
 // name      ?propose_attack@@YAHHH@Z
 // size      8344 bytes

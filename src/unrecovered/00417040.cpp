@@ -1,23 +1,4 @@
 // ORIGINAL: 0x00417040 FILE
-// DEFERRED: object layout IS solved (not the blocker) - the whole
-//           [ebp-0x158A4..ebp-0xAB4] frame is FOUR separate `Popup popup;`
-//           locals (each 0x537C = sizeof(BasePop)+sizeof(Scroll), matching
-//           the class-map gaps exactly), because BasePop already models
-//           Heap/2xFlatButton/Sprite/Spot/`uint8_t dialogs_[0xC94]` as its
-//           own members (src/basepop.h) - no hand-placed sub-objects needed.
-//           The blocker is the SEH: an 11-entry jump table at
-//           0x41786E-0x418DC0 (4-entry nested one at 0x417C0B) interleaves
-//           FOUR RAII'd Popup lifetimes across branches, and Ghidra's
-//           decompilation is dominated by the compiler's fs:[0] unwind-index
-//           writes (`local_8._0_1_ = N` before every call) which it cannot
-//           interpret as C++ EH and which must NOT be hand-transcribed (the
-//           lever is `Popup popup;` RAII, which emits its own index writes).
-//           One jump-table case (the rich-popup path, ~0x4181FD) also
-//           placement-constructs a real `Dialogs` into a popup's raw
-//           `dialogs_` buffer - `Dialogs dialogs;` already compiles
-//           standalone elsewhere in src/recovered/ (0047e340.cpp,
-//           0047f5f0.cpp), so that part is tractable too, just not reached
-//           in the budget left after 004BC6E0 and 005BB000 in this batch.
 // working copy - scaffold materialised by --work
 // name      ?production@BaseWin@@QAEXHH@Z
 // size      9193 bytes
@@ -2962,6 +2943,37 @@ class BaseWin { public:
     void UNK7();
     void production(int, int);
 };
+// DEFERRED: prologue is solved (4 sequential `Popup` locals + 1 `GraphicWin`
+// local, matching the 4 `??0Popup@@QAE@XZ` ctor calls at 0x00417070-0x004170A0
+// and the `??0GraphicWin@@QAE@XZ` ctor at 0x004170AF; every one of the ~40
+// EH-funclet `jmp` entries at 0x00651BB0+ reproduces automatically once those
+// are declared as real RAII locals plus `Popup::~Popup(){ close(); }` defined
+// IN THIS FILE - `~Popup()` has no out-of-line address, matching bytes prove
+// it is always inlined, so the 6-call chain seen at each of 0x00417175,
+// 0x00417203, 0x00417222... [close();Scroll close+2xFlatButton dtor+GraphicWin
+// dtor inlined via Scroll's own missing dtor; then BasePop dtor] is exactly
+// what an implicit ~Popup() generates for a `Scroll scroll_` member atop a
+// BasePop base, given close() runs first).
+//
+// UNBLOCKER NEEDED: the body past the prologue is one continuous modal event
+// loop (confirmed - spans 0x00417040-0x00418DBD, a single function, not a
+// separate callback) built around `?exec@BasePop@@QAEHHP6AHXZ@Z` and a
+// resolved 11+4-entry jump table, touching 54 distinct call targets across
+// >15 unrelated subsystems (NetDaemon::lock_base/unlock_base, FX::play,
+// Dialogs::item, ProdPicker::exec/calculate, DesignWin::exec, wave_it,
+// help_topic, interlude, base_making/base_reset/base_compute, parse_say
+// family, log_say, message_data, synch_veh, veh_at, draw_radius...). The
+// Ghidra hypothesis for this range embeds its SEH/state bookkeeping directly
+// in the arithmetic (`local_8._0_1_ = N`, `local_54[9] = (int *)0x417b25`) at
+// a rate that made ~30% of decompiled lines artifacts, not logic (measured:
+// 1240 raw lines -> 821 after stripping the two confirmed artifact shapes),
+// so trusting it for control flow risks landing a body that compiles but
+// computes something else - which the brief explicitly ranks worse than
+// leaving the address unattempted. Resolving this needs the same
+// raw-disassembly, case-by-case reconstruction already applied to the
+// prologue, extended across all 11+4 jump-table targets; that is a
+// same-order-of-magnitude effort as the whole rest of this batch, so it did
+// not fit inside this pass.
 void BaseWin::production(int a1, int a2) {
     // BODY GOES HERE.
     //

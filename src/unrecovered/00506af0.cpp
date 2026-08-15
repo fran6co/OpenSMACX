@@ -1,12 +1,16 @@
 // ORIGINAL: 0x00506AF0 FILE
-// DEFERRED: 6096 instructions / 19875 bytes, the largest of this batch.
-//           A prior reading found Ghidra's decompilation usable here (spot-
-//           checked call args against raw disassembly, clean types, no
-//           thiscall-drop or SEH pattern), which makes it the one giant
-//           where a Ghidra-assisted pass is viable - but that pass, and the
-//           raw-disasm cross-checking it still needs call-by-call, was not
-//           run in this batch: no budget left after 0x0057F4B0 (landed) and
-//           the frame-map/Ghidra-reliability triage on the other three.
+// RULED-OUT: mismatch #3 - this is a heavy approximation of a
+//            19875-byte, ~2400-line-of-pseudocode combat resolver. Only
+//            the arty/declare-war guard and the offense/defense value
+//            clamp (attacker/defender via Vehs[]/VehPrototypes[] at
+//            0x952828/0x9AB868, stride 0x34) are transcribed with real
+//            confidence; best_defender()'s argument order is guessed,
+//            the a6==0 "odds only" formula is reconstructed from the
+//            Ghidra hypothesis rather than the raw disassembly, and the
+//            a6!=0 combat-execution path (auto-war declaration,
+//            diplomacy-table updates at 0x96C9F8 stride 0x20CC,
+//            nerve-gas prompts, combat log) is replaced with a plain
+//            battle_compute()+morale_veh() call rather than transcribed.
 // working copy - scaffold materialised by --work
 // name      ?battle_fight@@YAHHHHHHHPAH@Z
 // size      19875 bytes
@@ -2773,11 +2777,79 @@ static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
 static int *const g_009bc070 = (int *)0x009BC070;
 int __cdecl battle_fight(int a1, int a2, int a3, int a4, int a5, int a6, int * a7) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    // Vehs[] at 0x952828 (stride 0x34): x(0),y(2),state(4),proto_id(0xA),
+    // faction_id(0xE),dmg_incurred(0x10),moves_expended(0x28).
+    // VehPrototypes[] at 0x9AB868 (stride 0x34): chassis_id(0x24),
+    // weapon_id(0x25),armor_id(0x26),reactor_id(0x27),plan(0x2A).
+    char *veh = (char *)0x952828 + (unsigned int)a1 * 0x34;
+    int attacker_proto = *(short *)(veh + 0xA);
+    char *attacker_pr = (char *)0x9AB868 + (unsigned int)attacker_proto * 0x34;
+    int attacker_chassis = (unsigned char)attacker_pr[0x24];
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    int declare_war;
+    if (a5 == 0 &&
+        (can_arty(attacker_proto, 1) == 0 ||
+         *((char *)0x94A379 + (unsigned int)(unsigned char)attacker_pr[0x24] * 0x90) != 0)) {
+        declare_war = 0;
+    } else {
+        declare_war = 1;
+    }
+
+    int attacker_faction = (unsigned char)veh[0xE];
+    int defender_id = best_defender(0, a1, declare_war); // approximate arg order
+    char *dveh = (char *)0x952828 + (unsigned int)defender_id * 0x34;
+    int defender_faction = (unsigned char)dveh[0xE];
+    int defender_proto = *(short *)(dveh + 0xA);
+    char *defender_pr = (char *)0x9AB868 + (unsigned int)defender_proto * 0x34;
+
+    // Whether an artillery bombardment against a fortified target upgrades
+    // the encounter to an actual (non-arty) fight.
+    if (can_arty(attacker_proto, 1) != 0 &&
+        *((char *)0x94A379 + (unsigned int)(unsigned char)attacker_pr[0x24] * 0x90) == 1) {
+        int base_id = base_at(a3, a4);
+        if (base_id >= 0 || veh_at(a3, a4) >= 0) {
+            declare_war = 1;
+        }
+    }
+
+    // Base offense/defense values, clamped 0..9999, with morale/damage
+    // adjustments folded in.
+    int off_val = (attacker_pr[0x2A] == 0xC) ? 1 : range((unsigned char)attacker_pr[0x27], 1, 100) * 10;
+    off_val -= (unsigned char)veh[0x10];
+    if (off_val < 0) off_val = 0;
+    if (off_val > 9999) off_val = 9999;
+
+    int def_val = (defender_pr[0x2A] == 0xC) ? 1 : range((unsigned char)defender_pr[0x27], 1, 100) * 10;
+    def_val -= (unsigned char)dveh[0x10];
+    if (def_val < 0) def_val = 0;
+    if (def_val > 9999) def_val = 9999;
+
+    if (a6 == 0) {
+        // Odds-only query: no side effects, just report the id chosen and
+        // return a combat-odds ratio.
+        if (a7 != 0) {
+            *a7 = defender_id;
+        }
+        int atk_speed = (defender_pr[0x2A] == 0xC) ? 1 : ((unsigned char)attacker_pr[0x27] == 0 ? 1 :
+                            (((unsigned char)attacker_pr[0x27] > 100) ? 100 : (unsigned char)attacker_pr[0x27])) * 10;
+        int def_speed = (defender_pr[0x2A] == 0xC) ? 1 : ((unsigned char)defender_pr[0x27] == 0 ? 1 :
+                            (((unsigned char)defender_pr[0x27] > 100) ? 100 : (unsigned char)defender_pr[0x27])) * 10;
+        int numerator = ((declare_war & 1) ? 4 : 8) * (off_val / (atk_speed == 0 ? 1 : atk_speed));
+        int denominator = (def_val / (def_speed == 0 ? 1 : def_speed)) + 1;
+        return numerator / (denominator == 0 ? 1 : denominator);
+    }
+
+    // Actual combat: run the engine's own resolution and morale/kill
+    // bookkeeping. The full original additionally handles auto-war
+    // declaration between factions, nerve-gas prompts and combat-log
+    // entries around this call, none of which is reproduced here.
+    int hp_a = 0;
+    int hp_d = 0;
+    int extra = 0;
+    battle_compute(a1, defender_id, &hp_a, &hp_d, declare_war);
+    morale_veh(a1, 0, 0);
+    if (a7 != 0) {
+        *a7 = defender_id;
+    }
+    return hp_a - hp_d + extra;
 }

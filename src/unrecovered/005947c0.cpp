@@ -1,33 +1,35 @@
 // ORIGINAL: 0x005947C0 FILE
-// DEFERRED: 6708 instructions, 23716 bytes - no jump table despite the
-//   name (a single if/else chain on the order code, not a switch); 1056
-//   branches (16%, the highest branch density of the five) and 405 call
-//   sites into 111 distinct callees. Ghidra's 3693-line hypothesis has 121
-//   `goto` and 471 `if` against a Popup/__try-__finally scope-index state
-//   machine (return addresses stored into `local_30`) and 7-level pointer
-//   types throughout. An order of magnitude past the largest function
-//   landed in this project (0x005CC940, 2380 bytes, UNRECOVERABLE-partial);
-//   left as BODY GOES HERE.
-// DEFERRED (2026-08-15 update): the SEH/frame puzzle this note flags IS now
-//   solved, for whoever picks this up next. `lea ecx,[ebp-0x5410]; call
-//   ??0Popup@@QAE@XZ` at entry is a plain `Popup popup;` local (0x537C,
-//   BasePop+Scroll, matching the class-map's [ebp-0x5410]..[ebp-0xBE8]
-//   region) - `Popup`/`BasePop` (src/popup.h, src/basepop.h) ALREADY model
-//   the embedded Heap, 2x FlatButton, Sprite, Spot and a raw
-//   `uint8_t dialogs_[0xC94]` buffer as BasePop's own members, so none of
-//   that needs hand-placed sub-objects; `Dialogs dialogs;` also already
-//   compiles standalone (src/recovered/units/0047e340.cpp, 0047f5f0.cpp) for
-//   wherever this function placement-constructs one into that buffer. This
-//   was cross-checked against two siblings this same batch: tech_achieved
-//   (0x5BB000, DEFERRED) and BaseWin::production (0x417040, DEFERRED) share
-//   the identical frame shape byte-for-byte (BasePop@0x5400/0x158A4-class
-//   gaps, the same 0xB4C=sizeof(FlatButton) and 0xA5C signature gaps). The
-//   remaining blocker is purely the 6708-instruction if/else volume, not the
-//   object model - the same instruction-by-instruction discipline used for
-//   0x004BC6E0 (tour, landed MISMATCH this batch) would work here, just at
-//   roughly 4x the length and with Ghidra's own type-propagation not settling
-//   (see its output's leading WARNING), so raw disassembly is the only
-//   trustworthy source throughout - budget for it as its own pass.
+// DEFERRED: largest address in this batch (6708 instructions, no jump
+//     table) and its frame confirms the SAME object graph as
+//     0x005BB000/tech_achieved in this batch, offset-for-offset:
+//       [ebp-0x5410] BasePop,GraphicWin,Popup   [ebp-0x49B4]/[ebp-0x3E68]
+//       FlatButton (Popup's own two, gap 0xB4C = sizeof(FlatButton)
+//       each)   [ebp-0x32F8] Sprite   [ebp-0x31F8] ListBox
+//       [ebp-0x30B8] GraphicWin   [ebp-0x26A0] Dialog   [ebp-0x2378]
+//       Spot   [ebp-0x21E0] GraphicWin (a second, separate Scroll)
+//       [ebp-0x1734]/[ebp-0xBE8] FlatButton,BaseButton (that Scroll's
+//       own two buttons) - plus [eax+0x1C] CheckBox and [eax+0x8C]
+//       EditGroup/SpriteBox reached through a register, matching
+//       tech_achieved's DialogEntry-linked-list widget teardown exactly.
+//     tech_achieved's own DEFERRED note (this batch) traced that ListBox/
+//     GraphicWin/Dialog cluster to a hand-inlined `Dialogs::Dialogs()`
+//     doing real vbtable-relative virtual-base placement - i.e.
+//     `class Dialogs : public ListBox` sharing a GraphicWin virtual base,
+//     which the flattened `Dialogs` class this file's scaffold emits
+//     (a direct member, not `: ListBox`) cannot reproduce. Whatever
+//     fraction of THIS function's Popup/Dialogs teardown block hits that
+//     same inlined constructor is blocked the same way; the rest is
+//     dispatch-heavy multiplayer/combat logic
+//     (?parse_says@@ 36x, ?pop@NetMsg@@ 28x, ?stack_check@@ 20x,
+//     ?speed@@ 18x, ?draw_tile@@ 12x, ?has_abil@@ 10x, ?veh_skip@@ 8x,
+//     ?synch_veh@@/?await_synch@NetDaemon@@ 7x, _rand 7x) with the same
+//     low-repetition/bespoke-argument risk profile flagged on
+//     0x00561080/enemy_strategy in this batch.
+// UNBLOCKER: same as 0x005BB000 for the Dialogs cluster (direct-offset
+//     approximation, not true vbtable computation); the rest needs the
+//     g_00xxxxxx cross-check technique applied at this function's scale,
+//     which is a multi-pass undertaking on its own given 6708
+//     instructions.
 // working copy - scaffold materialised by --work
 // name      ?order_veh@@YAHHHH@Z
 // size      23716 bytes

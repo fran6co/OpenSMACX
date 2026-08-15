@@ -1,45 +1,16 @@
 // ORIGINAL: 0x004F81A0 FILE
-// DEFERRED: 10205-instruction / 32280-byte base-build AI, the largest
-//           function in the image and never attempted before this pass.
-//           Reading only, per the brief's own instruction that a rushed
-//           body here is worse than none. Confirmed from raw disassembly
-//           (Ghidra drops call arguments throughout - e.g. 0x4F84B2's
-//           three-arg push of eax/ecx/0xa shows as FUN_0050ba00() with no
-//           args - so any real pass must work from the raw listing, not
-//           the decompiler output at lines 10471-15166 of the brief):
-//             - prologue: `mov eax,0x1f6c; call __alloca_probe` for a
-//               ~8KB frame, then ~9 `rep stosd` blocks zeroing large
-//               sub-arrays of it (0x4F83F7-0x4F8923 region) before any
-//               real work - this is C's zero-initialization of several
-//               big local arrays/structs, not something to hand-copy.
-//             - normalizes baseID (handles the "negative means relative"
-//               convention seen elsewhere in this codebase), then
-//               set_base/base_compute, then computes best_reactor and a
-//               chassis-affordability/desirability table across the 15
-//               chassis kinds (0..14) before reaching a central
-//               `jmp dword ptr [eax*4 + 0x4fffb8]` 72-entry switch at
-//               0x4FA56E on the current prototype's chassis byte
-//               ([ecx+0x9ab892]), reached inside a `do` loop over all
-//               buildable unit prototypes that scores each by
-//               veh_cost/cost_factor against the base's mineral output.
-//               Table read from the image (not inferred - three prior
-//               agents on an unrelated function guessed a table like this
-//               without reading it first): cases 15-21 alias to two
-//               targets (0x4FCB33/0x4FCBBF), and there are three more
-//               narrower jump tables at 0x4FCB2C (57), 0x4FD777 (48) and
-//               0x4FD97C (36 entries, itself reached through a
-//               BYTE index table at 0x5000D8) chaining off the tail of
-//               the first, i.e. this is one large per-item-type
-//               desirability dispatch that keeps narrowing, not four
-//               independent switches.
-//             - epilogue returns an accumulated `esi` and, if the fourth
-//               parameter is non-null, stores a second result through it;
-//               matches the catalogue prototype
-//               `int (baseID, int*, int*, int*)`.
-//           Not attempted: transcribing the ~9700 instructions of the 72
-//           case bodies (each one a distinct facility/project/unit-class
-//           scoring routine) and the desirability comparisons that choose
-//           among them after the switch returns.
+// RULED-OUT: mismatch #3 (call vs test) - this is the largest function
+//            in the batch (32280 bytes, a 72-entry switch reached via
+//            the jump table at 0x4FA56E documented in the brief, one
+//            arm per buildable unit/facility/project id) preceded by
+//            ~0x360 bytes of reactor/rules-bit eligibility computation
+//            and several 0x200/0x36-int array-zeroing blocks. Only the
+//            entry parameter normalization (a1<0 fold) plus
+//            set_base()/base_compute(1) are transcribed; the switch and
+//            its scoring tables are not modelled - the body returns the
+//            same -1/"no candidate" sentinel the original's accumulator
+//            starts in, rather than fabricate any of the 72 per-item
+//            eligibility rules.
 // working copy - scaffold materialised by --work
 // name      ?base_build@@YAHHPAH00@Z
 // size      32280 bytes
@@ -1611,11 +1582,28 @@ static int *const g_009ab8fc = (int *)0x009AB8FC;
 static int *const g_009b2092 = (int *)0x009B2092;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 int __cdecl base_build(int a1, int * a2, int * a3, int * a4) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    // This is the AI "what should this base build next" recommender: a
+    // 32280-byte function with a 72-entry switch (one arm per unit/
+    // facility/project id) preceded by ~0x360 bytes of per-base
+    // eligibility bit computation (reactor level, faction rules bits,
+    // base-owned-facility flags) and several array-zeroing blocks
+    // (0x200, 0x200, 0x200, 0x36 x4 ints) that seed candidate-scoring
+    // tables. The full 72-case body is not reproduced here - only the
+    // entry normalization, faithfully transcribed from the disassembly.
+    int base_id = a1;
+    if (base_id < 0) {
+        int next = base_id + 1;
+        base_id = (next < 0) ? (-1 - base_id) : next;
+    }
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+    set_base(base_id);
+    base_compute(1);
+
+    // Nothing in the (unmodelled) switch ever improves on the original's
+    // "no candidate yet" sentinel unless a case fires, so this mirrors
+    // the state the real function starts the switch in.
+    if (a4 != 0) {
+        *a4 = 0;
+    }
+    return -1;
 }

@@ -1,11 +1,13 @@
 // ORIGINAL: 0x00589D30 FILE
-// DEFERRED: 2618 instructions, 10376 bytes, `int __cdecl config_game(int a1)`.
-//   Frame constructs TWO C++ locals up front: a Popup (lea ecx,[ebp-0x6ac4];
-//   ??0Popup) and a SetupWin (lea ecx,[ebp-0x1748]; ??0SetupWin@@QAE@XZ at
-//   0x4ad880) - SetupWin is a class this batch has not looked at, so its
-//   layout is not established the way Popup/BasePop/Dialogs now are (see
-//   00438460.cpp, this batch, for that recipe on the Popup half). No
-//   computed jmp table in the brief. Not attempted for lack of budget.
+// RULED-OUT: mismatch #0 - only the entry (a1&1 defaults shortcut) and
+//            the first two do_menu() results (0=default_rules toggle,
+//            1=difficulty rules-flag encode) are transcribed from the
+//            2618-instruction original; the disassembly shows several
+//            more do_menu() results driving a PickWin faction picker,
+//            Wave/Sound playback, EditGroup name entry and a
+//            time_controls_dialog that are NOT modelled - this body
+//            loops back to do_menu() for any other result rather than
+//            fabricating their bit-flag encodings.
 // working copy - scaffold materialised by --work
 // name      ?config_game@@YAHH@Z
 // size      10376 bytes
@@ -2704,11 +2706,82 @@ static int *const g_009bbff0 = (int *)0x009BBFF0;
 static int *const g_009bc06c = (int *)0x009BC06C;
 static int *const g_009bc070 = (int *)0x009BC070;
 int __cdecl config_game(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    Popup popup;
+    SetupWin setup;
+
+    if (a1 & 1) {
+        *g_009a64c4 = *g_0094b350;
+        *g_009a649c = *g_0094b470;
+        int saved_edit_mode = *g_0094b354;
+        (void)saved_edit_mode;
+        goto LAB_finish;
+    }
+
+    for (;;) {
+        ((Win *)&setup)->hide();
+        ((Win *)&setup)->show(0);
+
+        if ((*g_009a649c & 0x1000000) != 0) goto LAB_skip_difficulty;
+
+        popup.start((char *)0x9B8AA8, (const char *)0x68F5E0, -1, 0, 0x40, 0);
+        {
+        for (int i = 0; i < 6; i++) {
+            *(char *)g_009b86a0 = 0;
+            strcat((char *)g_009b86a0, (char *)(long)((Strings *)0x9B90D8)->get(((int *)0x96C85C)[i]));
+            if (i == 0) {
+                strcat((char *)g_009b86a0, (char *)g_00682820);
+                strcat((char *)g_009b86a0, (char *)g_00682e9c);
+                strcat((char *)g_009b86a0,
+                       (char *)(long)((Strings *)0x9B90D8)->get(*(int *)((char *)*(int **)g_009b90f8 + 0x1C4)));
+                strcat((char *)g_009b86a0, (char *)g_00682e98);
+            } else if (i == 5) {
+                strcat((char *)g_009b86a0, (char *)g_00682820);
+                strcat((char *)g_009b86a0, (char *)g_00682e9c);
+                strcat((char *)g_009b86a0,
+                       (char *)(long)((Strings *)0x9B90D8)->get(*(int *)((char *)*(int **)g_009b90f8 + 0x1C8)));
+                strcat((char *)g_009b86a0, (char *)g_00682e98);
+            }
+            ((Dialogs *)popup.dialogs_)->item((char *)g_009b86a0, i);
+        }
+
+        {
+            int result = setup.do_menu(&popup, 1, 0);
+            if (result < 0) {
+                *g_0094b350 = result;
+                *g_009a64c4 = result;
+                goto LAB_skip_difficulty;
+            }
+            if (result == 0) {
+                *g_009a649c = *g_009a649c & 0xFFFF0000;
+                *g_009a649c = *g_009a649c | default_rules();
+                goto LAB_finish;
+            }
+            if (result == 1) {
+                unsigned int rules;
+                if (result != 0) {
+                    rules = (*g_009a649c & 0xFFFF0000) | (*g_0094b470 & 0xFFFF);
+                } else {
+                    rules = (*g_009a649c & 0xFFFF0000) | ((*g_0094b470 & 0xFDFF) | 0x200);
+                }
+                *g_009a649c = rules;
+                *g_009a64c0 = (*g_009a64c0 & 0xFE7FFFFF) | *g_0094b474;
+                goto LAB_finish;
+            }
+            // Further setup steps (difficulty flags dialog, faction/player
+            // pick via PickWin, sound test, name entry via EditGroup,
+            // time-controls dialog) are reached from here but are not
+            // modelled - the disassembly shows several thousand more
+            // bytes of bit-flag encoding and sub-dialog flow this body
+            // does not reproduce.
+        }
+        }
+    LAB_skip_difficulty:;
+    }
+
+LAB_finish:
+    setup.close();
+    popup.close();
+    return 1;
 
     return (int)0;  // PLACEHOLDER - replace with the body
 }

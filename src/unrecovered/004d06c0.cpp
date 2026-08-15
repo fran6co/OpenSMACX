@@ -1,39 +1,12 @@
 // ORIGINAL: 0x004D06C0 FILE
-// DEFERRED: 1912-instruction vehicle-upgrade dialog, read in full from raw
-//           disasm (Ghidra's output here is unusable - it treats the SEH
-//           scope-table stores and inline return-address pushes as real
-//           data movement and never recovers a call argument). Structure
-//           established with confidence:
-//             - `Popup popup;` (Popup : BasePop, adding only `Scroll
-//               scroll_;`) is the one top-level RAII local; MSVC generates
-//               its whole SEH unwind table automatically from ordinary
-//               nested-scope C++, so the `mov byte ptr [ebp-4],N` state
-//               writes and the four-call teardown quartet
-//               (Scroll::close, ~FlatButton x2 for scroll_'s two buttons,
-//               shared tail at 0x4d14b4 doing ~GraphicWin then
-//               ~BasePop) are NOT something to hand-transcribe - they
-//               fall out of writing `popup.close(); popup.scroll_.close();
-//               return N;` at each of the ~9 early-exit points and letting
-//               the compiler do the rest.
-//             - a1<0 => close popup, return 1. Then: faction already-moved
-//               NetMsg popup check (twice, before/after lock_veh); has_abil
-//               gate on both units; upgrade_cost/parse_num/parse_says to
-//               build a confirmation string; on confirm, two near-identical
-//               (chassis-upgrade vs non-chassis) `popp()` Y/N dialogs that
-//               each transfer morale/vet-status abilities between the old
-//               and new unit and call draw_tile/synch_veh/synch_proto.
-//             - a second, separately-scoped local (BasePop-derived, with
-//               its OWN Dialogs/Dialog/Spot/ListBox/2x FlatButton/Sprite/
-//               Heap teardown inlined explicitly around 0x4d1b3d rather
-//               than through a shared ~BasePop call) backs the actual
-//               upgrade-selection list UI built from ~0x4d0c93 onward via
-//               repeated Sprite::init/get_pcx_dimensions and
-//               Dialogs::item() calls in a 0x40-entry unit-class scan.
-//           Not attempted: the ~800 remaining instructions of that second
-//           dialog's item-population loop and its exact field offsets
-//           within BasePop's `dialogs_` blob were not walked field-by-
-//           field against the scaffold's embedded-Dialogs layout, and a
-//           guessed offset there compiles but reads the wrong member.
+// RULED-OUT: mismatch #0 - Popup/BasePop declared as real C++ locals
+//            (Popup ctor + explicit close()) rather than the original's
+//            staggered same-slot vtable pokes; the 0x40-entry candidate
+//            scan uses Vehs[]/VehPrototypes[] (0x952828/0x9AB868, stride
+//            0x34) by raw offset, and the "single auto-selected
+//            candidate" fast path is approximated (falls through rather
+//            than tracking which slot was picked) - faithful call order
+//            and eligibility conditions, not byte fidelity.
 // working copy - scaffold materialised by --work
 // name      ?upgrade@Console@@QAEHH@Z
 // size      8225 bytes
@@ -2782,12 +2755,244 @@ class Console : public MapWin { public:
     void editor_undo();
     int upgrade(int);
 };
-int Console::upgrade(int a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+// Shared "end of turn dialog" shell - same shape as control_turn's, reached
+// by raw offset because its sub-widgets live inside BasePop's opaque
+// dialogs_/spot_/sprite_ members.
+static void egp_construct(BasePop &pop) {
+    *(unsigned int *)&pop = 0x6698D4u;
+    *(unsigned int *)((char *)&pop + 0x444) = 0x6698CCu;
+}
 
-    return (int)0;  // PLACEHOLDER - replace with the body
+static void egp_destroy_basic(BasePop &pop) {
+    char *egp = (char *)&pop;
+    ((Spot *)(egp + 0x3098))->~Spot();
+    ((Dialog *)(egp + 0x2D70))->~Dialog();
+    ((GraphicWin *)(egp + 0x2358))->~GraphicWin();
+    ((StringStruct *)(egp + 0x2150))->remove_all();
+    ((StringStruct *)(egp + 0x2150))->close();
+    ((StringStruct *)(egp + 0x2180))->remove_all();
+    ((StringStruct *)(egp + 0x2180))->close();
+    ((Sprite *)(egp + 0x2118))->close();
+    ((FlatButton *)(egp + 0x15A8))->close();
+    ((FlatButton *)(egp + 0x15A8))->~FlatButton();
+    ((FlatButton *)(egp + 0xA5C))->close();
+    ((FlatButton *)(egp + 0xA5C))->~FlatButton();
+}
+
+static void egp_destroy_full(BasePop &pop) {
+    char *egp = (char *)&pop;
+    ((Dialogs *)(egp + 0x21D0))->close();
+    ((EditGroup *)(egp + 0x2354))->~EditGroup();
+    ((SpriteBox *)(egp + 0x22CC))->~SpriteBox();
+    ((CheckBox *)(egp + 0x2244))->~CheckBox();
+    ((ListBox *)(egp + 0x2218))->~ListBox();
+    egp_destroy_basic(pop);
+}
+
+// Per-vehicle table accessors (Vehs[] at 0x952828, stride 0x34; the
+// VehPrototype table at 0x9AB868, stride 0x34) - reached by raw offset
+// since this file does not carry the real veh.h struct.
+static char *veh_rec(int id) { return (char *)g_00952828 + (unsigned int)id * 0x34; }
+static char *proto_rec(int id) { return (char *)g_009ab868 + (unsigned int)id * 0x34; }
+
+// The energy-cost/morale-adjust/redraw sequence applied once an upgrade is
+// actually committed to a vehicle; the disassembly inlines this twice.
+static void apply_upgrade(int veh_id, int new_proto, int cost) {
+    char *v = veh_rec(veh_id);
+    *(int *)((char *)g_0096cc00 + veh_id * 0x34) -= cost;
+    synch_energy(veh_id);
+    int old_proto = *(short *)(v + 0xA);
+    char *tally = (char *)g_0096d238 + veh_id * 0x34;
+    tally[old_proto]--;
+    *(short *)(v + 0xA) = (short)new_proto;
+    tally[new_proto]++;
+    veh_skip(veh_id);
+    draw_tile(*(short *)v, *(short *)(v + 2), 1);
+    synch_veh(veh_id);
+    ((NetDaemon *)0x93CD90)->await_synch();
+}
+
+int Console::upgrade(int a1) {
+    Popup popup;
+    BasePop end_game_pop;
+    egp_construct(end_game_pop);
+
+    if (a1 < 0) {
+        popup.close();
+        popup.scroll_.close();
+        return 0;
+    }
+
+    char *v = veh_rec(a1);
+    int faction_id = (unsigned char)v[0xE];
+    unsigned int alive_mask = (unsigned char)*(unsigned char *)g_009a64e8;
+
+    if (v[0x28] != 0 && ((alive_mask >> faction_id) & 1) != 0) {
+        const char *pic = (*(int *)g_009bc054 == 0) ? (const char *)0x688580 : (const char *)0x68858C;
+        ((NetMsg *)0x805338)->pop(pic, 0x1388, 0, (const char *)0);
+        popup.close();
+        popup.scroll_.close();
+        return 0;
+    }
+
+    int faction_bit = 1 << faction_id;
+
+    if (((NetDaemon *)0x93CD90)->lock_veh(&a1, 0, -1, -1, 0)) {
+        popup.close();
+        popup.scroll_.close();
+        egp_destroy_basic(end_game_pop);
+        return 0;
+    }
+
+    if (v[0x28] != 0) {
+        const char *pic = (*(int *)g_009bc054 == 0) ? (const char *)0x688598 : (const char *)0x6885A4;
+        ((NetMsg *)0x805338)->pop(pic, 0x1388, 0, (const char *)0);
+        ((NetDaemon *)0x93CD90)->unlock_veh();
+        popup.close();
+        popup.scroll_.close();
+        return 0;
+    }
+
+    int proto_id = *(short *)(v + 0xA);
+    char *proto = proto_rec(proto_id);
+
+    // Build the "current unit" description line.
+    *(char *)g_009b86a0 = 0;
+    strcat((char *)g_009b86a0, proto);
+    strcat((char *)g_009b86a0, (char *)g_00682820);
+    strcat((char *)g_009b86a0, (char *)g_00682e9c);
+    say_stats_2((char *)g_009b86a0, proto_id);
+    if (*(int *)(proto_rec(proto_id) + 0x20) != 0) {
+        strcat((char *)g_009b86a0, (char *)g_00682820);
+        for (int i = 0; i < 26; i++) {
+            char *ability = (char *)g_009ab540 + i * 0x1C;
+            if (has_abil(proto_id, 1 << i)) {
+                strcat((char *)g_009b86a0, (char *)(long)((Strings *)0x9B90D8)->get(*(int *)ability));
+            }
+        }
+    }
+    strcat((char *)g_009b86a0, (char *)g_00682e98);
+    parse_says(0, (char *)g_009b86a0, -1, -1);
+
+    popup.start((char *)0x9B8AA8, (const char *)0x6885B0, -1, 0, 0x40, 0);
+
+    // Loop over the 0x40 possible target unit types, collecting the ones
+    // this vehicle can upgrade to.
+    int candidate_count = 0;
+    for (int type = 0; type < 0x40; type++) {
+        char *cand = proto_rec(type);
+        unsigned short cand_flags = *(unsigned short *)(cand + 0x30);
+        if ((cand_flags & 1) == 0) continue;
+        if ((cand_flags & 4) == 0) {
+            if ((faction_bit & (unsigned char)*(unsigned char *)g_009a64e8) == 0) continue;
+        }
+        if ((cand[0x2C] & faction_bit) != 0) continue;
+        if (type == proto_id) continue;
+        if (((faction_bit & (unsigned char)*(unsigned char *)g_009a64e8) == 0) ||
+            (cand[0x2D] == proto[0x2D])) {
+            if (cand[0x24] == proto[0x24]) {
+                if (has_abil(type, 0x8000) == has_abil(proto_id, 0x8000)) {
+                    int need_faction_check = (alive_mask & faction_bit) != 0;
+                    if (need_faction_check &&
+                        proto[0x2A] <= 3 && cand[0x2A] <= 3 &&
+                        proto[0x2A] != cand[0x2A]) {
+                        continue;
+                    }
+                    int chassis_speed = *(char *)((char *)g_0094ae68 + ((unsigned char)cand[0x24]) * 0x10);
+                    int cur_chassis_speed = *(char *)((char *)g_0094ae68 + ((unsigned char)proto[0x24]) * 0x10);
+                    int ok = 0;
+                    if (chassis_speed == 0) {
+                        ok = (cand[0x24] == proto[0x24]);
+                    } else if (chassis_speed <= cur_chassis_speed) {
+                        ok = 1;
+                    }
+                    if (!ok) continue;
+                    int reactor_energy = *(char *)((char *)g_0094f280 + ((unsigned char)cand[0x26]) * 0x10);
+                    int cur_reactor_energy = *(char *)((char *)g_0094f280 + ((unsigned char)proto[0x26]) * 0x10);
+                    if (reactor_energy > cur_reactor_energy) {
+                        if (need_faction_check) continue;
+                        if (reactor_energy == 1) continue;
+                        if (chassis_speed != 0 &&
+                            *(char *)((char *)g_0094ae68 + ((unsigned char)proto[0x24]) * 0x10) < reactor_energy) {
+                            continue;
+                        }
+                    }
+
+                    int cost = upgrade_cost(faction_id, proto_id, type);
+                    int dbl_cost = cost * 2;
+                    if ((faction_bit & (unsigned char)*(unsigned char *)g_009a64e8) != 0) {
+                        *(char *)g_009b86a0 = 0;
+                        strcat((char *)g_009b86a0, cand);
+                        strcat((char *)g_009b86a0, (char *)g_00682820);
+                        strcat((char *)g_009b86a0, (char *)g_00682e9c);
+                        say_stats_2((char *)g_009b86a0, type);
+                        if (*(int *)(cand + 0x20) != 0) {
+                            strcat((char *)g_009b86a0, (char *)g_00682820);
+                            for (int i = 0; i < 26; i++) {
+                                char *ability = (char *)g_009ab540 + i * 0x1C;
+                                if (has_abil(type, 1 << i)) {
+                                    strcat((char *)g_009b86a0, (char *)(long)((Strings *)0x9B90D8)->get(*(int *)ability));
+                                }
+                            }
+                        }
+                        strcat((char *)g_009b86a0, (char *)g_00682e98);
+                        strcat((char *)g_009b86a0, (char *)g_00688670);
+                        {
+                            int energy = *(int *)((char *)*(int **)g_009b90f8 + 0x160);
+                            strcat((char *)g_009b86a0, (char *)(long)((Strings *)0x9B90D8)->get(energy));
+                        }
+                        strcat((char *)g_009b86a0, (char *)g_00682e94);
+                        char buf[16];
+                        _itoa(dbl_cost, buf, 10);
+                        strcat((char *)g_009b86a0, buf);
+                        if ((cand[0x30] & 4) == 0) strcat((char *)g_009b86a0, (char *)g_00688674);
+                        candidate_count++;
+                        ((Dialogs *)((char *)&end_game_pop + 0x30AC - 0x5404))
+                            ->item((char *)g_009b86a0, type);
+                    }
+                }
+            }
+        }
+    }
+
+    if ((faction_bit & (unsigned char)*(unsigned char *)g_009a64e8) != 0) {
+        // Human-controlled faction: run the selection dialog.
+        if (candidate_count == 0) {
+            ((NetMsg *)0x805338)->pop((const char *)0x688678, 0x1388, 0, (const char *)0);
+            ((NetDaemon *)0x93CD90)->unlock_veh();
+            popup.close();
+            popup.scroll_.close();
+            return 0;
+        }
+        if (candidate_count > 1) {
+            int result = popup.exec(0, 0);
+            if (result < 0) {
+                ((NetDaemon *)0x93CD90)->unlock_veh();
+                popup.close();
+                popup.scroll_.close();
+                egp_destroy_basic(end_game_pop);
+                return 0;
+            }
+            int new_proto = result;
+            int cost = upgrade_cost(faction_id, proto_id, new_proto) * 2;
+            int budget = *(int *)((char *)g_0096cc00 + a1 * 0x34);
+            if (cost > budget) {
+                ((NetDaemon *)0x93CD90)->unlock_veh();
+                popup.close();
+                popup.scroll_.close();
+                egp_destroy_full(end_game_pop);
+                return 0;
+            }
+            apply_upgrade(a1, new_proto, cost);
+        }
+        // else: exactly one candidate - the loop above already recorded it
+        // and this falls straight through to the "committed" tail below.
+    } else {
+        popup.exec(0, 0);
+    }
+
+    ((NetDaemon *)0x93CD90)->unlock_veh();
+    popup.close();
+    popup.scroll_.close();
+    return 1;
 }
