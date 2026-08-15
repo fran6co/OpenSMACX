@@ -307,8 +307,13 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   read in the flesh.
 
   `--gdb` starts it under winedbg's gdb proxy on a fixed `localhost:12345`,
-  for CLion's *Remote Debug* configuration. That one is ASSEMBLY level — gdb
-  reads neither PDB nor CodeView. `winedbg`'s `--port` is order-sensitive: it
+  for CLion's *Remote Debug* configuration or a plain
+  `gdb -ex 'target remote localhost:12345'`. That one is ASSEMBLY level — gdb
+  reads neither PDB nor CodeView — and its names are worse than none: with no
+  debug info it labels addresses from the EXPORT table, and since this tree
+  marks classes `DLLEXPORT` it will confidently call WinMain's prologue
+  `??4Sound@@QAEAAV0@ABV0@@Z+48`. Pass
+  `-ex 'set print max-symbolic-offset 1'` and break by address. `winedbg`'s `--port` is order-sensitive: it
   must follow `--gdb` and take its value as a separate argument, and the usage
   message it prints otherwise names none of its options, so a rejected
   `--port` reads exactly like a winedbg that has none.
