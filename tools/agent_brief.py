@@ -275,9 +275,18 @@ def disassembly(address: int) -> str:
     # all three said so; a guessed case order compiles, reads correctly and
     # dispatches to the wrong branch.
     import jump_tables
-    tables = jump_tables.render(
-        pe, emit.parse_body_ranges(row.get("body_ranges") or ""), functions)
-    return text + ("\n" + tables if tables else "")
+    spans = emit.parse_body_ranges(row.get("body_ranges") or "")
+    tables = jump_tables.render(pe, spans, functions)
+    # WHICH C++ OBJECTS THE FRAME HOLDS, read off the destructor receivers.
+    # Guessing which locals a large RAII function declares, and how they nest,
+    # was the single biggest source of wasted effort in batches 18-20 - a
+    # `Popup` carries a `Scroll`, two `FlatButton`, a `Spot`, a `Sprite`, a
+    # `Heap` and a `Dialogs` region, and from the disassembly every one of
+    # them looks like an independent local.
+    import frame_objects
+    frame = frame_objects.render(pe, spans, functions)
+    return text + ("\n" + tables if tables else "") \
+                + ("\n" + frame if frame else "")
 
 
 def prompt_section(address: int, heading: str) -> str:
