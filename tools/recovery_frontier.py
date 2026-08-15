@@ -267,6 +267,11 @@ def source_states(src: Path = None) -> tuple:
         # holds; batch 13 spent three that way before the token existed.
         if a.unrecoverable:
             excluded.add(a.address)
+        # DEFERRED IS NOT EXCLUDED, and that is the whole distinction. It says
+        # a body can exist and nobody has had the budget; filtering it would
+        # turn a backlog into a wall. The five largest functions in the image
+        # were briefly marked UNRECOVERABLE on scale grounds, which would have
+        # dropped them from selection permanently.
         if a.state == annotation_scan.STATE_EXCLUDED:
             excluded.add(a.address)
         elif a.state == annotation_scan.STATE_IMPLEMENTED:
