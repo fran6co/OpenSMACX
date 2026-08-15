@@ -81,11 +81,108 @@ def stage(exe: Path, game: Path) -> list:
     return staged
 
 
+
+# CLion, and any other IDE with a "Remote Debug" configuration, needs the port
+# written into the configuration BEFORE the process exists. winedbg picks a
+# random one every launch and honours neither `WINEDBG_PORT` nor
+# `WINE_GDB_PORT` - measured, it opened 36153 and 39789 when both were set to
+# 12345 - so something has to bridge a fixed port to whatever it chose.
+GDB_PORT = 12345
+
+
+def relay(listen_port: int, target_port: int) -> None:
+    """Accept one gdb connection on `listen_port` and splice it to winedbg."""
+    import socket
+    import threading
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(("127.0.0.1", listen_port))
+    server.listen(1)
+    print(f"  gdb remote on localhost:{listen_port} -> winedbg {target_port}")
+    print(f"  attach with: target remote localhost:{listen_port}")
+    client, _ = server.accept()
+    upstream = socket.create_connection(("127.0.0.1", target_port))
+
+    def pump(source, sink):
+        try:
+            while True:
+                chunk = source.recv(65536)
+                if not chunk:
+                    break
+                sink.sendall(chunk)
+        except OSError:
+            pass
+        finally:
+            for end in (source, sink):
+                try:
+                    end.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+
+    threads = [threading.Thread(target=pump, args=pair, daemon=True)
+               for pair in ((client, upstream), (upstream, client))]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+
+def listening_ports() -> set:
+    out = subprocess.run(["ss", "-ltnH"], capture_output=True, text=True).stdout
+    return {int(field.rsplit(":", 1)[1]) for line in out.splitlines()
+            for field in [line.split()[3]] if ":" in field}
+
+
+def debug(exe: Path, game: Path, port: int) -> int:
+    """Start the executable under winedbg's gdb proxy and bridge it to `port`.
+
+    NO SOURCE-LEVEL DEBUGGING, and it is worth knowing before you try: the
+    executable carries a CodeView debug directory pointing at a PDB, which gdb
+    cannot read, so it reports `(No debugging symbols found)` and every frame
+    is `?? ()`. What you get is the assembly, the registers and the fault
+    address - which for a matching decompilation is most of what there is to
+    want, because the ADDRESS is the catalogue key. `describe()` below turns
+    one into a function name.
+    """
+    import time
+    before = listening_ports()
+    windows_path = subprocess.run(
+        ["winepath", "-w", str((game / exe.name).resolve())],
+        env=byte_match.wine_environment(), capture_output=True,
+        text=True).stdout.strip() or exe.name
+    server = subprocess.Popen(
+        ["winedbg", "--gdb", "--no-start", windows_path], cwd=game,
+        env={**byte_match.wine_environment(), "WINEDEBUG": "-all"},
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    for _ in range(40):
+        time.sleep(0.5)
+        opened = listening_ports() - before
+        if opened:
+            break
+    else:
+        server.terminate()
+        print("run-recovered: winedbg opened no port", file=sys.stderr)
+        return 2
+    try:
+        relay(port, sorted(opened)[0])
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.terminate()
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--exe", type=Path, default=DEFAULT_EXE)
     parser.add_argument("--game", type=Path, default=GAME_DIR)
     parser.add_argument("--timeout", type=int, default=120)
+    parser.add_argument("--gdb", action="store_true",
+                        help="start it under winedbg's gdb proxy and bridge "
+                             f"that to localhost:{GDB_PORT}, so an IDE's "
+                             "remote-debug configuration can hold a fixed "
+                             "port")
+    parser.add_argument("--port", type=int, default=GDB_PORT)
     arguments = parser.parse_args()
 
     if not arguments.exe.is_file():
@@ -99,6 +196,8 @@ def main() -> int:
 
     staged = stage(arguments.exe, arguments.game)
     print(f"staged {len(staged)} file(s) into {arguments.game}")
+    if arguments.gdb:
+        return debug(arguments.exe, arguments.game, arguments.port)
     try:
         done = subprocess.run(["wine", arguments.exe.name],
                               cwd=arguments.game,
