@@ -17,8 +17,7 @@
  */
 #include "stdafx.h"
 #include "palette.h"
-
-int *PaletteInitialized = reinterpret_cast<int *>(0x009B8178);
+#include "general.h"  // mem_get
 
 Palette g_PALETTE1;  // 0x0094C590
 Palette *PaletteCurrent;  // 0x009B8174
@@ -126,4 +125,95 @@ int Palette::get_pos(int value) {
 
 int __fastcall palette_get_pos_redirect(Palette *self, void *, int value) {
     return self->get_pos(value);
+}
+
+/*
+Purpose: Build the process palette and hand it to GDI, replacing whatever
+         palette was there before.
+ORIGINAL: 0x005FEBB0
+// name      ?init_palette_class@Palette@@SAXH@Z
+// CORRECTED from ?init_palette_class@Palette@@QAAXH@Z
+//   `QAA` is a public NON-STATIC member declared __cdecl - it takes a `this`
+//   as its first stack argument. The bytes say there is none. This body reads
+//   its `int` at `[esp + 0xc]` after `push ebx` / `push esi`, which is
+//   `[entry esp + 4]` - the FIRST argument, where `this` would be. And its
+//   only caller settles it independently: `jackal_init_real` is BYTE_EXACT
+//   compiled from `Palette::init_palette_class(tgl_direct_draw & 2)`, a call
+//   that pushes one argument and no receiver. `SA` is the static spelling,
+//   which is what `palette.h` has always declared.
+// size      320 bytes
+// spans     0x005FEBB0-0x005FECF0
+// prototype
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2
+// indirect  0x005FEBBE 0x005FEBFB 0x005FEC0E 0x005FEC16 0x005FECD6
+Return Value: none
+Status: Complete
+*/
+void Palette::init_palette_class(int use_system_colours) {
+    int existing = *PaletteInitialized;
+    if (existing) {
+        DeleteObject((void *)existing);
+        *PaletteInitialized = 0;
+    }
+    uint8_t *header = (uint8_t *)mem_get(0x404);
+    if (!header) {
+        return;
+    }
+    *(uint16_t *)header = 0x300;
+    *(uint16_t *)(header + 2) = 0x100;
+    *PaletteUsesSystemColours = use_system_colours;
+    if (use_system_colours) {
+        HDC screen = GetDC(0);
+        GetSystemPaletteEntries(screen, 0, 256, (PALETTEENTRY *)(header + 4));
+        ReleaseDC(0, screen);
+    } else {
+        // The twenty static colours, RGBQUAD (blue, green, red) on the way in
+        // and PALETTEENTRY (red, green, blue) on the way out - hence the
+        // reversal. Entries 0-9 and 246-255 are the range GDI reserves, and
+        // 984 is (246 - 0) * 4: the same walk writes both ends.
+        uint8_t *entry = header + 4;
+        const uint8_t *colour = SystemColours;
+        const uint8_t *high_colour = SystemColours + 40;
+        for (int i = 0; i < 10; ++i) {
+            entry[0] = colour[2];
+            entry[1] = colour[1];
+            entry[2] = colour[0];
+            entry[3] = 0;
+            entry[984] = high_colour[2];
+            entry[985] = high_colour[1];
+            entry[986] = high_colour[0];
+            entry[987] = 0;
+            entry += 4;
+            colour += 4;
+            high_colour += 4;
+        }
+        // Everything between the two reserved runs is ours to animate.
+        uint8_t *flags = header + 0x2F;
+        for (int remaining = 236; remaining != 0; --remaining) {
+            *flags = 5;  // PC_RESERVED | PC_NOCOLLAPSE
+            flags += 4;
+        }
+        // Four entries are handed back to the system by INDEX: PC_EXPLICIT
+        // means peRed holds a system palette slot rather than an intensity.
+        uint8_t *reserved = header + 4 + 8 * 4;
+        for (int pair = 0; pair < 2; ++pair) {
+            reserved[0] = (uint8_t)(pair + 8);
+            reserved[1] = 0;
+            reserved[2] = 0;
+            reserved[3] = 2;  // PC_EXPLICIT
+            // BUG IN THE ORIGINAL: entry 246 is given system index 245 and
+            // entry 247 index 246, one below each entry's own slot. The four
+            // lines above get this right for entries 8 and 9.
+            reserved[952] = (uint8_t)(pair - 11);
+            reserved[953] = 0;
+            reserved[954] = 0;
+            reserved[955] = 2;  // PC_EXPLICIT
+            reserved += 4;
+        }
+    }
+    *PaletteInitialized = (int)CreatePalette((const LOGPALETTE *)header);
+    free(header);
 }

@@ -154,6 +154,11 @@ def spelling(name: str) -> Spelling:
 # carry a class in the name and take no receiver at all, and `Y`/`Z` are free
 # functions.
 NONSTATIC_MEMBER = set("ABEFGHIJMNOPQRUVWX")
+# The three access codes for a STATIC member - public, protected,
+# private. Deliberately disjoint from NONSTATIC_MEMBER above: a name
+# carrying one of these belongs to a class and takes no `this`, which is
+# a combination nothing else in the mangling expresses.
+STATIC_MEMBER = set("CKS")
 MEMBER_ACCESS = re.compile(r"^\?[\w_]+@[\w_]+@@([A-Z])")
 
 
@@ -287,6 +292,18 @@ def is_nonstatic_member(mangled: str) -> bool:
     """
     found = MEMBER_ACCESS.match((mangled or "").strip())
     return bool(found) and found.group(1) in NONSTATIC_MEMBER
+
+
+def is_static_member(mangled: str) -> bool:
+    """Does this name belong to a class yet receive no `this`?
+
+    `?init_palette_class@Palette@@SAXH@Z` - `S` for public static. It has to
+    be DECLARED static for VC6 to mangle it back to `SA`; declared as a plain
+    member it becomes `QAA`, gains a receiver, and every argument shifts one
+    slot. That shift is what the caller's bytes disagree with.
+    """
+    found = MEMBER_ACCESS.match((mangled or "").strip())
+    return bool(found) and found.group(1) in STATIC_MEMBER
 
 
 def argument_bytes(parameters: Sequence[str]) -> int:

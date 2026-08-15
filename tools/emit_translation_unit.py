@@ -95,6 +95,13 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
+// The pointer-width pair. `src/` casts through `uintptr_t` wherever a body
+// turns an object into an address - `Palette::get_rgbquad` is the oldest of
+// them - and the prelude declaring every OTHER stdint name but these two made
+// those bodies NO_COMPILE on a syntax error, which reads as a broken body
+// rather than a missing typedef. 30 measurements in the ledger carried it.
+typedef unsigned int uintptr_t;
+typedef int intptr_t;
 typedef int int32;
 typedef unsigned int uint32;
 typedef short int16;
@@ -1535,11 +1542,21 @@ def static_for(entry) -> str:
     and every other `*::init_class()`. One of them said it plainly: fix it once
     in the emitter rather than per body.
 
-    ONLY FOR A CALLEE. `static` changes the mangling from `QAA` to `SA`, and
-    for the SUBJECT that is the symbol the comparison looks up - the reason
-    `member_convention` spells `__cdecl` at all. A callee is reached by a
-    relocation the comparison masks, so its mangling reaches nothing.
+    FOR A CALLEE THAT IS THE WHOLE STORY: `static` changes the mangling from
+    `QAA` to `SA`, and a callee is reached by a relocation the comparison
+    masks, so its mangling reaches nothing.
+
+    FOR A SUBJECT IT DEPENDS ON WHAT THE NAME SAYS, because there the symbol
+    IS what the comparison looks up. A `QAA` subject must stay non-static to
+    mangle back to `QAA`. An `SA` subject is the opposite: it is already a
+    static member, and declaring it non-static mangles it to `QAA`, gives it a
+    receiver, and shifts every argument one stack slot - which is a wrong
+    body, not a wrong symbol. `?init_palette_class@Palette@@SAXH@Z` read its
+    `int` from `[ebp + 0xc]` against the image's `[esp + 4]` until this
+    branch existed.
     """
+    if recovery_symbols.is_static_member(getattr(entry, "mangled", "")):
+        return "static "
     return "static " if entry.is_method and entry.convention == "__cdecl" \
         else ""
 
@@ -1667,6 +1684,22 @@ WIN32_IMPORTS = {
     # of the two spellings names the first one.
     "ShowWindow":
         'extern "C" __declspec(dllimport) int __stdcall ShowWindow(void *, int);',
+    # The GDI palette five, for `Palette::init_palette_class`. `HDC`,
+    # `HGDIOBJ` and `HPALETTE` are all `void *` here; `LOGPALETTE` and
+    # `PALETTEENTRY` stay opaque, so those two parameters are `void *` and the
+    # body casts - which is what it must do anyway to compile against the real
+    # `windows.h` in `src/`, where they are the real structs.
+    "DeleteObject":
+        'extern "C" __declspec(dllimport) int __stdcall DeleteObject(void *);',
+    "GetDC":
+        'extern "C" __declspec(dllimport) void *__stdcall GetDC(void *);',
+    "ReleaseDC":
+        'extern "C" __declspec(dllimport) int __stdcall ReleaseDC(void *, void *);',
+    "CreatePalette":
+        'extern "C" __declspec(dllimport) void *__stdcall CreatePalette(const void *);',
+    "GetSystemPaletteEntries":
+        'extern "C" __declspec(dllimport) unsigned int __stdcall '
+        'GetSystemPaletteEntries(void *, unsigned int, unsigned int, void *);',
 }
 
 
@@ -1686,6 +1719,40 @@ def win32_declarations(body: str) -> list:
     if not named:
         return []
     return [WIN32_IMPORTS[name] for name in sorted(named)] + [""]
+
+
+# Win32 STRUCTS a body may name in a cast, forward-declared on reference.
+#
+# WHY A CAST NEEDS THEM AND A FIELD ACCESS DOES NOT. A measured unit reaches
+# every struct field by offset, so it never needs a definition - but it does
+# need the NAME, because the same body has to compile twice. `windows.h`
+# declares `CreatePalette(const LOGPALETTE *)` and
+# `GetSystemPaletteEntries(..., LPPALETTEENTRY)`, and C++ will not implicitly
+# convert `void *` or `unsigned char *` to either, so the body must spell the
+# cast. Spelling it here as an incomplete type satisfies the cast and keeps
+# the unit's own declarations `void *`, where the widths are what decide the
+# `__stdcall` decoration.
+#
+# The names are the Win32 headers' own for the same reason `NOT_A_STRUCT`'s
+# are: a catalogued mangled name that reaches one of these asks for
+# `PAULOGPALETTE@@`, which is what `struct LOGPALETTE;` mangles to. A repeated
+# forward declaration is legal, so this never collides with the copy that
+# `wanted` emits when a signature reaches the same type.
+WIN32_STRUCTS = ("LOGPALETTE", "PALETTEENTRY", "RGBQUAD", "BITMAPINFO",
+                 "BITMAPINFOHEADER", "DDSURFACEDESC", "DDSCAPS")
+
+
+def win32_struct_declarations(body: str) -> list:
+    """`struct X;` for every Win32 struct `body` names. Same rule as above."""
+    if not body:
+        return []
+    import src_declarations
+    code = src_declarations.code_only(body)
+    named = sorted(name for name in WIN32_STRUCTS
+                   if re.search(rf"\b{name}\b", code))
+    if not named:
+        return []
+    return [f"struct {name};" for name in named] + [""]
 
 
 def string_routine_pragma(declarations: list) -> list:
@@ -1735,7 +1802,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # Captured HERE: `body` is rebound to a list of member lines by the
     # class-shell loop below, so anything wanting the subject's text has
     # to take it before that happens.
-    win32_lines = win32_declarations(body)
+    win32_lines = win32_struct_declarations(body) + win32_declarations(body)
 
     def declare(name: str, opening: bool) -> str:
         # `class X { public:` and `struct X {` differ only in default access,
@@ -2152,7 +2219,13 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         elif signature.kind == "dtor":
             lines.append(f"    ~{signature.klass}();")
         else:
-            lines.append(f"    {signature.returns} "
+            # `static_for` is the CALLEE rule and must not be used here: it
+            # makes every `QAA` method static, and a `QAA` subject has to stay
+            # non-static to mangle back to the symbol being compared. Only the
+            # static-member half applies to a subject - see `static_for`.
+            subject_static = "static " if recovery_symbols.is_static_member(
+                signature.mangled) else ""
+            lines.append(f"    {subject_static}{signature.returns} "
                          f"{signature.member_convention()}{signature.method}"
                          f"({', '.join(signature.params)});")
         lines.append("};")
