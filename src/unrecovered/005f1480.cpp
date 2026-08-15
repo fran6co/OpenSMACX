@@ -17,11 +17,10 @@
 typedef int (__stdcall *IfaceGetHdcProc)(void *, int *);
 typedef int (__stdcall *IfaceReleaseHdcProc)(void *, int);
 
-extern "C" __declspec(dllimport) int __stdcall InvalidateRect(void *, void *, int);
-extern "C" __declspec(dllimport) HDC __stdcall GetDC(void *);
-extern "C" __declspec(dllimport) int __stdcall SelectPalette(HDC, void *, int);
-extern "C" __declspec(dllimport) int __stdcall RealizePalette(HDC);
-extern "C" __declspec(dllimport) long __stdcall DefWindowProcA(void *, unsigned int, unsigned int, void *);
+// InvalidateRect, GetDC, SelectPalette, RealizePalette and DefWindowProcA
+// come from the scaffold (emit_translation_unit.WIN32_IMPORTS),
+// `__declspec(dllimport)` included so the calls keep the original's
+// IAT-indirect shape.
 
 long __cdecl Win::OnActivate(void *a1, unsigned int a2, void *a3, long a4) {
     InvalidateRect(reinterpret_cast<void *>(*g_009b7b28), 0, 0);
