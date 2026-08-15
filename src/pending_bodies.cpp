@@ -131,12 +131,6 @@ BasePop::BasePop() {
 // deleting its line here.
 // ---------------------------------------------------------------------------
 
-// 0x005FEBB0  ?init_palette_class@Palette@@QAAXH@Z
-void Palette::init_palette_class(int mode) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x005FEBB0, pending)(mode);
-}
-
 // 0x005FE330  ?init@Palette@@QAEXXZ
 void Palette::init() {
     typedef void(__cdecl *pending)(void *);

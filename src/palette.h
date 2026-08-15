@@ -29,9 +29,13 @@ class DLLEXPORT Palette {
   ~Palette() { ; }
 
   int get_rgbquad(RGBQUAD *output, int start, int count);
-  // `static`, because the image's name ends in `QAA` - a public member
-  // declared __cdecl, taking no receiver. jackal_init_real calls it with
-  // no ecx set up, so `Class::method()` is the only legal spelling.
+  // `static`, and the image's name says so: `?init_palette_class@Palette@@
+  // SAXH@Z`. It used to be catalogued `QAA`, which this comment described as
+  // "a public member declared __cdecl, taking no receiver" - a contradiction,
+  // because `QAA` DOES take one, as the first stack argument. The body read
+  // its `int` one slot too high for as long as that name stood. Corrected
+  // 2026-08-15 against two independent bytes; see the annotation on the body
+  // in palette.cpp.
   void init();                       // 005FE330
   int set();                         // 005FE460
   static void init_palette_class(int mode);
@@ -318,7 +322,25 @@ static_assert(sizeof(Palette) == 0x454,
 // the process is using.
 extern Palette *PaletteCurrent;
 
-extern int *PaletteInitialized;
+// 0x009B8178. THE HPALETTE ITSELF, not a flag: `init_palette_class` stores
+// `CreatePalette`'s result here and `DeleteObject`s whatever was here first,
+// so "initialised" and "non-null" are the same question and `get_rgbquad`
+// asks it that way. A constant address rather than `extern int *` for the
+// reason spelled out on `GenderDefault` in general.h - the indirection is
+// byte-visible and this global is only ever loaded and stored.
+static int *const PaletteInitialized = (int *)0x009B8178;
+
+// 0x009B8188. The argument `init_palette_class` was called with, kept so the
+// rest of the engine can ask which palette it got. Non-zero means the entries
+// were taken from the system palette with `GetSystemPaletteEntries`; zero
+// means the built-in twenty were installed and the middle 236 left free.
+static int *const PaletteUsesSystemColours = (int *)0x009B8188;
+
+// 0x0067022C. Twenty RGBQUADs - the Windows static colours. The first ten
+// become palette entries 0-9 and the last ten entries 246-255, which is the
+// layout GDI reserves. Bytes, not a struct, because `RGBQUAD` is opaque in a
+// measured unit; index it as `[entry * 4 + BLUE|GREEN|RED]`.
+static const uint8_t *const SystemColours = (const uint8_t *)0x0067022C;
 
 /*
  * The process palette, at 0x0094C590 in the image. The name is the image's
