@@ -122,12 +122,6 @@ BasePop::BasePop() {
 // deleting its line here.
 // ---------------------------------------------------------------------------
 
-// 0x005FE330  ?init@Palette@@QAEXXZ
-void Palette::init() {
-    typedef void(__cdecl *pending)(void *);
-    PENDING_BODY(0x005FE330, pending)(this);
-}
-
 // 0x005F2C40  ?set_display_mode@Win@@QAAHHHHH@Z
 int Win::set_display_mode(int width, int height, int depth, int tgl) {
     typedef int(__cdecl *pending)(int, int, int, int);
