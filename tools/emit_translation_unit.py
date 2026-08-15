@@ -1662,6 +1662,11 @@ WIN32_IMPORTS = {
         'GetCurrentThreadId(void);',
     "timeGetTime":
         'extern "C" __declspec(dllimport) unsigned long __stdcall timeGetTime(void);',
+    # `HWND` is `void *` in the prelude above, so this obeys the rule; the
+    # decoration `_ShowWindow@8` depends on the argument WIDTHS, not on which
+    # of the two spellings names the first one.
+    "ShowWindow":
+        'extern "C" __declspec(dllimport) int __stdcall ShowWindow(void *, int);',
 }
 
 

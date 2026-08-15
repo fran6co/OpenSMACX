@@ -1,5 +1,12 @@
 // ORIGINAL: 0x0063B910 BYTE_EXACT FILE
-// name      ?init_cursor_class@Cursor@@QAAXXZ
+// name      ?init_cursor_class@Cursor@@QAAHXZ
+// CORRECTED from ?init_cursor_class@Cursor@@QAAXXZ
+//   The old name returns `X` - void. Two independent bytes say `H` - int:
+//   the BYTE_EXACT body below is `return 0;` in a function typed `int`, and
+//   its one caller, jackal_init_real, follows `call 0x63b910` at 0x0062D4AD
+//   with `test eax, eax` / `jne` at 0x0062D4B2. A caller cannot test the
+//   result of a void call, so the source that compiled to those bytes had
+//   an int-returning declaration in scope.
 // size      29 bytes
 // spans     0x0063B910-0x0063B92D
 // prototype 

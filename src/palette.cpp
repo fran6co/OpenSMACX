@@ -21,6 +21,7 @@
 int *PaletteInitialized = reinterpret_cast<int *>(0x009B8178);
 
 Palette g_PALETTE1;  // 0x0094C590
+Palette *PaletteCurrent;  // 0x009B8174
 
 /*
 Purpose: Convert process palette RGB entries into Windows RGBQUAD order.

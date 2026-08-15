@@ -29,6 +29,14 @@
   */
 class DLLEXPORT Cursor {
  public:
+  // `static`, because the image's name ends in `QAA` - a public member
+  // declared __cdecl, taking no receiver. jackal_init_real calls it with
+  // no ecx set up, so `Class::method()` is the only legal spelling.
+  // `int`, though the catalogue spells the return `X` (void). The body at
+  // 0x0063B910 ends `xor eax, eax; ret` - VC6's way of returning zero -
+  // and jackal_init_real tests the result before continuing. Same family
+  // as the four void-over-`xor eax, eax` names corrected before it.
+  static int init_cursor_class();
   Cursor() { ; }
   ~Cursor() { ; }
   // Spelled as a method rather than a real constructor, as Ambience's is:

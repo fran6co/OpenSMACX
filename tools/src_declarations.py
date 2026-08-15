@@ -104,6 +104,14 @@ FUNCTION = re.compile(
 # `extern Console *ConsoleState;` / `uint32_t Foo[4];`
 VARIABLE = re.compile(
     r"^(?P<head>[\w:\*&<>,\s]*?)\b(?P<name>\w+)\s*(?P<array>(?:\[[^\]]*\])*)\s*$")
+# `static Strings *const StringTable = (Strings *)0x009B90D8;` and the
+# `reinterpret_cast` spelling of the same thing. A file-scope definition of a
+# const pointer to a LITERAL address - the one initialiser worth carrying
+# across into an emitted unit, because dropping it changes the code.
+CONSTANT_ADDRESS = re.compile(
+    r"^static\s+(?P<head>[\w:\s]+?\*\s*const)\s+(?P<name>\w+)\s*=\s*"
+    r"(?:\(\s*[\w:\s\*]+\)\s*|reinterpret_cast\s*<[\w:\s\*]+>\s*\(\s*)"
+    r"0[xX][0-9A-Fa-f]+\s*\)?\s*;?$")
 
 
 # A block whose contents are still FILE SCOPE. `src/sound.cpp` puts its
@@ -312,6 +320,32 @@ def _declaration_for(statement: str, opened_block: bool, origin: str):
                                _by_value_types(params) | returns_by_value,
                                origin)
         return None
+
+    # A CONSTANT ADDRESS SURVIVES AS ONE.
+    #
+    # `static Strings *const StringTable = (Strings *)0x009B90D8;` is not a
+    # variable that happens to hold an address, it is the address. Re-exporting
+    # it as `extern Strings *StringTable;` - which is what the general path
+    # below does, dropping the initialiser at the `=` - hides the constant, and
+    # the difference is byte-visible: a call through the constant is
+    # `mov ecx, 0x9b90d8`, and a call through the extern is
+    # `mov ecx, dword ptr [0x9b90d8]`, one extra load per use.
+    #
+    # `src/general.h` has carried this defect written down since the spelling
+    # was found: "the improvement is real in the shipped object and invisible
+    # to that instrument until it stops re-externing a `static T *const`
+    # definition". This is that. The header form is a definition, so emitting
+    # it verbatim promises nothing the unit does not have.
+    #
+    # ONLY FOR A LITERAL ADDRESS. An initialiser naming another symbol would
+    # drag that symbol's definition into a unit built to have none, so the
+    # match is deliberately narrow: a cast of a numeric literal, nothing else.
+    constant = CONSTANT_ADDRESS.match(statement.strip())
+    if constant:
+        head_text = constant.group("head")
+        return Declaration(constant.group("name"),
+                           statement.strip().rstrip(";") + ";", "variable",
+                           _named_types(head_text), set(), origin)
 
     # A variable. `Type name;`, `Type name = init;`, `Type name[4];`
     body = statement.split("=", 1)[0].strip()

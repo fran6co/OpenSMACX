@@ -50,12 +50,19 @@ extern uint32_t ScenEditorUndoPosition;
 // flags: `mov [0x9bbfec],eax` / `mov [0x9bbff0],ecx`, four instructions and no
 // relocation, against six instructions and two relocations before.
 //
-// THE THIRD SPELLING IS WHY THE CENSUS STILL SAYS MISMATCH. It does not
-// include this header; `src_declarations.py` re-derives a declaration from it
-// and drops the initialiser (`statement.split("=", 1)[0]`), so the constant is
-// hidden again in the unit the census measures. The improvement is real in the
-// shipped object and invisible to that instrument until it stops re-externing
-// a `static T *const` definition.
+// THE CENSUS SAID MISMATCH FOR TWO WEEKS, AND THE INSTRUMENT WAS WRONG. It
+// does not include this header; `src_declarations.py` re-derived a declaration
+// from it and dropped the initialiser (`statement.split("=", 1)[0]`), so the
+// constant was hidden again in the unit the census measured, and a real
+// improvement in the shipped object read as a defect in the body.
+//
+// Fixed 2026-08-15: `CONSTANT_ADDRESS` in that module carries a file-scope
+// `static T *const NAME = (T *)0xLITERAL;` across verbatim, and `parse_set`
+// measured BYTE_EXACT the moment it did. The narrowness is deliberate - an
+// initialiser naming another symbol would demand that symbol's definition in
+// a preamble built to have none - and both halves are held by
+// `test_src_declarations.py`. The same fix is what closed the last
+// instruction between `jackal_init_real` and its match, via `StringTable`.
 //
 // Call sites are unchanged - `*GenderDefault` still reads and writes the same
 // address. `static` is safe here only because nothing takes `&GenderDefault`
@@ -102,6 +109,17 @@ DLLEXPORT int __cdecl jackal_init_real(Palette *palette, Font *font,
                                        int display_width, int display_height,
                                        int colour_depth);
 DLLEXPORT void __cdecl jackal_close();
+
+// Called once from jackal_init_real, between the FileWin and Cursor class
+// bring-ups. `sub_63ce20` has no catalogued name - the image carries no
+// symbols and IDA reconstructed none for it - so it keeps the address.
+DLLEXPORT int __cdecl trig_init();
+DLLEXPORT int __cdecl sub_63ce20();
+
+// 0x009BC4B0. jackal_init_real stores its `tgl_direct_draw` argument here on
+// entry and sets bit 0 once every subsystem has come up, so it is the engine's
+// own state word: the mode it was asked for, plus "initialised".
+extern int JackalInitFlags;
 DLLEXPORT char __cdecl filefind_cd_drive_letter();
 DLLEXPORT void __cdecl filefind_set_alternative(LPCSTR path);
 DLLEXPORT LPSTR __cdecl filefind_get(LPCSTR file_name);

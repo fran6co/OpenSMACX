@@ -245,7 +245,19 @@ a time — memory included — by the retired `validate_x86_block`.
 
 ## The gates
 
-What `ctest` enforces, beyond `decomp_status.py --check`:
+THE GATE IS `decomp_status.py --check`, AND IT IS THE ONLY ONE. It compiles
+every BYTE_EXACT claim in `src/` against the shipped image and fails if one
+stops reproducing. Run it after every change to `src/` or to the emitters.
+
+The `ctest` suite that used to enforce the rest was RETIRED on 2026-08-15
+(see `RETIRED_ROUTES.md`). The verifiers below survived it and each still runs
+standalone — `.opensmacx/venv/bin/python tools/verify_<name>.py` — but nothing
+invokes them for you, so a claim that one of them "passes" now means somebody
+ran it and read the output.
+
+Reach for them deliberately: `verify_span_termination` and `verify_call_edges`
+after editing annotations, `verify_member_offsets` and `verify_class_layouts`
+after touching a class, `verify_recovery_abi` after changing a signature.
 
 - `tools/verify_member_offsets.py` — no declared member boundary the image
   contradicts
@@ -257,25 +269,14 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   dereferenced at load time
 - the retired `verify_observability_ratchet` — a new recovery must prove
   something observes it
-- `tools/verify_build_freshness.py` — a green ctest against a stale build
-  directory means nothing
-- `tools/verify_tests_do_not_write.py` — runs every tool test in its own
-  subprocess and fails if one edits or deletes a tracked file. It caught
-  the since-retired `test_integrate_recovery` deleting a byte-exact proof and
-  rewriting the catalogue on every run, and the second test that was passing
-  *because* of it
-- `tools/verify_test_registration.py`,
-  `tools/verify_tool_test_registration.py`,
-  `tools/verify_tool_reachability.py`,
-  `tools/verify_tests_all_run.py` — no test file defines a test class after its
-  `unittest.main()`. One did, and the gate invoking it ran 57 of 73 tests while
-  exiting 0. Neither registration gate could see it: the file WAS registered and
-  CMake DID run it,
-  `tools/verify_cmake_paths_exist.py` — every literal
-  `${CMAKE_CURRENT_SOURCE_DIR}/...` names something that exists. A retired
-  route's CMake lines outlive it silently, because a target outside `all` is
-  never built and so never resolves its own COMMAND,
-  `tools/verify_documented_counts.py` — the checks that watch the checks
+- the retired `verify_build_freshness`, `verify_tests_do_not_write`,
+  `verify_test_registration`, `verify_tool_test_registration`,
+  `verify_tool_reachability`, `verify_tests_all_run`,
+  `verify_cmake_paths_exist`, `verify_checks_can_fail`,
+  `verify_check_tests_observe` and `cmake_sources` — every one of them took the
+  TEST SUITE as its subject: is a test registered, does CMake run it, can the
+  check fail, does the build it measured still exist. They went with it
+- `tools/verify_documented_counts.py` — the checks that watch the checks
 - `tools/verify_span_termination.py` — no catalogued span stops mid-instruction
   or holds two functions back to back. Nine rows were truncated this way, and
   nothing pointed back at it: the agent is simply told its last instruction

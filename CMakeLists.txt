@@ -154,8 +154,6 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX)
 
-include(CTest)
-
 
 
 
@@ -311,9 +309,9 @@ set(OPENSMACX_SOURCES
 # DIRECTORY SCOPE, NOT PER TARGET. This was attached to `OpenSMACX` alone, which
 # is a hand-maintained list of one: every target added afterwards that spelled
 # `<cstdint>` broke in exactly the same way with exactly the same error, and one
-# did. `recovery-gameplay-tests` compiles `tests/recovery_fixtures.h`, whose
-# line 35 is `#include <cstdint>`, and it has been failing to build under the
-# vc6 preset with `C1083: Cannot open include file: 'cstdint'`. Declared before
+# did - the since-retired `recovery-gameplay-tests`, which failed under the vc6
+# preset with `C1083: Cannot open include file: 'cstdint'`. Directory scope is
+# kept because the next target to be added will spell it too. Declared before
 # the first target so every target in this directory inherits it.
 #
 # `src` is not optional: the two shims include "vc6_compat.h" by quoted name and
@@ -396,37 +394,28 @@ install(TARGETS OpenSMACX
 )
 
 # ---------------------------------------------------------------------------
-# Everything that is not the executable.
+# THE BUILD IS THE EXECUTABLE. Nothing else.
 #
-# Above this line is the whole of "compile src/ into a binary": the toolchain,
-# the source list, the target, and its install rule. Below it, in
-# tests/CMakeLists.txt, is everything a developer runs and a builder does not -
-# the gates, the tool tests, the recovery harness, the staging and hybrid
-# targets, and the artifact paths and Python interpreter they need.
+# `tests/` held 95 ctest registrations - the tool tests, the ABI, vtable and
+# layout gates, the annotation-integrity checks and a C++ fixture target -
+# and it was RETIRED on 2026-08-15 because nothing consumed its results.
 #
-# DEFAULTS ON, so `cmake -B build` does exactly what it did before this split
-# and no existing invocation changes meaning. `-DOPENSMACX_BUILD_TOOLING=OFF`
-# is the lean build: the executable and nothing else, with no Python, no
-# binutils, no wine prefix and no game directory required.
+# The finding that settled it: the suite reported 21% passing, 75 failures,
+# every one of them `ModuleNotFoundError: No module named 'pefile'`, because
+# a plain `cmake -S . -B build` had reconfigured the tree onto
+# /usr/bin/python3 instead of the venv every tool runs on. That state is not
+# something a person sees and tolerates - it is what an unrun suite looks
+# like. A second check had been failing since the very commit that
+# introduced its bound, and stayed red through every commit after.
 #
-# The two roots below exist because a subdirectory redefines
-# CMAKE_CURRENT_SOURCE_DIR and CMAKE_CURRENT_BINARY_DIR to ITSELF. Forty-one
-# paths in the moved half meant the repository root when they were written, and
-# would have silently become tests/ - `tools/verify_cmake_paths_exist.py`
-# checks that every literal ${...}/ path resolves, so the breakage would have
-# been caught, but naming the roots explicitly means it never happens. It also
-# fixes a latent fragility: the two functions moved below evaluate
-# CMAKE_CURRENT_SOURCE_DIR in the CALLER's directory, so they were only ever
-# correct while every caller lived at the top level.
+# The gate is `tools/decomp_status.py --check`: it compiles every BYTE_EXACT
+# claim in `src/` against the shipped image and fails if one no longer
+# reproduces. That one is run every batch, its result is read, and it is the
+# only check in this tree that was ever load-bearing.
+#
+# `OPENSMACX_ROOT` and `OPENSMACX_BUILD_ROOT` outlive the split that needed
+# them: `tools/` still reads them out of the cache.
 # ---------------------------------------------------------------------------
 set(OPENSMACX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 set(OPENSMACX_BUILD_ROOT "${CMAKE_CURRENT_BINARY_DIR}")
-
-option(OPENSMACX_BUILD_TOOLING
-    "Build the recovery tooling, gates and test suite (off = executable only)"
-    ON)
-
-if(OPENSMACX_BUILD_TOOLING)
-    add_subdirectory(tests)
-endif()
 

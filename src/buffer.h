@@ -49,7 +49,10 @@ class DLLEXPORT Buffer {
   void set_text_color2(int color1, int color2, int color3, int color4);
   void set_text_color3(int color1, int color2, int color3, int color4);
   void set_text_color_hyper(int color1, int color2, int color3, int color4);
-  int init_class();
+  // `static`: the image's name is `?init_class@Buffer@@QAAHXZ` - `QAA` is a
+  // public member declared __cdecl, which takes no receiver - and
+  // jackal_init_real calls it with no ecx set up.
+  static int init_class();
   void close_class();
   int sync_to_palette(Palette *palette);
   HDC get_hdc();

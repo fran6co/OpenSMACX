@@ -40,6 +40,7 @@ class DLLEXPORT BasePop : GraphicWin {
   // So `QAE` in `?basepop_alloc@BasePop@@QAEHXZ` describes a `this` that does
   // not exist, and declaring it static is what lets WinMain take its ADDRESS
   // - which is the only thing WinMain does with it.
+  static int init_class();          // 00604590
   static int basepop_alloc();
   void UNK3(int a1);
   void UNK4(int a1);

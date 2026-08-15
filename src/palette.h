@@ -29,6 +29,12 @@ class DLLEXPORT Palette {
   ~Palette() { ; }
 
   int get_rgbquad(RGBQUAD *output, int start, int count);
+  // `static`, because the image's name ends in `QAA` - a public member
+  // declared __cdecl, taking no receiver. jackal_init_real calls it with
+  // no ecx set up, so `Class::method()` is the only legal spelling.
+  void init();                       // 005FE330
+  int set();                         // 005FE460
+  static void init_palette_class(int mode);
   static void set_active_window(Win *window);
   int get_pos(int value);
 
@@ -306,6 +312,11 @@ class DLLEXPORT Palette {
 
 static_assert(sizeof(Palette) == 0x454,
               "Palette layout must match the legacy ABI");
+
+// 0x009B8174, four bytes below PaletteInitialized: jackal_init_real stores
+// the palette it was handed here before initialising it, so it is the one
+// the process is using.
+extern Palette *PaletteCurrent;
 
 extern int *PaletteInitialized;
 

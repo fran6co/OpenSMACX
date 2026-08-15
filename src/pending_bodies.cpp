@@ -22,6 +22,14 @@
 #include "general.h"
 #include "palette.h"
 #include "basepop.h"
+#include "buffer.h"
+#include "checkbox.h"
+#include "checkbutton.h"
+#include "cursor.h"
+#include "filewin.h"
+#include "radiobutton.h"
+#include "time.h"
+#include "win.h"
 #include "popup.h"
 #include "sound.h"
 
@@ -60,17 +68,6 @@
 
 #define PENDING_BODY(address, signature) \
     reinterpret_cast<signature>(static_cast<unsigned long>(address))
-
-// 0x0062D3A0  ?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z
-//             body in src/unrecovered/0062d3a0.cpp
-int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
-                             int tgl_direct_draw, int display_width,
-                             int display_height, int colour_depth) {
-    typedef int(__cdecl *pending)(Palette *, Font *, LPSTR, int, int, int, int);
-    return PENDING_BODY(0x0062D3A0, pending)(palette, font, window_name,
-                                             tgl_direct_draw, display_width,
-                                             display_height, colour_depth);
-}
 
 // 0x0062D500  ?jackal_close@@YAXXZ  body in src/recovered/0062d500.cpp
 void __cdecl jackal_close() {
@@ -124,4 +121,90 @@ int Popup::alloc() {
 BasePop::BasePop() {
     typedef void(__cdecl *pending)(void *);
     PENDING_BODY(0x00600860, pending)(this);
+}
+
+// ---------------------------------------------------------------------------
+// THE FRONTIER AFTER jackal_init_real, which was recovered into
+// src/general.cpp on 2026-08-15. It calls nineteen functions; five were
+// already compiled and these fourteen were not, so promoting one body moved
+// the edge outward by fourteen. Each is one `#include` and one body away from
+// deleting its line here.
+// ---------------------------------------------------------------------------
+
+// 0x005FEBB0  ?init_palette_class@Palette@@QAAXH@Z
+void Palette::init_palette_class(int mode) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x005FEBB0, pending)(mode);
+}
+
+// 0x005FE330  ?init@Palette@@QAEXXZ
+void Palette::init() {
+    typedef void(__cdecl *pending)(void *);
+    PENDING_BODY(0x005FE330, pending)(this);
+}
+
+// 0x005FE460  ?set@Palette@@QAEHXZ
+int Palette::set() {
+    typedef int(__cdecl *pending)(void *);
+    return PENDING_BODY(0x005FE460, pending)(this);
+}
+
+// 0x005F01F0  ?init_class@Win@@QAAHPAD@Z
+int Win::init_class(LPSTR window_name) {
+    typedef int(__cdecl *pending)(LPSTR);
+    return PENDING_BODY(0x005F01F0, pending)(window_name);
+}
+
+// 0x005F2C40  ?set_display_mode@Win@@QAAHHHHH@Z
+int Win::set_display_mode(int width, int height, int depth, int tgl) {
+    typedef int(__cdecl *pending)(int, int, int, int);
+    return PENDING_BODY(0x005F2C40, pending)(width, height, depth, tgl);
+}
+
+// 0x005EFD20  ?flip@Win@@QAAXPAURECT@@@Z
+void Win::flip(RECT *area) {
+    typedef void(__cdecl *pending)(RECT *);
+    PENDING_BODY(0x005EFD20, pending)(area);
+}
+
+// 0x0060FC60  ?init_class@CheckBox@@QAAHXZ
+int CheckBox::init_class() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x0060FC60, pending)();
+}
+
+// 0x0060E4D0  ?init_class@RadioButton@@QAAHXZ
+int RadioButton::init_class() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x0060E4D0, pending)();
+}
+
+// 0x00604590  ?init_class@BasePop@@QAAHXZ
+int BasePop::init_class() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x00604590, pending)();
+}
+
+// 0x00614D90  ?init_class@FileWin@@QAAHXZ
+int FileWin::init_class() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x00614D90, pending)();
+}
+
+// 0x0063B910  ?init_cursor_class@Cursor@@QAAXXZ - `int` here, see cursor.h
+int Cursor::init_cursor_class() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x0063B910, pending)();
+}
+
+// 0x0063B940  ?trig_init@@YAHXZ
+int __cdecl trig_init() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x0063B940, pending)();
+}
+
+// 0x0063CE20  no catalogued name
+int __cdecl sub_63ce20() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x0063CE20, pending)();
 }

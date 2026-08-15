@@ -23,6 +23,19 @@
 #include "log.h" // log_say
 #include "strings.h"
 #include "text.h"
+// jackal_init_real brings all of these up, in this order.
+#include "palette.h"
+#include "win.h"
+#include "buffer.h"
+#include "checkbox.h"
+#include "checkbutton.h"
+#include "radiobutton.h"
+#include "basebutton.h"
+#include "font.h"
+#include "basepop.h"
+#include "filewin.h"
+#include "cursor.h"
+#include "time.h"
 
 uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
 // GenderDefault (0x009BBFEC) and PluralityDefault (0x009BBFF0) are defined in
@@ -248,7 +261,7 @@ FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
 
 /*
 Purpose: Set the global gender and plurality variables used by various parse functions.
-ORIGINAL: 0x005A58E0
+ORIGINAL: 0x005A58E0 BYTE_EXACT
 // name      ?parse_set@@YAXHH@Z
 // size      22 bytes
 // spans     0x005A58E0-0x005A58F6
@@ -1561,4 +1574,116 @@ void __cdecl sort_descending(uint32_t count, int *id, int *value) {
             }
         }
     } while (has_swapped);
+}
+
+// ---------------------------------------------------------------------------
+// The Jackal engine's bring-up, promoted out of src/unrecovered/0062d3a0.cpp
+// on 2026-08-15. WinMain calls it once; everything the game draws with exists
+// because this returned zero.
+// ---------------------------------------------------------------------------
+
+// 0x009B7AF4 and 0x009BB484. A copy of one word into another, once, and
+// nothing else in the recovered corpus touches either - so there is no
+// evidence for a name and they keep their addresses rather than gaining an
+// invented one.
+static int *const g_009b7af4 = (int *)0x009B7AF4;
+static int *const g_009bb484 = (int *)0x009BB484;
+
+int JackalInitFlags;      // 0x009BC4B0
+
+/*
+Purpose: Bring up every drawing subsystem the game needs, in order, and stop
+         at the first one that refuses.
+ORIGINAL: 0x0062D3A0 BYTE_EXACT
+// name      ?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z
+// size      342 bytes
+// spans     0x0062D3A0-0x0062D4F6
+// prototype int (__cdecl ?jackal_init_real@@YAHPAUPalette@@PAUFont@@PADHHHH@Z)(Palette* pPalEntries, Font* fontBuffer, int8* lpWindowName, int nDDTgl, int displayWidth, int displayHeight, int nCmdLineVal)
+// callers   1   call targets   19
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005DF570 0x005EFD20 0x005F01F0 0x005F2C40 0x005FE330 0x005FE460 0x005FEBB0 0x00604590 0x006074B0 0x0060E4D0 0x0060FC60 0x00614D90 0x00616880 0x006168F0 0x006195B0 0x006339A0 0x0063B910 0x0063B940 0x0063CE20
+// indirect  0x0062D42A
+Return Value: Zero once every subsystem is up; the first refusal's code
+              otherwise, or 3 if the palette or font is missing
+Status: Complete
+*/
+int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
+                             int tgl_direct_draw, int display_width,
+                             int display_height, int colour_depth) {
+    if (font == 0 || palette == 0) {
+        return 3;
+    }
+
+    JackalInitFlags = tgl_direct_draw;
+    Palette::init_palette_class(tgl_direct_draw & 2);
+    PaletteCurrent = palette;
+    palette->init();
+    palette->set();
+
+    int result = Win::init_class(window_name);
+    if (result != 0) {
+        return result;
+    }
+    palette->set();
+
+    if (tgl_direct_draw & 4) {
+        Win::set_display_mode(display_width, display_height, colour_depth, 1);
+        ShowWindow(HandleMain, 5);
+        Win::flip(0);
+    }
+
+    result = Buffer::init_class();
+    if (result != 0) {
+        return result;
+    }
+    result = CheckBox::init_class();
+    if (result != 0) {
+        return result;
+    }
+    result = CheckButton::init_class();
+    if (result != 0) {
+        return result;
+    }
+    result = RadioButton::init_class();
+    if (result != 0) {
+        return result;
+    }
+
+    BaseButton::set_def_font(font, 0, 0);
+    result = Font::init_font_class(font);
+    if (result != 0) {
+        return result;
+    }
+    result = BasePop::init_class();
+    if (result != 0) {
+        return result;
+    }
+    result = FileWin::init_class();
+    if (result != 0) {
+        return result;
+    }
+    result = sub_63ce20();
+    if (result != 0) {
+        return result;
+    }
+
+    *g_009b7af4 = *g_009bb484;
+    trig_init();
+    result = Cursor::init_cursor_class();
+    if (result != 0) {
+        return result;
+    }
+
+    if (StringTable->init(0x8000) != 0) {
+        return 1;
+    }
+
+    result = Time::init_class();
+    if (result != 0) {
+        return result;
+    }
+
+    JackalInitFlags |= 1;
+    return 0;
 }

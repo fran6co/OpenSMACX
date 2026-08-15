@@ -32,6 +32,10 @@
 */
 class DLLEXPORT FileWin {
  public:
+  // `static`: the image's name ends in `QAA` - a public member declared
+  // __cdecl, taking no receiver - and jackal_init_real calls it with no
+  // ecx set up, so `Class::method()` is the only legal spelling.
+  static int init_class();   // 00614D90
   void on_double_clicked(int a1);
   FileWin() { ; }
   ~FileWin() { ; }
