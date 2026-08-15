@@ -102,6 +102,25 @@ class DLLEXPORT Text {
 // Through a plain `Text *` the placement `new (Txt) Text(512)` there emits a
 // `cmp`/`je` guard the image does not have - 98 bytes against 86 - because
 // the pointer is a variable it cannot fold. Nothing assigns to it.
+// AND IT STAYS A POINTER, unlike TextBufferGetPtr beside it. 0x009B7BA0 is
+// the OBJECT, not a pointer variable, so `Text *const Txt` names its address
+// rather than pointing at a word that holds one - and being `const` with a
+// literal initialiser, VC6 folds it: the four field stores in `??__ETxt`
+// compile to `mov dword ptr [0x9b7cf0], ebx` and so on, absolutely, with no
+// load anywhere. The cost the other conversions removed is already absent.
+//
+// RULED-OUT: `Text Txt(512);`, which is what the image really has. It is
+// worse twice over. Measured on ??__ETxt it diverges at instruction #0 where
+// the const pointer diverges at #1. And a namespace-scope object of a class
+// type MAKES THE COMPILER GENERATE the dynamic initialiser - VC6 names that
+// `_$E<n>` and registers it through `.CRT$XCU`, so `??__ETxt@@YAXXZ` would
+// stop existing as a symbol and 0x005FD400 could never carry a claim.
+//
+// What this does give up is a runnable pointer: 0x009B7BA0 is mapped in
+// terranx.exe and in nothing this tree builds, so `Txt->` faults in the
+// standalone executable. That is the byte-exactness goal and the running-
+// program goal pulling opposite ways, and it is the first place in this tree
+// where they cannot both be had.
 extern Text *const Txt;
 // AN OBJECT, not a pointer to 0x009B7D00. That address is above the end
 // of stored `.data` (0x006A8000), so it is zero-fill and the pointer form
