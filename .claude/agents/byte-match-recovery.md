@@ -114,6 +114,26 @@ coordinator's `--record-matches` stamps that word onto the marker when *it*
 reproduces your bytes. Writing it by hand claims a measurement you did not
 make, and it is how the marker gets clobbered.
 
+## When the original is wrong
+
+You will find bugs in the shipped code — a local read before it is written, a
+loop that runs one short, a branch that can never be taken. **Reproduce them.**
+Byte-exactness is the goal, and a body that fixes the original's mistake is a
+different program that will never match.
+
+Write a plain comment at the site, starting `BUG IN THE ORIGINAL:`, saying what
+is wrong and what the consequence is. No token, no ledger — a comment where the
+bug is, so that once the tree compiles to the shipped bytes there is a list to
+work from. Say plainly that it is left alone deliberately, or the next reader
+fixes it and silently breaks the match.
+
+`src/main.cpp` has the worked example: `WinMain` reads `colour_depth`
+uninitialised on the non-DirectDraw path, and reproducing that is what moved
+the body from MISMATCH at instruction #2 to MNEMONIC_ONLY — writing the sane
+thing moves the register saves into the prologue and the divergence with them.
+A bug in the original is frequently the thing standing between you and a
+match, not a distraction from it.
+
 ## Rules
 
 - **No `__asm`, no `_emit`.** It pastes the original's instructions instead of
