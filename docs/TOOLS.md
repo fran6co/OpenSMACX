@@ -283,6 +283,22 @@ What `ctest` enforces, beyond `decomp_status.py --check`:
   say `void` over bodies that return a constant. It reads the CALLEE only, and
   four agents have now found returns that only the caller reveals, so it is
   known-incomplete by measurement
+- `tools/derive_build_flags.py` — asks the byte-exact corpus which compiler
+  invocation built the image, instead of searching for it. Over 1,500 bodies
+  reproduce the shipped bytes exactly, so "which flags" is a measurement: it
+  reports that `/O2` and its frameless twin cover 116 of 120 sampled bodies,
+  that only 3 are explained by exactly one invocation, and that `/Ox` and
+  `/O2 /Oi-` reproduce the same bodies as `/O2` to the body — which is what
+  retired `/Oi-` as a flag set
+- `tools/run_recovered.py` — runs `build/OpenSMACX.exe` in `.opensmacx/game/`,
+  where the 653 files it reads by relative path are, and names the catalogued
+  function it faults in. It stages the executable and the MSVC runtimes it
+  imports beside the data first: wine resolves a DLL from the executable's
+  directory, VC6 links the CRT dynamically, and without `MSVCRTD.DLL` the
+  process dies before its first instruction with exit 53 and no diagnostic -
+  which reads exactly like the recovered code faulting immediately. Today it
+  faults at `0x0062D3C2` inside `jackal_init_real`, which is the frontier:
+  everything before it is compiled in and ran
 - `tools/cmake_sources.py` — every `CMakeLists.txt` the build reads, found
   rather than named. Three checks derive their population from "the
   CMakeLists" and each had spelled that as the root file; when every
