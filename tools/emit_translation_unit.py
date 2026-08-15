@@ -1715,6 +1715,10 @@ WIN32_IMPORTS = {
     "GetSystemPaletteEntries":
         'extern "C" __declspec(dllimport) unsigned int __stdcall '
         'GetSystemPaletteEntries(void *, unsigned int, unsigned int, void *);',
+    # First argument is the HPALETTE, spelled `void *` like every handle here.
+    "AnimatePalette":
+        'extern "C" __declspec(dllimport) int __stdcall '
+        'AnimatePalette(void *, unsigned int, unsigned int, void *);',
     # The batch that lets the BODY-MODE store files drop their own `extern "C"
     # __declspec(dllimport)` lines (src/recovered/005d6350.cpp and the
     # src/unrecovered/ working copies 0058f2f0 and 005f1480), the same way the
