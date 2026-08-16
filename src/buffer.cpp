@@ -54,6 +54,11 @@ bytes land on the zero already stored there. The three adjacent stores inside
 that ramp target distinct bytes with independent values, so their order is not
 observable.
 */
+// Slot 1 of `Buffer`'s vtable. The image points it at `sub_406b30` -
+// `xor eax, eax; ret` - the empty virtual the classes share, so what it
+// MEANS is whatever a derived class does with it.
+void Buffer::surface_lost() { ; }
+
 void Buffer::construct() {
     new (&spot_) Spot();
     volatile uint32_t *const object =
@@ -502,7 +507,6 @@ typedef void (OriginalObject::*func_buffer_virtual)();
 
 static const size_t OwnedAllocationCount = 20;
 static const size_t SurfaceReleaseSlot = 0x08;
-static const size_t BufferVirtualSlot = 0x04;
 static const size_t SurfaceGetDCSlot = 0x44;
 static const size_t ClipperSetClipListSlot = 0x1C;
 static const size_t SurfaceSetClipperSlot = 0x70;
@@ -620,12 +624,6 @@ Status: WIP
 #pragma function(memset)
 
 int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
-    // Buffer's own virtual slot 1, called on `this` whenever the surface or
-    // its device context could not be had. The BASE implementation is
-    // `sub_406b30` - `xor eax, eax; ret` - so what it means is whatever the
-    // derived windows do with it; nothing here establishes more.
-    static const size_t BufferSlotSurfaceLost = 4;
-    typedef void (OriginalObject::*func_buffer_surface_lost)();
 
     const int borrowed = tgl & 4;
     if (borrowed != 0 && direct_draw == nullptr) {
@@ -703,14 +701,14 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
 
     width_ = width;
     height_ = -height;
-    field_90_ = width * height;
+    pixel_count_ = width * height;
     field_9C_ = 0x100;
 
     if (BufferDirectDraw == nullptr) {
-        field_74_ = reinterpret_cast<uint32_t>(
+        previous_bitmap_ = reinterpret_cast<uint32_t>(
             SelectObject(hdc_, bitmap_handle_));
     }
-    field_4A8_ = (width + 3) & ~3;
+    stride_ = (width + 3) & ~3;
 
     if (BufferDefaultFont != nullptr) {
         if (BufferDefaultFont->is_initialized()) {
@@ -722,16 +720,14 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     }
 
     if (field_50_ != 0) {
-        (ORIGINAL(this)->*original_slot<func_buffer_surface_lost>(
-            *reinterpret_cast<uint8_t **>(this) + BufferSlotSurfaceLost))();
+        surface_lost();
     }
 
     if (surface_ == nullptr) {
         hdc2_ = hdc_;
     } else if (hdc2_ == nullptr) {
         if (surface_->GetDC(&hdc2_) != 0) {
-            (ORIGINAL(this)->*original_slot<func_buffer_surface_lost>(
-                *reinterpret_cast<uint8_t **>(this) + BufferSlotSurfaceLost))();
+            surface_lost();
         }
     }
 
@@ -748,15 +744,14 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
         const int remaining = --hdc_lock_count_;
         if (hdc2_ != nullptr && remaining <= 0) {
             if (surface_->ReleaseDC(hdc2_) != 0) {
-                (ORIGINAL(this)->*original_slot<func_buffer_surface_lost>(
-                    *reinterpret_cast<uint8_t **>(this) + BufferSlotSurfaceLost))();
+                surface_lost();
             }
             hdc_lock_count_ = 0;
             hdc2_ = nullptr;
         }
     }
 
-    field_1C_ = tgl;
+    init_flags_ = tgl;
     return 0;
 }
 
@@ -803,89 +798,70 @@ void Buffer::close() {
         }
     }
 
-    if (ordered[0x64 / 4] != 0) {
-        ordered[0x68 / 4] = 0;
-        ordered[0x6C / 4] = 0;
-        if (BufferDirectDraw != 0) {
-            void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
-            // The reference count was just zeroed, so this decrement always
-            // lands at or below zero and the published data is dropped.
-            const int32_t remaining =
-                static_cast<int32_t>(ordered[0x68 / 4]) - 1;
-            ordered[0x68 / 4] = static_cast<uint32_t>(remaining);
-            if (!surface) {
+    if (hdc_ != nullptr) {
+        hdc_lock_count_ = 0;
+        field_6C_ = 0;
+        if (BufferDirectDraw != nullptr) {
+            // The lock count was just zeroed, so this decrement always lands
+            // at or below zero and the published data is dropped.
+            const int remaining = hdc_lock_count_ - 1;
+            hdc_lock_count_ = remaining;
+            if (surface_ == nullptr) {
                 if (remaining <= 0) {
-                    ordered[0x60 / 4] = 0;
-                    ordered[0x68 / 4] = 0;
+                    hdc2_ = nullptr;
+                    hdc_lock_count_ = 0;
                 }
-            } else {
-                const uint32_t data = ordered[0x60 / 4];
-                if (data != 0 && remaining <= 0) {
-                    const long result =
-                        reinterpret_cast<func_surface_unlock_slot>(
-                            slot(surface, 0x68))(
-                                surface, reinterpret_cast<void *>(data));
-                    if (result != 0) {
-                        (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
-                    }
-                    ordered[0x68 / 4] = 0;
-                    ordered[0x60 / 4] = 0;
+            } else if (hdc2_ != nullptr && remaining <= 0) {
+                if (surface_->ReleaseDC(hdc2_) != 0) {
+                    surface_lost();
                 }
+                hdc_lock_count_ = 0;
+                hdc2_ = nullptr;
             }
-        } else if ((ordered[0x1C / 4] & 4U) == 0) {
-            HDC device = reinterpret_cast<HDC>(ordered[0x64 / 4]);
-            if (ordered[0x74 / 4] != 0) {
-                SelectObject(device, reinterpret_cast<HGDIOBJ>(ordered[0x74 / 4]));
-                ordered[0x74 / 4] = 0;
+        } else if ((init_flags_ & 4U) == 0) {
+            if (previous_bitmap_ != 0) {
+                SelectObject(hdc_, reinterpret_cast<HGDIOBJ>(previous_bitmap_));
+                previous_bitmap_ = 0;
             }
-            DeleteDC(device);
-            ordered[0x60 / 4] = 0;
-            ordered[0x64 / 4] = 0;
+            DeleteDC(hdc_);
+            hdc2_ = nullptr;
+            hdc_ = nullptr;
         }
     }
 
-    size_t offset_cases[] = {size_t(0x78), size_t(0x70)};
-    for (size_t offset_index = 0;
-         offset_index < sizeof(offset_cases) / sizeof(offset_cases[0]);
-         ++offset_index) {
-        size_t offset = offset_cases[offset_index];
-        if (ordered[offset / 4] != 0) {
-            DeleteObject(reinterpret_cast<HGDIOBJ>(ordered[offset / 4]));
-            ordered[offset / 4] = 0;
+    if (bitmap_handle_ != nullptr) {
+        DeleteObject(bitmap_handle_);
+        bitmap_handle_ = nullptr;
+    }
+    if (clip_region_ != nullptr) {
+        DeleteObject(clip_region_);
+        clip_region_ = nullptr;
+    }
+
+    if (BufferDirectDraw != nullptr) {
+        if (surface_ != nullptr) {
+            surface_->Release();
+        }
+        if (clipper_ != nullptr) {
+            clipper_->Release();
         }
     }
 
-    if (BufferDirectDraw != 0) {
-        size_t release_offset_cases[] = {size_t(0x58), size_t(0x5C)};
-        for (size_t release_offset_index = 0;
-             release_offset_index
-                 < sizeof(release_offset_cases) / sizeof(release_offset_cases[0]);
-             ++release_offset_index) {
-            size_t offset = release_offset_cases[release_offset_index];
-            void *const object = reinterpret_cast<void *>(ordered[offset / 4]);
-            if (object) {
-                reinterpret_cast<func_com_release>(
-                    slot(object, SurfaceReleaseSlot))(object);
-            }
-        }
-    }
-
-    ordered[0x58 / 4] = 0;
-    ordered[0x5C / 4] = 0;
-    ordered[0x0C / 4] = 0;
-    ordered[0x08 / 4] = 0;
-    ordered[0x18 / 4] = 0;
-    ordered[0x14 / 4] = 0;
-    ordered[0x10 / 4] = 0;
-    ordered[0x4A4 / 4] = 0;
-    ordered[0x4A8 / 4] = 0;
-    ordered[0x57C / 4] = 0;
-    *reinterpret_cast<volatile uint8_t *>(
-        reinterpret_cast<uint8_t *>(this) + 0x580) = 0;
-    ordered[0x80 / 4] = 0;
-    ordered[0x84 / 4] = 0;
-    ordered[0x50 / 4] = 0;
-    ordered[0x54 / 4] = 0;
+    surface_ = nullptr;
+    clipper_ = nullptr;
+    field_C_ = 0;
+    field_8_ = 0;
+    field_18_ = 0;
+    field_14_ = 0;
+    field_10_ = 0;
+    field_4A4_ = 0;
+    stride_ = 0;
+    field_57C_ = 0;
+    field_580_ = 0;
+    width_ = 0;
+    height_ = 0;
+    field_50_ = 0;
+    ppv_bits_ = nullptr;
     ordered[0x50C / 4] = 0xFFFFFFFFU;
     ordered[0x510 / 4] = 0;
     ordered[0x514 / 4] = 0;
@@ -972,7 +948,7 @@ Status: Complete
 */
 HDC Buffer::get_hdc() {
     if (field_50_ != 0) {
-        (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
+        surface_lost();
     }
     void *const surface = reinterpret_cast<void *>(surface_);
     // Without a surface the buffer owns its context directly, so acquiring is
@@ -989,7 +965,7 @@ HDC Buffer::get_hdc() {
     const long result = reinterpret_cast<func_surface_get_dc_slot>(
         slot(surface, SurfaceGetDCSlot))(surface, &hdc2_);
     if (result != 0) {
-        (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
+        surface_lost();
     }
     ++hdc_lock_count_;
     return hdc2_;
@@ -1029,7 +1005,7 @@ void Buffer::release_hdc(int count) {
     const long result = reinterpret_cast<func_surface_release_dc_slot>(
         slot(surface, SurfaceReleaseDCSlot))(surface, hdc2_);
     if (result != 0) {
-        (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
+        surface_lost();
     }
     hdc_lock_count_ = 0;
     hdc2_ = nullptr;
@@ -1172,16 +1148,16 @@ int Buffer::set_clip(RECT *rect) {
         get_hdc();
     }
     if (hdc2_ != nullptr) {
-        if (field_70_ != nullptr) {
-            DeleteObject(field_70_);
-            field_70_ = nullptr;
+        if (clip_region_ != nullptr) {
+            DeleteObject(clip_region_);
+            clip_region_ = nullptr;
         }
         HRGN region = nullptr;
         // A clip equal to the full extent needs no region at all; passing null
         // to SelectClipRgn restores the unclipped state.
         if (!EqualRect(&rect1_, &rect2_)) {
             region = CreateRectRgnIndirect(&rect1_);
-            field_70_ = region;
+            clip_region_ = region;
             if (region == nullptr) {
                 // The legacy body returns here without releasing the context
                 // it may have just acquired; preserved deliberately.

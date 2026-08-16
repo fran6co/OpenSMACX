@@ -2150,6 +2150,20 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         # unchanged and only the spelling is.
         if bases and body_defines & set(bases):
             return []
+        # AND A BASE THIS UNIT NEVER DEFINES IS NOT ONE EITHER. The base
+        # clause was decided here and the shell was decided by
+        # `members_of_shell` further down, from a different predicate, so the
+        # two could disagree - and did the moment `Buffer` gained virtuals:
+        # `GraphicWin` holds one by value, its layout stopped resolving, it
+        # fell back to an opaque forward declaration, and `Menu : public
+        # GraphicWin` was still emitted above it. `C2504: 'GraphicWin' : base
+        # class undefined` on 85 units, none of which had changed.
+        #
+        # Asking the same question both places is the fix. The flat form
+        # carries the base's members, so the layout is unchanged either way -
+        # which is what makes falling back safe rather than lossy.
+        if any(not members_of_shell(base) for base in bases):
+            return []
         return bases
 
     def embeds_the_subject(name: str) -> bool:
