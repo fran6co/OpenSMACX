@@ -144,10 +144,19 @@ Win *Win::get_key_window() {
     return PENDING_BODY(0x005F6A50, pending)();
 }
 
-// 0x005F6F10  ?get_mouse_window@Win@@QAAHPAH0@Z
-Win *Win::get_mouse_window(int *x, int *y) {
-    typedef Win *(__cdecl *pending)(int *, int *);
-    return PENDING_BODY(0x005F6F10, pending)(x, y);
+// 0x005ED2D0  ?screen_to_client@Win@@QAEXPAHPAH@Z - BYTE_EXACT already in
+// src/unrecovered/005ed2d0.cpp, and 133 bytes, so this edge is cheap to
+// close next.
+void Win::screen_to_client(int *x, int *y) {
+    typedef void(__fastcall *pending)(Win *, void *, int *, int *);
+    PENDING_BODY(0x005ED2D0, pending)(this, nullptr, x, y);
+}
+
+// 0x005F6AB0  ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z - the tree walk
+// `get_mouse_window` delegates to, 1110 bytes.
+Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y) {
+    typedef Win *(__cdecl *pending)(Win *, int *, int *);
+    return PENDING_BODY(0x005F6AB0, pending)(window, x, y);
 }
 
 // 0x005F1820  ?update_cursor@Win@@QAAHPAUWin@@H@Z

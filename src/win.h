@@ -115,6 +115,7 @@ class DLLEXPORT Win {
   static HDC get_hdc();
   static void release_hdc();
   void client_to_screen(int *x, int *y);
+  void screen_to_client(int *x, int *y);  // 005ED2D0
   int on_query_new_palette();
   int get_vert_pos();
   int get_horz_pos();
@@ -141,7 +142,11 @@ class DLLEXPORT Win {
   uint32_t iSomeFlag_;
   uint32_t field_A0_;
   uint32_t field_A4_;
-  uint32_t poWinBase_;
+  // 0xA8. A `Win *`, not a word: `Win::construct` stores `this` here and
+  // `Win::get_mouse_window` RETURNS it as the window that owns a position.
+  // Nothing else in the tree reads it, so the `uint32_t` cost nothing until
+  // now; it is the same four bytes either way.
+  Win *poWinBase_;
   uint32_t iVertScaleDenom_;
   uint32_t iVertScaleNum_;
   Buffer *buffer1_;
@@ -314,28 +319,70 @@ extern Win *WinTrackingWindow;
 // the new one. Also read by `Win::OnMouseMove` and cleared by `Win::close`.
 extern Win *WinHoverWindow;
 
-// 0x009B7ABC. The window holding the pointer, if any: the hover swap above
-// only runs when this is null or is the window being left. 85 references,
-// including `Win::get_mouse_window` and `BaseWin::click`.
+// THE FOUR WINDOWS `Win::get_mouse_window` CONSULTS, in this order, before
+// it walks the window tree at all. What is PROVEN is the mechanism, not a
+// role for each: the function tests each in turn, takes the first whose
+// `iSomeFlag_ & 1` (visible) is set, and NULLS any that fails that test
+// before moving on. Which is also why they are `Win *` - it dereferences
+// each at `+0x9C`. Two of them were `int WinInputStateA/B` here until this
+// function was read, on the strength of nothing but `flush_input` and
+// `flush_keyboard` clearing both.
+//
+// The order is the whole of what distinguishes them, so they are numbered
+// rather than given roles this tree cannot yet justify. 1 and 2 are cleared
+// together by `flush_input`, `flush_keyboard`, `flush_mouse`,
+// `Win::OnActivate`, `Win::close` and `do_all_tasks`; 3 has 85 references
+// including `BaseWin::click` and `go_reset`; 4 has 70 including
+// `Win::hide` and `iface_click`.
+extern Win *WinPointerOwner1;  // 0x009B7ACC
+extern Win *WinPointerOwner2;  // 0x009B7AD0
+extern Win *WinPointerOwner3;  // 0x009B7ABC
+extern Win *WinPointerOwner4;  // 0x009B7AC0
+
+// 0x009B7AE0. The focus window: `Win::get_key_window` returns it, and
+// `Win::OnKey`, `OnChar` and `OnSysKey` are the rest of its readers.
+// `Win::get_mouse_window` falls back to walking its tree when no pointer
+// owner above is live.
+extern Win *WinFocusWindow;
+
+// 0x009B7ADC. The modal window, and this one IS established: `Win::set_modal`
+// and `Win::release_modal` are its only writers, and they are also what
+// maintains `WinModalStack` and its depth at 0x009B7AE4.
 extern Win *WinModalWindow;
 
-// 0x009B7AA4. The modifier/button state passed as the trailing argument to
-// every input slot this procedure dispatches, and read by all six `Win::On*`
-// handlers - 23 references, and it is never anything but that argument.
-extern int WinKeyState;
+// 0x009B6E48 and 0x009B7B34. The root windows and how many there are;
+// `get_mouse_window` walks `roots[0 .. count)` when there is no focus
+// window, recursing into each until one claims the pointer.
+extern Win *WinRootWindows[];
+extern int WinRootCount;
+
+// 0x009B7AA4. NOT A KEY STATE, which is what it was called here after
+// `Win::window_proc` was read: that procedure only ever forwards it, and
+// `get_mouse_window` is what SETS it - to 1 on the two owners that return
+// the window found, and to 0 on the two that return that window's
+// `poWinBase_` instead. The trailing argument every input slot receives is
+// therefore "these coordinates are the window's own", not a modifier mask.
+extern int WinMouseDirect;
+
+// 0x009B6628 and 0x009B662C. The screen position `get_mouse_window` was
+// given, saved on entry so the tree walk can restore it before trying a
+// different subtree.
+extern int WinMouseScreenX;
+extern int WinMouseScreenY;
+
+// The `Win` flag bits `get_mouse_window` and `window_proc` test, named for
+// what the code does when each is set.
+static const uint32_t WinFlagVisible = 0x1;          // iSomeFlag_
+static const uint32_t WinFlagClipToParent = 0x20;    // iFlags_
+static const uint32_t WinFlagParentOffset = 0x8000;  // iFlags_
+
+// 0x005F6AB0. The tree walk `get_mouse_window` delegates to once it has a
+// subtree and a position in that subtree's coordinates.
+Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y);
 
 // 0x009B7B3C. Cleared on every WM_MOUSEMOVE and read by
 // `Win::update_cursor`, which is the only other function that touches it.
 extern int WinCursorMoved;
-
-// 0x009B7ACC and 0x009B7AD0. A PAIR, and no more than that is known: every
-// function that touches either - `flush_input`, `flush_keyboard`,
-// `Win::OnActivate`, `Win::close`, `do_all_tasks` and the WM_ACTIVATE arm
-// here - writes BOTH, always to the same value, and nothing in the image
-// writes one alone. What they hold is not established, so they are named
-// for the only behaviour that is.
-extern int WinInputStateA;
-extern int WinInputStateB;
 
 // 0x009B7A88 and 0x009B7A94. Two `__cdecl` hooks the procedure calls on the
 // way out: the second on mouse messages with (hwnd, lParam), the first on

@@ -583,11 +583,18 @@ int WinScreenWidth;        // 0x009B7B1C
 int WinScreenHeight;       // 0x009B7B20
 Win *WinTrackingWindow;    // 0x009B7AAC
 Win *WinHoverWindow;       // 0x009B7A7C
-Win *WinModalWindow;       // 0x009B7ABC
-int WinKeyState;           // 0x009B7AA4
+Win *WinPointerOwner1;     // 0x009B7ACC
+Win *WinPointerOwner2;     // 0x009B7AD0
+Win *WinPointerOwner3;     // 0x009B7ABC
+Win *WinPointerOwner4;     // 0x009B7AC0
+Win *WinFocusWindow;       // 0x009B7AE0
+Win *WinModalWindow;       // 0x009B7ADC
+Win *WinRootWindows[64];   // 0x009B6E48
+int WinRootCount;          // 0x009B7B34
+int WinMouseDirect;        // 0x009B7AA4
+int WinMouseScreenX;       // 0x009B6628
+int WinMouseScreenY;       // 0x009B662C
 int WinCursorMoved;        // 0x009B7B3C
-int WinInputStateA;        // 0x009B7ACC
-int WinInputStateB;        // 0x009B7AD0
 void(__cdecl *WinMessageHook)();                            // 0x009B7A88
 void(__cdecl *WinMouseHook)(HWND window, LPARAM position);  // 0x009B7A94
 void(__cdecl *WinKeyHook)(WPARAM key);                      // 0x009B7A8C
@@ -1454,6 +1461,156 @@ ORIGINAL: 0x005F01F0
 Status: Complete
 */
 /*
+Purpose: Decide which window a screen position belongs to, translating the
+         position into that window's coordinates on the way.
+ORIGINAL: 0x005F6F10
+// name      ?get_mouse_window@Win@@QAAHPAH0@Z
+// size      1033 bytes
+// spans     0x005F6F10-0x005F7319
+// prototype
+// callers   8   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED2D0 0x005F6AB0
+//
+// CORRECTED from `int`, like `get_key_window` beside it: the catalogue says
+// `H` and every caller treats the result as a `Win *`.
+//
+// The four `WinPointerOwner` globals come first, in that order, and the
+// FIRST that is visible wins; one that is not is nulled on the way past.
+// Owners 2 and 4 set `WinMouseDirect`, and that is what the tail reads to
+// decide between returning the window and returning its `poWinBase_`.
+Status: WIP
+*/
+Win *Win::get_mouse_window(int *x, int *y) {
+    WinMouseScreenX = *x;
+    WinMouseScreenY = *y;
+
+    Win *found = nullptr;
+    for (;;) {
+        if (WinPointerOwner1 != nullptr) {
+            if ((WinPointerOwner1->iSomeFlag_ & WinFlagVisible) != 0) {
+                *x -= WinPointerOwner1->client_rect_.left + WinPointerOwner1->outer_rect_.left;
+                *y -= WinPointerOwner1->client_rect_.top + WinPointerOwner1->outer_rect_.top;
+                if ((WinPointerOwner1->iFlags_ & WinFlagClipToParent) != 0
+                    && WinPointerOwner1->win_parent_ != nullptr) {
+                    WinPointerOwner1->win_parent_->screen_to_client(x, y);
+                    if ((WinPointerOwner1->iFlags_ & WinFlagParentOffset) != 0) {
+                        *x += WinPointerOwner1->win_parent_->outer_rect_.left;
+                        *y += WinPointerOwner1->win_parent_->outer_rect_.top;
+                    }
+                }
+                WinMouseDirect = 0;
+                found = WinPointerOwner1;
+                break;
+            }
+            WinPointerOwner1 = nullptr;
+            continue;
+        }
+        if (WinPointerOwner2 != nullptr) {
+            if ((WinPointerOwner2->iSomeFlag_ & WinFlagVisible) != 0) {
+                WinPointerOwner2->screen_to_client(x, y);
+                *x += WinPointerOwner2->outer_rect_.left;
+                *y += WinPointerOwner2->outer_rect_.top;
+                WinMouseDirect = 1;
+                found = WinPointerOwner2;
+                break;
+            }
+            WinPointerOwner2 = nullptr;
+            continue;
+        }
+        if (WinPointerOwner3 != nullptr) {
+            if ((WinPointerOwner3->iSomeFlag_ & WinFlagVisible) != 0) {
+                *x -= WinPointerOwner3->client_rect_.left + WinPointerOwner3->outer_rect_.left;
+                *y -= WinPointerOwner3->client_rect_.top + WinPointerOwner3->outer_rect_.top;
+                if ((WinPointerOwner3->iFlags_ & WinFlagClipToParent) != 0
+                    && WinPointerOwner3->win_parent_ != nullptr) {
+                    WinPointerOwner3->win_parent_->screen_to_client(x, y);
+                    if ((WinPointerOwner3->iFlags_ & WinFlagParentOffset) != 0) {
+                        *x += WinPointerOwner3->win_parent_->outer_rect_.left;
+                        *y += WinPointerOwner3->win_parent_->outer_rect_.top;
+                    }
+                }
+                WinMouseDirect = 0;
+                found = WinPointerOwner3;
+                break;
+            }
+            WinPointerOwner3 = nullptr;
+            continue;
+        }
+        if (WinPointerOwner4 != nullptr) {
+            if ((WinPointerOwner4->iSomeFlag_ & WinFlagVisible) != 0) {
+                WinPointerOwner4->screen_to_client(x, y);
+                *x += WinPointerOwner4->outer_rect_.left;
+                *y += WinPointerOwner4->outer_rect_.top;
+                WinMouseDirect = 1;
+                found = WinPointerOwner4;
+                break;
+            }
+            WinPointerOwner4 = nullptr;
+            continue;
+        }
+        break;
+    }
+
+    if (found == nullptr) {
+        if (WinFocusWindow != nullptr) {
+            *x -= WinFocusWindow->client_rect_.left + WinFocusWindow->outer_rect_.left;
+            *y -= WinFocusWindow->client_rect_.top + WinFocusWindow->outer_rect_.top;
+            if ((WinFocusWindow->iFlags_ & WinFlagClipToParent) != 0
+                && WinFocusWindow->win_parent_ != nullptr) {
+                WinFocusWindow->win_parent_->screen_to_client(x, y);
+                if ((WinFocusWindow->iFlags_ & WinFlagParentOffset) != 0) {
+                    *x += WinFocusWindow->win_parent_->outer_rect_.left;
+                    *y += WinFocusWindow->win_parent_->outer_rect_.top;
+                }
+            }
+            *x += WinFocusWindow->outer_rect_.left;
+            *y += WinFocusWindow->outer_rect_.top;
+            found = get_mouse_window_recurse(WinFocusWindow, x, y);
+            if (found == nullptr && WinModalWindow != nullptr) {
+                *x = WinMouseScreenX;
+                *y = WinMouseScreenY;
+                WinModalWindow->screen_to_client(x, y);
+                *x += WinModalWindow->outer_rect_.left;
+                *y += WinModalWindow->outer_rect_.top;
+                found = get_mouse_window_recurse(WinModalWindow, x, y);
+            }
+            if (found == nullptr) {
+                // Neither subtree claimed it, so the focus window keeps it
+                // and the position goes back to where it started.
+                *x = WinMouseScreenX;
+                *y = WinMouseScreenY;
+                *x -= WinFocusWindow->client_rect_.left + WinFocusWindow->outer_rect_.left;
+                *y -= WinFocusWindow->client_rect_.top + WinFocusWindow->outer_rect_.top;
+                if ((WinFocusWindow->iFlags_ & WinFlagClipToParent) != 0
+                    && WinFocusWindow->win_parent_ != nullptr) {
+                    WinFocusWindow->win_parent_->screen_to_client(x, y);
+                    if ((WinFocusWindow->iFlags_ & WinFlagParentOffset) != 0) {
+                        *x += WinFocusWindow->win_parent_->outer_rect_.left;
+                        *y += WinFocusWindow->win_parent_->outer_rect_.top;
+                    }
+                }
+                WinMouseDirect = 0;
+                found = WinFocusWindow;
+            }
+        } else {
+            for (int index = 0; index < WinRootCount; ++index) {
+                found = get_mouse_window_recurse(WinRootWindows[index], x, y);
+                if (found != nullptr) {
+                    break;
+                }
+            }
+        }
+    }
+
+    if (found != nullptr && WinMouseDirect == 0) {
+        found = found->poWinBase_;
+    }
+    return found;
+}
+
+/*
 Purpose: The window procedure the class registers - route every input
          message to the Win the pointer or the keyboard focus is over, and
          hand everything else to DefWindowProc.
@@ -1635,7 +1792,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
             (ORIGINAL(over)->*original_slot<func_win_wheel>(
                 vtable + WinSlotMouseWheel))(wparam, static_cast<unsigned int>(wparam) >> 16,
-                                 x, y, WinKeyState);
+                                 x, y, WinMouseDirect);
             return 0;
         }
         switch (message) {
@@ -1650,7 +1807,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             }
             uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
             (ORIGINAL(over)->*original_slot<func_win_button_up>(
-                vtable + WinSlotLButtonUp))(x, y, wparam, WinKeyState);
+                vtable + WinSlotLButtonUp))(x, y, wparam, WinMouseDirect);
             return 0;
         }
         case WM_LBUTTONDBLCLK:
@@ -1666,7 +1823,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
                 (ORIGINAL(over)->*original_slot<func_win_button_down>(
                     vtable + WinSlotRButtonDown))(message == WM_RBUTTONDBLCLK ? 1 : 0,
-                                     x, y, wparam, WinKeyState);
+                                     x, y, wparam, WinMouseDirect);
             }
             break;
         }
@@ -1679,7 +1836,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             if (over != nullptr) {
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
                 (ORIGINAL(over)->*original_slot<func_win_button_up>(
-                    vtable + WinSlotRButtonUp))(x, y, wparam, WinKeyState);
+                    vtable + WinSlotRButtonUp))(x, y, wparam, WinMouseDirect);
             }
             break;
         }
@@ -1756,8 +1913,8 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 }
                 if (WinHoverWindow != nullptr
                     && (WinCursorMoved != 0 || over != WinHoverWindow)
-                    && (WinModalWindow == nullptr
-                        || WinModalWindow == WinHoverWindow)) {
+                    && (WinPointerOwner3 == nullptr
+                        || WinPointerOwner3 == WinHoverWindow)) {
                     uint8_t *const vtable =
                         *reinterpret_cast<uint8_t **>(WinHoverWindow);
                     (ORIGINAL(WinHoverWindow)->*original_slot<func_win_leave>(
@@ -1766,7 +1923,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 WinHoverWindow = over;
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
                 (ORIGINAL(over)->*original_slot<func_win_enter>(
-                    vtable + WinSlotMouseEnter))(x, y, wparam, WinKeyState);
+                    vtable + WinSlotMouseEnter))(x, y, wparam, WinMouseDirect);
                 return 0;
             }
             default:
@@ -1789,8 +1946,8 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             const unsigned int minimised = HIWORD(wparam);
             InvalidateRect(HandleMain, nullptr, FALSE);
             if (active == 0) {
-                WinInputStateA = 0;
-                WinInputStateB = 0;
+                WinPointerOwner1 = nullptr;
+                WinPointerOwner2 = nullptr;
             } else if (minimised == 0 && BufferDirectDrawActive == 0
                        && get_hdc() != nullptr) {
                 SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
