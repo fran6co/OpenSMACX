@@ -61,7 +61,10 @@ class DLLEXPORT Buffer {
   // `??_GBuffer@@UAEPAXI@Z` at 0 and `sub_406b30` at 1; declared, the
   // compiler puts the pointer there itself and `sizeof` stays 0x588.
   virtual ~Buffer() { ; }
-  virtual void surface_lost();
+  // `int`, and returning 0, because that is what the three bytes are:
+  // `xor eax, eax; ret`. Declared `void` it compiles to `ret` alone and
+  // Buffer's slot 1 stops being the function the image put there.
+  virtual int surface_lost();
 
   // Slot 1 of this class's vtable.
   //

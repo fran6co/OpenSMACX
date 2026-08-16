@@ -54,10 +54,30 @@ bytes land on the zero already stored there. The three adjacent stores inside
 that ramp target distinct bytes with independent values, so their order is not
 observable.
 */
-// Slot 1 of `Buffer`'s vtable. The image points it at `sub_406b30` -
-// `xor eax, eax; ret` - the empty virtual the classes share, so what it
-// MEANS is whatever a derived class does with it.
-void Buffer::surface_lost() { ; }
+// Slot 1 of the vtable - the do-nothing virtual, returning 0.
+//
+// NO `ORIGINAL:` MARKER, deliberately, and the gate caught the first
+// attempt: an annotation here makes a SECOND claim on 0x00406B30, which
+// `annotation_scan` reports as a duplicate and drops from both sides. The
+// claim count fell by one - `nullsub_thunks.cpp` stopped counting - for a
+// comment.
+//
+// It is not claimed here because it is not this file's function. `src/nullsub_thunks.cpp`
+// already owns 0x00406B30 as `sub_406b30`, byte-exact, and 129 vtable slots
+// across 70 classes point at it - Buffer's slot 1 among them. There is ONE
+// three-byte function in the image, not 129: `/Gy` gives every function its
+// own COMDAT and the linker folded every identical empty override onto a
+// single copy.
+//
+// So the recovery of "Buffer::surface_lost" is not a second body. It is
+// declaring this override so that it compiles to the same three bytes and
+// folds the same way - `xor eax, eax; ret`, which is why it returns `int`
+// and returns 0. Written `void` it is `ret` alone, one byte, and Buffer's
+// slot 1 would stop being the function the image put there. Verified by
+// compiling this unit and reading the symbol out of the object:
+// `?surface_lost@Buffer@@UAEHXZ` is `33 c0 c3`, the three bytes at
+// 0x00406B30.
+int Buffer::surface_lost() { return 0; }
 
 void Buffer::construct() {
     new (&spot_) Spot();
