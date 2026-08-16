@@ -27,8 +27,27 @@ reformatted, no annotation marker is inserted, no `#include` is rewritten.
 differs, because the whole value of this directory is that it is the release
 and not a copy somebody tidied.
 
-The annotations that claim these functions live in `src/recovered/zlib/`,
-beside rather than inside the sources, for the same reason.
+## It is BUILT, and it is not a recovery
+
+`CMakeLists.txt` compiles these sources as a `zlib` static library and links
+it into `OpenSMACX`. That is the whole relationship: zlib is a dependency of
+this program exactly as it was a dependency of `terranx.exe`.
+
+Until 2026-08-16 there were thirty-nine `recovered_*.c` files beside these,
+each an annotation header over `#include "deflate.c"`, each carrying a
+BYTE_EXACT claim. They were counted as recoveries and they were not
+recoveries: nobody here wrote a line of them. `docs/EXCLUSIONS.md` section 1
+makes the same argument about the MSVC 6 CRT - code that can be compiled or
+linked is not code to rewrite - and seven CRT reimplementations were deleted
+the same day for the same reason. The claim count fell 1595 -> 1556, which
+is the honest number.
+
+What is lost with them is a real check: those thirty-nine claims said that
+this release, compiled with these flags, reproduces the image byte for byte,
+which is how the version and the flags were established in the first place.
+That evidence is in the git history and in `.opensmacx/byte-match.csv`, and
+re-deriving it needs the sources and the ledger, not thirty-nine files
+standing in the recovery count.
 
 ## Why it must not be amalgamated
 

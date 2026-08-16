@@ -40,7 +40,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
     "write build/compile_commands.json; tools/vc6_build_flags.py reads it"
     FORCE)
 
-project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX)
+# `C` AS WELL AS `CXX`, for zlib. zlib 1.0.2 uses K&R parameter definitions,
+# which no C++ compiler will parse - `byte_match.compile_unit` already writes
+# each vendored unit under its own `.c` suffix for exactly this reason. The
+# toolchain has defined `CMAKE_C_COMPILER` all along; only this line was
+# keeping the language out.
+project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX C)
 
 if(NOT WIN32)
     message(FATAL_ERROR
@@ -53,6 +58,37 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(FATAL_ERROR
         "OpenSMACX is injected into the 32-bit terranx.exe process and must be built for x86.")
 endif()
+
+# ZLIB IS A DEPENDENCY, NOT A RECOVERY. `terranx.exe` statically links zlib
+# 1.0.2 and says so in its own strings, and `src/vendor/zlib-1.0.2/` holds
+# that release unmodified - see PROVENANCE.md there. Thirty-nine functions
+# in the image are its code, and for a while each carried an annotation
+# under that directory claiming a byte-exact RECOVERY. They were never
+# recoveries: nobody here wrote them, and the same argument
+# `docs/EXCLUSIONS.md` section 1 makes about the CRT applies - code that can
+# be compiled or linked is not code to rewrite.
+#
+# So it is built, as its own target with its own flags, and DECLARED BEFORE
+# the `include_directories` and `add_compile_options` below. Those are
+# directory-scope and reach every target created after them, including the
+# `/FI src/vc6_compat.h` that pulls in `<new>` - which is how a C target
+# ends up on `eh.h(32): fatal error C1189: "eh.h is only for C++!"`. zlib
+# 1.0.2 must compile as C: it uses K&R parameter definitions that no C++
+# compiler will parse.
+add_library(zlib STATIC
+    src/vendor/zlib-1.0.2/deflate.c
+    src/vendor/zlib-1.0.2/infblock.c
+    src/vendor/zlib-1.0.2/infcodes.c
+    src/vendor/zlib-1.0.2/inffast.c
+    src/vendor/zlib-1.0.2/inflate.c
+    src/vendor/zlib-1.0.2/inftrees.c
+    src/vendor/zlib-1.0.2/trees.c
+)
+target_include_directories(zlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/zlib-1.0.2")
+# `/W0` and no forced include: PROVENANCE.md's whole point is that these
+# files are the release and not a copy somebody tidied, so the build adapts
+# to them rather than the other way round.
+target_compile_options(zlib PRIVATE /W0)
 
 set(OPENSMACX_SOURCES
     src/alpha.cpp
@@ -239,7 +275,7 @@ target_compile_definitions(OpenSMACX PRIVATE
     $<$<CONFIG:Debug>:BUILD_DEBUG>
 )
 target_precompile_headers(OpenSMACX PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h")
-target_link_libraries(OpenSMACX PRIVATE user32 gdi32 winmm)
+target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm)
 
 # `/subsystem:windows`, because the entry point is `WinMain` and not `main`.
 # Left at the default the linker looks for `main`, finds only `_WinMain@16` and
