@@ -68,6 +68,17 @@ CRT_SIGNATURES = {
     # unreachable for a reason that has nothing to do with its own bytes.
     # `Caviar::vx_read` and `Caviar::vx_write` are thin forwarders onto these
     # and were blocked on exactly this.
+    # stdio. `fopen` blocked 0x005BF480 and 0x005BFBC0, which were compiling
+    # only because a since-deleted CRT reimplementation happened to declare
+    # it where `src_declarations` could scrape it.
+    "_fopen": "void *_fopen(const char *, const char *)",
+    "_fclose": "int _fclose(void *)",
+    "_fread": "unsigned int _fread(void *, unsigned int, unsigned int, void *)",
+    "_fwrite": "unsigned int _fwrite(const void *, unsigned int, unsigned int, void *)",
+    "_fseek": "int _fseek(void *, long, int)",
+    "_ftell": "long _ftell(void *)",
+    "_fgetc": "int _fgetc(void *)",
+    "_fputc": "int _fputc(int, void *)",
     "_read": "int _read(int, void *, unsigned int)",
     "_write": "int _write(int, const void *, unsigned int)",
     "_close": "int _close(int)",
