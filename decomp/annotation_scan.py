@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """The source map: one grammar for every mapped byte of the binary in src/.
 
 This is the reader for the single annotation convention the project is
@@ -52,108 +51,19 @@ grammar belong in both until the tools are refactored onto this package and
 
 from __future__ import annotations
 
-import argparse
 import re
-from dataclasses import dataclass, field
 from pathlib import Path
+
+from .grammar import (EXCLUSION_TOKEN, LEGACY_BLOCK, LEGACY_OPENING,
+                      LEGACY_TRAILING, LESSON_CONTINUED, LESSON_DEFERRED,
+                      LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
+                      MARKER, MARKER_KEYWORD, MARKER_MATCHED, NEXT_MARKER,
+                      SENTINEL, _MANGLED_BASE, _NAME_FIELD)
+from .model import (Annotation, CrossRef, MODE_BODY, MODE_FILE,
+                    STATE_EXCLUDED, STATE_IMPLEMENTED, STATE_PLACEHOLDER)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC_ROOT = REPO_ROOT / "src"
-RECOVERED = SRC_ROOT / "recovered"
-RECOVERED_UNITS = RECOVERED / "units"
-UNRECOVERED = SRC_ROOT / "unrecovered"
-
-# The one marker. 6-8 hex digits because the image spans 0x00401000 to
-# 0x0066xxxx; `int(..., 16)` normalises. The optional trailing keyword is the
-# mode: absent means the next definition is the body, FILE means the whole
-# file is the unit, EXCLUDED cites the ground in docs/EXCLUSIONS.md.
-# The lookbehind matters: `PROVEN-AGAINST-ORIGINAL: 0x...` provenance
-# comments in the oracle files end in this spelling and are NOT map entries.
-MARKER = re.compile(
-    r"(?<![A-Za-z0-9_-])ORIGINAL:\s*0x(?P<addr>[0-9A-Fa-f]{6,8})"
-    r"(?P<tail>[^\n*]*)")
-# The keyword, read out of the marker's own tail rather than by a second
-# alternation, so `FILE` and `BYTE_EXACT` may appear in either order.
-MARKER_KEYWORD = re.compile(r"^\s*(?P<kw>FILE|EXCLUDED)\b(?P<rest>.*)$", re.S)
-# A RATCHET CLAIM, NOT A STATUS FIELD. `// ORIGINAL: 0x0046FB10 BYTE_EXACT`
-# means "this was proved to recompile to the shipped bytes; fail if it stops",
-# and that is the ONLY tier ever written down. Every other verdict -
-# MISMATCH, NO_COMPILE, MNEMONIC_ONLY - is measured on demand and recorded
-# nowhere, because a status field in a comment goes stale the moment anyone
-# edits the body and is believed anyway. The claim lives beside the body it
-# constrains, so deleting the body deletes the claim.
-MARKER_MATCHED = re.compile(r"(?<![A-Za-z0-9_])BYTE_EXACT(?![A-Za-z0-9_])")
-
-LEGACY_BLOCK = re.compile(r"Original Offset:\s*(?P<addr>[0-9A-Fa-f]{6,8})")
-# The inline trailing form, e.g. src/random.cpp's
-# `void __cdecl random_rand() {...} // 00625700`. Eight digits required: a
-# shorter bare hex token is too easy to hit in ordinary prose.
-LEGACY_TRAILING = re.compile(r"\}\s*//\s*(?P<addr>[0-9A-Fa-f]{8})\s*$")
-# The opening-brace form in src/text.cpp: `int f(...) { // 00585120`. The
-# census never scored these - a forward brace count from the marker line
-# lands in the NEXT function - which is why they sit unlocated in the
-# catalogue. Forward extraction from the marker line is correct here.
-LEGACY_OPENING = re.compile(r"\{\s*//\s*(?P<addr>[0-9A-Fa-f]{8})\s*$")
-# Preserved unit header, e.g. `// PRESERVED UNIT - measured BYTE_EXACT.`.
-LEGACY_PRESERVED = re.compile(r"PRESERVED UNIT\s*-\s*measured\s+(?P<tier>\w+)")
-# Proved body header, e.g. `// 0x00401000  ??0StringStruct@@QAE@H@Z -> ...`.
-LEGACY_PROVED = re.compile(r"^//\s*0x(?P<addr>[0-9A-Fa-f]{8})\b")
-
-# The citation token after EXCLUDED is a section reference, not free prose.
-# Accept `S1`, `1`, or `§1` so the grammar is ASCII-safe and greppable.
-EXCLUSION_TOKEN = re.compile(r"^\s*[§S]?\s*(?P<section>[0-9]+[a-z]?)")
-
-MODE_BODY = "body"
-MODE_FILE = "file"
-STATE_IMPLEMENTED = "implemented"
-STATE_PLACEHOLDER = "placeholder"
-STATE_EXCLUDED = "excluded"
-
-
-@dataclass
-class Annotation:
-    """One mapped piece of the binary, as the source tree declares it."""
-    address: int
-    mode: str                  # MODE_BODY | MODE_FILE
-    state: str                 # STATE_IMPLEMENTED | STATE_PLACEHOLDER | STATE_EXCLUDED
-    path: str                  # repo-relative, e.g. "src/stringstruct.cpp"
-    line: int                  # 1-based line of the marker (0 for filename-derived)
-    deprecated: bool = False   # recognised legacy spelling, pending migration
-    exclusion: str = ""        # EXCLUSIONS.md citation for STATE_EXCLUDED
-    region: str = ""           # the code this annotation claims ("" on error)
-    extract_error: str = ""    # why the region could not be cut
-    matched: bool = False      # carries a BYTE_EXACT ratchet claim: this piece
-                               # was proved to recompile to the shipped bytes
-                               # and must not stop. NOT a status field - see
-                               # MARKER_MATCHED.
-    recipe: str = "census"     # how the status tool must build the unit:
-                               # "census" (extract + scaffolding), "writeback"
-                               # (proved bodies, declfix recipe) or "verbatim"
-                               # (FILE mode: compile the file as-is)
-    levers: tuple = ()         # (fingerprint, prose) that MADE this match
-    ruled_out: tuple = ()      # spellings tried on this body that did not
-    unrecoverable: tuple = ()  # prose: no C body CAN exist for this piece
-    deferred: tuple = ()       # prose: a body can exist, nobody has written it
-
-    @property
-    def location(self) -> str:
-        return f"{self.path}:{self.line}" if self.line else self.path
-
-    @property
-    def address_hex(self) -> str:
-        return f"0x{self.address:08X}"
-
-
-LESSON_LEVER = re.compile(r"^\s*(?://|\*)?\s*LEVER:\s*(?P<key>\S+)\s+(?P<prose>.+?)\s*$")
-LESSON_RULED_OUT = re.compile(r"^\s*(?://|\*)?\s*RULED-OUT:\s*(?P<prose>.+?)\s*$")
-LESSON_CONTINUED = re.compile(r"^\s*(?://|\*)\s{2,}(?P<prose>\S.*?)\s*$")
-# The third token, and the only one that BELONGS on a placeholder.
-LESSON_UNRECOVERABLE = re.compile(
-    r"^\s*(?://|\*)?\s*UNRECOVERABLE:\s*(?P<prose>.+?)\s*$")
-# The FOURTH, and it exists because the third was used for something it does
-# not mean. See `lessons`.
-LESSON_DEFERRED = re.compile(
-    r"^\s*(?://|\*)?\s*DEFERRED:\s*(?P<prose>.+?)\s*$")
 
 
 def lessons(lines: list, index: int) -> tuple:
@@ -240,15 +150,6 @@ def lessons(lines: list, index: int) -> tuple:
     return tuple(levers), tuple(ruled), tuple(unrecoverable), tuple(deferred)
 
 
-@dataclass
-class CrossRef:
-    """The scan held against the catalogue. Drift, not failure."""
-    matched: dict = field(default_factory=dict)       # address -> Annotation
-    duplicates: dict = field(default_factory=dict)    # address -> [Annotation]
-    catalog_only: list = field(default_factory=list)  # [address]
-    uncatalogued: list = field(default_factory=list)  # [Annotation]
-
-
 # --------------------------------------------------------------- extraction
 
 
@@ -259,12 +160,6 @@ def _rel(path: Path) -> str:
         return str(resolved.relative_to(REPO_ROOT))
     except ValueError:
         return str(resolved)
-
-
-# A marker owns everything up to the NEXT marker. Matched loosely on purpose:
-# the point is only to stop before another piece's text, so any spelling of the
-# marker ends the region.
-NEXT_MARKER = re.compile(r"^\s*(?://|\*)?\s*ORIGINAL:\s*0x[0-9A-Fa-f]{8}\b")
 
 
 def _brace_delta(line: str, in_block: bool) -> tuple:
@@ -324,15 +219,6 @@ def _brace_delta(line: str, in_block: bool) -> tuple:
         code.append(char)
         index += 1
     return out, in_block, saw_open, "".join(code)
-
-
-# The identifier a mangled name is built around. `?base@Class@@...` is named
-# by `base`; `??0Class@@...`, `??1`, `??_G` and friends have no base name of
-# their own and are named by the CLASS. A plain `sub_63ffe0` is itself.
-_MANGLED_BASE = re.compile(r"^\?\?(?:_[A-Za-z]|[0-9A-Za-z])([A-Za-z_]\w*)@"
-                           r"|^\?([A-Za-z_]\w*)@"
-                           r"|^([A-Za-z_]\w*)$")
-_NAME_FIELD = re.compile(r"^\s*(?://+|\*)?\s*name\s+(\S+)\s*$")
 
 
 def subject_identifier(lines: list, start: int):
@@ -472,17 +358,6 @@ def extract_backward(lines: list, marker_index: int) -> str:
     """The region claimed by a trailing marker, for the inline legacy form."""
     start = backward_start(lines, marker_index)
     return "\n".join(lines[start:marker_index + 1]) + "\n"
-
-
-# The sentinel names the body slot. Its spelling is shared with the wave
-# tools (verify_wave.PLACEHOLDER), but what counts as UNTOUCHED is defined
-# HERE, because the emitter's own scaffold breaks verify_wave's rule: a
-# non-void skeleton carries a placeholder return after the sentinel so it
-# compiles before a body exists (C4716 otherwise), and `is_untouched`'s
-# one-line allowance reads that pristine scaffold as worked. The residue of
-# an untouched region is exactly: comments, the closing brace, and the
-# placeholder return - anything else is a body.
-SENTINEL = "// BODY GOES HERE."
 
 
 def _is_placeholder_region(text: str) -> bool:
@@ -929,43 +804,3 @@ def cross_reference(annotations: list, catalog: dict) -> CrossRef:
             result.matched.pop(address, None)
     result.catalog_only = sorted(set(catalog) - set(seen))
     return result
-
-
-# ------------------------------------------------------------------- CLI
-
-
-def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("paths", nargs="*", type=Path,
-                        help="files to scan (default: all of src/)")
-    arguments = parser.parse_args(argv)
-
-    if arguments.paths:
-        annotations = []
-        for path in arguments.paths:
-            annotations.extend(scan_file(path))
-    else:
-        annotations = scan_tree()
-
-    for annotation in annotations:
-        flags = " ".join(filter(None, [
-            "deprecated" if annotation.deprecated else "",
-            annotation.mode, annotation.state,
-            annotation.exclusion, annotation.extract_error]))
-        print(f"{annotation.address_hex}  {annotation.location:60s} {flags}")
-
-    states: dict = {}
-    for annotation in annotations:
-        states[annotation.state] = states.get(annotation.state, 0) + 1
-    print(f"\n{len(annotations)} annotation(s): "
-          + ", ".join(f"{state} {count}"
-                      for state, count in sorted(states.items())))
-    deprecated = sum(1 for ann in annotations if ann.deprecated)
-    print(f"{deprecated} on deprecated spellings, pending migration")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

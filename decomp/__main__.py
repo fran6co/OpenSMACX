@@ -1,17 +1,18 @@
 """`uv run python -m decomp` - is the reader sane, and has the copy drifted?
 
-TWO CHECKS, AND THE SECOND IS THE POINT. The first is a floor: parse `src/` and
-assert the results are the shape every consumer expects. It catches the failure
-this package can actually have in isolation, which is silence - a reader that
-resolves to nothing returns `{}`, and every count computed from it comes out
-zero looking like an answer.
+TWO CHECKS. The first is the ground truth and would be enough on its own:
+parse `src/` and prove the result against the tree itself - the counts, the
+shapes every consumer reads, and one known-good recovered body. It catches
+the failure this package can actually have in isolation, which is silence: a
+reader that resolves to nothing returns `{}`, and every count computed from
+it comes out zero looking like an answer.
 
-The second holds this package's parse against `tools/annotation_scan.py` and
-`tools/project_catalogue.py`, the modules it was copied from and must not
-import. Two parsers for one grammar is the cost of a self-contained package;
-this is what stops that cost turning into two ANSWERS for one grammar. It skips
-itself once those modules are gone, which is what a finished refactor looks
-like.
+The second is transitional. The same grammar also lives in
+`tools/annotation_scan.py` and `tools/project_catalogue.py`, which the 61
+scripts in `tools/` still import; while both copies exist, this holds the
+package's parse against theirs and fails on any annotation, any catalogue
+row, or any pattern of the grammar disagreeing. It skips itself once those
+modules are gone, which is what a finished refactor looks like.
 """
 
 from __future__ import annotations
@@ -19,8 +20,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from decomp import (STATE_IMPLEMENTED, from_source, project_catalogue, resolve,
+from decomp import (STATE_IMPLEMENTED, from_source, grammar, resolve,
                     scan_tree)
+from decomp import project_catalogue
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TOOLS = REPO_ROOT / "tools"
@@ -93,21 +95,17 @@ def drift(annotations: list, rows: dict) -> bool:
         assert their_rows[address] == row, \
             f"row drift at 0x{address:08X}:\n  tools  {their_rows[address]}\n  decomp {row}"
 
-    # The regexes themselves, so a tightened pattern is caught even on a tree
-    # where no annotation happens to exercise the difference.
-    assert their_catalogue.FACT_LINE.pattern == project_catalogue.FACT_LINE.pattern, \
-        "FACT_LINE drift"
-    assert their_catalogue.CONTINUED.pattern == project_catalogue.CONTINUED.pattern, \
-        "CONTINUED drift"
-    assert their_catalogue.CONTINUABLE == project_catalogue.CONTINUABLE, \
+    # The grammar itself, EXHAUSTIVELY - every pattern `grammar` declares, so
+    # a tightened pattern is caught even on a tree where no annotation
+    # happens to exercise the difference.
+    for name in grammar.SCAN_PATTERNS:
+        assert getattr(their_scan, name).pattern == \
+            getattr(grammar, name).pattern, f"{name} drift"
+    for name in grammar.CATALOGUE_PATTERNS:
+        assert getattr(their_catalogue, name).pattern == \
+            getattr(grammar, name).pattern, f"{name} drift"
+    assert their_catalogue.CONTINUABLE == grammar.CONTINUABLE, \
         "CONTINUABLE drift"
-    for name in ("MARKER", "MARKER_KEYWORD", "MARKER_MATCHED", "LEGACY_BLOCK",
-                 "LEGACY_TRAILING", "LEGACY_OPENING", "LEGACY_PROVED",
-                 "EXCLUSION_TOKEN", "NEXT_MARKER", "LESSON_LEVER",
-                 "LESSON_RULED_OUT", "LESSON_CONTINUED", "LESSON_UNRECOVERABLE",
-                 "LESSON_DEFERRED"):
-        ours_pattern = getattr(sys.modules["decomp.annotation_scan"], name).pattern
-        assert getattr(their_scan, name).pattern == ours_pattern, f"{name} drift"
     return True
 
 
@@ -116,7 +114,7 @@ def main() -> int:
     checked = drift(annotations, rows)
     against = "agrees with tools/" if checked else "tools/ copies absent"
     print(f"ok: {len(annotations)} annotations, {len(rows)} catalogue rows "
-          f"({against})")
+          f"(proved against src/, {against})")
     return 0
 
 
