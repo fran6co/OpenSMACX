@@ -367,14 +367,6 @@ namespace {
 // and its last store is `esp + 0x50`, so 0x30 bytes, `RGNDATAHEADER`'s 32
 // plus a `RECT`'s 16.
 //
-// `RGNDATA` itself ends in `char Buffer[1]`, a trailing array C++ cannot
-// size, so the rectangle is spelled out here and the API boundary takes one
-// cast. That cast is the shape of `SetClipList`, not a shortcut.
-struct ClipRegion {
-    RGNDATAHEADER rdh;
-    RECT rect;
-};
-
 }  // namespace
 
 namespace {
@@ -1195,20 +1187,26 @@ int Buffer::set_clip(RECT *rect) {
     if (surface_ != 0) {
         // A single-rectangle RGNDATA: the header's bound and the one entry in
         // the rectangle array are both the clipped rectangle.
-        ClipRegion clip;
-        clip.rdh.dwSize = sizeof(RGNDATAHEADER);
-        clip.rdh.iType = RDH_RECTANGLES;
-        clip.rdh.nCount = 1;
-        clip.rdh.nRgnSize = sizeof(RECT);
-        clip.rdh.rcBound = rect1_;
-        clip.rect = rect1_;
+        // The clip list `SetClipList` wants, built the way the API is
+        // built: `RGNDATA` ends in `char Buffer[1]`, so the storage is
+        // sized for the header plus the rectangles and the two casts are
+        // the ones the interface forces - one to `LPRGNDATA`, one to
+        // `LPRECT` over `Buffer`.
+        //
+        // On the stack rather than allocated, because that is where the
+        // original puts it: it builds the block at `esp + 0x24` and its
+        // last store is `esp + 0x50`, 0x30 bytes, which is exactly
+        // `sizeof(RGNDATAHEADER) + sizeof(RECT)`.
+        BYTE storage[sizeof(RGNDATAHEADER) + sizeof(RECT)];
+        LPRGNDATA const clip = reinterpret_cast<LPRGNDATA>(storage);
+        clip->rdh.dwSize = sizeof(RGNDATAHEADER);
+        clip->rdh.iType = RDH_RECTANGLES;
+        clip->rdh.nCount = 1;
+        clip->rdh.nRgnSize = sizeof(RECT);
+        clip->rdh.rcBound = rect1_;
+        reinterpret_cast<LPRECT>(clip->Buffer)[0] = rect1_;
 
-        // Slot 0x1C is index 7 of IDirectDrawClipper - `SetClipList` - and
-        // 0x70 is index 28 of IDirectDrawSurface - `SetClipper`. Called by
-        // name now that the two members carry their interface types; the
-        // emitted `call [reg + 0x1c]` is the same either way, and a name
-        // cannot be off by a slot.
-        clipper_->SetClipList(reinterpret_cast<LPRGNDATA>(&clip), 0);
+        clipper_->SetClipList(clip, 0);
         surface_->SetClipper(clipper_);
     }
     return 0;
