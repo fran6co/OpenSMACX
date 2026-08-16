@@ -1638,6 +1638,61 @@ QUALIFIED_DEFINITION = r"\b{klass}\s*::\s*(~?)\s*{method}\s*\("
 CONVENTIONS = ("__cdecl", "__stdcall", "__fastcall", "__thiscall")
 
 
+def defined_symbol_prefixes(body: str) -> list:
+    """Mangled-name prefixes for whatever `body`'s first definition defines.
+
+    THE CATALOGUE'S NAME AND THE SOURCE'S NAME ARE TWO DIFFERENT FACTS, and
+    only the second one is in the object file. `src/scroll.cpp` defines
+    `Scroll::set_sprite_up` where the catalogue asks for `?UNK1@Scroll@@...`;
+    `src/general.cpp` defines `filefind_set_alternative` against the
+    catalogue's `filefind_set_alternate`; the bulk-recovered files define
+    `leaf_00455e50_redirect` for `?load_deswin_sprites@@YAXXZ`. None of them
+    is a disagreement about which code is at the address - the annotation is
+    written directly above the definition, so the correspondence is not in
+    doubt - and yet every one of them left the body unmeasurable in its own
+    translation unit, because the symbol the catalogue names is not there.
+
+    Returned as PREFIXES rather than full names because this cannot mangle:
+    `?set_sprite_up@Scroll@@` is enough for the selector's qualified-name
+    rules, which already require the match to be unambiguous.
+
+    Empty when the head cannot be read, which leaves the catalogue's name as
+    the only candidate - exactly today's behaviour.
+    """
+    import src_declarations
+    code = src_declarations.code_only(body)
+    depth, head_end = 0, -1
+    for index, char in enumerate(code):
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+        elif char == "{" and depth == 0:
+            head_end = index
+            break
+    if head_end == -1:
+        return []
+    head = code[:head_end]
+    cut = max(head.rfind(";"), head.rfind("}"))
+    head = head[cut + 1:]
+    opening = head.find("(")
+    if opening == -1:
+        return []
+    qualified = re.search(r"(?:(\w+)\s*::\s*)?(~?\s*\w+)\s*$",
+                          head[:opening].rstrip())
+    if qualified is None:
+        return []
+    klass, method = qualified.group(1), qualified.group(2).replace(" ", "")
+    if klass and method == f"~{klass}":
+        return [f"??1{klass}@@"]
+    if klass and method == klass:
+        return [f"??0{klass}@@"]
+    if klass:
+        return [f"?{method}@{klass}@@"]
+    # A free function is `?name@@` with C++ linkage and `_name` with C.
+    return [f"?{method}@@", f"_{method}", method]
+
+
 def subject_declaration_from_body(body: str, klass: str, method: str,
                                   kind: str, convention: str = ""):
     """The subject's in-class declaration, taken from its own definition.
