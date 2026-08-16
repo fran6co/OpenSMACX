@@ -567,17 +567,17 @@ struct FactionArt {
     Sprite report_logo[2];
 };
 
-constexpr int MaxSocialCatNum = 4;
-constexpr int MaxSocialModelNum = 4;
-constexpr int MaxSocialEffectNum = 11;
-constexpr int MaxMoodNum = 9;
-constexpr int MaxReputeNum = 8;
-constexpr int MaxMightNum = 7;
-constexpr int MaxBonusNameNum = 41;
-constexpr int MaxPlayerNum = 8;
-constexpr int MaxRankingHistoryTurns = 1000;
-constexpr int MaxGoalsNum = 75;
-constexpr int MaxSitesNum = 25;
+static const int MaxSocialCatNum = 4;
+static const int MaxSocialModelNum = 4;
+static const int MaxSocialEffectNum = 11;
+static const int MaxMoodNum = 9;
+static const int MaxReputeNum = 8;
+static const int MaxMightNum = 7;
+static const int MaxBonusNameNum = 41;
+static const int MaxPlayerNum = 8;
+static const int MaxRankingHistoryTurns = 1000;
+static const int MaxGoalsNum = 75;
+static const int MaxSitesNum = 25;
 
 extern RulesSocialCategory *SocialCategories;
 extern RulesSocialEffect *SocialEffects;

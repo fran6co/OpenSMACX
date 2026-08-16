@@ -126,7 +126,7 @@ extern uint32_t *ListBoxCloseDynamicDefault;            // 0x009B8EE0
 
 // Fixed most-derived offset from L to the controlling vftable (GraphicWin
 // subobject); the destructor is always entered at L + this adjustment.
-constexpr size_t ListBoxDestructorAdjustment = 0x48;
+static const size_t ListBoxDestructorAdjustment = 0x48;
 
 void __fastcall list_box_on_dialog_focus_redirect(ListBox *self, void *, int a1);
 uint32_t __fastcall list_box_close_redirect(ListBox *self, void *);

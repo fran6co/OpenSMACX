@@ -86,7 +86,7 @@ const uint32_t TerraformingBits[20][2] = { // terrain enhancement, incompatible 
     BIT_MONOLITH,      BIT_SUPPLY_POD | BIT_NUTRIENT_RSC | BIT_RSC_BONUS, // monolith
 };
 
-constexpr int MaxTerrainNum = 20;
+static const int MaxTerrainNum = 20;
 
 extern RulesTerraforming *Terraforming;
 

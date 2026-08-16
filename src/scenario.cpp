@@ -24,20 +24,20 @@ extern "C" void __cdecl scenario_human_turn_ready(Console *self);
 
 namespace {
 
-constexpr uintptr_t TopMenuAddress = 0x0058E360;
-constexpr uintptr_t OpeningMovieAddress = 0x00403BE0;
-constexpr uintptr_t LoadFlagsAddress = 0x00453F70;
-constexpr uintptr_t MainInterfaceAddress = 0x007B0CB8;
-constexpr uintptr_t ConsoleAddress = 0x009156B0;
-constexpr uintptr_t CurrentFactionAddress = 0x00939284;
-constexpr uintptr_t ActionGoToAddress = 0x004CB310;
-constexpr uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
-constexpr uintptr_t ExitTurnLoopAddress = 0x009B2068;
-constexpr uintptr_t ControlTurnPhaseAddress = 0x009B2070;
-constexpr size_t ConsoleSelectedVehicleOffset = 0x23BDC;
-constexpr size_t ConsolePreviousVehicleOffset = 0x23BE0;
-constexpr size_t ConsoleTurnLoopOffset = 0x23BE4;
-constexpr size_t ConsoleTurnActiveOffset = 0x23BE8;
+static const uintptr_t TopMenuAddress = 0x0058E360;
+static const uintptr_t OpeningMovieAddress = 0x00403BE0;
+static const uintptr_t LoadFlagsAddress = 0x00453F70;
+static const uintptr_t MainInterfaceAddress = 0x007B0CB8;
+static const uintptr_t ConsoleAddress = 0x009156B0;
+static const uintptr_t CurrentFactionAddress = 0x00939284;
+static const uintptr_t ActionGoToAddress = 0x004CB310;
+static const uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
+static const uintptr_t ExitTurnLoopAddress = 0x009B2068;
+static const uintptr_t ControlTurnPhaseAddress = 0x009B2070;
+static const size_t ConsoleSelectedVehicleOffset = 0x23BDC;
+static const size_t ConsolePreviousVehicleOffset = 0x23BE0;
+static const size_t ConsoleTurnLoopOffset = 0x23BE4;
+static const size_t ConsoleTurnActiveOffset = 0x23BE8;
 
 typedef int (__cdecl *TopMenuFunction)(int);
 typedef void (__cdecl *OpeningMovieFunction)(char *);

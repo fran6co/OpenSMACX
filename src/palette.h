@@ -168,7 +168,7 @@ extern void *DirectDrawPalette;
 
 // IDirectDrawPalette::SetEntries, as a BYTE offset into the vtable - the same
 // spelling buffer.h uses for the surface slots it reaches.
-constexpr size_t DirectDrawPaletteSetEntriesSlot = 0x18;
+static const size_t DirectDrawPaletteSetEntriesSlot = 0x18;
 
 /*
  * The process palette, at 0x0094C590 in the image. The name is the image's

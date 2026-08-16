@@ -472,8 +472,8 @@ typedef void (OriginalObject::*func_parent_notify_slot)(int, int);
 // Both dispatches read the live vtable of whatever object is actually there
 // rather than going through a C++ virtual call, so no table this toolchain
 // lays out can disagree with the original's.
-constexpr size_t BaseButtonRefreshSlot = 0xF8;
-constexpr size_t WinValueChangedSlot = 0xB4;
+static const size_t BaseButtonRefreshSlot = 0xF8;
+static const size_t WinValueChangedSlot = 0xB4;
 
 }  // namespace
 
@@ -605,8 +605,8 @@ typedef void (OriginalObject::*func_button_init_show_slot)(int);
 // body closes and shows through its own overrides. In the BaseButton table
 // slot 0x168 holds BaseButton::close and slot 0x04 holds Win::show, which
 // takes one int.
-constexpr size_t BaseButtonInitCloseSlot = 0x168;
-constexpr size_t BaseButtonInitShowSlot = 0x04;
+static const size_t BaseButtonInitCloseSlot = 0x168;
+static const size_t BaseButtonInitShowSlot = 0x04;
 
 }  // namespace
 

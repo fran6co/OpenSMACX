@@ -205,7 +205,7 @@ extern const uint32_t DialogsRadioWinVtable;         // 0x00669A58
 
 // ~Dialogs and ??_GDialogs are entered at B + 0x188 (the GraphicWin
 // co-located subobject); both redirects recover the allocation base B first.
-constexpr size_t DialogsDestructorAdjustment = 0x188;
+static const size_t DialogsDestructorAdjustment = 0x188;
 
 uint32_t __fastcall dialogs_destructor_redirect(void *adjusted, void *);
 void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,

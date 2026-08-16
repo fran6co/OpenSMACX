@@ -488,15 +488,15 @@ struct BaseSecretProject {
     int user_defined_64;
 };
 
-constexpr int MaxBaseNum = 512;
-constexpr int MaxFacilityNum = 134; // 0 slot unused
-constexpr int MaxSecretProjectNum = 64;
-constexpr int FacilitySPStart = 70; // Special Project start offset
-constexpr int FacilityRepStart = 65; // Sky Hydro Lab; Nessus Mining Stat; OPT; ODP; Stockpile Eng
-constexpr int MaxCitizenNum = 10;
-constexpr int MaxSpecialistNum = 7;
-constexpr int SP_Unbuilt = -1;
-constexpr int SP_Destroyed = -2;
+static const int MaxBaseNum = 512;
+static const int MaxFacilityNum = 134; // 0 slot unused
+static const int MaxSecretProjectNum = 64;
+static const int FacilitySPStart = 70; // Special Project start offset
+static const int FacilityRepStart = 65; // Sky Hydro Lab; Nessus Mining Stat; OPT; ODP; Stockpile Eng
+static const int MaxCitizenNum = 10;
+static const int MaxSpecialistNum = 7;
+static const int SP_Unbuilt = -1;
+static const int SP_Destroyed = -2;
 
 extern RulesFacility *Facility;
 extern RulesCitizen *Citizen;

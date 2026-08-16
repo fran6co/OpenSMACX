@@ -698,15 +698,15 @@ struct DefaultPref {
     uint32_t top_menu;
 };
 
-constexpr int NoneValue = -1;
-constexpr int DisabledValue = -2;
+static const int NoneValue = -1;
+static const int DisabledValue = -2;
 
-constexpr int MaxResourceInfoNum = 9;
-constexpr int MaxTimeControlNum = 6;
-constexpr int MaxCompassNum = 8;
-constexpr int MaxResourceNum = 4;
-constexpr int MaxEnergyNum = 3;
-constexpr int MaxDiffNum = 6;
+static const int MaxResourceInfoNum = 9;
+static const int MaxTimeControlNum = 6;
+static const int MaxCompassNum = 8;
+static const int MaxResourceNum = 4;
+static const int MaxEnergyNum = 3;
+static const int MaxDiffNum = 6;
 
 extern LPCSTR AlphaxFileID;
 extern LPCSTR ScriptTxtID;

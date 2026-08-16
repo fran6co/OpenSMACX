@@ -67,7 +67,7 @@ static_assert(sizeof(Font) == 0x28, "Font layout must match the legacy ABI");
 // the original image.
 extern int *FontSizeTable;
 extern Font *FontTable;
-constexpr size_t FontSizeTableCount = 12;
+static const size_t FontSizeTableCount = 12;
 
 /*
  * FontQueue - three Font slots torn down together.

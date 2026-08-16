@@ -269,7 +269,21 @@ inline int _snprintf_s(char *destination, size_t size, size_t, const char *forma
 #define static_assert(condition, message) \
   typedef char OPENSMACX_ASSERT_JOIN(vc6_static_assert_, __LINE__)[(condition) ? 1 : -1]
 
-#define constexpr const
+/*
+ * `constexpr` IS GONE, NOT DEFINED. Every one of the 104 declarations that
+ * used it was a file-scope or function-local scalar constant, and each is now
+ * spelled the way VC6 spells it - `static const` at file scope, which is the
+ * internal linkage `constexpr` already implied, and plain `const` for the two
+ * function-local ones, where `static` would have changed storage duration for
+ * no reason. An integral `const` initialised by a literal is a constant
+ * expression in C++98, so the array bounds that depended on it still work.
+ *
+ * The macro is not kept as a courtesy: while it existed, `constexpr` compiled
+ * here and so kept being written, and `src_declarations` read the keyword as
+ * the variable's TYPE - refusing every constant it qualified and leaving four
+ * `C2065`s in a body that builds perfectly under CMake. Removing the define is
+ * what stops it coming back; the compiler now rejects the spelling outright.
+ */
 
 /*
  * `override` and `final` are C++11 spellings of things the compiler already

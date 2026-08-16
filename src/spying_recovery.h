@@ -9,9 +9,9 @@ extern uint8_t *SpyingBaseFactionBytes;  // Bases[index] + 4
 extern int *SpyingObserverFaction;
 extern uint8_t *SpyingFactionFlagBytes;  // Factions[index] + 0
 
-constexpr size_t SpyingStatusStride = 2099;
-constexpr size_t SpyingBaseStride = 0x134;
-constexpr size_t SpyingFactionStride = 0x59C;
+static const size_t SpyingStatusStride = 2099;
+static const size_t SpyingBaseStride = 0x134;
+static const size_t SpyingFactionStride = 0x59C;
 
 DLLEXPORT int __cdecl spying(int subject);
 
