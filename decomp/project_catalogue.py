@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Read the catalogue's facts back out of the annotations `src/` carries.
 
 THE READING HALF ONLY. `tools/project_catalogue.py` both STAMPS the fact block
@@ -49,30 +48,11 @@ the ratchet knows which bytes to compare and 402 functions carry more than one.
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 from . import annotation_scan
-
-REPO_ROOT = Path(__file__).resolve().parent.parent
-
-# A FACT LINE IS `// key value` WITH THE KEY AT COLUMN 3, exactly as `facts`
-# below writes it. The loose form - any indentation, any comment marker, the
-# key anywhere `\s*` could reach - also matched RULED-OUT prose, because a
-# continuation line is `//            calls need, so this is landed FILE-mode`
-# and "calls" is a word people write about a function. `stamped` let the last
-# match win, so 0x00402DD0's one call edge became that sentence; 13
-# annotations had a fact overwritten by prose this way, 10 of them `calls`.
-#
-# Measured over all 6,000: tightening this changes four values, every one of
-# them from prose back to the fact, and takes no `name` or `spans` away from
-# any row. The value is optional so a bare `// prototype`, which is how a row
-# with no recorded prototype is spelled once an editor strips the trailing
-# space, still registers as present-and-empty rather than absent.
-FACT_LINE = re.compile(
-    r"^(?://|\*) (name|size|spans|prototype|callers|kind|flags|calls|notes"
-    r"|indirect)"
-    r"(?: +(.*?))?\s*$")
+from .annotation_scan import REPO_ROOT
+from .grammar import CONTINUABLE, CONTINUED, FACT_LINE
 
 
 # {root: (stamp, rows)}, keyed the same way `annotation_scan.scan_tree` is.
@@ -188,11 +168,6 @@ def from_source(src: Path = None) -> dict:
     return rows
 
 
-CONTINUED = re.compile(r"^(?://|\*)( +)"
-                       r"((?:0x[0-9A-Fa-f]{8}(?: \(\d+x\))?(?: |$))+)$")
-CONTINUABLE = ("calls", "indirect")
-
-
 def stamped(lines: list, index: int) -> dict:
     """{key: value} already recorded in the comment run after a marker.
 
@@ -221,5 +196,3 @@ def stamped(lines: list, index: int) -> dict:
             continue
         open_key, column = None, None
     return found
-
-
