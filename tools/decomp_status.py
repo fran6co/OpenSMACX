@@ -133,7 +133,7 @@ def save_cache(entries: dict) -> None:
     os.replace(tmp, CACHE_PATH)
 
 
-def unit_hash(unit) -> str:
+def unit_hash(unit, address: int = 0) -> str:
     """The cache key for a unit.
 
     THE ORIGIN IS PART OF IT. A unit carrying one is compiled under that
@@ -153,10 +153,24 @@ def unit_hash(unit) -> str:
     Cheap and self-maintaining: the flags are hashed, not counted, so adding,
     reordering or editing a set invalidates exactly what it should and nothing
     has to remember to bump a version.
+
+    AND SO IS THE ADDRESS, since the fallback that compiles a body's own
+    translation unit. Until then every unit's text was unique to its subject,
+    so the text identified the question; a whole FILE is the same text for
+    every function in it, and `object_code` picks the subject out by name
+    afterwards. Keyed on text alone, four bodies in `src/lock.cpp` shared one
+    entry and the last one measured served its verdict to the other three -
+    `0x00590170` read MNEMONIC_ONLY compiled on its own and MISMATCH from the
+    cache. That is not a stale verdict, it is a verdict attributed to a
+    compile that never ran for that address.
+
+    Included unconditionally rather than only for file units: it costs one
+    full re-measure once, and it removes the question of whether two subjects
+    can ever scaffold to identical text.
     """
     text, origin = byte_match.unit_source(unit)
     material = text if origin is None else f"{origin}\n{text}"
-    material = f"{chr(31).join(byte_match.FLAG_SETS)}\n{material}"
+    material = f"{chr(31).join(byte_match.FLAG_SETS)}\n0x{address:08X}\n{material}"
     return hashlib.sha256(material.encode("utf-8", "replace")).hexdigest()
 
 
@@ -325,7 +339,8 @@ def measure(units: dict, cache: dict, no_cache: bool, jobs: int):
     import pefile
 
     entries = dict(cache)
-    hashed = {address: unit_hash(text) for address, text in units.items()}
+    hashed = {address: unit_hash(text, address)
+              for address, text in units.items()}
     pending = {}
     outcomes = {}
     for address, text in units.items():
@@ -1733,8 +1748,8 @@ def _state_counts(annotations: list, functions: dict) -> dict:
 
 
 def _miss_count(units: dict, cache: dict) -> int:
-    return sum(1 for text in units.values()
-               if unit_hash(text) not in cache)
+    return sum(1 for address, text in units.items()
+               if unit_hash(text, address) not in cache)
 
 
 if __name__ == "__main__":
