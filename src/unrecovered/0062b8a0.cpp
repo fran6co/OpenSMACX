@@ -41,26 +41,6 @@ union U3Int {
   void *raw;
 };
 
-return self->get_rgbquad(output, start, count_);
-int global_lock(int owner);
-
-return self->get_rgbquad(output, start, count_);
-int global_lock(int owner);
-
-return self->get_rgbquad(output, start, count_);
-int global_lock(int owner);
-
-return self->get_rgbquad(output, start, count_);
-int global_lock(int owner);
-
-int global_lock(int owner);
-
-int global_lock(int owner);
-
-int global_lock(int owner);
-
-int global_lock(int owner);
-
 int ButtonGroup::button_click(int a1) {
   int foundActive = 0;
   int foundClicked = 0;

@@ -2626,6 +2626,9 @@ class Datalink : public GraphicWin { public:
     void draw_concept();
 };
 
+// 0x0064FC88 is the CRT `__itoa` the original calls here.
+extern "C" char *__cdecl fn_0064fc88(int, char *, int);
+
 void Datalink::draw_concept() {
     char *self = reinterpret_cast<char *>(this);
 

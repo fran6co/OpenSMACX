@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0044CB80 FILE
+// ORIGINAL: 0x0044CB80 BYTE_EXACT FILE
 // name      ?help_create_link@@YAXPAD00@Z
 // size      66 bytes
 // spans     0x0044CB80-0x0044CBC2
@@ -1383,7 +1383,12 @@ static int *const g_0068353c = (int *)0x0068353C;
 static int *const g_00683540 = (int *)0x00683540;
 static int *const g_00683544 = (int *)0x00683544;
 
-void __cdecl help_create_link(int8* a1, int8* a2, int8* a3) {
+// `?help_create_link@@YAXPAD00@Z` is `PAD` three times - `char *`. The
+// `int8*` this said predates the prelude that declares `int8_t`, so the
+// type was never defined and every argument was an undeclared struct.
+extern "C" char *__cdecl my_strcat(char *, const char *);
+
+void __cdecl help_create_link(char *a1, char *a2, char *a3) {
     my_strcat(a1, reinterpret_cast<char *>(g_00683544));
     my_strcat(a1, a2);
     my_strcat(a1, reinterpret_cast<char *>(g_00683540));

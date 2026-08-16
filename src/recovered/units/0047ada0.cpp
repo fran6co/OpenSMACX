@@ -2380,18 +2380,18 @@ class NetMsg { public:
     ~NetMsg();
 };
 
-void RemoveAllShim();
-
-void RemoveAllShim();
-
-void RemoveAllShim();
-
-void RemoveAllCast();
-void RemoveAllShim();
-extern "C" void __fastcall Sub4066c0Cast(void *);
-extern "C" void __fastcall Sub4066c0Shim(void *);
-void removeAll();
-extern "C" void __fastcall sub4066c0(void *);
+// THE POINTER-TO-MEMBER SEAM THIS BODY USES, DECLARED.
+//
+// A `__thiscall` function reached by address cannot be called through a
+// plain function pointer - VC6 has no `__thiscall` on one - so the recovery
+// spells it as a pointer to MEMBER and reinterprets the raw address into it,
+// which is what `src/original_seam.h` does for every body that says
+// `ORIGINAL(...)`. These bodies wrote the same seam under their own names
+// and never declared it.
+class RemoveAllShim { public: void remove_all(); };
+union RemoveAllCast { void *addr; void (RemoveAllShim::*method)(); };
+class Sub4066c0Shim { public: void teardown(); };
+union Sub4066c0Cast { void *addr; void (Sub4066c0Shim::*method)(); };
 
 NetMsg::~NetMsg() {
     char *self = reinterpret_cast<char *>(this);

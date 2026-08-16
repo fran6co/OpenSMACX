@@ -2337,6 +2337,10 @@ class Win { public:
     void __cdecl update();
 };
 
+// `mov esi, 0x9b6630` then `add esi, 4` per iteration, at 0x005F4D0D:
+// the array of window pointers this walks.
+static void **const g_win_array = (void **)0x009B6630;
+
 void __cdecl Win::update() {
     for (int i = 0; i < *g_009b7b30; ++i) {
         reinterpret_cast<VCall *>(g_win_array[i])->slot074(0, -1);

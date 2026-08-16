@@ -2100,6 +2100,9 @@ static int *const g_00885f40 = (int *)0x00885F40;
 static int *const g_0094f35c = (int *)0x0094F35C;
 static int *const g_009b86a0 = (int *)0x009B86A0;
 static int *const g_009b90d8 = (int *)0x009B90D8;
+// `mov eax, dword ptr [edx*4 + 0x94f35c]` with edx = facilityID_*11,
+// at 0x00430B7F: the table the body indexes.
+static int *const g_facility_table = (int *)0x0094F35C;
 
 class Datalink : public GraphicWin { public:
     uint32_t field_A14_;

@@ -2345,6 +2345,11 @@ class Win { public:
     void __cdecl OnLButtonUp(void *, int, int, unsigned int);
 };
 
+// The one slot this body dispatches through, cast to under its own
+// name and never declared. Only the OFFSET is visible to the
+// comparison, and `slot082` is where the emitted shim puts it.
+class ButtonUpVCall { public: virtual void slot082(void *, int, int, int); };
+
 typedef int (__stdcall *SelectObjectFn)(void *hdc, void *obj);
 
 void Win::OnLButtonUp(void *a1, int a2, int a3, unsigned int a4) {

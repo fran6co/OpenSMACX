@@ -2622,6 +2622,11 @@ class Console : public MapWin { public:
     void editor_terrain();
 };
 
+// The `__thiscall` teardown at 0x004066C0, reached through a shim
+// class so VC6 emits the receiver in ecx. Declared, never defined:
+// the call is a relocation the comparison masks.
+class Shim4066c0 { public: void teardown(); };
+
 void Console::editor_terrain() {
     char *self = reinterpret_cast<char *>(this);
     Popup popup;

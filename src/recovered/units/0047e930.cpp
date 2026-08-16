@@ -80,6 +80,16 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
+
+// Placement new, the same block `emit_translation_unit`'s prelude has
+// carried since long after this unit was frozen: the body constructs an
+// object into raw storage and needs `operator new(size_t, void *)`. Guarded
+// by the macro VC6's own <new> uses, so a std-shim above it wins.
+#ifndef __PLACEMENT_NEW_INLINE
+#define __PLACEMENT_NEW_INLINE
+inline void *__cdecl operator new(unsigned int, void *p) { return p; }
+#endif
+
 typedef int int32;
 typedef unsigned int uint32;
 typedef short int16;
@@ -2517,6 +2527,10 @@ class NetWin { public:
     void alloc_slots();
     void pick_planet_size();
 };
+
+// Same shim as `PopMenuExec` in 0047cf40, under this unit's own name:
+// `PopMenu::exec` with the return type the call site reads.
+class PopMenuRow { public: int exec(int, int, int (__cdecl *)()); };
 
 extern "C" void *memcpy(void *, const void *, unsigned int);
 

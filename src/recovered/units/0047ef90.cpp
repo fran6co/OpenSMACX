@@ -2517,6 +2517,12 @@ class NetWin { public:
     void pick_erosion();
 };
 
+// The `__thiscall` teardown at 0x004066C0, reached through a shim
+// class so VC6 emits the receiver in ecx. Declared, never defined:
+// the call is a relocation the comparison masks.
+class Shim4066c0 { public: void teardown(); };
+class Shim406820 { public: void teardown(); };
+
 extern "C" void *memcpy(void *, const void *, unsigned int);
 
 void NetWin::pick_erosion() {

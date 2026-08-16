@@ -59,6 +59,16 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
+
+// Placement new, the same block `emit_translation_unit`'s prelude has
+// carried since long after this unit was frozen: the body constructs an
+// object into raw storage and needs `operator new(size_t, void *)`. Guarded
+// by the macro VC6's own <new> uses, so a std-shim above it wins.
+#ifndef __PLACEMENT_NEW_INLINE
+#define __PLACEMENT_NEW_INLINE
+inline void *__cdecl operator new(unsigned int, void *p) { return p; }
+#endif
+
 typedef int int32;
 typedef unsigned int uint32;
 typedef short int16;
@@ -2388,6 +2398,11 @@ class NetWin { public:
     void alloc_slots();
     void pick_diff(int);
 };
+
+// The body says why: `PopMenu::exec` is catalogued returning void and
+// the call site reads eax afterwards. The shim it casts through was
+// never declared.
+class PopMenuExec { public: int exec(int, int, int (__cdecl *)()); };
 
 void NetWin::pick_diff(int a1) {
     Win *self = reinterpret_cast<Win *>(this);

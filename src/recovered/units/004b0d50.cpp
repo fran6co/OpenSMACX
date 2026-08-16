@@ -2210,6 +2210,8 @@ class SocialWin : public GraphicWin, public SubInterface { public:
     void draw_psych_alloc();
 };
 
+typedef void (__cdecl *SoundHookFn)(char *);
+
 typedef char *(__cdecl *ItoaFn)(int, char *, int);
 
 void SocialWin::draw_psych_alloc() {
