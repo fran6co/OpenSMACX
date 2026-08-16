@@ -1529,8 +1529,19 @@ def main() -> int:
         holder = tempfile.TemporaryDirectory()
         work = Path(holder.name)
     try:
+        # WITH ITS ORIGIN, because a real source file has neighbours. Passing
+        # the TEXT alone compiles it in a scratch directory where its own
+        # `#include "stdafx.h"` resolves to nothing, and the tool reports
+        # `C1083: Cannot open include file` - a NO_COMPILE about the scratch
+        # directory rather than about the body. `--source` is documented as
+        # taking "a complete translation unit", and the complete translation
+        # units in this tree are the ones in `src/`, every one of which
+        # includes its own headers by quoted name. `unit_source` has understood
+        # the pair form since FILE-mode landings needed it; this path simply
+        # never used it.
         outcome = match_function(pe, rows, shared, int(arguments.address, 16),
-                                 arguments.source.read_text(), work,
+                                 (arguments.source.read_text(),
+                                  arguments.source), work,
                                  arguments.flags)
     finally:
         if holder:

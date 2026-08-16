@@ -57,6 +57,7 @@ import hashlib
 import json
 import concurrent.futures
 import os
+import functools
 import re
 import sys
 from pathlib import Path
@@ -188,6 +189,50 @@ def _worker_build(task):
         address, row, location, _WORKER["functions"], _WORKER["derived"],
         _WORKER["callees"], _WORKER["pe"])
     return address, unit, refusal
+
+
+@functools.lru_cache(maxsize=1)
+def compiled_sources() -> frozenset:
+    """The `src/` files CMake actually compiles, from CMakeLists.txt.
+
+    A body in one of these is PROVEN to compile: the executable builds. So a
+    NO_COMPILE verdict on it is a statement about the generated scaffolding
+    and nothing else, and `real_unit` below gives it a second chance against
+    the translation unit it really lives in.
+
+    Read from the build file rather than assumed from the path, because
+    `src/unrecovered/` and `src/recovered/units/` are full of .cpp files that
+    are in no build and for which the scaffold is the ONLY way to compile
+    them.
+    """
+    text = (REPO_ROOT / "CMakeLists.txt").read_text()
+    block = re.search(r"set\(OPENSMACX_SOURCES(.*?)^\)", text, re.S | re.M)
+    if not block:
+        return frozenset()
+    return frozenset("src/" + name for name in
+                     re.findall(r"src/([\w/]+\.cpp)", block.group(1)))
+
+
+def real_unit(location: str):
+    """`(text, origin)` for a body's own translation unit, or None.
+
+    A pair rather than a string so `byte_match.seed_context` puts the file's
+    own directory beside it when compiling - without that its
+    `#include "stdafx.h"` resolves to nothing and the answer is a C1083 about
+    a scratch directory. `object_code` then picks the subject out of the
+    object by NAME, which is how one compile of a real file can answer for any
+    function in it.
+    """
+    if not location:
+        return None
+    path = location.split(":")[0]
+    if path not in compiled_sources():
+        return None
+    whole = REPO_ROOT / path
+    try:
+        return (whole.read_text(errors="ignore"), whole)
+    except OSError:
+        return None
 
 
 def build_units(annotations: list, matched: dict, functions: dict,
@@ -1432,6 +1477,45 @@ def main(argv=None) -> int:
     cache = load_cache(arguments.no_cache)
     outcomes, entries = measure(units, cache, arguments.no_cache,
                                 arguments.jobs)
+
+    # A SECOND CHANCE AGAINST THE REAL TRANSLATION UNIT.
+    #
+    # A NO_COMPILE on a body whose file CMake compiles is a statement about the
+    # SCAFFOLD, not the body - the executable builds, so the body compiles.
+    # 452 of them were in that position: opaque class shells against bodies
+    # that name real members, imports absent from a hand-kept table, constants
+    # the indexer would not carry. Each is a real defect worth fixing, and
+    # each was also making a measurable body unmeasurable in the meantime.
+    #
+    # So where the scaffold cannot build it, compile the file it actually
+    # lives in. `object_code` picks the subject out of the object by NAME, so
+    # one compile of a real file answers for the function in it, with the real
+    # headers and the real class definitions.
+    #
+    # ONLY AS A FALLBACK, and only on NO_COMPILE. A unit the scaffold builds
+    # keeps its verdict untouched, so no claim can move because of this and
+    # the cache stays valid for everything that was already working.
+    retries = {}
+    for address, outcome in outcomes.items():
+        if outcome.get("tier") != "NO_COMPILE":
+            continue
+        annotation = cross.matched.get(address)
+        whole = real_unit(getattr(annotation, "location", "") if annotation
+                          else "")
+        if whole is not None:
+            retries[address] = whole
+    if retries:
+        recovered, entries = measure(retries, entries, arguments.no_cache,
+                                     arguments.jobs)
+        rescued = 0
+        for address, outcome in recovered.items():
+            if outcome.get("tier") != "NO_COMPILE":
+                outcome["measured_against"] = "translation unit"
+                outcomes[address] = outcome
+                rescued += 1
+        print(f"scaffold could not build {len(retries)} piece(s) whose file "
+              f"CMake compiles; measuring those against their own translation "
+              f"unit answered {rescued}")
     save_cache(entries)
 
     for address, reason_text in refusals.items():
