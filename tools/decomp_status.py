@@ -269,8 +269,16 @@ def real_unit(location: str):
     return None if text is None else (text, REPO_ROOT / path)
 
 
-def changed_sources() -> list:
-    """The `src/` files whose measurement a working-tree change can move.
+def changed_sources() -> tuple:
+    """`(paths, reason)` - the `src/` files a working-tree change can move.
+
+    `reason` is None when `paths` is a real scope, and otherwise says WHY
+    there is no scope, because the two ways of having none are not the same
+    fact and were reported as one. `--check` after a header edit printed
+    "scoped to 0 file(s) git reports changed:" with an empty list, which is
+    the sentence a run that measured NOTHING would print, above a run that
+    measured all 1,548 claims. A green that reads like a vacuous green is
+    the defect this file exists to avoid.
 
     `--check` measures every claim in the tree, and after editing one .cpp
     that is 1,602 compiles to learn about the twenty-eight that could have
@@ -298,15 +306,22 @@ def changed_sources() -> list:
             ["git", "status", "--porcelain", "--", "src"],
             cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout
     except (OSError, subprocess.SubprocessError):
-        return []
+        return [], "git could not be consulted"
     touched = set()
     for line in listed.splitlines():
         name = line[3:].strip().split(" -> ")[-1]
         if name.startswith("src/"):
             touched.add(name)
 
+    if not touched:
+        return [], "nothing under src/ has changed"
     if any(name.endswith(".h") for name in touched):
-        return []  # a header is every scaffolded unit's input; scope nothing
+        # A header is every scaffolded unit's input, so there is no scope
+        # smaller than the tree. Say which header, so the widening reads as
+        # a consequence rather than as a failure to find anything.
+        headers = sorted(n for n in touched if n.endswith(".h"))
+        return [], ("a changed header reaches every scaffolded unit: "
+                    + ", ".join(headers))
 
     # Who includes whom, by quoted name, over the files CMake compiles.
     includers: dict = {}
@@ -322,8 +337,11 @@ def changed_sources() -> list:
             continue
         reach.add(name)
         queue.extend(includers.get(name, ()))
-    return sorted(Path(p) for p in reach
-                  if p.endswith(".cpp") and (REPO_ROOT / p).is_file())
+    scope = sorted(Path(p) for p in reach
+                   if p.endswith(".cpp") and (REPO_ROOT / p).is_file())
+    # A .cpp change whose file CMake does not compile reaches nothing and
+    # scopes to nothing - which is a real scope of size zero, not a widening.
+    return scope, None if scope else "no compiled unit reached by the change"
 
 
 def build_units(annotations: list, matched: dict, functions: dict,
@@ -1518,17 +1536,20 @@ def main(argv=None) -> int:
     arguments = parser.parse_args(argv)
 
     if arguments.changed:
-        arguments.paths = list(changed_sources())
-        if not arguments.paths:
-            # Either nothing changed, or a HEADER did - and a header is an
-            # input to every scaffolded unit in the tree, so there is no
-            # scope smaller than all of it. Falling through to the full
-            # scan is the safe reading of both.
-            print("no scopeable change under src/ (a changed header reaches "
-                  "every scaffolded unit); checking the whole tree")
-        print(f"scoped to {len(arguments.paths)} file(s) git reports changed: "
-              + ", ".join(str(p) for p in arguments.paths[:8])
-              + (" ..." if len(arguments.paths) > 8 else ""))
+        scope, reason = changed_sources()
+        arguments.paths = list(scope)
+        if reason is not None:
+            # NO SCOPE IS NOT AN EMPTY SCOPE. Falling through to the full
+            # scan is the safe reading of every `reason`, and the message
+            # has to say that it is checking everything - printing
+            # "scoped to 0 file(s)" over a run that measures all 1,548
+            # claims is a true run wearing a vacuous run's words.
+            print(f"cannot scope ({reason}); CHECKING THE WHOLE TREE")
+        else:
+            print(f"scoped to {len(arguments.paths)} file(s) git reports "
+                  "changed: "
+                  + ", ".join(str(p) for p in arguments.paths[:8])
+                  + (" ..." if len(arguments.paths) > 8 else ""))
 
     if arguments.paths:
         annotations = []

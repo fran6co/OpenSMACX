@@ -185,6 +185,17 @@ extern "C" void __stdcall sub_5f86a0(int a1) {
     PENDING_BODY(0x005F86A0, pending)(a1);
 }
 
+// 0x005DFCD0  ?fill@Buffer@@QAEHPAURECT@@H@Z - 556 bytes, body in
+// src/unrecovered/005dfcd0.cpp. THE FRONTIER MOVED HERE when the no-argument
+// `Buffer::fill` landed in src/buffer.cpp: a clip rectangle narrower than the
+// buffer is the one case it does not handle itself, and it delegates. Five
+// other catalogued callers want this overload too, so it is a cheap edge to
+// close next.
+int Buffer::fill(RECT *area, int color) {
+    typedef int(__fastcall *pending)(Buffer *, void *, RECT *, int);
+    return PENDING_BODY(0x005DFCD0, pending)(this, nullptr, area, color);
+}
+
 // 0x0063B910  ?init_cursor_class@Cursor@@QAAXXZ - `int` here, see cursor.h
 int Cursor::init_cursor_class() {
     typedef int(__cdecl *pending)();
