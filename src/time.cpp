@@ -39,13 +39,13 @@ Status: Complete
 */
 void Time::init(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res) {
     stop();
-    unk_tgl_ = 0;
+    oneshot_state_ = 0;
     callback1_ = callback;
     callback2_ = 0;
     cb_param2_ = 0;
     cb_param1_ = param;
     count_ = cnt;
-    unk_1_ = 0;
+    tick_posted_ = 0;
     resolution_ = res;
     unk_2_ = 0;
 }
@@ -68,13 +68,13 @@ Status: Complete
 void Time::init(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, 
                 uint32_t res) {
     stop();
-    unk_tgl_ = 0;
+    oneshot_state_ = 0;
     callback1_ = 0;
     callback2_ = callback;
     cb_param2_ = param2;
     cb_param1_ = param;
     count_ = cnt;
-    unk_1_ = 0;
+    tick_posted_ = 0;
     resolution_ = res;
     unk_2_ = 0;
 }
@@ -102,7 +102,7 @@ uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
     if (!callback) {
         return 7;
     }
-    unk_tgl_ = 0;
+    oneshot_state_ = 0;
     if (count_ < 50) {
         id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
             (UINT_PTR)this, TIME_PERIODIC);
@@ -133,7 +133,7 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
     if (!callback) {
         return 7;
     }
-    unk_tgl_ = 0;
+    oneshot_state_ = 0;
     if (count_ < 50) {
         id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
             (UINT_PTR)this, TIME_PERIODIC);
@@ -166,7 +166,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
     if (!callback) {
         return 7;
     }
-    unk_tgl_ = 0;
+    oneshot_state_ = 0;
     if (count_ < 50) {
         // Bug fix: Original code had fuEvent param set to TIME_PERIODIC, the same as start().
         // Based on how the other pulse() functions work, this should be TIME_ONESHOT. It appears
@@ -204,7 +204,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
         id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
             (UINT_PTR)this, TIME_ONESHOT);
     } else {
-        unk_tgl_ = 1;
+        oneshot_state_ = TimeOneShot;
         id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
     }
     return id_event_ ? 0 : 2;
@@ -231,7 +231,7 @@ uint32_t Time::start() {
     if (!callback1_ && !callback2_) {
         return 7;
     }
-    unk_tgl_ &= ~1;
+    oneshot_state_ &= ~TimeOneShot;
     if (count_ < 50) {
         id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc,
             (UINT_PTR)this, TIME_PERIODIC);
@@ -266,7 +266,7 @@ uint32_t Time::pulse() {
         id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
             (UINT_PTR)this, TIME_ONESHOT);
     } else {
-        unk_tgl_ = (unk_tgl_ & ~2) | 1;
+        oneshot_state_ = (oneshot_state_ & ~TimeOneShotFired) | TimeOneShot;
         id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
     }
     return id_event_ ? 0 : 2;
@@ -296,7 +296,7 @@ void Time::stop() {
         }
         id_event_ = 0;
     }
-    if (~unk_tgl_ & 1) {
+    if (~oneshot_state_ & TimeOneShot) {
         flush_timer();
     }
 }
@@ -318,13 +318,13 @@ Status: Complete
 */
 void Time::close() {
     stop();
-    unk_tgl_ = 0;
+    oneshot_state_ = 0;
     callback1_ = 0;
     callback2_ = 0;
     cb_param2_ = 0;
     cb_param1_ = 0;
     count_ = 0;
-    unk_1_ = 0;
+    tick_posted_ = 0;
     resolution_ = 5;
     unk_2_ = 0;
 }
@@ -347,9 +347,9 @@ Status: Complete
 void Time::TimerProc(HWND UNUSED(hwnd), uint32_t UNUSED(msg), UINT_PTR id_timer, 
                      DWORD UNUSED(elapsed)) {
     if (id_timer && (!TimeModal || id_timer == (UINT_PTR)TimeModal)
-        && !reinterpret_cast<Time *>(id_timer)->unk_1_) {
+        && !reinterpret_cast<Time *>(id_timer)->tick_posted_) {
         PostMessageA(HandleMain, WM_USER + 1, id_timer, 0);
-        reinterpret_cast<Time *>(id_timer)->unk_1_ = 1;
+        reinterpret_cast<Time *>(id_timer)->tick_posted_ = 1;
     }
 }
 
@@ -371,9 +371,9 @@ Status: Complete
 void Time::MultimediaProc(uint32_t UNUSED(timer_id), uint32_t UNUSED(msg), DWORD_PTR user,
                           DWORD_PTR UNUSED(dw1), DWORD_PTR UNUSED(dw2)) {
     if (user && (!TimeModal || user == (DWORD_PTR)TimeModal) 
-        && !reinterpret_cast<Time *>(user)->unk_1_) {
+        && !reinterpret_cast<Time *>(user)->tick_posted_) {
         PostMessageA(HandleMain, WM_USER + 1, user, 0);
-        reinterpret_cast<Time *>(user)->unk_1_ = 1;
+        reinterpret_cast<Time *>(user)->tick_posted_ = 1;
     }
 }
 
