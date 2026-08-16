@@ -25,9 +25,9 @@ Palette g_PALETTE1;  // 0x0094C590
 HPALETTE PaletteInitialized;  // 0x009B8178
 int PaletteUsesSystemColours;  // 0x009B8188
 Palette *PaletteActive;                 // 0x009B8180
-Buffer *ScreenBuffer;                   // 0x009B7490
+Buffer ScreenBuffer;                    // 0x009B7490
 int PaletteSeedCache;                   // 0x009B8184
-void *PaletteDirectDrawSurface;         // 0x009BC4A0
+void *DirectDrawPalette;                // 0x009BC4A0
 
 // 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
 const uint8_t SystemColours[80] = {
@@ -252,7 +252,7 @@ void Palette::init_palette_class(int use_system_colours) {
 }
 
 /*
-ORIGINAL: 0x005FE460
+ORIGINAL: 0x005FE460 BYTE_EXACT
 // name      ?set@Palette@@QAEHXZ
 // size      139 bytes
 // spans     0x005FE460-0x005FE4EB
@@ -270,15 +270,19 @@ ORIGINAL: 0x005FE460
 Status: Complete
 */
 int Palette::set() {
-    if (*BufferDirectDrawActive) {
-        // DirectDraw is active: publish the palette through the surface
-        // object's vtable slot 6 instead of GDI.
-        void *surface = PaletteDirectDrawSurface;
-        if (surface != 0) {
-            typedef int(__stdcall *SurfacePublish)(void *, int, int, int, void *);
-            SurfacePublish publish = reinterpret_cast<SurfacePublish>(
-                (*reinterpret_cast<void ***>(surface))[6]);
-            publish(surface, 0, 0, 0x100, this);
+    if (BufferDirectDrawActive) {
+        // DirectDraw owns the screen, so the palette is published through
+        // IDirectDrawPalette::SetEntries rather than GDI. `entries_` is at
+        // offset 0, so this is the same address the image pushes as `this`.
+        void *ddraw_palette = DirectDrawPalette;
+        if (ddraw_palette != 0) {
+            typedef int(__stdcall *SetEntries)(
+                void *self, int flags, int first, int count,
+                PALETTEENTRY *entries);
+            void **const vtable = *reinterpret_cast<void ***>(ddraw_palette);
+            SetEntries set_entries = reinterpret_cast<SetEntries>(
+                vtable[DirectDrawPaletteSetEntriesSlot / sizeof(void *)]);
+            set_entries(ddraw_palette, 0, 0, 256, entries_);
         }
         return 0;
     }
@@ -286,7 +290,7 @@ int Palette::set() {
         return 7;
     }
     PaletteActive = this;
-    ScreenBuffer->sync_to_palette(this);
+    ScreenBuffer.sync_to_palette(this);
     if (PaletteUsesSystemColours == 0) {
         // Animate only when the seed changed; entries 10-245 are the ramp.
         if (PaletteSeedCache != seed_) {
