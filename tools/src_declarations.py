@@ -108,6 +108,14 @@ VARIABLE = re.compile(
 # `reinterpret_cast` spelling of the same thing. A file-scope definition of a
 # const pointer to a LITERAL address - the one initialiser worth carrying
 # across into an emitted unit, because dropping it changes the code.
+# `constexpr size_t SurfaceReleaseSlot = 0x08;` / `static const int N = 20;`
+# - a file-scope integral constant whose VALUE is the point of it. The
+# initialiser must be a plain literal: anything naming another symbol would
+# drag that symbol into a unit built to have none.
+CONSTANT_SCALAR = re.compile(
+    r"^(?:static\s+)?(?:constexpr|const)\s+(?!.*[\*&])(?P<head>[\w:\s]+?)"
+    r"\s+(?P<name>\w+)\s*=\s*"
+    r"(?P<init>[-+]?(?:0[xX][0-9A-Fa-f]+|\d+)[uUlL]*)\s*;?$")
 CONSTANT_ADDRESS = re.compile(
     r"^static\s+(?P<head>[\w:\s]+?\*\s*const)\s+(?P<name>\w+)\s*=\s*"
     r"(?:\(\s*[\w:\s\*]+\)\s*|reinterpret_cast\s*<[\w:\s\*]+>\s*\(\s*)"
@@ -320,6 +328,31 @@ def _declaration_for(statement: str, opened_block: bool, origin: str):
                                _by_value_types(params) | returns_by_value,
                                origin)
         return None
+
+    # A SCALAR CONSTANT SURVIVES AS ITS VALUE, and `constexpr` is a
+    # specifier, not a type.
+    #
+    # `constexpr size_t OwnedAllocationCount = 20;` was read as a variable of
+    # type `constexpr`, which is a type nothing can define, so the whole
+    # declaration was refused as an unsatisfiable by-value dependency and the
+    # name reached the unit undeclared. `buffer.cpp`'s 501-byte body at
+    # 0x005D7470 was NO_COMPILE on four `C2065`s for constants sitting in its
+    # own file - the same shape as a body that compiles perfectly under CMake
+    # and cannot be measured.
+    #
+    # THE VALUE COMES WITH IT, because that is what a constant is for: emitted
+    # as `extern const size_t N;` it would compile and then fail wherever the
+    # body used it as an array bound. `const` rather than `constexpr` because
+    # VC6 has no `constexpr` - an integral `const` initialised by a literal is
+    # a constant expression in C++ and is what the shim maps it to anyway.
+    scalar = CONSTANT_SCALAR.match(statement.strip())
+    if scalar:
+        head_text = scalar.group("head").strip()
+        return Declaration(
+            scalar.group("name"),
+            f"const {head_text} {scalar.group('name')} = "
+            f"{scalar.group('init')};",
+            "variable", _named_types(head_text), set(), origin)
 
     # A CONSTANT ADDRESS SURVIVES AS ONE.
     #
