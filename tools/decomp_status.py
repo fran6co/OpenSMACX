@@ -189,30 +189,43 @@ def _worker_init() -> None:
     _WORKER["pe"] = pefile.PE(str(byte_match.DEFAULT_EXE), fast_load=True)
 
 
-def _worker_build(task):
-    """One non-verbatim unit, in a worker. Returns (address, unit, refusal)."""
+def _build_task(task, functions, derived, callees, pe):
+    """One scaffolded unit. Returns (address, unit, refusal).
+
+    ONE BUILDER, because there were two and they drifted. The pool called a
+    worker and the serial path - taken whenever there are fewer than 64 units,
+    which is every `--addresses` run - re-derived the same decision inline
+    from `annotations`. Teaching one of them to prefer a body's real
+    translation unit therefore taught only one: a five-address run still
+    scaffolded, still failed, and the difference was invisible because a retry
+    pass caught it.
+    """
     address, recipe, region, location, row = task
     if recipe == "writeback":
         try:
             return address, writeback.build_unit(
-                address, region, _WORKER["functions"], _WORKER["callees"],
-                _WORKER["derived"], _WORKER["pe"]), ""
+                address, region, functions, callees, derived, pe), ""
         except emit.Unsettled as error:
             return address, None, f"no scaffolding: {error}"
     unit, refusal = census.build_unit(
-        address, row, location, _WORKER["functions"], _WORKER["derived"],
-        _WORKER["callees"], _WORKER["pe"])
+        address, row, location, functions, derived, callees, pe)
     return address, unit, refusal
+
+
+def _worker_build(task):
+    """`_build_task` against the state this worker loaded once."""
+    return _build_task(task, _WORKER["functions"], _WORKER["derived"],
+                       _WORKER["callees"], _WORKER["pe"])
 
 
 @functools.lru_cache(maxsize=1)
 def compiled_sources() -> frozenset:
     """The `src/` files CMake actually compiles, from CMakeLists.txt.
 
-    A body in one of these is PROVEN to compile: the executable builds. So a
-    NO_COMPILE verdict on it is a statement about the generated scaffolding
-    and nothing else, and `real_unit` below gives it a second chance against
-    the translation unit it really lives in.
+    A body in one of these is PROVEN to compile: the executable builds. So it
+    is measured in the translation unit it really lives in - `real_unit`
+    below - and never scaffolded. A scaffold is a reconstruction of a context
+    that, for these, already exists and is exactly right.
 
     Read from the build file rather than assumed from the path, because
     `src/unrecovered/` and `src/recovered/units/` are full of .cpp files that
@@ -225,6 +238,14 @@ def compiled_sources() -> frozenset:
         return frozenset()
     return frozenset("src/" + name for name in
                      re.findall(r"src/([\w/]+\.cpp)", block.group(1)))
+
+
+@functools.lru_cache(maxsize=None)
+def _read_source(path: str):
+    try:
+        return (REPO_ROOT / path).read_text(errors="ignore")
+    except OSError:
+        return None
 
 
 def real_unit(location: str):
@@ -242,11 +263,8 @@ def real_unit(location: str):
     path = location.split(":")[0]
     if path not in compiled_sources():
         return None
-    whole = REPO_ROOT / path
-    try:
-        return (whole.read_text(errors="ignore"), whole)
-    except OSError:
-        return None
+    text = _read_source(path)
+    return None if text is None else (text, REPO_ROOT / path)
 
 
 def build_units(annotations: list, matched: dict, functions: dict,
@@ -296,31 +314,12 @@ def build_units(annotations: list, matched: dict, functions: dict,
                     units[address] = unit
         return units, refusals
 
-    for annotation in annotations:
-        if annotation.state != annotation_scan.STATE_IMPLEMENTED:
-            continue
-        address = annotation.address
-        row = matched.get(address)
-        if row is None or annotation.recipe == "verbatim":
-            continue
-        if annotation.recipe == "writeback":
-            try:
-                units[address] = writeback.build_unit(
-                    address, annotation.region, functions, callees, derived,
-                    pe_fast)
-            except emit.Unsettled as error:
-                refusals[address] = f"no scaffolding: {error}"
-            continue
-        # Census recipe: reuse the census extractor and scaffolder VERBATIM.
-        # The marker line plays the role source_locations plays today, so a
-        # migrated annotation and the ledger row it came from are measured
-        # by the same bytes of code.
-        unit, refusal = census.build_unit(
-            address, row, annotation.location, functions, derived, callees,
-            pe_fast)
+    for task in tasks:
+        address, unit, refusal = _build_task(task, functions, derived,
+                                             callees, pe_fast)
         if refusal:
             refusals[address] = refusal
-        else:
+        elif unit is not None:
             units[address] = unit
     return units, refusals
 
@@ -1495,21 +1494,22 @@ def main(argv=None) -> int:
 
     # A SECOND CHANCE AGAINST THE REAL TRANSLATION UNIT.
     #
-    # A NO_COMPILE on a body whose file CMake compiles is a statement about the
-    # SCAFFOLD, not the body - the executable builds, so the body compiles.
-    # 452 of them were in that position: opaque class shells against bodies
-    # that name real members, imports absent from a hand-kept table, constants
-    # the indexer would not carry. Each is a real defect worth fixing, and
-    # each was also making a measurable body unmeasurable in the meantime.
+    # A NO_COMPILE on a body whose file CMake compiles is a statement about
+    # the SCAFFOLD: the executable builds, so the body compiles. 433 pieces
+    # were in that position and 247 of them answered here, 28 BYTE_EXACT.
     #
-    # So where the scaffold cannot build it, compile the file it actually
-    # lives in. `object_code` picks the subject out of the object by NAME, so
-    # one compile of a real file answers for the function in it, with the real
-    # headers and the real class definitions.
-    #
-    # ONLY AS A FALLBACK, and only on NO_COMPILE. A unit the scaffold builds
-    # keeps its verdict untouched, so no claim can move because of this and
-    # the cache stays valid for everything that was already working.
+    # A FALLBACK AND NOT THE PRIMARY ROUTE, WHICH WAS MEASURED. Making the
+    # real file primary broke 177 claims, and the reason is not fixable by
+    # better includes: matching a subject requires the file to DEFINE the
+    # catalogued symbol, and for 110 of them the catalogue has no name to
+    # match (`sub_406840`), while the other 67 live in bulk-recovered files
+    # that deliberately define a differently-named wrapper -
+    # `delegation_thunks.cpp` defines `?alpha_movie_on_key_click_redirect@@…`
+    # where the catalogue asks for `?on_key_click@AlphaMovie@@QAEHHH@Z`.
+    # Those bodies are FRAGMENTS, and a synthesised wrapper is the only thing
+    # that can carry the catalogued symbol for them. Both instruments are
+    # necessary; which one leads is decided by whether the subject can be
+    # named, and only the compiler knows that.
     retries = {}
     for address, outcome in outcomes.items():
         if outcome.get("tier") != "NO_COMPILE":
