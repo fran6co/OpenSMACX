@@ -119,6 +119,7 @@ class DLLEXPORT Buffer {
   // four-argument one above.
   int init(int width, int height, int tgl, ExtDirectDraw *direct_draw);
   int fill(int color);
+  int fill(RECT *area, int color);  // 005DFCD0
   int load_pcx(const char *filename, Palette *palette, int tgl, int height);
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height,
            int src_width, int src_height);
@@ -140,8 +141,17 @@ class DLLEXPORT Buffer {
   RECT rect1_;
   RECT rect2_;
   uint32_t field_40_[4];
-  uint32_t field_50_;
-  LPVOID *ppv_bits_;
+  // 0x50. The mapped pixels while the surface is locked: `Buffer::fill`
+  // sets it from `dib_bits_` when there is no surface and from
+  // `DDSURFACEDESC::lpSurface` when there is, and clears it when the last
+  // lock goes.
+  LPVOID locked_bits_;
+  // 0x54. THE BITS, not a pointer to them. `Buffer::init` passes `&`
+  // this to `CreateDIBSection` - `lea edx, [esi + 0x54]` at 0x005D777A -
+  // and `Buffer::fill` reads it as the destination base. Declared
+  // `LPVOID *` it compiled either way, because `LPVOID *` and the `VOID **`
+  // that CreateDIBSection wants are the same type.
+  LPVOID dib_bits_;
   // 0x58 and 0x5C. The DirectDraw pair `Buffer::init` creates: slot 4 of
   // IDirectDraw is CreateClipper and stores into 0x5C, and the surface it
   // creates is QueryInterface'd into 0x58. `Buffer::get_hdc` then calls
@@ -155,7 +165,9 @@ class DLLEXPORT Buffer {
   // `get_hdc` and `release_hdc` all raise it before GetDC and lower it
   // before ReleaseDC, and zero it when the last one goes.
   int hdc_lock_count_;
-  uint32_t field_6C_;
+  // 0x6C. How many holders that lock has - raised beside `locked_bits_`
+  // and lowered with it, exactly as `hdc_lock_count_` tracks `hdc2_`.
+  int surface_lock_count_;
   // 0x70. An HRGN the buffer owns: `Buffer::close` is the only thing that
   // touches it here, deleting it beside the bitmap. `Buffer::set_clip` is
   // the obvious producer but nothing recovered yet proves it.

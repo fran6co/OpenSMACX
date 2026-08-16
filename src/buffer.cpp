@@ -699,7 +699,7 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
                                     reinterpret_cast<void **>(&surface_));
         }
     } else if (borrowed == 0) {
-        bitmap_handle_ = CreateDIBSection(hdc_, bitmap_info_, 0, ppv_bits_,
+        bitmap_handle_ = CreateDIBSection(hdc_, bitmap_info_, 0, &dib_bits_,
                                           nullptr, 0);
         if (bitmap_handle_ == nullptr) {
             MessageBoxA(nullptr,
@@ -739,7 +739,7 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
         font4_ = nullptr;
     }
 
-    if (field_50_ != 0) {
+    if (locked_bits_ != 0) {
         surface_lost();
     }
 
@@ -775,8 +775,158 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     return 0;
 }
 
+/*
+Purpose: Flood the whole buffer with one colour - through DirectDraw when
+         there is a surface, and by writing the mapped bits when there is
+         not.
+ORIGINAL: 0x005DFB50
+// name      ?fill@Buffer@@QAEHH@Z
+// size      381 bytes
+// spans     0x005DFB50-0x005DFCCD
+// prototype int (__thiscall ?fill@Buffer@@QAEHH@Z)(Buffer* this, int)
+// callers   40   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005DFCD0
+//
+// The three DirectDraw slots are `Blt` (5), `Lock` (25) and `Unlock` (32),
+// checked against the interface; `EqualRect` is the import at 0x006692BC.
+//
+// CANNOT REACH BYTE-EXACT UNDER THIS PROJECT'S RULES, and the reason is in
+// the image rather than in the recovery. 0x005DFC43 is an `__asm` block:
+//
+//     pushf                       ; nothing saves the flags around its own
+//     push edi                    ; fill; nothing saves edi/esi it already
+//     push esi                    ; owns; nothing emits `cld` defensively
+//     cld
+//     mov edi, [ebp-4]            ; dest    <- the four locals below
+//     mov eax, [ebp-8]            ; width
+//     mov ebx, eax                ; ...clobbering ebx, a CALLEE-SAVED
+//     xor ecx, ecx                ;    register, with no save of its own
+//     and ebx, 3
+//     setne cl
+//     shr eax, 2
+//     add eax, ecx
+//     mov ecx, [ebp-0x10]         ; height
+//     mul ecx                     ; count = ((w+3)/4) * h
+//     mov ecx, eax
+//     mov dl, [ebp+8]             ; colour, broadcast to all four bytes
+//     mov al, dl
+//     mov ah, dl
+//     shl eax, 0x10
+//     mov al, dl
+//     mov ah, dl
+//     rep stosd
+//     pop esi
+//     pop edi
+//     popf
+//     mov esi, [ebp-0xc]          ; reload `this`, which it clobbered
+//
+// AGENTS.md bars `__asm` from recovered bodies, so the loop is written in C.
+// EVERY REMAINING DIVERGENCE IS DOWNSTREAM OF THAT ONE DECISION, which is
+// why it is worth having measured rather than argued:
+//
+//   * the four locals at [ebp-4], [ebp-8], [ebp-0xc], [ebp-0x10] exist only
+//     because the block reads them by name - that is the 0x10 by which the
+//     image's frame (0xE0) exceeds this one (0xD0);
+//   * `this` is spilled at [ebp-0xc] and reloaded at 0x005DFC71 because the
+//     block clobbers esi behind the allocator's back;
+//   * ebx is unavailable to the allocator for the same reason, so the image
+//     spells zero `push 0` / `test eax, eax` where this body, with ebx free,
+//     gets `xor ebx, ebx` hoisted once and then `push ebx` / `cmp eax, ebx`.
+//     One cause, eight of the twenty edits.
+//
+// What the C loop itself costs is NOTHING: VC6 recognises it and emits the
+// same `rep stosd`. The gap is the hand-written prologue around it.
+//
+// Measured 119/157 mnemonics, 20 edits, against `/c /O2 /Oy- /Gy /GR- /GX` -
+// the FRAMED set, which `flags frame` above already says and which the
+// best-of-four report does not pick, since a frameless build ties on the
+// aggregate while getting the prologue wrong.
+//
+// `WIP` below is the tree's word for "not BYTE_EXACT" and is the honest one,
+// but it does not here mean "unfinished": there is no next edit to this body
+// that raises the tier, only a rule change about `__asm`.
+Status: WIP
+*/
 int Buffer::fill(int color) {
-    return (ORIGINAL(this)->*BufferFillOriginal)(color);
+    // BOTH DECLARED HERE, and that is what the frame size says. The image
+    // reserves 0xE0 bytes: DDBLTFX (0x64) at ebp-0x74, DDSURFACEDESC (0x6C)
+    // at ebp-0xE0, and three dwords above them. Declared inside the branches
+    // that use them the two never overlap in lifetime, VC6 folds them onto
+    // the same slot, and the frame comes out 0x6C - the whole structure of
+    // the prologue turns on where these two lines sit.
+    DDBLTFX effects;
+    DDSURFACEDESC description;
+    if (surface_ != nullptr) {
+        effects.dwSize = sizeof(DDBLTFX);
+        effects.dwFillColor = color;
+        return surface_->Blt(nullptr, nullptr, nullptr,
+                             DDBLT_COLORFILL | DDBLT_WAIT, &effects);
+    }
+    if (dib_bits_ == nullptr) {
+        return 0;
+    }
+    // A buffer whose clip rectangle is not the whole buffer fills the
+    // rectangle instead, through the overload that takes one.
+    if (!EqualRect(&rect1_, &rect2_)) {
+        return fill(&rect1_, color);
+    }
+
+    void *pixels;
+    if (surface_ == nullptr) {
+        locked_bits_ = dib_bits_;
+        pixels = dib_bits_;
+        if (dib_bits_ != nullptr) {
+            ++surface_lock_count_;
+        }
+    } else if (locked_bits_ != nullptr) {
+        ++surface_lock_count_;
+        pixels = locked_bits_;
+    } else {
+        description.dwSize = sizeof(DDSURFACEDESC);
+        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+            pixels = nullptr;
+        } else {
+            ++surface_lock_count_;
+            stride_ = description.lPitch;
+            locked_bits_ = description.lpSurface;
+            pixels = description.lpSurface;
+        }
+    }
+
+    // The colour in all four bytes, one dword per pixel-quad, rows of
+    // `(width + 3) / 4` dwords.
+    // UNSIGNED throughout: the image divides with `shr eax, 2` and
+    // multiplies with `mul`. Written `int`, the same expression compiles to
+    // `cdq; sbb; and; add; sar` - six instructions of sign correction for a
+    // count that cannot be negative.
+    const uint32_t height = static_cast<uint32_t>(rect2_.bottom);
+    const uint32_t width = static_cast<uint32_t>(rect2_.right);
+    const uint8_t value = static_cast<uint8_t>(color);
+    const uint32_t quad = (static_cast<uint32_t>(value) << 24)
+        | (static_cast<uint32_t>(value) << 16)
+        | (static_cast<uint32_t>(value) << 8) | value;
+    uint32_t *out = static_cast<uint32_t *>(pixels);
+    const uint32_t count =
+        ((width >> 2) + ((width & 3) != 0 ? 1u : 0u)) * height;
+    for (uint32_t index = 0; index < count; ++index) {
+        out[index] = quad;
+    }
+
+    if (surface_ == nullptr) {
+        if (--surface_lock_count_ <= 0) {
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
+        }
+        return 0;
+    }
+    if (--surface_lock_count_ <= 0 && locked_bits_ != nullptr) {
+        surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+    return 0;
 }
 
 int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height) {
@@ -818,7 +968,7 @@ void Buffer::close() {
 
     if (hdc_ != nullptr) {
         hdc_lock_count_ = 0;
-        field_6C_ = 0;
+        surface_lock_count_ = 0;
         if (BufferDirectDraw != nullptr) {
             // The lock count was just zeroed, so this decrement always lands
             // at or below zero and the published data is dropped.
@@ -878,8 +1028,8 @@ void Buffer::close() {
     field_580_ = 0;
     width_ = 0;
     height_ = 0;
-    field_50_ = 0;
-    ppv_bits_ = nullptr;
+    locked_bits_ = 0;
+    dib_bits_ = nullptr;
     field_50C_ = 0xFFFFFFFFU;
     field_510_ = 0;
     field_514_ = 0;
@@ -965,7 +1115,7 @@ Return Value: The device context, or zero when the surface refuses one
 Status: Complete
 */
 HDC Buffer::get_hdc() {
-    if (field_50_ != 0) {
+    if (locked_bits_ != 0) {
         surface_lost();
     }
     IDirectDrawSurface *const surface = surface_;
@@ -1057,7 +1207,7 @@ so its four mutants survive. Reordering get_rgbquad against the acquire is
 likewise equivalent, since the two touch disjoint state.
 */
 int Buffer::sync_to_palette(Palette *palette) {
-    if (!ppv_bits_) {
+    if (!dib_bits_) {
         return 7;
     }
     if (!palette) {
@@ -1143,7 +1293,7 @@ dispatch reads back by fixed width. The clipper and surface dispatches, the
 RGNDATA contents, and the reference count are all observed.
 */
 int Buffer::set_clip(RECT *rect) {
-    if (!ppv_bits_ && surface_ == 0) {
+    if (!dib_bits_ && surface_ == 0) {
         return 7;
     }
     if (!rect) {
