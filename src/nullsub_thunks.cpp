@@ -56,6 +56,30 @@ int __fastcall nullsub_00406a80_redirect(void *, void *, int, int) {
 /*
 Purpose: sub_406b30 - a do-nothing leaf. The whole body is a return
          popping 0 bytes after zeroing EAX.
+
+         AND IT IS AN EMPTY VIRTUAL, reached from 129 vtable slots across 70
+         classes - `tools/derive_class_vtables.py` counts them - which is
+         also why `callers 0` below is true: nothing calls it directly.
+         `/Gy` gives every function its own COMDAT and the linker folded
+         every identical empty override in the program onto this one copy.
+
+         THE REDIRECT BELOW IS NOT THAT FUNCTION'S SHAPE. Those 129 slots
+         have different arities - slot 1 of Buffer, slot 6 of AlphaMovie,
+         slot 103 of something else - and a single
+         `int __fastcall(void *, void *)` models none of them; it produces
+         the right three bytes by ignoring everything it is handed. Nothing
+         calls it either, here or anywhere: all 56 redirects in this file are
+         annotation carriers.
+
+         `Buffer::surface_lost` in src/buffer.cpp is the first declaration in
+         this tree that is actually TRUE about one of those slots - a virtual
+         returning 0 - and it emits the identical `33 c0 c3`. As more classes
+         declare their real virtuals, each empty override folds here too, and
+         the claim on this address should move to whichever class declares
+         the base virtual. Note that `span_classes` records `shared=0`:
+         `byte_match.shared_span_index` detects folding between two
+         catalogued FUNCTIONS, and one function reached from 129 vtable slots
+         is not that case.
 ORIGINAL: 0x00406B30 BYTE_EXACT
 // name      sub_406b30
 // size      3 bytes
