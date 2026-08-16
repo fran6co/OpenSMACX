@@ -2,14 +2,14 @@
 #include "time.h"
 
 Time::Time()
-    : unk_tgl_(0),
+    : oneshot_state_(0),
       id_event_(0),
       callback1_(nullptr),
       callback2_(nullptr),
       cb_param2_(0),
       cb_param1_(0),
       count_(0),
-      unk_1_(0),
+      tick_posted_(0),
       resolution_(5),
       unk_2_(0) {
 }

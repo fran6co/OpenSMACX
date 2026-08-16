@@ -1588,27 +1588,27 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 // `time.h` already declares, and the layout is pinned by its
                 // own `static_assert(sizeof(Time) == 0x28)`:
                 //
-                //   [esi + 0x1C]  unk_1_       cleared on every tick
-                //   [esi]         unk_tgl_     bit 0 one-shot, bit 1 fired
-                //   [esi + 0x08]  callback1_   void(int)
-                //   [esi + 0x0C]  callback2_   void(int, int)
-                //   [esi + 0x14]  cb_param1_   pushed last, so it is first
+                //   [esi + 0x1C]  tick_posted_     cleared on every tick
+                //   [esi]         oneshot_state_   `test al,1`, `test al,2`
+                //   [esi + 0x08]  callback1_       void(int)
+                //   [esi + 0x0C]  callback2_       void(int, int)
+                //   [esi + 0x14]  cb_param1_       pushed last, so it is first
                 //   [esi + 0x10]  cb_param2_
                 //
-                // Bit 1 is set on the first tick and stops the timer on the
-                // second, which is what makes `unk_tgl_`'s bit 0 the
-                // one-shot flag: `Time::start()` clears it and `pulse` is
-                // the arm that sets it.
+                // This is the half of the one-shot emulation that lives
+                // outside `Time`: `SetTimer` has no one-shot mode, so a
+                // `pulse()` that went through it arrives here repeating,
+                // and the second tick is what stops it.
                 Time *const timer = reinterpret_cast<Time *>(wparam);
-                timer->unk_1_ = 0;
+                timer->tick_posted_ = 0;
                 if (*MsgStatus == 0) {
-                    if ((timer->unk_tgl_ & 1) != 0) {
-                        if ((timer->unk_tgl_ & 2) != 0) {
+                    if ((timer->oneshot_state_ & TimeOneShot) != 0) {
+                        if ((timer->oneshot_state_ & TimeOneShotFired) != 0) {
                             timer->stop();
                             return DefWindowProcA(window, message, wparam,
                                                   lparam);
                         }
-                        timer->unk_tgl_ |= 2;
+                        timer->oneshot_state_ |= TimeOneShotFired;
                     }
                     if (Time::TimeModal == nullptr
                         || timer == Time::TimeModal) {

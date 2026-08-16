@@ -19,12 +19,17 @@
 #pragma comment(lib, "Winmm.lib")
 #include <mmsystem.h>
 
+// The two bits of `Time::oneshot_state_`. See the member for what forces
+// them to exist: `SetTimer` cannot do one-shot, so it is emulated.
+static const int TimeOneShot = 1;
+static const int TimeOneShotFired = 2;
+
  /*
   * Time class
   */
 class DLLEXPORT Time {
   // The timer posts WM_USER+1 to the main window and `Win::window_proc`
-  // runs the tick: it clears `unk_1_`, tests and sets `unk_tgl_`, and calls
+  // runs the tick: it clears `tick_posted_`, tests and sets `oneshot_state_`, and calls
   // `callback1_`/`callback2_` with the stored parameters. The original has
   // all of that INLINE in the procedure rather than in a `Time` method, so
   // it stays inline and `Win` is a friend; a `Time::tick()` would be one
@@ -60,14 +65,35 @@ class DLLEXPORT Time {
   static void __cdecl close_class(); // 00616890
 
  private:
-  int unk_tgl_; // some kind of toggle or type
+  // ONE-SHOT EMULATION FOR THE `SetTimer` PATH, and nothing more general
+  // than that. `timeSetEvent` has `TIME_ONESHOT` and `TIME_PERIODIC` and
+  // picks between them directly; `SetTimer` has no one-shot mode at all, so
+  // when `count_` is 50 or more and the timer goes through `SetTimer`, the
+  // one-shot has to be emulated in software:
+  //
+  //   `pulse()`  sets   TimeOneShot        (one shot wanted)
+  //   `start()`  clears TimeOneShot        (periodic wanted)
+  //   the tick   sets   TimeOneShotFired   on the first tick, and calls
+  //                                        `stop()` when it sees it again
+  //   `stop()`   flushes queued ticks only when TimeOneShot is CLEAR - a
+  //              timer that stopped itself has nothing to flush
+  //
+  // The tick lives in `Win::window_proc`'s WM_USER+1 arm, which is why
+  // `Win` is a friend above.
+  int oneshot_state_;
   UINT_PTR id_event_;
   void(__cdecl *callback1_)(int);
   void(__cdecl *callback2_)(int, int);
   int cb_param2_; // callback 2nd parameter
   int cb_param1_; // callback 1st parameter
   uint32_t count_; // either delay (timeSetEvent) or elapsed (SetTimer) value
-  int unk_1_; // BOOL? related to Timer/Multimedia Proc? one time execution?
+  // A TICK IS ALREADY IN FLIGHT. `TimerProc` and `MultimediaProc` are the
+  // OS callbacks: each posts WM_USER+1 to the main window only when this is
+  // zero, and sets it as it posts. `Win::window_proc` clears it as the
+  // first thing it does with the message. So a timer whose ticks arrive
+  // faster than the message loop drains them queues exactly one, instead of
+  // a backlog.
+  int tick_posted_;
   uint32_t resolution_;
   int unk_2_;
 };
