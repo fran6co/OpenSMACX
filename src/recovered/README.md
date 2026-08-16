@@ -16,11 +16,6 @@ gitignored `build/byte-match/`, so a `git clean` undid a day of proving.
 They live under `src/` because they are source, not documentation. They live
 in their own directory because they are not yet PRODUCT source.
 
-`msvcrt/` beside them is the case where "not yet" is "not ever": seven
-functions the catalogue flags `kind library` / `lib`, which the C runtime
-this project links already defines. A second definition is LNK2005, so no
-choice of file makes them buildable. See the README there.
-
 ## What they are NOT
 
 **Compiled.** `CMakeLists.txt` names every file in `OPENSMACX_SOURCES` by

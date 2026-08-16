@@ -1910,6 +1910,45 @@ WIN32_IMPORTS = {
 }
 
 
+def crt_declarations(body: str) -> list:
+    """Declarations for the CRT functions `body` calls by their PLAIN name.
+
+    `declfix.CRT_SIGNATURES` already holds every one of these, keyed by the
+    DECORATED spelling - `_free`, `_fopen` - because that is what the
+    catalogue records and what `fix_declarations` rewrites a callee
+    declaration to. A body that simply writes `free(p)` names neither a
+    callee the catalogue knows nor anything `<stdlib.h>` could supply, since
+    the scaffold includes no CRT header, and got `C2065: 'free' : undeclared
+    identifier`.
+
+    Twelve bodies were compiling only because `src/recovered/00644ef2.cpp` -
+    a hand-written reimplementation of `free`, deleted for being a CRT
+    function this project LINKS rather than recovers - happened to define
+    the name where `src_declarations` could scrape it. A declaration nobody
+    meant to provide, holding up twelve unrelated claims.
+
+    One table, two spellings: the entry is emitted with its leading
+    underscore removed, and only when the body names it.
+    """
+    if not body:
+        return []
+    import src_declarations
+    code = src_declarations.code_only(body)
+    out = []
+    for decorated, signature in sorted(CRT_SIGNATURES.items()):
+        plain = decorated.lstrip("_")
+        # THE NAME, NOT A CALL. `src/recovered/00402320.cpp` writes
+        # `((FreeFn)free)(p)` - a cast of the function, not `free(`, and a
+        # pattern that insisted on the parenthesis left it undeclared.
+        if not plain or not re.search(rf"\b{plain}\b", code):
+            continue
+        if re.search(rf"\b{decorated}\b", code):
+            continue  # the body uses the decorated spelling; declfix owns it
+        out.append(f'extern "C" '
+                   f'{signature.replace(decorated, plain, 1)};')
+    return out
+
+
 def win32_declarations(body: str) -> list:
     """Declarations for the Win32 imports `body` actually names.
 
@@ -2060,7 +2099,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # Captured HERE: `body` is rebound to a list of member lines by the
     # class-shell loop below, so anything wanting the subject's text has
     # to take it before that happens.
-    win32_lines = win32_declarations(body)
+    win32_lines = win32_declarations(body) + crt_declarations(body)
 
     def declare(name: str, opening: bool) -> str:
         # `class X { public:` and `struct X {` differ only in default access,

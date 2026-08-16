@@ -16,13 +16,19 @@
 
 typedef void (__cdecl *DeleteProc)(void *);
 
+// 0x0064557F is `??3@YAXPAX@Z` - `operator delete`, which this project
+// LINKS rather than recovers (docs/EXCLUSIONS.md section 1). It used to be
+// declared by a hand-written reimplementation under `src/recovered/`; that
+// file is gone, so the name it supplied is spelled here as what it is.
+extern "C" void __cdecl operator_delete_at_64557f(void *);
+
 void* Console::m_0051ddf0(unsigned int a1) {
     char *base = reinterpret_cast<char *>(this) - 0x23d94;
     char *adjusted = base + 0x23d94;
     reinterpret_cast<Console *>(adjusted)->~Console();
     reinterpret_cast<GraphicWin *>(adjusted)->~GraphicWin();
     if (a1 & 1) {
-        (reinterpret_cast<DeleteProc>(&fn_0064557f))(base);
+        (reinterpret_cast<DeleteProc>(&operator_delete_at_64557f))(base);
     }
     return base;
 }
