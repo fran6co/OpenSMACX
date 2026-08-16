@@ -79,8 +79,13 @@ class DLLEXPORT Win {
   // `WinTrackingWindow` (`mov ecx, [0x9b7aac]`) rather than having one.
   static void OnLButtonDown(HWND window, LONG dbl, int x, int y,
                             WPARAM keys);          // 005F2330
-  static int get_key_window();                     // 005F6A50
-  static int get_mouse_window(int *x, int *y);     // 005F6F10
+  // CORRECTED from `int`. Both are catalogued returning `H`, and every
+  // caller in `window_proc` immediately treats the result as a `Win *` -
+  // tests it for null, dispatches through its vtable, stores it in
+  // `WinHoverWindow`. `H` and `PAV1@` are the same eax either way, so this
+  // costs no byte and stops the call sites casting.
+  static Win *get_key_window();                    // 005F6A50
+  static Win *get_mouse_window(int *x, int *y);    // 005F6F10
   static int update_cursor(Win *window, int tgl);  // 005F1820
   static int update_screen(RECT *area, Win *window);  // 005F7320
   void do_tracking(int x, int y);                  // 005F7580

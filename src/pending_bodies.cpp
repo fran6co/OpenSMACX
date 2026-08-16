@@ -128,6 +128,54 @@ void Win::flip(RECT *area) {
     PENDING_BODY(0x005EFD20, pending)(area);
 }
 
+// What `Win::window_proc` routes to, now that it is promoted into
+// src/win.cpp. These six are what its recovery still stands on, and the
+// first thing that faults if you move the mouse or press a key.
+//
+// 0x005F2330  ?OnLButtonDown@Win@@QAAXPAXJHHI@Z
+void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
+    typedef void(__cdecl *pending)(HWND, LONG, int, int, WPARAM);
+    PENDING_BODY(0x005F2330, pending)(window, dbl, x, y, keys);
+}
+
+// 0x005F6A50  ?get_key_window@Win@@QAGHXZ
+Win *Win::get_key_window() {
+    typedef Win *(__stdcall *pending)();
+    return PENDING_BODY(0x005F6A50, pending)();
+}
+
+// 0x005F6F10  ?get_mouse_window@Win@@QAAHPAH0@Z
+Win *Win::get_mouse_window(int *x, int *y) {
+    typedef Win *(__cdecl *pending)(int *, int *);
+    return PENDING_BODY(0x005F6F10, pending)(x, y);
+}
+
+// 0x005F1820  ?update_cursor@Win@@QAAHPAUWin@@H@Z
+int Win::update_cursor(Win *window, int tgl) {
+    typedef int(__cdecl *pending)(Win *, int);
+    return PENDING_BODY(0x005F1820, pending)(window, tgl);
+}
+
+// 0x005F7320  ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z
+int Win::update_screen(RECT *area, Win *window) {
+    typedef int(__cdecl *pending)(RECT *, Win *);
+    return PENDING_BODY(0x005F7320, pending)(area, window);
+}
+
+// 0x005F7580  ?do_tracking@Win@@QAEXHH@Z - the one __thiscall member of the
+// set, so the forwarder hands the receiver over explicitly.
+void Win::do_tracking(int x, int y) {
+    typedef void(__fastcall *pending)(Win *, void *, int, int);
+    PENDING_BODY(0x005F7580, pending)(this, nullptr, x, y);
+}
+
+// 0x005F86A0  sub_5f86a0 - byte-exact in src/recovered/005f86a0.cpp, which
+// is in no build, so the edge is still pending here.
+extern "C" void __stdcall sub_5f86a0(int a1) {
+    typedef void(__stdcall *pending)(int);
+    PENDING_BODY(0x005F86A0, pending)(a1);
+}
+
 // 0x0063B910  ?init_cursor_class@Cursor@@QAAXXZ - `int` here, see cursor.h
 int Cursor::init_cursor_class() {
     typedef int(__cdecl *pending)();
