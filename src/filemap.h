@@ -34,6 +34,15 @@ class DLLEXPORT Filemap {
   void close(LPVOID new_addr);
   // additional functions to assist with encapsulation
   uint32_t get_size() { return file_size_; }
+  // `Buffer::load_pcx` calls `GetFileSize(file_, NULL)` itself rather than
+  // reading `file_size_`, even though `open_read` has just set the two to
+  // the same value - so the handle has to be reachable to reproduce the
+  // call the image makes.
+  HANDLE get_handle() { return file_; }
+  // Likewise the mapped view: `open_read` returns it, but the image reads
+  // the MEMBER back afterwards (`mov eax, [esp+0x18]`) rather than keeping
+  // the returned register, so reproducing that needs the member.
+  LPVOID get_view() { return map_view_addr_; }
 
  private:
   LPVOID map_view_addr_; // (+0)

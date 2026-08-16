@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "buffer.h"
+#include "filemap.h"
 #include "font.h"
 #include "palette.h"
 #include "spot.h"
@@ -530,6 +531,15 @@ IDirectDraw *BufferDirectDraw;  // 0x009BC494
 // load, and the relocation is masked.
 uint32_t BufferField520Default = 1;
 
+// 0x009B3A10, and it is a GLOBAL for one reason: the `__asm` block in
+// `Buffer::fill(RECT *, int)` needs a memory location it can name, and a
+// compiler-allocated local has no name assembly can write. It holds the
+// bytes to skip between one filled row and the next, `stride_ - width`, and
+// it is live only for the duration of that loop. The whole image references
+// it from that one function and nowhere else, which is what a scratch
+// location smuggled out to file scope looks like.
+uint32_t BufferFillRowGap;
+
 namespace {
 
 typedef void (OriginalObject::*func_buffer_virtual)();
@@ -929,8 +939,261 @@ int Buffer::fill(int color) {
     return 0;
 }
 
+/*
+Purpose: Fill a rectangle of this buffer with a single colour, through
+         DirectDraw when there is a surface and by writing the mapped bits
+         when there is not.
+ORIGINAL: 0x005DFCD0
+// name      ?fill@Buffer@@QAEHPAURECT@@H@Z
+// size      556 bytes
+// spans     0x005DFCD0-0x005DFEFC
+// prototype int (__thiscall ?fill@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT* rect, int)
+// callers   8   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// `IntersectRect` is the import at 0x00669338; the DirectDraw slots are
+// `Blt` (5, +0x14), `Lock` (25, +0x64) and `Unlock` (32, +0x80), the same
+// three the no-argument overload uses.
+//
+// THREE RETURN CODES, and they are the only place this class says anything
+// but 0: 7 when the buffer has neither bits nor surface, 3 when the software
+// path is asked to fill a null rectangle, 0 everywhere else including every
+// failure.
+//
+// CANNOT REACH BYTE-EXACT, for the same reason as `fill(int)` and more
+// plainly. 0x005DFE69 is an `__asm` block, and this one settles it beyond
+// argument - it uses EBP as its row counter:
+//
+//     pushf / push edi / push esi / cld
+//     mov edi, [ebp-0x18]        ; dest
+//     mov edx, [ebp-0x1c]        ; width
+//     mov ebx, edx / and ebx, 3  ; tail bytes
+//     shr edx, 2                 ; whole dwords
+//     mov cl, [ebp+0xc] ...      ; colour broadcast to four bytes
+//     push ebp                   ; <-- THE FRAME POINTER, saved so the
+//     mov ebp, ecx               ;     block can use it as a loop counter
+//   row:
+//     mov ecx, edx / rep stosd
+//     mov ecx, ebx / rep stosb
+//     add edi, [0x9B3A10]        ; the row gap, via a named global
+//     dec ebp / jne row
+//     pop ebp / pop esi / pop edi / popf
+//     mov esi, [ebp-0x14]        ; reload `this`
+//
+// A compiler cannot spend EBP in a function it built a frame for, and it
+// has no reason to route a loop-invariant through a file-scope global. Both
+// are things only a human writing assembly does. AGENTS.md bars `__asm`
+// from recovered bodies, so the loop is C and the gap is measured:
+// 189 of 215 mnemonics, 24 edits, frame 0xF0 against the image's 0xEC.
+//
+// The C loop is not what costs it - VC6 recognises the fill and emits the
+// same `rep stosd`. The 24 are the block's own bookkeeping plus one
+// consequence that reaches the PROLOGUE: the image spills `this` to
+// [ebp-0x14] at instruction 7 and reloads it at 0x005DFEA6 purely because
+// the block clobbers ESI, and with no such pressure the allocator here
+// keeps `this` in EBX and orders the first six instructions differently.
+// That is edits #4, #5, #14 and #17, 300 bytes before the `__asm`.
+//
+// TWO THINGS IN THE ORIGINAL WORTH FLAGGING, left as the image has them
+// because byte-exactness is the goal:
+//
+//  1. The Blt path passes `&clipped` as the destination rectangle even when
+//     `area` is null - in which case nothing ever wrote to `clipped` and
+//     DirectDraw is handed an uninitialised RECT. Only reachable through a
+//     direct call with a null rectangle; `fill(int)` always passes `&rect1_`.
+//  2. The two bounds tests are not symmetric. The left edge is checked
+//     against `+width_` and the top edge against `-height_`:
+//     `mov eax, [esi+0x84]; neg eax; cmp edi, eax; jge`. Read at face
+//     value the second test rejects every non-negative top and the software
+//     fill never runs. It may instead be deliberate for a bottom-up DIB,
+//     whose rows count backwards from the base - nothing recovered so far
+//     settles which, so the `neg` is reproduced and named rather than
+//     quietly turned into the symmetric test it resembles.
+Status: WIP
+*/
+int Buffer::fill(RECT *area, int color) {
+    // ALL THREE AT FUNCTION SCOPE, which the 0xEC frame requires: the image
+    // lays out `clipped` at [ebp-0x10], DDBLTFX at [ebp-0x80] and
+    // DDSURFACEDESC at [ebp-0xEC], never overlapping. Declared inside the
+    // branches that use them their lifetimes are disjoint, VC6 folds them
+    // onto shared slots, and the frame shrinks to 0x9C. One `clipped` too:
+    // the two paths share the slot in the image.
+    RECT clipped;
+    DDBLTFX effects;
+    DDSURFACEDESC description;
+
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return 7;
+    }
+    if (surface_ != nullptr) {
+        effects.dwSize = sizeof(DDBLTFX);
+        effects.dwFillColor = color;
+        if (area != nullptr && !IntersectRect(&clipped, area, &rect1_)) {
+            return 0;
+        }
+        // See (1) above: `clipped` is uninitialised here when `area` is null.
+        surface_->Blt(&clipped, nullptr, nullptr,
+                      DDBLT_COLORFILL | DDBLT_WAIT, &effects);
+        return 0;
+    }
+
+    if (area == nullptr) {
+        return 3;
+    }
+    clipped = *area;
+    if (!IntersectRect(&clipped, &clipped, &rect1_)) {
+        return 0;
+    }
+    if (clipped.left >= static_cast<int>(width_)) {
+        return 0;
+    }
+    // See (2) above: NEGATED, as the image has it.
+    if (clipped.top >= -static_cast<int>(height_)) {
+        return 0;
+    }
+
+    void *pixels;
+    if (surface_ == nullptr) {
+        locked_bits_ = dib_bits_;
+        pixels = dib_bits_;
+        if (dib_bits_ == nullptr) {
+            return 0;
+        }
+        ++surface_lock_count_;
+    } else if (locked_bits_ != nullptr) {
+        ++surface_lock_count_;
+        pixels = locked_bits_;
+    } else {
+        description.dwSize = sizeof(DDSURFACEDESC);
+        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+            return 0;
+        }
+        ++surface_lock_count_;
+        stride_ = description.lPitch;
+        locked_bits_ = description.lpSurface;
+        pixels = description.lpSurface;
+    }
+    if (pixels == nullptr) {
+        return 0;
+    }
+
+    uint8_t *destination = static_cast<uint8_t *>(pixels)
+        + stride_ * clipped.top + clipped.left;
+    if (destination == nullptr) {
+        return 0;
+    }
+
+    int rows = clipped.bottom - clipped.top;
+    // UNSIGNED, so the split into whole dwords is `shr edx, 2` as the image
+    // has it rather than the `sar` a signed width earns.
+    const uint32_t width = static_cast<uint32_t>(clipped.right - clipped.left);
+    BufferFillRowGap = stride_ - width;
+
+    const uint8_t value = static_cast<uint8_t>(color);
+    const uint32_t quad = (static_cast<uint32_t>(value) << 24)
+        | (static_cast<uint32_t>(value) << 16)
+        | (static_cast<uint32_t>(value) << 8) | value;
+    do {
+        uint32_t *whole = reinterpret_cast<uint32_t *>(destination);
+        for (uint32_t count = width >> 2; count > 0; --count) {
+            *whole++ = quad;
+        }
+        uint8_t *tail = reinterpret_cast<uint8_t *>(whole);
+        for (uint32_t count = width & 3; count > 0; --count) {
+            *tail++ = value;
+        }
+        destination += BufferFillRowGap;
+    } while (--rows != 0);
+
+    if (surface_ == nullptr) {
+        if (--surface_lock_count_ <= 0) {
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
+        }
+        return 0;
+    }
+    --surface_lock_count_;
+    if (locked_bits_ != nullptr && surface_lock_count_ <= 0) {
+        surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+    return 0;
+}
+
+/*
+Purpose: Load a PCX file by name into this buffer, supplying a default
+         extension and memory-mapping the file for the decoder.
+ORIGINAL: 0x005D7DE0 BYTE_EXACT
+// name      ?load_pcx@Buffer@@QAEHPBDPAVPalette@@HH@Z
+// size      338 bytes
+// spans     0x005D7DE0-0x005D7F1D;0x00662BBC-0x00662BD1
+// prototype int (__thiscall ?load_pcx@Buffer@@QAEHPBDPAVPalette@@HH@Z)(Buffer* this, int8* fileName, Palette*, int, int size)
+// callers   44   call targets   6
+// kind      game
+// flags     seh;sp_ready;purged_ok
+// calls     0x00628380 0x006283E0 0x00628430 0x005E2690 0x00645470 0x006453E0
+//
+// TWO RANGES, and the 338 is their sum: 317 bytes of body at 0x005D7DE0 and
+// a 21-byte EH funclet at 0x00662BBC. Written as one range ending at
+// 0x005D7F31 - 338 counted forward from the entry - the span swallows
+// `sub_5d7f20`, and the comparison then measures this body against the next
+// function's prologue and can never agree.
+//
+// A NAME FIXER AND A FILE MAPPER; the decoding is all in the five-argument
+// overload at 0x005E2690, which takes the mapped bytes and their length.
+//
+// The `Filemap` local is what makes this function carry an EH frame -
+// `push -1; push 0x662BC7; mov eax, fs:[0]` - and it is constructed at
+// instruction 10, BEFORE the null-filename test at 13. Declaring it after
+// that test would move the constructor call past the early return and
+// change the shape of the whole prologue, so the declaration stays first.
+//
+// Return codes: 3 for a null name, 6 when the file will not open, and
+// otherwise whatever the decoder returns.
+//
+// `path` is 260 bytes - MAX_PATH - which the frame settles rather than
+// guesses: `sub esp, 0x114` with the 16-byte Filemap at offset 0 and the
+// buffer at offset 0x10 leaves exactly 0x104.
+//
+// BYTE_EXACT, 317/317, against `/c /O2 /Gy /GR- /GX`.
+Status: Complete
+*/
 int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height) {
-    return (ORIGINAL(this)->*BufferLoadPcxOriginal)(filename, palette, tgl, height);
+    Filemap map;
+    if (filename == nullptr) {
+        return 3;
+    }
+
+    char path[MAX_PATH];
+    path[0] = '\0';
+    strcat(path, filename);
+    // Supply `.pcx` unless the name already carries an extension. The scan
+    // starts ON the terminator and walks down, so a dot at position 0 is
+    // never reached and counts as no extension - which is what the image
+    // does, `cmp eax, ecx` against the start of the buffer both before the
+    // loop and after it.
+    char *scan = path + strlen(filename);
+    while (scan != path && *scan != '.') {
+        --scan;
+    }
+    if (scan == path) {
+        strcat(path, ".pcx");
+    }
+
+    if (map.open_read(path, TRUE) == nullptr) {
+        return 6;
+    }
+    // A SEPARATE STATEMENT, not an argument. MSVC evaluates arguments
+    // right to left, so written inline the GetFileSize call would land
+    // between the `palette` and `view` pushes; the image makes it first,
+    // at 0x005D7EC1, and pushes its result from EAX four instructions
+    // later - which is what a local assigned before the call looks like.
+    const DWORD size = GetFileSize(map.get_handle(), nullptr);
+    return load_pcx(static_cast<BYTE *>(map.get_view()), size,
+                    palette, tgl, height);
 }
 
 int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width, int height,
