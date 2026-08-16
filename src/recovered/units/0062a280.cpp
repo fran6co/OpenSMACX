@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0062A280 FILE
+// ORIGINAL: 0x0062A280 BYTE_EXACT FILE
 // name      ?rewind@Flic@@QAEHXZ
 // size      57 bytes
 // spans     0x0062A280-0x0062A2B9
@@ -1386,6 +1386,8 @@ class Flic { public:
     void UNK8();
     int rewind();
 };
+
+typedef int (__cdecl *FseekFn)(void *, long, int);
 
 int Flic::rewind() {
     if (!(*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(this) + 0x5b4) & 1)) {

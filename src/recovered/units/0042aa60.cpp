@@ -2181,6 +2181,9 @@ class Datalink : public GraphicWin { public:
     void set_cat_weapon();
 };
 
+char *__cdecl __itoa(int, char*, int);
+int __cdecl _strlen(const char *);
+
 void Datalink::set_cat_weapon() {
     char *self = reinterpret_cast<char *>(this);
 

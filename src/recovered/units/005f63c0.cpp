@@ -2159,12 +2159,12 @@ class VCall { public:
     virtual void slot020();
     virtual void slot021();
     virtual void slot022();
-    virtual void slot023();  // <-- used
+    virtual int slot023();  // <-- used
     virtual void slot024();
     virtual void slot025();
     virtual void slot026();
     virtual void slot027();
-    virtual void slot028();  // <-- used
+    virtual void slot028(int, int);  // <-- used
     virtual void slot029();
     virtual void slot030();
     virtual void slot031();
@@ -2174,7 +2174,7 @@ class VCall { public:
     virtual void slot035();
     virtual void slot036();
     virtual void slot037();
-    virtual void slot038();  // <-- used
+    virtual void slot038(int, int);  // <-- used
     virtual void slot039();
     virtual void slot040();
     virtual void slot041();
@@ -2201,7 +2201,7 @@ class VCall { public:
     virtual void slot062();
     virtual void slot063();
     virtual void slot064();
-    virtual void slot065();  // <-- used
+    virtual void slot065(int);  // <-- used
     virtual void slot066();
     virtual void slot067();
     virtual void slot068();
@@ -2376,7 +2376,7 @@ void Win::on_l_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
 
     child = *reinterpret_cast<int32_t *>(self + 0xc4);
     if (child != 0) {
-        reinterpret_cast<VCallX *>(child)->slot065(reinterpret_cast<int32_t>(self));
+        reinterpret_cast<VCall *>(child)->slot065(reinterpret_cast<int32_t>(self));
     }
 
     if (a4 == 0) {
@@ -2398,22 +2398,22 @@ void Win::on_l_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
             if (fp != 0) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(a2, a3);
             }
-            reinterpret_cast<VCallX *>(self)->slot028(a3, a2);
+            reinterpret_cast<VCall *>(self)->slot028(a3, a2);
             related = *reinterpret_cast<int32_t *>(self + 0x44);
         } else {
-            reinterpret_cast<VCallX *>(self)->slot038(a3, a2);
+            reinterpret_cast<VCall *>(self)->slot038(a3, a2);
             related = *reinterpret_cast<int32_t *>(self + 0x68);
         }
-        if (related != 0 && reinterpret_cast<VCallX *>(related)->slot023() == 0) {
-            reinterpret_cast<VCallX *>(related)->slot007();
+        if (related != 0 && reinterpret_cast<VCall *>(related)->slot023() == 0) {
+            reinterpret_cast<VCall *>(related)->slot007();
         }
     }
 
-    int32_t hitTest = reinterpret_cast<VCallX *>(self)->slot061();
+    int32_t hitTest = reinterpret_cast<VCall *>(self)->slot061();
     int32_t idx = 0;
     if (hitTest == 0 ||
         reinterpret_cast<Spot *>(self + 0x8f4)->check(a2, a3, &idx, 0) < 0 ||
-        reinterpret_cast<VCallX *>(self)->slot088(
+        reinterpret_cast<VCall *>(self)->slot088(
             idx, *reinterpret_cast<int32_t *>(self + idx * 4 + 0x900)) != 0) {
         reinterpret_cast<Win *>(self)->left_down_event(a2, a3, a5);
     }

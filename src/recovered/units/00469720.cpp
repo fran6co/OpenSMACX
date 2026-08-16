@@ -1909,6 +1909,8 @@ extern "C" unsigned int strlen(const char *);
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_0065593a = (int *)0x0065593A;
+static int *const g_009392c0_arr = (int *)0x009392C0;
+static int *const g_00939340_arr = (int *)0x00939340;
 static int *const g_0066ef50 = (int *)0x0066EF50;
 static int *const g_0066ef74 = (int *)0x0066EF74;
 static int *const g_0066ef98 = (int *)0x0066EF98;
@@ -2093,6 +2095,8 @@ class MapWin { public:
     int UNK2();
     void draw_legend();
 };
+
+extern "C" char *ITOA(int, char *, int);
 
 void MapWin::draw_legend() {
     char *self = reinterpret_cast<char *>(this);

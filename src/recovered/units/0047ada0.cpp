@@ -2380,6 +2380,19 @@ class NetMsg { public:
     ~NetMsg();
 };
 
+void RemoveAllShim();
+
+void RemoveAllShim();
+
+void RemoveAllShim();
+
+void RemoveAllCast();
+void RemoveAllShim();
+extern "C" void __fastcall Sub4066c0Cast(void *);
+extern "C" void __fastcall Sub4066c0Shim(void *);
+void removeAll();
+extern "C" void __fastcall sub4066c0(void *);
+
 NetMsg::~NetMsg() {
     char *self = reinterpret_cast<char *>(this);
 

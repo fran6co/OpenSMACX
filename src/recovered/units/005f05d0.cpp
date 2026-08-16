@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005F05D0 FILE
+// ORIGINAL: 0x005F05D0 BYTE_EXACT FILE
 // name      ?set_border_thickness@Win@@QAEXH@Z
 // size      61 bytes
 // spans     0x005F05D0-0x005F060D
@@ -2103,7 +2103,7 @@ class VCall { public:
     virtual void slot000();
     virtual void slot001();
     virtual void slot002();
-    virtual void slot003();  // <-- used
+    virtual void slot003(int, int, int);  // <-- used
 };
 
 class Win { public:
@@ -2206,7 +2206,7 @@ class Win { public:
 void Win::set_border_thickness(int a1) {
     if (*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(this) + 0x9C) & 2) {
         border_thickness_ = a1;
-        reinterpret_cast<VCall2 *>(this)->slot003(
+        reinterpret_cast<VCall *>(this)->slot003(
             client_rect_.right - client_rect_.left,
             client_rect_.bottom - client_rect_.top,
             0);

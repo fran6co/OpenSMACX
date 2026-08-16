@@ -1948,7 +1948,7 @@ void __cdecl stop_timers();
 // This body dispatches through slot(s): 1, 2, 12
 class VCall { public:
     virtual void slot000();
-    virtual void slot001();  // <-- used
+    virtual void slot001(int);  // <-- used
     virtual void slot002();  // <-- used
     virtual void slot003();
     virtual void slot004();
@@ -1966,6 +1966,8 @@ class VCall { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_007ad2d0 = (int *)0x007AD2D0;
+static int *const g_007ae778_arr = (int *)0x007AE778;
+static int &g_007f685c_sym = *(int *)0x007F685C;
 static int *const g_007ae778 = (int *)0x007AE778;
 static int *const g_007ae820 = (int *)0x007AE820;
 static int *const g_007cd11c = (int *)0x007CD11C;
@@ -2026,12 +2028,12 @@ void MainInterface::on_status(int a1) {
             if (i == 2) {
                 if ((*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x80) != 0 &&
                     (*reinterpret_cast<unsigned char *>(g_009a64c0) & 0x40) != 0) {
-                    reinterpret_cast<VCall2 *>(self + 0x3ec + i * 2892)->slot001(0);
+                    reinterpret_cast<VCall *>(self + 0x3ec + i * 2892)->slot001(0);
                 }
             } else if (i < 8 || i > 10) {
                 if (i < 0xb || i > 0x29 ||
                     *reinterpret_cast<int *>(self + 0x1dee8) == 0x3ea) {
-                    reinterpret_cast<VCall2 *>(self + 0x3ec + i * 2892)->slot001(0);
+                    reinterpret_cast<VCall *>(self + 0x3ec + i * 2892)->slot001(0);
                 } else {
                     reinterpret_cast<VCall *>(self + 0x3ec + i * 2892)->slot002();
                 }
@@ -2050,7 +2052,7 @@ void MainInterface::on_status(int a1) {
         }
 
         reinterpret_cast<ButtonGroup *>(self + 0x1def8)->set(0x3ee, 1);
-        reinterpret_cast<VCall2 *>(self + 0x1e0b8)->slot001(0);
+        reinterpret_cast<VCall *>(self + 0x1e0b8)->slot001(0);
 
         reinterpret_cast<Time *>(g_007ad2d0)->start();
         if (*g_007d3944 != 0) {

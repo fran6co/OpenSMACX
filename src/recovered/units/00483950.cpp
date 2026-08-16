@@ -1943,6 +1943,8 @@ void __cdecl say_tech(char *, int, int);
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_0066931c = (int *)0x0066931C;
+static int &g_759e28x = *(int *)0x00759E28;
+static int *const g_96cd48x = (int *)0x0096CD48;
 static int *const g_00682820 = (int *)0x00682820;
 static int *const g_006846b0 = (int *)0x006846B0;
 static int *const g_00759e28 = (int *)0x00759E28;
@@ -2033,6 +2035,9 @@ class NewTechWin : public GraphicWin { public:
 
     void on_redraw();
 };
+
+typedef char *(__stdcall *CharUpperFn)(char *);
+extern "C" char *__cdecl my_itoa(int, char *, int);
 
 void NewTechWin::on_redraw() {
     char *self = reinterpret_cast<char *>(this);

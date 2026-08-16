@@ -1,4 +1,4 @@
-// ORIGINAL: 0x004D04A0 FILE
+// ORIGINAL: 0x004D04A0 BYTE_EXACT FILE
 // name      ?wait@Console@@QAEXH@Z
 // size      64 bytes
 // spans     0x004D04A0-0x004D04E0
@@ -2058,6 +2058,7 @@ class Sprite { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_0095282c = (int *)0x0095282C;
+static int *const g_table_95282c = (int *)0x0095282C;
 
 class Console : public MapWin { public:
     uint8_t field_21A6C_[0xFC0];

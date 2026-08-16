@@ -1549,6 +1549,10 @@ class Dialog { public:
     void UNK2(int, int, int, int);
 };
 
+typedef int (__stdcall *GetWindowLongFn)(void *, int);
+
+typedef int (__stdcall *CallWindowProcFn)(int, int, int, int, int);
+
 void Dialog::UNK2(int a1, int a2, int a3, int a4) {
     unsigned int msg = a2;
     if (msg >= 7 && msg <= 8) {

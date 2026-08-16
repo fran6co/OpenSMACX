@@ -1948,6 +1948,7 @@ void __cdecl text_close();
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_00687494 = (int *)0x00687494;
+static int *const g_0096cc2carr = (int *)0x0096CC2C;
 static int *const g_0068749c = (int *)0x0068749C;
 static int *const g_006874a0 = (int *)0x006874A0;
 static int *const g_00691afc = (int *)0x00691AFC;
@@ -2223,6 +2224,8 @@ class SocialWin : public GraphicWin, public SubInterface { public:
     void UNK3();
     void draw_overview();
 };
+
+extern "C" char *__cdecl my_itoa(int, char *, int);
 
 void SocialWin::draw_overview() {
     Buffer *buf = (Buffer *)g_007aec64;

@@ -1933,6 +1933,8 @@ int __cdecl do_sound();
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_0066931c = (int *)0x0066931C;
+static int *const g_table_946d34 = (int *)0x00946D34;
+static int *const g_table_96ccb0 = (int *)0x0096CCB0;
 static int *const g_0078d5a0 = (int *)0x0078D5A0;
 static int *const g_0078d618 = (int *)0x0078D618;
 static int *const g_00946d34 = (int *)0x00946D34;

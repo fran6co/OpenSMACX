@@ -1904,6 +1904,7 @@ class Sprite { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_008a40bc = (int *)0x008A40BC;
+static int &g_009156b0_sym = *(int *)0x009156B0;
 static int *const g_008a4168 = (int *)0x008A4168;
 static int *const g_008a6244 = (int *)0x008A6244;
 static int *const g_008a6248 = (int *)0x008A6248;

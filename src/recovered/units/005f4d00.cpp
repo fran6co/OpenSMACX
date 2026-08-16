@@ -2218,7 +2218,7 @@ class VCall { public:
     virtual void slot058();
     virtual void slot059();
     virtual void slot060();
-    virtual void slot061();  // <-- used
+    virtual int slot061();  // <-- used
     virtual void slot062();
     virtual void slot063();  // <-- used
     virtual void slot064();
@@ -2231,7 +2231,7 @@ class VCall { public:
     virtual void slot071();
     virtual void slot072();
     virtual void slot073();
-    virtual void slot074();  // <-- used
+    virtual void slot074(int, int);  // <-- used
 };
 
 // ---- fixed globals this body references ----
@@ -2339,9 +2339,9 @@ class Win { public:
 
 void __cdecl Win::update() {
     for (int i = 0; i < *g_009b7b30; ++i) {
-        reinterpret_cast<WinVCall *>(g_win_array[i])->slot074(0, -1);
-        if (reinterpret_cast<WinVCall *>(g_win_array[i])->slot061() != 0) {
-            reinterpret_cast<WinVCall *>(g_win_array[i])->slot063();
+        reinterpret_cast<VCall *>(g_win_array[i])->slot074(0, -1);
+        if (reinterpret_cast<VCall *>(g_win_array[i])->slot061() != 0) {
+            reinterpret_cast<VCall *>(g_win_array[i])->slot063();
             do_sound();
         }
     }

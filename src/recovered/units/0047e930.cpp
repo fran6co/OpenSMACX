@@ -2518,6 +2518,8 @@ class NetWin { public:
     void pick_planet_size();
 };
 
+extern "C" void *memcpy(void *, const void *, unsigned int);
+
 void NetWin::pick_planet_size() {
     char *self = reinterpret_cast<char *>(this);
 

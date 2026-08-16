@@ -2448,7 +2448,7 @@ extern "C" unsigned int strlen(const char *);
 // This body dispatches through slot(s): 1
 class VCall { public:
     virtual void slot000();
-    virtual void slot001();  // <-- used
+    virtual void slot001(int);  // <-- used
 };
 
 // ---- fixed globals this body references ----
@@ -2626,6 +2626,10 @@ class Datalink : public GraphicWin { public:
     void draw_adv_concept();
 };
 
+char *__cdecl __itoa(int, char*, int);
+extern "C" char *__cdecl _strcat(char *, const char *);
+int __cdecl _strlen(const char *);
+
 void Datalink::draw_adv_concept() {
     char *self = reinterpret_cast<char *>(this);
     Popup popup;
@@ -2696,7 +2700,7 @@ void Datalink::draw_adv_concept() {
     reinterpret_cast<StringList *>(self + 0x13084)
         ->load(reinterpret_cast<int8 *>(g_00683360), reinterpret_cast<int8 *>(msg), 1, 0);
     sbox->add_fixup();
-    reinterpret_cast<VCallArg *>(sbox)->slot001(0);
+    reinterpret_cast<VCall *>(sbox)->slot001(0);
 
     reinterpret_cast<GraphicWin *>(this)->soft_update(
         reinterpret_cast<RECT *>(self + 0x10384));

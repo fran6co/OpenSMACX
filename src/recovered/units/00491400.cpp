@@ -2289,7 +2289,7 @@ class VCall { public:
     virtual void slot013();
     virtual void slot014();
     virtual void slot015();
-    virtual void slot016();  // <-- used
+    virtual void slot016(int);  // <-- used
     virtual void slot017();
     virtual void slot018();
     virtual void slot019();
@@ -2406,7 +2406,7 @@ void PrefWin::on_button_clicked(int a1) {
         reinterpret_cast<Scroll *>(self + 0x10b70)->set_pos(0x3f);
         if (*reinterpret_cast<int **>(g_0074daa0) != 0) {
             void *obj = *reinterpret_cast<void **>(g_0074daa0);
-            reinterpret_cast<VCall2 *>(obj)->slot016(0x3f);
+            reinterpret_cast<VCall *>(obj)->slot016(0x3f);
         }
         get_preferences();
         break;

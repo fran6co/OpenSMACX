@@ -2164,6 +2164,8 @@ void __cdecl synch_veh(int);
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_004b8fd4 = (int *)0x004B8FD4;
+static int *const g_0096c9f8_arr = (int *)0x0096C9F8;
+static int *const g_0097d044_arr = (int *)0x0097D044;
 static int *const g_006a7628 = (int *)0x006A7628;
 static int *const g_006e8150 = (int *)0x006E8150;
 static int *const g_006eeed8 = (int *)0x006EEED8;
