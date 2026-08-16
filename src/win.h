@@ -71,6 +71,20 @@ class DLLEXPORT Win {
   // ecx set up, so `Class::method()` is the only legal spelling.
   static int init_class(LPSTR window_name);   // 005F01F0
   static void flip(RECT *area);              // 005EFD20
+  // What `window_proc` routes to. Every one of these is `QAA` or `QAG` in
+  // the catalogue - a member declared __cdecl or __stdcall, taking no
+  // receiver - and the procedure calls them with no ecx set up, so
+  // `Class::method()` is the only legal spelling. `do_tracking` is the one
+  // exception: it is `QAE`, and the original loads its receiver from
+  // `WinTrackingWindow` (`mov ecx, [0x9b7aac]`) rather than having one.
+  static void OnLButtonDown(HWND window, LONG dbl, int x, int y,
+                            WPARAM keys);          // 005F2330
+  static int get_key_window();                     // 005F6A50
+  static int get_mouse_window(int *x, int *y);     // 005F6F10
+  static int update_cursor(Win *window, int tgl);  // 005F1820
+  static int update_screen(RECT *area, Win *window);  // 005F7320
+  void do_tracking(int x, int y);                  // 005F7580
+
   // The window procedure `init_class` registers. `static` and `__stdcall`
   // so `&Win::window_proc` is a plain `WNDPROC`: the image's name ends in
   // `QAG`, a public member declared __stdcall, but it is installed as a
@@ -282,6 +296,56 @@ extern HINSTANCE WinInstance;
 // as `BasePopScreenWidth`.
 extern int WinScreenWidth;
 extern int WinScreenHeight;
+
+// 0x009B7AAC. THE WINDOW BEING TRACKED, not a flag. `window_proc`'s
+// WM_MOUSEMOVE arm is `mov ecx, [0x9b7aac]` / `test ecx, ecx` / `je` /
+// `call ?do_tracking@Win@@QAEXHH@Z` - ecx is the receiver, and
+// `do_tracking` is the one `__thiscall` member in that whole procedure.
+// `Win::OnLButtonUp` and `OnRButtonUp` clear it.
+extern Win *WinTrackingWindow;
+
+// 0x009B7A7C. The window the pointer was last over: WM_MOUSEMOVE calls
+// slot 0x48 on it when the pointer moves to a different one, then stores
+// the new one. Also read by `Win::OnMouseMove` and cleared by `Win::close`.
+extern Win *WinHoverWindow;
+
+// 0x009B7ABC. The window holding the pointer, if any: the hover swap above
+// only runs when this is null or is the window being left. 85 references,
+// including `Win::get_mouse_window` and `BaseWin::click`.
+extern Win *WinModalWindow;
+
+// 0x009B7AA4. The modifier/button state passed as the trailing argument to
+// every input slot this procedure dispatches, and read by all six `Win::On*`
+// handlers - 23 references, and it is never anything but that argument.
+extern int WinKeyState;
+
+// 0x009B7B3C. Cleared on every WM_MOUSEMOVE and read by
+// `Win::update_cursor`, which is the only other function that touches it.
+extern int WinCursorMoved;
+
+// 0x009B7ACC and 0x009B7AD0. A PAIR, and no more than that is known: every
+// function that touches either - `flush_input`, `flush_keyboard`,
+// `Win::OnActivate`, `Win::close`, `do_all_tasks` and the WM_ACTIVATE arm
+// here - writes BOTH, always to the same value, and nothing in the image
+// writes one alone. What they hold is not established, so they are named
+// for the only behaviour that is.
+extern int WinInputStateA;
+extern int WinInputStateB;
+
+// 0x009B7A88 and 0x009B7A94. Two `__cdecl` hooks the procedure calls on the
+// way out: the second on mouse messages with (hwnd, lParam), the first on
+// every message at all, with no arguments. `Effect::init` installs the
+// first; `Win::OnKey`, `OnLButtonDown` and `OnRButtonDown` read them too.
+extern void(__cdecl *WinMessageHook)();
+extern void(__cdecl *WinMouseHook)(HWND window, LPARAM position);
+
+// 0x009B7A8C. A third hook, called after WM_KEYDOWN with the virtual key.
+// `Win::OnKey` is its only other reader.
+extern void(__cdecl *WinKeyHook)(WPARAM key);
+
+// 0x005F86A0. The one thing `window_proc`'s WM_SYSCOMMAND arm calls that is
+// not a `Win` member; byte-exact in src/recovered/005f86a0.cpp.
+extern "C" void __stdcall sub_5f86a0(int a1);
 
 int __fastcall win_set_cursor_redirect(Win *self, void *, int name);
 
