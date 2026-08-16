@@ -283,6 +283,15 @@ def changed_sources() -> list:
     changed when `win.h` gained a global - so a changed header pulls in its
     includers, transitively. Quoted includes only: `<windows.h>` is not
     ours to track, and nothing in `src/` can change it.
+
+    AND A HEADER REACHES FURTHER THAN ITS INCLUDERS, which this returned a
+    false green over before it said so. Renaming `Buffer::field_58_` to
+    `surface_` broke four bodies in `src/unrecovered/` - files that include
+    nothing at all. They are SCAFFOLDED: `emit_translation_unit` builds
+    their class shells by reading `src/*.h`, so every header is an input to
+    every scaffolded unit in the tree, and no include graph can see that
+    edge. So a changed header gives up on scoping and returns everything.
+    A `.cpp`-only change still scopes to that file.
     """
     try:
         listed = subprocess.run(
@@ -295,6 +304,9 @@ def changed_sources() -> list:
         name = line[3:].strip().split(" -> ")[-1]
         if name.startswith("src/"):
             touched.add(name)
+
+    if any(name.endswith(".h") for name in touched):
+        return []  # a header is every scaffolded unit's input; scope nothing
 
     # Who includes whom, by quoted name, over the files CMake compiles.
     includers: dict = {}
@@ -1508,8 +1520,12 @@ def main(argv=None) -> int:
     if arguments.changed:
         arguments.paths = list(changed_sources())
         if not arguments.paths:
-            print("no changed source under src/; nothing to check")
-            return 0
+            # Either nothing changed, or a HEADER did - and a header is an
+            # input to every scaffolded unit in the tree, so there is no
+            # scope smaller than all of it. Falling through to the full
+            # scan is the safe reading of both.
+            print("no scopeable change under src/ (a changed header reaches "
+                  "every scaffolded unit); checking the whole tree")
         print(f"scoped to {len(arguments.paths)} file(s) git reports changed: "
               + ", ".join(str(p) for p in arguments.paths[:8])
               + (" ..." if len(arguments.paths) > 8 else ""))

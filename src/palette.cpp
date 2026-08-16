@@ -271,7 +271,7 @@ ORIGINAL: 0x005FE460 BYTE_EXACT
 Status: Complete
 */
 int Palette::set() {
-    if (BufferDirectDrawActive) {
+    if (BufferDirectDraw) {
         // DirectDraw owns the screen, so the palette is published through
         // IDirectDrawPalette::SetEntries rather than GDI.
         if (DirectDrawPalette) {
