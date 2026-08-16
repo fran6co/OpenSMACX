@@ -102,6 +102,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import shutil
 import struct
 import concurrent.futures
@@ -606,6 +607,17 @@ def clip_jump_table(section: CoffSection, symbols: list, data: bytes,
 SYNTHESISED = ("??_G", "??_E", "??_H", "??_I")
 
 
+def _struct_class_agnostic(name: str) -> str:
+    """A mangled name with every `U`-for-struct read as `V`-for-class.
+
+    Only in TYPE position - `PAU`/`PBU`/`AAU`/`ABU` and a bare `U` opening a
+    qualified name - so the letters are not rewritten anywhere they mean
+    something else, and the two spellings of one type compare equal.
+    """
+    return re.sub(r"(?<=[PAQB])U(?=[\w?@])", "V",
+                  re.sub(r"(?<=[@$?])U(?=[\w?]+@)", "V", name or ""))
+
+
 def choose_subject_symbol(found: list, subject: str = None,
                           internal: list = None):
     """(symbol, section) for the subject among a unit's .text symbols.
@@ -649,6 +661,27 @@ def choose_subject_symbol(found: list, subject: str = None,
             return hit
         hit = next((pair for pair in (internal or [])
                     if pair[0].name in wanted), None)
+        if hit is not None:
+            return hit
+        # `U` AND `V` ARE THE SAME TYPE. In an MSVC mangled name `U` prefixes
+        # a struct and `V` a class, and nothing else about them differs - not
+        # layout, not calling convention, not a byte of code. IDA emits `U`
+        # for everything it did not see a `class` keyword for, so the
+        # catalogue asks for `PAUPalette@@` while `src/palette.h` says
+        # `class Palette` and the compiler writes `PAVPalette@@`.
+        #
+        # It never mattered while every unit was scaffolded, because the
+        # scaffold declares those types `struct` and so reproduced IDA's
+        # spelling by construction. Measuring a body in its REAL translation
+        # unit is what surfaced it: `jackal_init_real` is BYTE_EXACT and its
+        # own file could not be asked about it, because the two names differ
+        # in one letter per parameter.
+        #
+        # Tried only after the exact spellings, so a unit that really does
+        # carry the catalogued name is never reinterpreted.
+        loose = _struct_class_agnostic(subject)
+        hit = next((pair for pair in found + list(internal or [])
+                    if _struct_class_agnostic(pair[0].name) == loose), None)
         if hit is not None:
             return hit
 
@@ -1357,11 +1390,29 @@ def match_functions(pe, rows: dict, shared: set, subjects: list,
     for attempt in attempts:
         if not pending:
             break
-        stems = {f"u{address:08x}": address for address in sorted(pending)}
+        # ONE COMPILE PER DISTINCT SOURCE, not per subject.
+        #
+        # A scaffolded unit is written for one function, so these were the
+        # same thing and grouping cost nothing. A REAL translation unit is
+        # not: every body in `src/lock.cpp` is the same text, and
+        # `object_code` picks the subject out of the object by NAME
+        # afterwards. Compiling it once per subject would compile that file
+        # eight times to learn eight things one compile already knows.
+        #
+        # Keyed on the unit itself - text and origin both, since the origin
+        # decides the extension and which directory is copied beside it, and
+        # two files with identical text and different neighbours are two
+        # different compiles.
+        shared_source = {}
+        for address in sorted(pending):
+            shared_source.setdefault(pending[address], []).append(address)
+        stems = {f"u{addresses[0]:08x}": addresses
+                 for addresses in shared_source.values()}
         groups = [dict(list(stems.items())[at:at + chunk])
                   for at in range(0, len(stems), chunk)]
         batches = compile_batches(
-            [{stem: pending[stems[stem]] for stem in group} for group in groups],
+            [{stem: pending[stems[stem][0]] for stem in group}
+             for group in groups],
             attempt)
         # THE COMPARISON WAS THE SERIAL HALF. Compiling has run across every
         # core since one-unit-per-`cl`; the verdict that follows it - parse the
@@ -1378,17 +1429,18 @@ def match_functions(pe, rows: dict, shared: set, subjects: list,
         tasks = []
         for objects, diagnostics in batches:
             for stem, data in objects.items():
-                address = stems[stem]
-                if data is None:
-                    candidates[address] = {
-                        "tier": "NO_COMPILE",
-                        "refusal_reason": diagnostics.get(
-                            stem, "CL emitted no object")}
-                    continue
-                low, high = layouts[address].primary[0]
-                # By NAME - see the note at the census's own call.
-                tasks.append((address, data,
-                              rows.get(address, {}).get("name"), low, high))
+                for address in stems[stem]:
+                    if data is None:
+                        candidates[address] = {
+                            "tier": "NO_COMPILE",
+                            "refusal_reason": diagnostics.get(
+                                stem, "CL emitted no object")}
+                        continue
+                    low, high = layouts[address].primary[0]
+                    # By NAME - see the note at the census's own call. This is
+                    # what lets one object answer for every subject in it.
+                    tasks.append((address, data,
+                                  rows.get(address, {}).get("name"), low, high))
         candidates.update(_compare_all(tasks))
 
         for address, candidate in candidates.items():
