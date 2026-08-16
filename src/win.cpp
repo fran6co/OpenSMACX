@@ -20,6 +20,9 @@
 #include "win.h"
 #include <cstring>
 #include "palette.h"
+#include "general.h"
+#include "temp.h"
+#include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
 
 const uint32_t WinPrimaryVtable = 0x0066FDD0;
 const uint32_t WinSecondaryVtable = 0x0066FF30;
@@ -571,26 +574,13 @@ int __fastcall win_is_dialog_focus_redirect(Win *self, void *) {
     return self->is_dialog_focus();
 }
 
-int *WinHdcRefCount = reinterpret_cast<int *>(0x009B3AB0);
-HDC *WinSharedHdc = reinterpret_cast<HDC *>(0x009B7B2C);
-void **WinHdcSurface = reinterpret_cast<void **>(0x009BC498);
-// The same window handle temp.cpp binds as HandleMain; bound here too so
-// the device-context protocol carries its own rebindable dependency.
-HWND *WinHdcWindow = reinterpret_cast<HWND *>(0x009B7B28);
-
-namespace {
-
-typedef long(__stdcall *func_win_surface_slot)(void *, void *);
-
-static const size_t WinSurfaceGetDCSlot = 0x44;
-static const size_t WinSurfaceReleaseDCSlot = 0x68;
-
-void *win_surface_slot(void *object, size_t offset) {
-    void **const vtable = *reinterpret_cast<void ***>(object);
-    return vtable[offset / sizeof(void *)];
-}
-
-}  // namespace
+int WinHdcRefCount;        // 0x009B3AB0
+HDC WinSharedHdc;          // 0x009B7B2C
+IDirectDrawSurface *DirectDrawSurface;  // 0x009BC498
+Win *WinModalStack[4];     // 0x009B6EF8
+HINSTANCE WinInstance;     // 0x009B7B14
+int WinScreenWidth;        // 0x009B7B1C
+int WinScreenHeight;       // 0x009B7B20
 
 /*
 Purpose: Acquire the process-wide device context, taking one reference.
@@ -610,23 +600,20 @@ Status: Complete
 HDC Win::get_hdc() {
     // A context already held is simply counted again; only the first
     // reference actually acquires one.
-    if (*WinHdcRefCount != 0) {
-        ++*WinHdcRefCount;
-        return *WinSharedHdc;
+    if (WinHdcRefCount != 0) {
+        ++WinHdcRefCount;
+        return WinSharedHdc;
     }
-    void *const surface = *WinHdcSurface;
-    if (!surface) {
-        *WinSharedHdc = GetDC(*WinHdcWindow);
+    if (DirectDrawSurface == nullptr) {
+        WinSharedHdc = GetDC(HandleMain);
     } else {
-        reinterpret_cast<func_win_surface_slot>(
-            win_surface_slot(surface, WinSurfaceGetDCSlot))(
-                surface, WinSharedHdc);
+        DirectDrawSurface->GetDC(&WinSharedHdc);
     }
     // A failed acquire leaves the count at zero so the next call retries.
-    if (*WinSharedHdc != nullptr) {
-        *WinHdcRefCount = 1;
+    if (WinSharedHdc != nullptr) {
+        WinHdcRefCount = 1;
     }
-    return *WinSharedHdc;
+    return WinSharedHdc;
 }
 
 /*
@@ -652,22 +639,19 @@ exactly-zero test that makes an over-release drive the count negative and
 skip the release entirely.
 */
 void Win::release_hdc() {
-    --*WinHdcRefCount;
+    --WinHdcRefCount;
     // The legacy body tests for exactly zero rather than at-or-below, so an
     // over-release drives the count negative and skips the release entirely.
-    if (*WinHdcRefCount != 0) {
+    if (WinHdcRefCount != 0) {
         return;
     }
-    void *const surface = *WinHdcSurface;
-    if (surface) {
-        reinterpret_cast<func_win_surface_slot>(
-            win_surface_slot(surface, WinSurfaceReleaseDCSlot))(
-                surface, *WinSharedHdc);
-        *WinSharedHdc = nullptr;
+    if (DirectDrawSurface != nullptr) {
+        DirectDrawSurface->ReleaseDC(WinSharedHdc);
+        WinSharedHdc = nullptr;
         return;
     }
-    ReleaseDC(*WinHdcWindow, *WinSharedHdc);
-    *WinSharedHdc = nullptr;
+    ReleaseDC(HandleMain, WinSharedHdc);
+    WinSharedHdc = nullptr;
 }
 
 HDC __cdecl win_get_hdc_redirect() {
@@ -1430,160 +1414,125 @@ ORIGINAL: 0x005F01F0
 //           0x005F0498
 //
 // Promoted 2026-08-15 from src/unrecovered/005f01f0.cpp to retire its
-// pending_bodies forwarder. Was MISMATCH #7 (push/lea) as a FILE unit; the
-// FILE-mode scaffold kept esi/edi live differently, and the buffer/sprite
-// calls now go through the real class declarations. Win32 imports are read
-// straight out of the IAT slots below, as the original does.
+// pending_bodies forwarder.
+//
+// WRITTEN AGAINST THE REAL HEADERS. It used to reach every Win32 import
+// through a hand-written function-pointer typedef and its IAT slot address
+// - `(*(FnRegisterClassA *)g_0066929c)(&wndclass)` - and every global
+// through `static int *const g_009b7b14 = (int *)0x009B7B14`. That is what
+// a MEASUREMENT SCAFFOLD has to do, because a scaffold includes no
+// <windows.h> and declares no project header; this file is in the build and
+// has both. So the imports are called by name, `WNDCLASSA` is the real
+// struct, the surface is an `IDirectDrawSurface` whose `GetDC`/`ReleaseDC`
+// are the slots the offsets 0x44 and 0x68 were reaching, and the globals
+// are objects declared in win.h. Every one of those operands is relocated
+// and the comparison masks relocations, so none of it costs a byte.
+//
+// LEFT AT 88.2%, 22 edits, first divergence #7. The whole of it is one
+// callee-saved register: the original pushes esi AND edi and keeps a zero
+// in edi across every call, using it for `GetModuleHandleA(0)`, the
+// `cbClsExtra`/`cbWndExtra` stores, four of `CreateWindowExA`'s arguments
+// and every `cmp reg, edi` that follows. This build materialises the same
+// zero once, in esi, and pushes only esi.
+//
+// RULED OUT: the four flag sets are byte-identical here, so it is not the
+// frame-pointer or the /O1 register pressure; declaring `wndclass` before
+// `logo` does not move the frame; and caching the `GetSystemMetrics` import
+// slot in a local - which is what the original's `mov esi, [0x669334]` then
+// two `call esi` looks like - changes nothing, so the second register is
+// not being spent on that slot either.
 Status: Complete
 */
-// DirectDraw-surface GetDC/ReleaseDC, reached through the vtable at slots 17
-// and 26. Named to NOT read as `ComSlotNNN` - the measurement scaffold
-// supplies its own one-argument `ComSlot` typedefs for any it sees referenced,
-// and these take two.
-typedef int(__stdcall *IfaceGetHdcProc)(void *self, int *hdc_out);
-typedef int(__stdcall *IfaceReleaseHdcProc)(void *self, int hdc);
+// `JackalClass` is at 0x00696DC8 and again at 0x00696DD4 - the image holds
+// two copies, one for the registration and one for the creation, and the
+// operand is relocated either way, so the literal is the honest spelling.
+static const char WinClassName[] = "JackalClass";
 
-static int *const g_005f0650 = (int *)0x005F0650;
-static int *const g_00669050 = (int *)0x00669050;
-static int *const g_00669068 = (int *)0x00669068;
-static int *const g_006690b8 = (int *)0x006690B8;
-static int *const g_006690c0 = (int *)0x006690C0;
-static int *const g_00669138 = (int *)0x00669138;
-static int *const g_0066927c = (int *)0x0066927C;
-static int *const g_00669280 = (int *)0x00669280;
-static int *const g_00669298 = (int *)0x00669298;
-static int *const g_0066929c = (int *)0x0066929C;
-static int *const g_006692a0 = (int *)0x006692A0;
-static int *const g_00669320 = (int *)0x00669320;
-static int *const g_00669334 = (int *)0x00669334;
-static int *const g_00696dc8 = (int *)0x00696DC8;
-static int *const g_00696dd4 = (int *)0x00696DD4;
-static int *const g_00696de0 = (int *)0x00696DE0;
-static int *const g_009b3ab0 = (int *)0x009B3AB0;
-static int *const g_009b6ef8 = (int *)0x009B6EF8;
-static int *const g_009b6efc = (int *)0x009B6EFC;
-static int *const g_009b6f00 = (int *)0x009B6F00;
-static int *const g_009b6f04 = (int *)0x009B6F04;
-static int *const g_009b7510 = (int *)0x009B7510;
-static int *const g_009b7514 = (int *)0x009B7514;
-static int *const g_009b7b14 = (int *)0x009B7B14;
-static int *const g_009b7b1c = (int *)0x009B7B1C;
-static int *const g_009b7b20 = (int *)0x009B7B20;
-static int *const g_009b7b28 = (int *)0x009B7B28;
-static int *const g_009b7b2c = (int *)0x009B7B2C;
-static int *const g_009b8178 = (int *)0x009B8178;
-static int *const g_009b8180 = (int *)0x009B8180;
-static int *const g_009bc498 = (int *)0x009BC498;
-static int *const g_009bc4b0 = (int *)0x009BC4B0;
+int __cdecl Win::init_class(LPSTR window_name) {
+    WNDCLASSA wndclass;
 
-int __cdecl Win::init_class(char *a1) {
-    struct WndClassA_ {
-        uint32_t style;
-        void *lpfnWndProc;
-        int cbClsExtra;
-        int cbWndExtra;
-        int hInstance;
-        int hIcon;
-        int hCursor;
-        int hbrBackground;
-        char *lpszMenuName;
-        char *lpszClassName;
-    };
+    // The splash buffer. Its destructor is what puts this function in an EH
+    // frame: `push -1` at entry is the try level, and the `mov [level], 0`
+    // after the constructor is VC6 saying the object is now live.
+    Buffer logo;
 
-    typedef void *(__stdcall *FnGetModuleHandleA)(const char *);
-    typedef void *(__stdcall *FnLoadIconA)(int, const char *);
-    typedef int(__stdcall *FnGetStockObject)(int);
-    typedef unsigned short(__stdcall *FnRegisterClassA)(WndClassA_ *);
-    typedef int(__stdcall *FnGetSystemMetrics)(int);
-    typedef void *(__stdcall *FnCreateWindowExA)(unsigned int, const char *, const char *, unsigned int,
-                                                 int, int, int, int, int, int, int, int);
-    typedef void *(__stdcall *FnGetDC)(int);
-    typedef int(__stdcall *FnReleaseDC)(int, int);
-    typedef int(__stdcall *FnSetBkMode)(int, int);
-    typedef int(__stdcall *FnSetSystemPaletteUse)(int, int);
-    typedef void *(__stdcall *FnSelectPalette)(int, int, int);
-    typedef int(__stdcall *FnShowWindow)(int, int);
-    typedef void(__cdecl *FnFlip)(RECT *);
+    WinModalStack[0] = nullptr;
+    WinModalStack[1] = nullptr;
+    WinInstance = GetModuleHandleA(nullptr);
+    WinModalStack[2] = nullptr;
+    WinModalStack[3] = nullptr;
 
-    Buffer buf;
-    Buffer *const screen = (Buffer *)0x009B7490;
-
-    WndClassA_ wndclass;
-
-    *g_009b6ef8 = 0;
-    *g_009b6efc = 0;
-    *g_009b7b14 = (int)(*(FnGetModuleHandleA *)g_00669138)(0);
-    *g_009b6f00 = 0;
-    *g_009b6f04 = 0;
-
-    wndclass.style = 0x2b;
-    wndclass.lpfnWndProc = (void *)g_005f0650;
+    wndclass.style = CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS | CS_OWNDC;  // 0x2B
+    wndclass.lpfnWndProc = &Win::window_proc;
     wndclass.cbClsExtra = 0;
     wndclass.cbWndExtra = 0;
-    wndclass.hInstance = *g_009b7b14;
-    wndclass.hIcon = (int)(*(FnLoadIconA *)g_006692a0)(0, (const char *)0x7f00);
-    wndclass.hCursor = 0;
-    wndclass.hbrBackground = (*(FnGetStockObject *)g_006690c0)(4);
-    wndclass.lpszMenuName = 0;
-    wndclass.lpszClassName = (char *)g_00696dc8;
+    wndclass.hInstance = WinInstance;
+    wndclass.hIcon = LoadIconA(nullptr, IDI_APPLICATION);
+    wndclass.hCursor = nullptr;
+    wndclass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
+    wndclass.lpszMenuName = nullptr;
+    wndclass.lpszClassName = WinClassName;
 
-    if ((*(FnRegisterClassA *)g_0066929c)(&wndclass) == 0) {
+    if (RegisterClassA(&wndclass) == 0) {
         return 1;
     }
 
-    *g_009b7b1c = (*(FnGetSystemMetrics *)g_00669334)(0);
-    *g_009b7b20 = (*(FnGetSystemMetrics *)g_00669334)(1);
-    *g_009b7b28 = (int)(*(FnCreateWindowExA *)g_00669298)(
-        0x40000, (const char *)g_00696dd4, a1, 0x80000000,
-        0, 0, *g_009b7b1c, *g_009b7b20,
-        0, 0, *g_009b7b14, 0);
+    WinScreenWidth = GetSystemMetrics(SM_CXSCREEN);
+    WinScreenHeight = GetSystemMetrics(SM_CYSCREEN);
+    HandleMain = CreateWindowExA(
+        WS_EX_APPWINDOW, WinClassName, window_name, WS_POPUP,
+        0, 0, WinScreenWidth, WinScreenHeight,
+        nullptr, nullptr, WinInstance, nullptr);
 
-    if (*g_009b7b28 == 0) {
+    if (HandleMain == nullptr) {
         return 1;
     }
 
-    if (*g_009b3ab0 == 0) {
-        if (*g_009bc498 == 0) {
-            *g_009b7b2c = (int)(*(FnGetDC *)g_0066927c)(*g_009b7b28);
+    // The shared device context, acquired and released around the palette
+    // set-up. Written out rather than calling `Win::get_hdc` and
+    // `Win::release_hdc` because the original has the whole protocol inline
+    // here - a call would be one instruction where the image has thirty.
+    if (WinHdcRefCount == 0) {
+        if (DirectDrawSurface == nullptr) {
+            WinSharedHdc = GetDC(HandleMain);
         } else {
-            IfaceGetHdcProc fn17 = (IfaceGetHdcProc)(*(void ***)*g_009bc498)[17];
-            fn17((void *)*g_009bc498, g_009b7b2c);
+            DirectDrawSurface->GetDC(&WinSharedHdc);
         }
-        if (*g_009b7b2c != 0) {
-            *g_009b3ab0 = 1;
+        if (WinSharedHdc != nullptr) {
+            WinHdcRefCount = 1;
         }
     } else {
-        *g_009b3ab0 = *g_009b3ab0 + 1;
+        ++WinHdcRefCount;
     }
 
-    (*(FnSetBkMode *)g_00669068)(*g_009b7b2c, 1);
-    (*(FnSetSystemPaletteUse *)g_00669050)(*g_009b7b2c, 1);
-    (*(FnSelectPalette *)g_006690b8)(*g_009b7b2c, *g_009b8178, 0);
+    SetBkMode(WinSharedHdc, TRANSPARENT);
+    SetSystemPaletteUse(WinSharedHdc, SYSPAL_NOSTATIC);
+    SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
 
-    *g_009b3ab0 = *g_009b3ab0 - 1;
-    if (*g_009b3ab0 == 0) {
-        if (*g_009bc498 == 0) {
-            (*(FnReleaseDC *)g_00669280)(*g_009b7b28, *g_009b7b2c);
+    --WinHdcRefCount;
+    if (WinHdcRefCount == 0) {
+        if (DirectDrawSurface == nullptr) {
+            ReleaseDC(HandleMain, WinSharedHdc);
         } else {
-            IfaceReleaseHdcProc fn26 = (IfaceReleaseHdcProc)(*(void ***)*g_009bc498)[26];
-            fn26((void *)*g_009bc498, *g_009b7b2c);
+            DirectDrawSurface->ReleaseDC(WinSharedHdc);
         }
-        *g_009b7b2c = 0;
+        WinSharedHdc = nullptr;
     }
 
-    screen->init(*g_009b7b1c, *g_009b7b20, 0, 0);
-    screen->fill(0);
-    int pcx_rc = buf.load_pcx((const char *)g_00696de0, (Palette *)*g_009b8180, 10, 0xec);
-    if (pcx_rc == 0) {
-        buf.copy(screen, 0, 0,
-                 (*g_009b7510 - (int)buf.width_) / 2,
-                 ((int)buf.height_ - *g_009b7514) / 2,
-                 buf.width_, -(int)buf.height_);
+    ScreenBuffer.init(WinScreenWidth, WinScreenHeight, 0, 0);
+    ScreenBuffer.fill(0);
+    if (logo.load_pcx("logo.pcx", PaletteActive, 10, 0xEC) == 0) {
+        logo.copy(&ScreenBuffer, 0, 0,
+                  (static_cast<int>(ScreenBuffer.width_) -
+                   static_cast<int>(logo.width_)) / 2,
+                  (static_cast<int>(logo.height_) -
+                   static_cast<int>(ScreenBuffer.height_)) / 2,
+                  logo.width_, -static_cast<int>(logo.height_));
     }
 
-    if ((*(uint8_t *)g_009bc4b0 & 4) == 0) {
-        (*(FnShowWindow *)g_00669320)(*g_009b7b28, 5);
-        ((FnFlip)0x005EFD20)(0);
+    if ((JackalInitFlags & 4) == 0) {
+        ShowWindow(HandleMain, SW_SHOW);
+        Win::flip(0);
     }
 
     return 0;

@@ -128,6 +128,13 @@ void Win::flip(RECT *area) {
     PENDING_BODY(0x005EFD20, pending)(area);
 }
 
+// 0x005F0650  ?window_proc@Win@@QAGJPAXIIJ@Z
+LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
+                                   LPARAM lparam) {
+    typedef LRESULT(__stdcall *pending)(HWND, UINT, WPARAM, LPARAM);
+    return PENDING_BODY(0x005F0650, pending)(window, message, wparam, lparam);
+}
+
 // 0x0063B910  ?init_cursor_class@Cursor@@QAAXXZ - `int` here, see cursor.h
 int Cursor::init_cursor_class() {
     typedef int(__cdecl *pending)();

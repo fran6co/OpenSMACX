@@ -71,6 +71,13 @@ class DLLEXPORT Win {
   // ecx set up, so `Class::method()` is the only legal spelling.
   static int init_class(LPSTR window_name);   // 005F01F0
   static void flip(RECT *area);              // 005EFD20
+  // The window procedure `init_class` registers. `static` and `__stdcall`
+  // so `&Win::window_proc` is a plain `WNDPROC`: the image's name ends in
+  // `QAG`, a public member declared __stdcall, but it is installed as a
+  // callback and never called with a receiver, so a non-static member
+  // could not be spelled at the one place that uses it.
+  static LRESULT __stdcall window_proc(HWND window, UINT message,
+                                       WPARAM wparam, LPARAM lparam);
   static void clear_bubble_text();
   static void set_def_focus(int focus);
   void UNK8(int value);
@@ -234,11 +241,47 @@ HDC __cdecl win_get_hdc_redirect();
 void __cdecl win_release_hdc_redirect();
 
 // Shared device-context state: the reference count, the cached handle, and
-// the optional DirectDraw surface that supplies it. Tests rebind these.
-extern int *WinHdcRefCount;
-extern HDC *WinSharedHdc;
-extern void **WinHdcSurface;
-extern HWND *WinHdcWindow;
+// the optional DirectDraw surface that supplies it.
+//
+// REAL OBJECTS, not pointers to image addresses. They were
+// `int *WinHdcRefCount = reinterpret_cast<int *>(0x009B3AB0)` and the
+// reason given was that tests rebind them - the ctest suite was retired on
+// 2026-08-15, so nothing does. The pointer form also costs a load at every
+// use where the original has a direct absolute access, which is
+// byte-visible; `palette.cpp` already declares its own globals this way,
+// and 0x009B3AB0 / 0x009B7B2C / 0x009BC498 are all past `.data`'s stored
+// bytes, so there is no initialiser to preserve.
+extern int WinHdcRefCount;      // 0x009B3AB0
+extern HDC WinSharedHdc;        // 0x009B7B2C
+
+// 0x009BC498. An IDirectDrawSurface, eight bytes below the
+// IDirectDrawPalette `palette.h` binds at 0x009BC4A0. It was a `void *`
+// dispatched through raw vtable offsets - `vtable[0x44 / 4]` and
+// `vtable[0x68 / 4]` - and those two slots are 17 and 26, which in
+// `IDirectDrawSurface` are exactly `GetDC(HDC *)` and `ReleaseDC(HDC)`.
+// Calling them by name emits the same `call [reg + 0x44]`, and unlike an
+// offset it cannot be silently wrong.
+struct IDirectDrawSurface;  // <ddraw.h>, included where it is called
+extern IDirectDrawSurface *DirectDrawSurface;
+
+// 0x009B6EF8. The modal-window stack, indexed by the depth at 0x009B7AE4:
+// `Win::release_modal` reads `[edx*4 + 0x9b6ef8]` and shuffles entries down
+// through `[eax*4 + 0x9b6efc]`, so this is an array of `Win *`.
+// `Win::init_class` clears the first four entries. Nothing proves the array
+// is only four long - that is simply as far as the one function that clears
+// it goes.
+extern Win *WinModalStack[4];
+
+// 0x009B7B14. The module handle the window class is registered under:
+// `Win::close_class` unregisters with it and `FileWin::init` passes it on.
+extern HINSTANCE WinInstance;
+
+// 0x009B7B1C and 0x009B7B20. The screen metrics, read once from
+// GetSystemMetrics in `Win::init_class` and then from 166 and 51 other
+// sites in the image. `basepop.cpp` binds the first of the two separately
+// as `BasePopScreenWidth`.
+extern int WinScreenWidth;
+extern int WinScreenHeight;
 
 int __fastcall win_set_cursor_redirect(Win *self, void *, int name);
 
