@@ -51,7 +51,11 @@ void __fastcall font_queue_dtor_redirect(FontQueue *self, void *) {
     self->~FontQueue();
 }
 
-Font **FontDefaultPtr = (Font **)0x009BB484;
+// 0x009BB484. The process default font: `Font::init_font_class` sets it,
+// `close_font_class` clears it, and Buffer, Menu and PullDown fall back to
+// it - 42 references. Past `.data`'s stored bytes, so there is no
+// initialiser to preserve and a real object is the whole of it.
+Font *FontDefault;
 int *FontSizeTable = (int *)0x0068F220;
 Font *FontTable = (Font *)0x0093FC58;
 

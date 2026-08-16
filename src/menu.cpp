@@ -141,7 +141,7 @@ int Menu::requested_height() {
     // resolved at the point of use rather than cached.
     Font *font = *MenuFont;
     if (!font) {
-        font = *FontDefaultPtr;
+        font = FontDefault;
     }
     return font->height_ * 2;
 }

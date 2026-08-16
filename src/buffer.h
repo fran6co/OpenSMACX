@@ -231,6 +231,9 @@ class DLLEXPORT Buffer {
   uint32_t color_hyper_val_4_;
   uint32_t field_57C_;
   int8_t field_580_;
+  // 0x584, and it is the alignment after `int8_t field_580_` that puts it
+  // there rather than at 0x581 - which is also what makes
+  // `sizeof(Buffer) == 0x588` come out right.
   uint32_t field_584_;
 };
 
@@ -281,12 +284,8 @@ Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *);
 // IDirectDraw::CreateSurface. It also calls slot 4, CreateClipper.
 extern IDirectDraw *BufferDirectDraw;
 
-// 0x009BB484. The process default font, which `Buffer::init` installs as
-// `font1_` when it is initialised. buffer.cpp already described it that way
-// in prose - "the process default at 0x009BB484" - without a name.
-extern Font *BufferDefaultFont;
 // Value the close reset writes at offset 0x520; its meaning is unconfirmed.
-extern uint32_t *BufferResetValue520;
+extern uint32_t BufferField520Default;
 // Releases a Sprite-style allocation through the executable's own CRT.
 
 void __fastcall buffer_clear_links_redirect(Buffer *self, void *);

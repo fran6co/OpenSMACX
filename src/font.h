@@ -109,7 +109,7 @@ DLLEXPORT Font *__cdecl find_font(int size, int style);
 #endif
 
 // global
-extern Font **FontDefaultPtr;
+extern Font *FontDefault;
 
 /*
  * The face name every `Font::init` call site passes when it does not name one
