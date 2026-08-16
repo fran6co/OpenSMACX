@@ -2346,6 +2346,21 @@ class Datalink : public GraphicWin { public:
     void draw_defense();
 };
 
+void RemoveAllFn();
+void RemoveAllShim();
+
+void RemoveAllFn();
+void RemoveAllShim();
+
+void RemoveAllFn();
+void RemoveAllShim();
+
+void RemoveAllFn();
+void RemoveAllShim();
+void removeAllFn();
+
+extern "C" char *__stdcall CharUpperA(char *);
+
 void Datalink::draw_defense() {
     char *self = reinterpret_cast<char *>(this);
     StringStruct localList(0);

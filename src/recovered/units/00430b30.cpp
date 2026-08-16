@@ -2084,7 +2084,7 @@ extern "C" unsigned int strlen(const char *);
 // This body dispatches through slot(s): 1
 class VCall { public:
     virtual void slot000();
-    virtual void slot001();  // <-- used
+    virtual void slot001(int);  // <-- used
 };
 
 // ---- fixed globals this body references ----
@@ -2256,6 +2256,10 @@ class Datalink : public GraphicWin { public:
     void draw_tech();
 };
 
+typedef char *(__stdcall *CharUpperFn)(char *);
+
+typedef char *(__cdecl *ItoaShim)(int, char *, int);
+
 void Datalink::draw_tech() {
     char *self = reinterpret_cast<char *>(this);
     Buffer *buf = &buffer_;
@@ -2286,6 +2290,6 @@ void Datalink::draw_tech() {
         StringList *sl = reinterpret_cast<StringList *>(self + 0x15c24);
         sl->load(blurb, reinterpret_cast<char *>(g_009b86a0), 1, 0);
         sb->add_fixup();
-        reinterpret_cast<VCallInt1 *>(sb)->slot001(0);
+        reinterpret_cast<VCall *>(sb)->slot001(0);
     }
 }

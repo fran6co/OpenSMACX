@@ -2181,6 +2181,8 @@ class Datalink : public GraphicWin { public:
     void set_cat_tech();
 };
 
+extern "C" char *itoa_fn(int, char *, int);
+
 void Datalink::set_cat_tech() {
     char *self = reinterpret_cast<char *>(this);
     Strings *strings = reinterpret_cast<Strings *>(g_009b90d8);

@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00494230 FILE
+// ORIGINAL: 0x00494230 BYTE_EXACT FILE
 // name      ?on_left_double_click@ProdPicker@@QAEXHH@Z
 // size      65 bytes
 // spans     0x00494230-0x00494271
@@ -1945,7 +1945,7 @@ class VCall { public:
     virtual void slot016();
     virtual void slot017();
     virtual void slot018();
-    virtual void slot019();  // <-- used
+    virtual void slot019(int, int);  // <-- used
     virtual void slot020();
     virtual void slot021();
     virtual void slot022();
@@ -1970,7 +1970,7 @@ class VCall { public:
     virtual void slot041();
     virtual void slot042();
     virtual void slot043();
-    virtual void slot044();  // <-- used
+    virtual void slot044(int);  // <-- used
 };
 
 class ProdPicker : public GraphicWin { public:
@@ -2066,10 +2066,10 @@ class ProdPicker : public GraphicWin { public:
 };
 
 void ProdPicker::on_left_double_click(int a1, int a2) {
-    reinterpret_cast<VCall2 *>(this)->slot019(a1, a2);
+    reinterpret_cast<VCall *>(this)->slot019(a1, a2);
     if (field_B68_ == 0) {
-        reinterpret_cast<VCall2 *>(this)->slot044(-1);
+        reinterpret_cast<VCall *>(this)->slot044(-1);
     } else {
-        reinterpret_cast<VCall2 *>(this)->slot044(5);
+        reinterpret_cast<VCall *>(this)->slot044(5);
     }
 }

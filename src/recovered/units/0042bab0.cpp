@@ -2019,6 +2019,8 @@ extern "C" unsigned int strlen(const char *);
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_00683338 = (int *)0x00683338;
+static int *const g_00691884_sym = (int *)0x00691884;
+static int *const g_0096c8ac_sym = (int *)0x0096C8AC;
 static int *const g_0068333c = (int *)0x0068333C;
 static int *const g_00691884 = (int *)0x00691884;
 static int *const g_0078d618 = (int *)0x0078D618;

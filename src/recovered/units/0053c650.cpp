@@ -2341,6 +2341,8 @@ void __cdecl treaty_off(int, int, int);
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_0065e530 = (int *)0x0065E530;
+static int *const g_946d34x = (int *)0x00946D34;
+static int *const g_96c9f8x = (int *)0x0096C9F8;
 static int *const g_006693ac = (int *)0x006693AC;
 static int *const g_006695c0 = (int *)0x006695C0;
 static int *const g_006695c8 = (int *)0x006695C8;

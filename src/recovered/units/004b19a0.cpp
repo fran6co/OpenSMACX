@@ -2281,6 +2281,8 @@ class SocialWin : public GraphicWin, public SubInterface { public:
     void on_redraw();
 };
 
+typedef int (__stdcall *UnionRectFn)(RECT *, const RECT *, const RECT *);
+
 void SocialWin::on_redraw() {
     reinterpret_cast<Buffer *>(g_007aec64)->set_clip(reinterpret_cast<RECT *>(g_007aec94));
 

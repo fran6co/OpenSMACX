@@ -2158,9 +2158,9 @@ class VCall { public:
     virtual void slot019();
     virtual void slot020();
     virtual void slot021();
-    virtual void slot022();  // <-- used
-    virtual void slot023();  // <-- used
-    virtual void slot024();  // <-- used
+    virtual void slot022(int, int);  // <-- used
+    virtual int slot023();  // <-- used
+    virtual void slot024(int, int);  // <-- used
     virtual void slot025();
     virtual void slot026();
     virtual void slot027();
@@ -2171,9 +2171,9 @@ class VCall { public:
     virtual void slot032();
     virtual void slot033();
     virtual void slot034();
-    virtual void slot035();  // <-- used
+    virtual void slot035(int, int);  // <-- used
     virtual void slot036();
-    virtual void slot037();  // <-- used
+    virtual void slot037(int, int);  // <-- used
 };
 
 // ---- fixed globals this body references ----
@@ -2307,14 +2307,14 @@ void Win::on_r_button_up(int a1, int a2, unsigned int a3, int a4) {
                         if (fp != 0) {
                             reinterpret_cast<void(__cdecl *)(int, int)>(fp)(a1, a2);
                         }
-                        reinterpret_cast<VCallY *>(self)->slot022(a1, a2);
+                        reinterpret_cast<VCall *>(self)->slot022(a1, a2);
                         related = *reinterpret_cast<int32_t *>(self + 0x2c);
                     } else {
-                        reinterpret_cast<VCallY *>(self)->slot035(a1, a2);
+                        reinterpret_cast<VCall *>(self)->slot035(a1, a2);
                         related = *reinterpret_cast<int32_t *>(self + 0x5c);
                     }
-                    if (related != 0 && reinterpret_cast<VCallY *>(related)->slot023() == 0) {
-                        reinterpret_cast<VCallY *>(related)->slot007();
+                    if (related != 0 && reinterpret_cast<VCall *>(related)->slot023() == 0) {
+                        reinterpret_cast<VCall *>(related)->slot007();
                     }
                 }
             }
@@ -2330,14 +2330,14 @@ void Win::on_r_button_up(int a1, int a2, unsigned int a3, int a4) {
             if (fp != 0) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(a1, a2);
             }
-            reinterpret_cast<VCallY *>(self)->slot024(a1, a2);
+            reinterpret_cast<VCall *>(self)->slot024(a1, a2);
             related2 = *reinterpret_cast<int32_t *>(self + 0x34);
         } else {
-            reinterpret_cast<VCallY *>(self)->slot037(a1, a2);
+            reinterpret_cast<VCall *>(self)->slot037(a1, a2);
             related2 = *reinterpret_cast<int32_t *>(self + 0x64);
         }
-        if (related2 != 0 && reinterpret_cast<VCallY *>(related2)->slot023() == 0) {
-            reinterpret_cast<VCallY *>(related2)->slot007();
+        if (related2 != 0 && reinterpret_cast<VCall *>(related2)->slot023() == 0) {
+            reinterpret_cast<VCall *>(related2)->slot007();
         }
     }
 }

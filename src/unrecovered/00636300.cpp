@@ -1334,6 +1334,8 @@ class Video { public:
     int read_frame();
 };
 
+typedef unsigned long (__stdcall *TimeGetTimeFn)(void);
+
 void __cdecl log_say(char *, char *, int, int, int);
 
 // ---- fixed globals this body references ----

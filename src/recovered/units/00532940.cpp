@@ -1,4 +1,4 @@
-// ORIGINAL: 0x00532940 FILE
+// ORIGINAL: 0x00532940 BYTE_EXACT FILE
 // name      ?send_message@NetDaemon@@QAEXPADKH@Z
 // size      260 bytes
 // spans     0x00532940-0x00532A44
@@ -1514,6 +1514,8 @@ class NetDaemon { public:
     uint32_t unlock_veh();
     void send_message(char *, unsigned long, int);
 };
+
+typedef unsigned long (__stdcall *TimeGetTimeFn)(void);
 
 void NetDaemon::send_message(char *a1, unsigned long a2, int a3) {
     if (*g_0093f660) {

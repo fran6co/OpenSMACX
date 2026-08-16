@@ -2019,6 +2019,7 @@ extern "C" unsigned int strlen(const char *);
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_006832e4 = (int *)0x006832E4;
+static int *const g_009a4b98_tbl = (int *)0x009A4B98;
 static int *const g_0078d618 = (int *)0x0078D618;
 static int *const g_009a4b98 = (int *)0x009A4B98;
 static int *const g_009a64c0 = (int *)0x009A64C0;
@@ -2180,6 +2181,8 @@ class Datalink : public GraphicWin { public:
     void close();
     void set_cat_facility();
 };
+
+extern "C" char *itoa_(int, char *, int);
 
 void Datalink::set_cat_facility() {
     char *self = reinterpret_cast<char *>(this);

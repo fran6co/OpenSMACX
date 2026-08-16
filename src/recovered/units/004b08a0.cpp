@@ -2211,6 +2211,10 @@ class SocialWin : public GraphicWin, public SubInterface { public:
     void draw_economy_alloc();
 };
 
+typedef char *(__stdcall *CharUpperFn)(char *);
+
+extern "C" char *__cdecl my_itoa(int, char *, int);
+
 void SocialWin::draw_economy_alloc() {
     char *self = reinterpret_cast<char *>(this);
     RECT *savedRectPtr = reinterpret_cast<RECT *>(self + 0x1f260);

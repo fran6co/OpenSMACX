@@ -2210,6 +2210,8 @@ class SocialWin : public GraphicWin, public SubInterface { public:
     void draw_psych_alloc();
 };
 
+typedef char *(__cdecl *ItoaFn)(int, char *, int);
+
 void SocialWin::draw_psych_alloc() {
     char *self = reinterpret_cast<char *>(this);
     Buffer *buf = reinterpret_cast<Buffer *>(g_007aec64);

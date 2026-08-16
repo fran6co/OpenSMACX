@@ -2345,6 +2345,8 @@ class Win { public:
     void __cdecl OnLButtonUp(void *, int, int, unsigned int);
 };
 
+typedef int (__stdcall *SelectObjectFn)(void *hdc, void *obj);
+
 void Win::OnLButtonUp(void *a1, int a2, int a3, unsigned int a4) {
     *g_009b7aac = 0;
     ButtonUpVCall *obj = reinterpret_cast<ButtonUpVCall *>(

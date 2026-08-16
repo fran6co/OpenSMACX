@@ -1920,7 +1920,7 @@ void __cdecl slide_show(GraphicWin *, int);
 // This body dispatches through slot(s): 1, 57, 62
 class VCall { public:
     virtual void slot000();
-    virtual void slot001();  // <-- used
+    virtual void slot001(int);  // <-- used
     virtual void slot002();
     virtual void slot003();
     virtual void slot004();
@@ -1976,7 +1976,7 @@ class VCall { public:
     virtual void slot054();
     virtual void slot055();
     virtual void slot056();
-    virtual void slot057();  // <-- used
+    virtual void slot057(int, int, int);  // <-- used
     virtual void slot058();
     virtual void slot059();
     virtual void slot060();
@@ -1988,6 +1988,10 @@ class VCall { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_005398e0 = (int *)0x005398E0;
+static int &g_005398e0_target = *(int *)0x005398E0;
+static int &g_0078d690_arr = *(int *)0x0078D690;
+static int &g_0078d7f8_arr = *(int *)0x0078D7F8;
+static int &g_008578d8_win = *(int *)0x008578D8;
 static int *const g_00686b7c = (int *)0x00686B7C;
 static int *const g_00686b80 = (int *)0x00686B80;
 static int *const g_00686b84 = (int *)0x00686B84;
@@ -2009,6 +2013,8 @@ static int *const g_008578c0 = (int *)0x008578C0;
 static int *const g_008578d8 = (int *)0x008578D8;
 static int *const g_00872ca8 = (int *)0x00872CA8;
 static int *const g_009380dc = (int *)0x009380DC;
+Menu &g_009380dc_menu = *(Menu *)0x009380DC;
+ButtonGroup &g_008577f0_group = *(ButtonGroup *)0x008577F0;
 static int *const g_009a6490 = (int *)0x009A6490;
 static int *const g_009a6494 = (int *)0x009A6494;
 static int *const g_009a6498 = (int *)0x009A6498;
@@ -2092,9 +2098,9 @@ void PrefWin::display(int a1) {
         buf->box_sprite(&rect5, reinterpret_cast<BoxSpriteParams *>(g_0078d690_arr));
     }
 
-    reinterpret_cast<VCall2 *>(self + 0x18684)->slot001(0);
-    reinterpret_cast<VCall2 *>(self + 0x19d1c)->slot001(0);
-    reinterpret_cast<VCall2 *>(self + 0x191d0)->slot001(0);
+    reinterpret_cast<VCall *>(self + 0x18684)->slot001(0);
+    reinterpret_cast<VCall *>(self + 0x19d1c)->slot001(0);
+    reinterpret_cast<VCall *>(self + 0x191d0)->slot001(0);
 
     if (a1 >= 0) {
         *reinterpret_cast<int32_t *>(self + 0xa18) = *reinterpret_cast<int32_t *>(self + 0xa14);
@@ -2106,11 +2112,11 @@ void PrefWin::display(int a1) {
 
     slide_show(reinterpret_cast<GraphicWin *>(self), 0);
 
-    reinterpret_cast<VCall2 *>(self)->slot001(3);
+    reinterpret_cast<VCall *>(self)->slot001(3);
 
-    reinterpret_cast<Win *>(self)->set_def_focus(&g_008578d8_win);
+    reinterpret_cast<Win *>(self)->set_def_focus(reinterpret_cast<Win *>(&g_008578d8_win));
 
-    reinterpret_cast<VCall2 *>(self)->slot057(0, reinterpret_cast<int>(&g_005398e0_target), 0);
+    reinterpret_cast<VCall *>(self)->slot057(0, reinterpret_cast<int>(&g_005398e0_target), 0);
 
     uint32_t v = *reinterpret_cast<uint32_t *>(g_006970dc);
     if ((~(*g_009a6490) & 0x20000000) != 0) {

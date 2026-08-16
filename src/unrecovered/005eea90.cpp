@@ -2260,6 +2260,12 @@ class Win { public:
     int key_click_event(int, int);
 };
 
+typedef void (__stdcall *VCall2)(void *, int, char *, int);
+
+typedef void (__cdecl *Callback2)(int, int);
+typedef void (OriginalObject::*VCall0)();
+typedef void (OriginalObject::*VCall1)(int);
+
 int Win::key_click_event(int a1, int a2) {
     void *const self = this;
 

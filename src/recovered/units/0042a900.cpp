@@ -2181,6 +2181,8 @@ class Datalink : public GraphicWin { public:
     void set_cat_reactor();
 };
 
+typedef char *(__cdecl *ItoaFn)(int, char *, int);
+
 void Datalink::set_cat_reactor() {
     char *self = reinterpret_cast<char *>(this);
 

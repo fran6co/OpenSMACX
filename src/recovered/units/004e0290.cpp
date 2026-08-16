@@ -2600,6 +2600,8 @@ class Console : public MapWin { public:
     void editor_reload();
 };
 
+extern "C" char *my_strcpy(char *, const char *);
+
 void Console::editor_reload() {
     // Popup is an opaque callee type here (methods only, no agreed size),
     // so this local (stack, non-pointer) instance can't get the original's

@@ -2144,7 +2144,7 @@ class Sprite { public:
 // This body dispatches through slot(s): 1, 2
 class VCall { public:
     virtual void slot000();
-    virtual void slot001();  // <-- used
+    virtual void slot001(int);  // <-- used
     virtual void slot002();  // <-- used
 };
 
@@ -2152,6 +2152,8 @@ class VCall { public:
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_0078d5a0 = (int *)0x0078D5A0;
+static int *const g_007ae778_tbl = (int *)0x007AE778;
+static int &g_007f685c_val = *(int *)0x007F685C;
 static int *const g_0078d7f8 = (int *)0x0078D7F8;
 static int *const g_007ad2a0 = (int *)0x007AD2A0;
 static int *const g_007ad2b0 = (int *)0x007AD2B0;
@@ -2258,7 +2260,7 @@ void MainInterface::on_redraw() {
             int i = 0xb;
             do {
                 if (*g_009b7b1c == 0x320 && i == 0x24) break;
-                reinterpret_cast<VCall1 *>(p)->slot001(0);
+                reinterpret_cast<VCall *>(p)->slot001(0);
                 i++;
                 p += 0xb4c;
             } while (i < 0x2a);

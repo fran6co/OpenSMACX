@@ -2131,7 +2131,7 @@ class VCall { public:
     virtual void slot054();
     virtual void slot055();
     virtual void slot056();
-    virtual void slot057();  // <-- used
+    virtual void slot057(int, int, int);  // <-- used
     virtual void slot058();
     virtual void slot059();
     virtual void slot060();
@@ -2346,7 +2346,7 @@ void Datalink::exec(unsigned int a1, int a2) {
     void *vbase = reinterpret_cast<char *>(listBox) + voffset;
     reinterpret_cast<VCall *>(vbase)->slot062();
 
-    reinterpret_cast<VCall57 *>(this)->slot057(
+    reinterpret_cast<VCall *>(this)->slot057(
         1, reinterpret_cast<int>(g_005398e0), reinterpret_cast<int>(g_007ae820));
 
     *g_00885f30 = *reinterpret_cast<int *>(self + 0xa1c);

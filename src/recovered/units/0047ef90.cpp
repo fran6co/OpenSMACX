@@ -2517,6 +2517,8 @@ class NetWin { public:
     void pick_erosion();
 };
 
+extern "C" void *memcpy(void *, const void *, unsigned int);
+
 void NetWin::pick_erosion() {
     Popup popup;
     char *base = reinterpret_cast<char *>(&popup);

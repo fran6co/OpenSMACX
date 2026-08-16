@@ -2149,6 +2149,8 @@ void __cdecl commlink_attempt(int);
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_00686770 = (int *)0x00686770;
+static int *const g_00946a50_tbl = (int *)0x00946A50;
+static int *const g_00946d4c_tbl = (int *)0x00946D4C;
 static int *const g_007ad2a0 = (int *)0x007AD2A0;
 static int *const g_007fff74 = (int *)0x007FFF74;
 static int *const g_00805338 = (int *)0x00805338;

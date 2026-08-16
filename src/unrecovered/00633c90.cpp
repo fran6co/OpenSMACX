@@ -26,6 +26,9 @@ class Sub633c90Host {
     int remove_entry(int a2, int a3, int a4, int *a5);
 };
 
+extern "C" void free(void *);
+extern "C" void *memcpy(void *, const void *, unsigned int);
+
 int Sub633c90Host::remove_entry(int a2, int a3, int a4, int *a5) {
     int *self = (int *)this;
     void *cs = (void *)((char *)self + 0xC);
