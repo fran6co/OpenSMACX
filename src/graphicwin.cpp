@@ -21,6 +21,7 @@
 #include "buffer.h"
 #include "scroll.h"
 #include "vector_teardown.h"
+#include "temp.h"  // HandleMain, the window the invalidate targets
 
 #include <cstring>
 
@@ -383,7 +384,7 @@ Verification note: the calling convention of the 0xA10 paint hook is inferred,
 */
 void GraphicWin::redraw() {
     uint8_t *const object = reinterpret_cast<uint8_t *>(this);
-    if (*WinHdcWindow == nullptr) {
+    if (HandleMain == nullptr) {
         return;
     }
     uint32_t state;
@@ -431,7 +432,7 @@ void GraphicWin::redraw() {
         GraphicWinInvalidateRect = *reinterpret_cast<func_graphic_win_invalidate_rect **>(
             GraphicWinInvalidateRectImport);
     }
-    GraphicWinInvalidateRect(*WinHdcWindow, &area, FALSE);
+    GraphicWinInvalidateRect(HandleMain, &area, FALSE);
 }
 
 void __fastcall graphic_win_redraw_redirect(GraphicWin *self, void *) {
