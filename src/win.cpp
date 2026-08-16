@@ -594,6 +594,13 @@ int WinRootCount;          // 0x009B7B34
 int WinMouseDirect;        // 0x009B7AA4
 int WinMouseScreenX;       // 0x009B6628
 int WinMouseScreenY;       // 0x009B662C
+int WinTrackingMode;       // 0x009B7AA8
+int WinTrackingX;          // 0x009B7AB0
+int WinTrackingY;          // 0x009B7AB4
+Win *WinZOrderWindow;      // 0x009B7A6C
+int WinZOrderCount;        // 0x009B7B30
+int WinZOrderFlag;         // 0x009B7A78
+void(__cdecl *WinLeftDownHook)(int x, int y);  // 0x009B7A90
 int WinCursorMoved;        // 0x009B7B3C
 void(__cdecl *WinMessageHook)();                            // 0x009B7A88
 void(__cdecl *WinMouseHook)(HWND window, LPARAM position);  // 0x009B7A94
@@ -1460,6 +1467,125 @@ ORIGINAL: 0x005F01F0
 // not being spent on that slot either.
 Status: Complete
 */
+/*
+Purpose: Route a left button press - find the window under the pointer, ask
+         it what was hit, raise it, and either begin a drag or dispatch the
+         click.
+ORIGINAL: 0x005F2330
+// name      ?OnLButtonDown@Win@@QAAXPAXJHHI@Z
+// size      571 bytes
+// spans     0x005F2330-0x005F256B
+// prototype
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F4EC0 0x005F6F10
+//
+// `QAA`, so no receiver, and it passes `&x`/`&y` - the addresses of its OWN
+// parameters - to `get_mouse_window`, which rewrites them into the found
+// window's coordinates. Everything after that uses the rewritten pair.
+//
+// The tracking codes are 2 and 10 through 17. `hit` is whatever the window's
+// slot 0x12C returns, and those values start a drag instead of a click: the
+// four contiguous globals at 0x009B7AA8 are the whole of the drag state, and
+// `Win::do_tracking` is the only thing that reads them back.
+Status: WIP
+*/
+void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
+    static const size_t WinSlotHitTest = 0x12C;    // slot 75
+    static const size_t WinSlotLeftDown = 0x144;   // slot 81
+    typedef int (OriginalObject::*func_win_hit_test)(int, int);
+    typedef void (OriginalObject::*func_win_left_down)(LONG, int, int,
+                                                       WPARAM, int);
+
+    Win *const target = get_mouse_window(&x, &y);
+    if (target != nullptr) {
+        if (WinMouseDirect != 0
+            || (target->iFlags_ & WinFlagHitTestIndirect) != 0) {
+            const int hit = (ORIGINAL(target)->*original_slot<func_win_hit_test>(
+                *reinterpret_cast<uint8_t **>(target) + WinSlotHitTest))(x, y);
+            if (hit != 0) {
+                // WRITTEN OUT TWICE, as the original has it: the
+                // parent's child list and the root list are the same
+                // shuffle over different arrays, and factoring them
+                // together costs 158 bytes of the 571.
+                Win *const parent = target->win_parent_;
+                if (parent != nullptr) {
+                    if ((target->iFlags_ & WinFlagNoRaise) == 0) {
+                        int index = 0;
+                        while (index < parent->child_count_
+                               && parent->children_[index] != target) {
+                            ++index;
+                        }
+                        if (index < parent->child_count_) {
+                            while (index > 0) {
+                                parent->children_[index] = parent->children_[index - 1];
+                                --index;
+                            }
+                            parent->children_[0] = target;
+                        }
+                        WinZOrderCount = 0;
+                        for (int root = 0; root < WinRootCount; ++root) {
+                            if (WinZOrderWindow != nullptr
+                                && WinZOrderWindow == WinRootWindows[root]) {
+                                WinZOrderCount = 0;
+                                WinZOrderFlag = 0;
+                            }
+                            if ((WinRootWindows[root]->iSomeFlag_
+                                 & WinFlagVisible) != 0) {
+                                recurse_zorder(WinRootWindows[root]);
+                            }
+                        }
+                    }
+                } else {
+                    if ((target->iFlags_ & WinFlagNoRaise) == 0) {
+                        int index = 0;
+                        while (index < WinRootCount
+                               && WinRootWindows[index] != target) {
+                            ++index;
+                        }
+                        if (index < WinRootCount) {
+                            while (index > 0) {
+                                WinRootWindows[index] = WinRootWindows[index - 1];
+                                --index;
+                            }
+                            WinRootWindows[0] = target;
+                        }
+                        WinZOrderCount = 0;
+                        for (int root = 0; root < WinRootCount; ++root) {
+                            if (WinZOrderWindow != nullptr
+                                && WinZOrderWindow == WinRootWindows[root]) {
+                                WinZOrderCount = 0;
+                                WinZOrderFlag = 0;
+                            }
+                            if ((WinRootWindows[root]->iSomeFlag_
+                                 & WinFlagVisible) != 0) {
+                                recurse_zorder(WinRootWindows[root]);
+                            }
+                        }
+                    }
+                }
+                if (hit == 2 || (hit > 9 && hit <= 0x11)) {
+                    WinTrackingWindow = target;
+                    WinTrackingMode = hit;
+                    WinTrackingX = x;
+                    WinTrackingY = y;
+                    return;
+                }
+            }
+        }
+        uint8_t *const vtable = *reinterpret_cast<uint8_t **>(target);
+        (ORIGINAL(target)->*original_slot<func_win_left_down>(
+            vtable + WinSlotLeftDown))(dbl, x, y, keys, WinMouseDirect);
+    }
+    if (WinLeftDownHook != nullptr) {
+        WinLeftDownHook(x, y);
+    }
+    if (WinMessageHook != nullptr) {
+        WinMessageHook();
+    }
+}
+
 /*
 Purpose: Decide which window a screen position belongs to, translating the
          position into that window's coordinates on the way.
