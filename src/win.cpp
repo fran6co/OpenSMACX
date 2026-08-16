@@ -1583,37 +1583,41 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 return 0;
             }
             if (message == WM_USER + 1) {
-                // The timer tick a `Time` posts to itself. `wparam` is the
-                // Time, and its flag word at +0 carries "armed" (1) and
-                // "already firing" (2) - a re-entrant tick stops it.
+                // The tick a `Time` posts to this window, `wparam` being the
+                // Time itself. Every offset the original touches is a member
+                // `time.h` already declares, and the layout is pinned by its
+                // own `static_assert(sizeof(Time) == 0x28)`:
+                //
+                //   [esi + 0x1C]  unk_1_       cleared on every tick
+                //   [esi]         unk_tgl_     bit 0 one-shot, bit 1 fired
+                //   [esi + 0x08]  callback1_   void(int)
+                //   [esi + 0x0C]  callback2_   void(int, int)
+                //   [esi + 0x14]  cb_param1_   pushed last, so it is first
+                //   [esi + 0x10]  cb_param2_
+                //
+                // Bit 1 is set on the first tick and stops the timer on the
+                // second, which is what makes `unk_tgl_`'s bit 0 the
+                // one-shot flag: `Time::start()` clears it and `pulse` is
+                // the arm that sets it.
                 Time *const timer = reinterpret_cast<Time *>(wparam);
-                char *const state = reinterpret_cast<char *>(timer);
-                *reinterpret_cast<int *>(state + 0x1C) = 0;
+                timer->unk_1_ = 0;
                 if (*MsgStatus == 0) {
-                    const unsigned int flags =
-                        *reinterpret_cast<unsigned int *>(state);
-                    if ((flags & 1) != 0) {
-                        if ((flags & 2) != 0) {
+                    if ((timer->unk_tgl_ & 1) != 0) {
+                        if ((timer->unk_tgl_ & 2) != 0) {
                             timer->stop();
                             return DefWindowProcA(window, message, wparam,
                                                   lparam);
                         }
-                        *reinterpret_cast<unsigned int *>(state) = flags | 2;
+                        timer->unk_tgl_ |= 2;
                     }
                     if (Time::TimeModal == nullptr
                         || timer == Time::TimeModal) {
-                        typedef void(__cdecl * func_tick_one)(int);
-                        typedef void(__cdecl * func_tick_two)(int, int);
-                        func_tick_one one =
-                            *reinterpret_cast<func_tick_one *>(state + 8);
-                        if (one != nullptr) {
-                            one(*reinterpret_cast<int *>(state + 0x14));
+                        if (timer->callback1_ != nullptr) {
+                            timer->callback1_(timer->cb_param1_);
                         }
-                        func_tick_two two =
-                            *reinterpret_cast<func_tick_two *>(state + 0xC);
-                        if (two != nullptr) {
-                            two(*reinterpret_cast<int *>(state + 0x14),
-                                *reinterpret_cast<int *>(state + 0x10));
+                        if (timer->callback2_ != nullptr) {
+                            timer->callback2_(timer->cb_param1_,
+                                              timer->cb_param2_);
                         }
                     }
                 }
