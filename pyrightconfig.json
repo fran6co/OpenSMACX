@@ -1,6 +1,6 @@
 {
-  "venvPath": ".opensmacx",
-  "venv": "venv",
+  "venvPath": ".",
+  "venv": ".venv",
   "include": [
     "tools"
   ],

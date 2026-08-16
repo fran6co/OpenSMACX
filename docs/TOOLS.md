@@ -251,7 +251,7 @@ stops reproducing. Run it after every change to `src/` or to the emitters.
 
 The `ctest` suite that used to enforce the rest was RETIRED on 2026-08-15
 (see `RETIRED_ROUTES.md`). The verifiers below survived it and each still runs
-standalone — `.opensmacx/venv/bin/python tools/verify_<name>.py` — but nothing
+standalone — `uv run tools/verify_<name>.py` — but nothing
 invokes them for you, so a claim that one of them "passes" now means somebody
 ran it and read the output.
 

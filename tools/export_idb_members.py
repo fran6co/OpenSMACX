@@ -321,7 +321,7 @@ def main(argv=None) -> int:
     try:
         import idb  # noqa: F401
     except ImportError:
-        print("SKIP: python-idb is not installed (tools/requirements.txt).")
+        print("SKIP: python-idb is not installed (`uv sync`).")
         return 0
 
     digest = sha256(args.idb)

@@ -35,11 +35,14 @@ describe are assumed everywhere below and are not repeated here:
 - docs/STATIC_RECOMPILATION.md (retired), `docs/PORTING.md (retired) — the stopped static-recompile
   pilot and the general porting notes.
 
-The environment lives outside git: the hash-pinned executables, the IDB, the
-Ghidra project, and the Python venv are all under the gitignored `.opensmacx/`
-and `build/`. Use `.opensmacx/venv/bin/python` for every tool invocation
-(`tools/disasm.py`, the retired `add_redirect`, the retired `mutate_and_verify`, the
-metadata tools). `tools/disasm.py <addr-or-mangled-name>` over the pinned
+The environment lives outside git: the hash-pinned executables, the IDB and the
+Ghidra project are under the gitignored `.opensmacx/` and `build/`, and the
+Python environment is `.venv`, built by `uv sync` from `pyproject.toml` and the
+committed `uv.lock`. Use `uv run` for every tool invocation - `uv run
+tools/disasm.py`, the retired `add_redirect`, the retired `mutate_and_verify`,
+the metadata tools - never a bare `python3`, which carries none of the pinned
+dependencies. `uv run` re-syncs before it runs, so a stale environment stops
+being a failure mode. `tools/disasm.py <addr-or-mangled-name>` over the pinned
 executable is the ground truth for arity, offsets, and store order; the cached
 Ghidra decompilations under `build/ghidra-decompile/` are hypotheses to confirm
 against it, never to trust directly.
@@ -128,14 +131,16 @@ directory, so lanes do not contend for it.
                                                # here would drop local commits
     cd <path> && mkdir -p .opensmacx
     cp -al <main>/.opensmacx/game .opensmacx/game        # hard links, never
-    cp -al <main>/.opensmacx/venv .opensmacx/venv        # symlinks: symlinked
-    cp -al <main>/.opensmacx/analysis .opensmacx/analysis  # artifact paths are
+    cp -al <main>/.opensmacx/analysis .opensmacx/analysis  # symlinks: symlinked
+                                                     # artifact paths are
                                                      # rejected by the build
-    cmake -S . -B build -G Ninja \
-        -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python"
+    uv sync                                          # NOT copied - see below
+    cmake -S . -B build -G Ninja
 
-That last flag is not optional. Without it CMake takes `/usr/bin/python3`, which
-lacks `pefile`, and the oracle extraction fails partway through a build.
+The venv is the one thing NOT hard-linked across: `uv sync` rebuilds it in
+seconds from the shared uv cache, and it holds an editable install of `decomp`
+whose .pth names an absolute path into whichever tree created it. A copied
+`.venv` points every worktree back at the main one.
 
 The VC6 toolchain is NOT a flag: `CMakeLists.txt` defaults
 `CMAKE_TOOLCHAIN_FILE` to `cmake/toolchains/vc6.cmake`, where the cross system,
@@ -235,7 +240,7 @@ gameplay tests keep a central `main()` list:
 - Library functions: 338.
 - Thunks: 35.
 - Current recovery state: **not restated here.** Run
-  `.opensmacx/venv/bin/python tools/recovery_metrics.py`, or read
+  `uv run tools/recovery_metrics.py`, or read
   `docs/recovery/summary.json`, which is generated and gate-checked.
   This line used to carry the six per-state counts and they were wrong twice:
   every figure was stale before 2026-07-29, and by 2026-08-01 the recovered

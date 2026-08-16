@@ -1,0 +1,25 @@
+[project]
+name = "opensmacx-decomp"
+version = "0.1.0"
+description = "The source map: what src/ says about the shipped SMACX image."
+requires-python = ">=3.12"
+# EMPTY, AND KEPT THAT WAY. The parsers under `tools/decomp` are pure stdlib.
+# capstone and z3 belong to the tools that disassemble and solve, not to a
+# comment reader, so they live in the group below instead.
+dependencies = []
+
+[dependency-groups]
+# Was tools/requirements.txt. A group rather than a project dependency: these
+# are what the 61 scripts in tools/ need, and `decomp` needs none of them.
+tools = [
+    "capstone==5.0.6",
+    "pefile==2024.8.26",
+    "python-idb==0.8.0",
+    "undname==0.2",
+    "z3-solver==4.13.0.0",
+]
+
+[tool.uv]
+# So a bare `uv sync` reproduces the environment every tool already runs on,
+# without anyone having to remember `--group tools`.
+default-groups = ["tools"]

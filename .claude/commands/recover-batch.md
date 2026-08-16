@@ -11,7 +11,7 @@ subagents only score candidates. Follow these six steps in order.
 ## 1. Select
 
 ```sh
-.opensmacx/venv/bin/python tools/recovery_frontier.py --max-size <cap> --queue <n>
+uv run tools/recovery_frontier.py --max-size <cap> --queue <n>
 ```
 
 This is already joined against `annotation_scan`, so it will not hand out work
@@ -40,7 +40,7 @@ say which population a batch came from when you report it.
 For each address:
 
 ```sh
-.opensmacx/venv/bin/python tools/decomp_status.py --work <addr>
+uv run tools/decomp_status.py --work <addr>
 ```
 
 This materialises the scaffold over the placeholder, with `mizuchi_declfix`
@@ -50,7 +50,7 @@ result. One address is one file, so no two agents can collide.
 ## 3. Brief — the AGENT generates it, not you
 
 ```sh
-.opensmacx/venv/bin/python tools/agent_brief.py <addr> [--tier T --note "..."]
+uv run tools/agent_brief.py <addr> [--tier T --note "..."]
 ```
 
 The output **is** the prompt for that one function. **Tell each agent to run
@@ -86,7 +86,7 @@ candidates forms one chunk and runs serially. Eight agents is the ceiling.
 ## 5. Collect — and do not trust the reports
 
 ```sh
-.opensmacx/venv/bin/python tools/decomp_status.py --addresses <all of them> --record-matches
+uv run tools/decomp_status.py --addresses <all of them> --record-matches
 ```
 
 **Re-measure everything.** An agent's report is a claim about a run you did not
@@ -97,7 +97,7 @@ across `src/` and must not run beside anything.
 ## 6. Gate
 
 ```sh
-.opensmacx/venv/bin/python tools/decomp_status.py --check
+uv run tools/decomp_status.py --check
 ```
 
 The claim count is the floor and there is no constant to bump. Then report:
@@ -117,22 +117,22 @@ themselves more than once, and none of them costs agent time.
 # Landed units freeze their scaffolding, so an emitter fix reaches only the
 # units written after it. A re-scaffold pass banked 20 BYTE_EXACT with no
 # agent time at all; it keeps bodies and ratchets, and reverts regressions.
-.opensmacx/venv/bin/python tools/refresh_file_units.py --apply
+uv run tools/refresh_file_units.py --apply
 
 # A field name that lies about its offset is read straight into a body. Every
 # brief for a class with observed accesses tells the agent that the field at
 # 0x838 is spelled `field_838_`; this is what holds that true, against the
 # compiler rather than against a header comment.
-.opensmacx/venv/bin/python tools/verify_member_offsets.py --check-names
+uv run tools/verify_member_offsets.py --check-names
 
 # What a class's own code proves about where its fields are, for any class an
 # agent reported as unverified. This is already in every brief - run it
 # directly when triaging a DEFERRED note that blames a layout.
-.opensmacx/venv/bin/python tools/member_map.py <Class>
+uv run tools/member_map.py <Class>
 
 # Names that say void over bodies that return a status. A review aid, not a
 # gate: it reads constants only, and the caller-side half is still unbuilt.
-.opensmacx/venv/bin/python tools/verify_void_returns.py
+uv run tools/verify_void_returns.py
 ```
 
 **Act on the agents' STRUCTURE rows, and check the ones that blame a header.**

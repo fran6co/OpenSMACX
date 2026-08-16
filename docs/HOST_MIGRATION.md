@@ -7,7 +7,7 @@ see docs/PORTING.md (retired), which is a different problem.
 Start with:
 
 ```
-python3 the retired `host_doctor`
+uv run the retired `host_doctor`
 ```
 
 It imports nothing outside the standard library, so it works on a box that has
@@ -73,14 +73,15 @@ sudo apt install g++-mingw-w64-i686 wine wine32:i386 cmake build-essential
 `wine32:i386` is the one that matters. A `wine64`-only install answers
 `wine --version` happily and then cannot load an i386 PE at all.
 
-Python tooling needs `capstone` and `pefile`. Either install
-[uv](https://astral.sh/uv) and run tools through it:
+Python tooling needs `capstone` and `pefile`. Install
+[uv](https://astral.sh/uv); it is the only supported route, and it fetches the
+interpreter named in `.python-version` if the host lacks it:
 
 ```
-uv run --with-requirements tools/requirements.txt python3 lifted_oracle_plan (retired)
+uv sync
+uv run lifted_oracle_plan (retired)
 ```
 
-or make a venv and point CMake at it with `-DOPENSMACX_PYTHON=<that python>`.
 The system `python3` deliberately does not carry these.
 
 ## Rebuild, in order
