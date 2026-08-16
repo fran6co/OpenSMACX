@@ -147,7 +147,7 @@ Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *) {
 
 /*
 Purpose: Set the four fonts used by the buffer.
-ORIGINAL: 0x005DAC70
+ORIGINAL: 0x005DAC70 BYTE_EXACT
 // name      ?set_font@Buffer@@QAEHPAVFont@@PAVFont@@PAVFont@@PAVFont@@@Z
 // size      64 bytes
 // spans     0x005DAC70-0x005DACB0

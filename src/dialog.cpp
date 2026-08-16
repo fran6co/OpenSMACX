@@ -22,7 +22,7 @@
 
 /*
 Purpose: Set the three fonts used by the dialog.
-ORIGINAL: 0x00609C60
+ORIGINAL: 0x00609C60 BYTE_EXACT
 // name      ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z
 // size      45 bytes
 // spans     0x00609C60-0x00609C8D

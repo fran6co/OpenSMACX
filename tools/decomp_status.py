@@ -1590,61 +1590,83 @@ def main(argv=None) -> int:
     if gate_only:
         measurable = [a for a in measurable if a.matched]
 
-    units, refusals = build_units(measurable, cross.matched, functions,
-                                  derived, callees, pe_fast,
-                                  jobs=arguments.jobs)
-
-    cache = load_cache(arguments.no_cache)
-    outcomes, entries = measure(units, cache, arguments.no_cache,
-                                arguments.jobs)
-
-    # A SECOND CHANCE AGAINST THE REAL TRANSLATION UNIT.
+    # THE REAL TRANSLATION UNIT FIRST, where there is one.
     #
-    # A NO_COMPILE on a body whose file CMake compiles is a statement about
-    # the SCAFFOLD: the executable builds, so the body compiles. 433 pieces
-    # were in that position and 247 of them answered here, 28 BYTE_EXACT.
+    # A body in a file CMake compiles has a context that is not a
+    # reconstruction: the real <windows.h>, the real class definitions, the
+    # real headers. The scaffold is a rebuild of that from the catalogue, and
+    # everything it cannot rebuild it has to approximate - which is why it
+    # carries three hand-written tables of Win32 spellings and why `src/`
+    # grew bodies written in scaffold dialect to satisfy it.
     #
-    # A FALLBACK AND NOT THE PRIMARY ROUTE, WHICH WAS MEASURED. Making the
-    # real file primary broke 177 claims, and the reason is not fixable by
-    # better includes: matching a subject requires the file to DEFINE the
-    # catalogued symbol, and for 110 of them the catalogue has no name to
-    # match (`sub_406840`), while the other 67 live in bulk-recovered files
-    # that deliberately define a differently-named wrapper -
-    # `delegation_thunks.cpp` defines `?alpha_movie_on_key_click_redirect@@…`
-    # where the catalogue asks for `?on_key_click@AlphaMovie@@QAEHHH@Z`.
-    # Those bodies are FRAGMENTS, and a synthesised wrapper is the only thing
-    # that can carry the catalogued symbol for them. Both instruments are
-    # necessary; which one leads is decided by whether the subject can be
-    # named, and only the compiler knows that.
-    retries, aliases = {}, {}
-    for address, outcome in outcomes.items():
-        if outcome.get("tier") != "NO_COMPILE":
-            continue
+    # THIS WAS MEASURED AND REJECTED ONCE, at 177 lost claims, and the reason
+    # was not includes: matching a subject requires the unit to DEFINE the
+    # catalogued symbol, and 110 of those had no catalogued name to match
+    # while 67 lived in bulk-recovered files defining a differently-named
+    # wrapper. `emit.defined_symbol_prefixes` reads the name the source
+    # actually defines off the definition the annotation sits above, and
+    # `choose_subject_symbol` separates overloads by argument shape, so both
+    # of those are answered now.
+    scaffolds, refusals = build_units(measurable, cross.matched, functions,
+                                      derived, callees, pe_fast,
+                                      jobs=arguments.jobs)
+    units, fallback, aliases = {}, {}, {}
+    for address, unit in scaffolds.items():
         annotation = cross.matched.get(address)
         whole = real_unit(getattr(annotation, "location", "") if annotation
                           else "")
-        if whole is not None:
-            retries[address] = whole
-            # WHAT THE SOURCE CALLS IT, beside what the catalogue calls it.
-            # A whole translation unit defines many symbols and is selected
-            # from by name, so a body `src/` spells differently - and 177 of
-            # them do - is invisible in its own file without this. See
-            # `emit.defined_symbol_prefixes`.
-            region = getattr(annotation, "region", "") or ""
-            if region:
-                aliases[address] = emit.defined_symbol_prefixes(region)
+        if whole is None or annotation.recipe == "verbatim":
+            units[address] = unit
+            continue
+        units[address] = whole
+        fallback[address] = unit
+        region = getattr(annotation, "region", "") or ""
+        if region:
+            aliases[address] = emit.defined_symbol_prefixes(region)
+
+    cache = load_cache(arguments.no_cache)
+    outcomes, entries = measure(units, cache, arguments.no_cache,
+                                arguments.jobs, aliases)
+
+    # AND THE SCAFFOLD SECOND, WITH THE BETTER OF THE TWO KEPT.
+    #
+    # Not a fallback for failures only. A body whose own file cannot answer
+    # for it is not always a failure of the file: some bodies are FRAGMENTS -
+    # `delegation_thunks.cpp` defines `?alpha_movie_on_key_click_redirect@@…`
+    # where the catalogue asks for `?on_key_click@AlphaMovie@@QAEHHH@Z`, and
+    # a synthesised wrapper is the only thing that can carry the catalogued
+    # symbol for one of those.
+    #
+    # But three bodies are byte-exact in a SCAFFOLD and not in their own
+    # file - `Console::editor_polar`, `Console::editor_climate` and
+    # `get_mood` - and that is a finding rather than a routing problem, so
+    # the run says so instead of quietly preferring whichever route flatters
+    # the total. `byte_match._better` is the same ranking used across the
+    # four flag sets; it decides here too.
+    #
+    # Skipped where the first route already reached BYTE_EXACT, which is
+    # most claims, so the gate pays for the second compile only on the
+    # pieces that are not settled.
+    retries = {address: unit for address, unit in fallback.items()
+               if outcomes.get(address, {}).get("tier") != "BYTE_EXACT"}
     if retries:
         recovered, entries = measure(retries, entries, arguments.no_cache,
-                                     arguments.jobs, aliases)
-        rescued = 0
+                                     arguments.jobs)
+        rescued, only_scaffold = 0, []
         for address, outcome in recovered.items():
-            if outcome.get("tier") != "NO_COMPILE":
-                outcome["measured_against"] = "translation unit"
-                outcomes[address] = outcome
-                rescued += 1
-        print(f"scaffold could not build {len(retries)} piece(s) whose file "
-              f"CMake compiles; measuring those against their own translation "
-              f"unit answered {rescued}")
+            if not byte_match._better(outcome, outcomes.get(address, {})):
+                continue
+            if outcome.get("tier") == "BYTE_EXACT":
+                only_scaffold.append(address)
+            outcome["measured_against"] = "scaffold"
+            outcomes[address] = outcome
+            rescued += 1
+        print(f"{len(retries)} piece(s) unsettled in their own translation "
+              f"unit; the scaffold scored better on {rescued}")
+        if only_scaffold:
+            print(f"  BYTE_EXACT under the SCAFFOLD ONLY - the file they "
+                  f"live in does not reproduce them: "
+                  f"{', '.join(f'0x{a:08X}' for a in sorted(only_scaffold))}")
     save_cache(entries)
 
     for address, reason_text in refusals.items():
