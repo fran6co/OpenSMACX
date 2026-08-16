@@ -55,7 +55,27 @@ class DLLEXPORT Buffer {
  public:
   int poly(Vert *a1, int a2, int a3);
   Buffer() { ; }
-  ~Buffer() { ; }
+  // VIRTUAL, AND THE VPTR MEMBER IS GONE. `Buffer::construct` writes
+  // `object[0] = BufferVtable` by hand over what was an explicit
+  // `LPVOID vtable_` - a C++ vtable spelled as data. The image's slots are
+  // `??_GBuffer@@UAEPAXI@Z` at 0 and `sub_406b30` at 1; declared, the
+  // compiler puts the pointer there itself and `sizeof` stays 0x588.
+  virtual ~Buffer() { ; }
+  virtual void surface_lost();
+
+  // Slot 1 of this class's vtable.
+  //
+  // MEASURED, 2026-08-16. Declaring it `virtual` and deleting the explicit
+  // `LPVOID vtable_;` below is the right shape and is what the image has -
+  // `Buffer::construct` writes `object[0] = BufferVtable` by hand, which is
+  // a C++ vtable spelled as data. It compiles, it links, `sizeof` stays
+  // 0x588, and it changes not one byte of `Buffer::init` or
+  // `Buffer::close`: 90.8% and 95.7% either way. It also breaks 87 claims,
+  // because `emit_translation_unit` emits its class shells in an order that
+  // a polymorphic Buffer defeats - `C2504: 'GraphicWin' : base class
+  // undefined` on the first three checked. The blocker is the SCAFFOLD, not
+  // the class, and it is the same blocker `Win` has.
+
 
   void construct();
   void clear_links();
@@ -103,14 +123,17 @@ class DLLEXPORT Buffer {
  private:
   typedef int32_t Dib;
   
-  LPVOID vtable_;
   uint32_t poOwner_;
   uint32_t field_8_;
   uint32_t field_C_;
   uint32_t field_10_;
   uint32_t field_14_;
   uint32_t field_18_;
-  uint32_t field_1C_;
+  // 0x1C. The `tgl` argument `Buffer::init` was given, stored as its last
+  // act; `Buffer::close` tests bit 2 of it - the same `tgl & 4` that made
+  // `init` take the surface and clipper from the caller - to decide whether
+  // the device context is the buffer's to destroy.
+  uint32_t init_flags_;
   RECT rect1_;
   RECT rect2_;
   uint32_t field_40_[4];
@@ -130,8 +153,15 @@ class DLLEXPORT Buffer {
   // before ReleaseDC, and zero it when the last one goes.
   int hdc_lock_count_;
   uint32_t field_6C_;
-  HRGN field_70_;
-  uint32_t field_74_;
+  // 0x70. An HRGN the buffer owns: `Buffer::close` is the only thing that
+  // touches it here, deleting it beside the bitmap. `Buffer::set_clip` is
+  // the obvious producer but nothing recovered yet proves it.
+  HRGN clip_region_;
+  // 0x74. What `SelectObject` returned when `Buffer::init` selected the DIB
+  // into `hdc_` - that is, whatever was in the context before - and
+  // `Buffer::close` selects it back before `DeleteDC`. The GDI save/restore
+  // pair, written out.
+  uint32_t previous_bitmap_;
   HBITMAP bitmap_handle_;
   const BITMAPINFO *bitmap_info_;
 
@@ -146,14 +176,17 @@ class DLLEXPORT Buffer {
   uint16_t field_88_;
   uint16_t field_8A_;
   uint32_t field_8C_;
-  uint32_t field_90_;
+  // 0x90. `Buffer::init` sets it to `width * height`.
+  uint32_t pixel_count_;
   uint32_t field_94_;
   uint32_t field_98_;
   uint32_t field_9C_;
   uint32_t field_A0_;
   Dib dib_[256];
   uint32_t field_4A4_;
-  uint32_t field_4A8_;
+  // 0x4A8. `Buffer::init` sets it to `(width + 3) & ~3`: the row pitch a
+  // DIB needs, the width rounded up to a DWORD.
+  uint32_t stride_;
   uint32_t field_4AC_;
   Spot spot_;
   // 0x4BC. TWENTY OWNED HEAP POINTERS - `Buffer::init` and `Buffer::close`
