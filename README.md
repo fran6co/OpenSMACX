@@ -20,15 +20,18 @@ claim a gate re-proves on every run.
 
 ## Building
 
-VC6 under Wine is the only compiler, and the build needs no flags beyond the
-Python interpreter that carries `pefile`:
+VC6 under Wine is the only compiler, and the build needs no flags at all:
 
 ```sh
-python3 -m venv .opensmacx/venv
-.opensmacx/venv/bin/python -m pip install -r tools/requirements.txt
-cmake -S . -B build -G Ninja -DOPENSMACX_PYTHON="$PWD/.opensmacx/venv/bin/python"
+uv sync
+cmake -S . -B build -G Ninja
 cmake --build build
 ```
+
+`uv sync` builds `.venv` from `pyproject.toml` and the committed `uv.lock` -
+the pinned tool dependencies, the interpreter named in `.python-version`, and
+the `decomp` package - and every tool runs through `uv run`, never a bare
+`python3`.
 
 The VC6 toolchain defaults in from `cmake/toolchains/vc6.cmake` - no
 `-DCMAKE_TOOLCHAIN_FILE` needed; pass one to override it and the default

@@ -14,7 +14,6 @@
 *.txt
 !docs/recovery/verified-layouts.txt
 !CMakeLists.txt
-!tools/requirements.txt
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -279,6 +278,11 @@ __pycache__/
 /tools/terranx_original.exe
 /.opensmacx/
 /terranx.exe.idc
+
+# `uv sync` builds the environment here and `uv build` writes here. Neither is
+# a source of truth: `pyproject.toml` and the committed `uv.lock` are.
+/.venv/
+/dist/
 
 # Worktrees created for isolated parallel work. `git add -A` from the main tree
 # otherwise records one as a gitlink (mode 160000), which is never intended.

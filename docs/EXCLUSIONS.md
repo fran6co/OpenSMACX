@@ -23,7 +23,7 @@ Every figure below is re-derived by `tools/measure_exclusions.py`, and
 `--check` fails when this document and the image disagree:
 
 ```
-.opensmacx/venv/bin/python tools/measure_exclusions.py --check
+uv run tools/measure_exclusions.py --check
 ```
 
 The `measured` block at the bottom of this file is what it checks. Do not edit

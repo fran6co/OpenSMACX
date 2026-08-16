@@ -7,7 +7,8 @@ argument type list into it mechanically, and the linker relies on that being
 exact. Those 1,605 prototypes are therefore already in this repository, written
 in a different alphabet, and nothing was reading them.
 
-WHY A COMMITTED CSV. Deriving this needs `undname` (tools/requirements.txt) to
+WHY A COMMITTED CSV. Deriving this needs `undname` (the `tools` group in
+pyproject.toml, installed by `uv sync`) to
 turn the mangling into types, and the gate below needs the hash-pinned
 executable. `--check`, `load()` and the test suite must work on a machine that
 has none of the three, so the answer is derived locally and committed, exactly
@@ -1433,7 +1434,7 @@ def main(argv=None) -> int:
     try:
         import undname
     except ImportError:
-        print("REFUSED: undname is not installed (tools/requirements.txt). "
+        print("REFUSED: undname is not installed (`uv sync`). "
               "The derivation cannot run here; the committed CSV is the "
               "answer for consumers.", file=sys.stderr)
         return 2
