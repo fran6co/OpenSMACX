@@ -156,10 +156,15 @@ class DLLEXPORT Buffer {
   uint32_t field_4A8_;
   uint32_t field_4AC_;
   Spot spot_;
-  // 0x4BC. TWENTY POINTERS, not a word and a blob: `Buffer::init` walks
-  // `for (20) { if (*p) { free(*p); *p = 0; } p += 4; }` from 0x4BC, which
-  // ends at 0x50C - exactly where `field_50C_` starts.
-  void *cached_[20];
+  // 0x4BC. TWENTY OWNED HEAP POINTERS - `Buffer::init` and `Buffer::close`
+  // both walk `for (20) { if (*p) { free(*p); *p = 0; } p += 4; }` from
+  // 0x4BC, and the walk ends at 0x50C, exactly where `field_50C_` starts.
+  // That it is an ARRAY is proved by both walks; WHAT the entries hold is
+  // not, because nothing this tree has recovered writes one. They are only
+  // ever reached through a walking pointer, never named individually, so
+  // the name says the one thing that is established: the buffer owns them
+  // and frees them.
+  void *owned_[20];
   uint32_t field_50C_;
   uint32_t field_510_;
   uint32_t field_514_;
@@ -247,7 +252,6 @@ extern Font *BufferDefaultFont;
 // Value the close reset writes at offset 0x520; its meaning is unconfirmed.
 extern uint32_t *BufferResetValue520;
 // Releases a Sprite-style allocation through the executable's own CRT.
-extern func_sprite_free *BufferFree;
 
 void __fastcall buffer_clear_links_redirect(Buffer *self, void *);
 void __fastcall buffer_free_data_redirect(Buffer *self, void *, int count);
