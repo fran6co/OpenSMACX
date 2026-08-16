@@ -32,6 +32,28 @@ tools/decomp_status.py --check            # THE RATCHET
 every annotation carries its own name, size, spans, prototype, kind, flags and
 call edges, and `--check` holds them to the export row by row.
 
+The same two readers are packaged as `decomp/`, which `uv sync` installs
+editable, so they are one import from anywhere with no `sys.path` line:
+
+```python
+from decomp import from_source, scan_tree, resolve
+
+rows = from_source()                    # {address: row}, the facts in src/
+rows[0x005D7210]["name"]                # '??0Buffer@@QAE@XZ'
+annotations, duplicates = resolve(scan_tree())
+```
+
+The package is SELF-CONTAINED - standard library only, and it imports nothing
+from `tools/` - so its two modules are copies of `tools/annotation_scan.py` and
+the reading half of `tools/project_catalogue.py`. The stamping half stays in
+`tools/`, because writing the fact block needs the export and the emitter.
+
+Two parsers for one grammar is a real cost, and `uv run python -m decomp` is
+what bounds it: it parses `src/` both ways and fails if the answers differ on
+any annotation, any row or any of the fourteen patterns. **A grammar edit under
+`tools/` has to land in `decomp/` too, and vice versa, until the tools are
+refactored onto the package and the originals are deleted.**
+
 ### 2. What shape is this function? — read the image
 
 ```sh

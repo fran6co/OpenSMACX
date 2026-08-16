@@ -23,3 +23,18 @@ tools = [
 # So a bare `uv sync` reproduces the environment every tool already runs on,
 # without anyone having to remember `--group tools`.
 default-groups = ["tools"]
+
+[build-system]
+requires = ["uv_build>=0.9,<0.10"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# NOT the default `src` - that directory is 3,478 C++ files. The package sits
+# at the repository root, which an editable install turns into the one .pth
+# entry: `import decomp` from anywhere, and nothing else exposed.
+#
+# It briefly lived at `tools/decomp` so that the .pth would put `tools/` on
+# sys.path and let the package import the scripts beside it. The package is
+# self-contained now, so that reason is gone and it moved back out.
+module-root = ""
+module-name = "decomp"

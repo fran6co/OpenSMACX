@@ -123,7 +123,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/55/b3/279b1d57fa3681725
 [[package]]
 name = "opensmacx-decomp"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 
 [package.dev-dependencies]
 tools = [
