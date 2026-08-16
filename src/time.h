@@ -23,6 +23,14 @@
   * Time class
   */
 class DLLEXPORT Time {
+  // The timer posts WM_USER+1 to the main window and `Win::window_proc`
+  // runs the tick: it clears `unk_1_`, tests and sets `unk_tgl_`, and calls
+  // `callback1_`/`callback2_` with the stored parameters. The original has
+  // all of that INLINE in the procedure rather than in a `Time` method, so
+  // it stays inline and `Win` is a friend; a `Time::tick()` would be one
+  // `call` where the image has the whole sequence.
+  friend class Win;
+
  public:
   Time(); // 006161D0
   ~Time(); // 00616200
