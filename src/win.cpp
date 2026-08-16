@@ -582,8 +582,8 @@ namespace {
 
 typedef long(__stdcall *func_win_surface_slot)(void *, void *);
 
-constexpr size_t WinSurfaceGetDCSlot = 0x44;
-constexpr size_t WinSurfaceReleaseDCSlot = 0x68;
+static const size_t WinSurfaceGetDCSlot = 0x44;
+static const size_t WinSurfaceReleaseDCSlot = 0x68;
 
 void *win_surface_slot(void *object, size_t offset) {
     void **const vtable = *reinterpret_cast<void ***>(object);

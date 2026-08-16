@@ -219,11 +219,11 @@ static_assert(sizeof(RulesNatural) == 0x8,
               "RulesNatural layout must match the original executable");
 
 
-constexpr int MaxNaturalNum = 16;
-constexpr int MaxLandmarkNum = 64;
-constexpr int RegionBounds = 63;
-constexpr int MaxContinentNum = 128;
-constexpr int MaxRegionLandNum = 64;
+static const int MaxNaturalNum = 16;
+static const int MaxLandmarkNum = 64;
+static const int RegionBounds = 63;
+static const int MaxContinentNum = 128;
+static const int MaxRegionLandNum = 64;
 
 const int RadiusRange[] = { 1, 9, 25, 49, 81, 121, 169, 225, 289 };
 const int RadiusBaseX[] = {  1, 2, 1, 0, -1, -2, -1,  0, 0 };

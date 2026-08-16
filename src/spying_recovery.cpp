@@ -98,8 +98,8 @@ bool run_spying_oracle_suite() {
     // The status table is empty this early in startup, so a wrong faction
     // stride would read another zero and compare equal. Seed distinctive
     // entries at the exact indices the legacy body addresses, then restore.
-    constexpr size_t SeedFactions = 8;
-    constexpr size_t SeedSubjects = 8;
+    const size_t SeedFactions = 8;
+    const size_t SeedSubjects = 8;
     uint32_t saved_entries[SeedFactions][SeedSubjects];
     for (size_t f = 0; f < SeedFactions; ++f) {
         for (size_t s = 0; s < SeedSubjects; ++s) {

@@ -14,7 +14,7 @@
 
 namespace {
 
-constexpr int ItemNotFound = 11;
+static const int ItemNotFound = 11;
 
 PullDownItem *find_item(PullDownItem *items, int id) {
     for (int index = 0; index < 64; ++index) {

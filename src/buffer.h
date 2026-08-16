@@ -185,8 +185,8 @@ int polygon(Buffer *buffer, Vert *verts, int a3, int a4);
 
 // DirectDraw surface vtable slots the data lock/release pair dispatches
 // through; both are stdcall COM methods on the surface interface.
-constexpr size_t BufferSurfaceLockSlot = 0x64;
-constexpr size_t BufferSurfaceUnlockSlot = 0x80;
+static const size_t BufferSurfaceLockSlot = 0x64;
+static const size_t BufferSurfaceUnlockSlot = 0x80;
 
 // The seven-argument copy is the real blitter and is not recovered yet, so the
 // convenience overload reaches it through a seam.

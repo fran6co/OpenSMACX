@@ -336,9 +336,9 @@ typedef long(__stdcall *func_surface_lock)(void *, void *, void *, uint32_t, voi
 typedef long(__stdcall *func_surface_unlock)(void *, void *);
 
 // DDSURFACEDESC fields the lock path consumes.
-constexpr size_t SurfaceDescriptorSize = 0x6C;
-constexpr size_t SurfaceDescriptorPitch = 0x10;
-constexpr size_t SurfaceDescriptorData = 0x24;
+static const size_t SurfaceDescriptorSize = 0x6C;
+static const size_t SurfaceDescriptorPitch = 0x10;
+static const size_t SurfaceDescriptorData = 0x24;
 
 }  // namespace
 
@@ -494,14 +494,14 @@ typedef long(__stdcall *func_surface_release_dc_slot)(void *, void *);
 typedef unsigned long(__stdcall *func_com_release)(void *);
 typedef void (OriginalObject::*func_buffer_virtual)();
 
-constexpr size_t OwnedAllocationBase = 0x4BC;
-constexpr size_t OwnedAllocationCount = 20;
-constexpr size_t SurfaceReleaseSlot = 0x08;
-constexpr size_t BufferVirtualSlot = 0x04;
-constexpr size_t SurfaceGetDCSlot = 0x44;
-constexpr size_t ClipperSetClipListSlot = 0x1C;
-constexpr size_t SurfaceSetClipperSlot = 0x70;
-constexpr size_t SurfaceReleaseDCSlot = 0x68;
+static const size_t OwnedAllocationBase = 0x4BC;
+static const size_t OwnedAllocationCount = 20;
+static const size_t SurfaceReleaseSlot = 0x08;
+static const size_t BufferVirtualSlot = 0x04;
+static const size_t SurfaceGetDCSlot = 0x44;
+static const size_t ClipperSetClipListSlot = 0x1C;
+static const size_t SurfaceSetClipperSlot = 0x70;
+static const size_t SurfaceReleaseDCSlot = 0x68;
 
 void *slot(void *object, size_t offset) {
     void **const vtable = *reinterpret_cast<void ***>(object);

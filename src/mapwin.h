@@ -211,7 +211,7 @@ void __fastcall map_win_on_left_up_redirect(MapWin *self, void *, int a1, int a2
 // 0x0041AAC3, which walks slot 0's vbtable. Populated at run time, so this is
 // a mutable global; rebindable so leaf tests can seed a controlled table.
 extern MapWin **MapWinTable;                  // 0x007D3C3C
-constexpr size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
+static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
 
 // Per-window "this window is live" dword. The MapWin constructor clears it
 // (0x00462822), MapWin::clear writes it (0x004628AF), and mapwin_system_init
@@ -221,7 +221,7 @@ constexpr size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
 // bytes of derived storage are deliberately unmapped, and carving it would
 // force inventing a public accessor for a field whose full meaning is not
 // recovered. Same idiom as scroll.cpp's read_volatile_bits.
-constexpr size_t MapWinActiveOffset = 0x1DD74;
+static const size_t MapWinActiveOffset = 0x1DD74;
 
 // MapWin::draw_radius at 0x0046A2A0 is still an original body: `ret 0x10` at
 // 0x0046A493 makes it __thiscall with four stack arguments, and `mov esi, ecx`

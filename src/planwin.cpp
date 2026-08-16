@@ -81,7 +81,7 @@ namespace {
 // original's. Slot 0x30 is read from whatever object is actually there.
 typedef void (OriginalObject::*func_base_vtable_slot)();
 
-constexpr size_t PlanWinBlinkSlot = 0x30;
+static const size_t PlanWinBlinkSlot = 0x30;
 
 // Both methods reach the virtual base the way the original does - through the
 // vbtable rather than through the member - so they stay correct for any class

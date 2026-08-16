@@ -509,19 +509,19 @@ struct RulesOrder {
     LPSTR letter;
 };
 
-constexpr int MaxChassisNum = 9;
-constexpr int MaxWeaponNum = 26;
-constexpr int MaxArmorNum = 14;
-constexpr int MaxVehProtoNum = 512;
-constexpr int MaxVehProtoFactionNum = 64; // Limit per faction + max predefined from alpha/x.txt
-constexpr int MaxReactorNum = 4;
-constexpr int MaxAbilityNum = 29;
-constexpr int MaxMoraleNum = 7;
-constexpr int MaxDefenseModeNum = 3;
-constexpr int MaxOffenseModeNum = 3;
-constexpr int MaxOrderNum = 30;
-constexpr int MaxPlanNum = 15;
-constexpr int MaxTriadNum = 3;
+static const int MaxChassisNum = 9;
+static const int MaxWeaponNum = 26;
+static const int MaxArmorNum = 14;
+static const int MaxVehProtoNum = 512;
+static const int MaxVehProtoFactionNum = 64; // Limit per faction + max predefined from alpha/x.txt
+static const int MaxReactorNum = 4;
+static const int MaxAbilityNum = 29;
+static const int MaxMoraleNum = 7;
+static const int MaxDefenseModeNum = 3;
+static const int MaxOffenseModeNum = 3;
+static const int MaxOrderNum = 30;
+static const int MaxPlanNum = 15;
+static const int MaxTriadNum = 3;
 
 extern VehPrototype *VehPrototypes;
 extern Veh *Vehs;

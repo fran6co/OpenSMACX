@@ -151,10 +151,10 @@ struct RulesMandate {
     LPSTR name_caps;
 };
 
-constexpr int MaxTechnologyNum = 89;
-constexpr int TechNone = -1;
-constexpr int TechDisabled = -2;
-constexpr int MaxMandateNum = 4;
+static const int MaxTechnologyNum = 89;
+static const int TechNone = -1;
+static const int TechDisabled = -2;
+static const int MaxMandateNum = 4;
 
 extern RulesTechnology *Technology; // [89]
 extern uint8_t *GameTechAchieved; // [89]

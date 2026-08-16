@@ -132,8 +132,8 @@ uint32_t *BasePopDefaultButtonColors = reinterpret_cast<uint32_t *>(0x00696F24);
 
 namespace {
 
-constexpr size_t StringColorStride = 0x10;
-constexpr size_t ButtonColorStride = 0x0C;
+static const size_t StringColorStride = 0x10;
+static const size_t ButtonColorStride = 0x0C;
 
 void store_colors(uint32_t *table, size_t stride, size_t tier,
                   int c1, int c2, int c3, int c4) {

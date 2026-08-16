@@ -39,7 +39,7 @@ struct RulesProposal {
     int preq_tech;
 };
 
-constexpr int MaxProposalNum = 11;
+static const int MaxProposalNum = 11;
 
 extern RulesProposal *Proposal;
 

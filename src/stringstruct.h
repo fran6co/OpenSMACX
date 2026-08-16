@@ -63,14 +63,14 @@ static_assert(sizeof(StringStruct) == 0x24,
 void __fastcall string_struct_remove_all_redirect(StringStruct *self, void *);
 // The legacy close is entered through a virtual-base adjustor, so the redirect
 // receives a pointer 0x1C bytes into the object rather than its base.
-constexpr size_t StringStructCloseAdjustment = 0x1C;
+static const size_t StringStructCloseAdjustment = 0x1C;
 extern const uint32_t StringStructVtable;
 extern const uint32_t StringStructVirtualBaseVtable;
 void __fastcall string_struct_close_redirect(void *adjusted, void *);
 
 // A derived list closes with its own tables before closing its StringStruct
 // base; its adjustor sits 0x28 bytes into the object.
-constexpr size_t StringStructDerivedCloseAdjustment = 0x28;
+static const size_t StringStructDerivedCloseAdjustment = 0x28;
 extern const uint32_t StringStructDerivedVtable;
 extern const uint32_t StringStructDerivedVirtualBaseVtable;
 void __fastcall string_struct_derived_close_redirect(void *adjusted, void *);
@@ -142,7 +142,7 @@ static_assert(sizeof(StringList) == 0x30,
 // read from the vbtable, because the original does not read it either. The
 // vbtable IS honoured where the original honours it, inside the delegated
 // StringStruct::close_with_tables.
-constexpr size_t StringListVirtualBaseOffset = 0x28;
+static const size_t StringListVirtualBaseOffset = 0x28;
 
 // The virtual base's own one-slot vftable (0x006693AC), reinstalled once the
 // StringStruct stage has finished with the subobject.
