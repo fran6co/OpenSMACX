@@ -132,10 +132,10 @@ void Win::flip(RECT *area) {
 // src/win.cpp. These six are what its recovery still stands on, and the
 // first thing that faults if you move the mouse or press a key.
 //
-// 0x005F2330  ?OnLButtonDown@Win@@QAAXPAXJHHI@Z
-void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
-    typedef void(__cdecl *pending)(HWND, LONG, int, int, WPARAM);
-    PENDING_BODY(0x005F2330, pending)(window, dbl, x, y, keys);
+// 0x005F4EC0  ?recurse_zorder@@YAXPAUWin@@@Z
+void __cdecl recurse_zorder(Win *window) {
+    typedef void(__cdecl *pending)(Win *);
+    PENDING_BODY(0x005F4EC0, pending)(window);
 }
 
 // 0x005F6A50  ?get_key_window@Win@@QAGHXZ

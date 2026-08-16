@@ -370,11 +370,44 @@ extern int WinMouseDirect;
 extern int WinMouseScreenX;
 extern int WinMouseScreenY;
 
-// The `Win` flag bits `get_mouse_window` and `window_proc` test, named for
-// what the code does when each is set.
+// The `Win` flag bits `get_mouse_window`, `window_proc` and `OnLButtonDown`
+// test, named for what the code does when each is set.
 static const uint32_t WinFlagVisible = 0x1;          // iSomeFlag_
 static const uint32_t WinFlagClipToParent = 0x20;    // iFlags_
 static const uint32_t WinFlagParentOffset = 0x8000;  // iFlags_
+// `OnLButtonDown` runs the hit-test slot when the position is the window's
+// own (`WinMouseDirect`) OR this is set, and skips the raise when the other
+// is. Named for the branch each guards; nothing establishes more.
+static const uint32_t WinFlagHitTestIndirect = 0x4000000;  // iFlags_
+static const uint32_t WinFlagNoRaise = 0x2000000;          // iFlags_
+
+// 0x009B7AA8, 0x009B7AB0, 0x009B7AB4 - the rest of the drag that
+// `WinTrackingWindow` at 0x009B7AAC begins. All four are contiguous,
+// `Win::OnLButtonDown` is the only writer, and `Win::do_tracking` - the
+// method `window_proc` calls on `WinTrackingWindow` for every WM_MOUSEMOVE
+// - is the only other reader.
+extern int WinTrackingMode;  // 0x009B7AA8, the hit-test code that started it
+extern int WinTrackingX;     // 0x009B7AB0
+extern int WinTrackingY;     // 0x009B7AB4
+
+// The z-order refresh `OnLButtonDown` runs after raising a window, shared
+// with `Win::bring_to_top`, `bring_child_to_top`, `bring_parent_to_top`,
+// `recurse_zorder`, `Win::show` and `Win::hide`.
+//
+// Only the first has a settled meaning: it is compared against each root
+// window in turn and re-read after every `recurse_zorder`, so it is a
+// `Win *`. The other two are cleared together whenever that comparison
+// hits, and what they count is not established.
+extern Win *WinZOrderWindow;  // 0x009B7A6C
+extern int WinZOrderCount;    // 0x009B7B30
+extern int WinZOrderFlag;     // 0x009B7A78
+
+// 0x009B7A90. Called with the click position after the window has been
+// dispatched to. `Win::left_down_event` is its only other reader.
+extern void(__cdecl *WinLeftDownHook)(int x, int y);
+
+// 0x005F4EC0. Re-walks one root window's subtree after a raise.
+void __cdecl recurse_zorder(Win *window);
 
 // 0x005F6AB0. The tree walk `get_mouse_window` delegates to once it has a
 // subtree and a position in that subtree's coordinates.
