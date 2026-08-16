@@ -2195,7 +2195,7 @@ int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src, int x_d
 
 /*
 Purpose: Relocate an existing unit to the specified tile.
-ORIGINAL: 0x005A59B0
+ORIGINAL: 0x005A59B0 BYTE_EXACT
 // name      ?veh_put@@YAXHHH@Z
 // size      34 bytes
 // spans     0x005A59B0-0x005A59D2

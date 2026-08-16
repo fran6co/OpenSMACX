@@ -161,7 +161,7 @@ void Font::close() {
 
 /*
 Purpose: Get the width for the input text.
-ORIGINAL: 0x00619280
+ORIGINAL: 0x00619280 BYTE_EXACT
 // name      ?width@Font@@QAEHPAD@Z
 // size      99 bytes
 // spans     0x00619280-0x006192E3

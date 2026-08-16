@@ -20,6 +20,7 @@
 
 class Win;     // forward declaration
 class Buffer;  // forward declaration
+struct IDirectDrawPalette;  // <ddraw.h>, included where it is called
 
  /*
   * Palette class
@@ -164,11 +165,7 @@ extern int PaletteSeedCache;
  * make no sense of a 256-entry count. Opaque here because only that one call
  * is recovered; naming it wrongly is what made the call look arbitrary.
  */
-extern void *DirectDrawPalette;
-
-// IDirectDrawPalette::SetEntries, as a BYTE offset into the vtable - the same
-// spelling buffer.h uses for the surface slots it reaches.
-static const size_t DirectDrawPaletteSetEntriesSlot = 0x18;
+extern IDirectDrawPalette *DirectDrawPalette;
 
 /*
  * The process palette, at 0x0094C590 in the image. The name is the image's

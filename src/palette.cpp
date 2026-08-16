@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <ddraw.h>  // IDirectDrawPalette::SetEntries in set()
 #include "palette.h"
 #include "general.h"  // mem_get
 #include "buffer.h"   // Buffer::sync_to_palette in set()
@@ -27,7 +28,7 @@ int PaletteUsesSystemColours;  // 0x009B8188
 Palette *PaletteActive;                 // 0x009B8180
 Buffer ScreenBuffer;                    // 0x009B7490
 int PaletteSeedCache;                   // 0x009B8184
-void *DirectDrawPalette;                // 0x009BC4A0
+IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 
 // 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
 const uint8_t SystemColours[80] = {
@@ -272,17 +273,9 @@ Status: Complete
 int Palette::set() {
     if (BufferDirectDrawActive) {
         // DirectDraw owns the screen, so the palette is published through
-        // IDirectDrawPalette::SetEntries rather than GDI. `entries_` is at
-        // offset 0, so this is the same address the image pushes as `this`.
-        void *ddraw_palette = DirectDrawPalette;
-        if (ddraw_palette != 0) {
-            typedef int(__stdcall *SetEntries)(
-                void *self, int flags, int first, int count,
-                PALETTEENTRY *entries);
-            void **const vtable = *reinterpret_cast<void ***>(ddraw_palette);
-            SetEntries set_entries = reinterpret_cast<SetEntries>(
-                vtable[DirectDrawPaletteSetEntriesSlot / sizeof(void *)]);
-            set_entries(ddraw_palette, 0, 0, 256, entries_);
+        // IDirectDrawPalette::SetEntries rather than GDI.
+        if (DirectDrawPalette) {
+            DirectDrawPalette->SetEntries(0, 0, 256, entries_);
         }
         return 0;
     }

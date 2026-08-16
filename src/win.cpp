@@ -283,7 +283,7 @@ int __fastcall win_on_query_new_palette_redirect(Win *self, void *) {
 
 /*
 Purpose: Read the vertical scroll bar's current position.
-ORIGINAL: 0x005EE050
+ORIGINAL: 0x005EE050 BYTE_EXACT
 // name      ?get_vert_pos@Win@@QAEHXZ
 // size      20 bytes
 // spans     0x005EE050-0x005EE064
@@ -308,7 +308,7 @@ int __fastcall win_get_vert_pos_redirect(Win *self, void *) {
 
 /*
 Purpose: Read the horizontal scroll bar's current position.
-ORIGINAL: 0x005EE090
+ORIGINAL: 0x005EE090 BYTE_EXACT
 // name      ?get_horz_pos@Win@@QAEHXZ
 // size      20 bytes
 // spans     0x005EE090-0x005EE0A4
@@ -333,7 +333,7 @@ int __fastcall win_get_horz_pos_redirect(Win *self, void *) {
 
 /*
 Purpose: Set vertical scrollbar paging when a scrollbar is attached.
-ORIGINAL: 0x005EE0F0
+ORIGINAL: 0x005EE0F0 BYTE_EXACT
 // name      ?set_vert_paging@Win@@QAEXH@Z
 // size      23 bytes
 // spans     0x005EE0F0-0x005EE107
@@ -353,7 +353,7 @@ void Win::set_vert_paging(int paging) {
 
 /*
 Purpose: Set horizontal scrollbar paging when a scrollbar is attached.
-ORIGINAL: 0x005EE110
+ORIGINAL: 0x005EE110 BYTE_EXACT
 // name      ?set_horz_paging@Win@@QAEXH@Z
 // size      23 bytes
 // spans     0x005EE110-0x005EE127
@@ -868,7 +868,7 @@ void __cdecl win_set_def_focus_redirect(int focus) {
 
 /*
 Purpose: Publish a value into both attached scrollbars' first shared slot.
-ORIGINAL: 0x005EE130
+ORIGINAL: 0x005EE130 BYTE_EXACT
 // name      ?UNK8@Win@@QAEXH@Z
 // size      39 bytes
 // spans     0x005EE130-0x005EE157
@@ -892,7 +892,7 @@ void Win::UNK8(int value) {
 
 /*
 Purpose: Publish a value into both attached scrollbars' second shared slot.
-ORIGINAL: 0x005EE160
+ORIGINAL: 0x005EE160 BYTE_EXACT
 // name      ?UNK9@Win@@QAEXH@Z
 // size      39 bytes
 // spans     0x005EE160-0x005EE187
