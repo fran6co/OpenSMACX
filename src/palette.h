@@ -135,8 +135,17 @@ extern Palette *PaletteActive;
  * 0x009B7490. The screen buffer Palette::set realises against (the same
  * buffer Win::init_class sets up). Named here rather than re-derived in each
  * caller.
+ *
+ * AN OBJECT: `Palette::set` sets the receiver up as `mov ecx, 0x9b7490` - an
+ * immediate, the address of a global - before calling `sync_to_palette`.
+ * Through
+ * `extern Buffer *` the same source compiles to
+ * `mov ecx, dword ptr [ScreenBuffer]`, a load the image does not perform, and
+ * it lands one instruction earlier than the `push esi` beside it. An `extern`
+ * declaration of an incomplete type is legal; the DEFINITION in palette.cpp is
+ * where `buffer.h` is needed.
  */
-extern Buffer *ScreenBuffer;
+extern Buffer ScreenBuffer;
 
 /*
  * 0x009B8184. The seed_ value Palette::set last animated, so it can skip
@@ -145,11 +154,21 @@ extern Buffer *ScreenBuffer;
 extern int PaletteSeedCache;
 
 /*
- * 0x009BC4A0. The DirectDraw surface object Palette::set reaches when
- * BufferDirectDrawActive is on; its vtable slot 6 publishes the palette.
- * Opaque - only the vtable call is recovered.
+ * 0x009BC4A0. NOT A SURFACE - an IDirectDrawPalette. `Palette::set` reaches it
+ * when BufferDirectDrawActive is on and calls vtable slot 6 with
+ * `(0, 0, 0x100, entries)`, which is
+ * `SetEntries(DWORD dwFlags, DWORD dwStartingEntry, DWORD dwCount,
+ * LPPALETTEENTRY lpEntries)` - slot 6 of IDirectDrawPalette, after
+ * QueryInterface, AddRef, Release, GetCaps, GetEntries and Initialize. A
+ * surface's slot 6 is BltBatch, which takes different arguments and would
+ * make no sense of a 256-entry count. Opaque here because only that one call
+ * is recovered; naming it wrongly is what made the call look arbitrary.
  */
-extern void *PaletteDirectDrawSurface;
+extern void *DirectDrawPalette;
+
+// IDirectDrawPalette::SetEntries, as a BYTE offset into the vtable - the same
+// spelling buffer.h uses for the surface slots it reaches.
+constexpr size_t DirectDrawPaletteSetEntriesSlot = 0x18;
 
 /*
  * The process palette, at 0x0094C590 in the image. The name is the image's

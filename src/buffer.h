@@ -208,7 +208,13 @@ extern Palette **BufferPalette;
 Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *);
 
 // Selects the DirectDraw teardown path over the GDI device-context path.
-extern int *BufferDirectDrawActive;
+// 0x009BC494. Non-zero while DirectDraw owns the screen, so the GDI paths
+// stand down. AN OBJECT: `Palette::set` opens with
+// `mov eax, dword ptr [0x9bc494]` / `test eax, eax`, a direct load of the
+// VALUE. Through `extern int *` the same source compiles to a load of the
+// pointer and then `cmp dword ptr [eax], 0` - one instruction more, and the
+// first divergence in that body.
+extern int BufferDirectDrawActive;
 // Value the close reset writes at offset 0x520; its meaning is unconfirmed.
 extern uint32_t *BufferResetValue520;
 // Releases a Sprite-style allocation through the executable's own CRT.

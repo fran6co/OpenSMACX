@@ -1819,8 +1819,18 @@ WIN32_STRUCT_DEFINITIONS = (
 WIN32_STRUCT_NEEDS = {"LOGPALETTE": ("PALETTEENTRY",)}
 
 
-def win32_struct_declarations(body: str) -> list:
-    """Win32 struct types `body` names: defined where known, else forward."""
+def win32_struct_declarations(body: str, already: str = "") -> list:
+    """Win32 struct types `body` names: defined where known, else forward.
+
+    `already` is the unit built so far. A definition emitted here on top of one
+    the scaffolding has ALREADY emitted is `C2011: type redefinition`, and the
+    two collide precisely when the body is worth measuring: a class whose
+    layout holds `PALETTEENTRY entries_[256]` needs that type complete, so
+    `class_layouts` defines it, and then this defined it again. It cost
+    `init_palette_class` its verdict outright - NO_COMPILE on a body that
+    compiles under CMake, which is the shape a scaffold defect always takes.
+    A FORWARD declaration is not a conflict and is left alone.
+    """
     if not body:
         return []
     import src_declarations
@@ -1831,10 +1841,14 @@ def win32_struct_declarations(body: str) -> list:
         return []
     for name in list(named):
         named.update(WIN32_STRUCT_NEEDS.get(name, ()))
+    settled = classes_defined_in(already) if already else set()
     defined = [text for name, text in WIN32_STRUCT_DEFINITIONS
-               if name in named]
+               if name in named and name not in settled]
     forward = [f"struct {name};" for name in sorted(named)
-               if name not in dict(WIN32_STRUCT_DEFINITIONS)]
+               if name not in dict(WIN32_STRUCT_DEFINITIONS)
+               and name not in settled]
+    if not defined and not forward:
+        return []
     return forward + defined + [""]
 
 
@@ -1885,7 +1899,7 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
     # Captured HERE: `body` is rebound to a list of member lines by the
     # class-shell loop below, so anything wanting the subject's text has
     # to take it before that happens.
-    win32_lines = win32_struct_declarations(body) + win32_declarations(body)
+    win32_lines = win32_declarations(body)
 
     def declare(name: str, opening: bool) -> str:
         # `class X { public:` and `struct X {` differ only in default access,
@@ -2165,33 +2179,39 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         lines.append("// one side alone is what breaks it.")
     for name in by_value_first(definable):
         layout = members_of_shell(name)
-        body = []
+        # `members`, NOT `body`: `body` is the SUBJECT's source text, and
+        # rebinding it here shadowed it for everything below. That is why
+        # `win32_declarations(body)` had to be captured hundreds of lines
+        # earlier, and why the next thing to need the body at this point
+        # got a list and a TypeError instead.
+        members = []
         for entry in methods_by_class.get(name, ()):
             if entry.kind == "ctor":
-                body.append(f"    {name}({', '.join(entry.params)});")
+                members.append(f"    {name}({', '.join(entry.params)});")
             elif entry.kind == "dtor":
-                body.append(f"    ~{name}();")
+                members.append(f"    ~{name}();")
             else:
-                body.append(f"    {static_for(entry)}{entry.returns} "
+                members.append(f"    {static_for(entry)}{entry.returns} "
                             f"{entry.member_convention()}"
                             f"{entry.method}({', '.join(entry.params)});")
-        if not layout and not body:
+        if not layout and not members:
             # STILL OPAQUE, and it must stay that way: a class emitted with
             # nothing but imported methods has `sizeof` 1, and a body holding
             # one by value would then compile against a wrong size instead of
             # failing. An incomplete type fails loudly, which is correct.
             continue
-        body.extend(imported_methods(name, {e.method for e in
+        members.extend(imported_methods(name, {e.method for e in
                                             methods_by_class.get(name, ())}))
         lines.append(declare(name, opening=True))
         lines.extend(layout or [])
-        lines.extend(sorted(set(body)))
+        lines.extend(sorted(set(members)))
         lines.append("};")
         lines.append("")
     for text in sorted(set(d for d in declarations if d)):
         lines.append(text)
     if declarations or methods_by_class:
         lines.append("")
+    lines.extend(win32_struct_declarations(body, "\n".join(lines)))
     lines.extend(win32_lines)
     lines.extend(string_routine_pragma(declarations))
 

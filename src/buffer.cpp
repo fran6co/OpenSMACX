@@ -480,7 +480,7 @@ int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
     return self->text_line_height();
 }
 
-int *BufferDirectDrawActive = (int *)0x009BC494;
+int BufferDirectDrawActive;  // 0x009BC494
 uint32_t *BufferResetValue520 = (uint32_t *)0x00696BF0;
 func_sprite_free *BufferFree = (func_sprite_free *)0x00644EF2;
 
@@ -634,7 +634,7 @@ void Buffer::close() {
     if (ordered[0x64 / 4] != 0) {
         ordered[0x68 / 4] = 0;
         ordered[0x6C / 4] = 0;
-        if (*BufferDirectDrawActive != 0) {
+        if (BufferDirectDrawActive != 0) {
             void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
             // The reference count was just zeroed, so this decrement always
             // lands at or below zero and the published data is dropped.
@@ -683,7 +683,7 @@ void Buffer::close() {
         }
     }
 
-    if (*BufferDirectDrawActive != 0) {
+    if (BufferDirectDrawActive != 0) {
         size_t release_offset_cases[] = {size_t(0x58), size_t(0x5C)};
         for (size_t release_offset_index = 0;
              release_offset_index
