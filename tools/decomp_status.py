@@ -269,6 +269,51 @@ def real_unit(location: str):
     return None if text is None else (text, REPO_ROOT / path)
 
 
+def changed_sources() -> list:
+    """The `src/` files whose measurement a working-tree change can move.
+
+    `--check` measures every claim in the tree, and after editing one .cpp
+    that is 1,602 compiles to learn about the twenty-eight that could have
+    moved. Naming the file on the command line has always worked; what was
+    missing is deriving WHICH file, and a rule an editor has to remember is
+    the defect this repository keeps finding.
+
+    A HEADER IS NOT ITS OWN SCOPE. Editing `win.h` can move any claim in any
+    file that includes it - `Win::window_proc` and `Win::init_class` both
+    changed when `win.h` gained a global - so a changed header pulls in its
+    includers, transitively. Quoted includes only: `<windows.h>` is not
+    ours to track, and nothing in `src/` can change it.
+    """
+    try:
+        listed = subprocess.run(
+            ["git", "status", "--porcelain", "--", "src"],
+            cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout
+    except (OSError, subprocess.SubprocessError):
+        return []
+    touched = set()
+    for line in listed.splitlines():
+        name = line[3:].strip().split(" -> ")[-1]
+        if name.startswith("src/"):
+            touched.add(name)
+
+    # Who includes whom, by quoted name, over the files CMake compiles.
+    includers: dict = {}
+    for source in compiled_sources() | {p for p in touched if p.endswith(".h")}:
+        text = _read_source(source) or ""
+        for header in re.findall(r'#\s*include\s+"([\w./]+)"', text):
+            includers.setdefault("src/" + Path(header).name, set()).add(source)
+
+    reach, queue = set(), [p for p in touched]
+    while queue:
+        name = queue.pop()
+        if name in reach:
+            continue
+        reach.add(name)
+        queue.extend(includers.get(name, ()))
+    return sorted(Path(p) for p in reach
+                  if p.endswith(".cpp") and (REPO_ROOT / p).is_file())
+
+
 def build_units(annotations: list, matched: dict, functions: dict,
                 derived: dict, callees: dict, pe_fast, jobs: int = 0):
     """{address: unit text} and {address: refusal} for implemented pieces.
@@ -1446,6 +1491,9 @@ def main(argv=None) -> int:
     parser.add_argument("--check", action="store_true",
                         help="fail when a BYTE_EXACT claim in src/ no longer "
                              "reproduces; this is the ratchet")
+    parser.add_argument("--changed", action="store_true",
+                        help="scope to the src/ files git reports changed, "
+                             "plus everything that includes a changed header")
     parser.add_argument("--explain", action="store_true",
                         help="build the selected units and print each one's "
                              "compiler diagnostics beside the source lines "
@@ -1456,6 +1504,15 @@ def main(argv=None) -> int:
                         help="write BYTE_EXACT onto every annotation this run "
                              "proved (adds only, never removes)")
     arguments = parser.parse_args(argv)
+
+    if arguments.changed:
+        arguments.paths = list(changed_sources())
+        if not arguments.paths:
+            print("no changed source under src/; nothing to check")
+            return 0
+        print(f"scoped to {len(arguments.paths)} file(s) git reports changed: "
+              + ", ".join(str(p) for p in arguments.paths[:8])
+              + (" ..." if len(arguments.paths) > 8 else ""))
 
     if arguments.paths:
         annotations = []
