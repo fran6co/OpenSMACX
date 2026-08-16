@@ -523,25 +523,10 @@ uint32_t BufferField520Default = 1;
 
 namespace {
 
-typedef long(__stdcall *func_surface_unlock_slot)(void *, void *);
-typedef long(__stdcall *func_surface_get_dc_slot)(void *, void *);
-typedef long(__stdcall *func_clipper_set_list_slot)(void *, void *, unsigned long);
-typedef long(__stdcall *func_surface_set_clipper_slot)(void *, void *);
-typedef long(__stdcall *func_surface_release_dc_slot)(void *, void *);
-typedef unsigned long(__stdcall *func_com_release)(void *);
 typedef void (OriginalObject::*func_buffer_virtual)();
 
 static const size_t OwnedAllocationCount = 20;
-static const size_t SurfaceReleaseSlot = 0x08;
-static const size_t SurfaceGetDCSlot = 0x44;
-static const size_t ClipperSetClipListSlot = 0x1C;
-static const size_t SurfaceSetClipperSlot = 0x70;
-static const size_t SurfaceReleaseDCSlot = 0x68;
 
-void *slot(void *object, size_t offset) {
-    void **const vtable = *reinterpret_cast<void ***>(object);
-    return vtable[offset / sizeof(void *)];
-}
 
 }  // namespace
 
@@ -974,7 +959,7 @@ HDC Buffer::get_hdc() {
     if (field_50_ != 0) {
         surface_lost();
     }
-    void *const surface = reinterpret_cast<void *>(surface_);
+    IDirectDrawSurface *const surface = surface_;
     // Without a surface the buffer owns its context directly, so acquiring is
     // just publishing the stored handle and counting the reference.
     if (!surface) {
@@ -986,9 +971,7 @@ HDC Buffer::get_hdc() {
         ++hdc_lock_count_;
         return hdc2_;
     }
-    const long result = reinterpret_cast<func_surface_get_dc_slot>(
-        slot(surface, SurfaceGetDCSlot))(surface, &hdc2_);
-    if (result != 0) {
+    if (surface->GetDC(&hdc2_) != 0) {
         surface_lost();
     }
     ++hdc_lock_count_;
@@ -1011,7 +994,7 @@ ORIGINAL: 0x005E3563
 Status: Complete
 */
 void Buffer::release_hdc(int count) {
-    void *const surface = reinterpret_cast<void *>(surface_);
+    IDirectDrawSurface *const surface = surface_;
     // The count is subtracted rather than decremented, so a caller may return
     // several references at once; the handle drops only at or below zero.
     const int remaining = static_cast<int>(hdc_lock_count_) - count;
@@ -1026,9 +1009,7 @@ void Buffer::release_hdc(int count) {
     if (hdc2_ == nullptr || remaining >= 1) {
         return;
     }
-    const long result = reinterpret_cast<func_surface_release_dc_slot>(
-        slot(surface, SurfaceReleaseDCSlot))(surface, hdc2_);
-    if (result != 0) {
+    if (surface->ReleaseDC(hdc2_) != 0) {
         surface_lost();
     }
     hdc_lock_count_ = 0;
@@ -1197,23 +1178,29 @@ int Buffer::set_clip(RECT *rect) {
     if (surface_ != 0) {
         // A single-rectangle RGNDATA: the header's bound and the one entry in
         // the rectangle array are both the clipped rectangle.
-        struct ClipRegionData {
-            RGNDATAHEADER header;
-            RECT rects[1];
-        } region_data;
-        region_data.header.dwSize = sizeof(RGNDATAHEADER);
-        region_data.header.iType = RDH_RECTANGLES;
-        region_data.header.nCount = 1;
-        region_data.header.nRgnSize = sizeof(RECT);
-        region_data.header.rcBound = rect1_;
-        region_data.rects[0] = rect1_;
+        // An RGNDATA holding exactly one rectangle. `RGNDATA` itself ends
+        // in `char Buffer[1]` - a flexible array - so the storage has to be
+        // declared with the rectangle spelled out and handed over as
+        // `LPRGNDATA`; that cast is the API's, not this code's invention.
+        // The field names are `RGNDATAHEADER`'s own.
+        struct {
+            RGNDATAHEADER rdh;
+            RECT rect;
+        } region;
+        region.rdh.dwSize = sizeof(RGNDATAHEADER);
+        region.rdh.iType = RDH_RECTANGLES;
+        region.rdh.nCount = 1;
+        region.rdh.nRgnSize = sizeof(RECT);
+        region.rdh.rcBound = rect1_;
+        region.rect = rect1_;
 
-        void *const clipper = reinterpret_cast<void *>(clipper_);
-        reinterpret_cast<func_clipper_set_list_slot>(
-            slot(clipper, ClipperSetClipListSlot))(clipper, &region_data, 0);
-        void *const surface = reinterpret_cast<void *>(surface_);
-        reinterpret_cast<func_surface_set_clipper_slot>(
-            slot(surface, SurfaceSetClipperSlot))(surface, clipper);
+        // Slot 0x1C is index 7 of IDirectDrawClipper - `SetClipList` - and
+        // 0x70 is index 28 of IDirectDrawSurface - `SetClipper`. Called by
+        // name now that the two members carry their interface types; the
+        // emitted `call [reg + 0x1c]` is the same either way, and a name
+        // cannot be off by a slot.
+        clipper_->SetClipList(reinterpret_cast<LPRGNDATA>(&region), 0);
+        surface_->SetClipper(clipper_);
     }
     return 0;
 }
