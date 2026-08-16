@@ -996,21 +996,22 @@ ORIGINAL: 0x005DFCD0
 // keeps `this` in EBX and orders the first six instructions differently.
 // That is edits #4, #5, #14 and #17, 300 bytes before the `__asm`.
 //
-// TWO THINGS IN THE ORIGINAL WORTH FLAGGING, left as the image has them
-// because byte-exactness is the goal:
+// ONE THING IN THE ORIGINAL WORTH FLAGGING, left as the image has it
+// because byte-exactness is the goal: the Blt path passes `&clipped` as the
+// destination rectangle even when `area` is null - in which case nothing
+// ever wrote to `clipped` and DirectDraw is handed an uninitialised RECT.
+// Only reachable through a direct call with a null rectangle; `fill(int)`
+// always passes `&rect1_`.
 //
-//  1. The Blt path passes `&clipped` as the destination rectangle even when
-//     `area` is null - in which case nothing ever wrote to `clipped` and
-//     DirectDraw is handed an uninitialised RECT. Only reachable through a
-//     direct call with a null rectangle; `fill(int)` always passes `&rect1_`.
-//  2. The two bounds tests are not symmetric. The left edge is checked
-//     against `+width_` and the top edge against `-height_`:
-//     `mov eax, [esi+0x84]; neg eax; cmp edi, eax; jge`. Read at face
-//     value the second test rejects every non-negative top and the software
-//     fill never runs. It may instead be deliberate for a bottom-up DIB,
-//     whose rows count backwards from the base - nothing recovered so far
-//     settles which, so the `neg` is reproduced and named rather than
-//     quietly turned into the symmetric test it resembles.
+// THE `neg` IS NOT A BUG, though it was recorded as a suspected one here
+// first. `height_` HOLDS THE NEGATIVE, and `Buffer::init` carries both
+// halves of the round trip: it stores the negation at 0x005D7758
+// (`neg edi; mov [esi+0x84], edi`, and again from that same EDI at
+// 0x005D788D on the DIB path), then reads it back through a second `neg`
+// at 0x005D76BE-0x005D76C6 to compare against a positive height in its
+// "already this size" early-out. So `-height_` IS the positive height, and
+// `clipped.top >= -height_` is the ordinary bounds test its `+width_`
+// neighbour looks like.
 Status: WIP
 */
 int Buffer::fill(RECT *area, int color) {
@@ -1033,7 +1034,8 @@ int Buffer::fill(RECT *area, int color) {
         if (area != nullptr && !IntersectRect(&clipped, area, &rect1_)) {
             return 0;
         }
-        // See (1) above: `clipped` is uninitialised here when `area` is null.
+        // See the note above: `clipped` is uninitialised here when `area`
+        // is null, exactly as the image leaves it.
         surface_->Blt(&clipped, nullptr, nullptr,
                       DDBLT_COLORFILL | DDBLT_WAIT, &effects);
         return 0;
@@ -1049,7 +1051,7 @@ int Buffer::fill(RECT *area, int color) {
     if (clipped.left >= static_cast<int>(width_)) {
         return 0;
     }
-    // See (2) above: NEGATED, as the image has it.
+    // `height_` holds the negative, so this is the plain bounds test.
     if (clipped.top >= -static_cast<int>(height_)) {
         return 0;
     }
