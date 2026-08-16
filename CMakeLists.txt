@@ -22,6 +22,24 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
         CACHE FILEPATH "VC6 under wine is the only toolchain this tree builds with")
 endif()
 
+# THE BUILD'S OWN FLAGS, WRITTEN DOWN WHERE A TOOL CAN READ THEM.
+#
+# `tools/decomp_status.py` measures a body in its real translation unit
+# whenever the scaffold cannot build one, and to do that it has to compile
+# that file the way the build compiles it. It used to approximate: copy the
+# file's own directory beside it and hope. That resolves `#include "win.h"`
+# and nothing else, so `src/basewin.cpp` died on
+# `C1083: Cannot open include file: 'cstdint'` - which is supplied by
+# `cmake/vc6-include`, added below, along with a forced include of
+# `src/vc6_compat.h`.
+#
+# Mirroring those two into the tool would be a second copy of this file's
+# decisions, and the copy goes stale the first time an include path is added.
+# CMake already knows; this makes it say so.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
+    "write build/compile_commands.json; tools/vc6_build_flags.py reads it"
+    FORCE)
+
 project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX)
 
 if(NOT WIN32)

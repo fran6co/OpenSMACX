@@ -116,6 +116,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import cpu  # noqa: E402
+import vc6_build_flags  # noqa: E402
 import pefile  # noqa: E402
 
 from generator_support import parse_body_ranges, read_bytes  # noqa: E402
@@ -654,7 +655,7 @@ def _argument_shape(mangled: str):
 
 
 def choose_subject_symbol(found: list, subject: str = None,
-                          internal: list = None):
+                          internal: list = None, aliases=()):
     """(symbol, section) for the subject among a unit's .text symbols.
 
     Split out from `object_code` so it can be tested without a compiler: the
@@ -781,6 +782,39 @@ def choose_subject_symbol(found: list, subject: str = None,
                 if len(fits) == 1:
                     return fits[0]
 
+    # THE NAME THE SOURCE ACTUALLY DEFINES, when the catalogue's is absent.
+    #
+    # `emit.defined_symbol_prefixes` reads it off the definition the
+    # annotation is written above, so this is not a guess about which
+    # function is at the address - that correspondence is what the annotation
+    # IS. It is the other half of the same fact: `src/scroll.cpp` calls it
+    # `Scroll::set_sprite_up` and the catalogue calls it `?UNK1@Scroll@@`,
+    # and only the first of the two is in the object file.
+    #
+    # After every rule about the catalogued name, so a file that does carry
+    # the catalogued symbol is never diverted to a differently-named
+    # neighbour, and still strict about ambiguity.
+    for prefix in aliases or ():
+        exact = [pair for pair in found + list(internal or [])
+                 if pair[0].name == prefix]
+        if len(exact) == 1:
+            return exact[0]
+        same = [pair for pair in found + list(internal or [])
+                if pair[0].name.startswith(prefix)]
+        if len(same) == 1:
+            return same[0]
+        shape = _argument_shape(subject) if subject else None
+        if shape is not None:
+            fits = [pair for pair in same
+                    if _argument_shape(pair[0].name) == shape]
+            if len(fits) == 1:
+                return fits[0]
+            fits = [pair for pair in same
+                    if _argument_shape(pair[0].name) is not None
+                    and len(_argument_shape(pair[0].name)) == len(shape)]
+            if len(fits) == 1:
+                return fits[0]
+
     if len(found) != 1:
         names = [s.name for s, _ in found]
         raise ValueError(
@@ -792,7 +826,8 @@ def choose_subject_symbol(found: list, subject: str = None,
     return found[0]
 
 
-def object_code(data: bytes, want_eh: bool = False, subject: str = None):
+def object_code(data: bytes, want_eh: bool = False, subject: str = None,
+                aliases=()):
     """(bytes, relocation mask) for the compiled subject.
 
     `want_eh` selects the `.text$x` COMDAT that `/GX` emits the unwind funclets
@@ -855,7 +890,7 @@ def object_code(data: bytes, want_eh: bool = False, subject: str = None):
         elif not symbol.name.startswith("."):
             internal.append((symbol, sections[symbol.section - 1]))
 
-    symbol, section = choose_subject_symbol(found, subject, internal)
+    symbol, section = choose_subject_symbol(found, subject, internal, aliases)
 
     start, end = symbol.value, section.raw_size
     end = clip_jump_table(section, symbols, data, start, end)
@@ -1089,6 +1124,13 @@ def unit_source(unit):
 def seed_context(work: Path, origin: Path) -> None:
     """Put a landing's own directory beside it, so its includes resolve.
 
+    ONLY WHERE THE BUILD HAS NOTHING TO SAY. This is the approximation
+    `vc6_build_flags` replaces, and running both is worse than either: the
+    copy and the original are two different files to the preprocessor, so
+    `#pragma once` does not pair them and `src/vc6_compat.h` - delivered as a
+    `/FI` by the build and as a neighbour by this - defined `strcpy_s` twice.
+    A file CMake compiles gets CMake's include path and nothing else.
+
     A FILE-MODE LANDING COMPILES WITH ITS OWN DIRECTORY'S FILES BESIDE IT.
     Stated as a rule about landings rather than about zlib, because nothing
     here is zlib-shaped: a unit that is a real translation unit from a real
@@ -1101,6 +1143,8 @@ def seed_context(work: Path, origin: Path) -> None:
     shadowing something for a unit that never asked for it is the kind of
     defect that shows up as a byte mismatch nobody can trace.
     """
+    if vc6_build_flags.flags_for(origin):
+        return
     for sibling in sorted(origin.parent.iterdir()):
         if sibling.suffix in (".h", ".c") and sibling.is_file():
             target = work / sibling.name
@@ -1119,7 +1163,13 @@ def compile_unit(unit, work: Path, stem: str, flags: str) -> bytes:
     if origin is not None:
         seed_context(work, origin)
     source.write_text(text)
+    # AND THE FLAGS THE BUILD GIVES THIS FILE, when the build has any for it.
+    # See `vc6_build_flags`: a real translation unit needs the include path
+    # and forced includes CMakeLists.txt sets, and copying its neighbours is
+    # not the same thing. Empty for every scaffolded unit, which is most of
+    # them and self-contained by design.
     command = ["wine", str(VC6_CL), "/nologo", *flags.split(),
+               *vc6_build_flags.flags_for(origin),
                f"/Fo{obj.name}", source.name]
     result = subprocess.run(command, cwd=work, env=wine_environment(),
                             capture_output=True, text=True)
@@ -1194,22 +1244,35 @@ def compile_batch(units: dict, work: Path, flags: str) -> dict:
     batch - CL reports it and carries on - so a missing `.obj` is the
     compile-failure signal rather than a reason to fall back to one-at-a-time.
     """
-    names = {}
+    names, by_flags = {}, {}
     for stem, unit in units.items():
         text, origin = unit_source(unit)
         if origin is not None:
             seed_context(work, origin)
         names[stem] = f"{stem}{origin.suffix if origin else '.cpp'}"
         (work / names[stem]).write_text(text)
-    response = work / "cl.rsp"
-    response.write_text(" ".join(flags.split()) + "\n"
-                        + "\n".join(names[stem] for stem in units) + "\n")
-    done = run_compiler(["wine", str(VC6_CL), "/nologo", "@cl.rsp"], work)
+        # ONE RESPONSE FILE PER DISTINCT FLAG SET. A response file's flags
+        # apply to every source listed in it, and a real translation unit
+        # needs the include path CMake gives it (`vc6_build_flags`) while a
+        # scaffold needs none - so the two cannot share an invocation.
+        # Everything self-contained still shares ONE, which is where the
+        # 21.6x lives; the build's own files group by their own flags, and
+        # in this tree that is a single second group.
+        by_flags.setdefault(vc6_build_flags.signature(origin), []).append(stem)
+    output = ""
+    for index, (extra, stems) in enumerate(sorted(by_flags.items())):
+        response = work / f"cl{index}.rsp"
+        response.write_text(
+            " ".join(flags.split() + [w for w in extra.split("\x1f") if w])
+            + "\n" + "\n".join(names[stem] for stem in stems) + "\n")
+        done = run_compiler(
+            ["wine", str(VC6_CL), "/nologo", f"@{response.name}"], work)
+        output += done.stdout + done.stderr
     # RETURNED, not stashed on the function. This used to be
     # `compile_batch.diagnostics = ...`, a single slot on a module-level
     # object, which is exactly one shared mutable cell - fine while the only
     # caller was a serial loop and a race the moment batches run at once.
-    diagnostics = batch_diagnostics(done.stdout + done.stderr, units)
+    diagnostics = batch_diagnostics(output, units)
     out = {}
     for stem in units:
         obj = work / f"{stem}.obj"
@@ -1396,9 +1459,10 @@ def _original(low: int, high: int):
 
 def _compare_one(task):
     """One (compile output -> verdict). The unit of the comparison pool."""
-    address, data, name, low, high = task
+    address, data, name, low, high, aliases = task
     try:
-        rebuilt, rebuilt_mask = object_code(data, subject=name)
+        rebuilt, rebuilt_mask = object_code(data, subject=name,
+                                            aliases=aliases)
         original, mask = _original(low, high)
         return address, compare(original, mask, low, rebuilt, rebuilt_mask)
     except ValueError as error:
@@ -1432,7 +1496,7 @@ def _compare_one_serial(task):
 
 
 def match_functions(pe, rows: dict, shared: set, subjects: list,
-                    flags: str, chunk: int = 1) -> dict:
+                    flags: str, chunk: int = 1, aliases: dict = None) -> dict:
     """`match_function` for MANY units at once. {address: outcome}.
 
     Identical arithmetic to the singular form and deliberately so - it is the
@@ -1536,7 +1600,8 @@ def match_functions(pe, rows: dict, shared: set, subjects: list,
                     # By NAME - see the note at the census's own call. This is
                     # what lets one object answer for every subject in it.
                     tasks.append((address, data,
-                                  rows.get(address, {}).get("name"), low, high))
+                                  rows.get(address, {}).get("name"), low, high,
+                                  tuple((aliases or {}).get(address, ()))))
         candidates.update(_compare_all(tasks))
 
         for address, candidate in candidates.items():

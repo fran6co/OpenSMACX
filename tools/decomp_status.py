@@ -422,7 +422,8 @@ def explain_units(annotations: list, matched: dict, functions: dict,
 # ---------------------------------------------------------------- measuring
 
 
-def measure(units: dict, cache: dict, no_cache: bool, jobs: int):
+def measure(units: dict, cache: dict, no_cache: bool, jobs: int,
+            aliases: dict = None):
     """Compile + compare every unit; returns ({address: outcome}, new cache).
 
     `byte_match.match_functions` is the ratchet's own arithmetic, so the
@@ -457,7 +458,7 @@ def measure(units: dict, cache: dict, no_cache: bool, jobs: int):
         # invoked; passing it here is what put 120 bodies into a single
         # response file and compiled them one after another on one core.
         results = byte_match.match_functions(pe, rows, shared, subjects, "",
-                                             chunk=1)
+                                             chunk=1, aliases=aliases)
         for address, outcome in results.items():
             outcomes[address] = outcome
             entries[hashed[address]] = outcome
@@ -1615,7 +1616,7 @@ def main(argv=None) -> int:
     # that can carry the catalogued symbol for them. Both instruments are
     # necessary; which one leads is decided by whether the subject can be
     # named, and only the compiler knows that.
-    retries = {}
+    retries, aliases = {}, {}
     for address, outcome in outcomes.items():
         if outcome.get("tier") != "NO_COMPILE":
             continue
@@ -1624,9 +1625,17 @@ def main(argv=None) -> int:
                           else "")
         if whole is not None:
             retries[address] = whole
+            # WHAT THE SOURCE CALLS IT, beside what the catalogue calls it.
+            # A whole translation unit defines many symbols and is selected
+            # from by name, so a body `src/` spells differently - and 177 of
+            # them do - is invisible in its own file without this. See
+            # `emit.defined_symbol_prefixes`.
+            region = getattr(annotation, "region", "") or ""
+            if region:
+                aliases[address] = emit.defined_symbol_prefixes(region)
     if retries:
         recovered, entries = measure(retries, entries, arguments.no_cache,
-                                     arguments.jobs)
+                                     arguments.jobs, aliases)
         rescued = 0
         for address, outcome in recovered.items():
             if outcome.get("tier") != "NO_COMPILE":
