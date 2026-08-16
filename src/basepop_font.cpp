@@ -3,7 +3,7 @@
 
 /*
 Purpose: Set the four fonts used by popup strings.
-ORIGINAL: 0x006046F0
+ORIGINAL: 0x006046F0 BYTE_EXACT
 // name      ?set_string_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@PAUFont@@@Z
 // size      64 bytes
 // spans     0x006046F0-0x00604730
@@ -50,7 +50,7 @@ Purpose: Install the three button fonts, refusing a null primary.
          installed. Those are different failures and the return code does not
          distinguish them, which is the original's behaviour and not an
          oversight here.
-ORIGINAL: 0x006047F0
+ORIGINAL: 0x006047F0 BYTE_EXACT
 // name      ?set_button_font@BasePop@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z
 // size      54 bytes
 // spans     0x006047F0-0x00604826

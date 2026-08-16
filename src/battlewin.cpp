@@ -42,7 +42,7 @@ void BattleWin::on_iface_left_click(int, int) {
 Purpose: Destroy the window. The whole teardown is the Time member at +8; the
          original advances `this` by 8 and tail-jumps into the Time
          destructor, and nothing else in the object is touched.
-ORIGINAL: 0x00422ED0
+ORIGINAL: 0x00422ED0 BYTE_EXACT
 // name      ??1BattleWin@@QAE@XZ
 // size      8 bytes
 // spans     0x00422ED0-0x00422ED8

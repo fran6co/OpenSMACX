@@ -86,7 +86,7 @@ LPSTR Strings::put(LPCSTR input) {
 
 /*
 Purpose: Check if the string address is within the table.
-ORIGINAL: 0x006169A0
+ORIGINAL: 0x006169A0 BYTE_EXACT
 // name      ?get@Strings@@QAEHH@Z
 // size      27 bytes
 // spans     0x006169A0-0x006169BB

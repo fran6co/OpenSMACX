@@ -6417,7 +6417,7 @@ void __cdecl destroy_maininterface_wave() {
 
 /*
 Purpose: Atexit teardown thunk for g_JACKAL_FONT.
-ORIGINAL: 0x0045F940
+ORIGINAL: 0x0045F940 BYTE_EXACT
 // name      ??__Fg_JACKAL_FONT@@YAXXZ
 // size      10 bytes
 // spans     0x0045F940-0x0045F94A

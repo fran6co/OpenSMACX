@@ -619,7 +619,7 @@ HDC Win::get_hdc() {
 /*
 Purpose: Drop one reference to the process-wide device context, releasing it
          once the last reference is gone.
-ORIGINAL: 0x005EC6F0
+ORIGINAL: 0x005EC6F0 BYTE_EXACT
 // name      ?release_hdc@Win@@QAGXXZ
 // size      76 bytes
 // spans     0x005EC6F0-0x005EC73C
