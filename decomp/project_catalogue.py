@@ -53,6 +53,7 @@ from pathlib import Path
 from . import annotation_scan
 from .annotation_scan import REPO_ROOT
 from .grammar import CONTINUABLE, CONTINUED, FACT_LINE
+from .model import State
 
 
 # {root: (stamp, rows)}, keyed the same way `annotation_scan.scan_tree` is.
@@ -97,7 +98,7 @@ def from_source(src: Path = None) -> dict:
     # keeps finding defects in; there is one resolver and it lives in
     # `annotation_scan`.
     for annotation in annotation_scan.resolve(annotation_scan.scan_tree(root))[0]:
-        path = REPO_ROOT / annotation.path
+        path = annotation.path
         try:
             lines = path.read_text(errors="ignore").splitlines()
         except OSError:
@@ -148,15 +149,15 @@ def from_source(src: Path = None) -> dict:
             # populations are measured separately and must stay separate.
             "recovery_state": (
                 "external_library"
-                if annotation.state == annotation_scan.STATE_EXCLUDED
+                if annotation.state == State.EXCLUDED
                 and (annotation.exclusion or "").upper().startswith("S1") else
                 "unrecovered"
-                if annotation.state == annotation_scan.STATE_EXCLUDED else
+                if annotation.state == State.EXCLUDED else
                 "source_complete"
-                if annotation.state == annotation_scan.STATE_IMPLEMENTED else
+                if annotation.state == State.IMPLEMENTED else
                 "unrecovered"),
             "source_locations": annotation.location if
-                annotation.state == annotation_scan.STATE_IMPLEMENTED else "",
+                annotation.state == State.IMPLEMENTED else "",
             "segment": ".text",
             "original_dependencies": "",
             "redirect_exports": "",

@@ -24,9 +24,9 @@ IMPLEMENTED and belongs to the compiler. A file that claims a match in a
 comment and does not hold one in bytes is not a match, and nothing here can
 say otherwise.
 
-DEPRECATED FORMS are still recognised read-only while the tree migrates, each
-flagged `deprecated=True` so the migrator has an exact worklist and a scan can
-assert when none remain:
+DEPRECATED FORMS are still recognised read-only while the tree migrates. The
+recognition is a PARSING concern: a legacy spelling produces the same record
+as the new grammar, and nothing downstream can tell the spellings apart:
 
   * `Original Offset: 00XXXXXX` doc-comment blocks (the 2,679 hand-written
     recoveries and generated thunk files);
@@ -59,8 +59,7 @@ from .grammar import (EXCLUSION_TOKEN, LEGACY_BLOCK, LEGACY_OPENING,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
                       MARKER, MARKER_KEYWORD, MARKER_MATCHED, NEXT_MARKER,
                       SENTINEL, _MANGLED_BASE, _NAME_FIELD)
-from .model import (Annotation, CrossRef, MODE_BODY, MODE_FILE,
-                    STATE_EXCLUDED, STATE_IMPLEMENTED, STATE_PLACEHOLDER)
+from .model import DecompilationState, Mode, State
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC_ROOT = REPO_ROOT / "src"
@@ -153,13 +152,9 @@ def lessons(lines: list, index: int) -> tuple:
 # --------------------------------------------------------------- extraction
 
 
-def _rel(path: Path) -> str:
-    """Repo-relative when possible; absolute only for out-of-tree fixtures."""
-    resolved = Path(path).resolve()
-    try:
-        return str(resolved.relative_to(REPO_ROOT))
-    except ValueError:
-        return str(resolved)
+def _abs(path: Path) -> Path:
+    """Absolute: the record carries a path it can be acted on directly."""
+    return Path(path).resolve()
 
 
 def _brace_delta(line: str, in_block: bool) -> tuple:
@@ -378,10 +373,10 @@ def _is_placeholder_region(text: str) -> bool:
 
 def _state_of(region: str, excluded: str) -> str:
     if excluded:
-        return STATE_EXCLUDED
+        return State.EXCLUDED
     if _is_placeholder_region(region):
-        return STATE_PLACEHOLDER
-    return STATE_IMPLEMENTED
+        return State.PLACEHOLDER
+    return State.IMPLEMENTED
 
 
 def _parse_marker(line: str, in_block: bool):
@@ -445,17 +440,17 @@ def scan_text(text: str, path) -> list:
             lessons(lines, index)
         if keyword == "FILE":
             region = text
-            found.append(Annotation(
-                address=address, mode=MODE_FILE,
-                state=_state_of(region, ""), path=_rel(path),
+            found.append(DecompilationState(
+                address=address, mode=Mode.FILE,
+                state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, region=region, recipe="verbatim",
-                matched=matched, levers=found_levers, ruled_out=found_ruled,
+                byte_exact=matched, levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
         elif keyword == "EXCLUDED":
-            found.append(Annotation(
-                address=address, mode=MODE_BODY, state=STATE_EXCLUDED,
-                path=_rel(path), line=index + 1,
-                exclusion=_exclusion_citation(rest), matched=matched,
+            found.append(DecompilationState(
+                address=address, mode=Mode.BODY, state=State.EXCLUDED,
+                path=_abs(path), line=index + 1,
+                exclusion=_exclusion_citation(rest), byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
         else:
@@ -472,11 +467,11 @@ def scan_text(text: str, path) -> list:
                 except ValueError as problem:
                     region, error = "", str(problem)
             recipe = "writeback" if kind == "proved" else "census"
-            found.append(Annotation(
-                address=address, mode=MODE_BODY,
-                state=_state_of(region, ""), path=_rel(path),
+            found.append(DecompilationState(
+                address=address, mode=Mode.BODY,
+                state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, region=region, extract_error=error,
-                recipe=recipe, matched=matched,
+                recipe=recipe, byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
 
@@ -555,17 +550,15 @@ def _legacy_file_annotations(path: Path, text: str, lines: list,
 
     # The two src/recovered/ stores, keyed by filename.
     if kind == "units":
-        found.append(Annotation(
-            address=int(resolved.stem, 16), mode=MODE_FILE,
-            state=_state_of(text, ""), path=_rel(path), line=0,
-            deprecated=True, region=text, recipe="verbatim"))
+        found.append(DecompilationState(
+            address=int(resolved.stem, 16), mode=Mode.FILE,
+            state=_state_of(text, ""), path=_abs(path), line=0, region=text, recipe="verbatim"))
         return found
     if kind == "proved":
         body = _proved_body(lines)
-        found.append(Annotation(
-            address=int(resolved.stem, 16), mode=MODE_BODY,
-            state=_state_of(body, ""), path=_rel(path), line=0,
-            deprecated=True, region=body, recipe="writeback"))
+        found.append(DecompilationState(
+            address=int(resolved.stem, 16), mode=Mode.BODY,
+            state=_state_of(body, ""), path=_abs(path), line=0, region=body, recipe="writeback"))
         return found
 
     # The two deprecated inline spellings, anywhere under src/.
@@ -581,10 +574,10 @@ def _legacy_file_annotations(path: Path, text: str, lines: list,
                     error = ""
                 except ValueError as problem:
                     region, error = "", str(problem)
-                found.append(Annotation(
-                    address=address, mode=MODE_BODY,
-                    state=_state_of(region, ""), path=_rel(path),
-                    line=index + 1, deprecated=True, region=region,
+                found.append(DecompilationState(
+                    address=address, mode=Mode.BODY,
+                    state=_state_of(region, ""), path=_abs(path),
+                    line=index + 1, region=region,
                     extract_error=error, recipe="census"))
         trailing = LEGACY_TRAILING.search(line)
         if trailing:
@@ -594,10 +587,10 @@ def _legacy_file_annotations(path: Path, text: str, lines: list,
                 error = ""
             except ValueError as problem:
                 region, error = "", str(problem)
-            found.append(Annotation(
-                address=address, mode=MODE_BODY,
-                state=_state_of(region, ""), path=_rel(path),
-                line=index + 1, deprecated=True, region=region,
+            found.append(DecompilationState(
+                address=address, mode=Mode.BODY,
+                state=_state_of(region, ""), path=_abs(path),
+                line=index + 1, region=region,
                 extract_error=error, recipe="census"))
             in_block = block_now
             continue
@@ -609,10 +602,10 @@ def _legacy_file_annotations(path: Path, text: str, lines: list,
                 error = ""
             except ValueError as problem:
                 region, error = "", str(problem)
-            found.append(Annotation(
-                address=address, mode=MODE_BODY,
-                state=_state_of(region, ""), path=_rel(path),
-                line=index + 1, deprecated=True, region=region,
+            found.append(DecompilationState(
+                address=address, mode=Mode.BODY,
+                state=_state_of(region, ""), path=_abs(path),
+                line=index + 1, region=region,
                 extract_error=error, recipe="census"))
         in_block = block_now
     return found
@@ -697,22 +690,19 @@ def scan_tree(root: Path = SRC_ROOT) -> list:
 # ----------------------------------------------------------------- resolving
 
 
-def _precedence(annotation: Annotation) -> tuple:
+def _precedence(annotation: DecompilationState) -> tuple:
     """Which claimant owns an address when several annotate it.
 
-    Lower wins. The new grammar beats every legacy spelling; within one
-    grammar a proved body (byte-exact, re-verified by every collect) beats
-    an inline block; a preserved unit is a RECORD of a measurement, so it
-    yields to any live claim on the same address. The second key matters
-    once both stores carry explicit markers: the tie is decided by what the
-    file IS, not by the spelling it used to carry.
+    Lower wins. A proved body (byte-exact, re-verified by every collect)
+    beats an inline block; a preserved unit is a RECORD of a measurement,
+    so it yields to any live claim on the same address. A tie at one
+    precedence is a conflict the caller must surface, never decide.
     """
-    base = 0 if not annotation.deprecated else 1
     if annotation.recipe == "writeback":
-        return (base, 0)
+        return (0,)
     if annotation.recipe == "census":
-        return (base, 1)
-    return (base, 2)
+        return (1,)
+    return (2,)
 
 
 def _code_only(region: str) -> str:
@@ -780,27 +770,33 @@ def resolve(annotations: list) -> tuple:
 # ------------------------------------------------------------- cross-reference
 
 
-def cross_reference(annotations: list, catalog: dict) -> CrossRef:
+def cross_reference(annotations: list, catalog: dict) -> dict:
     """Hold the map against the catalogue; report drift, never fail on it.
+
+    Returns `{matched, duplicates, catalog_only, uncatalogued}`: matched is
+    `{address: record}`, duplicates `{address: [records]}`, catalog_only the
+    addresses no annotation claims, uncatalogued the records no catalogue row
+    knows.
 
     `catalog` is `{int_address: row}` as loaded by
     `emit_translation_unit.load_functions()` (catalogue corrections applied).
     """
-    result = CrossRef()
+    result = {"matched": {}, "duplicates": {},
+              "catalog_only": [], "uncatalogued": []}
     seen: dict = {}
     for annotation in annotations:
         if annotation.address in seen:
-            result.duplicates.setdefault(annotation.address,
-                                         [seen[annotation.address]])
-            result.duplicates[annotation.address].append(annotation)
+            result["duplicates"].setdefault(annotation.address,
+                                            [seen[annotation.address]])
+            result["duplicates"][annotation.address].append(annotation)
             continue
         seen[annotation.address] = annotation
         if annotation.address in catalog:
-            result.matched[annotation.address] = annotation
+            result["matched"][annotation.address] = annotation
         else:
-            result.uncatalogued.append(annotation)
+            result["uncatalogued"].append(annotation)
     for address in seen:
-        if address in result.duplicates:
-            result.matched.pop(address, None)
-    result.catalog_only = sorted(set(catalog) - set(seen))
+        if address in result["duplicates"]:
+            result["matched"].pop(address, None)
+    result["catalog_only"] = sorted(set(catalog) - set(seen))
     return result
