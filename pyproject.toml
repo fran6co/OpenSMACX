@@ -3,7 +3,7 @@ name = "opensmacx-decomp"
 version = "0.1.0"
 description = "The source map: what src/ says about the shipped SMACX image."
 requires-python = ">=3.12"
-# EMPTY, AND KEPT THAT WAY. The parsers under `tools/decomp` are pure stdlib.
+# EMPTY, AND KEPT THAT WAY. The parsers under `decomp/` are pure stdlib.
 # capstone and z3 belong to the tools that disassemble and solve, not to a
 # comment reader, so they live in the group below instead.
 dependencies = []
