@@ -22,7 +22,7 @@
 /*
 Purpose: Initialize the class by opening a file with write permission. The boolean parameter toggles 
          if the file is accessed sequentially or randomly.
-ORIGINAL: 0x006283A0
+ORIGINAL: 0x006283A0 BYTE_EXACT
 // name      ?init@Filemap@@QAEHPADH@Z
 // size      26 bytes
 // spans     0x006283A0-0x006283BA
@@ -41,7 +41,7 @@ Filemap *Filemap::init(LPCSTR file_name, BOOL is_sequential) {
 
 /*
 Purpose: Initialize the class by opening a random access file with write permission.
-ORIGINAL: 0x006283C0
+ORIGINAL: 0x006283C0 BYTE_EXACT
 // name      ?init@Filemap@@QAEHPAD@Z
 // size      21 bytes
 // spans     0x006283C0-0x006283D5

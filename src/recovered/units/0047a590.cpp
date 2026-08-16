@@ -52,6 +52,19 @@
 // where they can be edited without regenerating anything and are in
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ??0MultiWin@@QAE@XZ  at 0x0047A590  (503 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
 
 typedef int int32_t;
 typedef unsigned int uint32_t;
@@ -59,6 +72,13 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
+// The pointer-width pair. `src/` casts through `uintptr_t` wherever a body
+// turns an object into an address - `Palette::get_rgbquad` is the oldest of
+// them - and the prelude declaring every OTHER stdint name but these two made
+// those bodies NO_COMPILE on a syntax error, which reads as a broken body
+// rather than a missing typedef. 30 measurements in the ledger carried it.
+typedef unsigned int uintptr_t;
+typedef int intptr_t;
 typedef int int32;
 typedef unsigned int uint32;
 typedef short int16;
@@ -102,6 +122,20 @@ typedef void *HANDLE;
 typedef void *HWND;
 typedef void *HDC;
 typedef unsigned int UINT;
+
+// Placement new. The recovered window init_class bodies construct a Buffer in a
+// raw `char[sizeof(Buffer)]` (a plain local would double-destruct), which
+// needs `operator new(size_t, void *)`. The build gets it from the STL headers
+// stdafx.h pulls in, but this standalone unit includes none of them, so it is
+// restated here - guarded by the SAME macro VC6's own <new> uses, because the
+// std-shim includes the real <new> before this prelude whenever the body names
+// `std::`, and a second definition of the inline is a C2084 (measured: it
+// unreproduced 0x0050E9B0). Inline and unused-elsewhere, it emits nothing in
+// units that do not placement-new.
+#ifndef __PLACEMENT_NEW_INLINE
+#define __PLACEMENT_NEW_INLINE
+inline void *__cdecl operator new(unsigned int, void *p) { return p; }
+#endif
 
 // Spliced verbatim from src/original_seam.h so the unit calls into the
 // original image exactly as the build does. See seam_header().
@@ -415,8 +449,6 @@ const int BSTATE_UNK_8000 = 0x8000;
 const int BSTATE_UNK_80000 = 0x80000;
 const int BSTATE_UNK_8000000 = 0x8000000;
 const int BSTATE_UNK_8000000000 = 0x80000000;
-const int BufferSurfaceLockSlot = 0x64;
-const int BufferSurfaceUnlockSlot = 0x80;
 const int CHSI_COPTER = 6;
 const int CHSI_CRUISER = 4;
 const int CHSI_FOIL = 3;
@@ -487,8 +519,6 @@ const int DTREATY_UNK_80000000 = 0x80000000;
 const int DTREATY_VENDETTA = 0x10;
 const int DTREATY_WANT_REVENGE = 0x20;
 const int DTREATY_WANT_TO_TALK = 0x2000;
-const int DialogsDestructorAdjustment = 0x188;
-const int DisabledValue = -2;
 const int FAC_AEROSPACE_COMPLEX = 29;
 const int FAC_AQUAFARM = 36;
 const int FAC_ASCENT_TO_TRANSCENDENCE = 102;
@@ -622,9 +652,6 @@ const int FAC_VIRTUAL_WORLD = 76;
 const int FAC_VOICE_OF_PLANET = 101;
 const int FAC_WEATHER_PARADIGM = 72;
 const int FAC_XENOEMPATHY_DOME = 78;
-const int FacilityRepStart = 65;
-const int FacilitySPStart = 70;
-const int FontSizeTableCount = 12;
 const int GENDER_FEMALE = 1;
 const int GENDER_MALE = 0;
 const int GENDER_NEUTRAL = 2;
@@ -668,7 +695,6 @@ const int LM_SARGASSO = 4;
 const int LM_UNITY = 14;
 const int LM_URANIUM = 3;
 const int LM_VOLCANO = 1;
-const int ListBoxDestructorAdjustment = 0x48;
 const int MOOD_AMBIVALENT = 4;
 const int MOOD_BELLIGERENT = 7;
 const int MOOD_COOPERATIVE = 2;
@@ -711,53 +737,6 @@ const int MPREF_MAP_SHOW_FLAT_TERRAIN = 0x10000;
 const int MPREF_MAP_SHOW_FOG_WAR = 0x1;
 const int MPREF_MAP_SHOW_GRID_OCEAN_SQ = 0x800000;
 const int MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES = 0x1000;
-const int MapWinActiveOffset = 0x1DD74;
-const int MapWinTableSlots = 8;
-const int MaxAbilityNum = 29;
-const int MaxArmorNum = 14;
-const int MaxBaseNum = 512;
-const int MaxBonusNameNum = 41;
-const int MaxChassisNum = 9;
-const int MaxCitizenNum = 10;
-const int MaxCompassNum = 8;
-const int MaxContinentNum = 128;
-const int MaxDefenseModeNum = 3;
-const int MaxDiffNum = 6;
-const int MaxEnergyNum = 3;
-const int MaxFacilityNum = 134;
-const int MaxGoalsNum = 75;
-const int MaxLandmarkNum = 64;
-const int MaxMandateNum = 4;
-const int MaxMightNum = 7;
-const int MaxMoodNum = 9;
-const int MaxMoraleNum = 7;
-const int MaxNaturalNum = 16;
-const int MaxOffenseModeNum = 3;
-const int MaxOrderNum = 30;
-const int MaxPlanNum = 15;
-const int MaxPlayerNum = 8;
-const int MaxProposalNum = 11;
-const int MaxRankingHistoryTurns = 1000;
-const int MaxReactorNum = 4;
-const int MaxRegionLandNum = 64;
-const int MaxReputeNum = 8;
-const int MaxResourceInfoNum = 9;
-const int MaxResourceNum = 4;
-const int MaxSecretProjectNum = 64;
-const int MaxSitesNum = 25;
-const int MaxSocialCatNum = 4;
-const int MaxSocialEffectNum = 11;
-const int MaxSocialModelNum = 4;
-const int MaxSpecialistNum = 7;
-const int MaxTechnologyNum = 89;
-const int MaxTerrainNum = 20;
-const int MaxTextIndexNum = 4;
-const int MaxTimeControlNum = 6;
-const int MaxTriadNum = 3;
-const int MaxVehProtoFactionNum = 64;
-const int MaxVehProtoNum = 512;
-const int MaxWeaponNum = 26;
-const int NoneValue = -1;
 const int ORDERA_AUTOMATE_AIR_DEFENSE = 12;
 const int ORDERA_BOMBING_RUN = 10;
 const int ORDERA_ON_ALERT = 11;
@@ -980,7 +959,6 @@ const int RULE_SOCIAL = 3;
 const int RULE_TECH = 0;
 const int RULE_UNIT = 1;
 const int RULE_VOTES = 11;
-const int RegionBounds = 63;
 const int SE_CYBERNETIC = 1;
 const int SE_DEMOCRATIC = 2;
 const int SE_EUDAIMONIC = 2;
@@ -1011,7 +989,6 @@ const int SP_CLOUDBASE_ACADEMY = 35;
 const int SP_COMMAND_NEXUS = 1;
 const int SP_CYBORG_FACTORY = 17;
 const int SP_DREAM_TWISTER = 19;
-const int SP_Destroyed = -2;
 const int SP_EMPATH_GUILD = 4;
 const int SP_EMPTY_38 = 37;
 const int SP_EMPTY_39 = 38;
@@ -1062,7 +1039,6 @@ const int SP_SUPERCOLLIDER = 12;
 const int SP_TELEPATHIC_MATRIX = 30;
 const int SP_THEORY_OF_EVERYTHING = 18;
 const int SP_UNIVERSAL_TRANSLATOR = 20;
-const int SP_Unbuilt = -1;
 const int SP_VIRTUAL_WORLD = 6;
 const int SP_VOICE_OF_PLANET = 31;
 const int SP_WEATHER_PARADIGM = 2;
@@ -1099,12 +1075,6 @@ const int STATE_VICTORY_CONQUER = 0x2000;
 const int STATE_VICTORY_DIPLOMATIC = 0x200000;
 const int STATE_VICTORY_ECONOMIC = 0x400000;
 const int STATE_VOLCANO_ERUPTED = 0x20000;
-const int SpyingBaseStride = 0x134;
-const int SpyingFactionStride = 0x59C;
-const int SpyingStatusStride = 2099;
-const int StringListVirtualBaseOffset = 0x28;
-const int StringStructCloseAdjustment = 0x1C;
-const int StringStructDerivedCloseAdjustment = 0x28;
 const int TECH_ADAPDOC = 80;
 const int TECH_ADAPECO = 81;
 const int TECH_AGRAV = 23;
@@ -1228,8 +1198,6 @@ const int TFLAG_SECRETS = 0x1;
 const int TRIAD_AIR = 2;
 const int TRIAD_LAND = 0;
 const int TRIAD_SEA = 1;
-const int TechDisabled = -2;
-const int TechNone = -1;
 const int VFLAG_INVISIBLE = 0x400;
 const int VFLAG_IS_OBJECTIVE = 0x20;
 const int VFLAG_LURKER = 0x40;
@@ -1631,9 +1599,9 @@ class Buffer { public:
     Buffer();
     HDC get_hdc();
     int get_data();
-    int init_class();
     int text_height();
     int text_line_height();
+    static int init_class();
     void clear_links();
     void close();
     void close_class();

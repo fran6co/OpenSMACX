@@ -212,7 +212,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
 
 /*
 Purpose: Start an instance of the timer.
-ORIGINAL: 0x00616650
+ORIGINAL: 0x00616650 BYTE_EXACT
 // name      ?start@Time@@QAEHXZ
 // CORRECTED from ?start@Time@@QAEXXZ
 //   tail is `neg eax; sbb eax, eax; and al, 0xfe; add eax, 2; ret`
@@ -243,7 +243,7 @@ uint32_t Time::start() {
 
 /*
 Purpose: Start an instance of the pulse timer.
-ORIGINAL: 0x006166C0
+ORIGINAL: 0x006166C0 BYTE_EXACT
 // name      ?pulse@Time@@QAEHXZ
 // CORRECTED from ?pulse@Time@@QAEXXZ
 //   tail is `neg eax; sbb eax, eax; and al, 0xfe; add eax, 2; ret`
