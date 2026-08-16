@@ -489,7 +489,6 @@ int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
 IDirectDraw *BufferDirectDraw;  // 0x009BC494
 Font *BufferDefaultFont;        // 0x009BB484
 uint32_t *BufferResetValue520 = (uint32_t *)0x00696BF0;
-func_sprite_free *BufferFree = (func_sprite_free *)0x00644EF2;
 
 namespace {
 
@@ -501,7 +500,6 @@ typedef long(__stdcall *func_surface_release_dc_slot)(void *, void *);
 typedef unsigned long(__stdcall *func_com_release)(void *);
 typedef void (OriginalObject::*func_buffer_virtual)();
 
-static const size_t OwnedAllocationBase = 0x4BC;
 static const size_t OwnedAllocationCount = 20;
 static const size_t SurfaceReleaseSlot = 0x08;
 static const size_t BufferVirtualSlot = 0x04;
@@ -645,9 +643,9 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     spot_.init(0x28);
     field_4AC_ = 0;
     for (int slot = 0; slot < 20; ++slot) {
-        if (cached_[slot] != nullptr) {
-            free(cached_[slot]);
-            cached_[slot] = nullptr;
+        if (owned_[slot] != nullptr) {
+            free(owned_[slot]);
+            owned_[slot] = nullptr;
         }
     }
 
@@ -796,12 +794,12 @@ void Buffer::close() {
     volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
 
     // Twenty owned allocations released through the executable's allocator.
+    // The member, not `this` plus 0x4BC: `Buffer::init` walks the same array
+    // and the extent is proved - see `owned_` in buffer.h.
     for (size_t index = 0; index < OwnedAllocationCount; ++index) {
-        volatile uint32_t *const entry =
-            ordered + (OwnedAllocationBase / 4) + index;
-        if (*entry != 0) {
-            BufferFree(reinterpret_cast<void *>(*entry));
-            *entry = 0;
+        if (owned_[index] != nullptr) {
+            free(owned_[index]);
+            owned_[index] = nullptr;
         }
     }
 
@@ -1345,13 +1343,10 @@ Status: Complete
 void Buffer::clear_links() {
     spot_.init(0x28);
     field_4AC_ = 0;
-    // `lea edi, [esi + 0x4bc]` at 0x005D747B - the array itself, not a
-    // pointer stored there, which is what the cast used to assume.
-    void **const links = cached_;
-    for (size_t index = 0; index < 20; ++index) {
-        if (links[index]) {
-            BufferFree(links[index]);
-            links[index] = nullptr;
+    for (size_t index = 0; index < OwnedAllocationCount; ++index) {
+        if (owned_[index] != nullptr) {
+            free(owned_[index]);
+            owned_[index] = nullptr;
         }
     }
 }
