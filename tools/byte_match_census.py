@@ -192,10 +192,22 @@ def extract_body(source: str) -> str:
     definition, so the extract usually opens mid-comment; it is re-opened with
     `/*` rather than trimmed, because trimming would make this tool decide
     where a body starts.
+
+    THE TEST IS COMMENT DELIMITERS, NOT THE FIRST BRACE. It used to ask
+    whether a `*/` appeared before the first `{`, taking that brace as the
+    start of the body - and a brace in PROSE arrives sooner. 47 adjustor
+    thunks in `deleting_thunks.cpp` document themselves as "`WEEE@`
+    re-demangles to adjustor{1092}"; that `{` is inside the doc comment, so
+    the reopen was skipped and CL was handed the comment as code -
+    `C2501: 'ORIGINAL' : missing storage-class or type specifiers` on the
+    annotation's own `ORIGINAL:` line. Comparing the two delimiters instead
+    says exactly what is meant: an extract that meets `*/` before any `/*`
+    began inside a comment.
     """
     _, lines, start, end = body_span(source)
     text = "\n".join(lines[start:end + 1]) + "\n"
-    if "*/" in text.split("{", 1)[0]:
+    closes, opens = text.find("*/"), text.find("/*")
+    if closes != -1 and (opens == -1 or closes < opens):
         text = "/*\n" + text
     return text
 

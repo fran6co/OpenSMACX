@@ -59,7 +59,9 @@ import concurrent.futures
 import os
 import functools
 import re
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -322,6 +324,99 @@ def build_units(annotations: list, matched: dict, functions: dict,
         elif unit is not None:
             units[address] = unit
     return units, refusals
+
+
+# --------------------------------------------------------------- explaining
+
+
+def explain_units(annotations: list, matched: dict, functions: dict,
+                  derived: dict, callees: dict, pe_fast, keep: str = ""):
+    """Print each unit's compiler diagnostics WITH the lines they point at.
+
+    A NO_COMPILE row carries `u004070b0.cpp(2116) : error C2501` and the file
+    it names does not survive the run, so every one of 266 of them had to be
+    reconstructed by hand before it could be read. That is the whole reason
+    this campaign started with a tool: the error text alone says a token is
+    undeclared, and the fix depends entirely on WHAT THE LINE IS - a body
+    reaching for a file-scope static the emitter did not carry, a typedef, or
+    a doc comment the extractor swallowed into the code.
+
+    BOTH ROUTES, because the gate has two. A scaffold failure is only half the
+    story for a body whose file CMake compiles: the fallback below measures it
+    in its own translation unit instead, so a scaffold diagnostic that is
+    already answered elsewhere is not work to do. This says which.
+
+    Not a second measurement path: it builds through `_build_task` and
+    compiles through `byte_match.compile_unit`, so what it shows is what the
+    gate compiled.
+    """
+    keep_dir = Path(keep) if keep else None
+    if keep_dir:
+        keep_dir.mkdir(parents=True, exist_ok=True)
+
+    def attempt(unit, stem: str) -> str:
+        """"" if it compiles, else the diagnostics with their source lines."""
+        text, _ = byte_match.unit_source(unit)
+        if keep_dir:
+            (keep_dir / f"{stem}.cpp").write_text(text)
+        lines = text.splitlines()
+        with tempfile.TemporaryDirectory() as scratch:
+            try:
+                byte_match.compile_unit(unit, Path(scratch), stem,
+                                        byte_match.FLAG_SETS[0])
+            except (ValueError, OSError, subprocess.SubprocessError) as error:
+                out, seen = [], set()
+                for report in str(error).splitlines():
+                    hit = re.search(r"\((\d+)\)\s*:\s*(error|warning|fatal)",
+                                    report)
+                    out.append(f"    {report.strip()}")
+                    if not hit or int(hit.group(1)) in seen:
+                        continue
+                    seen.add(int(hit.group(1)))
+                    number = int(hit.group(1))
+                    for offset in range(max(1, number - 2), number + 1):
+                        if offset <= len(lines):
+                            out.append(f"      {offset:5d} | {lines[offset - 1]}")
+                return "\n".join(out) or "    (no diagnostic)"
+        return ""
+
+    worst = 0
+    for annotation in annotations:
+        if annotation.state != annotation_scan.STATE_IMPLEMENTED:
+            continue
+        address = annotation.address
+        if matched.get(address) is None:
+            continue
+        print(f"\n=== 0x{address:08X}  "
+              f"{functions.get(address, {}).get('name', '')}")
+        if annotation.recipe == "verbatim":
+            report = attempt((annotation.region, annotation.path),
+                             f"u{address:08x}")
+            print(report or "    FILE unit compiles")
+            worst = worst or bool(report)
+            continue
+        _, unit, refusal = _build_task(
+            (address, annotation.recipe, annotation.region,
+             annotation.location, matched[address]),
+            functions, derived, callees, pe_fast)
+        if refusal:
+            print(f"    scaffold refused before compiling: {refusal}")
+        elif unit is not None:
+            report = attempt(unit, f"u{address:08x}")
+            if not report:
+                print("    scaffold compiles")
+                continue
+            print(report)
+        whole = real_unit(getattr(annotation, "location", ""))
+        if whole is None:
+            print("    no fallback: this file is in no CMake build")
+            worst = 1
+            continue
+        report = attempt(whole, f"t{address:08x}")
+        print(report or "    ...but its own translation unit compiles; the "
+                        "gate measures it there")
+        worst = worst or bool(report)
+    return worst
 
 
 # ---------------------------------------------------------------- measuring
@@ -1350,6 +1445,12 @@ def main(argv=None) -> int:
     parser.add_argument("--check", action="store_true",
                         help="fail when a BYTE_EXACT claim in src/ no longer "
                              "reproduces; this is the ratchet")
+    parser.add_argument("--explain", action="store_true",
+                        help="build the selected units and print each one's "
+                             "compiler diagnostics beside the source lines "
+                             "they name; the way to read a NO_COMPILE")
+    parser.add_argument("--keep", default="",
+                        help="with --explain: write each built unit here")
     parser.add_argument("--record-matches", action="store_true",
                         help="write BYTE_EXACT onto every annotation this run "
                              "proved (adds only, never removes)")
@@ -1465,6 +1566,10 @@ def main(argv=None) -> int:
 
     duplicates = set(drift["duplicates"])
     measurable = [a for a in annotations if a.address not in duplicates]
+
+    if arguments.explain:
+        return explain_units(measurable, cross.matched, functions, derived,
+                             callees, pe_fast, arguments.keep)
 
     # THE GATE ASKS ABOUT CLAIMS, SO IT MEASURES CLAIMS. `--check`'s question
     # is "does every BYTE_EXACT claim in src/ still reproduce" - 1,540 of the

@@ -187,7 +187,7 @@ int __cdecl range(int input, int min, int max) {
 
 /*
 Purpose: Allocate memory with error checking.
-ORIGINAL: 0x005D4510
+ORIGINAL: 0x005D4510 BYTE_EXACT
 // name      ?mem_get@@YAPAXH@Z
 // size      44 bytes
 // spans     0x005D4510-0x005D453C
@@ -228,7 +228,7 @@ LPVOID __cdecl mem_get(size_t size) {
 }
 /*
 Purpose: Check the source file path and attempt to open a handle to the file.
-ORIGINAL: 0x00634BB0
+ORIGINAL: 0x00634BB0 BYTE_EXACT
 // name      ?env_open@@YAHPADPAD@Z
 // size      36 bytes
 // spans     0x00634BB0-0x00634BD4
@@ -384,7 +384,7 @@ int __cdecl btoi(LPCSTR str) {
 
 /*
 Purpose: Convert the hex string to an integer.
-ORIGINAL: 0x006288F0
+ORIGINAL: 0x006288F0 BYTE_EXACT
 // name      ?htoi@@YAHPAD@Z
 // size      91 bytes
 // spans     0x006288F0-0x0062894B
@@ -480,7 +480,7 @@ char *__cdecl findnum(char *str) {
 /*
 Purpose: Checks to see if the JACKAL library version is up to date. Pretty pointless but might add 
          an OpenSMACX check in the future.
-ORIGINAL: 0x0062D570
+ORIGINAL: 0x0062D570 BYTE_EXACT
 // name      ?jackal_version_check@@YAHPAD@Z
 // size      51 bytes
 // spans     0x0062D570-0x0062D5A3

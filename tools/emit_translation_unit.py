@@ -1628,6 +1628,112 @@ def without_classes_the_body_defines(scaffolding: str, body: str) -> str:
     return "\n".join(out) + "\n"
 
 
+# `RET conv Klass::method(...)` at the head of a definition, comments and
+# literals already blanked. The return type is whatever precedes the qualified
+# name on the same statement, which is why the scan below walks backwards from
+# `Klass::` to the previous `;`, `}` or `{` rather than trying to parse a type.
+QUALIFIED_DEFINITION = r"\b{klass}\s*::\s*(~?)\s*{method}\s*\("
+
+
+CONVENTIONS = ("__cdecl", "__stdcall", "__fastcall", "__thiscall")
+
+
+def subject_declaration_from_body(body: str, klass: str, method: str,
+                                  kind: str, convention: str = ""):
+    """The subject's in-class declaration, taken from its own definition.
+
+    THE BODY OUTRANKS THE CATALOGUE FOR THE SUBJECT, and only for the subject.
+    `imported_methods` states the opposite rule and is right about CALLEES: a
+    catalogued signature is decoded from the symbol the linker wrote, so it is
+    what the image has, while a header is what this project reconstructed.
+
+    The subject is the one member where that reasoning inverts. Its
+    declaration and its definition are in the SAME unit, so if they disagree
+    the unit does not compile at all - `C2511: 'init' : overloaded member
+    function 'int (unsigned int)' not found in 'Heap'` when the catalogue says
+    `?init@Heap@@QAE_NH@Z` and `src/heap.h` says `int init(uint32_t)`, and
+    `C2556` when only the return type differs. 69 committed bodies were
+    NO_COMPILE for exactly that, and NO_COMPILE is the one verdict that
+    teaches nothing: it cannot say whether the body reproduces the bytes.
+
+    Declaring what the body defines turns every one of them into a real
+    measurement. If the catalogue's signature is the true one the body will
+    now MISMATCH and say where - which is a finding about `src/` rather than a
+    failure of the harness to ask.
+
+    THE CALLING CONVENTION IS NOT THE BODY'S TO DROP. A definition in `src/`
+    spells the convention only when its header does not, and for a `QAA`
+    member the header is where it lives: `src/palette.cpp` writes
+    `void Palette::set_active_window(Win *)` while `palette.h` says
+    `static void __cdecl`. Rebuilding the declaration from the definition
+    alone therefore silently demoted three `QAA` subjects to `__thiscall` -
+    `this` moved from the stack into ECX, and three claims that had been
+    byte-exact for weeks came back MISMATCH on the first full measure.
+    `convention` is the catalogued spelling and is kept whenever the body
+    does not state one of its own.
+
+    Returns None when the definition cannot be found or read, and the caller
+    keeps the catalogued spelling.
+    """
+    import src_declarations
+    code = src_declarations.code_only(body)
+    if kind == "ctor":
+        pattern = QUALIFIED_DEFINITION.format(klass=re.escape(klass),
+                                              method=re.escape(klass))
+    elif kind == "dtor":
+        pattern = QUALIFIED_DEFINITION.format(klass=re.escape(klass),
+                                              method="~?\\s*" + re.escape(klass))
+    else:
+        pattern = QUALIFIED_DEFINITION.format(klass=re.escape(klass),
+                                              method=re.escape(method))
+    hit = re.search(pattern, code)
+    if hit is None:
+        return None
+
+    # The parameter list, by balancing from the `(` the match ended on.
+    depth, index = 0, hit.end() - 1
+    while index < len(code):
+        if code[index] == "(":
+            depth += 1
+        elif code[index] == ")":
+            depth -= 1
+            if depth == 0:
+                break
+        index += 1
+    else:
+        return None
+    params = code[hit.end():index].strip()
+
+    # Whatever follows the parameter list up to the opening brace is part of
+    # the declaration too - `const` is the one that occurs here, and dropping
+    # it would produce a declaration the definition does not match.
+    tail = code[index + 1:]
+    brace = tail.find("{")
+    if brace == -1:
+        return None
+    trailer = " ".join(tail[:brace].split())
+    if trailer and trailer not in ("const", "volatile", "const volatile"):
+        return None  # an initialiser list or something unparsed; do not guess
+
+    if kind == "dtor":
+        return f"    ~{klass}();"
+    if kind == "ctor":
+        return f"    {klass}({params});"
+
+    # Everything from the previous statement boundary to the class name is the
+    # return type and calling convention, verbatim.
+    head = code[:hit.start()]
+    cut = max(head.rfind(";"), head.rfind("}"), head.rfind("{"))
+    returns = " ".join(head[cut + 1:].split())
+    if not returns or "(" in returns or ")" in returns:
+        return None
+    # `static` on a definition is illegal; the catalogue decides that instead.
+    returns = re.sub(r"\bstatic\b", "", returns).strip()
+    if convention and not any(word in returns for word in CONVENTIONS):
+        returns = f"{returns} {convention.strip()}"
+    return f"    {returns} {method}({params}){' ' + trailer if trailer else ''};"
+
+
 def imported_methods(name: str, catalogued: set) -> list:
     """`src/`'s declarations for `name`'s methods, minus the catalogued ones.
 
@@ -2317,17 +2423,27 @@ def emit(address: int, functions: dict, derived: dict, callees: dict,
         lines.extend(imported_methods(
             signature.klass,
             {e.method for e in own} | {signature.method}))
-        if signature.kind == "ctor":
+        # `static_for` is the CALLEE rule and must not be used here: it makes
+        # every `QAA` method static, and a `QAA` subject has to stay
+        # non-static to mangle back to the symbol being compared. Only the
+        # static-member half applies to a subject - see `static_for`.
+        subject_static = "static " if recovery_symbols.is_static_member(
+            signature.mangled) else ""
+        # WHAT THE BODY DEFINES, WHEN THERE IS A BODY. See
+        # `subject_declaration_from_body`: a declaration that contradicts the
+        # definition beside it is C2511/C2556 and takes the whole unit down,
+        # so the catalogue's spelling cannot win this one.
+        from_body = subject_declaration_from_body(
+            body, signature.klass, signature.method, signature.kind,
+            signature.member_convention()) if body else None
+        if from_body is not None:
+            lines.append(from_body if not subject_static
+                         else "    static " + from_body.lstrip())
+        elif signature.kind == "ctor":
             lines.append(f"    {signature.klass}({', '.join(signature.params)});")
         elif signature.kind == "dtor":
             lines.append(f"    ~{signature.klass}();")
         else:
-            # `static_for` is the CALLEE rule and must not be used here: it
-            # makes every `QAA` method static, and a `QAA` subject has to stay
-            # non-static to mangle back to the symbol being compared. Only the
-            # static-member half applies to a subject - see `static_for`.
-            subject_static = "static " if recovery_symbols.is_static_member(
-                signature.mangled) else ""
             lines.append(f"    {subject_static}{signature.returns} "
                          f"{signature.member_convention()}{signature.method}"
                          f"({', '.join(signature.params)});")

@@ -13,7 +13,7 @@
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
-ORIGINAL: 0x004E25E0
+ORIGINAL: 0x004E25E0 BYTE_EXACT
 // name      ?pid_2_idx@AlphaNet@@QAEHK@Z
 // size      39 bytes
 // spans     0x004E25E0-0x004E2607

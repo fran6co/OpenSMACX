@@ -214,7 +214,7 @@ LPSTR Text::string() {
 
 /*
 Purpose: Parse the current item into the string buffer.
-ORIGINAL: 0x005FDD10
+ORIGINAL: 0x005FDD10 BYTE_EXACT
 // name      ?item@Text@@QAEXXZ
 // size      98 bytes
 // spans     0x005FDD10-0x005FDD72
@@ -518,7 +518,7 @@ Text::Text()
 // file_name_[0], where the image writes the byte FIRST.
 
 
-// ORIGINAL: 0x005FD550
+// ORIGINAL: 0x005FD550 BYTE_EXACT
 // name      ?text_open@@YAHPADPAD@Z
 // size      21 bytes
 // spans     0x005FD550-0x005FD565

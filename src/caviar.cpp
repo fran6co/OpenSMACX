@@ -427,7 +427,7 @@ Purpose: Read back the three values at 0x2C, 0x30 and 0x34, skipping any output
          The mangled name declares three ints; they are used as pointers, and
          the parameters are typed that way here because that is what the body
          does with them.
-ORIGINAL: 0x00618340
+ORIGINAL: 0x00618340 BYTE_EXACT
 // name      ?UNK11@Caviar@@QAEXHHH@Z
 // size      42 bytes
 // spans     0x00618340-0x0061836A

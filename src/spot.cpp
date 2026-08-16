@@ -268,7 +268,7 @@ int Spot::check(int x, int y, int *spot_pos, int *spot_type, RECT *spot_rect) {
 
 /*
 Purpose: Get the RECT for a specific spot.
-ORIGINAL: 0x005FAC00
+ORIGINAL: 0x005FAC00 BYTE_EXACT
 // name      ?get_rect@Spot@@QAEHHHPAURECT@@@Z
 // size      91 bytes
 // spans     0x005FAC00-0x005FAC5B
