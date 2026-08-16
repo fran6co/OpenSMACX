@@ -2,7 +2,8 @@
   "venvPath": ".",
   "venv": ".venv",
   "include": [
-    "tools"
+    "tools",
+    "decomp"
   ],
   "exclude": [
     ".opensmacx",

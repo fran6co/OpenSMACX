@@ -132,8 +132,8 @@ directory, so lanes do not contend for it.
     cd <path> && mkdir -p .opensmacx
     cp -al <main>/.opensmacx/game .opensmacx/game        # hard links, never
     cp -al <main>/.opensmacx/analysis .opensmacx/analysis  # symlinks: symlinked
-                                                     # artifact paths are
-                                                     # rejected by the build
+                                                           # artifact paths are
+                                                           # rejected by the build
     uv sync                                          # NOT copied - see below
     cmake -S . -B build -G Ninja
 
