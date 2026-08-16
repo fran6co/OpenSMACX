@@ -10,12 +10,14 @@ fact block stamped under each marker:
 
     rows = from_source()                      # {address: row}
     rows[0x005D7210]["name"]                  # '??0Buffer@@QAE@XZ'
-    annotations, duplicates = resolve(scan_tree())
+    records, duplicates = resolve(scan_tree())
+    records[0].path                           # absolute Path, ready to open
+    records[0].state is State.IMPLEMENTED     # typed vocabulary, not strings
 
 THE LAYOUT. Each module is one concern:
 
-    model.py             the data structures a scan produces - Annotation,
-                         CrossRef, the mode and state vocabulary
+    model.py             the data structures a scan produces -
+                         DecompilationState, Mode, State
     grammar.py           the annotation grammar as data - every pattern the
                          scanner recognises, nothing else
     annotation_scan.py   the engine that walks, extracts, resolves and
@@ -45,16 +47,13 @@ from . import annotation_scan, grammar, model, project_catalogue
 from .annotation_scan import (cross_reference, resolve, scan_file, scan_text,
                               scan_tree, tree_stamp)
 from .grammar import FACT_LINE
-from .model import (Annotation, CrossRef, MODE_BODY, MODE_FILE,
-                    STATE_EXCLUDED, STATE_IMPLEMENTED, STATE_PLACEHOLDER)
+from .model import DecompilationState, Mode, State
 from .project_catalogue import from_source, stamped
 
 __all__ = [
     "annotation_scan", "grammar", "model", "project_catalogue",
-    "Annotation", "CrossRef",
+    "DecompilationState", "Mode", "State",
     "scan_tree", "scan_file", "scan_text", "resolve",
     "cross_reference", "tree_stamp",
-    "MODE_BODY", "MODE_FILE",
-    "STATE_IMPLEMENTED", "STATE_PLACEHOLDER", "STATE_EXCLUDED",
     "from_source", "stamped", "FACT_LINE",
 ]
