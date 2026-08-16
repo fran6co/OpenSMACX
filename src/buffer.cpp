@@ -23,6 +23,12 @@
 #include "spot.h"
 
 #include <new>
+// `Buffer::init` creates the surface and clipper, and names
+// IID_IDirectDrawSurface - which lives in dxguid.lib. Linked the way
+// `time.h` links Winmm, rather than in CMakeLists, so the dependency
+// sits beside the code that needs it.
+#pragma comment(lib, "dxguid.lib")
+#include <ddraw.h>
 
 Palette **BufferPalette = reinterpret_cast<Palette **>(0x009B8174);
 
@@ -480,7 +486,8 @@ int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
     return self->text_line_height();
 }
 
-int BufferDirectDrawActive;  // 0x009BC494
+IDirectDraw *BufferDirectDraw;  // 0x009BC494
+Font *BufferDefaultFont;        // 0x009BB484
 uint32_t *BufferResetValue520 = (uint32_t *)0x00696BF0;
 func_sprite_free *BufferFree = (func_sprite_free *)0x00644EF2;
 
@@ -584,8 +591,175 @@ static func_buffer_init BufferInitOriginal = original_method<func_buffer_init>(0
 static func_buffer_fill BufferFillOriginal = original_method<func_buffer_fill>(0x005DFB50);
 static func_buffer_load_pcx BufferLoadPcxOriginal = original_method<func_buffer_load_pcx>(0x005D7DE0);
 
+/*
+Purpose: Give the buffer a size and the storage behind it - a DirectDraw
+         surface when the process has DirectDraw, a DIB section otherwise -
+         and leave a device context selected onto it.
+ORIGINAL: 0x005D7670
+// name      ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z
+// size      847 bytes
+// spans     0x005D7670-0x005D79BF
+// prototype int (__thiscall ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z)(Buffer* this, int, int, int, ExtDirectDraw*)
+// callers   40   call targets   5
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D7470 0x005D8000 0x005FA8A0 0x00644EF2 0x006465F0
+//
+// `height_` HOLDS THE NEGATIVE, which is what makes the early-out read
+// oddly: `width == width_ && height == -height_` is "already this size".
+// Every caller that reads it back negates it again - `Win::init_class`
+// passes `-logo.height_` to `copy` - so the sign lives in the field.
+//
+// The four returns are 3 (bad argument), 1 (no device context), 0x12 (the
+// surface or its clipper could not be created) and 0 (done, and also the
+// early-out).
+Status: WIP
+*/
+// `/O2` implies `/Oi`, which expands the `memset` below to `rep stosd`; the
+// image has `call _memset` at 0x005D77C3. `stdafx.h` already pins the four
+// string routines this way and this is the same lever, kept local because
+// only this body needs it.
+#pragma function(memset)
+
 int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
-    return (ORIGINAL(this)->*BufferInitOriginal)(width, height, tgl, direct_draw);
+    // Buffer's own virtual slot 1, called on `this` whenever the surface or
+    // its device context could not be had. The BASE implementation is
+    // `sub_406b30` - `xor eax, eax; ret` - so what it means is whatever the
+    // derived windows do with it; nothing here establishes more.
+    static const size_t BufferSlotSurfaceLost = 4;
+    typedef void (OriginalObject::*func_buffer_surface_lost)();
+
+    const int borrowed = tgl & 4;
+    if (borrowed != 0 && direct_draw == nullptr) {
+        return 3;
+    }
+    if (width < 0 || height < 0) {
+        return 3;
+    }
+    if (width == static_cast<int>(width_)
+        && height == -static_cast<int>(height_)) {
+        return 0;
+    }
+
+    close();
+    spot_.init(0x28);
+    field_4AC_ = 0;
+    for (int slot = 0; slot < 20; ++slot) {
+        if (cached_[slot] != nullptr) {
+            free(cached_[slot]);
+            cached_[slot] = nullptr;
+        }
+    }
+
+    if (BufferDirectDraw == nullptr && borrowed == 0) {
+        hdc_ = CreateCompatibleDC(nullptr);
+        if (hdc_ == nullptr) {
+            return 1;
+        }
+    }
+
+    width_ = width;
+    height_ = -height;
+
+    if (BufferDirectDraw != nullptr) {
+        if (borrowed == 0) {
+            DDSURFACEDESC description;
+            memset(&description, 0, sizeof(description));
+            description.dwSize = sizeof(description);
+            description.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+            description.dwHeight = height;
+            description.dwWidth = width;
+            description.ddsCaps.dwCaps =
+                DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY | DDSCAPS_VIDEOMEMORY;
+            IDirectDrawSurface *created = nullptr;
+            if (BufferDirectDraw->CreateSurface(&description, &created,
+                                                nullptr) != 0) {
+                return 0x12;
+            }
+            if (BufferDirectDraw->CreateClipper(0, &clipper_, nullptr) != 0) {
+                return 0x12;
+            }
+            created->QueryInterface(IID_IDirectDrawSurface,
+                                    reinterpret_cast<void **>(&surface_));
+        }
+    } else if (borrowed == 0) {
+        bitmap_handle_ = CreateDIBSection(hdc_, bitmap_info_, 0, ppv_bits_,
+                                          nullptr, 0);
+        if (bitmap_handle_ == nullptr) {
+            MessageBoxA(nullptr,
+                        "Unable to allocate draw-buffer; terminating program",
+                        "FATAL ERROR", MB_ICONEXCLAMATION);
+            exit(4);
+        }
+    }
+    if (borrowed != 0) {
+        surface_ = direct_draw->surface;
+        clipper_ = direct_draw->clipper;
+    }
+
+    rect2_.left = 0;
+    rect2_.top = 0;
+    rect2_.right = width;
+    rect2_.bottom = height;
+    set_clip(&rect2_);
+
+    width_ = width;
+    height_ = -height;
+    field_90_ = width * height;
+    field_9C_ = 0x100;
+
+    if (BufferDirectDraw == nullptr) {
+        field_74_ = reinterpret_cast<uint32_t>(
+            SelectObject(hdc_, bitmap_handle_));
+    }
+    field_4A8_ = (width + 3) & ~3;
+
+    if (BufferDefaultFont != nullptr) {
+        if (BufferDefaultFont->is_initialized()) {
+            font1_ = BufferDefaultFont;
+        }
+        font2_ = nullptr;
+        font3_ = nullptr;
+        font4_ = nullptr;
+    }
+
+    if (field_50_ != 0) {
+        (ORIGINAL(this)->*original_slot<func_buffer_surface_lost>(
+            *reinterpret_cast<uint8_t **>(this) + BufferSlotSurfaceLost))();
+    }
+
+    if (surface_ == nullptr) {
+        hdc2_ = hdc_;
+    } else if (hdc2_ == nullptr) {
+        if (surface_->GetDC(&hdc2_) != 0) {
+            (ORIGINAL(this)->*original_slot<func_buffer_surface_lost>(
+                *reinterpret_cast<uint8_t **>(this) + BufferSlotSurfaceLost))();
+        }
+    }
+
+    ++hdc_lock_count_;
+    SetBkMode(hdc2_, TRANSPARENT);
+    SetTextAlign(hdc2_, TA_LEFT | TA_TOP | TA_NOUPDATECP);
+
+    if (surface_ == nullptr) {
+        if (--hdc_lock_count_ <= 0) {
+            hdc2_ = nullptr;
+            hdc_lock_count_ = 0;
+        }
+    } else {
+        const int remaining = --hdc_lock_count_;
+        if (hdc2_ != nullptr && remaining <= 0) {
+            if (surface_->ReleaseDC(hdc2_) != 0) {
+                (ORIGINAL(this)->*original_slot<func_buffer_surface_lost>(
+                    *reinterpret_cast<uint8_t **>(this) + BufferSlotSurfaceLost))();
+            }
+            hdc_lock_count_ = 0;
+            hdc2_ = nullptr;
+        }
+    }
+
+    field_1C_ = tgl;
+    return 0;
 }
 
 int Buffer::fill(int color) {
@@ -634,7 +808,7 @@ void Buffer::close() {
     if (ordered[0x64 / 4] != 0) {
         ordered[0x68 / 4] = 0;
         ordered[0x6C / 4] = 0;
-        if (BufferDirectDrawActive != 0) {
+        if (BufferDirectDraw != 0) {
             void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
             // The reference count was just zeroed, so this decrement always
             // lands at or below zero and the published data is dropped.
@@ -683,7 +857,7 @@ void Buffer::close() {
         }
     }
 
-    if (BufferDirectDrawActive != 0) {
+    if (BufferDirectDraw != 0) {
         size_t release_offset_cases[] = {size_t(0x58), size_t(0x5C)};
         for (size_t release_offset_index = 0;
              release_offset_index
@@ -802,16 +976,16 @@ HDC Buffer::get_hdc() {
     if (field_50_ != 0) {
         (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
     }
-    void *const surface = reinterpret_cast<void *>(field_58_);
+    void *const surface = reinterpret_cast<void *>(surface_);
     // Without a surface the buffer owns its context directly, so acquiring is
     // just publishing the stored handle and counting the reference.
     if (!surface) {
         hdc2_ = hdc_;
-        ++field_68_;
+        ++hdc_lock_count_;
         return hdc_;
     }
     if (hdc2_ != nullptr) {
-        ++field_68_;
+        ++hdc_lock_count_;
         return hdc2_;
     }
     const long result = reinterpret_cast<func_surface_get_dc_slot>(
@@ -819,7 +993,7 @@ HDC Buffer::get_hdc() {
     if (result != 0) {
         (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
     }
-    ++field_68_;
+    ++hdc_lock_count_;
     return hdc2_;
 }
 
@@ -839,15 +1013,15 @@ ORIGINAL: 0x005E3563
 Status: Complete
 */
 void Buffer::release_hdc(int count) {
-    void *const surface = reinterpret_cast<void *>(field_58_);
+    void *const surface = reinterpret_cast<void *>(surface_);
     // The count is subtracted rather than decremented, so a caller may return
     // several references at once; the handle drops only at or below zero.
-    const int remaining = static_cast<int>(field_68_) - count;
-    field_68_ = static_cast<uint32_t>(remaining);
+    const int remaining = static_cast<int>(hdc_lock_count_) - count;
+    hdc_lock_count_ = static_cast<uint32_t>(remaining);
     if (!surface) {
         if (remaining < 1) {
             hdc2_ = nullptr;
-            field_68_ = 0;
+            hdc_lock_count_ = 0;
         }
         return;
     }
@@ -859,7 +1033,7 @@ void Buffer::release_hdc(int count) {
     if (result != 0) {
         (ORIGINAL(this)->*original_method<func_buffer_virtual>(reinterpret_cast<unsigned long>(slot(this, BufferVirtualSlot))))();
     }
-    field_68_ = 0;
+    hdc_lock_count_ = 0;
     hdc2_ = nullptr;
 }
 
@@ -981,7 +1155,7 @@ dispatch reads back by fixed width. The clipper and surface dispatches, the
 RGNDATA contents, and the reference count are all observed.
 */
 int Buffer::set_clip(RECT *rect) {
-    if (!ppv_bits_ && field_58_ == 0) {
+    if (!ppv_bits_ && surface_ == 0) {
         return 7;
     }
     if (!rect) {
@@ -1022,7 +1196,7 @@ int Buffer::set_clip(RECT *rect) {
         release_hdc(1);
     }
 
-    if (field_58_ != 0) {
+    if (surface_ != 0) {
         // A single-rectangle RGNDATA: the header's bound and the one entry in
         // the rectangle array are both the clipped rectangle.
         struct ClipRegionData {
@@ -1036,10 +1210,10 @@ int Buffer::set_clip(RECT *rect) {
         region_data.header.rcBound = rect1_;
         region_data.rects[0] = rect1_;
 
-        void *const clipper = reinterpret_cast<void *>(field_5C_);
+        void *const clipper = reinterpret_cast<void *>(clipper_);
         reinterpret_cast<func_clipper_set_list_slot>(
             slot(clipper, ClipperSetClipListSlot))(clipper, &region_data, 0);
-        void *const surface = reinterpret_cast<void *>(field_58_);
+        void *const surface = reinterpret_cast<void *>(surface_);
         reinterpret_cast<func_surface_set_clipper_slot>(
             slot(surface, SurfaceSetClipperSlot))(surface, clipper);
     }
@@ -1171,7 +1345,9 @@ Status: Complete
 void Buffer::clear_links() {
     spot_.init(0x28);
     field_4AC_ = 0;
-    void * *const links = reinterpret_cast<void **>(field_4BC_);
+    // `lea edi, [esi + 0x4bc]` at 0x005D747B - the array itself, not a
+    // pointer stored there, which is what the cast used to assume.
+    void **const links = cached_;
     for (size_t index = 0; index < 20; ++index) {
         if (links[index]) {
             BufferFree(links[index]);

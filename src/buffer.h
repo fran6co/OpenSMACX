@@ -36,7 +36,17 @@ struct Vert;
 // DirectDraw surface handle passed to `init`. No definition is known - the
 // original forwards it straight into the DirectDraw create call - so a forward
 // declaration is all `init`'s signature needs to compile.
-struct ExtDirectDraw;
+// <ddraw.h>, included where they are called.
+struct IDirectDraw;
+struct IDirectDrawSurface;
+struct IDirectDrawClipper;
+
+// 0x005D7852: `Buffer::init` takes the caller's surface from +0 and its
+// clipper from +4 when the `tgl & 4` flag says the storage is borrowed.
+struct ExtDirectDraw {
+  IDirectDrawSurface *surface;
+  IDirectDrawClipper *clipper;
+};
 
  /*
   * Buffer class
@@ -106,11 +116,19 @@ class DLLEXPORT Buffer {
   uint32_t field_40_[4];
   uint32_t field_50_;
   LPVOID *ppv_bits_;
-  uint32_t field_58_;
-  uint32_t field_5C_;
+  // 0x58 and 0x5C. The DirectDraw pair `Buffer::init` creates: slot 4 of
+  // IDirectDraw is CreateClipper and stores into 0x5C, and the surface it
+  // creates is QueryInterface'd into 0x58. `Buffer::get_hdc` then calls
+  // slot 0x44 - IDirectDrawSurface::GetDC - on 0x58 and had to cast it back
+  // out of a `uint32_t` to do it.
+  IDirectDrawSurface *surface_;
+  IDirectDrawClipper *clipper_;
   HDC hdc2_;
   HDC hdc_;
-  uint32_t field_68_;
+  // 0x68. How many holders the device context at `hdc2_` has: `init`,
+  // `get_hdc` and `release_hdc` all raise it before GetDC and lower it
+  // before ReleaseDC, and zero it when the last one goes.
+  int hdc_lock_count_;
   uint32_t field_6C_;
   HRGN field_70_;
   uint32_t field_74_;
@@ -138,8 +156,10 @@ class DLLEXPORT Buffer {
   uint32_t field_4A8_;
   uint32_t field_4AC_;
   Spot spot_;
-  uint32_t field_4BC_;  // 0x4BC
-  uint8_t field_4C0_[0x4C];  // 0x4C0
+  // 0x4BC. TWENTY POINTERS, not a word and a blob: `Buffer::init` walks
+  // `for (20) { if (*p) { free(*p); *p = 0; } p += 4; }` from 0x4BC, which
+  // ends at 0x50C - exactly where `field_50C_` starts.
+  void *cached_[20];
   uint32_t field_50C_;
   uint32_t field_510_;
   uint32_t field_514_;
@@ -214,7 +234,16 @@ Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *);
 // VALUE. Through `extern int *` the same source compiles to a load of the
 // pointer and then `cmp dword ptr [eax], 0` - one instruction more, and the
 // first divergence in that body.
-extern int BufferDirectDrawActive;
+// 0x009BC494. AN IDirectDraw, not a flag. Every test of it is `!= 0`,
+// which is what made `int` survive - but `Buffer::init` does
+// `mov ecx, [eax]` and `call [ecx + 0x18]` on it, which is slot 6,
+// IDirectDraw::CreateSurface. It also calls slot 4, CreateClipper.
+extern IDirectDraw *BufferDirectDraw;
+
+// 0x009BB484. The process default font, which `Buffer::init` installs as
+// `font1_` when it is initialised. buffer.cpp already described it that way
+// in prose - "the process default at 0x009BB484" - without a name.
+extern Font *BufferDefaultFont;
 // Value the close reset writes at offset 0x520; its meaning is unconfirmed.
 extern uint32_t *BufferResetValue520;
 // Releases a Sprite-style allocation through the executable's own CRT.

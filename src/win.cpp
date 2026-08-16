@@ -1827,7 +1827,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
     if (message > WM_LBUTTONDOWN) {
         if (message > WM_MOUSEWHEEL) {
             if (message == WM_QUERYNEWPALETTE) {
-                if (BufferDirectDrawActive != 0) {
+                if (BufferDirectDraw != 0) {
                     return 1;
                 }
                 if (WinHdcRefCount == 0) {
@@ -1854,7 +1854,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 if (window == reinterpret_cast<HWND>(wparam)) {
                     return 0;
                 }
-                if (BufferDirectDrawActive != 0) {
+                if (BufferDirectDraw != 0) {
                     return 0;
                 }
                 if (get_hdc() == nullptr) {
@@ -2074,7 +2074,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             if (active == 0) {
                 WinPointerOwner1 = nullptr;
                 WinPointerOwner2 = nullptr;
-            } else if (minimised == 0 && BufferDirectDrawActive == 0
+            } else if (minimised == 0 && BufferDirectDraw == 0
                        && get_hdc() != nullptr) {
                 SelectPalette(WinSharedHdc, PaletteInitialized, FALSE);
                 RealizePalette(WinSharedHdc);

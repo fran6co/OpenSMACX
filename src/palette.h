@@ -156,7 +156,7 @@ extern int PaletteSeedCache;
 
 /*
  * 0x009BC4A0. NOT A SURFACE - an IDirectDrawPalette. `Palette::set` reaches it
- * when BufferDirectDrawActive is on and calls vtable slot 6 with
+ * when BufferDirectDraw is on and calls vtable slot 6 with
  * `(0, 0, 0x100, entries)`, which is
  * `SetEntries(DWORD dwFlags, DWORD dwStartingEntry, DWORD dwCount,
  * LPPALETTEENTRY lpEntries)` - slot 6 of IDirectDrawPalette, after

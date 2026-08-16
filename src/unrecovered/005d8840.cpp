@@ -8,7 +8,7 @@
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005E3E50
 // indirect  0x005D88F7
-// LEVER: `int transparent = a2;` computed BEFORE the outer `if (field_58_
+// LEVER: `int transparent = a2;` computed BEFORE the outer `if (surface_
 // == 0)` guard (matching the original's unconditional `mov ecx, ebx`
 // ahead of the branch); and the tail returns the callee's own result
 // (`int result = ...; return result;`) rather than an explicit `return 0`,
@@ -17,7 +17,7 @@
 
 int Buffer::draw_mono(Buffer * a1, int a2, int a3, int a4, int a5) {
     int transparent = a2;
-    if (field_58_ == 0) {
+    if (surface_ == 0) {
         if (a2 == -1) {
             transparent = *reinterpret_cast<unsigned char *>(g_00696d14);
         }
@@ -36,7 +36,7 @@ int Buffer::draw_mono(Buffer * a1, int a2, int a3, int a4, int a5) {
         *reinterpret_cast<unsigned char *>(g_009b3a58) = (unsigned char)transparent;
         *g_009b3a78 = 0;
 
-        if (field_58_ == 0) {
+        if (surface_ == 0) {
             field_6C_ = field_6C_ - 1;
             if ((int)field_6C_ > 0) {
                 goto tail;
@@ -48,8 +48,8 @@ int Buffer::draw_mono(Buffer * a1, int a2, int a3, int a4, int a5) {
             }
             {
                 typedef int (__stdcall *ReleaseFn)(uint32_t, uint32_t);
-                ReleaseFn fn = *reinterpret_cast<ReleaseFn *>(*reinterpret_cast<uint32_t *>(field_58_) + 0x80);
-                fn(field_58_, field_50_);
+                ReleaseFn fn = *reinterpret_cast<ReleaseFn *>(*reinterpret_cast<uint32_t *>(surface_) + 0x80);
+                fn(reinterpret_cast<uint32_t>(surface_), field_50_);
             }
         }
         field_50_ = 0;
