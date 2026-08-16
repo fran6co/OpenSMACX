@@ -111,10 +111,10 @@ void Buffer::construct() {
     object[0x514 / 4] = 0;
     object[0x518 / 4] = 0;
     object[0x51C / 4] = 0;
-    object[0x520 / 4] = *BufferResetValue520;
+    object[0x520 / 4] = BufferField520Default;
     object[0x524 / 4] = 0;
     object[0x530 / 4] = 0;
-    object[0x52C / 4] = reinterpret_cast<uintptr_t>(*FontDefaultPtr);
+    object[0x52C / 4] = reinterpret_cast<uintptr_t>(FontDefault);
     object[0x53C / 4] = 0;
     object[0x54C / 4] = 0xFFFFFFFFU;
     object[0x55C / 4] = 2;
@@ -134,8 +134,7 @@ void Buffer::construct() {
     object[0x568 / 4] = 2;
     object[0x578 / 4] = 2;
     object[0x57C / 4] = 0;
-    *reinterpret_cast<volatile uint8_t *>(
-        reinterpret_cast<uint8_t *>(this) + 0x580) = 0;
+    field_580_ = 0;
     object[0x070 / 4] = 0;
     object[0x004 / 4] = 0;
     object[0x07C / 4] = 0x28;
@@ -493,7 +492,7 @@ Status: Complete
 */
 int Buffer::text_line_height() {
     if (!font1_) {
-        font1_ = *FontDefaultPtr;
+        font1_ = FontDefault;
     }
     const Font *const font = font1_;
     const int *const fields = reinterpret_cast<const int *>(font);
@@ -512,8 +511,15 @@ int __fastcall buffer_text_line_height_redirect(Buffer *self, void *) {
 }
 
 IDirectDraw *BufferDirectDraw;  // 0x009BC494
-Font *BufferDefaultFont;        // 0x009BB484
-uint32_t *BufferResetValue520 = (uint32_t *)0x00696BF0;
+// 0x00696BF0, holding 1. `Buffer::construct` and `Buffer::close` are its
+// only two references in the whole image and both READ it, so it is a
+// default that the two restore into `field_520_` rather than state.
+//
+// NOT `const`. It lives in `.data` below the zero-fill line, so the value
+// is known - but the original loads it, `mov eax, [0x696bf0]`, and a `const`
+// the compiler can see folds to `mov eax, 1`. A mutable global keeps the
+// load, and the relocation is masked.
+uint32_t BufferField520Default = 1;
 
 namespace {
 
@@ -730,9 +736,9 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     }
     stride_ = (width + 3) & ~3;
 
-    if (BufferDefaultFont != nullptr) {
-        if (BufferDefaultFont->is_initialized()) {
-            font1_ = BufferDefaultFont;
+    if (FontDefault != nullptr) {
+        if (FontDefault->is_initialized()) {
+            font1_ = FontDefault;
         }
         font2_ = nullptr;
         font3_ = nullptr;
@@ -806,8 +812,6 @@ ORIGINAL: 0x005D7470
 Status: Complete
 */
 void Buffer::close() {
-    volatile uint32_t *ordered = reinterpret_cast<volatile uint32_t *>(this);
-
     // Twenty owned allocations released through the executable's allocator.
     // The member, not `this` plus 0x4BC: `Buffer::init` walks the same array
     // and the extent is proved - see `owned_` in buffer.h.
@@ -882,38 +886,38 @@ void Buffer::close() {
     height_ = 0;
     field_50_ = 0;
     ppv_bits_ = nullptr;
-    ordered[0x50C / 4] = 0xFFFFFFFFU;
-    ordered[0x510 / 4] = 0;
-    ordered[0x514 / 4] = 0;
-    ordered[0x518 / 4] = 0;
-    ordered[0x51C / 4] = 0;
-    ordered[0x520 / 4] = *BufferResetValue520;
-    ordered[0x52C / 4] = reinterpret_cast<uint32_t>(*FontDefaultPtr);
+    field_50C_ = 0xFFFFFFFFU;
+    field_510_ = 0;
+    field_514_ = 0;
+    field_518_ = 0;
+    field_51C_ = 0;
+    field_520_ = BufferField520Default;
+    font1_ = FontDefault;
     // Four text slots at 0x530..0x53C with five rows 0x10 apart. The layout
     // is deliberately not uniform: the fourth slot holds 2 where the others
     // hold -1 at row two, and 0 where the others hold 2 at row four, so the
     // stores are written out rather than generated.
-    ordered[0x53C / 4] = 0;
-    ordered[0x54C / 4] = 0xFFFFFFFFU;
-    ordered[0x55C / 4] = 2;
-    ordered[0x56C / 4] = 2;
-    ordered[0x530 / 4] = 0;
-    ordered[0x540 / 4] = 0xFFFFFFFFU;
-    ordered[0x550 / 4] = 0xFFFFFFFFU;
-    ordered[0x560 / 4] = 2;
-    ordered[0x570 / 4] = 2;
-    ordered[0x534 / 4] = 0;
-    ordered[0x544 / 4] = 0xFFFFFFFFU;
-    ordered[0x554 / 4] = 0xFFFFFFFFU;
-    ordered[0x564 / 4] = 2;
-    ordered[0x574 / 4] = 2;
-    ordered[0x538 / 4] = 0;
-    ordered[0x548 / 4] = 0xFFFFFFFFU;
-    ordered[0x558 / 4] = 0xFFFFFFFFU;
-    ordered[0x568 / 4] = 2;
-    ordered[0x578 / 4] = 2;
-    ordered[0x584 / 4] = 0;
-    ordered[0x1C / 4] = 0;
+    color_val_1_ = 0;
+    color_val_2_ = 0xFFFFFFFFU;
+    color_val_3_ = 2;
+    color_val_4_ = 2;
+    font2_ = nullptr;
+    color_2_val_1_ = 0xFFFFFFFFU;
+    color_2_val_2_ = 0xFFFFFFFFU;
+    color_2_val_3_ = 2;
+    color_2_val_4_ = 2;
+    font3_ = nullptr;
+    color_3_val_1_ = 0xFFFFFFFFU;
+    color_3_val_2_ = 0xFFFFFFFFU;
+    color_3_val_3_ = 2;
+    color_3_val_4_ = 2;
+    font4_ = nullptr;
+    color_hyper_val_1_ = 0xFFFFFFFFU;
+    color_hyper_val_2_ = 0xFFFFFFFFU;
+    color_hyper_val_3_ = 2;
+    color_hyper_val_4_ = 2;
+    field_584_ = 0;
+    init_flags_ = 0;
 }
 
 void __fastcall buffer_close_redirect(Buffer *self, void *) {
@@ -1109,7 +1113,7 @@ Status: Complete
 int Buffer::text_height() {
     // The legacy body loads the default before testing the cached font, so the
     // fallback it returns is the value it just stored.
-    Font *const fallback = *FontDefaultPtr;
+    Font *const fallback = FontDefault;
     if (!font1_) {
         font1_ = fallback;
         return fallback->height_;
@@ -1596,7 +1600,7 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect, int len) {
     const int x_span = edge_int(right - edge_bits(drawn) - left);
     const int x_coord = edge_int(left + edge_bits(x_span / 2));
     if (!font1_) {
-        font1_ = *FontDefaultPtr;
+        font1_ = FontDefault;
     }
     const int y_span = edge_int(bottom - edge_bits(font1_->height_) - top);
     const int y_coord = edge_int(top + edge_bits(y_span / 2));

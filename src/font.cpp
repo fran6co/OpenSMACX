@@ -291,7 +291,7 @@ int __cdecl Font::init_font_class(Font *font) {
     if (!FontHDC) {
         return 2;
     }
-    *FontDefaultPtr = font;
+    FontDefault = font;
     if (font->font_obj_) {
         return 0;
     }
@@ -319,7 +319,7 @@ void __cdecl Font::close_font_class() {
             DeleteDC(FontHDC);
             FontHDC = 0;
         }
-        *FontDefaultPtr = NULL;
+        FontDefault = NULL;
     }
 }
 
