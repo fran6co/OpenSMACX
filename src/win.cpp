@@ -1628,7 +1628,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             int x = static_cast<short>(LOWORD(lparam));
             int y = static_cast<short>(HIWORD(lparam));
             Win *const over =
-                reinterpret_cast<Win *>(get_mouse_window(&x, &y));
+                get_mouse_window(&x, &y);
             if (over == nullptr) {
                 return 0;
             }
@@ -1644,7 +1644,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             int x = static_cast<short>(LOWORD(lparam));
             int y = static_cast<short>(HIWORD(lparam));
             Win *const over =
-                reinterpret_cast<Win *>(get_mouse_window(&x, &y));
+                get_mouse_window(&x, &y);
             if (over == nullptr) {
                 return 0;
             }
@@ -1661,7 +1661,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             int x = static_cast<short>(LOWORD(lparam));
             int y = static_cast<short>(HIWORD(lparam));
             Win *const over =
-                reinterpret_cast<Win *>(get_mouse_window(&x, &y));
+                get_mouse_window(&x, &y);
             if (over != nullptr) {
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
                 (ORIGINAL(over)->*original_slot<func_win_button_down>(
@@ -1675,7 +1675,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             int x = static_cast<short>(LOWORD(lparam));
             int y = static_cast<short>(HIWORD(lparam));
             Win *const over =
-                reinterpret_cast<Win *>(get_mouse_window(&x, &y));
+                get_mouse_window(&x, &y);
             if (over != nullptr) {
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(over);
                 (ORIGINAL(over)->*original_slot<func_win_button_up>(
@@ -1698,7 +1698,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP: {
                 Win *const focus =
-                    reinterpret_cast<Win *>(get_key_window());
+                    get_key_window();
                 if (focus == nullptr) {
                     return 0;
                 }
@@ -1749,7 +1749,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                 int x = static_cast<short>(LOWORD(lparam));
                 int y = static_cast<short>(HIWORD(lparam));
                 Win *const over =
-                    reinterpret_cast<Win *>(get_mouse_window(&x, &y));
+                    get_mouse_window(&x, &y);
                 update_cursor(over, 1);
                 if (over == nullptr) {
                     return 0;
@@ -1774,7 +1774,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             }
             return DefWindowProcA(window, message, wparam, lparam);
     } else if (message == WM_CHAR) {
-        Win *const focus = reinterpret_cast<Win *>(get_key_window());
+        Win *const focus = get_key_window();
         if (focus == nullptr) {
             return 0;
         }
@@ -1814,7 +1814,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
         }
         case WM_KEYDOWN:
         case WM_KEYUP: {
-            Win *const focus = reinterpret_cast<Win *>(get_key_window());
+            Win *const focus = get_key_window();
             if (focus != nullptr) {
                 uint8_t *const vtable = *reinterpret_cast<uint8_t **>(focus);
                 (ORIGINAL(focus)->*original_slot<func_win_key>(
