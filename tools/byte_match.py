@@ -629,6 +629,30 @@ def _struct_class_agnostic(name: str) -> str:
     return re.sub(r"(?<=[VU])tag(?=[\w]+@)", "", name)
 
 
+# Spellings that name the same machine type, dropped before two argument
+# lists are compared. Not a tolerance for convenience: `char *` against
+# `const char *` and `int` against `unsigned int` are the two things the
+# catalogue and `src/` disagree about constantly, and neither changes a byte
+# of the code or the size of anything pushed.
+INTERCHANGEABLE = re.compile(r"\b(const|volatile|unsigned|signed)\b")
+
+
+def _decoded_arguments(mangled: str):
+    """`mangled`'s argument list, or None if the name does not decode."""
+    import declfix
+    decoded = declfix.decode_signature(mangled or "")
+    return None if decoded is None else decoded[1]
+
+
+def _argument_shape(mangled: str):
+    """The argument list with interchangeable spellings collapsed."""
+    arguments = _decoded_arguments(mangled)
+    if arguments is None:
+        return None
+    return tuple(" ".join(INTERCHANGEABLE.sub("", text).replace("long", "int")
+                          .split()) for text in arguments)
+
+
 def choose_subject_symbol(found: list, subject: str = None,
                           internal: list = None):
     """(symbol, section) for the subject among a unit's .text symbols.
@@ -721,6 +745,41 @@ def choose_subject_symbol(found: list, subject: str = None,
                     if pair[0].name.startswith(qualified)]
             if len(same) == 1:
                 return same[0]
+            # AN OVERLOAD SET IS SEPARATED BY ITS ARGUMENTS, not by its return
+            # type. `src/time.h` declares six `Time::start`/`Time::pulse`
+            # overloads and disagrees with the catalogue about `int` against
+            # `uint32_t` in all six, so no spelling rule reaches them and the
+            # name alone is four-way ambiguous - but the catalogue's
+            # `?start@Time@@QAEHP6AXH@ZHHH@Z` takes four arguments and exactly
+            # one `Time::start` in the object does. Arity is the part of a
+            # signature the two sides never disagree about: it is fixed by the
+            # call sites, which compile.
+            #
+            # Still strict about ambiguity, and still last. Two overloads of
+            # one arity and this declines, exactly as the name rule above
+            # does.
+            # Strictest first: the same arguments, once `const` and
+            # `unsigned` - which name the same machine type and are what the
+            # two sides argue about - are collapsed. `?prefs_get@@` has two
+            # three-argument overloads, and only this separates them.
+            shape = _argument_shape(subject)
+            if shape is not None:
+                fits = [pair for pair in same
+                        if _argument_shape(pair[0].name) == shape]
+                if len(fits) == 1:
+                    return fits[0]
+                # Then arity alone. `src/time.h` disagrees with the catalogue
+                # about `int` against `uint32_t` in all six `Time::start` and
+                # `Time::pulse` overloads, so no comparison of spellings
+                # reaches them - but the catalogue's four-argument `start` has
+                # exactly one four-argument counterpart in the object. Arity
+                # is the part of a signature the two sides never disagree
+                # about: it is fixed by the call sites, which compile.
+                fits = [pair for pair in same
+                        if _argument_shape(pair[0].name) is not None
+                        and len(_argument_shape(pair[0].name)) == len(shape)]
+                if len(fits) == 1:
+                    return fits[0]
 
     if len(found) != 1:
         names = [s.name for s, _ in found]

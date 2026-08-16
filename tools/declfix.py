@@ -116,7 +116,8 @@ FUNCTION_POINTER_CONVENTION = {"A": "__cdecl", "G": "__stdcall",
                               "E": "__thiscall"}
 
 
-def _decode_type(text: str, index: int, seen: list | None = None):
+def _decode_type(text: str, index: int, seen: list | None = None,
+                 names: list | None = None):
     """One encoded type starting at `index`; returns (spelling, next index)
     or (None, index) when the encoding is out of scope.
 
@@ -125,6 +126,13 @@ def _decode_type(text: str, index: int, seen: list | None = None):
     index, so without the table `?f@@YAXPAD0@Z` decodes one parameter and a
     dead `0`. Passing None disables them, which is what a caller decoding a
     lone type outside an argument list wants.
+
+    `names` is the OTHER back-reference table, and MSVC keeps it separately:
+    it holds identifiers rather than whole types, seeded with the function's
+    own qualification chain. `?init@Filemap@@QAEPAV1@PBDH@Z` returns
+    `PAV1@` - a pointer to name 1, which is `Filemap`, the class it is
+    declared in. Without it the whole signature came back None and two
+    `Filemap::init` overloads could not be told apart at all.
     """
     if index >= len(text):
         return None, index
@@ -144,9 +152,17 @@ def _decode_type(text: str, index: int, seen: list | None = None):
         # A struct, class or union, named up to `@@`. Both keys decode to the
         # bare name: the emitted unit declares every one of them `struct`,
         # which is what `PAU` asks for and what the catalogue holds 8 to 1.
+        if text[index + 1:index + 2].isdigit() and \
+                text[index + 2:index + 3] == "@":
+            slot = int(text[index + 1])
+            if names is None or slot >= len(names):
+                return None, index
+            return names[slot], index + 3
         found = USER_DEFINED_NAME.match(text, index + 1)
         if not found or not text.startswith("@@", found.end()):
             return None, index
+        if names is not None and found.group(0) not in names:
+            names.append(found.group(0))
         return found.group(0), found.end() + 2
     if char == "P" and text[index + 1:index + 2] == "6":
         # A FUNCTION POINTER: `P6<conv><ret><args>@Z`. Returning None here
@@ -159,7 +175,7 @@ def _decode_type(text: str, index: int, seen: list | None = None):
         if convention is None:
             return None, index
         inner = index + 3
-        returns, inner = _decode_type(text, inner, None)
+        returns, inner = _decode_type(text, inner, None, names)
         if returns is None:
             return None, index
         # A nested argument list keeps its own back-reference table.
@@ -169,7 +185,7 @@ def _decode_type(text: str, index: int, seen: list | None = None):
                 inner += 1
                 break                        # (void)
             start = inner
-            param, inner = _decode_type(text, inner, nested)
+            param, inner = _decode_type(text, inner, nested, names)
             if param is None:
                 return None, index
             if inner - start > 1 and len(nested) < 10:
@@ -189,7 +205,7 @@ def _decode_type(text: str, index: int, seen: list | None = None):
         if next_index < len(text) and text[next_index] in "ABCD":
             const = "const " if text[next_index] in "BD" else ""
             next_index += 1
-        base, next_index = _decode_type(text, next_index, seen)
+        base, next_index = _decode_type(text, next_index, seen, names)
         if base is None:
             return None, index
         # `Q` is the POINTER itself being const, which is a different type
@@ -247,18 +263,36 @@ def decode_signature(mangled: str):
         return None
     body = tail[skip:]
 
-    returns, index = _decode_type(body, 0)
+    # The NAME back-reference table, seeded with this symbol's own
+    # qualification chain in the order MSVC records it: the base name first,
+    # then each enclosing scope innermost-first, which is the order they are
+    # written in. `?init@Filemap@@` therefore seeds ['init', 'Filemap'], and
+    # `V1@` in the signature resolves to `Filemap`.
+    qualification = mangled[1:split]
+    if qualification.startswith("?"):
+        # AN OPERATOR CODE IS NOT A NAME and takes no slot. `??4Filemap@@`
+        # spells `operator=` as `?4` glued to the class with no separator, so
+        # splitting on `@` yields one part `?4Filemap` - and `V0@` in its
+        # signature means `Filemap`, slot 0. `?_G` and the rest of the
+        # underscore forms are two characters after the `?`.
+        qualification = qualification[3:] if qualification[1:2] == "_" \
+            else qualification[2:]
+    names = [part for part in qualification.split("@") if part]
+
+    returns, index = _decode_type(body, 0, None, names)
     if returns is None:
         return None
 
-    # The back-reference table covers ARGUMENTS only; the return type takes no
-    # slot, which is why it is decoded above with no table.
+    # The TYPE back-reference table covers ARGUMENTS only; the return type
+    # takes no slot, which is why it is decoded above with no table. The NAME
+    # table is not the same table and does cover it - a class named in the
+    # return type is recorded and can be referred back to from an argument.
     params, seen = [], []
     while index < len(body) and body[index] != "@":
         if body[index] == "X" and (index + 1 >= len(body) or body[index + 1] in "@Z"):
             break  # (void)
         start = index
-        param, index = _decode_type(body, index, seen)
+        param, index = _decode_type(body, index, seen, names)
         if param is None:
             return None
         # A slot is taken by any type written as more than one character, and
