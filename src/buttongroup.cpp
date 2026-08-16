@@ -49,7 +49,7 @@ ButtonGroup::~ButtonGroup() {
 
 /*
 Purpose: Clear the active group while retaining the original selected ID and flags slots.
-ORIGINAL: 0x0062B7F0
+ORIGINAL: 0x0062B7F0 BYTE_EXACT
 // name      ?close@ButtonGroup@@QAEXXZ
 // size      32 bytes
 // spans     0x0062B7F0-0x0062B810

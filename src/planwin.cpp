@@ -23,7 +23,7 @@
 
 /*
 Purpose: Clear the plan window's line count.
-ORIGINAL: 0x0048AF20
+ORIGINAL: 0x0048AF20 BYTE_EXACT
 // name      ?clear_lines@PlanWin@@QAEXXZ
 // size      11 bytes
 // spans     0x0048AF20-0x0048AF2B
@@ -46,7 +46,7 @@ void __fastcall plan_win_clear_lines_redirect(PlanWin *self, void *) {
 /*
 Purpose: Close the plan window by dropping its blink state and running the
          close it inherits from MapWin.
-ORIGINAL: 0x0048BC50
+ORIGINAL: 0x0048BC50 BYTE_EXACT
 // name      ?close@PlanWin@@QAEXXZ
 // size      15 bytes
 // spans     0x0048BC50-0x0048BC5F

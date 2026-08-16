@@ -355,7 +355,7 @@ void CouncWin::draw_all_leaders() {
 }
 
 /*
-ORIGINAL: 0x00427130
+ORIGINAL: 0x00427130 BYTE_EXACT
 // name      ?show@CouncWin@@QAEHH@Z
 // size      27 bytes
 // spans     0x00427130-0x0042714B

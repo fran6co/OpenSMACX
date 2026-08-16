@@ -169,7 +169,7 @@ void __fastcall lock_unlock_redirect(Lock *self, void *, int slot) {
 Purpose: Take the global lock for an owner. Succeeds when the lock is free or
          already held by that owner, recording the owner and marking it held;
          fails without change when another owner holds it.
-ORIGINAL: 0x005902C0
+ORIGINAL: 0x005902C0 BYTE_EXACT
 // name      ?global_lock@Lock@@QAEHH@Z
 // size      51 bytes
 // spans     0x005902C0-0x005902F3

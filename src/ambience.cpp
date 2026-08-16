@@ -595,7 +595,7 @@ Ambience *__fastcall ambience_construct_redirect(Ambience *self, void *) {
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x00447270
+ORIGINAL: 0x00447270 BYTE_EXACT
 // name      ?basewin_show@FactionAmbience@@QAEXXZ
 // size      5 bytes
 // spans     0x00447270-0x00447275
@@ -618,7 +618,7 @@ void __fastcall faction_ambience_basewin_show_redirect(FactionAmbience *self, vo
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x00447280
+ORIGINAL: 0x00447280 BYTE_EXACT
 // name      ?basewin_hide@FactionAmbience@@QAEXXZ
 // size      5 bytes
 // spans     0x00447280-0x00447285
@@ -641,7 +641,7 @@ void __fastcall faction_ambience_basewin_hide_redirect(FactionAmbience *self, vo
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x00447290
+ORIGINAL: 0x00447290 BYTE_EXACT
 // name      ?design_window_show@FactionAmbience@@QAEXXZ
 // size      5 bytes
 // spans     0x00447290-0x00447295
@@ -664,7 +664,7 @@ void __fastcall faction_ambience_design_window_show_redirect(FactionAmbience *se
 /*
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
-ORIGINAL: 0x004472A0
+ORIGINAL: 0x004472A0 BYTE_EXACT
 // name      ?design_window_hide@FactionAmbience@@QAEXXZ
 // size      5 bytes
 // spans     0x004472A0-0x004472A5

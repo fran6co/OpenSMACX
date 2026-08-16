@@ -78,7 +78,7 @@ void Text::shutdown() {
 
 /*
 Purpose: If open, close the text file.
-ORIGINAL: 0x005FD9D0
+ORIGINAL: 0x005FD9D0 BYTE_EXACT
 // name      ?close@Text@@QAEXXZ
 // size      34 bytes
 // spans     0x005FD9D0-0x005FD9F2

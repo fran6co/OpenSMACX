@@ -43,7 +43,7 @@ void __fastcall status_win_close_redirect(StatusWin *self, void *) {
 /*
 Purpose: Place the status window, invalidating the two cached values that
          follow its position.
-ORIGINAL: 0x004B9F90
+ORIGINAL: 0x004B9F90 BYTE_EXACT
 // name      ?set_loc@StatusWin@@QAEXHH@Z
 // size      40 bytes
 // spans     0x004B9F90-0x004B9FB8

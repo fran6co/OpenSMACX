@@ -21,7 +21,7 @@
 
 /*
 Purpose: Close the debug window by clearing its single active flag.
-ORIGINAL: 0x005C98E0
+ORIGINAL: 0x005C98E0 BYTE_EXACT
 // name      ?close@MultiDebug@@QAEXXZ
 // size      11 bytes
 // spans     0x005C98E0-0x005C98EB

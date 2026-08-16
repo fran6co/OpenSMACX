@@ -24,7 +24,7 @@ func_edit_box_set_text EditBoxOriginalSetText =
 
 /*
 Purpose: Apply one length limit to all ten edit boxes in the group.
-ORIGINAL: 0x006120B0
+ORIGINAL: 0x006120B0 BYTE_EXACT
 // name      ?set_text_limits@EditGroup@@QAEXH@Z
 // size      19 bytes
 // spans     0x006120B0-0x006120C3

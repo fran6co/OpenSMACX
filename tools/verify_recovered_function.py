@@ -849,6 +849,24 @@ def main(argv=None) -> int:
                                        landed.path if landed else None)
     else:
         verdict = writeback.verify(address, body)
+
+    # THE SAME SECOND CHANCE THE GATE TAKES. `decomp_status.py` retries a
+    # NO_COMPILE against the body's own translation unit when CMake compiles
+    # that file, because such a verdict is a statement about the scaffolding
+    # and not about the body. Without the same step here the two tools answer
+    # the same question differently - `Palette::set` read NO_COMPILE
+    # (`C2027: use of undefined type 'IDirectDrawPalette'`) from this tool
+    # while the gate had it BYTE_EXACT, and an agent trusting this one would
+    # have gone looking for a defect in a body that has none.
+    if verdict.get("tier") == "NO_COMPILE" and not arguments.body:
+        import decomp_status
+        real = decomp_status.real_unit(source)
+        if real is not None:
+            real_text, real_origin = real
+            second = verify_body_verbatim(address, real_text, real_origin)
+            if byte_match._better(second, verdict):
+                second["measured_against"] = "translation unit"
+                verdict, whole = second, real
     tier = verdict.get("tier", "?")
 
     # A CANDIDATE THAT IS WORSE IS NOT AN IMPROVEMENT, and "byte exact or not"

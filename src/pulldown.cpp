@@ -191,7 +191,7 @@ int PullDown::uncheck_item(int id) {
 
 /*
 Purpose: Return the selected item index unless that item is disabled.
-ORIGINAL: 0x005F9F40
+ORIGINAL: 0x005F9F40 BYTE_EXACT
 // name      ?get_selected@PullDown@@QAEHXZ
 // size      28 bytes
 // spans     0x005F9F40-0x005F9F5C

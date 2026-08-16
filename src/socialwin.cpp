@@ -218,7 +218,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          and the two are observationally identical unless something re-arms the
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
-ORIGINAL: 0x004B2420
+ORIGINAL: 0x004B2420 BYTE_EXACT
 // name      ?on_iface_mouse_move@SocialWin@@QAEXHH@Z
 // size      13 bytes
 // spans     0x004B2420-0x004B242D
@@ -248,7 +248,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          and the two are observationally identical unless something re-arms the
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
-ORIGINAL: 0x004B2430
+ORIGINAL: 0x004B2430 BYTE_EXACT
 // name      ?on_iface_mouse_leave@SocialWin@@QAEXHH@Z
 // size      13 bytes
 // spans     0x004B2430-0x004B243D

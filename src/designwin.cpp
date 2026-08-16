@@ -196,7 +196,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          and the two are observationally identical unless something re-arms the
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
-ORIGINAL: 0x00437BE0
+ORIGINAL: 0x00437BE0 BYTE_EXACT
 // name      ?on_mouse_leave@DesignWin@@QAEXHH@Z
 // size      13 bytes
 // spans     0x00437BE0-0x00437BED

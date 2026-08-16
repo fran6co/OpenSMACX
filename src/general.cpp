@@ -1289,7 +1289,7 @@ void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3) {
 
 /*
 Purpose: Delete the initial auto-save game file.
-ORIGINAL: 0x005ABD10
+ORIGINAL: 0x005ABD10 BYTE_EXACT
 // name      ?kill_auto_save@@YAXXZ
 // size      12 bytes
 // spans     0x005ABD10-0x005ABD1C

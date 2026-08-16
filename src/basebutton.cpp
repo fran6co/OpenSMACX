@@ -480,7 +480,7 @@ static const size_t WinValueChangedSlot = 0xB4;
 /*
 Purpose: Give the button a new value, redrawing and notifying its parent only
          when the value actually changes.
-ORIGINAL: 0x00607C80
+ORIGINAL: 0x00607C80 BYTE_EXACT
 // name      ?set@BaseButton@@QAEXH@Z
 // size      61 bytes
 // spans     0x00607C80-0x00607CBD

@@ -56,7 +56,7 @@ int Log::init(LPCSTR input) {
 
 /*
 Purpose: Reset the log file.
-ORIGINAL: 0x006260D0
+ORIGINAL: 0x006260D0 BYTE_EXACT
 // name      ?reset@Log@@QAEXXZ
 // size      28 bytes
 // spans     0x006260D0-0x006260EC
