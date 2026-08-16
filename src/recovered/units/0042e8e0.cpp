@@ -2346,20 +2346,18 @@ class Datalink : public GraphicWin { public:
     void draw_defense();
 };
 
-void RemoveAllFn();
-void RemoveAllShim();
-
-void RemoveAllFn();
-void RemoveAllShim();
-
-void RemoveAllFn();
-void RemoveAllShim();
-
-void RemoveAllFn();
-void RemoveAllShim();
-void removeAllFn();
-
 extern "C" char *__stdcall CharUpperA(char *);
+
+// THE POINTER-TO-MEMBER SEAM THIS BODY USES, DECLARED.
+//
+// A `__thiscall` function reached by address cannot be called through a
+// plain function pointer - VC6 has no `__thiscall` on one - so the recovery
+// spells it as a pointer to MEMBER and reinterprets the raw address into it,
+// which is what `src/original_seam.h` does for every body that says
+// `ORIGINAL(...)`. These bodies wrote the same seam under their own names
+// and never declared it.
+class RemoveAllShim { public: void remove_all(); };
+typedef void (RemoveAllShim::*RemoveAllFn)();
 
 void Datalink::draw_defense() {
     char *self = reinterpret_cast<char *>(this);

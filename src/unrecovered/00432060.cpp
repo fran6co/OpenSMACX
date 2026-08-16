@@ -1,5 +1,5 @@
 // ORIGINAL: 0x00432060 BYTE_EXACT FILE
-// RULED-OUT: statement order, not declaration order - `this - 0xA14` (the
+// LEVER: statement-order  not declaration order - `this - 0xA14` (the
 //        GraphicWin-adjusted receiver used for slide_show/slide_hide,
 //        draw_entry, show, hide) is recomputed fresh inside each branch
 //        rather than hoisted once; and in the a1==0 branch the

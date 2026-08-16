@@ -2626,6 +2626,19 @@ class Datalink : public GraphicWin { public:
     void draw_adv_concept();
 };
 
+// THE POINTER-TO-MEMBER SEAM THIS BODY USES, DECLARED.
+//
+// A `__thiscall` function reached by address cannot be called through a
+// plain function pointer - VC6 has no `__thiscall` on one - so the recovery
+// spells it as a pointer to MEMBER and reinterprets the raw address into it,
+// which is what `src/original_seam.h` does for every body that says
+// `ORIGINAL(...)`. These bodies wrote the same seam under their own names
+// and never declared it.
+class Shim4066c0 { public: void teardown(); };
+// 0x0042C743 is `call dword ptr [0x66931c]` - the CharUpperA import slot,
+// spelled here the way every sibling recovery spells it.
+typedef char *(__stdcall *CharUpperFn)(char *);
+
 char *__cdecl __itoa(int, char*, int);
 extern "C" char *__cdecl _strcat(char *, const char *);
 int __cdecl _strlen(const char *);
@@ -2677,7 +2690,7 @@ void Datalink::draw_adv_concept() {
     }
     _strcat(msg, name);
 
-    raw_0066931c(msg);
+    reinterpret_cast<CharUpperFn>(*g_0066931c)(msg);
     char *edx_msg = reinterpret_cast<char *>(g_009b86a0);
     if (edx_msg != 0) {
         int len = _strlen(edx_msg);

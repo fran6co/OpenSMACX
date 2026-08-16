@@ -2183,6 +2183,19 @@ class Datalink : public GraphicWin { public:
 
 typedef char *(__cdecl *ItoaFn)(int, char *, int);
 
+// The record `set_cat_ability` walks, read off the original at 0x0042AD20:
+//   0x0042AD30  mov edi, 0x9ab538          the table
+//   0x0042AD35  cmp word ptr [edi + 0x18], -1   `flag`, a SIGNED WORD
+//   0x0042AD3C  mov eax, dword ptr [edi]        `id`
+//   0x0042ADA5  add edi, 0x1c                   the stride
+// so the size is 0x1C and both members are where the body already says.
+struct CatRecord {
+    int id;                 // 0x00
+    char field_04_[0x14];
+    short flag;             // 0x18
+    short field_1A_;
+};
+
 void Datalink::set_cat_ability() {
     char *self = reinterpret_cast<char *>(this);
 

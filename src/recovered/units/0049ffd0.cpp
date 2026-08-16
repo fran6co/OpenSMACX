@@ -1534,6 +1534,11 @@ class ReportWin { public:
     void start_attack(int, int, int, int);
 };
 
+// `Time::init` takes the callback; the `dest->init` two lines below it
+// is `Buffer::init`, which takes four ints - one name, two members,
+// and the body cast both through the same one.
+typedef void (__cdecl *TimeCallback)(int);
+
 void ReportWin::start_attack(int a1, int a2, int a3, int a4) {
     char *self = reinterpret_cast<char *>(this);
     *reinterpret_cast<int32_t *>(self + 0xF924) = a1;
@@ -1568,7 +1573,7 @@ void ReportWin::start_attack(int a1, int a2, int a3, int a4) {
         // mizuchi_declfix.py, which matches callee declarations by base name
         // without a class qualifier. The cast below matches the CORRUPTED
         // declared type so this still compiles to the same argument bytes.
-        dest->init((TimeCallback)0x2b, 0x2f, 0, 0);
+        dest->init(0x2b, 0x2f, 0, 0);
         Buffer *panel = reinterpret_cast<Buffer *>(self + 0x444);
         panel->copy(dest, v_e310, v_e314, 0, 0, 0x2b, 0x2f);
         Time *timer = reinterpret_cast<Time *>(self + 0xE2E8);

@@ -2591,6 +2591,8 @@ class TutWin : public Popup { public:
     void tour5();
 };
 
+extern "C" GraphicWin *__cdecl resolve_win();
+
 void TutWin::tour5() {
     int wasVisible = reinterpret_cast<Win *>(g_008a6270)->is_visible();
     if (!wasVisible) {

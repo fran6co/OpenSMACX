@@ -1388,23 +1388,6 @@ class FontQueue { public:
     FontQueue();
 };
 
-class NCCtorObj006457c2 { public: void ctor(); };
-
-class NCCtorObj006457c2 { public: void ctor(); };
-
-class NCCtorObj006457c2 { public: void ctor(); };
-
-class NCCtorObj006457c2 { public: void ctor(); };
-
-class NCCtorObj006457c2 { public: void ctor(); };
-
-class NCCtorObj006457c2 { public: void ctor(); };
-
-class NCCtorObj006457c2 { public: void ctor(); };
-
-class NCCtorObj006457c2 { public: void ctor(); };
-void *dtor(unsigned int flag);
-
 FontQueue::FontQueue() {
     FQCtorCast ctor, dtor;
     ctor.addr = g_00618ea0;

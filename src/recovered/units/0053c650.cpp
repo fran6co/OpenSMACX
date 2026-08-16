@@ -59,6 +59,16 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
+
+// Placement new, the same block `emit_translation_unit`'s prelude has
+// carried since long after this unit was frozen: the body constructs an
+// object into raw storage and needs `operator new(size_t, void *)`. Guarded
+// by the macro VC6's own <new> uses, so a std-shim above it wins.
+#ifndef __PLACEMENT_NEW_INLINE
+#define __PLACEMENT_NEW_INLINE
+inline void *__cdecl operator new(unsigned int, void *p) { return p; }
+#endif
+
 typedef int int32;
 typedef unsigned int uint32;
 typedef short int16;
@@ -2341,8 +2351,8 @@ void __cdecl treaty_off(int, int, int);
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_0065e530 = (int *)0x0065E530;
-static int *const g_946d34x = (int *)0x00946D34;
-static int *const g_96c9f8x = (int *)0x0096C9F8;
+static char *const g_946d34x = (char *)0x00946D34;
+static char *const g_96c9f8x = (char *)0x0096C9F8;
 static int *const g_006693ac = (int *)0x006693AC;
 static int *const g_006695c0 = (int *)0x006695C0;
 static int *const g_006695c8 = (int *)0x006695C8;
@@ -2367,8 +2377,8 @@ static int *const g_0096c9f8 = (int *)0x0096C9F8;
 static int *const g_009a64c0 = (int *)0x009A64C0;
 static int *const g_009b3374 = (int *)0x009B3374;
 static int *const g_009b8aa8 = (int *)0x009B8AA8;
-static int *const g_009bbfec = (int *)0x009BBFEC;
-static int *const g_009bbff0 = (int *)0x009BBFF0;
+static char *const g_009bbfec = (char *)0x009BBFEC;
+static char *const g_009bbff0 = (char *)0x009BBFF0;
 
 void __cdecl pact_ends(int a1, int a2) {
     unsigned char widgetStorage[0x5384];

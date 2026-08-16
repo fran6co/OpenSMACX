@@ -1906,11 +1906,11 @@ extern "C" unsigned int strlen(const char *);
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00682e94 = (int *)0x00682E94;
+static char *const g_00682e94 = (char *)0x00682E94;
 static int *const g_0068f9f4_arr = (int *)0x0068F9F4;
 static int *const g_009472ec_arr = (int *)0x009472EC;
 static int *const g_0096eac8_arr = (int *)0x0096EAC8;
-static int *const g_009b86a0_buf = (int *)0x009B86A0;
+static char *const g_009b86a0_buf = (char *)0x009B86A0;
 static int *const g_0068637c = (int *)0x0068637C;
 static int *const g_0068f9f4 = (int *)0x0068F9F4;
 static int *const g_0068fa10 = (int *)0x0068FA10;

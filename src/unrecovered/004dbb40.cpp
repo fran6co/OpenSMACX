@@ -2111,6 +2111,8 @@ class Console : public MapWin { public:
     void editor_reset_faction();
 };
 
+typedef int (__cdecl *NullCallback)(void);
+
 void Console::editor_reset_faction() {
     if (X_pop((const char *)g_00688f98, (NullCallback)0) != 0) {
         unsigned int factionId = 1;

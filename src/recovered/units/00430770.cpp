@@ -2571,6 +2571,18 @@ class Datalink : public GraphicWin { public:
     void draw_effect();
 };
 
+// THE POINTER-TO-MEMBER SEAM THIS BODY USES, DECLARED.
+//
+// A `__thiscall` function reached by address cannot be called through a
+// plain function pointer - VC6 has no `__thiscall` on one - so the recovery
+// spells it as a pointer to MEMBER and reinterprets the raw address into it,
+// which is what `src/original_seam.h` does for every body that says
+// `ORIGINAL(...)`. These bodies wrote the same seam under their own names
+// and never declared it.
+class Dummy4066c0 { public: void teardown(); };
+typedef void (Dummy4066c0::*MFP4066c0)();
+union MFP4066c0Cast { void *fn; MFP4066c0 mfp; };
+
 void Datalink::draw_effect() {
     char *self = reinterpret_cast<char *>(this);
     Buffer *buf = reinterpret_cast<Buffer *>(self + 0x444);

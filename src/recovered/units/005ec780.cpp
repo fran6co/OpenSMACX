@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005EC780 FILE
+// ORIGINAL: 0x005EC780 BYTE_EXACT FILE
 // name      ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z
 // size      60 bytes
 // spans     0x005EC780-0x005EC7BC
@@ -2214,6 +2214,8 @@ class Win { public:
     void release_modal();
     int set_cursor(HCURSOR *);
 };
+
+extern "C" void __cdecl WinUpdateCursor(int, int);
 
 int Win::set_cursor(HCURSOR *a1) {
     if (a1 != 0 && *reinterpret_cast<int *>(a1) == 0) {
