@@ -796,7 +796,7 @@ Purpose: Read the state word of the CheckBox embedded at 0x2228.
          SpriteBox::id_to_pos and Dialogs::destroy are: the body ends by
          loading the word into EAX and a void body cannot promise that. The
          return type does not change the thiscall cleanup.
-ORIGINAL: 0x00601BD0
+ORIGINAL: 0x00601BD0 BYTE_EXACT
 // name      ?read_check@BasePop@@QAEXXZ
 // size      17 bytes
 // spans     0x00601BD0-0x00601BE1

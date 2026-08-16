@@ -21,7 +21,7 @@
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
-ORIGINAL: 0x0062ED30
+ORIGINAL: 0x0062ED30 BYTE_EXACT
 // name      ?poll_players@Net@@QAEHPAUSessionStruct@@@Z
 // size      8 bytes
 // spans     0x0062ED30-0x0062ED38

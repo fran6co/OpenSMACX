@@ -53,7 +53,7 @@ Purpose: Report whether either lock entry is engaged - the low bit of its flag
          set. The original is typed as returning void but computes this boolean
          in EAX, so the value is returned here to match its behaviour rather
          than its declared type.
-ORIGINAL: 0x0058FFA0
+ORIGINAL: 0x0058FFA0 BYTE_EXACT
 // name      ?active@PlayerLock@@QAEXXZ
 // size      28 bytes
 // spans     0x0058FFA0-0x0058FFBC

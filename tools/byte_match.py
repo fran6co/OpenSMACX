@@ -608,14 +608,25 @@ SYNTHESISED = ("??_G", "??_E", "??_H", "??_I")
 
 
 def _struct_class_agnostic(name: str) -> str:
-    """A mangled name with every `U`-for-struct read as `V`-for-class.
+    """A mangled name with every `U`-for-struct read as `V`-for-class, and
+    every Win32 `tagXXX` read as the `XXX` its typedef is spelled with.
 
-    Only in TYPE position - `PAU`/`PBU`/`AAU`/`ABU` and a bare `U` opening a
-    qualified name - so the letters are not rewritten anywhere they mean
-    something else, and the two spellings of one type compare equal.
+    `U`/`V` only in TYPE position - `PAU`/`PBU`/`AAU`/`ABU` and a bare `U`
+    opening a qualified name - so the letters are not rewritten anywhere they
+    mean something else, and the two spellings of one type compare equal.
+
+    THE `tag` PREFIX IS THE SAME PROBLEM WEARING WINDOWS CLOTHES. `RECT` is
+    `typedef struct tagRECT RECT`, and MSVC mangles the TAG: `src/spot.cpp`
+    writes `?check@Spot@@QAEHHHPAH0PAUtagRECT@@@Z` where the catalogue - which
+    only ever saw the typedef - asks for `PAURECT@@`. Same struct, same
+    layout, same code; one letter-group of spelling. Stripping the prefix
+    rather than listing the types keeps this from becoming another
+    hand-maintained table that goes stale the first time a body touches
+    `tagPOINT` or `tagMSG`.
     """
-    return re.sub(r"(?<=[PAQB])U(?=[\w?@])", "V",
+    name = re.sub(r"(?<=[PAQB])U(?=[\w?@])", "V",
                   re.sub(r"(?<=[@$?])U(?=[\w?]+@)", "V", name or ""))
+    return re.sub(r"(?<=[VU])tag(?=[\w]+@)", "", name)
 
 
 def choose_subject_symbol(found: list, subject: str = None,
@@ -684,6 +695,32 @@ def choose_subject_symbol(found: list, subject: str = None,
                     if _struct_class_agnostic(pair[0].name) == loose), None)
         if hit is not None:
             return hit
+        # LAST: THE QUALIFIED NAME ALONE, and only when it is unambiguous.
+        #
+        # `src/heap.h` declares `int init(uint32_t)` and the catalogue holds
+        # `?init@Heap@@QAE_NH@Z` - `bool init(int)`. One of the two is wrong
+        # about this function's signature and neither this tool nor any
+        # spelling rule can say which; what is certain is that they are the
+        # same function, because `heap.cpp` defines exactly one `Heap::init`.
+        #
+        # Refusing to measure it is the worst of the three options. It leaves
+        # NO_COMPILE, the one verdict that says nothing about whether the body
+        # reproduces the bytes - while the comparison, given the chance, is
+        # precisely the instrument that settles the disagreement: `bool`
+        # returns `mov al` where `int` returns `mov eax`, so a wrong signature
+        # comes back MISMATCH at the first divergence and a right one comes
+        # back BYTE_EXACT. 69 committed bodies were held at NO_COMPILE by a
+        # signature argument the compiler was ready to settle.
+        #
+        # Ambiguity is still refused: the catalogue holds 98 (class, method)
+        # pairs with more than one overload, and picking one of those by name
+        # would be a guess. Two candidates and this rule declines.
+        qualified = subject.split("@@")[0] + "@@" if "@@" in subject else None
+        if qualified:
+            same = [pair for pair in found + list(internal or [])
+                    if pair[0].name.startswith(qualified)]
+            if len(same) == 1:
+                return same[0]
 
     if len(found) != 1:
         names = [s.name for s, _ in found]
