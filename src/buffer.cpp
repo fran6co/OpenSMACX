@@ -362,6 +362,23 @@ void __cdecl buffer_close_class_redirect() {
 
 namespace {
 
+// An RGNDATA holding exactly one rectangle: 48 bytes, which is what the
+// original reserves - `Buffer::set_clip` builds the block at `esp + 0x24`
+// and its last store is `esp + 0x50`, so 0x30 bytes, `RGNDATAHEADER`'s 32
+// plus a `RECT`'s 16.
+//
+// `RGNDATA` itself ends in `char Buffer[1]`, a trailing array C++ cannot
+// size, so the rectangle is spelled out here and the API boundary takes one
+// cast. That cast is the shape of `SetClipList`, not a shortcut.
+struct ClipRegion {
+    RGNDATAHEADER rdh;
+    RECT rect;
+};
+
+}  // namespace
+
+namespace {
+
 typedef long(__stdcall *func_surface_lock)(void *, void *, void *, uint32_t, void *);
 typedef long(__stdcall *func_surface_unlock)(void *, void *);
 
@@ -1178,28 +1195,20 @@ int Buffer::set_clip(RECT *rect) {
     if (surface_ != 0) {
         // A single-rectangle RGNDATA: the header's bound and the one entry in
         // the rectangle array are both the clipped rectangle.
-        // An RGNDATA holding exactly one rectangle. `RGNDATA` itself ends
-        // in `char Buffer[1]` - a flexible array - so the storage has to be
-        // declared with the rectangle spelled out and handed over as
-        // `LPRGNDATA`; that cast is the API's, not this code's invention.
-        // The field names are `RGNDATAHEADER`'s own.
-        struct {
-            RGNDATAHEADER rdh;
-            RECT rect;
-        } region;
-        region.rdh.dwSize = sizeof(RGNDATAHEADER);
-        region.rdh.iType = RDH_RECTANGLES;
-        region.rdh.nCount = 1;
-        region.rdh.nRgnSize = sizeof(RECT);
-        region.rdh.rcBound = rect1_;
-        region.rect = rect1_;
+        ClipRegion clip;
+        clip.rdh.dwSize = sizeof(RGNDATAHEADER);
+        clip.rdh.iType = RDH_RECTANGLES;
+        clip.rdh.nCount = 1;
+        clip.rdh.nRgnSize = sizeof(RECT);
+        clip.rdh.rcBound = rect1_;
+        clip.rect = rect1_;
 
         // Slot 0x1C is index 7 of IDirectDrawClipper - `SetClipList` - and
         // 0x70 is index 28 of IDirectDrawSurface - `SetClipper`. Called by
         // name now that the two members carry their interface types; the
         // emitted `call [reg + 0x1c]` is the same either way, and a name
         // cannot be off by a slot.
-        clipper_->SetClipList(reinterpret_cast<LPRGNDATA>(&region), 0);
+        clipper_->SetClipList(reinterpret_cast<LPRGNDATA>(&clip), 0);
         surface_->SetClipper(clipper_);
     }
     return 0;
