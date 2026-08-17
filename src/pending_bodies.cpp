@@ -70,33 +70,33 @@
 #define PENDING_BODY(address, signature) \
     reinterpret_cast<signature>(static_cast<unsigned long>(address))
 
-// 0x0062D500  ?jackal_close@@YAXXZ  body in src/recovered/0062d500.cpp
+// ?jackal_close@@YAXXZ at 0x0062D500 - body in src/recovered/0062d500.cpp
 void __cdecl jackal_close() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x0062D500, pending)();
 }
 
-// 0x006185A0  ?init_class@Caviar@@QAAHXZ
+// ?init_class@Caviar@@QAAHXZ at 0x006185A0
 //             body in src/unrecovered/006185a0.cpp
 int Caviar::init_class() {
     typedef int(__cdecl *pending)();
     return PENDING_BODY(0x006185A0, pending)();
 }
 
-// 0x00618D20  ?close_class@Caviar@@QAAXXZ
+// ?close_class@Caviar@@QAAXXZ at 0x00618D20
 //             body in src/recovered/units/00618d20.cpp
 void Caviar::close_class() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x00618D20, pending)();
 }
 
-// 0x0052AA30  ?control_game@@YAXXZ  body in src/unrecovered/0052aa30.cpp
+// ?control_game@@YAXXZ at 0x0052AA30 - body in src/unrecovered/0052aa30.cpp
 void __cdecl control_game() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x0052AA30, pending)();
 }
 
-// 0x00600860  ??0BasePop@@QAE@XZ  body in src/unrecovered/00600860.cpp
+// ??0BasePop@@QAE@XZ at 0x00600860 - body in src/unrecovered/00600860.cpp
 //
 // THE FRONTIER MOVED HERE when basepop_alloc was recovered into
 // src/basepop.cpp: `new BasePop()` needs a constructor to link against, and
@@ -116,13 +116,13 @@ BasePop::BasePop() {
 // deleting its line here.
 // ---------------------------------------------------------------------------
 
-// 0x005F2C40  ?set_display_mode@Win@@QAAHHHHH@Z
+// ?set_display_mode@Win@@QAAHHHHH@Z at 0x005F2C40
 int Win::set_display_mode(int width, int height, int depth, int tgl) {
     typedef int(__cdecl *pending)(int, int, int, int);
     return PENDING_BODY(0x005F2C40, pending)(width, height, depth, tgl);
 }
 
-// 0x005EFD20  ?flip@Win@@QAAXPAURECT@@@Z
+// ?flip@Win@@QAAXPAURECT@@@Z at 0x005EFD20
 void Win::flip(RECT *area) {
     typedef void(__cdecl *pending)(RECT *);
     PENDING_BODY(0x005EFD20, pending)(area);
@@ -132,19 +132,19 @@ void Win::flip(RECT *area) {
 // src/win.cpp. These six are what its recovery still stands on, and the
 // first thing that faults if you move the mouse or press a key.
 //
-// 0x005F4EC0  ?recurse_zorder@@YAXPAUWin@@@Z
+// ?recurse_zorder@@YAXPAUWin@@@Z at 0x005F4EC0
 void __cdecl recurse_zorder(Win *window) {
     typedef void(__cdecl *pending)(Win *);
     PENDING_BODY(0x005F4EC0, pending)(window);
 }
 
-// 0x005F6A50  ?get_key_window@Win@@QAGHXZ
+// ?get_key_window@Win@@QAGHXZ at 0x005F6A50
 Win *Win::get_key_window() {
     typedef Win *(__stdcall *pending)();
     return PENDING_BODY(0x005F6A50, pending)();
 }
 
-// 0x005ED2D0  ?screen_to_client@Win@@QAEXPAHPAH@Z - BYTE_EXACT already in
+// ?screen_to_client@Win@@QAEXPAHPAH@Z at 0x005ED2D0 - BYTE_EXACT already in
 // src/unrecovered/005ed2d0.cpp, and 133 bytes, so this edge is cheap to
 // close next.
 void Win::screen_to_client(int *x, int *y) {
@@ -152,40 +152,40 @@ void Win::screen_to_client(int *x, int *y) {
     PENDING_BODY(0x005ED2D0, pending)(this, nullptr, x, y);
 }
 
-// 0x005F6AB0  ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z - the tree walk
+// ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z at 0x005F6AB0 - the tree walk
 // `get_mouse_window` delegates to, 1110 bytes.
 Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y) {
     typedef Win *(__cdecl *pending)(Win *, int *, int *);
     return PENDING_BODY(0x005F6AB0, pending)(window, x, y);
 }
 
-// 0x005F1820  ?update_cursor@Win@@QAAHPAUWin@@H@Z
+// ?update_cursor@Win@@QAAHPAUWin@@H@Z at 0x005F1820
 int Win::update_cursor(Win *window, int tgl) {
     typedef int(__cdecl *pending)(Win *, int);
     return PENDING_BODY(0x005F1820, pending)(window, tgl);
 }
 
-// 0x005F7320  ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z
+// ?update_screen@Win@@QAAHPAURECT@@PAVWin@@@Z at 0x005F7320
 int Win::update_screen(RECT *area, Win *window) {
     typedef int(__cdecl *pending)(RECT *, Win *);
     return PENDING_BODY(0x005F7320, pending)(area, window);
 }
 
-// 0x005F7580  ?do_tracking@Win@@QAEXHH@Z - the one __thiscall member of the
+// ?do_tracking@Win@@QAEXHH@Z at 0x005F7580 - the one __thiscall member of the
 // set, so the forwarder hands the receiver over explicitly.
 void Win::do_tracking(int x, int y) {
     typedef void(__fastcall *pending)(Win *, void *, int, int);
     PENDING_BODY(0x005F7580, pending)(this, nullptr, x, y);
 }
 
-// 0x005F86A0  sub_5f86a0 - byte-exact in src/recovered/005f86a0.cpp, which
+// sub_5f86a0 at 0x005F86A0 - byte-exact in src/recovered/005f86a0.cpp, which
 // is in no build, so the edge is still pending here.
 extern "C" void __stdcall sub_5f86a0(int a1) {
     typedef void(__stdcall *pending)(int);
     PENDING_BODY(0x005F86A0, pending)(a1);
 }
 
-// 0x005E2690  ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z - 1127 bytes, body
+// ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z at 0x005E2690 - 1127 bytes, body
 // in src/unrecovered/005e2690.cpp. THE FRONTIER MOVED HERE when the by-name
 // `Buffer::load_pcx` landed byte-exact in src/buffer.cpp: that one only maps
 // the file and fixes up the extension, and hands the bytes to this decoder.
@@ -197,13 +197,13 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette, int tgl,
                                              palette, tgl, height);
 }
 
-// 0x0063B910  ?init_cursor_class@Cursor@@QAAXXZ - `int` here, see cursor.h
+// ?init_cursor_class@Cursor@@QAAXXZ at 0x0063B910 - `int` here, see cursor.h
 int Cursor::init_cursor_class() {
     typedef int(__cdecl *pending)();
     return PENDING_BODY(0x0063B910, pending)();
 }
 
-// 0x0063B940  ?trig_init@@YAHXZ
+// ?trig_init@@YAHXZ at 0x0063B940
 int __cdecl trig_init() {
     typedef int(__cdecl *pending)();
     return PENDING_BODY(0x0063B940, pending)();

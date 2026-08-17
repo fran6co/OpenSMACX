@@ -4,8 +4,8 @@ The whole reading machinery lives here - the lesson tokens, region
 extraction, the proved-store region rule and the tree walk. `read` is the
 entry point: a FILE reads that file, a DIRECTORY is globbed recursively
 and every annotation under it comes back, and two arguments read in-memory
-text - the migrator's dry-run surface. `read_file` is the explicit
-single-file form. NOTHING HERE CACHES: a call reads what is on disk at
+text. `read_file` is the explicit single-file form. NOTHING HERE CACHES:
+a call reads what is on disk at
 the moment of the call, and a caller that asks repeatedly memoises at its
 own layer. The patterns and the marker-recognition rule live in `grammar`;
 deciding BETWEEN records - one claimant per address - lives in
@@ -340,9 +340,9 @@ def read(source: Path | str,
     ONE ARGUMENT is a path: a FILE reads that file; a DIRECTORY is globbed
     recursively for source files and every annotation under it comes back,
     in deterministic order. TWO ARGUMENTS are in-memory TEXT attributed to
-    `path` - the migrator's dry-run surface. No caching anywhere: a call
-    reads what is on disk at the moment of the call. A caller that wants a
-    different set of files reads them itself and keeps the results.
+    `path`. No caching anywhere: a call reads what is on disk at the moment
+    of the call. A caller that wants a different set of files reads them
+    itself and keeps the results.
     """
     if path is not None:
         return _read_text(source, Path(path))
@@ -365,12 +365,9 @@ def read(source: Path | str,
 
 
 def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
-    """Scan TEXT attributed to `path` - the migrator's dry-run surface.
+    """Scan TEXT attributed to `path`.
 
-    Only EXPLICIT markers are read. The deprecated spellings and the
-    marker-less stores were rewritten with markers by the migration, and
-    the tree's rule is that recognition of those forms is deleted once the
-    rewrite lands, not maintained.
+    Only EXPLICIT markers are read - the tree's single annotation grammar.
     """
     path = Path(path)
     lines = text.splitlines()

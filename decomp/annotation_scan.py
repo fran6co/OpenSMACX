@@ -48,10 +48,11 @@ def _code_only(region: str) -> str:
                 text = text.split("*/", 1)[1].strip()
             else:
                 continue
-        # Inline comments are cut before comparison: the migrator rewrites
-        # them, so an identity check that kept them would flag its own work.
-        # A `//` inside a string is cut on BOTH sides of that comparison, so
-        # the cut cannot manufacture a difference.
+        # Inline comments are cut before comparison: the annotation layer
+        # lives in comments, and two regions that differ only in their
+        # annotations are one piece of code. A `//` inside a string is cut
+        # on BOTH sides of that comparison, so the cut cannot manufacture
+        # a difference.
         if "//" in text:
             text = text.split("//", 1)[0].strip()
         if text.startswith("/*"):
