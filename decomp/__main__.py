@@ -27,9 +27,11 @@ which is what a finished refactor looks like.
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
-from decomp import State, from_source, grammar, resolve, scan_tree, writer
+from decomp import (DecompilationState, State, from_source, grammar, resolve,
+                    scan_tree, writer)
 from decomp import project_catalogue
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -62,7 +64,8 @@ def sanity() -> tuple:
     return records, rows
 
 
-def _fingerprint(records: list, claim_attr: str, path_of) -> list:
+def _fingerprint(records: list[DecompilationState], claim_attr: str,
+                 path_of: Callable[[DecompilationState], str]) -> list:
     """Everything about a record that the grammar decides.
 
     `claim_attr` and `path_of` project each copy's shape onto common facts:
@@ -75,7 +78,7 @@ def _fingerprint(records: list, claim_attr: str, path_of) -> list:
                    a.unrecoverable, a.deferred) for a in records)
 
 
-def drift(records: list, rows: dict) -> bool:
+def drift(records: list[DecompilationState], rows: dict[int, dict]) -> bool:
     """True if the check ran. Raises if the two parsers disagree."""
     if not (TOOLS / "annotation_scan.py").is_file():
         print("skip: tools/annotation_scan.py is gone - the copies are now one")

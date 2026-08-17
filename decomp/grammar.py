@@ -1,9 +1,14 @@
-"""The annotation grammar, as data: every pattern the scanner recognises.
+"""The annotation grammar: every pattern, and where a marker counts.
 
-What a marker LOOKS LIKE lives here; what it MEANS lives in `annotation_scan`.
-Keeping the two apart is what lets a reader audit the whole grammar in one
-screenful, and what lets `python -m decomp` enumerate it exhaustively when it
-holds this package's parse against the `tools/` originals.
+What a marker LOOKS LIKE is the patterns below; WHERE IT COUNTS is the
+recognition half at the bottom - a marker only counts inside a comment,
+and `parse_marker`, `block_state_after` and `marker_addresses` are the ONE
+implementation of that rule, shared by the reader and the writer alike.
+What a marker MEANS - regions, states, lessons - lives in `reader`, and
+deciding between records lives in `annotation_scan`. Keeping the grammar
+apart is what lets a reader audit it in one screenful, and what lets
+`python -m decomp` enumerate it exhaustively when it holds this package's
+parse against the `tools/` originals.
 
 A COPY, AND KNOWINGLY SO. `tools/annotation_scan.py` and the reading half of
 `tools/project_catalogue.py` hold the same patterns, because the 61 scripts in
@@ -87,7 +92,7 @@ NEXT_MARKER = re.compile(r"^\s*(?://|\*)?\s*ORIGINAL:\s*0x[0-9A-Fa-f]{8}\b")
 
 # The sentinel names the body slot. Its spelling is shared with the wave
 # tools (verify_wave.PLACEHOLDER), but what counts as UNTOUCHED is defined
-# in `annotation_scan._is_placeholder_region`, because the emitter's own
+# in `reader._is_placeholder_region`, because the emitter's own
 # scaffold breaks verify_wave's rule: a non-void skeleton carries a
 # placeholder return after the sentinel so it compiles before a body exists
 # (C4716 otherwise), and `is_untouched`'s one-line allowance reads that
@@ -149,3 +154,85 @@ SCAN_PATTERNS = (
     "NEXT_MARKER", "_MANGLED_BASE", "_NAME_FIELD",
 )
 CATALOGUE_PATTERNS = ("FACT_LINE", "CONTINUED")
+
+# --------------------------------------------------------------- recognition
+
+# The patterns above are the grammar as DATA; these three functions are the
+# grammar APPLIED - the rule for where a marker is valid, shared by every
+# consumer. A hit in code or data is prose, not a map entry, and this is the
+# ONE implementation of that rule: the reader parses with it, and the writer
+# finds existing markers with it, so the two can never disagree about what
+# counts as a marker.
+def block_state_after(line: str, in_block: bool) -> bool:
+    """Cheap block-comment tracking: count the transitions on the line.
+
+    Deliberately naive about strings containing comment marks - a false
+    positive there only makes the scanner MORE willing to read a marker, and
+    a marker at an address the catalogue does not know is reported as
+    uncatalogued rather than believed, so the error cannot fabricate a map
+    entry.
+    THE SCAN IS BY `find`, NOT BY CHARACTER. This ran once per line of every
+    file under `src/`, and every tool in the loop calls `scan_tree` at
+    startup: the catalogue, the brief, the verifier and the ratchet all pay
+    it. Measured 2026-08-14, the character walk was 730,000 calls making 30
+    MILLION `startswith` probes - 8.8 s of the 12 s `load_functions` took, and
+    the largest single cost in the whole critical path. `find` does the same
+    search in C and skips everything between the marks.
+
+    The states are the same three: outside, inside a block, and stopped at a
+    line comment. Depth never exceeds one - the character version only ever
+    incremented from zero - so `/*` inside a block is text, exactly as before.
+    """
+    index = 0
+    if in_block:
+        end = line.find("*/")
+        if end < 0:
+            return True
+        index = end + 2
+    while True:
+        start = line.find("/*", index)
+        if start < 0:
+            return False
+        line_comment = line.find("//", index)
+        if 0 <= line_comment < start:
+            return False
+        end = line.find("*/", start + 2)
+        if end < 0:
+            return True
+        index = end + 2
+
+
+def parse_marker(line: str, in_block: bool) -> tuple | None:
+    """(address, keyword, rest, matched) for a marker IN A COMMENT."""
+    match = MARKER.search(line)
+    if not match:
+        return None
+    # The marker only counts inside a comment: either the line opens `//`
+    # before it, or the scanner is inside a `/* */` block. A hit in code or
+    # data is prose, not a map entry.
+    prefix = line[:match.start()]
+    if not in_block and "//" not in prefix and "/*" not in prefix:
+        return None
+    tail = match.group("tail") or ""
+    matched = bool(MARKER_MATCHED.search(tail))
+    keyword_hit = MARKER_KEYWORD.match(MARKER_MATCHED.sub("", tail))
+    keyword = keyword_hit.group("kw") if keyword_hit else None
+    rest = keyword_hit.group("rest") if keyword_hit else ""
+    return int(match.group("addr"), 16), keyword, rest, matched
+
+
+def marker_addresses(text: str) -> dict[int, int]:
+    """`{line: address}` for every marker in the text, in comment context.
+
+    The reader's public answer to "where are the markers" - a hit in code
+    or data is prose, not a map entry, and the comment-context rule is the
+    parser's, so callers do not re-implement it.
+    """
+    found = {}
+    in_block = False
+    for index, line in enumerate(text.splitlines()):
+        parsed = parse_marker(line, in_block)
+        in_block = block_state_after(line, in_block)
+        if parsed is not None:
+            found[index + 1] = parsed[0]
+    return found

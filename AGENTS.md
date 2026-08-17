@@ -725,13 +725,16 @@ parallel-agent targets (see "Parallel recovery" above):
 - `tools/recovery_metrics.py`: the only place that decides which rows are in scope, how a row is
   priced, and which way a number moves. Both the full exporter and the reused-export refresh path
   compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
-- `decomp/`: the source-map readers as an installed package - `from decomp import from_source,
-  scan_tree, resolve`, no `sys.path` line, works from any directory. It is SELF-CONTAINED
-  (standard library only, imports nothing from `tools/`), so `decomp/annotation_scan.py` and
-  `decomp/project_catalogue.py` are COPIES of the `tools/` modules the scripts still import.
+- `decomp/`: the source map as an installed package - `from decomp import from_source,
+  scan_tree, resolve`, no `sys.path` line, works from any directory - and the annotation
+  writer beside the parser: `decomp.write` replaces the annotations a text carries with the
+  records it is given. It is SELF-CONTAINED (standard library only, imports nothing from
+  `tools/`), so its grammar, parser and resolution are COPIES of `tools/annotation_scan.py`,
+  and its catalogue reader is a copy of the reading half of `tools/project_catalogue.py`.
   **A change to the annotation grammar must land in both copies.** `uv run python -m decomp`
-  parses `src/` each way and fails if they disagree; it is the only thing standing between two
-  parsers and two answers, and it retires when the tools move onto the package.
+  parses `src/` each way and fails if they disagree, and closes the read -> write -> read
+  loop over every annotated file; it is the only thing standing between two parsers and two
+  answers, and it retires when the tools move onto the package.
 - `tools/fetch_external_analysis.py`: verified local fetcher for ignored historical-analysis snapshots.
 - the retired `extract_legacy_leaves`: conservative local-only island extractor.
 - `test_extract_legacy_leaves (retired)`: 21 classifier, explicit-selection, symlink-containment, and output-ownership regression tests.

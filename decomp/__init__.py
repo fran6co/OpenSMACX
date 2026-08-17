@@ -18,19 +18,21 @@ THE LAYOUT. Each module is one concern:
 
     model.py             the data structures a scan produces -
                          DecompilationState, Mode, State
-    grammar.py           the annotation grammar as data - every pattern the
-                         scanner recognises, nothing else
-    annotation_scan.py   the engine - marker recognition, extraction,
-                         resolution, cross-reference
-    reader.py            the reading entry points - read_file, read, scan_tree
+    grammar.py           the annotation grammar - every pattern, plus the
+                         shared marker-recognition rule
+    reader.py            the parser - lessons, extraction, stores, the tree
+                         walk, and the entry points read_file, read, scan_tree
+    annotation_scan.py   resolution - one record per address, and the map
+                         held against the catalogue
     writer.py            the annotation writer - write, write_file
     project_catalogue.py the catalogue reader - the facts stamped under markers
 
 SELF-CONTAINED, BY REQUIREMENT. Nothing here imports from `tools/`, and
-nothing here imports outside the standard library. The grammar and the engine
-are COPIES of `tools/annotation_scan.py` and the reading half of
-`tools/project_catalogue.py`, which the 61 scripts in `tools/` still import
-directly.
+nothing here imports outside the standard library. The grammar, the parser
+and the resolution are COPIES of `tools/annotation_scan.py`, and the
+catalogue reader is a copy of the reading half of
+`tools/project_catalogue.py` - the modules the 61 scripts in `tools/` still
+import directly.
 
 That means two parsers for one grammar, which is a real cost and is paid on
 purpose: the package owes nothing to the scripts and can be lifted out whole.

@@ -28,16 +28,17 @@ from __future__ import annotations
 from pathlib import Path
 
 from . import reader
-from .annotation_scan import SRC_ROOT, _code_only, _parse_marker
-from .reader import _block_state_after
+from .annotation_scan import _code_only
 from .grammar import (LESSON_CONTINUED, LESSON_DEFERRED, LESSON_LEVER,
-                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE, MARKER)
-from .model import Mode, State
+                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE, MARKER,
+                      marker_addresses)
+from .model import DecompilationState, Mode, State
+from .reader import SRC_ROOT
 
 # ------------------------------------------------------------------ spelling
 
 
-def marker_line(record) -> str:
+def marker_line(record: DecompilationState) -> str:
     """The canonical marker line for a record."""
     line = f"// ORIGINAL: 0x{record.address:08X}"
     if record.mode is Mode.FILE:
@@ -49,7 +50,7 @@ def marker_line(record) -> str:
     return line
 
 
-def lesson_lines(record) -> list:
+def lesson_lines(record: DecompilationState) -> list[str]:
     """The record's lessons, one canonical line each.
 
     Continuation lines are a display form: the reader joins them with a
@@ -62,15 +63,15 @@ def lesson_lines(record) -> list:
     return out
 
 
-def _lesson_drop(lines: list, index: int) -> set:
+def _lesson_drop(lines: list[str], index: int) -> set[int]:
     """The 0-based line indices of the lesson run owned by the marker at
     `index` - the lines a replacement must delete.
 
-    MIRRORS `annotation_scan.lessons` line for line, because the writer and
+    MIRRORS `reader._lessons` line for line, because the writer and
     the reader disagreeing about which lines BELONG to a marker is the whole
     shape of the defect this module exists to avoid. A token line is
     dropped; a continuation line is dropped only while a token is open -
-    the same rule `lessons` reads by. Prose comment lines are kept: they
+    the same rule `_lessons` reads by. Prose comment lines are kept: they
     are not annotations.
     """
     drop = set()
@@ -95,7 +96,7 @@ def _lesson_drop(lines: list, index: int) -> set:
 # ------------------------------------------------------------------- writing
 
 
-def write(text: str, records: list) -> str:
+def write(text: str, records: list[DecompilationState]) -> str:
     """The text carrying exactly `records` as its annotations.
 
     Markers already in the text are REPLACED: a record at the marker's line
@@ -126,13 +127,7 @@ def write(text: str, records: list) -> str:
                 f"another record")
         by_line[record.line] = record
 
-    existing = {}
-    in_block = False
-    for index, line in enumerate(lines):
-        parsed = _parse_marker(line, in_block)
-        in_block = _block_state_after(line, in_block)
-        if parsed is not None:
-            existing[index + 1] = parsed[0]
+    existing = marker_addresses(text)
 
     out, drop = [], set()
     for index, line in enumerate(lines):
@@ -163,7 +158,7 @@ def write(text: str, records: list) -> str:
     return joined
 
 
-def write_file(path, records: list) -> None:
+def write_file(path: Path | str, records: list[DecompilationState]) -> None:
     """Rewrite the file at `path` so it carries exactly `records`."""
     path = Path(path)
     resolved = path.resolve()
@@ -193,7 +188,7 @@ def _region_code(region: str) -> str:
     return _code_only("\n".join(lines))
 
 
-def _key(record) -> tuple:
+def _key(record: DecompilationState) -> tuple:
     """Everything a round trip must preserve.
 
     `line` is NOT in it: it is a position in one text, and a rewrite that
@@ -209,7 +204,7 @@ def _key(record) -> tuple:
             record.deferred)
 
 
-def roundtrip_tree(root: Path = SRC_ROOT) -> tuple:
+def roundtrip_tree(root: Path = SRC_ROOT) -> tuple[int, int]:
     """(looped, skipped): files whose annotations survive write -> read.
 
     Every file with annotations is read, rewritten in memory from its own

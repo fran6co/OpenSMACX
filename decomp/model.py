@@ -28,7 +28,7 @@ class State(StrEnum):
 
     MEASURED, NOT CLAIMED. The only declared state is EXCLUDED, because
     exclusion is a decision; the others are derived from the region itself -
-    see `annotation_scan._state_of`.
+    see `reader._state_of`.
     """
     IMPLEMENTED = "implemented"
     PLACEHOLDER = "placeholder"
