@@ -173,17 +173,15 @@ def roundtrip_tree(root: Path = SRC_ROOT) -> tuple[int, int]:
 
     Every file with annotations is read, rewritten in memory from its own
     records, and read again; the two parses must agree field for field.
-    Skipped files are the ones the loop is NOT for: filename-derived store
-    records, which cannot be marker-addressed, and the legacy inline
-    spellings, whose markers point backward - migrating those is a rewrite
-    of the CODE's comment, not of the annotation layer, and belongs to the
-    migrator.
+    A skip means `write` refused a record - measured zero since the
+    migration gave every annotation an explicit marker, so a new skip is
+    an event worth investigating.
     """
+    by_path: dict[Path, list[DecompilationState]] = {}
+    for record in read(root):
+        by_path.setdefault(record.path, []).append(record)
     looped = skipped = 0
-    for path in reader.sources(root):
-        records = reader.read_file(path)
-        if not records:
-            continue
+    for path, records in by_path.items():
         try:
             rewritten = write(path.read_text(), records)
         except ValueError:
