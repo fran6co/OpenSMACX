@@ -292,8 +292,8 @@ def test_tree_roundtrip():
     """Every annotated file in src/ survives read -> write -> read.
 
     Measured zero skips when this landed: a new skip is an event worth
-    investigating - a legacy inline spelling landed, or the writer and the
-    reader disagreeing about what an annotation owns.
+    investigating - the writer and the reader disagreeing about what an
+    annotation owns.
     """
     looped, skipped = roundtrip_tree()
     assert looped > 3000, looped
