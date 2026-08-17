@@ -18,11 +18,16 @@ tools = [
     "undname==0.2",
     "z3-solver==4.13.0.0",
 ]
+# The decomp package's own tests. A group for the same reason: the package
+# RUNTIME stays standard-library-only, and only decomp/tests/ imports this.
+test = [
+    "pytest==8.4.1",
+]
 
 [tool.uv]
 # So a bare `uv sync` reproduces the environment every tool already runs on,
-# without anyone having to remember `--group tools`.
-default-groups = ["tools"]
+# without anyone having to remember a group name.
+default-groups = ["tools", "test"]
 
 [build-system]
 requires = ["uv_build>=0.9,<0.10"]

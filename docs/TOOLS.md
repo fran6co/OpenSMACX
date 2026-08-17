@@ -48,9 +48,15 @@ from `tools/` - so its two modules are copies of `tools/annotation_scan.py` and
 the reading half of `tools/project_catalogue.py`. The stamping half stays in
 `tools/`, because writing the fact block needs the export and the emitter.
 
+The readers have a writer: `decomp.write` replaces the annotations a text
+carries with the records it is given, and `uv run python -m decomp` closes
+the read -> write -> read loop over every annotated file in `src/`. The pair
+belongs to the package alone until the tools move onto it; `tools/` does not
+call it yet.
+
 Two parsers for one grammar is a real cost, and `uv run python -m decomp` is
 what bounds it: it parses `src/` both ways and fails if the answers differ on
-any annotation, any row or any of the fourteen patterns. **A grammar edit under
+any record, any row or any pattern of the grammar. **A grammar edit under
 `tools/` has to land in `decomp/` too, and vice versa, until the tools are
 refactored onto the package and the originals are deleted.**
 

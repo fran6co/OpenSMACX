@@ -284,6 +284,9 @@ __pycache__/
 /.venv/
 /dist/
 
+# `uv run pytest decomp/tests` caches its last session here.
+/.pytest_cache/
+
 # Worktrees created for isolated parallel work. `git add -A` from the main tree
 # otherwise records one as a gitlink (mode 160000), which is never intended.
 .claude/worktrees/
