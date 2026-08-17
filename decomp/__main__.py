@@ -1,13 +1,19 @@
-"""`uv run python -m decomp` - is the reader sane, and has the copy drifted?
+"""`uv run python -m decomp` - are the reader and the writer sane?
 
-TWO CHECKS. The first is the ground truth and would be enough on its own:
+THREE CHECKS. The first is the ground truth and would be enough on its own:
 parse `src/` and prove the result against the tree itself - the counts, the
 shapes every consumer reads, and one known-good recovered body. It catches
 the failure this package can actually have in isolation, which is silence: a
 reader that resolves to nothing returns `{}`, and every count computed from
 it comes out zero looking like an answer.
 
-The second is transitional. The same grammar also lives in
+The second closes the loop the writer opens: every annotated file is read,
+rewritten in memory from its own records, and read again - the two parses
+must agree in every fact they carry, and a second write from the rewritten
+text must change nothing. The annotation layer is allowed to canonicalise;
+the code underneath it is not.
+
+The third is transitional. The same grammar also lives in
 `tools/annotation_scan.py` and `tools/project_catalogue.py`, which the 61
 scripts in `tools/` still import; while both copies exist, this holds the
 package's parse against theirs and fails on any record, any catalogue row,
@@ -23,7 +29,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from decomp import State, from_source, grammar, resolve, scan_tree
+from decomp import State, from_source, grammar, resolve, scan_tree, writer
 from decomp import project_catalogue
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -126,12 +132,24 @@ def drift(records: list, rows: dict) -> bool:
     return True
 
 
+def loop() -> tuple:
+    """(looped, skipped): every annotated file read, rewritten from its own
+    records, and read again - the writer proved against the tree the sanity
+    check just proved the reader against. Fails if nothing loops: a writer
+    that cannot round-trip a single file is not a writer."""
+    looped, skipped = writer.roundtrip_tree()
+    assert looped > 0, "no file survives the read -> write -> read loop"
+    return looped, skipped
+
+
 def main() -> int:
     records, rows = sanity()
     checked = drift(records, rows)
+    looped, skipped = loop()
     against = "agrees with tools/" if checked else "tools/ copies absent"
     print(f"ok: {len(records)} records, {len(rows)} catalogue rows "
-          f"(proved against src/, {against})")
+          f"(proved against src/, loop closed on {looped} files, "
+          f"{skipped} skipped, {against})")
     return 0
 
 

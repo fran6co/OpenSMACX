@@ -20,8 +20,10 @@ THE LAYOUT. Each module is one concern:
                          DecompilationState, Mode, State
     grammar.py           the annotation grammar as data - every pattern the
                          scanner recognises, nothing else
-    annotation_scan.py   the engine that walks, extracts, resolves and
-                         cross-references
+    annotation_scan.py   the engine - marker recognition, extraction,
+                         resolution, cross-reference
+    reader.py            the reading entry points - read_file, read, scan_tree
+    writer.py            the annotation writer - write, write_file
     project_catalogue.py the catalogue reader - the facts stamped under markers
 
 SELF-CONTAINED, BY REQUIREMENT. Nothing here imports from `tools/`, and
@@ -43,17 +45,20 @@ deleted and that comparison goes with them.
 
 from __future__ import annotations
 
-from . import annotation_scan, grammar, model, project_catalogue
-from .annotation_scan import (cross_reference, resolve, scan_file, scan_text,
-                              scan_tree, tree_stamp)
+from . import (annotation_scan, grammar, model, project_catalogue, reader,
+               writer)
+from .annotation_scan import cross_reference, resolve
 from .grammar import FACT_LINE
 from .model import DecompilationState, Mode, State
 from .project_catalogue import from_source, stamped
+from .reader import read, read_file, scan_tree, tree_stamp
+from .writer import write, write_file
 
 __all__ = [
-    "annotation_scan", "grammar", "model", "project_catalogue",
+    "annotation_scan", "grammar", "model", "project_catalogue", "reader",
+    "writer",
     "DecompilationState", "Mode", "State",
-    "scan_tree", "scan_file", "scan_text", "resolve",
-    "cross_reference", "tree_stamp",
+    "read", "read_file", "scan_tree", "tree_stamp", "resolve",
+    "cross_reference", "write", "write_file",
     "from_source", "stamped", "FACT_LINE",
 ]
