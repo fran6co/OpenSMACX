@@ -727,8 +727,9 @@ parallel-agent targets (see "Parallel recovery" above):
   compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
 - `decomp/`: the source map as an installed package - `from decomp import from_source,
   scan_tree, resolve`, no `sys.path` line, works from any directory - and the annotation
-  writer beside the parser: `decomp.write` replaces the annotations a text carries with the
-  records it is given. It is SELF-CONTAINED (standard library only, imports nothing from
+  writer beside the parser: `decomp.write` rewrites the annotations the records describe,
+  each at its own line, and `decomp.remove` deletes them. It is SELF-CONTAINED
+  (standard library only, imports nothing from
   `tools/`), so its grammar, parser and resolution are COPIES of `tools/annotation_scan.py`,
   and its catalogue reader is a copy of the reading half of `tools/project_catalogue.py`.
   **A change to the annotation grammar must land in both copies.** `uv run python -m decomp`

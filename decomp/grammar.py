@@ -2,8 +2,8 @@
 
 What a marker LOOKS LIKE is the patterns below; WHERE IT COUNTS is the
 recognition half at the bottom - a marker only counts inside a comment,
-and `parse_marker`, `block_state_after` and `marker_addresses` are the ONE
-implementation of that rule, shared by the reader and the writer alike.
+and `parse_marker` and `block_state_after` are the ONE implementation of
+that rule: the reader parses with them, and nothing re-implements them.
 What a marker MEANS - regions, states, lessons - lives in `reader`, and
 deciding between records lives in `annotation_scan`. Keeping the grammar
 apart is what lets a reader audit it in one screenful, and what lets
@@ -219,20 +219,3 @@ def parse_marker(line: str, in_block: bool) -> tuple | None:
     keyword = keyword_hit.group("kw") if keyword_hit else None
     rest = keyword_hit.group("rest") if keyword_hit else ""
     return int(match.group("addr"), 16), keyword, rest, matched
-
-
-def marker_addresses(text: str) -> dict[int, int]:
-    """`{line: address}` for every marker in the text, in comment context.
-
-    The reader's public answer to "where are the markers" - a hit in code
-    or data is prose, not a map entry, and the comment-context rule is the
-    parser's, so callers do not re-implement it.
-    """
-    found = {}
-    in_block = False
-    for index, line in enumerate(text.splitlines()):
-        parsed = parse_marker(line, in_block)
-        in_block = block_state_after(line, in_block)
-        if parsed is not None:
-            found[index + 1] = parsed[0]
-    return found

@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from decomp import (DecompilationState, Mode, State, read, read_file, write,
-                    write_file)
+from decomp import (DecompilationState, Mode, State, read, read_file, remove,
+                    write, write_file)
 from decomp.writer import roundtrip_tree
 
 FIXTURE = Path("fixture.cpp")
@@ -154,7 +154,7 @@ def test_several_markers():
     assert write(MULTI, records) == MULTI
 
 
-# ------------------------------------------------------------- replacement
+# ------------------------------------------- write trusts the records it gets
 
 TWO_WITH_LESSONS = """// ORIGINAL: 0x00407000
 // LEVER: fp-1 what landed A
@@ -168,40 +168,20 @@ void __cdecl b() {
 """
 
 
-def test_replacement_removes_unclaimed_markers():
+def test_unclaimed_markers_pass_through():
     records = read(TWO_WITH_LESSONS, FIXTURE)
-    keep = [r for r in records if r.address == 0x00407000]
-    rewritten = write(TWO_WITH_LESSONS, keep)
+    described = [r for r in records if r.address == 0x00407000]
+    rewritten = write(TWO_WITH_LESSONS, described)
     reread = read(rewritten, FIXTURE)
-    assert [r.address for r in reread] == [0x00407000]
+    # A is rewritten canonically; B was not described, so it is untouched.
+    assert [r.address for r in reread] == [0x00407000, 0x00407010]
     assert reread[0].levers == (("fp-1", "what landed A"),)
-    # B's marker AND its lesson run are gone; B's code remains.
-    assert "0x00407010" not in rewritten
-    assert "the spelling that failed B" not in rewritten
-    assert "void __cdecl b() {" in rewritten
+    assert "0x00407010" in rewritten
+    assert "the spelling that failed B" in rewritten
 
 
-def test_empty_records_strip_every_marker():
-    rewritten = write(TWO_WITH_LESSONS, [])
-    assert "ORIGINAL:" not in rewritten
-    assert "LEVER:" not in rewritten
-    assert "RULED-OUT:" not in rewritten
-    assert "void __cdecl a() {" in rewritten
-    assert "void __cdecl b() {" in rewritten
-
-
-# ---------------------------------------------------------------- insertion
-
-
-def test_insertion_into_unmarked_text():
-    text = "void __cdecl f() {\n}\n"
-    made = [record(0x00408000, line=1)]
-    rewritten = write(text, made)
-    assert rewritten.splitlines()[0] == "// ORIGINAL: 0x00408000"
-    reread = read(rewritten, FIXTURE)
-    assert len(reread) == 1
-    assert reread[0].address == 0x00408000
-    assert reread[0].state is State.IMPLEMENTED
+def test_empty_records_leave_the_text_untouched():
+    assert write(TWO_WITH_LESSONS, []) == TWO_WITH_LESSONS
 
 
 def test_append_past_the_last_line():
@@ -209,6 +189,40 @@ def test_append_past_the_last_line():
     made = [record(0x00408100, line=len(text.splitlines()) + 1)]
     rewritten = write(text, made)
     assert rewritten.splitlines()[-1] == "// ORIGINAL: 0x00408100"
+
+
+# ------------------------------------------------- remove is a statement
+
+
+def test_remove_deletes_named_records():
+    records = read(TWO_WITH_LESSONS, FIXTURE)
+    drop = [r for r in records if r.address == 0x00407010]
+    rewritten = remove(TWO_WITH_LESSONS, drop)
+    reread = read(rewritten, FIXTURE)
+    assert [r.address for r in reread] == [0x00407000]
+    # B's marker and lesson run are gone; B's code and all of A remain.
+    assert "0x00407010" not in rewritten
+    assert "the spelling that failed B" not in rewritten
+    assert "void __cdecl b() {" in rewritten
+    assert "// ORIGINAL: 0x00407000" in rewritten
+    assert "what landed A" in rewritten
+
+
+def test_remove_all_leaves_only_the_code():
+    records = read(TWO_WITH_LESSONS, FIXTURE)
+    rewritten = remove(TWO_WITH_LESSONS, records)
+    assert "ORIGINAL:" not in rewritten
+    assert "LEVER:" not in rewritten
+    assert "RULED-OUT:" not in rewritten
+    assert "void __cdecl a() {" in rewritten
+    assert "void __cdecl b() {" in rewritten
+
+
+def test_remove_refusals():
+    with pytest.raises(ValueError, match="marker-addressable"):
+        remove("anything\n", [record(0x409000, line=0)])
+    with pytest.raises(ValueError, match="past the end"):
+        remove("one line\n", [record(0x409000, line=99)])
 
 
 # ----------------------------------------------------------------- refusals
