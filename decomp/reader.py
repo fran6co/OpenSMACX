@@ -1,9 +1,9 @@
 """The parser of the source map: file in, records out.
 
 The whole reading machinery lives here - the lesson tokens, region
-extraction, store recognition and the tree walk. `read` is the entry
-point: a FILE reads that file, a DIRECTORY is globbed recursively and
-every annotation under it comes back, and two arguments read in-memory
+extraction, the proved-store region rule and the tree walk. `read` is the
+entry point: a FILE reads that file, a DIRECTORY is globbed recursively
+and every annotation under it comes back, and two arguments read in-memory
 text - the migrator's dry-run surface. `read_file` is the explicit
 single-file form. NOTHING HERE CACHES: a call reads what is on disk at
 the moment of the call, and a caller that asks repeatedly memoises at its
@@ -17,8 +17,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .grammar import (EXCLUSION_TOKEN, LEGACY_BLOCK, LEGACY_OPENING,
-                      LEGACY_TRAILING, LESSON_CONTINUED, LESSON_DEFERRED,
+from .grammar import (EXCLUSION_TOKEN, LESSON_CONTINUED, LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
                       MARKER, MARKER_KEYWORD, MARKER_MATCHED, NEXT_MARKER,
                       SENTINEL, _MANGLED_BASE, _NAME_FIELD, block_state_after,
@@ -297,28 +296,6 @@ def _extract_forward_text(lines: list[str], marker_line: int) -> str:
     return text
 
 
-def _backward_start(lines: list[str], marker_index: int) -> int:
-    """Line index where the body claimed by a trailing marker opens.
-
-    The marker sits on the definition's CLOSING-brace line, so the body is
-    found by walking backwards until the braces balance. Single-line
-    definitions balance immediately; a multi-line body ends at the line whose
-    opening brace closes the count.
-    """
-    depth = 0
-    for index in range(marker_index, -1, -1):
-        depth += lines[index].count("}") - lines[index].count("{")
-        if depth <= 0 and "{" in lines[index]:
-            return index
-    raise ValueError("no balanced opening brace above the trailing marker")
-
-
-def _extract_backward(lines: list[str], marker_index: int) -> str:
-    """The region claimed by a trailing marker, for the inline legacy form."""
-    start = _backward_start(lines, marker_index)
-    return "\n".join(lines[start:marker_index + 1]) + "\n"
-
-
 def _is_placeholder_region(text: str) -> bool:
     if SENTINEL not in text:
         return False
@@ -364,15 +341,23 @@ def read(source: Path | str,
     recursively for source files and every annotation under it comes back,
     in deterministic order. TWO ARGUMENTS are in-memory TEXT attributed to
     `path` - the migrator's dry-run surface. No caching anywhere: a call
-    reads what is on disk at the moment of the call.
+    reads what is on disk at the moment of the call. A caller that wants a
+    different set of files reads them itself and keeps the results.
     """
     if path is not None:
         return _read_text(source, Path(path))
     source = Path(source)
     if source.is_dir():
         found: list[DecompilationState] = []
-        for file in sources(source):
-            found.extend(read_file(file))
+        # BOTH SUFFIXES. `.cpp` is what this tree is written in; `.c` arrived
+        # with `src/vendor/zlib-1.0.2/`, where the recovery for thirteen
+        # functions is upstream C that no C++ compiler will parse - zlib
+        # 1.0.2 uses K&R definitions. A glob that took only `.cpp` would
+        # report those annotations as missing while the files sat in the
+        # tree.
+        for suffix in ("*.cpp", "*.c"):
+            for file in source.rglob(suffix):
+                found.extend(read_file(file))
         found.sort(key=lambda record: (record.path, record.line,
                                        record.address))
         return found
@@ -382,13 +367,14 @@ def read(source: Path | str,
 def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
     """Scan TEXT attributed to `path` - the migrator's dry-run surface.
 
-    An explicit marker always wins. The legacy-store adapters fire only when a
-    file under `src/recovered/` carries NO marker at all, so a migrated file
-    is read by the new grammar even before the adapter is retired.
+    Only EXPLICIT markers are read. The deprecated spellings and the
+    marker-less stores were rewritten with markers by the migration, and
+    the tree's rule is that recognition of those forms is deleted once the
+    rewrite lands, not maintained.
     """
     path = Path(path)
     lines = text.splitlines()
-    kind = _store_kind(path)
+    proved = _proved_store(path)
     found = []
 
     in_block = False
@@ -418,7 +404,7 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
         else:
-            if kind == "proved":
+            if proved:
                 # Proved bodies keep the writeback semantics even once an
                 # explicit marker lands in the header: the body is the
                 # definition after the leading `//` run, never a brace count
@@ -430,7 +416,7 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
                     error = ""
                 except ValueError as problem:
                     region, error = "", str(problem)
-            recipe = "writeback" if kind == "proved" else "census"
+            recipe = "writeback" if proved else "census"
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY,
                 state=_state_of(region, ""), path=_abs(path),
@@ -439,102 +425,20 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
 
-    if not found:
-        found.extend(_legacy_file_annotations(path, text, lines, kind))
-
-    # A file may legitimately map several pieces (the thunk files do, once
-    # migrated); but the SAME address twice in one file is a defect the
-    # cross-reference reports, so nothing is dropped here.
     return found
 
 
-def _store_kind(path: Path) -> str:
-    """Which legacy store a file sits in, by directory SHAPE, not repo path.
+def _proved_store(path: Path) -> bool:
+    """True for files in the proved writeback store, by directory SHAPE,
+    not repo path: the parent is `recovered` and the name is an address.
 
-    "units" when the parent is `recovered/units`, "proved" when the parent is
-    `recovered`, and "" anywhere else - so the mechanism works in a fixture
-    tree as well as in the real one, and a store relocated during the
-    migration keeps its semantics. The file must be named for an address.
+    These files carry explicit markers like everything else; the store
+    still decides how their BODIES are cut - the definition after the
+    leading `//` run, never a brace count from the marker line.
     """
     resolved = Path(path).resolve()
-    if not re.fullmatch(r"[0-9a-f]{8}", resolved.stem):
-        return ""
-    if resolved.parent.name == "units" \
-            and resolved.parent.parent.name == "recovered":
-        return "units"
-    if resolved.parent.name == "recovered":
-        return "proved"
-    return ""
-
-
-def _legacy_file_annotations(path: Path, text: str,
-                             lines: list[str],
-                             kind: str) -> list[DecompilationState]:
-    """Read-only recognition of the pre-migration stores and spellings."""
-    found = []
-    resolved = Path(path).resolve()
-
-    # The two src/recovered/ stores, keyed by filename.
-    if kind == "units":
-        found.append(DecompilationState(
-            address=int(resolved.stem, 16), mode=Mode.FILE,
-            state=_state_of(text, ""), path=_abs(path), line=0, region=text, recipe="verbatim"))
-        return found
-    if kind == "proved":
-        body = _proved_body(lines)
-        found.append(DecompilationState(
-            address=int(resolved.stem, 16), mode=Mode.BODY,
-            state=_state_of(body, ""), path=_abs(path), line=0, region=body, recipe="writeback"))
-        return found
-
-    # The two deprecated inline spellings, anywhere under src/.
-    in_block = False
-    for index, line in enumerate(lines):
-        block_now = block_state_after(line, in_block)
-        if in_block or line.lstrip().startswith("/*"):
-            match = LEGACY_BLOCK.search(line)
-            if match and "// ORIGINAL:" not in line:
-                address = int(match.group("addr"), 16)
-                try:
-                    region = _extract_forward_text(lines, index + 1)
-                    error = ""
-                except ValueError as problem:
-                    region, error = "", str(problem)
-                found.append(DecompilationState(
-                    address=address, mode=Mode.BODY,
-                    state=_state_of(region, ""), path=_abs(path),
-                    line=index + 1, region=region,
-                    extract_error=error, recipe="census"))
-        trailing = LEGACY_TRAILING.search(line)
-        if trailing:
-            address = int(trailing.group("addr"), 16)
-            try:
-                region = _extract_backward(lines, index)
-                error = ""
-            except ValueError as problem:
-                region, error = "", str(problem)
-            found.append(DecompilationState(
-                address=address, mode=Mode.BODY,
-                state=_state_of(region, ""), path=_abs(path),
-                line=index + 1, region=region,
-                extract_error=error, recipe="census"))
-            in_block = block_now
-            continue
-        opening = LEGACY_OPENING.search(line)
-        if opening:
-            address = int(opening.group("addr"), 16)
-            try:
-                region = _extract_forward_text(lines, index + 1)
-                error = ""
-            except ValueError as problem:
-                region, error = "", str(problem)
-            found.append(DecompilationState(
-                address=address, mode=Mode.BODY,
-                state=_state_of(region, ""), path=_abs(path),
-                line=index + 1, region=region,
-                extract_error=error, recipe="census"))
-        in_block = block_now
-    return found
+    return bool(re.fullmatch(r"[0-9a-f]{8}", resolved.stem)) \
+        and resolved.parent.name == "recovered"
 
 
 def _proved_body(lines: list[str]) -> str:
@@ -550,13 +454,3 @@ def _proved_body(lines: list[str]) -> str:
                                   or lines[index].lstrip().startswith("//")):
         index += 1
     return "\n".join(lines[index:]).strip() + "\n"
-
-
-# BOTH SUFFIXES. `.cpp` is what this tree is written in; `.c` arrived with
-# `src/vendor/zlib-1.0.2/`, where the recovery for thirteen functions is
-# upstream C that no C++ compiler will parse - zlib 1.0.2 uses K&R
-# definitions. A glob that took only `.cpp` would report those annotations
-# as missing while the files sat in the tree.
-def sources(root: Path) -> list[Path]:
-    return sorted(path for suffix in ("*.cpp", "*.c")
-                  for path in Path(root).rglob(suffix))

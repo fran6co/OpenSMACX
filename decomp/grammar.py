@@ -47,23 +47,6 @@ MARKER_KEYWORD = re.compile(r"^\s*(?P<kw>FILE|EXCLUDED)\b(?P<rest>.*)$", re.S)
 # constrains, so deleting the body deletes the claim.
 MARKER_MATCHED = re.compile(r"(?<![A-Za-z0-9_])BYTE_EXACT(?![A-Za-z0-9_])")
 
-# ------------------------------------------------- the deprecated spellings
-
-LEGACY_BLOCK = re.compile(r"Original Offset:\s*(?P<addr>[0-9A-Fa-f]{6,8})")
-# The inline trailing form, e.g. src/random.cpp's
-# `void __cdecl random_rand() {...} // 00625700`. Eight digits required: a
-# shorter bare hex token is too easy to hit in ordinary prose.
-LEGACY_TRAILING = re.compile(r"\}\s*//\s*(?P<addr>[0-9A-Fa-f]{8})\s*$")
-# The opening-brace form in src/text.cpp: `int f(...) { // 00585120`. The
-# census never scored these - a forward brace count from the marker line
-# lands in the NEXT function - which is why they sit unlocated in the
-# catalogue. Forward extraction from the marker line is correct here.
-LEGACY_OPENING = re.compile(r"\{\s*//\s*(?P<addr>[0-9A-Fa-f]{8})\s*$")
-# Preserved unit header, e.g. `// PRESERVED UNIT - measured BYTE_EXACT.`.
-LEGACY_PRESERVED = re.compile(r"PRESERVED UNIT\s*-\s*measured\s+(?P<tier>\w+)")
-# Proved body header, e.g. `// 0x00401000  ??0StringStruct@@QAE@H@Z -> ...`.
-LEGACY_PROVED = re.compile(r"^//\s*0x(?P<addr>[0-9A-Fa-f]{8})\b")
-
 # -------------------------------------------------------- exclusion citations
 
 # The citation token after EXCLUDED is a section reference, not free prose.
@@ -147,8 +130,7 @@ CONTINUABLE = ("calls", "indirect")
 # CATALOGUE_PATTERNS in `tools/project_catalogue.py`.
 SCAN_PATTERNS = (
     "MARKER", "MARKER_KEYWORD", "MARKER_MATCHED",
-    "LEGACY_BLOCK", "LEGACY_TRAILING", "LEGACY_OPENING", "LEGACY_PRESERVED",
-    "LEGACY_PROVED", "EXCLUSION_TOKEN",
+    "EXCLUSION_TOKEN",
     "LESSON_LEVER", "LESSON_RULED_OUT", "LESSON_CONTINUED",
     "LESSON_UNRECOVERABLE", "LESSON_DEFERRED",
     "NEXT_MARKER", "_MANGLED_BASE", "_NAME_FIELD",
