@@ -51,16 +51,16 @@ from __future__ import annotations
 from pathlib import Path
 
 from . import annotation_scan, reader
-from .annotation_scan import REPO_ROOT
 from .grammar import CONTINUABLE, CONTINUED, FACT_LINE
 from .model import State
+from .reader import REPO_ROOT
 
 
 # {root: (stamp, rows)}, keyed the same way `reader.scan_tree` is.
 _SOURCE_CACHE = {}
 
 
-def from_source(src: Path = None) -> dict:
+def from_source(src: Path | None = None) -> dict[int, dict]:
     """The catalogue, read back out of `src/` - the same shape `emit` returns.
 
     MEMOISED ON THE FILES, for the reason `scan_tree` gives at length: this is
@@ -169,7 +169,7 @@ def from_source(src: Path = None) -> dict:
     return rows
 
 
-def stamped(lines: list, index: int) -> dict:
+def stamped(lines: list[str], index: int) -> dict[str, str]:
     """{key: value} already recorded in the comment run after a marker.
 
     THE FIRST SPELLING OF A KEY WINS. The block is written once, by `facts`,

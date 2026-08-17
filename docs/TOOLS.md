@@ -44,9 +44,10 @@ annotations, duplicates = resolve(scan_tree())
 ```
 
 The package is SELF-CONTAINED - standard library only, and it imports nothing
-from `tools/` - so its two modules are copies of `tools/annotation_scan.py` and
-the reading half of `tools/project_catalogue.py`. The stamping half stays in
-`tools/`, because writing the fact block needs the export and the emitter.
+from `tools/` - so its grammar, parser and resolution are copies of
+`tools/annotation_scan.py`, and its catalogue reader is a copy of the reading
+half of `tools/project_catalogue.py`. The stamping half stays in `tools/`,
+because writing the fact block needs the export and the emitter.
 
 The readers have a writer: `decomp.write` replaces the annotations a text
 carries with the records it is given, and `uv run python -m decomp` closes
