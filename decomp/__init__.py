@@ -6,11 +6,12 @@ markers. WHAT that piece is - its name, size, spans, prototype, call edges -
 comes from `project_catalogue.from_source`, which reads the `// key value`
 fact block stamped under each marker:
 
-    from decomp import from_source, scan_tree, resolve
+    from pathlib import Path
+    from decomp import from_source, read, resolve
 
     rows = from_source()                      # {address: row}
     rows[0x005D7210]["name"]                  # '??0Buffer@@QAE@XZ'
-    records, duplicates = resolve(scan_tree())
+    records, duplicates = resolve(read(Path("src")))
     records[0].path                           # absolute Path, ready to open
     records[0].state is State.IMPLEMENTED     # typed vocabulary, not strings
 
@@ -21,7 +22,8 @@ THE LAYOUT. Each module is one concern:
     grammar.py           the annotation grammar - every pattern, plus the
                          shared marker-recognition rule
     reader.py            the parser - lessons, extraction, stores, the tree
-                         walk, and the entry points read_file, read, scan_tree
+                         walk, and the entry points read (a file, a directory,
+                         or an in-memory text) and read_file
     annotation_scan.py   resolution - one record per address, and the map
                          held against the catalogue
     writer.py            the annotation writer - write, remove, and their
@@ -54,14 +56,14 @@ from .annotation_scan import cross_reference, resolve
 from .grammar import FACT_LINE
 from .model import DecompilationState, Mode, State
 from .project_catalogue import from_source, stamped
-from .reader import read, read_file, scan_tree, tree_stamp
+from .reader import read, read_file
 from .writer import remove, remove_file, write, write_file
 
 __all__ = [
     "annotation_scan", "grammar", "model", "project_catalogue", "reader",
     "writer",
     "DecompilationState", "Mode", "State",
-    "read", "read_file", "scan_tree", "tree_stamp", "resolve",
+    "read", "read_file", "resolve",
     "cross_reference", "write", "remove", "write_file",
     "from_source", "stamped", "FACT_LINE",
 ]

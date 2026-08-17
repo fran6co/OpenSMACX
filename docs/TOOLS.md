@@ -36,11 +36,12 @@ The same two readers are packaged as `decomp/`, which `uv sync` installs
 editable, so they are one import from anywhere with no `sys.path` line:
 
 ```python
-from decomp import from_source, scan_tree, resolve
+from pathlib import Path
+from decomp import from_source, read, resolve
 
 rows = from_source()                    # {address: row}, the facts in src/
 rows[0x005D7210]["name"]                # '??0Buffer@@QAE@XZ'
-annotations, duplicates = resolve(scan_tree())
+annotations, duplicates = resolve(read(Path("src")))
 ```
 
 The package is SELF-CONTAINED - standard library only, and it imports nothing

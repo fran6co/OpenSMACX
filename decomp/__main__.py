@@ -30,8 +30,8 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from decomp import (DecompilationState, State, from_source, grammar, reader,
-                    resolve, scan_tree, write)
+from decomp import (DecompilationState, State, from_source, grammar, read,
+                    reader, resolve, write)
 from decomp import project_catalogue
 from decomp.annotation_scan import _code_only
 from decomp.reader import SRC_ROOT
@@ -45,7 +45,7 @@ FACTS = ("name", "size", "body_ranges", "prototype", "binary_kind",
 
 def sanity() -> tuple:
     """The floor: `src/` parses, and to the shape consumers read."""
-    records, _duplicates = resolve(scan_tree())
+    records, _duplicates = resolve(read(SRC_ROOT))
     assert len(records) > 5000, len(records)
     assert any(record.state is State.IMPLEMENTED for record in records)
     assert all(isinstance(record.path, Path) and record.path.is_absolute()
