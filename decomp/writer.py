@@ -1,9 +1,16 @@
 """Write annotations back onto source: the inverse of `reader`.
 
-`write` takes a file's text and the records it should carry, and returns the
-text whose annotation layer expresses exactly those records - replacing the
-markers already there, removing the ones that are not, inserting the ones
-that are new. `write_file` does the same to a file on disk.
+TWO OPERATIONS, EACH EXPLICIT. `write` takes a file's text and the records
+that describe its annotations, and rewrites each record's marker canonically
+at `record.line`, appending a record one past the last line; `remove`
+deletes the annotations the records name, marker line and lesson run.
+`write_file` applies `write` to a file on disk.
+
+THE WRITER TRUSTS THE RECORDS. They are the description of the annotations
+the text carries - the output of reading it, possibly edited - so nothing
+here re-reads the text to check them. A marker the records do not describe
+passes through `write` untouched; deleting it is a `remove`, stated
+deliberately, not an omission.
 
 THE ANNOTATION LAYER ONLY. Code lines pass through untouched, and the
 catalogue's fact block - the `// name`, `// size`, `// spans` lines stamped
@@ -30,8 +37,7 @@ from pathlib import Path
 from . import reader
 from .annotation_scan import _code_only
 from .grammar import (LESSON_CONTINUED, LESSON_DEFERRED, LESSON_LEVER,
-                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE, MARKER,
-                      marker_addresses)
+                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE, MARKER)
 from .model import DecompilationState, Mode, State
 from .reader import SRC_ROOT
 
@@ -97,13 +103,13 @@ def _lesson_drop(lines: list[str], index: int) -> set[int]:
 
 
 def write(text: str, records: list[DecompilationState]) -> str:
-    """The text carrying exactly `records` as its annotations.
+    """The text with each of `records` rewritten at its own line.
 
-    Markers already in the text are REPLACED: a record at the marker's line
-    rewrites it, and a marker no record claims is removed with its lesson
-    run. A record at a line holding no marker is INSERTED there; a line past
-    the last line appends. Fact lines, prose and code pass through
-    untouched.
+    `records` describes the annotations the text carries. Each record's
+    marker is rewritten canonically at `record.line`, replacing the line
+    that is there and the lesson run owned by it; a record one past the
+    last line appends. Everything the records do not describe - code,
+    prose, fact lines, other markers - passes through untouched.
     """
     lines = text.splitlines()
 
@@ -127,24 +133,16 @@ def write(text: str, records: list[DecompilationState]) -> str:
                 f"another record")
         by_line[record.line] = record
 
-    existing = marker_addresses(text)
-
     out, drop = [], set()
     for index, line in enumerate(lines):
         if index in drop:
             continue
-        number = index + 1
-        if number in existing:
+        record = by_line.get(index + 1)
+        if record is not None:
             drop.update(_lesson_drop(lines, index))
-            record = by_line.get(number)
-            if record is not None:
-                out.append(marker_line(record))
-                out.extend(lesson_lines(record))
-            continue
-        if number in by_line:
-            record = by_line[number]
             out.append(marker_line(record))
             out.extend(lesson_lines(record))
+            continue
         out.append(line)
 
     if len(lines) + 1 in by_line:
@@ -153,8 +151,39 @@ def write(text: str, records: list[DecompilationState]) -> str:
         out.extend(lesson_lines(record))
 
     joined = "\n".join(out)
-    if text.endswith("\n") or not joined:
-        joined += "\n" if text.endswith("\n") else ""
+    if text.endswith("\n"):
+        joined += "\n"
+    return joined
+
+
+def remove(text: str, records: list[DecompilationState]) -> str:
+    """The text with the annotations described by `records` deleted.
+
+    Deletion is a statement, not an omission: each named record's marker
+    line and the lesson run owned by it are dropped; everything else -
+    code, prose, fact lines, the markers of records not named - passes
+    through untouched.
+    """
+    lines = text.splitlines()
+
+    drop: set[int] = set()
+    for record in records:
+        if not record.line:
+            raise ValueError(
+                f"{record.address_hex}: filename-derived records are not "
+                f"marker-addressable")
+        if record.line > len(lines):
+            raise ValueError(
+                f"{record.address_hex}: line {record.line} is past the end "
+                f"of a {len(lines)}-line file")
+        index = record.line - 1
+        drop.add(index)
+        drop.update(_lesson_drop(lines, index))
+
+    out = [line for index, line in enumerate(lines) if index not in drop]
+    joined = "\n".join(out)
+    if text.endswith("\n"):
+        joined += "\n"
     return joined
 
 
