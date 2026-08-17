@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from decomp import (DecompilationState, Mode, State, read, read_file, remove,
-                    write, write_file)
+                    remove_file, write, write_file)
 from decomp.writer import roundtrip_tree
 
 FIXTURE = Path("fixture.cpp")
@@ -250,16 +250,30 @@ def test_refuses_two_records_on_one_line():
               [record(0x409000, line=1), record(0x409001, line=1)])
 
 
-def test_write_file_checks_paths(tmp_path):
+def test_write_file_uses_the_paths_records_carry(tmp_path):
+    path = tmp_path / "unit.cpp"
+    path.write_text(WRAPPED_LESSON)
+    write_file(read_file(path))
+    # The wrapped lesson is canonicalised on disk, one line.
+    assert ("// RULED-OUT: plain ret 4 leaves ECX live, "
+            "so the stub must zero it first") in path.read_text()
+
+
+def test_write_file_groups_records_by_path(tmp_path):
+    a, b = tmp_path / "a.cpp", tmp_path / "b.cpp"
+    a.write_text(WRAPPED_LESSON)
+    b.write_text(BODY)
+    write_file(read_file(a) + read_file(b))
+    assert "so the stub must zero it first" in a.read_text()
+    assert b.read_text() == BODY
+
+
+def test_remove_file(tmp_path):
     path = tmp_path / "unit.cpp"
     path.write_text(BODY)
-    records = read_file(path)
-    write_file(path, records)                  # matching paths: fine
-    foreign = DecompilationState(address=0x409000, mode=Mode.BODY,
-                                 state=State.IMPLEMENTED,
-                                 path=tmp_path / "other.cpp", line=1)
-    with pytest.raises(ValueError, match="not"):
-        write_file(path, [foreign])
+    remove_file(read_file(path))
+    assert "ORIGINAL:" not in path.read_text()
+    assert "void __cdecl f() {" in path.read_text()
 
 
 # ------------------------------------------------------------- the loop

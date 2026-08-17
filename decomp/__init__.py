@@ -24,7 +24,8 @@ THE LAYOUT. Each module is one concern:
                          walk, and the entry points read_file, read, scan_tree
     annotation_scan.py   resolution - one record per address, and the map
                          held against the catalogue
-    writer.py            the annotation writer - write, remove, write_file
+    writer.py            the annotation writer - write, remove, and their
+                         on-disk forms write_file, remove_file
     project_catalogue.py the catalogue reader - the facts stamped under markers
 
 SELF-CONTAINED, BY REQUIREMENT. Nothing here imports from `tools/`, and
@@ -54,7 +55,7 @@ from .grammar import FACT_LINE
 from .model import DecompilationState, Mode, State
 from .project_catalogue import from_source, stamped
 from .reader import read, read_file, scan_tree, tree_stamp
-from .writer import remove, write, write_file
+from .writer import remove, remove_file, write, write_file
 
 __all__ = [
     "annotation_scan", "grammar", "model", "project_catalogue", "reader",

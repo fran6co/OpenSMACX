@@ -4,7 +4,8 @@ TWO OPERATIONS, EACH EXPLICIT. `write` takes a file's text and the records
 that describe its annotations, and rewrites each record's marker canonically
 at `record.line`, appending a record one past the last line; `remove`
 deletes the annotations the records name, marker line and lesson run.
-`write_file` applies `write` to a file on disk.
+`write_file` and `remove_file` apply them on disk, grouping the records by
+the paths the records themselves carry.
 
 THE WRITER TRUSTS THE RECORDS. They are the description of the annotations
 the text carries - the output of reading it, possibly edited - so nothing
@@ -187,16 +188,29 @@ def remove(text: str, records: list[DecompilationState]) -> str:
     return joined
 
 
-def write_file(path: Path | str, records: list[DecompilationState]) -> None:
-    """Rewrite the file at `path` so it carries exactly `records`."""
-    path = Path(path)
-    resolved = path.resolve()
+def write_file(records: list[DecompilationState]) -> None:
+    """Rewrite each record's own file with its annotations canonical.
+
+    Records carry their paths: they are grouped by file, and each file is
+    read, rewritten and saved. The text comes from disk because a record
+    carries only what ITS annotation claims - the region - and a file is
+    also everything between and around its annotations, which no record
+    describes.
+    """
+    by_path: dict[Path, list[DecompilationState]] = {}
     for record in records:
-        if Path(record.path).resolve() != resolved:
-            raise ValueError(
-                f"{record.address_hex}: record names {record.path}, "
-                f"not {path}")
-    path.write_text(write(path.read_text(), records))
+        by_path.setdefault(Path(record.path), []).append(record)
+    for path, group in by_path.items():
+        path.write_text(write(path.read_text(), group))
+
+
+def remove_file(records: list[DecompilationState]) -> None:
+    """Delete the named annotations from each record's own file."""
+    by_path: dict[Path, list[DecompilationState]] = {}
+    for record in records:
+        by_path.setdefault(Path(record.path), []).append(record)
+    for path, group in by_path.items():
+        path.write_text(remove(path.read_text(), group))
 
 
 # --------------------------------------------------------------- the proof
