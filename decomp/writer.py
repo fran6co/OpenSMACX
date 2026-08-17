@@ -23,7 +23,7 @@ THE SPELLINGS COME FROM `grammar`, nowhere else. A written marker is
 ` BYTE_EXACT` appended as the record requires - exactly the forms
 `grammar.MARKER` and `grammar.MARKER_KEYWORD` accept - and lessons are
 spelled the way `grammar.LESSON_*` accept them. That is what makes the
-read -> write -> read loop closed by construction, and `roundtrip_tree` is
+read -> write -> read loop closed by construction; `python -m decomp` is
 the measurement that says so over the whole tree.
 
 STATE IS NEVER WRITTEN. It is derived from the region on read, which is
@@ -35,12 +35,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import reader
-from .annotation_scan import _code_only
 from .grammar import (LESSON_CONTINUED, LESSON_DEFERRED, LESSON_LEVER,
-                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE, MARKER)
+                      LESSON_RULED_OUT, LESSON_UNRECOVERABLE)
 from .model import DecompilationState, Mode, State
-from .reader import SRC_ROOT
 
 # ------------------------------------------------------------------ spelling
 
@@ -211,73 +208,3 @@ def remove_file(records: list[DecompilationState]) -> None:
         by_path.setdefault(Path(record.path), []).append(record)
     for path, group in by_path.items():
         path.write_text(remove(path.read_text(), group))
-
-
-# --------------------------------------------------------------- the proof
-
-
-def _region_code(region: str) -> str:
-    """The region's code with the annotation layer removed.
-
-    A region can start mid-comment - a bare marker inside a doc block - and
-    `_code_only` cannot know that: it keeps the bare marker line, which is
-    annotation, and drops the `//`-prefixed one the writer emits, so the two
-    spellings of the SAME layer would compare as different code. Marker
-    lines are removed from both sides first; the code underneath is what a
-    round trip must preserve.
-    """
-    lines = [line for line in region.splitlines()
-             if not MARKER.search(line)]
-    return _code_only("\n".join(lines))
-
-
-def _key(record: DecompilationState) -> tuple:
-    """Everything a round trip must preserve.
-
-    `line` is NOT in it: it is a position in one text, and a rewrite that
-    canonicalises the annotation layer - a wrapped lesson re-emitted on one
-    line - legitimately moves every line below. The region is compared
-    code-only for the same reason, and the record fields beside it already
-    prove the annotations survived. What must never change is the code.
-    """
-    return (record.address, record.mode, record.state,
-            _region_code(record.region), record.byte_exact,
-            record.exclusion, record.extract_error, record.recipe,
-            record.levers, record.ruled_out, record.unrecoverable,
-            record.deferred)
-
-
-def roundtrip_tree(root: Path = SRC_ROOT) -> tuple[int, int]:
-    """(looped, skipped): files whose annotations survive write -> read.
-
-    Every file with annotations is read, rewritten in memory from its own
-    records, and read again; the two parses must agree field for field.
-    Skipped files are the ones the loop is NOT for: filename-derived store
-    records, which cannot be marker-addressed, and the legacy inline
-    spellings, whose markers point backward - migrating those is a rewrite
-    of the CODE's comment, not of the annotation layer, and belongs to the
-    migrator.
-    """
-    looped = skipped = 0
-    for path in reader.sources(root):
-        records = reader.read_file(path)
-        if not records:
-            continue
-        try:
-            rewritten = write(path.read_text(), records)
-        except ValueError:
-            skipped += 1
-            continue
-        reread = reader.read(rewritten, path)
-        if [_key(r) for r in records] != [_key(r) for r in reread]:
-            skipped += 1
-            continue
-        # THE FIXED POINT. The first write may canonicalise - one line per
-        # lesson, keywords in one order - and shift every line below; the
-        # second write, from the records of the text it produced, must
-        # change nothing. Canonical is stable or it is not canonical.
-        if write(rewritten, reread) != rewritten:
-            skipped += 1
-            continue
-        looped += 1
-    return looped, skipped

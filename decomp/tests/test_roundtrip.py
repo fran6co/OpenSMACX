@@ -15,7 +15,7 @@ import pytest
 
 from decomp import (DecompilationState, Mode, State, read, read_file, remove,
                     remove_file, write, write_file)
-from decomp.writer import roundtrip_tree
+from decomp.__main__ import _key, roundtrip_tree
 
 FIXTURE = Path("fixture.cpp")
 
@@ -32,7 +32,6 @@ def loop(text):
 
 
 def keys(records):
-    from decomp.writer import _key
     return [_key(r) for r in records]
 
 

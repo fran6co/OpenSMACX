@@ -30,9 +30,11 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-from decomp import (DecompilationState, State, from_source, grammar, resolve,
-                    scan_tree, writer)
+from decomp import (DecompilationState, State, from_source, grammar, reader,
+                    resolve, scan_tree, write)
 from decomp import project_catalogue
+from decomp.annotation_scan import _code_only
+from decomp.reader import SRC_ROOT
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TOOLS = REPO_ROOT / "tools"
@@ -135,12 +137,79 @@ def drift(records: list[DecompilationState], rows: dict[int, dict]) -> bool:
     return True
 
 
-def loop() -> tuple:
+def _region_code(region: str) -> str:
+    """The region's code with the annotation layer removed.
+
+    A region can start mid-comment - a bare marker inside a doc block - and
+    `_code_only` cannot know that: it keeps the bare marker line, which is
+    annotation, and drops the `//`-prefixed one the writer emits, so the two
+    spellings of the SAME layer would compare as different code. Marker
+    lines are removed from both sides first; the code underneath is what a
+    round trip must preserve.
+    """
+    lines = [line for line in region.splitlines()
+             if not grammar.MARKER.search(line)]
+    return _code_only("\n".join(lines))
+
+
+def _key(record: DecompilationState) -> tuple:
+    """Everything a round trip must preserve.
+
+    `line` is NOT in it: it is a position in one text, and a rewrite that
+    canonicalises the annotation layer - a wrapped lesson re-emitted on one
+    line - legitimately moves every line below. The region is compared
+    code-only for the same reason, and the record fields beside it already
+    prove the annotations survived. What must never change is the code.
+    """
+    return (record.address, record.mode, record.state,
+            _region_code(record.region), record.byte_exact,
+            record.exclusion, record.extract_error, record.recipe,
+            record.levers, record.ruled_out, record.unrecoverable,
+            record.deferred)
+
+
+def roundtrip_tree(root: Path = SRC_ROOT) -> tuple[int, int]:
+    """(looped, skipped): files whose annotations survive write -> read.
+
+    Every file with annotations is read, rewritten in memory from its own
+    records, and read again; the two parses must agree field for field.
+    Skipped files are the ones the loop is NOT for: filename-derived store
+    records, which cannot be marker-addressed, and the legacy inline
+    spellings, whose markers point backward - migrating those is a rewrite
+    of the CODE's comment, not of the annotation layer, and belongs to the
+    migrator.
+    """
+    looped = skipped = 0
+    for path in reader.sources(root):
+        records = reader.read_file(path)
+        if not records:
+            continue
+        try:
+            rewritten = write(path.read_text(), records)
+        except ValueError:
+            skipped += 1
+            continue
+        reread = reader.read(rewritten, path)
+        if [_key(r) for r in records] != [_key(r) for r in reread]:
+            skipped += 1
+            continue
+        # THE FIXED POINT. The first write may canonicalise - one line per
+        # lesson, keywords in one order - and shift every line below; the
+        # second write, from the records of the text it produced, must
+        # change nothing. Canonical is stable or it is not canonical.
+        if write(rewritten, reread) != rewritten:
+            skipped += 1
+            continue
+        looped += 1
+    return looped, skipped
+
+
+def loop() -> tuple[int, int]:
     """(looped, skipped): every annotated file read, rewritten from its own
     records, and read again - the writer proved against the tree the sanity
     check just proved the reader against. Fails if nothing loops: a writer
     that cannot round-trip a single file is not a writer."""
-    looped, skipped = writer.roundtrip_tree()
+    looped, skipped = roundtrip_tree()
     assert looped > 0, "no file survives the read -> write -> read loop"
     return looped, skipped
 
