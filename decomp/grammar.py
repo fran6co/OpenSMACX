@@ -172,7 +172,7 @@ def block_state_after(line: str, in_block: bool) -> bool:
     uncatalogued rather than believed, so the error cannot fabricate a map
     entry.
     THE SCAN IS BY `find`, NOT BY CHARACTER. This ran once per line of every
-    file under `src/`, and every tool in the loop calls `scan_tree` at
+    file under `src/`, and every tool in the loop reads the tree at
     startup: the catalogue, the brief, the verifier and the ratchet all pay
     it. Measured 2026-08-14, the character walk was 730,000 calls making 30
     MILLION `startswith` probes - 8.8 s of the 12 s `load_functions` took, and

@@ -726,7 +726,7 @@ parallel-agent targets (see "Parallel recovery" above):
   priced, and which way a number moves. Both the full exporter and the reused-export refresh path
   compute the published block through it; `tools/test_recovery_metrics.py` pins that they agree.
 - `decomp/`: the source map as an installed package - `from decomp import from_source,
-  scan_tree, resolve`, no `sys.path` line, works from any directory - and the annotation
+  read, resolve`, no `sys.path` line, works from any directory - and the annotation
   writer beside the parser: `decomp.write` rewrites the annotations the records describe,
   each at its own line, and `decomp.remove` deletes them. It is SELF-CONTAINED
   (standard library only, imports nothing from

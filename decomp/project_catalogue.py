@@ -56,18 +56,12 @@ from .model import State
 from .reader import REPO_ROOT
 
 
-# {root: (stamp, rows)}, keyed the same way `reader.scan_tree` is.
-_SOURCE_CACHE = {}
-
-
 def from_source(src: Path | None = None) -> dict[int, dict]:
     """The catalogue, read back out of `src/` - the same shape `emit` returns.
 
-    MEMOISED ON THE FILES, for the reason `scan_tree` gives at length: this is
-    the layer every tool starts from, and one `agent_brief` invocation reached
-    it nine times. The stamp is `reader.tree_stamp`, so a caller that
-    writes a recovery and reads the catalogue back gets its own edit; nothing
-    here is keyed on merely having been asked before.
+    NO CACHE: each call parses the tree afresh, and a caller that asks
+    repeatedly memoises at its own layer. The copy in `tools/` still
+    memoises; the package deliberately does not.
 
     This is the direction that makes the export deletable. Every annotation
     carries its own facts and `--check` holds them to the export, so reading
@@ -75,10 +69,6 @@ def from_source(src: Path | None = None) -> dict[int, dict]:
     store instead of a CSV.
     """
     root = src or (REPO_ROOT / "src")
-    stamp = reader.tree_stamp(root)
-    hit = _SOURCE_CACHE.get(str(root))
-    if hit is not None and hit[0] == stamp:
-        return hit[1]
     rows = {}
     # `recovery_state` was never a fact ABOUT a function: the exporter derived
     # it from `src/` and wrote it back into the CSV. Deriving it HERE, once,
@@ -97,7 +87,7 @@ def from_source(src: Path | None = None) -> dict[int, dict]:
     # Two resolvers giving two answers to one question is the shape this tree
     # keeps finding defects in; there is one resolver and it lives in
     # `annotation_scan`.
-    for annotation in annotation_scan.resolve(reader.scan_tree(root))[0]:
+    for annotation in annotation_scan.resolve(reader.read(root))[0]:
         path = annotation.path
         try:
             lines = path.read_text(errors="ignore").splitlines()
@@ -165,7 +155,6 @@ def from_source(src: Path | None = None) -> dict[int, dict]:
             "priority": "",
             "comments": "",
         }
-    _SOURCE_CACHE[str(root)] = (stamp, rows)
     return rows
 
 

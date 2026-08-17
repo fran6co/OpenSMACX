@@ -153,6 +153,16 @@ def test_several_markers():
     assert write(MULTI, records) == MULTI
 
 
+def test_read_directory_globs_recursively(tmp_path):
+    nested = tmp_path / "nested"
+    nested.mkdir()
+    (tmp_path / "a.cpp").write_text(BODY)
+    (nested / "b.cpp").write_text(MATCHED_TEXT)
+    records = read(tmp_path)
+    assert [r.address for r in records] == [0x00401000, 0x00404000]
+    assert all(r.path.is_absolute() for r in records)
+
+
 # ------------------------------------------- write trusts the records it gets
 
 TWO_WITH_LESSONS = """// ORIGINAL: 0x00407000

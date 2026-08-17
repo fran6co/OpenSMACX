@@ -1,11 +1,14 @@
 """The parser of the source map: file in, records out.
 
 The whole reading machinery lives here - the lesson tokens, region
-extraction, store recognition and the tree walk - with its entry points:
-`read_file` reads one file, `read` reads in-memory text - the migrator's
-dry-run surface - and `scan_tree` reads the whole tree, memoised on the
-files themselves. The patterns and the marker-recognition rule live in
-`grammar`; deciding BETWEEN records - one claimant per address - lives in
+extraction, store recognition and the tree walk. `read` is the entry
+point: a FILE reads that file, a DIRECTORY is globbed recursively and
+every annotation under it comes back, and two arguments read in-memory
+text - the migrator's dry-run surface. `read_file` is the explicit
+single-file form. NOTHING HERE CACHES: a call reads what is on disk at
+the moment of the call, and a caller that asks repeatedly memoises at its
+own layer. The patterns and the marker-recognition rule live in `grammar`;
+deciding BETWEEN records - one claimant per address - lives in
 `annotation_scan`. This module produces the claimants.
 """
 
@@ -350,10 +353,33 @@ def _exclusion_citation(rest: str) -> str:
 def read_file(path: Path) -> list[DecompilationState]:
     """Every annotation one file declares, in line order."""
     path = Path(path)
-    return read(path.read_text(), path)
+    return _read_text(path.read_text(), path)
 
 
-def read(text: str, path: Path | str) -> list[DecompilationState]:
+def read(source: Path | str,
+         path: Path | str | None = None) -> list[DecompilationState]:
+    """The annotations under a path, or in a text.
+
+    ONE ARGUMENT is a path: a FILE reads that file; a DIRECTORY is globbed
+    recursively for source files and every annotation under it comes back,
+    in deterministic order. TWO ARGUMENTS are in-memory TEXT attributed to
+    `path` - the migrator's dry-run surface. No caching anywhere: a call
+    reads what is on disk at the moment of the call.
+    """
+    if path is not None:
+        return _read_text(source, Path(path))
+    source = Path(source)
+    if source.is_dir():
+        found: list[DecompilationState] = []
+        for file in sources(source):
+            found.extend(read_file(file))
+        found.sort(key=lambda record: (record.path, record.line,
+                                       record.address))
+        return found
+    return read_file(source)
+
+
+def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
     """Scan TEXT attributed to `path` - the migrator's dry-run surface.
 
     An explicit marker always wins. The legacy-store adapters fire only when a
@@ -526,62 +552,11 @@ def _proved_body(lines: list[str]) -> str:
     return "\n".join(lines[index:]).strip() + "\n"
 
 
-# {root: (stamp, annotations)} for the process. Keyed on what the files ARE,
-# not on having been asked before - see `scan_tree`.
-_TREE_CACHE = {}
-
-
-# BOTH SUFFIXES, and the stamp and the scan must agree on which. `.cpp` is
-# what this tree is written in; `.c` arrived with `src/vendor/zlib-1.0.2/`,
-# where the recovery for thirteen functions is upstream C that no C++ compiler
-# will parse - zlib 1.0.2 uses K&R definitions. A scan that globbed only
-# `.cpp` would report those annotations as missing while the files sat in the
-# tree, and a STAMP that globbed only `.cpp` would be worse: the memo would
-# never notice a `.c` landing changing.
+# BOTH SUFFIXES. `.cpp` is what this tree is written in; `.c` arrived with
+# `src/vendor/zlib-1.0.2/`, where the recovery for thirteen functions is
+# upstream C that no C++ compiler will parse - zlib 1.0.2 uses K&R
+# definitions. A glob that took only `.cpp` would report those annotations
+# as missing while the files sat in the tree.
 def sources(root: Path) -> list[Path]:
     return sorted(path for suffix in ("*.cpp", "*.c")
                   for path in Path(root).rglob(suffix))
-
-
-def tree_stamp(root: Path = SRC_ROOT) -> tuple[tuple[str, int, int], ...]:
-    """(path, mtime, size) for every file `scan_tree` would read.
-
-    Stat-ing 3,500 files costs about ten milliseconds; reading and parsing
-    them costs two and a half seconds. That gap is the whole reason this
-    exists, and the stamp is the same triple every build system trusts to
-    decide whether a file changed.
-    """
-    out = []
-    for path in sources(root):
-        try:
-            info = path.stat()
-        except OSError:
-            continue
-        out.append((str(path), info.st_mtime_ns, info.st_size))
-    return tuple(out)
-
-
-def scan_tree(root: Path = SRC_ROOT) -> list[DecompilationState]:
-    """Every annotation under `root`, deterministic order.
-
-    MEMOISED ON THE FILES THEMSELVES, because the callers are layered and
-    each one asks independently. `agent_brief` for a single address called
-    this TEN times and `project_catalogue.from_source` nine, at 2.6 s a call -
-    41 s for a brief whose own work is a few hundred milliseconds. The layers
-    are right; asking again is not.
-
-    Keyed on the stamp rather than on the argument, so a tool that WRITES a
-    recovery and re-scans - which `writeback` does - sees its own edit. A
-    plain `lru_cache` here would hand it the tree as it was before the write,
-    and the verdict it published would describe code that no longer exists.
-    """
-    stamp = tree_stamp(root)
-    hit = _TREE_CACHE.get(str(root))
-    if hit is not None and hit[0] == stamp:
-        return hit[1]
-    found = []
-    for path in sources(root):
-        found.extend(read_file(path))
-    found.sort(key=lambda ann: (ann.path, ann.line, ann.address))
-    _TREE_CACHE[str(root)] = (stamp, found)
-    return found
