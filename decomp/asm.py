@@ -46,18 +46,6 @@ from pathlib import Path
 from .model import DecompilationState
 
 
-# ---------------------------------------------------------------- the record
-
-
-def _span(record: DecompilationState) -> tuple:
-    """(low, high) of the record's primary span - the body, not the cold
-    funclets a second span may cover."""
-    if not record.spans:
-        raise ValueError(
-            f"{record.address_hex}: no spans fact under its marker")
-    return record.spans[0]
-
-
 # -------------------------------------------------------------- the original
 
 
@@ -86,12 +74,18 @@ def _pe_bytes(exe: Path, address: int, size: int) -> bytes:
 
 
 def original_asm(record: DecompilationState, exe: Path | str) -> list:
-    """The shipped image's assembly for `record` - the bytes at its span
-    in `exe`, disassembled."""
+    """The shipped image's assembly for `record` - the bytes at its
+    primary span in `exe`, disassembled. A record can carry no spans - a
+    fresh annotation the catalogue has not stamped yet - and then nothing
+    locates it in the image, so the call says so."""
+    if not record.spans:
+        raise ValueError(
+            f"{record.address_hex}: the record carries no spans - nothing "
+            f"locates it in the image")
     exe = Path(exe)
     if not exe.is_file():
         raise ValueError(f"no executable at {exe}")
-    low, high = _span(record)
+    low, high = record.spans[0]
     return _disasm(_pe_bytes(exe, low, high - low), low)
 
 
