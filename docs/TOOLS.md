@@ -32,23 +32,21 @@ tools/decomp_status.py --check            # THE RATCHET
 every annotation carries its own name, size, spans, prototype, kind, flags and
 call edges, and `--check` holds them to the export row by row.
 
-The same two readers are packaged as `decomp/`, which `uv sync` installs
-editable, so they are one import from anywhere with no `sys.path` line:
+The source map is also packaged as `decomp/`, which `uv sync` installs
+editable, so it is one import from anywhere with no `sys.path` line:
 
 ```python
 from pathlib import Path
-from decomp import from_source, read, resolve
+from decomp import read, write, function_line
 
-rows = from_source()                    # {address: row}, the facts in src/
-rows[0x005D7210]["name"]                # '??0Buffer@@QAE@XZ'
-annotations, duplicates = resolve(read(Path("src")))
+records = read(Path("src"))             # every annotation under src/
+line = function_line(Path("src/win.cpp"), "Win::flip")
 ```
 
 The package is SELF-CONTAINED - standard library only, and it imports nothing
-from `tools/` - so its grammar, parser and resolution are copies of
-`tools/annotation_scan.py`, and its catalogue reader is a copy of the reading
-half of `tools/project_catalogue.py`. The stamping half stays in `tools/`,
-because writing the fact block needs the export and the emitter.
+from `tools/` - so its reader is a copy of the reading side of
+`tools/annotation_scan.py`. The stamping half stays in `tools/`, because
+writing the fact block needs the export and the emitter.
 
 The readers have a writer: `decomp.write` rewrites the annotations the
 records describe, each at its own line, and `decomp.remove` deletes them -
