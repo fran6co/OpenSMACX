@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from decomp import read_file
-from decomp.asm import _coff_function, _span, compiled_asm, original_asm
+from decomp.asm import _coff_function, compiled_asm, original_asm
 from decomp.reader import REPO_ROOT
 
 # The environment's facts live HERE, not in the package: where the pinned
@@ -52,12 +52,12 @@ def test_record_carries_name_and_spans(tmp_path):
     record = record_in(tmp_path, MARKED)
     assert record.name == "?f@C@@QAEXXZ"
     assert record.spans == ((0x00401000, 0x00401008),)
-    assert _span(record) == (0x00401000, 0x00401008)
 
 
 def test_span_refused_without_the_fact(tmp_path):
     with pytest.raises(ValueError, match="no spans"):
-        _span(record_in(tmp_path, NO_FACTS))
+        original_asm(record_in(tmp_path, NO_FACTS),
+                     Path("/nonexistent/image.exe"))
 
 
 def test_original_asm_refused_without_the_exe(tmp_path):
