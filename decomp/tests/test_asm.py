@@ -14,7 +14,8 @@ from pathlib import Path
 import pytest
 
 from decomp import read_file
-from decomp.asm import _coff_function, compiled_asm, original_asm
+from decomp.asm import (_coff_function, compare_asm, compiled_asm,
+                        original_asm)
 from decomp.reader import REPO_ROOT
 
 # The environment's facts live HERE, not in the package: where the pinned
@@ -98,6 +99,61 @@ def test_coff_function_refuses_an_absent_symbol():
         _coff_function(obj, "?g@@YAXXZ")
 
 
+# ------------------------------------------------------- listing comparison
+
+LISTING = [
+    "0x00401000  55                        push ebp",
+    "0x00401001  8B EC                     mov ebp, esp",
+    "0x00401003  B8 01 00 00 00              mov eax, 1",
+    "0x00401008  C3                        ret",
+]
+
+
+def test_compare_byte_exact():
+    result = compare_asm(LISTING, list(LISTING))
+    assert result.verdict == "BYTE_EXACT"
+    assert result.original_count == result.compiled_count == 4
+    assert result.matching_lines == 4
+    assert result.mnemonic_similarity == 1.0
+    assert result.first_divergence is None
+
+
+def test_compare_mnemonic_only():
+    compiled = list(LISTING)
+    compiled[2] = "0x00401003  B8 02 00 00 00              mov eax, 2"
+    result = compare_asm(LISTING, compiled)
+    assert result.verdict == "MNEMONIC_ONLY"
+    assert result.matching_lines == 3
+    assert result.mnemonic_similarity == 1.0
+    assert result.first_divergence == 2
+
+
+def test_compare_mismatch_reports_the_divergence():
+    compiled = list(LISTING)
+    compiled[1] = "0x00401001  33 C0                     xor eax, eax"
+    result = compare_asm(LISTING, compiled)
+    assert result.verdict == "MISMATCH"
+    assert result.first_divergence == 1
+    assert result.mnemonic_similarity < 1.0
+    assert any("xor" in line for line in result.context[1])
+
+
+def test_compare_ret_keeps_its_pop_count():
+    # `ret` and `ret 4` are different instructions; the sequence must say so.
+    a = ["0x00401000  C3                        ret"]
+    b = ["0x00401000  C2 04 00                  ret 4"]
+    result = compare_asm(a, b)
+    assert result.verdict == "MISMATCH"
+
+
+def test_compare_length_difference():
+    result = compare_asm(LISTING, LISTING[:-1])
+    assert result.verdict == "MISMATCH"
+    assert result.first_divergence == 3
+    assert result.original_count == 4
+    assert result.compiled_count == 3
+
+
 # ------------------------------------------------------- the real thing
 
 
@@ -113,12 +169,16 @@ def test_original_asm_on_a_known_record():
 @pytest.mark.skipif(not (HAVE_EXE and HAVE_BUILD),
                     reason="no build environment")
 def test_byte_exact_body_compiles_to_the_same_shape():
-    """Smoke: a BYTE_EXACT claim reproduces its instruction count. Strict
-    byte verdicts stay with the ratchet in tools/byte_match.py."""
+    """Smoke: a BYTE_EXACT claim reproduces byte for byte. The strict
+    multi-flag machinery stays with the ratchet in tools/byte_match.py;
+    this is the single-flag comparison the package offers."""
     records = read_file(REPO_ROOT / "src" / "caviar.cpp")
     record = next(r for r in records if r.address == 0x00616BC0)
     assert record.byte_exact
     original = original_asm(record, EXE)
     compiled = compiled_asm(record, COMPILE_COMMANDS, FLAGS)
-    assert len(compiled) == len(original), \
-        f"instruction count: compiled {len(compiled)} vs original {len(original)}"
+    result = compare_asm(original, compiled)
+    assert result.verdict == "BYTE_EXACT", \
+        f"{result.verdict}: {result.matching_lines}/{result.original_count} " \
+        f"lines match, similarity {result.mnemonic_similarity:.2f}"
+    assert result.matching_lines == result.original_count
