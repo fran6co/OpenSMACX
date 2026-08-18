@@ -15,10 +15,11 @@ replace-or-insert cannot be decided from the record alone. A marker the
 records do not describe passes through `write` untouched; deleting it is a
 `remove`, stated deliberately, not an omission.
 
-THE ANNOTATION LAYER ONLY. Code lines pass through untouched, and the
-catalogue's fact block - the `// name`, `// size`, `// spans` lines stamped
-under a marker - is prose as far as this module is concerned: it belongs to
-`project_catalogue`, and the writer never touches it.
+THE ANNOTATION LAYER ONLY. Code lines pass through untouched, and an
+annotation ALREADY IN the tree keeps its fact block exactly as it is - the
+richer facts the catalogue stamped are prose as far as this module is
+concerned. Only an annotation being ADDED gets facts written: its name and
+its image spans, the identity an annotation must carry to be verifiable.
 
 THE SPELLINGS COME FROM `grammar`, nowhere else. A written marker is
 `// ORIGINAL: 0x{address:08X}` with ` FILE`, ` EXCLUDED <citation>` and
@@ -54,6 +55,20 @@ def _marker_line(record: DecompilationState) -> str:
     if record.byte_exact:
         line += " BYTE_EXACT"
     return line
+
+
+def _fact_lines(record: DecompilationState) -> list[str]:
+    """Fact lines recording the record's identity and extent, in the
+    spelling the catalogue's stamp uses - key at column 3, value at
+    column 13."""
+    lines = []
+    if record.name:
+        lines.append(f"// {'name':<10}{record.name}")
+    if record.image_spans:
+        spans = ";".join(f"0x{low:08X}-0x{high:08X}"
+                         for low, high in record.image_spans)
+        lines.append(f"// {'spans':<10}{spans}")
+    return lines
 
 
 def _lesson_lines(record: DecompilationState) -> list[str]:
@@ -115,11 +130,14 @@ def write(text: str, records: list[DecompilationState]) -> str:
     `records` describes the annotations the text carries - plus, if it
     wants, new ones. A record whose line already holds its marker is
     rewritten canonically in place, replacing that line and the lesson run
-    owned by it. A record whose line holds NO marker is an annotation being
-    ADDED: the marker and its lessons are inserted above the line, and the
-    line itself stays untouched underneath. A record one past the last line
-    appends. Everything the records do not describe - code, prose, fact
-    lines, other markers - passes through as it was.
+    owned by it; the fact block underneath passes through untouched. A
+    record whose line holds NO marker is an annotation being ADDED: the
+    marker is inserted above the line with the record's name and spans
+    recorded as facts - an addition that cannot say what it names and
+    where it ends is refused - and the line itself stays untouched
+    underneath. A record one past the last line appends. Everything the
+    records do not describe - code, prose, fact lines, other markers -
+    passes through as it was.
     """
     lines = text.splitlines()
 
@@ -154,15 +172,26 @@ def write(text: str, records: list[DecompilationState]) -> str:
                 out.append(_marker_line(record))
                 out.extend(_lesson_lines(record))
                 continue
-            # A new annotation: the marker goes above this line, and the
-            # line itself - the definition it names - is kept.
+            # A new annotation: it goes above this line, which is kept,
+            # and it records its own name and spans as facts, because the
+            # tree does not know them yet.
+            if not record.name or not record.image_spans:
+                raise ValueError(
+                    f"{record.address_hex}: an annotation being added must "
+                    f"carry its name and its spans")
             out.append(_marker_line(record))
+            out.extend(_fact_lines(record))
             out.extend(_lesson_lines(record))
         out.append(line)
 
     if len(lines) + 1 in by_line:
         record = by_line[len(lines) + 1]
+        if not record.name or not record.image_spans:
+            raise ValueError(
+                f"{record.address_hex}: an annotation being added must "
+                f"carry its name and its spans")
         out.append(_marker_line(record))
+        out.extend(_fact_lines(record))
         out.extend(_lesson_lines(record))
 
     joined = "\n".join(out)

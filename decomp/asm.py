@@ -78,14 +78,14 @@ def original_asm(record: DecompilationState, exe: Path | str) -> list:
     primary span in `exe`, disassembled. A record can carry no spans - a
     fresh annotation the catalogue has not stamped yet - and then nothing
     locates it in the image, so the call says so."""
-    if not record.spans:
+    if not record.image_spans:
         raise ValueError(
             f"{record.address_hex}: the record carries no spans - nothing "
             f"locates it in the image")
     exe = Path(exe)
     if not exe.is_file():
         raise ValueError(f"no executable at {exe}")
-    low, high = record.spans[0]
+    low, high = record.image_spans[0]
     return _disasm(_pe_bytes(exe, low, high - low), low)
 
 

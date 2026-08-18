@@ -51,7 +51,7 @@ def record_in(tmp_path, text):
 def test_record_carries_name_and_spans(tmp_path):
     record = record_in(tmp_path, MARKED)
     assert record.name == "?f@C@@QAEXXZ"
-    assert record.spans == ((0x00401000, 0x00401008),)
+    assert record.image_spans == ((0x00401000, 0x00401008),)
 
 
 def test_span_refused_without_the_fact(tmp_path):
