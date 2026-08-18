@@ -543,14 +543,14 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
             found.append(DecompilationState(
                 address=address, mode=Mode.FILE,
                 state=_state_of(region, ""), path=_abs(path),
-                line=index + 1, name=name, spans=spans, region=region,
+                line=index + 1, name=name, image_spans=spans, region=region,
                 recipe="verbatim", byte_exact=matched, levers=found_levers,
                 ruled_out=found_ruled, unrecoverable=found_dead,
                 deferred=found_later))
         elif keyword == "EXCLUDED":
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY, state=State.EXCLUDED,
-                path=_abs(path), line=index + 1, name=name, spans=spans,
+                path=_abs(path), line=index + 1, name=name, image_spans=spans,
                 exclusion=_exclusion_citation(rest), byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))
@@ -571,7 +571,7 @@ def _read_text(text: str, path: Path | str) -> list[DecompilationState]:
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY,
                 state=_state_of(region, ""), path=_abs(path),
-                line=index + 1, name=name, spans=spans, region=region,
+                line=index + 1, name=name, image_spans=spans, region=region,
                 extract_error=error, recipe=recipe, byte_exact=matched,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later))

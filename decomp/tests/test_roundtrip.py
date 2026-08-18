@@ -20,9 +20,11 @@ from decomp.__main__ import _key, roundtrip_tree
 FIXTURE = Path("fixture.cpp")
 
 
-def record(address, line, mode=Mode.BODY, state=State.IMPLEMENTED, **kwargs):
+def record(address, line, mode=Mode.BODY, state=State.IMPLEMENTED,
+           name="", spans=(), **kwargs):
     return DecompilationState(address=address, mode=mode, state=state,
-                              path=FIXTURE, line=line, **kwargs)
+                              path=FIXTURE, line=line, name=name,
+                              image_spans=spans, **kwargs)
 
 
 def loop(text):
@@ -195,9 +197,11 @@ def test_empty_records_leave_the_text_untouched():
 
 def test_append_past_the_last_line():
     text = "void __cdecl f() {\n}\n"
-    made = [record(0x00408100, line=len(text.splitlines()) + 1)]
+    made = [record(0x00408100, line=len(text.splitlines()) + 1,
+                   name="?g@@YAXXZ", spans=((0x00408100, 0x00408104),))]
     rewritten = write(text, made)
-    assert rewritten.splitlines()[-1] == "// ORIGINAL: 0x00408100"
+    assert rewritten.splitlines()[-3] == "// ORIGINAL: 0x00408100"
+    assert rewritten.splitlines()[-2] == "// name      ?g@@YAXXZ"
 
 
 # ------------------------------------------------- remove is a statement
@@ -299,18 +303,29 @@ void __cdecl beta(int x) {
 
 
 def test_insert_new_annotation_above_a_function():
-    made = [record(0x00409000, line=1)]
+    made = [record(0x00409000, line=1, name="?alpha@@YAXXZ",
+                   spans=((0x00409000, 0x00409008),))]
     rewritten = write(PLAIN, made)
     lines = rewritten.splitlines()
     assert lines[0] == "// ORIGINAL: 0x00409000"
-    assert lines[1] == "void __cdecl alpha() {"      # definition untouched
+    # The annotation lands complete: its identity recorded as facts.
+    assert lines[1] == "// name      ?alpha@@YAXXZ"
+    assert lines[2] == "// spans     0x00409000-0x00409008"
+    assert lines[3] == "void __cdecl alpha() {"   # definition untouched
     reread = read(rewritten, FIXTURE)
     assert len(reread) == 1
     assert reread[0].address == 0x00409000
     assert reread[0].line == 1
     assert reread[0].state is State.IMPLEMENTED
+    assert reread[0].name == "?alpha@@YAXXZ"
+    assert reread[0].image_spans == ((0x00409000, 0x00409008),)
     # The fixed point holds for inserted annotations too.
     assert write(rewritten, reread) == rewritten
+
+
+def test_insert_refuses_an_annotation_without_identity():
+    with pytest.raises(ValueError, match="name and its spans"):
+        write(PLAIN, [record(0x00409000, line=1)])
 
 
 MARKED = """// ORIGINAL: 0x00400100
@@ -329,10 +344,13 @@ void __cdecl gamma() {
 def test_insert_between_existing_annotations():
     records = read(MARKED, FIXTURE)
     assert [r.address for r in records] == [0x00400100, 0x00400300]
-    rewritten = write(MARKED, records + [record(0x00400200, line=5)])
+    new = record(0x00400200, line=5, name="?beta@@YAXXZ",
+                 spans=((0x00400200, 0x00400208),))
+    rewritten = write(MARKED, records + [new])
     reread = read(rewritten, FIXTURE)
     assert [r.address for r in reread] == [0x00400100, 0x00400200, 0x00400300]
     assert reread[1].line == 5
+    assert reread[1].name == "?beta@@YAXXZ"
     assert "void __cdecl beta() {" in rewritten
 
 
@@ -340,7 +358,9 @@ def test_one_call_mixes_replacement_and_insertion():
     records = read(MARKED, FIXTURE)
     first = next(r for r in records if r.address == 0x00400100)
     first.byte_exact = True
-    rewritten = write(MARKED, records + [record(0x00400200, line=5)])
+    new = record(0x00400200, line=5, name="?beta@@YAXXZ",
+                 spans=((0x00400200, 0x00400208),))
+    rewritten = write(MARKED, records + [new])
     assert "// ORIGINAL: 0x00400100 BYTE_EXACT" in rewritten
     assert "// ORIGINAL: 0x00400200" in rewritten
     reread = read(rewritten, FIXTURE)
@@ -401,13 +421,20 @@ def test_annotate_by_name_end_to_end(tmp_path):
     line = function_line(path, "StringStruct::close")
     made = DecompilationState(address=0x00401060, mode=Mode.BODY,
                               state=State.IMPLEMENTED,
-                              path=path.resolve(), line=line)
+                              path=path.resolve(), line=line,
+                              name="?close@StringStruct@@QAEXXZ",
+                              image_spans=((0x00401060, 0x004010F9),))
     write_file([made])
     reread = read_file(path)
     assert len(reread) == 1
     assert reread[0].address == 0x00401060
     assert reread[0].line == 1
-    assert path.read_text().splitlines()[1] == "int StringStruct::close(int x) {"
+    assert reread[0].name == "?close@StringStruct@@QAEXXZ"
+    assert reread[0].image_spans == ((0x00401060, 0x004010F9),)
+    lines = path.read_text().splitlines()
+    assert lines[1] == "// name      ?close@StringStruct@@QAEXXZ"
+    assert lines[2] == "// spans     0x00401060-0x004010F9"
+    assert lines[3] == "int StringStruct::close(int x) {"
 
 
 # ------------------------------------------------------------- the loop
